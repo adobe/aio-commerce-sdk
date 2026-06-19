@@ -45,8 +45,8 @@ function stubEnv(values: {
   publishedPackages?: string;
   releaseChannel?: string;
 }) {
-  vi.stubEnv("NOTES_ENABLED", values.notesEnabled ?? "");
-  vi.stubEnv("NOTES_MODEL", values.notesModel ?? "");
+  vi.stubEnv("RELEASE_NOTES_ENABLED", values.notesEnabled ?? "");
+  vi.stubEnv("RELEASE_NOTES_MODEL", values.notesModel ?? "");
   vi.stubEnv("PUBLISHED_PACKAGES", values.publishedPackages ?? "");
   vi.stubEnv("RELEASE_CHANNEL", values.releaseChannel ?? "");
 }
@@ -68,7 +68,7 @@ afterEach(() => {
 });
 
 describe("release/release-notes.ts", () => {
-  test("skips when NOTES_ENABLED is not 'true'", async () => {
+  test("skips when RELEASE_NOTES_ENABLED is not 'true'", async () => {
     const core = createCoreMock();
     stubEnv({ notesEnabled: "false", releaseChannel: "public" });
 
@@ -117,7 +117,7 @@ describe("release/release-notes.ts", () => {
     );
   });
 
-  test("throws when NOTES_MODEL is missing", async () => {
+  test("throws when RELEASE_NOTES_MODEL is missing", async () => {
     const core = createCoreMock();
     stubEnv({
       notesEnabled: "true",
@@ -126,7 +126,7 @@ describe("release/release-notes.ts", () => {
     });
 
     await expect(main(asCore(core), asExec(createExecMock()))).rejects.toThrow(
-      "Missing NOTES_MODEL",
+      "Missing RELEASE_NOTES_MODEL",
     );
   });
 

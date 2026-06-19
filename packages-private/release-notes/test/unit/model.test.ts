@@ -10,12 +10,16 @@
  * governing permissions and limitations under the License.
  */
 
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+
+vi.mock("@ai-sdk/amazon-bedrock", () => ({
+  createAmazonBedrock: vi.fn(() => vi.fn().mockReturnValue({ __mock: true })),
+}));
 
 import { selectModel } from "#model";
 
 const VALID_ENV = {
-  NOTES_MODEL: "anthropic.claude-haiku-4-5",
+  RELEASE_NOTES_MODEL: "anthropic.claude-haiku-4-5",
 };
 
 describe("selectModel", () => {
@@ -28,5 +32,22 @@ describe("selectModel", () => {
     const { model } = selectModel(VALID_ENV);
     expect(model).toBeDefined();
     expect(typeof model).toBe("object");
+  });
+
+  it("passes baseURL to createAmazonBedrock when RELEASE_NOTES_MODEL_ENDPOINT is set", async () => {
+    const { createAmazonBedrock } = await import("@ai-sdk/amazon-bedrock");
+    selectModel({
+      RELEASE_NOTES_MODEL: "model-id",
+      RELEASE_NOTES_MODEL_ENDPOINT: "https://custom.endpoint",
+    });
+    expect(createAmazonBedrock).toHaveBeenCalledWith({
+      baseURL: "https://custom.endpoint",
+    });
+  });
+
+  it("passes undefined baseURL when RELEASE_NOTES_MODEL_ENDPOINT is not set", async () => {
+    const { createAmazonBedrock } = await import("@ai-sdk/amazon-bedrock");
+    selectModel({ RELEASE_NOTES_MODEL: "model-id" });
+    expect(createAmazonBedrock).toHaveBeenCalledWith({ baseURL: undefined });
   });
 });

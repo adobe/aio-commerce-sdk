@@ -8,11 +8,15 @@ inputs:
   release-channel:
     description: Release channel ("internal" or "public")
     required: true
-  notes-model:
+  release-notes-model:
     description: Model ID override (uses provider default when omitted)
     required: false
     default: ""
-  notes-enabled:
+  release-notes-model-endpoint:
+    description: Custom base URL for the Bedrock API (uses the default AWS endpoint when omitted)
+    required: false
+    default: ""
+  release-notes-enabled:
     description: Set to "true" to enable AI generation; defaults to "false" (dark-launch)
     required: false
     default: "false"
@@ -34,8 +38,9 @@ runs:
       env:
         PUBLISHED_PACKAGES: ${{ inputs.published-packages }}
         RELEASE_CHANNEL: ${{ inputs.release-channel }}
-        NOTES_MODEL: ${{ inputs.notes-model }}
-        NOTES_ENABLED: ${{ inputs.notes-enabled }}
+        RELEASE_NOTES_MODEL: ${{ inputs.release-notes-model }}
+        RELEASE_NOTES_MODEL_ENDPOINT: ${{ inputs.release-notes-model-endpoint }}
+        RELEASE_NOTES_ENABLED: ${{ inputs.release-notes-enabled }}
       with:
         script: |
           const { default: execNotes } = await import('${{ github.workspace }}/scripts/source/ci/release/release-notes.ts');

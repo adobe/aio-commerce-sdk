@@ -58,7 +58,18 @@ export async function fetchPackageDiff(
 ): Promise<string> {
   const { stdout } = await exec.getExecOutput(
     "git",
-    ["diff", `${prevTag}..${newTag}`, "--", pkgPath],
+    [
+      "diff",
+      `${prevTag}..${newTag}`,
+      "--",
+      `${pkgPath}/source`,
+      `${pkgPath}/docs`,
+      `${pkgPath}/BREAKING.md`,
+      `${pkgPath}/CHANGELOG.md`,
+      `${pkgPath}/package.json`,
+      `${pkgPath}/README.md`,
+      ":(exclude)**/api-reference/**",
+    ],
     { silent: true },
   );
   return stdout;

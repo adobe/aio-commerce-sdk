@@ -98,8 +98,13 @@ describe("fetchPackageDiff", () => {
     expect(result).toContain("newHelper");
     const args: string[] = (exec.getExecOutput as ReturnType<typeof vi.fn>).mock
       .calls[0][1];
-    expect(args).toContain("packages/aio-commerce-lib-core");
-    expect(args.join(" ")).not.toContain("CHANGELOG");
+    expect(args).toContain("packages/aio-commerce-lib-core/source");
+    expect(args).toContain("packages/aio-commerce-lib-core/docs");
+    expect(args).toContain("packages/aio-commerce-lib-core/CHANGELOG.md");
+    expect(args).toContain("packages/aio-commerce-lib-core/BREAKING.md");
+    expect(args).toContain("packages/aio-commerce-lib-core/package.json");
+    expect(args).toContain("packages/aio-commerce-lib-core/README.md");
+    expect(args).toContain(":(exclude)**/api-reference/**");
   });
 });
 

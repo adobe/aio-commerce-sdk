@@ -148,6 +148,12 @@ describe("renderMarkdown", () => {
     expect(md).not.toContain("## Contributors");
   });
 
+  test("skips by-package section when array is empty", () => {
+    const withNoPackages: ReleaseNotes = { ...SAMPLE_NOTES, byPackage: [] };
+    const md = renderMarkdown(withNoPackages);
+    expect(md).not.toContain("## By Package");
+  });
+
   test("render order is: headline > highlights > breaking > by-package > contributors", () => {
     const withBreaking: ReleaseNotes = {
       ...SAMPLE_NOTES,

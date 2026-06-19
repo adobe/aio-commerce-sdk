@@ -111,6 +111,54 @@ describe("assembleReleaseNotes", () => {
     expect(notes.byPackage[0]?.name).toBe(META);
   });
 
+  test("sorts non-meta packages alphabetically", () => {
+    const notes = assembleReleaseNotes([
+      makeResult("@adobe/aio-commerce-lib-zebra", "1.0.0"),
+      makeResult("@adobe/aio-commerce-lib-alpha", "1.0.0"),
+    ]);
+    expect(notes.byPackage[0]?.name).toBe("@adobe/aio-commerce-lib-alpha");
+    expect(notes.byPackage[1]?.name).toBe("@adobe/aio-commerce-lib-zebra");
+  });
+
+  test("places meta-package first when sandwiched between other packages", () => {
+    const notes = assembleReleaseNotes([
+      makeResult("@adobe/aio-commerce-lib-zebra", "1.0.0"),
+      makeResult(META, "2.0.0"),
+      makeResult("@adobe/aio-commerce-lib-alpha", "1.0.0"),
+    ]);
+    expect(notes.byPackage[0]?.name).toBe(META);
+    expect(notes.byPackage[1]?.name).toBe("@adobe/aio-commerce-lib-alpha");
+    expect(notes.byPackage[2]?.name).toBe("@adobe/aio-commerce-lib-zebra");
+  });
+
+  test("falls back to major-bump headline when no meta-package", () => {
+    const notes = assembleReleaseNotes([
+      makeResult(LIB, "2.0.0", { bump: "major", headline: "Major headline." }),
+    ]);
+    expect(notes.headline).toBe("Major headline.");
+  });
+
+  test("falls back to minor-bump headline when no meta or major", () => {
+    const notes = assembleReleaseNotes([
+      makeResult(LIB, "1.1.0", { bump: "minor", headline: "Minor headline." }),
+    ]);
+    expect(notes.headline).toBe("Minor headline.");
+  });
+
+  test("falls back to first package headline when no meta, major, or minor", () => {
+    const notes = assembleReleaseNotes([
+      makeResult(LIB, "1.0.1", { bump: "patch", headline: "Patch headline." }),
+    ]);
+    expect(notes.headline).toBe("Patch headline.");
+  });
+
+  test("uses Release: <packages> headline as last resort when no headlines exist", () => {
+    const notes = assembleReleaseNotes([
+      makeResult(LIB, "1.0.1", { headline: undefined as unknown as string }),
+    ]);
+    expect(notes.headline).toContain("Release:");
+  });
+
   test("deduplicates contributors across packages", () => {
     const notes = assembleReleaseNotes([
       makeResult(LIB, "2.0.0", { contributors: ["@alice", "@bob"] }),
@@ -155,6 +203,35 @@ describe("generatePackageNotes", () => {
 });
 
 describe("generateAllNotes", () => {
+  test("treats undefined token counts as zero when aggregating usage", async () => {
+    const { generateText } = await import("ai");
+    (generateText as ReturnType<typeof vi.fn>).mockResolvedValue({
+      output: makeNotes(LIB, "2.0.0"),
+      usage: {
+        inputTokens: undefined,
+        outputTokens: undefined,
+        totalTokens: undefined,
+        inputTokenDetails: {
+          noCacheTokens: undefined,
+          cacheReadTokens: undefined,
+          cacheWriteTokens: undefined,
+        },
+        outputTokenDetails: {
+          textTokens: undefined,
+          reasoningTokens: undefined,
+        },
+      },
+    });
+
+    const { totalUsage } = await generateAllNotes(
+      [makeEntry(LIB, "2.0.0")],
+      {} as Parameters<typeof generateAllNotes>[1],
+    );
+    expect(totalUsage.inputTokens).toBe(0);
+    expect(totalUsage.outputTokens).toBe(0);
+    expect(totalUsage.totalTokens).toBe(0);
+  });
+
   test("returns results and aggregated usage", async () => {
     const { generateText } = await import("ai");
     const mockNotes = makeNotes(LIB, "2.0.0");

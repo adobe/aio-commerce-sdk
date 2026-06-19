@@ -27,12 +27,17 @@ export default async function main(
   exec: AsyncFunctionArguments["exec"],
 ) {
   return await runGitHubScript(core, async () => {
-    const { NOTES_ENABLED, NOTES_MODEL, PUBLISHED_PACKAGES, RELEASE_CHANNEL } =
-      process.env;
+    const {
+      RELEASE_NOTES_ENABLED,
+      RELEASE_NOTES_MODEL_ENDPOINT,
+      RELEASE_NOTES_MODEL,
+      PUBLISHED_PACKAGES,
+      RELEASE_CHANNEL,
+    } = process.env;
 
-    if (NOTES_ENABLED !== "true") {
+    if (RELEASE_NOTES_ENABLED !== "true") {
       core.info(
-        "Release notes generation is disabled (NOTES_ENABLED != true). Skipping.",
+        "Release notes generation is disabled (RELEASE_NOTES_ENABLED != true). Skipping.",
       );
       return;
     }
@@ -48,8 +53,8 @@ export default async function main(
     if (!PUBLISHED_PACKAGES) {
       throw new Error("Missing PUBLISHED_PACKAGES environment variable.");
     }
-    if (!NOTES_MODEL) {
-      throw new Error("Missing NOTES_MODEL environment variable.");
+    if (!RELEASE_NOTES_MODEL) {
+      throw new Error("Missing RELEASE_NOTES_MODEL environment variable.");
     }
 
     const publishedPackages = JSON.parse(
@@ -61,7 +66,10 @@ export default async function main(
       return;
     }
 
-    const { model, modelId } = selectModel({ NOTES_MODEL });
+    const { model, modelId } = selectModel({
+      RELEASE_NOTES_MODEL,
+      RELEASE_NOTES_MODEL_ENDPOINT,
+    });
     core.info(`Generating release notes with model=${modelId}`);
 
     const entries = await collectEntries(exec, publishedPackages);
@@ -80,6 +88,7 @@ export default async function main(
       .addHeading("Release Notes Preview", 2)
       .addRaw(markdown)
       .write();
+
     core.info("Release notes written to job summary.");
   });
 }

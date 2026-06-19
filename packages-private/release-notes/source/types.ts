@@ -41,5 +41,6 @@ export interface ExecInterface {
 
 /** Environment variables required by the LLM model selector. */
 export type ReleaseNotesEnvironment = {
-  NOTES_MODEL: string;
+  RELEASE_NOTES_MODEL: string;
+  RELEASE_NOTES_MODEL_ENDPOINT?: string;
 };

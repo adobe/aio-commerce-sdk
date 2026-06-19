@@ -21,10 +21,13 @@ export type SelectedModel = {
 };
 
 /**
- * Selects the model from the `NOTES_MODEL` environment variable.
+ * Selects the model from the `RELEASE_NOTES_MODEL` environment variable.
  */
 export function selectModel(env: ReleaseNotesEnvironment): SelectedModel {
-  const { NOTES_MODEL: modelId } = env;
-  const model = createAmazonBedrock()(modelId);
+  const {
+    RELEASE_NOTES_MODEL: modelId,
+    RELEASE_NOTES_MODEL_ENDPOINT: baseURL,
+  } = env;
+  const model = createAmazonBedrock({ baseURL })(modelId);
   return { model, modelId };
 }
