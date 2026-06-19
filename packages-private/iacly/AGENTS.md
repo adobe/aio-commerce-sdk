@@ -24,12 +24,9 @@ pnpm --filter @aio-commerce-sdk/iacly lint
 - The library must remain free of provider-specific dependencies. Resource providers (e.g. for Commerce, I/O Events) live outside this package and depend on it — not the other way around.
 - This package has no build step — it is consumed directly from source within the workspace. Do not add a `tsdown.config.ts` unless promoting to a public package.
 
-## Promoting to a public package
+## Promotion
 
-1. Move to `packages/`.
-2. Change the npm scope from `@aio-commerce-sdk/iacly` to `@adobe/aio-commerce-lib-iacly` (or the agreed name).
-3. Set `"private": false`.
-4. Add `publishConfig.exports` with `dist/` paths.
-5. Add a `tsdown.config.ts` extending `baseConfig`.
-6. Add a `build` script.
-7. Run `pnpm changeset add` and follow the changeset conventions in the root `AGENTS.md`.
+`iacly` is intentionally kept private. `@aio-commerce-sdk/aio-commerce-lib-iacly` (the Commerce
+providers package) is the public-facing library that consumers install; `iacly` is its private
+dependency. Do not promote `iacly` to a public package without first aligning on a name that
+does not conflict with `@adobe/aio-commerce-lib-iacly`.
