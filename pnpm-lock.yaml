@@ -182,6 +182,18 @@ importers:
         specifier: 'catalog:'
         version: 6.0.3
 
+  packages-private/iacly:
+    devDependencies:
+      '@aio-commerce-sdk/config-typescript':
+        specifier: workspace:*
+        version: link:../../configs/typescript
+      '@aio-commerce-sdk/config-vitest':
+        specifier: workspace:*
+        version: link:../../configs/vitest
+      typescript:
+        specifier: 'catalog:'
+        version: 6.0.3
+
   packages-private/scripting-utils:
     dependencies:
       '@adobe/aio-commerce-lib-core':
