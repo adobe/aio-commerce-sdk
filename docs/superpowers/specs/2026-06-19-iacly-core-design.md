@@ -16,45 +16,50 @@ interface.
 
 ## Motivation
 
-Commerce apps on App Builder need to manage a set of external resources — webhook registrations,
-I/O Events registrations, Admin UI extensions — that must be created on install, updated when
-configuration changes, and removed on uninstall. Today, each of these is managed by ad-hoc
-imperative code spread across install and uninstall runtime actions. This leads to several
-recurring problems:
+Commerce apps on App Builder manage a set of external resources — webhook registrations, I/O
+Events providers and registrations, Admin UI extensions — created on install, updated on redeploy,
+and removed on uninstall.
 
-- **Orphaned resources on uninstall.** Uninstall logic is written against the current declarative
+The existing system in `aio-commerce-lib-app` already has meaningful infrastructure for this: a
+typed step tree (`defineBranchStep` / `defineLeafStep`) with `when` guards, per-step `validate`,
+`install`, and `uninstall` handlers; a `POST /validation` endpoint that serves as a dry-run; a
+persisted state machine (pending / in-progress / succeeded / failed) with lifecycle hooks
+(`onStepStart`, `onStepSuccess`, `onStepFailure`) and retry/resume that preserves succeeded steps;
+and idempotent create-or-get already implemented manually (e.g. `getIoEventsExistingData()` +
+`createOrGetIoEventProvider()`).
+
+The genuine gaps not covered today are:
+
+- **Orphaned resources on uninstall.** Uninstall logic runs against the _current_ declarative
   config. If config drifted or was redeployed between install and uninstall, resources that were
-  actually installed are no longer reflected in the config, and are never cleaned up.
-- **No drift detection.** There is no standard way to detect that a live resource was modified
-  outside of the app (e.g. a webhook manually edited in the Commerce admin), or to reconcile it
-  back to the declared state.
-- **No dependency ordering.** Resources that depend on each other (e.g. an I/O Events registration
-  that depends on a custom event provider) must be manually sequenced. A failure midway leaves
-  the system in a partial state with no structured recovery path.
-- **No plan step.** Install actions apply changes blindly — there is no reviewable diff of what
-  will change before mutations begin.
+  actually installed are no longer reflected in the config and are never cleaned up. There is no
+  record of what was actually applied — only what the current config says should exist.
+- **No update/drift detection.** The create-or-get pattern skips creation if a resource is found,
+  but does not compare desired vs. live state. A resource that was manually modified externally
+  (e.g. a webhook URL edited in the Commerce admin) is silently left as-is.
+- **No inspectable plan.** Changes are applied blindly. There is no reviewable diff of what will
+  change before mutations begin, and no structured record of what changed after.
+- **No parallel execution.** Steps execute sequentially in a fixed order. Independent resources
+  (e.g. webhook setup and eventing setup) cannot run concurrently.
 
-Standard IaC tools (Terraform, Pulumi) solve all of these, but require a long-running engine
-binary, a durable state backend, and the ability to install arbitrary tooling. App Builder
-runtime actions are short-lived serverless Node.js functions with a hard bundle-size ceiling and
-no persistent filesystem. These assumptions are incompatible.
-
-`iacly` fills the gap: a reconcile loop small enough to ship as a dependency, with no runtime
-requirements beyond Node.js.
+`iacly` addresses these four gaps while leaving the existing step/state/hooks/retry machinery in
+place. The two models coexist: resources that fit the CRUD model adopt `iacly`; steps that require
+conditional logic, sequential side effects, or non-CRUD APIs remain as imperative steps.
 
 **Goals:**
 
 - Define a minimal, dependency-free TypeScript interface for declarative resource management.
 - Establish `Resource` as the manageable unit and `Provider` as its grouping container.
 - Support the full reconcile cycle: check → list → diff → plan → apply.
-- Produce an `AppliedSnapshot` after every reconcile that makes teardown deterministic regardless
-  of config drift.
+- Produce an `AppliedSnapshot` after every reconcile that records the applied state of every
+  resource — including API-assigned identifiers — so teardown is deterministic regardless of
+  config drift and does not require re-listing from the live system.
 - Validate the interface against real Commerce SDK resource types before locking it in.
 
 **Non-goals:**
 
-- Implementing the reconcile engine itself (the runtime that executes providers in order, enforces
-  locks, and emits events). This is the next iteration.
+- Implementing the reconcile engine itself (the runtime that executes the DAG, enforces locks,
+  and emits events). This is the next iteration.
 - Persistence. The caller owns where and how the `AppliedSnapshot` is stored.
 - Commerce-specific business logic beyond what the providers need.
 - Replacing imperative installation steps. `iacly` providers are an additive option; imperative
@@ -84,16 +89,18 @@ import type {
 
 type AppConfig = { webhooks?: WebhookConfig[]; events?: EventConfig[] /* … */ };
 type WebhookConfig = {
-  code: string;
+  webhook_method: string; // e.g. 'observer'
+  batch_name: string; // composite identity key
+  hook_name: string;
   url: string;
-  method: string;
   fields: string[];
 };
 type Webhook = {
   id: number;
-  code: string;
+  webhook_method: string;
+  batch_name: string;
+  hook_name: string;
   url: string;
-  method: string;
   active: boolean;
 };
 
@@ -109,10 +116,10 @@ class WebhookResource implements Resource<AppConfig, WebhookConfig, Webhook> {
   }
 
   keyFromDesired(desired: WebhookConfig): string {
-    return desired.code;
+    return `${desired.webhook_method}:${desired.batch_name}:${desired.hook_name}`;
   }
   keyFromState(state: Webhook): string {
-    return state.code;
+    return `${state.webhook_method}:${state.batch_name}:${state.hook_name}`;
   }
 
   async list(): Promise<Webhook[]> {
@@ -124,7 +131,7 @@ class WebhookResource implements Resource<AppConfig, WebhookConfig, Webhook> {
     desired: WebhookConfig,
   ): DiffResult<WebhookConfig, Webhook> {
     if (!current) return { kind: "create", desired };
-    if (current.url !== desired.url || current.method !== desired.method) {
+    if (current.url !== desired.url) {
       return { kind: "update", current, desired };
     }
     return { kind: "noop" };
@@ -409,20 +416,37 @@ export type UpstreamOutputs = ReadonlyMap<string, ProviderOutputs>;
 ```
 
 `Resource` is the manageable unit. `TConfig` is the full app config type shared by all resources
-in a reconcile call. `check(config)` is called once per resource at the start of `plan()`: it
-extracts and validates this resource's desired items from the full config, returning `[]` when
+in a reconcile call — it should carry both the declarative config and any runtime context needed
+for filtering (e.g. `commerceEnv`), so `check()` can produce the correct desired set for the
+target environment. Snapshots and teardown must be env-consistent: a snapshot produced in staging
+must not drive deletions in production.
+
+`check(config)` is called once per resource at the start of `plan()`: it extracts, filters by
+environment, and validates this resource's desired items from the full config, returning `[]` when
 nothing is configured. `keyFromDesired` and `keyFromState` let the engine match desired items to
 live state without imposing structural constraints on `TDesired` or `TState`. The `id` parameter
 in `update` and `delete` is the config-level key (for identification and logging); resources
-access `current` to obtain the system-assigned API identifier for actual mutation calls. `read` is
-optional — the engine uses `list()` for its reconcile loop; `read` is available for resources that
-support point lookups.
+access `current` to obtain the system-assigned API identifier for actual mutation calls.
+
+`list?()` is optional. When implemented, the engine uses it for live discovery: drift detection,
+orphan detection, and idempotency across runs. When absent, the engine operates in
+**snapshot-only mode**: it creates resources not present in the previous snapshot and deletes
+resources present in the snapshot using the `state` stored in `ResourceRecord`. Drift detection
+and live orphan detection are unavailable in snapshot-only mode. Resources without a list API
+(e.g. Admin UI extensions) use snapshot-only mode.
+
+`update?()` is optional. Most Commerce and I/O Events APIs do not support in-place update;
+changes require delete + recreate. A resource whose `diff()` never returns `update` need not
+implement `update()`. Declaring `update()` when `diff()` may return `update` and `update()` is
+absent is a type error caught at compile time.
 
 `outputs()` is optional — only resources that expose values consumed by downstream resources need
 to implement it. The engine calls it after applying all items for that resource and merges the
 result into `UpstreamOutputs` under the resource's `kind`. `create()` and `update()` receive the
 accumulated upstream outputs so downstream resources can resolve cross-resource references without
-extra API calls.
+extra API calls. The engine asserts at apply time that any resource reading from
+`upstream.get(kind)` declared that `kind` in its `dependsOn`; accessing an undeclared kind throws
+rather than returning silently empty.
 
 `Provider` is a named container that groups related resources. It is the composition root: it
 takes shared clients in its constructor and wires them into each resource it creates internally.
@@ -439,11 +463,10 @@ export interface Resource<TConfig, TDesired, TState> {
 
   outputs?(states: readonly TState[]): ProviderOutputs;
 
-  list(): Promise<TState[]>;
-  read?(id: string): Promise<TState | null>;
+  list?(): Promise<TState[]>;
   diff(current: TState | null, desired: TDesired): DiffResult<TDesired, TState>;
   create(desired: TDesired, upstream: UpstreamOutputs): Promise<TState>;
-  update(
+  update?(
     id: string,
     current: TState,
     desired: TDesired,
@@ -548,15 +571,23 @@ export type ResourceOutcome<TState = unknown> =
 ```
 
 `AppliedSnapshot` is the persisted record of a reconcile run. It covers all resources — including
-those with `failed` or `blocked` outcomes — so teardown has complete information and can decide
-per-outcome how to handle each resource. The caller persists this after every reconcile (e.g. in
-the installation-details payload or `aio-lib-state`).
+those with `failed` or `blocked` outcomes — so teardown has complete information and can act on
+each resource without re-querying the live system. The caller persists this after every reconcile
+(e.g. in the installation-details payload or `aio-lib-state`).
+
+`ResourceRecord` stores the full `ResourceOutcome<TState>`, not just the status string. This
+means the API-assigned state (e.g. provider ID, registration ID) is preserved for `created`,
+`updated`, and `replaced` outcomes, enabling teardown to call `delete(id, current)` directly from
+the snapshot without a `list()` call. For resources in snapshot-only mode (no `list()`), this is
+the only source of the identifier. `failed` and `blocked` outcomes preserve their `error` and
+`blockedBy` fields so teardown can make an informed policy decision per resource rather than
+treating all non-success outcomes the same.
 
 ```ts
-export type ResourceRecord<TDesired = unknown> = {
+export type ResourceRecord<TDesired = unknown, TState = unknown> = {
   readonly key: string;
   readonly desired: TDesired;
-  readonly outcome: ResourceOutcome["status"];
+  readonly outcome: ResourceOutcome<TState>;
 };
 
 export type ProviderSnapshot = {
@@ -603,18 +634,25 @@ export interface PlanOptions {
 }
 
 // Options for the apply step: executes a Plan and returns outcomes.
+// maxConcurrency caps the number of actions executing in parallel; defaults to unbounded.
+// Without a cap, fanning out against a single Commerce instance or the I/O Events API may
+// trigger rate-limiting. force steals a held lock — only safe when the lock has a TTL that
+// prevents two reconciles running concurrently against the same resources.
 export interface ApplyOptions {
   lock?: Lock;
   force?: boolean;
+  maxConcurrency?: number;
   onEvent?: (event: ReconcileEvent) => Promise<void>;
 }
 
 // Convenience union for callers that want a single reconcile() call.
 export type ReconcileOptions = PlanOptions & ApplyOptions;
 
+// snapshot is the single source of truth. outcomes is derived from it for convenience:
+//   outcomes.get(`${kind}:${key}`) === snapshot.providers
+//     .find(p => p.kind === kind)?.resources.find(r => r.key === key)?.outcome
 export interface ReconcileResult {
   readonly plan: Plan;
-  readonly outcomes: ReadonlyMap<string, ResourceOutcome>; // key: `${resourceKind}:${itemKey}`
   readonly snapshot: AppliedSnapshot;
 }
 
@@ -713,6 +751,13 @@ codes by value; the codes must already exist). `commerce-events/provider` can ru
 with `io-events/event-metadata` and `io-events/registration` — it only needs the I/O Events
 provider ID, not the metadata or registrations.
 
+> **Verify before implementing:** `commerce-events/setup` is shown with no deps, running in
+> parallel with `io-events/provider`. This holds only if `instanceId` (passed to
+> `configureCommerceEventing`) can be derived from app config alone via `generateInstanceId()`
+> without waiting for the provider API response. The current code sources it from `providerData`
+> (the created provider object). If the value is identical to what `check()` can compute, no dep
+> is needed. Confirm before locking the dependency table.
+
 For 2 Commerce event sources (each with 1 event and 1 runtime action), the engine executes 9
 requests — the independent setups run first in parallel, then dependent resources in topo order:
 
@@ -795,7 +840,8 @@ resource regardless of whether it was successfully applied.
   writing any install logic.
 - `keyFromDesired` / `keyFromState` require careful implementation per provider — a mismatch
   between the two keys causes silent reconcile failures (resources never matched, perpetually
-  re-created).
+  re-created). Keys must be composite where the real API identity is composite (e.g. webhooks
+  are identified by `webhook_method + batch_name + hook_name`, not a single `code` field).
 - Cross-resource references via `outputs()` / `IoEventsOutputs.provider(upstream, instanceId)`
   are a convention, not enforced by the type system. A resource that consumes upstream outputs
   without declaring the corresponding `dependsOn` entry will receive an empty map at runtime with
@@ -843,6 +889,15 @@ accepts both as first-class options; neither is deprecated.
 - **`check` error granularity.** `check(config)` validates the entire provider section at once.
   If one item is invalid the whole provider fails before `list()` is called. Whether partial
   validation (valid items proceed, invalid items are reported) is ever needed is unresolved.
+- **`force` and concurrent reconcile risk.** `forceRelease()` steals a held lock and may allow
+  two reconciles to run concurrently against the same resources. `force` is safe only when the
+  lock backing store has a TTL slightly longer than the maximum worker duration, so crashed workers
+  are evicted before the next reconcile starts. The TTL value and the interaction between `force`
+  and TTL expiry are unspecified.
+- **Environment consistency of snapshots.** `check(config)` must filter desired items by
+  `commerceEnv` (or equivalent). The snapshot produced must record which env it applies to, or
+  callers must ensure a staging snapshot is never passed as `previousSnapshot` to a production
+  reconcile. The mechanism for this is unspecified.
 
 ## Future possibilities
 
@@ -858,6 +913,10 @@ accepts both as first-class options; neither is deprecated.
   where the install/uninstall runtime actions eventually converge.
 - **Per-item dependency narrowing.** The engine currently generates conservative deps: an item of
   kind B that declares `dependsOn: ['A']` depends on all A-kind actions, not just the one it
-  logically relates to. An optional `depsForDesired?(desired: TDesired): string[]` method on
-  `Resource` would let each resource express per-item deps precisely, enabling even more
-  parallelism (e.g. metadataA unblocked by providerA without waiting for providerB).
+  logically relates to. An optional `depsForDesired?(desired: TDesired): readonly string[]` method
+  on `Resource` would let each resource express per-item deps precisely (e.g. metadataA unblocked
+  by providerA without waiting for providerB), enabling finer-grained parallelism.
+- **Snapshot-only mode for non-listable resources.** Resources without `list?()` currently rely
+  on stored `ResourceRecord.outcome.state` for teardown. A future extension could let these
+  resources declare a `readById(id: string)` fallback, enabling at least point-lookup drift
+  detection without a full list.
