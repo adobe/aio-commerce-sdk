@@ -344,7 +344,6 @@ describe("CommerceEventsProvider", () => {
       const state = await subscriptionResource().create(
         {
           eventCode: "observer.catalog_product_save_after",
-          providerInstanceId: "my-instance",
         },
         new Map(),
       );

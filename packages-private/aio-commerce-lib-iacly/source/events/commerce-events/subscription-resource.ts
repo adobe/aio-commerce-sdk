@@ -68,9 +68,10 @@ export class CommerceEventSubscriptionResource
     if (current === null) {
       return { kind: "create", desired };
     }
+    const desiredFields =
+      desired.fields?.map((f) => ({ name: f.name, converter: f.value })) ?? [];
     const changed =
-      JSON.stringify(current.fields ?? []) !==
-      JSON.stringify(desired.fields?.map((f) => ({ name: f.name })) ?? []);
+      JSON.stringify(current.fields ?? []) !== JSON.stringify(desiredFields);
     return changed ? { kind: "replace", current, desired } : { kind: "noop" };
   }
 
@@ -78,9 +79,11 @@ export class CommerceEventSubscriptionResource
     desired: CommerceEventSubscriptionConfig,
     _upstream: UpstreamOutputs,
   ): Promise<CommerceEventSubscription> {
+    const fields =
+      desired.fields?.map((f) => ({ name: f.name, converter: f.value })) ?? [];
     await createEventSubscription(this.#client, {
       name: desired.eventCode,
-      fields: desired.fields?.map((f) => ({ name: f.name })) ?? [],
+      fields,
       provider_id: "default",
     });
     // createEventSubscription returns void — reconstruct state from desired.
@@ -88,7 +91,7 @@ export class CommerceEventSubscriptionResource
       name: desired.eventCode,
       parent: "",
       provider_id: "default",
-      fields: desired.fields?.map((f) => ({ name: f.name })) ?? [],
+      fields,
       rules: [],
       destination: "default",
       priority: false,

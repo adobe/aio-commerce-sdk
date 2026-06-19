@@ -29,7 +29,6 @@ export type CommerceEventProviderConfig = {
 export type CommerceEventSubscriptionConfig = {
   /** The event code to subscribe to (e.g. "observer.catalog_product_save_after"). */
   readonly eventCode: string;
-  readonly providerInstanceId: string;
   readonly fields?: ReadonlyArray<{
     readonly name: string;
     readonly value?: string;

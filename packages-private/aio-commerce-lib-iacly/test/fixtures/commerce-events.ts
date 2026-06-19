@@ -49,7 +49,6 @@ export const commerceEventsFixtures = {
 
     subscription: {
       eventCode: "observer.catalog_product_save_after",
-      providerInstanceId: "my-instance",
       fields: [{ name: "entity_id" }],
     } satisfies CommerceEventSubscriptionConfig,
   },
