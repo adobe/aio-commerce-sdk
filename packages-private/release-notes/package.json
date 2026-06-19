@@ -1,45 +1,46 @@
 {
-  "name": "@aio-commerce-sdk/scripts",
+  "name": "@aio-commerce-sdk/release-notes",
   "type": "module",
-  "author": "Adobe Inc.",
   "version": "0.1.0",
   "private": true,
   "engines": {
     "node": ">=22 <=24"
   },
   "license": "Apache-2.0",
-  "description": "Scripts for the AIO Commerce SDK monorepo",
-  "imports": {
-    "#*": "./source/*.ts",
-    "#test/*": "./test/*.ts"
-  },
-  "bin": {
-    "sdk-prepack": "./source/prepack.ts",
-    "sdk-postpack": "./source/postpack.ts"
-  },
+  "description": "AI-powered release notes generator for the Adobe Commerce SDK",
   "scripts": {
     "assist": "biome check --formatter-enabled=false --linter-enabled=false --assist-enabled=true --no-errors-on-unmatched",
     "assist:apply": "biome check --write --formatter-enabled=false --linter-enabled=false --assist-enabled=true --no-errors-on-unmatched",
     "check:ci": "biome ci --formatter-enabled=true --linter-enabled=true --assist-enabled=true --no-errors-on-unmatched",
-    "code:fix": "pnpm run lint:fix && pnpm run assist:apply && pnpm run format && pnpm run format:markdown",
+    "code:fix": "pnpm run lint:fix && pnpm run assist:apply && pnpm run format",
     "format": "biome format --write --no-errors-on-unmatched",
-    "format:markdown": "prettier --no-error-on-unmatched-pattern --write '**/*.md' \"!**/{CODE_OF_CONDUCT.md,COPYRIGHT,LICENSE,SECURITY.md,CONTRIBUTING.md}\"",
     "format:check": "biome format --no-errors-on-unmatched",
     "lint": "biome lint --no-errors-on-unmatched",
     "lint:fix": "biome lint --write --no-errors-on-unmatched",
+    "typecheck": "tsc --noEmit && echo '✅ No type errors found.'",
     "test": "vitest run --coverage",
     "test:watch": "vitest --coverage",
-    "test:ui": "vitest --ui --coverage",
-    "typecheck": "tsc --noEmit && echo '✅ No type errors found.'"
+    "test:ui": "vitest --ui --coverage"
+  },
+  "exports": {
+    ".": "./source/index.ts",
+    "./package.json": "./package.json"
+  },
+  "imports": {
+    "#*": "./source/*.ts",
+    "#test*": "./test/*.ts"
+  },
+  "dependencies": {
+    "@ai-sdk/amazon-bedrock": "^4.0.119",
+    "@ai-sdk/openai": "^3.0.73",
+    "@ai-sdk/valibot": "^2.0.31",
+    "ai": "^6.0.208",
+    "valibot": "catalog:"
   },
   "devDependencies": {
-    "@actions/core": "^3.0.0",
-    "@actions/exec": "^3.0.0",
-    "@actions/github": "^9.0.0",
     "@aio-commerce-sdk/config-typescript": "workspace:*",
     "@aio-commerce-sdk/config-vitest": "workspace:*",
-    "@aio-commerce-sdk/release-notes": "workspace:*",
-    "@aio-commerce-sdk/scripting-utils": "workspace:*"
+    "typescript": "catalog:"
   },
   "sideEffects": false
 }

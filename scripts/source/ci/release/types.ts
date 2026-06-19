@@ -14,7 +14,7 @@
 export type ReleaseChannel = "internal" | "public";
 
 /** Environment variables for the release prepare script. */
-export type Environment = {
+export type PrepareEnvironment = {
   REGISTRY_AUTH_TOKEN: string;
   REGISTRY_URL: string;
   RELEASE_CHANNEL: ReleaseChannel;

@@ -1,0 +1,42 @@
+name: Generate Release Notes
+description: Generate AI-powered release notes and emit them to the job summary
+
+inputs:
+  published-packages:
+    description: JSON array of published packages (from changesets/action outputs)
+    required: true
+  release-channel:
+    description: Release channel ("internal" or "public")
+    required: true
+  notes-model:
+    description: Model ID override (uses provider default when omitted)
+    required: false
+    default: ""
+  notes-enabled:
+    description: Set to "true" to enable AI generation; defaults to "false" (dark-launch)
+    required: false
+    default: "false"
+
+outputs:
+  releaseNotesMarkdown:
+    description: The generated release notes as a GitHub-flavored markdown string
+    value: ${{ steps.generate.outputs.releaseNotesMarkdown }}
+  releaseNotes:
+    description: The generated release notes as a JSON string (ReleaseNotes schema)
+    value: ${{ steps.generate.outputs.releaseNotes }}
+
+runs:
+  using: composite
+  steps:
+    - name: Generate Release Notes
+      id: generate
+      uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+      env:
+        PUBLISHED_PACKAGES: ${{ inputs.published-packages }}
+        RELEASE_CHANNEL: ${{ inputs.release-channel }}
+        NOTES_MODEL: ${{ inputs.notes-model }}
+        NOTES_ENABLED: ${{ inputs.notes-enabled }}
+      with:
+        script: |
+          const { default: execNotes } = await import('${{ github.workspace }}/scripts/source/ci/release/release-notes.ts');
+          await execNotes(core, exec, github, context);
