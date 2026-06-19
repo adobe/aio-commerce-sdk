@@ -1,0 +1,7 @@
+{
+  "extends": "@aio-commerce-sdk/config-typescript/tsconfig.base.json",
+  "compilerOptions": {
+    "erasableSyntaxOnly": true,
+    "rewriteRelativeImportExtensions": true
+  }
+}
