@@ -75,7 +75,7 @@ export class CommerceEventsProviderResource
     return changed ? { kind: "replace", current, desired } : { kind: "noop" };
   }
 
-  public create(
+  public async create(
     desired: CommerceEventProviderConfig,
     upstream: UpstreamOutputs,
   ): Promise<CommerceEventProvider> {
@@ -83,12 +83,14 @@ export class CommerceEventsProviderResource
       upstream,
       desired.ioEventsProviderInstanceId,
     );
-    return createEventProvider(this.#client, {
+    const response = await createEventProvider(this.#client, {
       provider_id: providerId,
       instance_id: desired.ioEventsProviderInstanceId,
       label: desired.label,
       description: desired.description,
     });
+    // Ensure instance_id is always set — the API response may omit it.
+    return { ...response, instance_id: desired.ioEventsProviderInstanceId };
   }
 
   public async delete(

@@ -84,6 +84,7 @@ export class CommerceEventSubscriptionResource
     await createEventSubscription(this.#client, {
       name: desired.eventCode,
       fields,
+      // "default" binds the subscription to Commerce's built-in event provider.
       provider_id: "default",
     });
     // createEventSubscription returns void — reconstruct state from desired.

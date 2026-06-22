@@ -38,6 +38,7 @@ export type {
   IoEventsConfig,
   IoEventsEventMetadataConfig,
   IoEventsProviderConfig,
+  IoEventsRegistrationConfig,
 } from "./events/io-events/types";
 export type { WebhookConfig } from "./webhooks/types";
 
