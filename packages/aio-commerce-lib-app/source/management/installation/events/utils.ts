@@ -119,6 +119,10 @@ export function findExistingRegistrations(
 
 /**
  * Generates a namespaced event name by combining the application ID with the event name.
+ *
+ * The application ID is sanitized to comply with the Commerce Eventing API's event code
+ * format requirement (`[a-zA-Z0-9_.]`): any character outside that set is replaced with `_`.
+ *
  * @param metadata
  * @param name
  */
@@ -126,7 +130,8 @@ export function getNamespacedEvent(
   metadata: ApplicationMetadata,
   name: string,
 ) {
-  return `${metadata.id}.${name}`.toLowerCase();
+  const sanitizedId = metadata.id.toLowerCase().replace(/[^a-z0-9_]/g, "_");
+  return `${sanitizedId}.${name}`.toLowerCase();
 }
 
 /**

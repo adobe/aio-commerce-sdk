@@ -256,6 +256,10 @@ describe("eventing installation", () => {
       }),
     );
 
+    const sanitizedMetadataId = config.metadata.id
+      .toLowerCase()
+      .replace(/[^a-z0-9_]/g, "_");
+
     expect(result.data).toMatchObject({
       installation: {
         eventing: {
@@ -286,7 +290,7 @@ describe("eventing installation", () => {
                       data: {
                         metadata: {
                           event_code:
-                            `com.adobe.commerce.${config.metadata.id}.${commerceEvent.name}`.toLowerCase(),
+                            `com.adobe.commerce.${sanitizedMetadataId}.${commerceEvent.name}`.toLowerCase(),
                           label: commerceEvent.label,
                         },
                         registrations: [
@@ -296,7 +300,7 @@ describe("eventing installation", () => {
                           },
                         ],
                         subscription: {
-                          name: `${config.metadata.id}.${commerceEvent.name}`.toLowerCase(),
+                          name: `${sanitizedMetadataId}.${commerceEvent.name}`.toLowerCase(),
                           provider_id: "io-provider-commerce",
                           parent: commerceEvent.name,
                           rules: commerceEvent.rules,
@@ -331,7 +335,7 @@ describe("eventing installation", () => {
                         data: {
                           metadata: {
                             event_code:
-                              `${config.metadata.id}.${externalEvent.name}`.toLowerCase(),
+                              `${sanitizedMetadataId}.${externalEvent.name}`.toLowerCase(),
                             label: externalEvent.label,
                           },
                           registrations: [

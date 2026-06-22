@@ -13,7 +13,7 @@ runs:
   using: composite
   steps:
     # pnpm version will be read from packageManager field in package.json
-    - uses: pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093 # v6.0.8
+    - uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
 
     # No registry-url/scope/token — install always resolves packages from public npm.
     # Avoids 404 on @adobe/aio-lib-* packages not present in Artifactory.
