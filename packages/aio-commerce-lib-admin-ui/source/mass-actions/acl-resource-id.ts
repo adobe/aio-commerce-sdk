@@ -17,12 +17,25 @@ import type { AdminUiEntity } from "#api/lib/acl-resource-id";
 /**
  * Derives the deterministic Commerce ACL resource id for a mass action.
  *
+ * The id is assembled as: `getAclResourceId(metadataId)` + `"_<entity>_massactions_"` +
+ * sanitized `actionId`. The `entity` value is used verbatim; the `actionId` is sanitized
+ * (trimmed, lowercased, non-`[a-z0-9_]` → `_`). `"Magento_CommerceBackendUix::adminuisdk_app_"`
+ * in the example is the fixed constant prefix (not a placeholder), and `"_massactions_"` is the
+ * literal keyword separator for this component:
+ *
+ * @example
+ * ```
+ * getMassActionAclResourceId("approval-dashboard-app", "order", "bulk-approve")
+ * // getAclResourceId("approval-dashboard-app")                          + "_order_massactions_" + sanitize("bulk-approve")
+ * // "Magento_CommerceBackendUix::adminuisdk_app_approval_dashboard_app" + "_order_massactions_" + "bulk_approve"
+ * // → "Magento_CommerceBackendUix::adminuisdk_app_approval_dashboard_app_order_massactions_bulk_approve"
+ * ```
+ *
  * @param metadataId - The application's `metadata.id` value (e.g. `"approval-dashboard-app"`).
  * @param entity - The grid's Commerce entity (`"order"`, `"product"`, or `"customer"`).
  * @param actionId - The action's `id` value from `adminUi.<entity>.massActions[].id`.
- * @returns The full Commerce ACL resource id for the mass-action leaf node (e.g.
- *   `"Magento_CommerceBackendUix::adminuisdk_app_approval_dashboard_app_order_massactions_bulk_approve"`),
- *   or an empty string when `metadataId` is blank.
+ * @returns The full Commerce ACL resource id for the mass-action leaf node, or an empty string
+ *   when `metadataId` is blank.
  */
 export function getMassActionAclResourceId(
   metadataId: string,

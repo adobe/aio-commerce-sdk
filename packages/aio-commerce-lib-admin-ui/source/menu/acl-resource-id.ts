@@ -15,11 +15,23 @@ import { getAclResourceId, sanitizeSegment } from "#api/lib/acl-resource-id";
 /**
  * Derives the deterministic Commerce ACL resource id for a specific menu item.
  *
+ * The id is assembled as: `getAclResourceId(metadataId)` + `"_menu_"` + sanitized `menuId`.
+ * Each segment is sanitized independently (trimmed, lowercased, non-`[a-z0-9_]` → `_`).
+ * `"Magento_CommerceBackendUix::adminuisdk_app_"` in the example is the fixed constant prefix
+ * (not a placeholder), and `"_menu_"` is the literal keyword separator for this component:
+ *
+ * @example
+ * ```
+ * getMenuAclResourceId("approval-dashboard-app", "approval_dashboard")
+ * // getAclResourceId("approval-dashboard-app")                          + "_menu_" + sanitize("approval_dashboard")
+ * // "Magento_CommerceBackendUix::adminuisdk_app_approval_dashboard_app" + "_menu_" + "approval_dashboard"
+ * // → "Magento_CommerceBackendUix::adminuisdk_app_approval_dashboard_app_menu_approval_dashboard"
+ * ```
+ *
  * @param metadataId - The application's `metadata.id` value (e.g. `"approval-dashboard-app"`).
  * @param menuId - The menu item's `id` value from `adminUi.menu.id` (e.g. `"approval_dashboard"`).
- * @returns The full Commerce ACL resource id for the menu leaf node (e.g.
- *   `"Magento_CommerceBackendUix::adminuisdk_app_approval_dashboard_app_menu_approval_dashboard"`),
- *   or an empty string when `metadataId` is blank.
+ * @returns The full Commerce ACL resource id for the menu leaf node, or an empty string
+ *   when `metadataId` is blank.
  */
 export function getMenuAclResourceId(
   metadataId: string,

@@ -10,6 +10,12 @@
  * governing permissions and limitations under the License.
  */
 
+/**
+ * Fixed, constant prefix that every Admin UI SDK ACL resource id starts with.
+ * It is owned by Commerce and is a stable part of the cross-repo id contract.
+ *
+ * @internal Exported for use by domain ACL helpers only — not part of the public API.
+ */
 // INTERNAL: The prefix and per-segment sanitization below are a cross-repo contract with the
 // Commerce module's (Magento_CommerceBackendUix) ACL id generator. Both sides must produce the
 // exact same id for the same input — any change here must be coordinated with the Commerce module.
@@ -31,10 +37,21 @@ export function sanitizeSegment(segment: string): string {
 /**
  * Derives the deterministic Commerce ACL resource id for an app from its metadata id.
  *
+ * The id is assembled as {@link PREFIX} + sanitized `metadataId`, where sanitization trims
+ * whitespace, lowercases, and replaces every character outside `[a-z0-9_]` with `_`.
+ * `"Magento_CommerceBackendUix::adminuisdk_app_"` is that fixed constant prefix — not a
+ * placeholder — so the example below is fully reproducible from the given argument:
+ *
+ * @example
+ * ```
+ * getAclResourceId("approval-dashboard-app")
+ * // PREFIX                                    + sanitize("approval-dashboard-app")
+ * // "Magento_CommerceBackendUix::adminuisdk_app_" + "approval_dashboard_app"
+ * // → "Magento_CommerceBackendUix::adminuisdk_app_approval_dashboard_app"
+ * ```
+ *
  * @param metadataId - The application's `metadata.id` value (e.g. `"approval-dashboard-app"`).
- * @returns The full Commerce ACL resource id (e.g.
- *   `"Magento_CommerceBackendUix::adminuisdk_app_approval_dashboard_app"`),
- *   or an empty string when `metadataId` is blank.
+ * @returns The full Commerce ACL resource id, or an empty string when `metadataId` is blank.
  */
 export function getAclResourceId(metadataId: string): string {
   if (metadataId.trim() === "") {

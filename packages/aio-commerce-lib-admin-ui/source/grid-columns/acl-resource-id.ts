@@ -17,12 +17,25 @@ import type { AdminUiEntity } from "#api/lib/acl-resource-id";
 /**
  * Derives the deterministic Commerce ACL resource id for a grid column.
  *
+ * The id is assembled as: `getAclResourceId(metadataId)` + `"_<entity>_gridcolumns_"` +
+ * sanitized `columnId`. The `entity` value is used verbatim (it is already `[a-z]`); the
+ * `columnId` is sanitized (trimmed, lowercased, non-`[a-z0-9_]` → `_`). `"Magento_CommerceBackendUix::adminuisdk_app_"`
+ * in the example is the fixed constant prefix (not a placeholder), and `"_gridcolumns_"` is the
+ * literal keyword separator for this component:
+ *
+ * @example
+ * ```
+ * getGridColumnAclResourceId("approval-dashboard-app", "order", "order_status")
+ * // getAclResourceId("approval-dashboard-app")                          + "_order_gridcolumns_" + sanitize("order_status")
+ * // "Magento_CommerceBackendUix::adminuisdk_app_approval_dashboard_app" + "_order_gridcolumns_" + "order_status"
+ * // → "Magento_CommerceBackendUix::adminuisdk_app_approval_dashboard_app_order_gridcolumns_order_status"
+ * ```
+ *
  * @param metadataId - The application's `metadata.id` value (e.g. `"approval-dashboard-app"`).
  * @param entity - The grid's Commerce entity (`"order"`, `"product"`, or `"customer"`).
  * @param columnId - The column's `id` value from `adminUi.<entity>.gridColumns.columns[].id`.
- * @returns The full Commerce ACL resource id for the grid-column leaf node (e.g.
- *   `"Magento_CommerceBackendUix::adminuisdk_app_approval_dashboard_app_order_gridcolumns_order_status"`),
- *   or an empty string when `metadataId` is blank.
+ * @returns The full Commerce ACL resource id for the grid-column leaf node, or an empty string
+ *   when `metadataId` is blank.
  */
 export function getGridColumnAclResourceId(
   metadataId: string,
