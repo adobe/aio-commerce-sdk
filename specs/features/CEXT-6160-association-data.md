@@ -283,8 +283,12 @@ For older SDK versions where the `/association` endpoint isn't registered in the
 extension points metadata, the client should skip the `POST /` call and proceed with just
 the Extension Manager registration.
 
-**On unassociation** — after unassociation completes, the client calls `DELETE /` to remove
-the stored data. This step is best-effort — a failure does not block the unassociation.
+**On unassociation** — once uninstallation has fully completed, the client calls `DELETE /`
+to clear the stored data, and only marks the app unassociated in the Extension Manager if
+that call succeeds. This step is blocking: if it fails, the client aborts without flipping
+the status and surfaces an error so the user can retry. Leaving an app unassociated while it
+can still reach Commerce (e.g. through a third-party-triggered runtime action) is worse than
+asking the user to retry.
 
 ### Edge cases
 
