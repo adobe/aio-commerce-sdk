@@ -10,13 +10,17 @@
  * governing permissions and limitations under the License.
  */
 
-/** biome-ignore-all lint/performance/noBarrelFile: This is the `@adobe/aio-commerce-lib-admin-ui/api` entrypoint. */
+import { AdminUiResource } from "./resource";
 
-export * from "../errors";
-export * from "./extensions/endpoints";
-export * from "./lib/acl-resource-id";
-export * from "./lib/api-client";
-export * from "./lib/permission-client";
+import type { AdobeCommerceHttpClient } from "@adobe/aio-commerce-lib-api";
+import type { Provider } from "@aio-commerce-sdk/iacly";
+import type { LibIaclyConfig } from "../index";
 
-export type * from "./extensions/schema";
-export type * from "./permissions/schema";
+export class AdminUiProvider implements Provider<LibIaclyConfig> {
+  public readonly name = "admin-ui";
+  public readonly resources: readonly [AdminUiResource];
+
+  public constructor(client: AdobeCommerceHttpClient) {
+    this.resources = [new AdminUiResource(client)];
+  }
+}

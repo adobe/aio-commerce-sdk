@@ -139,6 +139,37 @@ importers:
 
   configs/vitest: {}
 
+  packages-private/aio-commerce-lib-iacly:
+    dependencies:
+      '@adobe/aio-commerce-lib-admin-ui':
+        specifier: workspace:*
+        version: link:../../packages/aio-commerce-lib-admin-ui
+      '@adobe/aio-commerce-lib-api':
+        specifier: workspace:*
+        version: link:../../packages/aio-commerce-lib-api
+      '@adobe/aio-commerce-lib-events':
+        specifier: workspace:*
+        version: link:../../packages/aio-commerce-lib-events
+      '@adobe/aio-commerce-lib-webhooks':
+        specifier: workspace:*
+        version: link:../../packages/aio-commerce-lib-webhooks
+      '@aio-commerce-sdk/iacly':
+        specifier: workspace:*
+        version: link:../iacly
+    devDependencies:
+      '@aio-commerce-sdk/config-typescript':
+        specifier: workspace:*
+        version: link:../../configs/typescript
+      '@aio-commerce-sdk/config-vitest':
+        specifier: workspace:*
+        version: link:../../configs/vitest
+      msw:
+        specifier: 'catalog:'
+        version: 2.14.6(@types/node@24.13.2)(typescript@6.0.3)
+      typescript:
+        specifier: 'catalog:'
+        version: 6.0.3
+
   packages-private/common-utils:
     dependencies:
       '@adobe/aio-commerce-lib-core':

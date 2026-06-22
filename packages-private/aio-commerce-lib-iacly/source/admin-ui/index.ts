@@ -10,13 +10,12 @@
  * governing permissions and limitations under the License.
  */
 
-/** biome-ignore-all lint/performance/noBarrelFile: This is the `@adobe/aio-commerce-lib-admin-ui/api` entrypoint. */
+/** biome-ignore-all lint/performance/noBarrelFile: This is the admin-ui domain entrypoint. */
 
-export * from "../errors";
-export * from "./extensions/endpoints";
-export * from "./lib/acl-resource-id";
-export * from "./lib/api-client";
-export * from "./lib/permission-client";
+export { AdminUiProvider } from "./provider";
 
-export type * from "./extensions/schema";
-export type * from "./permissions/schema";
+export type {
+  AdminUiConfig,
+  AdminUiExtensionConfig,
+  AdminUiExtensionState,
+} from "./types";
