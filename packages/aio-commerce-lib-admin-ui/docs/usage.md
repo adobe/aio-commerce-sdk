@@ -356,10 +356,8 @@ The ACL tree Commerce builds for an app is hierarchical: the **app-root** node s
 - `getMenuAclResourceId(metadataId, menuId)` returns the **menu leaf** id for a single `adminUi.menu` item, where `menuId` is its `adminUi.menu.id`.
 
 ```typescript
-import {
-  getAclResourceId,
-  getMenuAclResourceId,
-} from "@adobe/aio-commerce-lib-admin-ui/api";
+import { getAclResourceId } from "@adobe/aio-commerce-lib-admin-ui/api";
+import { getMenuAclResourceId } from "@adobe/aio-commerce-lib-admin-ui/menu";
 
 getAclResourceId("approval-dashboard-app");
 // → "Magento_CommerceBackendUix::adminuisdk_app_approval_dashboard_app"
@@ -385,11 +383,9 @@ The same hierarchical scheme extends to the other Admin UI components. Each help
 - `getOrderViewButtonAclResourceId(metadataId, buttonId)` — an order view button (view buttons exist only on the order entity), where `buttonId` is its `adminUi.order.viewButtons[].id`.
 
 ```typescript
-import {
-  getGridColumnAclResourceId,
-  getMassActionAclResourceId,
-  getOrderViewButtonAclResourceId,
-} from "@adobe/aio-commerce-lib-admin-ui/api";
+import { getGridColumnAclResourceId } from "@adobe/aio-commerce-lib-admin-ui/grid-columns";
+import { getMassActionAclResourceId } from "@adobe/aio-commerce-lib-admin-ui/mass-actions";
+import { getOrderViewButtonAclResourceId } from "@adobe/aio-commerce-lib-admin-ui/order-view-buttons";
 
 getGridColumnAclResourceId("approval-dashboard-app", "order", "order_status");
 // → "Magento_CommerceBackendUix::adminuisdk_app_approval_dashboard_app_order_gridcolumns_order_status"
@@ -402,3 +398,81 @@ getOrderViewButtonAclResourceId("approval-dashboard-app", "approve-order");
 ```
 
 Like the menu helper, each segment is sanitized independently and a blank `metadataId` yields an empty string. Pass any of these ids to `check()` or `require()`.
+
+#### End-to-end example: an ACL-protected mass action handler
+
+The resource-id helpers are designed to be used together with the request/response builders and the permission client inside a single runtime action. A typical handler parses the incoming request, derives the leaf resource id for the item that was invoked, gates the work behind `require()`, and then returns the matching response envelope.
+
+The example below is a mass action worker. Note how `gridType` from the parsed request flows directly into `getMassActionAclResourceId` as the `entity` segment — the builders and the id helpers share the same `order` / `product` / `customer` vocabulary, so they compose without extra mapping:
+
+```typescript
+import {
+  AdminUiPermissionDeniedError,
+  AdminUiPermissionError,
+  getAdminUiPermissionClient,
+} from "@adobe/aio-commerce-lib-admin-ui/api";
+import {
+  getMassActionAclResourceId,
+  massActionErrorResponse,
+  okMassActionResponse,
+  parseMassActionRequest,
+} from "@adobe/aio-commerce-lib-admin-ui/mass-actions";
+import { AdobeCommerceHttpClient } from "@adobe/aio-commerce-lib-api";
+
+import type { RuntimeActionParams } from "@adobe/aio-commerce-lib-core/params";
+
+// Your application's `metadata.id` and the `adminUi.<entity>.massActions[].id` it registered.
+const APP_ID = "approval-dashboard-app";
+const ACTION_ID = "bulk-approve";
+
+export async function main(params: RuntimeActionParams) {
+  // 1. Validate and narrow the body Commerce POSTed.
+  let request;
+  try {
+    request = parseMassActionRequest(params);
+  } catch {
+    return massActionErrorResponse(400, "Invalid mass action request");
+  }
+  const { gridType, ids } = request;
+
+  // 2. Build a Commerce HTTP client and a permission client.
+  //    Hoist these to module scope if the action handles more than one request.
+  const httpClient = new AdobeCommerceHttpClient({
+    config: { baseUrl: params.COMMERCE_BASE_URL, flavor: "paas" },
+    auth: {
+      /* IMS or Integration auth params, typically read from `params` */
+    },
+  });
+  const permissionClient = getAdminUiPermissionClient({ httpClient });
+
+  // 3. Derive the leaf resource id for THIS action and require it.
+  //    `gridType` ("order" | "product" | "customer") is the entity segment.
+  const resource = getMassActionAclResourceId(APP_ID, gridType, ACTION_ID);
+  try {
+    await permissionClient.require(resource);
+  } catch (error) {
+    if (error instanceof AdminUiPermissionDeniedError) {
+      return massActionErrorResponse(
+        403,
+        "You do not have access to this action",
+      );
+    }
+    if (error instanceof AdminUiPermissionError) {
+      // HTTP 401, or a network/parse failure
+      return massActionErrorResponse(401, "Could not verify permissions");
+    }
+    throw error;
+  }
+
+  // 4. Run the work, then return the response envelope Commerce expects.
+  await approveOrders(ids);
+  return okMassActionResponse({ approved: ids.length });
+}
+```
+
+The same shape applies to the other components — swap in the matching trio of helpers:
+
+- **Grid columns**: `parseGridRequest` → `getGridColumnAclResourceId(appId, gridType, columnId)` → `okGridResponse` / `errorGridResponse`.
+- **Order view buttons**: `parseOrderViewButtonRequest` → `getOrderViewButtonAclResourceId(appId, buttonId)` → `okOrderViewButtonResponse` / `orderViewButtonErrorResponse`.
+
+For grid columns, gate the work per the request's `gridType`; for order view buttons, the entity is always `order`, so only the `appId` and `buttonId` segments vary.

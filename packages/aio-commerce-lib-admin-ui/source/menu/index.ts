@@ -21,4 +21,5 @@
  * @packageDocumentation
  */
 
+export { getMenuAclResourceId } from "./acl-resource-id";
 export * from "./paths";

@@ -24,6 +24,7 @@
  * @packageDocumentation
  */
 
+export { getMassActionAclResourceId } from "./acl-resource-id";
 export { parseMassActionSelection } from "./view/presets";
 export { MassActionSelectionSchema } from "./view/schema";
 export {
@@ -36,6 +37,7 @@ export {
   MassActionRequestSchema,
 } from "./worker/schema";
 
+export type { AdminUiEntity } from "#api/lib/acl-resource-id";
 export type { MassActionSelection } from "./view/types";
 export type {
   MassActionErrorBody,
