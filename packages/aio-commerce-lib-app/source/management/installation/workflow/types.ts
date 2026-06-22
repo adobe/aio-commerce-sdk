@@ -10,6 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
+import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 import type { StepMetaInfo } from "./step";
 
 /** Status of a step execution. */
@@ -77,7 +78,14 @@ type InstallationStateBase = {
 
   /** Results from executed leaf steps, keyed by path. */
   data: InstallationData | null;
+
+  /**
+   * The validated app configuration that drove this workflow. May be
+   * undefined on states persisted before this field was introduced.
+   */
+  config?: CommerceAppConfigOutputModel;
 };
+
 /** Installation state when in progress. */
 export type InProgressInstallationState = InstallationStateBase & {
   status: "in-progress";

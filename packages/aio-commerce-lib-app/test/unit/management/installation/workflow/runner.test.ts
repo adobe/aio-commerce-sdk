@@ -57,6 +57,32 @@ describe("createInitialState", () => {
     expect(state.status).toBe("in-progress");
   });
 
+  test("should persist the validated config on the state", () => {
+    const rootStep = defineBranchStep({
+      name: "root",
+      meta: { install: { label: "Root" } },
+      children: [],
+    });
+
+    const state = createInitialState({ rootStep, config: minimalValidConfig });
+
+    expect(state.config).toEqual(minimalValidConfig);
+  });
+
+  test("should default data to null", () => {
+    const rootStep = defineBranchStep({
+      name: "root",
+      meta: { install: { label: "Root" } },
+      children: [],
+    });
+
+    const state = createInitialState({
+      rootStep,
+      config: minimalValidConfig,
+    });
+    expect(state.data).toBeNull();
+  });
+
   test("should build step status from root step with name and meta", () => {
     const rootStep = defineBranchStep({
       name: "installation",
@@ -1036,6 +1062,14 @@ describe("createRetryState", () => {
     const retryState = createRetryState(failedState);
 
     expect(retryState.data).toBe(partialData);
+  });
+
+  test("should carry over the config from the failed state", () => {
+    const failedState = createMockFailedState({ config: minimalValidConfig });
+
+    const retryState = createRetryState(failedState);
+
+    expect(retryState.config).toEqual(minimalValidConfig);
   });
 });
 

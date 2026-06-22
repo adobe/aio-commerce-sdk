@@ -12,6 +12,7 @@
 
 import { unwrapHttpError } from "@adobe/aio-commerce-lib-api/utils";
 
+import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 import type {
   FailedInstallationState,
   InstallationError,
@@ -78,6 +79,7 @@ type FinalStateBase = {
   startedAt: string;
   step: StepStatus;
   data: Record<string, unknown> | null;
+  config?: CommerceAppConfigOutputModel;
 };
 
 /** Creates a succeeded installation state. */

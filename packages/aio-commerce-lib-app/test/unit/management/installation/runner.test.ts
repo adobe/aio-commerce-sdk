@@ -254,6 +254,15 @@ describe("createInitialUninstallationState", () => {
     const webhooksStep = state.step.children.find((c) => c.name === "webhooks");
     expect(webhooksStep?.meta.description).toBe("Removes Commerce webhooks");
   });
+
+  test("should persist config and default data to null", () => {
+    const state = createInitialUninstallationState({
+      config: minimalValidConfig,
+    });
+
+    expect(state.config).toEqual(minimalValidConfig);
+    expect(state.data).toBeNull();
+  });
 });
 
 describe("runUninstallation", () => {
