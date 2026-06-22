@@ -22,6 +22,9 @@ export function useGuestConnection(
         if (isActive) {
           setGuestConnection(connection);
         }
+      })
+      .catch((err: unknown) => {
+        console.error("UIX guest connection failed:", err);
       });
 
     return () => {

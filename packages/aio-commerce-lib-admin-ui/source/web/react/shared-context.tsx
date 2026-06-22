@@ -58,16 +58,17 @@ export function SharedContextProvider(
   props: Readonly<SharedContextProviderProps>,
 ) {
   const { children, extensionId, shellConfiguration } = props;
-  const {
-    imsOrg = null,
-    imsToken = null,
-    imsProfile = null,
-    locale = null,
-  } = shellConfiguration ?? {};
 
   const guestConnection = useGuestConnection(extensionId);
-  const value = useMemo<SharedContext>(
-    () => ({
+  const value = useMemo<SharedContext>(() => {
+    const {
+      imsOrg = null,
+      imsToken = null,
+      imsProfile = null,
+      locale = null,
+    } = shellConfiguration ?? {};
+
+    return {
       extensionId,
       imsToken,
       imsOrgId: imsOrg,
@@ -76,9 +77,8 @@ export function SharedContextProvider(
 
       guestConnection,
       sharedContext: guestConnection?.sharedContext ?? null,
-    }),
-    [extensionId, guestConnection, shellConfiguration],
-  );
+    };
+  }, [extensionId, guestConnection, shellConfiguration]);
 
   return (
     <SharedContext.Provider value={value}>{children}</SharedContext.Provider>
