@@ -503,9 +503,9 @@ describe("events installation module", () => {
     test("should unsubscribe matching Commerce event subscriptions", async () => {
       const mockDeleteEventSubscription = vi.fn().mockResolvedValue(undefined);
       // configWithCommerceEventing: metadata.id = "test-app-commerce-events", event name = "plugin.order_placed"
-      // getNamespacedEvent => "test-app-commerce-events.plugin.order_placed"
+      // getNamespacedEvent => "test_app_commerce_events.plugin.order_placed"
       const expectedSubscriptionName =
-        "test-app-commerce-events.plugin.order_placed";
+        "test_app_commerce_events.plugin.order_placed";
 
       const mockContext = createMockEventingInstallationContext({
         ioEventsClient: {

@@ -156,7 +156,7 @@
     "@adobe/aio-lib-files": "catalog:",
     "@types/npmcli__package-json": "^4.0.4",
     "msw": "catalog:",
-    "openapi-format": "1.33.0",
+    "openapi-format": "1.33.4",
     "typescript": "catalog:"
   },
   "sideEffects": false
