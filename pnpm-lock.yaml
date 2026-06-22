@@ -499,30 +499,18 @@ importers:
       '@adobe/aio-commerce-lib-core':
         specifier: workspace:*
         version: link:../aio-commerce-lib-core
-      '@adobe/aio-lib-core-config':
-        specifier: ^5.0.1
-        version: 5.0.1
       '@adobe/aio-lib-core-logging':
         specifier: 'catalog:'
         version: 3.0.2
       '@adobe/aio-lib-files':
         specifier: 'catalog:'
         version: 4.1.4
-      '@adobe/aio-lib-ims':
-        specifier: 'catalog:'
-        version: 8.1.2
       '@adobe/aio-lib-state':
         specifier: 'catalog:'
         version: 5.3.1
       consola:
         specifier: 'catalog:'
         version: 3.4.2
-      dotenv:
-        specifier: ^17.2.3
-        version: 17.4.2
-      package-manager-detector:
-        specifier: ^1.6.0
-        version: 1.6.0
       safe-stable-stringify:
         specifier: 'catalog:'
         version: 2.5.0
