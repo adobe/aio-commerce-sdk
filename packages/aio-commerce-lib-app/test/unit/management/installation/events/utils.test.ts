@@ -110,9 +110,9 @@ describe("getNamespacedEvent", () => {
   test.each([
     [
       "should join id and event name with a dot",
-      "my-app",
+      "myapp",
       "observer.order_placed",
-      "my-app.observer.order_placed",
+      "myapp.observer.order_placed",
     ],
     [
       "should lowercase the result when id contains uppercase",
@@ -122,15 +122,27 @@ describe("getNamespacedEvent", () => {
     ],
     [
       "should lowercase the result when event name contains uppercase",
-      "my-app",
+      "myapp",
       "Observer.Order_Placed",
-      "my-app.observer.order_placed",
+      "myapp.observer.order_placed",
     ],
     [
       "should lowercase both parts when both contain uppercase",
       "MyApp",
       "Observer.OrderPlaced",
       "myapp.observer.orderplaced",
+    ],
+    [
+      "should replace hyphens in id with underscores",
+      "my-app",
+      "observer.order_placed",
+      "my_app.observer.order_placed",
+    ],
+    [
+      "should replace all non-alphanumeric/underscore characters in id with underscores",
+      "purchase-approval",
+      "plugin.magento.sales.api.order_management.place",
+      "purchase_approval.plugin.magento.sales.api.order_management.place",
     ],
   ])("%s", (_desc, id, name, expected) => {
     expect(getNamespacedEvent(createMockMetadata(id), name)).toBe(expected);

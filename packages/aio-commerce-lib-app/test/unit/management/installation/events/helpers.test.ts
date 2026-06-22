@@ -917,7 +917,7 @@ describe("offboardIoEvents", () => {
     const { context, params, ioProvider } = createIoOffboardingScenario();
 
     const eventMetadata = createMockIoEventMetadata({
-      event_code: "com.adobe.commerce.test-app.observer.order_placed",
+      event_code: "com.adobe.commerce.test_app.observer.order_placed",
     });
 
     vi.mocked(

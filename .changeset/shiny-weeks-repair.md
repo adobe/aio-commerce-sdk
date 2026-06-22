@@ -1,7 +1,10 @@
 ---
-"@adobe/aio-commerce-lib-app": major
-"@adobe/aio-commerce-sdk": major
+"@adobe/aio-commerce-lib-app": minor
+"@adobe/aio-commerce-sdk": minor
 ---
+
+> [!NOTE]
+> This is not causing a major bump because the `adminUiSdk` property was in an experimental phase, which wasn't stabilized yet. A manual migration is still needed.
 
 Remove `commerce/backend-ui/1` support and the `adminUiSdk` config key. Migrate to `adminUi` and `commerce/backend-ui/2`.
 
