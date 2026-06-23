@@ -361,7 +361,7 @@ describe("createCustomScriptStep - uninstall function", () => {
     ).resolves.toBeUndefined();
   });
 
-  test("should throw error when script module not found during uninstall", async () => {
+  test("should skip uninstall gracefully when script module not found", async () => {
     const steps = createCustomScriptSteps(configWithCustomInstallationSteps);
     const step = steps?.[0] as LeafStep;
 
@@ -370,7 +370,11 @@ describe("createCustomScriptStep - uninstall function", () => {
 
     await expect(
       step.uninstall?.(configWithCustomInstallationSteps, mockContext),
-    ).rejects.toThrow();
+    ).resolves.toBeUndefined();
+
+    expect(mockContext.logger.warn).toHaveBeenCalledWith(
+      expect.stringContaining("./demo-success.js"),
+    );
   });
 
   test("should handle uninstall function that throws an error", async () => {
