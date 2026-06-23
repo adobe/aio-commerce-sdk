@@ -202,7 +202,7 @@ const MenuSchema = v.object({
   sandboxPermissions: v.optional(SandboxPermissionsSchema),
   /**
    * When `true`, Commerce auto-generates a per-app ACL resource id from `metadata.id`
-   * and injects it into the Magento User Roles permission tree, allowing role-based
+   * and injects it into the Adobe Commerce User Roles permission tree, allowing role-based
    * access control per app menu.
    */
   aclProtected: v.optional(v.boolean()),

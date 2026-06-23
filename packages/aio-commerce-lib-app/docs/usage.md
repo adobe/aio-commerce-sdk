@@ -666,7 +666,7 @@ export default defineConfig({
   - **label**: non-empty string — column header displayed in the grid
   - **type**: one of `"boolean"`, `"date"`, `"datetime"`, `"float"`, `"integer"`, `"string"`
   - **align**: one of `"left"`, `"center"`, `"right"`
-  - **aclProtected** (optional): boolean — when `true`, Commerce generates a per-app nested ACL resource for this column in the Magento User Roles tree, so admins can grant or deny it per role; roles without the resource don't see the column. Derive the id with `getGridColumnAclResourceId` from `@adobe/aio-commerce-lib-admin-ui/api`. See the [`@adobe/aio-commerce-lib-admin-ui` Permission Client documentation](../../aio-commerce-lib-admin-ui/docs/usage.md#permission-client).
+  - **aclProtected** (optional): boolean — when `true`, Commerce generates a per-app nested ACL resource for this column in the Adobe Commerce User Roles tree, so admins can grant or deny it per role; roles without the resource don't see the column. Derive the id with `getGridColumnAclResourceId` from `@adobe/aio-commerce-lib-admin-ui/api`. See the [`@adobe/aio-commerce-lib-admin-ui` Permission Client documentation](../../aio-commerce-lib-admin-ui/docs/usage.md#permission-client).
 
 Each of `order`, `product`, and `customer` is optional — configure only the grids your application extends.
 
@@ -722,7 +722,7 @@ Shared fields (both types):
 - **sortOrder**: Optional — positive number controlling display order
 - **confirm**: Optional — `{ title?, message? }` confirmation dialog before the handler runs
 - **notifications**: Optional — `{ success?, error? }` toast strings displayed after the handler returns
-- **aclProtected**: Optional — boolean; when `true`, Commerce generates a per-app nested ACL resource for this button in the Magento User Roles tree, so admins can grant or deny it per role; roles without the resource don't see the button and are blocked from invoking it. Derive the id with `getOrderViewButtonAclResourceId` from `@adobe/aio-commerce-lib-admin-ui/api`. See the [`@adobe/aio-commerce-lib-admin-ui` Permission Client documentation](../../aio-commerce-lib-admin-ui/docs/usage.md#permission-client).
+- **aclProtected**: Optional — boolean; when `true`, Commerce generates a per-app nested ACL resource for this button in the Adobe Commerce User Roles tree, so admins can grant or deny it per role; roles without the resource don't see the button and are blocked from invoking it. Derive the id with `getOrderViewButtonAclResourceId` from `@adobe/aio-commerce-lib-admin-ui/api`. See the [`@adobe/aio-commerce-lib-admin-ui` Permission Client documentation](../../aio-commerce-lib-admin-ui/docs/usage.md#permission-client).
 
 `type: "view"` specific:
 
@@ -788,7 +788,7 @@ Shared fields (both types):
 - **confirm**: Optional — `{ title?, message? }` confirmation dialog shown before the action runs
 - **notifications**: Optional — `{ success?, error? }` toast strings displayed after the action completes
 - **selectionLimit**: Optional — positive number capping how many records may be selected at once
-- **aclProtected**: Optional — boolean; when `true`, Commerce generates a per-app nested ACL resource for this mass action in the Magento User Roles tree, so admins can grant or deny it per role; roles without the resource don't see the action and are blocked from invoking it. Derive the id with `getMassActionAclResourceId` from `@adobe/aio-commerce-lib-admin-ui/api`. See the [`@adobe/aio-commerce-lib-admin-ui` Permission Client documentation](../../aio-commerce-lib-admin-ui/docs/usage.md#permission-client).
+- **aclProtected**: Optional — boolean; when `true`, Commerce generates a per-app nested ACL resource for this mass action in the Adobe Commerce User Roles tree, so admins can grant or deny it per role; roles without the resource don't see the action and are blocked from invoking it. Derive the id with `getMassActionAclResourceId` from `@adobe/aio-commerce-lib-admin-ui/api`. See the [`@adobe/aio-commerce-lib-admin-ui` Permission Client documentation](../../aio-commerce-lib-admin-ui/docs/usage.md#permission-client).
 
 `type: "view"` specific:
 
@@ -841,7 +841,7 @@ adminUi: {
   ```
 
 - **sandboxPermissions** (optional): array of iframe sandbox permissions; allowed values: `"allow-downloads"`, `"allow-modals"`, `"allow-popups"`
-- **aclProtected** (optional): boolean — when `true`, Commerce auto-generates a per-app ACL resource id from `metadata.id` and registers it in the Magento User Roles permission tree. Admins can then grant or deny access to the app's menu on a per-role basis; users without the resource see neither the menu item nor its content.
+- **aclProtected** (optional): boolean — when `true`, Commerce auto-generates a per-app ACL resource id from `metadata.id` and registers it in the Adobe Commerce User Roles permission tree. Admins can then grant or deny access to the app's menu on a per-role basis; users without the resource see neither the menu item nor its content.
 
   The generated resource id follows the pattern `Magento_CommerceBackendUix::adminuisdk_app_<sanitized-id>`, where `<sanitized-id>` is `metadata.id` lowercased with non-alphanumeric characters replaced by `_`. Use `getAclResourceId` from `@adobe/aio-commerce-lib-admin-ui/api` to derive it programmatically, and `getAdminUiPermissionClient` to check access from your runtime actions. See the [`@adobe/aio-commerce-lib-admin-ui` Permission Client documentation](../../aio-commerce-lib-admin-ui/docs/usage.md#permission-client) for details.
 
