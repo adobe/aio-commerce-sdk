@@ -16,15 +16,40 @@ import { getLogger } from "#utils/logger";
 import { getSharedFiles, getSharedState } from "#utils/repository";
 
 /**
+ * Describes where a record lives in the two-layer store: how an id maps to its
+ * `aio-lib-state` cache key and its `aio-lib-files` path. Parameterising this
+ * lets the same storage logic back distinct namespaces (Business Configuration
+ * under `configuration.*` / `scope/`, SDK system config under `system.*` /
+ * `system/`) without duplicating the cache/file fallback machinery.
+ */
+export type RepositoryNamespace = {
+  /** Builds the `aio-lib-state` cache key for an id. */
+  stateKey: (id: string) => string;
+  /** Builds the `aio-lib-files` path for an id. */
+  filePath: (id: string) => string;
+};
+
+/** Storage layout for scope-keyed Business Configuration. */
+const CONFIGURATION_NAMESPACE: RepositoryNamespace = {
+  stateKey: (scopeCode) => `configuration.${scopeCode}`,
+  filePath: (scopeCode) =>
+    `scope/${scopeCode.toLowerCase()}/configuration.json`,
+};
+
+/**
  * Gets cached configuration payload from state store.
  *
  * @param scopeCode - Scope code identifier.
+ * @param namespace - Storage namespace to read from.
  * @returns Promise resolving to cached configuration payload or null if not found.
  */
-export async function getCachedConfig(scopeCode: string) {
+export async function getCachedConfig(
+  scopeCode: string,
+  namespace: RepositoryNamespace = CONFIGURATION_NAMESPACE,
+) {
   try {
     const state = await getSharedState();
-    const key = getConfigStateKey(scopeCode);
+    const key = namespace.stateKey(scopeCode);
     const result = await state.get(key);
 
     if (result.value) {
@@ -43,24 +68,54 @@ export async function getCachedConfig(scopeCode: string) {
  * @param scopeCode - Scope code identifier.
  * @param payload - Configuration payload as JSON string.
  * @param ttlSeconds - Time to live for the cached configuration value.
+ * @param namespace - Storage namespace to write to.
  */
 export async function setCachedConfig(
   scopeCode: string,
   payload: string,
   ttlSeconds: number,
+  namespace: RepositoryNamespace = CONFIGURATION_NAMESPACE,
 ) {
   const logger = getLogger(
     "@adobe/aio-commerce-lib-config:configuration-repository",
   );
   try {
     const state = await getSharedState();
-    const key = getConfigStateKey(scopeCode);
+    const key = namespace.stateKey(scopeCode);
     await state.put(key, stringify({ data: payload }) as string, {
       ttl: ttlSeconds,
     });
   } catch (error) {
     logger.debug(
-      "Failed to cache configuration:",
+      "Failed to cache configuration; invalidating cache entry:",
+      error instanceof Error ? error.message : String(error),
+    );
+    // The read path trusts a cache hit unconditionally, so a stale entry must
+    // never be left behind to shadow the freshly persisted source of truth.
+    await deleteCachedConfig(scopeCode, namespace);
+  }
+}
+
+/**
+ * Removes a configuration entry from the state cache. Failures are swallowed
+ * (logged at debug) since `aio-lib-files` remains the source of truth.
+ *
+ * @param scopeCode - Scope code identifier.
+ * @param namespace - Storage namespace to delete from.
+ */
+async function deleteCachedConfig(
+  scopeCode: string,
+  namespace: RepositoryNamespace = CONFIGURATION_NAMESPACE,
+) {
+  const logger = getLogger(
+    "@adobe/aio-commerce-lib-config:configuration-repository",
+  );
+  try {
+    const state = await getSharedState();
+    await state.delete(namespace.stateKey(scopeCode));
+  } catch (error) {
+    logger.debug(
+      "Failed to clear cached configuration:",
       error instanceof Error ? error.message : String(error),
     );
     // Don't throw - caching failure shouldn't break functionality
@@ -71,20 +126,16 @@ export async function setCachedConfig(
  * Gets persisted configuration payload from files.
  *
  * @param scopeCode - Scope code identifier.
+ * @param namespace - Storage namespace to read from.
  * @returns Promise resolving to configuration payload as string or null if not found.
  */
-export async function getPersistedConfig(scopeCode: string) {
+export async function getPersistedConfig(
+  scopeCode: string,
+  namespace: RepositoryNamespace = CONFIGURATION_NAMESPACE,
+) {
   try {
     const files = await getSharedFiles();
-    const filePath = getConfigFilePath(scopeCode);
-    const filesList = await files.list("scope/");
-    const fileObject = filesList.find((file) => file.name === filePath);
-
-    if (!fileObject) {
-      return null;
-    }
-
-    const content = await files.read(filePath);
+    const content = await files.read(namespace.filePath(scopeCode));
     return content ? content.toString("utf8") : null;
   } catch {
     return null;
@@ -96,11 +147,32 @@ export async function getPersistedConfig(scopeCode: string) {
  *
  * @param scopeCode - Scope code identifier.
  * @param payload - Configuration payload as JSON string.
+ * @param namespace - Storage namespace to write to.
  */
-export async function saveConfig(scopeCode: string, payload: string) {
+export async function saveConfig(
+  scopeCode: string,
+  payload: string,
+  namespace: RepositoryNamespace = CONFIGURATION_NAMESPACE,
+) {
   const files = await getSharedFiles();
-  const filePath = getConfigFilePath(scopeCode);
+  const filePath = namespace.filePath(scopeCode);
   await files.write(filePath, payload);
+}
+
+/**
+ * Removes a configuration entry's file from storage. Clearing an entry that was
+ * never persisted is a no-op since `aio-lib-files` delete is idempotent; any
+ * real failure surfaces to the caller, since files are the source of truth.
+ *
+ * @param scopeCode - Scope code identifier.
+ * @param namespace - Storage namespace to delete from.
+ */
+async function deletePersistedConfig(
+  scopeCode: string,
+  namespace: RepositoryNamespace = CONFIGURATION_NAMESPACE,
+) {
+  const files = await getSharedFiles();
+  await files.delete(namespace.filePath(scopeCode));
 }
 
 /**
@@ -109,11 +181,13 @@ export async function saveConfig(scopeCode: string, payload: string) {
  * @param scopeCode - The scope code to persist configuration for.
  * @param payload - The configuration payload object.
  * @param ttlSeconds - Time to live for the cached configuration value.
+ * @param namespace - Storage namespace to persist to.
  */
 export async function persistConfig(
   scopeCode: string,
   payload: unknown,
   ttlSeconds: number,
+  namespace: RepositoryNamespace = CONFIGURATION_NAMESPACE,
 ) {
   const payloadString = stringify(payload) as string;
   const logger = getLogger(
@@ -121,11 +195,11 @@ export async function persistConfig(
   );
 
   // Always save to files (primary persistence)
-  await saveConfig(scopeCode, payloadString);
+  await saveConfig(scopeCode, payloadString, namespace);
 
   // Try to cache in state for faster reads
   try {
-    await setCachedConfig(scopeCode, payloadString, ttlSeconds);
+    await setCachedConfig(scopeCode, payloadString, ttlSeconds, namespace);
   } catch (e) {
     logger.debug("Failed to cache configuration in state", {
       scopeCode,
@@ -135,17 +209,35 @@ export async function persistConfig(
 }
 
 /**
+ * Removes a configuration entry from both storage layers.
+ *
+ * @param scopeCode - The scope code to delete configuration for.
+ * @param namespace - Storage namespace to delete from.
+ */
+export async function deleteConfig(
+  scopeCode: string,
+  namespace: RepositoryNamespace = CONFIGURATION_NAMESPACE,
+) {
+  await deletePersistedConfig(scopeCode, namespace);
+  await deleteCachedConfig(scopeCode, namespace);
+}
+
+/**
  * Tries to load configuration from state cache.
  *
  * @param scopeCode - The scope code to load configuration for.
+ * @param namespace - Storage namespace to load from.
  * @returns Promise resolving to parsed configuration or null if not found.
  */
-async function loadFromStateCache(scopeCode: string) {
+async function loadFromStateCache(
+  scopeCode: string,
+  namespace: RepositoryNamespace = CONFIGURATION_NAMESPACE,
+) {
   const logger = getLogger(
     "@adobe/aio-commerce-lib-config:configuration-repository",
   );
   try {
-    const statePayload = await getCachedConfig(scopeCode);
+    const statePayload = await getCachedConfig(scopeCode, namespace);
     if (statePayload) {
       return JSON.parse(statePayload);
     }
@@ -163,22 +255,26 @@ async function loadFromStateCache(scopeCode: string) {
  *
  * @param scopeCode - The scope code to load configuration for.
  * @param ttlSeconds - Time to live for the cached configuration value.
-
+ * @param namespace - Storage namespace to load from.
  * @returns Promise resolving to parsed configuration or null if not found.
  */
-async function loadFromPersistedFiles(scopeCode: string, ttlSeconds: number) {
+async function loadFromPersistedFiles(
+  scopeCode: string,
+  ttlSeconds: number,
+  namespace: RepositoryNamespace = CONFIGURATION_NAMESPACE,
+) {
   const logger = getLogger(
     "@adobe/aio-commerce-lib-config:configuration-repository",
   );
   try {
-    const filePayload = await getPersistedConfig(scopeCode);
+    const filePayload = await getPersistedConfig(scopeCode, namespace);
     if (!filePayload) {
       return null;
     }
 
     // Try to cache the file data for future reads
     try {
-      await setCachedConfig(scopeCode, filePayload, ttlSeconds);
+      await setCachedConfig(scopeCode, filePayload, ttlSeconds, namespace);
     } catch (err) {
       logger.debug("Failed to cache configuration in state", {
         scopeCode,
@@ -207,41 +303,29 @@ async function loadFromPersistedFiles(scopeCode: string, ttlSeconds: number) {
  *
  * @param scopeCode - The scope code to load configuration for.
  * @param ttlSeconds - Time to live for the cached configuration value.
-
+ * @param namespace - Storage namespace to load from.
  * @returns Promise resolving to configuration payload or null if not found.
  */
-export async function loadConfig(scopeCode: string, ttlSeconds: number) {
-  const fromState = await loadFromStateCache(scopeCode);
+export async function loadConfig(
+  scopeCode: string,
+  ttlSeconds: number,
+  namespace: RepositoryNamespace = CONFIGURATION_NAMESPACE,
+) {
+  const fromState = await loadFromStateCache(scopeCode, namespace);
   if (fromState) {
     return fromState;
   }
 
-  const fromFiles = await loadFromPersistedFiles(scopeCode, ttlSeconds);
+  const fromFiles = await loadFromPersistedFiles(
+    scopeCode,
+    ttlSeconds,
+    namespace,
+  );
   if (fromFiles) {
     return fromFiles;
   }
 
   return null;
-}
-
-/**
- * Gets the state key for a given scope code.
- *
- * @param scopeCode - The scope code to get the state key for.
- * @returns State key string.
- */
-function getConfigStateKey(scopeCode: string): string {
-  return `configuration.${scopeCode}`;
-}
-
-/**
- * Gets the file path for a given scope code.
- *
- * @param scopeCode - The scope code to get the file path for.
- * @returns File path string.
- */
-function getConfigFilePath(scopeCode: string): string {
-  return `scope/${scopeCode.toLowerCase()}/configuration.json`;
 }
 
 /**

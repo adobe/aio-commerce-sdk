@@ -119,6 +119,10 @@ export function buildAppManagementExtConfig(
           type: "action",
           impl: `${PACKAGE_NAME}/app-config`,
         },
+        {
+          type: "action",
+          impl: `${PACKAGE_NAME}/association`,
+        },
       ],
     },
 
@@ -128,6 +132,7 @@ export function buildAppManagementExtConfig(
           license: "Apache-2.0",
           actions: {
             "app-config": createActionDefinition("app-config"),
+            association: createActionDefinition("association"),
           } as Record<string, ActionDefinition>,
         },
       },

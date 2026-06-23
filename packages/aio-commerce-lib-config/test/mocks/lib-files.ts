@@ -32,9 +32,16 @@ export function createMockLibFiles() {
         return matchingFiles;
       });
 
-      public read = vi.fn(async (path: string) =>
-        Buffer.from(this.files.get(path) || "{}"),
-      );
+      public read = vi.fn(async (path: string) => {
+        const content = this.files.get(path);
+        if (content === undefined) {
+          // Mirror aio-lib-files, which throws (not returns empty) on a
+          // missing file so callers can distinguish "absent" from "empty".
+          throw Object.assign(new Error(`ENOENT: ${path}`), { code: "ENOENT" });
+        }
+
+        return Buffer.from(content);
+      });
 
       public write = vi.fn(
         async (
@@ -48,6 +55,12 @@ export function createMockLibFiles() {
           return bytes;
         },
       );
+
+      public delete = vi.fn(async (path: string) => {
+        // Mirror aio-lib-files, whose delete is idempotent: removing a
+        // missing path is a no-op rather than an error.
+        this.files.delete(path);
+      });
     },
   );
 
