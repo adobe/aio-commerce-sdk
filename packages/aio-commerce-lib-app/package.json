@@ -35,6 +35,16 @@
     "registry": "https://registry.npmjs.org",
     "access": "public",
     "exports": {
+      ".": {
+        "import": {
+          "types": "./dist/es/index.d.mts",
+          "default": "./dist/es/index.mjs"
+        },
+        "require": {
+          "types": "./dist/cjs/index.d.cts",
+          "default": "./dist/cjs/index.cjs"
+        }
+      },
       "./actions/*": {
         "import": {
           "types": "./dist/es/actions/*/index.d.mts",
@@ -69,6 +79,7 @@
     }
   },
   "exports": {
+    ".": "./source/index.ts",
     "./actions/*": "./source/actions/*/index.ts",
     "./config": "./source/config/index.ts",
     "./management": "./source/management/index.ts",
@@ -120,6 +131,7 @@
     "@adobe/aio-commerce-lib-events": "workspace:*",
     "@adobe/aio-commerce-lib-webhooks": "workspace:*",
     "@adobe/aio-lib-core-logging": "catalog:",
+    "@adobe/aio-lib-state": "catalog:",
     "@npmcli/package-json": "^8.0.0",
     "camelcase": "catalog:",
     "consola": "catalog:",
@@ -141,6 +153,7 @@
     "@aio-commerce-sdk/config-vitest": "workspace:*",
     "@aio-commerce-sdk/scripting-utils": "workspace:*",
     "@aio-commerce-sdk/scripts": "workspace:*",
+    "@adobe/aio-lib-files": "catalog:",
     "@types/npmcli__package-json": "^4.0.4",
     "msw": "catalog:",
     "openapi-format": "1.33.4",

@@ -1,6 +1,8 @@
 // @ts-expect-error - Importing the template as a raw string for testing purposes.
 import appConfigTemplate from "#templates/app-management/app-config.js?raw";
 // @ts-expect-error - Importing the template as a raw string for testing purposes.
+import associationTemplate from "#templates/app-management/association.js?raw";
+// @ts-expect-error - Importing the template as a raw string for testing purposes.
 import customScripts from "#templates/app-management/custom-scripts.js?raw";
 // @ts-expect-error - Importing the template as a raw string for testing purposes.
 import installationTemplate from "#templates/app-management/installation.js?raw";
@@ -11,6 +13,7 @@ import scopeTreeTemplate from "#templates/business-configuration/scope-tree.js?r
 
 export const templates = {
   appConfig: appConfigTemplate as string,
+  association: associationTemplate as string,
   installation: installationTemplate as string,
   customScripts: customScripts as string,
   businessConfig: businessConfigTemplate as string,
@@ -24,6 +27,7 @@ export const templates = {
 export function makeTemplateFiles(): Record<string, string> {
   return {
     "app-management/app-config.js.template": templates.appConfig,
+    "app-management/association.js.template": templates.association,
     "app-management/installation.js.template": templates.installation,
     "app-management/custom-scripts.js.template": templates.customScripts,
     "business-configuration/config.js.template": templates.businessConfig,

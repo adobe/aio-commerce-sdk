@@ -22,6 +22,7 @@ import pkg from "./package.json" with { type: "json" };
 export default mergeConfig(baseConfig, {
   dts: { eager: true },
   entry: [
+    "./source/index.ts",
     "./source/actions/*/index.ts",
     "./source/config/index.ts",
     "./source/commands/index.ts",
