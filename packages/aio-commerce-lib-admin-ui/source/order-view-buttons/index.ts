@@ -21,6 +21,7 @@
  * @packageDocumentation
  */
 
+export { getOrderViewButtonAclResourceId } from "./acl-resource-id";
 export {
   okOrderViewButtonResponse,
   orderViewButtonErrorResponse,

@@ -22,14 +22,15 @@ adminUi: {
 
 ### Constraints
 
-| Field                | Constraint                                                    |
-| -------------------- | ------------------------------------------------------------- |
-| `id`                 | Required; matches `^[A-Za-z0-9_/:]+$` — no hyphens or spaces  |
-| `label`              | Required, non-empty                                           |
-| `description`        | Required, non-empty                                           |
-| `parentMenu`         | Optional; one of the `COMMERCE_MENUS` constants               |
-| `pageTitle`          | Optional, non-empty                                           |
-| `sandboxPermissions` | Optional; `allow-downloads` / `allow-modals` / `allow-popups` |
+| Field                | Constraint                                                                                                                          |
+| -------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `id`                 | Required; matches `^[A-Za-z0-9_/:]+$` — no hyphens or spaces                                                                        |
+| `label`              | Required, non-empty                                                                                                                 |
+| `description`        | Required, non-empty                                                                                                                 |
+| `parentMenu`         | Optional; one of the `COMMERCE_MENUS` constants                                                                                     |
+| `pageTitle`          | Optional, non-empty                                                                                                                 |
+| `sandboxPermissions` | Optional; `allow-downloads` / `allow-modals` / `allow-popups`                                                                       |
+| `aclProtected`       | Optional boolean; when `true`, Commerce generates a per-app ACL resource for the menu so admins can grant/deny menu access per role |
 
 ## Parent menu constants
 

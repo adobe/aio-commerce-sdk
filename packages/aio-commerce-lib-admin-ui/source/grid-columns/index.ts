@@ -21,10 +21,12 @@
  * @packageDocumentation
  */
 
+export { getGridColumnAclResourceId } from "./acl-resource-id";
 export { parseGridRequest } from "./requests/presets";
 export { GridRequestSchema, GridTypeSchema } from "./requests/schema";
 export { errorGridResponse, okGridResponse } from "./responses/presets";
 
+export type { AdminUiEntity } from "#api/lib/acl-resource-id";
 export type { GridRequest, GridType } from "./requests/types";
 export type {
   GridErrorBody,
