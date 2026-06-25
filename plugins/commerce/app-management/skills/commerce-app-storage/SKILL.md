@@ -13,8 +13,6 @@ compatibility: >
   in the Adobe Developer Console. Requires a base app initialized with commerce-app-init.
 metadata:
   author: adobe
-  sdk-package: "@adobe/aio-commerce-lib-app"
-  version: "0.0.2"
 ---
 
 # Add Database Storage to a Commerce App

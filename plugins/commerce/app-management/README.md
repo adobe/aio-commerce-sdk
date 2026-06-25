@@ -1,7 +1,5 @@
 # Commerce App Management Skills
 
-> ⚠️ **Experimental** — These skills are under active development and subject to change.
-
 Agent skills for Adobe Commerce App Management, following the [agentskills.io](https://agentskills.io) open standard. Compatible with Claude Code, Cursor, VS Code Copilot, Gemini CLI, and other supported agents.
 
 ## Strategy
@@ -37,67 +35,23 @@ A developer creating an app that needs events and webhooks would run `commerce-a
 **Claude Code plugin:**
 
 ```sh
-/plugin marketplace add adobe/aio-commerce-sdk
-/plugin install commerce-app-management@adobe-aio-commerce-sdk
+/plugin marketplace add adobe/skills
+/plugin install commerce-app-management@adobe-skills
 ```
 
 **Tessl CLI:**
 
 ```sh
-tessl install github:adobe/aio-commerce-sdk --skills commerce-app-management
+tessl install github:adobe/skills --skills commerce-app-management
 ```
 
 **pnpx skills:**
 
 ```sh
-pnpx skills add adobe/aio-commerce-sdk --skill commerce-app-init
-pnpx skills add adobe/aio-commerce-sdk --skill commerce-app-eventing
-pnpx skills add adobe/aio-commerce-sdk --skill commerce-app-webhooks
-pnpx skills add adobe/aio-commerce-sdk --skill commerce-app-business-config
-pnpx skills add adobe/aio-commerce-sdk --skill commerce-app-storage
-pnpx skills add adobe/aio-commerce-sdk --skill commerce-app-admin-ui
+pnpx skills add adobe/skills --skill commerce-app-init
+pnpx skills add adobe/skills --skill commerce-app-eventing
+pnpx skills add adobe/skills --skill commerce-app-webhooks
+pnpx skills add adobe/skills --skill commerce-app-business-config
+pnpx skills add adobe/skills --skill commerce-app-storage
+pnpx skills add adobe/skills --skill commerce-app-admin-ui
 ```
-
-## Contributing
-
-### Local testing
-
-Install skills directly from a local checkout into a target project:
-
-```sh
-cd ~/my-commerce-app
-
-# Install all skills
-pnpx skills add /path/to/aio-commerce-sdk/plugins/commerce/app-management --yes
-
-# Install a specific skill only
-pnpx skills add /path/to/aio-commerce-sdk/plugins/commerce/app-management --yes --skill commerce-app-init
-```
-
-### Quality review
-
-Before shipping a skill, run the tessl reviewer to catch structural and quality issues:
-
-```sh
-pnpx tessl skill review skills/<skill-name>
-```
-
-A passing skill has 0 errors and 0 warnings. The judge score should be ≥ 90%.
-
-### Evaluations
-
-Implemented skills ship with evals in `skills/<skill-name>/evals/evals.json`, following the [agentskills.io eval format](https://agentskills.io/skill-creation/evaluating-skills.md).
-
-Install the `skill-creator` skill to automate the eval loop:
-
-```sh
-pnpx skills add anthropics/skills --skill skill-creator
-```
-
-Then ask your agent:
-
-```
-Run evals for the commerce-app-init skill
-```
-
-The agent runs each prompt with and without the skill, grades assertions, and writes results to `skills/<skill-name>-workspace/`. Eval results are excluded from version control — only `evals/evals.json` is committed.

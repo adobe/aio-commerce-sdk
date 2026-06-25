@@ -1,0 +1,8 @@
+{
+  "name": "@adobe/aio-commerce-plugin-app-migration",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "version": "node ../scripts/sync-plugin-version.mjs"
+  }
+}

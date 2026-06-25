@@ -16,6 +16,7 @@ jobs:
     outputs:
       published: ${{ steps.changesets.outputs.published }}
       publishedPackages: ${{ steps.changesets.outputs.publishedPackages }}
+      promotedSkills: ${{ steps.promote-skills.outputs.promotedSkills }}
     permissions:
       contents: write
       pull-requests: write
@@ -23,6 +24,8 @@ jobs:
       id-token: write
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          fetch-depth: 2
 
       - uses: ./.github/actions/setup-release
         with:
@@ -53,10 +56,43 @@ jobs:
           release-channel: public
           slack-webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
 
+      - name: Detect changed Commerce plugin versions
+        id: changed-plugins
+        if: steps.changesets.outputs.hasChangesets == 'false'
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          SOURCE_REPOSITORY_PATH: ${{ github.workspace }}
+        with:
+          script: |
+            const { detectChangedCommercePluginVersions } = await import('${{ github.workspace }}/scripts/source/ci/release/promote-skills.ts');
+            await detectChangedCommercePluginVersions(core, exec, process.env.SOURCE_REPOSITORY_PATH);
+
+      - name: Checkout adobe/skills
+        if: steps.changed-plugins.outputs.changed == 'true'
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          repository: adobe/skills
+          path: adobe-skills
+          token: ${{ secrets.ADOBE_SKILLS_TOKEN }}
+          fetch-depth: 0
+
+      - name: Promote changed Commerce plugins to adobe/skills
+        id: promote-skills
+        if: steps.changed-plugins.outputs.changed == 'true'
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          SOURCE_REPOSITORY_PATH: ${{ github.workspace }}
+          SKILLS_REPOSITORY_PATH: ${{ github.workspace }}/adobe-skills
+        with:
+          github-token: ${{ secrets.ADOBE_SKILLS_TOKEN }}
+          script: |
+            const { default: execPromoteSkills } = await import('${{ github.workspace }}/scripts/source/ci/release/promote-skills.ts');
+            await execPromoteSkills(core, exec, github, context);
+
   back-sync:
     name: Back-sync to main
     needs: release
-    if: needs.release.outputs.published == 'true'
+    if: needs.release.outputs.published == 'true' || needs.release.outputs.promotedSkills == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: write
