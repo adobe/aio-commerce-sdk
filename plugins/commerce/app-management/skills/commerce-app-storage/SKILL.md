@@ -14,7 +14,7 @@ compatibility: >
 metadata:
   author: adobe
   sdk-package: "@adobe/aio-commerce-lib-app"
-  version: "0.0.2"
+  version: "0.0.3"
 ---
 
 # Add Database Storage to a Commerce App
@@ -211,18 +211,8 @@ export default defineCustomInstallationStep({
     }
   },
   uninstall: async (config, context) => {
-    let client;
-    try {
-      const authProvider = getImsAuthProvider(
-        resolveImsAuthParams(context.params),
-      );
-      const token = await authProvider.getAccessToken();
-      const db = await initDb({ token, region: "emea" });
-      client = await db.connect();
-      await client.collection("held_orders").drop();
-    } finally {
-      if (client) await client.close();
-    }
+    // Tear down your database state here.
+    // Leave empty to preserve data across reinstalls.
   },
 });
 ```
