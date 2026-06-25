@@ -55,6 +55,7 @@ export function useShellConfiguration(
     // Docs: https://github.com/AdobeDocs/exc-app/blob/main/docs/interfaces/root.runtime.md#on
     // Docs: https://github.com/AdobeDocs/exc-app/blob/main/docs/interfaces/root.runtimeconfiguration.md
     const onConfiguration = (event?: RuntimeConfiguration) => {
+      console.log("UIX runtime configuration event:", event);
       if (event) {
         setShellConfiguration(extractShellConfiguration(event));
       }
@@ -63,6 +64,7 @@ export function useShellConfiguration(
     // Unified Shell uses hash navigation; Commerce Admin UI v1 samples subscribe to runtime "history".
     // Docs: https://github.com/AdobeDocs/exc-app/blob/main/docs/interfaces/page.pageapi.md#blocknavigation
     const onHistory = (event?: { path?: string; type?: string }) => {
+      console.log("UIX runtime history event:", event);
       if (event?.type === "external" && typeof event.path === "string") {
         const to = getRouteTo(event.path);
         if (to !== router.state.location.pathname) {

@@ -61,6 +61,12 @@ export function SharedContextProvider(
 
   const guestConnection = useGuestConnection(extensionId);
   const value = useMemo<SharedContext>(() => {
+    console.log(
+      "UIX shared context values:",
+      shellConfiguration,
+      guestConnection,
+    );
+
     const {
       imsOrg = null,
       imsToken = null,

@@ -84,6 +84,7 @@ export function createExtensionApp({
       page.title = metadata.title ?? `App Extension (${metadata.extensionId})`;
 
       runtime.on("ready", (configuration?: RuntimeConfiguration) => {
+        console.log("UIX runtime ready event:", configuration);
         render(runtime, configuration ?? runtime.lastConfigurationPayload);
         page.done().catch(() => {
           console.warn(

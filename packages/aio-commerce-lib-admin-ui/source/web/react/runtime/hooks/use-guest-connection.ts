@@ -19,6 +19,7 @@ export function useGuestConnection(
     register({ id: extensionId, methods: {} })
       .then(() => attach({ id: extensionId }))
       .then((connection) => {
+        console.log("UIX guest connection established:", connection, isActive);
         if (isActive) {
           setGuestConnection(connection);
         }
