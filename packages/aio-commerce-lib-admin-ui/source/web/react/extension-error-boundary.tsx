@@ -10,20 +10,49 @@
  * governing permissions and limitations under the License.
  */
 
+import { Button, ButtonGroup } from "@react-spectrum/s2/ButtonGroup";
+import {
+  Content,
+  Heading,
+  IllustratedMessage,
+} from "@react-spectrum/s2/IllustratedMessage";
+import ErrorIllustration from "@react-spectrum/s2/illustrations/linear/Error";
 import { useRouterState } from "@tanstack/react-router";
 import { ErrorBoundary } from "react-error-boundary";
 
 import type { FallbackProps } from "react-error-boundary";
 
+function getErrorMessage(error: unknown): string {
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  return typeof error === "string" ? error : "An unexpected error occurred.";
+}
+
+// Relies on Spectrum being mounted above this boundary so the fallback renders
+// within the Provider's theme. See the provider ordering in `extension-app.tsx`.
 function ErrorFallback({ error, resetErrorBoundary }: Readonly<FallbackProps>) {
   return (
-    <main style={{ padding: 24 }}>
-      <h1>Something went wrong</h1>
-      <pre>{error instanceof Error ? error.message : String(error)}</pre>
-      <button onClick={resetErrorBoundary} type="button">
-        Try again
-      </button>
-    </main>
+    <div
+      style={{
+        display: "flex",
+        minHeight: "100vh",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: 24,
+      }}>
+      <IllustratedMessage>
+        <ErrorIllustration />
+        <Heading>Something went wrong</Heading>
+        <Content>{getErrorMessage(error)}</Content>
+        <ButtonGroup>
+          <Button onPress={resetErrorBoundary} variant="accent">
+            Try again
+          </Button>
+        </ButtonGroup>
+      </IllustratedMessage>
+    </div>
   );
 }
 

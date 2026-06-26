@@ -47,12 +47,17 @@ export function ExtensionApp(props: Readonly<ExtensionAppProps>) {
     initialConfiguration,
   );
 
+  const spectrumRouter = useSpectrumRouter();
   return (
-    <ExtensionErrorBoundary>
-      <SharedContextProvider extensionId={extensionId}>
-        <ExtensionShell shellConfiguration={shellConfiguration} />
-      </SharedContextProvider>
-    </ExtensionErrorBoundary>
+    // The Spectrum Provider sits at the top so the error boundary and its fallback
+    // render within the configured theme, and so it wraps the data providers below.
+    <Provider router={spectrumRouter}>
+      <ExtensionErrorBoundary>
+        <SharedContextProvider extensionId={extensionId}>
+          <ExtensionShell shellConfiguration={shellConfiguration} />
+        </SharedContextProvider>
+      </ExtensionErrorBoundary>
+    </Provider>
   );
 }
 
@@ -69,15 +74,11 @@ function ExtensionShell(
   props: Readonly<{ shellConfiguration: ShellConfiguration | null }>,
 ) {
   const { shellConfiguration } = props;
-
-  const spectrumRouter = useSpectrumRouter();
   const credentials = useImsCredentials(shellConfiguration);
 
   return (
     <ImsContextProvider credentials={credentials}>
-      <Provider background="base" router={spectrumRouter}>
-        <Outlet />
-      </Provider>
+      <Outlet />
     </ImsContextProvider>
   );
 }
