@@ -21,6 +21,7 @@ import type { AdminUiConfig, AdminUiExecutionContext } from "./utils";
 /**
  * Registers the extension with Commerce via POST /V1/adminuisdk/extension.
  *
+ * @param config - The Admin UI configuration, used to determine whether the extension requires a view URL.
  * @param context - The execution context providing the Admin UI client and logger.
  */
 export async function registerExtension(
