@@ -580,7 +580,7 @@ is set in the assembled config and is not `"<FILL_IN>"`:
 
 ```javascript
 import { parseGridRequest, okGridResponse, errorGridResponse }
-  from '@adobe/aio-commerce-lib-admin-ui/grid-columns'
+  from '@adobe/aio-commerce-sdk/admin-ui/grid-columns'
 
 export async function main (params) {
   let request
@@ -630,7 +630,7 @@ import {
   parseMassActionRequest,
   okMassActionResponse,
   massActionErrorResponse,
-} from '@adobe/aio-commerce-lib-admin-ui/mass-actions'
+} from '@adobe/aio-commerce-sdk/admin-ui/mass-actions'
 
 export async function main (params) {
   const { gridType, ids } = parseMassActionRequest(params)
@@ -663,7 +663,7 @@ import {
   parseOrderViewButtonRequest,
   okOrderViewButtonResponse,
   orderViewButtonErrorResponse,
-} from '@adobe/aio-commerce-lib-admin-ui/order-view-buttons'
+} from '@adobe/aio-commerce-sdk/admin-ui/order-view-buttons'
 
 export async function main (params) {
   const { id, orderId } = parseOrderViewButtonRequest(params)
