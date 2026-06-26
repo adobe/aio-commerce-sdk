@@ -13,7 +13,6 @@
 import { join } from "node:path";
 
 import { GENERATED_ACTIONS_PATH, PACKAGE_NAME } from "#commands/constants";
-import { requiresWebSource } from "#config/schema/admin-ui";
 import { requiresInstallation } from "#config/schema/app";
 import { hasBusinessConfigSchema } from "#config/schema/business-configuration";
 
@@ -234,6 +233,24 @@ export function collectUniqueRuntimeActions(
       ...viewButtonRuntimeActions,
     ]),
   ];
+}
+
+/** Returns true if the `adminUi` config requires a `view` operation and `web` source in ext.config.yaml. */
+export function requiresWebSource(adminUi: AdminUi | undefined): boolean {
+  if (adminUi?.menu !== undefined) {
+    return true;
+  }
+  if (
+    (adminUi?.order?.viewButtons ?? []).some((button) => button.type === "view")
+  ) {
+    return true;
+  }
+  const entities = (["order", "product", "customer"] as const).map(
+    (key) => adminUi?.[key],
+  );
+  return entities
+    .flatMap((entity) => entity?.massActions ?? [])
+    .some((action) => action.type === "view");
 }
 
 /**

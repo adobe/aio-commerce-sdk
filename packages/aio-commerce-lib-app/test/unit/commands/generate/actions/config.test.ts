@@ -19,8 +19,8 @@ import {
   buildBusinessConfigurationExtConfig,
   collectUniqueRuntimeActions,
   getRuntimeActions,
+  requiresWebSource,
 } from "#commands/generate/actions/config";
-import { requiresWebSource } from "#config/schema/admin-ui";
 import {
   configWithAdminUiAllGrids,
   configWithAdminUiMenu,
