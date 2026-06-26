@@ -138,9 +138,30 @@
     "@adobe/aio-commerce-lib-webhooks": "workspace:*",
     "type-fest": "catalog:"
   },
+  "peerDependencies": {
+    "@react-spectrum/s2": "catalog:react",
+    "react": "catalog:react",
+    "react-dom": "catalog:react"
+  },
+  "peerDependenciesMeta": {
+    "@react-spectrum/s2": {
+      "optional": true
+    },
+    "react": {
+      "optional": true
+    },
+    "react-dom": {
+      "optional": true
+    }
+  },
   "devDependencies": {
     "@aio-commerce-sdk/config-tsdown": "workspace:*",
     "@aio-commerce-sdk/config-typescript": "workspace:*",
+    "@react-spectrum/s2": "catalog:react",
+    "@types/react": "catalog:react",
+    "@types/react-dom": "catalog:react",
+    "react": "catalog:react",
+    "react-dom": "catalog:react",
     "typescript": "catalog:"
   },
   "publishConfig": {
