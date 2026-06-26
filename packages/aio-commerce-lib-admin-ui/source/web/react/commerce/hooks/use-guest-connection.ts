@@ -1,8 +1,7 @@
 import { attach, register } from "@adobe/uix-guest";
 import { useEffect, useState } from "react";
 
-/** Defines the guest connection that shares the context between the extension and the Admin UI host. */
-export type GuestConnection = Awaited<ReturnType<typeof attach>>;
+import type { GuestConnection } from "#web/react/commerce/types";
 
 /**
  * Establishes a guest connection for the given extension ID and returns the connection object.
@@ -16,16 +15,21 @@ export function useGuestConnection(
 
   useEffect(() => {
     let isActive = true;
-    register({ id: extensionId, methods: {} })
-      .then(() => attach({ id: extensionId }))
+
+    // Our host doesn't communicate with the extension as there are no `methods`
+    // We don't use the returned `GuestServer`, this call is kept for future compatibility.
+    register({ id: extensionId, methods: {} }).catch((err) => {
+      console.error("UIX guest register failed:", err);
+    });
+
+    attach({ id: extensionId })
       .then((connection) => {
-        console.log("UIX guest connection established:", connection, isActive);
         if (isActive) {
           setGuestConnection(connection);
         }
       })
-      .catch((err: unknown) => {
-        console.error("UIX guest connection failed:", err);
+      .catch((err) => {
+        console.error("UIX guest attach failed:", err);
       });
 
     return () => {

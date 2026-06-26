@@ -16,22 +16,17 @@ import { useEffect, useState } from "react";
 import { getRouteTo } from "#web/react/routing/lib";
 
 import type { Runtime, RuntimeConfiguration } from "@adobe/exc-app";
-
-/** Defines the small subset of runtime configuration that extensions have access to */
-export type ShellConfiguration = Pick<
-  RuntimeConfiguration,
-  "imsOrg" | "imsToken" | "imsProfile" | "locale"
->;
+import type { ShellConfiguration } from "#web/react/shell/types";
 
 /**
- * Extracts the shell configuration from the runtime configuration.
+ * Extracts the shell configuration from the runtime configuration (only the components we want to expose).
  * @param config The runtime configuration object.
  */
 export function extractShellConfiguration(
   config: RuntimeConfiguration,
 ): ShellConfiguration {
-  const { imsOrg, imsToken, imsProfile, locale } = config;
-  return { imsOrg, imsToken, imsProfile, locale };
+  const { imsOrg, imsToken } = config;
+  return { imsOrg, imsToken };
 }
 
 /**

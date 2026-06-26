@@ -14,17 +14,28 @@
 
 /**
  * Browser helpers for mounting `commerce/backend-ui/2` iframe apps.
- *
  * @packageDocumentation
  */
 
+export { useIms } from "#web/react/auth/context/ims-context.tsx";
+export { useSharedContext } from "#web/react/commerce/context/shared-context.tsx";
+export {
+  useMassActionContext,
+  useOrderViewButtonContext,
+} from "#web/react/commerce/hooks/use-extension-context";
+export { useHostConnection } from "#web/react/commerce/hooks/use-host-connection";
 export { createExtensionApp } from "#web/react/create-extension-app.tsx";
-export { useSharedContext } from "#web/react/shared-context.tsx";
 
+export type { ImsContext } from "#web/react/auth/types";
+export type {
+  HostConnection,
+  MassActionContext,
+  OrderViewButtonContext,
+  SharedContext as SharedContextValue,
+} from "#web/react/commerce/types";
 export type { CreateExtensionAppOptions } from "#web/react/create-extension-app.tsx";
 export type {
   ExtensionAppRoutes,
   ExtensionRoute,
   IndexRoute,
 } from "#web/react/routing/types";
-export type { SharedContext as SharedContextValue } from "#web/react/shared-context.tsx";

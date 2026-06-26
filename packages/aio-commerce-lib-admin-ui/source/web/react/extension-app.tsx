@@ -13,20 +13,16 @@
 import { Provider } from "@react-spectrum/s2/Provider";
 import { Outlet } from "@tanstack/react-router";
 
-import { useSpectrumRouter } from "./routing/hooks/use-spectrum-router";
-import { ExtensionErrorBoundary } from "./runtime/extension-error-boundary";
-import { useShellConfiguration } from "./runtime/hooks/use-shell-configuration";
-import { SharedContextProvider } from "./shared-context";
+import { ImsContextProvider } from "#web/react/auth/context/ims-context.tsx";
+import { useImsCredentials } from "#web/react/auth/hooks/use-ims-credentials";
+import { SharedContextProvider } from "#web/react/commerce/context/shared-context.tsx";
+import { useSpectrumRouter } from "#web/react/routing/hooks/use-spectrum-router";
+import { useShellConfiguration } from "#web/react/shell/hooks/use-shell-configuration";
+
+import { ExtensionErrorBoundary } from "./extension-error-boundary";
 
 import type { Runtime, RuntimeConfiguration } from "@adobe/exc-app";
-import type { NavigateOptions, ToOptions } from "@tanstack/react-router";
-
-declare module "@react-spectrum/s2/Provider" {
-  interface RouterConfig {
-    href: ToOptions;
-    routerOptions: Omit<NavigateOptions, keyof ToOptions>;
-  }
-}
+import type { ShellConfiguration } from "#web/react/shell/types";
 
 /** The props received by the {@link ExtensionApp} component. */
 type ExtensionAppProps = {
@@ -36,13 +32,16 @@ type ExtensionAppProps = {
 };
 
 /**
- * The ExtensionApp component is the main entry point for an extension app. It is responsible for rendering the app and providing the necessary context to it.
+ * The ExtensionApp component is the main entry point for an extension app.
+ * It is responsible for rendering the app and providing the necessary context to it.
+ *
  * @param props - The props needed to initialize the extension app.
  */
 export function ExtensionApp(props: Readonly<ExtensionAppProps>) {
   const { extensionId, initialConfiguration, runtime } = props;
 
-  const spectrumRouter = useSpectrumRouter();
+  // The Experience Cloud shell configuration is an Experience Cloud concern, kept separate
+  // from the Commerce shared context. It feeds the IMS credentials and drives shell navigation.
   const shellConfiguration = useShellConfiguration(
     runtime,
     initialConfiguration,
@@ -50,13 +49,35 @@ export function ExtensionApp(props: Readonly<ExtensionAppProps>) {
 
   return (
     <ExtensionErrorBoundary>
-      <SharedContextProvider
-        extensionId={extensionId}
-        shellConfiguration={shellConfiguration}>
-        <Provider background="base" router={spectrumRouter}>
-          <Outlet />
-        </Provider>
+      <SharedContextProvider extensionId={extensionId}>
+        <ExtensionShell shellConfiguration={shellConfiguration} />
       </SharedContextProvider>
     </ExtensionErrorBoundary>
+  );
+}
+
+/**
+ * Renders the extension UI within the Commerce shared context.
+ *
+ * This is a separated component because `useImsCredentials` needs the `SharedContextProvider` to be mounted
+ * first,  so it can access the Commerce shared context. The IMS credentials are resolved from the shell
+ * configuration and the Commerce shared context, depending on where the app is running.
+ *
+ * @param props - The Experience Cloud shell configuration, if available.
+ */
+function ExtensionShell(
+  props: Readonly<{ shellConfiguration: ShellConfiguration | null }>,
+) {
+  const { shellConfiguration } = props;
+
+  const spectrumRouter = useSpectrumRouter();
+  const credentials = useImsCredentials(shellConfiguration);
+
+  return (
+    <ImsContextProvider credentials={credentials}>
+      <Provider background="base" router={spectrumRouter}>
+        <Outlet />
+      </Provider>
+    </ImsContextProvider>
   );
 }

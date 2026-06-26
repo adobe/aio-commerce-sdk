@@ -15,16 +15,16 @@ import page from "@adobe/exc-app/page";
 import { RouterProvider } from "@tanstack/react-router";
 import { createRoot } from "react-dom/client";
 
+import { createExtensionRouter } from "#web/react/routing/lib";
 import {
   createMockRuntime,
   loadExperienceCloudRuntime,
 } from "#web/runtime-loader";
 
 import { ExtensionApp } from "./extension-app";
-import { createExtensionRouter } from "./routing/lib";
 
 import type { RuntimeConfiguration } from "@adobe/exc-app";
-import type { ExtensionAppRoutes } from "./routing/types";
+import type { ExtensionAppRoutes } from "#web/react/routing/types";
 
 /** Configuration options when instantiating an extension app. */
 export type CreateExtensionAppOptions = {
@@ -95,5 +95,7 @@ export function createExtensionApp({
     });
   } catch {
     render(createMockRuntime(), null);
+    document.title =
+      metadata.title ?? `App Extension (${metadata.extensionId})`;
   }
 }
