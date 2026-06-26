@@ -51,7 +51,9 @@ export function ExtensionApp(props: Readonly<ExtensionAppProps>) {
   return (
     // The Spectrum Provider sits at the top so the error boundary and its fallback
     // render within the configured theme, and so it wraps the data providers below.
-    <Provider router={spectrumRouter}>
+    <Provider
+      colorScheme={shellConfiguration ? undefined : "light"}
+      router={spectrumRouter}>
       <ExtensionErrorBoundary>
         <SharedContextProvider extensionId={extensionId}>
           <ExtensionShell shellConfiguration={shellConfiguration} />
