@@ -17,6 +17,7 @@ import {
   unregisterExtension,
 } from "#management/installation/admin-ui/helpers";
 import { createMockAdminUiContext } from "#test/fixtures/admin-ui";
+import { configWithFullAdminUiV2 } from "#test/fixtures/config";
 import { makeHttpError } from "#test/fixtures/http-error";
 import { createMockLogger } from "#test/fixtures/installation";
 
@@ -34,20 +35,22 @@ describe("registerExtension", () => {
 
   test("logs success with extensionId when registerExtension call resolves", async () => {
     const logger = createMockLogger();
-    const context = {
-      ...createMockAdminUiContext({
-        registerExtensionImpl: () =>
-          Promise.resolve({ extensionId: "ext-123" }),
-      }),
+    const context = createMockAdminUiContext({
+      registerExtensionImpl: () => Promise.resolve({ extensionId: "ext-123" }),
+      appData: {
+        adminUiViewUrl: "https://example.com/admin-ui/index.html",
+      },
       logger,
-    };
+    });
 
-    await expect(registerExtension(context)).resolves.toBeUndefined();
+    await expect(
+      registerExtension(configWithFullAdminUiV2, context),
+    ).resolves.toBeUndefined();
 
     expect(context.adminUiClient.registerExtension).toHaveBeenCalledWith({
       extensionName: "test-ns",
       extensionTitle: context.appData.projectTitle,
-      extensionUrl: "https://test-ns.adobeio-static.net/index.html",
+      extensionUrl: "https://example.com/admin-ui/index.html",
       extensionWorkspace: context.appData.workspaceName,
     });
     expect(logger.info).toHaveBeenCalledWith(
@@ -63,11 +66,14 @@ describe("registerExtension", () => {
     );
     const context = createMockAdminUiContext({
       registerExtensionImpl: () => Promise.reject(httpError),
+      appData: {
+        adminUiViewUrl: "https://example.com/admin-ui/index.html",
+      },
     });
 
-    await expect(registerExtension(context)).rejects.toThrow(
-      REGISTER_EXTENSION_COMBINED_PATTERN,
-    );
+    await expect(
+      registerExtension(configWithFullAdminUiV2, context),
+    ).rejects.toThrow(REGISTER_EXTENSION_COMBINED_PATTERN);
   });
 
   test("logs error before throwing", async () => {
@@ -77,19 +83,29 @@ describe("registerExtension", () => {
       "Forbidden",
       JSON.stringify({ message: "Insufficient permissions" }),
     );
-    const context = {
-      ...createMockAdminUiContext({
-        registerExtensionImpl: () => Promise.reject(httpError),
-      }),
+    const context = createMockAdminUiContext({
+      registerExtensionImpl: () => Promise.reject(httpError),
+      appData: {
+        adminUiViewUrl: "https://example.com/admin-ui/index.html",
+      },
       logger,
-    };
+    });
 
-    await expect(registerExtension(context)).rejects.toThrow();
+    await expect(
+      registerExtension(configWithFullAdminUiV2, context),
+    ).rejects.toThrow();
 
     expect(logger.error).toHaveBeenCalledOnce();
     expect(logger.error).toHaveBeenCalledWith(
       expect.stringMatching(REGISTER_EXTENSION_COMBINED_PATTERN),
     );
+  });
+
+  test("throws when a web source is configured without an extension view url", async () => {
+    const context = createMockAdminUiContext();
+    await expect(
+      registerExtension(configWithFullAdminUiV2, context),
+    ).rejects.toThrow("extension view url was not given");
   });
 });
 
