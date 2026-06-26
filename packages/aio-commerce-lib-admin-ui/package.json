@@ -180,7 +180,6 @@
     "typescript": "catalog:"
   },
   "sideEffects": [
-    "**/web/index.*",
     "**/create-extension-app.*"
   ]
 }
