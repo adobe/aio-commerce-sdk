@@ -19,8 +19,8 @@ import {
   buildBusinessConfigurationExtConfig,
   collectUniqueRuntimeActions,
   getRuntimeActions,
-  requiresWebSource,
 } from "#commands/generate/actions/config";
+import { requiresWebSource } from "#config/schema/admin-ui";
 import {
   configWithAdminUiAllGrids,
   configWithAdminUiMenu,
@@ -149,7 +149,6 @@ describe("buildAppManagementExtConfig", () => {
 
     expect(workerImpls).toEqual([
       { type: "action", impl: "app-management/app-config" },
-      { type: "action", impl: "app-management/association" },
       { type: "action", impl: "app-management/installation" },
     ]);
   });

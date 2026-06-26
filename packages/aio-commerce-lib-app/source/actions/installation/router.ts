@@ -412,10 +412,7 @@ router.post("/validation", {
     }
 
     const appConfig = validateCommerceAppConfig(rawAppConfig);
-    const { appData, ...params } = buildWorkflowParams(
-      req.body,
-      rawParams as RuntimeActionArgs,
-    );
+    const { appData, ...params } = buildWorkflowParams(req.body, rawParams);
 
     const validationContext: ValidationContext = {
       appData,

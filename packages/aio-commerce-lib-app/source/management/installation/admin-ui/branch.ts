@@ -36,8 +36,8 @@ const registerExtensionStep = defineLeafStep({
     },
   },
 
-  install: (_: AdminUiConfig, context: AdminUiExecutionContext) =>
-    registerExtension(context),
+  install: (config: AdminUiConfig, context: AdminUiExecutionContext) =>
+    registerExtension(config, context),
 
   uninstall: (_: AdminUiConfig, context: AdminUiExecutionContext) =>
     unregisterExtension(context),

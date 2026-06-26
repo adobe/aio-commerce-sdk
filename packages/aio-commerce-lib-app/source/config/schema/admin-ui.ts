@@ -302,3 +302,26 @@ export function hasAdminUi<T extends AnyCommerceAppConfig>(
 ): config is AdminUiConfig<T> {
   return config.adminUi !== undefined;
 }
+
+/**
+ * Returns true if the `adminUi` config requires a `view` operation and `web` source in ext.config.yaml.
+ * @param adminUi - The Admin UI configuration to check.
+ */
+export function requiresWebSource(adminUi: AdminUi | undefined): boolean {
+  if (adminUi?.menu !== undefined) {
+    return true;
+  }
+
+  const viewButtons = adminUi?.order?.viewButtons ?? [];
+  if (viewButtons.some((button) => button.type === "view")) {
+    return true;
+  }
+
+  const entities = (["order", "product", "customer"] as const).map(
+    (key) => adminUi?.[key],
+  );
+
+  return entities
+    .flatMap((entity) => entity?.massActions ?? [])
+    .some((action) => action.type === "view");
+}
