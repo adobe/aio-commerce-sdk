@@ -61,7 +61,7 @@ describe("admin-ui installation module", () => {
     });
   });
 
-  describe("registerExtensionStep uninstall handler", () => {
+  describe("registerExtensionStep handlers", () => {
     const registerExtensionStep = adminUiStep.children[0];
 
     beforeEach(() => {
@@ -72,12 +72,29 @@ describe("admin-ui installation module", () => {
       vi.unstubAllEnvs();
     });
 
-    test("should have an uninstall handler defined", () => {
+    test("should have install and uninstall handlers defined", () => {
+      expect(registerExtensionStep.install).toBeDefined();
       expect(registerExtensionStep.uninstall).toBeDefined();
     });
 
     test("should have meta.uninstall defined", () => {
       expect(registerExtensionStep.meta.uninstall).toBeDefined();
+    });
+
+    test("should call registerExtension with the provided adminUiViewUrl", async () => {
+      const context = createMockAdminUiContext({
+        appData: {
+          adminUiViewUrl: "https://example.com/admin-ui/index.html",
+        },
+      });
+
+      await registerExtensionStep.install(configWithFullAdminUiV2, context);
+      expect(context.adminUiClient.registerExtension).toHaveBeenCalledWith({
+        extensionName: "test-namespace",
+        extensionTitle: context.appData.projectTitle,
+        extensionUrl: "https://example.com/admin-ui/index.html",
+        extensionWorkspace: context.appData.workspaceName,
+      });
     });
 
     test("should call unregisterExtension with workspaceName and __OW_NAMESPACE", async () => {

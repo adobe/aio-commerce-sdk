@@ -50,10 +50,7 @@ export const createAdminUiStepContext: StepContextFactory<
 
   return {
     get adminUiClient() {
-      if (adminUiClient === null) {
-        adminUiClient = createAdminUiClient(params);
-      }
-
+      adminUiClient ??= createAdminUiClient(params);
       return adminUiClient;
     },
   };
