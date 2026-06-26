@@ -37,7 +37,7 @@ export function useSpectrumRouter() {
       },
       useHref: (href: ToOptions | string) => {
         if (typeof href === "string") {
-          return href;
+          return getRouteTo(href);
         }
 
         return router.buildLocation(href).href;

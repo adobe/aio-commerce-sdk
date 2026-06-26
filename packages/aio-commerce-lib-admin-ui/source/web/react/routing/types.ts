@@ -10,7 +10,15 @@
  * governing permissions and limitations under the License.
  */
 
+import type { NavigateOptions, ToOptions } from "@tanstack/react-router";
 import type { ReactNode } from "react";
+
+declare module "@react-spectrum/s2/Provider" {
+  interface RouterConfig {
+    href: ToOptions;
+    routerOptions: Omit<NavigateOptions, keyof ToOptions>;
+  }
+}
 
 /** Defines a route that is marked as the index (entrypoint) */
 export type IndexRoute = {

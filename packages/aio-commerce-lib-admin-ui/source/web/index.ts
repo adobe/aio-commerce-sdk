@@ -31,7 +31,7 @@ export type {
   HostConnection,
   MassActionContext,
   OrderViewButtonContext,
-  SharedContext as SharedContextValue,
+  SharedContext,
 } from "#web/react/commerce/types";
 export type { CreateExtensionAppOptions } from "#web/react/create-extension-app.tsx";
 export type {
