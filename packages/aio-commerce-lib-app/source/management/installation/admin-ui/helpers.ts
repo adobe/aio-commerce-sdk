@@ -12,22 +12,16 @@
 
 import { unwrapHttpError } from "@adobe/aio-commerce-lib-api/utils";
 
-import { requiresWebSource } from "#config/schema/admin-ui";
-
 import { throwHttpError } from "../utils/http-error";
 
-import type { AdminUiConfig, AdminUiExecutionContext } from "./utils";
+import type { AdminUiExecutionContext } from "./utils";
 
 /**
  * Registers the extension with Commerce via POST /V1/adminuisdk/extension.
  *
- * @param config - The Admin UI configuration, used to determine whether the extension requires a view URL.
  * @param context - The execution context providing the Admin UI client and logger.
  */
-export async function registerExtension(
-  config: AdminUiConfig,
-  context: AdminUiExecutionContext,
-) {
+export async function registerExtension(context: AdminUiExecutionContext) {
   const { adminUiClient, appData, logger } = context;
   const extensionName = process.env.__OW_NAMESPACE;
 
@@ -37,13 +31,9 @@ export async function registerExtension(
 
   logger.info(`Registering Admin UI extension: ${appData.projectName}`);
 
-  if (requiresWebSource(config.adminUi) && !appData.adminUiViewUrl) {
-    throw new Error(
-      "The app has a web source defined, but the extension view url was not given.",
-    );
-  }
-
-  const extensionUrl = appData.adminUiViewUrl as string;
+  const extensionUrl =
+    appData.adminUiViewUrl ??
+    `https://${extensionName}.adobeio-static.net/index.html`;
   const { extensionId } = await adminUiClient
     .registerExtension({
       extensionName,

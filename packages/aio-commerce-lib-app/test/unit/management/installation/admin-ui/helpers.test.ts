@@ -17,7 +17,6 @@ import {
   unregisterExtension,
 } from "#management/installation/admin-ui/helpers";
 import { createMockAdminUiContext } from "#test/fixtures/admin-ui";
-import { configWithFullAdminUiV2 } from "#test/fixtures/config";
 import { makeHttpError } from "#test/fixtures/http-error";
 import { createMockLogger } from "#test/fixtures/installation";
 
@@ -43,9 +42,7 @@ describe("registerExtension", () => {
       logger,
     });
 
-    await expect(
-      registerExtension(configWithFullAdminUiV2, context),
-    ).resolves.toBeUndefined();
+    await expect(registerExtension(context)).resolves.toBeUndefined();
 
     expect(context.adminUiClient.registerExtension).toHaveBeenCalledWith({
       extensionName: "test-ns",
@@ -71,9 +68,9 @@ describe("registerExtension", () => {
       },
     });
 
-    await expect(
-      registerExtension(configWithFullAdminUiV2, context),
-    ).rejects.toThrow(REGISTER_EXTENSION_COMBINED_PATTERN);
+    await expect(registerExtension(context)).rejects.toThrow(
+      REGISTER_EXTENSION_COMBINED_PATTERN,
+    );
   });
 
   test("logs error before throwing", async () => {
@@ -91,9 +88,7 @@ describe("registerExtension", () => {
       logger,
     });
 
-    await expect(
-      registerExtension(configWithFullAdminUiV2, context),
-    ).rejects.toThrow();
+    await expect(registerExtension(context)).rejects.toThrow();
 
     expect(logger.error).toHaveBeenCalledOnce();
     expect(logger.error).toHaveBeenCalledWith(
@@ -101,11 +96,16 @@ describe("registerExtension", () => {
     );
   });
 
-  test("throws when a web source is configured without an extension view url", async () => {
+  test("falls back to the static extension url when no adminUiViewUrl is provided", async () => {
     const context = createMockAdminUiContext();
-    await expect(
-      registerExtension(configWithFullAdminUiV2, context),
-    ).rejects.toThrow("extension view url was not given");
+
+    await expect(registerExtension(context)).resolves.toBeUndefined();
+    expect(context.adminUiClient.registerExtension).toHaveBeenCalledWith({
+      extensionName: "test-ns",
+      extensionTitle: context.appData.projectTitle,
+      extensionUrl: "https://test-ns.adobeio-static.net/index.html",
+      extensionWorkspace: context.appData.workspaceName,
+    });
   });
 });
 
