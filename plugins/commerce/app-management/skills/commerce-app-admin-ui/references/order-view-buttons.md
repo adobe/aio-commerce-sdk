@@ -42,20 +42,21 @@ adminUi: {
 
 ### Constraints
 
-| Field                | Applies to | Constraint                                                    |
-| -------------------- | ---------- | ------------------------------------------------------------- |
-| `type`               | both       | `"worker"` or `"view"` (strict object per variant)            |
-| `id`                 | both       | Required, non-empty                                           |
-| `label`              | both       | Required, non-empty                                           |
-| `description`        | both       | Optional, non-empty                                           |
-| `level`              | both       | Optional; one of `-1`, `0`, `1`                               |
-| `sortOrder`          | both       | Optional positive number                                      |
-| `confirm`            | both       | Optional `{ title?, message? }`                               |
-| `notifications`      | both       | Optional `{ success?, error? }`                               |
-| `runtimeAction`      | worker     | Required; `<package>/<action>`                                |
-| `timeout`            | worker     | Optional positive number (seconds)                            |
-| `path`               | view       | Required; route into `web-src`                                |
-| `sandboxPermissions` | view       | Optional; `allow-downloads` / `allow-modals` / `allow-popups` |
+| Field                | Applies to | Constraint                                                                                                                          |
+| -------------------- | ---------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `type`               | both       | `"worker"` or `"view"` (strict object per variant)                                                                                  |
+| `id`                 | both       | Required, non-empty                                                                                                                 |
+| `label`              | both       | Required, non-empty                                                                                                                 |
+| `description`        | both       | Optional, non-empty                                                                                                                 |
+| `level`              | both       | Optional; one of `-1`, `0`, `1`                                                                                                     |
+| `sortOrder`          | both       | Optional positive number                                                                                                            |
+| `confirm`            | both       | Optional `{ title?, message? }`                                                                                                     |
+| `notifications`      | both       | Optional `{ success?, error? }`                                                                                                     |
+| `aclProtected`       | both       | Optional boolean; when `true`, Commerce generates a per-app nested ACL resource for the button so admins can grant/deny it per role |
+| `runtimeAction`      | worker     | Required; `<package>/<action>`                                                                                                      |
+| `timeout`            | worker     | Optional positive number (seconds)                                                                                                  |
+| `path`               | view       | Required; route into `web-src`                                                                                                      |
+| `sandboxPermissions` | view       | Optional; `allow-downloads` / `allow-modals` / `allow-popups`                                                                       |
 
 ## Worker handler wire contract
 

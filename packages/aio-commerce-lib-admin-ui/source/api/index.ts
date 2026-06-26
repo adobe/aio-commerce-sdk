@@ -13,9 +13,10 @@
 /** biome-ignore-all lint/performance/noBarrelFile: This is the `@adobe/aio-commerce-lib-admin-ui/api` entrypoint. */
 
 export * from "../errors";
-export * from "./lib/acl-resource-id";
+export { getAclResourceId } from "./lib/acl-resource-id";
 export * from "./lib/api-client";
 export * from "./lib/permission-client";
 
 export type * from "./extensions/schema";
+export type { AdminUiEntity } from "./lib/acl-resource-id";
 export type * from "./permissions/schema";

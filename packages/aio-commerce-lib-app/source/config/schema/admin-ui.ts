@@ -67,11 +67,12 @@ const ColumnTypeSchema = v.picklist([
 
 const ColumnAlignSchema = v.picklist(["left", "right", "center"]);
 
-const GridColumnSchema = v.object({
+const GridColumnSchema = v.strictObject({
   id: nonEmptyStringValueSchema("column ID"),
   label: nonEmptyStringValueSchema("column label"),
   type: ColumnTypeSchema,
   align: ColumnAlignSchema,
+  aclProtected: v.optional(v.boolean()),
 });
 
 const GridColumnsSchema = v.object({
@@ -95,6 +96,7 @@ const massActionCommonEntries = {
   confirm: v.optional(ConfirmSchema),
   notifications: v.optional(NotificationsSchema),
   selectionLimit: v.optional(positiveNumberValueSchema("selectionLimit")),
+  aclProtected: v.optional(v.boolean()),
 };
 
 /** `type: "view"` mass action — renders an iframe at `path`. */
@@ -141,6 +143,7 @@ const OrderViewButtonSchema = v.variant("type", [
     confirm: v.optional(ConfirmSchema),
     sandboxPermissions: v.optional(SandboxPermissionsSchema),
     notifications: v.optional(NotificationsSchema),
+    aclProtected: v.optional(v.boolean()),
   }),
   v.strictObject({
     type: v.literal("worker"),
@@ -155,6 +158,7 @@ const OrderViewButtonSchema = v.variant("type", [
     confirm: v.optional(ConfirmSchema),
     timeout: v.optional(positiveNumberValueSchema("timeout")),
     notifications: v.optional(NotificationsSchema),
+    aclProtected: v.optional(v.boolean()),
   }),
 ]);
 
@@ -198,7 +202,7 @@ const MenuSchema = v.object({
   sandboxPermissions: v.optional(SandboxPermissionsSchema),
   /**
    * When `true`, Commerce auto-generates a per-app ACL resource id from `metadata.id`
-   * and injects it into the Magento User Roles permission tree, allowing role-based
+   * and injects it into the Adobe Commerce User Roles permission tree, allowing role-based
    * access control per app menu.
    */
   aclProtected: v.optional(v.boolean()),
