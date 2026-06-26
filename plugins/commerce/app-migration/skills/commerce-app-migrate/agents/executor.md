@@ -1097,6 +1097,8 @@ constraints, Next steps) when in doc-scan-only mode.
             ← include only if src/commerce-backend-ui-1/ exists →
       [  mesh.json                    API Mesh config; v2 calls the action directly  ]
             ← include only if ProjectSnapshot.hasMeshConfig === true →
+      [  extension-manifest.json      metadata moved to app.commerce.config.ts  ]
+            ← include only if extension-manifest.json exists at the project root →
       [  <path>                       orphaned v1 schema file  ]
             ← for each .json under admin-ui-sdk/v1/ (or similar v1 paths) not referenced
                anywhere in src/, actions/, or app.config.yaml (confirmed with grep) →
@@ -1104,8 +1106,34 @@ constraints, Next steps) when in doc-scan-only mode.
       To remove:
         git rm -r <list each path that applies>
 
+    ← include this block only if assembled config has an `adminUi` section →
+    ── Dependencies that may no longer be needed ───────────────────────
+      These packages were common in v1 Admin UI SDK projects but are not
+      needed in v2. Check which are present in package.json and not
+      imported in any action source file before removing.
+
+      Frontend packages (v1 had a web-src UI; v2 has none):
+        @adobe/exc-app  @adobe/react-spectrum  @adobe/uix-core  @adobe/uix-guest
+        @spectrum-icons/workflow  react  react-dom  react-error-boundary
+        react-router-dom  core-js  crypto  crypto-browserify  https-browserify
+        os-browserify  regenerator-runtime
+
+      Runtime packages replaced by @adobe/aio-commerce-sdk:
+        @adobe/aio-sdk  cloudevents  got  node-fetch  oauth-1.0a  uuid
+
+      Dev dependencies (v1 build tooling):
+        @babel/core  @babel/plugin-transform-react-jsx  @babel/polyfill
+        @babel/preset-env  @openwhisk/wskdebug
+
+      To verify a package is unused before removing:
+        grep -r "<package>" src/ actions/ actions-src/ 2>/dev/null
+
+      To remove confirmed-unused packages:
+        <packageManager remove command> <package1> <package2> ...
+    ← end conditional →
+
     ── Modified ───────────────────────────────────────────────────────
-         ← omit app.config.yaml line if generate failed →
+         ← omit app.config.yaml line if init failed →
       app.config.yaml    added extensions block
       package.json       added postinstall hook
 
