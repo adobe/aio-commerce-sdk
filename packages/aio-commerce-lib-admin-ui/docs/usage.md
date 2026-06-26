@@ -10,7 +10,6 @@ This package provides utilities for interacting with the Admin UI SDK API and th
 - **[API Client](#api-client)**: Create typed HTTP clients for the Admin UI SDK API
 - **[Grid Column Wire Contract](#grid-column-wire-contract)**: Request and response builders for runtime actions handling `commerce/backend-ui/2` grid column extensions
 - **[Menu Constants](#menu-constants)**: Named constants and type guards for Commerce Admin menu IDs
-- **[Web Iframe Helpers](#web-iframe-helpers)**: Browser-side bootstrap helpers for iframe-based Admin UI extensions
 - **[Order View Button Wire Contract](#order-view-button-wire-contract)**: Request and response builders for runtime actions handling `commerce/backend-ui/2` order view button extensions
 - **[Permission Client](#permission-client)**: Check whether the current Commerce admin user has been granted a per-app ACL resource
 
@@ -51,41 +50,6 @@ await client.unregisterExtension({
   extensionName: "my_namespace",
 });
 ```
-
-### Web Iframe Helpers
-
-Apps that declare iframe-based Admin UI features use the `./web` entrypoint from browser code. The `@adobe/aio-commerce-lib-app` generator creates this wrapper for new `web-src/` projects:
-
-```jsx
-import { createExtensionApp } from "@adobe/aio-commerce-lib-admin-ui/web";
-import config from "#app.commerce.config";
-
-import { MainPage } from "./pages/main-page";
-
-createExtensionApp({
-  metadata: {
-    extensionId: config.metadata.id,
-    pageTitle: config.metadata.displayName,
-  },
-
-  routes: [{ index: true, element: <MainPage /> }],
-});
-```
-
-`createExtensionApp` mounts the app, loads the Experience Cloud shell runtime when available, registers the UIX guest extension, attaches the UIX guest connection, and provides Spectrum 2 layout context. Routing is backed by TanStack Router hash history and wired into Spectrum's `Provider` router integration. An app config path of `#/bulk-cancel` maps to `{ path: "bulk-cancel", element: <BulkCancelPage /> }`.
-
-Inside a rendered route, use `useSharedContext` to retrieve data from the shell, such as IMS data.
-
-```jsx
-import { useSharedContext } from "@adobe/aio-commerce-lib-admin-ui/web";
-
-export function MainPage() {
-  const { extensionId, imsToken, imsOrgId } = useSharedContext();
-  return <main>{/* Add your UI here */}</main>;
-}
-```
-
-`imsToken`, `imsOrgId`, and `guestConnection` are `null` until the shell and UIX connection are ready.
 
 ### Grid Column Wire Contract
 
