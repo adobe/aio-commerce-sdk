@@ -12,7 +12,7 @@
 
 import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
-import { join } from "node:path";
+import { basename, join } from "node:path";
 
 import { afterEach, describe, expect, test, vi } from "vitest";
 
@@ -360,7 +360,9 @@ describe("commands/generate/actions", () => {
           expect(
             existsSync(join(webSrcDir, "src", "pages", "main-page.jsx")),
           ).toBe(true);
-          expect(existsSync(join(webSrcDir, "src", "components"))).toBe(true);
+          expect(
+            existsSync(join(webSrcDir, "src", "components", "welcome.jsx")),
+          ).toBe(true);
 
           const appContent = await readFile(
             join(webSrcDir, "src", "app.jsx"),
@@ -368,6 +370,12 @@ describe("commands/generate/actions", () => {
           );
           expect(appContent).toContain("#app.commerce.config");
           expect(appContent).toContain("createExtensionApp");
+
+          const pageContent = await readFile(
+            join(webSrcDir, "src", "pages", "main-page.jsx"),
+            "utf-8",
+          );
+          expect(pageContent).toContain("#web/components/welcome");
 
           const pkg = JSON.parse(
             await readFile(join(tempDir, "package.json"), "utf-8"),
@@ -387,6 +395,12 @@ describe("commands/generate/actions", () => {
               },
             ],
           });
+          expect(pkg.imports["#web/*"]).toBe(
+            "./src/commerce-backend-ui-2/web-src/src/*",
+          );
+          expect(pkg.imports["#app.commerce.config"]).toBe(
+            "./src/commerce-extensibility-1/.generated/app.commerce.manifest.json",
+          );
           expect(pkg.dependencies).toEqual(
             expect.objectContaining({
               // biome-ignore lint/performance/useTopLevelRegex: Just a test
@@ -402,9 +416,11 @@ describe("commands/generate/actions", () => {
 
           expect(mockSpawnSync).toHaveBeenCalledTimes(1);
           expect(mockSpawnSync).toHaveBeenCalledWith(
-            "npm",
+            "pnpm",
             ["i"],
-            expect.objectContaining({ cwd: tempDir }),
+            expect.objectContaining({
+              cwd: expect.stringContaining(basename(tempDir)),
+            }),
           );
         },
       );
@@ -479,6 +495,9 @@ describe("commands/generate/actions", () => {
           expect(
             existsSync(join(webSrcDir, "src", "pages", "main-page.tsx")),
           ).toBe(true);
+          expect(
+            existsSync(join(webSrcDir, "src", "components", "welcome.tsx")),
+          ).toBe(true);
           expect(existsSync(join(webSrcDir, "src", "app.jsx"))).toBe(false);
 
           const indexHtml = await readFile(
@@ -521,6 +540,12 @@ describe("commands/generate/actions", () => {
               ),
             ),
           ).toBe(false);
+          const pkg = JSON.parse(
+            await readFile(join(tempDir, "package.json"), "utf-8"),
+          );
+          expect(pkg.imports["#web/*"]).toBe(
+            "./src/commerce-backend-ui-2/web-src/src/*",
+          );
           expect(mockSpawnSync).not.toHaveBeenCalled();
         },
       );

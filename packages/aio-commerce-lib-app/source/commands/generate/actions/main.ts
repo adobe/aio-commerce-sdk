@@ -15,6 +15,7 @@ import {
   generateActionFiles,
   generateWebSrc,
   prepareRuntimeAppConfigModule,
+  prepareWebSourceImportAlias,
   updateExtConfig,
 } from "./lib";
 
@@ -60,6 +61,11 @@ export async function run(
   if (hasAdminUi(appManifest)) {
     const extConfig = await updateExtConfig(
       appManifest,
+      BACKEND_UI_V2_EXTENSION_POINT_ID,
+    );
+
+    await prepareWebSourceImportAlias(
+      extConfig,
       BACKEND_UI_V2_EXTENSION_POINT_ID,
     );
 

@@ -5,6 +5,8 @@ import webSrcIndexHtml from "#templates/admin-ui/web-src/index.html?raw";
 // @ts-expect-error - Importing the template as a raw string for testing purposes.
 import webSrcApp from "#templates/admin-ui/web-src/src/app.jsx?raw";
 // @ts-expect-error - Importing the template as a raw string for testing purposes.
+import webSrcWelcome from "#templates/admin-ui/web-src/src/components/welcome.jsx?raw";
+// @ts-expect-error - Importing the template as a raw string for testing purposes.
 import webSrcMainPage from "#templates/admin-ui/web-src/src/pages/main-page.jsx?raw";
 // @ts-expect-error - Importing the template as a raw string for testing purposes.
 import appConfigTemplate from "#templates/app-management/app-config.js?raw";
@@ -30,6 +32,7 @@ export const templates = {
   webSrcIndexCss: webSrcIndexCss as string,
   webSrcIndexHtml: webSrcIndexHtml as string,
   webSrcMainPage: webSrcMainPage as string,
+  webSrcWelcome: webSrcWelcome as string,
 };
 
 /**
@@ -47,6 +50,7 @@ export function makeTemplateFiles(): Record<string, string> {
     "admin-ui/web-src/index.html": templates.webSrcIndexHtml,
     "admin-ui/web-src/index.css": templates.webSrcIndexCss,
     "admin-ui/web-src/src/app.jsx": templates.webSrcApp,
+    "admin-ui/web-src/src/components/welcome.jsx": templates.webSrcWelcome,
     "admin-ui/web-src/src/pages/main-page.jsx": templates.webSrcMainPage,
   };
 }

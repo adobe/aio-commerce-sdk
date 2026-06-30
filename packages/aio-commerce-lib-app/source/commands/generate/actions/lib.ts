@@ -58,11 +58,15 @@ import {
   CUSTOM_IMPORTS_PLACEHOLDER,
   CUSTOM_SCRIPTS_LOADER_PLACEHOLDER,
   CUSTOM_SCRIPTS_MAP_PLACEHOLDER,
+  JSX_FILE_EXTENSION,
   TEMPLATES_DIR,
+  TSX_FILE_EXTENSION,
   TYPESCRIPT_CONFIG_EXTENSIONS,
   WEB_SOURCE_DEPENDENCIES,
   WEB_SOURCE_DEV_DEPENDENCIES,
   WEB_SOURCE_ENTRYPOINT,
+  WEB_SOURCE_HTML_ENTRYPOINT,
+  WEB_SOURCE_IMPORT_ALIAS,
   WEB_SOURCE_SHARED_BUNDLES,
 } from "./constants";
 
@@ -79,10 +83,6 @@ type ValidExtensionPointId =
 type WebSourceExtension = "jsx" | "tsx";
 
 const LEADING_DOT_SLASH_PATTERN = /^\.\//u;
-const JSX_FILE_EXTENSION = ".jsx";
-const TSX_FILE_EXTENSION = ".tsx";
-const WEB_SOURCE_HTML_ENTRYPOINT = "index.html";
-
 /** Normalize a path for use as an ESM import specifier. */
 function normalizeImportPath(path: string) {
   const normalizedPath = path.split(sep).join("/");
@@ -332,6 +332,26 @@ async function prepareWebSourcePackage(projectRoot: string) {
   const dependencies = pkg.content.dependencies ?? {};
   const devDependencies = pkg.content.devDependencies ?? {};
   const dependencyMaps = [dependencies, devDependencies];
+  const declaredDependencyNames = new Set(
+    dependencyMaps.flatMap((dependencies) => Object.keys(dependencies)),
+  );
+  const dependenciesToDeclare = [
+    ...WEB_SOURCE_DEPENDENCIES,
+    ...WEB_SOURCE_DEV_DEPENDENCIES,
+  ].filter(({ name }) => !declaredDependencyNames.has(name));
+
+  if (dependenciesToDeclare.length > 0) {
+    consola.info("Adding web-src dependencies in package.json:");
+    consola.log.raw(
+      formatTree(
+        dependenciesToDeclare.map(
+          ({ name, version }) => `  - ${name}@${version}`,
+        ),
+      ),
+    );
+  } else {
+    consola.info("web-src dependencies are already declared in package.json.");
+  }
 
   pkg.update({
     dependencies: mergePackageJsonDependencies(
@@ -359,11 +379,56 @@ async function prepareWebSourcePackage(projectRoot: string) {
   await pkg.save();
 
   if (installPlan.missing.length === 0) {
+    consola.info("web-src dependencies are already installed.");
     return;
   }
 
+  consola.info("Installing missing web-src dependencies from package.json:");
+  consola.log.raw(
+    formatTree(
+      installPlan.missing.map(({ name, version }) => `  - ${name}@${version}`),
+    ),
+  );
   const packageManager = await detectPackageManager(projectRoot);
   runProjectInstall(packageManager, projectRoot);
+}
+
+/**
+ * Add the package import alias for an existing or generated web-src.
+ * @param extConfig - Extension config containing the view operation.
+ * @param extensionPointId - Extension point that owns the web source folder.
+ */
+export async function prepareWebSourceImportAlias(
+  extConfig: ExtConfig,
+  extensionPointId: ValidExtensionPointId,
+) {
+  const entrypoint = getWebSourceEntrypoint(extConfig, extensionPointId);
+  if (entrypoint === null) {
+    return;
+  }
+
+  const projectRoot = await getProjectRootDirectory();
+  const pkg = await loadPackageJson(projectRoot);
+  if (pkg === null) {
+    throw new Error("Could not find package.json.");
+  }
+
+  const existingImports =
+    typeof pkg.content.imports === "object" && pkg.content.imports !== null
+      ? pkg.content.imports
+      : {};
+
+  const webSourceSrcPath = join(dirname(entrypoint), "src");
+  pkg.update({
+    imports: {
+      ...existingImports,
+      [WEB_SOURCE_IMPORT_ALIAS]: `${normalizePackageJsonPath(
+        webSourceSrcPath,
+      )}/*`,
+    },
+  });
+
+  await pkg.save();
 }
 
 /**
@@ -408,6 +473,7 @@ async function copyWebSourceTemplates(
   extension: WebSourceExtension,
 ) {
   await mkdir(targetDir, { recursive: true });
+  const outputFiles: string[] = [];
 
   for (const entry of await readdir(sourceDir, { withFileTypes: true })) {
     const sourcePath = join(sourceDir, entry.name);
@@ -417,7 +483,10 @@ async function copyWebSourceTemplates(
     );
 
     if (entry.isDirectory()) {
-      await copyWebSourceTemplates(sourcePath, targetPath, extension);
+      outputFiles.push(
+        ...(await copyWebSourceTemplates(sourcePath, targetPath, extension)),
+      );
+
       continue;
     }
 
@@ -430,7 +499,10 @@ async function copyWebSourceTemplates(
     }
 
     await writeFile(targetPath, content, { encoding: "utf-8", flag: "wx" });
+    outputFiles.push(`  - ${relative(process.cwd(), targetPath)}`);
   }
+
+  return outputFiles;
 }
 
 /** Generate the web source scaffold for iframe-based Admin UI extensions. */
@@ -456,16 +528,16 @@ export async function generateWebSrc(
   const sourceDir = join(templatesDir, "admin-ui", "web-src");
   const targetDir = dirname(entrypointPath);
 
-  await copyWebSourceTemplates(
+  const outputFiles = await copyWebSourceTemplates(
     sourceDir,
     targetDir,
     await resolveWebSourceExtension(projectRoot),
   );
 
-  await mkdir(join(targetDir, "src", "components"), { recursive: true });
   await prepareWebSourcePackage(projectRoot);
 
   consola.success(`Scaffolded ${relative(process.cwd(), targetDir)}`);
+  consola.log.raw(formatTree(outputFiles));
 }
 
 /** Generate the action files */

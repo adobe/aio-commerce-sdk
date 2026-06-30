@@ -1,13 +1,10 @@
-import { useIms } from "@adobe/aio-commerce-lib-admin-ui/web";
+import { Welcome } from "#web/components/welcome";
 
+/** Entrypoint for the main page of the app. */
 export function MainPage() {
-  const { imsToken, imsOrgId } = useIms();
   return (
     <main>
-      <h1>Welcome to your Adobe Commerce App</h1>
-
-      <p>IMS Token: {`${imsToken.slice(0, 10)}...`}</p>
-      <p>IMS Org ID: {imsOrgId}</p>
+      <Welcome />
     </main>
   );
 }

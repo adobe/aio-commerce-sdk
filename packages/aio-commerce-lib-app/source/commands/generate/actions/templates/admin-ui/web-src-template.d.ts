@@ -21,4 +21,5 @@ declare module "#app.commerce.config" {
   export default config;
 }
 
+declare module "#web/*";
 declare module "*.css";
