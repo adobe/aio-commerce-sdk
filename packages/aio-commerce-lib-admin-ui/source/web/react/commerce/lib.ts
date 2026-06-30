@@ -16,5 +16,8 @@
  */
 export function parseOrderId(href: string): string | null {
   const urlObj = new URL(href);
-  return urlObj.searchParams.get("orderId");
+  return (
+    urlObj.searchParams.get("orderId") ??
+    new URLSearchParams(urlObj.hash.split("?")[1]).get("orderId")
+  );
 }
