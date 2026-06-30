@@ -27,6 +27,7 @@ import {
   getPackageDependencyInstallPlan,
   getProjectRootDirectory,
   isESM,
+  loadPackageJson,
   makeOutputDirFor,
   mergePackageJsonDependencies,
   readPackageJson,
@@ -165,6 +166,30 @@ describe("readPackageJson", () => {
   });
 });
 
+describe("loadPackageJson", () => {
+  test("should load package.json with npmcli package-json", async () => {
+    await withTempFiles(
+      {
+        "package.json": JSON.stringify({
+          name: "test-package",
+          version: "1.0.0",
+        }),
+      },
+      async (tempDir) => {
+        const pkg = await loadPackageJson(tempDir);
+        expect(pkg?.content.name).toBe("test-package");
+        expect(pkg?.content.version).toBe("1.0.0");
+      },
+    );
+  });
+
+  test("should return null when package.json is not found", async () => {
+    await withTempFiles({}, async (tempDir) => {
+      await expect(loadPackageJson(tempDir)).resolves.toBeNull();
+    });
+  });
+});
+
 describe("package.json dependency helpers", () => {
   test("should resolve an installed package version from a project", async () => {
     await withTempFiles(
@@ -192,6 +217,23 @@ describe("package.json dependency helpers", () => {
         await expect(
           getInstalledPackageVersion("react", tempDir),
         ).resolves.toBe(null);
+      },
+    );
+  });
+
+  test("should resolve a scoped installed package version from a project", async () => {
+    await withTempFiles(
+      {
+        "node_modules/@scope/package/package.json": JSON.stringify({
+          name: "@scope/package",
+          version: "1.2.3",
+        }),
+        "package.json": JSON.stringify({ name: "test-package" }),
+      },
+      async (tempDir) => {
+        await expect(
+          getInstalledPackageVersion("@scope/package", tempDir),
+        ).resolves.toBe("1.2.3");
       },
     );
   });
@@ -292,6 +334,16 @@ describe("package.json dependency helpers", () => {
         { name: "react", version: "^19.0.0" },
       ]),
     ).toEqual({ react: "19.2.7" });
+  });
+
+  test("should not merge dependencies that exist in another dependency map", () => {
+    expect(
+      mergePackageJsonDependencies(
+        {},
+        [{ name: "@types/react", version: "^19.0.0" }],
+        [{}, { "@types/react": "^18.0.0" }],
+      ),
+    ).toEqual({});
   });
 });
 
