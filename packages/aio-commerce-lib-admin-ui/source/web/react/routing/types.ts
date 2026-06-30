@@ -14,6 +14,7 @@ import type { NavigateOptions, ToOptions } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 
 declare module "@react-spectrum/s2/Provider" {
+  // biome-ignore lint/style/useConsistentTypeDefinitions: For declaration merging, we need to use `interface` instead of `type`.
   interface RouterConfig {
     href: ToOptions;
     routerOptions: Omit<NavigateOptions, keyof ToOptions>;
