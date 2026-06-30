@@ -17,7 +17,11 @@ import {
   IllustratedMessage,
 } from "@react-spectrum/s2/IllustratedMessage";
 import ErrorIllustration from "@react-spectrum/s2/illustrations/linear/Error";
-import { useRouterState } from "@tanstack/react-router";
+import {
+  useCanGoBack,
+  useRouter,
+  useRouterState,
+} from "@tanstack/react-router";
 import { ErrorBoundary } from "react-error-boundary";
 
 import type { FallbackProps } from "react-error-boundary";
@@ -33,6 +37,9 @@ function getErrorMessage(error: unknown): string {
 // Relies on Spectrum being mounted above this boundary so the fallback renders
 // within the Provider's theme. See the provider ordering in `extension-app.tsx`.
 function ErrorFallback({ error, resetErrorBoundary }: Readonly<FallbackProps>) {
+  const router = useRouter();
+  const canGoBack = useCanGoBack();
+
   return (
     <div
       style={{
@@ -47,6 +54,16 @@ function ErrorFallback({ error, resetErrorBoundary }: Readonly<FallbackProps>) {
         <Heading>Something went wrong</Heading>
         <Content>{getErrorMessage(error)}</Content>
         <ButtonGroup>
+          {canGoBack && (
+            <Button
+              onPress={() => {
+                resetErrorBoundary();
+                router.history.back();
+              }}
+              variant="secondary">
+              Go back
+            </Button>
+          )}
           <Button onPress={resetErrorBoundary} variant="accent">
             Try again
           </Button>
