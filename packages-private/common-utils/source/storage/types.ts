@@ -14,7 +14,7 @@
  * Generic key-value store interface.
  * @typeParam T - The type of data stored.
  */
-export interface KeyValueStore<T> {
+export type KeyValueStore<T> = {
   /**
    * Deletes data by key.
    *
@@ -37,7 +37,7 @@ export interface KeyValueStore<T> {
    * @param data - The data to save.
    */
   put(key: string, data: T): Promise<void>;
-}
+};
 
 /**
  * Function to extract a key from data.

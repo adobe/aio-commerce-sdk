@@ -21,7 +21,7 @@ const DEFAULT_SNAPSHOT_TAG = "beta";
 const STATUS_OUTPUT_FILE = "changeset-status.json";
 
 /** Structured output from `changeset status --output`. */
-interface ChangesetStatus {
+type ChangesetStatus = {
   changesets: Array<{
     id: string;
     releases: Array<{ name: string; type: string }>;
@@ -34,14 +34,14 @@ interface ChangesetStatus {
     oldVersion: string;
     type: string;
   }>;
-}
+};
 
 /** Workspace package info from `pnpm ls`. */
-interface WorkspacePackage {
+type WorkspacePackage = {
   name: string;
   path: string;
   private?: boolean;
-}
+};
 
 export default async function main(
   core: AsyncFunctionArguments["core"],

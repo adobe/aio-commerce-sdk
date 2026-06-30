@@ -2767,6 +2767,11 @@
           "workspaceTitle": {
             "type": "string",
             "minLength": 1
+          },
+          "adminUiViewUrl": {
+            "type": "string",
+            "format": "uri",
+            "minLength": 1
           }
         },
         "required": [

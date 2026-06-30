@@ -29,12 +29,12 @@ import type { ValidationIssue } from "#management/installation/workflow/step";
 import type { WebhooksExecutionContext } from "./context";
 
 /** Minimal identity fields shared by subscribe and unsubscribe params. */
-export interface WebhookIdentity {
+export type WebhookIdentity = {
   batch_name: string;
   hook_name: string;
   webhook_method: string;
   webhook_type: string;
-}
+};
 
 /** Identity of a Commerce webhook that conflicts with a modification webhook from this app. */
 export type ConflictingWebhook = WebhookIdentity & {

@@ -24,7 +24,7 @@ import type { AdobeCommerceHttpClient } from "@adobe/aio-commerce-lib-api";
 const DEFAULT_CACHE_TTL_MS = 300_000;
 
 /** Options used to create an Admin UI SDK permission client. */
-export interface AdminUiPermissionClientOptions {
+export type AdminUiPermissionClientOptions = {
   /** The application's `metadata.id` value. When provided, `check()` and `require()` can be called with no resource argument. */
   appId?: string;
   /**
@@ -37,10 +37,10 @@ export interface AdminUiPermissionClientOptions {
   denyOnError?: boolean;
   /** Commerce HTTP client used to call the Admin UI SDK permission endpoint. */
   httpClient: AdobeCommerceHttpClient;
-}
+};
 
 /** Client for checking the current user's Admin UI SDK resource permissions. */
-export interface AdminUiPermissionClient {
+export type AdminUiPermissionClient = {
   /**
    * Checks whether the current user has the given ACL resource granted.
    *
@@ -66,7 +66,7 @@ export interface AdminUiPermissionClient {
    *   `false`, or immediately when neither `resource` nor a valid `appId` is available.
    */
   require(resource?: string): Promise<void>;
-}
+};
 
 type PermissionCheckResult =
   | {
