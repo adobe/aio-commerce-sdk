@@ -14,8 +14,11 @@ import { Provider } from "@react-spectrum/s2/Provider";
 import { Outlet } from "@tanstack/react-router";
 
 import { ImsContextProvider } from "#web/react/auth/context/ims-context.tsx";
-import { useImsCredentials } from "#web/react/auth/hooks/use-ims-credentials";
-import { SharedContextProvider } from "#web/react/commerce/context/shared-context.tsx";
+import { resolveImsCredentials } from "#web/react/auth/lib";
+import {
+  SharedContextProvider,
+  useInternalSharedContext,
+} from "#web/react/commerce/context/shared-context.tsx";
 import { useSpectrumRouter } from "#web/react/routing/hooks/use-spectrum-router";
 import { useExtensionColorScheme } from "#web/react/shell/hooks/use-extension-color-scheme";
 import { useShellConfiguration } from "#web/react/shell/hooks/use-shell-configuration";
@@ -55,6 +58,14 @@ export function ExtensionApp(props: Readonly<ExtensionAppProps>) {
   );
 }
 
+/**
+ * Renders the extension UI after the Commerce shared context provider is mounted.
+ *
+ * This is a separated component because color-scheme and IMS credential resolution need the
+ * `SharedContextProvider` to be mounted first, so they can access the Commerce shared context.
+ *
+ * @param props - The Experience Cloud shell configuration, if available.
+ */
 function ExtensionAppContent(
   props: Readonly<{ shellConfiguration: ShellConfiguration | null }>,
 ) {
@@ -62,35 +73,18 @@ function ExtensionAppContent(
   const spectrumRouter = useSpectrumRouter();
   const colorScheme = useExtensionColorScheme(shellConfiguration);
 
+  const { sharedContext } = useInternalSharedContext();
+  const credentials = resolveImsCredentials(shellConfiguration, sharedContext);
+
   return (
     // The Spectrum Provider sits at the top so the error boundary and its fallback
     // render within the configured theme, and so it wraps the data providers below.
     <Provider colorScheme={colorScheme} router={spectrumRouter}>
       <ExtensionErrorBoundary>
-        <ExtensionShell shellConfiguration={shellConfiguration} />
+        <ImsContextProvider credentials={credentials}>
+          <Outlet />
+        </ImsContextProvider>
       </ExtensionErrorBoundary>
     </Provider>
-  );
-}
-
-/**
- * Renders the extension UI within the Commerce shared context.
- *
- * This is a separated component because `useImsCredentials` needs the `SharedContextProvider` to be mounted
- * first,  so it can access the Commerce shared context. The IMS credentials are resolved from the shell
- * configuration and the Commerce shared context, depending on where the app is running.
- *
- * @param props - The Experience Cloud shell configuration, if available.
- */
-function ExtensionShell(
-  props: Readonly<{ shellConfiguration: ShellConfiguration | null }>,
-) {
-  const { shellConfiguration } = props;
-  const credentials = useImsCredentials(shellConfiguration);
-
-  return (
-    <ImsContextProvider credentials={credentials}>
-      <Outlet />
-    </ImsContextProvider>
   );
 }
