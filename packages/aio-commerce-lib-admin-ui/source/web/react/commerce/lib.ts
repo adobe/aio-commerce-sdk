@@ -10,15 +10,11 @@
  * governing permissions and limitations under the License.
  */
 
-const ORDER_ID_PATH_PARAM_PATTERN = /\/orderId\/([^/?#]+)/u;
-
 /**
- * Extracts the order ID from a Commerce host URL. The host passes it as a Magento path parameter
- * (`.../orderId/<value>/`), not as a query string.
- *
+ * Extracts the order ID from the given URL (must be absolute).
  * @param href - The URL to read the order ID from (typically `window.location.href`).
  */
 export function parseOrderId(href: string): string | null {
-  const match = ORDER_ID_PATH_PARAM_PATTERN.exec(href);
-  return match ? decodeURIComponent(match[1]) : null;
+  const urlObj = new URL(href);
+  return urlObj.searchParams.get("orderId");
 }
