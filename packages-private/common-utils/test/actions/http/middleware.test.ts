@@ -18,11 +18,11 @@ import { HttpActionRouter } from "#actions/http/router";
 
 import type { RuntimeActionParams } from "@adobe/aio-commerce-lib-core/params";
 
-interface LoggerContext {
+type LoggerContext = {
   logger: {
     info: (msg: string) => void;
   };
-}
+};
 
 describe("Middleware Plugins", () => {
   describe("logger()", () => {

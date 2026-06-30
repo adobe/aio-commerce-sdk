@@ -33,16 +33,17 @@ import type { EmptyObject, Promisable, Simplify } from "type-fest";
  * }
  * ```
  */
-// biome-ignore lint/suspicious/noEmptyInterface: Intentionally empty for declaration merging
+// biome-ignore lint/suspicious/noEmptyInterface: intentionally empty for declaration merging
+// biome-ignore lint/style/useConsistentTypeDefinitions: interface required for declaration merging
 export interface RouteContext {}
 
 /**
  * Internal context with raw action params, always available.
  */
-export interface BaseContext {
+export type BaseContext = {
   /** Raw OpenWhisk/Runtime action parameters */
   rawParams: RuntimeActionParams;
-}
+};
 
 /**
  * Context builder function type.
@@ -92,7 +93,7 @@ export type ExtractParams<T extends string> = T extends `${infer Before}/*`
  * @template TBody - Type of request body
  * @template TQuery - Type of query parameters
  */
-export interface RouteRequest<TParams, TBody, TQuery> {
+export type RouteRequest<TParams, TBody, TQuery> = {
   /** Parsed request body */
   body: TBody;
 
@@ -109,10 +110,10 @@ export interface RouteRequest<TParams, TBody, TQuery> {
 
   /** Query string parameters */
   query: TQuery;
-}
+};
 
 /** Internal compiled route representation used by the router. */
-export interface CompiledRoute {
+export type CompiledRoute = {
   /** Optional schema for validating request body */
   body?: StandardSchemaV1;
 
@@ -137,7 +138,7 @@ export interface CompiledRoute {
 
   /** Optional schema for validating query parameters */
   query?: StandardSchemaV1;
-}
+};
 
 /**
  * Helper type to check if schema output contains all required path params.
