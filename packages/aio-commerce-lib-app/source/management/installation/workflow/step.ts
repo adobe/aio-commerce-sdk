@@ -179,7 +179,7 @@ export type Step<
   | BranchStep<TName, TConfig, TStepCtx>;
 
 /** Loosely-typed step for use in non type-safe contexts. */
-export interface AnyStep {
+export type AnyStep = {
   children?: AnyStep[];
 
   // biome-ignore-start lint/suspicious/noExplicitAny: We need the flexibility here
@@ -198,7 +198,7 @@ export interface AnyStep {
 
   when?: (config: CommerceAppConfigOutputModel) => boolean;
   // biome-ignore-end lint/suspicious/noExplicitAny: We no longer need the flexibility
-}
+};
 
 /** Check if a step is a leaf step. */
 export function isLeafStep(step: AnyStep): step is LeafStep {

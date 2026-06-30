@@ -51,9 +51,9 @@ export type SlackPayload = {
  * These types match the arguments injected by `actions/github-script`.
  * @see https://github.com/actions/github-script
  */
-export interface AsyncFunctionArguments {
+export type AsyncFunctionArguments = {
   context: typeof import("@actions/github").context;
   core: typeof import("@actions/core");
   exec: typeof import("@actions/exec");
   github: ReturnType<typeof import("@actions/github").getOctokit>;
-}
+};

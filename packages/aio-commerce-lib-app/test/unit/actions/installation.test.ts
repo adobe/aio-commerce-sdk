@@ -284,6 +284,28 @@ describe("installationRuntimeAction", () => {
       });
     });
 
+    test("returns 400 when adminUiViewUrl is not a valid URL", async () => {
+      const handler = installationRuntimeAction({
+        appConfig: minimalValidConfig,
+      });
+
+      const result = await handler(
+        createRuntimeActionParams({
+          method: "post",
+          body: {
+            ...requestBody,
+            appData: { ...appData, adminUiViewUrl: "not-a-url" },
+          },
+          ...DEFAULT_INSTALLATION_PARAMS,
+        }),
+      );
+
+      expect(result).toMatchObject({
+        type: "error",
+        error: { statusCode: 400 },
+      });
+    });
+
     test("returns 500 when installation starts without an app config", async () => {
       const handler = installationRuntimeAction({
         // @ts-expect-error - intentionally missing app config
@@ -347,6 +369,39 @@ describe("installationRuntimeAction", () => {
           name: "app-management/installation",
           blocking: false,
           result: false,
+        }),
+      );
+    });
+
+    test("passes adminUiViewUrl to the installation execution", async () => {
+      const initialState = createMockInProgressState({ id: "installation-1" });
+      createInitialInstallationStateMock.mockReturnValue(initialState);
+
+      const handler = installationRuntimeAction({
+        appConfig: minimalValidConfig,
+      });
+
+      await handler(
+        createRuntimeActionParams({
+          method: "post",
+          body: {
+            ...requestBody,
+            appData: {
+              ...appData,
+              adminUiViewUrl: "https://example.com/admin-ui/index.html",
+            },
+          },
+          ...DEFAULT_INSTALLATION_PARAMS,
+        }),
+      );
+
+      expect(invokeMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          params: expect.objectContaining({
+            appData: expect.objectContaining({
+              adminUiViewUrl: "https://example.com/admin-ui/index.html",
+            }),
+          }),
         }),
       );
     });
