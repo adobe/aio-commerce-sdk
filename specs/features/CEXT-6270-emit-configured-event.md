@@ -45,23 +45,31 @@ After this feature ships, publishing a custom event from a runtime action looks 
 
 ```ts
 import { publishEvent } from "@adobe/aio-commerce-lib-app";
+import { createAdobeIoEventsApiClient } from "@adobe/aio-commerce-lib-events";
 import { resolveImsAuthParams } from "@adobe/aio-commerce-lib-auth";
 
 export async function main(params) {
+  const client = createAdobeIoEventsApiClient({
+    auth: resolveImsAuthParams(params),
+    config: { ingressBaseUrl: params.AIO_EVENTS_INGRESS_BASE_URL },
+  });
+
   await publishEvent({
+    client,
     provider: "order-events",
     event: "order.created",
     payload: { orderId: "100000123", total: 149.99 },
-    auth: resolveImsAuthParams(params),
   });
 }
 ```
 
 `provider` is the `key` of an event provider declared in `app.commerce.config.ts`. `event`
 is the `name` of an event within that provider. Both must match the configuration exactly. The
-`payload` is a JSON object; the SDK wraps it in a CloudEvents envelope before sending. `auth`
-follows the same pattern as `getCommerceClient` — the action must have `AIO_COMMERCE_AUTH`
-inputs configured.
+`payload` is a JSON object; the SDK wraps it in a CloudEvents envelope before sending.
+
+`config.ingressBaseUrl` defaults to `https://eventsingress.adobe.io/` when not set. Stage
+environments set `AIO_EVENTS_INGRESS_BASE_URL` in the action inputs to target the stage
+ingress — no code change needed. The action must have `AIO_COMMERCE_AUTH` inputs configured.
 
 **Example configuration** that backs the call above:
 
@@ -137,10 +145,10 @@ payload). The request must carry two auth headers: `Authorization: Bearer {acces
 `x-api-key: {client_id}`. Both are available from the standard IMS auth params resolved by
 `resolveImsAuthParams`.
 
-The ingress base URL is configurable via the `AIO_EVENTS_INGRESS_BASE_URL` action input,
-defaulting to `https://eventsingress.adobe.io/` when not set. Stage environments should set
-this input to the stage ingress URL. This mirrors the `AIO_EVENTS_API_BASE_URL` pattern
-already used by `AdobeIoEventsHttpClient` for the management API.
+The ingress base URL is a new optional field on `IoEventsHttpClientConfig` in `lib-api`:
+`ingressBaseUrl`, defaulting to `https://eventsingress.adobe.io/` when not set. This keeps
+the ingress config co-located with the rest of the client config, consistent with how
+`baseUrl` controls the management API endpoint on the same client.
 
 ### `publishEvent` in lib-app
 
@@ -148,36 +156,29 @@ A new export from the root entrypoint of `@adobe/aio-commerce-lib-app`:
 
 ```ts
 publishEvent<TPayload extends Record<string, unknown>>(params: {
+  client: AdobeIoEventsApiClient;
   provider: string;
   event: string;
   payload: TPayload;
-  auth: ImsAuthParams | ImsAuthProvider;
-  ingressBaseUrl?: string;
 }): Promise<void>
 ```
 
-The generic `TPayload` lets callers enforce the payload shape at the call site without
-requiring the SDK to know the schema. The constraint `Record<string, unknown>` rules out
-primitives and arrays, matching what the I/O Events ingress expects as `data`.
+`publishEvent` accepts the existing `AdobeIoEventsApiClient` from `lib-events` — no new
+client type is introduced. The generic `TPayload` lets callers enforce the payload shape at
+the call site. The constraint `Record<string, unknown>` rules out primitives and arrays,
+matching what the I/O Events ingress expects as `data`.
 
-`ingressBaseUrl` is an optional escape hatch for testing against non-production ingress
-endpoints directly in code. In production, prefer the `AIO_EVENTS_INGRESS_BASE_URL` action
-input so the URL is configured per environment rather than hardcoded at call sites.
-
-Internal flow:
+Internal flow of `publishEvent`:
 
 1. Read `getSystemConfigByKey<StoredEventsData>("events")` from lib-config.
 2. If null, throw `EventsDataNotInitializedError`.
 3. Look up `params.provider` in `data.providers`. If not found, throw `ProviderNotFoundError`.
 4. Look up `params.event` in the provider's `events` map. If not found, throw `EventNotFoundError`.
-5. Resolve `ImsAuthProvider` to `ImsAuthParams` if needed (same as `getCommerceClient`).
-6. Resolve the ingress base URL from `params.ingressBaseUrl`, falling back to
-   `AIO_EVENTS_INGRESS_BASE_URL` in the runtime action inputs, then to
-   `https://eventsingress.adobe.io/`.
-7. POST a CloudEvents envelope to the ingress with `Authorization` and `x-api-key` headers.
+5. POST a CloudEvents envelope to `client`'s `ingressBaseUrl` with `Authorization` and `x-api-key` headers.
 
 ### Changeset
 
+- `@adobe/aio-commerce-lib-api`: `minor` — adds `ingressBaseUrl` to `IoEventsHttpClientConfig`.
 - `@adobe/aio-commerce-lib-app`: `minor` — new `publishEvent` export plus installation-side
   `system.events` write.
 - `@adobe/aio-commerce-sdk`: `minor` — re-exports the above.
@@ -200,13 +201,12 @@ incremental work with a meaningful runtime benefit.
 
 **`lib-app` vs. `lib-events` for `publishEvent`.**
 `lib-events` currently wraps the I/O Events **management** API only (providers, registrations,
-metadata via `https://api.adobe.io/events`). It has no ingress capability. Adding a raw
-`publishToIngress(providerId, eventCode, payload, auth)` primitive to `lib-events` would be
-correct layering and would make the ingress call reusable, but it introduces net-new
-functionality into that library for a single consumer today. The ingress call lives in
-`lib-app` for now, with the expectation that it can be extracted to `lib-events` if a second
-consumer appears. `publishEvent` also needs system storage and app config resolution, so
-the high-level function always lives in `lib-app` regardless of where the HTTP call lands.
+metadata via `https://api.adobe.io/events`). `publishEvent` needs system storage and app
+config resolution, so the high-level function lives in `lib-app`. The HTTP call to the ingress
+is made via the existing `AdobeIoEventsApiClient` from `lib-events`, extended with an
+`ingressBaseUrl` config field — no new client type needed, and the composability pattern
+already used across the SDK is preserved: callers construct the client with the right config
+and pass it in.
 
 **Storing the pre-computed event code rather than recomputing at runtime.**
 The event code could be recomputed from the provider type and app metadata, but that
