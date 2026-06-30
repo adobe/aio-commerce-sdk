@@ -44,10 +44,12 @@ function ErrorFallback({ error, resetErrorBoundary }: Readonly<FallbackProps>) {
     <div
       style={{
         display: "flex",
-        minHeight: "100vh",
         alignItems: "center",
         justifyContent: "center",
         padding: 24,
+
+        // Subtract the padding to avoid generating overflow
+        minHeight: "calc(100dvh - 48px)",
       }}>
       <IllustratedMessage>
         <ErrorIllustration />
