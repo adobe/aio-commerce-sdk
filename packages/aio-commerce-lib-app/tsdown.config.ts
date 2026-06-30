@@ -22,7 +22,8 @@ export default mergeConfig(baseConfig, {
   entry: [
     "./source/index.ts",
     "./source/actions/*/index.ts",
-    "./source/config/index.ts",
+    "./source/config/index.browser.ts",
+    "./source/config/index.node.ts",
     "./source/commands/index.ts",
     "./source/management/index.ts",
   ],

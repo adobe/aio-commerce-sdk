@@ -56,13 +56,17 @@
         }
       },
       "./config": {
+        "browser": {
+          "types": "./dist/es/config/index.browser.d.mts",
+          "default": "./dist/es/config/index.browser.mjs"
+        },
         "import": {
-          "types": "./dist/es/config/index.d.mts",
-          "default": "./dist/es/config/index.mjs"
+          "types": "./dist/es/config/index.node.d.mts",
+          "default": "./dist/es/config/index.node.mjs"
         },
         "require": {
-          "types": "./dist/cjs/config/index.d.cts",
-          "default": "./dist/cjs/config/index.cjs"
+          "types": "./dist/cjs/config/index.node.d.cts",
+          "default": "./dist/cjs/config/index.node.cjs"
         }
       },
       "./management": {
@@ -81,11 +85,15 @@
   "exports": {
     ".": "./source/index.ts",
     "./actions/*": "./source/actions/*/index.ts",
-    "./config": "./source/config/index.ts",
+    "./config": {
+      "browser": "./source/config/index.browser.ts",
+      "default": "./source/config/index.node.ts"
+    },
     "./management": "./source/management/index.ts",
     "./package.json": "./package.json"
   },
   "imports": {
+    "#config/index": "./source/config/index.node.ts",
     "#*": "./source/*.ts",
     "#openapi.json": "./docs/openapi.json",
     "#test/*": "./test/*.ts",
