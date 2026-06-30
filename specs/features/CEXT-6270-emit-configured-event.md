@@ -137,6 +137,11 @@ payload). The request must carry two auth headers: `Authorization: Bearer {acces
 `x-api-key: {client_id}`. Both are available from the standard IMS auth params resolved by
 `resolveImsAuthParams`.
 
+The ingress base URL is configurable via the `AIO_EVENTS_INGRESS_BASE_URL` action input,
+defaulting to `https://eventsingress.adobe.io/` when not set. Stage environments should set
+this input to the stage ingress URL. This mirrors the `AIO_EVENTS_API_BASE_URL` pattern
+already used by `AdobeIoEventsHttpClient` for the management API.
+
 ### `publishEvent` in lib-app
 
 A new export from the root entrypoint of `@adobe/aio-commerce-lib-app`:
@@ -147,12 +152,17 @@ publishEvent<TPayload extends Record<string, unknown>>(params: {
   event: string;
   payload: TPayload;
   auth: ImsAuthParams | ImsAuthProvider;
+  ingressBaseUrl?: string;
 }): Promise<void>
 ```
 
 The generic `TPayload` lets callers enforce the payload shape at the call site without
 requiring the SDK to know the schema. The constraint `Record<string, unknown>` rules out
 primitives and arrays, matching what the I/O Events ingress expects as `data`.
+
+`ingressBaseUrl` is an optional escape hatch for testing against non-production ingress
+endpoints directly in code. In production, prefer the `AIO_EVENTS_INGRESS_BASE_URL` action
+input so the URL is configured per environment rather than hardcoded at call sites.
 
 Internal flow:
 
@@ -161,7 +171,10 @@ Internal flow:
 3. Look up `params.provider` in `data.providers`. If not found, throw `ProviderNotFoundError`.
 4. Look up `params.event` in the provider's `events` map. If not found, throw `EventNotFoundError`.
 5. Resolve `ImsAuthProvider` to `ImsAuthParams` if needed (same as `getCommerceClient`).
-6. POST a CloudEvents envelope to the ingress with `Authorization` and `x-api-key` headers.
+6. Resolve the ingress base URL from `params.ingressBaseUrl`, falling back to
+   `AIO_EVENTS_INGRESS_BASE_URL` in the runtime action inputs, then to
+   `https://eventsingress.adobe.io/`.
+7. POST a CloudEvents envelope to the ingress with `Authorization` and `x-api-key` headers.
 
 ### Changeset
 
@@ -186,9 +199,14 @@ published. The install step already computes and has the provider ID; persisting
 incremental work with a meaningful runtime benefit.
 
 **`lib-app` vs. `lib-events` for `publishEvent`.**
-`lib-events` is a set of API wrappers with no knowledge of the app config schema or system
-storage. `publishEvent` needs both; adding it to `lib-events` would invert the dependency
-direction.
+`lib-events` currently wraps the I/O Events **management** API only (providers, registrations,
+metadata via `https://api.adobe.io/events`). It has no ingress capability. Adding a raw
+`publishToIngress(providerId, eventCode, payload, auth)` primitive to `lib-events` would be
+correct layering and would make the ingress call reusable, but it introduces net-new
+functionality into that library for a single consumer today. The ingress call lives in
+`lib-app` for now, with the expectation that it can be extracted to `lib-events` if a second
+consumer appears. `publishEvent` also needs system storage and app config resolution, so
+the high-level function always lives in `lib-app` regardless of where the HTTP call lands.
 
 **Storing the pre-computed event code rather than recomputing at runtime.**
 The event code could be recomputed from the provider type and app metadata, but that
