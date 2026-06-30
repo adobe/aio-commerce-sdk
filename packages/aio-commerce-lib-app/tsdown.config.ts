@@ -13,7 +13,7 @@
 import { baseConfig } from "@aio-commerce-sdk/config-tsdown/tsdown.config.base";
 import { mergeConfig } from "tsdown";
 
-import { getVariables } from "./build.variables";
+import { getVariables } from "./build.variables.ts";
 
 const buildVariables = await getVariables();
 
