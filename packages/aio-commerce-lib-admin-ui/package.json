@@ -179,7 +179,5 @@
     "react-dom": "catalog:react",
     "typescript": "catalog:"
   },
-  "sideEffects": [
-    "**/create-extension-app.*"
-  ]
+  "sideEffects": false
 }

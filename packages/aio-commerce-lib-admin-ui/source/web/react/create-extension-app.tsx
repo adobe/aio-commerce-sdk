@@ -10,10 +10,6 @@
  * governing permissions and limitations under the License.
  */
 
-// Applies the Spectrum base theme to the `<html>` element via plain CSS so the
-// iframe is themed on first paint, before this bundle mounts the Provider.
-import "@react-spectrum/s2/page.css";
-
 import Runtime, { init } from "@adobe/exc-app";
 import page from "@adobe/exc-app/page";
 import { RouterProvider } from "@tanstack/react-router";
