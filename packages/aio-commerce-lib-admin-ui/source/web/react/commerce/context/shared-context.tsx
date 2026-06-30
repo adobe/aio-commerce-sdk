@@ -21,19 +21,20 @@ import {
 import { useGuestConnection } from "#web/react/commerce/hooks/use-guest-connection";
 
 import type { ReactNode } from "react";
-import type { GuestConnection, SharedContext } from "#web/react/commerce/types";
+import type {
+  GuestConnection,
+  SharedContext,
+  SharedContextState,
+} from "#web/react/commerce/types";
 
-// `undefined` means there is no provider (a usage error); `null` means the provider is mounted but
-// no Commerce connection is available (still connecting, or running outside the Commerce Admin).
-const SharedContextValue = createContext<SharedContext | null | undefined>(
+const SharedContextValue = createContext<SharedContextState | undefined>(
   undefined,
 );
 
 /**
- * Returns the current Commerce shared context, or `null` when no Commerce connection is available
- * (still connecting, or running outside the Commerce Admin — e.g. in the Experience Cloud shell).
+ * Returns the current Commerce shared context provider state.
  */
-export function useSharedContext(): SharedContext | null {
+export function useInternalSharedContext(): SharedContextState {
   const context = useContext(SharedContextValue);
   if (context === undefined) {
     throw new Error(
@@ -42,6 +43,26 @@ export function useSharedContext(): SharedContext | null {
   }
 
   return context;
+}
+
+/**
+ * Returns the current Commerce shared context.
+ *
+ * @throws If no Commerce connection is available.
+ */
+export function useSharedContext(): SharedContext {
+  const context = useInternalSharedContext();
+  if (!(context.sharedContext && context.host)) {
+    throw new Error(
+      "useSharedContext can only be used inside the Commerce Admin after the guest connection is established.",
+    );
+  }
+
+  return {
+    extensionId: context.extensionId,
+    sharedContext: context.sharedContext,
+    host: context.host,
+  };
 }
 
 /**
@@ -84,13 +105,14 @@ export function SharedContextProvider(
   const guestConnection = useGuestConnection(extensionId);
   const sharedContext = useLiveSharedContext(guestConnection);
 
-  const value = useMemo<SharedContext | null>(() => {
-    if (!(guestConnection && sharedContext)) {
-      return null;
-    }
-
-    return { extensionId, sharedContext, host: guestConnection.host };
-  }, [extensionId, guestConnection, sharedContext]);
+  const value = useMemo<SharedContextState>(
+    () => ({
+      extensionId,
+      sharedContext,
+      host: guestConnection?.host ?? null,
+    }),
+    [extensionId, guestConnection?.host, sharedContext],
+  );
 
   return (
     <SharedContextValue.Provider value={value}>

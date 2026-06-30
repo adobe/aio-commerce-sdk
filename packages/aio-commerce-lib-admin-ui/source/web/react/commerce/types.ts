@@ -16,6 +16,18 @@ import type { ImsContext } from "#web/react/auth/types";
 /** The guest connection that shares the context between the extension and the Admin UI host. */
 export type GuestConnection = Awaited<ReturnType<typeof attach>>;
 
+/** The Commerce shared context provider state for a mounted Admin UI iframe app. */
+export type SharedContextState = {
+  /** The extension ID of the app. */
+  extensionId: string;
+
+  /** The live `sharedContext` object provided by the host, when Commerce is connected. */
+  sharedContext: GuestConnection["sharedContext"] | null;
+
+  /** The host proxy, when Commerce is connected. */
+  host: GuestConnection["host"] | null;
+};
+
 /**
  * The Commerce shared context for a mounted Admin UI iframe app.
  *
@@ -23,15 +35,12 @@ export type GuestConnection = Awaited<ReturnType<typeof attach>>;
  * host over the guest connection. It is distinct from the IMS credentials ({@link ImsContext}),
  * which are also available in the Experience Cloud shell.
  */
-export type SharedContext = {
-  /** The extension ID of the app. */
-  extensionId: string;
-
+export type SharedContext = SharedContextState & {
   /** The live `sharedContext` object provided by the host. */
-  sharedContext: NonNullable<GuestConnection["sharedContext"]>;
+  sharedContext: NonNullable<SharedContextState["sharedContext"]>;
 
   /** The host proxy, used by `useHostConnection` to invoke host-frame actions (close/onError). */
-  host: GuestConnection["host"];
+  host: NonNullable<SharedContextState["host"]>;
 };
 
 /** Actions for closing the extension iframe and returning control to the Commerce Admin. */

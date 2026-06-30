@@ -34,12 +34,6 @@ export function useMassActionContext(): MassActionContext {
   const context = useSharedContext();
 
   return useMemo(() => {
-    if (!context) {
-      throw new Error(
-        "useMassActionContext can only be used on a mass-action extension point rendered inside the Commerce Admin.",
-      );
-    }
-
     const { sharedContext } = context;
     return {
       imsToken,

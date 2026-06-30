@@ -34,10 +34,10 @@ type HostFrameField = {
  * host does not provide the frame actions (e.g. a menu page).
  */
 export function useHostConnection(): HostConnection {
-  const host = useSharedContext()?.host ?? null;
+  const { host } = useSharedContext();
 
   return useMemo<HostConnection>(() => {
-    const field = (host as { field?: HostFrameField } | null)?.field;
+    const field = (host as { field?: HostFrameField }).field;
     const requireField = () => {
       if (!field) {
         throw new Error(

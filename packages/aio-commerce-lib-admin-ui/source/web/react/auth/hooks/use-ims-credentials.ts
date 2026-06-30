@@ -12,7 +12,7 @@
 
 import { useMemo } from "react";
 
-import { useSharedContext } from "#web/react/commerce/context/shared-context.tsx";
+import { useInternalSharedContext } from "#web/react/commerce/context/shared-context.tsx";
 
 import type { ImsContext } from "#web/react/auth/types";
 import type { ShellConfiguration } from "#web/react/shell/types";
@@ -29,7 +29,7 @@ import type { ShellConfiguration } from "#web/react/shell/types";
 export function useImsCredentials(
   shellConfiguration: ShellConfiguration | null,
 ): ImsContext | null {
-  const sharedContext = useSharedContext()?.sharedContext ?? null;
+  const sharedContext = useInternalSharedContext().sharedContext;
 
   return useMemo<ImsContext | null>(() => {
     const imsToken =
