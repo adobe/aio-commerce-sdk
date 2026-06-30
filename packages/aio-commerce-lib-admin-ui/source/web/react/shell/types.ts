@@ -15,5 +15,5 @@ import type { RuntimeConfiguration } from "@adobe/exc-app";
 /** The small subset of Experience Cloud runtime configuration that extensions have access to. */
 export type ShellConfiguration = Pick<
   RuntimeConfiguration,
-  "imsOrg" | "imsToken"
+  "imsOrg" | "imsToken" | "theme"
 >;

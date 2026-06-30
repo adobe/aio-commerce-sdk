@@ -25,8 +25,8 @@ import type { ShellConfiguration } from "#web/react/shell/types";
 function extractShellConfiguration(
   config: RuntimeConfiguration,
 ): ShellConfiguration {
-  const { imsOrg, imsToken } = config;
-  return { imsOrg, imsToken };
+  const { imsOrg, imsToken, theme } = config;
+  return { imsOrg, imsToken, theme };
 }
 
 /**

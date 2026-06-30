@@ -17,6 +17,7 @@ import { ImsContextProvider } from "#web/react/auth/context/ims-context.tsx";
 import { useImsCredentials } from "#web/react/auth/hooks/use-ims-credentials";
 import { SharedContextProvider } from "#web/react/commerce/context/shared-context.tsx";
 import { useSpectrumRouter } from "#web/react/routing/hooks/use-spectrum-router";
+import { useExtensionColorScheme } from "#web/react/shell/hooks/use-extension-color-scheme";
 import { useShellConfiguration } from "#web/react/shell/hooks/use-shell-configuration";
 
 import { ExtensionErrorBoundary } from "./extension-error-boundary";
@@ -47,17 +48,26 @@ export function ExtensionApp(props: Readonly<ExtensionAppProps>) {
     initialConfiguration,
   );
 
+  return (
+    <SharedContextProvider extensionId={extensionId}>
+      <ExtensionAppContent shellConfiguration={shellConfiguration} />
+    </SharedContextProvider>
+  );
+}
+
+function ExtensionAppContent(
+  props: Readonly<{ shellConfiguration: ShellConfiguration | null }>,
+) {
+  const { shellConfiguration } = props;
   const spectrumRouter = useSpectrumRouter();
+  const colorScheme = useExtensionColorScheme(shellConfiguration);
+
   return (
     // The Spectrum Provider sits at the top so the error boundary and its fallback
     // render within the configured theme, and so it wraps the data providers below.
-    <Provider
-      colorScheme={shellConfiguration ? undefined : "light"}
-      router={spectrumRouter}>
+    <Provider colorScheme={colorScheme} router={spectrumRouter}>
       <ExtensionErrorBoundary>
-        <SharedContextProvider extensionId={extensionId}>
-          <ExtensionShell shellConfiguration={shellConfiguration} />
-        </SharedContextProvider>
+        <ExtensionShell shellConfiguration={shellConfiguration} />
       </ExtensionErrorBoundary>
     </Provider>
   );
