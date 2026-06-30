@@ -14,6 +14,7 @@ import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { basename, join } from "node:path";
 
+import { consola } from "consola";
 import { afterEach, describe, expect, test, vi } from "vitest";
 
 import {
@@ -564,6 +565,11 @@ describe("commands/generate/actions", () => {
           );
           expect(pkg.imports["#web/*"]).toBe(
             "./src/commerce-backend-ui-2/web-src/src/*",
+          );
+          expect(consola.info).toHaveBeenCalledWith(
+            expect.stringContaining(
+              "web-src entrypoint already exists, skipping scaffold:",
+            ),
           );
           expect(mockSpawnSync).not.toHaveBeenCalled();
         },

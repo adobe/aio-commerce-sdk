@@ -517,6 +517,12 @@ export async function generateWebSrc(
   const entrypointPath = join(projectRoot, entrypoint);
 
   if (existsSync(entrypointPath)) {
+    consola.info(
+      `web-src entrypoint already exists, skipping scaffold: ${relative(
+        process.cwd(),
+        entrypointPath,
+      )}`,
+    );
     return;
   }
 
