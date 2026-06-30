@@ -31,11 +31,15 @@ export const viewButtonWorkerBase = {
 import type { AdminUiExecutionContext } from "#management/installation/admin-ui/utils";
 
 /** Creates a mock AdminUiExecutionContext with Admin UI client methods. */
-export function createMockAdminUiContext(overrides?: {
-  registerExtensionImpl?: () => Promise<{ extensionId: string }>;
-  unregisterExtensionImpl?: () => Promise<unknown>;
-}): AdminUiExecutionContext {
-  const mockInstallation = createMockInstallationContext();
+export function createMockAdminUiContext(
+  overrides?: NonNullable<
+    Parameters<typeof createMockInstallationContext>[0]
+  > & {
+    registerExtensionImpl?: () => Promise<{ extensionId: string }>;
+    unregisterExtensionImpl?: () => Promise<unknown>;
+  },
+): AdminUiExecutionContext {
+  const mockInstallation = createMockInstallationContext(overrides);
 
   return {
     ...mockInstallation,
@@ -51,6 +55,6 @@ export function createMockAdminUiContext(overrides?: {
         .mockImplementation(
           overrides?.unregisterExtensionImpl ?? (() => Promise.resolve()),
         ),
-    } as unknown as AdminUiExecutionContext["adminUiClient"],
+    },
   };
 }
