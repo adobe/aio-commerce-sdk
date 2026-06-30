@@ -20,6 +20,7 @@ const __dirname = dirname(__filename);
 declare const __LIB_ADMIN_UI_RANGE__: string;
 declare const __REACT_VERSION__: string;
 declare const __REACT_DOM_VERSION__: string;
+declare const __REACT_DOM_TYPES_VERSION__: string;
 declare const __REACT_TYPES_VERSION__: string;
 declare const __SPECTRUM_S2_VERSION__: string;
 
@@ -71,6 +72,7 @@ export const WEB_SOURCE_DEPENDENCIES = [
 /** Development dependencies required by the generated web-src app. */
 export const WEB_SOURCE_DEV_DEPENDENCIES = [
   { name: "@types/react", version: __REACT_TYPES_VERSION__ },
+  { name: "@types/react-dom", version: __REACT_DOM_TYPES_VERSION__ },
 ] as const;
 
 /** Parcel shared bundle config required by Spectrum S2 styles. */

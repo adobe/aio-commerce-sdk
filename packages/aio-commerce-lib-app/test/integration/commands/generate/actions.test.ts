@@ -369,13 +369,14 @@ describe("commands/generate/actions", () => {
             "utf-8",
           );
           expect(appContent).toContain("#app.commerce.config");
+          expect(appContent).toContain("#web/pages/main-page.jsx");
           expect(appContent).toContain("createExtensionApp");
 
           const pageContent = await readFile(
             join(webSrcDir, "src", "pages", "main-page.jsx"),
             "utf-8",
           );
-          expect(pageContent).toContain("#web/components/welcome");
+          expect(pageContent).toContain("#web/components/welcome.jsx");
 
           const pkg = JSON.parse(
             await readFile(join(tempDir, "package.json"), "utf-8"),
@@ -412,6 +413,7 @@ describe("commands/generate/actions", () => {
           );
           expect(pkg.devDependencies).toEqual({
             "@types/react": "^19.2.7",
+            "@types/react-dom": "^19.2.3",
           });
 
           expect(mockSpawnSync).toHaveBeenCalledTimes(1);
@@ -444,6 +446,10 @@ describe("commands/generate/actions", () => {
             name: "@types/react",
             version: "19.2.7",
           }),
+          "node_modules/@types/react-dom/package.json": JSON.stringify({
+            name: "@types/react-dom",
+            version: "19.2.3",
+          }),
           "node_modules/react-dom/package.json": JSON.stringify({
             name: "react-dom",
             version: "19.2.7",
@@ -470,6 +476,7 @@ describe("commands/generate/actions", () => {
           );
           expect(pkg.devDependencies).toEqual({
             "@types/react": "^19.2.7",
+            "@types/react-dom": "^19.2.3",
           });
           expect(mockSpawnSync).not.toHaveBeenCalled();
         },
@@ -505,6 +512,18 @@ describe("commands/generate/actions", () => {
             "utf-8",
           );
           expect(indexHtml).toContain("./src/app.tsx");
+
+          const appContent = await readFile(
+            join(webSrcDir, "src", "app.tsx"),
+            "utf-8",
+          );
+          expect(appContent).toContain("#web/pages/main-page.tsx");
+
+          const pageContent = await readFile(
+            join(webSrcDir, "src", "pages", "main-page.tsx"),
+            "utf-8",
+          );
+          expect(pageContent).toContain("#web/components/welcome.tsx");
         },
       );
     });

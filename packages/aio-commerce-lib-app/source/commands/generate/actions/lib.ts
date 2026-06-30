@@ -64,8 +64,6 @@ import {
   TYPESCRIPT_CONFIG_EXTENSIONS,
   WEB_SOURCE_DEPENDENCIES,
   WEB_SOURCE_DEV_DEPENDENCIES,
-  WEB_SOURCE_ENTRYPOINT,
-  WEB_SOURCE_HTML_ENTRYPOINT,
   WEB_SOURCE_IMPORT_ALIAS,
   WEB_SOURCE_SHARED_BUNDLES,
 } from "./constants";
@@ -344,9 +342,7 @@ async function prepareWebSourcePackage(projectRoot: string) {
     consola.info("Adding web-src dependencies in package.json:");
     consola.log.raw(
       formatTree(
-        dependenciesToDeclare.map(
-          ({ name, version }) => `  - ${name}@${version}`,
-        ),
+        dependenciesToDeclare.map(({ name, version }) => ` ${name}@${version}`),
       ),
     );
   } else {
@@ -386,7 +382,7 @@ async function prepareWebSourcePackage(projectRoot: string) {
   consola.info("Installing missing web-src dependencies from package.json:");
   consola.log.raw(
     formatTree(
-      installPlan.missing.map(({ name, version }) => `  - ${name}@${version}`),
+      installPlan.missing.map(({ name, version }) => ` ${name}@${version}`),
     ),
   );
   const packageManager = await detectPackageManager(projectRoot);
@@ -491,15 +487,16 @@ async function copyWebSourceTemplates(
     }
 
     let content = await readFile(sourcePath, "utf-8");
-    if (entry.name === WEB_SOURCE_HTML_ENTRYPOINT) {
-      const appEntrypoint =
-        extension === "tsx" ? "./src/app.tsx" : WEB_SOURCE_ENTRYPOINT;
 
-      content = content.replace(WEB_SOURCE_ENTRYPOINT, appEntrypoint);
+    if (extension === "tsx") {
+      content = content.replaceAll(
+        `${JSX_FILE_EXTENSION}"`,
+        `${TSX_FILE_EXTENSION}"`,
+      );
     }
 
     await writeFile(targetPath, content, { encoding: "utf-8", flag: "wx" });
-    outputFiles.push(`  - ${relative(process.cwd(), targetPath)}`);
+    outputFiles.push(` ${relative(process.cwd(), targetPath)}`);
   }
 
   return outputFiles;
