@@ -52,9 +52,6 @@ const { mockSpawnSync } = vi.hoisted(() => ({
 
 vi.mock("node:child_process", () => ({ spawnSync: mockSpawnSync }));
 
-const ADMIN_UI_PACKAGE_SPECIFIER_PATTERN =
-  /^@adobe\/aio-commerce-lib-admin-ui@\^/;
-
 function getActionsDir(tempDir: string, extensionPointId: string) {
   return join(
     tempDir,
@@ -390,29 +387,75 @@ describe("commands/generate/actions", () => {
               },
             ],
           });
+          expect(pkg.dependencies).toEqual(
+            expect.objectContaining({
+              // biome-ignore lint/performance/useTopLevelRegex: Just a test
+              "@adobe/aio-commerce-lib-admin-ui": expect.stringMatching(/^\^/),
+              "@react-spectrum/s2": "1.4.0",
+              react: "19.2.7",
+              "react-dom": "19.2.7",
+            }),
+          );
+          expect(pkg.devDependencies).toEqual({
+            "@types/react": "^19.2.7",
+          });
 
-          const installCall = mockSpawnSync.mock.calls.find(
-            ([, args]) =>
-              Array.isArray(args) &&
-              args.includes("react@19.2.7") &&
-              args.includes("@react-spectrum/s2@1.4.0"),
+          expect(mockSpawnSync).toHaveBeenCalledTimes(1);
+          expect(mockSpawnSync).toHaveBeenCalledWith(
+            "npm",
+            ["i"],
+            expect.objectContaining({ cwd: tempDir }),
           );
-          expect(installCall?.[1]).toEqual(
-            expect.arrayContaining([
-              expect.stringMatching(ADMIN_UI_PACKAGE_SPECIFIER_PATTERN),
-              "react@19.2.7",
-              "react-dom@19.2.7",
-              "@react-spectrum/s2@1.4.0",
-            ]),
-          );
+        },
+      );
+    });
 
-          const devInstallCall = mockSpawnSync.mock.calls.find(
-            ([, args]) =>
-              Array.isArray(args) && args.includes("@types/react@^19.2.7"),
+    test("declares compatible installed web-src dependencies without reinstalling them", async () => {
+      await withTempProject(
+        {
+          ...EMPTY_PROJECT,
+          ...makeTemplateFiles(),
+          "node_modules/@adobe/aio-commerce-lib-admin-ui/package.json":
+            JSON.stringify({
+              name: "@adobe/aio-commerce-lib-admin-ui",
+              version: "0.1.0",
+            }),
+          "node_modules/@react-spectrum/s2/package.json": JSON.stringify({
+            name: "@react-spectrum/s2",
+            version: "1.4.0",
+          }),
+          "node_modules/@types/react/package.json": JSON.stringify({
+            name: "@types/react",
+            version: "19.2.7",
+          }),
+          "node_modules/react-dom/package.json": JSON.stringify({
+            name: "react-dom",
+            version: "19.2.7",
+          }),
+          "node_modules/react/package.json": JSON.stringify({
+            name: "react",
+            version: "19.2.7",
+          }),
+        },
+        async (tempDir) => {
+          await run(configWithAdminUiMenu, tempDir);
+
+          const pkg = JSON.parse(
+            await readFile(join(tempDir, "package.json"), "utf-8"),
           );
-          expect(devInstallCall?.[1]).toEqual(
-            expect.arrayContaining(["--save-dev", "@types/react@^19.2.7"]),
+          expect(pkg.dependencies).toEqual(
+            expect.objectContaining({
+              // biome-ignore lint/performance/useTopLevelRegex: Just a test
+              "@adobe/aio-commerce-lib-admin-ui": expect.stringMatching(/^\^/),
+              "@react-spectrum/s2": "1.4.0",
+              react: "19.2.7",
+              "react-dom": "19.2.7",
+            }),
           );
+          expect(pkg.devDependencies).toEqual({
+            "@types/react": "^19.2.7",
+          });
+          expect(mockSpawnSync).not.toHaveBeenCalled();
         },
       );
     });

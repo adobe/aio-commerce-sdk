@@ -14,7 +14,10 @@ import { spawnSync } from "node:child_process";
 import { join } from "node:path";
 
 import { hasDynamicSchema } from "@adobe/aio-commerce-lib-config";
-import { getInstallCommand } from "@aio-commerce-sdk/scripting-utils/project";
+import {
+  getInstallCommand,
+  getProjectInstallCommand,
+} from "@aio-commerce-sdk/scripting-utils/project";
 import consola from "consola";
 import * as prettier from "prettier";
 
@@ -95,6 +98,44 @@ export function runInstall(
     dependencies,
     options,
   );
+  const displayCommand = [command, ...args].join(" ");
+  const result = spawnSync(command, args, {
+    cwd,
+    stdio: "inherit",
+  });
+
+  if (result.error || result.status !== 0) {
+    throw new Error(
+      `Failed to install dependencies automatically. Please install manually: ${displayCommand}`,
+      {
+        cause:
+          result.error ??
+          new Error(`Install exited with code ${result.status}`),
+      },
+    );
+  }
+
+  consola.log(""); // Add a newline after the install output for readability.
+  consola.success("Dependencies installed successfully");
+}
+
+/**
+ * Install dependencies declared in package.json.
+ * @param packageManager - The detected package manager.
+ * @param cwd - Working directory for the install command.
+ */
+export function runProjectInstall(
+  packageManager: PackageManager,
+  cwd = process.cwd(),
+) {
+  consola.start(
+    [
+      `Installing project dependencies with ${packageManager}...`,
+      "This may take a few seconds...\n",
+    ].join("\n"),
+  );
+
+  const { command, args } = getProjectInstallCommand(packageManager);
   const displayCommand = [command, ...args].join(" ");
   const result = spawnSync(command, args, {
     cwd,

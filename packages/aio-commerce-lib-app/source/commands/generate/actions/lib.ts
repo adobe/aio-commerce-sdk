@@ -20,6 +20,7 @@ import {
   getProjectRootDirectory,
   loadPackageJson,
   makeOutputDirFor,
+  mergePackageJsonDependencies,
 } from "@aio-commerce-sdk/scripting-utils/project";
 import { createOrUpdateExtConfig } from "@aio-commerce-sdk/scripting-utils/yaml";
 import { readYamlFile } from "@aio-commerce-sdk/scripting-utils/yaml/index";
@@ -41,7 +42,7 @@ import {
   getManifestPath,
   getRuntimeAppConfigPath,
   hasDynamicAppConfig,
-  runInstall,
+  runProjectInstall,
 } from "#commands/utils";
 import {
   hasCustomInstallationSteps,
@@ -315,12 +316,6 @@ async function prepareWebSourcePackage(projectRoot: string) {
     projectRoot,
   );
 
-  const missingDependencies = installPlan.missing
-    .filter(({ name }) =>
-      WEB_SOURCE_DEPENDENCIES.some((dependency) => dependency.name === name),
-    )
-    .map(({ name, version }) => `${name}@${version}`);
-
   if (installPlan.incompatible.length > 0) {
     const incompatibleDependencies = installPlan.incompatible
       .map(
@@ -334,15 +329,21 @@ async function prepareWebSourcePackage(projectRoot: string) {
     );
   }
 
-  const missingDevDependencies = WEB_SOURCE_DEV_DEPENDENCIES.filter(
-    ({ name }) =>
-      installPlan.missing.some((dependency) => dependency.name === name),
-  );
-  const missingDevDependencySpecifiers = missingDevDependencies.map(
-    ({ name, version }) => `${name}@${version}`,
-  );
+  const dependencies = pkg.content.dependencies ?? {};
+  const devDependencies = pkg.content.devDependencies ?? {};
+  const dependencyMaps = [dependencies, devDependencies];
 
   pkg.update({
+    dependencies: mergePackageJsonDependencies(
+      dependencies,
+      WEB_SOURCE_DEPENDENCIES,
+      dependencyMaps,
+    ),
+    devDependencies: mergePackageJsonDependencies(
+      devDependencies,
+      WEB_SOURCE_DEV_DEPENDENCIES,
+      dependencyMaps,
+    ),
     // Required as per Spectrum S2 documentation: https://react-spectrum.adobe.com/getting-started#framework-setup
     "@parcel/bundler-default": {
       ...(pkg.content["@parcel/bundler-default"] as Record<string, unknown>),
@@ -357,18 +358,12 @@ async function prepareWebSourcePackage(projectRoot: string) {
 
   await pkg.save();
 
-  if (
-    missingDependencies.length === 0 &&
-    missingDevDependencySpecifiers.length === 0
-  ) {
+  if (installPlan.missing.length === 0) {
     return;
   }
 
   const packageManager = await detectPackageManager(projectRoot);
-  runInstall(packageManager, missingDependencies, projectRoot);
-  runInstall(packageManager, missingDevDependencySpecifiers, projectRoot, {
-    dev: true,
-  });
+  runProjectInstall(packageManager, projectRoot);
 }
 
 /**
