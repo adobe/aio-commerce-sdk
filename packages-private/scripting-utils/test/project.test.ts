@@ -25,6 +25,7 @@ import {
   getInstallCommand,
   getInstalledPackageVersion,
   getPackageDependencyInstallPlan,
+  getProjectInstallCommand,
   getProjectRootDirectory,
   isESM,
   loadPackageJson,
@@ -594,6 +595,36 @@ describe("getInstallCommand", () => {
     expect(getInstallCommand("bun", pkgs, { dev: true })).toEqual({
       command: "bun",
       args: ["add", "--dev", "foo", "bar"],
+    });
+  });
+});
+
+describe("getProjectInstallCommand", () => {
+  test("should return the project install command for npm", () => {
+    expect(getProjectInstallCommand("npm")).toEqual({
+      command: "npm",
+      args: ["i"],
+    });
+  });
+
+  test("should return the project install command for pnpm", () => {
+    expect(getProjectInstallCommand("pnpm")).toEqual({
+      command: "pnpm",
+      args: ["i"],
+    });
+  });
+
+  test("should return the project install command for yarn", () => {
+    expect(getProjectInstallCommand("yarn")).toEqual({
+      command: "yarn",
+      args: ["install"],
+    });
+  });
+
+  test("should return the project install command for bun", () => {
+    expect(getProjectInstallCommand("bun")).toEqual({
+      command: "bun",
+      args: ["install"],
     });
   });
 });

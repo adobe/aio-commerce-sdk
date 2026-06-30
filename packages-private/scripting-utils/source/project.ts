@@ -353,3 +353,18 @@ export function getInstallCommand(
     command: resolved?.command ?? "npm",
   };
 }
+
+/**
+ * Get the command that installs a project's declared dependencies.
+ * @param packageManager - The detected package manager
+ */
+export function getProjectInstallCommand(packageManager: PackageManager): {
+  command: string;
+  args: string[];
+} {
+  const resolved = resolveCommand(packageManager, "install", []);
+  return {
+    args: resolved?.args.filter(Boolean) ?? ["install"],
+    command: resolved?.command ?? "npm",
+  };
+}
