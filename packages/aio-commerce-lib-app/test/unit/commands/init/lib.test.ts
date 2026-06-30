@@ -12,7 +12,8 @@
 
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
-import { installDependencies, runInstall } from "#commands/init/lib";
+import { installDependencies } from "#commands/init/lib";
+import { runInstall } from "#commands/utils";
 
 const mockSpawnSync = vi.fn<(...args: unknown[]) => unknown>();
 const INSTALL_VERB_RE = /^(i|install)$/;

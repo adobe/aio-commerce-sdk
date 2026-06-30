@@ -10,17 +10,19 @@
  * governing permissions and limitations under the License.
  */
 
-import { readFile, rm, writeFile } from "node:fs/promises";
+import { existsSync } from "node:fs";
+import { mkdir, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import { dirname, extname, join, relative, sep } from "node:path";
-import { fileURLToPath } from "node:url";
 
 import {
+  detectPackageManager,
+  getPackageDependencyInstallPlan,
   getProjectRootDirectory,
+  loadPackageJson,
   makeOutputDirFor,
 } from "@aio-commerce-sdk/scripting-utils/project";
 import { createOrUpdateExtConfig } from "@aio-commerce-sdk/scripting-utils/yaml";
 import { readYamlFile } from "@aio-commerce-sdk/scripting-utils/yaml/index";
-import NpmPackageJson from "@npmcli/package-json";
 import { consola } from "consola";
 import { formatTree } from "consola/utils";
 import { build } from "esbuild";
@@ -36,8 +38,10 @@ import {
   getActionPath,
   getActionsDir,
   getExtConfigPath,
+  getManifestPath,
   getRuntimeAppConfigPath,
   hasDynamicAppConfig,
+  runInstall,
 } from "#commands/utils";
 import {
   hasCustomInstallationSteps,
@@ -48,36 +52,35 @@ import {
   buildAdminUiV2ExtConfig,
   buildAppManagementExtConfig,
   buildBusinessConfigurationExtConfig,
+} from "./config";
+import {
   CUSTOM_IMPORTS_PLACEHOLDER,
   CUSTOM_SCRIPTS_LOADER_PLACEHOLDER,
   CUSTOM_SCRIPTS_MAP_PLACEHOLDER,
-} from "./config";
+  TEMPLATES_DIR,
+  TYPESCRIPT_CONFIG_EXTENSIONS,
+  WEB_SOURCE_DEPENDENCIES,
+  WEB_SOURCE_DEV_DEPENDENCIES,
+  WEB_SOURCE_ENTRYPOINT,
+  WEB_SOURCE_SHARED_BUNDLES,
+} from "./constants";
 
 import type { ExtConfig } from "@aio-commerce-sdk/scripting-utils/yaml";
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 import type { CustomInstallationStep } from "#config/schema/installation";
 import type { TemplateAction } from "./config";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
-/** The path to the action templates directory, sibling to this file. */
-export const TEMPLATES_DIR = join(__dirname, "templates");
-
 type ValidExtensionPointId =
   | typeof EXTENSIBILITY_EXTENSION_POINT_ID
   | typeof CONFIGURATION_EXTENSION_POINT_ID
   | typeof BACKEND_UI_V2_EXTENSION_POINT_ID;
 
-const TYPESCRIPT_CONFIG_EXTENSIONS = new Set([".ts", ".mts", ".cts"]);
+type WebSourceExtension = "jsx" | "tsx";
+
 const LEADING_DOT_SLASH_PATTERN = /^\.\//u;
-
-const DYNAMIC_APP_CONFIG_IMPORT = `import appConfig from "${APP_CONFIG_IMPORT_ALIAS}";`;
-const STATIC_APP_MANIFEST_IMPORT =
-  'import appConfig from "../../app.commerce.manifest.json" with { type: "json" };';
-
-const STATIC_CONFIG_SCHEMA_IMPORT =
-  'import configSchema from "../../configuration-schema.json" with { type: "json" };';
+const JSX_FILE_EXTENSION = ".jsx";
+const TSX_FILE_EXTENSION = ".tsx";
+const WEB_SOURCE_HTML_ENTRYPOINT = "index.html";
 
 /** Normalize a path for use as an ESM import specifier. */
 function normalizeImportPath(path: string) {
@@ -97,7 +100,11 @@ async function updateAppConfigImportAlias(
   projectRoot: string,
   runtimeConfigPath: string,
 ) {
-  const pkg = await NpmPackageJson.load(projectRoot);
+  const pkg = await loadPackageJson(projectRoot);
+  if (pkg === null) {
+    throw new Error("Could not find package.json.");
+  }
+
   const existingImports =
     typeof pkg.content.imports === "object" && pkg.content.imports !== null
       ? pkg.content.imports
@@ -109,30 +116,6 @@ async function updateAppConfigImportAlias(
       [APP_CONFIG_IMPORT_ALIAS]: normalizePackageJsonPath(runtimeConfigPath),
     },
   });
-
-  await pkg.save();
-}
-
-/** Remove the package import alias used only by dynamic generated actions. */
-async function deleteAppConfigImportAlias(projectRoot: string) {
-  const pkg = await NpmPackageJson.load(projectRoot);
-  const existingImports =
-    typeof pkg.content.imports === "object" && pkg.content.imports !== null
-      ? pkg.content.imports
-      : {};
-
-  if (!(APP_CONFIG_IMPORT_ALIAS in existingImports)) {
-    return;
-  }
-
-  const imports = { ...existingImports };
-  delete imports[APP_CONFIG_IMPORT_ALIAS];
-
-  if (Object.keys(imports).length > 0) {
-    pkg.update({ imports });
-  } else {
-    pkg.content.imports = undefined;
-  }
 
   await pkg.save();
 }
@@ -206,18 +189,18 @@ async function generateRuntimeAppConfigModule() {
   );
 }
 
-/** Remove the generated app config module when generated actions use static JSON. */
-async function cleanupRuntimeAppConfigModule() {
+/** Point the app config alias at the generated static app manifest JSON. */
+async function prepareStaticAppConfigImportAlias() {
   const projectRoot = await getProjectRootDirectory();
   await rm(join(projectRoot, getRuntimeAppConfigPath()), { force: true });
-  await deleteAppConfigImportAlias(projectRoot);
+  await updateAppConfigImportAlias(projectRoot, getManifestPath());
 }
 
 /**
  * Prepare runtime-side config artifacts consumed by generated actions: the
  * bundled ESM module and its `#app.commerce.config` package import alias.
  *
- * Generates them for dynamic schemas, cleans them up for static ones.
+ * Dynamic schemas use the source config file, while static schemas use the generated JSON manifest.
  */
 export async function prepareRuntimeAppConfigModule(
   appManifest: CommerceAppConfigOutputModel,
@@ -227,29 +210,7 @@ export async function prepareRuntimeAppConfigModule(
     return;
   }
 
-  await cleanupRuntimeAppConfigModule();
-}
-
-/** Switch static JSON imports to the generated runtime config module for dynamic schemas. */
-function applyRuntimeAppConfigImport(template: string, actionName: string) {
-  if (actionName === "app-config" || actionName === "installation") {
-    return template.replace(
-      STATIC_APP_MANIFEST_IMPORT,
-      DYNAMIC_APP_CONFIG_IMPORT,
-    );
-  }
-
-  if (actionName === "config") {
-    // Dynamic mode has no separate schema file; pull the schema off the runtime config module.
-    return template
-      .replace(STATIC_CONFIG_SCHEMA_IMPORT, DYNAMIC_APP_CONFIG_IMPORT)
-      .replace(
-        "const args = { configSchema };",
-        "const args = { configSchema: appConfig.businessConfig.schema };",
-      );
-  }
-
-  return template;
+  await prepareStaticAppConfigImportAlias();
 }
 
 /**
@@ -318,6 +279,200 @@ export async function updateExtConfig(
   return extConfig;
 }
 
+/**
+ * Resolve the generated web-src entrypoint path from an extension config.
+ * @param extConfig - Extension config containing the view operation.
+ * @param extensionPointId - Extension point that owns the web source folder.
+ */
+function getWebSourceEntrypoint(
+  extConfig: ExtConfig,
+  extensionPointId: ValidExtensionPointId,
+) {
+  const viewEntrypoint = extConfig.operations?.view?.[0]?.impl;
+  if (viewEntrypoint === undefined) {
+    return null;
+  }
+
+  return join(
+    getExtensionPointFolderPath(extensionPointId),
+    extConfig.web ?? "web-src",
+    viewEntrypoint,
+  );
+}
+
+/**
+ * Ensure package.json has the dependencies and Parcel config needed by web-src.
+ * @param projectRoot - Project root containing the package.json to update.
+ */
+async function prepareWebSourcePackage(projectRoot: string) {
+  const pkg = await loadPackageJson(projectRoot);
+  if (pkg === null) {
+    throw new Error("Could not find package.json.");
+  }
+
+  const installPlan = await getPackageDependencyInstallPlan(
+    [...WEB_SOURCE_DEPENDENCIES, ...WEB_SOURCE_DEV_DEPENDENCIES],
+    projectRoot,
+  );
+
+  const missingDependencies = installPlan.missing
+    .filter(({ name }) =>
+      WEB_SOURCE_DEPENDENCIES.some((dependency) => dependency.name === name),
+    )
+    .map(({ name, version }) => `${name}@${version}`);
+
+  if (installPlan.incompatible.length > 0) {
+    const incompatibleDependencies = installPlan.incompatible
+      .map(
+        ({ name, version, installedVersion }) =>
+          `${name}@${installedVersion} does not satisfy ${version}`,
+      )
+      .join("\n");
+
+    throw new Error(
+      `Cannot scaffold web-src because installed dependencies are incompatible:\n${incompatibleDependencies}`,
+    );
+  }
+
+  const missingDevDependencies = WEB_SOURCE_DEV_DEPENDENCIES.filter(
+    ({ name }) =>
+      installPlan.missing.some((dependency) => dependency.name === name),
+  );
+  const missingDevDependencySpecifiers = missingDevDependencies.map(
+    ({ name, version }) => `${name}@${version}`,
+  );
+
+  pkg.update({
+    // Required as per Spectrum S2 documentation: https://react-spectrum.adobe.com/getting-started#framework-setup
+    "@parcel/bundler-default": {
+      ...(pkg.content["@parcel/bundler-default"] as Record<string, unknown>),
+      manualSharedBundles: WEB_SOURCE_SHARED_BUNDLES,
+    },
+    // Required otherwise Parcel will fail when using our deps which export ESM.
+    "@parcel/resolver-default": {
+      ...(pkg.content["@parcel/resolver-default"] as Record<string, unknown>),
+      packageExports: true,
+    },
+  });
+
+  await pkg.save();
+
+  if (
+    missingDependencies.length === 0 &&
+    missingDevDependencySpecifiers.length === 0
+  ) {
+    return;
+  }
+
+  const packageManager = await detectPackageManager(projectRoot);
+  runInstall(packageManager, missingDependencies, projectRoot);
+  runInstall(packageManager, missingDevDependencySpecifiers, projectRoot, {
+    dev: true,
+  });
+}
+
+/**
+ * Resolve the generated web-src file extension from the app config file type.
+ * @param projectRoot - Project root used to find the commerce app config file.
+ */
+async function resolveWebSourceExtension(
+  projectRoot: string,
+): Promise<WebSourceExtension> {
+  const configFilePath = await resolveCommerceAppConfig(projectRoot);
+  return configFilePath !== null &&
+    TYPESCRIPT_CONFIG_EXTENSIONS.has(extname(configFilePath))
+    ? "tsx"
+    : "jsx";
+}
+
+/**
+ * Resolve the destination path for a web-src template file.
+ * @param templatePath - Template file path relative to its source directory.
+ * @param extension - Web source extension to generate.
+ */
+function getWebSourceTemplateTargetPath(
+  templatePath: string,
+  extension: WebSourceExtension,
+) {
+  if (extension === "jsx" || !templatePath.endsWith(JSX_FILE_EXTENSION)) {
+    return templatePath;
+  }
+
+  return `${templatePath.slice(0, -JSX_FILE_EXTENSION.length)}${TSX_FILE_EXTENSION}`;
+}
+
+/**
+ * Copy web-src templates directly to the final file extension and entrypoint.
+ * @param sourceDir - Template web-src directory.
+ * @param targetDir - Generated web-src directory.
+ * @param extension - Web source extension to generate.
+ */
+async function copyWebSourceTemplates(
+  sourceDir: string,
+  targetDir: string,
+  extension: WebSourceExtension,
+) {
+  await mkdir(targetDir, { recursive: true });
+
+  for (const entry of await readdir(sourceDir, { withFileTypes: true })) {
+    const sourcePath = join(sourceDir, entry.name);
+    const targetPath = join(
+      targetDir,
+      getWebSourceTemplateTargetPath(entry.name, extension),
+    );
+
+    if (entry.isDirectory()) {
+      await copyWebSourceTemplates(sourcePath, targetPath, extension);
+      continue;
+    }
+
+    let content = await readFile(sourcePath, "utf-8");
+    if (entry.name === WEB_SOURCE_HTML_ENTRYPOINT) {
+      const appEntrypoint =
+        extension === "tsx" ? "./src/app.tsx" : WEB_SOURCE_ENTRYPOINT;
+
+      content = content.replace(WEB_SOURCE_ENTRYPOINT, appEntrypoint);
+    }
+
+    await writeFile(targetPath, content, { encoding: "utf-8", flag: "wx" });
+  }
+}
+
+/** Generate the web source scaffold for iframe-based Admin UI extensions. */
+export async function generateWebSrc(
+  extConfig: ExtConfig,
+  extensionPointId: ValidExtensionPointId,
+  templatesDir = TEMPLATES_DIR,
+) {
+  const entrypoint = getWebSourceEntrypoint(extConfig, extensionPointId);
+  if (entrypoint === null) {
+    return;
+  }
+
+  const projectRoot = await getProjectRootDirectory();
+  const entrypointPath = join(projectRoot, entrypoint);
+
+  if (existsSync(entrypointPath)) {
+    return;
+  }
+
+  consola.start(`Scaffolding web-src for ${extensionPointId}...`);
+
+  const sourceDir = join(templatesDir, "admin-ui", "web-src");
+  const targetDir = dirname(entrypointPath);
+
+  await copyWebSourceTemplates(
+    sourceDir,
+    targetDir,
+    await resolveWebSourceExtension(projectRoot),
+  );
+
+  await mkdir(join(targetDir, "src", "components"), { recursive: true });
+  await prepareWebSourcePackage(projectRoot);
+
+  consola.success(`Scaffolded ${relative(process.cwd(), targetDir)}`);
+}
+
 /** Generate the action files */
 export async function generateActionFiles(
   appManifest: CommerceAppConfigOutputModel,
@@ -330,15 +485,10 @@ export async function generateActionFiles(
   await makeOutputDirFor(getActionsDir(extensionPointId));
   const projectRoot = await getProjectRootDirectory();
   const outputFiles: string[] = [];
-  const useDynamicImports = hasDynamicAppConfig(appManifest);
 
   for (const action of actions) {
     const templatePath = join(templatesDir, action.templateFile);
     let template = await readFile(templatePath, "utf-8");
-
-    if (useDynamicImports) {
-      template = applyRuntimeAppConfigImport(template, action.name);
-    }
 
     // For installation action, inject custom script imports
     if (action.name === "installation") {

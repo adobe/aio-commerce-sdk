@@ -14,6 +14,12 @@
           }
         }
       }
+    },
+    {
+      "includes": ["**/*.jsx", "**/*.tsx"],
+      "formatter": {
+        "bracketSameLine": false
+      }
     }
   ]
 }

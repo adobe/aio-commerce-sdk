@@ -10,10 +10,11 @@ import { loadAppManifest } from "#commands/utils";
 import { hasAdminUi, hasBusinessConfigSchema } from "#config/index";
 
 import { getRuntimeActions } from "./config";
+import { TEMPLATES_DIR } from "./constants";
 import {
   generateActionFiles,
+  generateWebSrc,
   prepareRuntimeAppConfigModule,
-  TEMPLATES_DIR,
   updateExtConfig,
 } from "./lib";
 
@@ -57,7 +58,18 @@ export async function run(
   }
 
   if (hasAdminUi(appManifest)) {
-    await updateExtConfig(appManifest, BACKEND_UI_V2_EXTENSION_POINT_ID);
+    const extConfig = await updateExtConfig(
+      appManifest,
+      BACKEND_UI_V2_EXTENSION_POINT_ID,
+    );
+
+    if (extConfig.operations?.view) {
+      await generateWebSrc(
+        extConfig,
+        BACKEND_UI_V2_EXTENSION_POINT_ID,
+        templatesDir,
+      );
+    }
   }
 }
 

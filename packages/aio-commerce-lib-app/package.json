@@ -89,6 +89,7 @@
     "#*": "./source/*.ts",
     "#openapi.json": "./docs/openapi.json",
     "#test/*": "./test/*.ts",
+    "#templates/admin-ui/*": "./source/commands/generate/actions/templates/admin-ui/*",
     "#templates/*": "./source/commands/generate/actions/templates/*.template"
   },
   "files": [
@@ -117,7 +118,8 @@
     "lint": "biome lint --no-errors-on-unmatched && pnpm run lint:openapi",
     "lint:openapi": "redocly lint --config ../../redocly.yaml",
     "lint:fix": "biome lint --write --no-errors-on-unmatched",
-    "typecheck": "tsc --noEmit && echo '✅ No type errors found.'",
+    "typecheck": "tsc --noEmit && pnpm run typecheck:templates && echo '✅ No type errors found.'",
+    "typecheck:templates": "tsc -p source/commands/generate/actions/templates/admin-ui/tsconfig.json",
     "test": "vitest run --coverage",
     "test:watch": "vitest --coverage",
     "test:ui": "vitest --ui --coverage"
@@ -132,7 +134,6 @@
     "@adobe/aio-commerce-lib-webhooks": "workspace:*",
     "@adobe/aio-lib-core-logging": "catalog:",
     "@adobe/aio-lib-state": "catalog:",
-    "@npmcli/package-json": "^8.0.0",
     "camelcase": "catalog:",
     "consola": "catalog:",
     "esbuild": "^0.28.0",
@@ -146,6 +147,7 @@
     "yaml": "catalog:"
   },
   "devDependencies": {
+    "@adobe/aio-lib-files": "catalog:",
     "@aio-commerce-sdk/common-utils": "workspace:*",
     "@aio-commerce-sdk/config-tsdown": "workspace:*",
     "@aio-commerce-sdk/config-typedoc": "workspace:*",
@@ -153,10 +155,12 @@
     "@aio-commerce-sdk/config-vitest": "workspace:*",
     "@aio-commerce-sdk/scripting-utils": "workspace:*",
     "@aio-commerce-sdk/scripts": "workspace:*",
-    "@adobe/aio-lib-files": "catalog:",
-    "@types/npmcli__package-json": "^4.0.4",
+    "@pnpm/lockfile.fs": "^1100.1.7",
+    "@react-spectrum/s2": "catalog:react",
+    "@types/react": "catalog:react",
     "msw": "catalog:",
-    "openapi-format": "1.33.5",
+    "openapi-format": "1.33.0",
+    "react": "catalog:react",
     "typescript": "catalog:"
   },
   "sideEffects": false

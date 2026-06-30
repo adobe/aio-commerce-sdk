@@ -11,8 +11,10 @@
  */
 
 import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
-import NpmPackageJson from "@npmcli/package-json";
+import { loadPackageJson } from "@aio-commerce-sdk/scripting-utils/project";
 import { consola } from "consola";
+
+import { runInstall } from "#commands/utils";
 
 import {
   ensureAppConfig,
@@ -21,7 +23,6 @@ import {
   ensurePackageJson,
   installDependencies,
   runGeneration,
-  runInstall,
   writePostinstallHook,
 } from "./lib";
 
@@ -65,7 +66,11 @@ export async function run(flags?: InitFlags, extraOptions?: InitExtraOptions) {
   installDependencies(packageManager, domains);
 
   // Sync the package.json with the app config
-  const pkg = await NpmPackageJson.load(process.cwd());
+  const pkg = await loadPackageJson(process.cwd());
+  if (pkg === null) {
+    throw new Error("Could not find package.json.");
+  }
+
   pkg.update({
     name: config.metadata.id,
     version: config.metadata.version,

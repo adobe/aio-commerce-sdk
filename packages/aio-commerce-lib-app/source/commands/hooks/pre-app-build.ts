@@ -20,11 +20,12 @@ import {
   EXTENSIBILITY_EXTENSION_POINT_ID,
 } from "#commands/constants";
 import { getRuntimeActions } from "#commands/generate/actions/config";
+import { TEMPLATES_DIR } from "#commands/generate/actions/constants";
 import {
   generateActionFiles,
+  generateWebSrc,
   prepareRuntimeAppConfigModule,
   readExtConfig,
-  TEMPLATES_DIR,
   updateExtConfig,
 } from "#commands/generate/actions/lib";
 import { run as generateManifestCommand } from "#commands/generate/manifest/main";
@@ -88,7 +89,18 @@ export async function run(extension: Extension, templatesDir = TEMPLATES_DIR) {
 
   if (extension === "backend-ui/2") {
     if (hasAdminUi(appManifest)) {
-      await updateExtConfig(appManifest, BACKEND_UI_V2_EXTENSION_POINT_ID);
+      const extConfig = await updateExtConfig(
+        appManifest,
+        BACKEND_UI_V2_EXTENSION_POINT_ID,
+      );
+
+      if (extConfig.operations?.view) {
+        await generateWebSrc(
+          extConfig,
+          BACKEND_UI_V2_EXTENSION_POINT_ID,
+          templatesDir,
+        );
+      }
     }
     return;
   }

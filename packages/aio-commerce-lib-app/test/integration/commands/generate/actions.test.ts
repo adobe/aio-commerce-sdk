@@ -42,8 +42,18 @@ import {
   EMPTY_PROJECT,
   INVALID_PROJECT,
   MINIMAL_PROJECT,
+  makeProjectFiles,
   withTempProject,
 } from "#test/fixtures/project";
+
+const { mockSpawnSync } = vi.hoisted(() => ({
+  mockSpawnSync: vi.fn((..._args: unknown[]) => ({ status: 0 })),
+}));
+
+vi.mock("node:child_process", () => ({ spawnSync: mockSpawnSync }));
+
+const ADMIN_UI_PACKAGE_SPECIFIER_PATTERN =
+  /^@adobe\/aio-commerce-lib-admin-ui@\^/;
 
 function getActionsDir(tempDir: string, extensionPointId: string) {
   return join(
@@ -55,6 +65,7 @@ function getActionsDir(tempDir: string, extensionPointId: string) {
 
 describe("commands/generate/actions", () => {
   afterEach(() => {
+    mockSpawnSync.mockClear();
     vi.unstubAllEnvs();
   });
 
@@ -131,7 +142,7 @@ describe("commands/generate/actions", () => {
       );
     });
 
-    test("uses static JSON imports when business config schema is static", async () => {
+    test("uses the app config alias when business config schema is static", async () => {
       await withTempProject(
         { ...EMPTY_PROJECT, ...makeTemplateFiles() },
         async (tempDir) => {
@@ -147,21 +158,20 @@ describe("commands/generate/actions", () => {
           );
 
           const configContent = await readFile(configPath, "utf-8");
+          expect(configContent).toContain('"#app.commerce.config"');
           expect(configContent).toContain(
-            'import configSchema from "../../configuration-schema.json" with { type: "json" }',
+            "configSchema: config.businessConfig.schema",
           );
-          expect(configContent).not.toContain("#app.commerce.config");
+          expect(configContent).not.toContain("configuration-schema.json");
 
           const appConfigContent = await readFile(appConfigPath, "utf-8");
-          expect(appConfigContent).toContain(
-            'import appConfig from "../../app.commerce.manifest.json" with { type: "json" }',
-          );
-          expect(appConfigContent).not.toContain("#app.commerce.config");
+          expect(appConfigContent).toContain('"#app.commerce.config"');
+          expect(appConfigContent).not.toContain("app.commerce.manifest.json");
         },
       );
     });
 
-    test("rewrites schema/manifest imports when business config schema is dynamic", async () => {
+    test("uses the app config alias when business config schema is dynamic", async () => {
       await withTempProject(
         {
           ...EMPTY_PROJECT,
@@ -184,7 +194,7 @@ describe("commands/generate/actions", () => {
           const configContent = await readFile(configPath, "utf-8");
           expect(configContent).toContain('"#app.commerce.config"');
           expect(configContent).toContain(
-            "configSchema: appConfig.businessConfig.schema",
+            "configSchema: config.businessConfig.schema",
           );
           expect(configContent).not.toContain("configuration-schema.json");
           expect(configContent).not.toContain("configuration-schema.js");
@@ -249,7 +259,7 @@ describe("commands/generate/actions", () => {
       );
     });
 
-    test("removes the runtime app config module and alias when regenerating as static", async () => {
+    test("points the app config alias at the generated manifest for static config", async () => {
       await withTempProject(
         {
           ...EMPTY_PROJECT,
@@ -265,14 +275,30 @@ describe("commands/generate/actions", () => {
         },
         async (tempDir) => {
           await run(minimalValidConfig, tempDir);
-          expect(existsSync(join(tempDir, getRuntimeAppConfigPath()))).toBe(
-            false,
-          );
+          const runtimeConfigPath = join(tempDir, getRuntimeAppConfigPath());
+          expect(existsSync(runtimeConfigPath)).toBe(false);
 
           const pkg = JSON.parse(
             await readFile(join(tempDir, "package.json"), "utf-8"),
           );
-          expect(pkg.imports?.["#app.commerce.config"]).toBeUndefined();
+          expect(pkg.imports["#app.commerce.config"]).toBe(
+            "./src/commerce-extensibility-1/.generated/app.commerce.manifest.json",
+          );
+        },
+      );
+    });
+
+    test("keeps the runtime app config alias when generated actions use static JSON imports", async () => {
+      await withTempProject(
+        { ...EMPTY_PROJECT, ...makeTemplateFiles() },
+        async (tempDir) => {
+          await run(configWithBusinessConfig, tempDir);
+          const pkg = JSON.parse(
+            await readFile(join(tempDir, "package.json"), "utf-8"),
+          );
+          expect(pkg.imports["#app.commerce.config"]).toBe(
+            "./src/commerce-extensibility-1/.generated/app.commerce.manifest.json",
+          );
         },
       );
     });
@@ -315,6 +341,144 @@ describe("commands/generate/actions", () => {
           expect(content).toContain("index.html");
           expect(content).toContain("web-src");
           expect(content).not.toContain("workerProcess");
+        },
+      );
+    });
+
+    test("scaffolds web-src for backend-ui/2 when a view operation is generated", async () => {
+      await withTempProject(
+        { ...EMPTY_PROJECT, ...makeTemplateFiles() },
+        async (tempDir) => {
+          await run(configWithAdminUiMenu, tempDir);
+
+          const webSrcDir = join(
+            tempDir,
+            getExtensionPointFolderPath(BACKEND_UI_V2_EXTENSION_POINT_ID),
+            "web-src",
+          );
+
+          expect(existsSync(join(webSrcDir, "index.html"))).toBe(true);
+          expect(existsSync(join(webSrcDir, "index.css"))).toBe(true);
+          expect(existsSync(join(webSrcDir, "src", "app.jsx"))).toBe(true);
+          expect(
+            existsSync(join(webSrcDir, "src", "pages", "main-page.jsx")),
+          ).toBe(true);
+          expect(existsSync(join(webSrcDir, "src", "components"))).toBe(true);
+
+          const appContent = await readFile(
+            join(webSrcDir, "src", "app.jsx"),
+            "utf-8",
+          );
+          expect(appContent).toContain("#app.commerce.config");
+          expect(appContent).toContain("createExtensionApp");
+
+          const pkg = JSON.parse(
+            await readFile(join(tempDir, "package.json"), "utf-8"),
+          );
+          expect(pkg["@parcel/resolver-default"]).toEqual({
+            packageExports: true,
+          });
+          expect(pkg["@parcel/bundler-default"]).toEqual({
+            manualSharedBundles: [
+              {
+                assets: [
+                  "**/@react-spectrum/s2/**",
+                  "src/commerce-backend-ui-2/web-src/*.{js,jsx,ts,tsx}",
+                ],
+                name: "s2-styles",
+                types: ["css"],
+              },
+            ],
+          });
+
+          const installCall = mockSpawnSync.mock.calls.find(
+            ([, args]) =>
+              Array.isArray(args) &&
+              args.includes("react@19.2.7") &&
+              args.includes("@react-spectrum/s2@1.4.0"),
+          );
+          expect(installCall?.[1]).toEqual(
+            expect.arrayContaining([
+              expect.stringMatching(ADMIN_UI_PACKAGE_SPECIFIER_PATTERN),
+              "react@19.2.7",
+              "react-dom@19.2.7",
+              "@react-spectrum/s2@1.4.0",
+            ]),
+          );
+
+          const devInstallCall = mockSpawnSync.mock.calls.find(
+            ([, args]) =>
+              Array.isArray(args) && args.includes("@types/react@^19.2.7"),
+          );
+          expect(devInstallCall?.[1]).toEqual(
+            expect.arrayContaining(["--save-dev", "@types/react@^19.2.7"]),
+          );
+        },
+      );
+    });
+
+    test("scaffolds TSX web-src files when the app config is TypeScript", async () => {
+      await withTempProject(
+        {
+          ...makeProjectFiles(configWithAdminUiMenu),
+          ...makeTemplateFiles(),
+        },
+        async (tempDir) => {
+          await run(configWithAdminUiMenu, tempDir);
+
+          const webSrcDir = join(
+            tempDir,
+            getExtensionPointFolderPath(BACKEND_UI_V2_EXTENSION_POINT_ID),
+            "web-src",
+          );
+
+          expect(existsSync(join(webSrcDir, "src", "app.tsx"))).toBe(true);
+          expect(
+            existsSync(join(webSrcDir, "src", "pages", "main-page.tsx")),
+          ).toBe(true);
+          expect(existsSync(join(webSrcDir, "src", "app.jsx"))).toBe(false);
+
+          const indexHtml = await readFile(
+            join(webSrcDir, "index.html"),
+            "utf-8",
+          );
+          expect(indexHtml).toContain("./src/app.tsx");
+        },
+      );
+    });
+
+    test("does not overwrite an existing web-src entrypoint", async () => {
+      const entrypoint = join(
+        getExtensionPointFolderPath(BACKEND_UI_V2_EXTENSION_POINT_ID),
+        "web-src",
+        "index.html",
+      );
+
+      await withTempProject(
+        {
+          ...EMPTY_PROJECT,
+          ...makeTemplateFiles(),
+          [entrypoint]: "<html>custom</html>",
+        },
+        async (tempDir) => {
+          await run(configWithAdminUiMenu, tempDir);
+
+          const entrypointPath = join(tempDir, entrypoint);
+          expect(await readFile(entrypointPath, "utf-8")).toBe(
+            "<html>custom</html>",
+          );
+          expect(
+            existsSync(
+              join(
+                tempDir,
+                getExtensionPointFolderPath(BACKEND_UI_V2_EXTENSION_POINT_ID),
+                "web-src",
+                "src",
+                "app.jsx",
+              ),
+            ),
+          ).toBe(false);
+          expect(mockSpawnSync).not.toHaveBeenCalled();
         },
       );
     });
