@@ -50,6 +50,9 @@ export type HostConnection = {
 
   /** Closes the iframe and navigates back, flagging the originating page that an error occurred. */
   closeWithError: () => Promise<void>;
+
+  /** Returns the host (domain) of the Commerce Admin the extension is embedded in. */
+  getCommerceHost: () => string;
 };
 
 /** The context shared with mass-action extension points, in addition to the IMS credentials. */
