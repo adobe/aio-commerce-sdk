@@ -35,8 +35,8 @@ import type {
  * import { parseMassActionRequest } from "@adobe/aio-commerce-lib-admin-ui/mass-actions";
  *
  * export async function main(params: unknown) {
- *   const { requestId, gridType, ids } = parseMassActionRequest(params);
- *   // process ids...
+ *   const { requestId, gridType, selectedIds } = parseMassActionRequest(params);
+ *   // process selectedIds...
  * }
  * ```
  */
@@ -57,7 +57,7 @@ export function parseMassActionRequest(input: unknown): MassActionRequest {
  * @example
  * ```ts
  * return okMassActionResponse();
- * return okMassActionResponse({ exported: ids.length });
+ * return okMassActionResponse({ exported: selectedIds.length });
  * ```
  */
 export function okMassActionResponse(
