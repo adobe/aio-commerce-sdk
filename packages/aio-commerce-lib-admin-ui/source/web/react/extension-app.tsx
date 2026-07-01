@@ -30,6 +30,7 @@ import { isControlFrame, isUiFrame } from "#web/react/commerce/lib";
 import { useSpectrumRouter } from "#web/react/routing/hooks/use-spectrum-router";
 import { useExtensionColorScheme } from "#web/react/shell/hooks/use-extension-color-scheme";
 import { useShellConfiguration } from "#web/react/shell/hooks/use-shell-configuration";
+import { syncRootColorScheme } from "#web/react/theme";
 
 import { ExtensionErrorBoundary } from "./extension-error-boundary";
 
@@ -99,12 +100,17 @@ function CommerceExtensionApp(props: Readonly<{ extensionId: string }>) {
   const { extensionId } = props;
   const spectrumRouter = useSpectrumRouter();
 
+  // Commerce Admin always uses the light theme, so there's nothing to wait on for it, but the
+  // root attribute still needs syncing since Spectrum S2's page styles key off it.
+  useEffect(() => {
+    syncRootColorScheme("light");
+  }, []);
+
   if (isControlFrame()) {
     return <ControlFrameRegistration extensionId={extensionId} />;
   }
 
   return (
-    // Commerce Admin always uses the light theme, so there's nothing to wait on for it.
     <Provider colorScheme="light" router={spectrumRouter}>
       <ExtensionErrorBoundary>
         <Suspense fallback={<ConnectionFallback />}>
