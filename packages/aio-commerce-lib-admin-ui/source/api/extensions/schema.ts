@@ -16,7 +16,6 @@ import * as v from "valibot";
 export const ExtensionRegistrationParamsSchema = v.object({
   extensionName: v.pipe(v.string(), v.minLength(1)),
   extensionTitle: v.pipe(v.string(), v.minLength(1)),
-  extensionUrl: v.pipe(v.string(), v.url()),
   extensionWorkspace: v.pipe(v.string(), v.minLength(1)),
 });
 
