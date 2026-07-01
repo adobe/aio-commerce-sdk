@@ -38,6 +38,8 @@ function ConnectionFallback() {
  * Renders the Commerce Admin flow: a control frame only needs to register itself with the UIX
  * host (no visible content), while a UI frame renders the routed extension-point content once
  * its guest connection is established.
+ *
+ * @param props - The props needed to initialize the extension app.
  */
 export function CommerceExtensionApp(props: Readonly<{ extensionId: string }>) {
   const { extensionId } = props;

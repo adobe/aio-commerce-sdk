@@ -26,6 +26,9 @@ const commerceHostCache = new Map<string, Promise<string>>();
 /**
  * Returns the cached Commerce Admin host promise for an extension, resolving it once over the
  * given guest connection. The value is static for the lifetime of the connection.
+ *
+ * @param extensionId - The unique identifier for the extension app.
+ * @param connection - The established guest connection.
  */
 function getCommerceHostPromise(
   extensionId: string,

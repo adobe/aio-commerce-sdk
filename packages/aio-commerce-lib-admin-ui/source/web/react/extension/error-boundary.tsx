@@ -34,8 +34,6 @@ function getErrorMessage(error: unknown): string {
   return typeof error === "string" ? error : "An unexpected error occurred.";
 }
 
-// Relies on Spectrum being mounted above this boundary so the fallback renders
-// within the Provider's theme. See the provider ordering in `extension-app.tsx`.
 function ErrorFallback({ error, resetErrorBoundary }: Readonly<FallbackProps>) {
   const router = useRouter();
   const canGoBack = useCanGoBack();

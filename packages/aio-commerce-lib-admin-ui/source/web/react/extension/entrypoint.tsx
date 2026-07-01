@@ -27,8 +27,8 @@ type EntrypointProps = {
 
 /**
  * The Entrypoint component is the main entry point for an extension app.
- * It picks between the Commerce Admin, Experience Cloud shell, and standalone flows: 
-
+ * It picks between the Commerce Admin, Experience Cloud shell, and standalone flows.
+ *
  * @param props - The props needed to initialize the extension app.
  */
 export function Entrypoint(props: Readonly<EntrypointProps>) {

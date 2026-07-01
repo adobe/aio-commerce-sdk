@@ -30,7 +30,10 @@ function ShellFallback() {
   return <CenteredProgress aria-label="Loading experience cloud runtime" />;
 }
 
-/** Renders the Experience Cloud shell flow, waiting for the shell's runtime configuration. */
+/**
+ * Renders the Experience Cloud shell flow, waiting for the shell's runtime configuration.
+ * @param props - The props needed to initialize the extension app.
+ */
 export function ExperienceShellExtensionApp(
   props: Readonly<{
     initialConfigurationPromise: Promise<RuntimeConfiguration | null>;
@@ -51,7 +54,10 @@ export function ExperienceShellExtensionApp(
   );
 }
 
-/** Renders IMS-gated route content once the shell/runtime configuration is known. */
+/**
+ * Renders IMS-gated route content once the shell/runtime configuration is known.
+ * @param props - The props needed to initialize the extension app.
+ */
 function ShellExtensionContent(
   props: Readonly<{
     initialConfigurationPromise: Promise<RuntimeConfiguration | null>;
