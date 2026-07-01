@@ -10,7 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
-import { attach } from "@adobe/uix-guest";
+import { attach, register } from "@adobe/uix-guest";
 import { useEffect, useState } from "react";
 
 import type { GuestConnection } from "#web/react/commerce/types";
@@ -28,15 +28,25 @@ export function useGuestConnection(
   useEffect(() => {
     let isActive = true;
 
-    attach({ id: extensionId })
-      .then((connection) => {
-        if (isActive) {
-          setGuestConnection(connection);
-        }
-      })
-      .catch((err) => {
-        console.error("UIX guest attach failed:", err);
+    const isEmbeddedIframe = globalThis.self !== globalThis.top;
+    const isUiFrame = isEmbeddedIframe && window.name.startsWith("uix-guest-");
+    const isControlFrame = isEmbeddedIframe && !window.name;
+
+    if (isUiFrame) {
+      attach({ id: extensionId })
+        .then((connection) => {
+          if (isActive) {
+            setGuestConnection(connection);
+          }
+        })
+        .catch((err) => {
+          console.error("UIX guest attach failed:", err);
+        });
+    } else if (isControlFrame) {
+      register({ id: extensionId, methods: {} }).catch((err) => {
+        console.error("UIX guest register failed:", err);
       });
+    }
 
     return () => {
       isActive = false;
