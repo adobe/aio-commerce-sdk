@@ -32,24 +32,6 @@ export function getShellColorScheme(
 }
 
 /**
- * Resolves the Spectrum S2 color scheme for the current extension runtime.
- *
- * @param isCommerceLike - Whether the app should follow Commerce Admin theming.
- * @param shellTheme - The theme value provided by Experience Shell.
- */
-export function getExtensionColorScheme(
-  isCommerceLike: boolean,
-  shellTheme: string | null | undefined,
-) {
-  if (isCommerceLike) {
-    // Commerce Admin always uses the light theme, regardless of the host theme.
-    return "light";
-  }
-
-  return getShellColorScheme(shellTheme);
-}
-
-/**
  * Syncs the root `data-color-scheme` attribute used by Spectrum S2 page styles.
  *
  * @param colorScheme - The Spectrum S2 color scheme to apply.

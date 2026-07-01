@@ -63,11 +63,11 @@ export function createExtensionApp({
   const root = createRoot(rootElement);
   const render = (
     runtime: ReturnType<typeof Runtime>,
-    initialConfiguration: RuntimeConfiguration | null,
+    initialConfigurationPromise: Promise<RuntimeConfiguration | null>,
   ) => {
     const extensionAppProps = {
       extensionId: metadata.extensionId,
-      initialConfiguration,
+      initialConfigurationPromise,
       runtime,
     };
 
@@ -81,19 +81,25 @@ export function createExtensionApp({
     loadExperienceCloudRuntime();
     init(() => {
       const runtime = Runtime();
-      page.title = metadata.title ?? `App Extension (${metadata.extensionId})`;
+      const { promise, resolve } =
+        Promise.withResolvers<RuntimeConfiguration | null>();
 
+      page.title = metadata.title ?? `App Extension (${metadata.extensionId})`;
       runtime.on("ready", (configuration?: RuntimeConfiguration) => {
-        render(runtime, configuration ?? runtime.lastConfigurationPayload);
+        resolve(configuration ?? runtime.lastConfigurationPayload);
         page.done().catch(() => {
           console.warn(
             "Failed to mark page as done in Experience Cloud Shell.",
           );
         });
       });
+
+      // Render immediately instead of waiting for "ready", so the app can show its own
+      // loading UI (via Suspense) rather than leaving the iframe blank until the shell responds.
+      render(runtime, promise);
     });
   } catch {
-    render(createMockRuntime(), null);
+    render(createMockRuntime(), Promise.resolve(null));
     document.title =
       metadata.title ?? `App Extension (${metadata.extensionId})`;
   }

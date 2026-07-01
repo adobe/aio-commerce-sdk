@@ -20,6 +20,9 @@ export type GuestConnection = Awaited<ReturnType<typeof attach>>;
 export type SharedContextState = {
   /** The extension ID of the app. */
   extensionId: string;
+
+  /** The established guest connection. */
+  guestConnection: GuestConnection;
 };
 
 /**
@@ -29,7 +32,10 @@ export type SharedContextState = {
  * host over the guest connection. It is distinct from the IMS credentials ({@link ImsContext}),
  * which are also available in the Experience Cloud shell.
  */
-export type SharedContext = SharedContextState & {
+export type SharedContext = {
+  /** The extension ID of the app. */
+  extensionId: string;
+
   /** The live `sharedContext` object provided by the host. */
   sharedContext: NonNullable<GuestConnection["sharedContext"]>;
 

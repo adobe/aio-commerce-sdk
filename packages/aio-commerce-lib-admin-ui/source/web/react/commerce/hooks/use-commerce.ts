@@ -13,7 +13,8 @@
 import { use } from "react";
 
 import { useInternalSharedContext } from "#web/react/commerce/context/shared-context.tsx";
-import { getGuestConnectionPromise } from "#web/react/commerce/hooks/use-guest-connection";
+
+import type { GuestConnection } from "#web/react/commerce/types";
 
 /** The host integration API exposed to every extension point. */
 type HostIntegration = {
@@ -24,23 +25,24 @@ const commerceHostCache = new Map<string, Promise<string>>();
 
 /**
  * Returns the cached Commerce Admin host promise for an extension, resolving it once over the
- * guest connection. The value is static for the lifetime of the connection.
+ * given guest connection. The value is static for the lifetime of the connection.
  */
-function getCommerceHostPromise(extensionId: string): Promise<string> {
+function getCommerceHostPromise(
+  extensionId: string,
+  connection: GuestConnection,
+): Promise<string> {
   let promise = commerceHostCache.get(extensionId);
   if (!promise) {
-    promise = getGuestConnectionPromise(extensionId).then((connection) => {
-      const integration = (connection.host as { integration?: HostIntegration })
-        .integration;
+    const integration = (connection.host as { integration?: HostIntegration })
+      .integration;
 
-      if (!integration) {
-        throw new Error(
-          "The host does not provide the integration API needed to resolve the Commerce host.",
+    promise = integration
+      ? integration.getCommerceHost()
+      : Promise.reject(
+          new Error(
+            "The host does not provide the integration API needed to resolve the Commerce host.",
+          ),
         );
-      }
-
-      return integration.getCommerceHost();
-    });
 
     commerceHostCache.set(extensionId, promise);
   }
@@ -50,13 +52,14 @@ function getCommerceHostPromise(extensionId: string): Promise<string> {
 
 /**
  * Returns the host (domain) of the Commerce Admin the extension is embedded in, suspending until
- * the guest connection is established.
+ * it's resolved over the guest connection.
  *
- * @throws If the app isn't running inside a Commerce Admin UI frame at all.
+ * @throws If used outside a Commerce Admin UI frame.
  */
 export function useCommerce() {
-  const { extensionId } = useInternalSharedContext();
-  const commerceHost = use(getCommerceHostPromise(extensionId));
+  const { extensionId, guestConnection: connection } =
+    useInternalSharedContext();
+  const commerceHost = use(getCommerceHostPromise(extensionId, connection));
 
   return { commerceHost };
 }

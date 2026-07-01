@@ -12,23 +12,18 @@
 
 import { useEffect } from "react";
 
-import { getExtensionColorScheme, syncRootColorScheme } from "#web/react/theme";
+import { getShellColorScheme, syncRootColorScheme } from "#web/react/theme";
 
 import type { ShellConfiguration } from "#web/react/shell/types";
 
 /**
- * Keeps the Spectrum S2 color scheme aligned with Commerce, Experience Shell, or browser defaults.
+ * Keeps the Spectrum S2 color scheme aligned with Experience Shell or browser defaults.
  * @param shellConfiguration - The Experience Shell configuration, if available.
- * @param isCommerceLike - Whether the extension is running in a Commerce-like context (Commerce Admin) or not.
  */
 export function useExtensionColorScheme(
-  isCommerceLike: boolean,
   shellConfiguration: ShellConfiguration | null,
 ) {
-  const colorScheme = getExtensionColorScheme(
-    isCommerceLike,
-    shellConfiguration?.theme,
-  );
+  const colorScheme = getShellColorScheme(shellConfiguration?.theme);
 
   useEffect(() => {
     syncRootColorScheme(colorScheme);

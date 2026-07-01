@@ -18,11 +18,6 @@ import {
   useSyncExternalStore,
 } from "react";
 
-import {
-  getGuestConnectionPromise,
-  useGuestConnection,
-} from "#web/react/commerce/hooks/use-guest-connection";
-
 import type { ReactNode } from "react";
 import type { useCommerce } from "#web/react/commerce/hooks/use-commerce";
 import type {
@@ -54,18 +49,18 @@ export function useInternalSharedContext(): SharedContextState {
 }
 
 /**
- * Returns the current Commerce shared context, suspending until the guest connection is
- * established.
+ * Returns the current Commerce shared context. The guest connection is already established by
+ * the time this can be called (see {@link SharedContextProvider}).
  *
  * This is a low-level escape hatch that exposes the raw `sharedContext`/`host` objects; prefer a
  * purpose-built hook ({@link useCommerce}, {@link useMassActionContext}, {@link useOrderViewButtonContext}, etc.) when one
  * covers what you need.
  *
- * @throws If the app isn't running inside a Commerce Admin UI frame at all.
+ * @throws If used outside a {@link SharedContextProvider}.
  */
 export function useSharedContext(): SharedContext {
-  const { extensionId } = useInternalSharedContext();
-  const connection = use(getGuestConnectionPromise(extensionId));
+  const { extensionId, guestConnection: connection } =
+    useInternalSharedContext();
   const sharedContext = useLiveSharedContext(connection);
 
   return {
@@ -96,22 +91,22 @@ function useLiveSharedContext(guestConnection: GuestConnection) {
 
 type SharedContextProviderProps = {
   children?: ReactNode;
+  connection: GuestConnection;
   extensionId: string;
 };
 
 /**
  * Provides the Commerce shared context for a mounted Admin UI iframe app.
- * @param props - The props needed to initialize the shared context.
+ * @param props - The props needed to initialize the shared context, including the already
+ * established guest connection.
  */
 export function SharedContextProvider(
   props: Readonly<SharedContextProviderProps>,
 ) {
-  const { children, extensionId } = props;
-  useGuestConnection(extensionId);
-
+  const { children, connection, extensionId } = props;
   const value = useMemo<SharedContextState>(
-    () => ({ extensionId }),
-    [extensionId],
+    () => ({ extensionId, guestConnection: connection }),
+    [extensionId, connection],
   );
 
   return (
