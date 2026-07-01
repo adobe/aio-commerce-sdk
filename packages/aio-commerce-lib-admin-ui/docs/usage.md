@@ -40,7 +40,6 @@ const client = createAdminUiApiClient({
 await client.registerExtension({
   extensionName: "my_namespace",
   extensionTitle: "My App",
-  extensionUrl: "https://my_namespace.adobeio-static.net/index.html",
   extensionWorkspace: "prod-workspace",
 });
 
