@@ -59,7 +59,6 @@ function ErrorFallback({ error, resetErrorBoundary }: Readonly<FallbackProps>) {
           {canGoBack && (
             <Button
               onPress={() => {
-                resetErrorBoundary();
                 router.history.back();
               }}
               variant="secondary">
