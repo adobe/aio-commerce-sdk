@@ -12,7 +12,6 @@
 
 import { useMemo } from "react";
 
-import { useIms } from "#web/react/auth/context/ims-context.tsx";
 import { useSharedContext } from "#web/react/commerce/context/shared-context.tsx";
 import { parseOrderId } from "#web/react/commerce/lib";
 
@@ -22,43 +21,31 @@ import type {
 } from "#web/react/commerce/types";
 
 /**
- * Returns the context for a mass-action extension point: the IMS credentials plus the selected
- * row IDs and the Commerce instance the action was triggered from.
- *
- * Mass actions are a Commerce-only extension point, so this requires the Commerce connection.
+ * Returns the context for a mass-action extension point: the selected row IDs the action was triggered
+ * with. Mass actions are a Commerce-only extension point, so this requires the Commerce connection.
  *
  * @throws If used outside a Commerce mass-action page (e.g. in the Experience Cloud shell).
  */
 export function useMassActionContext(): MassActionContext {
-  const { imsToken, imsOrgId } = useIms();
-  const context = useSharedContext();
-
-  return useMemo(() => {
-    const { sharedContext } = context;
-    return {
-      imsToken,
-      imsOrgId,
-      selectedIds: (sharedContext.get("selectedIds") as string[]) ?? [],
-      commerceBaseUrl: sharedContext.get("commerceBaseUrl") as string,
-      clientId: sharedContext.get("clientId") as string,
-    };
-  }, [imsToken, imsOrgId, context]);
-}
-
-/**
- * Returns the context for an order view-button extension point: the IMS credentials plus the
- * order ID the button was triggered from. The order ID comes from the URL path parameter the
- * host sets, not from the shared context.
- */
-export function useOrderViewButtonContext(): OrderViewButtonContext {
-  const { imsToken, imsOrgId } = useIms();
+  const { sharedContext } = useSharedContext();
 
   return useMemo(
     () => ({
-      imsToken,
-      imsOrgId,
+      selectedIds: (sharedContext.get("selectedIds") as string[]) ?? [],
+    }),
+    [sharedContext],
+  );
+}
+
+/**
+ * Returns the context for an order view-button extension point: the order ID the button was
+ * triggered from.
+ */
+export function useOrderViewButtonContext(): OrderViewButtonContext {
+  return useMemo(
+    () => ({
       orderId: parseOrderId(globalThis.location.href),
     }),
-    [imsToken, imsOrgId],
+    [],
   );
 }

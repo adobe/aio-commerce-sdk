@@ -55,14 +55,12 @@ export type HostConnection = {
   getCommerceHost: () => string;
 };
 
-/** The context shared with mass-action extension points, in addition to the IMS credentials. */
-export type MassActionContext = ImsContext & {
+/** The context shared with mass-action extension points. */
+export type MassActionContext = {
   selectedIds: string[];
-  commerceBaseUrl: string;
-  clientId: string;
 };
 
-/** The context shared with order view-button extension points, in addition to the IMS credentials. */
-export type OrderViewButtonContext = ImsContext & {
+/** The context shared with order view-button extension points. */
+export type OrderViewButtonContext = {
   orderId: string | null;
 };
