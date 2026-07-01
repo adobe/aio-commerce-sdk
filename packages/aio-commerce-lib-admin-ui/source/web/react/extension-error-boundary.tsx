@@ -83,9 +83,12 @@ function ErrorFallback({ error, resetErrorBoundary }: Readonly<FallbackProps>) {
 export function ExtensionErrorBoundary(
   props: Readonly<React.PropsWithChildren>,
 ) {
-  const href = useRouterState({ select: (state) => state.location.href });
+  const routeKey = useRouterState({
+    select: (state) => state.matches.at(-1)?.pathname,
+  });
+
   return (
-    <ErrorBoundary FallbackComponent={ErrorFallback} resetKeys={[href]}>
+    <ErrorBoundary FallbackComponent={ErrorFallback} resetKeys={[routeKey]}>
       {props.children}
     </ErrorBoundary>
   );
