@@ -23,6 +23,10 @@ function getGuestConnectionPromise(
   let promise = connectionCache.get(extensionId);
   if (!promise) {
     promise = attach({ id: extensionId });
+    promise.catch((err) => {
+      console.error("UIX guest attach failed:", err);
+    });
+
     connectionCache.set(extensionId, promise);
   }
 

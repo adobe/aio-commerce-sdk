@@ -59,14 +59,13 @@ export function useInternalSharedContext(): SharedContextState {
  * @throws If used outside a {@link SharedContextProvider}.
  */
 export function useSharedContext(): SharedContext {
-  const { extensionId, guestConnection: connection } =
-    useInternalSharedContext();
-  const sharedContext = useLiveSharedContext(connection);
+  const { extensionId, guestConnection } = useInternalSharedContext();
+  const sharedContext = useLiveSharedContext(guestConnection);
 
   return {
     extensionId,
     sharedContext,
-    host: connection.host,
+    host: guestConnection.host,
   };
 }
 
@@ -91,7 +90,7 @@ function useLiveSharedContext(guestConnection: GuestConnection) {
 
 type SharedContextProviderProps = {
   children?: ReactNode;
-  connection: GuestConnection;
+  guestConnection: GuestConnection;
   extensionId: string;
 };
 
@@ -103,10 +102,10 @@ type SharedContextProviderProps = {
 export function SharedContextProvider(
   props: Readonly<SharedContextProviderProps>,
 ) {
-  const { children, connection, extensionId } = props;
+  const { children, guestConnection, extensionId } = props;
   const value = useMemo<SharedContextState>(
-    () => ({ extensionId, guestConnection: connection }),
-    [extensionId, connection],
+    () => ({ extensionId, guestConnection }),
+    [extensionId, guestConnection],
   );
 
   return (

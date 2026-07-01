@@ -57,9 +57,10 @@ function getCommerceHostPromise(
  * @throws If used outside a Commerce Admin UI frame.
  */
 export function useCommerce() {
-  const { extensionId, guestConnection: connection } =
-    useInternalSharedContext();
-  const commerceHost = use(getCommerceHostPromise(extensionId, connection));
+  const { extensionId, guestConnection } = useInternalSharedContext();
+  const commerceHost = use(
+    getCommerceHostPromise(extensionId, guestConnection),
+  );
 
   return { commerceHost };
 }
