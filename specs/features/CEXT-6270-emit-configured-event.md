@@ -135,15 +135,30 @@ the same fallback used by `generateInstanceId`. The event code is the value retu
 `getIoEventCode(getNamespacedEvent(metadata, event.name), providerType)`, the same
 computation already performed during installation.
 
-### I/O Events publish endpoint
+### `publishEvent` in lib-events
 
-The I/O Events ingress (`https://eventsingress.adobe.io/`) accepts a CloudEvents 1.0 payload.
-The required fields are `specversion`, `type` (the event code), `source`
-(`urn:uuid:{providerId}`), `id` (a fresh UUID per call — the API requires `source + id` to
-be unique per distinct event), `datacontenttype: "application/json"`, and `data` (the
-payload). The request must carry two auth headers: `Authorization: Bearer {access_token}` and
-`x-api-key: {client_id}`. Both are available from the standard IMS auth params resolved by
-`resolveImsAuthParams`.
+A new export from `@adobe/aio-commerce-lib-events` that owns the I/O Events ingress HTTP
+call and CloudEvents envelope construction:
+
+```ts
+publishEvent<TPayload extends Record<string, unknown>>(params: {
+  client: AdobeIoEventsApiClient;
+  providerId: string;
+  eventCode: string;
+  payload: TPayload;
+}): Promise<void>
+```
+
+`publishEvent` operates at the resolved level: callers supply the provider UUID and the
+fully-qualified event code directly. It builds a CloudEvents 1.0 envelope and POSTs it to the
+ingress URL configured on `client`.
+
+The I/O Events ingress (`https://eventsingress.adobe.io/`) requires the following fields:
+`specversion`, `type` (the event code), `source` (`urn:uuid:{providerId}`), `id` (a fresh
+UUID per call — the API requires `source + id` to be unique per distinct event),
+`datacontenttype: "application/json"`, and `data` (the payload). The request must carry two
+auth headers: `Authorization: Bearer {access_token}` and `x-api-key: {client_id}`. Both come
+from the IMS auth params on `client`.
 
 The ingress base URL is a new optional field on `IoEventsHttpClientConfig` in `lib-api`:
 `ingressBaseUrl`, defaulting to `https://eventsingress.adobe.io/` when not set. This keeps
@@ -174,11 +189,12 @@ Internal flow of `publishEvent`:
 2. If null, throw `EventsDataNotInitializedError`.
 3. Look up `params.provider` in `data.providers`. If not found, throw `ProviderNotFoundError`.
 4. Look up `params.event` in the provider's `events` map. If not found, throw `EventNotFoundError`.
-5. POST a CloudEvents envelope to `client`'s `ingressBaseUrl` with `Authorization` and `x-api-key` headers.
+5. Call `publishEvent` from `lib-events` with the resolved `providerId` and `eventCode`.
 
 ### Changeset
 
 - `@adobe/aio-commerce-lib-api`: `minor` — adds `ingressBaseUrl` to `IoEventsHttpClientConfig`.
+- `@adobe/aio-commerce-lib-events`: `minor` — new `publishRawEvent` export.
 - `@adobe/aio-commerce-lib-app`: `minor` — new `publishEvent` export plus installation-side
   `system.events` write.
 - `@adobe/aio-commerce-sdk`: `minor` — re-exports the above.
@@ -200,13 +216,13 @@ published. The install step already computes and has the provider ID; persisting
 incremental work with a meaningful runtime benefit.
 
 **`lib-app` vs. `lib-events` for `publishEvent`.**
-`lib-events` currently wraps the I/O Events **management** API only (providers, registrations,
-metadata via `https://api.adobe.io/events`). `publishEvent` needs system storage and app
-config resolution, so the high-level function lives in `lib-app`. The HTTP call to the ingress
-is made via the existing `AdobeIoEventsApiClient` from `lib-events`, extended with an
-`ingressBaseUrl` config field — no new client type needed, and the composability pattern
-already used across the SDK is preserved: callers construct the client with the right config
-and pass it in.
+`lib-events` owns all I/O Events HTTP operations: management API and ingress. The new
+`publishRawEvent` in `lib-events` handles CloudEvents envelope construction and the ingress
+POST, operating on already-resolved `providerId` and `eventCode`. `publishEvent` in `lib-app`
+sits above it: it reads system storage, resolves provider key and event name to their
+respective IDs and codes, then delegates the HTTP call to `lib-events.publishEvent`. This
+boundary means any change to the ingress protocol is isolated to `lib-events`; `lib-app` only
+cares about resolution.
 
 **Storing the pre-computed event code rather than recomputing at runtime.**
 The event code could be recomputed from the provider type and app metadata, but that
