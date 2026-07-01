@@ -54,9 +54,6 @@ import type { CommerceAppConfigDomain } from "#config/index";
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 import type { InitFlags } from "./main";
 
-// __LIB_CONFIG_RANGE__ is injected and replaced at build time.
-declare const __LIB_CONFIG_RANGE__: string;
-
 /** Ensure app.commerce.config file exists, allow creating if it doesn't. When options are provided, prompts are skipped. */
 export async function ensureCommerceAppConfig(
   cwd = process.cwd(),

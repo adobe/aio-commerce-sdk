@@ -16,14 +16,6 @@ import { fileURLToPath } from "node:url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// These are injected and replaced at build/test time.
-declare const __LIB_ADMIN_UI_RANGE__: string;
-declare const __REACT_VERSION__: string;
-declare const __REACT_DOM_VERSION__: string;
-declare const __REACT_DOM_TYPES_VERSION__: string;
-declare const __REACT_TYPES_VERSION__: string;
-declare const __SPECTRUM_S2_VERSION__: string;
-
 /** The path to the action templates directory, sibling to this file. */
 export const TEMPLATES_DIR = join(__dirname, "templates");
 

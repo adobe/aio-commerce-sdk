@@ -91,3 +91,16 @@ export async function getVariables() {
     __OPENAPI_VERSION__: defineString(spec.info.version),
   };
 }
+
+declare global {
+  var __REACT_VERSION__: string;
+  var __REACT_DOM_VERSION__: string;
+  var __REACT_DOM_TYPES_VERSION__: string;
+  var __REACT_TYPES_VERSION__: string;
+  var __SPECTRUM_S2_VERSION__: string;
+
+  var __LIB_ADMIN_UI_RANGE__: string;
+  var __LIB_CONFIG_RANGE__: string;
+  var __PKG_VERSION__: string;
+  var __OPENAPI_VERSION__: string;
+}

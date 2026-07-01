@@ -28,9 +28,6 @@ import {
 
 import type { CommerceAppConfigDomain } from "#config/index";
 
-// __PKG_VERSION__ is injected and replaced at build time.
-declare const __PKG_VERSION__: string;
-
 // Pin the self-install to the executing version so running `init` on a
 // specific release doesn't silently downgrade to the latest stable.
 const REQUIRED_DEPENDENCIES = [

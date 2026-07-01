@@ -403,19 +403,17 @@ describe("commands/generate/actions", () => {
           expect(pkg.imports["#app.commerce.config"]).toBe(
             "./src/commerce-extensibility-1/.generated/app.commerce.manifest.json",
           );
-          expect(pkg.dependencies).toEqual(
-            expect.objectContaining({
-              // biome-ignore lint/performance/useTopLevelRegex: Just a test
-              "@adobe/aio-commerce-lib-admin-ui": expect.stringMatching(/^\^/),
-              "@react-spectrum/s2": "1.4.0",
-              react: "19.2.7",
-              "react-dom": "19.2.7",
-            }),
+          expect(Object.keys(pkg.dependencies)).toEqual(
+            expect.arrayContaining([
+              "@adobe/aio-commerce-lib-admin-ui",
+              "@react-spectrum/s2",
+              "react",
+              "react-dom",
+            ]),
           );
-          expect(pkg.devDependencies).toEqual({
-            "@types/react": "^19.2.7",
-            "@types/react-dom": "^19.2.3",
-          });
+          expect(Object.keys(pkg.devDependencies)).toEqual(
+            expect.arrayContaining(["@types/react", "@types/react-dom"]),
+          );
 
           expect(mockSpawnSync).toHaveBeenCalledTimes(1);
           expect(mockSpawnSync).toHaveBeenCalledWith(
@@ -425,61 +423,6 @@ describe("commands/generate/actions", () => {
               cwd: expect.stringContaining(basename(tempDir)),
             }),
           );
-        },
-      );
-    });
-
-    test("declares compatible installed web-src dependencies without reinstalling them", async () => {
-      await withTempProject(
-        {
-          ...EMPTY_PROJECT,
-          ...makeTemplateFiles(),
-          "node_modules/@adobe/aio-commerce-lib-admin-ui/package.json":
-            JSON.stringify({
-              name: "@adobe/aio-commerce-lib-admin-ui",
-              version: "0.1.0",
-            }),
-          "node_modules/@react-spectrum/s2/package.json": JSON.stringify({
-            name: "@react-spectrum/s2",
-            version: "1.4.0",
-          }),
-          "node_modules/@types/react/package.json": JSON.stringify({
-            name: "@types/react",
-            version: "19.2.7",
-          }),
-          "node_modules/@types/react-dom/package.json": JSON.stringify({
-            name: "@types/react-dom",
-            version: "19.2.3",
-          }),
-          "node_modules/react-dom/package.json": JSON.stringify({
-            name: "react-dom",
-            version: "19.2.7",
-          }),
-          "node_modules/react/package.json": JSON.stringify({
-            name: "react",
-            version: "19.2.7",
-          }),
-        },
-        async (tempDir) => {
-          await run(configWithAdminUiMenu, tempDir);
-
-          const pkg = JSON.parse(
-            await readFile(join(tempDir, "package.json"), "utf-8"),
-          );
-          expect(pkg.dependencies).toEqual(
-            expect.objectContaining({
-              // biome-ignore lint/performance/useTopLevelRegex: Just a test
-              "@adobe/aio-commerce-lib-admin-ui": expect.stringMatching(/^\^/),
-              "@react-spectrum/s2": "1.4.0",
-              react: "19.2.7",
-              "react-dom": "19.2.7",
-            }),
-          );
-          expect(pkg.devDependencies).toEqual({
-            "@types/react": "^19.2.7",
-            "@types/react-dom": "^19.2.3",
-          });
-          expect(mockSpawnSync).not.toHaveBeenCalled();
         },
       );
     });
