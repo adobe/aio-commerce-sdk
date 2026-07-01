@@ -41,7 +41,7 @@ export function useInternalSharedContext(): SharedContextState {
   const context = use(SharedContextValue);
   if (context === undefined) {
     throw new Error(
-      "useSharedContext must be used inside a SharedContextProvider.",
+      "useSharedContext must be used inside a SharedContextProvider, which is only available in the Commerce Admin.",
     );
   }
 
