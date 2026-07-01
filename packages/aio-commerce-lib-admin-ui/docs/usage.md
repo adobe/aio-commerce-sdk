@@ -177,9 +177,9 @@ Use `parseMassActionRequest` to validate and narrow the incoming body:
 import { parseMassActionRequest } from "@adobe/aio-commerce-lib-admin-ui/mass-actions";
 
 export async function main(params: unknown) {
-  const { requestId, gridType, ids } = parseMassActionRequest(params);
+  const { requestId, gridType, selectedIds } = parseMassActionRequest(params);
   // gridType is "order" | "product" | "customer"
-  // ids is string[] with at least one entry
+  // selectedIds is string[] with at least one entry
 }
 ```
 
@@ -194,7 +194,7 @@ success. Optionally include any fields you need for logging:
 import { okMassActionResponse } from "@adobe/aio-commerce-lib-admin-ui/mass-actions";
 
 return okMassActionResponse();
-return okMassActionResponse({ exported: ids.length });
+return okMassActionResponse({ exported: selectedIds.length });
 ```
 
 #### Building an error response
@@ -432,7 +432,7 @@ export async function main(params: RuntimeActionParams) {
   } catch {
     return massActionErrorResponse(400, "Invalid mass action request");
   }
-  const { gridType, ids } = request;
+  const { gridType, selectedIds } = request;
 
   // 2. Build a Commerce HTTP client and a permission client.
   //    Hoist these to module scope if the action handles more than one request.
@@ -464,8 +464,8 @@ export async function main(params: RuntimeActionParams) {
   }
 
   // 4. Run the work, then return the response envelope Commerce expects.
-  await approveOrders(ids);
-  return okMassActionResponse({ approved: ids.length });
+  await approveOrders(selectedIds);
+  return okMassActionResponse({ approved: selectedIds.length });
 }
 ```
 
