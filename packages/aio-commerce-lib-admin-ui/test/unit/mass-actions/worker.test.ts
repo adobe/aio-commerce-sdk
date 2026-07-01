@@ -24,7 +24,7 @@ import type { MassActionGridType } from "#mass-actions/worker/types";
 const VALID_REQUEST = {
   requestId: "550e8400-e29b-41d4-a716-446655440000",
   gridType: "order",
-  selectedIds: ["000000001", "000000002"],
+  ids: ["000000001", "000000002"],
 };
 
 describe("parseMassActionRequest", () => {
@@ -43,7 +43,7 @@ describe("parseMassActionRequest", () => {
 
   it("throws when requestId is missing", () => {
     expect(() =>
-      parseMassActionRequest({ gridType: "order", selectedIds: ["1"] }),
+      parseMassActionRequest({ gridType: "order", ids: ["1"] }),
     ).toThrow(CommerceSdkValidationError);
   });
 
@@ -53,15 +53,15 @@ describe("parseMassActionRequest", () => {
     ).toThrow(CommerceSdkValidationError);
   });
 
-  it("throws when selectedIds is empty", () => {
-    expect(() =>
-      parseMassActionRequest({ ...VALID_REQUEST, selectedIds: [] }),
-    ).toThrow(CommerceSdkValidationError);
+  it("throws when ids is empty", () => {
+    expect(() => parseMassActionRequest({ ...VALID_REQUEST, ids: [] })).toThrow(
+      CommerceSdkValidationError,
+    );
   });
 
-  it("throws when selectedIds contains an empty string", () => {
+  it("throws when ids contains an empty string", () => {
     expect(() =>
-      parseMassActionRequest({ ...VALID_REQUEST, selectedIds: ["1", ""] }),
+      parseMassActionRequest({ ...VALID_REQUEST, ids: ["1", ""] }),
     ).toThrow(CommerceSdkValidationError);
   });
 
