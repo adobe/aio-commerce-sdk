@@ -12,7 +12,6 @@
 
 import { useEffect } from "react";
 
-import { useInternalSharedContext } from "#web/react/commerce/context/shared-context.tsx";
 import { getExtensionColorScheme, syncRootColorScheme } from "#web/react/theme";
 
 import type { ShellConfiguration } from "#web/react/shell/types";
@@ -20,17 +19,14 @@ import type { ShellConfiguration } from "#web/react/shell/types";
 /**
  * Keeps the Spectrum S2 color scheme aligned with Commerce, Experience Shell, or browser defaults.
  * @param shellConfiguration - The Experience Shell configuration, if available.
+ * @param isCommerceLike - Whether the extension is running in a Commerce-like context (Commerce Admin) or not.
  */
 export function useExtensionColorScheme(
+  isCommerceLike: boolean,
   shellConfiguration: ShellConfiguration | null,
 ) {
-  const { sharedContext } = useInternalSharedContext();
-  const isEmbeddedOutsideExperienceShell =
-    globalThis.parent !== globalThis.window && shellConfiguration === null;
-
   const colorScheme = getExtensionColorScheme(
-    // We assume we are running in Commerce based on this condition, it probably can be improved in the future.
-    sharedContext !== null || isEmbeddedOutsideExperienceShell,
+    isCommerceLike,
     shellConfiguration?.theme,
   );
 

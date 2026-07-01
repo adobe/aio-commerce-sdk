@@ -20,12 +20,6 @@ export type GuestConnection = Awaited<ReturnType<typeof attach>>;
 export type SharedContextState = {
   /** The extension ID of the app. */
   extensionId: string;
-
-  /** The live `sharedContext` object provided by the host, when Commerce is connected. */
-  sharedContext: GuestConnection["sharedContext"] | null;
-
-  /** The host proxy, when Commerce is connected. */
-  host: GuestConnection["host"] | null;
 };
 
 /**
@@ -37,10 +31,10 @@ export type SharedContextState = {
  */
 export type SharedContext = SharedContextState & {
   /** The live `sharedContext` object provided by the host. */
-  sharedContext: NonNullable<SharedContextState["sharedContext"]>;
+  sharedContext: NonNullable<GuestConnection["sharedContext"]>;
 
   /** The host proxy, used by `useHostConnection` to invoke host-frame actions (close/onError). */
-  host: NonNullable<SharedContextState["host"]>;
+  host: NonNullable<GuestConnection["host"]>;
 };
 
 /** Actions for closing the extension iframe and returning control to the Commerce Admin. */
@@ -50,9 +44,6 @@ export type HostConnection = {
 
   /** Closes the iframe and navigates back, flagging the originating page that an error occurred. */
   closeWithError: () => Promise<void>;
-
-  /** Returns the host (domain) of the Commerce Admin the extension is embedded in. */
-  getCommerceHost: () => string;
 };
 
 /** The context shared with mass-action extension points. */

@@ -11,28 +11,35 @@
  */
 
 import type { ImsContext } from "#web/react/auth/types";
-import type { SharedContextState } from "#web/react/commerce/types";
+import type { SharedContext } from "#web/react/commerce/types";
 import type { ShellConfiguration } from "#web/react/shell/types";
 
 /**
- * Resolves IMS credentials from Experience Shell first, then Commerce shared context.
- *
- * @param shellConfiguration - The Experience Shell configuration, if available.
- * @param sharedContext - The Commerce shared context, if available.
+ * Resolves IMS credentials from the Commerce shared context.
+ * @param sharedContext - The Commerce shared context, established over the guest connection.
  */
-export function resolveImsCredentials(
-  shellConfiguration: ShellConfiguration | null,
-  sharedContext: SharedContextState["sharedContext"],
+export function resolveCommerceImsCredentials(
+  sharedContext: SharedContext["sharedContext"],
 ): ImsContext | null {
-  const imsToken =
-    shellConfiguration?.imsToken ??
-    (sharedContext?.get("imsToken") as string) ??
-    null;
+  const imsToken = sharedContext.get("imsToken") as string | null;
+  const imsOrgId = sharedContext.get("imsOrgId") as string | null;
 
-  const imsOrgId =
-    shellConfiguration?.imsOrg ??
-    (sharedContext?.get("imsOrgId") as string) ??
-    null;
+  if (!(imsToken && imsOrgId)) {
+    return null;
+  }
+
+  return { imsToken, imsOrgId };
+}
+
+/**
+ * Resolves IMS credentials from the Experience Cloud shell configuration.
+ * @param shellConfiguration - The Experience Cloud shell configuration, if available.
+ */
+export function resolveShellImsCredentials(
+  shellConfiguration: ShellConfiguration | null,
+): ImsContext | null {
+  const imsToken = shellConfiguration?.imsToken ?? null;
+  const imsOrgId = shellConfiguration?.imsOrg ?? null;
 
   if (!(imsToken && imsOrgId)) {
     return null;

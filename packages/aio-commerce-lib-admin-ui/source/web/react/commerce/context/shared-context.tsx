@@ -12,15 +12,23 @@
 
 import {
   createContext,
+  use,
   useCallback,
-  useContext,
   useMemo,
   useSyncExternalStore,
 } from "react";
 
-import { useGuestConnection } from "#web/react/commerce/hooks/use-guest-connection";
+import {
+  getGuestConnectionPromise,
+  useGuestConnection,
+} from "#web/react/commerce/hooks/use-guest-connection";
 
 import type { ReactNode } from "react";
+import type { useCommerce } from "#web/react/commerce/hooks/use-commerce";
+import type {
+  useMassActionContext,
+  useOrderViewButtonContext,
+} from "#web/react/commerce/hooks/use-extension-context";
 import type {
   GuestConnection,
   SharedContext,
@@ -35,7 +43,7 @@ const SharedContextValue = createContext<SharedContextState | undefined>(
  * Returns the current Commerce shared context provider state.
  */
 export function useInternalSharedContext(): SharedContextState {
-  const context = useContext(SharedContextValue);
+  const context = use(SharedContextValue);
   if (context === undefined) {
     throw new Error(
       "useSharedContext must be used inside a SharedContextProvider.",
@@ -46,22 +54,24 @@ export function useInternalSharedContext(): SharedContextState {
 }
 
 /**
- * Returns the current Commerce shared context.
+ * Returns the current Commerce shared context, suspending until the guest connection is
+ * established.
  *
- * @throws If no Commerce connection is available.
+ * This is a low-level escape hatch that exposes the raw `sharedContext`/`host` objects; prefer a
+ * purpose-built hook ({@link useCommerce}, {@link useMassActionContext}, {@link useOrderViewButtonContext}, etc.) when one
+ * covers what you need.
+ *
+ * @throws If the app isn't running inside a Commerce Admin UI frame at all.
  */
 export function useSharedContext(): SharedContext {
-  const context = useInternalSharedContext();
-  if (!(context.sharedContext && context.host)) {
-    throw new Error(
-      "useSharedContext can only be used inside the Commerce Admin after the guest connection is established.",
-    );
-  }
+  const { extensionId } = useInternalSharedContext();
+  const connection = use(getGuestConnectionPromise(extensionId));
+  const sharedContext = useLiveSharedContext(connection);
 
   return {
-    extensionId: context.extensionId,
-    sharedContext: context.sharedContext,
-    host: context.host,
+    extensionId,
+    sharedContext,
+    host: connection.host,
   };
 }
 
@@ -72,20 +82,16 @@ export function useSharedContext(): SharedContext {
  * events. `useSyncExternalStore` subscribes to those events and surfaces the current instance
  * (whose reference changes on each update), so consumers re-render when the host updates it.
  *
- * @param guestConnection - The active guest connection, or null before it is established.
+ * @param guestConnection - The established guest connection.
  */
-function useLiveSharedContext(guestConnection: GuestConnection | null) {
+function useLiveSharedContext(guestConnection: GuestConnection) {
   const subscribe = useCallback(
     (onContextChange: () => void) =>
-      guestConnection?.addEventListener("contextchange", onContextChange) ??
-      (() => undefined),
+      guestConnection.addEventListener("contextchange", onContextChange),
     [guestConnection],
   );
 
-  return useSyncExternalStore(
-    subscribe,
-    () => guestConnection?.sharedContext ?? null,
-  );
+  return useSyncExternalStore(subscribe, () => guestConnection.sharedContext);
 }
 
 type SharedContextProviderProps = {
@@ -101,17 +107,11 @@ export function SharedContextProvider(
   props: Readonly<SharedContextProviderProps>,
 ) {
   const { children, extensionId } = props;
-
-  const guestConnection = useGuestConnection(extensionId);
-  const sharedContext = useLiveSharedContext(guestConnection);
+  useGuestConnection(extensionId);
 
   const value = useMemo<SharedContextState>(
-    () => ({
-      extensionId,
-      sharedContext,
-      host: guestConnection?.host ?? null,
-    }),
-    [extensionId, guestConnection?.host, sharedContext],
+    () => ({ extensionId }),
+    [extensionId],
   );
 
   return (

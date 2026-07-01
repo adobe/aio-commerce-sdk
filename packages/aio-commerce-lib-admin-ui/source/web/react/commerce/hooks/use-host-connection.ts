@@ -25,24 +25,17 @@ type HostFrameField = {
   onError: () => Promise<void>;
 };
 
-/** The host integration API exposed to every extension point. */
-type HostIntegration = {
-  getCommerceHost: () => string;
-};
-
 /**
  * Returns typed helpers for interacting with the Commerce Admin host.
  *
  * @throws If called before the guest connection is established, or on an extension point where
- * the host does not provide the requested action (e.g. `close`/`closeWithError` on a menu page).
+ * the host does not provide the frame actions (e.g. `close`/`closeWithError` on a menu page).
  */
 export function useHostConnection(): HostConnection {
   const { host } = useSharedContext();
 
   return useMemo<HostConnection>(() => {
     const field = (host as { field?: HostFrameField }).field;
-    const integration = (host as { integration?: HostIntegration }).integration;
-
     const requireField = () => {
       if (!field) {
         throw new Error(
@@ -53,20 +46,9 @@ export function useHostConnection(): HostConnection {
       return field;
     };
 
-    const requireIntegration = () => {
-      if (!integration) {
-        throw new Error(
-          "Host integration actions are unavailable. They require an established guest connection with a host.",
-        );
-      }
-
-      return integration;
-    };
-
     return {
       close: () => requireField().close(),
       closeWithError: () => requireField().onError(),
-      getCommerceHost: () => requireIntegration().getCommerceHost(),
     };
   }, [host]);
 }

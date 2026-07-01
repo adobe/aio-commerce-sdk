@@ -10,7 +10,9 @@
  * governing permissions and limitations under the License.
  */
 
-import { createContext, useContext } from "react";
+import { createContext, use } from "react";
+
+import { isEmbeddedInHost } from "#web/react/commerce/lib";
 
 import type { ReactNode } from "react";
 import type { ImsContext } from "#web/react/auth/types";
@@ -27,7 +29,7 @@ const ImsContextValue = createContext<ImsContext | null | undefined>(undefined);
  * Commerce Admin and the Experience Cloud shell).
  */
 export function useIms(): ImsContext {
-  const credentials = useContext(ImsContextValue);
+  const credentials = use(ImsContextValue);
   if (credentials === undefined) {
     throw new Error("useIms must be used inside an ImsContextProvider.");
   }
@@ -45,11 +47,6 @@ type ImsContextProviderProps = {
   children?: ReactNode;
   credentials: ImsContext | null;
 };
-
-/** Whether the app is embedded in a host frame (the Commerce Admin or the Experience Cloud shell). */
-function isEmbeddedInHost(): boolean {
-  return globalThis.window.parent !== globalThis.window;
-}
 
 /**
  * Provides the IMS credentials for a mounted Admin UI iframe app.

@@ -21,3 +21,18 @@ export function parseOrderId(href: string): string | null {
     new URLSearchParams(urlObj.hash.split("?")[1]).get("orderId")
   );
 }
+
+/** Whether the app is embedded in a host frame (the Commerce Admin or the Experience Cloud shell). */
+export function isEmbeddedInHost(): boolean {
+  return globalThis.window.parent !== globalThis.window;
+}
+
+/** Whether this window is a Commerce UIX guest UI frame, as opposed to a control frame or standalone. */
+export function isUiFrame(): boolean {
+  return isEmbeddedInHost() && window.name.startsWith("uix-guest-");
+}
+
+/** Whether this window is a Commerce UIX guest control frame, which registers instead of attaching. */
+export function isControlFrame(): boolean {
+  return isEmbeddedInHost() && !window.name;
+}

@@ -19,6 +19,7 @@
 
 export { useIms } from "#web/react/auth/context/ims-context.tsx";
 export { useSharedContext } from "#web/react/commerce/context/shared-context.tsx";
+export { useCommerce } from "#web/react/commerce/hooks/use-commerce";
 export {
   useMassActionContext,
   useOrderViewButtonContext,
