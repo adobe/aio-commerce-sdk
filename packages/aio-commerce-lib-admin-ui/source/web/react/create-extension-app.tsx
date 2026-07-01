@@ -32,9 +32,6 @@ export type CreateExtensionAppOptions = {
   metadata: {
     /** The unique identifier for the extension app. */
     extensionId: string;
-
-    /** The display title for the extension app. */
-    title?: string;
   };
 
   /** Optional root element where the app will be mounted. */
@@ -84,7 +81,7 @@ export function createExtensionApp({
       const { promise, resolve } =
         Promise.withResolvers<RuntimeConfiguration | null>();
 
-      page.title = metadata.title ?? `App Extension (${metadata.extensionId})`;
+      page.title = document.title;
       runtime.on("ready", (configuration?: RuntimeConfiguration) => {
         resolve(configuration ?? runtime.lastConfigurationPayload);
         page.done().catch(() => {
@@ -100,7 +97,5 @@ export function createExtensionApp({
     });
   } catch {
     render(createMockRuntime(), Promise.resolve(null));
-    document.title =
-      metadata.title ?? `App Extension (${metadata.extensionId})`;
   }
 }

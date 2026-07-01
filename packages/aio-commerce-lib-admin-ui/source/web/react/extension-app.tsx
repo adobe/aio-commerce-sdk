@@ -136,10 +136,12 @@ function ControlFrameRegistration(props: Readonly<{ extensionId: string }>) {
  */
 function CommerceGuestConnection(props: Readonly<{ extensionId: string }>) {
   const { extensionId } = props;
-  const connection = useGuestConnection(extensionId);
+  const guestConnection = useGuestConnection(extensionId);
 
   return (
-    <SharedContextProvider connection={connection} extensionId={extensionId}>
+    <SharedContextProvider
+      extensionId={extensionId}
+      guestConnection={guestConnection}>
       <CommerceExtensionContent />
     </SharedContextProvider>
   );
