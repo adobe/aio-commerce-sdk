@@ -33,11 +33,8 @@ export const MassActionGridTypeSchema = v.picklist([
 export const MassActionRequestSchema = v.object({
   requestId: nonEmptyStringValueSchema("requestId"),
   gridType: MassActionGridTypeSchema,
-  selectedIds: v.pipe(
+  ids: v.pipe(
     v.array(nonEmptyStringValueSchema("id")),
-    v.minLength(
-      1,
-      'The value of "selectedIds" must contain at least one entry',
-    ),
+    v.minLength(1, 'The value of "ids" must contain at least one entry'),
   ),
 });
