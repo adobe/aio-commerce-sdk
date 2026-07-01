@@ -25,7 +25,7 @@ export {
   useOrderViewButtonContext,
 } from "#web/react/commerce/hooks/use-extension-context";
 export { useHostConnection } from "#web/react/commerce/hooks/use-host-connection";
-export { createExtensionApp } from "#web/react/create-extension-app.tsx";
+export { createExtensionApp } from "#web/react/extension/create-app.tsx";
 
 export type { ImsContext } from "#web/react/auth/types";
 export type {
@@ -34,7 +34,7 @@ export type {
   OrderViewButtonContext,
   SharedContext,
 } from "#web/react/commerce/types";
-export type { CreateExtensionAppOptions } from "#web/react/create-extension-app.tsx";
+export type { CreateExtensionAppOptions } from "#web/react/extension/create-app.tsx";
 export type {
   ExtensionAppRoutes,
   ExtensionRoute,

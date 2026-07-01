@@ -21,7 +21,7 @@ import {
   loadExperienceCloudRuntime,
 } from "#web/runtime-loader";
 
-import { ExtensionApp } from "./extension-app";
+import { Entrypoint } from "./entrypoint";
 
 import type { RuntimeConfiguration } from "@adobe/exc-app";
 import type { ExtensionAppRoutes } from "#web/react/routing/types";
@@ -60,16 +60,16 @@ export function createExtensionApp({
   const root = createRoot(rootElement);
   const render = (
     runtime: ReturnType<typeof Runtime>,
-    initialConfigurationPromise: Promise<RuntimeConfiguration | null>,
+    initialConfigurationPromise: Promise<RuntimeConfiguration | null> | null,
   ) => {
-    const extensionAppProps = {
+    const entrypointProps = {
       extensionId: metadata.extensionId,
       initialConfigurationPromise,
       runtime,
     };
 
-    const extension = <ExtensionApp {...extensionAppProps} />;
-    const router = createExtensionRouter(extension, routes);
+    const entrypoint = <Entrypoint {...entrypointProps} />;
+    const router = createExtensionRouter(entrypoint, routes);
 
     root.render(<RouterProvider router={router} />);
   };
@@ -96,6 +96,8 @@ export function createExtensionApp({
       render(runtime, promise);
     });
   } catch {
-    render(createMockRuntime(), Promise.resolve(null));
+    // Nothing to wait for here (no shell, no host), so skip the promise/Suspense
+    // machinery entirely instead of forcing an always-resolved promise through it.
+    render(createMockRuntime(), null);
   }
 }
