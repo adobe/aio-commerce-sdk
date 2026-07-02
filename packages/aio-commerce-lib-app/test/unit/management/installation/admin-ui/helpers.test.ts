@@ -36,9 +36,6 @@ describe("registerExtension", () => {
     const logger = createMockLogger();
     const context = createMockAdminUiContext({
       registerExtensionImpl: () => Promise.resolve({ extensionId: "ext-123" }),
-      appData: {
-        adminUiViewUrl: "https://example.com/admin-ui/index.html",
-      },
       logger,
     });
 
@@ -47,7 +44,6 @@ describe("registerExtension", () => {
     expect(context.adminUiClient.registerExtension).toHaveBeenCalledWith({
       extensionName: "test-ns",
       extensionTitle: context.appData.projectTitle,
-      extensionUrl: "https://example.com/admin-ui/index.html",
       extensionWorkspace: context.appData.workspaceName,
     });
     expect(logger.info).toHaveBeenCalledWith(
@@ -63,9 +59,6 @@ describe("registerExtension", () => {
     );
     const context = createMockAdminUiContext({
       registerExtensionImpl: () => Promise.reject(httpError),
-      appData: {
-        adminUiViewUrl: "https://example.com/admin-ui/index.html",
-      },
     });
 
     await expect(registerExtension(context)).rejects.toThrow(
@@ -82,9 +75,6 @@ describe("registerExtension", () => {
     );
     const context = createMockAdminUiContext({
       registerExtensionImpl: () => Promise.reject(httpError),
-      appData: {
-        adminUiViewUrl: "https://example.com/admin-ui/index.html",
-      },
       logger,
     });
 
@@ -94,18 +84,6 @@ describe("registerExtension", () => {
     expect(logger.error).toHaveBeenCalledWith(
       expect.stringMatching(REGISTER_EXTENSION_COMBINED_PATTERN),
     );
-  });
-
-  test("falls back to the static extension url when no adminUiViewUrl is provided", async () => {
-    const context = createMockAdminUiContext();
-
-    await expect(registerExtension(context)).resolves.toBeUndefined();
-    expect(context.adminUiClient.registerExtension).toHaveBeenCalledWith({
-      extensionName: "test-ns",
-      extensionTitle: context.appData.projectTitle,
-      extensionUrl: "https://test-ns.adobeio-static.net/index.html",
-      extensionWorkspace: context.appData.workspaceName,
-    });
   });
 });
 

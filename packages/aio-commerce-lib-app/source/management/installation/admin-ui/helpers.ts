@@ -31,13 +31,9 @@ export async function registerExtension(context: AdminUiExecutionContext) {
 
   logger.info(`Registering Admin UI extension: ${appData.projectName}`);
 
-  const extensionUrl =
-    appData.adminUiViewUrl ??
-    `https://${extensionName}.adobeio-static.net/index.html`;
   const { extensionId } = await adminUiClient
     .registerExtension({
       extensionName,
-      extensionUrl,
       extensionTitle: appData.projectTitle,
       extensionWorkspace: appData.workspaceName,
     })
