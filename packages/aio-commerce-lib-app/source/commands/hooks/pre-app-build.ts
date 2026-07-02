@@ -25,6 +25,7 @@ import {
   generateActionFiles,
   generateWebSrc,
   prepareRuntimeAppConfigModule,
+  prepareWebSourceImportAlias,
   readExtConfig,
   updateExtConfig,
 } from "#commands/generate/actions/lib";
@@ -95,6 +96,7 @@ export async function run(extension: Extension, templatesDir = TEMPLATES_DIR) {
       );
 
       if (extConfig.operations?.view) {
+        await prepareWebSourceImportAlias(extConfig);
         await generateWebSrc(
           extConfig,
           BACKEND_UI_V2_EXTENSION_POINT_ID,

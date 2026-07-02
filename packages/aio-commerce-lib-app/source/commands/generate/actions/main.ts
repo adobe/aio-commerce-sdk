@@ -64,12 +64,8 @@ export async function run(
       BACKEND_UI_V2_EXTENSION_POINT_ID,
     );
 
-    await prepareWebSourceImportAlias(
-      extConfig,
-      BACKEND_UI_V2_EXTENSION_POINT_ID,
-    );
-
     if (extConfig.operations?.view) {
+      await prepareWebSourceImportAlias(extConfig);
       await generateWebSrc(
         extConfig,
         BACKEND_UI_V2_EXTENSION_POINT_ID,

@@ -392,13 +392,13 @@ async function prepareWebSourcePackage(projectRoot: string) {
 /**
  * Add the package import alias for an existing or generated web-src.
  * @param extConfig - Extension config containing the view operation.
- * @param extensionPointId - Extension point that owns the web source folder.
  */
-export async function prepareWebSourceImportAlias(
-  extConfig: ExtConfig,
-  extensionPointId: ValidExtensionPointId,
-) {
-  const entrypoint = getWebSourceEntrypoint(extConfig, extensionPointId);
+export async function prepareWebSourceImportAlias(extConfig: ExtConfig) {
+  const entrypoint = getWebSourceEntrypoint(
+    extConfig,
+    BACKEND_UI_V2_EXTENSION_POINT_ID,
+  );
+
   if (entrypoint === null) {
     return;
   }
