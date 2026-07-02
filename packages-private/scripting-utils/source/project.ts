@@ -179,15 +179,18 @@ export async function getPackageDependencyInstallPlan(
     missing: [],
   };
 
-  for (const dependency of requiredDependencies) {
-    const installedVersion = await getInstalledPackageVersion(
-      dependency.name,
-      cwd,
-    );
+  const installedVersions = await Promise.all(
+    requiredDependencies.map((dependency) =>
+      getInstalledPackageVersion(dependency.name, cwd),
+    ),
+  );
+
+  requiredDependencies.forEach((dependency, index) => {
+    const installedVersion = installedVersions[index];
 
     if (installedVersion === null) {
       plan.missing.push(dependency);
-      continue;
+      return;
     }
 
     if (
@@ -197,7 +200,7 @@ export async function getPackageDependencyInstallPlan(
     ) {
       plan.incompatible.push({ ...dependency, installedVersion });
     }
-  }
+  });
 
   return plan;
 }
