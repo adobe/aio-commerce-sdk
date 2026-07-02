@@ -68,6 +68,9 @@ import {
   WEB_SOURCE_ENTRYPOINT_FILE,
   WEB_SOURCE_IMPORT_ALIAS,
   WEB_SOURCE_SHARED_BUNDLES,
+  WEB_SOURCE_TS_DEV_DEPENDENCIES,
+  WEB_SOURCE_TSCONFIG,
+  WEB_SOURCE_TSCONFIG_FILE,
 } from "./constants";
 
 import type { ExtConfig } from "@aio-commerce-sdk/scripting-utils/yaml";
@@ -320,14 +323,22 @@ function getWebSourceEntrypoint(
  * Ensure package.json has the dependencies and Parcel config needed by web-src.
  * @param projectRoot - Project root containing the package.json to update.
  */
-async function prepareWebSourcePackage(projectRoot: string) {
+async function prepareWebSourcePackage(
+  projectRoot: string,
+  extension: WebSourceExtension,
+) {
   const pkg = await loadPackageJson(projectRoot);
   if (pkg === null) {
     throw new Error("Could not find package.json.");
   }
 
+  const requiredDevDependencies = [
+    ...WEB_SOURCE_DEV_DEPENDENCIES,
+    ...(extension === "tsx" ? WEB_SOURCE_TS_DEV_DEPENDENCIES : []),
+  ];
+
   const installPlan = await getPackageDependencyInstallPlan(
-    [...WEB_SOURCE_DEPENDENCIES, ...WEB_SOURCE_DEV_DEPENDENCIES],
+    [...WEB_SOURCE_DEPENDENCIES, ...requiredDevDependencies],
     projectRoot,
   );
 
@@ -352,7 +363,7 @@ async function prepareWebSourcePackage(projectRoot: string) {
   );
   const dependenciesToDeclare = [
     ...WEB_SOURCE_DEPENDENCIES,
-    ...WEB_SOURCE_DEV_DEPENDENCIES,
+    ...requiredDevDependencies,
   ].filter(({ name }) => !declaredDependencyNames.has(name));
 
   if (dependenciesToDeclare.length > 0) {
@@ -374,7 +385,7 @@ async function prepareWebSourcePackage(projectRoot: string) {
     ),
     devDependencies: mergePackageJsonDependencies(
       devDependencies,
-      WEB_SOURCE_DEV_DEPENDENCIES,
+      requiredDevDependencies,
       dependencyMaps,
     ),
     // Required as per Spectrum S2 documentation: https://react-spectrum.adobe.com/getting-started#framework-setup
@@ -558,15 +569,26 @@ export async function generateWebSrc(
 
   const sourceDir = join(templatesDir, "admin-ui", "web-src");
   const targetDir = dirname(entrypointPath);
+  const extension = await resolveWebSourceExtension(projectRoot);
 
   const outputFiles = await copyWebSourceTemplates(
     sourceDir,
     targetDir,
-    await resolveWebSourceExtension(projectRoot),
+    extension,
     appName,
   );
 
-  await prepareWebSourcePackage(projectRoot);
+  if (extension === "tsx") {
+    const tsconfigPath = join(targetDir, WEB_SOURCE_TSCONFIG_FILE);
+    await writeFile(
+      tsconfigPath,
+      JSON.stringify(WEB_SOURCE_TSCONFIG, null, 2),
+      "utf-8",
+    );
+    outputFiles.push(` ${relative(process.cwd(), tsconfigPath)}`);
+  }
+
+  await prepareWebSourcePackage(projectRoot, extension);
 
   consola.success(`Scaffolded ${relative(process.cwd(), targetDir)}`);
   consola.log.raw(formatTree(outputFiles));

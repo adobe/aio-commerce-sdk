@@ -364,6 +364,9 @@ describe("commands/generate/actions", () => {
           expect(indexContent).toContain("<title>Test App</title>");
           expect(indexContent).not.toContain("APP_TITLE");
 
+          // tsconfig.json is only scaffolded for TypeScript web-src.
+          expect(existsSync(join(webSrcDir, "tsconfig.json"))).toBe(false);
+
           const appContent = await readFile(
             join(webSrcDir, "src", "app.jsx"),
             "utf-8",
@@ -467,6 +470,17 @@ describe("commands/generate/actions", () => {
             "utf-8",
           );
           expect(pageContent).toContain("#web/components/welcome.tsx");
+
+          const tsconfig = JSON.parse(
+            await readFile(join(webSrcDir, "tsconfig.json"), "utf-8"),
+          );
+          expect(tsconfig.extends).toContain("@tsconfig/bases/recommended");
+          expect(tsconfig.compilerOptions.jsx).toBe("react-jsx");
+
+          const pkg = JSON.parse(
+            await readFile(join(tempDir, "package.json"), "utf-8"),
+          );
+          expect(pkg.devDependencies["@tsconfig/bases"]).toBe("*");
         },
       );
     });

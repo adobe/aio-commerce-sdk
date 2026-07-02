@@ -65,6 +65,30 @@ export const WEB_SOURCE_DEV_DEPENDENCIES = [
   { name: "@types/react-dom", version: __REACT_DOM_TYPES_VERSION__ },
 ] as const;
 
+/** Development dependencies required only by TypeScript web-src scaffolds. */
+export const WEB_SOURCE_TS_DEV_DEPENDENCIES = [
+  { name: "@tsconfig/bases", version: "*" },
+] as const;
+
+/** tsconfig.json generated for TypeScript web-src scaffolds. */
+export const WEB_SOURCE_TSCONFIG_FILE = "tsconfig.json";
+export const WEB_SOURCE_TSCONFIG = {
+  extends: ["@tsconfig/bases/recommended"],
+  compilerOptions: {
+    module: "esnext",
+    moduleResolution: "bundler",
+    allowJs: true,
+    checkJs: true,
+    allowImportingTsExtensions: true,
+    rewriteRelativeImportExtensions: false,
+    noEmit: true,
+    jsx: "react-jsx",
+    jsxImportSource: "react",
+  },
+
+  include: ["src/**/*.js", "src/**/*.ts", "src/**/*.tsx", "src/**/*.jsx"],
+};
+
 /** Parcel shared bundle config required by Spectrum S2 styles. */
 export const WEB_SOURCE_SHARED_BUNDLES = [
   {
