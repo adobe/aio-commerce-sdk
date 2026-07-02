@@ -23,12 +23,6 @@ export const AppDataSchema = v.object({
   workspaceId: nonEmptyStringValueSchema("workspaceId"),
   workspaceName: nonEmptyStringValueSchema("workspaceName"),
   workspaceTitle: nonEmptyStringValueSchema("workspaceTitle"),
-  adminUiViewUrl: v.optional(
-    v.pipe(
-      nonEmptyStringValueSchema("adminUiViewUrl"),
-      v.url("Expected a valid URL for adminUiViewUrl"),
-    ),
-  ),
 });
 
 /** Type for Adobe I/O app credentials. */

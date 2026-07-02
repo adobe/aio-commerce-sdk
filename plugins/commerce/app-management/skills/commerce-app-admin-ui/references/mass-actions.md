@@ -62,9 +62,9 @@ Available on `order`, `product`, and `customer`.
 
 Import from `@adobe/aio-commerce-sdk/admin-ui/mass-actions`.
 
-Commerce POSTs `{ requestId, gridType, ids }` (`ids` is non-empty). The HTTP status code conveys success vs. failure.
+Commerce POSTs `{ requestId, gridType, selectedIds }` (`selectedIds` is non-empty). The HTTP status code conveys success vs. failure.
 
-- `parseMassActionRequest(params)` → `{ requestId, gridType, ids }`; throws `CommerceSdkValidationError` on malformed input.
+- `parseMassActionRequest(params)` → `{ requestId, gridType, selectedIds }`; throws `CommerceSdkValidationError` on malformed input.
 - `okMassActionResponse(body?)` → HTTP 200; optional body for logging.
 - `massActionErrorResponse(statusCode, message)` → non-2xx; body is `{ message }`. Commerce surfaces `notifications.error`.
 
@@ -77,9 +77,9 @@ import {
 import type { RuntimeActionParams } from "@adobe/aio-commerce-sdk/core/params";
 
 export async function main(params: RuntimeActionParams) {
-  const { gridType, ids } = parseMassActionRequest(params);
+  const { gridType, selectedIds } = parseMassActionRequest(params);
   try {
-    const archived = await archive(gridType, ids);
+    const archived = await archive(gridType, selectedIds);
     return okMassActionResponse({ archived });
   } catch (error) {
     return massActionErrorResponse(

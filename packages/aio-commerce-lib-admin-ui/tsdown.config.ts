@@ -19,6 +19,7 @@ export default mergeConfig(baseConfig, {
     "./source/grid-columns/index.ts",
     "./source/mass-actions/index.ts",
     "./source/menu/index.ts",
+    "./source/web/index.ts",
     "./source/order-view-buttons/index.ts",
   ],
 });
