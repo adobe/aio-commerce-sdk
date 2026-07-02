@@ -81,18 +81,13 @@ describe("admin-ui installation module", () => {
       expect(registerExtensionStep.meta.uninstall).toBeDefined();
     });
 
-    test("should call registerExtension with the provided adminUiViewUrl", async () => {
-      const context = createMockAdminUiContext({
-        appData: {
-          adminUiViewUrl: "https://example.com/admin-ui/index.html",
-        },
-      });
+    test("should call registerExtension with extensionName, title, and workspace", async () => {
+      const context = createMockAdminUiContext();
 
       await registerExtensionStep.install(configWithFullAdminUiV2, context);
       expect(context.adminUiClient.registerExtension).toHaveBeenCalledWith({
         extensionName: "test-namespace",
         extensionTitle: context.appData.projectTitle,
-        extensionUrl: "https://example.com/admin-ui/index.html",
         extensionWorkspace: context.appData.workspaceName,
       });
     });
