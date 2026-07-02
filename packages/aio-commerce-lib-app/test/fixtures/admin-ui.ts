@@ -35,6 +35,7 @@ export function createMockAdminUiContext(
   overrides?: NonNullable<
     Parameters<typeof createMockInstallationContext>[0]
   > & {
+    enableAdminUiSdkImpl?: () => Promise<boolean>;
     registerExtensionImpl?: () => Promise<{ extensionId: string }>;
     unregisterExtensionImpl?: () => Promise<unknown>;
   },
@@ -44,6 +45,11 @@ export function createMockAdminUiContext(
   return {
     ...mockInstallation,
     adminUiClient: {
+      enableAdminUiSdk: vi
+        .fn()
+        .mockImplementation(
+          overrides?.enableAdminUiSdkImpl ?? (() => Promise.resolve(true)),
+        ),
       registerExtension: vi
         .fn()
         .mockImplementation(
