@@ -36,11 +36,10 @@ export function useSpectrumRouter() {
         return router.navigate({ ...href, ...options });
       },
       useHref: (href: ToOptions | string) => {
-        if (typeof href === "string") {
-          return getRouteTo(href);
-        }
+        const toOptions =
+          typeof href === "string" ? { to: getRouteTo(href) } : href;
 
-        return router.buildLocation(href).href;
+        return router.buildLocation(toOptions).href;
       },
     }),
     [router],
