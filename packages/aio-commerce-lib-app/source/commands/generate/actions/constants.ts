@@ -44,11 +44,7 @@ export const TYPESCRIPT_CONFIG_EXTENSIONS = new Set([".ts", ".mts", ".cts"]);
 export const JSX_FILE_EXTENSION = ".jsx";
 export const TSX_FILE_EXTENSION = ".tsx";
 
-export const WEB_SOURCE_HTML_ENTRYPOINT = "index.html";
 export const WEB_SOURCE_IMPORT_ALIAS = "#web/*";
-
-/** Default generated web-src entrypoint referenced by the HTML template. */
-export const WEB_SOURCE_ENTRYPOINT = "./src/app.jsx";
 
 /** Runtime dependencies required by the generated web-src app. */
 export const WEB_SOURCE_DEPENDENCIES = [
