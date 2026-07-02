@@ -11,7 +11,7 @@
  */
 
 import { Provider } from "@react-spectrum/s2/Provider";
-import { Outlet } from "@tanstack/react-router";
+import { Outlet as ActiveRoute } from "@tanstack/react-router";
 import { Suspense, use } from "react";
 
 import { ImsContextProvider } from "#web/react/auth/context/ims-context.tsx";
@@ -81,7 +81,7 @@ function ShellExtensionContent(
     <Provider colorScheme={colorScheme} router={spectrumRouter}>
       <ExtensionErrorBoundary>
         <ImsContextProvider credentials={credentials}>
-          <Outlet />
+          <ActiveRoute />
         </ImsContextProvider>
       </ExtensionErrorBoundary>
     </Provider>

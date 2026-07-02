@@ -12,7 +12,7 @@
 
 import { register } from "@adobe/uix-guest";
 import { Provider } from "@react-spectrum/s2/Provider";
-import { Outlet } from "@tanstack/react-router";
+import { Outlet as ActiveRoute } from "@tanstack/react-router";
 import { Suspense, useEffect } from "react";
 
 import { ImsContextProvider } from "#web/react/auth/context/ims-context.tsx";
@@ -105,7 +105,7 @@ function CommerceExtensionContent() {
 
   return (
     <ImsContextProvider credentials={credentials}>
-      <Outlet />
+      <ActiveRoute />
     </ImsContextProvider>
   );
 }

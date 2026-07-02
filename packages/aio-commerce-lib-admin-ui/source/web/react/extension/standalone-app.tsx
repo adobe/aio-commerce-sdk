@@ -11,7 +11,7 @@
  */
 
 import { Provider } from "@react-spectrum/s2/Provider";
-import { Outlet } from "@tanstack/react-router";
+import { Outlet as ActiveRoute } from "@tanstack/react-router";
 import { useEffect } from "react";
 
 import { ImsContextProvider } from "#web/react/auth/context/ims-context.tsx";
@@ -32,7 +32,7 @@ export function StandaloneExtensionApp() {
     <Provider colorScheme={undefined} router={spectrumRouter}>
       <ExtensionErrorBoundary>
         <ImsContextProvider credentials={null}>
-          <Outlet />
+          <ActiveRoute />
         </ImsContextProvider>
       </ExtensionErrorBoundary>
     </Provider>
