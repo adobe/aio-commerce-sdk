@@ -10,9 +10,14 @@
  * governing permissions and limitations under the License.
  */
 
+import { spawnSync } from "node:child_process";
 import { join } from "node:path";
 
 import { hasDynamicSchema } from "@adobe/aio-commerce-lib-config";
+import {
+  getInstallCommand,
+  getProjectInstallCommand,
+} from "@aio-commerce-sdk/scripting-utils/project";
 import consola from "consola";
 import * as prettier from "prettier";
 
@@ -29,6 +34,10 @@ import {
   RUNTIME_APP_CONFIG_FILE,
 } from "./constants";
 
+import type {
+  PackageInstallOptions,
+  PackageManager,
+} from "@aio-commerce-sdk/scripting-utils/project";
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 
 /** Format file content using prettier, inferring the parser from the file path. */
@@ -54,6 +63,98 @@ export async function loadAppManifest() {
   consola.debug("Loaded app commerce config");
 
   return appConfig;
+}
+
+/**
+ * Install the given dependencies.
+ * @param packageManager - The detected package manager.
+ * @param dependencies - Package specifiers to install; no-op when empty.
+ * @param cwd - Working directory for the install command.
+ * @param options - Install command options.
+ */
+export function runInstall(
+  packageManager: PackageManager,
+  dependencies: string[],
+  cwd = process.cwd(),
+  options: PackageInstallOptions = {},
+) {
+  if (dependencies.length === 0) {
+    return;
+  }
+
+  const dependencyListString = dependencies
+    .map((dependency) => `  - ${dependency}`)
+    .join("\n");
+
+  consola.start(
+    [
+      `Installing the following dependencies with ${packageManager}:\n${dependencyListString}\n`,
+      "This may take a few seconds...\n",
+    ].join("\n"),
+  );
+
+  const { command, args } = getInstallCommand(
+    packageManager,
+    dependencies,
+    options,
+  );
+  const displayCommand = [command, ...args].join(" ");
+  const result = spawnSync(command, args, {
+    cwd,
+    stdio: "inherit",
+  });
+
+  if (result.error || result.status !== 0) {
+    throw new Error(
+      `Failed to install dependencies automatically. Please install manually: ${displayCommand}`,
+      {
+        cause:
+          result.error ??
+          new Error(`Install exited with code ${result.status}`),
+      },
+    );
+  }
+
+  consola.log(""); // Add a newline after the install output for readability.
+  consola.success("Dependencies installed successfully");
+}
+
+/**
+ * Install dependencies declared in package.json.
+ * @param packageManager - The detected package manager.
+ * @param cwd - Working directory for the install command.
+ */
+export function runProjectInstall(
+  packageManager: PackageManager,
+  cwd = process.cwd(),
+) {
+  consola.start(
+    [
+      `Installing project dependencies with ${packageManager}...`,
+      "This may take a few seconds...\n",
+    ].join("\n"),
+  );
+
+  const { command, args } = getProjectInstallCommand(packageManager);
+  const displayCommand = [command, ...args].join(" ");
+  const result = spawnSync(command, args, {
+    cwd,
+    stdio: "inherit",
+  });
+
+  if (result.error || result.status !== 0) {
+    throw new Error(
+      `Failed to install dependencies automatically. Please install manually: ${displayCommand}`,
+      {
+        cause:
+          result.error ??
+          new Error(`Install exited with code ${result.status}`),
+      },
+    );
+  }
+
+  consola.log(""); // Add a newline after the install output for readability.
+  consola.success("Dependencies installed successfully");
 }
 
 /**
