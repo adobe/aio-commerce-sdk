@@ -480,7 +480,8 @@ describe("commands/generate/actions", () => {
           const pkg = JSON.parse(
             await readFile(join(tempDir, "package.json"), "utf-8"),
           );
-          expect(pkg.devDependencies["@tsconfig/bases"]).toBe("*");
+          expect(pkg.devDependencies["@tsconfig/bases"]).toBe("latest");
+          expect(pkg.devDependencies.typescript).toBe("latest");
         },
       );
     });

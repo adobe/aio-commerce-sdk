@@ -23,7 +23,10 @@ import NpmPackageJson from "@npmcli/package-json";
 import { getPackageInfo } from "local-pkg";
 import { resolveCommand } from "package-manager-detector";
 import { detect, getUserAgent } from "package-manager-detector/detect";
-import { satisfies as satisfiesSemverRange } from "semver";
+import {
+  validRange as isValidSemverRange,
+  satisfies as satisfiesSemverRange,
+} from "semver";
 
 import type { PackageJson } from "type-fest";
 
@@ -190,6 +193,12 @@ export async function getPackageDependencyInstallPlan(
 
     if (installedVersion === null) {
       plan.missing.push(dependency);
+      return;
+    }
+
+    // Dist-tags (e.g. "latest") aren't semver ranges, so any installed version
+    // is considered compatible.
+    if (isValidSemverRange(dependency.version) === null) {
       return;
     }
 

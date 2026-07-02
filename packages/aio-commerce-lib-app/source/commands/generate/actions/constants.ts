@@ -67,7 +67,8 @@ export const WEB_SOURCE_DEV_DEPENDENCIES = [
 
 /** Development dependencies required only by TypeScript web-src scaffolds. */
 export const WEB_SOURCE_TS_DEV_DEPENDENCIES = [
-  { name: "@tsconfig/bases", version: "*" },
+  { name: "@tsconfig/bases", version: "latest" },
+  { name: "typescript", version: "latest" },
 ] as const;
 
 /** tsconfig.json generated for TypeScript web-src scaffolds. */
