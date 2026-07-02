@@ -13,6 +13,7 @@
 import Runtime, { init } from "@adobe/exc-app";
 import page from "@adobe/exc-app/page";
 import { RouterProvider } from "@tanstack/react-router";
+import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 
 import { createExtensionRouter } from "#web/react/routing/lib";
@@ -71,7 +72,11 @@ export function createExtensionApp({
     const entrypoint = <Entrypoint {...entrypointProps} />;
     const router = createExtensionRouter(entrypoint, routes);
 
-    root.render(<RouterProvider router={router} />);
+    root.render(
+      <StrictMode>
+        <RouterProvider router={router} />
+      </StrictMode>,
+    );
   };
 
   try {

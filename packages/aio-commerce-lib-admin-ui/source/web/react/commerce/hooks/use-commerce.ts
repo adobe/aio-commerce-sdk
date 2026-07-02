@@ -13,6 +13,7 @@
 import { use } from "react";
 
 import { useInternalSharedContext } from "#web/react/commerce/context/shared-context.tsx";
+import { createRetryablePromiseCache } from "#web/react/promise-cache";
 
 import type { GuestConnection } from "#web/react/commerce/types";
 
@@ -21,7 +22,7 @@ type HostIntegration = {
   getCommerceHost: () => Promise<string>;
 };
 
-const commerceHostCache = new Map<string, Promise<string>>();
+const commerceHosts = createRetryablePromiseCache<string>();
 
 /**
  * Returns the cached Commerce Admin host promise for an extension, resolving it once over the
@@ -34,23 +35,20 @@ function getCommerceHostPromise(
   extensionId: string,
   connection: GuestConnection,
 ): Promise<string> {
-  let promise = commerceHostCache.get(extensionId);
-  if (!promise) {
-    const integration = (connection.host as { integration?: HostIntegration })
-      .integration;
+  const integration = (connection.host as { integration?: HostIntegration })
+    .integration;
 
-    promise = integration
-      ? integration.getCommerceHost()
-      : Promise.reject(
-          new Error(
-            "The host does not provide the integration API needed to resolve the Commerce host.",
-          ),
-        );
-
-    commerceHostCache.set(extensionId, promise);
+  if (!integration) {
+    // Rejects synchronously, so there's no pending window for `use` to keep stable and nothing
+    // to cache: a later attempt re-checks for free and could succeed if the host changes.
+    return Promise.reject(
+      new Error(
+        "The host does not provide the integration API needed to resolve the Commerce host.",
+      ),
+    );
   }
 
-  return promise;
+  return commerceHosts(extensionId, () => integration.getCommerceHost());
 }
 
 /**

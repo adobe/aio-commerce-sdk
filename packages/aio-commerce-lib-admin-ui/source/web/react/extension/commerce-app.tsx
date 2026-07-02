@@ -24,10 +24,30 @@ import {
 } from "#web/react/commerce/context/shared-context.tsx";
 import { useGuestConnection } from "#web/react/commerce/hooks/use-guest-connection";
 import { isControlFrame } from "#web/react/commerce/lib";
+import { createRetryablePromiseCache } from "#web/react/promise-cache";
 import { useSpectrumRouter } from "#web/react/routing/hooks/use-spectrum-router";
 import { syncRootColorScheme } from "#web/react/theme";
 
 import { ExtensionErrorBoundary } from "./error-boundary";
+
+const controlFrameRegistrations = createRetryablePromiseCache<unknown>();
+
+/**
+ * Registers a Commerce Admin control frame with the UIX host, once per extension. `register`
+ * has no teardown, so this is memoized rather than run inside an effect body every mount.
+ *
+ * @param extensionId - The unique identifier for the extension app.
+ */
+function registerControlFrame(extensionId: string) {
+  return controlFrameRegistrations(extensionId, () => {
+    const promise = register({ id: extensionId, methods: {} });
+    promise.catch((err) => {
+      console.error("UIX guest register failed:", err);
+    });
+
+    return promise;
+  });
+}
 
 /** The fallback UI shown when connecting to the Commerce host. */
 function ConnectionFallback() {
@@ -73,9 +93,7 @@ export function CommerceExtensionApp(props: Readonly<{ extensionId: string }>) {
 function ControlFrameRegistration(props: Readonly<{ extensionId: string }>) {
   const { extensionId } = props;
   useEffect(() => {
-    register({ id: extensionId, methods: {} }).catch((err) => {
-      console.error("UIX guest register failed:", err);
-    });
+    registerControlFrame(extensionId);
   }, [extensionId]);
 
   return null;

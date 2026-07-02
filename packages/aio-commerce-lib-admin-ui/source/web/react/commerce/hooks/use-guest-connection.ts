@@ -13,24 +13,23 @@
 import { attach } from "@adobe/uix-guest";
 import { use } from "react";
 
+import { createRetryablePromiseCache } from "#web/react/promise-cache";
+
 import type { GuestConnection } from "#web/react/commerce/types";
 
-const connectionCache = new Map<string, Promise<GuestConnection>>();
+const guestConnections = createRetryablePromiseCache<GuestConnection>();
 
 function getGuestConnectionPromise(
   extensionId: string,
 ): Promise<GuestConnection> {
-  let promise = connectionCache.get(extensionId);
-  if (!promise) {
-    promise = attach({ id: extensionId });
+  return guestConnections(extensionId, () => {
+    const promise = attach({ id: extensionId });
     promise.catch((err) => {
       console.error("UIX guest attach failed:", err);
     });
 
-    connectionCache.set(extensionId, promise);
-  }
-
-  return promise;
+    return promise;
+  });
 }
 
 /**
