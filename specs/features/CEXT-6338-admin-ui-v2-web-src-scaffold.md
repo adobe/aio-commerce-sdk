@@ -192,8 +192,8 @@ handles the EC runtime loading internally via `@adobe/exc-app`, bootstraps the s
 fallback to a mock runtime for local development, mounts a hash-based router with a Spectrum 2
 `Provider` and a default error boundary, wires the Experience Cloud shell runtime (configuration and
 navigation events), and calls `register()` from `@adobe/uix-guest` with the extension ID. The
-`metadata` object carries the `extensionId` (and an optional `title`); the optional `root` overrides
-the mount element, which defaults to `#root`. The `routes` array follows a standard route object
+`metadata` object carries the `extensionId`; the optional `root` overrides the mount element, which
+defaults to `#root`. The `routes` array follows a standard route object
 format — an index route plus optional path routes — and is rendered inside the router, with the
 index route typically being the main page component. Because the scaffold is fully developer-owned,
 apps that want a different routing setup edit `app.jsx` directly: drop the `routes` array, mount
@@ -203,8 +203,13 @@ The entrypoint also exposes React hooks for reading host-provided context inside
 **`useIms()`** returns the IMS credentials `{ imsToken, imsOrgId }`, available in both the Commerce
 Admin and the Experience Cloud shell (it throws when the app runs standalone, outside any host).
 **`useSharedContext()`** returns the Commerce shared context (`{ extensionId, sharedContext, host }`)
-provided by the UIX host, or `null` when no Commerce connection is available (still connecting, or
-running outside the Commerce Admin). Extension-point-specific helpers — `useMassActionContext`,
+provided by the UIX host (it throws when used outside the Commerce Admin). While the connection to
+the host is still being established, `createExtensionApp` suspends the rendered route via `Suspense`
+instead of surfacing a connecting state through the hook, so consumers only ever observe a resolved
+context. **`useCommerce()`** returns `{ commerceHost }`, the domain of the Commerce Admin the
+extension is embedded in, resolved once over the guest connection and cached per extension
+(available on every Commerce extension point; it throws when used outside the Commerce Admin, same
+as `useSharedContext()`). Extension-point-specific helpers — `useMassActionContext`,
 `useOrderViewButtonContext`, and `useHostConnection` — build on these to expose the selected row
 IDs, the order ID, and host-frame actions (closing the iframe). All hooks must be called inside a
 component tree rendered by `createExtensionApp`.
