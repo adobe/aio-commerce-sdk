@@ -25,7 +25,7 @@ import {
   getExtensionPointFolderPath,
 } from "#commands/constants";
 import { exec, run } from "#commands/generate/actions/main";
-import { getRuntimeAppConfigPath } from "#commands/utils";
+import { getManifestPath, getRuntimeAppConfigPath } from "#commands/utils";
 import {
   dynamicOptionsConfigFile,
   dynamicOptionsConfigFileTs,
@@ -257,46 +257,38 @@ describe("commands/generate/actions", () => {
       );
     });
 
-    test("points the app config alias at the generated manifest for static config", async () => {
+    test("writes a JSON passthrough module and #app.commerce.config alias for static config", async () => {
       await withTempProject(
         {
           ...EMPTY_PROJECT,
           ...makeTemplateFiles(),
-          "package.json": JSON.stringify({
-            type: "module",
-            imports: {
-              "#app.commerce.config":
-                "./src/commerce-extensibility-1/.generated/app.commerce.config.js",
-            },
-          }),
-          [getRuntimeAppConfigPath()]: "export default {};",
+          "package.json": JSON.stringify({ type: "module" }),
+          // The generate manifest command writes this; seed it so the passthrough
+          // module resolves when imported below.
+          [getManifestPath()]: JSON.stringify({ metadata: { id: "static" } }),
         },
-        async (tempDir) => {
-          await run(minimalValidConfig, tempDir);
-          const runtimeConfigPath = join(tempDir, getRuntimeAppConfigPath());
-          expect(existsSync(runtimeConfigPath)).toBe(false);
-
-          const pkg = JSON.parse(
-            await readFile(join(tempDir, "package.json"), "utf-8"),
-          );
-          expect(pkg.imports["#app.commerce.config"]).toBe(
-            "./src/commerce-extensibility-1/.generated/app.commerce.manifest.json",
-          );
-        },
-      );
-    });
-
-    test("keeps the runtime app config alias when generated actions use static JSON imports", async () => {
-      await withTempProject(
-        { ...EMPTY_PROJECT, ...makeTemplateFiles() },
         async (tempDir) => {
           await run(configWithBusinessConfig, tempDir);
+
+          const runtimeConfigPath = join(tempDir, getRuntimeAppConfigPath());
+          expect(existsSync(runtimeConfigPath)).toBe(true);
+
+          const moduleContents = await readFile(runtimeConfigPath, "utf-8");
+          expect(moduleContents).toContain(
+            'import appConfig from "./app.commerce.manifest.json" with { type: "json" }',
+          );
+          expect(moduleContents).toContain("export default appConfig");
+
           const pkg = JSON.parse(
             await readFile(join(tempDir, "package.json"), "utf-8"),
           );
           expect(pkg.imports["#app.commerce.config"]).toBe(
-            "./src/commerce-extensibility-1/.generated/app.commerce.manifest.json",
+            "./src/commerce-extensibility-1/.generated/app.commerce.config.js",
           );
+
+          // The generated module must actually import without a JSON attribute error.
+          const mod = await import(runtimeConfigPath);
+          expect(mod.default).toEqual({ metadata: { id: "static" } });
         },
       );
     });
@@ -401,7 +393,7 @@ describe("commands/generate/actions", () => {
             "./src/commerce-backend-ui-2/web-src/src/*",
           );
           expect(pkg.imports["#app.commerce.config"]).toBe(
-            "./src/commerce-extensibility-1/.generated/app.commerce.manifest.json",
+            "./src/commerce-extensibility-1/.generated/app.commerce.config.js",
           );
           expect(Object.keys(pkg.dependencies)).toEqual(
             expect.arrayContaining([
