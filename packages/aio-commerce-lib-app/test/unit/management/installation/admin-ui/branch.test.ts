@@ -54,15 +54,33 @@ describe("admin-ui installation module", () => {
       expect(adminUiStep.meta.uninstall).toBeDefined();
     });
 
-    test("should have one leaf child: register-extension", () => {
-      expect(adminUiStep.children).toHaveLength(1);
-      expect(adminUiStep.children[0].name).toBe("register-extension");
+    test("should have two leaf children: enable-admin-ui-sdk then register-extension", () => {
+      expect(adminUiStep.children).toHaveLength(2);
+      expect(adminUiStep.children[0].name).toBe("enable-admin-ui-sdk");
+      expect(adminUiStep.children[1].name).toBe("register-extension");
       expect(isLeafStep(adminUiStep.children[0])).toBe(true);
+      expect(isLeafStep(adminUiStep.children[1])).toBe(true);
+    });
+  });
+
+  describe("enableAdminUiSdkStep handlers", () => {
+    const enableAdminUiSdkStep = adminUiStep.children[0];
+
+    test("should have an install handler but no uninstall handler", () => {
+      expect(enableAdminUiSdkStep.install).toBeDefined();
+      expect(enableAdminUiSdkStep.uninstall).toBeUndefined();
+    });
+
+    test("should call enableAdminUiSdk on install", async () => {
+      const context = createMockAdminUiContext();
+
+      await enableAdminUiSdkStep.install(configWithFullAdminUiV2, context);
+      expect(context.adminUiClient.enableAdminUiSdk).toHaveBeenCalledOnce();
     });
   });
 
   describe("registerExtensionStep handlers", () => {
-    const registerExtensionStep = adminUiStep.children[0];
+    const registerExtensionStep = adminUiStep.children[1];
 
     beforeEach(() => {
       vi.stubEnv("__OW_NAMESPACE", "test-namespace");
