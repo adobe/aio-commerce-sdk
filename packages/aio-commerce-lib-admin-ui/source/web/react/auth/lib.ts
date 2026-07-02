@@ -38,12 +38,10 @@ export function resolveCommerceImsCredentials(
 export function resolveShellImsCredentials(
   shellConfiguration: ShellConfiguration | null,
 ): ImsContext | null {
-  const imsToken = shellConfiguration?.imsToken ?? null;
-  const imsOrgId = shellConfiguration?.imsOrg ?? null;
-
-  if (!(imsToken && imsOrgId)) {
+  if (!shellConfiguration) {
     return null;
   }
 
+  const { imsToken, imsOrg: imsOrgId } = shellConfiguration;
   return { imsToken, imsOrgId };
 }
