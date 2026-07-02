@@ -55,6 +55,7 @@ import {
   buildBusinessConfigurationExtConfig,
 } from "./config";
 import {
+  APP_TITLE_PLACEHOLDER,
   CUSTOM_IMPORTS_PLACEHOLDER,
   CUSTOM_SCRIPTS_LOADER_PLACEHOLDER,
   CUSTOM_SCRIPTS_MAP_PLACEHOLDER,
@@ -64,6 +65,7 @@ import {
   TYPESCRIPT_CONFIG_EXTENSIONS,
   WEB_SOURCE_DEPENDENCIES,
   WEB_SOURCE_DEV_DEPENDENCIES,
+  WEB_SOURCE_ENTRYPOINT_FILE,
   WEB_SOURCE_IMPORT_ALIAS,
   WEB_SOURCE_SHARED_BUNDLES,
 } from "./constants";
@@ -482,6 +484,7 @@ async function copyWebSourceTemplates(
   sourceDir: string,
   targetDir: string,
   extension: WebSourceExtension,
+  appTitle: string,
 ) {
   await mkdir(targetDir, { recursive: true });
   const outputFiles: string[] = [];
@@ -495,7 +498,12 @@ async function copyWebSourceTemplates(
 
     if (entry.isDirectory()) {
       outputFiles.push(
-        ...(await copyWebSourceTemplates(sourcePath, targetPath, extension)),
+        ...(await copyWebSourceTemplates(
+          sourcePath,
+          targetPath,
+          extension,
+          appTitle,
+        )),
       );
 
       continue;
@@ -510,6 +518,10 @@ async function copyWebSourceTemplates(
       );
     }
 
+    if (targetPath.endsWith(WEB_SOURCE_ENTRYPOINT_FILE)) {
+      content = content.replaceAll(APP_TITLE_PLACEHOLDER, appTitle);
+    }
+
     await writeFile(targetPath, content, { encoding: "utf-8", flag: "wx" });
     outputFiles.push(` ${relative(process.cwd(), targetPath)}`);
   }
@@ -521,6 +533,7 @@ async function copyWebSourceTemplates(
 export async function generateWebSrc(
   extConfig: ExtConfig,
   extensionPointId: ValidExtensionPointId,
+  appName: string,
   templatesDir = TEMPLATES_DIR,
 ) {
   const entrypoint = getWebSourceEntrypoint(extConfig, extensionPointId);
@@ -550,6 +563,7 @@ export async function generateWebSrc(
     sourceDir,
     targetDir,
     await resolveWebSourceExtension(projectRoot),
+    appName,
   );
 
   await prepareWebSourcePackage(projectRoot);

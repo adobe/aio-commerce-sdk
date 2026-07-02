@@ -357,6 +357,13 @@ describe("commands/generate/actions", () => {
             existsSync(join(webSrcDir, "src", "components", "welcome.jsx")),
           ).toBe(true);
 
+          const indexContent = await readFile(
+            join(webSrcDir, "index.html"),
+            "utf-8",
+          );
+          expect(indexContent).toContain("<title>Test App</title>");
+          expect(indexContent).not.toContain("APP_TITLE");
+
           const appContent = await readFile(
             join(webSrcDir, "src", "app.jsx"),
             "utf-8",

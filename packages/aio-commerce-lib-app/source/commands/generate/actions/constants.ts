@@ -44,6 +44,8 @@ export const TYPESCRIPT_CONFIG_EXTENSIONS = new Set([".ts", ".mts", ".cts"]);
 export const JSX_FILE_EXTENSION = ".jsx";
 export const TSX_FILE_EXTENSION = ".tsx";
 
+export const APP_TITLE_PLACEHOLDER = "APP_TITLE";
+export const WEB_SOURCE_ENTRYPOINT_FILE = "index.html";
 export const WEB_SOURCE_IMPORT_ALIAS = "#web/*";
 
 /** Runtime dependencies required by the generated web-src app. */

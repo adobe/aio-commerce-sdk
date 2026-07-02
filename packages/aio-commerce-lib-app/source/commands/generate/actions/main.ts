@@ -69,6 +69,7 @@ export async function run(
       await generateWebSrc(
         extConfig,
         BACKEND_UI_V2_EXTENSION_POINT_ID,
+        appManifest.metadata.displayName,
         templatesDir,
       );
     }
