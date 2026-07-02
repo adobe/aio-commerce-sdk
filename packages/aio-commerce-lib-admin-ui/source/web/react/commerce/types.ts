@@ -59,5 +59,5 @@ export type MassActionContext = {
 
 /** The context shared with order view-button extension points. */
 export type OrderViewButtonContext = {
-  orderId: string | null;
+  orderId: string;
 };

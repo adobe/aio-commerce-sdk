@@ -29,23 +29,35 @@ import type {
 export function useMassActionContext(): MassActionContext {
   const { sharedContext } = useSharedContext();
 
-  return useMemo(
-    () => ({
-      selectedIds: (sharedContext.get("selectedIds") as string[]) ?? [],
-    }),
-    [sharedContext],
-  );
+  return useMemo(() => {
+    // An empty selection is valid (a mass action with nothing selected), but a missing key means
+    // the shared context was never populated with it, i.e. we're not on a mass-action page.
+    const selectedIds = sharedContext.get("selectedIds");
+    if (!Array.isArray(selectedIds)) {
+      throw new Error(
+        "Could not find `selectedIds` in the Commerce shared context. Is this frame running as a mass-action extension point?",
+      );
+    }
+
+    return { selectedIds: selectedIds as string[] };
+  }, [sharedContext]);
 }
 
 /**
  * Returns the context for an order view-button extension point: the order ID the button was
  * triggered from.
+ *
+ * @throws If used outside a Commerce order view-button page (no order ID in the page URL).
  */
 export function useOrderViewButtonContext(): OrderViewButtonContext {
-  return useMemo(
-    () => ({
-      orderId: parseOrderId(globalThis.location.href),
-    }),
-    [],
-  );
+  return useMemo(() => {
+    const orderId = parseOrderId(globalThis.location.href);
+    if (orderId === null) {
+      throw new Error(
+        "Could not find an order ID. Is this frame running as an order view-button extension point?",
+      );
+    }
+
+    return { orderId };
+  }, []);
 }
