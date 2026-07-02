@@ -7,7 +7,6 @@ import { MainPage } from "#web/pages/main-page.jsx";
 createExtensionApp({
   metadata: {
     extensionId: config.metadata.id,
-    title: config.metadata.displayName,
   },
 
   routes: [{ index: true, element: <MainPage /> }],
