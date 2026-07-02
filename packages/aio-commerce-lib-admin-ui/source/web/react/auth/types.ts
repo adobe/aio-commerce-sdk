@@ -10,16 +10,8 @@
  * governing permissions and limitations under the License.
  */
 
-import { baseConfig } from "@aio-commerce-sdk/config-tsdown/tsdown.config.base";
-import { mergeConfig } from "tsdown";
-
-export default mergeConfig(baseConfig, {
-  entry: [
-    "./source/api/index.ts",
-    "./source/grid-columns/index.ts",
-    "./source/mass-actions/index.ts",
-    "./source/menu/index.ts",
-    "./source/web/index.ts",
-    "./source/order-view-buttons/index.ts",
-  ],
-});
+/** The IMS credentials provided by the host (Commerce Admin or Experience Cloud shell). */
+export type ImsContext = {
+  imsToken: string;
+  imsOrgId: string;
+};

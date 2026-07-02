@@ -19,10 +19,29 @@ import { existsSync } from "node:fs";
 import { access, mkdir, readFile } from "node:fs/promises";
 import { dirname, join, parse } from "node:path";
 
+import NpmPackageJson from "@npmcli/package-json";
+import { getPackageInfo } from "local-pkg";
 import { resolveCommand } from "package-manager-detector";
 import { detect, getUserAgent } from "package-manager-detector/detect";
+import { satisfies as satisfiesSemverRange } from "semver";
 
 import type { PackageJson } from "type-fest";
+
+export type PackageDependency = {
+  /** Package name as it appears in package.json. */
+  name: string;
+
+  /** Version specifier to write or install, compared by exact string equality. */
+  version: string;
+};
+
+export type PackageInstallOptions = {
+  /** Install packages as development dependencies. */
+  dev?: boolean;
+};
+
+type PackageJsonDependencies = NonNullable<PackageJson["dependencies"]>;
+type WritablePackageJsonDependencies = Record<string, string>;
 
 /**
  * Find a file by walking up parent directories
@@ -93,6 +112,123 @@ export async function readPackageJson(
 }
 
 /**
+ * Load the nearest package.json file with npmcli's package.json helper.
+ * @param cwd The current working directory
+ */
+export async function loadPackageJson(cwd = process.cwd()) {
+  const packageJsonPath = await findNearestPackageJson(cwd);
+  if (!packageJsonPath) {
+    return null;
+  }
+
+  return NpmPackageJson.load(dirname(packageJsonPath));
+}
+
+/**
+ * Convert package.json dependencies into a dependency map that can be written back.
+ * @param dependencies - Dependency map read from package.json.
+ */
+function toWritablePackageJsonDependencies(
+  dependencies: PackageJsonDependencies,
+): WritablePackageJsonDependencies {
+  return Object.fromEntries(
+    Object.entries(dependencies).filter((entry): entry is [string, string] =>
+      Boolean(entry[1]),
+    ),
+  );
+}
+
+/**
+ * Resolve the installed package version from a project root.
+ * @param packageName - Package name to resolve.
+ * @param cwd - Project directory to resolve from.
+ */
+export async function getInstalledPackageVersion(
+  packageName: string,
+  cwd = process.cwd(),
+) {
+  const packageInfo = await getPackageInfo(packageName, { paths: [cwd] });
+  return packageInfo?.version ?? null;
+}
+
+type PackageDependencyInstallPlan = {
+  missing: PackageDependency[];
+  incompatible: Array<
+    PackageDependency & {
+      installedVersion: string;
+    }
+  >;
+};
+
+/**
+ * Resolve which dependencies are missing or installed with incompatible versions.
+ *
+ * Installed package versions are compared with `semver.satisfies`. Declared
+ * package.json ranges are not used as compatibility proof because they can
+ * differ from what is actually installed.
+ *
+ * @param requiredDependencies - Dependencies that should exist.
+ * @param cwd - Project directory to resolve installed packages from.
+ */
+export async function getPackageDependencyInstallPlan(
+  requiredDependencies: readonly PackageDependency[],
+  cwd = process.cwd(),
+): Promise<PackageDependencyInstallPlan> {
+  const plan: PackageDependencyInstallPlan = {
+    incompatible: [],
+    missing: [],
+  };
+
+  const installedVersions = await Promise.all(
+    requiredDependencies.map((dependency) =>
+      getInstalledPackageVersion(dependency.name, cwd),
+    ),
+  );
+
+  requiredDependencies.forEach((dependency, index) => {
+    const installedVersion = installedVersions[index];
+
+    if (installedVersion === null) {
+      plan.missing.push(dependency);
+      return;
+    }
+
+    if (
+      !satisfiesSemverRange(installedVersion, dependency.version, {
+        includePrerelease: true,
+      })
+    ) {
+      plan.incompatible.push({ ...dependency, installedVersion });
+    }
+  });
+
+  return plan;
+}
+
+/**
+ * Merge required dependencies into a package.json dependency map when they are missing.
+ *
+ * @param dependencies - Dependency map to update.
+ * @param requiredDependencies - Dependencies that should exist.
+ * @param dependencyMaps - Package dependency maps to compare against.
+ */
+export function mergePackageJsonDependencies(
+  dependencies: PackageJsonDependencies,
+  requiredDependencies: readonly PackageDependency[],
+  dependencyMaps: readonly PackageJsonDependencies[] = [dependencies],
+) {
+  const nextDependencies = toWritablePackageJsonDependencies(dependencies);
+
+  for (const { name, version } of requiredDependencies) {
+    if (!dependencyMaps.some((dependencies) => name in dependencies)) {
+      nextDependencies[name] = version;
+    }
+  }
+
+  return nextDependencies;
+}
+
+/**
  * Check if the current working directory is an ESM project.
  * @param cwd The current working directory
  */
@@ -137,8 +273,13 @@ export async function makeOutputDirFor(fileOrFolder: string) {
   return outputDir;
 }
 
-// App Builder targets Node.js — unsupported detections (e.g. deno) fall back to npm.
 const VALID_PACKAGE_MANAGERS = ["npm", "pnpm", "yarn", "bun"] as const;
+const DEV_DEPENDENCY_INSTALL_FLAGS = {
+  bun: "--dev",
+  npm: "--save-dev",
+  pnpm: "--save-dev",
+  yarn: "--dev",
+} as const satisfies Record<PackageManager, string>;
 
 /** The package manager used to install the package */
 export type PackageManager = (typeof VALID_PACKAGE_MANAGERS)[number];
@@ -198,19 +339,35 @@ export function getExecCommand(packageManager: PackageManager): string {
  * manager (e.g. `pnpm add foo bar`, `npm i foo bar`).
  * @param packageManager - The detected package manager
  * @param packages - Package specifiers to install (e.g. `["foo@^1.0"]`)
+ * @param options - Install command options.
  */
 export function getInstallCommand(
   packageManager: PackageManager,
   packages: string[],
+  options: PackageInstallOptions = {},
 ): { command: string; args: string[] } {
-  const resolved = resolveCommand(packageManager, "add", packages);
-  if (!resolved) {
-    return { command: "npm", args: ["install", ...packages] };
-  }
+  const installArgs = options.dev
+    ? [DEV_DEPENDENCY_INSTALL_FLAGS[packageManager], ...packages]
+    : packages;
 
+  const resolved = resolveCommand(packageManager, "add", installArgs);
   return {
-    // Filter out any empty args via truthyness check.
-    args: resolved.args.filter((a) => Boolean(a)),
-    command: resolved.command,
+    args: resolved?.args.filter(Boolean) ?? ["install", ...installArgs],
+    command: resolved?.command ?? "npm",
+  };
+}
+
+/**
+ * Get the command that installs a project's declared dependencies.
+ * @param packageManager - The detected package manager
+ */
+export function getProjectInstallCommand(packageManager: PackageManager): {
+  command: string;
+  args: string[];
+} {
+  const resolved = resolveCommand(packageManager, "install", []);
+  return {
+    args: resolved?.args.filter(Boolean) ?? ["install"],
+    command: resolved?.command ?? "npm",
   };
 }
