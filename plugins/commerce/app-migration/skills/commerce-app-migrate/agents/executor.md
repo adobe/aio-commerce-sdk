@@ -504,12 +504,12 @@ the configuration-schema generation sub-step.
 
 Run the appropriate command for the `packageManager` from `ProjectSnapshot`:
 
-| packageManager | command                             |
-| -------------- | ----------------------------------- |
-| `npm`          | `npx aio-commerce-lib-app init`     |
+| packageManager | command                               |
+| -------------- | ------------------------------------- |
+| `npm`          | `npx aio-commerce-lib-app init`       |
 | `pnpm`         | `pnpm exec aio-commerce-lib-app init` |
 | `yarn`         | `yarn exec aio-commerce-lib-app init` |
-| `bun`          | `bunx aio-commerce-lib-app init`    |
+| `bun`          | `bunx aio-commerce-lib-app init`      |
 
 The `init` command installs required dependencies and generates the full `src/` extension
 structure from `app.commerce.config.ts` in one step.
@@ -555,7 +555,10 @@ After this command completes successfully, check which directories were created:
 
 - `src/commerce-extensibility-1/` — always expected
 - `src/commerce-configuration-1/` — present only if `businessConfig` was defined
-- `src/commerce-backend-ui-2/` — present only if `adminUi` was defined
+- `src/commerce-backend-ui-2/` — present only if `adminUi` was defined; when the
+  `adminUi` config has any `view` entry (view mass action, view button, or menu),
+  it also contains a generated `web-src/` frontend (mounted with `createExtensionApp`
+  from `@adobe/aio-commerce-lib-admin-ui/web`), plus additional dependencies installed (if not already present and compatible) needed by the frontend (`react`, `react-dom`, `@react-spectrum/s2`, and some `devDependencies` needed for proper TypeScript support/config).
 
 Note which directories exist — you will need this in Steps 5a, 6, and 7.
 
@@ -579,21 +582,24 @@ is set in the assembled config and is not `"<FILL_IN>"`:
 4. Scaffold:
 
 ```javascript
-import { parseGridRequest, okGridResponse, errorGridResponse }
-  from '@adobe/aio-commerce-sdk/admin-ui/grid-columns'
+import {
+  parseGridRequest,
+  okGridResponse,
+  errorGridResponse,
+} from "@adobe/aio-commerce-sdk/admin-ui/grid-columns";
 
-export async function main (params) {
-  let request
+export async function main(params) {
+  let request;
   try {
-    request = parseGridRequest(params)
+    request = parseGridRequest(params);
   } catch (e) {
-    return errorGridResponse(400, e.message)
+    return errorGridResponse(400, e.message);
   }
-  const data = {}
+  const data = {};
   for (const id of request.ids) {
     // TODO: fetch column data for id
   }
-  return okGridResponse(data)
+  return okGridResponse(data);
 }
 ```
 
@@ -606,8 +612,8 @@ export async function main (params) {
   actions:
     <action>:
       function: actions/<action>/index.js
-      web: 'yes'
-      runtime: '<detectedNodeRuntime>'
+      web: "yes"
+      runtime: "<detectedNodeRuntime>"
       inputs:
         LOG_LEVEL: debug
       annotations:
@@ -630,15 +636,15 @@ import {
   parseMassActionRequest,
   okMassActionResponse,
   massActionErrorResponse,
-} from '@adobe/aio-commerce-sdk/admin-ui/mass-actions'
+} from "@adobe/aio-commerce-sdk/admin-ui/mass-actions";
 
-export async function main (params) {
-  const { gridType, ids } = parseMassActionRequest(params)
+export async function main(params) {
+  const { gridType, ids } = parseMassActionRequest(params);
   try {
     // existing business logic
-    return okMassActionResponse()
+    return okMassActionResponse();
   } catch (error) {
-    return massActionErrorResponse(500, error.message)
+    return massActionErrorResponse(500, error.message);
   }
 }
 ```
@@ -663,15 +669,15 @@ import {
   parseOrderViewButtonRequest,
   okOrderViewButtonResponse,
   orderViewButtonErrorResponse,
-} from '@adobe/aio-commerce-sdk/admin-ui/order-view-buttons'
+} from "@adobe/aio-commerce-sdk/admin-ui/order-view-buttons";
 
-export async function main (params) {
-  const { id, orderId } = parseOrderViewButtonRequest(params)
+export async function main(params) {
+  const { id, orderId } = parseOrderViewButtonRequest(params);
   try {
     // existing business logic
-    return okOrderViewButtonResponse()
+    return okOrderViewButtonResponse();
   } catch (error) {
-    return orderViewButtonErrorResponse(500, error.message)
+    return orderViewButtonErrorResponse(500, error.message);
   }
 }
 ```
@@ -1112,11 +1118,19 @@ constraints, Next steps) when in doc-scan-only mode.
       needed in v2. Check which are present in package.json and not
       imported in any action source file before removing.
 
-      Frontend packages (v1 had a web-src UI; v2 has none):
+      v1 frontend packages (superseded by the v2 web-src scaffold, whose
+      shell/guest plumbing is provided by @adobe/aio-commerce-lib-admin-ui):
         @adobe/exc-app  @adobe/react-spectrum  @adobe/uix-core  @adobe/uix-guest
-        @spectrum-icons/workflow  react  react-dom  react-error-boundary
-        react-router-dom  core-js  crypto  crypto-browserify  https-browserify
+        @spectrum-icons/workflow  react-error-boundary  react-router-dom
+        core-js  crypto  crypto-browserify  https-browserify
         os-browserify  regenerator-runtime
+
+      Do NOT remove react or react-dom when the adminUi config has any
+      `view` entry (view mass action, view button, or menu): init/generate scaffolds
+      src/commerce-backend-ui-2/web-src/ and pins react, react-dom,
+      @react-spectrum/s2, and @adobe/aio-commerce-lib-admin-ui for it.
+      If adminUi is worker-only (no view entries), react and react-dom are
+      removable as well.
 
       Runtime packages replaced by @adobe/aio-commerce-sdk:
         @adobe/aio-sdk  cloudevents  got  node-fetch  oauth-1.0a  uuid

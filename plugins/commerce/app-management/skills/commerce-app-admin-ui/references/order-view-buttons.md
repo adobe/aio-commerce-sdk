@@ -93,4 +93,19 @@ export async function main(params: RuntimeActionParams) {
 
 ## View variant (iframe)
 
-No server handler. Commerce opens the iframe at `https://<extension-host>/index.html<path>?orderId=<orderId>`. The app signals completion through the UIX Host connection — call `close()` on success or `onError()` on failure. Commerce then redirects back to the order view page and renders the notification from the registration.
+No server handler. Commerce opens the iframe at `path` into the app's generated `web-src` (add a matching `{ path, element }` route in `src/app.jsx`). Inside the route component, read the order with `useOrderViewButtonContext` and signal completion with `useHostConnection`, both from `@adobe/aio-commerce-lib-admin-ui/web`:
+
+```jsx
+import {
+  useHostConnection,
+  useOrderViewButtonContext,
+} from "@adobe/aio-commerce-lib-admin-ui/web";
+
+function EditShippingPage() {
+  const { orderId } = useOrderViewButtonContext(); // the order the button was clicked on
+  const { close, closeWithError } = useHostConnection();
+  // ...do the work, then await close() on success or closeWithError() on failure
+}
+```
+
+On `close()` / `closeWithError()`, Commerce closes the frame, redirects back to the order view page, and renders the configured notification. `useOrderViewButtonContext` throws when the frame is not running as an order view-button extension point within Commerce.
