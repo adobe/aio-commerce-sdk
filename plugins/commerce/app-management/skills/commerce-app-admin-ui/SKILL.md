@@ -194,7 +194,7 @@ createExtensionApp({
 });
 ```
 
-Add a `{ path, element }` route to `routes` for each `view` entry's `path`, and build the page as a React component. Inside route components, use the hooks from the same `/web` entrypoint: `useIms()` returns `{ imsToken, imsOrgId }` from the host (the generated `Welcome` component demonstrates it). For a `view` **mass action**, read the selection with `useMassActionContext` (see [mass-actions](references/mass-actions.md)); for a `view` **order button**, use `useOrderViewButtonContext` and `useHostConnection` (see [order-view-buttons](references/order-view-buttons.md)). The **menu** needs only the `MENU_*` constant for `parentMenu` — see [menu](references/menu.md).
+Add a `{ path, element }` route to `routes` for each `view` entry's `path`, and build the page as a React component. Inside route components, use the hooks from the same `/web` entrypoint: `useIms()` returns `{ imsToken, imsOrgId }` from the host (the generated `Welcome` component demonstrates it), and `useCommerce()` returns `{ commerceHost }` (the Commerce Admin domain) — pair the two to call the Commerce REST API from the iframe (`imsToken` for auth, `commerceHost` for the base URL). For a `view` **mass action**, read the selection with `useMassActionContext` (see [mass-actions](references/mass-actions.md)); for a `view` **order button**, use `useOrderViewButtonContext` and `useHostConnection` (see [order-view-buttons](references/order-view-buttons.md)). The **menu** needs only the `MENU_*` constant for `parentMenu` (if a parent menu is desired) — see [menu](references/menu.md).
 
 ## Step 5 — Validate
 
