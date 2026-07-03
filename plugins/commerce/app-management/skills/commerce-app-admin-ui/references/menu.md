@@ -51,7 +51,7 @@ Import from `@adobe/aio-commerce-sdk/admin-ui/menu`. Use the named constant rath
 
 ## Rendering
 
-The menu entry opens the app's `web-src` at its route. That frontend is scaffolded automatically by init/generate (if it doesn't already exists; `index.html`, `src/app.jsx`, `src/pages/main-page.jsx`, `src/components/welcome.jsx`) — the generated `src/app.jsx` mounts the iframe app with `createExtensionApp` from `@adobe/aio-commerce-lib-admin-ui/web`:
+The menu entry opens the app's `web-src` at its route. That frontend is scaffolded automatically by init/generate (if it doesn't already exist; `index.html`, `src/app.jsx`, `src/pages/main-page.jsx`, `src/components/welcome.jsx`) — the generated `src/app.jsx` mounts the iframe app with `createExtensionApp` from `@adobe/aio-commerce-lib-admin-ui/web`:
 
 ```jsx
 import { createExtensionApp } from "@adobe/aio-commerce-lib-admin-ui/web";
