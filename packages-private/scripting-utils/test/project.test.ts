@@ -222,6 +222,20 @@ describe("package.json dependency helpers", () => {
     );
   });
 
+  test("should return null when an installed package has no version field", async () => {
+    await withTempFiles(
+      {
+        "node_modules/react/package.json": JSON.stringify({ name: "react" }),
+        "package.json": JSON.stringify({ name: "test-package" }),
+      },
+      async (tempDir) => {
+        await expect(
+          getInstalledPackageVersion("react", tempDir),
+        ).resolves.toBe(null);
+      },
+    );
+  });
+
   test("should resolve a scoped installed package version from a project", async () => {
     await withTempFiles(
       {
@@ -332,6 +346,39 @@ describe("package.json dependency helpers", () => {
     );
   });
 
+  test("should treat compatible installed prerelease versions as compatible", async () => {
+    await withTempFiles(
+      {
+        "node_modules/react/package.json": JSON.stringify({
+          name: "react",
+          version: "19.1.0-beta.1",
+        }),
+        "package.json": JSON.stringify({ name: "test-package" }),
+      },
+      async (tempDir) => {
+        await expect(
+          getPackageDependencyInstallPlan(
+            [{ name: "react", version: "^19.0.0" }],
+            tempDir,
+          ),
+        ).resolves.toEqual({ incompatible: [], missing: [] });
+      },
+    );
+  });
+
+  test("should return an empty plan when no dependencies are required", async () => {
+    await withTempFiles(
+      {
+        "package.json": JSON.stringify({ name: "test-package" }),
+      },
+      async (tempDir) => {
+        await expect(
+          getPackageDependencyInstallPlan([], tempDir),
+        ).resolves.toEqual({ incompatible: [], missing: [] });
+      },
+    );
+  });
+
   test("should merge missing dependencies", () => {
     expect(
       mergePackageJsonDependencies(
@@ -365,6 +412,21 @@ describe("package.json dependency helpers", () => {
         [{}, { "@types/react": "^18.0.0" }],
       ),
     ).toEqual({});
+  });
+
+  test("should drop dependencies with falsy versions when merging", () => {
+    expect(
+      mergePackageJsonDependencies(
+        { "left-pad": undefined, react: "^19.0.0", typescript: "" },
+        [],
+      ),
+    ).toEqual({ react: "^19.0.0" });
+  });
+
+  test("should leave dependencies unchanged when no dependencies are required", () => {
+    expect(mergePackageJsonDependencies({ react: "^19.0.0" }, [])).toEqual({
+      react: "^19.0.0",
+    });
   });
 });
 
@@ -615,6 +677,21 @@ describe("getInstallCommand", () => {
     expect(getInstallCommand("bun", pkgs, { dev: true })).toEqual({
       command: "bun",
       args: ["add", "--dev", "foo", "bar"],
+    });
+  });
+
+  test("should return the bare add command for an empty package list", () => {
+    expect(getInstallCommand("npm", [])).toEqual({
+      command: "npm",
+      args: ["i"],
+    });
+    expect(getInstallCommand("pnpm", [])).toEqual({
+      command: "pnpm",
+      args: ["add"],
+    });
+    expect(getInstallCommand("npm", [], { dev: true })).toEqual({
+      command: "npm",
+      args: ["i", "--save-dev"],
     });
   });
 });
