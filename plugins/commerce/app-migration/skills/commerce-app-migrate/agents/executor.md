@@ -631,23 +631,28 @@ For each mass action in the assembled config where `type: "worker"`:
 3. If found: rewrite to use lib utilities (preserve existing business logic; replace
    request parsing and response construction with the builders below):
 
-```javascript
-import {
-  parseMassActionRequest,
-  okMassActionResponse,
-  massActionErrorResponse,
-} from "@adobe/aio-commerce-sdk/admin-ui/mass-actions";
+   ```javascript
+   import {
+     parseMassActionRequest,
+     okMassActionResponse,
+     massActionErrorResponse,
+   } from "@adobe/aio-commerce-sdk/admin-ui/mass-actions";
 
-export async function main(params) {
-  const { gridType, ids } = parseMassActionRequest(params);
-  try {
-    // existing business logic
-    return okMassActionResponse();
-  } catch (error) {
-    return massActionErrorResponse(500, error.message);
-  }
-}
-```
+   export async function main(params) {
+     try {
+       const { gridType, ids } = parseMassActionRequest(params);
+
+       // existing business logic
+       return okMassActionResponse();
+     } catch (error) {
+       if (error instanceof CommerceSdkValidationError) {
+         return massActionErrorResponse(400, error.display(false));
+       }
+
+       return massActionErrorResponse(500, error.message);
+     }
+   }
+   ```
 
 4. If not found: scaffold a new handler at
    `src/commerce-backend-ui-2/actions/<action>/index.js` using the same shape.
@@ -672,17 +677,22 @@ import {
 } from "@adobe/aio-commerce-sdk/admin-ui/order-view-buttons";
 
 export async function main(params) {
-  const { id, orderId } = parseOrderViewButtonRequest(params);
   try {
+    const { id, orderId } = parseOrderViewButtonRequest(params);
+
     // existing business logic
     return okOrderViewButtonResponse();
   } catch (error) {
+    if (error instanceof CommerceSdkValidationError) {
+      return orderViewButtonErrorResponse(400, error.display(false));
+    }
+
     return orderViewButtonErrorResponse(500, error.message);
   }
 }
 ```
 
-4. If not found: scaffold a new handler at
+1. If not found: scaffold a new handler at
    `src/commerce-backend-ui-2/actions/<action>/index.js` using the same shape.
 
 - `parseOrderViewButtonRequest(params)` → `{ requestId, id, orderId }`.
