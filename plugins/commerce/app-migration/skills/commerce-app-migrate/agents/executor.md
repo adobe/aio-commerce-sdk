@@ -692,7 +692,7 @@ export async function main(params) {
 }
 ```
 
-1. If not found: scaffold a new handler at
+4. If not found: scaffold a new handler at
    `src/commerce-backend-ui-2/actions/<action>/index.js` using the same shape.
 
 - `parseOrderViewButtonRequest(params)` → `{ requestId, id, orderId }`.
