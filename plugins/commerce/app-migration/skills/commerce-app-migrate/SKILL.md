@@ -2,6 +2,14 @@
 name: commerce-app-migrate
 description: >
   Migrate an Adobe Commerce App Builder project from the Integration Starter Kit or Checkout Starter Kit to the new App Management approach. Run from the root of the App Builder project to be migrated. Pass --auto to skip confirmation prompts (suitable for CI or batch use) — auto mode prints a summary of all Q&A questions answered with their defaults. Pass --doc-scan-only to scan README.md and env.dist for outdated content without modifying any files. Use when the user wants to migrate an App Builder project from the Integration Starter Kit or Checkout Starter Kit to the App Management approach, or mentions upgrading their Adobe Commerce extension architecture.
+license: Apache-2.0
+compatibility: >
+  Requires Node.js 22+, aio CLI, and @adobe/aio-commerce-lib-app.
+  Run from the root of the App Builder project being migrated.
+metadata:
+  author: adobe
+  sdk-package: "@adobe/aio-commerce-lib-app"
+  version: "0.0.1"
 ---
 
 # Migrate to App Management
