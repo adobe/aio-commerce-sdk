@@ -52,10 +52,11 @@ function getCommerceHostPromise(
 }
 
 /**
- * Returns the host (domain) of the Commerce Admin the extension is embedded in, suspending until
- * it's resolved over the guest connection.
+ * Returns the host (domain) of the Commerce Admin the extension is embedded in, resolving it over
+ * the guest connection.
  *
- * @throws If used outside a Commerce Admin UI frame.
+ * @throws If used outside a Commerce Admin UI frame, or when the host does not expose the
+ * Commerce integration API.
  */
 export function useCommerce() {
   const { extensionId, guestConnection } = useInternalSharedContext();
