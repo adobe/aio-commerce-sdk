@@ -11,21 +11,41 @@
  */
 
 import { baseConfig } from "@aio-commerce-sdk/config-vitest/vitest.config.base";
-import { defineConfig, mergeConfig } from "vitest/config";
+import { playwright } from "@vitest/browser-playwright";
+import { mergeConfig } from "vitest/config";
 
-export default mergeConfig(
-  baseConfig,
-  defineConfig({
-    plugins: [],
-    test: {
-      passWithNoTests: true,
-      coverage: {
-        exclude: [
-          "./source/**/index.ts",
-          "./source/**/types.ts",
-          "./source/web/runtime-loader.ts",
-        ],
-      },
+export default mergeConfig(baseConfig, {
+  test: {
+    passWithNoTests: true,
+    coverage: {
+      exclude: [
+        "./source/**/index.ts",
+        "./source/**/types.ts",
+        "./source/web/runtime-loader.ts",
+      ],
     },
-  }),
-);
+    projects: [
+      {
+        extends: true,
+        test: {
+          name: "node",
+          include: ["test/unit/**/*.test.{ts,tsx}"],
+          exclude: ["test/unit/web/react/**"],
+        },
+      },
+      {
+        extends: true,
+        test: {
+          name: "browser",
+          include: ["test/unit/web/react/**/*.test.{ts,tsx}"],
+          browser: {
+            enabled: true,
+            headless: true,
+            provider: playwright(),
+            instances: [{ browser: "chromium" }],
+          },
+        },
+      },
+    ],
+  },
+});
