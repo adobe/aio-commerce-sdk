@@ -15,7 +15,8 @@
   },
   "bin": {
     "sdk-prepack": "./source/prepack.ts",
-    "sdk-postpack": "./source/postpack.ts"
+    "sdk-postpack": "./source/postpack.ts",
+    "sdk-sync-plugin-version": "./source/sync-plugin-version.ts"
   },
   "scripts": {
     "assist": "biome check --formatter-enabled=false --linter-enabled=false --assist-enabled=true --no-errors-on-unmatched",

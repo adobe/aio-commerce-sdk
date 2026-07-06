@@ -10,19 +10,20 @@
  * governing permissions and limitations under the License.
  */
 
-import { cp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { cp, mkdir, readFile, rm } from "node:fs/promises";
 import { basename, dirname, join } from "node:path";
 
-import { runGitHubScript } from "./utils.ts";
+import { readJson, runGitHubScript, writeJson } from "./utils.ts";
 
 import type { AsyncFunctionArguments } from "./types.ts";
 
 const SOURCE_REPOSITORY = "adobe/aio-commerce-sdk";
 const TARGET_OWNER = "adobe";
 const TARGET_REPO = "skills";
-const TARGET_REPOSITORY_URL = "https://github.com/adobe/skills";
+const TARGET_REPOSITORY_URL = `https://github.com/${TARGET_OWNER}/${TARGET_REPO}`;
 const PROMOTION_BRANCH = "promote/adobe-aio-commerce-sdk";
 const PROMOTED_REPOSITORY_FIELD = "https://github.com/adobe/aio-commerce-sdk";
+const PROMOTED_ENTRIES = ["tile.json", "README.md", "skills", ".claude-plugin"];
 
 type PluginPackageJson = {
   name: string;
@@ -199,16 +200,11 @@ export async function preparePromotionArtifacts(
     await rm(targetPath, { recursive: true, force: true });
     await mkdir(targetPath, { recursive: true });
 
-    await cp(join(sourcePath, "tile.json"), join(targetPath, "tile.json"));
-    await cp(join(sourcePath, "README.md"), join(targetPath, "README.md"));
-    await cp(join(sourcePath, "skills"), join(targetPath, "skills"), {
-      recursive: true,
-    });
-    await cp(
-      join(sourcePath, ".claude-plugin"),
-      join(targetPath, ".claude-plugin"),
-      { recursive: true },
-    );
+    for (const entry of PROMOTED_ENTRIES) {
+      await cp(join(sourcePath, entry), join(targetPath, entry), {
+        recursive: true,
+      });
+    }
     await rewritePluginRepository(targetPath);
 
     promotions.push({
@@ -436,14 +432,6 @@ async function upsertPromotionPullRequest(
     title,
     body,
   });
-}
-
-async function readJson<T>(path: string) {
-  return JSON.parse(await readFile(path, "utf-8")) as T;
-}
-
-async function writeJson(path: string, value: unknown) {
-  await writeFile(path, `${JSON.stringify(value, null, 2)}\n`);
 }
 
 function requireEnv(name: string) {

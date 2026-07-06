@@ -56,6 +56,11 @@ jobs:
           release-channel: public
           slack-webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
 
+      # hasChangesets is false only on the run that lands right after the "Version
+      # Packages" PR merges, which is the one commit where diffing against HEAD^1
+      # reflects the actual version bump. `published` can't gate this instead:
+      # skill-only releases never publish to npm, so `published` stays false even
+      # when a plugin version legitimately changed.
       - name: Detect changed Commerce plugin versions
         id: changed-plugins
         if: steps.changesets.outputs.hasChangesets == 'false'

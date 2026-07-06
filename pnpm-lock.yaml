@@ -739,9 +739,17 @@ importers:
         specifier: 'catalog:'
         version: 6.0.3
 
-  plugins/commerce/app-management: {}
+  plugins/commerce/app-management:
+    devDependencies:
+      '@aio-commerce-sdk/scripts':
+        specifier: workspace:*
+        version: link:../../../scripts
 
-  plugins/commerce/app-migration: {}
+  plugins/commerce/app-migration:
+    devDependencies:
+      '@aio-commerce-sdk/scripts':
+        specifier: workspace:*
+        version: link:../../../scripts
 
   scripts:
     devDependencies:
@@ -814,6 +822,7 @@ packages:
   '@adobe/aio-lib-core-networking@5.1.0':
     resolution: {integrity: sha512-RZgA73yUHhikjIGy7k0DRobPbIXbtuI/0ixrBXOVqj19WTqFFrEuyHtzOuRsBAmu0OvVkf6slQHtDTL9oPLxfg==}
     engines: {node: '>=18'}
+    bundledDependencies: []
 
   '@adobe/aio-lib-core-tvm@4.0.3':
     resolution: {integrity: sha512-zwl4GeU5CryZBozpub4jI9tnGW2ewD6mMLaXX8HhO8DqKzcjnjYr+MbUS0c/QzGd8gTzZWbikm4J7tfpCn3cAA==}
@@ -822,6 +831,7 @@ packages:
   '@adobe/aio-lib-env@3.0.1':
     resolution: {integrity: sha512-UaLosV8jBowEA2ho4BNmWuHhrNCFbx26kJAr2SAIdEm4lZ/D8av8FUSMOEyAKJ/dfO2HCnLKMy77ie2AU7HI3g==}
     engines: {node: '>=18'}
+    bundledDependencies: []
 
   '@adobe/aio-lib-files@4.1.4':
     resolution: {integrity: sha512-YhUu5YV4hnFm6arsMYhl96bjbxnOpmMgE5WiwUvLlm9Dh4PGNGAaY52nED5xnbI+ODbj0vSd9s6KwC3kTmo6tQ==}

@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "version": "node ../scripts/sync-plugin-version.mjs"
+    "version": "sdk-sync-plugin-version"
+  },
+  "devDependencies": {
+    "@aio-commerce-sdk/scripts": "workspace:*"
   }
 }
