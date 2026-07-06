@@ -26,18 +26,18 @@ import type { InferOutput } from "valibot";
 
 // Mock User Schema
 export const mockUserSchema = object({
-  id: pipe(
-    string("id must be a string"),
-    minLength(1, "id must not be empty"),
-    maxLength(36, "id must not exceed 36 characters"),
+  age: pipe(
+    number("age must be a number"),
+    minValue(18, "age must be 18 or older"),
   ),
   email: pipe(
     string("email must be a string"),
     email("email must be a valid email"),
   ),
-  age: pipe(
-    number("age must be a number"),
-    minValue(18, "age must be 18 or older"),
+  id: pipe(
+    string("id must be a string"),
+    minLength(1, "id must not be empty"),
+    maxLength(36, "id must not exceed 36 characters"),
   ),
   name: pipe(
     string("name must be a string"),
@@ -58,31 +58,31 @@ export type MockUser = InferOutput<typeof mockUserSchema>;
 
 // Sample valid user data
 export const mockValidUser: MockUser = {
-  id: "123e4567-e89b-12d3-a456-426614174000",
-  email: "test@example.com",
-  name: "John Doe",
   age: 25,
+  email: "test@example.com",
+  id: "123e4567-e89b-12d3-a456-426614174000",
+  name: "John Doe",
 };
 
 // Invalid mock user data that will cause an input error
 export const mockInvalidUserForInputError = {
-  id: "",
-  email: "invalid-email",
   age: 16,
+  email: "invalid-email",
+  id: "",
 };
 
 // Invalid mock user data that will cause a schema validation error
 export const mockInvalidUserForSchemaValidationError = {
-  id: "123e4567-e89b-12d3-a456-426614174000",
-  email: "myemail@example.com",
   age: "18",
+  email: "myemail@example.com",
+  id: "123e4567-e89b-12d3-a456-426614174000",
   name: "John Doe",
 };
 
 // Invalid mock user data that will cause a transformation error
 export const mockInvalidUserForTransformationError = {
-  id: "123e4567-e89b-12d3-a456-426614174000",
-  email: "myemail@example.com",
   age: 18,
+  email: "myemail@example.com",
+  id: "123e4567-e89b-12d3-a456-426614174000",
   name: "my-invalid-name",
 };

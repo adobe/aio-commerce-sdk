@@ -38,21 +38,21 @@ export type CommerceEventsStepData = InferStepOutput<typeof commerceEventsStep>;
 
 /** Leaf step for installing commerce event sources. */
 export const commerceEventsStep = defineLeafStep({
-  name: "commerce",
+  install: createCommerceEvents,
   meta: {
     install: {
-      label: "Configure Commerce Events",
       description: "Sets up I/O Events for Adobe Commerce event sources",
+      label: "Configure Commerce Events",
     },
     uninstall: {
-      label: "Remove Commerce Events",
       description: "Removes I/O Events for Adobe Commerce event sources",
+      label: "Remove Commerce Events",
     },
   },
+  name: "commerce",
+  uninstall: removeCommerceEvents,
 
   when: hasCommerceEvents,
-  install: createCommerceEvents,
-  uninstall: removeCommerceEvents,
 });
 
 /**
@@ -90,12 +90,13 @@ async function createCommerceEvents(
       continue;
     }
 
+    // biome-ignore lint/performance/noAwaitInLoops: providers must be onboarded sequentially so the one-time eventing-module configuration (see `eventingConfigured` below) runs against the first onboarded provider's data
     const { providerData, eventsData } = await onboardIoEvents(
       {
         context,
+        events,
         metadata: config.metadata,
         provider,
-        events,
         providerType: COMMERCE_PROVIDER_TYPE,
       },
       existingIoEventsData,
@@ -105,16 +106,16 @@ async function createCommerceEvents(
       // The eventing module must be configured before creating the other entities, and only once.
       await configureCommerceEventing(
         {
-          context,
           config: {
             enabled: true,
-            merchant_id: sanitizeEventingIdentifier(context.appData.orgName),
             environment_id: sanitizeEventingIdentifier(
               context.appData.projectName,
             ),
             instance_id: providerData.instance_id,
+            merchant_id: sanitizeEventingIdentifier(context.appData.orgName),
             workspace_configuration: workspaceConfiguration,
           },
+          context,
         },
         commerceEventingExistingData,
       );
@@ -124,13 +125,13 @@ async function createCommerceEvents(
     const { commerceProvider, subscriptions } = await onboardCommerceEventing(
       {
         context,
-        metadata: config.metadata,
-        provider,
         ioData: {
-          provider: providerData,
           events: eventsData,
+          provider: providerData,
           workspaceConfiguration,
         },
+        metadata: config.metadata,
+        provider,
       },
       commerceEventingExistingData,
     );
@@ -139,15 +140,15 @@ async function createCommerceEvents(
       provider: {
         config: provider,
         data: {
-          ioEvents: providerData,
           commerce: commerceProvider,
-          events: eventsData.map(({ config, data }, index) => ({
-            config,
+          events: eventsData.map(({ config: eventConfig, data }, index) => ({
+            config: eventConfig,
             data: {
               ...data,
               subscription: subscriptions[index],
             },
           })),
+          ioEvents: providerData,
         },
       },
     });
@@ -176,13 +177,14 @@ async function removeCommerceEvents(
     ]);
 
   for (const { provider, events } of config.eventing.commerce) {
+    // biome-ignore lint/performance/noAwaitInLoops: each provider issues two external API calls (Commerce eventing + I/O Events); running providers sequentially avoids a rate-limit burst during uninstall
     await offboardCommerceEventing(
-      { context, metadata: config.metadata, provider, events },
+      { context, events, metadata: config.metadata, provider },
       commerceEventingExistingData,
     );
 
     await offboardIoEvents(
-      { context, metadata: config.metadata, provider, events },
+      { context, events, metadata: config.metadata, provider },
       existingIoEventsData,
     );
   }

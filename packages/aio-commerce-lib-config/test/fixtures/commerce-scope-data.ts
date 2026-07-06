@@ -13,28 +13,28 @@
 import type { StoreGroup, StoreView, Website } from "#types/index";
 
 export const mockWebsites: Website[] = [
-  { id: 1, name: "Main Website", code: "base", default_group_id: 1 },
-  { id: 2, name: "Second Website", code: "second", default_group_id: 2 },
+  { code: "base", default_group_id: 1, id: 1, name: "Main Website" },
+  { code: "second", default_group_id: 2, id: 2, name: "Second Website" },
 ];
 
 export const mockStoreGroups: StoreGroup[] = [
   {
-    id: 1,
-    website_id: 1,
-    name: "Main Store",
     code: "main_store",
-    root_category_id: 2,
     default_store_id: 1,
+    id: 1,
+    name: "Main Store",
+    root_category_id: 2,
+    website_id: 1,
   },
 ];
 
 export const mockStoreViews: StoreView[] = [
   {
-    id: 1,
     code: "default",
-    name: "Default Store View",
-    website_id: 1,
-    store_group_id: 1,
+    id: 1,
     is_active: true,
+    name: "Default Store View",
+    store_group_id: 1,
+    website_id: 1,
   },
 ];

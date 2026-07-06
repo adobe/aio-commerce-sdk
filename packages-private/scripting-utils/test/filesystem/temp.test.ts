@@ -40,9 +40,9 @@ describe("withTempFiles", () => {
 
   test("should create nested directory structure", async () => {
     const files = {
+      "package.json": '{"name":"test"}',
       "src/index.js": "console.log('hello');",
       "src/utils/helper.js": "export const help = () => {};",
-      "package.json": '{"name":"test"}',
     };
 
     await withTempFiles(files, (tempDir) => {
@@ -97,8 +97,8 @@ describe("withTempFiles", () => {
 
   test("should create files with correct content encoding", async () => {
     const files = {
-      "utf8.txt": "Hello 世界 🌍",
       "json.json": JSON.stringify({ key: "value" }, null, 2),
+      "utf8.txt": "Hello 世界 🌍",
     };
 
     await withTempFiles(files, async (tempDir) => {

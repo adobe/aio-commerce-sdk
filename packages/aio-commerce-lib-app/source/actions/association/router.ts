@@ -48,9 +48,9 @@ export const router = new HttpActionRouter<AssociationActionContext>().use(
 router.post("/", {
   body: AssociationRequestBodySchema,
 
-  handler: async (req, { logger }) => {
+  handler: async (req, { logger: requestLogger }) => {
     const { commerceBaseUrl, commerceEnv } = req.body;
-    logger.debug(
+    requestLogger.debug(
       `Storing association data (baseUrl: "${commerceBaseUrl}", env: "${commerceEnv}")`,
     );
 
@@ -66,8 +66,8 @@ router.post("/", {
  * Called when the app is unassociated.
  */
 router.delete("/", {
-  handler: async (_req, { logger }) => {
-    logger.debug("Clearing association data");
+  handler: async (_req, { logger: requestLogger }) => {
+    requestLogger.debug("Clearing association data");
     await clearAssociationData();
     return noContent();
   },

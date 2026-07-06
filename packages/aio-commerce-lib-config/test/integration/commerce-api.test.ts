@@ -55,16 +55,16 @@ vi.mock("@adobe/aio-commerce-lib-auth", async () => {
 const BASE_URL = "https://test.commerce.com/V1";
 
 const clientParams: CommerceHttpClientParams = {
-  config: { baseUrl: "https://test.commerce.com", flavor: "saas" },
-  fetchOptions: { retry: 0 },
   auth: {
     clientId: "test-client-id",
     clientSecrets: ["test-client-secret"],
-    technicalAccountId: "test-account-id",
-    technicalAccountEmail: "test@adobe.com",
-    imsOrgId: "test-org@AdobeOrg",
     environment: "prod",
+    imsOrgId: "test-org@AdobeOrg",
+    technicalAccountEmail: "test@adobe.com",
+    technicalAccountId: "test-account-id",
   },
+  config: { baseUrl: "https://test.commerce.com", flavor: "saas" },
+  fetchOptions: { retry: 0 },
 };
 
 const server = setupServer();
@@ -168,9 +168,9 @@ describe("api/commerce", () => {
       const result = await getAllScopeData(client);
 
       expect(result).toEqual({
-        websites: mockWebsites,
         storeGroups: mockStoreGroups,
         storeViews: mockStoreViews,
+        websites: mockWebsites,
       });
     });
 

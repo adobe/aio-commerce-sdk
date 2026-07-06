@@ -54,25 +54,25 @@ let mockFilesInstance = new MockFiles();
 
 // Only the external I/O boundary is mocked — aio-lib-state and aio-lib-files
 vi.mock("#utils/repository", () => ({
-  getSharedState: vi.fn(async () => mockStateInstance),
   getSharedFiles: vi.fn(async () => mockFilesInstance),
+  getSharedState: vi.fn(async () => mockStateInstance),
   setGlobalStateOptions: vi.fn(),
 }));
 
 vi.mock("#modules/scope-tree/scope-tree-repository", () => ({
+  deleteCachedScopeTree: vi.fn(() => Promise.resolve()),
   getCachedScopeTree: vi.fn(() => Promise.resolve(null)),
   getPersistedScopeTree: vi.fn(() => Promise.resolve(mockScopeTree)),
-  setCachedScopeTree: vi.fn(() => Promise.resolve()),
-  deleteCachedScopeTree: vi.fn(() => Promise.resolve()),
   saveScopeTree: vi.fn(() => Promise.resolve()),
+  setCachedScopeTree: vi.fn(() => Promise.resolve()),
 }));
 
 vi.mock("#api/commerce", () => ({
   getAllScopeData: vi.fn(() =>
     Promise.resolve({
-      websites: [],
       storeGroups: [],
       storeViews: [],
+      websites: [],
     }),
   ),
 }));
@@ -88,8 +88,8 @@ function buildPayload(
   }>,
 ) {
   return JSON.stringify({
-    scope: { id, code, level },
     config: entries,
+    scope: { code, id, level },
   });
 }
 
@@ -106,17 +106,17 @@ describe("ConfigManager functions", () => {
     // Set up a default schema for tests
     const defaultSchema = [
       {
-        name: "exampleList",
-        type: "list",
-        selectionMode: "single",
-        options: [{ label: "Option 1", value: "option1" }],
         default: "option1",
+        name: "exampleList",
+        options: [{ label: "Option 1", value: "option1" }],
+        selectionMode: "single",
+        type: "list",
       },
       {
+        default: "",
+        label: "Currency",
         name: "currency",
         type: "text",
-        label: "Currency",
-        default: "",
       },
     ] satisfies BusinessConfigSchema;
 
@@ -144,8 +144,8 @@ describe("ConfigManager functions", () => {
       buildPayload("id1", "global", "global", [
         {
           name: "currency",
-          value: "€",
           origin: { code: "global", level: "global" },
+          value: "€",
         },
       ]),
       300,
@@ -161,8 +161,8 @@ describe("ConfigManager functions", () => {
       buildPayload("id2", "global", "global", [
         {
           name: "currency",
-          value: "£",
           origin: { code: "global", level: "global" },
+          value: "£",
         },
       ]),
     );
@@ -230,8 +230,8 @@ describe("ConfigManager functions", () => {
       buildPayload("id-global", "global", "global", [
         {
           name: "currency",
-          value: "$",
           origin: { code: "global", level: "global" },
+          value: "$",
         },
       ]),
     );
@@ -264,8 +264,8 @@ describe("ConfigManager functions", () => {
       buildPayload("idsv", "default", "store_view", [
         {
           name: "exampleList",
-          value: "option1",
           origin: { code: "default", level: "store_view" },
+          value: "option1",
         },
       ]),
     );
@@ -294,8 +294,8 @@ describe("ConfigManager functions", () => {
       buildPayload("idw", "base", "website", [
         {
           name: "currency",
-          value: "EUR",
           origin: { code: "base", level: "website" },
+          value: "EUR",
         },
       ]),
     );
@@ -320,8 +320,8 @@ describe("ConfigManager functions", () => {
       buildPayload("idw", "base", "website", [
         {
           name: "currency",
-          value: "EUR",
           origin: { code: "base", level: "website" },
+          value: "EUR",
         },
       ]),
     );
@@ -330,8 +330,8 @@ describe("ConfigManager functions", () => {
       buildPayload("idsv", "default", "store_view", [
         {
           name: "currency",
-          value: "JPY",
           origin: { code: "default", level: "store_view" },
+          value: "JPY",
         },
       ]),
     );
@@ -390,13 +390,13 @@ describe("ConfigManager functions", () => {
       buildPayload("id-global", "global", "global", [
         {
           name: "currency",
-          value: "USD",
           origin: { code: "global", level: "global" },
+          value: "USD",
         },
         {
           name: "exampleList",
-          value: "option1",
           origin: { code: "global", level: "global" },
+          value: "option1",
         },
       ]),
     );
@@ -423,10 +423,10 @@ describe("ConfigManager functions", () => {
       {
         config: [
           {
+            anotherProp: 123,
+            extraProp: "ignored",
             name: "currency",
             value: "GBP",
-            extraProp: "ignored",
-            anotherProp: 123,
           } as any, // Allow extra props for runtime testing
         ],
       },
@@ -470,8 +470,8 @@ describe("unsyncCommerceScopes", () => {
     expect(unsynced).toBe(true);
 
     expect(scopeTreeRepository.saveScopeTree).toHaveBeenCalledTimes(1);
-    const savedScopeTree = vi.mocked(scopeTreeRepository.saveScopeTree).mock
-      .calls[0][1];
+    const [, savedScopeTree] = vi.mocked(scopeTreeRepository.saveScopeTree).mock
+      .calls[0];
 
     expect(savedScopeTree).toEqual(
       mockScopeTree.filter((scope) => scope.code !== "commerce"),
@@ -521,10 +521,10 @@ describe("initialize", () => {
   test("should set global schema when schema is provided", () => {
     const testSchema = [
       {
+        default: "test",
+        label: "Test Field",
         name: "testField",
         type: "text",
-        label: "Test Field",
-        default: "test",
       },
     ] satisfies BusinessConfigSchema;
 
@@ -540,10 +540,10 @@ describe("initialize", () => {
 
   test("should call setGlobalStateOptions when libStateOptions is provided", () => {
     const testSchema = [
-      { name: "field", type: "text", label: "Field", default: "" },
+      { default: "", label: "Field", name: "field", type: "text" },
     ] satisfies BusinessConfigSchema;
 
-    initialize({ schema: testSchema, libStateOptions: { region: "emea" } });
+    initialize({ libStateOptions: { region: "emea" }, schema: testSchema });
 
     expect(repository.setGlobalStateOptions).toHaveBeenCalledWith({
       region: "emea",
@@ -552,7 +552,7 @@ describe("initialize", () => {
 
   test("should not call setGlobalStateOptions when libStateOptions is omitted", () => {
     const testSchema = [
-      { name: "field", type: "text", label: "Field", default: "" },
+      { default: "", label: "Field", name: "field", type: "text" },
     ] satisfies BusinessConfigSchema;
 
     initialize({ schema: testSchema });
@@ -563,27 +563,27 @@ describe("initialize", () => {
   test("should resolve dynamic list options when runtime params are provided", async () => {
     const testSchema = [
       {
+        default: (opts) => opts[0].value,
         name: "paymentMethod",
-        type: "dynamicList",
-        selectionMode: "single",
         options: (params: RuntimeActionParams) => [
           { label: String(params.PAYMENT_LABEL), value: "braintree" },
         ],
-        default: (opts) => opts[0].value,
+        selectionMode: "single",
+        type: "dynamicList",
       },
     ] satisfies BusinessConfigSchema;
 
     const result = await initialize({
-      schema: testSchema,
       params: { PAYMENT_LABEL: "Braintree" },
+      schema: testSchema,
     });
 
     expect(result.configSchema[0]).toMatchObject({
-      name: "paymentMethod",
-      type: "list",
-      selectionMode: "single",
-      options: [{ label: "Braintree", value: "braintree" }],
       default: "braintree",
+      name: "paymentMethod",
+      options: [{ label: "Braintree", value: "braintree" }],
+      selectionMode: "single",
+      type: "list",
     });
     expect(getGlobalSchema()).toEqual(result.configSchema);
   });
@@ -591,11 +591,11 @@ describe("initialize", () => {
   test("should reject dynamic list options when runtime params are missing", () => {
     const testSchema = [
       {
-        name: "paymentMethod",
-        type: "dynamicList",
-        selectionMode: "single",
-        options: () => [{ label: "Braintree", value: "braintree" }],
         default: (opts) => opts[0].value,
+        name: "paymentMethod",
+        options: () => [{ label: "Braintree", value: "braintree" }],
+        selectionMode: "single",
+        type: "dynamicList",
       },
     ] satisfies BusinessConfigSchema;
 
@@ -607,10 +607,10 @@ describe("initialize", () => {
   test("should succeed when no schema provided but global schema already exists", () => {
     const existingSchema = [
       {
+        default: "existing",
+        label: "Existing Field",
         name: "existingField",
         type: "text",
-        label: "Existing Field",
-        default: "existing",
       },
     ] satisfies BusinessConfigSchema;
 
@@ -678,17 +678,17 @@ describe("getScopeTree", () => {
 
 describe("syncCommerceScopes", () => {
   const commerceConfig: CommerceHttpClientParams = {
-    config: {
-      baseUrl: "https://test.commerce.com",
-      flavor: "saas",
-    },
     auth: {
       clientId: "test-client-id",
       clientSecrets: ["test-client-secret"],
-      technicalAccountId: "test-technical-account-id",
-      technicalAccountEmail: "test-technical-account-email",
-      imsOrgId: "test-ims-org-id",
       environment: "prod",
+      imsOrgId: "test-ims-org-id",
+      technicalAccountEmail: "test-technical-account-email",
+      technicalAccountId: "test-technical-account-id",
+    },
+    config: {
+      baseUrl: "https://test.commerce.com",
+      flavor: "saas",
     },
   };
 
@@ -753,9 +753,9 @@ describe("syncCommerceScopes", () => {
 
   test("should use custom cache timeout when provided", async () => {
     vi.mocked(commerceApi.getAllScopeData).mockResolvedValue({
-      websites: [],
       storeGroups: [],
       storeViews: [],
+      websites: [],
     });
     vi.mocked(scopeTreeRepository.getPersistedScopeTree).mockResolvedValue(
       mockScopeTree,
@@ -791,20 +791,20 @@ describe("setCustomScopeTree", () => {
   test("should set custom scopes successfully", async () => {
     const customScopes = [
       {
-        code: "region_us",
-        label: "US Region",
-        level: "custom",
-        is_editable: true,
-        is_final: false,
         children: [
           {
             code: "region_us_west",
-            label: "US West",
-            level: "custom",
             is_editable: true,
             is_final: true,
+            label: "US West",
+            level: "custom",
           },
         ],
+        code: "region_us",
+        is_editable: true,
+        is_final: false,
+        label: "US Region",
+        level: "custom",
       },
     ];
 
@@ -828,13 +828,13 @@ describe("setCustomScopeTree", () => {
     const existingCustomScopes: ScopeTree = [
       ...mockScopeTree,
       {
-        id: "existing-custom-id",
         code: "region_eu",
-        label: "Old EU Region",
-        level: "custom",
+        id: "existing-custom-id",
         is_editable: true,
         is_final: false,
         is_removable: true,
+        label: "Old EU Region",
+        level: "custom",
       },
     ];
 
@@ -846,10 +846,10 @@ describe("setCustomScopeTree", () => {
       scopes: [
         {
           code: "region_eu",
-          label: "European Region",
-          level: "custom",
           is_editable: true,
           is_final: false,
+          label: "European Region",
+          level: "custom",
         },
       ],
     });
@@ -867,10 +867,10 @@ describe("setCustomScopeTree", () => {
       scopes: [
         {
           code: "new_region",
-          label: "New Region",
-          level: "custom",
           is_editable: true,
           is_final: true,
+          label: "New Region",
+          level: "custom",
         },
       ],
     });
@@ -887,16 +887,16 @@ describe("setCustomScopeTree", () => {
       scopes: [
         {
           code: "custom_scope",
-          label: "Custom Scope",
-          level: "custom",
           is_editable: true,
           is_final: true,
+          label: "Custom Scope",
+          level: "custom",
         },
       ],
     });
 
-    const savedTree = vi.mocked(scopeTreeRepository.saveScopeTree).mock
-      .calls[0][1];
+    const [, savedTree] = vi.mocked(scopeTreeRepository.saveScopeTree).mock
+      .calls[0];
 
     expect(savedTree.find((s) => s.code === "global")).toBeDefined();
     expect(savedTree.find((s) => s.code === "commerce")).toBeDefined();
@@ -911,10 +911,10 @@ describe("setCustomScopeTree", () => {
       scopes: [
         {
           code: "region",
-          label: "Region",
-          level: "custom",
           is_editable: true,
           is_final: true,
+          label: "Region",
+          level: "custom",
         },
       ],
     });
@@ -937,8 +937,8 @@ describe("setCustomScopeTree", () => {
     expect(result.message).toBe("Custom scope tree updated successfully");
     expect(result.scopes).toHaveLength(0);
 
-    const savedTree = vi.mocked(scopeTreeRepository.saveScopeTree).mock
-      .calls[0][1];
+    const [, savedTree] = vi.mocked(scopeTreeRepository.saveScopeTree).mock
+      .calls[0];
     expect(savedTree).toHaveLength(2); // Only global and commerce
     expect(savedTree[0].code).toBe("global");
     expect(savedTree[1].code).toBe("commerce");
@@ -950,17 +950,17 @@ describe("setCustomScopeTree", () => {
         scopes: [
           {
             code: "region",
-            label: "Region A",
-            level: "custom",
             is_editable: true,
             is_final: true,
+            label: "Region A",
+            level: "custom",
           },
           {
             code: "region",
-            label: "Region B",
-            level: "custom",
             is_editable: true,
             is_final: true,
+            label: "Region B",
+            level: "custom",
           },
         ],
       }),
@@ -972,12 +972,12 @@ describe("setCustomScopeTree", () => {
       setCustomScopeTree({
         scopes: [
           {
-            id: "   ",
             code: "region",
-            label: "Region",
-            level: "custom",
+            id: "   ",
             is_editable: true,
             is_final: true,
+            label: "Region",
+            level: "custom",
           },
         ],
       }),
@@ -990,10 +990,10 @@ describe("setCustomScopeTree", () => {
         scopes: [
           {
             code: "global", // Reserved code
-            label: "Invalid",
-            level: "custom",
             is_editable: true,
             is_final: true,
+            label: "Invalid",
+            level: "custom",
           },
         ],
       }),

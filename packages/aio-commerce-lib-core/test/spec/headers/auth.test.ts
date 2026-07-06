@@ -33,7 +33,7 @@ describe("headers/auth", () => {
 
     test("should parse Basic authorization", () => {
       const auth = parseAuthorization("Basic dXNlcjpwYXNz");
-      expect(auth).toEqual({ scheme: "Basic", credentials: "dXNlcjpwYXNz" });
+      expect(auth).toEqual({ credentials: "dXNlcjpwYXNz", scheme: "Basic" });
     });
 
     test("should parse OAuth authorization with parameters", () => {
@@ -41,21 +41,21 @@ describe("headers/auth", () => {
         'OAuth oauth_consumer_key="key123", oauth_token="token456", oauth_signature="sig789"',
       );
       expect(auth).toEqual({
-        scheme: "OAuth",
         parameters: {
           oauth_consumer_key: "key123",
-          oauth_token: "token456",
           oauth_signature: "sig789",
+          oauth_token: "token456",
         },
+        scheme: "OAuth",
       });
     });
 
     test("should parse generic authorization schemes", () => {
       const auth = parseAuthorization("Digest realm=example");
       expect(auth).toEqual({
-        scheme: "Digest",
-        rawParameters: "realm=example",
         parseParameters: expect.any(Function),
+        rawParameters: "realm=example",
+        scheme: "Digest",
       });
 
       const digestAuth = auth as GenericAuthorization;
@@ -67,15 +67,15 @@ describe("headers/auth", () => {
     test("should parse generic scheme with key-value parameters", () => {
       const auth = parseAuthorization('Digest realm="Example", nonce="abc123"');
       expect(auth).toMatchObject({
-        scheme: "Digest",
-        rawParameters: 'realm="Example", nonce="abc123"',
         parseParameters: expect.any(Function),
+        rawParameters: 'realm="Example", nonce="abc123"',
+        scheme: "Digest",
       });
 
       const digestAuth = auth as GenericAuthorization;
       expect(digestAuth.parseParameters()).toEqual({
-        realm: "Example",
         nonce: "abc123",
+        realm: "Example",
       });
     });
 
@@ -197,9 +197,9 @@ describe("headers/auth", () => {
       );
       const digestAuth = auth as GenericAuthorization;
       expect(digestAuth.parseParameters()).toEqual({
-        realm: "example",
         nonce: "abc123",
         qop: "auth",
+        realm: "example",
       });
     });
 
@@ -209,9 +209,9 @@ describe("headers/auth", () => {
       );
       const digestAuth = auth as GenericAuthorization;
       expect(digestAuth.parseParameters()).toEqual({
-        realm: "Example Realm",
         nonce: "abc123",
         qop: "auth",
+        realm: "Example Realm",
       });
     });
 
@@ -221,9 +221,9 @@ describe("headers/auth", () => {
       );
       const digestAuth = auth as GenericAuthorization;
       expect(digestAuth.parseParameters()).toEqual({
-        realm: "example.com",
         nonce: "abc-123_xyz",
         qop: "auth-int",
+        realm: "example.com",
       });
     });
 
@@ -271,8 +271,8 @@ describe("headers/auth", () => {
       const auth = parseAuthorization('Digest realm="", nonce=abc123');
       const digestAuth = auth as GenericAuthorization;
       expect(digestAuth.parseParameters()).toEqual({
-        realm: "",
         nonce: "abc123",
+        realm: "",
       });
     });
 
@@ -282,8 +282,8 @@ describe("headers/auth", () => {
       );
       const digestAuth = auth as GenericAuthorization;
       expect(digestAuth.parseParameters()).toEqual({
-        realm: "Example Realm",
         nonce: "abc123",
+        realm: "Example Realm",
       });
     });
 
@@ -293,8 +293,8 @@ describe("headers/auth", () => {
       );
       const digestAuth = auth as GenericAuthorization;
       expect(digestAuth.parseParameters()).toEqual({
-        realm: "Example, Realm",
         nonce: "abc123",
+        realm: "Example, Realm",
       });
     });
 
@@ -304,9 +304,9 @@ describe("headers/auth", () => {
       );
       const digestAuth = auth as GenericAuthorization;
       expect(digestAuth.parseParameters()).toEqual({
-        realm: "example",
         nonce: "123456",
         qop: "auth",
+        realm: "example",
       });
     });
 
@@ -316,8 +316,8 @@ describe("headers/auth", () => {
       );
       const digestAuth = auth as GenericAuthorization;
       expect(digestAuth.parseParameters()).toEqual({
-        realm: "example.com",
         domain: "sub.example.com",
+        realm: "example.com",
       });
     });
 
@@ -327,8 +327,8 @@ describe("headers/auth", () => {
       );
       const digestAuth = auth as GenericAuthorization;
       expect(digestAuth.parseParameters()).toEqual({
-        realm: "example-realm",
         nonce: "abc_123-xyz",
+        realm: "example-realm",
       });
     });
 
@@ -338,10 +338,10 @@ describe("headers/auth", () => {
       );
       const digestAuth = auth as GenericAuthorization;
       expect(digestAuth.parseParameters()).toEqual({
+        domain: "example.com",
+        password: "secret pass",
         realm: "Example Realm",
         username: "user123",
-        password: "secret pass",
-        domain: "example.com",
       });
     });
 
@@ -351,9 +351,9 @@ describe("headers/auth", () => {
       );
       const digestAuth = auth as GenericAuthorization;
       expect(digestAuth.parseParameters()).toEqual({
-        realm: "Example",
         nonce: "abc123",
         qop: "auth",
+        realm: "Example",
       });
     });
 
@@ -361,8 +361,8 @@ describe("headers/auth", () => {
       const auth = parseAuthorization("Digest realm=example, nonce=abc123");
       const digestAuth = auth as GenericAuthorization;
       expect(digestAuth.parseParameters()).toEqual({
-        realm: "example",
         nonce: "abc123",
+        realm: "example",
       });
     });
 

@@ -40,14 +40,14 @@ export function createRootInstallationStep(
   config: CommerceAppConfigOutputModel,
 ): BranchStep {
   return defineBranchStep({
-    name: "installation",
+    children: createDefaultChildSteps(config),
     meta: {
       install: {
-        label: "Installation",
         description: "App installation workflow",
+        label: "Installation",
       },
     },
-    children: createDefaultChildSteps(config),
+    name: "installation",
   });
 }
 
@@ -58,13 +58,13 @@ export function createRootUninstallationStep(
   config: CommerceAppConfigOutputModel,
 ): BranchStep {
   return defineBranchStep({
-    name: "uninstallation",
+    children: createDefaultChildSteps(config),
     meta: {
       install: {
-        label: "Uninstallation",
         description: "App uninstallation workflow",
+        label: "Uninstallation",
       },
     },
-    children: createDefaultChildSteps(config),
+    name: "uninstallation",
   });
 }

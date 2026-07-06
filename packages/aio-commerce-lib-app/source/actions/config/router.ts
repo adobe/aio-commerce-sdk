@@ -93,10 +93,8 @@ export const router = new HttpActionRouter<ConfigActionContext>().use(
 
 /** GET / - Retrieve configuration */
 router.get("/", {
-  query: GetConfigurationQuerySchema,
-
   handler: async (req, ctx) => {
-    const { logger, rawParams } = ctx;
+    const { logger: requestLogger, rawParams } = ctx;
     const { configSchema: rawConfigSchema } = rawParams;
 
     const env = req.query.commerceEnv;
@@ -104,19 +102,19 @@ router.get("/", {
       ? filterSchemaByEnv(rawConfigSchema, env)
       : rawConfigSchema;
 
-    logger.debug("Initializing configuration");
+    requestLogger.debug("Initializing configuration");
     const { configSchema } = await initialize({
-      schema: envFilteredSchema,
       params: rawParams,
+      schema: envFilteredSchema,
     });
 
     const { scopeId } = req.query;
-    logger.debug(`Retrieving configuration with scope id: ${scopeId}`);
+    requestLogger.debug(`Retrieving configuration with scope id: ${scopeId}`);
     const appConfiguration = await getConfiguration(byScopeId(scopeId), {
       encryptionKey: rawParams.AIO_COMMERCE_CONFIG_ENCRYPTION_KEY,
     });
 
-    logger.debug("Masking password values...");
+    requestLogger.debug("Masking password values...");
     appConfiguration.config = filterPasswordFields(
       configSchema,
       appConfiguration.config,
@@ -126,6 +124,7 @@ router.get("/", {
       body: { schema: configSchema, values: appConfiguration },
     });
   },
+  query: GetConfigurationQuerySchema,
 });
 
 /**
@@ -137,14 +136,16 @@ router.get("/", {
 router.put("/", {
   body: PutConfigBodySchema,
   handler: async (req, ctx) => {
-    const { logger, rawParams } = ctx;
+    const { logger: requestLogger, rawParams } = ctx;
 
-    logger.debug(`Setting configuration with scope id: ${req.body.scopeId}`);
+    requestLogger.debug(
+      `Setting configuration with scope id: ${req.body.scopeId}`,
+    );
     const { scopeId, config } = req.body;
 
     const { configSchema } = await initialize({
-      schema: rawParams.configSchema,
       params: rawParams,
+      schema: rawParams.configSchema,
     });
 
     // The UI sent it to us as a masked value, which means the user didn't update it.
@@ -175,14 +176,16 @@ router.put("/", {
 router.patch("/", {
   body: PatchConfigBodySchema,
   handler: async (req, ctx) => {
-    const { logger, rawParams } = ctx;
+    const { logger: requestLogger, rawParams } = ctx;
 
-    logger.debug(`Patching configuration with scope id: ${req.body.scopeId}`);
+    requestLogger.debug(
+      `Patching configuration with scope id: ${req.body.scopeId}`,
+    );
     const { scopeId, config } = req.body;
 
     const { configSchema } = await initialize({
-      schema: rawParams.configSchema,
       params: rawParams,
+      schema: rawParams.configSchema,
     });
 
     const result = await setConfiguration({ config }, byScopeId(scopeId), {

@@ -17,13 +17,13 @@ import type { CommerceHttpClientParams } from "@adobe/aio-commerce-lib-api";
 export const BASE_URL = "https://commerce.test";
 
 export const TEST_CLIENT_PARAMS: CommerceHttpClientParams = {
-  config: { baseUrl: BASE_URL, flavor: "paas" as const },
   auth: {
     accessToken: "test-access-token",
     accessTokenSecret: "test-access-token-secret",
     consumerKey: "test-consumer-key",
     consumerSecret: "test-consumer-secret",
   },
+  config: { baseUrl: BASE_URL, flavor: "paas" as const },
   fetchOptions: { retry: 0 },
 };
 

@@ -65,31 +65,29 @@ export async function promptForCommerceAppConfig(): Promise<ScaffoldAppAnswers> 
   const configFormat = await consola.prompt(
     "What format do you want to use for the config file?",
     {
-      type: "select",
+      cancel: "reject",
       default: "ts",
       initial: "ts",
-      cancel: "reject",
       options: [
-        { label: "TypeScript", value: "ts", hint: "Recommended" },
+        { hint: "Recommended", label: "TypeScript", value: "ts" },
         { label: "JavaScript", value: "js" },
       ] as const,
+      type: "select",
     },
   );
 
   const appName = await consola.prompt("What is the name of your app?", {
-    type: "text",
-    placeholder: "Application Display Name",
-    default: "My Application",
     cancel: "reject",
+    default: "My Application",
+    placeholder: "Application Display Name",
+    type: "text",
   });
 
   const featuresToAdd = await consola.prompt(
     `What features do you want to add to your app? ${colorize("gray", "Space to select/deselect, Enter to submit")}`,
     {
-      type: "multiselect",
-      initial: [],
-      required: true,
       cancel: "reject",
+      initial: [],
 
       options: [
         { label: "Business Configuration", value: "businessConfig.schema" },
@@ -101,6 +99,8 @@ export async function promptForCommerceAppConfig(): Promise<ScaffoldAppAnswers> 
           value: "installation.customInstallationSteps",
         },
       ] as const,
+      required: true,
+      type: "multiselect",
     },
   );
 
@@ -114,8 +114,8 @@ export async function promptForCommerceAppConfig(): Promise<ScaffoldAppAnswers> 
   return {
     appName,
     configFile,
-    domains,
     configFormat,
+    domains,
   };
 }
 
@@ -134,11 +134,11 @@ export async function getDefaultCommerceAppConfig(
 
   const defaultConfig: Partial<CommerceAppConfig> = {
     metadata: {
-      id: appName.toLowerCase().replace(/ /g, "-"),
-      displayName: appName,
-      version: "1.0.0",
       description:
         "A custom Adobe Commerce application. Fill description for your app.",
+      displayName: appName,
+      id: appName.toLowerCase().replace(/ /g, "-"),
+      version: "1.0.0",
     },
   };
 

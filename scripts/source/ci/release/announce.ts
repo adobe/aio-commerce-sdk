@@ -44,11 +44,11 @@ function announce(): SlackPayload {
   return {
     blocks: [
       {
-        type: "section",
         text: {
-          type: "mrkdwn",
           text: announcement,
+          type: "mrkdwn",
         },
+        type: "section",
       },
     ],
   };

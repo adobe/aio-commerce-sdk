@@ -42,9 +42,9 @@ describe("actions/http/utils", () => {
 
     it("should extract body from args when __ow_body is not present", () => {
       const args = {
+        __ow_headers: { "content-type": "application/json" },
         __ow_method: "post",
         __ow_path: "/users",
-        __ow_headers: { "content-type": "application/json" },
         name: "test",
         value: 123,
       };
@@ -56,10 +56,10 @@ describe("actions/http/utils", () => {
 
     it("should filter out __ow_* keys when extracting from args", () => {
       const args = {
+        __ow_body: undefined,
+        __ow_headers: {},
         __ow_method: "post",
         __ow_path: "/users",
-        __ow_headers: {},
-        __ow_body: undefined,
         __ow_query: "foo=bar",
         name: "test",
       };
@@ -85,8 +85,8 @@ describe("actions/http/utils", () => {
   describe("parseQueryParams", () => {
     it("should parse query string", () => {
       expect(parseQueryParams("foo=bar&baz=qux")).toEqual({
-        foo: "bar",
         baz: "qux",
+        foo: "bar",
       });
     });
 
@@ -94,8 +94,8 @@ describe("actions/http/utils", () => {
       expect(
         parseQueryParams("name=John%20Doe&email=test%40example.com"),
       ).toEqual({
-        name: "John Doe",
         email: "test@example.com",
+        name: "John Doe",
       });
     });
 
@@ -105,24 +105,24 @@ describe("actions/http/utils", () => {
 
     it("should extract from fallback params when query string is undefined", () => {
       const params = {
+        __ow_headers: {},
         __ow_method: "get",
         __ow_path: "/users",
-        __ow_headers: {},
-        foo: "bar",
         baz: "qux",
+        foo: "bar",
       };
       expect(parseQueryParams(undefined, params)).toEqual({
-        foo: "bar",
         baz: "qux",
+        foo: "bar",
       });
     });
 
     it("should filter OpenWhisk fields from fallback params", () => {
       const params = {
+        __ow_body: "test",
+        __ow_headers: {},
         __ow_method: "get",
         __ow_path: "/users",
-        __ow_headers: {},
-        __ow_body: "test",
         __ow_query: undefined,
         id: "123",
       };
@@ -145,13 +145,13 @@ describe("actions/http/utils", () => {
 
   describe("validateSchema", () => {
     const userSchema = v.object({
+      age: v.pipe(v.number(), v.minValue(0)),
       id: v.string(),
       name: v.string(),
-      age: v.pipe(v.number(), v.minValue(0)),
     });
 
     it("should return success with valid data", async () => {
-      const input = { id: "123", name: "John", age: 25 };
+      const input = { age: 25, id: "123", name: "John" };
       const result = await validateSchema(userSchema, input);
 
       expect(result.success).toBe(true);
@@ -161,7 +161,7 @@ describe("actions/http/utils", () => {
     });
 
     it("should return failure with invalid data", async () => {
-      const input = { id: 123, name: "John", age: 25 };
+      const input = { age: 25, id: 123, name: "John" };
       const result = await validateSchema(userSchema, input);
 
       expect(result.success).toBe(false);
@@ -182,7 +182,7 @@ describe("actions/http/utils", () => {
     });
 
     it("should return failure with multiple validation errors", async () => {
-      const input = { id: 123, name: 456, age: -1 };
+      const input = { age: -1, id: 123, name: 456 };
       const result = await validateSchema(userSchema, input);
 
       expect(result.success).toBe(false);

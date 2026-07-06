@@ -92,7 +92,7 @@ function pruneUnusedTags(spec: OpenApiSpec) {
     }
   }
 
-  for (let i = spec.tags.length - 1; i >= 0; i--) {
+  for (let i = spec.tags.length - 1; i >= 0; i -= 1) {
     if (!usedTags.has(spec.tags[i].name)) {
       spec.tags.splice(i, 1);
     }

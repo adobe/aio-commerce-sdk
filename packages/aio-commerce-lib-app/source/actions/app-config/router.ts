@@ -59,8 +59,7 @@ export const router = new HttpActionRouter<AppConfigActionContext>().use(
 
 /** GET / - Get app config */
 router.get("/", {
-  query: v.object({ commerceEnv: v.optional(CommerceEnvSchema) }),
-  handler: async (req, { logger, rawParams }) => {
+  handler: async (req, { logger: requestLogger, rawParams }) => {
     const rawAppConfig = rawParams.appConfig;
 
     if (!rawAppConfig) {
@@ -71,7 +70,7 @@ router.get("/", {
 
     let appConfig = rawAppConfig;
     if (hasBusinessConfigSchema(rawAppConfig)) {
-      logger.debug("Resolving business config schema...");
+      requestLogger.debug("Resolving business config schema...");
       const schema = await resolveBusinessConfigSchema(
         rawAppConfig.businessConfig.schema,
         rawParams,
@@ -83,9 +82,9 @@ router.get("/", {
       };
     }
 
-    logger.debug("Validating app config...");
+    requestLogger.debug("Validating app config...");
     const validatedConfig = validateCommerceAppConfig(appConfig);
-    logger.debug("Successfully validated the app config");
+    requestLogger.debug("Successfully validated the app config");
 
     const { commerceEnv } = req.query;
     const config = commerceEnv
@@ -99,6 +98,7 @@ router.get("/", {
       body: { ...config, openApiSpecUrl },
     });
   },
+  query: v.object({ commerceEnv: v.optional(CommerceEnvSchema) }),
 });
 
 /**
@@ -106,25 +106,25 @@ router.get("/", {
  * @internal - Do not add to OpenAPI Spec.
  */
 router.get("/openapi.json", {
-  query: v.object({ ck: v.optional(v.string()) }),
-  handler: async (req, { logger, rawParams }) => {
+  handler: async (req, { logger: requestLogger, rawParams }) => {
     const { ck } = req.query;
     const domains = getConfigDomains(rawParams.appConfig);
 
     if (ck && getOpenApiCacheKey(domains) === ck) {
-      logger.debug(
+      requestLogger.debug(
         `Received request for OpenAPI spec with cache key query param: ${ck}`,
       );
 
       return ok({
-        body: await buildOpenApiSpec(domains, logger),
+        body: await buildOpenApiSpec(domains, requestLogger),
         headers: { "Cache-Control": "public, max-age=31536000, immutable" },
       });
     }
 
     // Return without caching.
     return ok({
-      body: await buildOpenApiSpec(domains, logger),
+      body: await buildOpenApiSpec(domains, requestLogger),
     });
   },
+  query: v.object({ ck: v.optional(v.string()) }),
 });

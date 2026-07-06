@@ -37,7 +37,7 @@ export function setAtPath(
   }
 
   let current = data;
-  for (let i = 0; i < path.length - 1; i++) {
+  for (let i = 0; i < path.length - 1; i += 1) {
     const key = path[i];
     current[key] ??= {};
     current = current[key] as Record<string, unknown>;
@@ -52,7 +52,11 @@ export function getAtPath(
 ): unknown {
   let current: unknown = data;
   for (const key of path) {
-    if (current == null || typeof current !== "object") {
+    if (
+      current === null ||
+      current === undefined ||
+      typeof current !== "object"
+    ) {
       return;
     }
     current = (current as Record<string, unknown>)[key];
@@ -67,9 +71,9 @@ export async function createInstallationError(
   key = "STEP_EXECUTION_FAILED",
 ): Promise<InstallationError> {
   return {
-    path,
     key,
     message: await unwrapHttpError(err),
+    path,
   };
 }
 
@@ -88,8 +92,8 @@ export function createSucceededState(
 ): SucceededInstallationState {
   return {
     ...base,
-    status: "succeeded",
     completedAt: nowIsoString(),
+    status: "succeeded",
   };
 }
 
@@ -100,8 +104,8 @@ export function createFailedState(
 ): FailedInstallationState {
   return {
     ...base,
-    status: "failed",
     completedAt: nowIsoString(),
     error,
+    status: "failed",
   };
 }

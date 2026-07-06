@@ -20,10 +20,10 @@ export default mergeConfig(
   defineConfig({
     plugins: [],
     test: {
-      passWithNoTests: true,
       coverage: {
         exclude: [...BARREL_FILES, "./source/**/types.ts"],
       },
+      passWithNoTests: true,
     },
   }),
 );

@@ -20,24 +20,29 @@ const MAX_TTL = 31_536_000;
 // than the `system-config` helpers the repository calls, so the real config
 // code path runs and the test exercises actual round-trip storage behavior.
 const { state, files, mockState, mockFiles } = vi.hoisted(() => {
-  const state = new Map<string, string>();
-  const files = new Map<string, string>();
+  const stateStore = new Map<string, string>();
+  const filesStore = new Map<string, string>();
 
-  const mockState = {
-    get: vi.fn(async (key: string) => ({ value: state.get(key) ?? null })),
+  const stateMock = {
+    delete: vi.fn(async (key: string) => {
+      stateStore.delete(key);
+    }),
+    get: vi.fn(async (key: string) => ({
+      value: stateStore.get(key) ?? null,
+    })),
     put: vi.fn(
       async (key: string, value: string, _options?: { ttl?: number }) => {
-        state.set(key, value);
+        stateStore.set(key, value);
       },
     ),
-    delete: vi.fn(async (key: string) => {
-      state.delete(key);
-    }),
   };
 
-  const mockFiles = {
+  const filesMock = {
+    delete: vi.fn(async (path: string) => {
+      filesStore.delete(path);
+    }),
     read: vi.fn(async (path: string) => {
-      const content = files.get(path);
+      const content = filesStore.get(path);
       if (content === undefined) {
         throw Object.assign(new Error(`ENOENT: ${path}`), { code: "ENOENT" });
       }
@@ -45,15 +50,17 @@ const { state, files, mockState, mockFiles } = vi.hoisted(() => {
     }),
     write: vi.fn(async (path: string, content: string | Buffer) => {
       const contentString = content.toString();
-      files.set(path, contentString);
+      filesStore.set(path, contentString);
       return contentString.length;
-    }),
-    delete: vi.fn(async (path: string) => {
-      files.delete(path);
     }),
   };
 
-  return { state, files, mockState, mockFiles };
+  return {
+    files: filesStore,
+    mockFiles: filesMock,
+    mockState: stateMock,
+    state: stateStore,
+  };
 });
 
 vi.mock("@adobe/aio-lib-state", () => ({

@@ -94,12 +94,12 @@ export function createInitialState(
 ): InProgressInstallationState {
   const { rootStep, config, mode } = options;
   return {
+    config,
+    data: null,
     id: crypto.randomUUID(),
     startedAt: nowIsoString(),
     status: "in-progress",
     step: buildInitialStepStatus(rootStep, config, [], mode),
-    data: null,
-    config,
   };
 }
 
@@ -112,12 +112,12 @@ export function createRetryState(
   failedState: FailedInstallationState,
 ): InProgressInstallationState {
   return {
+    config: failedState.config,
+    data: failedState.data,
     id: failedState.id,
     startedAt: failedState.startedAt,
     status: "in-progress",
     step: resetFailedSteps(failedState.step),
-    data: failedState.data,
-    config: failedState.config,
   };
 }
 
@@ -125,8 +125,8 @@ export function createRetryState(
 function resetFailedSteps(step: StepStatus): StepStatus {
   return {
     ...step,
-    status: step.status === "succeeded" ? "succeeded" : "pending",
     children: step.children.map(resetFailedSteps),
+    status: step.status === "succeeded" ? "succeeded" : "pending",
   };
 }
 
@@ -162,15 +162,15 @@ async function executeWorkflowWithMode(
   // Deep clone the step status so we don't mutate the original
   const step = structuredClone(initialState.step);
   const context: StepExecutionContext = {
-    installationContext,
     config,
-    id: initialState.id,
-    startedAt: initialState.startedAt,
-    step,
     data: initialState.data as Record<string, unknown> | null,
     error: null,
     hooks,
+    id: initialState.id,
+    installationContext,
     mode,
+    startedAt: initialState.startedAt,
+    step,
   };
 
   await callHook(hooks, "onInstallationStart", snapshot(context));
@@ -178,11 +178,11 @@ async function executeWorkflowWithMode(
     // Execute the root step
     await executeStep(rootStep, context.step, {}, context);
     const succeeded = createSucceededState({
+      config: context.config,
+      data: context.data,
       id: context.id,
       startedAt: context.startedAt,
       step: context.step,
-      data: context.data,
-      config: context.config,
     });
 
     await callHook(hooks, "onInstallationSuccess", succeeded);
@@ -194,11 +194,11 @@ async function executeWorkflowWithMode(
 
     const failed = createFailedState(
       {
-        step: context.step,
+        config: context.config,
+        data: context.data,
         id: context.id,
         startedAt: context.startedAt,
-        data: context.data,
-        config: context.config,
+        step: context.step,
       },
       error,
     );
@@ -233,27 +233,27 @@ function buildInitialStepStatus(
   }
 
   return {
+    children,
     id: crypto.randomUUID(),
-    name: step.name,
-    path,
     meta:
       mode === "uninstall" && step.meta.uninstall
         ? step.meta.uninstall
         : step.meta.install,
+    name: step.name,
+    path,
     status: "pending" as const,
-    children,
   };
 }
 
 /** Snapshot current execution as InProgressInstallationState. */
 function snapshot(context: StepExecutionContext): InProgressInstallationState {
   return {
+    config: context.config,
+    data: context.data,
     id: context.id,
     startedAt: context.startedAt,
     status: "in-progress",
     step: context.step,
-    data: context.data,
-    config: context.config,
   };
 }
 
@@ -275,7 +275,7 @@ async function executeStep(
   await callHook(
     context.hooks,
     "onStepStart",
-    { path, stepName: step.name, isLeaf },
+    { isLeaf, path, stepName: step.name },
     snapshot(context),
   );
 
@@ -293,10 +293,10 @@ async function executeStep(
       context.hooks,
       "onStepSuccess",
       {
-        path,
-        stepName: step.name,
         isLeaf,
+        path,
         result: getAtPath(context.data, path),
+        stepName: step.name,
       },
       snapshot(context),
     );
@@ -307,7 +307,7 @@ async function executeStep(
     await callHook(
       context.hooks,
       "onStepFailure",
-      { path, stepName: step.name, isLeaf, error: context.error },
+      { error: context.error, isLeaf, path, stepName: step.name },
       snapshot(context),
     );
 
@@ -334,6 +334,7 @@ async function executeBranchStep(
       throw new Error(`Step "${child.name}" not found`);
     }
 
+    // biome-ignore lint/performance/noAwaitInLoops: sibling steps run in declared order and can read data/state written by earlier steps into the shared installation context
     await executeStep(childStep, child, childContext, context);
   }
 }

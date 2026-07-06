@@ -36,10 +36,10 @@ let __globalStateOptions: LibStateOptions | null = null;
 function getOptimalRegion(owRegion: string | undefined) {
   // See: https://developer.adobe.com/app-builder/docs/guides/runtime_guides/reference_docs/multiple-regions
   const regionMapping: Record<string, string> = {
-    "us-east-1": "amer",
-    "eu-west-1": "emea",
     "ap-northeast-1": "apac",
     "ap-southeast-2": "aus",
+    "eu-west-1": "emea",
+    "us-east-1": "amer",
   };
 
   const defaultRegion = "us-east-1";

@@ -29,10 +29,10 @@ describe("aio-commerce-lib-auth/integration-auth", () => {
   describe("getIntegrationAuthProvider", () => {
     test("should export getIntegrationAuthProvider", () => {
       const integrationAuthProvider = getIntegrationAuthProvider({
-        consumerKey: "test-consumer-key",
-        consumerSecret: "test-consumer-secret",
         accessToken: "test-access-token",
         accessTokenSecret: "test-access-token-secret",
+        consumerKey: "test-consumer-key",
+        consumerSecret: "test-consumer-secret",
       });
 
       const headers = integrationAuthProvider.getHeaders(
@@ -61,10 +61,10 @@ describe("aio-commerce-lib-auth/integration-auth", () => {
     test("should not throw with valid params", () => {
       expect(() => {
         assertIntegrationAuthParams({
-          consumerKey: "test-consumer-key",
-          consumerSecret: "test-consumer-secret",
           accessToken: "test-access-token",
           accessTokenSecret: "test-access-token-secret",
+          consumerKey: "test-consumer-key",
+          consumerSecret: "test-consumer-secret",
         });
       }).not.toThrow();
     });
@@ -78,10 +78,10 @@ describe("aio-commerce-lib-auth/integration-auth", () => {
 
   describe("assertIntegrationAuthParams edge cases", () => {
     const validConfig = {
-      consumerKey: "test-consumer-key",
-      consumerSecret: "test-consumer-secret",
       accessToken: "test-access-token",
       accessTokenSecret: "test-access-token-secret",
+      consumerKey: "test-consumer-key",
+      consumerSecret: "test-consumer-secret",
     };
 
     test("should throw with missing consumerKey", () => {
@@ -152,10 +152,10 @@ describe("aio-commerce-lib-auth/integration-auth", () => {
     test("should throw with wrong data types", () => {
       expect(() => {
         assertIntegrationAuthParams({
-          consumerKey: 123,
-          consumerSecret: true,
           accessToken: null,
           accessTokenSecret: undefined,
+          consumerKey: 123,
+          consumerSecret: true,
         } as unknown as typeof validConfig);
       }).toThrow("Invalid IntegrationAuthProvider configuration");
     });
@@ -187,8 +187,8 @@ describe("aio-commerce-lib-auth/integration-auth", () => {
       expect(() => {
         assertIntegrationAuthParams({
           ...validConfig,
-          extraProperty: "should-be-ignored",
           anotherExtra: 123,
+          extraProperty: "should-be-ignored",
         });
       }).not.toThrow();
     });
@@ -197,20 +197,20 @@ describe("aio-commerce-lib-auth/integration-auth", () => {
   describe("resolveIntegrationAuthParams", () => {
     test("should resolve Integration auth params from App Builder action inputs", () => {
       const params = {
-        AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_KEY: "test-consumer-key",
-        AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_SECRET: "test-consumer-secret",
         AIO_COMMERCE_AUTH_INTEGRATION_ACCESS_TOKEN: "test-access-token",
         AIO_COMMERCE_AUTH_INTEGRATION_ACCESS_TOKEN_SECRET:
           "test-access-token-secret",
+        AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_KEY: "test-consumer-key",
+        AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_SECRET: "test-consumer-secret",
       };
 
       const resolved = resolveIntegrationAuthParams(params);
 
       expect(resolved).toEqual({
-        consumerKey: "test-consumer-key",
-        consumerSecret: "test-consumer-secret",
         accessToken: "test-access-token",
         accessTokenSecret: "test-access-token-secret",
+        consumerKey: "test-consumer-key",
+        consumerSecret: "test-consumer-secret",
       });
     });
 
@@ -227,11 +227,11 @@ describe("aio-commerce-lib-auth/integration-auth", () => {
 
     test("should throw CommerceSdkValidationError with empty consumerKey", () => {
       const params = {
-        AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_KEY: "",
-        AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_SECRET: "test-consumer-secret",
         AIO_COMMERCE_AUTH_INTEGRATION_ACCESS_TOKEN: "test-access-token",
         AIO_COMMERCE_AUTH_INTEGRATION_ACCESS_TOKEN_SECRET:
           "test-access-token-secret",
+        AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_KEY: "",
+        AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_SECRET: "test-consumer-secret",
       };
 
       expect(() => {
@@ -241,11 +241,11 @@ describe("aio-commerce-lib-auth/integration-auth", () => {
 
     test("should throw CommerceSdkValidationError with empty consumerSecret", () => {
       const params = {
-        AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_KEY: "test-consumer-key",
-        AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_SECRET: "",
         AIO_COMMERCE_AUTH_INTEGRATION_ACCESS_TOKEN: "test-access-token",
         AIO_COMMERCE_AUTH_INTEGRATION_ACCESS_TOKEN_SECRET:
           "test-access-token-secret",
+        AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_KEY: "test-consumer-key",
+        AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_SECRET: "",
       };
 
       expect(() => {
@@ -255,11 +255,11 @@ describe("aio-commerce-lib-auth/integration-auth", () => {
 
     test("should throw CommerceSdkValidationError with empty accessToken", () => {
       const params = {
-        AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_KEY: "test-consumer-key",
-        AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_SECRET: "test-consumer-secret",
         AIO_COMMERCE_AUTH_INTEGRATION_ACCESS_TOKEN: "",
         AIO_COMMERCE_AUTH_INTEGRATION_ACCESS_TOKEN_SECRET:
           "test-access-token-secret",
+        AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_KEY: "test-consumer-key",
+        AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_SECRET: "test-consumer-secret",
       };
 
       expect(() => {
@@ -269,10 +269,10 @@ describe("aio-commerce-lib-auth/integration-auth", () => {
 
     test("should throw CommerceSdkValidationError with empty accessTokenSecret", () => {
       const params = {
-        AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_KEY: "test-consumer-key",
-        AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_SECRET: "test-consumer-secret",
         AIO_COMMERCE_AUTH_INTEGRATION_ACCESS_TOKEN: "test-access-token",
         AIO_COMMERCE_AUTH_INTEGRATION_ACCESS_TOKEN_SECRET: "",
+        AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_KEY: "test-consumer-key",
+        AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_SECRET: "test-consumer-secret",
       };
 
       expect(() => {
@@ -282,10 +282,10 @@ describe("aio-commerce-lib-auth/integration-auth", () => {
 
     test("should throw CommerceSdkValidationError with invalid data types", () => {
       const params = {
-        AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_KEY: 123,
-        AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_SECRET: true,
         AIO_COMMERCE_AUTH_INTEGRATION_ACCESS_TOKEN: null,
         AIO_COMMERCE_AUTH_INTEGRATION_ACCESS_TOKEN_SECRET: undefined,
+        AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_KEY: 123,
+        AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_SECRET: true,
       };
 
       expect(() => {
@@ -295,11 +295,11 @@ describe("aio-commerce-lib-auth/integration-auth", () => {
 
     test("should throw CommerceSdkValidationError with null values", () => {
       const params = {
-        AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_KEY: null,
-        AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_SECRET: "test-consumer-secret",
         AIO_COMMERCE_AUTH_INTEGRATION_ACCESS_TOKEN: "test-access-token",
         AIO_COMMERCE_AUTH_INTEGRATION_ACCESS_TOKEN_SECRET:
           "test-access-token-secret",
+        AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_KEY: null,
+        AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_SECRET: "test-consumer-secret",
       };
 
       expect(() => {
@@ -311,10 +311,10 @@ describe("aio-commerce-lib-auth/integration-auth", () => {
   describe("isIntegrationAuthProvider", () => {
     test("should return true for Integration auth provider", () => {
       const provider = getIntegrationAuthProvider({
-        consumerKey: "test-consumer-key",
-        consumerSecret: "test-consumer-secret",
         accessToken: "test-access-token",
         accessTokenSecret: "test-access-token-secret",
+        consumerKey: "test-consumer-key",
+        consumerSecret: "test-consumer-secret",
       });
 
       expect(isIntegrationAuthProvider(provider)).toBe(true);
@@ -322,10 +322,10 @@ describe("aio-commerce-lib-auth/integration-auth", () => {
 
     test("should return false for plain Integration auth params", () => {
       const params = {
-        consumerKey: "test-consumer-key",
-        consumerSecret: "test-consumer-secret",
         accessToken: "test-access-token",
         accessTokenSecret: "test-access-token-secret",
+        consumerKey: "test-consumer-key",
+        consumerSecret: "test-consumer-secret",
       };
 
       expect(isIntegrationAuthProvider(params)).toBe(false);

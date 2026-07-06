@@ -189,10 +189,10 @@ describe("generateCustomScriptsTemplate", () => {
         installation: {
           customInstallationSteps: [
             {
+              description: "Script inside the generated actions dir",
+              name: "Nested",
               script:
                 "src/commerce-extensibility-1/.generated/actions/app-management/nested.js",
-              name: "Nested",
-              description: "Script inside the generated actions dir",
             },
           ],
         },

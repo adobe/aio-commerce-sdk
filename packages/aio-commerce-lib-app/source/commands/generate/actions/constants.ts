@@ -74,18 +74,18 @@ export const WEB_SOURCE_TS_DEV_DEPENDENCIES = [
 /** tsconfig.json generated for TypeScript web-src scaffolds. */
 export const WEB_SOURCE_TSCONFIG_FILE = "tsconfig.json";
 export const WEB_SOURCE_TSCONFIG = {
-  extends: ["@tsconfig/bases/recommended"],
   compilerOptions: {
-    module: "esnext",
-    moduleResolution: "bundler",
+    allowImportingTsExtensions: true,
     allowJs: true,
     checkJs: true,
-    allowImportingTsExtensions: true,
-    rewriteRelativeImportExtensions: false,
-    noEmit: true,
     jsx: "react-jsx",
     jsxImportSource: "react",
+    module: "esnext",
+    moduleResolution: "bundler",
+    noEmit: true,
+    rewriteRelativeImportExtensions: false,
   },
+  extends: ["@tsconfig/bases/recommended"],
 
   include: ["src/**/*.js", "src/**/*.ts", "src/**/*.tsx", "src/**/*.jsx"],
 };

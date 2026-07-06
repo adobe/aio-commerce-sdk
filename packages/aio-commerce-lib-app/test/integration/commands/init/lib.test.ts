@@ -341,8 +341,8 @@ describe("commands/init/lib", () => {
         );
         expect(written).toMatchObject({
           name: "my-commerce-app",
-          version: "1.0.0",
           private: true,
+          version: "1.0.0",
         });
         expect(written.scripts).toBeUndefined();
         expect(result.execCommand).toBe(getExecCommand(result.packageManager));
@@ -420,10 +420,10 @@ describe("commands/init/lib", () => {
     test("leaves package.json untouched when postinstall is already configured", async () => {
       const execCommand = "npx";
       const original = JSON.stringify({
-        type: "module",
         scripts: {
           postinstall: `${execCommand} aio-commerce-lib-app hooks postinstall`,
         },
+        type: "module",
       });
 
       await withTempProject(
@@ -442,8 +442,8 @@ describe("commands/init/lib", () => {
 
     test("appends to an existing different postinstall script", async () => {
       const packageJson = JSON.stringify({
-        type: "module",
         scripts: { postinstall: "echo hello" },
+        type: "module",
       });
 
       await withTempProject(
@@ -490,13 +490,13 @@ describe("commands/init/lib", () => {
 
     test.each([
       {
-        domain: "installation.customInstallationSteps",
         config: configWithCustomInstallationSteps,
+        domain: "installation.customInstallationSteps",
       },
-      { domain: "eventing.commerce", config: configWithCommerceEventing },
-      { domain: "eventing.external", config: configWithExternalEventing },
-      { domain: "webhooks", config: configWithWebhooks },
-      { domain: "adminUi", config: configWithAdminUiSingleGrid },
+      { config: configWithCommerceEventing, domain: "eventing.commerce" },
+      { config: configWithExternalEventing, domain: "eventing.external" },
+      { config: configWithWebhooks, domain: "webhooks" },
+      { config: configWithAdminUiSingleGrid, domain: "adminUi" },
     ])("generates the installation action when $domain is configured", async ({
       config,
     }) => {

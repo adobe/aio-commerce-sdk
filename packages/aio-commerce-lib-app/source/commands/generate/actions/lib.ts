@@ -158,14 +158,14 @@ async function bundleTypeScriptAppConfigModule(
   outputPath: string,
 ) {
   await build({
-    entryPoints: [configFilePath],
-    outfile: outputPath,
     bundle: true,
+    entryPoints: [configFilePath],
     format: "esm",
+    logLevel: "silent",
+    outfile: outputPath,
+    packages: "external",
     platform: "node",
     target: "node22",
-    packages: "external",
-    logLevel: "silent",
   });
 }
 
@@ -244,8 +244,8 @@ export async function readExtConfig(extensionPointId: ValidExtensionPointId) {
 
   try {
     return {
-      path: extConfigPath,
       doc: await readYamlFile(extConfigPath),
+      path: extConfigPath,
     };
   } catch (error) {
     const reason =
@@ -259,6 +259,7 @@ export async function readExtConfig(extensionPointId: ValidExtensionPointId) {
         `Make sure the file exists and is valid YAML. You can regenerate it with "aio-commerce-lib-app generate actions".`,
         `Reason: ${reason}`,
       ].join("\n"),
+      { cause: error },
     );
   }
 }
@@ -359,7 +360,7 @@ async function prepareWebSourcePackage(
   const devDependencies = pkg.content.devDependencies ?? {};
   const dependencyMaps = [dependencies, devDependencies];
   const declaredDependencyNames = new Set(
-    dependencyMaps.flatMap((dependencies) => Object.keys(dependencies)),
+    dependencyMaps.flatMap((depMap) => Object.keys(depMap)),
   );
   const dependenciesToDeclare = [
     ...WEB_SOURCE_DEPENDENCIES,
@@ -378,16 +379,6 @@ async function prepareWebSourcePackage(
   }
 
   pkg.update({
-    dependencies: mergePackageJsonDependencies(
-      dependencies,
-      WEB_SOURCE_DEPENDENCIES,
-      dependencyMaps,
-    ),
-    devDependencies: mergePackageJsonDependencies(
-      devDependencies,
-      requiredDevDependencies,
-      dependencyMaps,
-    ),
     // Required as per Spectrum S2 documentation: https://react-spectrum.adobe.com/getting-started#framework-setup
     "@parcel/bundler-default": {
       ...(pkg.content["@parcel/bundler-default"] as Record<string, unknown>),
@@ -398,6 +389,16 @@ async function prepareWebSourcePackage(
       ...(pkg.content["@parcel/resolver-default"] as Record<string, unknown>),
       packageExports: true,
     },
+    dependencies: mergePackageJsonDependencies(
+      dependencies,
+      WEB_SOURCE_DEPENDENCIES,
+      dependencyMaps,
+    ),
+    devDependencies: mergePackageJsonDependencies(
+      devDependencies,
+      requiredDevDependencies,
+      dependencyMaps,
+    ),
   });
 
   await pkg.save();
@@ -496,48 +497,46 @@ async function copyWebSourceTemplates(
   targetDir: string,
   extension: WebSourceExtension,
   appTitle: string,
-) {
+): Promise<string[]> {
   await mkdir(targetDir, { recursive: true });
-  const outputFiles: string[] = [];
 
-  for (const entry of await readdir(sourceDir, { withFileTypes: true })) {
-    const sourcePath = join(sourceDir, entry.name);
-    const targetPath = join(
-      targetDir,
-      getWebSourceTemplateTargetPath(entry.name, extension),
-    );
+  const entries = await readdir(sourceDir, { withFileTypes: true });
+  const outputFilesByEntry = await Promise.all(
+    entries.map(async (entry) => {
+      const sourcePath = join(sourceDir, entry.name);
+      const targetPath = join(
+        targetDir,
+        getWebSourceTemplateTargetPath(entry.name, extension),
+      );
 
-    if (entry.isDirectory()) {
-      outputFiles.push(
-        ...(await copyWebSourceTemplates(
+      if (entry.isDirectory()) {
+        return await copyWebSourceTemplates(
           sourcePath,
           targetPath,
           extension,
           appTitle,
-        )),
-      );
+        );
+      }
 
-      continue;
-    }
+      let content = await readFile(sourcePath, "utf-8");
 
-    let content = await readFile(sourcePath, "utf-8");
+      if (extension === "tsx") {
+        content = content.replaceAll(
+          `${JSX_FILE_EXTENSION}"`,
+          `${TSX_FILE_EXTENSION}"`,
+        );
+      }
 
-    if (extension === "tsx") {
-      content = content.replaceAll(
-        `${JSX_FILE_EXTENSION}"`,
-        `${TSX_FILE_EXTENSION}"`,
-      );
-    }
+      if (targetPath.endsWith(WEB_SOURCE_ENTRYPOINT_FILE)) {
+        content = content.replaceAll(APP_TITLE_PLACEHOLDER, appTitle);
+      }
 
-    if (targetPath.endsWith(WEB_SOURCE_ENTRYPOINT_FILE)) {
-      content = content.replaceAll(APP_TITLE_PLACEHOLDER, appTitle);
-    }
+      await writeFile(targetPath, content, { encoding: "utf-8", flag: "wx" });
+      return ` ${relative(process.cwd(), targetPath)}`;
+    }),
+  );
 
-    await writeFile(targetPath, content, { encoding: "utf-8", flag: "wx" });
-    outputFiles.push(` ${relative(process.cwd(), targetPath)}`);
-  }
-
-  return outputFiles;
+  return outputFilesByEntry.flat();
 }
 
 /** Generate the web source scaffold for iframe-based Admin UI extensions. */
@@ -605,36 +604,37 @@ export async function generateActionFiles(
 
   await makeOutputDirFor(getActionsDir(extensionPointId));
   const projectRoot = await getProjectRootDirectory();
-  const outputFiles: string[] = [];
 
-  for (const action of actions) {
-    const templatePath = join(templatesDir, action.templateFile);
-    let template = await readFile(templatePath, "utf-8");
+  const outputFiles = await Promise.all(
+    actions.map(async (action) => {
+      const templatePath = join(templatesDir, action.templateFile);
+      let template = await readFile(templatePath, "utf-8");
 
-    // For installation action, inject custom script imports
-    if (action.name === "installation") {
-      const customScriptsTemplatePath = join(
-        templatesDir,
-        "app-management",
-        "custom-scripts.js.template",
+      // For installation action, inject custom script imports
+      if (action.name === "installation") {
+        const customScriptsTemplatePath = join(
+          templatesDir,
+          "app-management",
+          "custom-scripts.js.template",
+        );
+
+        const scriptsTemplate = await generateCustomScriptsTemplate(
+          await readFile(customScriptsTemplatePath, "utf-8"),
+          appManifest,
+        );
+
+        template = applyCustomScripts(template, scriptsTemplate);
+      }
+
+      const actionPath = join(
+        projectRoot,
+        getActionPath(extensionPointId, action.name),
       );
 
-      const scriptsTemplate = await generateCustomScriptsTemplate(
-        await readFile(customScriptsTemplatePath, "utf-8"),
-        appManifest,
-      );
-
-      template = applyCustomScripts(template, scriptsTemplate);
-    }
-
-    const actionPath = join(
-      projectRoot,
-      getActionPath(extensionPointId, action.name),
-    );
-
-    await writeFile(actionPath, template, "utf-8");
-    outputFiles.push(` ${relative(process.cwd(), actionPath)}`);
-  }
+      await writeFile(actionPath, template, "utf-8");
+      return ` ${relative(process.cwd(), actionPath)}`;
+    }),
+  );
 
   consola.success(`Generated ${actions.length} action(s)`);
   consola.log.raw(formatTree(outputFiles));

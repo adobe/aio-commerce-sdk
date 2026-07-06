@@ -45,7 +45,7 @@ describe("createRootInstallationStep", () => {
     );
 
     expect(result.children.length).toBe(4);
-    const customInstallationStep = result.children[3];
+    const [, , , customInstallationStep] = result.children;
     expect(customInstallationStep.name).toBe("customInstallationSteps");
     expect(customInstallationStep.type).toBe("branch");
 
@@ -79,8 +79,8 @@ describe("createRootUninstallationStep", () => {
 
     expect(result.meta).toEqual({
       install: {
-        label: "Uninstallation",
         description: "App uninstallation workflow",
+        label: "Uninstallation",
       },
     });
   });
@@ -91,7 +91,7 @@ describe("createRootUninstallationStep", () => {
     );
 
     expect(result.children.length).toBe(4);
-    const customInstallationStep = result.children[3];
+    const [, , , customInstallationStep] = result.children;
     expect(customInstallationStep.name).toBe("customInstallationSteps");
     expect(customInstallationStep.type).toBe("branch");
 

@@ -35,8 +35,7 @@ function getCommerceHostPromise(
   extensionId: string,
   connection: GuestConnection,
 ): Promise<string> {
-  const integration = (connection.host as { integration?: HostIntegration })
-    .integration;
+  const { integration } = connection.host as { integration?: HostIntegration };
 
   if (!integration) {
     // Rejects synchronously, so there's no pending window for `use` to keep stable and nothing

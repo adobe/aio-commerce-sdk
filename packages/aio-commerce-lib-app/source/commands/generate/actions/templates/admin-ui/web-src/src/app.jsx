@@ -9,5 +9,5 @@ createExtensionApp({
     extensionId: config.metadata.id,
   },
 
-  routes: [{ index: true, element: <MainPage /> }],
+  routes: [{ element: <MainPage />, index: true }],
 });

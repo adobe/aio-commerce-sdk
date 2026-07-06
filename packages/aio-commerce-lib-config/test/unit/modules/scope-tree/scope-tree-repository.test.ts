@@ -31,8 +31,8 @@ let mockStateInstance = new MockState();
 let mockFilesInstance = new MockFiles();
 
 vi.mock("#utils/repository", () => ({
-  getSharedState: vi.fn(async () => mockStateInstance),
   getSharedFiles: vi.fn(async () => mockFilesInstance),
+  getSharedState: vi.fn(async () => mockStateInstance),
 }));
 
 describe("scope-tree/scope-tree-repository", () => {
@@ -134,8 +134,8 @@ describe("scope-tree/scope-tree-repository", () => {
       await mockFilesInstance.write(
         "test-namespace/scope-tree.json",
         JSON.stringify({
-          scopes: mockScopeTree,
           lastUpdated: new Date().toISOString(),
+          scopes: mockScopeTree,
           version: "1.0",
         }),
       );

@@ -71,8 +71,8 @@ describe("unregisterExtension", () => {
     });
 
     await unregisterExtension(makeHttpClient(fetchMock as typeof fetch), {
-      workspaceName: "prod-workspace",
       extensionName: "my-namespace",
+      workspaceName: "prod-workspace",
     });
 
     expect(capturedMethod).toBe("DELETE");
@@ -86,8 +86,8 @@ describe("unregisterExtension", () => {
 
     await expect(
       unregisterExtension(makeHttpClient(fetchMock as typeof fetch), {
-        workspaceName: "prod-workspace",
         extensionName: "my-namespace",
+        workspaceName: "prod-workspace",
       }),
     ).rejects.toThrow();
   });

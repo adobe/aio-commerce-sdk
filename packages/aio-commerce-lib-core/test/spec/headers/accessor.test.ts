@@ -19,8 +19,8 @@ describe("headers/accessor", () => {
   describe("createHeaderAccessor", () => {
     test("should create accessor with camelCase keys", () => {
       const headers = {
-        "x-api-key": "test-key",
         Authorization: "Bearer token",
+        "x-api-key": "test-key",
       };
 
       const accessor = createHeaderAccessor(headers, [
@@ -88,9 +88,9 @@ describe("headers/accessor", () => {
 
     test("should handle multiple headers", () => {
       const headers = {
-        "x-api-key": "test-key",
         Authorization: "Bearer token",
         "content-type": "application/json",
+        "x-api-key": "test-key",
       };
 
       const accessor = createHeaderAccessor(headers, [
@@ -106,8 +106,8 @@ describe("headers/accessor", () => {
 
     test("should handle headers with mixed casing", () => {
       const headers = {
-        "X-Api-Key": "test-key",
         AUTHORIZATION: "Bearer token",
+        "X-Api-Key": "test-key",
       };
 
       const accessor = createHeaderAccessor(headers, [
@@ -121,8 +121,8 @@ describe("headers/accessor", () => {
 
     test("should normalize complex header names to camelCase", () => {
       const headers = {
-        "x-custom-header-name": "value1",
         "another-long-header": "value2",
+        "x-custom-header-name": "value1",
       };
 
       const accessor = createHeaderAccessor(headers, [
@@ -136,10 +136,10 @@ describe("headers/accessor", () => {
 
     test("should transform header names with various casing styles to match the inferred return type", () => {
       const headers = {
-        test_snake: "test",
         _underscore_prefix: "test2",
-        testCamelCase: "test3",
         "kebab-case": "test4",
+        test_snake: "test",
+        testCamelCase: "test3",
       };
 
       const accessor = createHeaderAccessor(headers, [
@@ -152,10 +152,10 @@ describe("headers/accessor", () => {
       // Typing `expected` as `typeof accessor` ties the expected shape to the inferred
       // return type if runtime output drifts from the type, this assertion fails.
       const expected: typeof accessor = {
+        kebabCase: "test4",
+        testCamelCase: "test3",
         testSnake: "test",
         underscorePrefix: "test2",
-        testCamelCase: "test3",
-        kebabCase: "test4",
       };
 
       expect(accessor).toEqual(expected);
@@ -163,8 +163,8 @@ describe("headers/accessor", () => {
 
     test("should provide type-safe destructuring", () => {
       const headers = {
-        "x-api-key": "test-key",
         Authorization: "Bearer token",
+        "x-api-key": "test-key",
       };
 
       const { xApiKey, authorization } = createHeaderAccessor(headers, [

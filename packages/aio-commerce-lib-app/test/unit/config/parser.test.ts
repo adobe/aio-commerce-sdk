@@ -218,8 +218,8 @@ describe("readExtensibilityConfig", () => {
 
     await withTempFiles(
       {
-        "package.json": JSON.stringify({ name: "test-project" }),
         "app.commerce.config.js": configContent,
+        "package.json": JSON.stringify({ name: "test-project" }),
       },
       async (tempDir) => {
         const result = (await readCommerceAppConfig(tempDir)) as {
@@ -239,8 +239,8 @@ describe("readExtensibilityConfig", () => {
 
     await withTempFiles(
       {
-        "package.json": JSON.stringify({ name: "test-project" }),
         "app.commerce.config.js": configContent,
+        "package.json": JSON.stringify({ name: "test-project" }),
       },
       async (tempDir) => {
         await expect(readCommerceAppConfig(tempDir)).rejects.toThrow();
@@ -271,8 +271,8 @@ describe("readExtensibilityConfig", () => {
 
     await withTempFiles(
       {
-        "package.json": JSON.stringify({ name: "test-project" }),
         "app.commerce.config.js": configContent,
+        "package.json": JSON.stringify({ name: "test-project" }),
       },
       async (tempDir) => {
         const result = (await readCommerceAppConfig(tempDir)) as {
@@ -283,8 +283,8 @@ describe("readExtensibilityConfig", () => {
         };
 
         expect(result.metadata.id).toBe("app-with-schema");
-        expect(result.businessConfig?.schema).toHaveLength(1);
-        expect(result.businessConfig?.schema[0].name).toBe("apiKey");
+        expect(result.businessConfig.schema).toHaveLength(1);
+        expect(result.businessConfig.schema[0].name).toBe("apiKey");
       },
     );
   });
@@ -303,8 +303,8 @@ describe("readExtensibilityConfig", () => {
 
     await withTempFiles(
       {
-        "package.json": JSON.stringify({ name: "test-project" }),
         "app.commerce.config.ts": configContent,
+        "package.json": JSON.stringify({ name: "test-project" }),
       },
       async (tempDir) => {
         const result = (await readCommerceAppConfig(tempDir)) as {
@@ -330,8 +330,8 @@ describe("readExtensibilityConfig", () => {
 
     await withTempFiles(
       {
-        "package.json": JSON.stringify({ name: "test-project" }),
         "app.commerce.config.mjs": configContent,
+        "package.json": JSON.stringify({ name: "test-project" }),
       },
       async (tempDir) => {
         const result = (await readCommerceAppConfig(tempDir)) as {
@@ -357,8 +357,8 @@ describe("readExtensibilityConfig", () => {
 
     await withTempFiles(
       {
-        "package.json": JSON.stringify({ name: "test-project" }),
         "app.commerce.config.cjs": configContent,
+        "package.json": JSON.stringify({ name: "test-project" }),
       },
       async (tempDir) => {
         const result = (await readCommerceAppConfig(tempDir)) as {
@@ -386,8 +386,8 @@ describe("parseExtensibilityConfig", () => {
 
     await withTempFiles(
       {
-        "package.json": JSON.stringify({ name: "test-project" }),
         "app.commerce.config.js": configContent,
+        "package.json": JSON.stringify({ name: "test-project" }),
       },
       async (tempDir) => {
         const result = await parseCommerceAppConfig(tempDir);
@@ -411,8 +411,8 @@ describe("parseExtensibilityConfig", () => {
 
     await withTempFiles(
       {
-        "package.json": JSON.stringify({ name: "test-project" }),
         "app.commerce.config.js": configContent,
+        "package.json": JSON.stringify({ name: "test-project" }),
       },
       async (tempDir) => {
         await expect(parseCommerceAppConfig(tempDir)).rejects.toThrow();
@@ -435,8 +435,8 @@ describe("parseExtensibilityConfig", () => {
 
     await withTempFiles(
       {
-        "package.json": JSON.stringify({ name: "test-project" }),
         "app.commerce.config.js": configContent,
+        "package.json": JSON.stringify({ name: "test-project" }),
       },
       async (tempDir) => {
         await expect(parseCommerceAppConfig(tempDir)).rejects.toThrow();
@@ -461,8 +461,8 @@ describe("parseExtensibilityConfig", () => {
 
     await withTempFiles(
       {
-        "package.json": JSON.stringify({ name: "test-project" }),
         "app.commerce.config.js": configContent,
+        "package.json": JSON.stringify({ name: "test-project" }),
       },
       async (tempDir) => {
         await expect(parseCommerceAppConfig(tempDir)).rejects.toThrow();
@@ -484,8 +484,8 @@ describe("parseExtensibilityConfig", () => {
 
     await withTempFiles(
       {
-        "package.json": JSON.stringify({ name: "test-project" }),
         "app.commerce.config.js": configContent,
+        "package.json": JSON.stringify({ name: "test-project" }),
       },
       async (tempDir) => {
         await expect(parseCommerceAppConfig(tempDir)).rejects.toThrow();

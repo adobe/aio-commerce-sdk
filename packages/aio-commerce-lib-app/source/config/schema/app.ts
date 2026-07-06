@@ -26,12 +26,12 @@ import type { CommerceAppConfigDomain } from "./domains";
 
 /** The schema used to validate the commerce app config file. */
 export const CommerceAppConfigSchema = v.looseObject({
-  // TEMP: use `looseObject` for testing purposes, remove when all subsections of the config schema are implemented
-  metadata: MetadataSchema,
+  adminUi: v.optional(AdminUiSchema),
   businessConfig: v.optional(SchemaBusinessConfig),
   eventing: v.optional(EventingSchema),
-  adminUi: v.optional(AdminUiSchema),
   installation: v.optional(InstallationSchema),
+  // TEMP: use `looseObject` for testing purposes, remove when all subsections of the config schema are implemented
+  metadata: MetadataSchema,
   webhooks: v.optional(WebhooksSchema),
 });
 

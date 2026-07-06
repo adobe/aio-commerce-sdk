@@ -354,36 +354,36 @@ export function makeWorkspaceConfig(context: EventsExecutionContext) {
     project: {
       id: projectId,
       name: projectName,
-      title: projectTitle,
 
       org: {
         id: consumerOrgId,
-        name: orgName,
         ims_org_id: imsOrgId,
+        name: orgName,
       },
+      title: projectTitle,
 
       workspace: {
-        id: workspaceId,
-        name: workspaceName,
-        title: workspaceTitle,
         action_url: `https://${process.env.__OW_NAMESPACE}.adobeioruntime.net`,
         app_url: `https://${process.env.__OW_NAMESPACE}.adobeio-static.net`,
         details: {
           credentials: [
             {
               id: "000000",
-              name: `aio-${workspaceId}`,
               integration_type: "oauth_server_to_server",
+              name: `aio-${workspaceId}`,
               oauth_server_to_server: {
                 client_id: clientId,
                 client_secrets: clientSecrets,
+                scopes: scopes.map((scope) => scope.trim()),
                 technical_account_email: technicalAccountEmail,
                 technical_account_id: technicalAccountId,
-                scopes: scopes.map((scope) => scope.trim()),
               },
             },
           ],
         },
+        id: workspaceId,
+        name: workspaceName,
+        title: workspaceTitle,
       },
     },
   };
@@ -415,9 +415,9 @@ export async function getIoEventsExistingData(context: EventsExecutionContext) {
 
     const metadataHal = _embedded?.eventmetadata ?? [];
     const actualMetadata = metadataHal.map(
-      ({ _embedded, _links, ...meta }) => ({
+      ({ _embedded: metadataEmbedded, _links: _metadataLinks, ...meta }) => ({
         ...meta,
-        sample: _embedded?.sample_event ?? null,
+        sample: metadataEmbedded?.sample_event ?? null,
       }),
     );
 

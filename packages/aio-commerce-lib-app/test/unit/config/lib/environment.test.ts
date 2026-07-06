@@ -62,35 +62,35 @@ describe("getInstallCommerceEnv", () => {
 
 describe("filterAppConfigByEnv", () => {
   const config = {
-    metadata: {
-      id: "test-app",
-      displayName: "Test",
-      description: "Test",
-      version: "1.0.0",
-    },
-    webhooks: [
-      { label: "all", env: undefined },
-      { label: "paas-only", env: ["paas"] },
-      { label: "saas-only", env: ["saas"] },
-    ],
     eventing: {
       commerce: [
         {
+          events: [{ env: ["saas"], name: "plugin.a" }, { name: "plugin.b" }],
           provider: { label: "Mixed" },
-          events: [{ name: "plugin.a", env: ["saas"] }, { name: "plugin.b" }],
         },
         {
+          events: [{ env: ["paas"], name: "plugin.c" }],
           provider: { label: "Paas Only" },
-          events: [{ name: "plugin.c", env: ["paas"] }],
         },
       ],
       external: [
         {
+          events: [{ env: ["saas"], name: "ext.a" }],
           provider: { label: "Ext" },
-          events: [{ name: "ext.a", env: ["saas"] }],
         },
       ],
     },
+    metadata: {
+      description: "Test",
+      displayName: "Test",
+      id: "test-app",
+      version: "1.0.0",
+    },
+    webhooks: [
+      { env: undefined, label: "all" },
+      { env: ["paas"], label: "paas-only" },
+      { env: ["saas"], label: "saas-only" },
+    ],
   } as unknown as CommerceAppConfigOutputModel;
 
   test("filters webhooks to the target environment", () => {

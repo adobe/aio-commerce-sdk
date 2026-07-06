@@ -56,6 +56,7 @@ export async function resolveCommerceAppConfig(cwd = process.cwd()) {
   const rootDirectory = dirname(packageJsonPath);
 
   for (const configPath of configPaths) {
+    // biome-ignore lint/performance/noAwaitInLoops: must check paths in priority order and stop at the first match
     const configFilePath = await findUp(configPath, {
       cwd,
       stopAt: rootDirectory,

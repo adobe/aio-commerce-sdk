@@ -27,97 +27,94 @@ export const DOMAIN_DEFAULTS = {
   businessConfig: {
     schema: [
       {
-        type: "list",
-        name: "sampleList",
-        label: "Sample List",
-        selectionMode: "multiple",
-
         default: ["a"],
+        label: "Sample List",
+        name: "sampleList",
         options: [
           { label: "Option A", value: "a" },
           { label: "Option B", value: "b" },
         ],
+        selectionMode: "multiple",
+        type: "list",
       },
       {
-        type: "text",
-        name: "sampleText",
-        label: "Sample Text",
         default: "Hello, world!",
+        label: "Sample Text",
+        name: "sampleText",
+        type: "text",
       },
     ],
   },
 
   "eventing.commerce": [
     {
-      provider: {
-        label: "Commerce Events Provider",
-        description: "A description for your Commerce Events provider.",
-      },
-
       events: [
         {
-          name: "plugin.sample_event",
+          description: "Use case description for the event.",
           fields: [{ name: "*" }],
 
           label: "Sample Event",
-          description: "Use case description for the event.",
+          name: "plugin.sample_event",
           runtimeActions: ["my-package/handle-sample-event"],
         },
       ],
+      provider: {
+        description: "A description for your Commerce Events provider.",
+        label: "Commerce Events Provider",
+      },
     },
   ],
 
   "eventing.external": [
     {
-      provider: {
-        label: "External Events Provider",
-        description: "A description for your External Events provider.",
-      },
-
       events: [
         {
-          name: "be-observer.sample_event",
-          label: "Sample Event",
           description: "Use case description for the event.",
+          label: "Sample Event",
+          name: "be-observer.sample_event",
           runtimeActions: ["my-package/handle-sample-event"],
         },
       ],
+      provider: {
+        description: "A description for your External Events provider.",
+        label: "External Events Provider",
+      },
     },
   ],
 
   "installation.customInstallationSteps": [
     {
-      name: "sample-step",
       description: "Use case description for the step.",
+      name: "sample-step",
       script: "./path/to/script.js",
     },
   ],
 
   webhooks: [
     {
-      label: "Sample Webhook",
-      description: "A sample Commerce Webhook handler.",
-      runtimeAction: "my-package/handle-webhook",
       category: "modification",
+      description: "A sample Commerce Webhook handler.",
+      label: "Sample Webhook",
+      runtimeAction: "my-package/handle-webhook",
       webhook: {
-        webhook_method: "plugin.sample.event",
-        webhook_type: "after",
         batch_name: "my_app",
         hook_name: "sample_hook",
         method: "POST",
+        webhook_method: "plugin.sample.event",
+        webhook_type: "after",
       },
     },
     {
-      label: "Sample Webhook with URL",
-      description: "A sample Commerce Webhook handler using an explicit URL.",
       category: "modification",
+      description: "A sample Commerce Webhook handler using an explicit URL.",
+      label: "Sample Webhook with URL",
       webhook: {
-        webhook_method: "plugin.sample.event",
-        webhook_type: "after",
         batch_name: "my_app",
         hook_name: "sample_hook_url",
         method: "POST",
         url: "https://example.com/webhook",
+        webhook_method: "plugin.sample.event",
+        webhook_type: "after",
       },
     },
   ],

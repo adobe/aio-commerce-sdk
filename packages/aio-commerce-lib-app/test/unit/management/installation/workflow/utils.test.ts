@@ -106,18 +106,18 @@ describe("createInstallationError", () => {
     const err = new Error("Something went wrong");
     const result = await createInstallationError(err, ["step", "child"]);
     expect(result).toEqual({
-      path: ["step", "child"],
       key: "STEP_EXECUTION_FAILED",
       message: "Something went wrong",
+      path: ["step", "child"],
     });
   });
 
   test("should create error from string", async () => {
     const result = await createInstallationError("string error", ["a", "b"]);
     expect(result).toEqual({
-      path: ["a", "b"],
       key: "STEP_EXECUTION_FAILED",
       message: "string error",
+      path: ["a", "b"],
     });
   });
 
@@ -125,9 +125,9 @@ describe("createInstallationError", () => {
     const err = new Error("Error message");
     const result = await createInstallationError(err, ["path"], "CUSTOM_KEY");
     expect(result).toEqual({
-      path: ["path"],
       key: "CUSTOM_KEY",
       message: "Error message",
+      path: ["path"],
     });
   });
 
@@ -140,9 +140,9 @@ describe("createInstallationError", () => {
 
     const result = await createInstallationError(err, ["step"]);
     expect(result).toEqual({
-      path: ["step"],
       key: "STEP_EXECUTION_FAILED",
       message: "HTTP 400 Bad Request — API error detail",
+      path: ["step"],
     });
   });
 });
@@ -157,20 +157,20 @@ describe("createSucceededState", () => {
 
   test("should create correct state with status succeeded and completedAt", () => {
     const base = {
+      data: { result: "some-data" },
       id: "install-123",
       startedAt: FAKE_SYSTEM_TIME,
       step: mockStep,
-      data: { result: "some-data" },
     };
 
     const result = createSucceededState(base);
     expect(result).toEqual({
+      completedAt: FAKE_SYSTEM_TIME,
+      data: { result: "some-data" },
       id: "install-123",
       startedAt: FAKE_SYSTEM_TIME,
-      step: mockStep,
-      data: { result: "some-data" },
       status: "succeeded",
-      completedAt: FAKE_SYSTEM_TIME,
+      step: mockStep,
     });
   });
 });
@@ -185,25 +185,25 @@ describe("createFailedState", () => {
 
   test("should create correct state with status failed, completedAt, and error", () => {
     const base = {
+      data: { partial: "data" },
       id: "install-456",
       startedAt: FAKE_SYSTEM_TIME,
       step: mockStep,
-      data: { partial: "data" },
     };
     const error = createMockInstallationError({
-      path: ["step", "child"],
       message: "Something failed",
+      path: ["step", "child"],
     });
 
     const result = createFailedState(base, error);
     expect(result).toEqual({
+      completedAt: FAKE_SYSTEM_TIME,
+      data: { partial: "data" },
+      error,
       id: "install-456",
       startedAt: FAKE_SYSTEM_TIME,
-      step: mockStep,
-      data: { partial: "data" },
       status: "failed",
-      completedAt: FAKE_SYSTEM_TIME,
-      error,
+      step: mockStep,
     });
   });
 });

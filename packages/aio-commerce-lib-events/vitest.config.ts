@@ -25,11 +25,11 @@ export default mergeConfig(
     // Write your Vitest configuration here.
     plugins: [],
     test: {
-      passWithNoTests: true,
       coverage: {
         // Exclude  files that don't contain "logic".
         exclude: [...BARREL_FILES, "./source/**/types.ts"],
       },
+      passWithNoTests: true,
     },
   }),
 );

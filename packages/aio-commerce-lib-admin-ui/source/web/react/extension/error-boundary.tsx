@@ -22,6 +22,7 @@ import {
   useRouter,
   useRouterState,
 } from "@tanstack/react-router";
+import { useCallback } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 
 import type { FallbackProps } from "react-error-boundary";
@@ -37,17 +38,20 @@ function getErrorMessage(error: unknown): string {
 function ErrorFallback({ error, resetErrorBoundary }: Readonly<FallbackProps>) {
   const router = useRouter();
   const canGoBack = useCanGoBack();
+  const goBack = useCallback(() => {
+    router.history.back();
+  }, [router]);
 
   return (
     <div
       style={{
-        display: "flex",
         alignItems: "center",
+        display: "flex",
         justifyContent: "center",
-        padding: 24,
 
         // Subtract the padding to avoid generating overflow
         minHeight: "calc(100dvh - 48px)",
+        padding: 24,
       }}>
       <IllustratedMessage>
         <ErrorIllustration />
@@ -55,11 +59,7 @@ function ErrorFallback({ error, resetErrorBoundary }: Readonly<FallbackProps>) {
         <Content>{getErrorMessage(error)}</Content>
         <ButtonGroup>
           {canGoBack && (
-            <Button
-              onPress={() => {
-                router.history.back();
-              }}
-              variant="secondary">
+            <Button onPress={goBack} variant="secondary">
               Go back
             </Button>
           )}

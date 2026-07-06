@@ -93,10 +93,10 @@ export function resolveIntegrationAuthParams(
   params: Record<string, unknown>,
 ): IntegrationAuthParams {
   const resolvedParams = {
-    consumerKey: params.AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_KEY,
-    consumerSecret: params.AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_SECRET,
     accessToken: params.AIO_COMMERCE_AUTH_INTEGRATION_ACCESS_TOKEN,
     accessTokenSecret: params.AIO_COMMERCE_AUTH_INTEGRATION_ACCESS_TOKEN_SECRET,
+    consumerKey: params.AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_KEY,
+    consumerSecret: params.AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_SECRET,
   };
 
   return __parseIntegrationAuthParams(resolvedParams);

@@ -68,10 +68,10 @@ export const UrlSchema = pipe(
  */
 export const IntegrationAuthParamsSchema = nonOptional(
   object({
-    consumerKey: integrationAuthParameter("consumerKey"),
-    consumerSecret: integrationAuthParameter("consumerSecret"),
     accessToken: integrationAuthParameter("accessToken"),
     accessTokenSecret: integrationAuthParameter("accessTokenSecret"),
+    consumerKey: integrationAuthParameter("consumerKey"),
+    consumerSecret: integrationAuthParameter("consumerSecret"),
   }),
 );
 

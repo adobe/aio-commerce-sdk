@@ -54,17 +54,17 @@ export const router = new HttpActionRouter().use(
 /** GET / - Get scope tree */
 router.get("/", {
   handler: async (_req, ctx) => {
-    const { logger } = ctx;
+    const { logger: requestLogger } = ctx;
     const result = await getScopeTree();
 
-    logger.debug(
+    requestLogger.debug(
       `Successfully retrieved scope tree (cached: ${result.isCachedData}): ${inspect(result.scopeTree)}`,
     );
 
     if (result.isCachedData) {
       return nonAuthoritativeInformation({
-        headers: { "x-cache": "hit" },
         body: { scopes: result.scopeTree },
+        headers: { "x-cache": "hit" },
       });
     }
 
@@ -78,8 +78,8 @@ router.get("/", {
 router.put("/", {
   body: SetCustomScopeTreeBodySchema,
   handler: async (req, ctx) => {
-    const { logger } = ctx;
-    logger.debug(
+    const { logger: requestLogger } = ctx;
+    requestLogger.debug(
       `Setting custom scope tree with ${req.body.scopes?.length || 0} scopes`,
     );
 
@@ -88,20 +88,24 @@ router.put("/", {
     } satisfies SetCustomScopeTreeRequest;
 
     let result: Awaited<ReturnType<typeof setCustomScopeTree>>;
-    logger.debug(`Setting custom scope tree: ${inspect(request)}`);
+    requestLogger.debug(`Setting custom scope tree: ${inspect(request)}`);
 
     try {
       result = await setCustomScopeTree(request);
     } catch (err) {
       if (err instanceof Error && "isValidationError" in err) {
-        logger.debug(`Custom scope tree validation failed: ${err.message}`);
+        requestLogger.debug(
+          `Custom scope tree validation failed: ${err.message}`,
+        );
         return badRequest({ body: { message: err.message } });
       }
 
       throw err;
     }
 
-    logger.debug(`Successfully set custom scope tree: ${inspect(result)}`);
+    requestLogger.debug(
+      `Successfully set custom scope tree: ${inspect(result)}`,
+    );
 
     return ok({
       body: { result },
@@ -116,8 +120,8 @@ router.put("/", {
 router.post("/commerce", {
   body: SyncCommerceScopesBodySchema,
   handler: async (req, ctx) => {
-    const { logger } = ctx;
-    logger.debug("Syncing commerce scopes...");
+    const { logger: requestLogger } = ctx;
+    requestLogger.debug("Syncing commerce scopes...");
 
     const { commerceBaseUrl, commerceEnv } = req.body;
     const paramsWithCommerceConfig = {
@@ -136,30 +140,32 @@ router.post("/commerce", {
     const result = await syncCommerceScopes(commerceConfig);
 
     if (result.error) {
-      logger.error(`Error syncing commerce scopes: ${inspect(result.error)}`);
+      requestLogger.error(
+        `Error syncing commerce scopes: ${inspect(result.error)}`,
+      );
       return internalServerError({
         body: {
-          message: "An internal server error occurred",
           error: result.error,
+          message: "An internal server error occurred",
         },
       });
     }
 
     if (!result.synced) {
-      logger.debug(
+      requestLogger.debug(
         `Commerce scopes not synced (cached): ${inspect(result.scopeTree)}`,
       );
 
       return nonAuthoritativeInformation({
-        headers: { "x-cache": "hit" },
         body: {
           scopes: result.scopeTree,
           synced: false,
         },
+        headers: { "x-cache": "hit" },
       });
     }
 
-    logger.debug(
+    requestLogger.debug(
       `Successfully synced commerce scopes: ${inspect(result.scopeTree)}`,
     );
 
@@ -175,20 +181,20 @@ router.post("/commerce", {
 /** DELETE /commerce - Unsync commerce scopes */
 router.delete("/commerce", {
   handler: async (_req, ctx) => {
-    const { logger } = ctx;
-    logger.debug("Unsyncing commerce scopes...");
+    const { logger: requestLogger } = ctx;
+    requestLogger.debug("Unsyncing commerce scopes...");
 
     const { unsynced } = await unsyncCommerceScopes();
 
     if (unsynced) {
       const message = "Commerce scopes unsynced successfully";
 
-      logger.debug(message);
+      requestLogger.debug(message);
       return ok(message);
     }
 
     const message = "No commerce scopes to unsync";
-    logger.debug(message);
+    requestLogger.debug(message);
 
     return ok(message);
   },

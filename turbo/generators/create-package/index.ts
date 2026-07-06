@@ -55,9 +55,9 @@ function getPackageData(options: WizardOptions) {
     : `packages/${name}`;
 
   return {
+    packageDir,
     packageName: name,
     scopedPackageName,
-    packageDir,
     ...options,
   } satisfies PackageData;
 }
@@ -71,26 +71,25 @@ async function createPackageWizard() {
 
   const data = await prompts.group(
     {
-      name: () =>
-        prompts.text({
-          message: "What is the name of the package?",
-          placeholder: "aio-commerce-lib-{name}",
-          initialValue: "aio-commerce-lib-",
-          defaultValue: "aio-commerce-lib-unnamed",
-
-          validate: (value) => {
-            if (value?.trim().length === 0) {
-              return "Package name cannot be empty";
-            }
-          },
-        }),
-
       isPrivate: () =>
         prompts.confirm({
           initialValue: false,
           message: `Is the package private? ${ansis.gray(
             '(i.e. scoped to the monorepo, not published to the public "@adobe" NPM registry)',
           )}`,
+        }),
+      name: () =>
+        prompts.text({
+          defaultValue: "aio-commerce-lib-unnamed",
+          initialValue: "aio-commerce-lib-",
+          message: "What is the name of the package?",
+          placeholder: "aio-commerce-lib-{name}",
+
+          validate: (value) => {
+            if (value?.trim().length === 0) {
+              return "Package name cannot be empty";
+            }
+          },
         }),
 
       willContainTests: () =>
@@ -148,23 +147,23 @@ export function getGeneratorConfig(): PlopTypes.PlopGeneratorConfig {
   const prompts = async () => await createPackageWizard();
 
   return {
-    description:
-      "Creates a new package in the @adobe/aio-commerce-sdk monorepo",
-
-    prompts,
     actions(data) {
       const packageData = data as PackageData;
       return [
         {
-          type: "addMany",
-          destination: packageData.packageDir,
           base: "create-package/template",
+          destination: packageData.packageDir,
           stripExtensions: ["hbs"],
           templateFiles: getTemplateFiles(packageData),
+          type: "addMany",
         },
         formatFiles,
         installDependencies,
       ];
     },
+    description:
+      "Creates a new package in the @adobe/aio-commerce-sdk monorepo",
+
+    prompts,
   };
 }

@@ -36,8 +36,8 @@ describe("config-utils", () => {
       const entries: ConfigValueWithOptionalOrigin[] = [
         {
           name: "currency",
-          value: "USD",
           origin: { code: "global", level: "global" },
+          value: "USD",
         },
         { name: "locale", value: "en_US" },
       ];
@@ -157,8 +157,8 @@ describe("config-utils", () => {
 
       expect(result.find((e) => e.name === "timezone")).toMatchObject({
         name: "timezone",
-        value: "UTC",
         origin: { code: "base", level: "website" },
+        value: "UTC",
       });
     });
 
@@ -171,8 +171,8 @@ describe("config-utils", () => {
       );
 
       expect(result.find((e) => e.name === "currency")).toMatchObject({
-        value: "EUR",
         origin: { code: "base", level: "website" },
+        value: "EUR",
       });
     });
 
@@ -185,8 +185,8 @@ describe("config-utils", () => {
       );
 
       expect(result.find((e) => e.name === "locale")).toMatchObject({
-        value: "en_US",
         origin: { code: "global", level: "global" },
+        value: "en_US",
       });
     });
 

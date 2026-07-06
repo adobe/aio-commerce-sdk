@@ -21,9 +21,9 @@ import * as v from "valibot";
  * `?selection={"ids":["000000001"],"gridType":"customer"}`
  */
 export const MassActionSelectionSchema = v.object({
+  gridType: v.picklist(["order", "product", "customer"]),
   ids: v.pipe(
     v.array(nonEmptyStringValueSchema("id")),
     v.minLength(1, 'The value of "ids" must contain at least one entry'),
   ),
-  gridType: v.picklist(["order", "product", "customer"]),
 });

@@ -58,7 +58,7 @@ export async function setConfiguration(
     scopeTree,
   );
 
-  const sanitizedEntries = sanitizeRequestEntries(request?.config);
+  const sanitizedEntries = sanitizeRequestEntries(request.config);
   const passwordFields = getPasswordFields(schema);
   const encryptedEntries = encryptPasswordFields(
     sanitizedEntries,
@@ -82,8 +82,8 @@ export async function setConfiguration(
   );
 
   const payload = {
-    scope: { id: scopeId, code: scopeCode, level: scopeLevel },
     config: mergedScopeConfig,
+    scope: { code: scopeCode, id: scopeId, level: scopeLevel },
   };
 
   await configRepository.persistConfig(
@@ -93,10 +93,10 @@ export async function setConfiguration(
   );
 
   return {
-    message: "Configuration values updated successfully",
-    timestamp: new Date().toISOString(),
-    scope: { id: String(scopeId), code: scopeCode, level: scopeLevel },
     config: mergedScopeConfig.map(({ name, value }) => ({ name, value })),
+    message: "Configuration values updated successfully",
+    scope: { code: scopeCode, id: String(scopeId), level: scopeLevel },
+    timestamp: new Date().toISOString(),
   };
 }
 
