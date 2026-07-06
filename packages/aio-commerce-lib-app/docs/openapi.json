@@ -1390,6 +1390,11 @@
                         "step": {
                           "$ref": "#/components/schemas/StepStatus"
                         },
+                        "config": {
+                          "description": "The validated app configuration recorded at install time. Present so uninstallation can be sourced from what was actually installed rather than the current request config. Absent on states persisted before this field was introduced.",
+                          "type": "object",
+                          "additionalProperties": true
+                        },
                         "data": {
                           "anyOf": [
                             {
@@ -1426,6 +1431,11 @@
                         },
                         "step": {
                           "$ref": "#/components/schemas/StepStatus"
+                        },
+                        "config": {
+                          "description": "The validated app configuration recorded at install time. Present so uninstallation can be sourced from what was actually installed rather than the current request config. Absent on states persisted before this field was introduced.",
+                          "type": "object",
+                          "additionalProperties": true
                         },
                         "data": {
                           "anyOf": [
@@ -1479,6 +1489,11 @@
                         },
                         "step": {
                           "$ref": "#/components/schemas/StepStatus"
+                        },
+                        "config": {
+                          "description": "The validated app configuration recorded at install time. Present so uninstallation can be sourced from what was actually installed rather than the current request config. Absent on states persisted before this field was introduced.",
+                          "type": "object",
+                          "additionalProperties": true
                         },
                         "data": {
                           "anyOf": [
@@ -1636,6 +1651,11 @@
                     },
                     "step": {
                       "$ref": "#/components/schemas/StepStatus"
+                    },
+                    "config": {
+                      "description": "The validated app configuration recorded at install time. Present so uninstallation can be sourced from what was actually installed rather than the current request config. Absent on states persisted before this field was introduced.",
+                      "type": "object",
+                      "additionalProperties": true
                     },
                     "data": {
                       "anyOf": [
@@ -1869,6 +1889,11 @@
                         "step": {
                           "$ref": "#/components/schemas/StepStatus"
                         },
+                        "config": {
+                          "description": "The validated app configuration recorded at install time. Present so uninstallation can be sourced from what was actually installed rather than the current request config. Absent on states persisted before this field was introduced.",
+                          "type": "object",
+                          "additionalProperties": true
+                        },
                         "data": {
                           "anyOf": [
                             {
@@ -1905,6 +1930,11 @@
                         },
                         "step": {
                           "$ref": "#/components/schemas/StepStatus"
+                        },
+                        "config": {
+                          "description": "The validated app configuration recorded at install time. Present so uninstallation can be sourced from what was actually installed rather than the current request config. Absent on states persisted before this field was introduced.",
+                          "type": "object",
+                          "additionalProperties": true
                         },
                         "data": {
                           "anyOf": [
@@ -1958,6 +1988,11 @@
                         },
                         "step": {
                           "$ref": "#/components/schemas/StepStatus"
+                        },
+                        "config": {
+                          "description": "The validated app configuration recorded at install time. Present so uninstallation can be sourced from what was actually installed rather than the current request config. Absent on states persisted before this field was introduced.",
+                          "type": "object",
+                          "additionalProperties": true
                         },
                         "data": {
                           "anyOf": [
@@ -2115,6 +2150,11 @@
                     },
                     "step": {
                       "$ref": "#/components/schemas/StepStatus"
+                    },
+                    "config": {
+                      "description": "The validated app configuration recorded at install time. Present so uninstallation can be sourced from what was actually installed rather than the current request config. Absent on states persisted before this field was introduced.",
+                      "type": "object",
+                      "additionalProperties": true
                     },
                     "data": {
                       "anyOf": [
