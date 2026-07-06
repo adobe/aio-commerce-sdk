@@ -66,7 +66,10 @@ vi.mock("#management/index", async () => {
 
 import { installationRuntimeAction } from "#actions/installation/index";
 import { createRuntimeActionParams } from "#test/fixtures/actions";
-import { minimalValidConfig } from "#test/fixtures/config";
+import {
+  configWithCommerceEventing,
+  minimalValidConfig,
+} from "#test/fixtures/config";
 import {
   createMockCombinedStoreImpl,
   createMockFailedState,
@@ -663,6 +666,95 @@ describe("installationRuntimeAction", () => {
         type: "success",
         statusCode: 202,
         body: expect.objectContaining({ ...initialState }),
+      });
+    });
+
+    test("sources uninstallation from the recorded install snapshot, not the drifted request config", async () => {
+      // The install snapshot recorded config A (with eventing)...
+      installationStore = createMockInstallationStore(
+        createMockSucceededState({
+          id: "installation-1",
+          config: configWithCommerceEventing,
+        }),
+      );
+
+      // ...while the current request config B has drifted (eventing removed).
+      const handler = installationRuntimeAction({
+        appConfig: minimalValidConfig,
+      });
+
+      await handler(
+        createRuntimeActionParams({
+          method: "post",
+          path: "/uninstallation",
+          body: requestBody,
+          ...DEFAULT_INSTALLATION_PARAMS,
+        }),
+      );
+
+      // Uninstall must be built from the recorded snapshot config.
+      expect(createInitialUninstallationStateMock).toHaveBeenCalledWith({
+        config: configWithCommerceEventing,
+      });
+
+      // ...and the recorded config must flow to the async execution action.
+      expect(invokeMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          params: expect.objectContaining({
+            appConfig: configWithCommerceEventing,
+          }),
+        }),
+      );
+    });
+
+    test("falls back to the request config when the snapshot has no recorded config (legacy install)", async () => {
+      installationStore = createMockInstallationStore(
+        createMockSucceededState({ id: "installation-1", data: null }),
+      );
+
+      const handler = installationRuntimeAction({
+        appConfig: minimalValidConfig,
+      });
+
+      await handler(
+        createRuntimeActionParams({
+          method: "post",
+          path: "/uninstallation",
+          body: requestBody,
+          ...DEFAULT_INSTALLATION_PARAMS,
+        }),
+      );
+
+      expect(createInitialUninstallationStateMock).toHaveBeenCalledWith({
+        config: minimalValidConfig,
+      });
+    });
+
+    test("ignores an in-progress install snapshot and falls back to the request config", async () => {
+      // The cache can still hold an actively-running install — only a completed
+      // snapshot is authoritative for sourcing the uninstall config.
+      installationStore = createMockInstallationStore(
+        createMockInProgressState({
+          id: "installation-1",
+          config: configWithCommerceEventing,
+        }),
+      );
+
+      const handler = installationRuntimeAction({
+        appConfig: minimalValidConfig,
+      });
+
+      await handler(
+        createRuntimeActionParams({
+          method: "post",
+          path: "/uninstallation",
+          body: requestBody,
+          ...DEFAULT_INSTALLATION_PARAMS,
+        }),
+      );
+
+      expect(createInitialUninstallationStateMock).toHaveBeenCalledWith({
+        config: minimalValidConfig,
       });
     });
   });

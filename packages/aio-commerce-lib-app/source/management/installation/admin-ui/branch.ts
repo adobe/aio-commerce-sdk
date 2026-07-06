@@ -16,11 +16,34 @@ import {
   defineLeafStep,
 } from "#management/installation/workflow/step";
 
-import { registerExtension, unregisterExtension } from "./helpers";
+import {
+  enableAdminUiSdk,
+  registerExtension,
+  unregisterExtension,
+} from "./helpers";
 import { createAdminUiStepContext } from "./utils";
 
 import type { InferStepOutput } from "#management/installation/workflow/step";
 import type { AdminUiConfig, AdminUiExecutionContext } from "./utils";
+
+/**
+ * Leaf step that enables the Admin UI SDK (PUT) on install. Runs before
+ * {@link registerExtensionStep} so Commerce accepts the extension registration.
+ * Install-only: enabling the SDK is not reverted on uninstall since other
+ * extensions may still rely on it.
+ */
+const enableAdminUiSdkStep = defineLeafStep({
+  name: "enable-admin-ui-sdk",
+  meta: {
+    install: {
+      label: "Enable Admin UI SDK",
+      description: "Enables the Admin UI SDK in Adobe Commerce",
+    },
+  },
+
+  install: (_: AdminUiConfig, context: AdminUiExecutionContext) =>
+    enableAdminUiSdk(context),
+});
 
 /** Leaf step that registers the extension (POST) on install and unregisters it (DELETE) on uninstall. */
 const registerExtensionStep = defineLeafStep({
@@ -64,5 +87,5 @@ export const adminUiStep = defineBranchStep({
 
   when: hasAdminUi,
   context: createAdminUiStepContext,
-  children: [registerExtensionStep],
+  children: [enableAdminUiSdkStep, registerExtensionStep],
 });

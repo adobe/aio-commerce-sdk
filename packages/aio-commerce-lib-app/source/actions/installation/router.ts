@@ -465,15 +465,6 @@ router.post("/uninstallation", {
       `Starting uninstallation for app "${appData.projectName}" (workspace: "${appData.workspaceName}", commerce: "${commerceBaseUrl}")`,
     );
 
-    const rawAppConfig = rawParams.appConfig;
-
-    if (!rawAppConfig) {
-      return internalServerError(
-        "The app config is missing. Does the action receive it as a parameter?",
-      );
-    }
-
-    const appConfig = validateCommerceAppConfig(rawAppConfig);
     const store = await createUninstallationStore();
     const existingState = await store.get(getStorageKey());
 
@@ -486,8 +477,24 @@ router.post("/uninstallation", {
       );
     }
 
+    const installationSnapshot = await getInstallationSnapshot();
+    const installAppConfig = installationSnapshot?.config;
+
+    const uninstallConfig = installAppConfig ?? rawParams.appConfig;
+    if (!uninstallConfig) {
+      return internalServerError(
+        "Cannot determine what to uninstall: no recorded installation snapshot and no app config was provided.",
+      );
+    }
+
+    logger.debug(
+      installAppConfig
+        ? "Sourcing uninstallation from recorded install snapshot"
+        : "No recorded install config found; falling back to request config",
+    );
+
     const initialState = createInitialUninstallationState({
-      config: appConfig,
+      config: validateCommerceAppConfig(uninstallConfig),
     });
     logger.debug(`Created initial uninstall state: ${initialState.id}`);
     await store.put(getStorageKey(), initialState);
@@ -501,7 +508,7 @@ router.post("/uninstallation", {
       params: {
         ...workflowParams,
         initialState,
-        appConfig,
+        appConfig: uninstallConfig,
         __ow_path: "/uninstallation/execution",
         __ow_method: "post",
       },
@@ -605,3 +612,18 @@ router.delete("/uninstallation", {
     return noContent();
   },
 });
+
+/**
+ * Returns the completed installation snapshot that recorded its config, or null
+ * when none is authoritative (no install, an in-progress install, or a legacy
+ * record persisted before the config was recorded).
+ */
+async function getInstallationSnapshot() {
+  const installationStore = await createInstallationStore();
+  const installSnapshot = await installationStore.get(getStorageKey());
+  return installSnapshot &&
+    isCompletedState(installSnapshot) &&
+    installSnapshot.config
+    ? installSnapshot
+    : null;
+}

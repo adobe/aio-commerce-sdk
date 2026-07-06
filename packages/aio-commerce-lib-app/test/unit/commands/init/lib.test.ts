@@ -12,7 +12,8 @@
 
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
-import { installDependencies, runInstall } from "#commands/init/lib";
+import { installDependencies } from "#commands/init/lib";
+import { runInstall, runProjectInstall } from "#commands/utils";
 
 const mockSpawnSync = vi.fn<(...args: unknown[]) => unknown>();
 const INSTALL_VERB_RE = /^(i|install)$/;
@@ -85,6 +86,17 @@ describe("commands/init/lib", () => {
       expect(() =>
         runInstall("npm", ["@adobe/aio-commerce-lib-config"], "/tmp/project"),
       ).toThrow();
+    });
+  });
+
+  describe("runProjectInstall", () => {
+    test("runs the package manager install command without package specifiers", () => {
+      runProjectInstall("pnpm", "/tmp/project");
+
+      expect(mockSpawnSync).toHaveBeenCalledWith("pnpm", ["i"], {
+        cwd: "/tmp/project",
+        stdio: "inherit",
+      });
     });
   });
 

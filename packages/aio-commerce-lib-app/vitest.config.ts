@@ -10,27 +10,24 @@
  * governing permissions and limitations under the License.
  */
 
-import libConfigPkg from "@adobe/aio-commerce-lib-config/package.json" with {
-  type: "json",
-};
 import { baseConfig } from "@aio-commerce-sdk/config-vitest/vitest.config.base";
 import { defineConfig, mergeConfig } from "vitest/config";
 
-import spec from "./docs/openapi.json" with { type: "json" };
-import pkg from "./package.json" with { type: "json" };
+import { getVariables } from "./build.variables";
 
 const TEMPLATE_FILES = ["./source/commands/generate/actions/templates/**"];
 const BARREL_FILES = ["./source/**/index.ts"];
+
+const buildVariables = await getVariables();
 
 export default mergeConfig(
   baseConfig,
   defineConfig({
     plugins: [],
     define: {
-      __PKG_VERSION__: JSON.stringify(pkg.version),
-      __OPENAPI_VERSION__: JSON.stringify(spec.info.version),
-      __LIB_CONFIG_RANGE__: JSON.stringify(`^${libConfigPkg.version}`),
+      ...buildVariables,
     },
+
     test: {
       setupFiles: ["./test/setup/global.ts"],
       coverage: {

@@ -16,6 +16,8 @@ import { GENERATED_ACTIONS_PATH, PACKAGE_NAME } from "#commands/constants";
 import { requiresInstallation } from "#config/schema/app";
 import { hasBusinessConfigSchema } from "#config/schema/business-configuration";
 
+import { COMMERCE_ACTION_INPUTS } from "./constants";
+
 import type {
   ActionDefinition,
   ExtConfig,
@@ -33,28 +35,10 @@ export type TemplateAction = ActionConfig & {
   templateFile: string;
 };
 
-/** The list of Commerce variables that are required for the runtime actions */
-export const COMMERCE_VARIABLES = [
-  "AIO_COMMERCE_AUTH_IMS_CLIENT_ID",
-  "AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS",
-  "AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID",
-  "AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL",
-  "AIO_COMMERCE_AUTH_IMS_ORG_ID",
-  "AIO_COMMERCE_AUTH_IMS_SCOPES",
-] as const satisfies string[];
-
-/** The inputs for the generated runtime actions */
-export const COMMERCE_ACTION_INPUTS = Object.fromEntries(
-  COMMERCE_VARIABLES.map((variable) => [variable, `$${variable}`] as const),
-);
-
-export const CUSTOM_IMPORTS_PLACEHOLDER = "// {{CUSTOM_SCRIPTS_IMPORTS}}";
-export const CUSTOM_SCRIPTS_MAP_PLACEHOLDER = "// {{CUSTOM_SCRIPTS_MAP}}";
-export const CUSTOM_SCRIPTS_LOADER_PLACEHOLDER = "// {{CUSTOM_SCRIPTS_LOADER}}";
-
 /**
  * Creates a runtime action configuration.
  * @param actionName - The name of the action.
+ * @param config - Action generation options.
  * @param options - Optional configuration options.
  */
 function createActionDefinition(
@@ -87,6 +71,7 @@ function createActionDefinition(
 /**
  * Gets the runtime actions to be generated from the ext.config.yaml configuration.
  * @param extConfig - The ext.config.yaml configuration.
+ * @param dir - Directory containing the runtime action templates.
  */
 export function getRuntimeActions(extConfig: ExtConfig, dir: string) {
   return Object.entries(
@@ -102,7 +87,7 @@ export function getRuntimeActions(extConfig: ExtConfig, dir: string) {
 
 /**
  * Builds the ext.config.yaml configuration for the extensibility extension.
- * @param features - The features that are enabled for the app.
+ * @param appConfig - Parsed app configuration.
  */
 export function buildAppManagementExtConfig(
   appConfig: CommerceAppConfigOutputModel,
@@ -257,6 +242,7 @@ export function requiresWebSource(adminUi: AdminUi | undefined): boolean {
  * Builds the ext.config.yaml for the Admin UI v2 extension (`commerce/backend-ui/2`).
  * Derives `workerProcess` and `view` operation declarations from `adminUi` config.
  * Adds a `view` operation and `web` source when view-type entries or `adminUi.menu` is configured.
+ * @param appConfig - Parsed app configuration.
  */
 export function buildAdminUiV2ExtConfig(
   appConfig: CommerceAppConfigOutputModel,

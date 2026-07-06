@@ -36,6 +36,10 @@ const client = createAdminUiApiClient({
   },
 });
 
+// Enable the Admin UI SDK. This must run before registering an extension,
+// otherwise Commerce will not serve the registered extension.
+await client.enableAdminUiSdk();
+
 // Register an extension
 await client.registerExtension({
   extensionName: "my_namespace",

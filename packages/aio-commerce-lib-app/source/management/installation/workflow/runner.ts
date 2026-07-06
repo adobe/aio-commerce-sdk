@@ -99,6 +99,7 @@ export function createInitialState(
     status: "in-progress",
     step: buildInitialStepStatus(rootStep, config, [], mode),
     data: null,
+    config,
   };
 }
 
@@ -116,6 +117,7 @@ export function createRetryState(
     status: "in-progress",
     step: resetFailedSteps(failedState.step),
     data: failedState.data,
+    config: failedState.config,
   };
 }
 
@@ -180,6 +182,7 @@ async function executeWorkflowWithMode(
       startedAt: context.startedAt,
       step: context.step,
       data: context.data,
+      config: context.config,
     });
 
     await callHook(hooks, "onInstallationSuccess", succeeded);
@@ -195,6 +198,7 @@ async function executeWorkflowWithMode(
         id: context.id,
         startedAt: context.startedAt,
         data: context.data,
+        config: context.config,
       },
       error,
     );
@@ -249,6 +253,7 @@ function snapshot(context: StepExecutionContext): InProgressInstallationState {
     status: "in-progress",
     step: context.step,
     data: context.data,
+    config: context.config,
   };
 }
 

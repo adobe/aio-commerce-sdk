@@ -72,17 +72,16 @@ function assertScriptModule(module: unknown): asserts module is ScriptModule {
  *
  * @param customScripts - The customScripts context containing the loaded modules
  * @param script - The script path to resolve the module for
+ * @returns The resolved script module, or `undefined` if the script is not present in the context.
  */
 function getScriptModule(
   customScripts: Record<string, unknown>,
   script: string,
-): ScriptModule {
+): ScriptModule | undefined {
   let scriptModule = customScripts[script] as WithDefault<unknown>;
 
   if (!scriptModule) {
-    throw new Error(
-      `Script ${script} not found in customScripts context. Make sure the script is defined in the configuration and the action was generated with custom scripts support.`,
-    );
+    return;
   }
 
   if (typeof scriptModule === "object" && "default" in scriptModule) {
@@ -164,6 +163,12 @@ function createCustomScriptStep(scriptConfig: CustomInstallationStep): AnyStep {
       logger.debug(`Script path: ${script}`);
 
       const scriptModule = getScriptModule(customScripts, script);
+      if (!scriptModule) {
+        throw new Error(
+          `Script ${script} not found in customScripts context. Make sure the script is defined in the configuration and the action was generated with custom scripts support.`,
+        );
+      }
+
       const install = resolveCustomScriptHandler(scriptModule, "install");
 
       const scriptResult = await install(config, context);
@@ -184,6 +189,14 @@ function createCustomScriptStep(scriptConfig: CustomInstallationStep): AnyStep {
       logger.debug(`Uninstalling custom script: ${name}`);
 
       const scriptModule = getScriptModule(customScripts, script);
+      if (!scriptModule) {
+        logger.warn(
+          `Script ${script} not found in customScripts context, skipping uninstall. It may have been removed from the project after being configured.`,
+        );
+
+        return;
+      }
+
       const uninstall = resolveCustomScriptHandler(scriptModule, "uninstall");
 
       if (!uninstall) {

@@ -90,19 +90,22 @@ This produces the following files, organized by extension point:
 - `src/commerce-extensibility-1/.generated/actions/app-management/installation.js`: drives the installation flow, including any custom scripts you define
 - `src/commerce-extensibility-1/ext.config.yaml`: extension manifest with the `pre-app-build` hook
 
+Generated application code should import app metadata from `#app.commerce.config`. For static configurations, the alias points to `src/commerce-extensibility-1/.generated/app.commerce.manifest.json`. For dynamic configurations, it points to a generated runtime-safe ESM module.
+
 **`commerce/configuration/1`**: Business configuration (generated when `businessConfig` is defined):
 
-- `src/commerce-configuration-1/.generated/configuration-schema.json`: a validated JSON representation of your schema for runtime use
+- `src/commerce-configuration-1/.generated/configuration-schema.json`: a validated JSON representation of your schema, generated for static schemas
 - `src/commerce-configuration-1/.generated/actions/business-configuration/config.js`: handles retrieving and updating configuration values across scopes
 - `src/commerce-configuration-1/.generated/actions/business-configuration/scope-tree.js`: handles scope hierarchy management for both Adobe Commerce and custom external scopes
 - `src/commerce-configuration-1/ext.config.yaml`: extension manifest with the `pre-app-build` hook
 
 > [!NOTE]
-> When the business config schema contains `dynamicList` fields, the manifest is emitted as an ESM module (`app.commerce.manifest.js`) instead of JSON, and no separate `configuration-schema.json` is generated. Generated actions resolve `dynamicList` fields on every request. Any external credentials a factory uses must be declared as `inputs` for each action that resolves the schema (in the corresponding `ext.config.yaml` of each action).
+> Generated actions import app config through `#app.commerce.config`. When the business config schema contains `dynamicList` fields, no separate `configuration-schema.json` is generated. Generated actions resolve `dynamicList` fields on every request. Any external credentials a factory uses must be declared as `inputs` for each action that resolves the schema (in the corresponding `ext.config.yaml` of each action).
 
 **`commerce/backend-ui/2`**: Admin UI registration (generated when `adminUi` is defined):
 
 - `src/commerce-backend-ui-2/ext.config.yaml`: extension manifest with the `pre-app-build` hook and `workerProcess` declarations derived from `runtimeAction` values
+- `src/commerce-backend-ui-2/web-src/`: browser scaffold generated when iframe-based Admin UI features require a `view` operation. Existing `web-src/index.html` files are never overwritten.
 
 > [!NOTE]
 > Generated actions default to the `nodejs:24` runtime. To pin a different runtime, set the `runtime` field on the action in the generated `ext.config.yaml`. Codegen preserves a `runtime` you set there, so it survives regeneration.
@@ -596,7 +599,9 @@ export default defineCustomInstallationStep(async (config, context) => {
 > [!WARNING]
 > **Experimental:** Admin UI support on `commerce/backend-ui/2` is not yet production-ready. The API may change in future releases.
 
-The `adminUi` field declares Admin UI registrations for the `commerce/backend-ui/2` extension point. Unlike `commerce/backend-ui/1`, which required a dedicated registration action, V2 reads the registration directly from the `app-config` endpoint — no separate registration action is generated. Every field of `adminUi` is optional — configure only the extension points your application needs. When defined, `init` and `generate all` automatically wire up the extension, including the `pre-app-build` hook and the `workerProcess` declarations in `ext.config.yaml`. Currently supported: grid column extensions, mass actions, order view buttons, and menu declarations. For details on each extension point, see the [Admin UI SDK Extension Points documentation](https://developer.adobe.com/commerce/extensibility/admin-ui-sdk/extension-points/).
+The `adminUi` field declares Admin UI registrations for the `commerce/backend-ui/2` extension point. Unlike `commerce/backend-ui/1`, which required a dedicated registration action, V2 reads the registration directly from the `app-config` endpoint — no separate registration action is generated. Every field of `adminUi` is optional — configure only the extension points your application needs. When defined, `init` and `generate all` automatically wire up the extension, including the `pre-app-build` hook and the `workerProcess` declarations in `ext.config.yaml`.
+
+View-based features also get a minimal `web-src/` scaffold when the resolved `view` entrypoint does not exist yet. The scaffold uses `.tsx` files when your app config is TypeScript and `.jsx` files otherwise. It imports app metadata from `#app.commerce.config`, so custom Admin UI code should use the same alias instead of importing generated files by path. Currently supported: grid column extensions, mass actions, order view buttons, and menu declarations. For details on each extension point, see the [Admin UI SDK Extension Points documentation](https://developer.adobe.com/commerce/extensibility/admin-ui-sdk/extension-points/).
 
 ##### Grid Columns
 

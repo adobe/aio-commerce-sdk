@@ -312,6 +312,26 @@ describe("package.json dependency helpers", () => {
     );
   });
 
+  test("should treat dist-tag specifiers as compatible when installed", async () => {
+    await withTempFiles(
+      {
+        "node_modules/typescript/package.json": JSON.stringify({
+          name: "typescript",
+          version: "5.4.0",
+        }),
+        "package.json": JSON.stringify({ name: "test-package" }),
+      },
+      async (tempDir) => {
+        await expect(
+          getPackageDependencyInstallPlan(
+            [{ name: "typescript", version: "latest" }],
+            tempDir,
+          ),
+        ).resolves.toEqual({ incompatible: [], missing: [] });
+      },
+    );
+  });
+
   test("should merge missing dependencies", () => {
     expect(
       mergePackageJsonDependencies(

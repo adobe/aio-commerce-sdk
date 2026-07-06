@@ -17,10 +17,6 @@ import { requiresInstallationFromDomains } from "#config/schema/app";
 import type AioLogger from "@adobe/aio-lib-core-logging";
 import type { CommerceAppConfigDomain } from "#config/schema/domains";
 
-// __PKG_VERSION__ and __OPENAPI_VERSION__ are injected and replaced at build time.
-declare const __PKG_VERSION__: string;
-declare const __OPENAPI_VERSION__: string;
-
 /**
  * Loads the committed OpenAPI spec via dynamic import so it
  * lands in its own chunk and is not parsed on every cold start.
