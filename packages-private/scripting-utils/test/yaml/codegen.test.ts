@@ -126,10 +126,32 @@ runtimeManifest:
         new Document({}),
       );
 
-      // Should have default empty structures
+      // Should have default empty hooks but no action manifest.
       expect(doc.has("hooks")).toBe(true);
       expect(doc.has("operations")).toBe(false);
-      expect(doc.has("runtimeManifest")).toBe(true);
+      expect(doc.has("runtimeManifest")).toBe(false);
+    });
+  });
+
+  test("should not create runtime manifest when packages are empty", async () => {
+    await withTempFiles({}, async (tempDir) => {
+      const configPath = join(tempDir, "ext.config.yaml");
+      const config = {
+        runtimeManifest: {
+          packages: {},
+        },
+      };
+
+      const doc = await createOrUpdateExtConfig(
+        configPath,
+        config,
+        new Document({}),
+      );
+      const fileContent = await readFile(configPath, "utf-8");
+
+      expect(doc.has("runtimeManifest")).toBe(false);
+      expect(fileContent).not.toContain("runtimeManifest");
+      expect(fileContent).not.toContain("packages: {}");
     });
   });
 
@@ -178,7 +200,7 @@ runtimeManifest:
       const configPath = join(tempDir, "ext.config.yaml");
       const config = {
         runtimeManifest: {
-          // No packages - tests line 148 (manifest.packages ?? {})
+          // No packages should not create an action manifest.
         },
       };
 
@@ -188,7 +210,10 @@ runtimeManifest:
         new Document({}),
       );
 
-      expect(doc.has("runtimeManifest")).toBe(true);
+      const fileContent = await readFile(configPath, "utf-8");
+
+      expect(doc.has("runtimeManifest")).toBe(false);
+      expect(fileContent).not.toContain("runtimeManifest");
     });
   });
 
@@ -731,6 +756,26 @@ runtimeManifest:
         const fileContent = await readFile(configPath, "utf-8");
 
         expect(fileContent).toContain("web: web-src");
+      });
+    });
+
+    test("does not write runtime manifest for web-only extensions", async () => {
+      await withTempFiles({}, async (tempDir) => {
+        const configPath = join(tempDir, "ext.config.yaml");
+        const config = {
+          operations: {
+            view: [{ type: "web" as const, impl: "index.html" }],
+          },
+          web: "web-src",
+        };
+
+        await createOrUpdateExtConfig(configPath, config, new Document({}));
+        const fileContent = await readFile(configPath, "utf-8");
+
+        expect(fileContent).toContain("web: web-src");
+        expect(fileContent).toContain("view:");
+        expect(fileContent).not.toContain("runtimeManifest");
+        expect(fileContent).not.toContain("packages: {}");
       });
     });
 

@@ -300,7 +300,13 @@ describe("buildAdminUiV2ExtConfig", () => {
 
   test("workerProcess is omitted when adminUi has only menu (no grids or worker mass actions)", () => {
     const config = buildAdminUiV2ExtConfig(configWithAdminUiMenu);
+
+    expect(config.operations.view).toEqual([
+      { type: "web", impl: "index.html" },
+    ]);
     expect(config.operations?.workerProcess).toBeUndefined();
+    expect(config.web).toBe("web-src");
+    expect("runtimeManifest" in config).toBe(false);
   });
 
   test("includes view and web when view mass actions are configured", () => {
