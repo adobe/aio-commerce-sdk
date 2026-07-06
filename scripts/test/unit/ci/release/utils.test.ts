@@ -112,5 +112,16 @@ describe("release/utils.ts", () => {
         );
       });
     });
+
+    test("formats the output with Biome, collapsing short arrays onto one line", async () => {
+      await withTempFiles({}, async (tempDir) => {
+        const path = join(tempDir, "data.json");
+        await writeJson(path, { keywords: ["commerce", "adobe"] });
+
+        await expect(readFile(path, "utf-8")).resolves.toBe(
+          '{\n  "keywords": ["commerce", "adobe"]\n}\n',
+        );
+      });
+    });
   });
 });
