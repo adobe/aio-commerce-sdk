@@ -29,7 +29,7 @@ catalogs:
     '@types/react-dom': ^19.2.3
     react: ^19.2.7
     react-dom: ^19.2.7
-  
+
 engineStrict: true
 allowBuilds:
   '@actions/github-script': true
@@ -38,3 +38,5 @@ allowBuilds:
   esbuild: true
   msw: true
   protobufjs: true
+minimumReleaseAgeExclude:
+  - ultracite@7.9.2
