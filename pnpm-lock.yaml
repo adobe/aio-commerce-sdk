@@ -124,8 +124,8 @@ importers:
         specifier: 'catalog:'
         version: 6.0.3
       ultracite:
-        specifier: 7.8.3
-        version: 7.8.3
+        specifier: 7.8.4
+        version: 7.8.4
       vitest:
         specifier: ^4.1.0
         version: 4.1.9(@types/node@24.13.2)(@vitest/coverage-v8@4.1.9)(@vitest/ui@4.1.9)(msw@2.14.6(@types/node@24.13.2)(typescript@6.0.3))(vite@8.1.3(@types/node@24.13.2)(esbuild@0.28.1)(jiti@2.7.0)(yaml@2.9.0))
@@ -810,7 +810,6 @@ packages:
   '@adobe/aio-lib-core-networking@5.1.0':
     resolution: {integrity: sha512-RZgA73yUHhikjIGy7k0DRobPbIXbtuI/0ixrBXOVqj19WTqFFrEuyHtzOuRsBAmu0OvVkf6slQHtDTL9oPLxfg==}
     engines: {node: '>=18'}
-    bundledDependencies: []
 
   '@adobe/aio-lib-core-tvm@4.0.3':
     resolution: {integrity: sha512-zwl4GeU5CryZBozpub4jI9tnGW2ewD6mMLaXX8HhO8DqKzcjnjYr+MbUS0c/QzGd8gTzZWbikm4J7tfpCn3cAA==}
@@ -819,7 +818,6 @@ packages:
   '@adobe/aio-lib-env@3.0.1':
     resolution: {integrity: sha512-UaLosV8jBowEA2ho4BNmWuHhrNCFbx26kJAr2SAIdEm4lZ/D8av8FUSMOEyAKJ/dfO2HCnLKMy77ie2AU7HI3g==}
     engines: {node: '>=18'}
-    bundledDependencies: []
 
   '@adobe/aio-lib-files@4.1.4':
     resolution: {integrity: sha512-YhUu5YV4hnFm6arsMYhl96bjbxnOpmMgE5WiwUvLlm9Dh4PGNGAaY52nED5xnbI+ODbj0vSd9s6KwC3kTmo6tQ==}
@@ -3846,8 +3844,8 @@ packages:
     engines: {node: '>=0.8.0'}
     hasBin: true
 
-  ultracite@7.8.3:
-    resolution: {integrity: sha512-Fsj9aYJfh57uDB6DrdKVafKhF0QNekwqTrZKoTMYePjZp1npyFCnfZVj2SnPZdOcxAGHJfmLYUIDq0YPh8acVA==}
+  ultracite@7.8.4:
+    resolution: {integrity: sha512-Lqd1k8sr7xT3QY+2x6qA72TFkA3r1Z7QvCUbOFBOeGAVdwBG43RPSvhTuEpZOgbdINFBcJ/v6dK2tyT4inPDTQ==}
     hasBin: true
     peerDependencies:
       oxfmt: '>=0.1.0'
@@ -7214,7 +7212,7 @@ snapshots:
   uglify-js@3.19.3:
     optional: true
 
-  ultracite@7.8.3:
+  ultracite@7.8.4:
     dependencies:
       '@clack/prompts': 1.7.0
       commander: 15.0.0
