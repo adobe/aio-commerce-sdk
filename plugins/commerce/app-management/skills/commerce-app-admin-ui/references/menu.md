@@ -51,7 +51,9 @@ Import from `@adobe/aio-commerce-sdk/admin-ui/menu`. Use the named constant rath
 
 ## Rendering
 
-The menu entry opens the app's `web-src` at its route. That frontend is scaffolded automatically by init/generate (if it doesn't already exist; `index.html`, `src/app.jsx`, `src/pages/main-page.jsx`, `src/components/welcome.jsx`) — the generated `src/app.jsx` mounts the iframe app with `createExtensionApp` from `@adobe/aio-commerce-lib-admin-ui/web`:
+**The menu has no `path` — it always opens the app's index route.** The menu page _is_ the index route (`src/pages/main-page.jsx`, registered as `{ index: true }` in `src/app.jsx`). Unlike view mass actions and view buttons, there is no per-entry route to scaffold for the menu; it reuses the index page every app already has.
+
+That frontend is scaffolded automatically by init/generate (if it doesn't already exist; `index.html`, `src/app.jsx`, `src/pages/main-page.jsx`, `src/components/welcome.jsx`) — the generated `src/app.jsx` mounts the iframe app with `createExtensionApp` from `@adobe/aio-commerce-lib-admin-ui/web`:
 
 ```jsx
 import { createExtensionApp } from "@adobe/aio-commerce-lib-admin-ui/web";
