@@ -632,6 +632,7 @@ For each mass action in the assembled config where `type: "worker"`:
    request parsing and response construction with the builders below):
 
    ```javascript
+   import { CommerceSdkValidationError } from "@adobe/aio-commerce-sdk/core/error";
    import {
      parseMassActionRequest,
      okMassActionResponse,
@@ -640,7 +641,7 @@ For each mass action in the assembled config where `type: "worker"`:
 
    export async function main(params) {
      try {
-       const { gridType, ids } = parseMassActionRequest(params);
+       const { gridType, selectedIds } = parseMassActionRequest(params);
 
        // existing business logic
        return okMassActionResponse();
@@ -657,7 +658,7 @@ For each mass action in the assembled config where `type: "worker"`:
 4. If not found: scaffold a new handler at
    `src/commerce-backend-ui-2/actions/<action>/index.js` using the same shape.
 
-- `parseMassActionRequest(params)` → `{ requestId, gridType, ids }` — validates incoming shape.
+- `parseMassActionRequest(params)` → `{ requestId, gridType, selectedIds }` — validates incoming shape.
 - `okMassActionResponse(body?)` → HTTP 200.
 - `massActionErrorResponse(statusCode, message)` → non-2xx.
 
@@ -670,6 +671,7 @@ For each view button in the assembled config where `type: "worker"`:
 3. If found: rewrite to use lib utilities:
 
 ```javascript
+import { CommerceSdkValidationError } from "@adobe/aio-commerce-sdk/core/error";
 import {
   parseOrderViewButtonRequest,
   okOrderViewButtonResponse,
