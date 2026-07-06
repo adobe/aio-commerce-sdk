@@ -3,7 +3,7 @@
   "info": {
     "title": "App Management API",
     "description": "REST API for managing Adobe Commerce App Builder apps: resolving app configuration, managing configuration values, running the installation and uninstallation lifecycle, and managing the scope tree.",
-    "version": "2.1.0",
+    "version": "2.0.0",
     "contact": {},
     "license": {
       "identifier": "Apache-2.0",
