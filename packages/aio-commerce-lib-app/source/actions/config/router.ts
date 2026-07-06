@@ -19,7 +19,7 @@ import {
 import { ok } from "@adobe/aio-commerce-lib-core/responses";
 import {
   HttpActionRouter,
-  logger,
+  logger as withLogger,
 } from "@aio-commerce-sdk/common-utils/actions";
 
 import { filterSchemaByEnv } from "#config/lib/environment";
@@ -86,7 +86,7 @@ function filterPasswordFields<T extends Omit<ConfigValue, "origin">>(
  * - PATCH /   Partially update configuration (only updates provided fields, allows unsetting)
  */
 export const router = new HttpActionRouter<ConfigActionContext>().use(
-  logger({
+  withLogger({
     name: () => "config",
   }),
 );
@@ -94,7 +94,7 @@ export const router = new HttpActionRouter<ConfigActionContext>().use(
 /** GET / - Retrieve configuration */
 router.get("/", {
   handler: async (req, ctx) => {
-    const { logger: requestLogger, rawParams } = ctx;
+    const { logger, rawParams } = ctx;
     const { configSchema: rawConfigSchema } = rawParams;
 
     const env = req.query.commerceEnv;
@@ -102,19 +102,19 @@ router.get("/", {
       ? filterSchemaByEnv(rawConfigSchema, env)
       : rawConfigSchema;
 
-    requestLogger.debug("Initializing configuration");
+    logger.debug("Initializing configuration");
     const { configSchema } = await initialize({
       params: rawParams,
       schema: envFilteredSchema,
     });
 
     const { scopeId } = req.query;
-    requestLogger.debug(`Retrieving configuration with scope id: ${scopeId}`);
+    logger.debug(`Retrieving configuration with scope id: ${scopeId}`);
     const appConfiguration = await getConfiguration(byScopeId(scopeId), {
       encryptionKey: rawParams.AIO_COMMERCE_CONFIG_ENCRYPTION_KEY,
     });
 
-    requestLogger.debug("Masking password values...");
+    logger.debug("Masking password values...");
     appConfiguration.config = filterPasswordFields(
       configSchema,
       appConfiguration.config,
@@ -136,11 +136,9 @@ router.get("/", {
 router.put("/", {
   body: PutConfigBodySchema,
   handler: async (req, ctx) => {
-    const { logger: requestLogger, rawParams } = ctx;
+    const { logger, rawParams } = ctx;
 
-    requestLogger.debug(
-      `Setting configuration with scope id: ${req.body.scopeId}`,
-    );
+    logger.debug(`Setting configuration with scope id: ${req.body.scopeId}`);
     const { scopeId, config } = req.body;
 
     const { configSchema } = await initialize({
@@ -176,11 +174,9 @@ router.put("/", {
 router.patch("/", {
   body: PatchConfigBodySchema,
   handler: async (req, ctx) => {
-    const { logger: requestLogger, rawParams } = ctx;
+    const { logger, rawParams } = ctx;
 
-    requestLogger.debug(
-      `Patching configuration with scope id: ${req.body.scopeId}`,
-    );
+    logger.debug(`Patching configuration with scope id: ${req.body.scopeId}`);
     const { scopeId, config } = req.body;
 
     const { configSchema } = await initialize({

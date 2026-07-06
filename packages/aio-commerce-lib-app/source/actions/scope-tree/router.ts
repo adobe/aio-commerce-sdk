@@ -25,7 +25,7 @@ import {
 } from "@adobe/aio-commerce-lib-core/responses";
 import {
   HttpActionRouter,
-  logger,
+  logger as withLogger,
 } from "@aio-commerce-sdk/common-utils/actions";
 import { inspect } from "@aio-commerce-sdk/common-utils/logging";
 
@@ -46,7 +46,7 @@ import type { SetCustomScopeTreeRequest } from "@adobe/aio-commerce-lib-config";
  * - DELETE /commerce   Unsync commerce scopes
  */
 export const router = new HttpActionRouter().use(
-  logger({
+  withLogger({
     name: () => "scope-tree",
   }),
 );
@@ -54,10 +54,10 @@ export const router = new HttpActionRouter().use(
 /** GET / - Get scope tree */
 router.get("/", {
   handler: async (_req, ctx) => {
-    const { logger: requestLogger } = ctx;
+    const { logger } = ctx;
     const result = await getScopeTree();
 
-    requestLogger.debug(
+    logger.debug(
       `Successfully retrieved scope tree (cached: ${result.isCachedData}): ${inspect(result.scopeTree)}`,
     );
 
@@ -78,8 +78,8 @@ router.get("/", {
 router.put("/", {
   body: SetCustomScopeTreeBodySchema,
   handler: async (req, ctx) => {
-    const { logger: requestLogger } = ctx;
-    requestLogger.debug(
+    const { logger } = ctx;
+    logger.debug(
       `Setting custom scope tree with ${req.body.scopes?.length || 0} scopes`,
     );
 
@@ -88,24 +88,20 @@ router.put("/", {
     } satisfies SetCustomScopeTreeRequest;
 
     let result: Awaited<ReturnType<typeof setCustomScopeTree>>;
-    requestLogger.debug(`Setting custom scope tree: ${inspect(request)}`);
+    logger.debug(`Setting custom scope tree: ${inspect(request)}`);
 
     try {
       result = await setCustomScopeTree(request);
     } catch (err) {
       if (err instanceof Error && "isValidationError" in err) {
-        requestLogger.debug(
-          `Custom scope tree validation failed: ${err.message}`,
-        );
+        logger.debug(`Custom scope tree validation failed: ${err.message}`);
         return badRequest({ body: { message: err.message } });
       }
 
       throw err;
     }
 
-    requestLogger.debug(
-      `Successfully set custom scope tree: ${inspect(result)}`,
-    );
+    logger.debug(`Successfully set custom scope tree: ${inspect(result)}`);
 
     return ok({
       body: { result },
@@ -120,8 +116,8 @@ router.put("/", {
 router.post("/commerce", {
   body: SyncCommerceScopesBodySchema,
   handler: async (req, ctx) => {
-    const { logger: requestLogger } = ctx;
-    requestLogger.debug("Syncing commerce scopes...");
+    const { logger } = ctx;
+    logger.debug("Syncing commerce scopes...");
 
     const { commerceBaseUrl, commerceEnv } = req.body;
     const paramsWithCommerceConfig = {
@@ -140,9 +136,7 @@ router.post("/commerce", {
     const result = await syncCommerceScopes(commerceConfig);
 
     if (result.error) {
-      requestLogger.error(
-        `Error syncing commerce scopes: ${inspect(result.error)}`,
-      );
+      logger.error(`Error syncing commerce scopes: ${inspect(result.error)}`);
       return internalServerError({
         body: {
           error: result.error,
@@ -152,7 +146,7 @@ router.post("/commerce", {
     }
 
     if (!result.synced) {
-      requestLogger.debug(
+      logger.debug(
         `Commerce scopes not synced (cached): ${inspect(result.scopeTree)}`,
       );
 
@@ -165,7 +159,7 @@ router.post("/commerce", {
       });
     }
 
-    requestLogger.debug(
+    logger.debug(
       `Successfully synced commerce scopes: ${inspect(result.scopeTree)}`,
     );
 
@@ -181,20 +175,20 @@ router.post("/commerce", {
 /** DELETE /commerce - Unsync commerce scopes */
 router.delete("/commerce", {
   handler: async (_req, ctx) => {
-    const { logger: requestLogger } = ctx;
-    requestLogger.debug("Unsyncing commerce scopes...");
+    const { logger } = ctx;
+    logger.debug("Unsyncing commerce scopes...");
 
     const { unsynced } = await unsyncCommerceScopes();
 
     if (unsynced) {
       const message = "Commerce scopes unsynced successfully";
 
-      requestLogger.debug(message);
+      logger.debug(message);
       return ok(message);
     }
 
     const message = "No commerce scopes to unsync";
-    requestLogger.debug(message);
+    logger.debug(message);
 
     return ok(message);
   },

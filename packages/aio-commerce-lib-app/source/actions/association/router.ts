@@ -13,7 +13,7 @@
 import { noContent } from "@adobe/aio-commerce-lib-core/responses";
 import {
   HttpActionRouter,
-  logger,
+  logger as withLogger,
 } from "@aio-commerce-sdk/common-utils/actions";
 
 import {
@@ -36,7 +36,7 @@ type AssociationActionContext = BaseContext;
  * - DELETE / Clear stored Commerce instance details
  */
 export const router = new HttpActionRouter<AssociationActionContext>().use(
-  logger({ name: () => "association" }),
+  withLogger({ name: () => "association" }),
 );
 
 /**
@@ -48,9 +48,9 @@ export const router = new HttpActionRouter<AssociationActionContext>().use(
 router.post("/", {
   body: AssociationRequestBodySchema,
 
-  handler: async (req, { logger: requestLogger }) => {
+  handler: async (req, { logger }) => {
     const { commerceBaseUrl, commerceEnv } = req.body;
-    requestLogger.debug(
+    logger.debug(
       `Storing association data (baseUrl: "${commerceBaseUrl}", env: "${commerceEnv}")`,
     );
 
@@ -66,8 +66,8 @@ router.post("/", {
  * Called when the app is unassociated.
  */
 router.delete("/", {
-  handler: async (_req, { logger: requestLogger }) => {
-    requestLogger.debug("Clearing association data");
+  handler: async (_req, { logger }) => {
+    logger.debug("Clearing association data");
     await clearAssociationData();
     return noContent();
   },
