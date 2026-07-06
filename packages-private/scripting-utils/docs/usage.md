@@ -73,12 +73,12 @@ const packageManager = await detectPackageManager();
 // (npx, pnpm exec, yarn exec, or bun x)
 const execCommand = getExecCommand(packageManager);
 
-// Get the command to install dependencies
-// (e.g. "pnpm add foo bar", "npm i foo bar")
+// Get the command to install dependencies, returned as a { command, args }
+// pair (e.g. { command: "pnpm", args: ["add", "foo", "bar"] })
 const installCommand = getInstallCommand(packageManager, ["foo", "bar"]);
 
 // Pass PackageInstallOptions to install as development dependencies
-// (e.g. "npm i --save-dev foo bar")
+// (adds the manager's dev flag, e.g. args: ["add", "--save-dev", "foo", "bar"])
 const installOptions: PackageInstallOptions = { dev: true };
 const devInstallCommand = getInstallCommand(
   packageManager,
@@ -86,8 +86,8 @@ const devInstallCommand = getInstallCommand(
   installOptions,
 );
 
-// Get the command that installs a project's declared dependencies
-// (e.g. "pnpm install", "npm i")
+// Get the { command, args } pair that installs a project's declared dependencies
+// (e.g. { command: "pnpm", args: ["install"] })
 const projectInstallCommand = getProjectInstallCommand(packageManager);
 ```
 

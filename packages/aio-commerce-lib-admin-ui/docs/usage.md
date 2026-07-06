@@ -526,7 +526,7 @@ function Welcome() {
 
 #### Resolving the Commerce host
 
-`useCommerce` returns the host (domain) of the Commerce Admin the extension is embedded in. The value comes from the host-provided Commerce context:
+`useCommerce` returns the host (domain) of the Commerce Admin the extension is embedded in. The value is resolved over the guest connection via the host's integration API. It throws when used outside the Commerce Admin frame, or when the host does not expose that integration API:
 
 ```jsx
 import { useCommerce } from "@adobe/aio-commerce-lib-admin-ui/web";
@@ -539,7 +539,7 @@ function CommerceInfo() {
 
 #### Interacting with the Commerce Admin host
 
-`useHostConnection` returns typed helpers for closing the extension iframe and returning control to the Commerce Admin. Note that these only useful in flows that need to close the current iframe and navigate back, such as mass actions and order view buttons.
+`useHostConnection` returns typed helpers for closing the extension iframe and returning control to the Commerce Admin. Note that these are only useful in flows that need to close the current iframe and navigate back, such as mass actions and order view buttons.
 
 ```jsx
 import { useHostConnection } from "@adobe/aio-commerce-lib-admin-ui/web";
@@ -585,7 +585,7 @@ import { useSharedContext } from "@adobe/aio-commerce-lib-admin-ui/web";
 
 function Advanced() {
   const { extensionId, sharedContext, host } = useSharedContext();
-  const locale = sharedContext.get("selectedIds");
+  const selectedIds = sharedContext.get("selectedIds");
 }
 ```
 
