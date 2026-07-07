@@ -10,11 +10,6 @@
  * governing permissions and limitations under the License.
  */
 
-/** Frame modes recognized by the extension entrypoint. */
-export type FrameMode = "ui" | "control" | "standalone" | "shell";
-
-const ORIGINAL_PARENT = globalThis.window.parent;
-
 function setParent(parent: Window) {
   Object.defineProperty(globalThis.window, "parent", {
     value: parent,
@@ -22,38 +17,54 @@ function setParent(parent: Window) {
   });
 }
 
+/** The two orthogonal axes that drive frame detection in `#web/react/commerce/lib`. */
+type FrameOptions = {
+  /** Whether the app runs inside a host frame (`window.parent !== window`). */
+  embedded: boolean;
+  /** The `window.name` the host assigns; a `uix-guest-*` name marks a UI frame. */
+  name?: string;
+};
+
 /**
- * Drives the real frame detection (`#web/react/commerce/lib`) by setting
- * `window.parent`/`window.name` instead of mocking the module. Browser mode runs
- * tests in an iframe, so `window.parent !== window` by default — the standalone and
- * shell cases must explicitly pin `window.parent` back to `window`.
+ * Drives the real frame detection by stubbing `window.parent`/`window.name`, instead
+ * of mocking the module. Browser mode runs tests in an iframe, so `window.parent !== window`
+ * by default — this pins both axes explicitly. Prefer the named helpers below; reach for
+ * this primitive only for states they don't express (e.g. embedded with an unrelated name).
  *
- * Pair with {@link restoreFrame} in an `afterEach`.
- *
- * @param mode - Which frame the app should detect.
+ * @param options - The frame's embedded state and host-assigned name.
+ * @returns A function that restores the previous `window.parent`/`window.name`.
  */
-export function stubFrame(mode: FrameMode) {
-  switch (mode) {
-    case "ui":
-      setParent({} as Window);
-      globalThis.window.name = "uix-guest-1";
-      break;
-    case "control":
-      setParent({} as Window);
-      globalThis.window.name = "";
-      break;
-    case "standalone":
-    case "shell":
-      setParent(globalThis.window);
-      globalThis.window.name = "";
-      break;
-    default:
-      throw new Error(`Unknown frame mode: ${mode}`);
-  }
+export function stubFrame({ embedded, name = "" }: FrameOptions) {
+  const previousParent = globalThis.window.parent;
+  const previousName = globalThis.window.name;
+
+  setParent(embedded ? ({} as Window) : globalThis.window);
+  globalThis.window.name = name;
+
+  return () => {
+    setParent(previousParent);
+    globalThis.window.name = previousName;
+  };
 }
 
-/** Restores `window.parent`/`window.name` after a {@link stubFrame} call. */
-export function restoreFrame() {
-  setParent(ORIGINAL_PARENT);
-  globalThis.window.name = "";
+/** Embedded UI frame (uix-guest name): `isUiFrame()` reports true. */
+export function stubUiFrame(name = "uix-guest-1") {
+  return stubFrame({ embedded: true, name });
+}
+
+/** Embedded control frame (no name): `isControlFrame()` reports true. */
+export function stubControlFrame() {
+  return stubFrame({ embedded: true, name: "" });
+}
+
+/** Top-level standalone window (not embedded). */
+export function stubStandaloneFrame(name = "") {
+  return stubFrame({ embedded: false, name });
+}
+
+/** Embedded in the Experience Cloud shell iframe: neither a UI nor a control frame. */
+export function stubShellFrame() {
+  // A name that is neither a uix-guest name nor empty keeps isUiFrame/isControlFrame false, so
+  // the shell flow is reached; it still needs a non-null initial configuration promise to render.
+  return stubFrame({ embedded: true, name: "exc-app" });
 }

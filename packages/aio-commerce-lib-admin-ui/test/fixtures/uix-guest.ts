@@ -12,6 +12,11 @@
 
 import { vi } from "vitest";
 
+export type MockGuestConnectionOverrides = Partial<{
+  host: object;
+  sharedContext: Map<string, unknown>;
+}>;
+
 /**
  * Builds a minimal fake UIX guest connection, matching what `SharedContextProvider`
  * and `useGuestConnection` consume. `@adobe/uix-guest` needs a real uix-host across
@@ -20,14 +25,11 @@ import { vi } from "vitest";
  * @param overrides - Partial fields to merge over the defaults.
  */
 export function createMockGuestConnection(
-  overrides: Partial<{
-    host: object;
-    sharedContext: Map<string, unknown>;
-  }> = {},
+  overrides: MockGuestConnectionOverrides = {},
 ) {
   return {
     host: {},
-    sharedContext: new Map<string, unknown>([["locale", "en_US"]]),
+    sharedContext: new Map<string, unknown>([["theme", "dark"]]),
     addEventListener: vi.fn(() => vi.fn()),
     ...overrides,
   };

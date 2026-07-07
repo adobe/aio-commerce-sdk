@@ -10,95 +10,56 @@
  * governing permissions and limitations under the License.
  */
 
-import {
-  createMemoryHistory,
-  createRootRoute,
-  createRoute,
-  createRouter,
-  RouterProvider,
-} from "@tanstack/react-router";
+import { createMemoryHistory, RouterProvider } from "@tanstack/react-router";
 import { render } from "vitest-browser-react";
 
-import type { AnyRouter } from "@tanstack/react-router";
-import type { ReactNode } from "react";
+import { createExtensionRouter } from "#web/react/routing/lib";
 
-/** A child route to mount inside the component under test's `<Outlet />`. */
-type RouteSpec = { index?: boolean; path?: string; element: ReactNode };
+import type { RouteEntry } from "#web/react/routing/types";
 
 type RouterOptions = {
-  /** Child routes rendered into the root component's `<Outlet />`. */
-  routes?: RouteSpec[];
+  /** Routes rendered into the root component's `<Outlet />`; declare every path a test navigates to. */
+  routes?: RouteEntry[];
   /** Initial history stack; seed multiple entries to make `useCanGoBack` true. */
   initialEntries?: string[];
 };
 
 /**
- * Builds a real TanStack router backed by memory history, so tests get deterministic,
- * isolated navigation. A catch-all splat route is always added so navigating to
- * arbitrary paths matches without pre-declaring every route.
- */
-function buildRouter(
-  rootComponent: () => ReactNode,
-  routes: RouteSpec[],
-  initialEntries: string[],
-): AnyRouter {
-  const rootRoute = createRootRoute({ component: rootComponent });
-
-  const specs = routes.some((route) => route.index)
-    ? routes
-    : [{ index: true, element: null } as RouteSpec, ...routes];
-
-  const children = specs.map((route) =>
-    createRoute({
-      getParentRoute: () => rootRoute,
-      path: route.index ? "/" : (route.path as string),
-      component: () => route.element,
-    }),
-  );
-
-  const splat = createRoute({
-    getParentRoute: () => rootRoute,
-    path: "$",
-    component: () => null,
-  });
-
-  return createRouter({
-    history: createMemoryHistory({ initialEntries }),
-    routeTree: rootRoute.addChildren([...children, splat]),
-  });
-}
-
-/**
- * Renders `ui` as the root route of a real router. Use when the component under test
- * needs router context (e.g. `useSpectrumRouter`) or renders an `<Outlet />`.
+ * Renders `ui` as the root route of the real extension router, backed by memory history so tests
+ * get deterministic, seedable, isolated navigation. Use when the component under test needs router
+ * context (e.g. `useSpectrumRouter`) or renders an `<Outlet />`.
  *
  * @param ui - The element under test.
  * @param options - Child routes and/or initial history entries.
  * @returns The rendered screen and the live router (assert on `router.state`).
  */
 export async function renderWithRouter(
-  ui: ReactNode,
+  ui: React.JSX.Element,
   options: RouterOptions = {},
 ) {
   const { routes = [], initialEntries = ["/"] } = options;
-  const router = buildRouter(() => ui, routes, initialEntries);
+  const router = createExtensionRouter(
+    ui,
+    routes,
+    createMemoryHistory({ initialEntries }),
+  );
   const screen = await render(<RouterProvider router={router} />);
   return { screen, router };
 }
 
 /**
- * Renders a hook inside a real router context and exposes its latest return value.
+ * Renders a hook inside the real router context and exposes its latest return value.
  * Read `result.current` (after `vi.waitFor` when the value updates asynchronously).
  *
  * @param useHook - The hook invocation under test.
- * @param options - Initial history entries.
+ * @param options - Child routes and/or initial history entries.
  * @returns `result` (live hook value), the router, and the rendered screen.
  */
 export async function renderHookWithRouter<T>(
   useHook: () => T,
-  options: Pick<RouterOptions, "initialEntries"> = {},
+  options: RouterOptions = {},
 ) {
-  const { initialEntries = ["/"] } = options;
+  const { routes = [], initialEntries = ["/"] } = options;
   const result = { current: undefined as T };
 
   function Probe() {
@@ -106,7 +67,11 @@ export async function renderHookWithRouter<T>(
     return null;
   }
 
-  const router = buildRouter(() => <Probe />, [], initialEntries);
+  const router = createExtensionRouter(
+    <Probe />,
+    routes,
+    createMemoryHistory({ initialEntries }),
+  );
   const screen = await render(<RouterProvider router={router} />);
   return { result, router, screen };
 }
