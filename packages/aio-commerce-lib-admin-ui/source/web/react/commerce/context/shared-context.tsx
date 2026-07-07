@@ -62,7 +62,7 @@ export function useInternalSharedContext(): SharedContextState {
  * ```tsx
  * import { useSharedContext } from "@adobe/aio-commerce-lib-admin-ui/web";
  *
- * function LocaleLabel() {
+ * function ImsTokenLabel() {
  *   const { sharedContext } = useSharedContext();
  *   return <span>{sharedContext.get("imsToken")}</span>;
  * }
