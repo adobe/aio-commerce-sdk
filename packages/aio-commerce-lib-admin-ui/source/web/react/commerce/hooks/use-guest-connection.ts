@@ -22,7 +22,7 @@ const guestConnections = createRetryablePromiseCache<GuestConnection>();
 function getGuestConnectionPromise(
   extensionId: string,
 ): Promise<GuestConnection> {
-  return guestConnections(extensionId, () => {
+  return guestConnections.get(extensionId, () => {
     const promise = attach({ id: extensionId });
     promise.catch((err) => {
       console.error("UIX guest attach failed:", err);
@@ -38,4 +38,9 @@ function getGuestConnectionPromise(
  */
 export function useGuestConnection(extensionId: string): GuestConnection {
   return use(getGuestConnectionPromise(extensionId));
+}
+
+/** Drops the cached connection for `extensionId`, so a later render re-attaches. */
+export function resetGuestConnection(extensionId: string) {
+  guestConnections.evict(extensionId);
 }

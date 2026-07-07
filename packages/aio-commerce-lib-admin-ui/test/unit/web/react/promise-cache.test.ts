@@ -16,53 +16,61 @@ import { createRetryablePromiseCache } from "#web/react/promise-cache";
 
 describe("createRetryablePromiseCache", () => {
   test("returns the identical promise for the same key and runs create once", () => {
-    const getOrCreate = createRetryablePromiseCache<string>();
+    const cache = createRetryablePromiseCache<string>();
     const create = vi.fn(() => Promise.resolve("value"));
 
-    const first = getOrCreate("key", create);
-    const second = getOrCreate("key", create);
+    const first = cache.get("key", create);
+    const second = cache.get("key", create);
 
     expect(second).toBe(first);
     expect(create).toHaveBeenCalledTimes(1);
   });
 
   test("creates separate promises for different keys", () => {
-    const getOrCreate = createRetryablePromiseCache<string>();
+    const cache = createRetryablePromiseCache<string>();
     const create = vi.fn(() => Promise.resolve("value"));
 
-    const first = getOrCreate("first", create);
-    const second = getOrCreate("second", create);
+    const first = cache.get("first", create);
+    const second = cache.get("second", create);
 
     expect(second).not.toBe(first);
     expect(create).toHaveBeenCalledTimes(2);
   });
 
   test("keeps a resolved promise cached", async () => {
-    const getOrCreate = createRetryablePromiseCache<string>();
+    const cache = createRetryablePromiseCache<string>();
     const create = vi.fn(() => Promise.resolve("value"));
 
-    const first = getOrCreate("key", create);
+    const first = cache.get("key", create);
     await expect(first).resolves.toBe("value");
 
-    const second = getOrCreate("key", create);
+    const second = cache.get("key", create);
     expect(second).toBe(first);
     expect(create).toHaveBeenCalledTimes(1);
   });
 
-  test("evicts a rejected promise so the next lookup retries", async () => {
-    const getOrCreate = createRetryablePromiseCache<string>();
+  test("keeps a rejected promise cached until it is evicted", async () => {
+    const cache = createRetryablePromiseCache<string>();
     const create = vi
       .fn<() => Promise<string>>()
       .mockRejectedValueOnce(new Error("boom"))
       .mockResolvedValueOnce("recovered");
 
-    const first = getOrCreate("key", create);
+    const first = cache.get("key", create);
     await expect(first).rejects.toThrow("boom");
 
-    const second = getOrCreate("key", create);
-    expect(second).not.toBe(first);
+    // The rejection stays cached, so a later lookup replays it without re-running create.
+    const second = cache.get("key", create);
+    expect(second).toBe(first);
+    expect(create).toHaveBeenCalledTimes(1);
+
+    // Evicting drops the entry, so the next lookup retries.
+    cache.evict("key");
+    const third = cache.get("key", create);
+
+    expect(third).not.toBe(first);
     expect(create).toHaveBeenCalledTimes(2);
 
-    await expect(second).resolves.toBe("recovered");
+    await expect(third).resolves.toBe("recovered");
   });
 });

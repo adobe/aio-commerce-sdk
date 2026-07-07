@@ -22,7 +22,11 @@ import {
   SharedContextProvider,
   useSharedContext,
 } from "#web/react/commerce/context/shared-context.tsx";
-import { useGuestConnection } from "#web/react/commerce/hooks/use-guest-connection";
+import { resetCommerceHost } from "#web/react/commerce/hooks/use-commerce";
+import {
+  resetGuestConnection,
+  useGuestConnection,
+} from "#web/react/commerce/hooks/use-guest-connection";
 import { isControlFrame } from "#web/react/commerce/lib";
 import { createRetryablePromiseCache } from "#web/react/promise-cache";
 import { useSpectrumRouter } from "#web/react/routing/hooks/use-spectrum-router";
@@ -39,7 +43,7 @@ const controlFrameRegistrations = createRetryablePromiseCache<unknown>();
  * @param extensionId - The unique identifier for the extension app.
  */
 function registerControlFrame(extensionId: string) {
-  return controlFrameRegistrations(extensionId, () => {
+  return controlFrameRegistrations.get(extensionId, () => {
     const promise = register({ id: extensionId, methods: {} });
     promise.catch((err) => {
       console.error("UIX guest register failed:", err);
@@ -77,7 +81,12 @@ export function CommerceExtensionApp(props: Readonly<{ extensionId: string }>) {
 
   return (
     <Provider colorScheme="light" router={spectrumRouter}>
-      <ExtensionErrorBoundary>
+      <ExtensionErrorBoundary
+        onReset={() => {
+          // Drop cached failures so "Try again" re-attaches instead of replaying the rejection.
+          resetGuestConnection(extensionId);
+          resetCommerceHost(extensionId);
+        }}>
         <Suspense fallback={<ConnectionFallback />}>
           <CommerceGuestConnection extensionId={extensionId} />
         </Suspense>

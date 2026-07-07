@@ -39,16 +39,19 @@ function getCommerceHostPromise(
     .integration;
 
   if (!integration) {
-    // Rejects synchronously, so there's no pending window for `use` to keep stable and nothing
-    // to cache: a later attempt re-checks for free and could succeed if the host changes.
-    return Promise.reject(
-      new Error(
-        "The host does not provide the integration API needed to resolve the Commerce host.",
-      ),
+    // Throw during render so the error surfaces to the boundary immediately: this is a static
+    // property of the connection, so there's nothing async to await or cache.
+    throw new Error(
+      "The host does not provide the integration API needed to resolve the Commerce host.",
     );
   }
 
-  return commerceHosts(extensionId, () => integration.getCommerceHost());
+  return commerceHosts.get(extensionId, () => integration.getCommerceHost());
+}
+
+/** Drops the cached Commerce host for `extensionId`, so a later render re-resolves it. */
+export function resetCommerceHost(extensionId: string) {
+  commerceHosts.evict(extensionId);
 }
 
 /**

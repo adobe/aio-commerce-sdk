@@ -10,33 +10,41 @@
  * governing permissions and limitations under the License.
  */
 
+type RetryablePromiseCache<T> = {
+  /** Returns the cached promise for `key`, or runs `create` to produce and cache one on a miss. */
+  get: (key: string, create: () => Promise<T>) => Promise<T>;
+
+  /** Drops the cached promise for `key`, so the next lookup creates a fresh one. */
+  evict: (key: string) => void;
+};
+
 /**
- * Creates a keyed cache of promises that memoizes in-flight and resolved promises and evicts
- * failed ones, so a later lookup for the same key retries instead of replaying the rejection.
+ * Creates a keyed cache that memoizes in-flight, resolved, and rejected promises, giving `use()`
+ * the reference-stable promise it needs while suspended and single-flighting side-effecting
+ * establishment calls across re-renders, remounts, and StrictMode double-invocation.
  *
- * This is the reference-stable memoization that `use()` requires while suspended, and the
- * single-flight guarantee that side-effecting establishment calls (which have no teardown to
- * undo a duplicate) need to survive re-renders, remounts, and StrictMode double-invocation.
- *
- * @returns A `get-or-create` function: it returns the cached promise for `key`, or runs
- * `create` to produce and cache one on a miss.
+ * Rejections are retained (not evicted) so `use()` replays them to an error boundary instead of
+ * suspending forever on a fresh pending promise. Retry a failed key via {@link RetryablePromiseCache.evict}.
  */
-export function createRetryablePromiseCache<T>() {
+export function createRetryablePromiseCache<T>(): RetryablePromiseCache<T> {
   const cache = new Map<string, Promise<T>>();
 
-  return (key: string, create: () => Promise<T>): Promise<T> => {
-    let promise = cache.get(key);
-    if (!promise) {
-      promise = create();
-      promise.catch(() => {
-        if (cache.get(key) === promise) {
-          cache.delete(key);
-        }
-      });
+  return {
+    get(key, create) {
+      let promise = cache.get(key);
+      if (!promise) {
+        promise = create();
 
-      cache.set(key, promise);
-    }
+        // Mark a retained rejection handled so it isn't flagged as unhandled; `use()` still sees it.
+        promise.catch(() => undefined);
+        cache.set(key, promise);
+      }
 
-    return promise;
+      return promise;
+    },
+
+    evict(key) {
+      cache.delete(key);
+    },
   };
 }
