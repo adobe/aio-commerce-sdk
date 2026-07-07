@@ -55,7 +55,7 @@ jobs:
         # The Chromium binary itself is fetched by pnpm (playwright is in allowBuilds),
         # but Linux still needs Chromium's system libraries for the browser-mode tests.
       - name: Install Playwright system deps (Linux)
-        run: pnpm exec playwright install-deps chromium
+        run: pnpx playwright install-deps chromium
 
         # See: https://turborepo.com/docs/reference/run#--affected
       - name: Run Turbo tasks on affected packages
