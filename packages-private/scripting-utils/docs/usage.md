@@ -87,7 +87,7 @@ const devInstallCommand = getInstallCommand(
 );
 
 // Get the { command, args } pair that installs a project's declared dependencies
-// (e.g. { command: "pnpm", args: ["install"] })
+// (e.g. { command: "pnpm", args: ["i"] })
 const projectInstallCommand = getProjectInstallCommand(packageManager);
 ```
 

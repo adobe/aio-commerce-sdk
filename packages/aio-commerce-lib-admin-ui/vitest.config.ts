@@ -23,7 +23,7 @@ export default mergeConfig(
         exclude: [
           "./source/**/index.ts",
           "./source/**/types.ts",
-          "./source/web/react/runtime-loader.ts",
+          "./source/web/runtime-loader.ts",
         ],
       },
     },
