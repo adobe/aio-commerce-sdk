@@ -52,10 +52,18 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-        # The Chromium binary itself is fetched by pnpm (playwright is in allowBuilds),
-        # but Linux still needs Chromium's system libraries for the browser-mode tests.
-      - name: Install Playwright system deps (Linux)
-        run: pnpx playwright install-deps chromium
+        # Cache the downloaded browser binary; system libs (--with-deps) install too fast to cache.
+      - name: Cache Playwright browsers
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-playwright-
+
+        # Browser-mode tests need the Chromium binary plus its system libraries on Linux.
+      - name: Install Playwright Chromium
+        run: pnpx playwright install --with-deps chromium
 
         # See: https://turborepo.com/docs/reference/run#--affected
       - name: Run Turbo tasks on affected packages
