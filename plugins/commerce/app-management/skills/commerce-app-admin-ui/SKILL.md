@@ -12,11 +12,13 @@ license: Apache-2.0
 compatibility: >
   Requires Node.js 22+, aio CLI, @adobe/aio-commerce-lib-app, and
   @adobe/aio-commerce-sdk (for Admin UI runtime action handlers).
+  View variants use @adobe/aio-commerce-lib-admin-ui/web (installed
+  automatically by the web-src scaffold).
   Requires a base app initialized with commerce-app-init.
 metadata:
   author: adobe
   sdk-package: "@adobe/aio-commerce-sdk"
-  version: "0.0.3"
+  version: "0.0.5"
 ---
 
 # Configure Commerce App Admin UI
@@ -115,7 +117,9 @@ Run init so that `commerce/backend-ui/2` is added to `app.config.yaml` and `inst
 npx @adobe/aio-commerce-lib-app init
 ```
 
-The build derives the extension's `ext.config.yaml` from your `adminUi` config: each worker `runtimeAction` becomes a `workerProcess` operation, and a web view (served from `web-src`) is added automatically when you declare a `menu` or any `view`-type entry. Those `hooks` and `operations` sections are managed by the build — do not hand-edit them.
+The build derives the extension's `ext.config.yaml` from your `adminUi` config: each worker `runtimeAction` becomes a `workerProcess` operation, and when you declare a `menu` or any `view`-type entry, a `view` operation plus an explicit `web: web-src` key are written. Those `hooks`, `operations`, and `web` sections are managed by the library — do not hand-edit them.
+
+When a `view` operation is present, init/generate also scaffolds the web frontend automatically (skipped if `web-src/index.html` already exists). It generates `src/commerce-backend-ui-2/web-src/` — `index.html`, `src/app.jsx`, `src/pages/main-page.jsx`, `src/components/welcome.jsx` (`.tsx` plus a `tsconfig.json` when the app config is TypeScript) — adds the `#web/*` import alias to `package.json`, and declares and installs pinned versions of `react`, `react-dom`, `@react-spectrum/s2`, and `@adobe/aio-commerce-lib-admin-ui` (React and Spectrum S2 are optional peer dependencies of the admin-ui library), plus some `devDependencies` for proper TypeScript support/config. Do not hand-pick different versions of these dependencies; the scaffold fails if incompatible versions are already installed.
 
 ## Step 4 — Implement the handlers
 
@@ -174,7 +178,85 @@ export async function main(params: RuntimeActionParams) {
 
 ### View variants (view mass actions, view buttons, menu)
 
-No server handler. Commerce opens an iframe into the app's `web-src` at the entry's `path`. Build that UI in the app's web frontend. For a `view` **mass action**, read the user's selection inside the iframe with `parseMassActionSelection` (see [mass-actions](references/mass-actions.md)). The **menu** needs only the `MENU_*` constant for `parentMenu` — see [menu](references/menu.md).
+No server handler. Commerce opens an iframe into the app's `web-src` at the entry's `path` — and that frontend was generated for you in Step 3 (`index.html`, `src/app.jsx`, `src/pages/main-page.jsx`, `src/components/welcome.jsx`). The generated `src/app.jsx` mounts the `commerce/backend-ui/2` iframe app with `createExtensionApp` from `@adobe/aio-commerce-lib-admin-ui/web`, and its `routes` array must start with the index route:
+
+```jsx
+// src/commerce-backend-ui-2/web-src/src/app.jsx (generated)
+import { createExtensionApp } from "@adobe/aio-commerce-lib-admin-ui/web";
+import "@react-spectrum/s2/page.css";
+
+import config from "#app.commerce.config";
+import { MainPage } from "#web/pages/main-page.jsx";
+
+createExtensionApp({
+  metadata: { extensionId: config.metadata.id },
+  routes: [{ index: true, element: <MainPage /> }],
+});
+```
+
+Just as the worker variants wire a `runtimeAction` to an action, each `view` entry's `path` must be wired to a page and a route. Scaffold that wiring per entry — but **only create what is missing. Never overwrite or modify an existing page or route.**
+
+The **menu** has no `path`: it renders at the index route (`src/pages/main-page.jsx`), which the scaffold already created as a plain page. There is nothing to scaffold for the menu — leave `main-page.jsx` in place (customize its content if you like). It needs only the `MENU_*` constant for `parentMenu` in the config (see [menu](references/menu.md)).
+
+For each `view`-type **mass action** and **order view button** (both carry a `path`):
+
+1. **Check for the route.** Look in `src/app.jsx` for a `routes` entry whose `path` equals the entry's config `path`, and in `web-src/src/pages/` for its page file. If a route for that `path` already exists, leave it and its page untouched and move on.
+
+2. **Create the placeholder page (missing only).** Add `web-src/src/pages/<name>.jsx` — use `.tsx` (and TypeScript) when the app config is TypeScript. Keep it minimal, matching the look of the generated `main-page`/`welcome` (a `<main>` with a heading). Do not add a copyright header — the generated `web-src` files carry none. Pre-wire the context hook for the entry type (table below).
+
+3. **Register the route in `src/app.jsx` (missing only).** Import the page via the `#web/pages/*` alias and append a `{ path, element }` entry to `routes`. Write `path` as the **exact same string as the config `path`, including the leading `#/`** — copy it verbatim so the route and the config entry visibly line up. Keep the index route first.
+
+Pre-wire the hook by view type — all from `@adobe/aio-commerce-lib-admin-ui/web`:
+
+| View entry           | Context hook                                  | Also                                                         | Reference                                              |
+| -------------------- | --------------------------------------------- | ------------------------------------------------------------ | ------------------------------------------------------ |
+| Mass action (`view`) | `useMassActionContext()` → `{ selectedIds }`  | `useHostConnection()` → `{ close, closeWithError }` to close | [mass-actions](references/mass-actions.md)             |
+| Order view button    | `useOrderViewButtonContext()` → `{ orderId }` | `useHostConnection()` → `{ close, closeWithError }` to close | [order-view-buttons](references/order-view-buttons.md) |
+| Menu                 | none (plain index page)                       | —                                                            | [menu](references/menu.md)                             |
+
+A route component may also call `useIms()` → `{ imsToken, imsOrgId }` and `useCommerce()` → `{ commerceHost }` to reach the Commerce REST API (`imsToken` for auth, `commerceHost` for the base URL; the generated `Welcome` component demonstrates `useIms`). Add those only when the page actually needs them.
+
+Example — a `view` mass action placeholder page and its route registration:
+
+```jsx
+// src/commerce-backend-ui-2/web-src/src/pages/export-customers.jsx
+import {
+  useHostConnection,
+  useMassActionContext,
+} from "@adobe/aio-commerce-lib-admin-ui/web";
+
+export function ExportCustomersPage() {
+  const { selectedIds } = useMassActionContext(); // string[] — the selected record ids
+  const { close } = useHostConnection(); // await close() (or closeWithError()) when done
+
+  return (
+    <main>
+      <h1>Export customers</h1>
+      <p>{selectedIds.length} selected</p>
+    </main>
+  );
+}
+```
+
+```jsx
+// src/commerce-backend-ui-2/web-src/src/app.jsx
+import { createExtensionApp } from "@adobe/aio-commerce-lib-admin-ui/web";
+import "@react-spectrum/s2/page.css";
+
+import config from "#app.commerce.config";
+import { MainPage } from "#web/pages/main-page.jsx";
+import { ExportCustomersPage } from "#web/pages/export-customers.jsx";
+
+createExtensionApp({
+  metadata: { extensionId: config.metadata.id },
+  routes: [
+    { index: true, element: <MainPage /> }, // keep the index route first
+    { path: "#/export-customers", element: <ExportCustomersPage /> }, // path === config `path`
+  ],
+});
+```
+
+For an order view button, swap the hook for `useOrderViewButtonContext()` (`{ orderId }`) — see [order-view-buttons](references/order-view-buttons.md).
 
 ## Step 5 — Validate
 
@@ -193,8 +275,10 @@ A build failure with a validation error points directly to the offending `adminU
 - **`runtimeAction` with no handler**: a worker entry whose `<package>/<action>` is not declared under `runtimeManifest` in `src/commerce-backend-ui-2/ext.config.yaml` leaves the generated `workerProcess` reference unresolved at deploy.
 - **Wrong action location**: handler sources and their `runtimeManifest` entry belong in the Admin UI extension folder `src/commerce-backend-ui-2/` — not `src/commerce-extensibility-1/` (where webhook and event handlers live). The `function` path is relative to `src/commerce-backend-ui-2/`.
 - **Grid row keys must match column ids**: keys in the `okGridResponse` rows must equal the `id`s in `gridColumns.columns`, or cells render empty (or fall back to the defaults bag).
+- **View route `path`**: register the `{ path }` in `src/app.jsx` as the exact same string as the entry's config `path` — copy it verbatim, hash included, so the two line up.
 - **Menu `id` charset**: the menu `id` allows only letters, digits, `/`, `:`, and `_` — no hyphens or spaces.
 - **`defineConfig` not found**: import `defineConfig` from `@adobe/aio-commerce-lib-app/config`.
+- **Double renders/requests in development**: `createExtensionApp` wraps the app in React `<StrictMode>`, so under `aio app dev` or `aio app run` components render twice and effects run an extra setup + cleanup cycle on mount. Duplicate renders or effect-triggered requests in development are expected StrictMode behavior, not a bug to fix; production builds are unaffected.
 
 ## Quality Bar
 
