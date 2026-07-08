@@ -23,6 +23,13 @@ export {
   getCommerceClient,
   getCommerceInstance,
 } from "./access/commerce-instance";
+export { publishEvent } from "./access/events";
 export { AppNotAssociatedError } from "./errors/app-not-associated-error";
+export {
+  EventNotFoundError,
+  EventsDataNotInitializedError,
+  ProviderNotFoundError,
+  PublishEventError,
+} from "./errors/publish-event-errors";
 
 export type { AssociatedCommerceInstance } from "./management/association/types";

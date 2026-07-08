@@ -90,6 +90,17 @@ describe("commerceEventsStep orchestration", () => {
       };
     });
 
+    vi.doMock("@adobe/aio-commerce-lib-config", async () => {
+      const actual = await vi.importActual<
+        typeof import("@adobe/aio-commerce-lib-config")
+      >("@adobe/aio-commerce-lib-config");
+      return {
+        ...actual,
+        getSystemConfigByKey: vi.fn().mockResolvedValue(null),
+        setSystemConfigByKey: vi.fn().mockResolvedValue(undefined),
+      };
+    });
+
     const commerceModule = await import(
       "#management/installation/events/commerce"
     );
@@ -107,6 +118,7 @@ describe("commerceEventsStep orchestration", () => {
     vi.resetModules();
     vi.doUnmock("#management/installation/events/helpers");
     vi.doUnmock("#management/installation/events/utils");
+    vi.doUnmock("@adobe/aio-commerce-lib-config");
   });
 
   test("should configure Commerce Eventing only once when multiple commerce sources are installed", async () => {

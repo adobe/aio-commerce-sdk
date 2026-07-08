@@ -10,6 +10,11 @@
  * governing permissions and limitations under the License.
  */
 
+import {
+  getSystemConfigByKey,
+  setSystemConfigByKey,
+} from "@adobe/aio-commerce-lib-config";
+
 import { appliesToEnv, getInstallCommerceEnv } from "#config/lib/environment";
 import { hasCommerceEvents } from "#config/schema/eventing";
 import { defineLeafStep } from "#management/installation/workflow/step";
@@ -21,6 +26,7 @@ import {
   onboardCommerceEventing,
   onboardIoEvents,
 } from "./helpers";
+import { EVENTS_STORAGE_KEY } from "./stored-events-data";
 import {
   COMMERCE_PROVIDER_TYPE,
   getCommerceEventingExistingData,
@@ -32,6 +38,7 @@ import {
 import type { CommerceEventsConfig } from "#config/schema/eventing";
 import type { InferStepOutput } from "#management/installation/workflow/step";
 import type { EventsExecutionContext } from "./context";
+import type { StoredEventsData } from "./stored-events-data";
 
 /** The output data of the Commerce Eventing step (auto-inferred). */
 export type CommerceEventsStepData = InferStepOutput<typeof commerceEventsStep>;
@@ -80,6 +87,7 @@ async function createCommerceEvents(
   // another environment is skipped, so the one-time eventing-module configuration
   // runs on the first provider that is actually onboarded.
   let eventingConfigured = false;
+  const storedProviders: StoredEventsData["providers"] = {};
 
   for (const { provider, events: providerEvents } of config.eventing.commerce) {
     const events = providerEvents.filter((event) => appliesToEnv(event, env));
@@ -151,7 +159,28 @@ async function createCommerceEvents(
         },
       },
     });
+
+    const providerKey =
+      provider.key ?? provider.label.toLowerCase().replace(/\s+/g, "-");
+    storedProviders[providerKey] = {
+      id: providerData.id,
+      events: Object.fromEntries(
+        eventsData.map(({ config: eventConfig, data: eventData }) => [
+          eventConfig.name,
+          eventData.metadata.event_code,
+        ]),
+      ),
+    };
   }
+
+  const existing = (await getSystemConfigByKey<StoredEventsData>(
+    EVENTS_STORAGE_KEY,
+  )) ?? {
+    providers: {},
+  };
+  await setSystemConfigByKey(EVENTS_STORAGE_KEY, {
+    providers: { ...existing.providers, ...storedProviders },
+  });
 
   logger.debug("Completed Commerce Events installation step.");
   return stepData;

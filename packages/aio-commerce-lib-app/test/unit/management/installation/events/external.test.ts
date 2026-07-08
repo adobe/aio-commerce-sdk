@@ -71,6 +71,17 @@ describe("externalEventsStep orchestration", () => {
       return { ...actual, ...utilsMocks };
     });
 
+    vi.doMock("@adobe/aio-commerce-lib-config", async () => {
+      const actual = await vi.importActual<
+        typeof import("@adobe/aio-commerce-lib-config")
+      >("@adobe/aio-commerce-lib-config");
+      return {
+        ...actual,
+        getSystemConfigByKey: vi.fn().mockResolvedValue(null),
+        setSystemConfigByKey: vi.fn().mockResolvedValue(undefined),
+      };
+    });
+
     const module = await import("#management/installation/events/external");
     return {
       externalEventsStep: module.externalEventsStep,
@@ -84,6 +95,7 @@ describe("externalEventsStep orchestration", () => {
     vi.resetModules();
     vi.doUnmock("#management/installation/events/helpers");
     vi.doUnmock("#management/installation/events/utils");
+    vi.doUnmock("@adobe/aio-commerce-lib-config");
   });
 
   test("skips a provider whose events are all scoped to another environment", async () => {

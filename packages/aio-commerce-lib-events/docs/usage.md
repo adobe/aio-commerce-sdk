@@ -275,9 +275,7 @@ import { createCustomCommerceEventsApiClient } from "@adobe/aio-commerce-lib-eve
 const customClient = createCustomCommerceEventsApiClient(
   {
     config: { baseUrl: "https://api.commerce.adobe.com", flavor: "saas" },
-    auth: {
-      /* auth params */
-    },
+    auth: {/* auth params */},
   },
   {
     // Only include the functions you need

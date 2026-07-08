@@ -69,6 +69,17 @@ vi.mock("@adobe/aio-commerce-lib-auth", async () => {
   };
 });
 
+vi.mock("@adobe/aio-commerce-lib-config", async () => {
+  const actual = await vi.importActual<
+    typeof import("@adobe/aio-commerce-lib-config")
+  >("@adobe/aio-commerce-lib-config");
+  return {
+    ...actual,
+    getSystemConfigByKey: vi.fn().mockResolvedValue(null),
+    setSystemConfigByKey: vi.fn().mockResolvedValue(undefined),
+  };
+});
+
 const IO_EVENTS_BASE_URL = "https://api.adobe.io/events";
 const COMMERCE_BASE_URL = "https://api.commerce.adobe.com/V1";
 

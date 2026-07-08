@@ -12,6 +12,7 @@
 
 /** biome-ignore-all lint/performance/noBarrelFile: This is the package `io-events` entrypoint. */
 
+export * from "./api/event-ingress/endpoints";
 export * from "./api/event-metadata/endpoints";
 export * from "./api/event-providers/endpoints";
 export * from "./api/event-providers/shorthands";

@@ -10,16 +10,23 @@
  * governing permissions and limitations under the License.
  */
 
+import {
+  getSystemConfigByKey,
+  setSystemConfigByKey,
+} from "@adobe/aio-commerce-lib-config";
+
 import { appliesToEnv, getInstallCommerceEnv } from "#config/lib/environment";
 import { hasExternalEvents } from "#config/schema/eventing";
 import { defineLeafStep } from "#management/installation/workflow/step";
 
 import { offboardIoEvents, onboardIoEvents } from "./helpers";
+import { EVENTS_STORAGE_KEY } from "./stored-events-data";
 import { EXTERNAL_PROVIDER_TYPE, getIoEventsExistingData } from "./utils";
 
 import type { ExternalEventsConfig } from "#config/schema/eventing";
 import type { InferStepOutput } from "#management/installation/workflow/step";
 import type { EventsExecutionContext } from "./context";
+import type { StoredEventsData } from "./stored-events-data";
 
 /** The output data of the External Eventing step (auto-inferred). */
 export type ExternalEventsStepData = InferStepOutput<typeof externalEventsStep>;
@@ -59,6 +66,7 @@ async function createExternalEvents(
   const stepData = [];
   const env = getInstallCommerceEnv(context.params);
   const existingIoEventsData = await getIoEventsExistingData(context);
+  const storedProviders: StoredEventsData["providers"] = {};
 
   for (const { provider, events: providerEvents } of config.eventing.external) {
     const events = providerEvents.filter((event) => appliesToEnv(event, env));
@@ -92,7 +100,28 @@ async function createExternalEvents(
         },
       },
     });
+
+    const providerKey =
+      provider.key ?? provider.label.toLowerCase().replace(/\s+/g, "-");
+    storedProviders[providerKey] = {
+      id: providerData.id,
+      events: Object.fromEntries(
+        eventsData.map(({ config: eventConfig, data: eventData }) => [
+          eventConfig.name,
+          eventData.metadata.event_code,
+        ]),
+      ),
+    };
   }
+
+  const existing = (await getSystemConfigByKey<StoredEventsData>(
+    EVENTS_STORAGE_KEY,
+  )) ?? {
+    providers: {},
+  };
+  await setSystemConfigByKey(EVENTS_STORAGE_KEY, {
+    providers: { ...existing.providers, ...storedProviders },
+  });
 
   logger.debug("Completed External Events installation step.");
   return stepData;
