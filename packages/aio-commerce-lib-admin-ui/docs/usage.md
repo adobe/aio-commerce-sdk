@@ -12,6 +12,7 @@ This package provides utilities for interacting with the Admin UI SDK API and th
 - **[Menu Constants](#menu-constants)**: Named constants and type guards for Commerce Admin menu IDs
 - **[Order View Button Wire Contract](#order-view-button-wire-contract)**: Request and response builders for runtime actions handling `commerce/backend-ui/2` order view button extensions
 - **[Permission Client](#permission-client)**: Check whether the current Commerce admin user has been granted a per-app ACL resource
+- **[Web Extension App](#web-extension-app)**: Mount a `commerce/backend-ui/2` iframe app in the browser and read host-provided context through React hooks
 
 ## API Reference
 
@@ -479,3 +480,113 @@ The same shape applies to the other components — swap in the matching trio of 
 - **Order view buttons**: `parseOrderViewButtonRequest` → `getOrderViewButtonAclResourceId(appId, buttonId)` → `okOrderViewButtonResponse` / `orderViewButtonErrorResponse`.
 
 For grid columns, gate the work per the request's `gridType`; for order view buttons, the entity is always `order`, so only the `appId` and `buttonId` segments vary.
+
+### Web Extension App
+
+The `./web` entrypoint provides the browser side of a `commerce/backend-ui/2` app: `createExtensionApp` mounts the iframe app (Experience Cloud Shell wiring, UIX registration, shared-context attachment, routing, and Spectrum setup included), and a set of React hooks expose the context the host shares with the frame.
+
+> [!NOTE]
+> This entrypoint is browser/ESM-only — there is no `require` (CJS) build. `react`, `react-dom`, and `@react-spectrum/s2` are optional peer dependencies of this package. If you use `./web`, install versions that satisfy this package's peer dependency ranges, even though those peers remain optional for consumers that don't use the browser entrypoint.
+
+#### Mounting an app
+
+`createExtensionApp` mounts the app into the element with id `root` (or into the `root` element you pass). `routes` must start with the index route; additional routes are path-based:
+
+```jsx
+// src/app.jsx
+import { createExtensionApp } from "@adobe/aio-commerce-lib-admin-ui/web";
+import "@react-spectrum/s2/page.css";
+
+import { MainPage } from "./pages/main-page.jsx";
+import { SettingsPage } from "./pages/settings-page.jsx";
+
+createExtensionApp({
+  metadata: { extensionId: "my-extension-id" },
+  routes: [
+    { index: true, element: <MainPage /> },
+    { path: "/settings", element: <SettingsPage /> },
+  ],
+});
+```
+
+The whole app is wrapped in React's [`<StrictMode>`](https://react.dev/reference/react/StrictMode). When running locally with `aio app dev` or `aio app run` (which serve React's development build), StrictMode runs its extra development-only checks: components render twice, and effects run an extra setup + cleanup cycle on mount. Duplicated renders, effect runs, or requests fired from effects during development are therefore expected — not a bug — and surface unsafe side effects early. These checks do not run in production builds, where StrictMode has no effect.
+
+#### Reading IMS credentials
+
+`useIms` returns the IMS credentials provided by the host (`{ imsToken, imsOrgId }`). It works inside both the Commerce Admin and the Experience Cloud shell, and throws when the app runs standalone (no host provides credentials):
+
+```jsx
+import { useIms } from "@adobe/aio-commerce-lib-admin-ui/web";
+
+function Welcome() {
+  const { imsToken, imsOrgId } = useIms();
+  // Use imsToken to call IMS-authenticated APIs on behalf of the admin user.
+}
+```
+
+#### Resolving the Commerce host
+
+`useCommerce` returns the host (domain) of the Commerce Admin the extension is embedded in. The value is resolved over the guest connection via the host's integration API. It throws when used outside the Commerce Admin frame, or when the host does not expose that integration API:
+
+```jsx
+import { useCommerce } from "@adobe/aio-commerce-lib-admin-ui/web";
+
+function CommerceInfo() {
+  const { commerceHost } = useCommerce();
+  return <span>{commerceHost}</span>;
+}
+```
+
+#### Interacting with the Commerce Admin host
+
+`useHostConnection` returns typed helpers for closing the extension iframe and returning control to the Commerce Admin. Note that these are only useful in flows that need to close the current iframe and navigate back, such as mass actions and order view buttons.
+
+```jsx
+import { useHostConnection } from "@adobe/aio-commerce-lib-admin-ui/web";
+
+function Actions() {
+  const { close, closeWithError } = useHostConnection();
+  // close() closes the current iframe and navigates back to the originating grid or order.
+  // closeWithError() does the same, flagging that an error occurred.
+}
+```
+
+#### Reading the mass-action selection
+
+`useMassActionContext` returns the row IDs the mass action was triggered with. It reads from the host-provided Commerce context and throws when that context does not include a mass-action selection:
+
+```jsx
+import { useMassActionContext } from "@adobe/aio-commerce-lib-admin-ui/web";
+
+function MassActionPage() {
+  const { selectedIds } = useMassActionContext();
+  // selectedIds is string[] (an empty selection is valid).
+}
+```
+
+#### Reading the order view-button context
+
+`useOrderViewButtonContext` returns the ID of the order the view button was triggered from. It throws when no order ID is present in the page URL:
+
+```jsx
+import { useOrderViewButtonContext } from "@adobe/aio-commerce-lib-admin-ui/web";
+
+function OrderViewButtonPage() {
+  const { orderId } = useOrderViewButtonContext();
+}
+```
+
+#### Low-level shared context access
+
+`useSharedContext` is an escape hatch that exposes the raw Commerce shared context and host proxy from the guest connection. Prefer a purpose-built hook (`useCommerce`, `useMassActionContext`, `useOrderViewButtonContext`, `useHostConnection`) when one covers what you need:
+
+```jsx
+import { useSharedContext } from "@adobe/aio-commerce-lib-admin-ui/web";
+
+function Advanced() {
+  const { extensionId, sharedContext, host } = useSharedContext();
+  const selectedIds = sharedContext.get("selectedIds");
+}
+```
+
+`useSharedContext` (and the hooks built on it) require the Commerce guest connection, so they only work inside the Commerce Admin — not in the Experience Cloud shell.

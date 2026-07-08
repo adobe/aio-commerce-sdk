@@ -2,7 +2,7 @@
 
 - **Ticket:** [CEXT-6338](https://jira.corp.adobe.com/browse/CEXT-6338)
 - **Created:** 2026-06-10
-- [ ] **Implemented**
+- [x] **Implemented**
 
 ## Summary
 
@@ -112,12 +112,17 @@ web-src/
     pages/
       main-page.jsx
     components/
+      welcome.jsx
 ```
+
+When the app config is TypeScript (e.g. `app.commerce.config.ts`), the same tree is generated with
+`.tsx` files instead of `.jsx`, plus a `web-src/tsconfig.json`.
 
 Every generated file is owned by the developer from the moment it lands. The SDK generates the
 scaffold once — when the resolved `view` entrypoint does not yet exist — and never overwrites or
 regenerates anything afterwards. Developers are free to edit any file, including `app.jsx`;
-`src/components/` starts empty as the conventional home for shared UI primitives.
+`src/components/` is the conventional home for shared UI primitives and starts with a single
+`welcome.jsx` placeholder component.
 
 `app.jsx` is the Parcel entry point and the equivalent of `App.js` in the raw Commerce sample. It
 reads `metadata.id` from `#app.commerce.config`, imports `MainPage`, and delegates all shell wiring
@@ -161,15 +166,21 @@ Each `path` here corresponds to the hash fragment declared in `app.commerce.conf
 example `path: "#/bulk-cancel"` maps to the `"bulk-cancel"` route above. `BulkCancelPage` and
 `ArchivePage` are additional user-created components.
 
-`pages/main-page.jsx` is the starting point for all custom UI. It is pre-wired with `useIms` so the
-host-provided IMS credentials are available:
+`pages/main-page.jsx` is the starting point for all custom UI. It renders the `Welcome` component
+from `components/welcome.jsx`, which demonstrates `useIms` so the host-provided IMS credentials are
+available from the start:
 
 ```jsx
 import { useIms } from "@adobe/aio-commerce-lib-admin-ui/web";
 
-export function MainPage() {
-  const { imsToken, imsOrgId } = useIms();
-  return <main>{/* Add your UI here */}</main>;
+export function Welcome() {
+  const { imsOrgId } = useIms();
+  return (
+    <>
+      <h1>Welcome to your Adobe Commerce App</h1>
+      <p>Your IMS Org ID is {imsOrgId}</p>
+    </>
+  );
 }
 ```
 
@@ -257,8 +268,19 @@ their own entrypoint — a custom React setup, a different framework, or a hand-
 is detected and left entirely untouched, because the SDK only generates when the entrypoint is
 absent and never overwrites.
 
-All files are static copies from the package's template directory — no interpolation is needed
-because `app.jsx` reads `metadata.id` from `#app.commerce.config` at runtime.
+Files are copied from the package's template directory with minimal processing: the `<title>` of
+`index.html` is interpolated with the app title, and everything else is copied verbatim — no
+per-app values need to be baked into the sources because `app.jsx` reads `metadata.id` from
+`#app.commerce.config` at runtime.
+
+The scaffold adapts to the app's language. When the commerce app config file is TypeScript (`.ts`,
+`.mts`, or `.cts`), the `.jsx` templates are emitted as `.tsx` (with `.jsx` import specifiers
+inside the copied files rewritten to `.tsx`), a `tsconfig.json` is written at the `web-src/` root
+so the scaffold type-checks out of the box, and the TypeScript dev dependencies (`typescript`,
+`@tsconfig/bases`) are installed alongside the other pinned dependencies. Otherwise the scaffold is
+emitted as plain `.jsx`. The templates themselves are type-checked inside the SDK package via an
+ambient `web-src-template.d.ts` declaration file (declaring the `#app.commerce.config` and `#web/*`
+module aliases); that file stays in the package and is never copied into the app.
 
 After copying files, `generateWebSrc` installs any missing pinned `/web` dependencies (React and
 `@react-spectrum/s2`) into the app at the SDK-pinned versions, using the package manager detected
@@ -266,12 +288,16 @@ from the app's lock file.
 
 ### Scaffold contents
 
-| File                      | Role                                                                                                     |
-| ------------------------- | -------------------------------------------------------------------------------------------------------- |
-| `index.html`              | Entry point loaded by the `view` operation URL; mounts the React app; references `index.css`             |
-| `src/app.jsx`             | Reads `metadata.id` from `#app.commerce.config`; declares the `routes` array; calls `createExtensionApp` |
-| `index.css`               | Global stylesheet; developers add styles directly or compose additional sheets via CSS `@import`         |
-| `src/pages/main-page.jsx` | Stub entry point for custom UI; pre-wired with `useIms()` to access the host-provided IMS credentials    |
+| File                           | Role                                                                                                     |
+| ------------------------------ | -------------------------------------------------------------------------------------------------------- |
+| `index.html`                   | Entry point loaded by the `view` operation URL; mounts the React app; references `index.css`             |
+| `src/app.jsx`                  | Reads `metadata.id` from `#app.commerce.config`; declares the `routes` array; calls `createExtensionApp` |
+| `index.css`                    | Global stylesheet; developers add styles directly or compose additional sheets via CSS `@import`         |
+| `src/pages/main-page.jsx`      | Stub entry point for custom UI; renders the `Welcome` component                                          |
+| `src/components/welcome.jsx`   | Sample `Welcome` component; demonstrates `useIms()` to access the host-provided IMS credentials          |
+| `tsconfig.json` (TS apps only) | TypeScript configuration for the scaffold; generated only when the app config is TypeScript              |
+
+For TypeScript apps, the `.jsx` files above are generated as `.tsx` instead.
 
 ### `generate all` integration
 
@@ -326,7 +352,8 @@ propagate through a package upgrade. Because the substance of the scaffold lives
 the frozen wrappers are intentionally thin and such template-level changes should be rare.
 
 The current design ties the scaffold to React: `createExtensionApp` mounts a hash-based router with
-a Spectrum 2 `Provider`, the context hooks are React hooks, and the scaffold ships `.jsx` files.
+a Spectrum 2 `Provider`, the context hooks are React hooks, and the scaffold ships `.jsx` (or
+`.tsx`) files.
 Spectrum 2 is a deliberate requirement — Admin UI extensions should look consistent across vendors —
 so there is no built-in support for other frameworks. The escape hatch is all-or-nothing: a
 developer who wants a different framework (or any setup the scaffold does not provide) must own the

@@ -10,7 +10,10 @@
  * governing permissions and limitations under the License.
  */
 
-import { describe, expect, test, vi } from "vitest";
+import { readFile } from "node:fs/promises";
+
+import { withTempFiles } from "@aio-commerce-sdk/scripting-utils/filesystem";
+import { afterEach, describe, expect, test, vi } from "vitest";
 
 import { EXTENSIBILITY_EXTENSION_POINT_ID } from "#commands/constants";
 import {
@@ -21,6 +24,7 @@ import {
 import {
   applyCustomScripts,
   generateCustomScriptsTemplate,
+  prepareWebSourceImportAlias,
   readExtConfig,
 } from "#commands/generate/actions/lib";
 import { templates } from "#test/fixtures/commands";
@@ -31,21 +35,28 @@ import {
 
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 
-vi.mock("@aio-commerce-sdk/scripting-utils/project", () => ({
-  getProjectRootDirectory: () => "/fake/project/root",
-  makeOutputDirFor: vi.fn(() => Promise.resolve("/fake/output/dir")),
-}));
+const getProjectRootDirectory = vi.hoisted(() =>
+  vi.fn(() => "/fake/project/root"),
+);
+
+vi.mock("@aio-commerce-sdk/scripting-utils/project", async (importOriginal) => {
+  const actual =
+    await importOriginal<
+      typeof import("@aio-commerce-sdk/scripting-utils/project")
+    >();
+  return {
+    ...actual,
+    getProjectRootDirectory,
+    makeOutputDirFor: vi.fn(() => Promise.resolve("/fake/output/dir")),
+  };
+});
 
 vi.mock("@aio-commerce-sdk/scripting-utils/yaml/index", () => ({
   readYamlFile: vi.fn(),
 }));
 
-vi.mock("node:fs/promises", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("node:fs/promises")>();
-  return {
-    ...actual,
-    readFile: vi.fn(),
-  };
+afterEach(() => {
+  vi.clearAllMocks();
 });
 
 describe("readExtConfig", () => {
@@ -61,6 +72,78 @@ describe("readExtConfig", () => {
     ).rejects.toThrow(
       "Could not read ext.config.yaml for commerce/extensibility/1",
     );
+  });
+});
+
+describe("prepareWebSourceImportAlias", () => {
+  test("throws when package.json is missing", async () => {
+    await withTempFiles({}, async (tempDir) => {
+      getProjectRootDirectory.mockReturnValue(tempDir);
+
+      await expect(
+        prepareWebSourceImportAlias({
+          web: "web-src",
+          operations: {
+            view: [
+              {
+                type: "web",
+                impl: "index.html",
+              },
+            ],
+          },
+        }),
+      ).rejects.toThrow("Could not find package.json.");
+    });
+  });
+
+  test("adds the #web import alias for a view operation", async () => {
+    await withTempFiles(
+      {
+        "package.json": JSON.stringify({
+          imports: {
+            "#app.commerce.config": "./src/commerce-app-config.js",
+          },
+        }),
+      },
+      async (tempDir) => {
+        getProjectRootDirectory.mockReturnValue(tempDir);
+
+        await prepareWebSourceImportAlias({
+          web: "web-src",
+          operations: {
+            view: [
+              {
+                type: "web",
+                impl: "index.html",
+              },
+            ],
+          },
+        });
+
+        await expect(
+          readFile(`${tempDir}/package.json`, "utf-8").then(JSON.parse),
+        ).resolves.toMatchObject({
+          imports: {
+            "#app.commerce.config": "./src/commerce-app-config.js",
+            "#web/*": "./src/commerce-backend-ui-2/web-src/src/*",
+          },
+        });
+      },
+    );
+  });
+
+  test("does nothing when there is no view operation", async () => {
+    await prepareWebSourceImportAlias({
+      operations: {
+        workerProcess: [
+          {
+            type: "action",
+            impl: "actions/worker/index.js",
+          },
+        ],
+      },
+    });
+    expect(getProjectRootDirectory).not.toHaveBeenCalled();
   });
 });
 

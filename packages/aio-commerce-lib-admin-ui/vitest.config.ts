@@ -13,8 +13,6 @@
 import { baseConfig } from "@aio-commerce-sdk/config-vitest/vitest.config.base";
 import { defineConfig, mergeConfig } from "vitest/config";
 
-const BARREL_FILES = ["./source/index.ts"];
-
 export default mergeConfig(
   baseConfig,
   defineConfig({
@@ -22,7 +20,11 @@ export default mergeConfig(
     test: {
       passWithNoTests: true,
       coverage: {
-        exclude: [...BARREL_FILES, "./source/**/types.ts"],
+        exclude: [
+          "./source/**/index.ts",
+          "./source/**/types.ts",
+          "./source/web/runtime-loader.ts",
+        ],
       },
     },
   }),

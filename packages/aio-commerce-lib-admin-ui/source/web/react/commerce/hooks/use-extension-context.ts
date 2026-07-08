@@ -21,17 +21,18 @@ import type {
 } from "#web/react/commerce/types";
 
 /**
- * Returns the context for a mass-action extension point: the selected row IDs the action was triggered
- * with. Mass actions are a Commerce-only extension point, so this requires the Commerce connection.
+ * Returns the context for a mass-action extension point: the selected row IDs the action was
+ * triggered with. The value is read from the host-provided Commerce context.
  *
- * @throws If used outside a Commerce mass-action page (e.g. in the Experience Cloud shell).
+ * @throws If used outside the Commerce shared context, or when that context does not include a
+ * mass-action selection.
  */
 export function useMassActionContext(): MassActionContext {
   const { sharedContext } = useSharedContext();
 
   return useMemo(() => {
     // An empty selection is valid (a mass action with nothing selected), but a missing key means
-    // the shared context was never populated with it, i.e. we're not on a mass-action page.
+    // the shared context was never populated with the mass-action payload.
     const selectedIds = sharedContext.get("selectedIds");
     if (!Array.isArray(selectedIds)) {
       throw new Error(
@@ -47,7 +48,7 @@ export function useMassActionContext(): MassActionContext {
  * Returns the context for an order view-button extension point: the order ID the button was
  * triggered from.
  *
- * @throws If used outside a Commerce order view-button page (no order ID in the page URL).
+ * @throws If no order ID is present in the page URL.
  */
 export function useOrderViewButtonContext(): OrderViewButtonContext {
   return useMemo(() => {
