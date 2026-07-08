@@ -48,13 +48,14 @@ export async function createOrUpdateExtConfig(
   }
 
   config.hooks ??= {};
-  config.runtimeManifest ??= { packages: {} };
 
   await buildHooks(extConfigDoc, config.hooks);
   if (config.operations !== undefined) {
     buildOperations(extConfigDoc, config.operations);
   }
-  buildRuntimeManifest(extConfigDoc, config.runtimeManifest);
+  if (config.runtimeManifest !== undefined) {
+    buildRuntimeManifest(extConfigDoc, config.runtimeManifest);
+  }
 
   await writeExtConfig(path, extConfigDoc);
   return extConfigDoc;
@@ -205,13 +206,17 @@ function buildOperations(extConfig: Document, operations: Operations) {
  * @param packages - The packages to build
  */
 function buildRuntimeManifest(extConfig: Document, manifest: RuntimeManifest) {
+  const packages = manifest.packages ?? {};
+  if (Object.keys(packages).length === 0) {
+    return;
+  }
+
   getOrCreateMap(extConfig, ["runtimeManifest"], {
     onBeforeCreate: (pair) => {
       pair.key.spaceBefore = true;
     },
   });
 
-  const packages = manifest.packages ?? {};
   getOrCreateMap(extConfig, ["runtimeManifest", "packages"]);
 
   for (const [name, pkg] of Object.entries(packages)) {
