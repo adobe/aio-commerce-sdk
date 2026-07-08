@@ -14,8 +14,8 @@ type RetryablePromiseCache<T> = {
   /** Returns the cached promise for `key`, or runs `create` to produce and cache one on a miss. */
   get: (key: string, create: () => Promise<T>) => Promise<T>;
 
-  /** Drops the cached promise for `key`, so the next lookup creates a fresh one. */
-  evict: (key: string) => void;
+  /** Drops the cached promise for `key` only if it rejected, so the next lookup retries. */
+  evictIfRejected: (key: string) => void;
 };
 
 /**
@@ -27,24 +27,28 @@ type RetryablePromiseCache<T> = {
  * suspending forever on a fresh pending promise. Retry a failed key via {@link RetryablePromiseCache.evict}.
  */
 export function createRetryablePromiseCache<T>(): RetryablePromiseCache<T> {
-  const cache = new Map<string, Promise<T>>();
+  const cache = new Map<string, { promise: Promise<T>; rejected: boolean }>();
 
   return {
     get(key, create) {
-      let promise = cache.get(key);
-      if (!promise) {
-        promise = create();
-
-        // Mark a retained rejection handled so it isn't flagged as unhandled; `use()` still sees it.
-        promise.catch(() => undefined);
-        cache.set(key, promise);
+      const cached = cache.get(key);
+      if (cached) {
+        return cached.promise;
       }
 
-      return promise;
+      const entry = { promise: create(), rejected: false };
+      entry.promise.catch(() => {
+        entry.rejected = true;
+      });
+
+      cache.set(key, entry);
+      return entry.promise;
     },
 
-    evict(key) {
-      cache.delete(key);
+    evictIfRejected(key) {
+      if (cache.get(key)?.rejected) {
+        cache.delete(key);
+      }
     },
   };
 }

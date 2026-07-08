@@ -64,13 +64,27 @@ describe("createRetryablePromiseCache", () => {
     expect(second).toBe(first);
     expect(create).toHaveBeenCalledTimes(1);
 
-    // Evicting drops the entry, so the next lookup retries.
-    cache.evict("key");
+    // evictIfRejected drops the failed entry, so the next lookup retries.
+    cache.evictIfRejected("key");
     const third = cache.get("key", create);
 
     expect(third).not.toBe(first);
     expect(create).toHaveBeenCalledTimes(2);
 
     await expect(third).resolves.toBe("recovered");
+  });
+
+  test("evictIfRejected keeps a resolved promise", async () => {
+    const cache = createRetryablePromiseCache<string>();
+    const create = vi.fn(() => Promise.resolve("value"));
+
+    const first = cache.get("key", create);
+    await expect(first).resolves.toBe("value");
+
+    cache.evictIfRejected("key");
+    const second = cache.get("key", create);
+
+    expect(second).toBe(first);
+    expect(create).toHaveBeenCalledTimes(1);
   });
 });

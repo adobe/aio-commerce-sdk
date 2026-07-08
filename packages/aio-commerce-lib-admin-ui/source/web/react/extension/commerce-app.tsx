@@ -22,9 +22,9 @@ import {
   SharedContextProvider,
   useSharedContext,
 } from "#web/react/commerce/context/shared-context.tsx";
-import { resetCommerceHost } from "#web/react/commerce/hooks/use-commerce";
+import { retryCommerceHost } from "#web/react/commerce/hooks/use-commerce";
 import {
-  resetGuestConnection,
+  retryGuestConnection,
   useGuestConnection,
 } from "#web/react/commerce/hooks/use-guest-connection";
 import { isControlFrame } from "#web/react/commerce/lib";
@@ -83,9 +83,10 @@ export function CommerceExtensionApp(props: Readonly<{ extensionId: string }>) {
     <Provider colorScheme="light" router={spectrumRouter}>
       <ExtensionErrorBoundary
         onReset={() => {
-          // Drop cached failures so "Try again" re-attaches instead of replaying the rejection.
-          resetGuestConnection(extensionId);
-          resetCommerceHost(extensionId);
+          // Retry only failed steps so "Try again" re-attaches after a connection failure but
+          // keeps a healthy connection when the error came from elsewhere.
+          retryGuestConnection(extensionId);
+          retryCommerceHost(extensionId);
         }}>
         <Suspense fallback={<ConnectionFallback />}>
           <CommerceGuestConnection extensionId={extensionId} />

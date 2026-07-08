@@ -49,9 +49,9 @@ function getCommerceHostPromise(
   return commerceHosts.get(extensionId, () => integration.getCommerceHost());
 }
 
-/** Drops the cached Commerce host for `extensionId`, so a later render re-resolves it. */
-export function resetCommerceHost(extensionId: string) {
-  commerceHosts.evict(extensionId);
+/** Drops a failed Commerce host resolution for `extensionId`, so a later render retries it. */
+export function retryCommerceHost(extensionId: string) {
+  commerceHosts.evictIfRejected(extensionId);
 }
 
 /**

@@ -40,7 +40,7 @@ export function useGuestConnection(extensionId: string): GuestConnection {
   return use(getGuestConnectionPromise(extensionId));
 }
 
-/** Drops the cached connection for `extensionId`, so a later render re-attaches. */
-export function resetGuestConnection(extensionId: string) {
-  guestConnections.evict(extensionId);
+/** Drops a failed connection for `extensionId`, so a later render re-attaches. */
+export function retryGuestConnection(extensionId: string) {
+  guestConnections.evictIfRejected(extensionId);
 }
