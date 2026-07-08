@@ -302,7 +302,7 @@ describe("buildAdminUiV2ExtConfig", () => {
     const config = buildAdminUiV2ExtConfig(configWithAdminUiMenu);
 
     expect(config.operations.view).toEqual([
-      { type: "web", impl: "index.html" },
+      { impl: "index.html", type: "web" },
     ]);
     expect(config.operations?.workerProcess).toBeUndefined();
     expect(config.web).toBe("web-src");
