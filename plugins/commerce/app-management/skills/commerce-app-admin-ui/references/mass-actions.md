@@ -4,7 +4,7 @@ Adds a bulk action to the order, product, or customer grid, applied to the recor
 Declared under `adminUi.<entity>.massActions` (an array). Two variants, discriminated by `type`:
 
 - **`worker`** — Commerce calls a runtime action with the selected ids (server-side processing).
-- **`view`** — Commerce opens an iframe into the app's `web-src` at `path`, passing the selection as a query parameter.
+- **`view`** — Commerce opens an iframe into the app's `web-src` at `path`; the selection is available through the Commerce shared context.
 
 ## Config (`app.commerce.config.ts`)
 
@@ -92,11 +92,19 @@ export async function main(params: RuntimeActionParams) {
 
 ## View variant (iframe)
 
-No server handler. Commerce opens the iframe at `path` and appends the selection as a JSON-encoded `selection` query parameter. Read it inside the iframe with `parseMassActionSelection`:
+No server handler. Commerce opens the iframe at `path` into the app's generated `web-src` (add a matching `{ path, element }` route in `src/app.jsx`). Read the user's selection inside the route component with `useMassActionContext` from `@adobe/aio-commerce-lib-admin-ui/web`; when done, close the frame with `useHostConnection`:
 
-```typescript
-import { parseMassActionSelection } from "@adobe/aio-commerce-sdk/admin-ui/mass-actions";
+```jsx
+import {
+  useHostConnection,
+  useMassActionContext,
+} from "@adobe/aio-commerce-lib-admin-ui/web";
 
-const raw = new URLSearchParams(globalThis.location.search).get("selection");
-const { ids, gridType } = parseMassActionSelection(raw); // ids: string[], gridType: "order" | "product" | "customer"
+function ExportCustomersPage() {
+  const { selectedIds } = useMassActionContext(); // string[] — the selected record ids
+  const { close, closeWithError } = useHostConnection();
+  // ...render the UI, then await close() on success or closeWithError() on failure
+}
 ```
+
+`useMassActionContext` throws if the frame is not running as a mass-action extension point within Commerce.
