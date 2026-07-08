@@ -31,6 +31,7 @@ import {
   COMMERCE_PROVIDER_TYPE,
   getCommerceEventingExistingData,
   getIoEventsExistingData,
+  getProviderStorageKey,
   makeWorkspaceConfig,
   sanitizeEventingIdentifier,
 } from "./utils";
@@ -160,8 +161,7 @@ async function createCommerceEvents(
       },
     });
 
-    const providerKey =
-      provider.key ?? provider.label.toLowerCase().replace(/\s+/g, "-");
+    const providerKey = getProviderStorageKey(provider);
     storedProviders[providerKey] = {
       id: providerData.id,
       events: Object.fromEntries(

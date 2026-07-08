@@ -9,6 +9,7 @@ The `@adobe/aio-commerce-lib-app` library provides:
 - **Installation Management**: Generate and manage the runtime action that powers the app installation flow.
 - **Admin UI Configuration** (`commerce/backend-ui/2`): Generate and manage the runtime action and `workerProcess` declarations for Admin UI extensions on `commerce/backend-ui/2`. Currently supports grid column extensions, mass actions, order view buttons, and menu declarations.
 - **Association Helpers**: Retrieve the Commerce instance the app is associated with from any runtime action via `getCommerceClient` and `getCommerceInstance`.
+- **Event Emission**: Publish a configured I/O Event from any runtime action by provider key and event name via `publishEvent`.
 
 ## Reference
 
@@ -1023,6 +1024,92 @@ aio app deploy
 A plain `aio app deploy` on its own does not add the action: the `pre-app-build` hook only regenerates actions already declared in `ext.config.yaml`. Only `generate actions` (or `generate all`) rebuilds the manifest to pick up newly added SDK actions. Until the app is redeployed with the endpoint, the App Management client skips the store call and the helpers throw `AppNotAssociatedError`.
 
 For an app that was already associated under the older SDK, re-associate it after redeploying so the store call runs and backfills the instance data — a redeploy alone does not populate data for an existing association.
+
+### Emitting Configured Events from Runtime Actions
+
+Runtime actions can publish a custom I/O Event by referencing the provider and event exactly as declared in the `eventing` section of `app.commerce.config.ts` — no need to know the I/O Events provider UUID, the fully-qualified event code, or the CloudEvents envelope format.
+
+At installation time the SDK writes each configured provider's I/O Events ID and its event codes to system storage. `publishEvent` reads that metadata to resolve the provider key and event name at runtime, so there is no management API round-trip on the hot path.
+
+`publishEvent(params)` takes:
+
+- `client` — an [`AdobeIoEventsApiClient`](../../aio-commerce-lib-events/docs/usage.md) created with the IMS auth to use for the ingress call.
+- `provider` — the `key` of an event provider declared in `app.commerce.config.ts` (or the slugified `label` when `key` is omitted).
+- `event` — the `name` of an event declared under that provider.
+- `payload` — the event payload; any JSON object. The SDK wraps it in a CloudEvents 1.0 envelope before sending.
+
+Given this configuration:
+
+```ts
+eventing: {
+  commerce: [
+    {
+      provider: {
+        key: "order-events",
+        label: "Order Events",
+        description: "Events related to order lifecycle",
+      },
+      events: [
+        {
+          name: "order.created",
+          label: "Order Created",
+          description: "Triggered when a new order is placed",
+          runtimeActions: ["my-package/handle-order-created"],
+        },
+      ],
+    },
+  ],
+}
+```
+
+a runtime action emits the event like this:
+
+```ts
+import { publishEvent } from "@adobe/aio-commerce-lib-app";
+import { createAdobeIoEventsApiClient } from "@adobe/aio-commerce-lib-events";
+import { resolveImsAuthParams } from "@adobe/aio-commerce-lib-auth";
+
+export async function main(params) {
+  const client = createAdobeIoEventsApiClient({
+    auth: resolveImsAuthParams(params),
+  });
+
+  await publishEvent({
+    client,
+    provider: "order-events",
+    event: "order.created",
+    payload: { orderId: "100000123", total: 149.99 },
+  });
+}
+```
+
+`publishEvent` validates the reference before sending and throws when it cannot be resolved. All three errors extend `PublishEventError`, so you can catch them individually or with a single clause:
+
+- `EventsDataNotInitializedError` — no eventing metadata is in system storage. The app installation has not run, or ran with an older SDK. Re-run the installation to initialize it.
+- `ProviderNotFoundError` — the `provider` key does not match any provider in the configuration.
+- `EventNotFoundError` — the `event` name does not match any event under the given provider.
+
+```ts
+import {
+  EventNotFoundError,
+  EventsDataNotInitializedError,
+  ProviderNotFoundError,
+  PublishEventError,
+  publishEvent,
+} from "@adobe/aio-commerce-lib-app";
+
+try {
+  await publishEvent({ client, provider, event, payload });
+} catch (error) {
+  if (error instanceof PublishEventError) {
+    // Handle any publish-event failure (or narrow with the specific subclasses).
+  }
+  throw error;
+}
+```
+
+> [!NOTE]
+> To target a non-production ingress endpoint, pass `config.ingressBaseUrl` when creating the client. The lower-level `publishRawEvent` (from `@adobe/aio-commerce-lib-events`) is available when you already have a resolved provider ID and event code; see the [`@adobe/aio-commerce-lib-events` usage guide](../../aio-commerce-lib-events/docs/usage.md).
 
 ## Best Practices
 

@@ -56,6 +56,10 @@ describe("externalEventsStep orchestration", () => {
 
     const helperMocks = { onboardIoEvents: vi.fn() };
     const utilsMocks = { getIoEventsExistingData: vi.fn() };
+    const configMocks = {
+      getSystemConfigByKey: vi.fn().mockResolvedValue(null),
+      setSystemConfigByKey: vi.fn().mockResolvedValue(undefined),
+    };
 
     vi.doMock("#management/installation/events/helpers", async () => {
       const actual = await vi.importActual<
@@ -77,8 +81,7 @@ describe("externalEventsStep orchestration", () => {
       >("@adobe/aio-commerce-lib-config");
       return {
         ...actual,
-        getSystemConfigByKey: vi.fn().mockResolvedValue(null),
-        setSystemConfigByKey: vi.fn().mockResolvedValue(undefined),
+        ...configMocks,
       };
     });
 
@@ -87,6 +90,7 @@ describe("externalEventsStep orchestration", () => {
       externalEventsStep: module.externalEventsStep,
       helperMocks,
       utilsMocks,
+      configMocks,
     };
   }
 
@@ -96,6 +100,74 @@ describe("externalEventsStep orchestration", () => {
     vi.doUnmock("#management/installation/events/helpers");
     vi.doUnmock("#management/installation/events/utils");
     vi.doUnmock("@adobe/aio-commerce-lib-config");
+  });
+
+  test("persists provider id and event codes to system storage keyed by the provider storage key", async () => {
+    const context = createMockEventingInstallationContext();
+
+    const { externalEventsStep, helperMocks, utilsMocks, configMocks } =
+      await importExternalStepWithMocks();
+
+    utilsMocks.getIoEventsExistingData.mockResolvedValue(
+      createMockExistingIoEventsData(),
+    );
+    helperMocks.onboardIoEvents.mockResolvedValue({
+      providerData: { id: "external-provider-uuid-123" },
+      eventsData: [
+        {
+          config: { name: "external_event" },
+          data: { metadata: { event_code: "external_event" } },
+        },
+      ],
+    });
+
+    await externalEventsStep.install(configWithExternalEventing, context);
+
+    expect(configMocks.setSystemConfigByKey).toHaveBeenCalledWith("events", {
+      providers: {
+        "third-party-events-provider": {
+          id: "external-provider-uuid-123",
+          events: { external_event: "external_event" },
+        },
+      },
+    });
+  });
+
+  test("merges newly stored providers with pre-existing stored data", async () => {
+    const context = createMockEventingInstallationContext();
+
+    const { externalEventsStep, helperMocks, utilsMocks, configMocks } =
+      await importExternalStepWithMocks();
+
+    configMocks.getSystemConfigByKey.mockResolvedValue({
+      providers: {
+        "existing-provider": { id: "existing-uuid", events: {} },
+      },
+    });
+    utilsMocks.getIoEventsExistingData.mockResolvedValue(
+      createMockExistingIoEventsData(),
+    );
+    helperMocks.onboardIoEvents.mockResolvedValue({
+      providerData: { id: "external-provider-uuid-123" },
+      eventsData: [
+        {
+          config: { name: "external_event" },
+          data: { metadata: { event_code: "external_event" } },
+        },
+      ],
+    });
+
+    await externalEventsStep.install(configWithExternalEventing, context);
+
+    expect(configMocks.setSystemConfigByKey).toHaveBeenCalledWith("events", {
+      providers: {
+        "existing-provider": { id: "existing-uuid", events: {} },
+        "third-party-events-provider": {
+          id: "external-provider-uuid-123",
+          events: { external_event: "external_event" },
+        },
+      },
+    });
   });
 
   test("skips a provider whose events are all scoped to another environment", async () => {

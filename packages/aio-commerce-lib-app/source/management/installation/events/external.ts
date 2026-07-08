@@ -21,7 +21,11 @@ import { defineLeafStep } from "#management/installation/workflow/step";
 
 import { offboardIoEvents, onboardIoEvents } from "./helpers";
 import { EVENTS_STORAGE_KEY } from "./stored-events-data";
-import { EXTERNAL_PROVIDER_TYPE, getIoEventsExistingData } from "./utils";
+import {
+  EXTERNAL_PROVIDER_TYPE,
+  getIoEventsExistingData,
+  getProviderStorageKey,
+} from "./utils";
 
 import type { ExternalEventsConfig } from "#config/schema/eventing";
 import type { InferStepOutput } from "#management/installation/workflow/step";
@@ -101,8 +105,7 @@ async function createExternalEvents(
       },
     });
 
-    const providerKey =
-      provider.key ?? provider.label.toLowerCase().replace(/\s+/g, "-");
+    const providerKey = getProviderStorageKey(provider);
     storedProviders[providerKey] = {
       id: providerData.id,
       events: Object.fromEntries(

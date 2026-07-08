@@ -68,6 +68,11 @@ describe("commerceEventsStep orchestration", () => {
       makeWorkspaceConfig: vi.fn(),
     };
 
+    const configMocks = {
+      getSystemConfigByKey: vi.fn().mockResolvedValue(null),
+      setSystemConfigByKey: vi.fn().mockResolvedValue(undefined),
+    };
+
     vi.doMock("#management/installation/events/helpers", async () => {
       const actual = await vi.importActual<
         typeof import("#management/installation/events/helpers")
@@ -96,8 +101,7 @@ describe("commerceEventsStep orchestration", () => {
       >("@adobe/aio-commerce-lib-config");
       return {
         ...actual,
-        getSystemConfigByKey: vi.fn().mockResolvedValue(null),
-        setSystemConfigByKey: vi.fn().mockResolvedValue(undefined),
+        ...configMocks,
       };
     });
 
@@ -109,6 +113,7 @@ describe("commerceEventsStep orchestration", () => {
       commerceEventsStep: commerceModule.commerceEventsStep,
       helperMocks,
       utilsMocks,
+      configMocks,
     };
   }
 
@@ -238,5 +243,110 @@ describe("commerceEventsStep orchestration", () => {
     expect(helperMocks.onboardIoEvents).toHaveBeenCalledTimes(1);
     expect(helperMocks.configureCommerceEventing).toHaveBeenCalledTimes(1);
     expect(helperMocks.onboardCommerceEventing).toHaveBeenCalledTimes(1);
+  });
+
+  test("persists provider id and event codes to system storage keyed by the provider storage key", async () => {
+    vi.stubEnv("__OW_NAMESPACE", "test-namespace");
+    const context = createMockEventingInstallationContext();
+
+    const { commerceEventsStep, helperMocks, utilsMocks, configMocks } =
+      await importCommerceStepWithMocks();
+
+    utilsMocks.makeWorkspaceConfig.mockReturnValue(
+      createMockWorkspaceConfiguration(),
+    );
+    utilsMocks.getIoEventsExistingData.mockResolvedValue(
+      createMockExistingIoEventsData(),
+    );
+    utilsMocks.getCommerceEventingExistingData.mockResolvedValue(
+      createMockExistingCommerceEventingData(),
+    );
+
+    helperMocks.onboardIoEvents.mockResolvedValue({
+      providerData: {
+        id: "provider-uuid-123",
+        instance_id: "test-app-order-events-provider-test-workspace-id",
+      },
+      eventsData: [
+        {
+          config: { name: "plugin.order_placed" },
+          data: { metadata: { event_code: "com.adobe.commerce.order.placed" } },
+        },
+      ],
+    });
+    helperMocks.configureCommerceEventing.mockResolvedValue(undefined);
+    helperMocks.onboardCommerceEventing.mockResolvedValue({
+      commerceProvider: {},
+      subscriptions: [{}],
+    });
+
+    await commerceEventsStep.install(configWithCommerceEventing, context);
+
+    expect(configMocks.setSystemConfigByKey).toHaveBeenCalledWith("events", {
+      providers: {
+        "order-events-provider": {
+          id: "provider-uuid-123",
+          events: {
+            "plugin.order_placed": "com.adobe.commerce.order.placed",
+          },
+        },
+      },
+    });
+  });
+
+  test("merges newly stored providers with pre-existing stored data", async () => {
+    vi.stubEnv("__OW_NAMESPACE", "test-namespace");
+    const context = createMockEventingInstallationContext();
+
+    const { commerceEventsStep, helperMocks, utilsMocks, configMocks } =
+      await importCommerceStepWithMocks();
+
+    configMocks.getSystemConfigByKey.mockResolvedValue({
+      providers: {
+        "existing-provider": { id: "existing-uuid", events: {} },
+      },
+    });
+
+    utilsMocks.makeWorkspaceConfig.mockReturnValue(
+      createMockWorkspaceConfiguration(),
+    );
+    utilsMocks.getIoEventsExistingData.mockResolvedValue(
+      createMockExistingIoEventsData(),
+    );
+    utilsMocks.getCommerceEventingExistingData.mockResolvedValue(
+      createMockExistingCommerceEventingData(),
+    );
+
+    helperMocks.onboardIoEvents.mockResolvedValue({
+      providerData: {
+        id: "provider-uuid-123",
+        instance_id: "test-app-order-events-provider-test-workspace-id",
+      },
+      eventsData: [
+        {
+          config: { name: "plugin.order_placed" },
+          data: { metadata: { event_code: "com.adobe.commerce.order.placed" } },
+        },
+      ],
+    });
+    helperMocks.configureCommerceEventing.mockResolvedValue(undefined);
+    helperMocks.onboardCommerceEventing.mockResolvedValue({
+      commerceProvider: {},
+      subscriptions: [{}],
+    });
+
+    await commerceEventsStep.install(configWithCommerceEventing, context);
+
+    expect(configMocks.setSystemConfigByKey).toHaveBeenCalledWith("events", {
+      providers: {
+        "existing-provider": { id: "existing-uuid", events: {} },
+        "order-events-provider": {
+          id: "provider-uuid-123",
+          events: {
+            "plugin.order_placed": "com.adobe.commerce.order.placed",
+          },
+        },
+      },
+    });
   });
 });

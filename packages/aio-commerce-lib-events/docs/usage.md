@@ -261,6 +261,32 @@ await ioEventsClient.deleteRegistration({
 });
 ```
 
+#### Publishing Events to the Ingress
+
+`publishRawEvent` sends an event to the Adobe I/O Events ingress. It builds a CloudEvents 1.0 envelope from the resolved `providerId` and `eventCode` you supply and POSTs it to the ingress endpoint configured on the client. Authentication is applied automatically from the client's IMS auth.
+
+```typescript
+await ioEventsClient.publishRawEvent({
+  providerId: "your-provider-uuid",
+  eventCode: "com.adobe.commerce.order.created",
+  payload: { orderId: "100000123", total: 149.99 },
+});
+```
+
+The `payload` must be a JSON object; it is placed in the CloudEvents `data` field. The provider is identified via the envelope's `source` (`urn:uuid:{providerId}`) and the event via `type` (`eventCode`). Errors from the ingress propagate to the caller.
+
+By default the client targets the production ingress (`https://eventsingress.adobe.io/`). To use a different endpoint, pass `config.ingressBaseUrl` when creating the client:
+
+```typescript
+const ioEventsClient = createAdobeIoEventsApiClient({
+  auth: {/* IMS auth params */},
+  config: { ingressBaseUrl: "https://your-ingress-endpoint" },
+});
+```
+
+> [!TIP]
+> If you are emitting an event declared in your `app.commerce.config.ts`, prefer `publishEvent` from [`@adobe/aio-commerce-lib-app`](../../aio-commerce-lib-app/docs/usage.md#emitting-configured-events-from-runtime-actions). It resolves the provider ID and event code for you from the app configuration, so you only pass the provider key and event name. Use `publishRawEvent` when you already have the resolved provider ID and event code.
+
 ### Custom API Clients
 
 > [!TIP]
