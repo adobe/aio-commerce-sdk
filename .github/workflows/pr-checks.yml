@@ -63,7 +63,7 @@ jobs:
 
         # Browser-mode tests need the Chromium binary plus its system libraries on Linux.
       - name: Install Playwright Chromium
-        run: pnpx playwright install --with-deps chromium
+        run: pnpm exec playwright install --with-deps chromium
 
         # See: https://turborepo.com/docs/reference/run#--affected
       - name: Run Turbo tasks on affected packages
