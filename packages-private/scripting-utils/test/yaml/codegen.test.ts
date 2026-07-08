@@ -764,7 +764,7 @@ runtimeManifest:
         const configPath = join(tempDir, "ext.config.yaml");
         const config = {
           operations: {
-            view: [{ type: "web" as const, impl: "index.html" }],
+            view: [{ impl: "index.html", type: "web" as const }],
           },
           web: "web-src",
         };
