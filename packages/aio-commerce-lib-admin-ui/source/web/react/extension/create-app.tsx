@@ -46,7 +46,22 @@ export type CreateExtensionAppOptions = {
  * Mounts a Commerce Admin UI iframe app and handles Experience Cloud Shell, UIX
  * registration, shared-context attachment, routing, and Spectrum setup.
  *
+ * The app is wrapped in React's `<StrictMode>`, so in development builds (e.g. when
+ * served via `aio app dev` or `aio app run`) components render twice and effects run
+ * an extra setup + cleanup cycle on mount. Production builds are unaffected.
+ *
  * @param options - App bootstrap options.
+ *
+ * @example
+ * ```tsx
+ * import { createExtensionApp } from "@adobe/aio-commerce-lib-admin-ui/web";
+ * import { MainPage } from "./pages/main-page.jsx";
+ *
+ * createExtensionApp({
+ *   metadata: { extensionId: "my-extension-id" },
+ *   routes: [{ index: true, element: <MainPage /> }],
+ * });
+ * ```
  */
 export function createExtensionApp({
   metadata,

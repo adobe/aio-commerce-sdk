@@ -37,6 +37,7 @@ allowBuilds:
   core-js-pure: true
   esbuild: true
   msw: true
+  playwright: true
   protobufjs: true
 minimumReleaseAgeExclude:
   - ultracite@7.9.2

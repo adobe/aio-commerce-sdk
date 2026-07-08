@@ -52,11 +52,21 @@ export function useInternalSharedContext(): SharedContextState {
  * Returns the current Commerce shared context. The guest connection is already established by
  * the time this can be called (see {@link SharedContextProvider}).
  *
- * This is a low-level escape hatch that exposes the raw `sharedContext`/`host` objects; prefer a
- * purpose-built hook ({@link useCommerce}, {@link useMassActionContext}, {@link useOrderViewButtonContext}, etc.) when one
- * covers what you need.
+ * This is a low-level escape hatch that exposes the raw `sharedContext` and `host` objects.
+ * Prefer a purpose-built hook ({@link useCommerce}, {@link useMassActionContext},
+ * {@link useOrderViewButtonContext}) when one covers what you need.
  *
  * @throws If used outside a {@link SharedContextProvider}.
+ *
+ * @example
+ * ```tsx
+ * import { useSharedContext } from "@adobe/aio-commerce-lib-admin-ui/web";
+ *
+ * function ImsTokenLabel() {
+ *   const { sharedContext } = useSharedContext();
+ *   return <span>{sharedContext.get("imsToken")}</span>;
+ * }
+ * ```
  */
 export function useSharedContext(): SharedContext {
   const { extensionId, guestConnection } = useInternalSharedContext();

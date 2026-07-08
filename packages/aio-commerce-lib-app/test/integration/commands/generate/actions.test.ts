@@ -24,6 +24,10 @@ import {
   GENERATED_ACTIONS_PATH,
   getExtensionPointFolderPath,
 } from "#commands/constants";
+import {
+  WEB_SOURCE_DEPENDENCIES,
+  WEB_SOURCE_DEV_DEPENDENCIES,
+} from "#commands/generate/actions/constants";
 import { exec, run } from "#commands/generate/actions/main";
 import { getManifestPath, getRuntimeAppConfigPath } from "#commands/utils";
 import {
@@ -37,6 +41,7 @@ import {
   configWithDynamicListOptions,
   configWithFullAdminUiV2,
   configWithOneScript,
+  configWithWorkerMassActions,
   minimalValidConfig,
 } from "#test/fixtures/config";
 import {
@@ -50,6 +55,8 @@ import {
 const { mockSpawnSync } = vi.hoisted(() => ({
   mockSpawnSync: vi.fn((..._args: unknown[]) => ({ status: 0 })),
 }));
+
+const LEADING_CARET_PATTERN = /^\^/u;
 
 vi.mock("node:child_process", () => ({ spawnSync: mockSpawnSync }));
 
@@ -529,6 +536,133 @@ describe("commands/generate/actions", () => {
             ),
           );
           expect(mockSpawnSync).not.toHaveBeenCalled();
+        },
+      );
+    });
+
+    test("throws when an installed web-src dependency is incompatible", async () => {
+      await withTempProject(
+        {
+          ...EMPTY_PROJECT,
+          ...makeTemplateFiles(),
+          // React 17 does not satisfy the required range pinned at build time.
+          [join("node_modules", "react", "package.json")]: JSON.stringify({
+            name: "react",
+            version: "17.0.0",
+          }),
+        },
+        async (tempDir) => {
+          await expect(run(configWithAdminUiMenu, tempDir)).rejects.toThrow(
+            "Cannot scaffold web-src because installed dependencies are incompatible",
+          );
+
+          expect(mockSpawnSync).not.toHaveBeenCalled();
+        },
+      );
+    });
+
+    test("does not run install when all web-src dependencies are already installed", async () => {
+      // Seed every required (JSX) web-src dependency as installed with a
+      // version that satisfies its required range.
+      const installedDependencies = Object.fromEntries(
+        [...WEB_SOURCE_DEPENDENCIES, ...WEB_SOURCE_DEV_DEPENDENCIES].map(
+          ({ name, version }) => [
+            join("node_modules", name, "package.json"),
+            JSON.stringify({
+              name,
+              version: version.replace(LEADING_CARET_PATTERN, ""),
+            }),
+          ],
+        ),
+      );
+
+      await withTempProject(
+        {
+          ...EMPTY_PROJECT,
+          ...makeTemplateFiles(),
+          ...installedDependencies,
+        },
+        async (tempDir) => {
+          await run(configWithAdminUiMenu, tempDir);
+
+          const webSrcDir = join(
+            tempDir,
+            getExtensionPointFolderPath(BACKEND_UI_V2_EXTENSION_POINT_ID),
+            "web-src",
+          );
+
+          // Distinct from the skip-if-exists case: the scaffold still runs.
+          expect(existsSync(join(webSrcDir, "index.html"))).toBe(true);
+          expect(existsSync(join(webSrcDir, "src", "app.jsx"))).toBe(true);
+
+          expect(consola.info).toHaveBeenCalledWith(
+            "web-src dependencies are already installed.",
+          );
+          expect(mockSpawnSync).not.toHaveBeenCalled();
+        },
+      );
+    });
+
+    test("does not scaffold web-src or write the #web/* alias when adminUi has no view operation", async () => {
+      await withTempProject(
+        { ...EMPTY_PROJECT, ...makeTemplateFiles() },
+        async (tempDir) => {
+          await run(configWithWorkerMassActions, tempDir);
+
+          const extensionDir = join(
+            tempDir,
+            getExtensionPointFolderPath(BACKEND_UI_V2_EXTENSION_POINT_ID),
+          );
+
+          expect(existsSync(join(extensionDir, "ext.config.yaml"))).toBe(true);
+          expect(existsSync(join(extensionDir, "web-src"))).toBe(false);
+
+          const pkg = JSON.parse(
+            await readFile(join(tempDir, "package.json"), "utf-8"),
+          );
+          expect(pkg.imports["#web/*"]).toBeUndefined();
+          expect(mockSpawnSync).not.toHaveBeenCalled();
+        },
+      );
+    });
+
+    test("scaffolds JSX web-src files when a JavaScript app config file exists", async () => {
+      await withTempProject(
+        {
+          ...makeProjectFiles(configWithAdminUiMenu, "cjs"),
+          ...makeTemplateFiles(),
+        },
+        async (tempDir) => {
+          await run(configWithAdminUiMenu, tempDir);
+
+          const webSrcDir = join(
+            tempDir,
+            getExtensionPointFolderPath(BACKEND_UI_V2_EXTENSION_POINT_ID),
+            "web-src",
+          );
+
+          expect(existsSync(join(webSrcDir, "src", "app.jsx"))).toBe(true);
+          expect(existsSync(join(webSrcDir, "src", "app.tsx"))).toBe(false);
+          expect(existsSync(join(webSrcDir, "tsconfig.json"))).toBe(false);
+
+          const indexHtml = await readFile(
+            join(webSrcDir, "index.html"),
+            "utf-8",
+          );
+          expect(indexHtml).toContain("./src/app.jsx");
+        },
+      );
+    });
+
+    test("throws when installing web-src dependencies fails", async () => {
+      mockSpawnSync.mockReturnValueOnce({ status: 1 });
+
+      await withTempProject(
+        { ...EMPTY_PROJECT, ...makeTemplateFiles() },
+        async (tempDir) => {
+          await expect(run(configWithAdminUiMenu, tempDir)).rejects.toThrow(
+            "Failed to install dependencies automatically",
+          );
         },
       );
     });

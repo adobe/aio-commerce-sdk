@@ -132,6 +132,10 @@ out
 # Turbo
 .turbo
 
+# Vitest browser-mode failure screenshots
+**/__screenshots__/
+**/.vitest-attachments/
+
 .vscode/*
 !.vscode/settings.json
 !.vscode/extensions.json
