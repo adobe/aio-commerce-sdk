@@ -10,33 +10,45 @@
  * governing permissions and limitations under the License.
  */
 
-/**
- * Creates a keyed cache of promises that memoizes in-flight and resolved promises and evicts
- * failed ones, so a later lookup for the same key retries instead of replaying the rejection.
- *
- * This is the reference-stable memoization that `use()` requires while suspended, and the
- * single-flight guarantee that side-effecting establishment calls (which have no teardown to
- * undo a duplicate) need to survive re-renders, remounts, and StrictMode double-invocation.
- *
- * @returns A `get-or-create` function: it returns the cached promise for `key`, or runs
- * `create` to produce and cache one on a miss.
- */
-export function createRetryablePromiseCache<T>() {
-  const cache = new Map<string, Promise<T>>();
+type RetryablePromiseCache<T> = {
+  /** Returns the cached promise for `key`, or runs `create` to produce and cache one on a miss. */
+  get: (key: string, create: () => Promise<T>) => Promise<T>;
 
-  return (key: string, create: () => Promise<T>): Promise<T> => {
-    let promise = cache.get(key);
-    if (!promise) {
-      promise = create();
-      promise.catch(() => {
-        if (cache.get(key) === promise) {
-          cache.delete(key);
-        }
+  /** Drops the cached promise for `key` only if it rejected, so the next lookup retries. */
+  evictIfRejected: (key: string) => void;
+};
+
+/**
+ * Creates a keyed cache that memoizes in-flight, resolved, and rejected promises, giving `use()`
+ * the reference-stable promise it needs while suspended and single-flighting side-effecting
+ * establishment calls across re-renders, remounts, and StrictMode double-invocation.
+ *
+ * Rejections are retained (not evicted) so `use()` replays them to an error boundary instead of
+ * suspending forever on a fresh pending promise. Retry a failed key via {@link RetryablePromiseCache.evict}.
+ */
+export function createRetryablePromiseCache<T>(): RetryablePromiseCache<T> {
+  const cache = new Map<string, { promise: Promise<T>; rejected: boolean }>();
+
+  return {
+    get(key, create) {
+      const cached = cache.get(key);
+      if (cached) {
+        return cached.promise;
+      }
+
+      const entry = { promise: create(), rejected: false };
+      entry.promise.catch(() => {
+        entry.rejected = true;
       });
 
-      cache.set(key, promise);
-    }
+      cache.set(key, entry);
+      return entry.promise;
+    },
 
-    return promise;
+    evictIfRejected(key) {
+      if (cache.get(key)?.rejected) {
+        cache.delete(key);
+      }
+    },
   };
 }
