@@ -1039,7 +1039,7 @@ Given this configuration:
 
 ```ts
 eventing: {
-  commerce: [
+  external: [
     {
       provider: {
         key: "order-events",
@@ -1051,7 +1051,6 @@ eventing: {
           name: "order.created",
           label: "Order Created",
           description: "Triggered when a new order is placed",
-          runtimeActions: ["my-package/handle-order-created"],
         },
       ],
     },
