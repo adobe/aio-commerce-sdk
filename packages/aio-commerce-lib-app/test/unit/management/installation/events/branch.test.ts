@@ -12,6 +12,17 @@
 
 import { describe, expect, test, vi } from "vitest";
 
+vi.mock("@adobe/aio-commerce-lib-config", async () => {
+  const actual = await vi.importActual<
+    typeof import("@adobe/aio-commerce-lib-config")
+  >("@adobe/aio-commerce-lib-config");
+  return {
+    ...actual,
+    getSystemConfigByKey: vi.fn().mockResolvedValue(null),
+    setSystemConfigByKey: vi.fn().mockResolvedValue(undefined),
+  };
+});
+
 import { eventingStep } from "#management/installation/events/branch";
 import { commerceEventsStep } from "#management/installation/events/commerce";
 import { createEventsStepContext } from "#management/installation/events/context";

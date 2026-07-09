@@ -117,3 +117,27 @@ export type OffboardEventsParams = {
   provider: EventProvider;
   events: AppEvent[];
 };
+
+/** A single event entry stored in system config after installation. */
+export type StoredEventEntry = {
+  /** The fully-qualified I/O Events event code. */
+  code: string;
+  /** Whether the event contains PHI data requiring HIPAA audit. */
+  isPhiData: boolean;
+};
+
+/** A single provider entry stored in system config after installation. */
+export type StoredProviderEntry = {
+  /** The I/O Events provider UUID. */
+  id: string;
+  /** Maps each event's declared `name` to its stored event entry. */
+  events: Record<string, StoredEventEntry>;
+};
+
+/**
+ * Shape of the `system.events` entry written to system storage at installation time.
+ * Keyed by `provider.key`.
+ */
+export type StoredEventsData = {
+  providers: Record<string, StoredProviderEntry>;
+};

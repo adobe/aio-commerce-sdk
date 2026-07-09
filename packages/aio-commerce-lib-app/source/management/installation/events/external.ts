@@ -10,16 +10,26 @@
  * governing permissions and limitations under the License.
  */
 
+import {
+  getSystemConfigByKey,
+  setSystemConfigByKey,
+} from "@adobe/aio-commerce-lib-config";
+
 import { appliesToEnv, getInstallCommerceEnv } from "#config/lib/environment";
 import { hasExternalEvents } from "#config/schema/eventing";
 import { defineLeafStep } from "#management/installation/workflow/step";
 
 import { offboardIoEvents, onboardIoEvents } from "./helpers";
-import { EXTERNAL_PROVIDER_TYPE, getIoEventsExistingData } from "./utils";
+import {
+  EVENTS_STORAGE_KEY,
+  EXTERNAL_PROVIDER_TYPE,
+  getIoEventsExistingData,
+} from "./utils";
 
 import type { ExternalEventsConfig } from "#config/schema/eventing";
 import type { InferStepOutput } from "#management/installation/workflow/step";
 import type { EventsExecutionContext } from "./context";
+import type { StoredEventsData } from "./types";
 
 /** The output data of the External Eventing step (auto-inferred). */
 export type ExternalEventsStepData = InferStepOutput<typeof externalEventsStep>;
@@ -57,6 +67,7 @@ async function createExternalEvents(
 
   const env = getInstallCommerceEnv(context.params);
   const existingIoEventsData = await getIoEventsExistingData(context);
+  const storedProviders: StoredEventsData["providers"] = {};
 
   const eligibleProviders = config.eventing.external
     .map(({ provider, events: providerEvents }) => ({
@@ -86,6 +97,21 @@ async function createExternalEvents(
         existingIoEventsData,
       );
 
+      if (provider.key) {
+        storedProviders[provider.key] = {
+          events: Object.fromEntries(
+            eventsData.map(({ config: eventConfig, data: eventData }) => [
+              eventConfig.name,
+              {
+                code: eventData.metadata.event_code,
+                isPhiData: eventConfig.hipaa_audit_required ?? false,
+              },
+            ]),
+          ),
+          id: providerData.id,
+        };
+      }
+
       return {
         provider: {
           config: provider,
@@ -101,9 +127,19 @@ async function createExternalEvents(
     }),
   );
 
+  const existing = (await getSystemConfigByKey<StoredEventsData>(
+    EVENTS_STORAGE_KEY,
+  )) ?? {
+    providers: {},
+  };
+  await setSystemConfigByKey(EVENTS_STORAGE_KEY, {
+    providers: { ...existing.providers, ...storedProviders },
+  });
+
   logger.debug("Completed External Events installation step.");
   return stepData;
 }
+
 /**
  * Removed all created entities for External Events during the installation
  * @param config - The configuration of the app, with external events.

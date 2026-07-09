@@ -245,6 +245,7 @@ const CommerceEventSchema = v.object({
 /** Schema for external event configuration */
 const ExternalEventSchema = v.object({
   ...BaseEventSchema.entries,
+  hipaa_audit_required: v.optional(booleanValueSchema("hipaa_audit_required")),
   name: externalEventNameSchema(),
 });
 

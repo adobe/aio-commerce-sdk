@@ -2,7 +2,7 @@
 
 - **Ticket:** [CEXT-6270](https://jira.corp.adobe.com/browse/CEXT-6270)
 - **Created:** 2026-06-23
-- [ ] **Implemented**
+- [x] **Implemented**
 
 ## Summary
 
@@ -44,14 +44,12 @@ IMS token and OAuth scope. Every app that uses this pattern reimplements the sam
 After this feature ships, publishing a custom event from a runtime action looks like this:
 
 ```ts
-import {
-  publishEvent,
-  getAdobeIoEventsClient,
-} from "@adobe/aio-commerce-lib-app";
+import { publishEvent } from "@adobe/aio-commerce-lib-app";
+import { createAdobeIoEventsApiClient } from "@adobe/aio-commerce-lib-events";
 import { resolveImsAuthParams } from "@adobe/aio-commerce-lib-auth";
 
 export async function main(params) {
-  const client = getAdobeIoEventsClient({
+  const client = createAdobeIoEventsApiClient({
     auth: resolveImsAuthParams(params),
     config: { ingressBaseUrl: params.AIO_EVENTS_INGRESS_BASE_URL },
   });
@@ -65,11 +63,9 @@ export async function main(params) {
 }
 ```
 
-`provider` is the `key` of an event provider declared in `app.commerce.config.ts`. When
-`key` is omitted in the config, the stored key is the slugified provider label — pass that
-same value here. `event` is the `name` of an event within that provider. Both must match the
-configuration exactly. The `payload` is a JSON object; the SDK wraps it in a CloudEvents
-envelope before sending.
+`provider` is the `key` of an event provider declared in `app.commerce.config.ts`. `event`
+is the `name` of an event within that provider. Both must match the configuration exactly. The
+`payload` is a JSON object; the SDK wraps it in a CloudEvents envelope before sending.
 
 `config.ingressBaseUrl` defaults to `https://eventsingress.adobe.io/` when not set. Stage
 environments set `AIO_EVENTS_INGRESS_BASE_URL` in the action inputs to target the stage
@@ -139,19 +135,6 @@ the same fallback used by `generateInstanceId`. The event code is the value retu
 `getIoEventCode(getNamespacedEvent(metadata, event.name), providerType)`, the same
 computation already performed during installation.
 
-### `getAdobeIoEventsClient` in lib-app
-
-A new export from `@adobe/aio-commerce-lib-app` that mirrors `getCommerceClient`:
-
-```ts
-getAdobeIoEventsClient(params: IoEventsHttpClientParams): AdobeIoEventsHttpClient
-```
-
-Creates and returns an `AdobeIoEventsHttpClient` from `lib-api`. Unlike `getCommerceClient`,
-no state read is needed — the caller supplies auth and config directly. The function exists to
-give developers a consistent `get*Client` entry point in `lib-app` rather than requiring them
-to import a lower-level constructor from `lib-api`.
-
 ### `publishEvent` in lib-events
 
 A new export from `@adobe/aio-commerce-lib-events` that owns the I/O Events ingress HTTP
@@ -159,7 +142,7 @@ call and CloudEvents envelope construction:
 
 ```ts
 publishEvent<TPayload extends Record<string, unknown>>(params: {
-  client: AdobeIoEventsHttpClient;
+  client: AdobeIoEventsApiClient;
   providerId: string;
   eventCode: string;
   payload: TPayload;
@@ -188,17 +171,17 @@ A new export from the root entrypoint of `@adobe/aio-commerce-lib-app`:
 
 ```ts
 publishEvent<TPayload extends Record<string, unknown>>(params: {
-  client: AdobeIoEventsHttpClient;
+  client: AdobeIoEventsApiClient;
   provider: string;
   event: string;
   payload: TPayload;
 }): Promise<void>
 ```
 
-`publishEvent` accepts `AdobeIoEventsHttpClient` from `lib-api` — no new client type is
-introduced. The generic `TPayload` lets callers enforce the payload shape at the call site.
-The constraint `Record<string, unknown>` rules out primitives and arrays, matching what the
-I/O Events ingress expects as `data`.
+`publishEvent` accepts the existing `AdobeIoEventsApiClient` from `lib-events` — no new
+client type is introduced. The generic `TPayload` lets callers enforce the payload shape at
+the call site. The constraint `Record<string, unknown>` rules out primitives and arrays,
+matching what the I/O Events ingress expects as `data`.
 
 Internal flow of `publishEvent`:
 
@@ -212,8 +195,8 @@ Internal flow of `publishEvent`:
 
 - `@adobe/aio-commerce-lib-api`: `minor` — adds `ingressBaseUrl` to `IoEventsHttpClientConfig`.
 - `@adobe/aio-commerce-lib-events`: `minor` — new `publishEvent` export.
-- `@adobe/aio-commerce-lib-app`: `minor` — new `publishEvent` and `getAdobeIoEventsClient`
-  exports plus installation-side `system.events` write.
+- `@adobe/aio-commerce-lib-app`: `minor` — new `publishEvent` export plus installation-side
+  `system.events` write.
 - `@adobe/aio-commerce-sdk`: `minor` — re-exports the above.
 
 ## Drawbacks
@@ -233,15 +216,13 @@ published. The install step already computes and has the provider ID; persisting
 incremental work with a meaningful runtime benefit.
 
 **`lib-app` vs. `lib-events` for `publishEvent`.**
-`lib-events` owns all I/O Events HTTP operations: management API and ingress. `publishEvent`
-in `lib-events` handles CloudEvents envelope construction and the ingress POST, operating on
-already-resolved `providerId` and `eventCode`. `publishEvent` in `lib-app` sits above it: it
-reads system storage, resolves provider key and event name to their respective IDs and codes,
-then delegates the HTTP call to `lib-events.publishEvent`. Both functions accept
-`AdobeIoEventsHttpClient` — the foundational HTTP client from `lib-api` — keeping the type
-boundary as low and unrestrictive as possible. `getAdobeIoEventsClient` in `lib-app` provides
-a consistent `get*Client` entry point that mirrors `getCommerceClient`, so callers only need
-to import from `lib-app`.
+`lib-events` owns all I/O Events HTTP operations: management API and ingress. The new
+`publishEvent` in `lib-events` handles CloudEvents envelope construction and the ingress
+POST, operating on already-resolved `providerId` and `eventCode`. `publishEvent` in `lib-app`
+sits above it: it reads system storage, resolves provider key and event name to their
+respective IDs and codes, then delegates the HTTP call to `lib-events.publishEvent`. This
+boundary means any change to the ingress protocol is isolated to `lib-events`; `lib-app` only
+cares about resolution.
 
 **Storing the pre-computed event code rather than recomputing at runtime.**
 The event code could be recomputed from the provider type and app metadata, but that
