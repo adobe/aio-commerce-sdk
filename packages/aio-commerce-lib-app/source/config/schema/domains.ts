@@ -35,19 +35,19 @@ import type { AnyCommerceAppConfig } from "./app";
 
 /** The individual validatable domains of the app config. */
 export const CommerceAppConfigSchemas = {
-  metadata: MetadataSchema,
+  adminUi: AdminUiSchema,
   businessConfig: SchemaBusinessConfig,
-  eventing: EventingSchema,
-  installation: InstallationSchema,
-  webhooks: WebhooksSchema,
 
   "businessConfig.schema": v.unwrap(SchemaBusinessConfig.entries.schema),
+  eventing: EventingSchema,
   "eventing.commerce": v.unwrap(EventingSchema.entries.commerce),
   "eventing.external": v.unwrap(EventingSchema.entries.external),
+  installation: InstallationSchema,
   "installation.customInstallationSteps": v.unwrap(
     InstallationSchema.entries.customInstallationSteps,
   ),
-  adminUi: AdminUiSchema,
+  metadata: MetadataSchema,
+  webhooks: WebhooksSchema,
 } as const;
 
 /** Individual validatable domains of the commerce app config. */
@@ -64,17 +64,17 @@ export function getConfigDomains(
   const withExternalEvents = hasExternalEvents(config);
 
   const domains: Record<CommerceAppConfigDomain, boolean> = {
-    metadata: hasMetadata(config),
-    businessConfig: hasBusinessConfig(config),
-    eventing: withCommerceEvents || withExternalEvents,
-    installation: hasCustomInstallation(config),
-    webhooks: hasWebhooks(config),
     adminUi: hasAdminUi(config),
+    businessConfig: hasBusinessConfig(config),
 
     "businessConfig.schema": hasBusinessConfigSchema(config),
+    eventing: withCommerceEvents || withExternalEvents,
     "eventing.commerce": withCommerceEvents,
     "eventing.external": withExternalEvents,
+    installation: hasCustomInstallation(config),
     "installation.customInstallationSteps": hasCustomInstallationSteps(config),
+    metadata: hasMetadata(config),
+    webhooks: hasWebhooks(config),
   };
 
   const domainsList = Object.entries(domains)

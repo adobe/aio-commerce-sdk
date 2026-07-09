@@ -63,8 +63,8 @@ describe("createInitialInstallationState", () => {
     expect(state.status).toBe("in-progress");
     expect(state.step.name).toBe("installation");
     expect(state.step.meta).toEqual({
-      label: "Installation",
       description: "App installation workflow",
+      label: "Installation",
     });
   });
 
@@ -134,9 +134,9 @@ describe("runInstallation", () => {
     });
 
     const result = await runInstallation({
-      installationContext: createMockInstallationContext(),
       config: minimalValidConfig,
       initialState,
+      installationContext: createMockInstallationContext(),
     });
 
     expect(result.status).toBe("succeeded");
@@ -156,10 +156,10 @@ describe("runInstallation", () => {
     });
 
     await runInstallation({
-      installationContext: createMockInstallationContext(),
       config: minimalValidConfig,
-      initialState,
       hooks,
+      initialState,
+      installationContext: createMockInstallationContext(),
     });
 
     expect(hooks.onInstallationStart).toHaveBeenCalledTimes(1);
@@ -187,8 +187,8 @@ describe("createInitialUninstallationState", () => {
     expect(state.status).toBe("in-progress");
     expect(state.step.name).toBe("uninstallation");
     expect(state.step.meta).toEqual({
-      label: "Uninstallation",
       description: "App uninstallation workflow",
+      label: "Uninstallation",
     });
   });
 
@@ -281,9 +281,9 @@ describe("runUninstallation", () => {
     });
 
     const result = await runUninstallation({
-      installationContext: createMockInstallationContext(),
       config: minimalValidConfig,
       initialState,
+      installationContext: createMockInstallationContext(),
     });
 
     expect(result.status).toBe("succeeded");
@@ -303,10 +303,10 @@ describe("runUninstallation", () => {
     });
 
     await runUninstallation({
-      installationContext: createMockInstallationContext(),
       config: minimalValidConfig,
-      initialState,
       hooks,
+      initialState,
+      installationContext: createMockInstallationContext(),
     });
 
     expect(hooks.onInstallationStart).toHaveBeenCalledTimes(1);
@@ -338,14 +338,14 @@ describe("runInstallation — retry behavior", () => {
       .mockResolvedValueOnce(createMockSucceededState());
 
     const result = await runInstallation({
-      installationContext: createMockInstallationContext(),
       config: minimalValidConfig,
       initialState,
+      installationContext: createMockInstallationContext(),
     });
 
     expect(result).toMatchObject({
-      status: "succeeded",
       metadata: { isRetry: true },
+      status: "succeeded",
     });
     expect((result as Record<string, unknown>).isRetry).toBeUndefined();
     expect(vi.mocked(executeWorkflow)).toHaveBeenCalledTimes(2);
@@ -358,14 +358,14 @@ describe("runInstallation — retry behavior", () => {
       .mockResolvedValueOnce(failedState);
 
     const result = await runInstallation({
-      installationContext: createMockInstallationContext(),
       config: minimalValidConfig,
       initialState,
+      installationContext: createMockInstallationContext(),
     });
 
     expect(result).toMatchObject({
-      status: "failed",
       metadata: { isRetry: true },
+      status: "failed",
     });
   });
 
@@ -377,10 +377,10 @@ describe("runInstallation — retry behavior", () => {
     const onInstallationFailure = vi.fn();
 
     await runInstallation({
-      installationContext: createMockInstallationContext(),
       config: minimalValidConfig,
-      initialState,
       hooks: { onInstallationFailure },
+      initialState,
+      installationContext: createMockInstallationContext(),
     });
 
     expect(onInstallationFailure).not.toHaveBeenCalled();
@@ -394,10 +394,10 @@ describe("runInstallation — retry behavior", () => {
     const onStepFailure = vi.fn();
 
     await runInstallation({
-      installationContext: createMockInstallationContext(),
       config: minimalValidConfig,
-      initialState,
       hooks: { onStepFailure },
+      initialState,
+      installationContext: createMockInstallationContext(),
     });
 
     expect(
@@ -417,10 +417,10 @@ describe("runInstallation — retry behavior", () => {
     const onInstallationFailure = vi.fn();
 
     const result = await runInstallation({
-      installationContext: createMockInstallationContext(),
       config: minimalValidConfig,
-      initialState,
       hooks: { onInstallationFailure },
+      initialState,
+      installationContext: createMockInstallationContext(),
     });
 
     expect(result.status).toBe("failed");
@@ -434,7 +434,6 @@ describe("runInstallation — retry behavior", () => {
   test("should pass firstResult-based retry state (not fresh all-pending state) to second executeWorkflow call", async () => {
     const failedState = createMockFailedState({
       step: createMockStepStatus({
-        status: "failed",
         children: [
           createMockStepStatus({
             name: "step-a",
@@ -447,6 +446,7 @@ describe("runInstallation — retry behavior", () => {
             status: "failed",
           }),
         ],
+        status: "failed",
       }),
     });
 
@@ -455,9 +455,9 @@ describe("runInstallation — retry behavior", () => {
       .mockResolvedValueOnce(createMockSucceededState());
 
     await runInstallation({
-      installationContext: createMockInstallationContext(),
       config: minimalValidConfig,
       initialState,
+      installationContext: createMockInstallationContext(),
     });
 
     const secondCallInitialState =
@@ -471,9 +471,9 @@ describe("runInstallation — retry behavior", () => {
       .mockResolvedValueOnce(
         createMockFailedState({
           error: {
-            path: ["eventing", "commerce"],
             key: "PROVIDER_CREATION_FAILED",
             message: "Provider already exists",
+            path: ["eventing", "commerce"],
           },
         }),
       )
@@ -482,9 +482,9 @@ describe("runInstallation — retry behavior", () => {
     const mockContext = createMockInstallationContext();
 
     await runInstallation({
-      installationContext: mockContext,
       config: minimalValidConfig,
       initialState,
+      installationContext: mockContext,
     });
 
     expect(mockContext.logger.warn).toHaveBeenCalledWith(

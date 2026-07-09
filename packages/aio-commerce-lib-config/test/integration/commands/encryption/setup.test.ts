@@ -75,12 +75,12 @@ describe("commands/encryption/setup", () => {
 
     test.each<{ label: string; files: Record<string, string> }>([
       {
-        label: "package.json found",
         files: { ".env": "", "package.json": "{}" },
+        label: "package.json found",
       },
       {
-        label: "package.json not found, falls back to cwd",
         files: { ".env": "" },
+        label: "package.json not found, falls back to cwd",
       },
     ] as const)("runs successfully and does not exit ($label)", async ({
       files,

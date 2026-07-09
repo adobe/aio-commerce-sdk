@@ -25,7 +25,7 @@ describe("actions/http/router", () => {
 
       router.get("/users/:id", {
         handler: (req, ctx) =>
-          ok({ body: { id: req.params.id, context: !!ctx } }),
+          ok({ body: { context: !!ctx, id: req.params.id } }),
       });
 
       const handler = router.handler();
@@ -35,9 +35,9 @@ describe("actions/http/router", () => {
       } as RuntimeActionParams);
 
       expect(result).toMatchObject({
-        type: "success",
+        body: { context: true, id: "123" },
         statusCode: 200,
-        body: { id: "123", context: true },
+        type: "success",
       });
     });
 
@@ -55,9 +55,9 @@ describe("actions/http/router", () => {
       } as RuntimeActionParams);
 
       expect(result).toMatchObject({
-        type: "success",
-        statusCode: 200,
         body: { sku: "ABC-123" },
+        statusCode: 200,
+        type: "success",
       });
     });
 
@@ -76,9 +76,9 @@ describe("actions/http/router", () => {
       } as RuntimeActionParams);
 
       expect(result).toMatchObject({
-        type: "success",
-        statusCode: 200,
         body: { orgId: "org-1", userId: "user-2" },
+        statusCode: 200,
+        type: "success",
       });
     });
   });
@@ -98,11 +98,11 @@ describe("actions/http/router", () => {
       } as RuntimeActionParams);
 
       expect(result).toMatchObject({
-        type: "error",
         error: {
-          statusCode: 404,
           body: { message: "No route matches /products" },
+          statusCode: 404,
         },
+        type: "error",
       });
     });
   });
@@ -122,11 +122,11 @@ describe("actions/http/router", () => {
       } as RuntimeActionParams);
 
       expect(result).toMatchObject({
-        type: "error",
         error: {
-          statusCode: 405,
           body: { message: "Method POST not allowed" },
+          statusCode: 405,
         },
+        type: "error",
       });
     });
 
@@ -147,11 +147,11 @@ describe("actions/http/router", () => {
       } as RuntimeActionParams);
 
       expect(result).toMatchObject({
-        type: "error",
         error: {
-          statusCode: 405,
           body: { message: "Method DELETE not allowed" },
+          statusCode: 405,
         },
+        type: "error",
       });
     });
   });
@@ -161,8 +161,8 @@ describe("actions/http/router", () => {
       const router = new HttpActionRouter();
 
       router.get("/users/:id", {
-        params: object({ id: pipe(string(), minLength(5)) }),
         handler: (req) => ok({ body: { id: req.params.id } }),
+        params: object({ id: pipe(string(), minLength(5)) }),
       });
 
       const handler = router.handler();
@@ -172,11 +172,11 @@ describe("actions/http/router", () => {
       } as RuntimeActionParams);
 
       expect(result).toMatchObject({
-        type: "error",
         error: {
-          statusCode: 400,
           body: { message: "Invalid route parameters" },
+          statusCode: 400,
         },
+        type: "error",
       });
     });
 
@@ -184,23 +184,23 @@ describe("actions/http/router", () => {
       const router = new HttpActionRouter();
 
       router.post("/users", {
-        body: object({ name: string(), email: string() }),
+        body: object({ email: string(), name: string() }),
         handler: (req) => ok({ body: req.body }),
       });
 
       const handler = router.handler();
       const result = await handler({
+        __ow_body: JSON.stringify({ name: "John" }),
         __ow_method: "post",
         __ow_path: "/users",
-        __ow_body: JSON.stringify({ name: "John" }),
       } as RuntimeActionParams);
 
       expect(result).toMatchObject({
-        type: "error",
         error: {
-          statusCode: 400,
           body: { message: "Invalid request body" },
+          statusCode: 400,
         },
+        type: "error",
       });
     });
 
@@ -208,8 +208,8 @@ describe("actions/http/router", () => {
       const router = new HttpActionRouter();
 
       router.get("/search", {
-        query: object({ q: pipe(string(), minLength(1)) }),
         handler: (req) => ok({ body: { query: req.query.q } }),
+        query: object({ q: pipe(string(), minLength(1)) }),
       });
 
       const handler = router.handler();
@@ -220,11 +220,11 @@ describe("actions/http/router", () => {
       } as RuntimeActionParams);
 
       expect(result).toMatchObject({
-        type: "error",
         error: {
-          statusCode: 400,
           body: { message: "Invalid query parameters" },
+          statusCode: 400,
         },
+        type: "error",
       });
     });
 
@@ -232,31 +232,31 @@ describe("actions/http/router", () => {
       const router = new HttpActionRouter();
 
       router.post("/users/:id", {
-        params: object({ id: string() }),
         body: object({ name: string() }),
-        query: object({ format: optional(string()) }),
         handler: (req) =>
           ok({
             body: {
+              format: req.query.format,
               id: req.params.id,
               name: req.body.name,
-              format: req.query.format,
             },
           }),
+        params: object({ id: string() }),
+        query: object({ format: optional(string()) }),
       });
 
       const handler = router.handler();
       const result = await handler({
+        __ow_body: JSON.stringify({ name: "Alice" }),
         __ow_method: "post",
         __ow_path: "/users/u123",
-        __ow_body: JSON.stringify({ name: "Alice" }),
         __ow_query: "format=json",
       } as RuntimeActionParams);
 
       expect(result).toMatchObject({
-        type: "success",
+        body: { format: "json", id: "u123", name: "Alice" },
         statusCode: 200,
-        body: { id: "u123", name: "Alice", format: "json" },
+        type: "success",
       });
     });
   });
@@ -292,9 +292,9 @@ describe("actions/http/router", () => {
       } as RuntimeActionParams);
 
       expect(result).toMatchObject({
-        type: "success",
-        statusCode: 200,
         body: { requestId: "req-123", timestamp: 1_234_567_890 },
+        statusCode: 200,
+        type: "success",
       });
     });
 
@@ -325,9 +325,9 @@ describe("actions/http/router", () => {
       } as RuntimeActionParams);
 
       expect(result).toMatchObject({
-        type: "success",
-        statusCode: 200,
         body: { first: "one", second: "two", third: "three" },
+        statusCode: 200,
+        type: "success",
       });
     });
 
@@ -353,9 +353,9 @@ describe("actions/http/router", () => {
       } as RuntimeActionParams);
 
       expect(result).toMatchObject({
-        type: "success",
-        statusCode: 200,
         body: { value: "loaded" },
+        statusCode: 200,
+        type: "success",
       });
     });
 
@@ -381,9 +381,9 @@ describe("actions/http/router", () => {
       } as RuntimeActionParams);
 
       expect(result).toMatchObject({
-        type: "success",
-        statusCode: 200,
         body: { hasRaw: true, method: "get" },
+        statusCode: 200,
+        type: "success",
       });
     });
   });
@@ -404,16 +404,16 @@ describe("actions/http/router", () => {
 
       const handler = router.handler();
       await handler({
+        __ow_headers: { "content-type": "application/json" },
         __ow_method: "get",
         __ow_path: "/test/456",
-        __ow_headers: { "content-type": "application/json" },
       } as RuntimeActionParams);
 
       expect(receivedReq).toMatchObject({
-        params: { id: "456" },
-        method: "GET",
-        path: "/test/456",
         headers: { "content-type": "application/json" },
+        method: "GET",
+        params: { id: "456" },
+        path: "/test/456",
       });
 
       expect(receivedCtx).toMatchObject({
@@ -448,9 +448,9 @@ describe("actions/http/router", () => {
       } as RuntimeActionParams);
 
       expect(result).toMatchObject({
-        type: "success",
-        statusCode: 200,
         body: { method: uppercase },
+        statusCode: 200,
+        type: "success",
       });
     });
   });

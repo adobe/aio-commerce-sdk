@@ -74,8 +74,8 @@ export function useSharedContext(): SharedContext {
 
   return {
     extensionId,
-    sharedContext,
     host: guestConnection.host,
+    sharedContext,
   };
 }
 

@@ -32,18 +32,20 @@ export async function withTempFiles<T>(
   try {
     await mkdir(tempDir, { recursive: true });
 
-    for (const [filePath, content] of Object.entries(files)) {
-      const fullPath = join(tempDir, filePath);
-      const dir = join(fullPath, "..");
+    await Promise.all(
+      Object.entries(files).map(async ([filePath, content]) => {
+        const fullPath = join(tempDir, filePath);
+        const dir = join(fullPath, "..");
 
-      await mkdir(dir, { recursive: true });
-      await writeFile(fullPath, content, "utf-8");
-    }
+        await mkdir(dir, { recursive: true });
+        await writeFile(fullPath, content, "utf-8");
+      }),
+    );
 
     return await callback(tempDir);
   } finally {
     try {
-      await rm(tempDir, { recursive: true, force: true });
+      await rm(tempDir, { force: true, recursive: true });
     } catch {
       // Ignore cleanup errors
     }

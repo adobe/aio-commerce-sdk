@@ -81,16 +81,16 @@ export const GetEventMetadataForEventAndProviderSchema = v.object({
 /** The schema of the parameters received by the POST `providers/:id/eventmetadata` Adobe I/O Events API endpoint. */
 export const CreateEventMetadataForProviderSchema = v.object({
   consumerOrgId: stringValueSchema("consumerOrgId"),
-  projectId: stringValueSchema("projectId"),
-  workspaceId: stringValueSchema("workspaceId"),
-  providerId: stringValueSchema("providerId"),
-
-  label: stringValueSchema("label"),
   description: stringValueSchema("description"),
   eventCode: stringValueSchema("eventCode"),
+
+  label: stringValueSchema("label"),
+  projectId: stringValueSchema("projectId"),
+  providerId: stringValueSchema("providerId"),
   sampleEventTemplate: v.optional(
     sampleEventTemplateSchema("sampleEventTemplate"),
   ),
+  workspaceId: stringValueSchema("workspaceId"),
 });
 
 /**
@@ -112,10 +112,10 @@ export type GetEventMetadataForEventAndProviderParams = v.InferInput<
 /** The schema of the parameters received by the DELETE `providers/:id/eventmetadata/:code` Adobe I/O Events API endpoint. */
 export const DeleteEventMetadataForProviderSchema = v.object({
   consumerOrgId: stringValueSchema("consumerOrgId"),
-  projectId: stringValueSchema("projectId"),
-  workspaceId: stringValueSchema("workspaceId"),
-  providerId: stringValueSchema("providerId"),
   eventCode: stringValueSchema("eventCode"),
+  projectId: stringValueSchema("projectId"),
+  providerId: stringValueSchema("providerId"),
+  workspaceId: stringValueSchema("workspaceId"),
 });
 
 /**

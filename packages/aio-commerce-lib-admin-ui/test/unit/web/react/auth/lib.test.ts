@@ -36,13 +36,13 @@ function makeSharedContext(values: Record<string, string>) {
 describe("resolveCommerceImsCredentials", () => {
   test("returns the credentials when both values are present", () => {
     const sharedContext = makeSharedContext({
-      imsToken: "test-token",
       imsOrgId: "test-org",
+      imsToken: "test-token",
     });
 
     expect(resolveCommerceImsCredentials(sharedContext)).toEqual({
-      imsToken: "test-token",
       imsOrgId: "test-org",
+      imsToken: "test-token",
     });
   });
 
@@ -62,14 +62,14 @@ describe("resolveShellImsCredentials", () => {
 
   test("maps the shell configuration to IMS credentials", () => {
     const shellConfiguration: ShellConfiguration = {
-      imsToken: "t",
       imsOrg: "o",
+      imsToken: "t",
       theme: "light",
     };
 
     expect(resolveShellImsCredentials(shellConfiguration)).toEqual({
-      imsToken: "t",
       imsOrgId: "o",
+      imsToken: "t",
     });
   });
 });

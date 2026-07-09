@@ -21,7 +21,7 @@ import type { RuntimeConfiguration } from "@adobe/exc-app";
 import type { RouteEntry } from "#web/react/routing/types";
 
 const ROUTES: RouteEntry[] = [
-  { index: true, element: <div data-testid="route-content" /> },
+  { element: <div data-testid="route-content" />, index: true },
 ];
 
 // The runtime is the exc-app boundary; a minimal fake EventEmitter is enough.

@@ -28,10 +28,10 @@ describe("schema/config-schema-repository", () => {
       const schema1 = VALID_CONFIGURATION;
       const schema2 = [
         {
+          default: "new",
+          label: "New Field",
           name: "newField",
           type: "text",
-          label: "New Field",
-          default: "new",
         },
       ] satisfies BusinessConfigSchema;
 

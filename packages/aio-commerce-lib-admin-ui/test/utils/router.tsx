@@ -44,7 +44,7 @@ export async function renderWithRouter(
     createMemoryHistory({ initialEntries }),
   );
   const screen = await render(<RouterProvider router={router} />);
-  return { screen, router };
+  return { router, screen };
 }
 
 /**

@@ -30,22 +30,22 @@ describe("createOrUpdateExtConfig", () => {
         operations: {
           workerProcess: [
             {
-              type: "action" as const,
               impl: "my-action",
+              type: "action" as const,
             },
           ],
         },
         runtimeManifest: {
           packages: {
             "my-package": {
-              license: "Apache-2.0",
               actions: {
                 "my-action": {
                   function: "actions/my-action.js",
-                  web: "yes",
                   runtime: "nodejs:24",
+                  web: "yes",
                 },
               },
+              license: "Apache-2.0",
             },
           },
         },
@@ -224,14 +224,14 @@ runtimeManifest:
         runtimeManifest: {
           packages: {
             "test-package": {
-              license: "MIT",
               actions: {
                 "test-action": {
                   function: "actions/test.js",
-                  web: "yes",
                   runtime: "nodejs:20",
+                  web: "yes",
                 },
               },
+              license: "MIT",
             },
           },
         },
@@ -350,12 +350,12 @@ operations:
           operations: {
             workerProcess: [
               {
-                type: "action" as const,
                 impl: "existing-action",
+                type: "action" as const,
               },
               {
-                type: "action" as const,
                 impl: "new-action",
+                type: "action" as const,
               },
             ],
           },
@@ -551,8 +551,8 @@ hooks:
         const configPath = join(tempDir, "ext.config.yaml");
         const config = {
           operations: {
+            view: [{ impl: "index.html", type: "web" as const }],
             workerProcess: [],
-            view: [{ type: "web" as const, impl: "index.html" }],
           },
         };
 
@@ -580,8 +580,8 @@ operations:
           const existingDoc = parseDocument(existingConfig);
           const config = {
             operations: {
+              view: [{ impl: "index.html", type: "web" as const }],
               workerProcess: [],
-              view: [{ type: "web" as const, impl: "index.html" }],
             },
           };
 
@@ -764,7 +764,7 @@ runtimeManifest:
         const configPath = join(tempDir, "ext.config.yaml");
         const config = {
           operations: {
-            view: [{ type: "web" as const, impl: "index.html" }],
+            view: [{ impl: "index.html", type: "web" as const }],
           },
           web: "web-src",
         };

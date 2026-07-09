@@ -81,11 +81,11 @@ async function createIoEventProvider(params: CreateIoProviderParams) {
   return ioEventsClient
     .createEventProvider({
       ...appCredentials,
+      description: provider.description,
+      instanceId: provider.instanceId,
 
       label: provider.label,
       providerType: provider.type,
-      instanceId: provider.instanceId,
-      description: provider.description,
     })
     .then((res) => {
       logger.info(`Provider "${provider.label}" created with ID '${res.id}'`);
@@ -158,11 +158,11 @@ async function createIoEventProviderEventMetadata(
   return ioEventsClient
     .createEventMetadataForProvider({
       ...appCredentials,
-      providerId: provider.id,
-
-      label: event.label,
       description: event.description,
       eventCode,
+
+      label: event.label,
+      providerId: provider.id,
     })
     .then((res) => {
       logger.info(
@@ -235,21 +235,21 @@ async function createIoEventRegistration(params: CreateRegistrationParams) {
 
   const payload = {
     ...appCredentials,
-
-    name,
     clientId: runtimeParams.AIO_COMMERCE_AUTH_IMS_CLIENT_ID,
-    description,
     deliveryType: "webhook",
-    runtimeAction,
+    description,
 
     enabled: true,
     eventsOfInterest: events.map((event) => ({
-      providerId: provider.id,
       eventCode: getIoEventCode(
         getNamespacedEvent(metadata, event.name),
         provider.provider_metadata as EventProviderType,
       ),
+      providerId: provider.id,
     })),
+
+    name,
+    runtimeAction,
   } as const;
 
   return ioEventsClient
@@ -449,15 +449,15 @@ async function createCommerceEventSubscription(
   );
 
   const eventSpec: EventSubscriptionCreateParams = {
+    destination: event.config.destination,
+    fields: event.config.fields,
+    force: event.config.force,
+    hipaa_audit_required: event.config.hipaa_audit_required,
     name: eventName,
     parent: event.config.name,
-    fields: event.config.fields,
-    rules: event.config.rules,
-    provider_id: provider.id,
-    destination: event.config.destination,
-    hipaa_audit_required: event.config.hipaa_audit_required,
     priority: event.config.priority,
-    force: event.config.force,
+    provider_id: provider.id,
+    rules: event.config.rules,
   };
 
   logger.debug(
@@ -543,11 +543,11 @@ export async function onboardIoEvents<EventType extends AppEvent>(
   const metadataPromises = events.map((event) =>
     createOrGetIoProviderEventMetadata(
       {
-        metadata,
         context,
-        type: providerType,
-        provider: providerData,
         event,
+        metadata,
+        provider: providerData,
+        type: providerType,
       },
 
       // Retrieve the existing metadata for this provider, if any.
@@ -561,9 +561,9 @@ export async function onboardIoEvents<EventType extends AppEvent>(
     ([runtimeAction, groupedEvents]) =>
       createOrGetIoEventRegistration(
         {
-          metadata,
           context,
           events: groupedEvents,
+          metadata,
           provider: providerData,
           runtimeAction,
         },
@@ -597,8 +597,8 @@ export async function onboardIoEvents<EventType extends AppEvent>(
   });
 
   return {
-    providerData,
     eventsData,
+    providerData,
   };
 }
 
@@ -614,16 +614,15 @@ export async function onboardCommerceEventing(
   const { events, provider, workspaceConfiguration } = ioData;
 
   const instanceId = provider.instance_id;
-  const subscriptions: Partial<CommerceEventSubscription>[] = [];
 
   const commerceProvider = await createOrGetCommerceProvider(
     {
       context,
       provider: {
+        description: provider.description,
         id: provider.id,
         instance_id: instanceId,
         label: provider.label,
-        description: provider.description,
         workspace_configuration: workspaceConfiguration,
       },
     },
@@ -634,14 +633,14 @@ export async function onboardCommerceEventing(
   const { workspace_configuration: _, ...commerceProviderData } =
     commerceProvider;
 
-  for (const event of events) {
-    subscriptions.push(
-      await createOrGetCommerceEventSubscription(
-        { context, metadata, provider, event },
+  const subscriptions = await Promise.all(
+    events.map((event) =>
+      createOrGetCommerceEventSubscription(
+        { context, event, metadata, provider },
         existingData.subscriptions,
       ),
-    );
-  }
+    ),
+  );
 
   return {
     commerceProvider: commerceProviderData,
@@ -705,6 +704,7 @@ async function deleteIoEventRegistrations(
     );
 
     try {
+      // biome-ignore lint/performance/noAwaitInLoops: deletes hit the Adobe I/O Events API sequentially to avoid a rate-limit burst during uninstall
       await ioEventsClient.deleteRegistration({
         ...appCredentials,
         registrationId: registration.registration_id,
@@ -756,10 +756,11 @@ async function deleteIoEventMetadata(
     );
 
     try {
+      // biome-ignore lint/performance/noAwaitInLoops: deletes hit the Adobe I/O Events API sequentially to avoid a rate-limit burst during uninstall
       await ioEventsClient.deleteEventMetadataForProvider({
         ...appCredentials,
-        providerId: providerData.id,
         eventCode: eventMetadata.event_code,
+        providerId: providerData.id,
       });
       logger.info(
         `Deleted event metadata "${eventMetadata.event_code}" from provider "${providerData.id}".`,
@@ -892,7 +893,10 @@ async function deleteCommerceEventSubscriptions(
     );
 
     try {
-      await commerceEventsClient.deleteEventSubscription({ name: eventName });
+      // biome-ignore lint/performance/noAwaitInLoops: unsubscribes hit the Adobe Commerce API sequentially to avoid a rate-limit burst during uninstall
+      await commerceEventsClient.deleteEventSubscription({
+        name: eventName,
+      });
       logger.info(
         `Unsubscribed Commerce event subscription for "${eventName}".`,
       );

@@ -69,14 +69,14 @@ describe("commands/generate/manifest", () => {
     test("produces identical checksum for equivalent configs with different key order", async () => {
       // Same values, but properties declared in reverse order
       const configA: CommerceAppConfigOutputModel = {
-        metadata: mockMetadata,
         businessConfig: fullConfig.businessConfig,
         eventing: fullConfig.eventing,
+        metadata: mockMetadata,
       };
 
       const configB: CommerceAppConfigOutputModel = {
-        eventing: fullConfig.eventing,
         businessConfig: fullConfig.businessConfig,
+        eventing: fullConfig.eventing,
         metadata: mockMetadata,
       };
 

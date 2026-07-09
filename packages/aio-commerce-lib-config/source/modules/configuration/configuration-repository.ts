@@ -31,9 +31,9 @@ export type RepositoryNamespace = {
 
 /** Storage layout for scope-keyed Business Configuration. */
 const CONFIGURATION_NAMESPACE: RepositoryNamespace = {
-  stateKey: (scopeCode) => `configuration.${scopeCode}`,
   filePath: (scopeCode) =>
     `scope/${scopeCode.toLowerCase()}/configuration.json`,
+  stateKey: (scopeCode) => `configuration.${scopeCode}`,
 };
 
 /**
@@ -202,8 +202,8 @@ export async function persistConfig(
     await setCachedConfig(scopeCode, payloadString, ttlSeconds, namespace);
   } catch (e) {
     logger.debug("Failed to cache configuration in state", {
-      scopeCode,
       error: e instanceof Error ? e.message : String(e),
+      scopeCode,
     });
   }
 }
@@ -243,8 +243,8 @@ async function loadFromStateCache(
     }
   } catch (err) {
     logger.debug("Failed to load configuration from state cache", {
-      scopeCode,
       error: err instanceof Error ? err.message : String(err),
+      scopeCode,
     });
   }
   return null;
@@ -277,8 +277,8 @@ async function loadFromPersistedFiles(
       await setCachedConfig(scopeCode, filePayload, ttlSeconds, namespace);
     } catch (err) {
       logger.debug("Failed to cache configuration in state", {
-        scopeCode,
         error: err instanceof Error ? err.message : String(err),
+        scopeCode,
       });
     }
 

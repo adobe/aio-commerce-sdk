@@ -23,24 +23,23 @@ const AcceptedConfigurationValuesSchema = v.union([
 
 /** Query parameters for GET / */
 export const GetConfigurationQuerySchema = v.object({
-  scopeId: nonEmptyStringValueSchema("scopeId"),
   commerceEnv: v.optional(CommerceEnvSchema),
+  scopeId: nonEmptyStringValueSchema("scopeId"),
 });
 
 /** Request body for PUT / */
 export const PutConfigBodySchema = v.object({
-  scopeId: nonEmptyStringValueSchema("scopeId"),
   config: v.array(
     v.object({
       name: nonEmptyStringValueSchema("config[i].name"),
       value: v.union([v.string(), v.array(v.string())]),
     }),
   ),
+  scopeId: nonEmptyStringValueSchema("scopeId"),
 });
 
 /** Request body for PATCH / */
 export const PatchConfigBodySchema = v.object({
-  scopeId: nonEmptyStringValueSchema("scopeId"),
   config: v.array(
     v.object({
       name: nonEmptyStringValueSchema("config[i].name"),
@@ -48,4 +47,5 @@ export const PatchConfigBodySchema = v.object({
       value: v.nullable(AcceptedConfigurationValuesSchema),
     }),
   ),
+  scopeId: nonEmptyStringValueSchema("scopeId"),
 });

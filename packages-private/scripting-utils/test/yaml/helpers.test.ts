@@ -53,7 +53,7 @@ config:
         expect(doc.get("count")).toBe(2);
 
         // Test array
-        const tags = doc.toJSON().tags;
+        const { tags } = doc.toJSON();
         expect(Array.isArray(tags)).toBe(true);
         expect(tags).toEqual(["frontend", "backend"]);
 

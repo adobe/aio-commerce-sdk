@@ -30,6 +30,11 @@ export function createRetryablePromiseCache<T>(): RetryablePromiseCache<T> {
   const cache = new Map<string, { promise: Promise<T>; rejected: boolean }>();
 
   return {
+    evictIfRejected(key) {
+      if (cache.get(key)?.rejected) {
+        cache.delete(key);
+      }
+    },
     get(key, create) {
       const cached = cache.get(key);
       if (cached) {
@@ -43,12 +48,6 @@ export function createRetryablePromiseCache<T>(): RetryablePromiseCache<T> {
 
       cache.set(key, entry);
       return entry.promise;
-    },
-
-    evictIfRejected(key) {
-      if (cache.get(key)?.rejected) {
-        cache.delete(key);
-      }
     },
   };
 }

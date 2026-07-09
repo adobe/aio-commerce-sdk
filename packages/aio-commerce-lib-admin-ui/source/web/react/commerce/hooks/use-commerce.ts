@@ -35,8 +35,7 @@ function getCommerceHostPromise(
   extensionId: string,
   connection: GuestConnection,
 ): Promise<string> {
-  const integration = (connection.host as { integration?: HostIntegration })
-    .integration;
+  const { integration } = connection.host as { integration?: HostIntegration };
 
   if (!integration) {
     // Throw during render so the error surfaces to the boundary immediately: this is a static

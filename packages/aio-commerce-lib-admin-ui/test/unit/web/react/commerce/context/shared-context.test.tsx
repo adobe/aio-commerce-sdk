@@ -24,13 +24,12 @@ afterEach(() => {
 /** Builds a minimal fake UIX guest connection for the provider. */
 function makeConnection() {
   return {
+    addEventListener: vi.fn((_event: string, _onChange: () => void) => vi.fn()),
     host: {},
     sharedContext: new Map([
       ["imsToken", "t"],
       ["imsOrgId", "o"],
     ]),
-
-    addEventListener: vi.fn((_event: string, _onChange: () => void) => vi.fn()),
   };
 }
 

@@ -34,13 +34,13 @@ export function createMockRuntime(
 ): MockRuntime {
   const handlers: Record<string, RuntimeHandler> = {};
   const runtime: Runtime = {
+    configured: false,
+    emit: vi.fn(),
+    lastConfigurationPayload: null,
+    off: vi.fn(),
     on: vi.fn((type, handler) => {
       handlers[type as string] = handler as RuntimeHandler;
     }),
-    off: vi.fn(),
-    emit: vi.fn(),
-    configured: false,
-    lastConfigurationPayload: null,
     ...overrides,
   };
 

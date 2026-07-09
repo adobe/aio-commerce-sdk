@@ -24,9 +24,9 @@ import scopeTreeTemplate from "#templates/business-configuration/scope-tree.js?r
 export const templates = {
   appConfig: appConfigTemplate as string,
   association: associationTemplate as string,
-  installation: installationTemplate as string,
-  customScripts: customScripts as string,
   businessConfig: businessConfigTemplate as string,
+  customScripts: customScripts as string,
+  installation: installationTemplate as string,
   scopeTree: scopeTreeTemplate as string,
   webSrcApp: webSrcApp as string,
   webSrcIndexCss: webSrcIndexCss as string,
@@ -41,16 +41,16 @@ export const templates = {
  */
 export function makeTemplateFiles(): Record<string, string> {
   return {
-    "app-management/app-config.js.template": templates.appConfig,
-    "app-management/association.js.template": templates.association,
-    "app-management/installation.js.template": templates.installation,
-    "app-management/custom-scripts.js.template": templates.customScripts,
-    "business-configuration/config.js.template": templates.businessConfig,
-    "business-configuration/scope-tree.js.template": templates.scopeTree,
-    "admin-ui/web-src/index.html": templates.webSrcIndexHtml,
     "admin-ui/web-src/index.css": templates.webSrcIndexCss,
+    "admin-ui/web-src/index.html": templates.webSrcIndexHtml,
     "admin-ui/web-src/src/app.jsx": templates.webSrcApp,
     "admin-ui/web-src/src/components/welcome.jsx": templates.webSrcWelcome,
     "admin-ui/web-src/src/pages/main-page.jsx": templates.webSrcMainPage,
+    "app-management/app-config.js.template": templates.appConfig,
+    "app-management/association.js.template": templates.association,
+    "app-management/custom-scripts.js.template": templates.customScripts,
+    "app-management/installation.js.template": templates.installation,
+    "business-configuration/config.js.template": templates.businessConfig,
+    "business-configuration/scope-tree.js.template": templates.scopeTree,
   };
 }

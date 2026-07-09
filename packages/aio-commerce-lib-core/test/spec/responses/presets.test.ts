@@ -53,9 +53,9 @@ describe("responses/presets", () => {
       const result = ok({ body: { message: "Request successful" } });
 
       expect(result).toEqual({
-        type: "success",
-        statusCode: 200,
         body: { message: "Request successful" },
+        statusCode: 200,
+        type: "success",
       });
     });
 
@@ -63,8 +63,8 @@ describe("responses/presets", () => {
       const result = ok();
 
       expect(result).toEqual({
-        type: "success",
         statusCode: 200,
+        type: "success",
       });
     });
 
@@ -72,9 +72,9 @@ describe("responses/presets", () => {
       const result = ok("Request successful");
 
       expect(result).toEqual({
-        type: "success",
-        statusCode: 200,
         body: { message: "Request successful" },
+        statusCode: 200,
+        type: "success",
       });
     });
   });
@@ -86,9 +86,9 @@ describe("responses/presets", () => {
       });
 
       expect(result).toEqual({
-        type: "success",
-        statusCode: 201,
         body: { message: "Resource created successfully" },
+        statusCode: 201,
+        type: "success",
       });
     });
 
@@ -96,9 +96,9 @@ describe("responses/presets", () => {
       const result = created("Resource created successfully");
 
       expect(result).toEqual({
-        type: "success",
-        statusCode: 201,
         body: { message: "Resource created successfully" },
+        statusCode: 201,
+        type: "success",
       });
     });
   });
@@ -110,9 +110,9 @@ describe("responses/presets", () => {
       });
 
       expect(result).toEqual({
-        type: "success",
-        statusCode: 202,
         body: { message: "Request accepted for processing" },
+        statusCode: 202,
+        type: "success",
       });
     });
 
@@ -120,9 +120,9 @@ describe("responses/presets", () => {
       const result = accepted("Request accepted for processing");
 
       expect(result).toEqual({
-        type: "success",
-        statusCode: 202,
         body: { message: "Request accepted for processing" },
+        statusCode: 202,
+        type: "success",
       });
     });
 
@@ -130,8 +130,8 @@ describe("responses/presets", () => {
       const result = accepted();
 
       expect(result).toEqual({
-        type: "success",
         statusCode: 202,
+        type: "success",
       });
     });
   });
@@ -143,13 +143,13 @@ describe("responses/presets", () => {
       });
 
       expect(result).toEqual({
-        type: "error",
         error: {
-          statusCode: 400,
           body: {
             message: "Invalid input provided",
           },
+          statusCode: 400,
         },
+        type: "error",
       });
     });
 
@@ -157,13 +157,13 @@ describe("responses/presets", () => {
       const result = badRequest("Invalid input provided");
 
       expect(result).toEqual({
-        type: "error",
         error: {
-          statusCode: 400,
           body: {
             message: "Invalid input provided",
           },
+          statusCode: 400,
         },
+        type: "error",
       });
     });
   });
@@ -175,13 +175,13 @@ describe("responses/presets", () => {
       });
 
       expect(result).toEqual({
-        type: "error",
         error: {
-          statusCode: 401,
           body: {
             message: "Authentication required",
           },
+          statusCode: 401,
         },
+        type: "error",
       });
     });
   });
@@ -191,13 +191,13 @@ describe("responses/presets", () => {
       const result = forbidden({ body: { message: "Access denied" } });
 
       expect(result).toEqual({
-        type: "error",
         error: {
-          statusCode: 403,
           body: {
             message: "Access denied",
           },
+          statusCode: 403,
         },
+        type: "error",
       });
     });
   });
@@ -207,13 +207,13 @@ describe("responses/presets", () => {
       const result = notFound({ body: { message: "Resource not found" } });
 
       expect(result).toEqual({
-        type: "error",
         error: {
-          statusCode: 404,
           body: {
             message: "Resource not found",
           },
+          statusCode: 404,
         },
+        type: "error",
       });
     });
 
@@ -221,13 +221,13 @@ describe("responses/presets", () => {
       const result = notFound("Resource not found");
 
       expect(result).toEqual({
-        type: "error",
         error: {
-          statusCode: 404,
           body: {
             message: "Resource not found",
           },
+          statusCode: 404,
         },
+        type: "error",
       });
     });
   });
@@ -239,13 +239,13 @@ describe("responses/presets", () => {
       });
 
       expect(result).toEqual({
-        type: "error",
         error: {
-          statusCode: 405,
           body: {
             message: "Method not allowed",
           },
+          statusCode: 405,
         },
+        type: "error",
       });
     });
 
@@ -253,13 +253,13 @@ describe("responses/presets", () => {
       const result = methodNotAllowed("Method not allowed");
 
       expect(result).toEqual({
-        type: "error",
         error: {
-          statusCode: 405,
           body: {
             message: "Method not allowed",
           },
+          statusCode: 405,
         },
+        type: "error",
       });
     });
   });
@@ -271,13 +271,13 @@ describe("responses/presets", () => {
       });
 
       expect(result).toEqual({
-        type: "error",
         error: {
-          statusCode: 500,
           body: {
             message: "Internal server error",
           },
+          statusCode: 500,
         },
+        type: "error",
       });
     });
 
@@ -285,13 +285,13 @@ describe("responses/presets", () => {
       const result = internalServerError("Internal server error");
 
       expect(result).toEqual({
-        type: "error",
         error: {
-          statusCode: 500,
           body: {
             message: "Internal server error",
           },
+          statusCode: 500,
         },
+        type: "error",
       });
     });
   });

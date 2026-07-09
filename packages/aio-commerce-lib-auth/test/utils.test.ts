@@ -20,10 +20,10 @@ describe("aio-commerce-lib-auth/utils", () => {
       const params = {
         AIO_COMMERCE_AUTH_IMS_CLIENT_ID: "test-client-id",
         AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS: ["supersecret"],
-        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID: "test-technical-account-id",
-        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL: "test-email@example.com",
         AIO_COMMERCE_AUTH_IMS_ORG_ID: "test-org-id",
         AIO_COMMERCE_AUTH_IMS_SCOPES: ["scope1", "scope2"],
+        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL: "test-email@example.com",
+        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID: "test-technical-account-id",
       };
 
       const resolved = resolveAuthParams(params);
@@ -31,32 +31,32 @@ describe("aio-commerce-lib-auth/utils", () => {
       expect(resolved).toEqual({
         clientId: "test-client-id",
         clientSecrets: ["supersecret"],
-        technicalAccountId: "test-technical-account-id",
-        technicalAccountEmail: "test-email@example.com",
+        context: undefined,
+        environment: undefined,
         imsOrgId: "test-org-id",
         scopes: ["scope1", "scope2"],
-        environment: undefined,
-        context: undefined,
         strategy: "ims",
+        technicalAccountEmail: "test-email@example.com",
+        technicalAccountId: "test-technical-account-id",
       });
     });
 
     test("should auto-detect and resolve Integration auth params when Integration params are provided", () => {
       const params = {
-        AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_KEY: "test-consumer-key",
-        AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_SECRET: "test-consumer-secret",
         AIO_COMMERCE_AUTH_INTEGRATION_ACCESS_TOKEN: "test-access-token",
         AIO_COMMERCE_AUTH_INTEGRATION_ACCESS_TOKEN_SECRET:
           "test-access-token-secret",
+        AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_KEY: "test-consumer-key",
+        AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_SECRET: "test-consumer-secret",
       };
 
       const resolved = resolveAuthParams(params);
 
       expect(resolved).toEqual({
-        consumerKey: "test-consumer-key",
-        consumerSecret: "test-consumer-secret",
         accessToken: "test-access-token",
         accessTokenSecret: "test-access-token-secret",
+        consumerKey: "test-consumer-key",
+        consumerSecret: "test-consumer-secret",
         strategy: "integration",
       });
     });
@@ -65,15 +65,15 @@ describe("aio-commerce-lib-auth/utils", () => {
       const params = {
         AIO_COMMERCE_AUTH_IMS_CLIENT_ID: "test-client-id",
         AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS: ["supersecret"],
-        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID: "test-technical-account-id",
-        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL: "test-email@example.com",
         AIO_COMMERCE_AUTH_IMS_ORG_ID: "test-org-id",
         AIO_COMMERCE_AUTH_IMS_SCOPES: ["scope1", "scope2"],
-        AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_KEY: "test-consumer-key",
-        AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_SECRET: "test-consumer-secret",
+        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL: "test-email@example.com",
+        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID: "test-technical-account-id",
         AIO_COMMERCE_AUTH_INTEGRATION_ACCESS_TOKEN: "test-access-token",
         AIO_COMMERCE_AUTH_INTEGRATION_ACCESS_TOKEN_SECRET:
           "test-access-token-secret",
+        AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_KEY: "test-consumer-key",
+        AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_SECRET: "test-consumer-secret",
       };
 
       const resolved = resolveAuthParams(params);
@@ -88,16 +88,16 @@ describe("aio-commerce-lib-auth/utils", () => {
         // Full IMS
         AIO_COMMERCE_AUTH_IMS_CLIENT_ID: "test-client-id",
         AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS: ["supersecret"],
-        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID: "test-technical-account-id",
-        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL: "test-email@example.com",
         AIO_COMMERCE_AUTH_IMS_ORG_ID: "test-org-id",
         AIO_COMMERCE_AUTH_IMS_SCOPES: ["scope1", "scope2"],
-        // Integration
-        AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_KEY: "test-consumer-key",
-        AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_SECRET: "test-consumer-secret",
+        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL: "test-email@example.com",
+        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID: "test-technical-account-id",
         AIO_COMMERCE_AUTH_INTEGRATION_ACCESS_TOKEN: "test-access-token",
         AIO_COMMERCE_AUTH_INTEGRATION_ACCESS_TOKEN_SECRET:
           "test-access-token-secret",
+        // Integration
+        AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_KEY: "test-consumer-key",
+        AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_SECRET: "test-consumer-secret",
       };
 
       const resolved = resolveAuthParams(params);

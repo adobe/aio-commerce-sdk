@@ -63,11 +63,12 @@ export async function findUp(
 
   let currentDir = cwd;
 
-  while (true) {
+  for (;;) {
     // Try to find any of the files in the current directory
     for (const fileName of names) {
       const filePath = join(currentDir, fileName);
       try {
+        // biome-ignore lint/performance/noAwaitInLoops: must probe file names in priority order and stop at the first match
         await access(filePath);
         return filePath;
       } catch {
@@ -229,7 +230,7 @@ export function mergePackageJsonDependencies(
   const nextDependencies = toWritablePackageJsonDependencies(dependencies);
 
   for (const { name, version } of requiredDependencies) {
-    if (!dependencyMaps.some((dependencies) => name in dependencies)) {
+    if (!dependencyMaps.some((dependencyMap) => name in dependencyMap)) {
       nextDependencies[name] = version;
     }
   }

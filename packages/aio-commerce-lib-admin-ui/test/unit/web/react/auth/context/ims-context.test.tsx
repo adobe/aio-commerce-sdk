@@ -22,7 +22,7 @@ import {
 
 import type { ReactNode } from "react";
 
-const CREDENTIALS = { imsToken: "t", imsOrgId: "o" };
+const CREDENTIALS = { imsOrgId: "o", imsToken: "t" };
 
 let restoreFrame: () => void = () => undefined;
 afterEach(() => {

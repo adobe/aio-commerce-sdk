@@ -248,13 +248,13 @@ export function defineLeafStep<
   TOutput = unknown,
 >(options: LeafStepOptions<TName, TConfig, TStepCtx, TOutput>) {
   return {
-    type: "leaf",
-    name: options.name,
-    meta: options.meta,
-    when: options.when,
     install: options.install,
+    meta: options.meta,
+    name: options.name,
+    type: "leaf",
     uninstall: options.uninstall,
     validate: options.validate,
+    when: options.when,
   } satisfies LeafStep<TName, TConfig, TStepCtx, TOutput>;
 }
 
@@ -279,13 +279,13 @@ export function defineBranchStep<
   const TChildren extends AnyStep[] = AnyStep[],
 >(options: BranchStepOptions<TName, TConfig, TStepCtx, TChildren>) {
   return {
-    type: "branch",
-    name: options.name,
-    meta: options.meta,
-    when: options.when,
-    context: options.context,
     children: options.children,
+    context: options.context,
+    meta: options.meta,
+    name: options.name,
+    type: "branch",
     validate: options.validate,
+    when: options.when,
   } satisfies BranchStep<TName, TConfig, TStepCtx, TChildren>;
 }
 

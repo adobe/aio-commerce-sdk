@@ -13,7 +13,7 @@
 import { register } from "@adobe/uix-guest";
 import { Provider } from "@react-spectrum/s2/Provider";
 import { Outlet as ActiveRoute } from "@tanstack/react-router";
-import { Suspense, useEffect } from "react";
+import { Suspense, useCallback, useEffect } from "react";
 
 import { ImsContextProvider } from "#web/react/auth/context/ims-context.tsx";
 import { resolveCommerceImsCredentials } from "#web/react/auth/lib";
@@ -68,6 +68,12 @@ function ConnectionFallback() {
 export function CommerceExtensionApp(props: Readonly<{ extensionId: string }>) {
   const { extensionId } = props;
   const spectrumRouter = useSpectrumRouter();
+  const resetConnections = useCallback(() => {
+    // Retry only failed steps so "Try again" re-attaches after a connection failure but
+    // keeps a healthy connection when the error came from elsewhere.
+    retryGuestConnection(extensionId);
+    retryCommerceHost(extensionId);
+  }, [extensionId]);
 
   // Commerce Admin always uses the light theme, so there's nothing to wait on for it, but the
   // root attribute still needs syncing since Spectrum S2's page styles key off it.
@@ -81,13 +87,7 @@ export function CommerceExtensionApp(props: Readonly<{ extensionId: string }>) {
 
   return (
     <Provider colorScheme="light" router={spectrumRouter}>
-      <ExtensionErrorBoundary
-        onReset={() => {
-          // Retry only failed steps so "Try again" re-attaches after a connection failure but
-          // keeps a healthy connection when the error came from elsewhere.
-          retryGuestConnection(extensionId);
-          retryCommerceHost(extensionId);
-        }}>
+      <ExtensionErrorBoundary onReset={resetConnections}>
         <Suspense fallback={<ConnectionFallback />}>
           <CommerceGuestConnection extensionId={extensionId} />
         </Suspense>

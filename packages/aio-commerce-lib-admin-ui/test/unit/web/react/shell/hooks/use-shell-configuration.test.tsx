@@ -21,9 +21,9 @@ import type { RouteEntry } from "#web/react/routing/types";
 const CURRENT_PATHNAME = "/current";
 
 const ROUTES: RouteEntry[] = [
-  { index: true, element: null },
-  { path: "current", element: null },
-  { path: "other", element: null },
+  { element: null, index: true },
+  { element: null, path: "current" },
+  { element: null, path: "other" },
 ];
 
 beforeEach(() => {
@@ -40,8 +40,8 @@ describe("useShellConfiguration", () => {
     const initial = {
       imsOrg: "org@AdobeOrg",
       imsToken: "token",
-      theme: "dark",
       locale: "en-US",
+      theme: "dark",
     };
 
     const { result } = await renderHookWithRouter(() =>
@@ -84,8 +84,8 @@ describe("useShellConfiguration", () => {
     runtime.handlers.configuration({
       imsOrg: "org@AdobeOrg",
       imsToken: "token",
-      theme: "light",
       locale: "en-US",
+      theme: "light",
     });
 
     await vi.waitFor(() =>
@@ -101,10 +101,10 @@ describe("useShellConfiguration", () => {
     const runtime = createMockRuntime();
     const { router } = await renderHookWithRouter(
       () => useShellConfiguration(runtime, null),
-      { routes: ROUTES, initialEntries: [CURRENT_PATHNAME] },
+      { initialEntries: [CURRENT_PATHNAME], routes: ROUTES },
     );
 
-    runtime.handlers.history({ type: "external", path: "/other" });
+    runtime.handlers.history({ path: "/other", type: "external" });
 
     await vi.waitFor(() =>
       expect(router.state.location.pathname).toBe("/other"),
@@ -115,11 +115,11 @@ describe("useShellConfiguration", () => {
     const runtime = createMockRuntime();
     const { router } = await renderHookWithRouter(
       () => useShellConfiguration(runtime, null),
-      { routes: ROUTES, initialEntries: [CURRENT_PATHNAME] },
+      { initialEntries: [CURRENT_PATHNAME], routes: ROUTES },
     );
 
     const navigate = vi.spyOn(router, "navigate");
-    runtime.handlers.history({ type: "external", path: CURRENT_PATHNAME });
+    runtime.handlers.history({ path: CURRENT_PATHNAME, type: "external" });
 
     expect(navigate).not.toHaveBeenCalled();
   });
@@ -128,11 +128,11 @@ describe("useShellConfiguration", () => {
     const runtime = createMockRuntime();
     const { router } = await renderHookWithRouter(
       () => useShellConfiguration(runtime, null),
-      { routes: ROUTES, initialEntries: [CURRENT_PATHNAME] },
+      { initialEntries: [CURRENT_PATHNAME], routes: ROUTES },
     );
 
     const navigate = vi.spyOn(router, "navigate");
-    runtime.handlers.history({ type: "internal", path: "/other" });
+    runtime.handlers.history({ path: "/other", type: "internal" });
 
     expect(navigate).not.toHaveBeenCalled();
   });
@@ -141,7 +141,7 @@ describe("useShellConfiguration", () => {
     const runtime = createMockRuntime();
     const { router } = await renderHookWithRouter(
       () => useShellConfiguration(runtime, null),
-      { routes: ROUTES, initialEntries: [CURRENT_PATHNAME] },
+      { initialEntries: [CURRENT_PATHNAME], routes: ROUTES },
     );
 
     const navigate = vi.spyOn(router, "navigate");

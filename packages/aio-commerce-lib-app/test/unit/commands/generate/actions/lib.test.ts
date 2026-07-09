@@ -82,15 +82,15 @@ describe("prepareWebSourceImportAlias", () => {
 
       await expect(
         prepareWebSourceImportAlias({
-          web: "web-src",
           operations: {
             view: [
               {
-                type: "web",
                 impl: "index.html",
+                type: "web",
               },
             ],
           },
+          web: "web-src",
         }),
       ).rejects.toThrow("Could not find package.json.");
     });
@@ -109,15 +109,15 @@ describe("prepareWebSourceImportAlias", () => {
         getProjectRootDirectory.mockReturnValue(tempDir);
 
         await prepareWebSourceImportAlias({
-          web: "web-src",
           operations: {
             view: [
               {
-                type: "web",
                 impl: "index.html",
+                type: "web",
               },
             ],
           },
+          web: "web-src",
         });
 
         await expect(
@@ -137,8 +137,8 @@ describe("prepareWebSourceImportAlias", () => {
       operations: {
         workerProcess: [
           {
-            type: "action",
             impl: "actions/worker/index.js",
+            type: "action",
           },
         ],
       },
@@ -272,10 +272,10 @@ describe("generateCustomScriptsTemplate", () => {
         installation: {
           customInstallationSteps: [
             {
+              description: "Script inside the generated actions dir",
+              name: "Nested",
               script:
                 "src/commerce-extensibility-1/.generated/actions/app-management/nested.js",
-              name: "Nested",
-              description: "Script inside the generated actions dir",
             },
           ],
         },

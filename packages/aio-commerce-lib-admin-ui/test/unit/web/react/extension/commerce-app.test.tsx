@@ -27,7 +27,7 @@ vi.mock("@adobe/uix-guest", async () =>
 );
 
 const ROUTES: RouteEntry[] = [
-  { index: true, element: <div data-testid="route-content" /> },
+  { element: <div data-testid="route-content" />, index: true },
 ];
 
 function mockAttachedConnection() {

@@ -28,9 +28,9 @@ export function createMockGuestConnection(
   overrides: MockGuestConnectionOverrides = {},
 ) {
   return {
+    addEventListener: vi.fn(() => vi.fn()),
     host: {},
     sharedContext: new Map<string, unknown>([["theme", "dark"]]),
-    addEventListener: vi.fn(() => vi.fn()),
     ...overrides,
   };
 }
@@ -41,5 +41,5 @@ export function createMockGuestConnection(
  * `attach`/`register` in the test and drive them with `vi.mocked(...).mockResolvedValue`.
  */
 export function uixGuestMock() {
-  return { register: vi.fn(), attach: vi.fn() };
+  return { attach: vi.fn(), register: vi.fn() };
 }

@@ -19,8 +19,8 @@ const {
   syncCommerceScopesMock,
   unsyncCommerceScopesMock,
 } = vi.hoisted(() => ({
-  resolveCommerceHttpClientParamsMock: vi.fn(),
   getScopeTreeMock: vi.fn(),
+  resolveCommerceHttpClientParamsMock: vi.fn(),
   setCustomScopeTreeMock: vi.fn(),
   syncCommerceScopesMock: vi.fn(),
   unsyncCommerceScopesMock: vi.fn(),
@@ -45,9 +45,9 @@ const scopeTree = [{ id: "default", name: "Default Website" }];
 const customScopes = [
   {
     code: "store-a",
-    label: "Store A",
     is_editable: true,
     is_final: false,
+    label: "Store A",
   },
 ];
 
@@ -66,8 +66,8 @@ describe("scopeTreeRuntimeAction", () => {
       const result = await scopeTreeRuntimeAction(createRuntimeActionParams());
 
       expect(result).toMatchObject({
-        type: "success",
         statusCode: 200,
+        type: "success",
       });
     });
 
@@ -91,8 +91,8 @@ describe("scopeTreeRuntimeAction", () => {
       const result = await scopeTreeRuntimeAction(createRuntimeActionParams());
 
       expect(result).toMatchObject({
-        type: "success",
         statusCode: 203,
+        type: "success",
       });
     });
 
@@ -116,8 +116,8 @@ describe("scopeTreeRuntimeAction", () => {
 
       await scopeTreeRuntimeAction(
         createRuntimeActionParams({
-          method: "put",
           body: { scopes: customScopes },
+          method: "put",
         }),
       );
 
@@ -131,8 +131,8 @@ describe("scopeTreeRuntimeAction", () => {
 
       const result = await scopeTreeRuntimeAction(
         createRuntimeActionParams({
-          method: "put",
           body: { scopes: customScopes },
+          method: "put",
         }),
       );
 
@@ -152,20 +152,20 @@ describe("scopeTreeRuntimeAction", () => {
 
       const result = await scopeTreeRuntimeAction(
         createRuntimeActionParams({
-          method: "put",
           body: { scopes: customScopes },
+          method: "put",
         }),
       );
 
       expect(result).toMatchObject({
-        type: "error",
         error: {
-          statusCode: 400,
           body: {
             message:
               "Scope code 'commerce' is reserved and cannot be used in custom scopes",
           },
+          statusCode: 400,
         },
+        type: "error",
       });
     });
 
@@ -174,14 +174,14 @@ describe("scopeTreeRuntimeAction", () => {
 
       const result = await scopeTreeRuntimeAction(
         createRuntimeActionParams({
-          method: "put",
           body: { scopes: customScopes },
+          method: "put",
         }),
       );
 
       expect(result).toMatchObject({
-        type: "error",
         error: { statusCode: 500 },
+        type: "error",
       });
     });
   });
@@ -190,17 +190,17 @@ describe("scopeTreeRuntimeAction", () => {
     test("syncs commerce scopes with the resolved API client params", async () => {
       const commerceConfig = { token: "resolved-config" };
       resolveCommerceHttpClientParamsMock.mockReturnValue(commerceConfig);
-      syncCommerceScopesMock.mockResolvedValue({ synced: true, scopeTree });
+      syncCommerceScopesMock.mockResolvedValue({ scopeTree, synced: true });
 
       await scopeTreeRuntimeAction(
         createRuntimeActionParams({
-          method: "post",
-          path: "/commerce",
+          AIO_COMMERCE_AUTH_IMS_TOKEN: "ims-token",
           body: {
             commerceBaseUrl: "https://commerce.example.com",
             commerceEnv: "paas",
           },
-          AIO_COMMERCE_AUTH_IMS_TOKEN: "ims-token",
+          method: "post",
+          path: "/commerce",
         }),
       );
 
@@ -209,16 +209,16 @@ describe("scopeTreeRuntimeAction", () => {
 
     test("returns the synced scope tree in the response body", async () => {
       resolveCommerceHttpClientParamsMock.mockReturnValue({});
-      syncCommerceScopesMock.mockResolvedValue({ synced: true, scopeTree });
+      syncCommerceScopesMock.mockResolvedValue({ scopeTree, synced: true });
 
       const result = await scopeTreeRuntimeAction(
         createRuntimeActionParams({
-          method: "post",
-          path: "/commerce",
           body: {
             commerceBaseUrl: "https://commerce.example.com",
             commerceEnv: "paas",
           },
+          method: "post",
+          path: "/commerce",
         }),
       );
 
@@ -229,37 +229,37 @@ describe("scopeTreeRuntimeAction", () => {
 
     test("returns a 203 response when synced scopes come from cache", async () => {
       resolveCommerceHttpClientParamsMock.mockReturnValue({});
-      syncCommerceScopesMock.mockResolvedValue({ synced: false, scopeTree });
+      syncCommerceScopesMock.mockResolvedValue({ scopeTree, synced: false });
 
       const result = await scopeTreeRuntimeAction(
         createRuntimeActionParams({
-          method: "post",
-          path: "/commerce",
           body: {
             commerceBaseUrl: "https://commerce.example.com",
             commerceEnv: "paas",
           },
+          method: "post",
+          path: "/commerce",
         }),
       );
 
       expect(result).toMatchObject({
-        type: "success",
         statusCode: 203,
+        type: "success",
       });
     });
 
     test("sets x-cache: hit header when synced scopes come from cache", async () => {
       resolveCommerceHttpClientParamsMock.mockReturnValue({});
-      syncCommerceScopesMock.mockResolvedValue({ synced: false, scopeTree });
+      syncCommerceScopesMock.mockResolvedValue({ scopeTree, synced: false });
 
       const result = await scopeTreeRuntimeAction(
         createRuntimeActionParams({
-          method: "post",
-          path: "/commerce",
           body: {
             commerceBaseUrl: "https://commerce.example.com",
             commerceEnv: "paas",
           },
+          method: "post",
+          path: "/commerce",
         }),
       );
 
@@ -274,18 +274,18 @@ describe("scopeTreeRuntimeAction", () => {
 
       const result = await scopeTreeRuntimeAction(
         createRuntimeActionParams({
-          method: "post",
-          path: "/commerce",
           body: {
             commerceBaseUrl: "https://commerce.example.com",
             commerceEnv: "paas",
           },
+          method: "post",
+          path: "/commerce",
         }),
       );
 
       expect(result).toMatchObject({
-        type: "error",
         error: { statusCode: 500 },
+        type: "error",
       });
     });
   });
@@ -302,8 +302,8 @@ describe("scopeTreeRuntimeAction", () => {
       );
 
       expect(result).toMatchObject({
-        type: "success",
         body: { message: "Commerce scopes unsynced successfully" },
+        type: "success",
       });
     });
 
@@ -318,8 +318,8 @@ describe("scopeTreeRuntimeAction", () => {
       );
 
       expect(result).toMatchObject({
-        type: "success",
         body: { message: "No commerce scopes to unsync" },
+        type: "success",
       });
     });
   });

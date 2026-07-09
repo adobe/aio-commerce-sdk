@@ -58,21 +58,20 @@ async function generateAll() {
 
 /** Command handlers registry mapping command names to their subcommand handlers */
 const COMMANDS = {
-  init: initCommand,
+  generate: {
+    actions: generateActionsCommand,
+    all: generateAll,
+    manifest: generateManifestCommand,
+    schema: generateSchemaCommand,
+  },
 
   // Hooks are "internal" commands.
   // Users should not need to run these commands directly.
   hooks: {
-    "pre-app-build": preAppBuildHookCommand,
     postinstall: postinstallHookCommand,
+    "pre-app-build": preAppBuildHookCommand,
   },
-
-  generate: {
-    actions: generateActionsCommand,
-    manifest: generateManifestCommand,
-    schema: generateSchemaCommand,
-    all: generateAll,
-  },
+  init: initCommand,
 } as const;
 
 /**

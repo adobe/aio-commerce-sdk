@@ -141,30 +141,30 @@ export async function createRegistration(
         ...fetchOptions,
         json: {
           client_id: validatedParams.clientId,
-          name: validatedParams.name,
-          description: validatedParams.description,
-          webhook_url: validatedParams.webhookUrl,
-          events_of_interest: validatedParams.eventsOfInterest.map((event) => ({
-            provider_id: event.providerId,
-            event_code: event.eventCode,
-          })),
           delivery_type: validatedParams.deliveryType,
-          runtime_action: validatedParams.runtimeAction,
-          enabled: validatedParams.enabled,
+          description: validatedParams.description,
           destination_metadata: validatedParams.destinationMetadata
             ? {
-                aws_region: validatedParams.destinationMetadata.awsRegion,
                 aws_account_id:
                   validatedParams.destinationMetadata.awsAccountId,
+                aws_region: validatedParams.destinationMetadata.awsRegion,
               }
             : undefined,
+          enabled: validatedParams.enabled,
+          events_of_interest: validatedParams.eventsOfInterest.map((event) => ({
+            event_code: event.eventCode,
+            provider_id: event.providerId,
+          })),
+          name: validatedParams.name,
+          runtime_action: validatedParams.runtimeAction,
           subscriber_filters: validatedParams.subscriberFilters?.map(
             (filter) => ({
-              name: filter.name,
               description: filter.description,
+              name: filter.name,
               subscriber_filter: filter.subscriberFilter,
             }),
           ),
+          webhook_url: validatedParams.webhookUrl,
         },
       },
     )
@@ -195,30 +195,30 @@ export async function updateRegistration(
       {
         ...fetchOptions,
         json: {
-          name: validatedParams.name,
-          description: validatedParams.description,
-          webhook_url: validatedParams.webhookUrl,
-          events_of_interest: validatedParams.eventsOfInterest.map((event) => ({
-            provider_id: event.providerId,
-            event_code: event.eventCode,
-          })),
           delivery_type: validatedParams.deliveryType,
-          runtime_action: validatedParams.runtimeAction,
-          enabled: validatedParams.enabled,
+          description: validatedParams.description,
           destination_metadata: validatedParams.destinationMetadata
             ? {
-                aws_region: validatedParams.destinationMetadata.awsRegion,
                 aws_account_id:
                   validatedParams.destinationMetadata.awsAccountId,
+                aws_region: validatedParams.destinationMetadata.awsRegion,
               }
             : undefined,
+          enabled: validatedParams.enabled,
+          events_of_interest: validatedParams.eventsOfInterest.map((event) => ({
+            event_code: event.eventCode,
+            provider_id: event.providerId,
+          })),
+          name: validatedParams.name,
+          runtime_action: validatedParams.runtimeAction,
           subscriber_filters: validatedParams.subscriberFilters?.map(
             (filter) => ({
-              name: filter.name,
               description: filter.description,
+              name: filter.name,
               subscriber_filter: filter.subscriberFilter,
             }),
           ),
+          webhook_url: validatedParams.webhookUrl,
         },
       },
     )

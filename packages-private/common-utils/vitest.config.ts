@@ -28,10 +28,10 @@ export default mergeConfig(
       coverage: {
         exclude: [...BARREL_FILES],
         thresholds: {
-          statements: 90,
           branches: 80,
           functions: 90,
           lines: 90,
+          statements: 90,
         },
       },
     },

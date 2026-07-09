@@ -106,8 +106,8 @@ function buildActionDefinition(
   });
   actionDef.set("annotations", {
     ...(action.annotations ?? {
-      "require-adobe-auth": true,
       final: true,
+      "require-adobe-auth": true,
     }),
   });
 
@@ -294,9 +294,9 @@ async function buildHooks(extConfig: Document, hooks: Record<string, string>) {
  */
 async function writeExtConfig(configPath: string, doc: Document) {
   const yamlContent = doc.toString({
+    defaultStringType: "PLAIN",
     indent: 2,
     lineWidth: 0,
-    defaultStringType: "PLAIN",
   });
 
   await writeFile(configPath, yamlContent, "utf-8");

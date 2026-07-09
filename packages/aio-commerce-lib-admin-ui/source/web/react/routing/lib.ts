@@ -70,10 +70,10 @@ export function createExtensionRouter(
 
   const routes = routeEntries.map((route) =>
     createRoute({
-      path: getRoutePath(route),
+      component: () => route.element,
 
       getParentRoute: () => rootRoute,
-      component: () => route.element,
+      path: getRoutePath(route),
     }),
   );
 

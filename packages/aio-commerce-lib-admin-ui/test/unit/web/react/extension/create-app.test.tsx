@@ -22,19 +22,19 @@ import type { ExtensionAppRoutes } from "#web/react/routing/types";
 // @adobe/exc-app and the runtime loader reach the real Experience Cloud shell/runtime; they are the
 // external boundaries faked here. react-dom, the router, and the Entrypoint all run for real.
 const mocks = vi.hoisted(() => ({
-  runtimeFactory: vi.fn(),
-  init: vi.fn(),
-  page: { title: "", done: vi.fn() },
-  loadExperienceCloudRuntime: vi.fn(),
   createMockRuntime: vi.fn(),
+  init: vi.fn(),
+  loadExperienceCloudRuntime: vi.fn(),
+  page: { done: vi.fn(), title: "" },
+  runtimeFactory: vi.fn(),
 }));
 
 // The real `@adobe/exc-app` is CJS: the browser's ESM interop resolves the default import to the whole
 // module object, so the mock's `default` must be the callable module itself.
 vi.mock("@adobe/exc-app", () =>
   Object.assign(mocks.runtimeFactory, {
-    init: mocks.init,
     default: mocks.runtimeFactory,
+    init: mocks.init,
   }),
 );
 
@@ -48,7 +48,7 @@ vi.mock("#web/runtime-loader", () => ({
 }));
 
 const ROUTES: ExtensionAppRoutes = [
-  { index: true, element: <div data-testid="route-content" /> },
+  { element: <div data-testid="route-content" />, index: true },
 ];
 const OPTIONS = { metadata: { extensionId: "ext-1" }, routes: ROUTES };
 

@@ -24,8 +24,8 @@ describe("headers/validation", () => {
   describe("assertRequiredHeaders", () => {
     test("should pass when all required headers are present", () => {
       const headers = {
-        "x-api-key": "test-key",
         Authorization: "Bearer token",
+        "x-api-key": "test-key",
       };
 
       expect(() => {
@@ -95,8 +95,8 @@ describe("headers/validation", () => {
 
     test("should throw error when header value is only whitespace", () => {
       const headers = {
-        "x-api-key": "   ",
         Authorization: "\t\n",
+        "x-api-key": "   ",
       };
 
       expect(() => {
@@ -133,8 +133,8 @@ describe("headers/validation", () => {
 
     test("should narrow types after successful assertion", () => {
       const headers: Record<string, string | undefined> = {
-        "x-api-key": "test-key",
         Authorization: "Bearer token",
+        "x-api-key": "test-key",
       };
 
       assertRequiredHeaders(headers, ["x-api-key", "Authorization"]);
@@ -149,8 +149,8 @@ describe("headers/validation", () => {
 
     test("should preserve non-required headers", () => {
       const headers = {
-        "x-api-key": "test-key",
         Authorization: "Bearer token",
+        "x-api-key": "test-key",
         "x-optional": "optional-value",
       };
 
@@ -219,8 +219,8 @@ describe("headers/validation", () => {
   describe("getMissingOrEmptyHeaders", () => {
     test("should return empty array when all required headers are present", () => {
       const headers = {
-        "x-api-key": "test-key",
         Authorization: "Bearer token",
+        "x-api-key": "test-key",
       };
 
       const missing = getMissingOrEmptyHeaders(headers, [
@@ -289,8 +289,8 @@ describe("headers/validation", () => {
 
     test("should return header name when header value is only whitespace", () => {
       const headers = {
-        "x-api-key": "   ",
         Authorization: "\t\n",
+        "x-api-key": "   ",
       };
 
       const missing1 = getMissingOrEmptyHeaders(headers, ["x-api-key"]);
@@ -363,8 +363,8 @@ describe("headers/validation", () => {
 
     test("should handle headers with mixed casing", () => {
       const headers = {
-        "X-API-KEY": "test-key",
         authorization: "Bearer token",
+        "X-API-KEY": "test-key",
       };
 
       const missing = getMissingOrEmptyHeaders(headers, [
@@ -510,8 +510,8 @@ describe("headers/validation", () => {
       // This test covers the fallback branch ?? path when find() returns undefined
       // We need a scenario where the path key doesn't match any required header
       const headers = {
-        "x-api-key": "test-key",
         "some-other-header": "value",
+        "x-api-key": "test-key",
       };
 
       // When Authorization is missing, the path will be "authorization" (lowercase)

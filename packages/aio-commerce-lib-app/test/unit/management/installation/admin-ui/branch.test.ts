@@ -32,12 +32,12 @@ describe("admin-ui installation module", () => {
       expect(adminUiStep.name).toBe("admin-ui");
       expect(adminUiStep.meta).toEqual({
         install: {
-          label: "Admin UI",
           description: "Registers the extension with Adobe Commerce Admin UI",
+          label: "Admin UI",
         },
         uninstall: {
-          label: "Admin UI",
           description: "Removes the extension from Adobe Commerce Admin UI",
+          label: "Admin UI",
         },
       });
     });
@@ -64,7 +64,7 @@ describe("admin-ui installation module", () => {
   });
 
   describe("enableAdminUiSdkStep handlers", () => {
-    const enableAdminUiSdkStep = adminUiStep.children[0];
+    const [enableAdminUiSdkStep] = adminUiStep.children;
 
     test("should have an install handler but no uninstall handler", () => {
       expect(enableAdminUiSdkStep.install).toBeDefined();
@@ -80,7 +80,7 @@ describe("admin-ui installation module", () => {
   });
 
   describe("registerExtensionStep handlers", () => {
-    const registerExtensionStep = adminUiStep.children[1];
+    const [, registerExtensionStep] = adminUiStep.children;
 
     beforeEach(() => {
       vi.stubEnv("__OW_NAMESPACE", "test-namespace");
@@ -115,8 +115,8 @@ describe("admin-ui installation module", () => {
       await registerExtensionStep.uninstall?.(configWithFullAdminUiV2, context);
 
       expect(context.adminUiClient.unregisterExtension).toHaveBeenCalledWith({
-        workspaceName: context.appData.workspaceName,
         extensionName: "test-namespace",
+        workspaceName: context.appData.workspaceName,
       });
     });
 

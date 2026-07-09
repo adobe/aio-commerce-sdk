@@ -37,9 +37,12 @@ const ADOBE_LICENSE_BANNER = `
  * @type {import("tsdown").UserConfig}
  */
 export const baseConfig = {
+  banner: ADOBE_LICENSE_BANNER,
+
+  dts: true,
   entry: [],
 
-  plugins: [selectiveBundlePlugin()],
+  failOnWarn: "ci-only",
   format: {
     cjs: {
       outputOptions: {
@@ -52,19 +55,16 @@ export const baseConfig = {
       },
     },
   },
+  minify: false,
 
-  publint: true,
+  nodeProtocol: "strip",
   outputOptions: {
     dir: OUT_DIR,
     minifyInternalExports: true,
   },
 
-  failOnWarn: "ci-only",
-  banner: ADOBE_LICENSE_BANNER,
+  plugins: [selectiveBundlePlugin()],
 
-  nodeProtocol: "strip",
-  minify: false,
-
-  dts: true,
+  publint: true,
   treeshake: true,
 };

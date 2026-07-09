@@ -48,14 +48,14 @@ function createActionDefinition(
 ) {
   const def: ActionDefinition = {
     ...options,
+    annotations: {
+      final: true,
+      "require-adobe-auth": true,
+    },
 
     function: `${GENERATED_ACTIONS_PATH}/${actionName}.js`,
-    web: options.web ?? "yes",
     runtime: "nodejs:24",
-    annotations: {
-      "require-adobe-auth": true,
-      final: true,
-    },
+    web: options.web ?? "yes",
   };
 
   if (config.requiresEncryptionKey) {
@@ -101,12 +101,12 @@ export function buildAppManagementExtConfig(
     operations: {
       workerProcess: [
         {
-          type: "action",
           impl: `${PACKAGE_NAME}/app-config`,
+          type: "action",
         },
         {
-          type: "action",
           impl: `${PACKAGE_NAME}/association`,
+          type: "action",
         },
       ],
     },
@@ -114,11 +114,11 @@ export function buildAppManagementExtConfig(
     runtimeManifest: {
       packages: {
         [PACKAGE_NAME]: {
-          license: "Apache-2.0",
           actions: {
             "app-config": createActionDefinition("app-config"),
             association: createActionDefinition("association"),
           } as Record<string, ActionDefinition>,
+          license: "Apache-2.0",
         },
       },
     },
@@ -131,8 +131,8 @@ export function buildAppManagementExtConfig(
 
   if (needsInstallAction) {
     extConfig.operations.workerProcess.push({
-      type: "action",
       impl: `${PACKAGE_NAME}/installation`,
+      type: "action",
     });
 
     extConfig.runtimeManifest.packages[PACKAGE_NAME].actions.installation =
@@ -156,8 +156,8 @@ export function buildBusinessConfigurationExtConfig() {
   const actions = [
     {
       name: "config",
-      templateFile: "config.js.template",
       requiresEncryptionKey: true,
+      templateFile: "config.js.template",
     },
     {
       name: "scope-tree",
@@ -173,21 +173,21 @@ export function buildBusinessConfigurationExtConfig() {
 
     operations: {
       workerProcess: actions.map((action) => ({
-        type: "action",
         impl: `${PACKAGE_NAME}/${action.name}`,
+        type: "action",
       })),
     },
 
     runtimeManifest: {
       packages: {
         [PACKAGE_NAME]: {
-          license: "Apache-2.0",
           actions: Object.fromEntries(
             actions.map((action) => [
               action.name,
               createActionDefinition(action.name, action),
             ]),
           ),
+          license: "Apache-2.0",
         },
       },
     },
@@ -247,7 +247,7 @@ export function requiresWebSource(adminUi: AdminUi | undefined): boolean {
 export function buildAdminUiV2ExtConfig(
   appConfig: CommerceAppConfigOutputModel,
 ) {
-  const adminUi = appConfig.adminUi;
+  const { adminUi } = appConfig;
   const runtimeActions = collectUniqueRuntimeActions(adminUi);
   const requiresWeb = requiresWebSource(adminUi);
   return {
@@ -257,12 +257,12 @@ export function buildAdminUiV2ExtConfig(
     },
     operations: {
       ...(requiresWeb && {
-        view: [{ type: "web" as const, impl: "index.html" }],
+        view: [{ impl: "index.html", type: "web" as const }],
       }),
       ...(runtimeActions.length > 0 && {
         workerProcess: runtimeActions.map((impl) => ({
-          type: "action" as const,
           impl,
+          type: "action" as const,
         })),
       }),
     },

@@ -32,6 +32,10 @@ afterEach(() => {
   vi.clearAllMocks();
 });
 
+function renderNullFallback() {
+  return null;
+}
+
 const suspenseWrapper = ({ children }: { children: ReactNode }) => (
   <Suspense fallback={null}>{children}</Suspense>
 );
@@ -93,7 +97,7 @@ describe("useGuestConnection", () => {
     }
 
     await render(
-      <ErrorBoundary fallbackRender={() => null} onError={onError}>
+      <ErrorBoundary fallbackRender={renderNullFallback} onError={onError}>
         <Suspense fallback={null}>
           <HookProbe />
         </Suspense>

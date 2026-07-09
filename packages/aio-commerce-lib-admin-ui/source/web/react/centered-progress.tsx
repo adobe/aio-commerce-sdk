@@ -20,13 +20,13 @@ export function CenteredProgress(props: Readonly<{ "aria-label": string }>) {
   return (
     <div
       style={{
-        display: "flex",
         alignItems: "center",
+        display: "flex",
         justifyContent: "center",
-        padding: 24,
 
         // Subtract the padding to avoid generating overflow
         minHeight: "calc(100dvh - 48px)",
+        padding: 24,
       }}>
       <ProgressCircle aria-label={props["aria-label"]} isIndeterminate />
     </div>

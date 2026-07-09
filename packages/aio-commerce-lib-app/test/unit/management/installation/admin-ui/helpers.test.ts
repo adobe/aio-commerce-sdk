@@ -71,8 +71,8 @@ describe("registerExtension", () => {
   test("logs success with extensionId when registerExtension call resolves", async () => {
     const logger = createMockLogger();
     const context = createMockAdminUiContext({
-      registerExtensionImpl: () => Promise.resolve({ extensionId: "ext-123" }),
       logger,
+      registerExtensionImpl: () => Promise.resolve({ extensionId: "ext-123" }),
     });
 
     await expect(registerExtension(context)).resolves.toBeUndefined();
@@ -110,8 +110,8 @@ describe("registerExtension", () => {
       JSON.stringify({ message: "Insufficient permissions" }),
     );
     const context = createMockAdminUiContext({
-      registerExtensionImpl: () => Promise.reject(httpError),
       logger,
+      registerExtensionImpl: () => Promise.reject(httpError),
     });
 
     await expect(registerExtension(context)).rejects.toThrow();

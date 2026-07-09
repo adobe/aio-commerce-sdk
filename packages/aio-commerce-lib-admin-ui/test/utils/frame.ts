@@ -12,8 +12,8 @@
 
 function setParent(parent: Window) {
   Object.defineProperty(globalThis.window, "parent", {
-    value: parent,
     configurable: true,
+    value: parent,
   });
 }
 

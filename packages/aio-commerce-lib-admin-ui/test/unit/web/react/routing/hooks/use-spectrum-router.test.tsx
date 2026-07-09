@@ -18,9 +18,9 @@ import { useSpectrumRouter } from "#web/react/routing/hooks/use-spectrum-router"
 import type { RouteEntry } from "#web/react/routing/types";
 
 const ROUTES: RouteEntry[] = [
-  { index: true, element: null },
-  { path: "settings", element: null },
-  { path: "bar", element: null },
+  { element: null, index: true },
+  { element: null, path: "settings" },
+  { element: null, path: "bar" },
 ];
 
 describe("useSpectrumRouter", () => {

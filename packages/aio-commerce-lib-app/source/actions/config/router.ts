@@ -19,7 +19,7 @@ import {
 import { ok } from "@adobe/aio-commerce-lib-core/responses";
 import {
   HttpActionRouter,
-  logger,
+  logger as withLogger,
 } from "@aio-commerce-sdk/common-utils/actions";
 
 import { filterSchemaByEnv } from "#config/lib/environment";
@@ -86,15 +86,13 @@ function filterPasswordFields<T extends Omit<ConfigValue, "origin">>(
  * - PATCH /   Partially update configuration (only updates provided fields, allows unsetting)
  */
 export const router = new HttpActionRouter<ConfigActionContext>().use(
-  logger({
+  withLogger({
     name: () => "config",
   }),
 );
 
 /** GET / - Retrieve configuration */
 router.get("/", {
-  query: GetConfigurationQuerySchema,
-
   handler: async (req, ctx) => {
     const { logger, rawParams } = ctx;
     const { configSchema: rawConfigSchema } = rawParams;
@@ -106,8 +104,8 @@ router.get("/", {
 
     logger.debug("Initializing configuration");
     const { configSchema } = await initialize({
-      schema: envFilteredSchema,
       params: rawParams,
+      schema: envFilteredSchema,
     });
 
     const { scopeId } = req.query;
@@ -126,6 +124,7 @@ router.get("/", {
       body: { schema: configSchema, values: appConfiguration },
     });
   },
+  query: GetConfigurationQuerySchema,
 });
 
 /**
@@ -143,8 +142,8 @@ router.put("/", {
     const { scopeId, config } = req.body;
 
     const { configSchema } = await initialize({
-      schema: rawParams.configSchema,
       params: rawParams,
+      schema: rawParams.configSchema,
     });
 
     // The UI sent it to us as a masked value, which means the user didn't update it.
@@ -181,8 +180,8 @@ router.patch("/", {
     const { scopeId, config } = req.body;
 
     const { configSchema } = await initialize({
-      schema: rawParams.configSchema,
       params: rawParams,
+      schema: rawParams.configSchema,
     });
 
     const result = await setConfiguration({ config }, byScopeId(scopeId), {

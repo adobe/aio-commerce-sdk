@@ -94,9 +94,9 @@ describe("ExtensionErrorBoundary", () => {
 
   test("recovers via 'Try again' by resetting the error boundary", async () => {
     // The flag lives outside the component so it survives the reset remount.
-    let shouldThrow = true;
+    const retryState: { shouldThrow: boolean } = { shouldThrow: true };
     function ToggleChild() {
-      if (shouldThrow) {
+      if (retryState.shouldThrow) {
         throw new Error("boom");
       }
 
@@ -110,7 +110,7 @@ describe("ExtensionErrorBoundary", () => {
     );
 
     await expect.element(screen.getByText("boom")).toBeInTheDocument();
-    shouldThrow = false;
+    retryState.shouldThrow = false;
 
     await screen.getByText("Try again").click();
     await expect.element(screen.getByText("recovered")).toBeInTheDocument();

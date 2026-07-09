@@ -181,8 +181,8 @@ describe("commands/generate/actions", () => {
         {
           ...EMPTY_PROJECT,
           ...makeTemplateFiles(),
-          "package.json": JSON.stringify({ type: "module" }),
           "app.commerce.config.js": dynamicOptionsConfigFile,
+          "package.json": JSON.stringify({ type: "module" }),
         },
         async (tempDir) => {
           await run(configWithDynamicListOptions, tempDir);
@@ -217,8 +217,8 @@ describe("commands/generate/actions", () => {
     test("generates a runtime app config module and #app.commerce.config alias for a JS config file", async () => {
       await withTempProject(
         {
-          "package.json": JSON.stringify({ type: "module" }),
           "app.commerce.config.js": dynamicOptionsConfigFile,
+          "package.json": JSON.stringify({ type: "module" }),
           ...makeTemplateFiles(),
         },
         async (tempDir) => {
@@ -245,8 +245,8 @@ describe("commands/generate/actions", () => {
     test("bundles a TypeScript app config file via esbuild", async () => {
       await withTempProject(
         {
-          "package.json": JSON.stringify({ type: "module" }),
           "app.commerce.config.ts": dynamicOptionsConfigFileTs,
+          "package.json": JSON.stringify({ type: "module" }),
           ...makeTemplateFiles(),
         },
         async (tempDir) => {

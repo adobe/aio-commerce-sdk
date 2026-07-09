@@ -25,12 +25,16 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
+function renderNullFallback() {
+  return null;
+}
+
 /** Builds a minimal fake UIX guest connection with the given host object. */
 function makeConnection(host: object) {
   return {
+    addEventListener: vi.fn(() => vi.fn()),
     host,
     sharedContext: new Map<string, unknown>(),
-    addEventListener: vi.fn(() => vi.fn()),
   };
 }
 
@@ -73,7 +77,7 @@ describe("useCommerce", () => {
         extensionId="ext-use-commerce-no-integration"
         // @ts-expect-error -- fake connection cannot satisfy the uix-guest GuestConnection type
         guestConnection={connection}>
-        <ErrorBoundary fallbackRender={() => null} onError={onError}>
+        <ErrorBoundary fallbackRender={renderNullFallback} onError={onError}>
           <Suspense fallback={null}>
             <HookProbe />
           </Suspense>

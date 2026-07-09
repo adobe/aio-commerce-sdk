@@ -19,7 +19,7 @@ import { StandaloneExtensionApp } from "#web/react/extension/standalone-app.tsx"
 import type { RouteEntry } from "#web/react/routing/types";
 
 const ROUTES: RouteEntry[] = [
-  { index: true, element: <div data-testid="route-content" /> },
+  { element: <div data-testid="route-content" />, index: true },
 ];
 
 let restoreFrame: () => void = () => undefined;

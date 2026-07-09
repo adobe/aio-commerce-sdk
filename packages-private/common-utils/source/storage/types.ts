@@ -21,14 +21,14 @@ export type KeyValueStore<T> = {
    * @param key - The key to delete.
    * @returns True if the key existed and was deleted.
    */
-  delete(key: string): Promise<boolean>;
+  delete: (key: string) => Promise<boolean>;
   /**
    * Retrieves data by key.
    *
    * @param key - The key to retrieve.
    * @returns The data or null if not found.
    */
-  get(key: string): Promise<T | null>;
+  get: (key: string) => Promise<T | null>;
 
   /**
    * Saves data with the given key.
@@ -36,7 +36,7 @@ export type KeyValueStore<T> = {
    * @param key - The key to save under.
    * @param data - The data to save.
    */
-  put(key: string, data: T): Promise<void>;
+  put: (key: string, data: T) => Promise<void>;
 };
 
 /**

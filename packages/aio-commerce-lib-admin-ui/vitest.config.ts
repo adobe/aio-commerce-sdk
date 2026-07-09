@@ -16,7 +16,6 @@ import { mergeConfig } from "vitest/config";
 
 export default mergeConfig(baseConfig, {
   test: {
-    passWithNoTests: true,
     coverage: {
       exclude: [
         "./source/**/index.ts",
@@ -24,26 +23,27 @@ export default mergeConfig(baseConfig, {
         "./source/web/runtime-loader.ts",
       ],
     },
+    passWithNoTests: true,
     projects: [
       {
         extends: true,
         test: {
-          name: "node",
-          include: ["test/unit/**/*.test.{ts,tsx}"],
           exclude: ["test/unit/web/react/**"],
+          include: ["test/unit/**/*.test.{ts,tsx}"],
+          name: "node",
         },
       },
       {
         extends: true,
         test: {
-          name: "browser",
-          include: ["test/unit/web/react/**/*.test.{ts,tsx}"],
           browser: {
             enabled: true,
             headless: true,
-            provider: playwright(),
             instances: [{ browser: "chromium" }],
+            provider: playwright(),
           },
+          include: ["test/unit/web/react/**/*.test.{ts,tsx}"],
+          name: "browser",
         },
       },
     ],

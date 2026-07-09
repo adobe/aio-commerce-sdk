@@ -44,8 +44,8 @@ describe("Middleware Plugins", () => {
       } as RuntimeActionParams);
 
       expect(result).toMatchObject({
-        statusCode: 200,
         body: { hasLogger: true },
+        statusCode: 200,
       });
     });
 
@@ -67,8 +67,8 @@ describe("Middleware Plugins", () => {
       } as RuntimeActionParams);
 
       expect(result).toMatchObject({
-        statusCode: 200,
         body: { hasLogger: true },
+        statusCode: 200,
       });
     });
 
@@ -91,8 +91,8 @@ describe("Middleware Plugins", () => {
       } as RuntimeActionParams);
 
       expect(result).toMatchObject({
-        statusCode: 200,
         body: { hasLogger: true },
+        statusCode: 200,
       });
     });
   });

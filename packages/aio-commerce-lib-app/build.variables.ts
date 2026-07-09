@@ -79,16 +79,15 @@ export async function getVariables() {
   }
 
   return {
-    __REACT_VERSION__: getSpecifier("react", reactCatalog),
-    __REACT_DOM_VERSION__: getSpecifier("react-dom", reactCatalog),
-    __REACT_DOM_TYPES_VERSION__: getSpecifier("@types/react-dom", reactCatalog),
-    __REACT_TYPES_VERSION__: getSpecifier("@types/react", reactCatalog),
-    __SPECTRUM_S2_VERSION__: getSpecifier("@react-spectrum/s2", reactCatalog),
-
     __LIB_ADMIN_UI_RANGE__: defineString(`^${adminUiPkg.version}`),
     __LIB_CONFIG_RANGE__: defineString(`^${libConfigPkg.version}`),
-    __PKG_VERSION__: defineString(pkg.version),
     __OPENAPI_VERSION__: defineString(spec.info.version),
+    __PKG_VERSION__: defineString(pkg.version),
+    __REACT_DOM_TYPES_VERSION__: getSpecifier("@types/react-dom", reactCatalog),
+    __REACT_DOM_VERSION__: getSpecifier("react-dom", reactCatalog),
+    __REACT_TYPES_VERSION__: getSpecifier("@types/react", reactCatalog),
+    __REACT_VERSION__: getSpecifier("react", reactCatalog),
+    __SPECTRUM_S2_VERSION__: getSpecifier("@react-spectrum/s2", reactCatalog),
   };
 }
 

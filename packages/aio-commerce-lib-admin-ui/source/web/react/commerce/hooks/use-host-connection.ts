@@ -44,7 +44,7 @@ export function useHostConnection(): HostConnection {
   const { host } = useSharedContext();
 
   return useMemo<HostConnection>(() => {
-    const field = (host as { field?: HostFrameField }).field;
+    const { field } = host as { field?: HostFrameField };
     const requireField = () => {
       if (!field) {
         throw new Error(

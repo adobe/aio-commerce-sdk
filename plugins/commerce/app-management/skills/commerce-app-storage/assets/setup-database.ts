@@ -51,9 +51,9 @@ async function openClient(context: { params: Record<string, unknown> }) {
   const authProvider = getImsAuthProvider(resolveImsAuthParams(context.params));
   const token = await authProvider.getAccessToken();
   const db = await initDb({
-    token,
     // region MUST match the manifest database.region. Omit to use AIO_DB_REGION.
     region: (context.params.DB_REGION as string) || "amer", // "amer" | "apac" | "emea" | "aus"
+    token,
   });
   return db.connect();
 }
@@ -73,7 +73,7 @@ export default defineCustomInstallationStep({
       await orders.createIndex({ order_id: 1 }, { unique: true });
 
       logger.info(`Created "${COLLECTION}" with a unique index on order_id`);
-      return { status: "success", collection: COLLECTION };
+      return { collection: COLLECTION, status: "success" };
     } catch (error) {
       if (error instanceof Error && error.name === "DbError") {
         logger.error("Database error during install", error.message);

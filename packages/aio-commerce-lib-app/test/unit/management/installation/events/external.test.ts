@@ -31,12 +31,12 @@ describe("externalEventsStep leaf step", () => {
     expect(externalEventsStep.name).toBe("external");
     expect(externalEventsStep.meta).toEqual({
       install: {
-        label: "Configure External Events",
         description: "Sets up I/O Events for external event sources",
+        label: "Configure External Events",
       },
       uninstall: {
-        label: "Remove External Events",
         description: "Removes I/O Events for external event sources",
+        label: "Remove External Events",
       },
     });
   });
@@ -91,8 +91,11 @@ describe("externalEventsStep orchestration", () => {
       params: { AIO_COMMERCE_API_FLAVOR: "paas" },
     });
 
-    const { externalEventsStep, helperMocks, utilsMocks } =
-      await importExternalStepWithMocks();
+    const {
+      externalEventsStep: mockedExternalEventsStep,
+      helperMocks,
+      utilsMocks,
+    } = await importExternalStepWithMocks();
 
     utilsMocks.getIoEventsExistingData.mockResolvedValue(
       createMockExistingIoEventsData(),
@@ -103,13 +106,13 @@ describe("externalEventsStep orchestration", () => {
     });
 
     const config = createExternalEventConfig("ext.saas_event", {
-      label: "SaaS Event",
       description: "SaaS-only external event",
-      runtimeActions: ["my-package/on-saas"],
       env: ["saas"],
+      label: "SaaS Event",
+      runtimeActions: ["my-package/on-saas"],
     });
 
-    const result = await externalEventsStep.install(config, context);
+    const result = await mockedExternalEventsStep.install(config, context);
 
     expect(result).toHaveLength(0);
     expect(helperMocks.onboardIoEvents).not.toHaveBeenCalled();
