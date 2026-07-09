@@ -11,9 +11,9 @@ Each plugin is a private pnpm workspace package. Use changesets to express relea
 3. Choose the semver bump for the plugin change.
 4. Write a concise, user-facing changeset message.
 
-Do not manually bump versions in `tile.json` or `.claude-plugin/plugin.json`. The plugin
-`package.json` is the authoritative version source; release automation syncs that version into
-the plugin manifests.
+Do not manually bump versions in `.tessl-plugin/plugin.json` or `.claude-plugin/plugin.json`. The
+plugin `package.json` is the authoritative version source; release automation syncs that version
+into the plugin manifests.
 
 Plugin semver rules:
 
@@ -21,14 +21,11 @@ Plugin semver rules:
 - `minor` — new skills, new references or assets, or additive behavioral changes.
 - `major` — removed skills, renamed skills that break installs, or behavioral changes that break existing usage patterns.
 
-When adding a new skill to a plugin, also add a matching entry to `tile.json`:
+When adding a new skill to a plugin, also add its directory to `.tessl-plugin/plugin.json`'s
+`skills` array:
 
 ```json
-"skills": {
-  "commerce-app-<name>": {
-    "path": "skills/commerce-app-<name>/SKILL.md"
-  }
-}
+"skills": ["skills/commerce-app-<name>"]
 ```
 
 ## Plugin README files
@@ -43,7 +40,7 @@ Plugin `README.md` files are copied verbatim to `adobe/skills` and must be stabl
 
 Each `SKILL.md` must open with a YAML frontmatter block. Required fields:
 
-- `name` — kebab-case identifier; must match the key in `tile.json`
+- `name` — kebab-case identifier; must match the skill's directory name as referenced in `.tessl-plugin/plugin.json`'s `skills` array
 - `description` — multi-line routing description (use `>` block scalar); written to tell the agent _when_ to invoke the skill, not to describe its contents
 - `license` — always `Apache-2.0`
 - `compatibility` — runtime and package requirements (use `>` block scalar)

@@ -20,7 +20,7 @@ import { readJson, writeJson } from "./ci/release/utils.ts";
 type PackageJson = { version: string };
 type VersionedManifest = { version: string; [key: string]: unknown };
 
-/** Syncs a Commerce plugin's tile.json and plugin.json versions to its package.json version. */
+/** Syncs a Commerce plugin's .tessl-plugin/plugin.json and .claude-plugin/plugin.json versions to its package.json version. */
 export default async function main() {
   const packageJsonPath = join(process.cwd(), "package.json");
   if (!existsSync(packageJsonPath)) {
@@ -30,7 +30,7 @@ export default async function main() {
   const packageJson = await readJson<PackageJson>(packageJsonPath);
 
   const manifestPaths = [
-    join(process.cwd(), "tile.json"),
+    join(process.cwd(), ".tessl-plugin/plugin.json"),
     join(process.cwd(), ".claude-plugin/plugin.json"),
   ].filter((manifestPath) => existsSync(manifestPath));
 

@@ -25,19 +25,22 @@ const plugins = [
 
 describe("plugin version consistency", () => {
   for (const plugin of plugins) {
-    test(`${plugin}: package.json version matches tile.json and .claude-plugin/plugin.json`, async () => {
-      const [packageJson, tileJson, pluginJson] = await Promise.all([
+    test(`${plugin}: package.json version matches .tessl-plugin/plugin.json and .claude-plugin/plugin.json`, async () => {
+      const [packageJson, tesslPluginJson, pluginJson] = await Promise.all([
         readFile(join(repoRoot, plugin, "package.json"), "utf-8").then(
           JSON.parse,
         ),
-        readFile(join(repoRoot, plugin, "tile.json"), "utf-8").then(JSON.parse),
+        readFile(
+          join(repoRoot, plugin, ".tessl-plugin/plugin.json"),
+          "utf-8",
+        ).then(JSON.parse),
         readFile(
           join(repoRoot, plugin, ".claude-plugin/plugin.json"),
           "utf-8",
         ).then(JSON.parse),
       ]);
 
-      expect(tileJson.version).toBe(packageJson.version);
+      expect(tesslPluginJson.version).toBe(packageJson.version);
       expect(pluginJson.version).toBe(packageJson.version);
     });
   }

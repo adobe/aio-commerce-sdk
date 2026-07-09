@@ -23,14 +23,19 @@ const TARGET_REPO = "skills";
 const TARGET_REPOSITORY_URL = `https://github.com/${TARGET_OWNER}/${TARGET_REPO}`;
 const PROMOTION_BRANCH = "promote/adobe-aio-commerce-sdk";
 const PROMOTED_REPOSITORY_FIELD = "https://github.com/adobe/aio-commerce-sdk";
-const PROMOTED_ENTRIES = ["tile.json", "README.md", "skills", ".claude-plugin"];
+const PROMOTED_ENTRIES = [
+  ".tessl-plugin",
+  "README.md",
+  "skills",
+  ".claude-plugin",
+];
 
 type PluginPackageJson = {
   name: string;
   version: string;
 };
 
-type TileJson = {
+type TesslPluginManifest = {
   name: string;
   version: string;
 };
@@ -191,9 +196,11 @@ export async function preparePromotionArtifacts(
       const packageJson = await readJson<PluginPackageJson>(
         join(sourcePath, "package.json"),
       );
-      const tileJson = await readJson<TileJson>(join(sourcePath, "tile.json"));
+      const tesslPluginJson = await readJson<TesslPluginManifest>(
+        join(sourcePath, ".tessl-plugin/plugin.json"),
+      );
       const displayName =
-        tileJson.name.split("/").at(-1) ?? basename(sourcePath);
+        tesslPluginJson.name.split("/").at(-1) ?? basename(sourcePath);
 
       await rm(targetPath, { force: true, recursive: true });
       await mkdir(targetPath, { recursive: true });

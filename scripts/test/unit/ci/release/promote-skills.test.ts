@@ -225,6 +225,11 @@ describe("release/promote-skills.ts", () => {
             repository: "https://github.com/adobe/aio-commerce-sdk",
             version: "1.0.0",
           }),
+        "source/plugins/commerce/app-management/.tessl-plugin/plugin.json":
+          JSON.stringify({
+            name: "adobe/commerce-app-management",
+            version: "1.0.0",
+          }),
         "source/plugins/commerce/app-management/CHANGELOG.md": [
           "# @adobe/aio-commerce-plugin-app-management",
           "",
@@ -249,10 +254,6 @@ describe("release/promote-skills.ts", () => {
           "# App Management\n",
         "source/plugins/commerce/app-management/skills/commerce-app-init/SKILL.md":
           "# Skill\n",
-        "source/plugins/commerce/app-management/tile.json": JSON.stringify({
-          name: "adobe/commerce-app-management",
-          version: "1.0.0",
-        }),
       },
       async (tempDir) => {
         const sourceRoot = join(tempDir, "source");
@@ -306,6 +307,11 @@ describe("release/promote-skills.ts", () => {
             repository: "https://github.com/adobe/skills",
             version: "1.0.0",
           }),
+        "source/plugins/commerce/app-management/.tessl-plugin/plugin.json":
+          JSON.stringify({
+            name: "adobe/commerce-app-management",
+            version: "1.0.0",
+          }),
         "source/plugins/commerce/app-management/package.json": JSON.stringify({
           name: "@adobe/aio-commerce-plugin-app-management",
           version: "1.0.0",
@@ -314,10 +320,6 @@ describe("release/promote-skills.ts", () => {
           "# App Management\n",
         "source/plugins/commerce/app-management/skills/commerce-app-init/SKILL.md":
           "# Skill\n",
-        "source/plugins/commerce/app-management/tile.json": JSON.stringify({
-          name: "adobe/commerce-app-management",
-          version: "1.0.0",
-        }),
       },
       async (tempDir) => {
         await expect(
@@ -340,6 +342,11 @@ describe("release/promote-skills.ts", () => {
             repository: "https://github.com/adobe/aio-commerce-sdk",
             version: "1.2.0",
           }),
+        "source/plugins/commerce/app-management/.tessl-plugin/plugin.json":
+          JSON.stringify({
+            name: "adobe/commerce-app-management",
+            version: "1.2.0",
+          }),
         "source/plugins/commerce/app-management/CHANGELOG.md": [
           "# @adobe/aio-commerce-plugin-app-management",
           "",
@@ -356,10 +363,6 @@ describe("release/promote-skills.ts", () => {
           "# App Management\n",
         "source/plugins/commerce/app-management/skills/commerce-app-init/SKILL.md":
           "# Skill\n",
-        "source/plugins/commerce/app-management/tile.json": JSON.stringify({
-          name: "adobe/commerce-app-management",
-          version: "1.2.0",
-        }),
       },
       async (tempDir) => {
         const core = createCoreMock();
@@ -395,7 +398,8 @@ describe("release/promote-skills.ts", () => {
           .mockResolvedValueOnce({
             exitCode: 0,
             stderr: "",
-            stdout: " M plugins/commerce/app-management/tile.json\n",
+            stdout:
+              " M plugins/commerce/app-management/.tessl-plugin/plugin.json\n",
           });
 
         await promoteSkills(
@@ -432,6 +436,11 @@ describe("release/promote-skills.ts", () => {
             repository: "https://github.com/adobe/aio-commerce-sdk",
             version: "1.2.0",
           }),
+        "source/plugins/commerce/app-management/.tessl-plugin/plugin.json":
+          JSON.stringify({
+            name: "adobe/commerce-app-management",
+            version: "1.2.0",
+          }),
         "source/plugins/commerce/app-management/CHANGELOG.md": "",
         "source/plugins/commerce/app-management/package.json": JSON.stringify({
           name: "@adobe/aio-commerce-plugin-app-management",
@@ -441,10 +450,6 @@ describe("release/promote-skills.ts", () => {
           "# App Management\n",
         "source/plugins/commerce/app-management/skills/commerce-app-init/SKILL.md":
           "# Skill\n",
-        "source/plugins/commerce/app-management/tile.json": JSON.stringify({
-          name: "adobe/commerce-app-management",
-          version: "1.2.0",
-        }),
       },
       async (tempDir) => {
         const core = createCoreMock();

@@ -24,7 +24,7 @@ import syncPluginVersion from "#sync-plugin-version";
 type PluginManifest = { version: string; repository?: string };
 
 describe("sync-plugin-version.ts", () => {
-  test("syncs tile.json and plugin.json versions to package.json", async () => {
+  test("syncs .tessl-plugin/plugin.json and .claude-plugin/plugin.json versions to package.json", async () => {
     await withTempFiles(
       {
         ".claude-plugin/plugin.json": JSON.stringify({
@@ -32,27 +32,29 @@ describe("sync-plugin-version.ts", () => {
           repository: "https://github.com/adobe/aio-commerce-sdk",
           version: "1.1.0",
         }),
+        ".tessl-plugin/plugin.json": JSON.stringify({
+          name: "adobe/commerce-app-management",
+          version: "1.1.0",
+        }),
         "package.json": JSON.stringify({
           name: "@adobe/aio-commerce-plugin-app-management",
           version: "1.2.0",
-        }),
-        "tile.json": JSON.stringify({
-          name: "adobe/commerce-app-management",
-          version: "1.1.0",
         }),
       },
       async (tempDir) => {
         await withChdir(tempDir, async () => {
           await syncPluginVersion();
 
-          const [tileJson, pluginJson] = await Promise.all([
-            readJson<PluginManifest>(join(tempDir, "tile.json")),
+          const [tesslPluginJson, pluginJson] = await Promise.all([
+            readJson<PluginManifest>(
+              join(tempDir, ".tessl-plugin/plugin.json"),
+            ),
             readJson<PluginManifest>(
               join(tempDir, ".claude-plugin/plugin.json"),
             ),
           ]);
 
-          expect(tileJson.version).toBe("1.2.0");
+          expect(tesslPluginJson.version).toBe("1.2.0");
           expect(pluginJson.version).toBe("1.2.0");
           expect(pluginJson.repository).toBe(
             "https://github.com/adobe/aio-commerce-sdk",
