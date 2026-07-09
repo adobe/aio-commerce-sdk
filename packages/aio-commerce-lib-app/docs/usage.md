@@ -9,6 +9,7 @@ The `@adobe/aio-commerce-lib-app` library provides:
 - **Installation Management**: Generate and manage the runtime action that powers the app installation flow.
 - **Admin UI Configuration** (`commerce/backend-ui/2`): Generate and manage the runtime action and `workerProcess` declarations for Admin UI extensions on `commerce/backend-ui/2`. Currently supports grid column extensions, mass actions, order view buttons, and menu declarations.
 - **Association Helpers**: Retrieve the Commerce instance the app is associated with from any runtime action via `getCommerceClient` and `getCommerceInstance`.
+- **Event Emission**: Publish a configured I/O Event from any runtime action by provider key and event name via `publishEvent`.
 
 ## Reference
 
@@ -287,7 +288,6 @@ eventing: {
   - **operator**: The comparison operator. Valid values: `"greaterThan"`, `"lessThan"`, `"equal"`, `"regex"`, `"in"`, `"onChange"`
   - **value**: The value to compare against
 - **destination**: Optional destination for the event. Must be a valid destination name.
-- **hipaaAuditRequired**: Optional boolean value to indicate if the event requires HIPAA audit.
 - **prioritary**: Optional boolean value to indicate if the event is prioritary.
 - **force**: Optional boolean value to indicate if the event should be forced.
 - **runtimeActions**: Array of runtime actions to invoke when the event is triggered, each in the format `<package>/<action>` (e.g., `["my-package/my-action"]`). Multiple actions can be specified to handle the same event.
@@ -599,32 +599,9 @@ export default defineCustomInstallationStep(async (config, context) => {
 > [!WARNING]
 > **Experimental:** Admin UI support on `commerce/backend-ui/2` is not yet production-ready. The API may change in future releases.
 
-The `adminUi` field declares Admin UI registrations for the `commerce/backend-ui/2` extension point. Unlike `commerce/backend-ui/1`, which required a dedicated registration action, V2 reads the registration directly from the `app-config` endpoint. Every field of `adminUi` is optional. Configure only the extension points your application needs. When defined, `init` and `generate all` automatically wire up the extension, including the `pre-app-build` hook and the `workerProcess` declarations in `ext.config.yaml`.
+The `adminUi` field declares Admin UI registrations for the `commerce/backend-ui/2` extension point. Unlike `commerce/backend-ui/1`, which required a dedicated registration action, V2 reads the registration directly from the `app-config` endpoint — no separate registration action is generated. Every field of `adminUi` is optional — configure only the extension points your application needs. When defined, `init` and `generate all` automatically wire up the extension, including the `pre-app-build` hook and the `workerProcess` declarations in `ext.config.yaml`.
 
-##### Generated web source
-
-View-based Admin UI features create a browser `view` operation in `src/commerce-backend-ui-2/ext.config.yaml` with `web: "web-src"`. This applies to menu declarations, `view` mass actions, and `view` order view buttons. Worker-only Admin UI features don't create `web-src/` or the `#web/*` import alias.
-
-When the resolved `view` entrypoint doesn't exist, `init`, `generate all`, and the `pre-app-build` hook scaffold `src/commerce-backend-ui-2/web-src/`. If there's an existing `web-src/index.html`, all files are left in place, and we don't override anything under `web-src`. The scaffold uses `.tsx` files when your app config is TypeScript and `.jsx` files otherwise.
-
-The generated scaffold includes these files:
-
-- `index.html` and `index.css`.
-- `src/app.{jsx,tsx}`
-- `src/pages/main-page.{jsx,tsx}`
-- `src/components/welcome.{jsx,tsx}`
-- `tsconfig.json` for TypeScript app configs only.
-
-The generated `src/app.{jsx,tsx}` imports app metadata from `#app.commerce.config`, imports local browser code from `#web/*`, and creates the embedded Admin UI app with `createExtensionApp`. Keep the generated index route as the first route when adding path-based routes.
-
-When it scaffolds browser source, the generator also updates `package.json` for Admin UI browser code:
-
-- Adds `imports["#web/*"]` for the generated `web-src/src/*` folder.
-- Adds runtime dependencies for `@adobe/aio-commerce-lib-admin-ui`, `react`, `react-dom`, and `@react-spectrum/s2`.
-- Adds React type dependencies, plus `@tsconfig/bases` and `typescript` for TypeScript app configs.
-- Adds the Parcel shared bundle and package exports settings required by the generated Spectrum S2 browser app.
-
-If those dependencies are already installed at compatible versions, generation doesn't run an install command. If an installed dependency is incompatible, generation fails so you can decide whether to align the version or keep your existing dependency set.
+View-based features also get a minimal `web-src/` scaffold when the resolved `view` entrypoint does not exist yet. The scaffold uses `.tsx` files when your app config is TypeScript and `.jsx` files otherwise. It imports app metadata from `#app.commerce.config`, so custom Admin UI code should use the same alias instead of importing generated files by path. Currently supported: grid column extensions, mass actions, order view buttons, and menu declarations. For details on each extension point, see the [Admin UI SDK Extension Points documentation](https://developer.adobe.com/commerce/extensibility/admin-ui-sdk/extension-points/).
 
 ##### Grid Columns
 
@@ -1046,6 +1023,86 @@ aio app deploy
 A plain `aio app deploy` on its own does not add the action: the `pre-app-build` hook only regenerates actions already declared in `ext.config.yaml`. Only `generate actions` (or `generate all`) rebuilds the manifest to pick up newly added SDK actions. Until the app is redeployed with the endpoint, the App Management client skips the store call and the helpers throw `AppNotAssociatedError`.
 
 For an app that was already associated under the older SDK, re-associate it after redeploying so the store call runs and backfills the instance data — a redeploy alone does not populate data for an existing association.
+
+### Emitting Configured Events from Runtime Actions
+
+Runtime actions can publish a custom I/O Event by referencing the provider and event exactly as declared in the `eventing` section of `app.commerce.config.ts`. At installation time, the SDK writes each configured provider's I/O Events ID and event codes to system storage. `publishEvent` resolves those automatically by the given key and publishes the event.
+
+`publishEvent(params)` takes:
+
+- `client` — an [`AdobeIoEventsApiClient`](../../aio-commerce-lib-events/docs/usage.md) created with the IMS auth to use for the ingress call.
+- `provider` — the `key` of an event provider declared in `app.commerce.config.ts`.
+- `event` — the `name` of an event declared under that provider.
+- `payload` — the event payload; any JSON object. The SDK wraps it in a CloudEvents 1.0 envelope before sending.
+
+Given this configuration:
+
+```ts
+eventing: {
+  external: [
+    {
+      provider: {
+        key: "order-events",
+        label: "Order Events",
+        description: "Events related to order lifecycle",
+      },
+      events: [
+        {
+          name: "order.created",
+          label: "Order Created",
+          description: "Triggered when a new order is placed",
+        },
+      ],
+    },
+  ],
+}
+```
+
+a runtime action emits the event like this:
+
+```ts
+import { publishEvent } from "@adobe/aio-commerce-lib-app";
+import { createAdobeIoEventsApiClient } from "@adobe/aio-commerce-lib-events";
+import { resolveImsAuthParams } from "@adobe/aio-commerce-lib-auth";
+
+export async function main(params) {
+  const client = createAdobeIoEventsApiClient({
+    auth: resolveImsAuthParams(params),
+  });
+
+  await publishEvent({
+    client,
+    provider: "order-events",
+    event: "order.created",
+    payload: { orderId: "100000123", total: 149.99 },
+  });
+}
+```
+
+`publishEvent` validates the reference before sending and throws when it cannot be resolved. All three errors extend `PublishEventError`, so you can catch them individually or with a single clause:
+
+- `EventsDataNotInitializedError` — no eventing metadata is in system storage. The app installation has not run, or ran with an older SDK. Re-run the installation to initialize it.
+- `ProviderNotFoundError` — the `provider` key does not match any provider in the configuration.
+- `EventNotFoundError` — the `event` name does not match any event under the given provider.
+
+```ts
+import {
+  EventNotFoundError,
+  EventsDataNotInitializedError,
+  ProviderNotFoundError,
+  PublishEventError,
+  publishEvent,
+} from "@adobe/aio-commerce-lib-app";
+
+try {
+  await publishEvent({ client, provider, event, payload });
+} catch (error) {
+  if (error instanceof PublishEventError) {
+    // Handle any publish-event failure (or narrow with the specific subclasses).
+  }
+  throw error;
+}
+```
 
 ## Best Practices
 

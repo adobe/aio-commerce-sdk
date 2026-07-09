@@ -41,6 +41,9 @@ const PROVIDER_TYPE_TO_LABEL = {
 /** Max characters taken from `metadata.id` in the I/O Events provider `instance_id`. */
 const METADATA_ID_MAX_LENGTH_FOR_INSTANCE_ID = 100;
 
+/** Storage key used for the events installation data in system config. */
+export const EVENTS_STORAGE_KEY = "events";
+
 /**
  * Generates a unique instance ID for I/O Events for this app deployment.
  * Uses `{metadata.id (first 100 chars)}-{providerKeyOrSlug}-{workspaceId}` (lowercased).
@@ -55,8 +58,9 @@ export function generateInstanceId(
   workspaceId: string,
 ) {
   const appId = metadata.id.slice(0, METADATA_ID_MAX_LENGTH_FOR_INSTANCE_ID);
-  const slugLabel = provider.label.toLowerCase().replace(/\s+/g, "-");
-  return `${appId}-${provider.key ?? slugLabel}-${workspaceId}`.toLowerCase();
+  const providerKey =
+    provider.key ?? provider.label.toLowerCase().replace(/\s+/g, "-");
+  return `${appId}-${providerKey}-${workspaceId}`.toLowerCase();
 }
 
 /**
