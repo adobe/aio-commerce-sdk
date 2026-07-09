@@ -14,6 +14,8 @@
 
 // Export all webhook operations
 export * from "./operations/presets";
+// Export response predicates
+export * from "./predicates";
 // Export HTTP response wrappers
 export * from "./presets";
 
