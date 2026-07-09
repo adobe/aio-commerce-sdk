@@ -26,9 +26,9 @@ import {
   onboardCommerceEventing,
   onboardIoEvents,
 } from "./helpers";
-import { EVENTS_STORAGE_KEY } from "./types";
 import {
   COMMERCE_PROVIDER_TYPE,
+  EVENTS_STORAGE_KEY,
   getCommerceEventingExistingData,
   getIoEventsExistingData,
   makeWorkspaceConfig,
@@ -166,7 +166,10 @@ async function createCommerceEvents(
         events: Object.fromEntries(
           eventsData.map(({ config: eventConfig, data: eventData }) => [
             eventConfig.name,
-            eventData.metadata.event_code,
+            {
+              code: eventData.metadata.event_code,
+              isPhiData: eventConfig.hipaa_audit_required ?? false,
+            },
           ]),
         ),
         id: providerData.id,

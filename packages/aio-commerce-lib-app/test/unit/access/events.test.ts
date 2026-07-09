@@ -31,17 +31,20 @@ import type { AdobeIoEventsApiClient } from "@adobe/aio-commerce-lib-events/io-e
 
 function createMockClient() {
   return {
-    publishRawEvent: vi.fn().mockResolvedValue(undefined),
+    publishEvent: vi.fn().mockResolvedValue(undefined),
   } as unknown as AdobeIoEventsApiClient;
 }
 
 const storedData = {
   providers: {
     "order-events": {
-      id: "provider-uuid-123",
       events: {
-        "order.created": "com.adobe.commerce.order.created",
+        "order.created": {
+          code: "com.adobe.commerce.order.created",
+          isPhiData: false,
+        },
       },
+      id: "provider-uuid-123",
     },
   },
 };
@@ -57,15 +60,48 @@ describe("publishEvent", () => {
 
     await publishEvent({
       client,
-      provider: "order-events",
       event: "order.created",
       payload: { orderId: "100000123", total: 149.99 },
+      provider: "order-events",
     });
 
-    expect(client.publishRawEvent).toHaveBeenCalledWith({
-      providerId: "provider-uuid-123",
+    expect(client.publishEvent).toHaveBeenCalledWith({
       eventCode: "com.adobe.commerce.order.created",
+      isPhiData: false,
       payload: { orderId: "100000123", total: 149.99 },
+      providerId: "provider-uuid-123",
+    });
+  });
+
+  test("reads isPhiData from stored data and forwards it to the client", async () => {
+    const storedDataWithPhi = {
+      providers: {
+        "order-events": {
+          events: {
+            "order.created": {
+              code: "com.adobe.commerce.order.created",
+              isPhiData: true,
+            },
+          },
+          id: "provider-uuid-123",
+        },
+      },
+    };
+    mockGetSystemConfigByKey.mockResolvedValue(storedDataWithPhi);
+    const client = createMockClient();
+
+    await publishEvent({
+      client,
+      event: "order.created",
+      payload: { orderId: "100000123", total: 149.99 },
+      provider: "order-events",
+    });
+
+    expect(client.publishEvent).toHaveBeenCalledWith({
+      eventCode: "com.adobe.commerce.order.created",
+      isPhiData: true,
+      payload: { orderId: "100000123", total: 149.99 },
+      providerId: "provider-uuid-123",
     });
   });
 
@@ -76,13 +112,13 @@ describe("publishEvent", () => {
     await expect(
       publishEvent({
         client,
-        provider: "order-events",
         event: "order.created",
         payload: {},
+        provider: "order-events",
       }),
     ).rejects.toBeInstanceOf(EventsDataNotInitializedError);
 
-    expect(client.publishRawEvent).not.toHaveBeenCalled();
+    expect(client.publishEvent).not.toHaveBeenCalled();
   });
 
   test("throws ProviderNotFoundError when the provider key is unknown", async () => {
@@ -92,13 +128,13 @@ describe("publishEvent", () => {
     await expect(
       publishEvent({
         client,
-        provider: "unknown-provider",
         event: "order.created",
         payload: {},
+        provider: "unknown-provider",
       }),
     ).rejects.toBeInstanceOf(ProviderNotFoundError);
 
-    expect(client.publishRawEvent).not.toHaveBeenCalled();
+    expect(client.publishEvent).not.toHaveBeenCalled();
   });
 
   test("throws EventNotFoundError when the event name is unknown", async () => {
@@ -108,12 +144,12 @@ describe("publishEvent", () => {
     await expect(
       publishEvent({
         client,
-        provider: "order-events",
         event: "order.updated",
         payload: {},
+        provider: "order-events",
       }),
     ).rejects.toBeInstanceOf(EventNotFoundError);
 
-    expect(client.publishRawEvent).not.toHaveBeenCalled();
+    expect(client.publishEvent).not.toHaveBeenCalled();
   });
 });

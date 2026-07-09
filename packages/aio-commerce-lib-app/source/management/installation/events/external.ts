@@ -20,8 +20,11 @@ import { hasExternalEvents } from "#config/schema/eventing";
 import { defineLeafStep } from "#management/installation/workflow/step";
 
 import { offboardIoEvents, onboardIoEvents } from "./helpers";
-import { EVENTS_STORAGE_KEY } from "./types";
-import { EXTERNAL_PROVIDER_TYPE, getIoEventsExistingData } from "./utils";
+import {
+  EVENTS_STORAGE_KEY,
+  EXTERNAL_PROVIDER_TYPE,
+  getIoEventsExistingData,
+} from "./utils";
 
 import type { ExternalEventsConfig } from "#config/schema/eventing";
 import type { InferStepOutput } from "#management/installation/workflow/step";
@@ -99,7 +102,10 @@ async function createExternalEvents(
           events: Object.fromEntries(
             eventsData.map(({ config: eventConfig, data: eventData }) => [
               eventConfig.name,
-              eventData.metadata.event_code,
+              {
+                code: eventData.metadata.event_code,
+                isPhiData: eventConfig.hipaa_audit_required ?? false,
+              },
             ]),
           ),
           id: providerData.id,

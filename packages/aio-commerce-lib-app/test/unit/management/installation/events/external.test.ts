@@ -146,7 +146,12 @@ describe("externalEventsStep orchestration", () => {
     expect(configMocks.setSystemConfigByKey).toHaveBeenCalledWith("events", {
       providers: {
         "third-party-events-provider": {
-          events: { external_event: "external_event" },
+          events: {
+            external_event: {
+              code: "external_event",
+              isPhiData: false,
+            },
+          },
           id: "external-provider-uuid-123",
         },
       },
@@ -233,7 +238,12 @@ describe("externalEventsStep orchestration", () => {
       providers: {
         "existing-provider": { events: {}, id: "existing-uuid" },
         "third-party-events-provider": {
-          events: { external_event: "external_event" },
+          events: {
+            external_event: {
+              code: "external_event",
+              isPhiData: false,
+            },
+          },
           id: "external-provider-uuid-123",
         },
       },

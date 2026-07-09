@@ -312,7 +312,10 @@ describe("commerceEventsStep orchestration", () => {
       providers: {
         "order-events-provider": {
           events: {
-            "plugin.order_placed": "com.adobe.commerce.order.placed",
+            "plugin.order_placed": {
+              code: "com.adobe.commerce.order.placed",
+              isPhiData: false,
+            },
           },
           id: "provider-uuid-123",
         },
@@ -388,7 +391,10 @@ describe("commerceEventsStep orchestration", () => {
         "existing-provider": { events: {}, id: "existing-uuid" },
         "order-events-provider": {
           events: {
-            "plugin.order_placed": "com.adobe.commerce.order.placed",
+            "plugin.order_placed": {
+              code: "com.adobe.commerce.order.placed",
+              isPhiData: false,
+            },
           },
           id: "provider-uuid-123",
         },

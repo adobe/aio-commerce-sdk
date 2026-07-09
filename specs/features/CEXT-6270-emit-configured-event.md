@@ -135,13 +135,13 @@ the same fallback used by `generateInstanceId`. The event code is the value retu
 `getIoEventCode(getNamespacedEvent(metadata, event.name), providerType)`, the same
 computation already performed during installation.
 
-### `publishRawEvent` in lib-events
+### `publishEvent` in lib-events
 
 A new export from `@adobe/aio-commerce-lib-events` that owns the I/O Events ingress HTTP
 call and CloudEvents envelope construction:
 
 ```ts
-publishRawEvent<TPayload extends Record<string, unknown>>(params: {
+publishEvent<TPayload extends Record<string, unknown>>(params: {
   client: AdobeIoEventsApiClient;
   providerId: string;
   eventCode: string;
@@ -149,7 +149,7 @@ publishRawEvent<TPayload extends Record<string, unknown>>(params: {
 }): Promise<void>
 ```
 
-`publishRawEvent` operates at the resolved level: callers supply the provider UUID and the
+`publishEvent` operates at the resolved level: callers supply the provider UUID and the
 fully-qualified event code directly. It builds a CloudEvents 1.0 envelope and POSTs it to the
 ingress URL configured on `client`.
 
@@ -189,12 +189,12 @@ Internal flow of `publishEvent`:
 2. If null, throw `EventsDataNotInitializedError`.
 3. Look up `params.provider` in `data.providers`. If not found, throw `ProviderNotFoundError`.
 4. Look up `params.event` in the provider's `events` map. If not found, throw `EventNotFoundError`.
-5. Call `publishRawEvent` from `lib-events` with the resolved `providerId` and `eventCode`.
+5. Call `publishEvent` from `lib-events` with the resolved `providerId` and `eventCode`.
 
 ### Changeset
 
 - `@adobe/aio-commerce-lib-api`: `minor` — adds `ingressBaseUrl` to `IoEventsHttpClientConfig`.
-- `@adobe/aio-commerce-lib-events`: `minor` — new `publishRawEvent` export.
+- `@adobe/aio-commerce-lib-events`: `minor` — new `publishEvent` export.
 - `@adobe/aio-commerce-lib-app`: `minor` — new `publishEvent` export plus installation-side
   `system.events` write.
 - `@adobe/aio-commerce-sdk`: `minor` — re-exports the above.
@@ -217,10 +217,10 @@ incremental work with a meaningful runtime benefit.
 
 **`lib-app` vs. `lib-events` for `publishEvent`.**
 `lib-events` owns all I/O Events HTTP operations: management API and ingress. The new
-`publishRawEvent` in `lib-events` handles CloudEvents envelope construction and the ingress
+`publishEvent` in `lib-events` handles CloudEvents envelope construction and the ingress
 POST, operating on already-resolved `providerId` and `eventCode`. `publishEvent` in `lib-app`
 sits above it: it reads system storage, resolves provider key and event name to their
-respective IDs and codes, then delegates the HTTP call to `lib-events.publishRawEvent`. This
+respective IDs and codes, then delegates the HTTP call to `lib-events.publishEvent`. This
 boundary means any change to the ingress protocol is isolated to `lib-events`; `lib-app` only
 cares about resolution.
 

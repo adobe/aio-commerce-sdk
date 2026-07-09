@@ -161,7 +161,7 @@ describe("Adobe IO Events API - Integration Tests", () => {
     );
   });
 
-  describe("publishRawEvent", () => {
+  describe("publishEvent", () => {
     const ingressBaseUrl = "https://eventsingress.adobe.io";
     const TEST_PROVIDER_ID = "test-provider-uuid";
     const TEST_EVENT_CODE = "app.test.event";
@@ -175,7 +175,7 @@ describe("Adobe IO Events API - Integration Tests", () => {
         }),
       );
 
-      await client.publishRawEvent({
+      await client.publishEvent({
         eventCode: TEST_EVENT_CODE,
         payload: { foo: "bar" },
         providerId: TEST_PROVIDER_ID,
@@ -195,7 +195,7 @@ describe("Adobe IO Events API - Integration Tests", () => {
         }),
       );
 
-      await client.publishRawEvent({
+      await client.publishEvent({
         eventCode: TEST_EVENT_CODE,
         payload,
         providerId: TEST_PROVIDER_ID,
@@ -220,23 +220,24 @@ describe("Adobe IO Events API - Integration Tests", () => {
         }),
       );
 
-      await client.publishRawEvent({
+      await client.publishEvent({
         eventCode: TEST_EVENT_CODE,
         payload: { foo: "bar" },
         providerId: TEST_PROVIDER_ID,
       });
 
-      expect(capture.headers?.get("content-type")).toBe(
+      expect.assert(capture.headers);
+      expect(capture.headers.get("content-type")).toBe(
         "application/cloudevents+json",
       );
-      expect(capture.headers?.get("Accept")).toBe("application/json");
-      expect(capture.headers?.get("Authorization")).toBe(
+      expect(capture.headers.get("Accept")).toBe("application/json");
+      expect(capture.headers.get("Authorization")).toBe(
         "Bearer supersecrettoken",
       );
-      expect(capture.headers?.get("x-api-key")).toBe("test-client-id");
+      expect(capture.headers.get("x-api-key")).toBe("test-client-id");
     });
 
-    test("should send x-event-phidata: true when hipaaAuditRequired is set", async () => {
+    test("should send x-event-phidata: true when isPhiData is true", async () => {
       const capture = { headers: null as Headers | null };
       server.use(
         http.post(`${ingressBaseUrl}/`, ({ request }) => {
@@ -245,17 +246,18 @@ describe("Adobe IO Events API - Integration Tests", () => {
         }),
       );
 
-      await client.publishRawEvent({
+      await client.publishEvent({
         eventCode: TEST_EVENT_CODE,
-        hipaaAuditRequired: true,
+        isPhiData: true,
         payload: { foo: "bar" },
         providerId: TEST_PROVIDER_ID,
       });
 
-      expect(capture.headers?.get("x-event-phidata")).toBe("true");
+      expect.assert(capture.headers);
+      expect(capture.headers.get("x-event-phidata")).toBe("true");
     });
 
-    test("should not send x-event-phidata when hipaaAuditRequired is omitted", async () => {
+    test("should not send x-event-phidata when isPhiData is omitted", async () => {
       const capture = { headers: null as Headers | null };
       server.use(
         http.post(`${ingressBaseUrl}/`, ({ request }) => {
@@ -264,13 +266,14 @@ describe("Adobe IO Events API - Integration Tests", () => {
         }),
       );
 
-      await client.publishRawEvent({
+      await client.publishEvent({
         eventCode: TEST_EVENT_CODE,
         payload: { foo: "bar" },
         providerId: TEST_PROVIDER_ID,
       });
 
-      expect(capture.headers?.get("x-event-phidata")).toBeNull();
+      expect.assert(capture.headers);
+      expect(capture.headers.get("x-event-phidata")).toBeNull();
     });
   });
 

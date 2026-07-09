@@ -17,7 +17,7 @@ import {
   EventsDataNotInitializedError,
   ProviderNotFoundError,
 } from "../errors/publish-event-errors";
-import { EVENTS_STORAGE_KEY } from "../management/installation/events/types";
+import { EVENTS_STORAGE_KEY } from "../management/installation/events/utils";
 
 import type { AdobeIoEventsApiClient } from "@adobe/aio-commerce-lib-events/io-events";
 import type { StoredEventsData } from "../management/installation/events/types";
@@ -33,7 +33,6 @@ import type { StoredEventsData } from "../management/installation/events/types";
  * @param params.provider - The `key` of an event provider declared in `app.commerce.config.ts`.
  * @param params.event - The `name` of an event within that provider.
  * @param params.payload - The event payload. Must be a JSON object.
- * @param params.hipaaAuditRequired - When `true`, marks the event as containing PHI data for HIPAA compliance.
  *
  * @throws {EventsDataNotInitializedError} If no eventing installation data is found in system storage.
  * @throws {ProviderNotFoundError} If the provider key is not found in the stored data.
@@ -67,15 +66,8 @@ export async function publishEvent<
   provider: string;
   event: string;
   payload: TPayload;
-  hipaaAuditRequired?: boolean;
 }): Promise<void> {
-  const {
-    client,
-    provider: providerKey,
-    event: eventName,
-    payload,
-    hipaaAuditRequired,
-  } = params;
+  const { client, provider: providerKey, event: eventName, payload } = params;
 
   const data = await getSystemConfigByKey<StoredEventsData>(EVENTS_STORAGE_KEY);
   if (!data) {
@@ -87,15 +79,15 @@ export async function publishEvent<
     throw new ProviderNotFoundError(providerKey);
   }
 
-  const eventCode = providerEntry.events[eventName];
-  if (!eventCode) {
+  const eventEntry = providerEntry.events[eventName];
+  if (!eventEntry) {
     throw new EventNotFoundError(eventName, providerKey);
   }
 
-  await client.publishRawEvent({
-    providerId: providerEntry.id,
-    eventCode,
+  await client.publishEvent({
+    eventCode: eventEntry.code,
+    isPhiData: eventEntry.isPhiData,
     payload,
-    hipaaAuditRequired,
+    providerId: providerEntry.id,
   });
 }

@@ -41,6 +41,9 @@ const PROVIDER_TYPE_TO_LABEL = {
 /** Max characters taken from `metadata.id` in the I/O Events provider `instance_id`. */
 const METADATA_ID_MAX_LENGTH_FOR_INSTANCE_ID = 100;
 
+/** Storage key used for the events installation data in system config. */
+export const EVENTS_STORAGE_KEY = "events";
+
 /**
  * Generates a unique instance ID for I/O Events for this app deployment.
  * Uses `{metadata.id (first 100 chars)}-{providerKey}-{workspaceId}` (lowercased).

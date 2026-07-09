@@ -12,8 +12,8 @@
 
 import type { AdobeIoEventsHttpClient } from "@adobe/aio-commerce-lib-api";
 
-/** Parameters required to publish a raw event to the I/O Events ingress. */
-export type PublishRawEventParams<
+/** Parameters required to publish an event to the I/O Events ingress. */
+export type PublishEventParams<
   TPayload extends Record<string, unknown> = Record<string, unknown>,
 > = {
   /** The I/O Events provider UUID. */
@@ -27,7 +27,7 @@ export type PublishRawEventParams<
    * by sending `x-event-phidata: true` to the ingress. Required for HIPAA compliance.
    * Defaults to `false` when omitted.
    */
-  hipaaAuditRequired?: boolean;
+  isPhiData?: boolean;
 };
 
 /**
@@ -41,22 +41,22 @@ export type PublishRawEventParams<
  * @param httpClient - The {@link AdobeIoEventsHttpClient} to use for the request.
  * @param params - The resolved provider ID, event code, and payload.
  */
-export async function publishRawEvent<
+export async function publishEvent<
   TPayload extends Record<string, unknown> = Record<string, unknown>,
 >(
   httpClient: AdobeIoEventsHttpClient,
-  params: PublishRawEventParams<TPayload>,
+  params: PublishEventParams<TPayload>,
 ): Promise<void> {
-  const { providerId, eventCode, payload, hipaaAuditRequired } = params;
+  const { providerId, eventCode, payload, isPhiData } = params;
 
   const cloudEvent = {
-    specversion: "1.0",
+    data: payload,
+    datacontenttype: "application/json",
     id: globalThis.crypto.randomUUID(),
     source: `urn:uuid:${providerId}`,
-    type: eventCode,
+    specversion: "1.0",
     time: new Date().toISOString(),
-    datacontenttype: "application/json",
-    data: payload,
+    type: eventCode,
   };
 
   // Extend the existing client so auth hooks are preserved but the prefix URL
@@ -70,9 +70,9 @@ export async function publishRawEvent<
     // The management client defaults to Accept: application/hal+json; the ingress
     // requires application/cloudevents+json and application/json respectively.
     headers: {
-      "content-type": "application/cloudevents+json",
       Accept: "application/json",
-      ...(hipaaAuditRequired && { "x-event-phidata": "true" }),
+      "content-type": "application/cloudevents+json",
+      ...(isPhiData && { "x-event-phidata": "true" }),
     },
   });
 }

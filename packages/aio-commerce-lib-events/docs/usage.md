@@ -263,24 +263,24 @@ await ioEventsClient.deleteRegistration({
 
 #### Publishing Events to the Ingress
 
-`publishRawEvent` sends an event to the Adobe I/O Events ingress. It builds a CloudEvents 1.0 envelope from the resolved `providerId` and `eventCode` you supply and POSTs it to the ingress endpoint configured on the client. Authentication is applied automatically from the client's IMS auth.
+`publishEvent` sends an event to the Adobe I/O Events ingress. It builds a CloudEvents 1.0 envelope from the resolved `providerId` and `eventCode` you supply and POSTs it to the ingress endpoint configured on the client. Authentication is applied automatically from the client's IMS auth.
 
 ```typescript
-await ioEventsClient.publishRawEvent({
+await ioEventsClient.publishEvent({
   providerId: "your-provider-uuid",
   eventCode: "com.adobe.commerce.order.created",
   payload: { orderId: "100000123", total: 149.99 },
 });
 ```
 
-When the event payload contains Protected Health Information (PHI), pass `hipaaAuditRequired: true` to send the `x-event-phidata: true` header required for HIPAA compliance:
+When the event payload contains Protected Health Information (PHI), pass `isPhiData: true` to send the `x-event-phidata: true` header required for HIPAA compliance:
 
 ```typescript
-await ioEventsClient.publishRawEvent({
+await ioEventsClient.publishEvent({
   providerId: "your-provider-uuid",
   eventCode: "com.adobe.commerce.patient.updated",
   payload: { patientId: "..." },
-  hipaaAuditRequired: true,
+  isPhiData: true,
 });
 ```
 
@@ -298,7 +298,9 @@ import { createCustomCommerceEventsApiClient } from "@adobe/aio-commerce-lib-eve
 const customClient = createCustomCommerceEventsApiClient(
   {
     config: { baseUrl: "https://api.commerce.adobe.com", flavor: "saas" },
-    auth: {/* auth params */},
+    auth: {
+      /* auth params */
+    },
   },
   {
     // Only include the functions you need

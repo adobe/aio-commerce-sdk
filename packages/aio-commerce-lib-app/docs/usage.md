@@ -288,7 +288,6 @@ eventing: {
   - **operator**: The comparison operator. Valid values: `"greaterThan"`, `"lessThan"`, `"equal"`, `"regex"`, `"in"`, `"onChange"`
   - **value**: The value to compare against
 - **destination**: Optional destination for the event. Must be a valid destination name.
-- **hipaaAuditRequired**: Optional boolean value to indicate if the event requires HIPAA audit.
 - **prioritary**: Optional boolean value to indicate if the event is prioritary.
 - **force**: Optional boolean value to indicate if the event should be forced.
 - **runtimeActions**: Array of runtime actions to invoke when the event is triggered, each in the format `<package>/<action>` (e.g., `["my-package/my-action"]`). Multiple actions can be specified to handle the same event.
@@ -1058,7 +1057,6 @@ Runtime actions can publish a custom I/O Event by referencing the provider and e
 - `provider` — the `key` of an event provider declared in `app.commerce.config.ts`.
 - `event` — the `name` of an event declared under that provider.
 - `payload` — the event payload; any JSON object. The SDK wraps it in a CloudEvents 1.0 envelope before sending.
-- `hipaaAuditRequired` — optional boolean. When `true`, the event is marked as containing PHI data by sending `x-event-phidata: true` to the ingress. Required for HIPAA compliance when the event payload includes protected health information.
 
 Given this configuration:
 
