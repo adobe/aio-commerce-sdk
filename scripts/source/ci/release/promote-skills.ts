@@ -292,6 +292,9 @@ async function rewritePluginRepository(targetPath: string) {
   await writeJson(pluginJsonPath, pluginJson);
 }
 
+// @changesets/release-utils ships an equivalent getChangelogEntry, but it's
+// only published as a 1.0.0-next prerelease (part of the unreleased v3 line)
+// so we hand-roll this until it reaches a stable release.
 async function readChangelogEntries(changelogPath: string, version: string) {
   try {
     const changelog = await readFile(changelogPath, "utf-8");
