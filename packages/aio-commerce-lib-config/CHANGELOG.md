@@ -296,7 +296,9 @@
   // For fresh data from Commerce API
   await libConfig.getScopeTree({
     refreshData: true,
-    commerceConfig: {/* Commerce client config */},
+    commerceConfig: {
+      /* Commerce client config */
+    },
   });
   ```
 

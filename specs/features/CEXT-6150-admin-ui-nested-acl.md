@@ -117,7 +117,9 @@ import {
   createPermissionClient,
 } from "@adobe/aio-commerce-lib-admin-ui";
 
-const client = createPermissionClient({/* ... */});
+const client = createPermissionClient({
+  /* ... */
+});
 
 const resourceId = getMenuAclResourceId(
   "approval-dashboard-app",

@@ -40,7 +40,9 @@ const client = createCommerceWebhooksApiClient({
     baseUrl: "https://my-commerce-instance.com",
     flavor: "paas", // or "saas"
   },
-  auth: {/* IMS or Integration auth params */},
+  auth: {
+    /* IMS or Integration auth params */
+  },
 });
 ```
 
@@ -138,7 +140,9 @@ const httpClient = new AdobeCommerceHttpClient({
     baseUrl: "https://my-commerce-instance.com",
     flavor: "paas",
   },
-  auth: {/* auth params */},
+  auth: {
+    /* auth params */
+  },
 });
 
 // Use the standalone functions
@@ -452,7 +456,9 @@ import {
 export async function customizeCheckout(params) {
   return ok([
     // Add a custom shipping method
-    addOperation("result/shipping_methods", {/* ... */}),
+    addOperation("result/shipping_methods", {
+      /* ... */
+    }),
     // Update the shipping amount
     replaceOperation("result/shipping_methods/flatrate/amount", 5.99),
     // Remove an unwanted payment method

@@ -599,32 +599,9 @@ export default defineCustomInstallationStep(async (config, context) => {
 > [!WARNING]
 > **Experimental:** Admin UI support on `commerce/backend-ui/2` is not yet production-ready. The API may change in future releases.
 
-The `adminUi` field declares Admin UI registrations for the `commerce/backend-ui/2` extension point. Unlike `commerce/backend-ui/1`, which required a dedicated registration action, V2 reads the registration directly from the `app-config` endpoint. Every field of `adminUi` is optional. Configure only the extension points your application needs. When defined, `init` and `generate all` automatically wire up the extension, including the `pre-app-build` hook and the `workerProcess` declarations in `ext.config.yaml`.
+The `adminUi` field declares Admin UI registrations for the `commerce/backend-ui/2` extension point. Unlike `commerce/backend-ui/1`, which required a dedicated registration action, V2 reads the registration directly from the `app-config` endpoint — no separate registration action is generated. Every field of `adminUi` is optional — configure only the extension points your application needs. When defined, `init` and `generate all` automatically wire up the extension, including the `pre-app-build` hook and the `workerProcess` declarations in `ext.config.yaml`.
 
-##### Generated web source
-
-View-based Admin UI features create a browser `view` operation in `src/commerce-backend-ui-2/ext.config.yaml` with `web: "web-src"`. This applies to menu declarations, `view` mass actions, and `view` order view buttons. Worker-only Admin UI features don't create `web-src/` or the `#web/*` import alias.
-
-When the resolved `view` entrypoint doesn't exist, `init`, `generate all`, and the `pre-app-build` hook scaffold `src/commerce-backend-ui-2/web-src/`. If there's an existing `web-src/index.html`, all files are left in place, and we don't override anything under `web-src`. The scaffold uses `.tsx` files when your app config is TypeScript and `.jsx` files otherwise.
-
-The generated scaffold includes these files:
-
-- `index.html` and `index.css`.
-- `src/app.{jsx,tsx}`
-- `src/pages/main-page.{jsx,tsx}`
-- `src/components/welcome.{jsx,tsx}`
-- `tsconfig.json` for TypeScript app configs only.
-
-The generated `src/app.{jsx,tsx}` imports app metadata from `#app.commerce.config`, imports local browser code from `#web/*`, and creates the embedded Admin UI app with `createExtensionApp`. Keep the generated index route as the first route when adding path-based routes.
-
-When it scaffolds browser source, the generator also updates `package.json` for Admin UI browser code:
-
-- Adds `imports["#web/*"]` for the generated `web-src/src/*` folder.
-- Adds runtime dependencies for `@adobe/aio-commerce-lib-admin-ui`, `react`, `react-dom`, and `@react-spectrum/s2`.
-- Adds React type dependencies, plus `@tsconfig/bases` and `typescript` for TypeScript app configs.
-- Adds the Parcel shared bundle and package exports settings required by the generated Spectrum S2 browser app.
-
-If those dependencies are already installed at compatible versions, generation doesn't run an install command. If an installed dependency is incompatible, generation fails so you can decide whether to align the version or keep your existing dependency set.
+View-based features also get a minimal `web-src/` scaffold when the resolved `view` entrypoint does not exist yet. The scaffold uses `.tsx` files when your app config is TypeScript and `.jsx` files otherwise. It imports app metadata from `#app.commerce.config`, so custom Admin UI code should use the same alias instead of importing generated files by path. Currently supported: grid column extensions, mass actions, order view buttons, and menu declarations. For details on each extension point, see the [Admin UI SDK Extension Points documentation](https://developer.adobe.com/commerce/extensibility/admin-ui-sdk/extension-points/).
 
 ##### Grid Columns
 

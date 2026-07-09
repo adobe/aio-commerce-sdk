@@ -46,10 +46,10 @@ export const EVENTS_STORAGE_KEY = "events";
 
 /**
  * Generates a unique instance ID for I/O Events for this app deployment.
- * Uses `{metadata.id (first 100 chars)}-{providerKey}-{workspaceId}` (lowercased).
+ * Uses `{metadata.id (first 100 chars)}-{providerKeyOrSlug}-{workspaceId}` (lowercased).
  *
  * @param metadata - The metadata of the application
- * @param provider - The event provider; must have an explicit `key`
+ * @param provider - The event provider (optional `key`, else label is slugified)
  * @param workspaceId - Adobe I/O Developer Console workspace ID for this deployment
  */
 export function generateInstanceId(
