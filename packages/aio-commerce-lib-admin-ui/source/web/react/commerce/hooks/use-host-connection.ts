@@ -17,8 +17,7 @@ import { useSharedContext } from "#web/react/commerce/context/shared-context.tsx
 import type { HostConnection } from "#web/react/commerce/types";
 
 /**
- * The host actions exposed to mass-action and order view-button extension points, used to close
- * the extension iframe and navigate the Commerce Admin back to the originating grid or order.
+ * Host frame actions used to close the extension iframe and return control to the Commerce Admin.
  */
 type HostFrameField = {
   close: () => Promise<void>;
@@ -28,18 +27,28 @@ type HostFrameField = {
 /**
  * Returns typed helpers for interacting with the Commerce Admin host.
  *
- * @throws If called before the guest connection is established, or on an extension point where
- * the host does not provide the frame actions (e.g. `close`/`closeWithError` on a menu page).
+ * @throws If called before the guest connection is established, or when the host frame actions
+ * are unavailable.
+ *
+ * @example
+ * ```tsx
+ * import { useHostConnection } from "@adobe/aio-commerce-lib-admin-ui/web";
+ *
+ * function DoneButton() {
+ *   const { close } = useHostConnection();
+ *   return <button onClick={() => void close()}>Done</button>;
+ * }
+ * ```
  */
 export function useHostConnection(): HostConnection {
   const { host } = useSharedContext();
 
   return useMemo<HostConnection>(() => {
-    const field = (host as { field?: HostFrameField }).field;
+    const { field } = host as { field?: HostFrameField };
     const requireField = () => {
       if (!field) {
         throw new Error(
-          "Host frame actions are unavailable. They require an established guest connection with a host, and are only provided to mass-action and order view-button extension points.",
+          "Host frame actions are unavailable. They require an established guest connection with a host that exposes frame actions.",
         );
       }
 

@@ -35,27 +35,30 @@ function getCommerceHostPromise(
   extensionId: string,
   connection: GuestConnection,
 ): Promise<string> {
-  const integration = (connection.host as { integration?: HostIntegration })
-    .integration;
+  const { integration } = connection.host as { integration?: HostIntegration };
 
   if (!integration) {
-    // Rejects synchronously, so there's no pending window for `use` to keep stable and nothing
-    // to cache: a later attempt re-checks for free and could succeed if the host changes.
-    return Promise.reject(
-      new Error(
-        "The host does not provide the integration API needed to resolve the Commerce host.",
-      ),
+    // Throw during render so the error surfaces to the boundary immediately: this is a static
+    // property of the connection, so there's nothing async to await or cache.
+    throw new Error(
+      "The host does not provide the integration API needed to resolve the Commerce host.",
     );
   }
 
-  return commerceHosts(extensionId, () => integration.getCommerceHost());
+  return commerceHosts.get(extensionId, () => integration.getCommerceHost());
+}
+
+/** Drops a failed Commerce host resolution for `extensionId`, so a later render retries it. */
+export function retryCommerceHost(extensionId: string) {
+  commerceHosts.evictIfRejected(extensionId);
 }
 
 /**
- * Returns the host (domain) of the Commerce Admin the extension is embedded in, suspending until
- * it's resolved over the guest connection.
+ * Returns the host (domain) of the Commerce Admin the extension is embedded in, resolving it over
+ * the guest connection.
  *
- * @throws If used outside a Commerce Admin UI frame.
+ * @throws If used outside a Commerce Admin UI frame, or when the host does not expose the
+ * Commerce integration API.
  */
 export function useCommerce() {
   const { extensionId, guestConnection } = useInternalSharedContext();

@@ -55,16 +55,16 @@ describe("stringValueSchema", () => {
   const schema = stringValueSchema("testField");
 
   it.each([
-    { value: "test", description: "string values" },
-    { value: "", description: "empty strings" },
+    { description: "string values", value: "test" },
+    { description: "empty strings", value: "" },
   ])("should accept $description", ({ value }) => {
     expect(() => v.parse(schema, value)).not.toThrow();
   });
 
   it.each([
-    { value: 123, description: "numbers" },
-    { value: true, description: "booleans" },
-    { value: null, description: "null" },
+    { description: "numbers", value: 123 },
+    { description: "booleans", value: true },
+    { description: "null", value: null },
   ])("should reject $description", ({ value }) => {
     expect(() => v.parse(schema, value)).toThrow();
   });
@@ -78,8 +78,8 @@ describe("nonEmptyStringValueSchema", () => {
   });
 
   it.each([
-    { value: "", description: "empty strings" },
-    { value: 123, description: "numbers" },
+    { description: "empty strings", value: "" },
+    { description: "numbers", value: 123 },
   ])("should reject $description", ({ value }) => {
     expect(() => v.parse(schema, value)).toThrow();
   });
@@ -89,16 +89,16 @@ describe("booleanValueSchema", () => {
   const schema = booleanValueSchema("testField");
 
   it.each([
-    { value: true, description: "true" },
-    { value: false, description: "false" },
+    { description: "true", value: true },
+    { description: "false", value: false },
   ])("should accept $description", ({ value }) => {
     expect(() => v.parse(schema, value)).not.toThrow();
   });
 
   it.each([
-    { value: "true", description: "string 'true'" },
-    { value: 1, description: "number 1" },
-    { value: null, description: "null" },
+    { description: "string 'true'", value: "true" },
+    { description: "number 1", value: 1 },
+    { description: "null", value: null },
   ])("should reject $description", ({ value }) => {
     expect(() => v.parse(schema, value)).toThrow();
   });
@@ -110,24 +110,24 @@ describe("alphaNumericOrUnderscoreSchema", () => {
 
     it.each([
       {
-        value: "test_value_123",
         description: "lowercase alphanumeric with underscores",
+        value: "test_value_123",
       },
       {
-        value: "TEST_VALUE_123",
         description: "uppercase alphanumeric with underscores",
+        value: "TEST_VALUE_123",
       },
       {
-        value: "Test_Value_123",
         description: "mixed case alphanumeric with underscores",
+        value: "Test_Value_123",
       },
     ])("should accept $description", ({ value }) => {
       expect(() => v.parse(schema, value)).not.toThrow();
     });
 
     it.each([
-      { value: "test-value", description: "strings with hyphens" },
-      { value: "test@value", description: "strings with special characters" },
+      { description: "strings with hyphens", value: "test-value" },
+      { description: "strings with special characters", value: "test@value" },
     ])("should reject $description", ({ value }) => {
       expect(() => v.parse(schema, value)).toThrow();
     });
@@ -141,8 +141,8 @@ describe("alphaNumericOrUnderscoreSchema", () => {
     });
 
     it.each([
-      { value: "TEST_VALUE", description: "uppercase letters" },
-      { value: "Test_Value", description: "mixed case" },
+      { description: "uppercase letters", value: "TEST_VALUE" },
+      { description: "mixed case", value: "Test_Value" },
     ])("should reject $description", ({ value }) => {
       expect(() => v.parse(schema, value)).toThrow();
     });
@@ -166,8 +166,8 @@ describe("alphaNumericOrUnderscoreSchema", () => {
     });
 
     it.each([
-      { value: "test_value", description: "lowercase letters" },
-      { value: "Test_Value", description: "mixed case" },
+      { description: "lowercase letters", value: "test_value" },
+      { description: "mixed case", value: "Test_Value" },
     ])("should reject $description", ({ value }) => {
       expect(() => v.parse(schema, value)).toThrow();
     });
@@ -190,16 +190,16 @@ describe("alphaNumericOrUnderscoreOrHyphenSchema", () => {
 
     it.each([
       {
-        value: "test-value_123",
         description: "lowercase alphanumeric with underscores and hyphens",
+        value: "test-value_123",
       },
       {
-        value: "TEST-VALUE_123",
         description: "uppercase alphanumeric with underscores and hyphens",
+        value: "TEST-VALUE_123",
       },
       {
-        value: "Test-Value_123",
         description: "mixed case alphanumeric with underscores and hyphens",
+        value: "Test-Value_123",
       },
     ])("should accept $description", ({ value }) => {
       expect(() => v.parse(schema, value)).not.toThrow();
@@ -221,8 +221,8 @@ describe("alphaNumericOrUnderscoreOrHyphenSchema", () => {
     });
 
     it.each([
-      { value: "TEST-VALUE", description: "uppercase letters" },
-      { value: "Test-Value", description: "mixed case" },
+      { description: "uppercase letters", value: "TEST-VALUE" },
+      { description: "mixed case", value: "Test-Value" },
     ])("should reject $description", ({ value }) => {
       expect(() => v.parse(schema, value)).toThrow();
     });
@@ -239,8 +239,8 @@ describe("alphaNumericOrUnderscoreOrHyphenSchema", () => {
     });
 
     it.each([
-      { value: "test-value", description: "lowercase letters" },
-      { value: "Test-Value", description: "mixed case" },
+      { description: "lowercase letters", value: "test-value" },
+      { description: "mixed case", value: "Test-Value" },
     ])("should reject $description", ({ value }) => {
       expect(() => v.parse(schema, value)).toThrow();
     });
@@ -253,24 +253,24 @@ describe("alphaNumericOrHyphenSchema", () => {
 
     it.each([
       {
-        value: "test-value-123",
         description: "lowercase alphanumeric with hyphens",
+        value: "test-value-123",
       },
       {
-        value: "TEST-VALUE-123",
         description: "uppercase alphanumeric with hyphens",
+        value: "TEST-VALUE-123",
       },
       {
-        value: "Test-Value-123",
         description: "mixed case alphanumeric with hyphens",
+        value: "Test-Value-123",
       },
     ])("should accept $description", ({ value }) => {
       expect(() => v.parse(schema, value)).not.toThrow();
     });
 
     it.each([
-      { value: "test_value", description: "strings with underscores" },
-      { value: "test@value", description: "strings with special characters" },
+      { description: "strings with underscores", value: "test_value" },
+      { description: "strings with special characters", value: "test@value" },
     ])("should reject $description", ({ value }) => {
       expect(() => v.parse(schema, value)).toThrow();
     });
@@ -284,8 +284,8 @@ describe("alphaNumericOrHyphenSchema", () => {
     });
 
     it.each([
-      { value: "TEST-VALUE", description: "uppercase letters" },
-      { value: "Test-Value", description: "mixed case" },
+      { description: "uppercase letters", value: "TEST-VALUE" },
+      { description: "mixed case", value: "Test-Value" },
     ])("should reject $description", ({ value }) => {
       expect(() => v.parse(schema, value)).toThrow();
     });
@@ -309,8 +309,8 @@ describe("alphaNumericOrHyphenSchema", () => {
     });
 
     it.each([
-      { value: "test-value", description: "lowercase letters" },
-      { value: "Test-Value", description: "mixed case" },
+      { description: "lowercase letters", value: "test-value" },
+      { description: "mixed case", value: "Test-Value" },
     ])("should reject $description", ({ value }) => {
       expect(() => v.parse(schema, value)).toThrow();
     });

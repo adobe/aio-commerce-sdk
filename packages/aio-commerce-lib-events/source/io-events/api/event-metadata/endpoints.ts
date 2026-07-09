@@ -115,9 +115,9 @@ export async function createEventMetadataForProvider(
       {
         ...fetchOptions,
         json: {
-          label: validatedParams.label,
           description: validatedParams.description,
           event_code: validatedParams.eventCode,
+          label: validatedParams.label,
           sample_event_template: validatedParams.sampleEventTemplate,
         },
       },

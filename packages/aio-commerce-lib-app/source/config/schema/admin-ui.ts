@@ -45,13 +45,13 @@ const SandboxPermissionsSchema = v.pipe(
 );
 
 const NotificationsSchema = v.object({
-  success: v.optional(nonEmptyStringValueSchema("success notification")),
   error: v.optional(nonEmptyStringValueSchema("error notification")),
+  success: v.optional(nonEmptyStringValueSchema("success notification")),
 });
 
 const ConfirmSchema = v.object({
-  title: v.optional(nonEmptyStringValueSchema("confirm title")),
   message: v.optional(nonEmptyStringValueSchema("confirm message")),
+  title: v.optional(nonEmptyStringValueSchema("confirm title")),
 });
 
 // ─── Grid columns ─────────────────────────────────────────────────────────────
@@ -68,51 +68,51 @@ const ColumnTypeSchema = v.picklist([
 const ColumnAlignSchema = v.picklist(["left", "right", "center"]);
 
 const GridColumnSchema = v.strictObject({
+  aclProtected: v.optional(v.boolean()),
+  align: ColumnAlignSchema,
   id: nonEmptyStringValueSchema("column ID"),
   label: nonEmptyStringValueSchema("column label"),
   type: ColumnTypeSchema,
-  align: ColumnAlignSchema,
-  aclProtected: v.optional(v.boolean()),
 });
 
 const GridColumnsSchema = v.object({
-  label: nonEmptyStringValueSchema("grid columns label"),
-  description: nonEmptyStringValueSchema("grid columns description"),
-  runtimeAction: nonEmptyStringValueSchema("runtime action"),
   columns: v.pipe(
     v.array(GridColumnSchema),
     v.minLength(1, "At least one grid column is required"),
   ),
+  description: nonEmptyStringValueSchema("grid columns description"),
+  label: nonEmptyStringValueSchema("grid columns label"),
+  runtimeAction: nonEmptyStringValueSchema("runtime action"),
 });
 
 // ─── Mass actions ─────────────────────────────────────────────────────────────
 
 /** Fields shared by both mass-action variants. `description` is flat — no `installation` nesting. */
 const massActionCommonEntries = {
+  aclProtected: v.optional(v.boolean()),
+  confirm: v.optional(ConfirmSchema),
+  description: v.optional(nonEmptyStringValueSchema("mass action description")),
   id: nonEmptyStringValueSchema("mass action ID"),
   label: nonEmptyStringValueSchema("mass action label"),
-  description: v.optional(nonEmptyStringValueSchema("mass action description")),
-  title: v.optional(nonEmptyStringValueSchema("mass action page title")),
-  confirm: v.optional(ConfirmSchema),
   notifications: v.optional(NotificationsSchema),
   selectionLimit: v.optional(positiveNumberValueSchema("selectionLimit")),
-  aclProtected: v.optional(v.boolean()),
+  title: v.optional(nonEmptyStringValueSchema("mass action page title")),
 };
 
 /** `type: "view"` mass action — renders an iframe at `path`. */
 const ViewMassActionSchema = v.strictObject({
   ...massActionCommonEntries,
-  type: v.literal("view"),
   path: nonEmptyStringValueSchema("mass action path"),
   sandboxPermissions: v.optional(SandboxPermissionsSchema),
+  type: v.literal("view"),
 });
 
 /** `type: "worker"` mass action — invokes a workerProcess runtime action. */
 const WorkerMassActionSchema = v.strictObject({
   ...massActionCommonEntries,
-  type: v.literal("worker"),
   runtimeAction: nonEmptyStringValueSchema("runtimeAction"),
   timeout: v.optional(positiveNumberValueSchema("timeout")),
+  type: v.literal("worker"),
 });
 
 /**
@@ -131,53 +131,53 @@ const ViewButtonLevelSchema = v.picklist([-1, 0, 1]);
 
 const OrderViewButtonSchema = v.variant("type", [
   v.strictObject({
-    type: v.literal("view"),
-    id: nonEmptyStringValueSchema("view button ID"),
-    label: nonEmptyStringValueSchema("view button label"),
+    aclProtected: v.optional(v.boolean()),
+    confirm: v.optional(ConfirmSchema),
     description: v.optional(
       nonEmptyStringValueSchema("view button description"),
     ),
-    path: nonEmptyStringValueSchema("view button path"),
+    id: nonEmptyStringValueSchema("view button ID"),
+    label: nonEmptyStringValueSchema("view button label"),
     level: v.optional(ViewButtonLevelSchema),
-    sortOrder: v.optional(positiveNumberValueSchema("sortOrder")),
-    confirm: v.optional(ConfirmSchema),
-    sandboxPermissions: v.optional(SandboxPermissionsSchema),
     notifications: v.optional(NotificationsSchema),
-    aclProtected: v.optional(v.boolean()),
+    path: nonEmptyStringValueSchema("view button path"),
+    sandboxPermissions: v.optional(SandboxPermissionsSchema),
+    sortOrder: v.optional(positiveNumberValueSchema("sortOrder")),
+    type: v.literal("view"),
   }),
   v.strictObject({
-    type: v.literal("worker"),
-    id: nonEmptyStringValueSchema("view button ID"),
-    label: nonEmptyStringValueSchema("view button label"),
+    aclProtected: v.optional(v.boolean()),
+    confirm: v.optional(ConfirmSchema),
     description: v.optional(
       nonEmptyStringValueSchema("view button description"),
     ),
-    runtimeAction: nonEmptyStringValueSchema("runtime action"),
+    id: nonEmptyStringValueSchema("view button ID"),
+    label: nonEmptyStringValueSchema("view button label"),
     level: v.optional(ViewButtonLevelSchema),
-    sortOrder: v.optional(positiveNumberValueSchema("sortOrder")),
-    confirm: v.optional(ConfirmSchema),
-    timeout: v.optional(positiveNumberValueSchema("timeout")),
     notifications: v.optional(NotificationsSchema),
-    aclProtected: v.optional(v.boolean()),
+    runtimeAction: nonEmptyStringValueSchema("runtime action"),
+    sortOrder: v.optional(positiveNumberValueSchema("sortOrder")),
+    timeout: v.optional(positiveNumberValueSchema("timeout")),
+    type: v.literal("worker"),
   }),
 ]);
 
 // ─── Entity extension points ──────────────────────────────────────────────────
 
 const AdminUiOrderSchema = v.object({
-  massActions: v.optional(v.array(MassActionSchema)),
   gridColumns: v.optional(GridColumnsSchema),
+  massActions: v.optional(v.array(MassActionSchema)),
   viewButtons: v.optional(v.array(OrderViewButtonSchema)),
 });
 
 const AdminUiProductSchema = v.object({
-  massActions: v.optional(v.array(MassActionSchema)),
   gridColumns: v.optional(GridColumnsSchema),
+  massActions: v.optional(v.array(MassActionSchema)),
 });
 
 const AdminUiCustomerSchema = v.object({
-  massActions: v.optional(v.array(MassActionSchema)),
   gridColumns: v.optional(GridColumnsSchema),
+  massActions: v.optional(v.array(MassActionSchema)),
 });
 
 const MenuIdSchema = v.pipe(
@@ -189,9 +189,15 @@ const MenuIdSchema = v.pipe(
 );
 
 const MenuSchema = v.object({
+  /**
+   * When `true`, Commerce auto-generates a per-app ACL resource id from `metadata.id`
+   * and injects it into the Adobe Commerce User Roles permission tree, allowing role-based
+   * access control per app menu.
+   */
+  aclProtected: v.optional(v.boolean()),
+  description: nonEmptyStringValueSchema("menu description"),
   id: MenuIdSchema,
   label: nonEmptyStringValueSchema("menu label"),
-  description: nonEmptyStringValueSchema("menu description"),
   pageTitle: v.optional(nonEmptyStringValueSchema("menu page title")),
   parentMenu: v.optional(
     v.picklist(
@@ -200,12 +206,6 @@ const MenuSchema = v.object({
     ),
   ),
   sandboxPermissions: v.optional(SandboxPermissionsSchema),
-  /**
-   * When `true`, Commerce auto-generates a per-app ACL resource id from `metadata.id`
-   * and injects it into the Adobe Commerce User Roles permission tree, allowing role-based
-   * access control per app menu.
-   */
-  aclProtected: v.optional(v.boolean()),
 });
 
 // ─── Top-level schema ─────────────────────────────────────────────────────────
@@ -216,10 +216,10 @@ const MenuSchema = v.object({
  * @experimental
  */
 export const AdminUiSchema = v.object({
+  customer: v.optional(AdminUiCustomerSchema),
   menu: v.optional(MenuSchema),
   order: v.optional(AdminUiOrderSchema),
   product: v.optional(AdminUiProductSchema),
-  customer: v.optional(AdminUiCustomerSchema),
 });
 
 // ─── Types ────────────────────────────────────────────────────────────────────

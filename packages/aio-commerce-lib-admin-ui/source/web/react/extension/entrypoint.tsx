@@ -10,7 +10,11 @@
  * governing permissions and limitations under the License.
  */
 
-import { isControlFrame, isUiFrame } from "#web/react/commerce/lib";
+import {
+  isControlFrame,
+  isEmbeddedInHost,
+  isUiFrame,
+} from "#web/react/commerce/lib";
 
 import { CommerceExtensionApp } from "./commerce-app";
 import { ExperienceShellExtensionApp } from "./experience-shell-app";
@@ -38,12 +42,15 @@ export function Entrypoint(props: Readonly<EntrypointProps>) {
     return <CommerceExtensionApp extensionId={extensionId} />;
   }
 
-  return initialConfigurationPromise === null ? (
-    <StandaloneExtensionApp />
-  ) : (
-    <ExperienceShellExtensionApp
-      initialConfigurationPromise={initialConfigurationPromise}
-      runtime={runtime}
-    />
-  );
+  // The shell flow only applies when embedded in the Experience Cloud shell
+  if (isEmbeddedInHost() && initialConfigurationPromise !== null) {
+    return (
+      <ExperienceShellExtensionApp
+        initialConfigurationPromise={initialConfigurationPromise}
+        runtime={runtime}
+      />
+    );
+  }
+
+  return <StandaloneExtensionApp />;
 }

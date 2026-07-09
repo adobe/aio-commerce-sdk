@@ -28,11 +28,11 @@ describe("responses/presets", () => {
       const result = ok(operation);
 
       expect(result).toEqual({
-        type: "success",
-        statusCode: 200,
         body: {
           op: "success",
         },
+        statusCode: 200,
+        type: "success",
       });
     });
 
@@ -41,12 +41,12 @@ describe("responses/presets", () => {
       const result = ok(operation);
 
       expect(result).toEqual({
-        type: "success",
-        statusCode: 200,
         body: {
-          op: "exception",
           message: "Product is out of stock",
+          op: "exception",
         },
+        statusCode: 200,
+        type: "success",
       });
     });
 
@@ -58,13 +58,13 @@ describe("responses/presets", () => {
       const result = ok(operation);
 
       expect(result).toEqual({
-        type: "success",
-        statusCode: 200,
         body: {
-          op: "exception",
           message: "Payment validation failed",
+          op: "exception",
           type: "Magento\\Payment\\Exception\\PaymentException",
         },
+        statusCode: 200,
+        type: "success",
       });
     });
 
@@ -73,13 +73,13 @@ describe("responses/presets", () => {
       const result = ok(operation);
 
       expect(result).toEqual({
-        type: "success",
-        statusCode: 200,
         body: {
           op: "add",
           path: "result",
           value: { data: "test" },
         },
+        statusCode: 200,
+        type: "success",
       });
     });
 
@@ -88,34 +88,34 @@ describe("responses/presets", () => {
       const result = ok(operation);
 
       expect(result).toEqual({
-        type: "success",
-        statusCode: 200,
         body: {
           op: "replace",
           path: "result/price",
           value: 99.99,
         },
+        statusCode: 200,
+        type: "success",
       });
     });
 
     it("should create a 200 OK response with replace operation and instance", () => {
       const operation = replaceOperation(
         "result/product",
-        { sku: "ABC123", name: "Updated Product" },
+        { name: "Updated Product", sku: "ABC123" },
         "Magento\\Catalog\\Api\\Data\\ProductInterface",
       );
 
       const result = ok(operation);
 
       expect(result).toEqual({
-        type: "success",
-        statusCode: 200,
         body: {
+          instance: "Magento\\Catalog\\Api\\Data\\ProductInterface",
           op: "replace",
           path: "result/product",
-          value: { sku: "ABC123", name: "Updated Product" },
-          instance: "Magento\\Catalog\\Api\\Data\\ProductInterface",
+          value: { name: "Updated Product", sku: "ABC123" },
         },
+        statusCode: 200,
+        type: "success",
       });
     });
 
@@ -124,12 +124,12 @@ describe("responses/presets", () => {
       const result = ok(operation);
 
       expect(result).toEqual({
-        type: "success",
-        statusCode: 200,
         body: {
           op: "remove",
           path: "result/deprecated",
         },
+        statusCode: 200,
+        type: "success",
       });
     });
 
@@ -141,8 +141,6 @@ describe("responses/presets", () => {
       const result = ok(operations);
 
       expect(result).toEqual({
-        type: "success",
-        statusCode: 200,
         body: [
           {
             op: "add",
@@ -155,6 +153,8 @@ describe("responses/presets", () => {
             value: { id: 2 },
           },
         ],
+        statusCode: 200,
+        type: "success",
       });
     });
 
@@ -176,9 +176,9 @@ describe("responses/presets", () => {
       const result = ok([]);
 
       expect(result).toEqual({
-        type: "success",
-        statusCode: 200,
         body: [],
+        statusCode: 200,
+        type: "success",
       });
     });
 

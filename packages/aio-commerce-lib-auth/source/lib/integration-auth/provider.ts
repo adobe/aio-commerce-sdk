@@ -98,9 +98,9 @@ export function getIntegrationAuthProvider(
       key: authParams.consumerKey,
       secret: authParams.consumerSecret,
     },
-    signature_method: "HMAC-SHA256",
     hash_function: (baseString, key) =>
       crypto.createHmac("sha256", key).update(baseString).digest("base64"),
+    signature_method: "HMAC-SHA256",
   });
 
   const oauthToken = {
@@ -112,7 +112,7 @@ export function getIntegrationAuthProvider(
     getHeaders: (method: HttpMethodInput, url: AdobeCommerceUrl) => {
       const urlString = parse(UrlSchema, url);
       return oauth.toHeader(
-        oauth.authorize({ url: urlString, method }, oauthToken),
+        oauth.authorize({ method, url: urlString }, oauthToken),
       );
     },
   };

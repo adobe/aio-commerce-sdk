@@ -33,12 +33,12 @@ describe("commerceEventsStep leaf step", () => {
     expect(commerceEventsStep.name).toBe("commerce");
     expect(commerceEventsStep.meta).toEqual({
       install: {
-        label: "Configure Commerce Events",
         description: "Sets up I/O Events for Adobe Commerce event sources",
+        label: "Configure Commerce Events",
       },
       uninstall: {
-        label: "Remove Commerce Events",
         description: "Removes I/O Events for Adobe Commerce event sources",
+        label: "Remove Commerce Events",
       },
     });
   });
@@ -111,9 +111,9 @@ describe("commerceEventsStep orchestration", () => {
 
     return {
       commerceEventsStep: commerceModule.commerceEventsStep,
+      configMocks,
       helperMocks,
       utilsMocks,
-      configMocks,
     };
   }
 
@@ -135,8 +135,11 @@ describe("commerceEventsStep orchestration", () => {
       },
     });
 
-    const { commerceEventsStep, helperMocks, utilsMocks } =
-      await importCommerceStepWithMocks();
+    const {
+      commerceEventsStep: mockedCommerceEventsStep,
+      helperMocks,
+      utilsMocks,
+    } = await importCommerceStepWithMocks();
 
     utilsMocks.makeWorkspaceConfig.mockReturnValue(
       createMockWorkspaceConfiguration(),
@@ -169,7 +172,7 @@ describe("commerceEventsStep orchestration", () => {
       subscriptions: [],
     });
 
-    const result = await commerceEventsStep.install(
+    const result = await mockedCommerceEventsStep.install(
       createConfigWithTwoCommerceEventingSources(),
       context,
     );
@@ -180,14 +183,14 @@ describe("commerceEventsStep orchestration", () => {
     expect(helperMocks.configureCommerceEventing).toHaveBeenCalledTimes(1);
     expect(helperMocks.configureCommerceEventing).toHaveBeenCalledWith(
       {
-        context,
         config: {
           enabled: true,
-          merchant_id: "test_org_42",
           environment_id: "test_project_7",
           instance_id: "test-app-commerce-events-provider-test-workspace-id",
+          merchant_id: "test_org_42",
           workspace_configuration: expect.any(String),
         },
+        context,
       },
       createMockExistingCommerceEventingData(),
     );
@@ -205,8 +208,11 @@ describe("commerceEventsStep orchestration", () => {
       params: { AIO_COMMERCE_API_FLAVOR: "saas" },
     });
 
-    const { commerceEventsStep, helperMocks, utilsMocks } =
-      await importCommerceStepWithMocks();
+    const {
+      commerceEventsStep: mockedCommerceEventsStep,
+      helperMocks,
+      utilsMocks,
+    } = await importCommerceStepWithMocks();
 
     utilsMocks.makeWorkspaceConfig.mockReturnValue(
       createMockWorkspaceConfiguration(),
@@ -237,7 +243,7 @@ describe("commerceEventsStep orchestration", () => {
       firstSourceEnv: ["paas"],
     });
 
-    const result = await commerceEventsStep.install(config, context);
+    const result = await mockedCommerceEventsStep.install(config, context);
 
     expect(result).toHaveLength(1);
     expect(helperMocks.onboardIoEvents).toHaveBeenCalledTimes(1);
@@ -249,20 +255,24 @@ describe("commerceEventsStep orchestration", () => {
     vi.stubEnv("__OW_NAMESPACE", "test-namespace");
     const context = createMockEventingInstallationContext();
 
-    const { commerceEventsStep, helperMocks, utilsMocks, configMocks } =
-      await importCommerceStepWithMocks();
+    const {
+      commerceEventsStep: mockedCommerceEventsStep,
+      helperMocks,
+      utilsMocks,
+      configMocks,
+    } = await importCommerceStepWithMocks();
 
     const configWithKey = {
       ...configWithCommerceEventing,
       eventing: {
         commerce: [
           {
+            events: configWithCommerceEventing.eventing.commerce[0].events,
             provider: {
+              description: "Provides commerce events",
               key: "order-events-provider",
               label: "Order Events Provider",
-              description: "Provides commerce events",
             },
-            events: configWithCommerceEventing.eventing.commerce[0].events,
           },
         ],
       },
@@ -279,16 +289,16 @@ describe("commerceEventsStep orchestration", () => {
     );
 
     helperMocks.onboardIoEvents.mockResolvedValue({
-      providerData: {
-        id: "provider-uuid-123",
-        instance_id: "test-app-order-events-provider-test-workspace-id",
-      },
       eventsData: [
         {
           config: { name: "plugin.order_placed" },
           data: { metadata: { event_code: "com.adobe.commerce.order.placed" } },
         },
       ],
+      providerData: {
+        id: "provider-uuid-123",
+        instance_id: "test-app-order-events-provider-test-workspace-id",
+      },
     });
     helperMocks.configureCommerceEventing.mockResolvedValue(undefined);
     helperMocks.onboardCommerceEventing.mockResolvedValue({
@@ -296,15 +306,15 @@ describe("commerceEventsStep orchestration", () => {
       subscriptions: [{}],
     });
 
-    await commerceEventsStep.install(configWithKey, context);
+    await mockedCommerceEventsStep.install(configWithKey, context);
 
     expect(configMocks.setSystemConfigByKey).toHaveBeenCalledWith("events", {
       providers: {
         "order-events-provider": {
-          id: "provider-uuid-123",
           events: {
             "plugin.order_placed": "com.adobe.commerce.order.placed",
           },
+          id: "provider-uuid-123",
         },
       },
     });
@@ -314,20 +324,24 @@ describe("commerceEventsStep orchestration", () => {
     vi.stubEnv("__OW_NAMESPACE", "test-namespace");
     const context = createMockEventingInstallationContext();
 
-    const { commerceEventsStep, helperMocks, utilsMocks, configMocks } =
-      await importCommerceStepWithMocks();
+    const {
+      commerceEventsStep: mockedCommerceEventsStep,
+      helperMocks,
+      utilsMocks,
+      configMocks,
+    } = await importCommerceStepWithMocks();
 
     const configWithKey = {
       ...configWithCommerceEventing,
       eventing: {
         commerce: [
           {
+            events: configWithCommerceEventing.eventing.commerce[0].events,
             provider: {
+              description: "Provides commerce events",
               key: "order-events-provider",
               label: "Order Events Provider",
-              description: "Provides commerce events",
             },
-            events: configWithCommerceEventing.eventing.commerce[0].events,
           },
         ],
       },
@@ -335,7 +349,7 @@ describe("commerceEventsStep orchestration", () => {
 
     configMocks.getSystemConfigByKey.mockResolvedValue({
       providers: {
-        "existing-provider": { id: "existing-uuid", events: {} },
+        "existing-provider": { events: {}, id: "existing-uuid" },
       },
     });
 
@@ -350,16 +364,16 @@ describe("commerceEventsStep orchestration", () => {
     );
 
     helperMocks.onboardIoEvents.mockResolvedValue({
-      providerData: {
-        id: "provider-uuid-123",
-        instance_id: "test-app-order-events-provider-test-workspace-id",
-      },
       eventsData: [
         {
           config: { name: "plugin.order_placed" },
           data: { metadata: { event_code: "com.adobe.commerce.order.placed" } },
         },
       ],
+      providerData: {
+        id: "provider-uuid-123",
+        instance_id: "test-app-order-events-provider-test-workspace-id",
+      },
     });
     helperMocks.configureCommerceEventing.mockResolvedValue(undefined);
     helperMocks.onboardCommerceEventing.mockResolvedValue({
@@ -367,16 +381,16 @@ describe("commerceEventsStep orchestration", () => {
       subscriptions: [{}],
     });
 
-    await commerceEventsStep.install(configWithKey, context);
+    await mockedCommerceEventsStep.install(configWithKey, context);
 
     expect(configMocks.setSystemConfigByKey).toHaveBeenCalledWith("events", {
       providers: {
-        "existing-provider": { id: "existing-uuid", events: {} },
+        "existing-provider": { events: {}, id: "existing-uuid" },
         "order-events-provider": {
-          id: "provider-uuid-123",
           events: {
             "plugin.order_placed": "com.adobe.commerce.order.placed",
           },
+          id: "provider-uuid-123",
         },
       },
     });

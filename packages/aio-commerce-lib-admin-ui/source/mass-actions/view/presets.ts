@@ -40,7 +40,7 @@ import type { MassActionSelection } from "./types";
 export function parseMassActionSelection(
   rawSelection: unknown,
 ): MassActionSelection {
-  if (rawSelection == null) {
+  if (rawSelection === null || rawSelection === undefined) {
     throw new Error(
       "Invalid mass action selection: the selection query parameter is missing.",
     );
@@ -49,9 +49,10 @@ export function parseMassActionSelection(
   let parsed: unknown;
   try {
     parsed = JSON.parse(String(rawSelection));
-  } catch {
+  } catch (error) {
     throw new Error(
       `Invalid mass action selection: expected a JSON string, got: ${String(rawSelection)}`,
+      { cause: error },
     );
   }
 

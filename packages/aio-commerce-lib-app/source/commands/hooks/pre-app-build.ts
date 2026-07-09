@@ -114,14 +114,14 @@ export async function run(extension: Extension, templatesDir = TEMPLATES_DIR) {
 /** Runs the pre-app-build hook */
 export async function exec() {
   consola.debug("Running lib-app pre-app-build hook");
-  const extension = process.env.EXTENSION as Extension;
+  const rawExtension = process.env.EXTENSION;
 
   try {
-    if (!extension) {
+    if (!rawExtension) {
       throw new Error("EXTENSION environment variable is not set");
     }
 
-    await run(extension);
+    await run(rawExtension as Extension);
   } catch (error) {
     if (error instanceof CommerceSdkValidationError) {
       consola.error(error.display());

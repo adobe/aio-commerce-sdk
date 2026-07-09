@@ -18,20 +18,6 @@ import { getVariables } from "./build.variables.ts";
 const buildVariables = await getVariables();
 
 export default mergeConfig(baseConfig, {
-  dts: { eager: true },
-  entry: [
-    "./source/index.ts",
-    "./source/actions/*/index.ts",
-    "./source/config/index.browser.ts",
-    "./source/config/index.node.ts",
-    "./source/commands/index.ts",
-    "./source/management/index.ts",
-  ],
-
-  define: {
-    ...buildVariables,
-  },
-
   copy: [
     {
       from: "./source/commands/generate/actions/templates",
@@ -41,5 +27,18 @@ export default mergeConfig(baseConfig, {
       from: "./source/commands/generate/actions/templates",
       to: "./dist/es/commands",
     },
+  ],
+
+  define: {
+    ...buildVariables,
+  },
+  dts: { eager: true },
+  entry: [
+    "./source/index.ts",
+    "./source/actions/*/index.ts",
+    "./source/config/index.browser.ts",
+    "./source/config/index.node.ts",
+    "./source/commands/index.ts",
+    "./source/management/index.ts",
   ],
 });

@@ -35,36 +35,36 @@ let mockFilesInstance = new MockFiles();
 
 // Only the external I/O boundary is mocked — aio-lib-state and aio-lib-files
 vi.mock("#utils/repository", () => ({
-  getSharedState: vi.fn(async () => mockStateInstance),
   getSharedFiles: vi.fn(async () => mockFilesInstance),
+  getSharedState: vi.fn(async () => mockStateInstance),
 }));
 
 // Commerce API is an external system boundary
 vi.mock("#api/commerce", () => ({
   getAllScopeData: vi.fn(() =>
-    Promise.resolve({ websites: [], storeGroups: [], storeViews: [] }),
+    Promise.resolve({ storeGroups: [], storeViews: [], websites: [] }),
   ),
 }));
 
 const integrationSchema = [
   {
-    name: "exampleList",
-    type: "list",
-    selectionMode: "single",
-    options: [{ label: "Option 1", value: "option1" }],
     default: "option1",
+    name: "exampleList",
+    options: [{ label: "Option 1", value: "option1" }],
+    selectionMode: "single",
+    type: "list",
   },
   {
+    default: "",
+    label: "Currency",
     name: "currency",
     type: "text",
-    label: "Currency",
-    default: "",
   },
   {
+    default: "",
+    label: "API Password",
     name: "apiPassword",
     type: "password",
-    label: "API Password",
-    default: "",
   },
 ] satisfies BusinessConfigSchema;
 
@@ -79,8 +79,8 @@ function buildPayload(
   }>,
 ) {
   return JSON.stringify({
-    scope: { id, code, level },
     config: entries,
+    scope: { code, id, level },
   });
 }
 
@@ -94,8 +94,8 @@ describe("config-manager", () => {
     await mockFilesInstance.write(
       "aio-commerce-config/scope-tree.json",
       JSON.stringify({
-        scopes: mockScopeTree,
         lastUpdated: new Date().toISOString(),
+        scopes: mockScopeTree,
         version: "1.0",
       }),
     );
@@ -124,8 +124,8 @@ describe("config-manager", () => {
       buildPayload("id1", "global", "global", [
         {
           name: "currency",
-          value: "€",
           origin: { code: "global", level: "global" },
+          value: "€",
         },
       ]),
       300,
@@ -141,8 +141,8 @@ describe("config-manager", () => {
       buildPayload("id2", "global", "global", [
         {
           name: "currency",
-          value: "£",
           origin: { code: "global", level: "global" },
+          value: "£",
         },
       ]),
     );
@@ -167,8 +167,8 @@ describe("config-manager", () => {
       buildPayload("id-global", "global", "global", [
         {
           name: "currency",
-          value: "$",
           origin: { code: "global", level: "global" },
+          value: "$",
         },
       ]),
     );
@@ -201,8 +201,8 @@ describe("config-manager", () => {
       buildPayload("idsv", "default", "store_view", [
         {
           name: "exampleList",
-          value: "option1",
           origin: { code: "default", level: "store_view" },
+          value: "option1",
         },
       ]),
     );
@@ -231,8 +231,8 @@ describe("config-manager", () => {
       buildPayload("idw", "base", "website", [
         {
           name: "currency",
-          value: "EUR",
           origin: { code: "base", level: "website" },
+          value: "EUR",
         },
       ]),
     );
@@ -275,13 +275,13 @@ describe("config-manager", () => {
       buildPayload("id-global", "global", "global", [
         {
           name: "currency",
-          value: "USD",
           origin: { code: "global", level: "global" },
+          value: "USD",
         },
         {
           name: "exampleList",
-          value: "option1",
           origin: { code: "global", level: "global" },
+          value: "option1",
         },
       ]),
     );
@@ -307,10 +307,10 @@ describe("config-manager", () => {
       {
         config: [
           {
+            anotherProp: 123,
+            extraProp: "ignored",
             name: "currency",
             value: "GBP",
-            extraProp: "ignored",
-            anotherProp: 123,
           } as any,
         ],
       },
@@ -330,8 +330,8 @@ describe("config-manager", () => {
       buildPayload("id-base-region", "base_region", "base", [
         {
           name: "currency",
-          value: "AUD",
           origin: { code: "base_region", level: "base" },
+          value: "AUD",
         },
       ]),
     );
@@ -402,12 +402,12 @@ describe("setCustomScopeTree", () => {
     await setCustomScopeTree({
       scopes: [
         {
-          id: "my-explicit-id",
           code: "region_apac",
-          label: "APAC Region",
-          level: "custom",
+          id: "my-explicit-id",
           is_editable: true,
           is_final: true,
+          label: "APAC Region",
+          level: "custom",
         },
       ],
     });

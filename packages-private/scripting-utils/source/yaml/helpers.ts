@@ -47,9 +47,9 @@ export async function readYamlFile(path: string) {
     try {
       const fileContent = await readFile(path, "utf-8");
       doc = parseDocument(fileContent, { keepSourceTokens: true });
-    } catch {
+    } catch (err) {
       const file = basename(path);
-      throw new Error(`Failed to parse ${file}`);
+      throw new Error(`Failed to parse ${file}`, { cause: err });
     }
   }
 
@@ -117,8 +117,8 @@ export function getOrCreateSeq(
   options?: GetOrCreateOptions,
 ): YAMLSeq {
   return getOrCreateNode(doc, path, options ?? {}, {
-    typeGuard: isSeq,
     createNode: () => new YAMLSeq(),
+    typeGuard: isSeq,
     typeName: "sequence",
   });
 }
@@ -135,8 +135,8 @@ export function getOrCreateMap(
   options?: GetOrCreateOptions,
 ): YAMLMap {
   return getOrCreateNode(doc, path, options ?? {}, {
-    typeGuard: isMap,
     createNode: () => new YAMLMap(),
+    typeGuard: isMap,
     typeName: "map",
   });
 }

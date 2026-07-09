@@ -22,6 +22,7 @@ import {
   useRouter,
   useRouterState,
 } from "@tanstack/react-router";
+import { useCallback } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 
 import type { FallbackProps } from "react-error-boundary";
@@ -37,17 +38,20 @@ function getErrorMessage(error: unknown): string {
 function ErrorFallback({ error, resetErrorBoundary }: Readonly<FallbackProps>) {
   const router = useRouter();
   const canGoBack = useCanGoBack();
+  const goBack = useCallback(() => {
+    router.history.back();
+  }, [router]);
 
   return (
     <div
       style={{
-        display: "flex",
         alignItems: "center",
+        display: "flex",
         justifyContent: "center",
-        padding: 24,
 
         // Subtract the padding to avoid generating overflow
         minHeight: "calc(100dvh - 48px)",
+        padding: 24,
       }}>
       <IllustratedMessage>
         <ErrorIllustration />
@@ -55,11 +59,7 @@ function ErrorFallback({ error, resetErrorBoundary }: Readonly<FallbackProps>) {
         <Content>{getErrorMessage(error)}</Content>
         <ButtonGroup>
           {canGoBack && (
-            <Button
-              onPress={() => {
-                router.history.back();
-              }}
-              variant="secondary">
+            <Button onPress={goBack} variant="secondary">
               Go back
             </Button>
           )}
@@ -76,17 +76,22 @@ function ErrorFallback({ error, resetErrorBoundary }: Readonly<FallbackProps>) {
  * A wrapper component that provides an error boundary for extension apps.
  * It catches JavaScript errors anywhere in its child component tree, logs those errors, and displays a fallback UI.
  *
- * @param props - The props for the component, including children elements.
+ * @param props - The props for the component, including children elements and an optional
+ * `onReset` callback run before the boundary re-renders its children (via "Try again" or a
+ * route change), e.g. to drop cached failures so a retry starts fresh.
  */
 export function ExtensionErrorBoundary(
-  props: Readonly<React.PropsWithChildren>,
+  props: Readonly<React.PropsWithChildren<{ onReset?: () => void }>>,
 ) {
   const routeKey = useRouterState({
     select: (state) => state.matches.at(-1)?.pathname,
   });
 
   return (
-    <ErrorBoundary FallbackComponent={ErrorFallback} resetKeys={[routeKey]}>
+    <ErrorBoundary
+      FallbackComponent={ErrorFallback}
+      onReset={props.onReset}
+      resetKeys={[routeKey]}>
       {props.children}
     </ErrorBoundary>
   );

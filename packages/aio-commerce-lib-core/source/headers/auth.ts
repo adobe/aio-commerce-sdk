@@ -184,8 +184,8 @@ const authorizationSchema = pipe(
     // - parameters === "" would require space followed by only whitespace, but trim() removes trailing whitespace
     // Both cases are already caught by the spaceIndex === -1 check above
     return {
-      scheme: authorization.slice(0, spaceIndex),
       parameters: authorization.slice(spaceIndex + 1).trim(),
+      scheme: authorization.slice(0, spaceIndex),
     };
   }),
 );
@@ -244,23 +244,22 @@ export function parseAuthorization(authorization: string): Authorization {
 
   if (scheme === "Basic") {
     return {
-      scheme: "Basic",
       credentials: parameters,
+      scheme: "Basic",
     };
   }
 
   if (scheme === "OAuth") {
     return {
-      scheme: "OAuth",
       parameters: parseKeyValueParameters(parameters) as OAuth1Parameters,
+      scheme: "OAuth",
     };
   }
 
   return {
-    scheme,
-    rawParameters: parameters,
-
     parseParameters: () => parseKeyValueParameters(parameters),
+    rawParameters: parameters,
+    scheme,
   };
 }
 

@@ -20,9 +20,9 @@ import type { InstallationHooks } from "#management/installation/workflow/hooks"
 /** Creates a mock step event for testing. */
 function createMockStepEvent() {
   return {
+    isLeaf: true,
     path: ["root", "child"],
     stepName: "child",
-    isLeaf: true,
   };
 }
 
@@ -84,20 +84,20 @@ describe("callHook", () => {
 
   describe("step hooks (event and state)", () => {
     test.each([
-      { hookName: "onStepStart" as const, extraProps: {} },
+      { extraProps: {}, hookName: "onStepStart" as const },
       {
-        hookName: "onStepSuccess" as const,
         extraProps: { result: { success: true } },
+        hookName: "onStepSuccess" as const,
       },
       {
-        hookName: "onStepFailure" as const,
         extraProps: {
           error: {
-            path: ["root", "child"],
             key: "STEP_EXECUTION_FAILED",
             message: "Something went wrong",
+            path: ["root", "child"],
           },
         },
+        hookName: "onStepFailure" as const,
       },
     ])("$hookName should receive event and state", async ({
       hookName,

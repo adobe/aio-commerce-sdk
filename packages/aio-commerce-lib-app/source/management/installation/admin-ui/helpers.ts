@@ -89,8 +89,8 @@ export async function unregisterExtension(
 
   try {
     await adminUiClient.unregisterExtension({
-      workspaceName: appData.workspaceName,
       extensionName,
+      workspaceName: appData.workspaceName,
     });
     logger.info(
       `Admin UI extension "${extensionName}" unregistered successfully.`,

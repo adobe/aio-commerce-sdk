@@ -20,9 +20,9 @@ import {
 } from "../../../source/order-view-buttons/presets";
 
 const VALID_REQUEST = {
-  requestId: "550e8400-e29b-41d4-a716-446655440000",
   id: "sync-inventory",
   orderId: "000000001",
+  requestId: "550e8400-e29b-41d4-a716-446655440000",
 };
 
 describe("parseOrderViewButtonRequest", () => {
@@ -79,9 +79,9 @@ describe("parseOrderViewButtonRequest", () => {
 describe("okOrderViewButtonResponse", () => {
   it("returns a 200 success response with an empty body", () => {
     expect(okOrderViewButtonResponse()).toEqual({
-      type: "success",
-      statusCode: 200,
       body: {},
+      statusCode: 200,
+      type: "success",
     });
   });
 });

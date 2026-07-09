@@ -36,14 +36,14 @@ const { context, getToken } = aioLibIms;
  */
 function toImsAuthConfig(config: ImsAuthParams): ImsAuthConfig {
   return {
-    scopes: config.scopes,
-    env: config?.environment ?? "prod",
-    context: config.context ?? "aio-commerce-lib-auth-creds",
     client_id: config.clientId,
     client_secrets: config.clientSecrets,
-    technical_account_id: config.technicalAccountId,
-    technical_account_email: config.technicalAccountEmail,
+    context: config.context ?? "aio-commerce-lib-auth-creds",
+    env: config?.environment ?? "prod",
     ims_org_id: config.imsOrgId,
+    scopes: config.scopes,
+    technical_account_email: config.technicalAccountEmail,
+    technical_account_id: config.technicalAccountId,
   };
 }
 

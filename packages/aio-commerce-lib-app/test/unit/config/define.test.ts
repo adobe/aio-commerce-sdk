@@ -17,20 +17,20 @@ import { defineConfig } from "#config/lib/define";
 describe("defineConfig", () => {
   test("should return the config as-is", () => {
     const config = {
-      metadata: {
-        id: "test-app",
-        displayName: "Test App",
-        description: "A test application",
-        version: "1.0.0",
-      },
       businessConfig: {
         schema: [
           {
+            label: "Test Field",
             name: "testField",
             type: "text" as const,
-            label: "Test Field",
           },
         ],
+      },
+      metadata: {
+        description: "A test application",
+        displayName: "Test App",
+        id: "test-app",
+        version: "1.0.0",
       },
     };
 
@@ -42,9 +42,9 @@ describe("defineConfig", () => {
   test("should work with minimal config", () => {
     const config = {
       metadata: {
-        id: "minimal-app",
-        displayName: "Minimal",
         description: "Minimal app",
+        displayName: "Minimal",
+        id: "minimal-app",
         version: "1.0.0",
       },
     };

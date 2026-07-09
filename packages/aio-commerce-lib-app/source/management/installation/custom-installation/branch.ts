@@ -19,22 +19,22 @@ import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 
 /** Root custom installation step that executes custom installation scripts. */
 const customInstallationStepBase = defineBranchStep({
-  name: "customInstallationSteps",
+  children: [],
   meta: {
     install: {
-      label: "Custom Installation Steps",
       description:
         "Executes custom installation scripts defined in the application configuration",
+      label: "Custom Installation Steps",
     },
     uninstall: {
-      label: "Custom Uninstallation Steps",
       description:
         "Executes custom uninstallation scripts defined in the application configuration",
+      label: "Custom Uninstallation Steps",
     },
   },
+  name: "customInstallationSteps",
 
   when: hasCustomInstallationSteps,
-  children: [],
 });
 
 /**

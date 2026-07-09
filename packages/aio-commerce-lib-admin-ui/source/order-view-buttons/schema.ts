@@ -21,7 +21,7 @@ import * as v from "valibot";
  * single order currently being viewed.
  */
 export const OrderViewButtonRequestSchema = v.object({
-  requestId: nonEmptyStringValueSchema("requestId"),
   id: nonEmptyStringValueSchema("id"),
   orderId: nonEmptyStringValueSchema("orderId"),
+  requestId: nonEmptyStringValueSchema("requestId"),
 });

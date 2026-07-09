@@ -40,23 +40,24 @@ vi.mock("@adobe/aio-commerce-lib-auth", async () => {
 
 describe("lib/commerce/http-client", () => {
   test("should throw an error with unknown flavor", () => {
-    expect(() => {
-      new AdobeCommerceHttpClient({
-        config: { flavor: "unknown" },
-      } as unknown as CommerceHttpClientParams);
-    }).toThrow("Invalid Commerce configuration. Unknown flavor: unknown");
+    expect(
+      () =>
+        new AdobeCommerceHttpClient({
+          config: { flavor: "unknown" },
+        } as unknown as CommerceHttpClientParams),
+    ).toThrow("Invalid Commerce configuration. Unknown flavor: unknown");
   });
 
   describe.each([
     {
+      expectedUrl: "https://api.commerce.adobe.com/rest/all/V1/test",
       flavor: "paas",
       params: TEST_ADOBE_COMMERCE_HTTP_CLIENT_PARAMS_PAAS,
-      expectedUrl: "https://api.commerce.adobe.com/rest/all/V1/test",
     },
     {
+      expectedUrl: "https://api.commerce.adobe.com/V1/test",
       flavor: "saas",
       params: TEST_ADOBE_COMMERCE_HTTP_CLIENT_PARAMS_SAAS,
-      expectedUrl: "https://api.commerce.adobe.com/V1/test",
     },
   ])("$flavor HTTP Client", ({ flavor, params, expectedUrl }) => {
     const context = setupTestContext(TestAdobeCommerceHttpClient, params);
@@ -226,24 +227,24 @@ describe("lib/commerce/http-client", () => {
   describe("URL formation with trailing slashes", () => {
     test.each([
       {
-        flavor: "paas",
         baseUrl: "https://api.commerce.adobe.com/",
         expectedUrl: "https://api.commerce.adobe.com/rest/all/V1/test",
+        flavor: "paas",
       },
       {
-        flavor: "paas",
         baseUrl: "https://api.commerce.adobe.com",
         expectedUrl: "https://api.commerce.adobe.com/rest/all/V1/test",
+        flavor: "paas",
       },
       {
-        flavor: "saas",
         baseUrl: "https://api.commerce.adobe.com/",
         expectedUrl: "https://api.commerce.adobe.com/V1/test",
+        flavor: "saas",
       },
       {
-        flavor: "saas",
         baseUrl: "https://api.commerce.adobe.com",
         expectedUrl: "https://api.commerce.adobe.com/V1/test",
+        flavor: "saas",
       },
     ])("should handle trailing slashes correctly for $flavor with baseUrl: $baseUrl", async ({
       flavor,

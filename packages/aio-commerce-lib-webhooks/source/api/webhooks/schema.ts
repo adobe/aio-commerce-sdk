@@ -46,8 +46,8 @@ const WebhookHeaderSchema = v.object({
 const DeveloperConsoleOAuthSchema = v.object({
   client_id: nonEmptyString("client_id"),
   client_secret: nonEmptyString("client_secret"),
-  org_id: nonEmptyString("org_id"),
   environment: optionalString("environment"),
+  org_id: nonEmptyString("org_id"),
 });
 
 /**
@@ -56,29 +56,29 @@ const DeveloperConsoleOAuthSchema = v.object({
  * Required fields per the Commerce API: webhook_method, webhook_type, batch_name, hook_name, url.
  */
 export const WebhookSubscribeParamsSchema = v.object({
-  webhook_method: nonEmptyString("webhook_method"),
-  webhook_type: nonEmptyString("webhook_type"),
   batch_name: nonEmptyString("batch_name"),
   batch_order: v.optional(v.number()),
-  hook_name: nonEmptyString("hook_name"),
-  url: nonEmptyString("url"),
-  priority: v.optional(v.number()),
-  required: v.optional(v.boolean()),
-  soft_timeout: v.optional(v.number()),
-  timeout: v.optional(v.number()),
-  method: optionalString("method"),
+  developer_console_oauth: v.optional(DeveloperConsoleOAuthSchema),
   fallback_error_message: optionalString("fallback_error_message"),
-  ttl: v.optional(v.number()),
   fields: v.optional(
     v.array(WebhookFieldSchema, "Expected an array of field objects"),
-  ),
-  rules: v.optional(
-    v.array(WebhookRuleSchema, "Expected an array of rule objects"),
   ),
   headers: v.optional(
     v.array(WebhookHeaderSchema, "Expected an array of header objects"),
   ),
-  developer_console_oauth: v.optional(DeveloperConsoleOAuthSchema),
+  hook_name: nonEmptyString("hook_name"),
+  method: optionalString("method"),
+  priority: v.optional(v.number()),
+  required: v.optional(v.boolean()),
+  rules: v.optional(
+    v.array(WebhookRuleSchema, "Expected an array of rule objects"),
+  ),
+  soft_timeout: v.optional(v.number()),
+  timeout: v.optional(v.number()),
+  ttl: v.optional(v.number()),
+  url: nonEmptyString("url"),
+  webhook_method: nonEmptyString("webhook_method"),
+  webhook_type: nonEmptyString("webhook_type"),
 });
 
 /**
@@ -86,10 +86,10 @@ export const WebhookSubscribeParamsSchema = v.object({
  * Required: webhook_method, webhook_type, batch_name, hook_name.
  */
 export const WebhookUnsubscribeParamsSchema = v.object({
-  webhook_method: nonEmptyString("webhook_method"),
-  webhook_type: nonEmptyString("webhook_type"),
   batch_name: nonEmptyString("batch_name"),
   hook_name: nonEmptyString("hook_name"),
+  webhook_method: nonEmptyString("webhook_method"),
+  webhook_type: nonEmptyString("webhook_type"),
 });
 
 /**

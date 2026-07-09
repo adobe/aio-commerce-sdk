@@ -123,10 +123,10 @@ function buildCommerceHttpClientPaaS(
 
   const beforeRequestAuthHook = buildAuthBeforeRequestHook("paas", auth);
   const httpClient = createKy({
-    prefixUrl: commerceUrl,
     hooks: {
       beforeRequest: [beforeRequestAuthHook],
     },
+    prefixUrl: commerceUrl,
   });
 
   return optionallyExtendKy(httpClient, fetchOptions);
@@ -144,7 +144,6 @@ function buildCommerceHttpClientSaaS(
 
   const beforeRequestAuthHook = buildAuthBeforeRequestHook("saas", auth);
   const httpClient = createKy({
-    prefixUrl: commerceUrl,
     hooks: {
       beforeRequest: [
         beforeRequestAuthHook,
@@ -153,6 +152,7 @@ function buildCommerceHttpClientSaaS(
         },
       ],
     },
+    prefixUrl: commerceUrl,
   });
 
   return optionallyExtendKy(httpClient, fetchOptions);
@@ -183,7 +183,7 @@ function isSaaSParams(
 export function buildCommerceHttpClient(
   params: CommerceHttpClientParamsWithRequiredConfig,
 ) {
-  const flavor = params.config.flavor;
+  const { flavor } = params.config;
 
   if (isPaaSParams(params)) {
     return buildCommerceHttpClientPaaS(params);

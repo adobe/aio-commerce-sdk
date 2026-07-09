@@ -58,14 +58,14 @@ describe("buildAppManagementExtConfig", () => {
   });
 
   test.concurrent.each([
-    { label: "commerce eventing", config: configWithCommerceEventing },
-    { label: "external eventing", config: configWithExternalEventing },
+    { config: configWithCommerceEventing, label: "commerce eventing" },
+    { config: configWithExternalEventing, label: "external eventing" },
     {
-      label: "custom installation steps",
       config: configWithCustomInstallationSteps,
+      label: "custom installation steps",
     },
-    { label: "webhooks", config: configWithWebhooks },
-    { label: "adminUi", config: configWithViewMassActions },
+    { config: configWithWebhooks, label: "webhooks" },
+    { config: configWithViewMassActions, label: "adminUi" },
   ])("includes installation action when $label is configured", ({ config }) => {
     const result = buildAppManagementExtConfig(config);
 
@@ -74,14 +74,14 @@ describe("buildAppManagementExtConfig", () => {
   });
 
   test.concurrent.each([
-    { label: "commerce eventing", config: configWithCommerceEventing },
-    { label: "external eventing", config: configWithExternalEventing },
+    { config: configWithCommerceEventing, label: "commerce eventing" },
+    { config: configWithExternalEventing, label: "external eventing" },
     {
-      label: "custom installation steps",
       config: configWithCustomInstallationSteps,
+      label: "custom installation steps",
     },
-    { label: "webhooks", config: configWithWebhooks },
-    { label: "adminUi", config: configWithViewMassActions },
+    { config: configWithWebhooks, label: "webhooks" },
+    { config: configWithViewMassActions, label: "adminUi" },
   ])("includes installation workerProcess entry when $label is configured", ({
     config,
   }) => {
@@ -98,10 +98,10 @@ describe("buildAppManagementExtConfig", () => {
       businessConfig: {
         schema: [
           {
-            name: "secret",
-            label: "Secret",
-            type: "password" as const,
             default: "" as const,
+            label: "Secret",
+            name: "secret",
+            type: "password" as const,
           },
         ],
       },
@@ -148,9 +148,9 @@ describe("buildAppManagementExtConfig", () => {
       result.operations?.workerProcess?.map((worker) => worker) ?? [];
 
     expect(workerImpls).toEqual([
-      { type: "action", impl: "app-management/app-config" },
-      { type: "action", impl: "app-management/association" },
-      { type: "action", impl: "app-management/installation" },
+      { impl: "app-management/app-config", type: "action" },
+      { impl: "app-management/association", type: "action" },
+      { impl: "app-management/installation", type: "action" },
     ]);
   });
 });
@@ -187,20 +187,20 @@ describe("buildAdminUiV2ExtConfig", () => {
     const config = buildAdminUiV2ExtConfig({
       ...minimalValidConfig,
       adminUi: {
-        order: {
-          gridColumns: {
-            label: "L",
-            description: "D",
-            runtimeAction: sharedRuntimeAction,
-            columns: [{ id: "k", label: "K", type: "string", align: "left" }],
-          },
-        },
         customer: {
           gridColumns: {
-            label: "L",
+            columns: [{ align: "left", id: "k", label: "K", type: "string" }],
             description: "D",
+            label: "L",
             runtimeAction: sharedRuntimeAction,
-            columns: [{ id: "k", label: "K", type: "string", align: "left" }],
+          },
+        },
+        order: {
+          gridColumns: {
+            columns: [{ align: "left", id: "k", label: "K", type: "string" }],
+            description: "D",
+            label: "L",
+            runtimeAction: sharedRuntimeAction,
           },
         },
       },
@@ -228,7 +228,7 @@ describe("buildAdminUiV2ExtConfig", () => {
   test("view view buttons add operations.view pointing at index.html", () => {
     const config = buildAdminUiV2ExtConfig(configWithOrderViewTypeButtons);
     expect(config.operations?.view).toEqual([
-      { type: "web", impl: "index.html" },
+      { impl: "index.html", type: "web" },
     ]);
   });
 
@@ -243,7 +243,7 @@ describe("buildAdminUiV2ExtConfig", () => {
       config.operations?.workerProcess?.map((op) => op.impl) ?? [];
 
     expect(config.operations?.view).toEqual([
-      { type: "web", impl: "index.html" },
+      { impl: "index.html", type: "web" },
     ]);
     expect(workerImpls).toContain("orders/sync-inventory");
   });
@@ -255,17 +255,17 @@ describe("buildAdminUiV2ExtConfig", () => {
       adminUi: {
         order: {
           gridColumns: {
-            label: "L",
+            columns: [{ align: "left", id: "k", label: "K", type: "string" }],
             description: "D",
+            label: "L",
             runtimeAction: sharedAction,
-            columns: [{ id: "k", label: "K", type: "string", align: "left" }],
           },
           viewButtons: [
             {
-              type: "worker",
               id: "btn",
               label: "Btn",
               runtimeAction: sharedAction,
+              type: "worker",
             },
           ],
         },
@@ -302,7 +302,7 @@ describe("buildAdminUiV2ExtConfig", () => {
     const config = buildAdminUiV2ExtConfig(configWithAdminUiMenu);
 
     expect(config.operations.view).toEqual([
-      { type: "web", impl: "index.html" },
+      { impl: "index.html", type: "web" },
     ]);
     expect(config.operations?.workerProcess).toBeUndefined();
     expect(config.web).toBe("web-src");
@@ -312,7 +312,7 @@ describe("buildAdminUiV2ExtConfig", () => {
   test("includes view and web when view mass actions are configured", () => {
     const config = buildAdminUiV2ExtConfig(configWithViewMassActions);
     expect(config.operations?.view).toEqual([
-      { type: "web", impl: "index.html" },
+      { impl: "index.html", type: "web" },
     ]);
     expect(config.web).toBe("web-src");
   });
@@ -334,24 +334,24 @@ describe("buildAdminUiV2ExtConfig", () => {
       adminUi: {
         order: {
           gridColumns: {
-            label: "L",
-            description: "D",
-            runtimeAction: sharedAction,
             columns: [
               {
+                align: "left" as const,
                 id: "k",
                 label: "K",
                 type: "string" as const,
-                align: "left" as const,
               },
             ],
+            description: "D",
+            label: "L",
+            runtimeAction: sharedAction,
           },
           massActions: [
             {
               id: "fetch",
               label: "Fetch",
-              type: "worker" as const,
               runtimeAction: sharedAction,
+              type: "worker" as const,
             },
           ],
         },
@@ -368,23 +368,23 @@ describe("buildAdminUiV2ExtConfig", () => {
     const config = buildAdminUiV2ExtConfig({
       ...minimalValidConfig,
       adminUi: {
-        order: {
-          massActions: [
-            {
-              id: "app::export",
-              label: "Export",
-              type: "worker",
-              runtimeAction: "pkg/export",
-            },
-          ],
-        },
         customer: {
           massActions: [
             {
               id: "app::export-c",
               label: "Export",
-              type: "worker",
               runtimeAction: "pkg/export",
+              type: "worker",
+            },
+          ],
+        },
+        order: {
+          massActions: [
+            {
+              id: "app::export",
+              label: "Export",
+              runtimeAction: "pkg/export",
+              type: "worker",
             },
           ],
         },
@@ -394,14 +394,14 @@ describe("buildAdminUiV2ExtConfig", () => {
       config.operations?.workerProcess?.map((op) => op.impl) ?? [];
 
     expect(workerImpls).toEqual(
-      [{ type: "action", impl: "pkg/export" }].map((e) => e.impl),
+      [{ impl: "pkg/export", type: "action" }].map((e) => e.impl),
     );
   });
 
   test("declares view operation when adminUi.menu is present", () => {
     const config = buildAdminUiV2ExtConfig(configWithAdminUiMenu);
     expect(config.operations?.view).toEqual([
-      { type: "web", impl: "index.html" },
+      { impl: "index.html", type: "web" },
     ]);
   });
 
@@ -414,7 +414,7 @@ describe("buildAdminUiV2ExtConfig", () => {
     const config = buildAdminUiV2ExtConfig(configWithFullAdminUiV2);
     expect(config.operations?.workerProcess).toHaveLength(2);
     expect(config.operations?.view).toEqual([
-      { type: "web", impl: "index.html" },
+      { impl: "index.html", type: "web" },
     ]);
   });
 });
@@ -518,8 +518,8 @@ describe("buildBusinessConfigurationExtConfig", () => {
       result.operations?.workerProcess?.map((worker) => worker) ?? [];
 
     expect(workerImpls).toEqual([
-      { type: "action", impl: "app-management/config" },
-      { type: "action", impl: "app-management/scope-tree" },
+      { impl: "app-management/config", type: "action" },
+      { impl: "app-management/scope-tree", type: "action" },
     ]);
   });
 });

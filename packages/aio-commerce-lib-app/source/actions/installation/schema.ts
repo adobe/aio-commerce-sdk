@@ -20,6 +20,6 @@ export const InstallationRequestBodySchema = v.object({
   appData: AppDataSchema,
   commerceBaseUrl: v.string(),
   commerceEnv: CommerceEnvSchema,
-  ioEventsUrl: v.string(),
   ioEventsEnv: v.string(),
+  ioEventsUrl: v.string(),
 });

@@ -45,8 +45,8 @@ export async function main(params: Record<string, unknown>) {
     // 2. Initialize. region MUST match the manifest database.region.
     //    Omit it to use AIO_DB_REGION or the "amer" default.
     const db = await initDb({
-      token,
       region: (params.DB_REGION as string) || "amer", // "amer" | "apac" | "emea" | "aus"
+      token,
     });
 
     // 3. Connect — opens a session that must be closed (see finally).
@@ -59,8 +59,8 @@ export async function main(params: Record<string, unknown>) {
 
     // Insert one
     const inserted = await records.insertOne({
-      name: "Jane Smith",
       createdAt: new Date().toISOString(),
+      name: "Jane Smith",
     });
 
     // Insert many
@@ -72,7 +72,7 @@ export async function main(params: Record<string, unknown>) {
     // Find many — returns a cursor. Iterate to bound memory.
     for await (const doc of records
       .find({ active: true })
-      .project({ name: 1, _id: 0 })) {
+      .project({ _id: 0, name: 1 })) {
       logger.info("record", doc);
     }
     // ...or load all at once (only for small result sets):

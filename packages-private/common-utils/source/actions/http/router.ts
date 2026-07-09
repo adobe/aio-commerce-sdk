@@ -78,14 +78,14 @@ export class HttpActionRouter<TContext extends BaseContext = BaseContext> {
   ): this {
     const { pattern, keys } = parse(path);
     this.routes.push({
-      method,
-      pattern,
+      body: config.body,
+      handler: config.handler,
       keys,
+      method,
       // Cast needed because config.params type includes compile-time error type
       params: config.params as StandardSchemaV1 | undefined,
-      body: config.body,
+      pattern,
       query: config.query,
-      handler: config.handler,
     });
 
     return this;
@@ -272,6 +272,7 @@ export class HttpActionRouter<TContext extends BaseContext = BaseContext> {
     let context: any = { rawParams: args };
 
     for (const builder of this.contextBuilders) {
+      // biome-ignore lint/performance/noAwaitInLoops: builders run in order, each receiving the context merged from all previous builders
       const result = await builder(context);
       if (result) {
         context = { ...context, ...result };
@@ -289,15 +290,15 @@ export class HttpActionRouter<TContext extends BaseContext = BaseContext> {
     params: Record<string, string>,
   ) {
     if (!route.params) {
-      return { success: true, data: params };
+      return { data: params, success: true };
     }
 
     const result = await validateSchema(route.params, params);
     if (!result.success) {
-      return { success: false, issues: result.issues };
+      return { issues: result.issues, success: false };
     }
 
-    return { success: true, data: result.data };
+    return { data: result.data, success: true };
   }
 
   /**
@@ -305,15 +306,15 @@ export class HttpActionRouter<TContext extends BaseContext = BaseContext> {
    */
   private async validateBody(route: CompiledRoute, body: unknown) {
     if (!route.body) {
-      return { success: true, data: body };
+      return { data: body, success: true };
     }
 
     const result = await validateSchema(route.body, body);
     if (!result.success) {
-      return { success: false, issues: result.issues };
+      return { issues: result.issues, success: false };
     }
 
-    return { success: true, data: result.data };
+    return { data: result.data, success: true };
   }
 
   /**
@@ -324,15 +325,15 @@ export class HttpActionRouter<TContext extends BaseContext = BaseContext> {
     query: Record<string, string>,
   ) {
     if (!route.query) {
-      return { success: true, data: query };
+      return { data: query, success: true };
     }
 
     const result = await validateSchema(route.query, query);
 
     if (!result.success) {
-      return { success: false, issues: result.issues };
+      return { issues: result.issues, success: false };
     }
-    return { success: true, data: result.data };
+    return { data: result.data, success: true };
   }
 
   /** Handles a matched route by validating inputs and calling the handler. */
@@ -355,8 +356,8 @@ export class HttpActionRouter<TContext extends BaseContext = BaseContext> {
     if (!paramsResult.success) {
       return badRequest({
         body: {
-          message: "Invalid route parameters",
           issues: paramsResult.issues,
+          message: "Invalid route parameters",
         },
       });
     }
@@ -365,8 +366,8 @@ export class HttpActionRouter<TContext extends BaseContext = BaseContext> {
     if (!bodyResult.success) {
       return badRequest({
         body: {
-          message: "Invalid request body",
           issues: bodyResult.issues,
+          message: "Invalid request body",
         },
       });
     }
@@ -375,8 +376,8 @@ export class HttpActionRouter<TContext extends BaseContext = BaseContext> {
     if (!queryResult.success) {
       return badRequest({
         body: {
-          message: "Invalid query parameters",
           issues: queryResult.issues,
+          message: "Invalid query parameters",
         },
       });
     }
@@ -384,12 +385,12 @@ export class HttpActionRouter<TContext extends BaseContext = BaseContext> {
     try {
       return await route.handler(
         {
-          params: paramsResult.data,
           body: bodyResult.data,
-          query: queryResult.data,
           headers,
           method,
+          params: paramsResult.data,
           path,
+          query: queryResult.data,
         },
         context,
       );
@@ -397,8 +398,8 @@ export class HttpActionRouter<TContext extends BaseContext = BaseContext> {
       console.error("Handler error:", err);
       return internalServerError({
         body: {
-          message: "Internal server error",
           error: err instanceof Error ? err.message : "Unknown error",
+          message: "Internal server error",
         },
       });
     }
@@ -418,10 +419,11 @@ export class HttpActionRouter<TContext extends BaseContext = BaseContext> {
   public handler() {
     return async (args: RuntimeActionParams): Promise<ActionResponse> => {
       const method = (args.__ow_method ?? "get").toUpperCase() as HttpMethod;
-      const rawPath = (args.__ow_path as string) ?? "/";
+      const rawPath = args.__ow_path ?? "/";
 
       const path = rawPath.startsWith("/") ? rawPath : `/${rawPath}`;
-      const headers = (args.__ow_headers as Record<string, string>) ?? {};
+      const headers =
+        (args.__ow_headers as Record<string, string> | undefined) ?? {};
       const body = parseRequestBody(args.__ow_body, args);
       const query = parseQueryParams(args.__ow_query, args);
 
@@ -440,6 +442,7 @@ export class HttpActionRouter<TContext extends BaseContext = BaseContext> {
           continue;
         }
 
+        // biome-ignore lint/performance/noAwaitInLoops: must stop at the first matching route that returns a response
         const response = await this.handleRoute(
           route,
           match,

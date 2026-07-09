@@ -1,0 +1,37 @@
+/*
+ * Copyright 2026 Adobe. All rights reserved.
+ * This file is licensed to you under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License. You may obtain a copy
+ * of the License at http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under
+ * the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR REPRESENTATIONS
+ * OF ANY KIND, either express or implied. See the License for the specific language
+ * governing permissions and limitations under the License.
+ */
+
+import { SharedContextProvider } from "#web/react/commerce/context/shared-context.tsx";
+
+import type { ReactNode } from "react";
+
+/**
+ * Builds a `renderHook`/`render` wrapper that mounts the children inside a
+ * `SharedContextProvider` backed by the given fake connection. Pair with
+ * `createMockGuestConnection` to vary the host or shared context per test.
+ *
+ * @param connection - A fake UIX guest connection (e.g. from `createMockGuestConnection`).
+ * @param extensionId - The extension ID to expose through the provider.
+ */
+export function sharedContextProvider(
+  connection: object,
+  extensionId = "ext-1",
+) {
+  return ({ children }: { children: ReactNode }) => (
+    <SharedContextProvider
+      extensionId={extensionId}
+      // @ts-expect-error -- fake connection cannot satisfy the uix-guest GuestConnection type
+      guestConnection={connection}>
+      {children}
+    </SharedContextProvider>
+  );
+}

@@ -28,10 +28,10 @@ import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 
 /** Config exercising every capability, so no path is stripped. */
 const fullyCapableConfig = {
-  metadata: mockMetadata,
-  businessConfig: configWithBusinessConfig.businessConfig,
   adminUi: configWithAdminUiAllGrids.adminUi,
+  businessConfig: configWithBusinessConfig.businessConfig,
   installation: configWithOneScript.installation,
+  metadata: mockMetadata,
 } satisfies CommerceAppConfigOutputModel;
 
 const logger = createMockLogger();

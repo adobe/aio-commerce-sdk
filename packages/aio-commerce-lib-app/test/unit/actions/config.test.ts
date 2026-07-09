@@ -48,25 +48,25 @@ import type { RuntimeActionParams } from "@adobe/aio-commerce-lib-core/params";
 
 const configSchema = [
   {
-    name: "apiKey",
-    label: "API Key",
-    description: "Commerce API key",
-    type: "password",
     default: "",
+    description: "Commerce API key",
+    label: "API Key",
+    name: "apiKey",
+    type: "password",
   },
   {
-    name: "mode",
-    label: "Mode",
-    description: "App mode",
-    type: "text",
     default: "sandbox",
+    description: "App mode",
+    label: "Mode",
+    name: "mode",
+    type: "text",
   },
 ] satisfies BusinessConfigSchema;
 
 const envScopedSchema = [
-  { name: "shared", type: "text", label: "Shared" },
-  { name: "paasOnly", type: "text", label: "PaaS", env: ["paas"] },
-  { name: "saasOnly", type: "text", label: "SaaS", env: ["saas"] },
+  { label: "Shared", name: "shared", type: "text" },
+  { env: ["paas"], label: "PaaS", name: "paasOnly", type: "text" },
+  { env: ["saas"], label: "SaaS", name: "saasOnly", type: "text" },
 ] satisfies BusinessConfigSchema;
 
 describe("configRuntimeAction", () => {
@@ -91,19 +91,19 @@ describe("configRuntimeAction", () => {
   describe("GET /", () => {
     test("masks password values when retrieving configuration", async () => {
       getConfigurationMock.mockResolvedValue({
-        scopeId: "store-1",
         config: [
-          { name: "apiKey", value: "super-secret", origin: "scope" },
-          { name: "mode", value: "live", origin: "scope" },
+          { name: "apiKey", origin: "scope", value: "super-secret" },
+          { name: "mode", origin: "scope", value: "live" },
         ],
+        scopeId: "store-1",
       });
 
       const handler = configRuntimeAction({ configSchema });
 
       const result = await handler(
         createRuntimeActionParams({
-          query: "scopeId=store-1",
           AIO_COMMERCE_CONFIG_ENCRYPTION_KEY: "encryption-key",
+          query: "scopeId=store-1",
         }),
       );
 
@@ -111,7 +111,7 @@ describe("configRuntimeAction", () => {
         body: {
           values: {
             config: expect.arrayContaining([
-              { name: "apiKey", value: "*****", origin: "scope" },
+              { name: "apiKey", origin: "scope", value: "*****" },
             ]),
           },
         },
@@ -124,15 +124,15 @@ describe("configRuntimeAction", () => {
       const result = await handler(createRuntimeActionParams());
 
       expect(result).toMatchObject({
-        type: "error",
         error: { statusCode: 400 },
+        type: "error",
       });
     });
 
     test("returns full schema when commerceEnv is omitted", async () => {
       getConfigurationMock.mockResolvedValue({
-        scopeId: "store-1",
         config: [],
+        scopeId: "store-1",
       });
 
       const handler = configRuntimeAction({ configSchema: envScopedSchema });
@@ -141,7 +141,7 @@ describe("configRuntimeAction", () => {
         createRuntimeActionParams({ query: "scopeId=store-1" }),
       );
 
-      expect(result).toMatchObject({ type: "success", statusCode: 200 });
+      expect(result).toMatchObject({ statusCode: 200, type: "success" });
       expect.assert(result.type === "success");
       expect.assert(result.body);
 
@@ -153,19 +153,19 @@ describe("configRuntimeAction", () => {
       ]);
 
       expect(initializeMock).toHaveBeenCalledWith({
+        params: expect.anything(),
         schema: expect.arrayContaining([
           expect.objectContaining({ name: "shared" }),
           expect.objectContaining({ name: "paasOnly" }),
           expect.objectContaining({ name: "saasOnly" }),
         ]),
-        params: expect.anything(),
       });
     });
 
     test("filters schema by commerceEnv=paas", async () => {
       getConfigurationMock.mockResolvedValue({
-        scopeId: "store-1",
         config: [],
+        scopeId: "store-1",
       });
 
       const handler = configRuntimeAction({ configSchema: envScopedSchema });
@@ -176,7 +176,7 @@ describe("configRuntimeAction", () => {
         }),
       );
 
-      expect(result).toMatchObject({ type: "success", statusCode: 200 });
+      expect(result).toMatchObject({ statusCode: 200, type: "success" });
       expect.assert(result.type === "success");
       expect.assert(result.body);
 
@@ -187,18 +187,18 @@ describe("configRuntimeAction", () => {
       ]);
 
       expect(initializeMock).toHaveBeenCalledWith({
+        params: expect.anything(),
         schema: expect.arrayContaining([
           expect.objectContaining({ name: "shared" }),
           expect.objectContaining({ name: "paasOnly" }),
         ]),
-        params: expect.anything(),
       });
     });
 
     test("filters schema by commerceEnv=saas", async () => {
       getConfigurationMock.mockResolvedValue({
-        scopeId: "store-1",
         config: [],
+        scopeId: "store-1",
       });
 
       const handler = configRuntimeAction({ configSchema: envScopedSchema });
@@ -209,7 +209,7 @@ describe("configRuntimeAction", () => {
         }),
       );
 
-      expect(result).toMatchObject({ type: "success", statusCode: 200 });
+      expect(result).toMatchObject({ statusCode: 200, type: "success" });
       expect.assert(result.type === "success");
       expect.assert(result.body);
 
@@ -230,28 +230,28 @@ describe("configRuntimeAction", () => {
       );
 
       expect(result).toMatchObject({
-        type: "error",
         error: { statusCode: 400 },
+        type: "error",
       });
     });
 
     test("resolves dynamicList options before responding", async () => {
       getConfigurationMock.mockResolvedValue({
-        scopeId: "store-1",
         config: [],
+        scopeId: "store-1",
       });
 
       const dynamicSchema = [
         {
-          name: "paymentMethod",
+          default: (opts) => opts[0].value,
           label: "Payment Method",
-          type: "dynamicList",
-          selectionMode: "single",
+          name: "paymentMethod",
           options: () => [
             { label: "Braintree", value: "braintree" },
             { label: "PayPal", value: "paypal" },
           ],
-          default: (opts) => opts[0].value,
+          selectionMode: "single",
+          type: "dynamicList",
         },
       ] satisfies BusinessConfigSchema;
 
@@ -261,32 +261,32 @@ describe("configRuntimeAction", () => {
         createRuntimeActionParams({ query: "scopeId=store-1" }),
       );
 
-      expect(result).toMatchObject({ type: "success", statusCode: 200 });
+      expect(result).toMatchObject({ statusCode: 200, type: "success" });
       expect.assert(result.type === "success");
       expect.assert(result.body);
 
       const responseSchema = result.body.schema as BusinessConfigSchema;
       expect(responseSchema[0]).toMatchObject({
-        name: "paymentMethod",
-        type: "list",
-        selectionMode: "single",
         default: "braintree",
+        name: "paymentMethod",
         options: [
           { label: "Braintree", value: "braintree" },
           { label: "PayPal", value: "paypal" },
         ],
+        selectionMode: "single",
+        type: "list",
       });
 
       // The handler passes the unresolved schema to initialize; resolution
       // happens inside initialize itself.
       expect(initializeMock).toHaveBeenCalledWith({
+        params: expect.anything(),
         schema: expect.arrayContaining([
           expect.objectContaining({
-            type: "dynamicList",
             name: "paymentMethod",
+            type: "dynamicList",
           }),
         ]),
-        params: expect.anything(),
       });
     });
   });
@@ -294,22 +294,22 @@ describe("configRuntimeAction", () => {
   describe("PUT /", () => {
     test("filters masked password values before saving", async () => {
       setConfigurationMock.mockResolvedValue({
-        scopeId: "store-1",
         config: [],
+        scopeId: "store-1",
       });
 
       const handler = configRuntimeAction({ configSchema });
 
       await handler(
         createRuntimeActionParams({
-          method: "put",
           body: {
-            scopeId: "store-1",
             config: [
               { name: "apiKey", value: "*****" },
               { name: "mode", value: "live" },
             ],
+            scopeId: "store-1",
           },
+          method: "put",
         }),
       );
 
@@ -322,19 +322,19 @@ describe("configRuntimeAction", () => {
 
     test("sets Cache-Control: no-store on the response", async () => {
       setConfigurationMock.mockResolvedValue({
-        scopeId: "store-1",
         config: [],
+        scopeId: "store-1",
       });
 
       const handler = configRuntimeAction({ configSchema });
 
       const result = await handler(
         createRuntimeActionParams({
-          method: "put",
           body: {
-            scopeId: "store-1",
             config: [{ name: "mode", value: "live" }],
+            scopeId: "store-1",
           },
+          method: "put",
         }),
       );
 
@@ -348,18 +348,18 @@ describe("configRuntimeAction", () => {
 
       const result = await handler(
         createRuntimeActionParams({
-          method: "put",
           body: {
-            scopeId: "store-1",
             config: [{ name: "apiKey", value: null }],
+            scopeId: "store-1",
           },
+          method: "put",
         }),
       );
 
       expect(setConfigurationMock).not.toHaveBeenCalled();
       expect(result).toMatchObject({
-        type: "error",
         error: { statusCode: 400 },
+        type: "error",
       });
     });
   });
@@ -367,19 +367,19 @@ describe("configRuntimeAction", () => {
   describe("PATCH /", () => {
     test("accepts null values as unsets", async () => {
       setConfigurationMock.mockResolvedValue({
-        scopeId: "store-1",
         config: [],
+        scopeId: "store-1",
       });
 
       const handler = configRuntimeAction({ configSchema });
 
       await handler(
         createRuntimeActionParams({
-          method: "patch",
           body: {
-            scopeId: "store-1",
             config: [{ name: "apiKey", value: null }],
+            scopeId: "store-1",
           },
+          method: "patch",
         }),
       );
 
@@ -392,19 +392,19 @@ describe("configRuntimeAction", () => {
 
     test("sets Cache-Control: no-store on the response", async () => {
       setConfigurationMock.mockResolvedValue({
-        scopeId: "store-1",
         config: [],
+        scopeId: "store-1",
       });
 
       const handler = configRuntimeAction({ configSchema });
 
       const result = await handler(
         createRuntimeActionParams({
-          method: "patch",
           body: {
-            scopeId: "store-1",
             config: [{ name: "mode", value: "live" }],
+            scopeId: "store-1",
           },
+          method: "patch",
         }),
       );
 

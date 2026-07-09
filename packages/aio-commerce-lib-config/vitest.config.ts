@@ -28,11 +28,11 @@ export default mergeConfig(
   baseConfig,
   defineConfig({
     test: {
-      setupFiles: ["./test/setup.ts"],
-      passWithNoTests: true,
       coverage: {
         exclude: [...BARREL_FILES, ...UNTESTABLE_FILES, "./source/**/types.ts"],
       },
+      passWithNoTests: true,
+      setupFiles: ["./test/setup.ts"],
     },
   }),
 );

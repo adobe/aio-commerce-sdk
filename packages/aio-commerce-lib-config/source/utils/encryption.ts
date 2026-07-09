@@ -92,7 +92,7 @@ export function encrypt(plainText: string, encryptionKey: string): string {
 export function decrypt(encryptedText: string, encryptionKey: string): string {
   validateEncryptionKey(encryptionKey);
 
-  if (!encryptedText?.startsWith(ENCRYPTED_PREFIX)) {
+  if (!encryptedText.startsWith(ENCRYPTED_PREFIX)) {
     throw new Error(
       `Invalid encrypted value. Expected value to start with '${ENCRYPTED_PREFIX}'.`,
     );

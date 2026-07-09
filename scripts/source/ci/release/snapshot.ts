@@ -120,6 +120,7 @@ async function snapshot(
       const tag = `${pkg.name}@${pkg.version}`;
 
       try {
+        // biome-ignore lint/performance/noAwaitInLoops: sequential to avoid tripping GitHub's secondary rate limits when publishing multiple pre-releases in the same workflow run.
         await github.rest.repos.createRelease({
           body,
           name: tag,

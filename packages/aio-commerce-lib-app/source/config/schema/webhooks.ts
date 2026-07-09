@@ -52,8 +52,6 @@ const CategorySchema = v.picklist(
 
 /** Schema for the nested webhook payload without url — used when runtimeAction resolves the URL at runtime. */
 const WebhookDefinitionBaseSchema = v.object({
-  webhook_method: nonEmptyStringValueSchema("webhook_method"),
-  webhook_type: nonEmptyStringValueSchema("webhook_type"),
   batch_name: v.pipe(
     nonEmptyStringValueSchema("batch_name"),
     v.regex(
@@ -62,6 +60,15 @@ const WebhookDefinitionBaseSchema = v.object({
     ),
   ),
   batch_order: v.optional(positiveNumberValueSchema("batch_order")),
+  fallback_error_message: v.optional(
+    stringValueSchema("fallback_error_message"),
+  ),
+  fields: v.optional(
+    v.array(WebhookFieldSchema, "Expected an array of webhook field objects"),
+  ),
+  headers: v.optional(
+    v.array(WebhookHeaderSchema, "Expected an array of webhook header objects"),
+  ),
   hook_name: v.pipe(
     nonEmptyStringValueSchema("hook_name"),
     v.regex(
@@ -69,24 +76,17 @@ const WebhookDefinitionBaseSchema = v.object({
       "hook_name must contain only letters, numbers, and underscores",
     ),
   ),
+  method: nonEmptyStringValueSchema("HTTP method"),
   priority: v.optional(positiveNumberValueSchema("priority")),
   required: v.optional(booleanValueSchema("required")),
-  soft_timeout: v.optional(positiveNumberValueSchema("soft_timeout")),
-  timeout: v.optional(positiveNumberValueSchema("timeout")),
-  method: nonEmptyStringValueSchema("HTTP method"),
-  fallback_error_message: v.optional(
-    stringValueSchema("fallback_error_message"),
-  ),
-  ttl: v.optional(positiveNumberValueSchema("ttl")),
-  fields: v.optional(
-    v.array(WebhookFieldSchema, "Expected an array of webhook field objects"),
-  ),
   rules: v.optional(
     v.array(WebhookRuleSchema, "Expected an array of webhook rule objects"),
   ),
-  headers: v.optional(
-    v.array(WebhookHeaderSchema, "Expected an array of webhook header objects"),
-  ),
+  soft_timeout: v.optional(positiveNumberValueSchema("soft_timeout")),
+  timeout: v.optional(positiveNumberValueSchema("timeout")),
+  ttl: v.optional(positiveNumberValueSchema("ttl")),
+  webhook_method: nonEmptyStringValueSchema("webhook_method"),
+  webhook_type: nonEmptyStringValueSchema("webhook_type"),
 });
 
 /** Schema for the nested webhook payload with a required url. */
@@ -102,17 +102,17 @@ const WebhookDefinitionWithUrlSchema = v.object({
 
 /** Fields shared by every webhook entry, regardless of how its URL is resolved. */
 const WebhookEntryBaseSchema = v.object({
-  label: nonEmptyStringValueSchema("webhook label"),
-  description: nonEmptyStringValueSchema("webhook description"),
   category: v.optional(CategorySchema),
+  description: nonEmptyStringValueSchema("webhook description"),
   env: v.optional(CommerceEnvArraySchema),
+  label: nonEmptyStringValueSchema("webhook label"),
 });
 
 /** Schema for a webhook entry that resolves its URL from a runtime action. */
 const WebhookEntryWithRuntimeActionSchema = v.object({
   ...WebhookEntryBaseSchema.entries,
-  runtimeAction: nonEmptyStringValueSchema("runtimeAction"),
   requireAdobeAuth: v.optional(booleanValueSchema("requireAdobeAuth")),
+  runtimeAction: nonEmptyStringValueSchema("runtimeAction"),
   webhook: WebhookDefinitionBaseSchema,
 });
 

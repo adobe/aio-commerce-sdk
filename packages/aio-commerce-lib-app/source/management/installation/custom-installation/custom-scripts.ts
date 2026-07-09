@@ -144,14 +144,6 @@ type ScriptExecutionResult = {
 function createCustomScriptStep(scriptConfig: CustomInstallationStep): AnyStep {
   const { script, name, description } = scriptConfig;
   return defineLeafStep({
-    name: camelcase(name),
-    meta: {
-      install: {
-        label: name,
-        description,
-      },
-    },
-
     install: async (
       config: ConfigWithInstallationSteps,
       context: ExecutionContext,
@@ -175,10 +167,17 @@ function createCustomScriptStep(scriptConfig: CustomInstallationStep): AnyStep {
       logger.info(`Successfully executed script: ${name}`);
 
       return {
-        script,
         data: scriptResult,
+        script,
       };
     },
+    meta: {
+      install: {
+        description,
+        label: name,
+      },
+    },
+    name: camelcase(name),
 
     uninstall: async (
       config: ConfigWithInstallationSteps,
@@ -199,6 +198,7 @@ function createCustomScriptStep(scriptConfig: CustomInstallationStep): AnyStep {
 
       const uninstall = resolveCustomScriptHandler(scriptModule, "uninstall");
 
+      // biome-ignore lint/suspicious/noUnnecessaryConditions: resolveCustomScriptHandler's "uninstall" overload returns `CustomInstallationStepHandler | null`; the check is required at runtime
       if (!uninstall) {
         logger.debug(
           `Script ${script} does not export an uninstall function, skipping uninstall.`,

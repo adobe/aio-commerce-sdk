@@ -22,18 +22,18 @@ const {
   runUninstallationMock,
   runValidationMock,
 } = vi.hoisted(() => {
-  const invokeMock = vi.fn();
+  const actionInvokeMock = vi.fn();
 
   return {
-    invokeMock,
-    openwhiskMock: vi.fn(() => ({
-      actions: {
-        invoke: invokeMock,
-      },
-    })),
     createCombinedStoreMock: vi.fn(),
     createInitialInstallationStateMock: vi.fn(),
     createInitialUninstallationStateMock: vi.fn(),
+    invokeMock: actionInvokeMock,
+    openwhiskMock: vi.fn(() => ({
+      actions: {
+        invoke: actionInvokeMock,
+      },
+    })),
     runInstallationMock: vi.fn(),
     runUninstallationMock: vi.fn(),
     runValidationMock: vi.fn(),
@@ -89,13 +89,13 @@ type WorkflowRunnerArgs = {
   hooks: InstallationHooks;
 };
 
-const appData = createMockInstallationContext().appData;
+const { appData } = createMockInstallationContext();
 const requestBody = {
   appData,
   commerceBaseUrl: "https://commerce.example.com",
   commerceEnv: "paas",
-  ioEventsUrl: "https://events.example.com",
   ioEventsEnv: "prod",
+  ioEventsUrl: "https://events.example.com",
 };
 
 describe("installationRuntimeAction", () => {
@@ -140,15 +140,15 @@ describe("installationRuntimeAction", () => {
 
         await hooks.onInstallationStart?.(inProgressState);
         await hooks.onStepStart?.(
-          { path: ["validate"], stepName: "validate", isLeaf: true },
+          { isLeaf: true, path: ["validate"], stepName: "validate" },
           inProgressState,
         );
         await hooks.onStepSuccess?.(
           {
-            path: ["validate"],
-            stepName: "validate",
             isLeaf: true,
+            path: ["validate"],
             result: undefined,
+            stepName: "validate",
           },
           succeededState,
         );
@@ -169,15 +169,15 @@ describe("installationRuntimeAction", () => {
 
         await hooks.onInstallationStart?.(inProgressState);
         await hooks.onStepStart?.(
-          { path: ["cleanup"], stepName: "cleanup", isLeaf: true },
+          { isLeaf: true, path: ["cleanup"], stepName: "cleanup" },
           inProgressState,
         );
         await hooks.onStepSuccess?.(
           {
-            path: ["cleanup"],
-            stepName: "cleanup",
             isLeaf: true,
+            path: ["cleanup"],
             result: undefined,
+            stepName: "cleanup",
           },
           succeededState,
         );
@@ -199,8 +199,8 @@ describe("installationRuntimeAction", () => {
       const result = await handler(createRuntimeActionParams());
 
       expect(result).toMatchObject({
-        type: "success",
         statusCode: 204,
+        type: "success",
       });
     });
 
@@ -215,8 +215,8 @@ describe("installationRuntimeAction", () => {
       const result = await handler(createRuntimeActionParams());
 
       expect(result).toMatchObject({
-        type: "success",
         body: existingState,
+        type: "success",
       });
     });
   });
@@ -233,15 +233,15 @@ describe("installationRuntimeAction", () => {
 
       const result = await handler(
         createRuntimeActionParams({
-          method: "post",
           body: requestBody,
+          method: "post",
           ...DEFAULT_INSTALLATION_PARAMS,
         }),
       );
 
       expect(result).toMatchObject({
-        type: "error",
         error: { statusCode: 409 },
+        type: "error",
       });
     });
 
@@ -256,15 +256,15 @@ describe("installationRuntimeAction", () => {
 
       const result = await handler(
         createRuntimeActionParams({
-          method: "post",
           body: requestBody,
+          method: "post",
           ...DEFAULT_INSTALLATION_PARAMS,
         }),
       );
 
       expect(result).toMatchObject({
-        type: "error",
         error: { statusCode: 409 },
+        type: "error",
       });
     });
 
@@ -275,15 +275,15 @@ describe("installationRuntimeAction", () => {
 
       const result = await handler(
         createRuntimeActionParams({
-          method: "post",
           body: { ...requestBody, commerceEnv: "production" },
+          method: "post",
           ...DEFAULT_INSTALLATION_PARAMS,
         }),
       );
 
       expect(result).toMatchObject({
-        type: "error",
         error: { statusCode: 400 },
+        type: "error",
       });
     });
 
@@ -295,15 +295,15 @@ describe("installationRuntimeAction", () => {
 
       const result = await handler(
         createRuntimeActionParams({
-          method: "post",
           body: requestBody,
+          method: "post",
           ...DEFAULT_INSTALLATION_PARAMS,
         }),
       );
 
       expect(result).toMatchObject({
-        type: "error",
         error: { statusCode: 500 },
+        type: "error",
       });
     });
 
@@ -317,8 +317,8 @@ describe("installationRuntimeAction", () => {
 
       await handler(
         createRuntimeActionParams({
-          method: "post",
           body: requestBody,
+          method: "post",
           ...DEFAULT_INSTALLATION_PARAMS,
         }),
       );
@@ -339,16 +339,16 @@ describe("installationRuntimeAction", () => {
 
       await handler(
         createRuntimeActionParams({
-          method: "post",
           body: requestBody,
+          method: "post",
           ...DEFAULT_INSTALLATION_PARAMS,
         }),
       );
 
       expect(invokeMock).toHaveBeenCalledWith(
         expect.objectContaining({
-          name: "app-management/installation",
           blocking: false,
+          name: "app-management/installation",
           result: false,
         }),
       );
@@ -364,16 +364,16 @@ describe("installationRuntimeAction", () => {
 
       const result = await handler(
         createRuntimeActionParams({
-          method: "post",
           body: requestBody,
+          method: "post",
           ...DEFAULT_INSTALLATION_PARAMS,
         }),
       );
 
       expect(result).toMatchObject({
-        type: "success",
-        statusCode: 202,
         body: expect.objectContaining({ ...initialState }),
+        statusCode: 202,
+        type: "success",
       });
     });
   });
@@ -386,16 +386,16 @@ describe("installationRuntimeAction", () => {
 
       const result = await handler(
         createRuntimeActionParams({
+          appData,
           method: "post",
           path: "/execution",
-          appData,
           ...DEFAULT_INSTALLATION_PARAMS,
         }),
       );
 
       expect(result).toMatchObject({
-        type: "error",
         error: { statusCode: 400 },
+        type: "error",
       });
     });
 
@@ -407,10 +407,10 @@ describe("installationRuntimeAction", () => {
 
       await handler(
         createRuntimeActionParams({
+          appData,
+          initialState,
           method: "post",
           path: "/execution",
-          initialState,
-          appData,
           ...DEFAULT_INSTALLATION_PARAMS,
         }),
       );
@@ -428,10 +428,10 @@ describe("installationRuntimeAction", () => {
 
       await handler(
         createRuntimeActionParams({
+          appData,
+          initialState,
           method: "post",
           path: "/execution",
-          initialState,
-          appData,
           ...DEFAULT_INSTALLATION_PARAMS,
         }),
       );
@@ -458,10 +458,10 @@ describe("installationRuntimeAction", () => {
           await hooks.onInstallationStart?.(inProgressState);
           await hooks.onStepFailure?.(
             {
+              error: failedState.error,
+              isLeaf: true,
               path: ["installation", "validate"],
               stepName: "validate",
-              isLeaf: true,
-              error: failedState.error,
             },
             failedState,
           );
@@ -477,17 +477,17 @@ describe("installationRuntimeAction", () => {
 
       const result = await handler(
         createRuntimeActionParams({
+          appData,
+          initialState,
           method: "post",
           path: "/execution",
-          initialState,
-          appData,
           ...DEFAULT_INSTALLATION_PARAMS,
         }),
       );
 
       expect(result).toMatchObject({
-        type: "error",
         error: { statusCode: 500 },
+        type: "error",
       });
     });
   });
@@ -501,16 +501,16 @@ describe("installationRuntimeAction", () => {
 
       const result = await handler(
         createRuntimeActionParams({
+          body: requestBody,
           method: "post",
           path: "/validation",
-          body: requestBody,
           ...DEFAULT_INSTALLATION_PARAMS,
         }),
       );
 
       expect(result).toMatchObject({
-        type: "error",
         error: { statusCode: 500 },
+        type: "error",
       });
     });
 
@@ -524,16 +524,16 @@ describe("installationRuntimeAction", () => {
 
       const result = await handler(
         createRuntimeActionParams({
+          body: requestBody,
           method: "post",
           path: "/validation",
-          body: requestBody,
           ...DEFAULT_INSTALLATION_PARAMS,
         }),
       );
 
       expect(result).toMatchObject({
-        type: "success",
         body: validationResult,
+        type: "success",
       });
     });
   });
@@ -556,8 +556,8 @@ describe("installationRuntimeAction", () => {
       );
 
       expect(result).toMatchObject({
-        type: "success",
         body: existingState,
+        type: "success",
       });
     });
   });
@@ -574,16 +574,16 @@ describe("installationRuntimeAction", () => {
 
       const result = await handler(
         createRuntimeActionParams({
+          body: requestBody,
           method: "post",
           path: "/uninstallation",
-          body: requestBody,
           ...DEFAULT_INSTALLATION_PARAMS,
         }),
       );
 
       expect(result).toMatchObject({
-        type: "error",
         error: { statusCode: 409 },
+        type: "error",
       });
     });
 
@@ -599,9 +599,9 @@ describe("installationRuntimeAction", () => {
 
       await handler(
         createRuntimeActionParams({
+          body: requestBody,
           method: "post",
           path: "/uninstallation",
-          body: requestBody,
           ...DEFAULT_INSTALLATION_PARAMS,
         }),
       );
@@ -624,21 +624,21 @@ describe("installationRuntimeAction", () => {
 
       await handler(
         createRuntimeActionParams({
+          body: requestBody,
           method: "post",
           path: "/uninstallation",
-          body: requestBody,
           ...DEFAULT_INSTALLATION_PARAMS,
         }),
       );
 
       expect(invokeMock).toHaveBeenCalledWith(
         expect.objectContaining({
-          name: "app-management/installation",
           blocking: false,
-          result: false,
+          name: "app-management/installation",
           params: expect.objectContaining({
             __ow_path: "/uninstallation/execution",
           }),
+          result: false,
         }),
       );
     });
@@ -655,17 +655,17 @@ describe("installationRuntimeAction", () => {
 
       const result = await handler(
         createRuntimeActionParams({
+          body: requestBody,
           method: "post",
           path: "/uninstallation",
-          body: requestBody,
           ...DEFAULT_INSTALLATION_PARAMS,
         }),
       );
 
       expect(result).toMatchObject({
-        type: "success",
-        statusCode: 202,
         body: expect.objectContaining({ ...initialState }),
+        statusCode: 202,
+        type: "success",
       });
     });
 
@@ -673,8 +673,8 @@ describe("installationRuntimeAction", () => {
       // The install snapshot recorded config A (with eventing)...
       installationStore = createMockInstallationStore(
         createMockSucceededState({
-          id: "installation-1",
           config: configWithCommerceEventing,
+          id: "installation-1",
         }),
       );
 
@@ -685,9 +685,9 @@ describe("installationRuntimeAction", () => {
 
       await handler(
         createRuntimeActionParams({
+          body: requestBody,
           method: "post",
           path: "/uninstallation",
-          body: requestBody,
           ...DEFAULT_INSTALLATION_PARAMS,
         }),
       );
@@ -709,7 +709,7 @@ describe("installationRuntimeAction", () => {
 
     test("falls back to the request config when the snapshot has no recorded config (legacy install)", async () => {
       installationStore = createMockInstallationStore(
-        createMockSucceededState({ id: "installation-1", data: null }),
+        createMockSucceededState({ data: null, id: "installation-1" }),
       );
 
       const handler = installationRuntimeAction({
@@ -718,9 +718,9 @@ describe("installationRuntimeAction", () => {
 
       await handler(
         createRuntimeActionParams({
+          body: requestBody,
           method: "post",
           path: "/uninstallation",
-          body: requestBody,
           ...DEFAULT_INSTALLATION_PARAMS,
         }),
       );
@@ -735,8 +735,8 @@ describe("installationRuntimeAction", () => {
       // snapshot is authoritative for sourcing the uninstall config.
       installationStore = createMockInstallationStore(
         createMockInProgressState({
-          id: "installation-1",
           config: configWithCommerceEventing,
+          id: "installation-1",
         }),
       );
 
@@ -746,9 +746,9 @@ describe("installationRuntimeAction", () => {
 
       await handler(
         createRuntimeActionParams({
+          body: requestBody,
           method: "post",
           path: "/uninstallation",
-          body: requestBody,
           ...DEFAULT_INSTALLATION_PARAMS,
         }),
       );
@@ -771,10 +771,10 @@ describe("installationRuntimeAction", () => {
 
       await handler(
         createRuntimeActionParams({
+          appData,
+          initialState,
           method: "post",
           path: "/uninstallation/execution",
-          initialState,
-          appData,
           ...DEFAULT_INSTALLATION_PARAMS,
         }),
       );
@@ -798,10 +798,10 @@ describe("installationRuntimeAction", () => {
 
       await handler(
         createRuntimeActionParams({
+          appData,
+          initialState,
           method: "post",
           path: "/uninstallation/execution",
-          initialState,
-          appData,
           ...DEFAULT_INSTALLATION_PARAMS,
         }),
       );
@@ -827,10 +827,10 @@ describe("installationRuntimeAction", () => {
           await hooks.onInstallationStart?.(inProgressState);
           await hooks.onStepFailure?.(
             {
+              error: failedState.error,
+              isLeaf: true,
               path: ["uninstallation", "cleanup"],
               stepName: "cleanup",
-              isLeaf: true,
-              error: failedState.error,
             },
             failedState,
           );
@@ -846,17 +846,17 @@ describe("installationRuntimeAction", () => {
 
       const result = await handler(
         createRuntimeActionParams({
+          appData,
+          initialState,
           method: "post",
           path: "/uninstallation/execution",
-          initialState,
-          appData,
           ...DEFAULT_INSTALLATION_PARAMS,
         }),
       );
 
       expect(result).toMatchObject({
-        type: "error",
         error: { statusCode: 500 },
+        type: "error",
       });
     });
   });
@@ -890,8 +890,8 @@ describe("installationRuntimeAction", () => {
       );
 
       expect(result).toMatchObject({
-        type: "success",
         statusCode: 204,
+        type: "success",
       });
     });
   });

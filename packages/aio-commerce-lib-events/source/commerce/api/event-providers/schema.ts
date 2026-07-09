@@ -20,11 +20,11 @@ export const EventProviderGetByIdParamsSchema = v.object({
 });
 
 export const EventProviderCreateParamsSchema = v.object({
-  provider_id: stringValueSchema("provider_id"),
+  description: v.optional(stringValueSchema("description")),
   instance_id: stringValueSchema("instance_id"),
 
   label: v.optional(stringValueSchema("label")),
-  description: v.optional(stringValueSchema("description")),
+  provider_id: stringValueSchema("provider_id"),
   workspace_configuration: v.optional(
     workspaceConfigurationSchema("workspace_configuration"),
   ),

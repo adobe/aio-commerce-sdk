@@ -95,11 +95,11 @@ export abstract class CommerceSdkErrorBase extends Error {
   /** Returns the full stack trace of the error and its causes. */
   public get fullStack() {
     let out = this.stack ?? "";
-    let cause = this.cause;
+    let { cause } = this;
 
     while (cause instanceof Error) {
       out += `\nCaused by: ${cause.stack ?? cause.message}`;
-      cause = cause.cause;
+      ({ cause } = cause);
     }
 
     return out;
@@ -107,11 +107,11 @@ export abstract class CommerceSdkErrorBase extends Error {
 
   /** Returns the root cause of the error. */
   public get rootCause() {
-    let cause = this.cause;
+    let { cause } = this;
 
     while (cause) {
       if (typeof cause === "object" && cause !== null && "cause" in cause) {
-        cause = cause.cause;
+        ({ cause } = cause);
       } else {
         break;
       }
@@ -124,10 +124,10 @@ export abstract class CommerceSdkErrorBase extends Error {
   public toJSON() {
     // This is needed, otherwise JSON.stringify returns '{}' 🤡
     return {
-      name: this.name,
-      message: this.message,
-      stack: this.fullStack,
       cause: this.cause,
+      message: this.message,
+      name: this.name,
+      stack: this.fullStack,
       traceId: this.traceId,
     };
   }
@@ -140,10 +140,10 @@ export abstract class CommerceSdkErrorBase extends Error {
     if (inspect) {
       // This returns a pretty-printed string with more details than `toString`
       return util.inspect(this, {
-        depth: null,
         colors: true,
-        sorted: true,
+        depth: null,
         maxStringLength: Number.POSITIVE_INFINITY,
+        sorted: true,
       });
     }
 

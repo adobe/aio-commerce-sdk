@@ -22,8 +22,8 @@ import {
 import type { MassActionGridType } from "#mass-actions/worker/types";
 
 const VALID_REQUEST = {
-  requestId: "550e8400-e29b-41d4-a716-446655440000",
   gridType: "order",
+  requestId: "550e8400-e29b-41d4-a716-446655440000",
   selectedIds: ["000000001", "000000002"],
 };
 

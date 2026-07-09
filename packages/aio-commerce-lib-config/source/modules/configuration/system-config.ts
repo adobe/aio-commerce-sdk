@@ -29,8 +29,8 @@ const SYSTEM_CONFIG_CACHE_TTL_SECONDS = 86_400;
  * and keeps these entries cleanly separated from `configuration.*`.
  */
 const SYSTEM_NAMESPACE: RepositoryNamespace = {
-  stateKey: (key) => key,
   filePath: (key) => `system/${key}.json`,
+  stateKey: (key) => key,
 };
 
 /**

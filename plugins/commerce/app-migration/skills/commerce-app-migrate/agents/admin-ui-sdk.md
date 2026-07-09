@@ -103,10 +103,18 @@ V1 mass actions used `displayIframe` to distinguish iframe vs. worker handlers. 
 
 **`runtimeAction` for worker mass actions:** V1 `path` on a `displayIframe: false` mass action was a full HTTP URL to the runtime action endpoint, not a runtime action name. V2 `runtimeAction` requires a `<package>/<action>` name resolved by App Registry. Add an unresolved question and set `runtimeAction` to `"<FILL_IN>"`:
 
+**Inference:** Before setting `default: ""`, attempt to derive the value from the v1 `path` URL.
+Parse the two path segments immediately after `/web/<namespace>/` — e.g.
+`https://.../api/v1/web/ns/my-pkg/my-action` → `my-pkg/my-action`. Then cross-reference
+against all `ext.config.yaml` files in the project to confirm the action is declared under
+that package. If confirmed: use `<package>/<action>` as `default`. If the parse succeeds
+but no confirmation from config: still use the parsed value as `default`. If the URL
+cannot be parsed: `default: ""`.
+
     {
       "id": "adminUi.<entity>.massActions.<actionId>.runtimeAction",
       "prompt": "V1 mass action \"<actionId>\" was a worker (displayIframe: false) with path \"<path>\". V2 requires a runtimeAction name (e.g. \"<package>/<action-name>\"). What is the runtime action name?",
-      "default": ""
+      "default": "<inferred value, or empty string if inference failed>"
     }
 
 **`sandbox` / `sandboxPermissions`:** Valid values are `"allow-downloads"`, `"allow-modals"`, and `"allow-popups"`.
@@ -140,23 +148,32 @@ at the top level — these don't exist in V1. Add an unresolved question for eac
 
 Replace `<meshId>` with the actual `data.meshId` value. If `data.meshId` is absent, omit the `(meshId: "...")` parenthetical from the prompt.
 
-    {
-      "id": "adminUi.<entity>.gridColumns.runtimeAction",
-      "prompt": "V1 grid columns for <entity> used API Mesh (meshId: \"<meshId>\"). V2 requires a runtimeAction that returns column data. What is the runtime action name for the <entity> grid columns?",
-      "default": ""
-    }
+**Inference:** Before setting `default: ""`, scan all `ext.config.yaml` files in the project.
+For the current entity, find a package whose name or action names contain the entity name
+(e.g. `customer`) AND a grid or column keyword (e.g. `column`, `grid`). Resolve to
+`<package>/<action>` format. Apply resolution rules:
 
-    {
-      "id": "adminUi.<entity>.gridColumns.label",
-      "prompt": "What label should be shown for the <entity> grid columns section?",
-      "default": "<Entity> grid columns"
-    }
+- Exactly one candidate → use as `default`
+- Multiple candidates → list them in the prompt, `default: ""`
+- No candidate → `default: ""`
 
-    {
-      "id": "adminUi.<entity>.gridColumns.description",
-      "prompt": "What description should be shown for the <entity> grid columns?",
-      "default": "Adds custom columns to the <entity> grid"
-    }
+  {
+  "id": "adminUi.<entity>.gridColumns.runtimeAction",
+  "prompt": "V1 grid columns for <entity> used API Mesh (meshId: \"<meshId>\"). V2 requires a runtimeAction that returns column data. What is the runtime action name for the <entity> grid columns?",
+  "default": "<inferred value, or empty string if inference failed>"
+  }
+
+  {
+  "id": "adminUi.<entity>.gridColumns.label",
+  "prompt": "What label should be shown for the <entity> grid columns section?",
+  "default": "<Entity> grid columns"
+  }
+
+  {
+  "id": "adminUi.<entity>.gridColumns.description",
+  "prompt": "What description should be shown for the <entity> grid columns?",
+  "default": "Adds custom columns to the <entity> grid"
+  }
 
 Set `runtimeAction` to `"<FILL_IN>"` in the configFragment until the developer answers.
 
@@ -190,10 +207,14 @@ V1 order view buttons (`order.viewButtons`) are now supported in v2. Like mass a
 developer-defined HTTP URL, not a runtime action name. V2 requires a `<package>/<action>` name
 resolved by App Registry. Add an unresolved question and set `runtimeAction` to `"<FILL_IN>"`:
 
+**Inference:** Same strategy as worker mass actions — parse the v1 `path` URL for the two
+segments after `/web/<namespace>/`, cross-reference against `ext.config.yaml`. Use as `default`
+if parseable; `default: ""` otherwise.
+
     {
       "id": "adminUi.order.viewButtons.<buttonId>.runtimeAction",
       "prompt": "V1 view button \"<buttonId>\" was a non-iframe button (displayIframe: false) with path \"<path>\". V2 requires a runtimeAction name (e.g. \"orders/<action-name>\"). What is the runtime action name?",
-      "default": ""
+      "default": "<inferred value, or empty string if inference failed>"
     }
 
 **Missing `path` on view buttons:** If a `type: "view"` button has no `path`, add an unresolved
@@ -270,123 +291,6 @@ Patch response. This is a manual migration that requires implementing a new webh
 For each custom fee found, inform the developer that it requires manual migration.
 
 See: [Custom fees — Checkout Totals Collector](https://developer.adobe.com/commerce/extensibility/starter-kit/checkout/totals-collector-fees)
-
----
-
-## Handler Migration
-
-After producing the `configFragment`, update the runtime action handler source files.
-Only **worker** entries require a handler — `view` entries (iframe) have no server handler.
-
-Use your Write tool to update or create each handler file described below.
-
-### Worker mass actions
-
-For each worker mass action in the v1 registration, find the existing handler file.
-The file is typically referenced by the `path` field in the v1 config (an HTTP URL whose
-path segment maps to an action under `actions/`), or discoverable via `app.config.yaml` or
-`ext.config.yaml`. Update it to use the v2 wire-contract builders:
-
-```typescript
-import {
-  parseMassActionRequest,
-  okMassActionResponse,
-  massActionErrorResponse,
-} from "@adobe/aio-commerce-sdk/admin-ui/mass-actions";
-
-export async function main(params: unknown) {
-  const { gridType, ids } = parseMassActionRequest(params);
-  try {
-    // existing business logic — replace direct params access with the parsed values above
-    await processEntities(gridType, ids);
-    return okMassActionResponse();
-  } catch (error) {
-    return massActionErrorResponse(500, (error as Error).message);
-  }
-}
-```
-
-- `parseMassActionRequest(params)` → `{ requestId, gridType, ids }` — validates the incoming shape; throws `CommerceSdkValidationError` on bad input.
-- `okMassActionResponse(body?)` → HTTP 200; optional body for logging.
-- `massActionErrorResponse(statusCode, message)` → non-2xx; body is `{ message }`.
-
-### Worker view buttons
-
-For each worker view button (`displayIframe: false`) in the v1 registration, find the
-existing handler file and update it:
-
-```typescript
-import {
-  parseOrderViewButtonRequest,
-  okOrderViewButtonResponse,
-  orderViewButtonErrorResponse,
-} from "@adobe/aio-commerce-sdk/admin-ui/order-view-buttons";
-
-export async function main(params: unknown) {
-  const { id, orderId } = parseOrderViewButtonRequest(params);
-  try {
-    // existing business logic — id is the buttonId, orderId is the order
-    await handleButton(id, orderId);
-    return okOrderViewButtonResponse();
-  } catch (error) {
-    return orderViewButtonErrorResponse(500, (error as Error).message);
-  }
-}
-```
-
-- `parseOrderViewButtonRequest(params)` → `{ requestId, id, orderId }` — `id` identifies which button was clicked (useful when one handler serves multiple buttons).
-- `okOrderViewButtonResponse()` → success; empty `{}` body.
-- `orderViewButtonErrorResponse(statusCode, message)` → error; `{ message }` body.
-
-### Grid columns (new handler)
-
-V1 grid columns used API Mesh — there is no existing handler to migrate. Once the developer
-provides the `runtimeAction` name (via the `adminUi.<entity>.gridColumns.runtimeAction`
-unresolved question), scaffold a new handler under
-`src/commerce-backend-ui-2/actions/<action>/index.ts`:
-
-```typescript
-import {
-  parseGridRequest,
-  okGridResponse,
-  errorGridResponse,
-} from "@adobe/aio-commerce-sdk/admin-ui/grid-columns";
-
-export async function main(params: unknown) {
-  const { gridType, ids } = parseGridRequest(params);
-  try {
-    // fetch column data for the visible entity ids
-    const rows = await fetchColumnData(gridType, ids);
-    // rows keyed by entity id; each value keyed by the column ids declared in config
-    return okGridResponse(rows);
-  } catch (error) {
-    return errorGridResponse(500, (error as Error).message);
-  }
-}
-```
-
-- `parseGridRequest(params)` → `{ requestId, gridType, ids }` — `ids` are the visible entity IDs.
-- `okGridResponse(data, defaults?)` → success envelope. Row object keys must match the `id` values declared in `gridColumns.columns`, or cells render empty.
-- `errorGridResponse(statusCode, message)` → non-2xx error response.
-
-Also register the action in `src/commerce-backend-ui-2/ext.config.yaml` under `runtimeManifest`:
-
-```yaml
-runtimeManifest:
-  packages:
-    <package>: # must match the <package> portion of runtimeAction
-      actions:
-        <action>:
-          function: actions/<action>/index.js
-          web: "yes"
-          annotations:
-            require-adobe-auth: true
-            final: true
-```
-
-If the developer has not yet answered the `runtimeAction` unresolved question, skip creating
-the handler file — leave a `<FILL_IN>` placeholder in the config and note that the handler
-must be scaffolded once the action name is confirmed.
 
 ---
 

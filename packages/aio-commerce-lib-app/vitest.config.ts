@@ -23,17 +23,17 @@ const buildVariables = await getVariables();
 export default mergeConfig(
   baseConfig,
   defineConfig({
-    plugins: [],
     define: {
       ...buildVariables,
     },
+    plugins: [],
 
     test: {
-      setupFiles: ["./test/setup/global.ts"],
       coverage: {
         // Exclude barrel files and template files
         exclude: [...BARREL_FILES, ...TEMPLATE_FILES],
       },
+      setupFiles: ["./test/setup/global.ts"],
     },
   }),
 );

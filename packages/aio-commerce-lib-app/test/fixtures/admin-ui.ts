@@ -15,17 +15,17 @@ import { vi } from "vitest";
 import { createMockInstallationContext } from "#test/fixtures/installation";
 
 export const viewButtonViewBase = {
-  type: "view" as const,
   id: "delete-order",
   label: "Delete",
   path: "#/delete-order",
+  type: "view" as const,
 };
 
 export const viewButtonWorkerBase = {
-  type: "worker" as const,
   id: "sync-inventory",
   label: "Sync inventory",
   runtimeAction: "orders/sync-inventory",
+  type: "worker" as const,
 };
 
 import type { AdminUiExecutionContext } from "#management/installation/admin-ui/utils";

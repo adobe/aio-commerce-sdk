@@ -54,8 +54,8 @@ export async function fetchRawConfiguration(
   if (!configData) {
     const defaults = getSchemaDefaults(schema);
     configData = {
-      scope: { id: scopeId, code: scopeCode, level: scopeLevel },
       config: defaults.config,
+      scope: { code: scopeCode, id: scopeId, level: scopeLevel },
     };
   } else if (!Array.isArray(configData.config)) {
     configData.config = [];
@@ -64,13 +64,13 @@ export async function fetchRawConfiguration(
   try {
     configData = await mergeWithSchemaDefaults({
       configData,
-      scopeCode,
-      scopeLevel,
-      scopePath,
+      getSchemaFn: async () => Promise.resolve(schema),
 
       loadScopeConfigFn: (code: string) =>
         configRepository.loadConfig(code, context.cacheTimeout),
-      getSchemaFn: async () => Promise.resolve(schema),
+      scopeCode,
+      scopeLevel,
+      scopePath,
     });
   } catch {
     // Continue with original configData if merging fails

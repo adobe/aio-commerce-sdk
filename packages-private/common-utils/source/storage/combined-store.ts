@@ -125,8 +125,8 @@ class CombinedStore<T> implements KeyValueStore<T> {
 
   public async delete(key: string): Promise<boolean> {
     const [cacheDeleted, persistentDeleted] = await Promise.all([
-      this.cache.delete?.(key) ?? Promise.resolve(false),
-      this.persistent.delete?.(key) ?? Promise.resolve(false),
+      this.cache.delete(key),
+      this.persistent.delete(key),
     ]);
 
     return cacheDeleted || persistentDeleted;

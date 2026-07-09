@@ -68,8 +68,8 @@ export async function createEventSubscription(
     .post("eventing/eventSubscribe", {
       ...fetchOptions,
       json: {
-        force,
         event,
+        force,
       },
     })
     .json()

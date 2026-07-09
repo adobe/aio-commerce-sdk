@@ -18,12 +18,12 @@ import type { ConfigValueWithOptionalOrigin } from "#modules/configuration/types
 export const mockGlobalConfigValues: ConfigValueWithOptionalOrigin[] = [
   {
     name: "currency",
-    value: "USD",
     origin: { code: "global", level: "global" },
+    value: "USD",
   },
   {
     name: "locale",
-    value: "en_US",
     origin: { code: "global", level: "global" },
+    value: "en_US",
   },
 ];

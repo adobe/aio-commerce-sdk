@@ -42,8 +42,8 @@ describe("appConfigRuntimeAction", () => {
       const result = await handler(createRuntimeActionParams());
 
       expect(result).toMatchObject({
-        type: "success",
         body: minimalValidConfig,
+        type: "success",
       });
     });
 
@@ -56,8 +56,8 @@ describe("appConfigRuntimeAction", () => {
       const result = await handler(createRuntimeActionParams());
 
       expect(result).toMatchObject({
-        type: "error",
         error: { statusCode: 500 },
+        type: "error",
       });
     });
 
@@ -69,8 +69,8 @@ describe("appConfigRuntimeAction", () => {
 
       const result = await handler(createRuntimeActionParams());
       expect(result).toMatchObject({
-        type: "error",
         error: { statusCode: 500 },
+        type: "error",
       });
     });
 
@@ -81,20 +81,20 @@ describe("appConfigRuntimeAction", () => {
 
       const result = await handler(createRuntimeActionParams());
       expect(result).toMatchObject({
-        type: "success",
         body: {
           businessConfig: {
             schema: [
               expect.objectContaining({
-                name: "paymentMethod",
-                type: "list",
-                selectionMode: "single",
                 default: "braintree",
+                name: "paymentMethod",
                 options: [{ label: "Braintree", value: "braintree" }],
+                selectionMode: "single",
+                type: "list",
               }),
             ],
           },
         },
+        type: "success",
       });
     });
 
@@ -155,10 +155,10 @@ describe("appConfigRuntimeAction", () => {
       const ck = getOpenApiCacheKey(domains);
 
       expect(result).toMatchObject({
-        type: "success",
         body: {
           openApiSpecUrl: `https://test-namespace.adobeioruntime.net/api/v1/web/app-management/app-config/openapi.json?ck=${ck}`,
         },
+        type: "success",
       });
     });
 
@@ -169,8 +169,8 @@ describe("appConfigRuntimeAction", () => {
       const result = await handler(createRuntimeActionParams());
 
       expect(result).toMatchObject({
-        type: "success",
         body: minimalValidConfig,
+        type: "success",
       });
       expect.assert(result.type === "success");
       expect(result.body as Record<string, unknown>).not.toHaveProperty(
@@ -185,8 +185,8 @@ describe("appConfigRuntimeAction", () => {
       const result = await handler(createRuntimeActionParams());
 
       expect(result).toMatchObject({
-        type: "success",
         body: { adminUi: configWithFullAdminUiV2.adminUi },
+        type: "success",
       });
     });
   });
@@ -225,8 +225,8 @@ describe("appConfigRuntimeAction", () => {
       );
 
       expect(result).toMatchObject({
-        type: "success",
         headers: { "Cache-Control": "public, max-age=31536000, immutable" },
+        type: "success",
       });
     });
   });

@@ -17,6 +17,7 @@ import {
   createRouter,
 } from "@tanstack/react-router";
 
+import type { RouterHistory } from "@tanstack/react-router";
 import type { IndexRoute, RouteEntry } from "./types";
 
 const HASH_ROUTE_PREFIX_PATTERN = /^[#/]+/u;
@@ -55,10 +56,13 @@ export function getRouteTo(path: string) {
  *
  * @param rootComponent The root component of the extension app.
  * @param routeEntries The route entries for the extension app.
+ * @param history The history implementation to use. Defaults to hash history; pass a memory
+ *   history to get deterministic, seedable navigation (e.g. in tests).
  */
 export function createExtensionRouter(
   rootComponent: React.JSX.Element,
   routeEntries: RouteEntry[],
+  history: RouterHistory = createHashHistory(),
 ) {
   const rootRoute = createRootRoute({
     component: () => rootComponent,
@@ -66,15 +70,15 @@ export function createExtensionRouter(
 
   const routes = routeEntries.map((route) =>
     createRoute({
-      path: getRoutePath(route),
+      component: () => route.element,
 
       getParentRoute: () => rootRoute,
-      component: () => route.element,
+      path: getRoutePath(route),
     }),
   );
 
   return createRouter({
-    history: createHashHistory(),
+    history,
     routeTree: rootRoute.addChildren(routes),
   });
 }
