@@ -29,18 +29,18 @@ export default async function main() {
 
   const packageJson = await readJson<PackageJson>(packageJsonPath);
 
-  for (const manifestPath of [
+  const manifestPaths = [
     join(process.cwd(), "tile.json"),
     join(process.cwd(), ".claude-plugin/plugin.json"),
-  ]) {
-    if (!existsSync(manifestPath)) {
-      continue;
-    }
+  ].filter((manifestPath) => existsSync(manifestPath));
 
-    const manifest = await readJson<VersionedManifest>(manifestPath);
-    manifest.version = packageJson.version;
-    await writeJson(manifestPath, manifest);
-  }
+  await Promise.all(
+    manifestPaths.map(async (manifestPath) => {
+      const manifest = await readJson<VersionedManifest>(manifestPath);
+      manifest.version = packageJson.version;
+      await writeJson(manifestPath, manifest);
+    }),
+  );
 }
 
 main().catch((error) => {

@@ -64,8 +64,8 @@ export default async function main(
 ) {
   return await runGitHubScript(core, async () => {
     await promoteSkills(core, exec, github, context, {
-      sourceRepositoryPath: requireEnv("SOURCE_REPOSITORY_PATH"),
       skillsRepositoryPath: requireEnv("SKILLS_REPOSITORY_PATH"),
+      sourceRepositoryPath: requireEnv("SOURCE_REPOSITORY_PATH"),
     });
   });
 }
@@ -144,15 +144,13 @@ export async function getChangedPluginPackagePaths(
     .map((line) => line.trim())
     .filter((line) => line.length > 0);
 
-  const changedPackagePaths: string[] = [];
+  const versionChanges = await Promise.all(
+    packagePaths.map((packagePath) =>
+      packageVersionChanged(exec, sourceRepositoryPath, packagePath),
+    ),
+  );
 
-  for (const packagePath of packagePaths) {
-    if (await packageVersionChanged(exec, sourceRepositoryPath, packagePath)) {
-      changedPackagePaths.push(packagePath);
-    }
-  }
-
-  return changedPackagePaths;
+  return packagePaths.filter((_, index) => versionChanges[index]);
 }
 
 export function hasChangedCommercePluginVersions(packagePaths: string[]) {
@@ -185,43 +183,44 @@ export async function preparePromotionArtifacts(
   sourceRepositoryPath: string,
   skillsRepositoryPath: string,
 ) {
-  const promotions: PluginPromotion[] = [];
+  return await Promise.all(
+    packagePaths.map(async (packagePath) => {
+      const pluginRelativePath = dirname(packagePath);
+      const sourcePath = join(sourceRepositoryPath, pluginRelativePath);
+      const targetPath = join(skillsRepositoryPath, pluginRelativePath);
+      const packageJson = await readJson<PluginPackageJson>(
+        join(sourcePath, "package.json"),
+      );
+      const tileJson = await readJson<TileJson>(join(sourcePath, "tile.json"));
+      const displayName =
+        tileJson.name.split("/").at(-1) ?? basename(sourcePath);
 
-  for (const packagePath of packagePaths) {
-    const pluginRelativePath = dirname(packagePath);
-    const sourcePath = join(sourceRepositoryPath, pluginRelativePath);
-    const targetPath = join(skillsRepositoryPath, pluginRelativePath);
-    const packageJson = await readJson<PluginPackageJson>(
-      join(sourcePath, "package.json"),
-    );
-    const tileJson = await readJson<TileJson>(join(sourcePath, "tile.json"));
-    const displayName = tileJson.name.split("/").at(-1) ?? basename(sourcePath);
+      await rm(targetPath, { force: true, recursive: true });
+      await mkdir(targetPath, { recursive: true });
 
-    await rm(targetPath, { recursive: true, force: true });
-    await mkdir(targetPath, { recursive: true });
+      await Promise.all(
+        PROMOTED_ENTRIES.map((entry) =>
+          cp(join(sourcePath, entry), join(targetPath, entry), {
+            recursive: true,
+          }),
+        ),
+      );
+      await rewritePluginRepository(targetPath);
 
-    for (const entry of PROMOTED_ENTRIES) {
-      await cp(join(sourcePath, entry), join(targetPath, entry), {
-        recursive: true,
-      });
-    }
-    await rewritePluginRepository(targetPath);
-
-    promotions.push({
-      packagePath,
-      sourcePath,
-      targetPath,
-      packageName: packageJson.name,
-      displayName,
-      version: packageJson.version,
-      changelogEntries: await readChangelogEntries(
-        join(sourcePath, "CHANGELOG.md"),
-        packageJson.version,
-      ),
-    });
-  }
-
-  return promotions;
+      return {
+        changelogEntries: await readChangelogEntries(
+          join(sourcePath, "CHANGELOG.md"),
+          packageJson.version,
+        ),
+        displayName,
+        packageName: packageJson.name,
+        packagePath,
+        sourcePath,
+        targetPath,
+        version: packageJson.version,
+      } satisfies PluginPromotion;
+    }),
+  );
 }
 
 export function buildPromotionPullRequestBody(
@@ -409,31 +408,31 @@ async function upsertPromotionPullRequest(
   )}`;
   const body = buildPromotionPullRequestBody(promotions);
   const openPullRequests = await github.rest.pulls.list({
+    head: `${TARGET_OWNER}:${PROMOTION_BRANCH}`,
     owner: TARGET_OWNER,
     repo: TARGET_REPO,
-    head: `${TARGET_OWNER}:${PROMOTION_BRANCH}`,
     state: "open",
   });
   const [pullRequest] = openPullRequests.data;
 
   if (pullRequest) {
     await github.rest.pulls.update({
-      owner: TARGET_OWNER,
-      repo: TARGET_REPO,
-      pull_number: pullRequest.number,
-      title,
       body,
+      owner: TARGET_OWNER,
+      pull_number: pullRequest.number,
+      repo: TARGET_REPO,
+      title,
     });
     return;
   }
 
   await github.rest.pulls.create({
+    base: "main",
+    body,
+    head: PROMOTION_BRANCH,
     owner: TARGET_OWNER,
     repo: TARGET_REPO,
-    base: "main",
-    head: PROMOTION_BRANCH,
     title,
-    body,
   });
 }
 

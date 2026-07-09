@@ -27,6 +27,11 @@ describe("sync-plugin-version.ts", () => {
   test("syncs tile.json and plugin.json versions to package.json", async () => {
     await withTempFiles(
       {
+        ".claude-plugin/plugin.json": JSON.stringify({
+          name: "commerce-app-management",
+          repository: "https://github.com/adobe/aio-commerce-sdk",
+          version: "1.1.0",
+        }),
         "package.json": JSON.stringify({
           name: "@adobe/aio-commerce-plugin-app-management",
           version: "1.2.0",
@@ -34,11 +39,6 @@ describe("sync-plugin-version.ts", () => {
         "tile.json": JSON.stringify({
           name: "adobe/commerce-app-management",
           version: "1.1.0",
-        }),
-        ".claude-plugin/plugin.json": JSON.stringify({
-          name: "commerce-app-management",
-          version: "1.1.0",
-          repository: "https://github.com/adobe/aio-commerce-sdk",
         }),
       },
       async (tempDir) => {

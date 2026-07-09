@@ -46,9 +46,9 @@ describe("release/promote-skills.ts", () => {
       const core = createCoreMock();
       const exec = createExecMock();
       exec.getExecOutput.mockResolvedValueOnce({
-        stdout: "",
-        stderr: "",
         exitCode: 0,
+        stderr: "",
+        stdout: "",
       });
 
       await expect(
@@ -86,9 +86,9 @@ describe("release/promote-skills.ts", () => {
       };
       const context = { sha: "1234567890abcdef" };
       exec.getExecOutput.mockResolvedValueOnce({
-        stdout: "",
-        stderr: "",
         exitCode: 0,
+        stderr: "",
+        stdout: "",
       });
 
       await promoteSkills(
@@ -97,8 +97,8 @@ describe("release/promote-skills.ts", () => {
         github as never,
         context as never,
         {
-          sourceRepositoryPath: tempDir,
           skillsRepositoryPath: join(tempDir, "skills"),
+          sourceRepositoryPath: tempDir,
         },
       );
 
@@ -111,9 +111,9 @@ describe("release/promote-skills.ts", () => {
     await withTempFiles({}, async (tempDir) => {
       const exec = createExecMock();
       exec.getExecOutput.mockResolvedValueOnce({
-        stdout: "",
-        stderr: "",
         exitCode: 0,
+        stderr: "",
+        stdout: "",
       });
 
       await expect(
@@ -134,17 +134,17 @@ describe("release/promote-skills.ts", () => {
         const exec = createExecMock();
         exec.getExecOutput
           .mockResolvedValueOnce({
-            stdout: "plugins/commerce/app-management/package.json\n",
-            stderr: "",
             exitCode: 0,
+            stderr: "",
+            stdout: "plugins/commerce/app-management/package.json\n",
           })
           .mockResolvedValueOnce({
+            exitCode: 0,
+            stderr: "",
             stdout: JSON.stringify({
               name: "@adobe/aio-commerce-plugin-app-management",
               version: "0.0.0",
             }),
-            stderr: "",
-            exitCode: 0,
           });
 
         await expect(
@@ -166,17 +166,17 @@ describe("release/promote-skills.ts", () => {
         const exec = createExecMock();
         exec.getExecOutput
           .mockResolvedValueOnce({
-            stdout: "plugins/commerce/app-management/package.json\n",
-            stderr: "",
             exitCode: 0,
+            stderr: "",
+            stdout: "plugins/commerce/app-management/package.json\n",
           })
           .mockResolvedValueOnce({
+            exitCode: 0,
+            stderr: "",
             stdout: JSON.stringify({
               name: "@adobe/aio-commerce-plugin-app-management",
               version: "1.0.0",
             }),
-            stderr: "",
-            exitCode: 0,
           });
 
         await expect(
@@ -198,14 +198,14 @@ describe("release/promote-skills.ts", () => {
         const exec = createExecMock();
         exec.getExecOutput
           .mockResolvedValueOnce({
-            stdout: "plugins/commerce/app-management/package.json\n",
-            stderr: "",
             exitCode: 0,
+            stderr: "",
+            stdout: "plugins/commerce/app-management/package.json\n",
           })
           .mockResolvedValueOnce({
-            stdout: "",
-            stderr: "fatal: path does not exist",
             exitCode: 128,
+            stderr: "fatal: path does not exist",
+            stdout: "",
           });
 
         await expect(
@@ -218,10 +218,13 @@ describe("release/promote-skills.ts", () => {
   test("copies promotion artifacts and excludes SDK-only files", async () => {
     await withTempFiles(
       {
-        "source/plugins/commerce/app-management/package.json": JSON.stringify({
-          name: "@adobe/aio-commerce-plugin-app-management",
-          version: "1.0.0",
-        }),
+        "skills/plugins/commerce/app-management/package.json": "{}",
+        "source/plugins/commerce/app-management/.claude-plugin/plugin.json":
+          JSON.stringify({
+            name: "commerce-app-management",
+            repository: "https://github.com/adobe/aio-commerce-sdk",
+            version: "1.0.0",
+          }),
         "source/plugins/commerce/app-management/CHANGELOG.md": [
           "# @adobe/aio-commerce-plugin-app-management",
           "",
@@ -238,21 +241,18 @@ describe("release/promote-skills.ts", () => {
           "- Keep previous entries out.",
           "",
         ].join("\n"),
-        "source/plugins/commerce/app-management/tile.json": JSON.stringify({
-          name: "adobe/commerce-app-management",
+        "source/plugins/commerce/app-management/package.json": JSON.stringify({
+          name: "@adobe/aio-commerce-plugin-app-management",
           version: "1.0.0",
         }),
         "source/plugins/commerce/app-management/README.md":
           "# App Management\n",
         "source/plugins/commerce/app-management/skills/commerce-app-init/SKILL.md":
           "# Skill\n",
-        "source/plugins/commerce/app-management/.claude-plugin/plugin.json":
-          JSON.stringify({
-            name: "commerce-app-management",
-            version: "1.0.0",
-            repository: "https://github.com/adobe/aio-commerce-sdk",
-          }),
-        "skills/plugins/commerce/app-management/package.json": "{}",
+        "source/plugins/commerce/app-management/tile.json": JSON.stringify({
+          name: "adobe/commerce-app-management",
+          version: "1.0.0",
+        }),
       },
       async (tempDir) => {
         const sourceRoot = join(tempDir, "source");
@@ -274,10 +274,10 @@ describe("release/promote-skills.ts", () => {
 
         expect(promotions).toEqual([
           expect.objectContaining({
+            changelogEntries: ["- Promote App Management skills."],
             displayName: "commerce-app-management",
             packageName: "@adobe/aio-commerce-plugin-app-management",
             version: "1.0.0",
-            changelogEntries: ["- Promote App Management skills."],
           }),
         ]);
         expect(pluginJson.repository).toBe("https://github.com/adobe/skills");
@@ -300,24 +300,24 @@ describe("release/promote-skills.ts", () => {
   test("rejects plugin manifests that do not point to the SDK repository", async () => {
     await withTempFiles(
       {
+        "source/plugins/commerce/app-management/.claude-plugin/plugin.json":
+          JSON.stringify({
+            name: "commerce-app-management",
+            repository: "https://github.com/adobe/skills",
+            version: "1.0.0",
+          }),
         "source/plugins/commerce/app-management/package.json": JSON.stringify({
           name: "@adobe/aio-commerce-plugin-app-management",
-          version: "1.0.0",
-        }),
-        "source/plugins/commerce/app-management/tile.json": JSON.stringify({
-          name: "adobe/commerce-app-management",
           version: "1.0.0",
         }),
         "source/plugins/commerce/app-management/README.md":
           "# App Management\n",
         "source/plugins/commerce/app-management/skills/commerce-app-init/SKILL.md":
           "# Skill\n",
-        "source/plugins/commerce/app-management/.claude-plugin/plugin.json":
-          JSON.stringify({
-            name: "commerce-app-management",
-            version: "1.0.0",
-            repository: "https://github.com/adobe/skills",
-          }),
+        "source/plugins/commerce/app-management/tile.json": JSON.stringify({
+          name: "adobe/commerce-app-management",
+          version: "1.0.0",
+        }),
       },
       async (tempDir) => {
         await expect(
@@ -334,10 +334,12 @@ describe("release/promote-skills.ts", () => {
   test("promotes changed plugins through the full git path", async () => {
     await withTempFiles(
       {
-        "source/plugins/commerce/app-management/package.json": JSON.stringify({
-          name: "@adobe/aio-commerce-plugin-app-management",
-          version: "1.2.0",
-        }),
+        "source/plugins/commerce/app-management/.claude-plugin/plugin.json":
+          JSON.stringify({
+            name: "commerce-app-management",
+            repository: "https://github.com/adobe/aio-commerce-sdk",
+            version: "1.2.0",
+          }),
         "source/plugins/commerce/app-management/CHANGELOG.md": [
           "# @adobe/aio-commerce-plugin-app-management",
           "",
@@ -346,20 +348,18 @@ describe("release/promote-skills.ts", () => {
           "- Add new skill.",
           "",
         ].join("\n"),
-        "source/plugins/commerce/app-management/tile.json": JSON.stringify({
-          name: "adobe/commerce-app-management",
+        "source/plugins/commerce/app-management/package.json": JSON.stringify({
+          name: "@adobe/aio-commerce-plugin-app-management",
           version: "1.2.0",
         }),
         "source/plugins/commerce/app-management/README.md":
           "# App Management\n",
         "source/plugins/commerce/app-management/skills/commerce-app-init/SKILL.md":
           "# Skill\n",
-        "source/plugins/commerce/app-management/.claude-plugin/plugin.json":
-          JSON.stringify({
-            name: "commerce-app-management",
-            version: "1.2.0",
-            repository: "https://github.com/adobe/aio-commerce-sdk",
-          }),
+        "source/plugins/commerce/app-management/tile.json": JSON.stringify({
+          name: "adobe/commerce-app-management",
+          version: "1.2.0",
+        }),
       },
       async (tempDir) => {
         const core = createCoreMock();
@@ -378,24 +378,24 @@ describe("release/promote-skills.ts", () => {
         exec.getExecOutput
           // git diff --name-only (detect changed plugins)
           .mockResolvedValueOnce({
-            stdout: "plugins/commerce/app-management/package.json\n",
-            stderr: "",
             exitCode: 0,
+            stderr: "",
+            stdout: "plugins/commerce/app-management/package.json\n",
           })
           // git show HEAD^1:package.json (previous version)
           .mockResolvedValueOnce({
+            exitCode: 0,
+            stderr: "",
             stdout: JSON.stringify({
               name: "@adobe/aio-commerce-plugin-app-management",
               version: "1.1.1",
             }),
-            stderr: "",
-            exitCode: 0,
           })
           // git status --porcelain (has changes to commit)
           .mockResolvedValueOnce({
-            stdout: " M plugins/commerce/app-management/tile.json\n",
-            stderr: "",
             exitCode: 0,
+            stderr: "",
+            stdout: " M plugins/commerce/app-management/tile.json\n",
           });
 
         await promoteSkills(
@@ -404,8 +404,8 @@ describe("release/promote-skills.ts", () => {
           github as never,
           context as never,
           {
-            sourceRepositoryPath: join(tempDir, "source"),
             skillsRepositoryPath: join(tempDir, "skills"),
+            sourceRepositoryPath: join(tempDir, "source"),
           },
         );
 
@@ -413,10 +413,10 @@ describe("release/promote-skills.ts", () => {
         expect(github.rest.pulls.create).toHaveBeenCalledOnce();
         expect(github.rest.pulls.create).toHaveBeenCalledWith(
           expect.objectContaining({
+            base: "main",
+            head: "promote/adobe-aio-commerce-sdk",
             owner: "adobe",
             repo: "skills",
-            head: "promote/adobe-aio-commerce-sdk",
-            base: "main",
           }),
         );
       },
@@ -426,25 +426,25 @@ describe("release/promote-skills.ts", () => {
   test("is a no-op when adobe/skills already reflects the promoted content", async () => {
     await withTempFiles(
       {
+        "source/plugins/commerce/app-management/.claude-plugin/plugin.json":
+          JSON.stringify({
+            name: "commerce-app-management",
+            repository: "https://github.com/adobe/aio-commerce-sdk",
+            version: "1.2.0",
+          }),
+        "source/plugins/commerce/app-management/CHANGELOG.md": "",
         "source/plugins/commerce/app-management/package.json": JSON.stringify({
           name: "@adobe/aio-commerce-plugin-app-management",
-          version: "1.2.0",
-        }),
-        "source/plugins/commerce/app-management/CHANGELOG.md": "",
-        "source/plugins/commerce/app-management/tile.json": JSON.stringify({
-          name: "adobe/commerce-app-management",
           version: "1.2.0",
         }),
         "source/plugins/commerce/app-management/README.md":
           "# App Management\n",
         "source/plugins/commerce/app-management/skills/commerce-app-init/SKILL.md":
           "# Skill\n",
-        "source/plugins/commerce/app-management/.claude-plugin/plugin.json":
-          JSON.stringify({
-            name: "commerce-app-management",
-            version: "1.2.0",
-            repository: "https://github.com/adobe/aio-commerce-sdk",
-          }),
+        "source/plugins/commerce/app-management/tile.json": JSON.stringify({
+          name: "adobe/commerce-app-management",
+          version: "1.2.0",
+        }),
       },
       async (tempDir) => {
         const core = createCoreMock();
@@ -462,20 +462,20 @@ describe("release/promote-skills.ts", () => {
 
         exec.getExecOutput
           .mockResolvedValueOnce({
-            stdout: "plugins/commerce/app-management/package.json\n",
-            stderr: "",
             exitCode: 0,
+            stderr: "",
+            stdout: "plugins/commerce/app-management/package.json\n",
           })
           .mockResolvedValueOnce({
+            exitCode: 0,
+            stderr: "",
             stdout: JSON.stringify({
               name: "@adobe/aio-commerce-plugin-app-management",
               version: "1.1.1",
             }),
-            stderr: "",
-            exitCode: 0,
           })
           // git status --porcelain returns empty: skills already up to date
-          .mockResolvedValueOnce({ stdout: "", stderr: "", exitCode: 0 });
+          .mockResolvedValueOnce({ exitCode: 0, stderr: "", stdout: "" });
 
         await promoteSkills(
           asCore(core),
@@ -483,8 +483,8 @@ describe("release/promote-skills.ts", () => {
           github as never,
           context as never,
           {
-            sourceRepositoryPath: join(tempDir, "source"),
             skillsRepositoryPath: join(tempDir, "skills"),
+            sourceRepositoryPath: join(tempDir, "source"),
           },
         );
 
@@ -498,14 +498,14 @@ describe("release/promote-skills.ts", () => {
     expect(
       buildPromotionPullRequestBody([
         {
+          changelogEntries: ["- Add App Management skills."],
           displayName: "commerce-app-management",
           version: "1.0.0",
-          changelogEntries: ["- Add App Management skills."],
         },
         {
+          changelogEntries: [],
           displayName: "commerce-app-migration",
           version: "1.0.0",
-          changelogEntries: [],
         },
       ]),
     ).toBe(
