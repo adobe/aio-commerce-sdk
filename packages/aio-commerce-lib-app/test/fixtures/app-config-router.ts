@@ -21,25 +21,25 @@ import {
  * Used to verify that the app-config router filters by commerceEnv.
  */
 export const configWithEnvScopedEventingAndWebhooks = {
-  metadata: minimalValidConfig.metadata,
-  webhooks: [createMockPaasWebhookEntry(), createMockAllEnvsWebhookEntry()],
   eventing: {
     commerce: [
       {
-        provider: { label: "Orders", description: "Order events" },
         events: [
           {
-            name: "plugin.order_placed",
-            label: "Order Placed",
             description: "Order placed",
-            fields: [{ name: "order_id" }],
-            runtimeActions: ["my-package/on-order"],
             env: ["paas" as const],
+            fields: [{ name: "order_id" }],
+            label: "Order Placed",
+            name: "plugin.order_placed",
+            runtimeActions: ["my-package/on-order"],
           },
         ],
+        provider: { description: "Order events", label: "Orders" },
       },
     ],
   },
+  metadata: minimalValidConfig.metadata,
+  webhooks: [createMockPaasWebhookEntry(), createMockAllEnvsWebhookEntry()],
 };
 
 /**
@@ -47,24 +47,24 @@ export const configWithEnvScopedEventingAndWebhooks = {
  * Used to verify that the app-config router filters fields by commerceEnv.
  */
 export const configWithEnvScopedBusinessConfig = {
-  metadata: minimalValidConfig.metadata,
   businessConfig: {
     schema: [
       {
-        name: "paasField",
-        label: "PaaS Field",
-        type: "text" as const,
         default: "paas",
         env: ["paas" as const],
+        label: "PaaS Field",
+        name: "paasField",
+        type: "text" as const,
       },
       {
-        name: "sharedField",
-        label: "Shared Field",
-        type: "text" as const,
         default: "shared",
+        label: "Shared Field",
+        name: "sharedField",
+        type: "text" as const,
       },
     ],
   },
+  metadata: minimalValidConfig.metadata,
 };
 
 /**

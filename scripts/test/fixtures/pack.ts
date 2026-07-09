@@ -14,8 +14,8 @@ import { readFileSync } from "node:fs";
 
 export const ORIGINAL_PACKAGE_JSON = JSON.stringify(
   {
-    name: "@adobe/test-package",
     description: "original",
+    name: "@adobe/test-package",
   },
   null,
   2,
@@ -23,8 +23,8 @@ export const ORIGINAL_PACKAGE_JSON = JSON.stringify(
 
 export const BUILD_PACKAGE_JSON = JSON.stringify(
   {
-    name: "@adobe/test-package",
     description: "build",
+    name: "@adobe/test-package",
   },
   null,
   2,
@@ -32,8 +32,8 @@ export const BUILD_PACKAGE_JSON = JSON.stringify(
 
 export const EXISTING_BACKUP_PACKAGE_JSON = JSON.stringify(
   {
-    name: "@adobe/test-package",
     description: "existing-backup",
+    name: "@adobe/test-package",
   },
   null,
   2,

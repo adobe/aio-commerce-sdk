@@ -33,12 +33,12 @@ describe("commerceEventsStep leaf step", () => {
     expect(commerceEventsStep.name).toBe("commerce");
     expect(commerceEventsStep.meta).toEqual({
       install: {
-        label: "Configure Commerce Events",
         description: "Sets up I/O Events for Adobe Commerce event sources",
+        label: "Configure Commerce Events",
       },
       uninstall: {
-        label: "Remove Commerce Events",
         description: "Removes I/O Events for Adobe Commerce event sources",
+        label: "Remove Commerce Events",
       },
     });
   });
@@ -118,8 +118,11 @@ describe("commerceEventsStep orchestration", () => {
       },
     });
 
-    const { commerceEventsStep, helperMocks, utilsMocks } =
-      await importCommerceStepWithMocks();
+    const {
+      commerceEventsStep: mockedCommerceEventsStep,
+      helperMocks,
+      utilsMocks,
+    } = await importCommerceStepWithMocks();
 
     utilsMocks.makeWorkspaceConfig.mockReturnValue(
       createMockWorkspaceConfiguration(),
@@ -152,7 +155,7 @@ describe("commerceEventsStep orchestration", () => {
       subscriptions: [],
     });
 
-    const result = await commerceEventsStep.install(
+    const result = await mockedCommerceEventsStep.install(
       createConfigWithTwoCommerceEventingSources(),
       context,
     );
@@ -163,14 +166,14 @@ describe("commerceEventsStep orchestration", () => {
     expect(helperMocks.configureCommerceEventing).toHaveBeenCalledTimes(1);
     expect(helperMocks.configureCommerceEventing).toHaveBeenCalledWith(
       {
-        context,
         config: {
           enabled: true,
-          merchant_id: "test_org_42",
           environment_id: "test_project_7",
           instance_id: "test-app-commerce-events-provider-test-workspace-id",
+          merchant_id: "test_org_42",
           workspace_configuration: expect.any(String),
         },
+        context,
       },
       createMockExistingCommerceEventingData(),
     );
@@ -188,8 +191,11 @@ describe("commerceEventsStep orchestration", () => {
       params: { AIO_COMMERCE_API_FLAVOR: "saas" },
     });
 
-    const { commerceEventsStep, helperMocks, utilsMocks } =
-      await importCommerceStepWithMocks();
+    const {
+      commerceEventsStep: mockedCommerceEventsStep,
+      helperMocks,
+      utilsMocks,
+    } = await importCommerceStepWithMocks();
 
     utilsMocks.makeWorkspaceConfig.mockReturnValue(
       createMockWorkspaceConfiguration(),
@@ -220,7 +226,7 @@ describe("commerceEventsStep orchestration", () => {
       firstSourceEnv: ["paas"],
     });
 
-    const result = await commerceEventsStep.install(config, context);
+    const result = await mockedCommerceEventsStep.install(config, context);
 
     expect(result).toHaveLength(1);
     expect(helperMocks.onboardIoEvents).toHaveBeenCalledTimes(1);

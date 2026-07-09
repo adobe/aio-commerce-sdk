@@ -137,17 +137,17 @@ export function resolveImsAuthParams(
       "AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS",
       params.AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS,
     ),
-    technicalAccountId: params.AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID,
-    technicalAccountEmail: params.AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL,
+    context: params.AIO_COMMERCE_AUTH_IMS_CONTEXT,
+
+    // These are optional, if not set will be defaulted in future use of `getHeaders` or `getAccessToken`
+    environment: params.AIO_COMMERCE_AUTH_IMS_ENVIRONMENT,
     imsOrgId: params.AIO_COMMERCE_AUTH_IMS_ORG_ID,
     scopes: __transformStringArray(
       "AIO_COMMERCE_AUTH_IMS_SCOPES",
       params.AIO_COMMERCE_AUTH_IMS_SCOPES,
     ),
-
-    // These are optional, if not set will be defaulted in future use of `getHeaders` or `getAccessToken`
-    environment: params.AIO_COMMERCE_AUTH_IMS_ENVIRONMENT,
-    context: params.AIO_COMMERCE_AUTH_IMS_CONTEXT,
+    technicalAccountEmail: params.AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL,
+    technicalAccountId: params.AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID,
   };
 
   return __parseImsAuthParams(resolvedParams);

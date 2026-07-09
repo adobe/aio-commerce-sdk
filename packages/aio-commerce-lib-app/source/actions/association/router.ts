@@ -13,7 +13,7 @@
 import { noContent } from "@adobe/aio-commerce-lib-core/responses";
 import {
   HttpActionRouter,
-  logger,
+  logger as withLogger,
 } from "@aio-commerce-sdk/common-utils/actions";
 
 import {
@@ -36,7 +36,7 @@ type AssociationActionContext = BaseContext;
  * - DELETE / Clear stored Commerce instance details
  */
 export const router = new HttpActionRouter<AssociationActionContext>().use(
-  logger({ name: () => "association" }),
+  withLogger({ name: () => "association" }),
 );
 
 /**

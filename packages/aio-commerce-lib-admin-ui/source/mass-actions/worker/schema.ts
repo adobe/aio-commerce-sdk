@@ -31,8 +31,8 @@ export const MassActionGridTypeSchema = v.picklist([
  * enforced here.
  */
 export const MassActionRequestSchema = v.object({
-  requestId: nonEmptyStringValueSchema("requestId"),
   gridType: MassActionGridTypeSchema,
+  requestId: nonEmptyStringValueSchema("requestId"),
   selectedIds: v.pipe(
     v.array(nonEmptyStringValueSchema("id")),
     v.minLength(

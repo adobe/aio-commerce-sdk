@@ -66,7 +66,7 @@ export function createInitialInstallationState(
   const { config } = options;
   const rootStep = createRootInstallationStep(config);
 
-  return createInitialState({ rootStep, config });
+  return createInitialState({ config, rootStep });
 }
 
 /**
@@ -81,15 +81,15 @@ export async function runInstallation(
   const { installationContext, config, initialState, hooks } = options;
   const rootStep = createRootInstallationStep(config);
   const firstResult = await executeWorkflow({
-    rootStep,
-    installationContext,
     config,
-    initialState,
     hooks: {
       ...hooks,
       onInstallationFailure: undefined,
       onStepFailure: undefined,
     },
+    initialState,
+    installationContext,
+    rootStep,
   });
 
   if (firstResult.status === "succeeded") {
@@ -103,23 +103,23 @@ export async function runInstallation(
 
   const retryState = createRetryState(firstResult);
   const retryResult = await executeWorkflow({
-    rootStep,
-    installationContext,
     config,
-    initialState: retryState,
     hooks: hooks && {
       ...hooks,
-      onInstallationSuccess: (state) =>
-        hooks.onInstallationSuccess?.({
-          ...state,
-          metadata: { isRetry: true },
-        } as InstallationState),
       onInstallationFailure: (state) =>
         hooks.onInstallationFailure?.({
           ...state,
           metadata: { isRetry: true },
         } as InstallationState),
+      onInstallationSuccess: (state) =>
+        hooks.onInstallationSuccess?.({
+          ...state,
+          metadata: { isRetry: true },
+        } as InstallationState),
     },
+    initialState: retryState,
+    installationContext,
+    rootStep,
   });
 
   return { ...retryResult, metadata: { isRetry: true } };
@@ -151,7 +151,7 @@ export function createInitialUninstallationState(
 ): InProgressInstallationState {
   const { config } = options;
   const rootStep = createRootUninstallationStep(config);
-  return createInitialState({ rootStep, config, mode: "uninstall" });
+  return createInitialState({ config, mode: "uninstall", rootStep });
 }
 
 /**
@@ -163,11 +163,11 @@ export function runUninstallation(
   const { installationContext, config, initialState, hooks } = options;
   const rootStep = createRootUninstallationStep(config);
   return executeUninstallWorkflow({
-    rootStep,
-    installationContext,
     config,
-    initialState,
     hooks,
+    initialState,
+    installationContext,
+    rootStep,
   });
 }
 
@@ -193,5 +193,5 @@ export function runValidation(
 ): Promise<ValidationResult> {
   const { validationContext, config } = options;
   const rootStep = createRootInstallationStep(config);
-  return validateStepTree({ rootStep, validationContext, config });
+  return validateStepTree({ config, rootStep, validationContext });
 }

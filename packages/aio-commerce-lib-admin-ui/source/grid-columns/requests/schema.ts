@@ -28,10 +28,10 @@ export const GridTypeSchema = v.picklist(["order", "product", "customer"]);
  * enforced here.
  */
 export const GridRequestSchema = v.object({
-  requestId: nonEmptyStringValueSchema("requestId"),
   gridType: GridTypeSchema,
   ids: v.pipe(
     v.array(nonEmptyStringValueSchema("id")),
     v.minLength(1, 'The value of "ids" must contain at least one entry'),
   ),
+  requestId: nonEmptyStringValueSchema("requestId"),
 });

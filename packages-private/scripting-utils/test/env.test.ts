@@ -51,8 +51,8 @@ describe("syncImsCredentials", () => {
       { integration_type: "oauth_server_to_server", name: "my-s2s-context" },
     ]);
     vi.mocked(context.get).mockResolvedValue({
-      name: "my-s2s-context",
       data: { client_id: "test-client-id" },
+      name: "my-s2s-context",
     });
 
     await withTempFiles({}, async (tempDir) => {
@@ -106,12 +106,12 @@ describe("syncImsCredentials", () => {
     ]);
 
     vi.mocked(context.get).mockResolvedValue({
-      name: "my-s2s-context",
       data: {
         client_id: "test-client-id",
         client_secrets: "test-secret",
         ims_org_id: "test-org-id",
       },
+      name: "my-s2s-context",
     });
 
     await withTempFiles(
@@ -143,10 +143,10 @@ describe("syncImsCredentials", () => {
     ]);
 
     vi.mocked(context.get).mockResolvedValue({
-      name: "my-s2s-context",
       data: {
         client_id: "new-client-id",
       },
+      name: "my-s2s-context",
     });
 
     await withTempFiles(
@@ -172,10 +172,10 @@ describe("syncImsCredentials", () => {
     ]);
 
     vi.mocked(context.get).mockResolvedValue({
-      name: "my-s2s-context",
       data: {
         client_id: "same-client-id",
       },
+      name: "my-s2s-context",
     });
 
     const originalEnv = "AIO_COMMERCE_AUTH_IMS_CLIENT_ID=same-client-id\n";
@@ -200,12 +200,12 @@ describe("syncImsCredentials", () => {
     ]);
 
     vi.mocked(context.get).mockResolvedValue({
-      name: "my-s2s-context",
       data: {
+        another_unknown: "also-ignored",
         client_id: "test-client-id",
         unknown_key: "should-be-ignored",
-        another_unknown: "also-ignored",
       },
+      name: "my-s2s-context",
     });
 
     await withTempFiles(
@@ -233,10 +233,10 @@ describe("syncImsCredentials", () => {
     ]);
 
     vi.mocked(context.get).mockResolvedValue({
-      name: "my-s2s-context",
       data: {
         client_id: "test-client-id",
       },
+      name: "my-s2s-context",
     });
 
     await withTempFiles(
@@ -263,10 +263,10 @@ describe("syncImsCredentials", () => {
     ]);
 
     vi.mocked(context.get).mockResolvedValue({
-      name: "my-s2s-context",
       data: {
         scopes: "scope1 scope2 scope3",
       },
+      name: "my-s2s-context",
     });
 
     await withTempFiles(
@@ -291,15 +291,15 @@ describe("syncImsCredentials", () => {
     ]);
 
     vi.mocked(context.get).mockResolvedValue({
-      name: "my-s2s-context",
       data: {
         client_id: "test-client-id",
         client_secrets: "test-secret",
+        ims_org_id: "org-id-456",
+        scopes: "scope1,scope2",
         technical_account_email: "test@example.com",
         technical_account_id: "tech-account-123",
-        scopes: "scope1,scope2",
-        ims_org_id: "org-id-456",
       },
+      name: "my-s2s-context",
     });
 
     await withTempFiles(
@@ -339,10 +339,10 @@ describe("syncImsCredentials", () => {
     ]);
 
     vi.mocked(context.get).mockResolvedValue({
-      name: "first-s2s",
       data: {
         client_id: "first-client-id",
       },
+      name: "first-s2s",
     });
 
     await withTempFiles(

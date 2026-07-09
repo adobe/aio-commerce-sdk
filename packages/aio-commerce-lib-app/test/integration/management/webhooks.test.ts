@@ -46,8 +46,6 @@ function findValidationNodeByPath(
       return found;
     }
   }
-
-  return;
 }
 
 setupApiTestLifecycle();
@@ -60,7 +58,7 @@ describe("webhooks installation integration", () => {
     vi.stubEnv("__OW_NAMESPACE", "test-namespace");
 
     const config = configWithWebhooks;
-    const webhookEntry = config.webhooks[0];
+    const [webhookEntry] = config.webhooks;
     const capture = {
       subscribeBody: null as Record<string, unknown> | null,
     };
@@ -86,8 +84,8 @@ describe("webhooks installation integration", () => {
     const initialState = createInitialInstallationState({ config });
     const result = await runInstallation({
       config,
-      installationContext: createMockInstallationContext(),
       initialState,
+      installationContext: createMockInstallationContext(),
     });
 
     expect.assert(isSucceededState(result));
@@ -105,18 +103,18 @@ describe("webhooks installation integration", () => {
           subscriptions: {
             subscribedWebhooks: [
               expect.objectContaining({
-                webhook_method: webhookEntry.webhook.webhook_method,
-                webhook_type: webhookEntry.webhook.webhook_type,
                 batch_name: "test_app_webhooks_default",
-                hook_name: "test_app_webhooks_order_created",
-                method: webhookEntry.webhook.method,
-                url: "https://test-namespace.adobeioruntime.net/api/v1/web/my-package/handle-webhook",
                 developer_console_oauth: {
                   client_id: "test-client-id",
                   client_secret: "test-secret-1",
-                  org_id: "test-ims-org-id",
                   environment: "production",
+                  org_id: "test-ims-org-id",
                 },
+                hook_name: "test_app_webhooks_order_created",
+                method: webhookEntry.webhook.method,
+                url: "https://test-namespace.adobeioruntime.net/api/v1/web/my-package/handle-webhook",
+                webhook_method: webhookEntry.webhook.webhook_method,
+                webhook_type: webhookEntry.webhook.webhook_type,
               }),
             ],
           },
@@ -147,8 +145,8 @@ describe("webhooks validation integration", () => {
     expect(result.valid).toBe(false);
     expect(result.summary).toEqual({
       errors: 0,
-      warnings: 1,
       totalIssues: 1,
+      warnings: 1,
     });
 
     const subscriptionsValidation = findValidationNodeByPath(result.result, [

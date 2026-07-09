@@ -29,28 +29,28 @@ let mockStateInstance = new MockState();
 let mockFilesInstance = new MockFiles();
 
 vi.mock("#utils/repository", () => ({
-  getSharedState: vi.fn(async () => mockStateInstance),
   getSharedFiles: vi.fn(async () => mockFilesInstance),
+  getSharedState: vi.fn(async () => mockStateInstance),
 }));
 
 vi.mock("#modules/scope-tree/scope-tree-repository", () => ({
+  deleteCachedScopeTree: vi.fn(),
+  getCachedScopeTree: vi.fn(),
   getPersistedScopeTree: vi.fn(),
   saveScopeTree: vi.fn(),
-  getCachedScopeTree: vi.fn(),
   setCachedScopeTree: vi.fn(),
-  deleteCachedScopeTree: vi.fn(),
 }));
 
 vi.mock("#api/commerce", () => ({
   getAllScopeData: vi.fn(() =>
-    Promise.resolve({ websites: [], storeGroups: [], storeViews: [] }),
+    Promise.resolve({ storeGroups: [], storeViews: [], websites: [] }),
   ),
 }));
 
 const schema = [
-  { name: "currency", type: "text", label: "Currency", default: "" },
-  { name: "locale", type: "text", label: "Locale", default: "" },
-  { name: "apiKey", type: "password", label: "API Key", default: "" },
+  { default: "", label: "Currency", name: "currency", type: "text" },
+  { default: "", label: "Locale", name: "locale", type: "text" },
+  { default: "", label: "API Key", name: "apiKey", type: "password" },
 ] satisfies BusinessConfigSchema;
 
 // mockScopeTree has: global (id-global), commerce > base (idw) > main_store (ids) > default (idsv)

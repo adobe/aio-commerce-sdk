@@ -160,8 +160,8 @@ export function deriveScopeFromCodeAndLevel(
 
   return {
     scopeCode: node.code,
-    scopeLevel: node.level,
     scopeId: node.id,
+    scopeLevel: node.level,
     scopePath: path,
   };
 }
@@ -209,8 +209,8 @@ export function deriveScopeFromCommerceScopeId(
   const path = findScopePath(tree, node.code, node.level);
   return {
     scopeCode: node.code,
-    scopeLevel: node.level,
     scopeId: node.id,
+    scopeLevel: node.level,
     scopePath: path,
   };
 }
@@ -241,8 +241,8 @@ export function deriveScopeFromId(
   const path = findScopePath(tree, node.code, node.level);
   return {
     scopeCode: node.code,
-    scopeLevel: node.level,
     scopeId: node.id,
+    scopeLevel: node.level,
     scopePath: path,
   };
 }
@@ -292,7 +292,7 @@ export function deriveScopeFromArgs(args: unknown[], tree: ScopeTree) {
     return deriveScopeFromCodeAndLevel(args[0], args[1], tree);
   }
   if (args.length === 1) {
-    const arg = args[0];
+    const [arg] = args;
     // Try as ID first, then as code with default level
     try {
       return deriveScopeFromId(arg, tree);
@@ -393,8 +393,8 @@ export function mergeScopes(
   for (const existingEntry of existingScopeEntries) {
     mergedMap.set(existingEntry.name, {
       name: existingEntry.name,
-      value: existingEntry.value,
       origin: existingEntry.origin || { code: scopeCode, level: scopeLevel },
+      value: existingEntry.value,
     });
   }
 
@@ -404,16 +404,16 @@ export function mergeScopes(
     } else {
       mergedMap.set(requestedEntry.name, {
         name: requestedEntry.name,
-        value: requestedEntry.value,
         origin: { code: scopeCode, level: scopeLevel },
+        value: requestedEntry.value,
       });
     }
   }
 
   return Array.from(mergedMap.values()).map((data) => ({
     name: data.name,
-    value: data.value,
     origin: data.origin,
+    value: data.value,
   }));
 }
 
@@ -427,8 +427,8 @@ export function getSchemaDefaults(schema: ResolvedBusinessConfigSchema) {
     .filter((field) => field.default !== undefined)
     .map((field) => ({
       name: field.name,
-      value: field.default as string,
       origin: { code: "default", level: "system" },
+      value: field.default as string,
     }));
 
   return { config: defaults };
@@ -449,8 +449,8 @@ function mergeConfigEntries(
     if (!merged.has(entry.name)) {
       merged.set(entry.name, {
         name: entry.name,
-        value: entry.value,
         origin,
+        value: entry.value,
       });
     }
   }
@@ -469,15 +469,19 @@ async function mergeConfigFromPath(
     code: string,
   ) => Promise<{ scope: ScopeNode; config: ConfigValue[] } | null>,
 ) {
-  for (const node of scopePath) {
-    const persisted = await loadScopeConfigFn(node.code);
+  const persistedConfigs = await Promise.all(
+    scopePath.map((node) => loadScopeConfigFn(node.code)),
+  );
+
+  scopePath.forEach((node, index) => {
+    const persisted = persistedConfigs[index];
     if (persisted?.config && Array.isArray(persisted.config)) {
       mergeConfigEntries(merged, persisted.config, {
         code: node.code,
         level: node.level,
       });
     }
-  }
+  });
 }
 
 /**
@@ -521,16 +525,18 @@ function mergeCurrentConfigData(
   scopeCode: string,
   scopeLevel: string,
 ) {
-  if (configData?.config && Array.isArray(configData.config)) {
+  if (Array.isArray(configData.config)) {
     for (const entry of configData.config) {
       if (!merged.has(entry.name)) {
         merged.set(entry.name, {
           name: entry.name,
-          value: entry.value,
           origin: entry.origin || {
+            // biome-ignore lint/suspicious/noUnnecessaryConditions: configData is deserialized from persisted storage with no runtime schema validation, so a legacy or corrupted record can lack `scope` despite the static type
             code: configData.scope?.code || scopeCode,
+            // biome-ignore lint/suspicious/noUnnecessaryConditions: same as above — configData.scope may be absent on legacy/corrupted persisted records
             level: configData.scope?.level || scopeLevel,
           },
+          value: entry.value,
         });
       }
     }
@@ -550,8 +556,8 @@ function applySchemaDefaults(
     if (!merged.has(name)) {
       merged.set(name, {
         name,
-        value: def,
         origin: { code: "default", level: "system" },
+        value: def,
       });
     }
   }
@@ -605,8 +611,8 @@ export async function mergeWithSchemaDefaults({
   applySchemaDefaults(merged, defaultMap);
   configData.config = Array.from(merged.entries()).map(([name, data]) => ({
     name,
-    value: data.value,
     origin: data.origin,
+    value: data.value,
   }));
 
   return configData;

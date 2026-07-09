@@ -28,7 +28,7 @@ export function resolveCommerceImsCredentials(
     return null;
   }
 
-  return { imsToken, imsOrgId };
+  return { imsOrgId, imsToken };
 }
 
 /**
@@ -43,5 +43,5 @@ export function resolveShellImsCredentials(
   }
 
   const { imsToken, imsOrg: imsOrgId } = shellConfiguration;
-  return { imsToken, imsOrgId };
+  return { imsOrgId, imsToken };
 }

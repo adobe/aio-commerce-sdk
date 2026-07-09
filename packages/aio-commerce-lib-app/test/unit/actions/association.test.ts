@@ -13,13 +13,13 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
 const { mockSetAssociationData, mockClearAssociationData } = vi.hoisted(() => ({
-  mockSetAssociationData: vi.fn(),
   mockClearAssociationData: vi.fn(),
+  mockSetAssociationData: vi.fn(),
 }));
 
 vi.mock("#management/association/association-repository", () => ({
-  setAssociationData: mockSetAssociationData,
   clearAssociationData: mockClearAssociationData,
+  setAssociationData: mockSetAssociationData,
 }));
 
 import { associationRuntimeAction } from "#actions/association/index";
@@ -34,12 +34,12 @@ describe("associationRuntimeAction", () => {
     test("stores valid association data and returns 204", async () => {
       const action = associationRuntimeAction();
       const params = createRuntimeActionParams({
-        method: "post",
-        path: "/",
         body: {
           commerceBaseUrl: "https://example.com",
           commerceEnv: "paas",
         },
+        method: "post",
+        path: "/",
       });
 
       const result = await action(params);
@@ -49,20 +49,20 @@ describe("associationRuntimeAction", () => {
         env: "paas",
       });
       expect(result).toMatchObject({
-        type: "success",
         statusCode: 204,
+        type: "success",
       });
     });
 
     test("accepts saas as a valid env", async () => {
       const action = associationRuntimeAction();
       const params = createRuntimeActionParams({
-        method: "post",
-        path: "/",
         body: {
           commerceBaseUrl: "https://saas.example.com",
           commerceEnv: "saas",
         },
+        method: "post",
+        path: "/",
       });
 
       const result = await action(params);
@@ -72,27 +72,27 @@ describe("associationRuntimeAction", () => {
         env: "saas",
       });
       expect(result).toMatchObject({
-        type: "success",
         statusCode: 204,
+        type: "success",
       });
     });
 
     test("returns 400 for invalid env values", async () => {
       const action = associationRuntimeAction();
       const params = createRuntimeActionParams({
-        method: "post",
-        path: "/",
         body: {
           commerceBaseUrl: "https://example.com",
           commerceEnv: "invalid",
         },
+        method: "post",
+        path: "/",
       });
 
       const result = await action(params);
 
       expect(result).toMatchObject({
-        type: "error",
         error: { statusCode: 400 },
+        type: "error",
       });
       expect(mockSetAssociationData).not.toHaveBeenCalled();
     });
@@ -100,19 +100,19 @@ describe("associationRuntimeAction", () => {
     test("returns 400 when commerceBaseUrl is not a valid URL", async () => {
       const action = associationRuntimeAction();
       const params = createRuntimeActionParams({
-        method: "post",
-        path: "/",
         body: {
           commerceBaseUrl: "not-a-url",
           commerceEnv: "paas",
         },
+        method: "post",
+        path: "/",
       });
 
       const result = await action(params);
 
       expect(result).toMatchObject({
-        type: "error",
         error: { statusCode: 400 },
+        type: "error",
       });
       expect(mockSetAssociationData).not.toHaveBeenCalled();
     });
@@ -120,18 +120,18 @@ describe("associationRuntimeAction", () => {
     test("returns 400 when the body is missing required fields", async () => {
       const action = associationRuntimeAction();
       const params = createRuntimeActionParams({
-        method: "post",
-        path: "/",
         body: {
           commerceBaseUrl: "https://example.com",
         },
+        method: "post",
+        path: "/",
       });
 
       const result = await action(params);
 
       expect(result).toMatchObject({
-        type: "error",
         error: { statusCode: 400 },
+        type: "error",
       });
       expect(mockSetAssociationData).not.toHaveBeenCalled();
     });
@@ -144,19 +144,19 @@ describe("associationRuntimeAction", () => {
 
       const action = associationRuntimeAction();
       const params = createRuntimeActionParams({
-        method: "post",
-        path: "/",
         body: {
           commerceBaseUrl: "https://example.com",
           commerceEnv: "paas",
         },
+        method: "post",
+        path: "/",
       });
 
       const result = await action(params);
 
       expect(result).toMatchObject({
-        type: "error",
         error: { statusCode: 500 },
+        type: "error",
       });
 
       consoleErrorSpy.mockRestore();
@@ -175,8 +175,8 @@ describe("associationRuntimeAction", () => {
 
       expect(mockClearAssociationData).toHaveBeenCalledOnce();
       expect(result).toMatchObject({
-        type: "success",
         statusCode: 204,
+        type: "success",
       });
     });
 
@@ -195,8 +195,8 @@ describe("associationRuntimeAction", () => {
       const result = await action(params);
 
       expect(result).toMatchObject({
-        type: "error",
         error: { statusCode: 500 },
+        type: "error",
       });
 
       consoleErrorSpy.mockRestore();

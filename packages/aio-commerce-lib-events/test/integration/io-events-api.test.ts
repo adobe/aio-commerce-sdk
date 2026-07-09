@@ -170,8 +170,8 @@ describe("Adobe IO Events API - Integration Tests", () => {
     test("should encode sample event template to base64 in request body", async () => {
       const sampleEventTemplate = {
         name: "product name",
-        sku: "1234567890",
         price: 100,
+        sku: "1234567890",
       };
 
       const capture = { body: null as Record<string, unknown> | null };
@@ -189,13 +189,13 @@ describe("Adobe IO Events API - Integration Tests", () => {
 
       await client.createEventMetadataForProvider({
         consumerOrgId: CONSUMER_ORG_ID,
-        projectId: PROJECT_ID,
-        workspaceId: WORKSPACE_ID,
-        providerId: PROVIDER_ID,
-        label: "test-label",
         description: "test-description",
         eventCode: "test-event-code",
+        label: "test-label",
+        projectId: PROJECT_ID,
+        providerId: PROVIDER_ID,
         sampleEventTemplate,
+        workspaceId: WORKSPACE_ID,
       });
 
       if (!capture.body) {
@@ -222,8 +222,8 @@ describe("Adobe IO Events API - Integration Tests", () => {
     test("should handle already base64-encoded sample event template", async () => {
       const sampleEventTemplate = {
         name: "product name",
-        sku: "1234567890",
         price: 100,
+        sku: "1234567890",
       };
 
       const alreadyEncoded = Buffer.from(
@@ -245,13 +245,13 @@ describe("Adobe IO Events API - Integration Tests", () => {
 
       await client.createEventMetadataForProvider({
         consumerOrgId: CONSUMER_ORG_ID,
-        projectId: PROJECT_ID,
-        workspaceId: WORKSPACE_ID,
-        providerId: PROVIDER_ID,
-        label: "test-label",
         description: "test-description",
         eventCode: "test-event-code",
+        label: "test-label",
+        projectId: PROJECT_ID,
+        providerId: PROVIDER_ID,
         sampleEventTemplate: alreadyEncoded,
+        workspaceId: WORKSPACE_ID,
       });
 
       if (!capture.body) {
@@ -270,8 +270,8 @@ describe("Adobe IO Events API - Integration Tests", () => {
     test("should handle sample event template as JSON string", async () => {
       const sampleEventTemplate = {
         name: "product name",
-        sku: "1234567890",
         price: 100,
+        sku: "1234567890",
       };
 
       const jsonString = JSON.stringify(sampleEventTemplate);
@@ -291,13 +291,13 @@ describe("Adobe IO Events API - Integration Tests", () => {
 
       await client.createEventMetadataForProvider({
         consumerOrgId: CONSUMER_ORG_ID,
-        projectId: PROJECT_ID,
-        workspaceId: WORKSPACE_ID,
-        providerId: PROVIDER_ID,
-        label: "test-label",
         description: "test-description",
         eventCode: "test-event-code",
+        label: "test-label",
+        projectId: PROJECT_ID,
+        providerId: PROVIDER_ID,
         sampleEventTemplate: jsonString,
+        workspaceId: WORKSPACE_ID,
       });
 
       if (!capture.body) {

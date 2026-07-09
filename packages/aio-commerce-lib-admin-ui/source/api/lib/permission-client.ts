@@ -49,14 +49,14 @@ export type AdminUiPermissionClient = {
    *   `true` (the default), or immediately when neither `resource` nor a valid `appId` is available.
    * @throws {@link AdminUiPermissionError} on HTTP 401, regardless of `denyOnError`.
    */
-  check(resource?: string): Promise<boolean>;
+  check: (resource?: string) => Promise<boolean>;
   /**
    * Clears cached permission results.
    *
    * @param resource - The ACL resource id whose cached result to clear. When omitted, clears all cached
    *   entries and in-flight tracking without aborting outstanding HTTP requests.
    */
-  invalidate(resource?: string): void;
+  invalidate: (resource?: string) => void;
   /**
    * Resolves when the current user has the given ACL resource granted.
    *
@@ -65,7 +65,7 @@ export type AdminUiPermissionClient = {
    * @throws {@link AdminUiPermissionError} on HTTP 401, on network or parse errors while `denyOnError` is
    *   `false`, or immediately when neither `resource` nor a valid `appId` is available.
    */
-  require(resource?: string): Promise<void>;
+  require: (resource?: string) => Promise<void>;
 };
 
 type PermissionCheckResult =
@@ -130,8 +130,8 @@ export function getAdminUiPermissionClient(
 
       if (denyOnError) {
         return {
-          error: toPermissionError(error),
           cacheable: false,
+          error: toPermissionError(error),
         };
       }
 
@@ -171,8 +171,8 @@ export function getAdminUiPermissionClient(
           inFlight.get(resource) === trackedPromise
         ) {
           cache.set(resource, {
-            value: result.allowed,
             expiresAt: Date.now() + cacheTtlMs,
+            value: result.allowed,
           });
         }
 
@@ -206,6 +206,16 @@ export function getAdminUiPermissionClient(
       const result = await resolveCheck(resolved);
       return "error" in result ? false : result.allowed;
     },
+    invalidate(resource?: string) {
+      if (resource === undefined) {
+        cache.clear();
+        inFlight.clear();
+        return;
+      }
+
+      cache.delete(resource);
+      inFlight.delete(resource);
+    },
     async require(resource?: string) {
       const resolved = resolveResource(resource);
       if (resolved === "") {
@@ -222,16 +232,6 @@ export function getAdminUiPermissionClient(
       if (!result.allowed) {
         throw new AdminUiPermissionDeniedError(resolved);
       }
-    },
-    invalidate(resource?: string) {
-      if (resource === undefined) {
-        cache.clear();
-        inFlight.clear();
-        return;
-      }
-
-      cache.delete(resource);
-      inFlight.delete(resource);
     },
   };
 }

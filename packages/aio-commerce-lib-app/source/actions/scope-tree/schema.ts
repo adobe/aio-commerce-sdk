@@ -17,13 +17,13 @@ import * as v from "valibot";
 import type { CustomScopeInput } from "@adobe/aio-commerce-lib-config";
 
 const CustomScopeInputSchema: v.GenericSchema<CustomScopeInput> = v.object({
-  id: v.optional(v.string()),
+  children: v.optional(v.array(v.lazy(() => CustomScopeInputSchema))),
   code: v.string(),
-  label: v.string(),
-  level: v.optional(v.string()),
+  id: v.optional(v.string()),
   is_editable: v.boolean(),
   is_final: v.boolean(),
-  children: v.optional(v.array(v.lazy(() => CustomScopeInputSchema))),
+  label: v.string(),
+  level: v.optional(v.string()),
 });
 
 /** Request body for PUT / */

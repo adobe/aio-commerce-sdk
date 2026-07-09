@@ -69,9 +69,9 @@ export async function run(flags?: InitFlags, extraOptions?: InitExtraOptions) {
   }
 
   pkg.update({
+    description: config.metadata.description,
     name: config.metadata.id,
     version: config.metadata.version,
-    description: config.metadata.description,
   });
 
   await pkg.save();

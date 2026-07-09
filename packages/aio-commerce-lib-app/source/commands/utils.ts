@@ -43,16 +43,16 @@ import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 /** Format file content using prettier, inferring the parser from the file path. */
 export function prettierFormat(content: string, filepath: string) {
   return prettier.format(content, {
-    semi: true,
-    quoteStyle: "double",
     arrowParens: "always",
     bracketSameLine: true,
     bracketSpacing: true,
-    trailingComma: "all",
-    tabWidth: 2,
-    useTabs: false,
-    printWidth: 80,
     filepath,
+    printWidth: 80,
+    quoteStyle: "double",
+    semi: true,
+    tabWidth: 2,
+    trailingComma: "all",
+    useTabs: false,
   });
 }
 

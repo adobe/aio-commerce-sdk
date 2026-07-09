@@ -90,18 +90,18 @@ export const DEFAULT_INSTALLATION_IMS_PARAMS: InstallationImsParams = {
   AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS: ["test-secret-1"],
   AIO_COMMERCE_AUTH_IMS_ORG_ID: "test-ims-org-id",
   AIO_COMMERCE_AUTH_IMS_SCOPES: ["test-scope1", "test-scope2"],
-  AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID: "test-technical-account-id",
   AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL:
     "test-technical-account@example.com",
+  AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID: "test-technical-account-id",
 };
 
 export const DEFAULT_INSTALLATION_PARAMS = {
   ...DEFAULT_INSTALLATION_IMS_PARAMS,
   AIO_COMMERCE_API_BASE_URL: "https://api.commerce.adobe.com",
   AIO_COMMERCE_API_FLAVOR: "saas",
-  AIO_COMMERCE_AUTH_IMS_TOKEN: "test-ims-token",
   AIO_COMMERCE_AUTH_IMS_API_KEY: "test-api-key",
   AIO_COMMERCE_AUTH_IMS_ENVIRONMENT: "prod",
+  AIO_COMMERCE_AUTH_IMS_TOKEN: "test-ims-token",
 } satisfies InstallationParams;
 
 export function createMockInstallationParams(
@@ -120,11 +120,11 @@ export function createMockInstallationContext(
   return {
     appData: {
       consumerOrgId: "test-consumer-org-id",
-      projectId: "test-project-id",
-      workspaceId: "test-workspace-id",
       orgName: "test-org-name",
+      projectId: "test-project-id",
       projectName: "test-project-name",
       projectTitle: "Test Project Title",
+      workspaceId: "test-workspace-id",
       workspaceName: "test-workspace-name",
       workspaceTitle: "Test Workspace Title",
       ...(overrides?.appData ?? {}),
@@ -140,12 +140,12 @@ export function createMockStepStatus(
   overrides?: Partial<StepStatus>,
 ): StepStatus {
   return {
+    children: [],
     id: "root-id",
+    meta: { description: "Root step for testing", label: "Root Step" },
     name: "root",
     path: ["root"],
     status: "pending" as ExecutionStatus,
-    meta: { label: "Root Step", description: "Root step for testing" },
-    children: [],
     ...overrides,
   };
 }
@@ -155,10 +155,10 @@ export function createMockBranchStep(
   overrides?: Partial<BranchStep>,
 ): BranchStep {
   return {
-    type: "branch",
-    name: "installation",
-    meta: { install: { label: "Installation" } },
     children: [],
+    meta: { install: { label: "Installation" } },
+    name: "installation",
+    type: "branch",
     ...overrides,
   };
 }
@@ -169,9 +169,9 @@ export function createMockInstallationStepStatus(
 ): StepStatus {
   return createMockStepStatus({
     id: "step-id",
+    meta: { label: "Installation" },
     name: "installation",
     path: ["installation"],
-    meta: { label: "Installation" },
     status: "pending",
     ...overrides,
   });
@@ -182,18 +182,18 @@ export function createMockInstallationError(
   overrides?: Partial<InstallationError>,
 ): InstallationError {
   return {
-    path: ["root", "step"],
     key: "STEP_EXECUTION_FAILED",
     message: "Step execution failed",
+    path: ["root", "step"],
     ...overrides,
   };
 }
 
 /** Base properties shared by all installation states. */
 const baseStateProps = {
+  data: {},
   id: "test-installation-1",
   step: createMockStepStatus(),
-  data: {},
 };
 
 /** Creates a mock InProgressInstallationState. */
@@ -202,8 +202,8 @@ export function createMockInProgressState(
 ): InProgressInstallationState {
   return {
     ...baseStateProps,
-    status: "in-progress",
     startedAt: FAKE_SYSTEM_TIME,
+    status: "in-progress",
     step: createMockStepStatus({ status: "in-progress" }),
     ...overrides,
   };
@@ -214,10 +214,10 @@ export function createMockInstallationInProgressState(
   overrides?: Partial<InProgressInstallationState>,
 ): InProgressInstallationState {
   return createMockInProgressState({
+    data: null,
     id: "installation-id",
     startedAt: FAKE_SYSTEM_TIME,
     step: createMockInstallationStepStatus(),
-    data: null,
     ...overrides,
   });
 }
@@ -228,9 +228,9 @@ export function createMockSucceededState(
 ): SucceededInstallationState {
   return {
     ...baseStateProps,
-    status: "succeeded",
-    startedAt: FAKE_SYSTEM_TIME,
     completedAt: FAKE_COMPLETED_TIME,
+    startedAt: FAKE_SYSTEM_TIME,
+    status: "succeeded",
     step: createMockStepStatus({ status: "succeeded" }),
     ...overrides,
   };
@@ -241,11 +241,11 @@ export function createMockInstallationSucceededState(
   overrides?: Partial<SucceededInstallationState>,
 ): SucceededInstallationState {
   return createMockSucceededState({
+    completedAt: FAKE_COMPLETED_TIME,
+    data: null,
     id: "installation-id",
     startedAt: FAKE_SYSTEM_TIME,
-    completedAt: FAKE_COMPLETED_TIME,
     step: createMockInstallationStepStatus({ status: "pending" }),
-    data: null,
     ...overrides,
   });
 }
@@ -256,11 +256,11 @@ export function createMockFailedState(
 ): FailedInstallationState {
   return {
     ...baseStateProps,
-    status: "failed",
-    startedAt: FAKE_SYSTEM_TIME,
     completedAt: FAKE_COMPLETED_TIME,
-    step: createMockStepStatus({ status: "failed" }),
     error: createMockInstallationError(),
+    startedAt: FAKE_SYSTEM_TIME,
+    status: "failed",
+    step: createMockStepStatus({ status: "failed" }),
     ...overrides,
   };
 }
@@ -270,11 +270,11 @@ export function createMockStepValidationResult(
   overrides?: Partial<StepValidationResult>,
 ): StepValidationResult {
   return {
+    children: [],
+    issues: [],
+    meta: { label: "Installation" },
     name: "installation",
     path: ["installation"],
-    meta: { label: "Installation" },
-    issues: [],
-    children: [],
     ...overrides,
   };
 }
@@ -285,8 +285,8 @@ export function createMockValidationSummary(
 ): ValidationSummary {
   return {
     errors: 0,
-    warnings: 0,
     totalIssues: 0,
+    warnings: 0,
     ...overrides,
   };
 }
@@ -296,9 +296,9 @@ export function createMockValidationResult(
   overrides?: Partial<ValidationResult>,
 ): ValidationResult {
   return {
-    valid: true,
     result: createMockStepValidationResult(),
     summary: createMockValidationSummary(),
+    valid: true,
     ...overrides,
   };
 }
@@ -310,14 +310,14 @@ export function createMockInstallationStore(
   let value = initialValue;
 
   return {
-    get: vi.fn(async (_key: string) => value),
-    put: vi.fn(async (_key: string, nextValue: InstallationState) => {
-      value = nextValue;
-    }),
     delete: vi.fn(async (_key: string) => {
       const hasValue = value !== null;
       value = null;
       return hasValue;
+    }),
+    get: vi.fn(async (_key: string) => value),
+    put: vi.fn(async (_key: string, nextValue: InstallationState) => {
+      value = nextValue;
     }),
   };
 }

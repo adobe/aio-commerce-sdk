@@ -90,9 +90,9 @@ export async function ensureCommerceAppConfig(
     const createConfig = await consola.prompt(
       `Do you want to create a ${COMMERCE_APP_CONFIG_FILE} file? (y/n)`,
       {
-        type: "confirm",
-        initial: true,
         default: false,
+        initial: true,
+        type: "confirm",
       },
     );
 
@@ -117,10 +117,10 @@ export async function ensureCommerceAppConfig(
       await writeFile(path, configContent, "utf-8");
     }
 
-    const config = await parseCommerceAppConfig(cwd);
+    const createdConfig = await parseCommerceAppConfig(cwd);
     consola.success(`Created ${answers.configFile}`);
 
-    return { config, domains: answers.domains };
+    return { config: createdConfig, domains: answers.domains };
   } catch (error) {
     throw new Error(`Failed to create ${answers.configFile}`, {
       cause: error,
@@ -142,8 +142,8 @@ export async function ensurePackageJson(cwd = process.cwd()) {
     consola.warn("package.json not found. Creating one...");
     packageJson = {
       name: "my-commerce-app",
-      version: "1.0.0",
       private: true,
+      version: "1.0.0",
     };
 
     await writeFile(
@@ -161,9 +161,9 @@ export async function ensurePackageJson(cwd = process.cwd()) {
   const execCommand = getExecCommand(packageManager);
 
   return {
+    execCommand,
     packageJson,
     packageManager,
-    execCommand,
   };
 }
 

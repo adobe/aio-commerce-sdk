@@ -89,21 +89,21 @@ describe("stringifyError", () => {
     const error = new CommerceSdkValidationError("Validation failed", {
       issues: [
         {
-          kind: "validation",
-          type: "custom",
-          input: null,
           expected: "string",
-          received: "null",
+          input: null,
+          kind: "validation",
           message: "Field is required",
           path: [
             {
-              type: "object",
-              origin: "value",
               input: {},
               key: "field1",
+              origin: "value",
+              type: "object",
               value: null,
             },
           ],
+          received: "null",
+          type: "custom",
         },
       ],
     });

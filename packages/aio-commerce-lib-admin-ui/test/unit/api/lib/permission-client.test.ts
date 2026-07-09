@@ -57,8 +57,8 @@ describe("client.check — TTL cache", () => {
   it("does not hit the network twice within TTL", async () => {
     const fetchMock = vi.fn(async () => Response.json({ allowed: true }));
     const client = getAdminUiPermissionClient({
-      httpClient: makeHttpClient(fetchMock as typeof fetch),
       cacheTtlMs: 60_000,
+      httpClient: makeHttpClient(fetchMock as typeof fetch),
     });
 
     await client.check("Acme_Promotions::dashboard");
@@ -70,8 +70,8 @@ describe("client.check — TTL cache", () => {
   it("hits the network again after TTL expires", async () => {
     const fetchMock = vi.fn(async () => Response.json({ allowed: true }));
     const client = getAdminUiPermissionClient({
-      httpClient: makeHttpClient(fetchMock as typeof fetch),
       cacheTtlMs: 1,
+      httpClient: makeHttpClient(fetchMock as typeof fetch),
     });
 
     await client.check("Acme_Promotions::dashboard");
@@ -87,8 +87,8 @@ describe("client.check — TTL cache", () => {
       return Response.json({ allowed: true });
     });
     const client = getAdminUiPermissionClient({
-      httpClient: makeHttpClient(fetchMock as typeof fetch),
       cacheTtlMs: 60_000,
+      httpClient: makeHttpClient(fetchMock as typeof fetch),
     });
 
     const [a, b] = await Promise.all([
@@ -104,8 +104,8 @@ describe("client.check — TTL cache", () => {
   it("invalidate(resource) clears one cache entry", async () => {
     const fetchMock = vi.fn(async () => Response.json({ allowed: true }));
     const client = getAdminUiPermissionClient({
-      httpClient: makeHttpClient(fetchMock as typeof fetch),
       cacheTtlMs: 60_000,
+      httpClient: makeHttpClient(fetchMock as typeof fetch),
     });
 
     await client.check("Acme_Promotions::dashboard");
@@ -118,8 +118,8 @@ describe("client.check — TTL cache", () => {
   it("invalidate() with no argument clears all entries", async () => {
     const fetchMock = vi.fn(async () => Response.json({ allowed: true }));
     const client = getAdminUiPermissionClient({
-      httpClient: makeHttpClient(fetchMock as typeof fetch),
       cacheTtlMs: 60_000,
+      httpClient: makeHttpClient(fetchMock as typeof fetch),
     });
 
     await client.check("Acme_Promotions::dashboard");
@@ -134,8 +134,8 @@ describe("client.check — TTL cache", () => {
   it("cacheTtlMs: 0 disables caching", async () => {
     const fetchMock = vi.fn(async () => Response.json({ allowed: true }));
     const client = getAdminUiPermissionClient({
-      httpClient: makeHttpClient(fetchMock as typeof fetch),
       cacheTtlMs: 0,
+      httpClient: makeHttpClient(fetchMock as typeof fetch),
     });
 
     await client.check("Acme_Promotions::dashboard");
@@ -150,8 +150,8 @@ describe("client.check — TTL cache", () => {
       return Response.json({ allowed: true });
     });
     const client = getAdminUiPermissionClient({
-      httpClient: makeHttpClient(fetchMock as typeof fetch),
       cacheTtlMs: 0,
+      httpClient: makeHttpClient(fetchMock as typeof fetch),
     });
 
     const [a, b] = await Promise.all([
@@ -175,8 +175,8 @@ describe("client.check — TTL cache", () => {
       .mockReturnValueOnce(firstResponse)
       .mockResolvedValueOnce(Response.json({ allowed: false }));
     const client = getAdminUiPermissionClient({
-      httpClient: makeHttpClient(fetchMock as typeof fetch),
       cacheTtlMs: 60_000,
+      httpClient: makeHttpClient(fetchMock as typeof fetch),
     });
 
     const firstCheck = client.check("Acme_Promotions::dashboard");
@@ -195,8 +195,8 @@ describe("client.check — fail-closed (denyOnError: true)", () => {
       Response.json({ error: "Internal Server Error" }, { status: 500 }),
     );
     const client = getAdminUiPermissionClient({
-      httpClient: makeHttpClient(fetchMock as typeof fetch),
       cacheTtlMs: 0,
+      httpClient: makeHttpClient(fetchMock as typeof fetch),
     });
 
     expect(await client.check("Acme_Promotions::dashboard")).toBe(false);
@@ -207,8 +207,8 @@ describe("client.check — fail-closed (denyOnError: true)", () => {
       throw new TypeError("Network error");
     });
     const client = getAdminUiPermissionClient({
-      httpClient: makeHttpClient(fetchMock as typeof fetch),
       cacheTtlMs: 0,
+      httpClient: makeHttpClient(fetchMock as typeof fetch),
     });
 
     expect(await client.check("Acme_Promotions::dashboard")).toBe(false);
@@ -217,8 +217,8 @@ describe("client.check — fail-closed (denyOnError: true)", () => {
   it("returns false on schema mismatch", async () => {
     const fetchMock = vi.fn(async () => Response.json({ allowed: "yes" }));
     const client = getAdminUiPermissionClient({
-      httpClient: makeHttpClient(fetchMock as typeof fetch),
       cacheTtlMs: 0,
+      httpClient: makeHttpClient(fetchMock as typeof fetch),
     });
 
     expect(await client.check("Acme_Promotions::dashboard")).toBe(false);
@@ -243,8 +243,8 @@ describe("client.check — fail-closed (denyOnError: true)", () => {
       Response.json({ message: "Unauthorized" }, { status: 401 }),
     );
     const client = getAdminUiPermissionClient({
-      httpClient: makeHttpClient(fetchMock as typeof fetch),
       cacheTtlMs: 0,
+      httpClient: makeHttpClient(fetchMock as typeof fetch),
     });
 
     await expect(
@@ -257,9 +257,9 @@ describe("client.check — denyOnError: false", () => {
   it("throws AdminUiPermissionError on 5xx", async () => {
     const fetchMock = vi.fn(async () => Response.json({}, { status: 500 }));
     const client = getAdminUiPermissionClient({
-      httpClient: makeHttpClient(fetchMock as typeof fetch),
       cacheTtlMs: 0,
       denyOnError: false,
+      httpClient: makeHttpClient(fetchMock as typeof fetch),
     });
 
     await expect(
@@ -272,8 +272,8 @@ describe("client.require", () => {
   it("resolves when allowed", async () => {
     const fetchMock = vi.fn(async () => Response.json({ allowed: true }));
     const client = getAdminUiPermissionClient({
-      httpClient: makeHttpClient(fetchMock as typeof fetch),
       cacheTtlMs: 0,
+      httpClient: makeHttpClient(fetchMock as typeof fetch),
     });
 
     await expect(
@@ -284,8 +284,8 @@ describe("client.require", () => {
   it("throws AdminUiPermissionDeniedError when denied", async () => {
     const fetchMock = vi.fn(async () => Response.json({ allowed: false }));
     const client = getAdminUiPermissionClient({
-      httpClient: makeHttpClient(fetchMock as typeof fetch),
       cacheTtlMs: 0,
+      httpClient: makeHttpClient(fetchMock as typeof fetch),
     });
 
     await expect(
@@ -296,8 +296,8 @@ describe("client.require", () => {
   it("throws AdminUiPermissionError on 5xx with default denyOnError", async () => {
     const fetchMock = vi.fn(async () => Response.json({}, { status: 500 }));
     const client = getAdminUiPermissionClient({
-      httpClient: makeHttpClient(fetchMock as typeof fetch),
       cacheTtlMs: 0,
+      httpClient: makeHttpClient(fetchMock as typeof fetch),
     });
 
     await expect(
@@ -313,8 +313,8 @@ describe("client.require", () => {
       throw new TypeError("Network error");
     });
     const client = getAdminUiPermissionClient({
-      httpClient: makeHttpClient(fetchMock as typeof fetch),
       cacheTtlMs: 0,
+      httpClient: makeHttpClient(fetchMock as typeof fetch),
     });
 
     await expect(
@@ -325,8 +325,8 @@ describe("client.require", () => {
   it("throws AdminUiPermissionError on schema mismatch with default denyOnError", async () => {
     const fetchMock = vi.fn(async () => Response.json({ allowed: "yes" }));
     const client = getAdminUiPermissionClient({
-      httpClient: makeHttpClient(fetchMock as typeof fetch),
       cacheTtlMs: 0,
+      httpClient: makeHttpClient(fetchMock as typeof fetch),
     });
 
     await expect(
@@ -339,8 +339,8 @@ describe("client.require", () => {
       Response.json({ message: "Unauthorized" }, { status: 401 }),
     );
     const client = getAdminUiPermissionClient({
-      httpClient: makeHttpClient(fetchMock as typeof fetch),
       cacheTtlMs: 0,
+      httpClient: makeHttpClient(fetchMock as typeof fetch),
     });
 
     await expect(
@@ -359,9 +359,9 @@ describe("client.check — appId defaulting", () => {
     });
 
     const client = getAdminUiPermissionClient({
-      httpClient: makeHttpClient(fetchMock as typeof fetch),
       appId: "acme-promotions",
       cacheTtlMs: 0,
+      httpClient: makeHttpClient(fetchMock as typeof fetch),
     });
 
     const result = await client.check();
@@ -375,8 +375,8 @@ describe("client.check — appId defaulting", () => {
   it("returns false immediately when appId is missing and no resource provided", async () => {
     const fetchMock = vi.fn();
     const client = getAdminUiPermissionClient({
-      httpClient: makeHttpClient(fetchMock as typeof fetch),
       cacheTtlMs: 0,
+      httpClient: makeHttpClient(fetchMock as typeof fetch),
     });
 
     expect(await client.check()).toBe(false);
@@ -388,9 +388,9 @@ describe("client.require — appId defaulting", () => {
   it("uses getAclResourceId(appId) when resource is omitted", async () => {
     const fetchMock = vi.fn(async () => Response.json({ allowed: true }));
     const client = getAdminUiPermissionClient({
-      httpClient: makeHttpClient(fetchMock as typeof fetch),
       appId: "acme-promotions",
       cacheTtlMs: 0,
+      httpClient: makeHttpClient(fetchMock as typeof fetch),
     });
 
     await expect(client.require()).resolves.toBeUndefined();
@@ -399,8 +399,8 @@ describe("client.require — appId defaulting", () => {
   it("throws AdminUiPermissionError immediately when appId missing and no resource provided", async () => {
     const fetchMock = vi.fn();
     const client = getAdminUiPermissionClient({
-      httpClient: makeHttpClient(fetchMock as typeof fetch),
       cacheTtlMs: 0,
+      httpClient: makeHttpClient(fetchMock as typeof fetch),
     });
 
     await expect(client.require()).rejects.toBeInstanceOf(

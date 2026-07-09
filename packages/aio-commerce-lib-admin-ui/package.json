@@ -109,7 +109,8 @@
   "imports": {
     "#*": "./source/*.ts",
     "#*.tsx": "./source/*.tsx",
-    "#test/*": "./test/*.ts"
+    "#test/*": "./test/*.ts",
+    "#test/*.tsx": "./test/*.tsx"
   },
   "files": [
     "dist",

@@ -226,8 +226,8 @@ export async function getScopeTree(
   options?: OperationOptions,
 ) {
   const context = {
-    namespace: DEFAULT_NAMESPACE,
     cacheTimeout: options?.cacheTimeout ?? DEFAULT_CACHE_TIMEOUT,
+    namespace: DEFAULT_NAMESPACE,
   };
 
   if (params?.refreshData === true) {
@@ -285,8 +285,8 @@ export async function syncCommerceScopes(
   try {
     const result = await getScopeTree(
       {
-        refreshData: true,
         commerceConfig,
+        refreshData: true,
       },
       options,
     );
@@ -308,6 +308,7 @@ export async function syncCommerceScopes(
   } catch (error) {
     throw new Error(
       `Failed to sync Commerce scopes: ${error instanceof Error ? error.message : "Unknown error"}`,
+      { cause: error },
     );
   }
 }
@@ -396,9 +397,9 @@ export async function getConfiguration(
   options?: ConfigOptions,
 ) {
   const context = {
-    namespace: DEFAULT_NAMESPACE,
     cacheTimeout: options?.cacheTimeout ?? DEFAULT_CACHE_TIMEOUT,
     encryptionKey: options?.encryptionKey,
+    namespace: DEFAULT_NAMESPACE,
   };
 
   if (selector.by._tag === "scopeId") {
@@ -456,9 +457,9 @@ export async function getConfigurationByKey(
   options?: ConfigOptions,
 ) {
   const context = {
-    namespace: DEFAULT_NAMESPACE,
     cacheTimeout: options?.cacheTimeout ?? DEFAULT_CACHE_TIMEOUT,
     encryptionKey: options?.encryptionKey,
+    namespace: DEFAULT_NAMESPACE,
   };
 
   if (selector.by._tag === "scopeId") {
@@ -535,9 +536,9 @@ export async function setConfiguration(
   options?: ConfigOptions,
 ) {
   const context = {
-    namespace: DEFAULT_NAMESPACE,
     cacheTimeout: options?.cacheTimeout ?? DEFAULT_CACHE_TIMEOUT,
     encryptionKey: options?.encryptionKey,
+    namespace: DEFAULT_NAMESPACE,
   };
 
   if (selector.by._tag === "scopeId") {
@@ -634,8 +635,8 @@ export async function setCustomScopeTree(
   options?: OperationOptions,
 ) {
   const context = {
-    namespace: DEFAULT_NAMESPACE,
     cacheTimeout: options?.cacheTimeout ?? DEFAULT_CACHE_TIMEOUT,
+    namespace: DEFAULT_NAMESPACE,
   };
 
   return await setCustomScopeTreeModule(context, request);

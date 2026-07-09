@@ -13,7 +13,7 @@
 import { register } from "@adobe/uix-guest";
 import { Provider } from "@react-spectrum/s2/Provider";
 import { Outlet as ActiveRoute } from "@tanstack/react-router";
-import { Suspense, useEffect } from "react";
+import { Suspense, useCallback, useEffect } from "react";
 
 import { ImsContextProvider } from "#web/react/auth/context/ims-context.tsx";
 import { resolveCommerceImsCredentials } from "#web/react/auth/lib";
@@ -22,7 +22,11 @@ import {
   SharedContextProvider,
   useSharedContext,
 } from "#web/react/commerce/context/shared-context.tsx";
-import { useGuestConnection } from "#web/react/commerce/hooks/use-guest-connection";
+import { retryCommerceHost } from "#web/react/commerce/hooks/use-commerce";
+import {
+  retryGuestConnection,
+  useGuestConnection,
+} from "#web/react/commerce/hooks/use-guest-connection";
 import { isControlFrame } from "#web/react/commerce/lib";
 import { createRetryablePromiseCache } from "#web/react/promise-cache";
 import { useSpectrumRouter } from "#web/react/routing/hooks/use-spectrum-router";
@@ -39,7 +43,7 @@ const controlFrameRegistrations = createRetryablePromiseCache<unknown>();
  * @param extensionId - The unique identifier for the extension app.
  */
 function registerControlFrame(extensionId: string) {
-  return controlFrameRegistrations(extensionId, () => {
+  return controlFrameRegistrations.get(extensionId, () => {
     const promise = register({ id: extensionId, methods: {} });
     promise.catch((err) => {
       console.error("UIX guest register failed:", err);
@@ -64,6 +68,12 @@ function ConnectionFallback() {
 export function CommerceExtensionApp(props: Readonly<{ extensionId: string }>) {
   const { extensionId } = props;
   const spectrumRouter = useSpectrumRouter();
+  const resetConnections = useCallback(() => {
+    // Retry only failed steps so "Try again" re-attaches after a connection failure but
+    // keeps a healthy connection when the error came from elsewhere.
+    retryGuestConnection(extensionId);
+    retryCommerceHost(extensionId);
+  }, [extensionId]);
 
   // Commerce Admin always uses the light theme, so there's nothing to wait on for it, but the
   // root attribute still needs syncing since Spectrum S2's page styles key off it.
@@ -77,7 +87,7 @@ export function CommerceExtensionApp(props: Readonly<{ extensionId: string }>) {
 
   return (
     <Provider colorScheme="light" router={spectrumRouter}>
-      <ExtensionErrorBoundary>
+      <ExtensionErrorBoundary onReset={resetConnections}>
         <Suspense fallback={<ConnectionFallback />}>
           <CommerceGuestConnection extensionId={extensionId} />
         </Suspense>

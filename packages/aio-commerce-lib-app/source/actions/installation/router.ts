@@ -20,7 +20,7 @@ import {
 } from "@adobe/aio-commerce-lib-core/responses";
 import {
   HttpActionRouter,
-  logger,
+  logger as withLogger,
 } from "@aio-commerce-sdk/common-utils/actions";
 import { createCombinedStore } from "@aio-commerce-sdk/common-utils/storage";
 import openwhisk from "openwhisk";
@@ -122,11 +122,11 @@ function buildWorkflowParams(
 ) {
   return {
     ...rawParams,
-    appData: body.appData,
-    AIO_EVENTS_API_BASE_URL: body.ioEventsUrl,
-    AIO_COMMERCE_AUTH_IMS_ENVIRONMENT: body.ioEventsEnv,
     AIO_COMMERCE_API_BASE_URL: body.commerceBaseUrl,
     AIO_COMMERCE_API_FLAVOR: body.commerceEnv,
+    AIO_COMMERCE_AUTH_IMS_ENVIRONMENT: body.ioEventsEnv,
+    AIO_EVENTS_API_BASE_URL: body.ioEventsUrl,
+    appData: body.appData,
   };
 }
 
@@ -146,9 +146,9 @@ function buildInstallationContext(
 ): InstallationContext {
   return {
     appData: params.appData,
-    params,
-    logger: logFn,
     customScripts: params.customScriptsLoader?.(appConfig, logFn) ?? {},
+    logger: logFn,
+    params,
   };
 }
 
@@ -182,10 +182,10 @@ function createInstallationHooks(
   };
 
   return {
-    onInstallationStart: (state: InstallationState) =>
-      logAndSave("Installation started", state),
     onInstallationFailure: (state: InstallationState) =>
       logAndSave("Installation failed", state),
+    onInstallationStart: (state: InstallationState) =>
+      logAndSave("Installation started", state),
     onInstallationSuccess: (state: InstallationState) =>
       logAndSave(
         state.status === "succeeded" && state.metadata?.isRetry
@@ -193,16 +193,16 @@ function createInstallationHooks(
           : "Installation succeeded",
         state,
       ),
-
-    onStepStart: (event: { stepName: string }, state: InstallationState) =>
-      logAndSave(`Step started: ${event.stepName}`, state),
-    onStepSuccess: (event: { stepName: string }, state: InstallationState) =>
-      logAndSave(`Step succeeded: ${event.stepName}`, state),
     onStepFailure: (event: StepFailedEvent, state: InstallationState) =>
       logAndSave(
         `Step failed: ${event.stepName} — ${event.error.message ?? `(key: ${event.error.key})`}`,
         state,
       ),
+
+    onStepStart: (event: { stepName: string }, state: InstallationState) =>
+      logAndSave(`Step started: ${event.stepName}`, state),
+    onStepSuccess: (event: { stepName: string }, state: InstallationState) =>
+      logAndSave(`Step succeeded: ${event.stepName}`, state),
   };
 }
 
@@ -220,7 +220,7 @@ function createInstallationHooks(
  * - DELETE /uninstallation           Clear uninstallation state only (no offboarding)
  */
 export const router = new HttpActionRouter<InstallationActionContext>().use(
-  logger({ name: () => "installation" }),
+  withLogger({ name: () => "installation" }),
 );
 
 /**
@@ -297,27 +297,27 @@ router.post("/", {
     const mergedParams = buildWorkflowParams(req.body, rawParams);
 
     const activation = await ow.actions.invoke({
-      name: DEFAULT_ACTION_NAME,
       blocking: false,
-      result: false,
+      name: DEFAULT_ACTION_NAME,
 
       params: {
         ...mergedParams,
-
-        initialState,
-        appConfig,
+        __ow_method: "post",
 
         // Override path to hit the execution endpoint
         __ow_path: "/execution",
-        __ow_method: "post",
+        appConfig,
+
+        initialState,
       },
+      result: false,
     });
 
     logger.debug(`Async execution started: ${activation.activationId}`);
     return accepted({
       body: {
-        message: "Installation started",
         activationId: activation.activationId,
+        message: "Installation started",
         ...initialState,
       },
     });
@@ -362,10 +362,10 @@ router.post("/execution", {
       `Executing installation ${initialState.id} for app "${appData.projectName}" (workspace: "${appData.workspaceName}", commerce: "${AIO_COMMERCE_API_BASE_URL}")`,
     );
     const result = await runInstallation({
-      installationContext,
       config: appConfig,
-      initialState,
       hooks,
+      initialState,
+      installationContext,
     });
 
     await store.put(getStorageKey(), result);
@@ -374,8 +374,8 @@ router.post("/execution", {
     if (isFailedState(result)) {
       return internalServerError({
         body: {
-          message: "Installation failed",
           error: result.error,
+          message: "Installation failed",
           state: result,
         },
       });
@@ -416,13 +416,13 @@ router.post("/validation", {
 
     const validationContext: ValidationContext = {
       appData,
-      params,
       logger,
+      params,
     };
 
     const result = await runValidation({
-      validationContext,
       config: appConfig,
+      validationContext,
     });
 
     logger.debug(
@@ -502,23 +502,23 @@ router.post("/uninstallation", {
     const workflowParams = buildWorkflowParams(req.body, rawParams);
     const ow = openwhisk();
     const activation = await ow.actions.invoke({
-      name: DEFAULT_ACTION_NAME,
       blocking: false,
-      result: false,
+      name: DEFAULT_ACTION_NAME,
       params: {
         ...workflowParams,
-        initialState,
-        appConfig: uninstallConfig,
-        __ow_path: "/uninstallation/execution",
         __ow_method: "post",
+        __ow_path: "/uninstallation/execution",
+        appConfig: uninstallConfig,
+        initialState,
       },
+      result: false,
     });
 
     logger.debug(`Async uninstallation started: ${activation.activationId}`);
     return accepted({
       body: {
-        message: "Uninstallation started",
         activationId: activation.activationId,
+        message: "Uninstallation started",
         ...initialState,
       },
     });
@@ -567,10 +567,10 @@ router.post("/uninstallation/execution", {
       `Executing uninstallation ${initialState.id} for app "${appData.projectName}" (workspace: "${appData.workspaceName}", commerce: "${AIO_COMMERCE_API_BASE_URL}")`,
     );
     const result = await runUninstallation({
-      installationContext,
       config: appConfig,
-      initialState,
       hooks,
+      initialState,
+      installationContext,
     });
 
     await store.put(getStorageKey(), result);
@@ -587,8 +587,8 @@ router.post("/uninstallation/execution", {
     if (isFailedState(result)) {
       return internalServerError({
         body: {
-          message: "Uninstallation failed",
           error: result.error,
+          message: "Uninstallation failed",
           state: result,
         },
       });

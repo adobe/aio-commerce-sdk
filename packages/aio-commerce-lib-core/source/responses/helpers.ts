@@ -109,13 +109,13 @@ export function buildErrorResponse<
   payload: { body: TBody; headers?: THeaders },
 ): ErrorResponse<TBody, THeaders> {
   return {
-    type: "error",
     error: {
-      ...(payload?.headers && { headers: payload.headers }),
+      ...(payload.headers && { headers: payload.headers }),
+      body: payload.body,
 
       statusCode,
-      body: payload.body,
     },
+    type: "error",
   };
 }
 
@@ -157,8 +157,8 @@ export function buildSuccessResponse<
   payload?: { body?: TBody; headers?: THeaders },
 ): SuccessResponse<TBody, THeaders> {
   return {
-    type: "success",
     statusCode,
+    type: "success",
 
     ...(payload?.headers && { headers: payload.headers }),
     ...(payload?.body && { body: payload.body }),

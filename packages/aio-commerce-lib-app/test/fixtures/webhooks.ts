@@ -68,18 +68,18 @@ export function createMockRuntimeWebhookEntry(
 /** Runtime webhook entry scoped to the PaaS environment (app-config env-filter tests). */
 export function createMockPaasWebhookEntry(): RuntimeWebhookEntry {
   return createMockRuntimeWebhookEntry({
-    label: "PaaS only",
     description: "PaaS-only webhook",
-    runtimeAction: "my-package/paas",
     env: ["paas"],
+    label: "PaaS only",
+    runtimeAction: "my-package/paas",
   });
 }
 
 /** Runtime webhook entry that applies to all environments (no `env`). */
 export function createMockAllEnvsWebhookEntry(): RuntimeWebhookEntry {
   return createMockRuntimeWebhookEntry({
-    label: "All envs",
     description: "Webhook for all environments",
+    label: "All envs",
     runtimeAction: "my-package/all",
   });
 }
@@ -98,9 +98,9 @@ export function createMockUrlWebhookEntry(
   };
 
   return {
-    label: "Test Webhook",
-    description: "Test webhook",
     category: "modification",
+    description: "Test webhook",
+    label: "Test Webhook",
     ...entryOverrides,
     webhook,
   };
@@ -124,12 +124,12 @@ export function createMockResolvedWebhook(
   overrides: Partial<WebhookSubscribeParams> = {},
 ): WebhookSubscribeParams {
   return {
-    webhook_method: "observer.catalog_product_save_after",
-    webhook_type: "after",
     batch_name: "my_app_batch",
     hook_name: "my_app_hook",
-    url: "https://example.com/hook",
     method: "POST",
+    url: "https://example.com/hook",
+    webhook_method: "observer.catalog_product_save_after",
+    webhook_type: "after",
     ...overrides,
   };
 }
@@ -138,11 +138,11 @@ export function createMockExistingCommerceWebhook(
   overrides: Partial<CommerceWebhook> = {},
 ): CommerceWebhook {
   return {
-    webhook_method: "plugin.order.api.order_created",
-    webhook_type: "after",
     batch_name: "test_app_webhooks_default",
     hook_name: "test_app_webhooks_order_created",
     url: "https://example.com/hook",
+    webhook_method: "plugin.order.api.order_created",
+    webhook_type: "after",
     ...overrides,
   };
 }
@@ -178,15 +178,15 @@ export function createMockWebhooksContext(
   unsubscribeWebhookFn = vi.fn().mockResolvedValue(null),
 ): WebhooksExecutionContext {
   const mockInstallation = createMockInstallationContext({
-    params,
     logger: createMockLogger(),
+    params,
   });
 
   return {
     ...mockInstallation,
     commerceWebhooksClient: createMockCommerceWebhooksClient({
-      subscribeWebhook: subscribeWebhookFn,
       getWebhookList: getWebhookListFn,
+      subscribeWebhook: subscribeWebhookFn,
       unsubscribeWebhook: unsubscribeWebhookFn,
     }),
   };

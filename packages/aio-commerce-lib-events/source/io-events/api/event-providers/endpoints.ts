@@ -133,11 +133,11 @@ export async function createEventProvider(
         ...fetchOptions,
         json: {
           ...validatedParams,
+          data_residency_region: validatedParams.dataResidencyRegion,
 
           docs_url: validatedParams.docsUrl,
-          provider_metadata: validatedParams.providerType,
           instance_id: validatedParams.instanceId,
-          data_residency_region: validatedParams.dataResidencyRegion,
+          provider_metadata: validatedParams.providerType,
         },
       },
     )

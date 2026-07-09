@@ -42,54 +42,54 @@ describe("scope-tree/merge-scopes", () => {
   beforeEach(() => {
     // Fresh Commerce API data
     mockCommerceFreshData = {
-      websites: [
-        {
-          id: 1,
-          name: "Main Website",
-          code: "main",
-          default_group_id: 1,
-        },
-        {
-          id: 2,
-          name: "Second Website",
-          code: "second",
-          default_group_id: 2,
-        },
-      ],
       storeGroups: [
         {
-          id: 1,
-          website_id: 1,
-          root_category_id: 2,
-          default_store_id: 1,
-          name: "Main Store",
           code: "main_store",
+          default_store_id: 1,
+          id: 1,
+          name: "Main Store",
+          root_category_id: 2,
+          website_id: 1,
         },
         {
-          id: 2,
-          website_id: 2,
-          root_category_id: 3,
-          default_store_id: 2,
-          name: "Second Store",
           code: "second_store",
+          default_store_id: 2,
+          id: 2,
+          name: "Second Store",
+          root_category_id: 3,
+          website_id: 2,
         },
       ],
       storeViews: [
         {
-          id: 1,
           code: "default",
-          name: "Default Store View",
-          website_id: 1,
-          store_group_id: 1,
+          id: 1,
           is_active: true,
+          name: "Default Store View",
+          store_group_id: 1,
+          website_id: 1,
         },
         {
-          id: 2,
           code: "second_view",
-          name: "Second Store View",
-          website_id: 2,
-          store_group_id: 2,
+          id: 2,
           is_active: true,
+          name: "Second Store View",
+          store_group_id: 2,
+          website_id: 2,
+        },
+      ],
+      websites: [
+        {
+          code: "main",
+          default_group_id: 1,
+          id: 1,
+          name: "Main Website",
+        },
+        {
+          code: "second",
+          default_group_id: 2,
+          id: 2,
+          name: "Second Website",
         },
       ],
     };
@@ -97,71 +97,71 @@ describe("scope-tree/merge-scopes", () => {
     // Existing tree with no commerce scopes
     mockExistingTree = [
       {
-        id: "global-uuid-123",
         code: "global",
-        label: "Global",
-        level: "global",
+        id: "global-uuid-123",
         is_editable: false,
         is_final: true,
         is_removable: false,
+        label: "Global",
+        level: "global",
       },
     ];
 
     // Existing tree with some commerce scopes (to test UUID preservation)
     mockExistingTreeWithCommerceScopes = [
       {
-        id: "global-uuid-123",
         code: "global",
+        id: "global-uuid-123",
+        is_editable: false,
+        is_final: true,
+        is_removable: false,
         label: "Global",
         level: "global",
-        is_editable: false,
-        is_final: true,
-        is_removable: false,
       },
       {
-        id: "commerce-parent-uuid",
-        code: "commerce",
-        label: "Commerce",
-        level: "commerce",
-        is_editable: false,
-        is_final: true,
-        is_removable: false,
         children: [
           {
-            id: "existing-website-uuid-456",
-            commerce_id: 1,
-            code: "main",
-            label: "Old Main Website Name",
-            level: "website",
-            is_editable: false,
-            is_final: false,
-            is_removable: false,
             children: [
               {
-                id: "existing-store-group-uuid-789",
-                commerce_id: 1,
-                code: "main_store",
-                label: "Old Main Store Name",
-                level: "store",
-                is_editable: false,
-                is_final: false,
-                is_removable: false,
                 children: [
                   {
-                    id: "existing-store-view-uuid-101",
-                    commerce_id: 1,
                     code: "default",
-                    label: "Old Default Store View",
-                    level: "store_view",
+                    commerce_id: 1,
+                    id: "existing-store-view-uuid-101",
                     is_editable: false,
                     is_final: true,
                     is_removable: false,
+                    label: "Old Default Store View",
+                    level: "store_view",
                   },
                 ],
+                code: "main_store",
+                commerce_id: 1,
+                id: "existing-store-group-uuid-789",
+                is_editable: false,
+                is_final: false,
+                is_removable: false,
+                label: "Old Main Store Name",
+                level: "store",
               },
             ],
+            code: "main",
+            commerce_id: 1,
+            id: "existing-website-uuid-456",
+            is_editable: false,
+            is_final: false,
+            is_removable: false,
+            label: "Old Main Website Name",
+            level: "website",
           },
         ],
+        code: "commerce",
+        id: "commerce-parent-uuid",
+        is_editable: false,
+        is_final: true,
+        is_removable: false,
+        label: "Commerce",
+        level: "commerce",
       },
     ];
   });
@@ -175,12 +175,12 @@ describe("scope-tree/merge-scopes", () => {
 
       expect(result).toHaveLength(2); // Two websites
       expect(result[0]).toMatchObject({
-        commerce_id: 1,
         code: "main",
-        label: "Main Website",
-        level: "website",
+        commerce_id: 1,
         is_editable: true,
         is_final: true,
+        label: "Main Website",
+        level: "website",
       });
       expect(result[0].id).toMatch(NEW_UUID_REGEX); // New UUID generated
       expect(result[0].children).toHaveLength(1); // One store group
@@ -256,15 +256,15 @@ describe("scope-tree/merge-scopes", () => {
     test("should merge updated commerce scopes with existing tree structure", () => {
       const updatedCommerceScopes: ScopeNode[] = [
         {
-          id: "website-uuid-1",
-          commerce_id: 1,
+          children: [],
           code: "main",
-          label: "Main Website",
-          level: "website",
+          commerce_id: 1,
+          id: "website-uuid-1",
           is_editable: false,
           is_final: false,
           is_removable: false,
-          children: [],
+          label: "Main Website",
+          level: "website",
         },
       ];
 
@@ -288,38 +288,38 @@ describe("scope-tree/merge-scopes", () => {
       const existingTreeWithCustom: ScopeTree = [
         ...mockExistingTree,
         {
-          id: "akeneo-parent-uuid",
-          code: "akeneo",
-          label: "Akeneo",
-          level: "akeneo",
-          is_editable: false,
-          is_final: true,
-          is_removable: false,
           children: [
             {
-              id: "akeneo-uuid-123",
               code: "akeneo_master",
-              label: "Akeneo Master",
-              level: "akeneo_level1",
+              id: "akeneo-uuid-123",
               is_editable: true,
               is_final: false,
               is_removable: true,
+              label: "Akeneo Master",
+              level: "akeneo_level1",
             },
           ],
+          code: "akeneo",
+          id: "akeneo-parent-uuid",
+          is_editable: false,
+          is_final: true,
+          is_removable: false,
+          label: "Akeneo",
+          level: "akeneo",
         },
       ];
 
       const updatedCommerceScopes: ScopeNode[] = [
         {
-          id: "website-uuid-1",
-          commerce_id: 1,
+          children: [],
           code: "main",
-          label: "Main Website",
-          level: "website",
+          commerce_id: 1,
+          id: "website-uuid-1",
           is_editable: false,
           is_final: false,
           is_removable: false,
-          children: [],
+          label: "Main Website",
+          level: "website",
         },
       ];
 

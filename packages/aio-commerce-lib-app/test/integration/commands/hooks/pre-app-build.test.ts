@@ -34,6 +34,7 @@ import {
   configWithBusinessConfig,
   configWithCommerceEventing,
   configWithFullAdminUiV2,
+  configWithWorkerMassActions,
 } from "#test/fixtures/config";
 import {
   businessConfigActionFile,
@@ -190,6 +191,43 @@ describe("commands/hooks/pre-app-build", () => {
             "index.html",
           );
           expect(existsSync(webSrcEntrypoint)).toBe(true);
+        },
+      );
+    });
+
+    test("does not scaffold web-src or write the #web/* alias for backend-ui/2 when adminUi has no view operation", async () => {
+      await withTempProject(
+        {
+          ...makeProjectFiles(configWithWorkerMassActions),
+          ...makeTemplateFiles(),
+        },
+        async (tempDir) => {
+          await run("backend-ui/2");
+
+          const extConfigPath = join(
+            tempDir,
+            getExtConfigPath(BACKEND_UI_V2_EXTENSION_POINT_ID),
+          );
+
+          expect(existsSync(extConfigPath)).toBe(true);
+
+          const content = await readFile(extConfigPath, "utf-8");
+          expect(content).toContain("workerProcess");
+          expect(content).not.toContain("web-src");
+
+          const webSrcDir = join(
+            tempDir,
+            getExtConfigPath(BACKEND_UI_V2_EXTENSION_POINT_ID),
+            "..",
+            "web-src",
+          );
+          expect(existsSync(webSrcDir)).toBe(false);
+
+          const pkg = JSON.parse(
+            await readFile(join(tempDir, "package.json"), "utf-8"),
+          );
+          expect(pkg.imports["#web/*"]).toBeUndefined();
+          expect(mockSpawnSync).not.toHaveBeenCalled();
         },
       );
     });

@@ -30,7 +30,7 @@ catalogs:
     '@types/react-dom': ^19.2.3
     react: ^19.2.7
     react-dom: ^19.2.7
-  
+
 engineStrict: true
 allowBuilds:
   '@actions/github-script': true
@@ -38,4 +38,5 @@ allowBuilds:
   core-js-pure: true
   esbuild: true
   msw: true
+  playwright: true
   protobufjs: true

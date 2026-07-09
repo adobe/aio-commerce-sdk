@@ -16,16 +16,16 @@ import { describe, expect, it } from "vitest";
 import { parseMassActionSelection } from "#mass-actions/view/presets";
 
 const VALID_SELECTION = JSON.stringify({
-  ids: ["000000001", "000000002"],
   gridType: "customer",
+  ids: ["000000001", "000000002"],
 });
 
 describe("parseMassActionSelection", () => {
   it("parses a valid JSON selection string", () => {
     const result = parseMassActionSelection(VALID_SELECTION);
     expect(result).toEqual({
-      ids: ["000000001", "000000002"],
       gridType: "customer",
+      ids: ["000000001", "000000002"],
     });
   });
 
@@ -34,12 +34,12 @@ describe("parseMassActionSelection", () => {
     "product",
     "customer",
   ] as const)("accepts gridType %s", (gridType) => {
-    const raw = JSON.stringify({ ids: ["1"], gridType });
+    const raw = JSON.stringify({ gridType, ids: ["1"] });
     expect(parseMassActionSelection(raw).gridType).toBe(gridType);
   });
 
   it("accepts a single id", () => {
-    const raw = JSON.stringify({ ids: ["000000001"], gridType: "order" });
+    const raw = JSON.stringify({ gridType: "order", ids: ["000000001"] });
     const result = parseMassActionSelection(raw);
     expect(result.ids).toEqual(["000000001"]);
   });
@@ -61,21 +61,21 @@ describe("parseMassActionSelection", () => {
   });
 
   it("throws when ids is empty", () => {
-    const raw = JSON.stringify({ ids: [], gridType: "order" });
+    const raw = JSON.stringify({ gridType: "order", ids: [] });
     expect(() => parseMassActionSelection(raw)).toThrow(
       CommerceSdkValidationError,
     );
   });
 
   it("throws when ids contains an empty string", () => {
-    const raw = JSON.stringify({ ids: ["1", ""], gridType: "order" });
+    const raw = JSON.stringify({ gridType: "order", ids: ["1", ""] });
     expect(() => parseMassActionSelection(raw)).toThrow(
       CommerceSdkValidationError,
     );
   });
 
   it("throws when gridType is unknown", () => {
-    const raw = JSON.stringify({ ids: ["1"], gridType: "sales_order_grid" });
+    const raw = JSON.stringify({ gridType: "sales_order_grid", ids: ["1"] });
     expect(() => parseMassActionSelection(raw)).toThrow(
       CommerceSdkValidationError,
     );

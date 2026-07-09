@@ -32,13 +32,17 @@ import {
   findUp,
   findNearestPackageJson,
   readPackageJson,
+  loadPackageJson,
   isESM,
   getProjectRootDirectory,
   makeOutputDirFor,
   detectPackageManager,
   getExecCommand,
   getInstallCommand,
+  getProjectInstallCommand,
 } from "@aio-commerce-sdk/scripting-utils/project";
+
+import type { PackageInstallOptions } from "@aio-commerce-sdk/scripting-utils/project";
 
 // Find a file by walking up parent directories
 const configPath = await findUp("tsconfig.json");
@@ -48,6 +52,10 @@ const packageJsonPath = await findNearestPackageJson();
 
 // Read and parse package.json
 const packageJson = await readPackageJson();
+
+// Load the nearest package.json with @npmcli/package-json
+// (returns an editable instance, or null when not found)
+const pkg = await loadPackageJson();
 
 // Check if the project uses ESM
 const esm = await isESM();
@@ -65,9 +73,55 @@ const packageManager = await detectPackageManager();
 // (npx, pnpm exec, yarn exec, or bun x)
 const execCommand = getExecCommand(packageManager);
 
-// Get the command to install dependencies
-// (e.g. "pnpm add foo bar", "npm i foo bar")
+// Get the command to install dependencies, returned as a { command, args }
+// pair (e.g. { command: "pnpm", args: ["add", "foo", "bar"] })
 const installCommand = getInstallCommand(packageManager, ["foo", "bar"]);
+
+// Pass PackageInstallOptions to install as development dependencies
+// (adds the manager's dev flag, e.g. args: ["add", "--save-dev", "foo", "bar"])
+const installOptions: PackageInstallOptions = { dev: true };
+const devInstallCommand = getInstallCommand(
+  packageManager,
+  ["foo", "bar"],
+  installOptions,
+);
+
+// Get the { command, args } pair that installs a project's declared dependencies
+// (e.g. { command: "pnpm", args: ["i"] })
+const projectInstallCommand = getProjectInstallCommand(packageManager);
+```
+
+Helpers for resolving and merging package dependencies (a `PackageDependency` is a `{ name, version }` pair):
+
+```typescript
+import {
+  getInstalledPackageVersion,
+  getPackageDependencyInstallPlan,
+  mergePackageJsonDependencies,
+  loadPackageJson,
+} from "@aio-commerce-sdk/scripting-utils/project";
+
+import type { PackageDependency } from "@aio-commerce-sdk/scripting-utils/project";
+
+// Resolve the installed version of a package (null when not installed)
+const installedVersion = await getInstalledPackageVersion("react");
+
+// Resolve which required dependencies are missing or installed
+// with versions incompatible with the required semver range
+const requiredDependencies: PackageDependency[] = [
+  { name: "react", version: "^19.0.0" },
+];
+
+const { missing, incompatible } =
+  await getPackageDependencyInstallPlan(requiredDependencies);
+
+// Merge required dependencies into a package.json dependency map
+// (only adds the ones not already declared)
+const pkg = await loadPackageJson();
+const dependencies = mergePackageJsonDependencies(
+  pkg?.content.dependencies ?? {},
+  requiredDependencies,
+);
 ```
 
 ## Filesystem Utilities

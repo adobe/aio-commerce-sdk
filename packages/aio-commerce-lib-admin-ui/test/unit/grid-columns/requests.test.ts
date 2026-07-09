@@ -18,9 +18,9 @@ import { parseGridRequest } from "#grid-columns/requests/presets";
 import type { GridType } from "#grid-columns/requests/types";
 
 const VALID_REQUEST = {
-  requestId: "550e8400-e29b-41d4-a716-446655440000",
   gridType: "order",
   ids: ["000000001", "000000002"],
+  requestId: "550e8400-e29b-41d4-a716-446655440000",
 };
 
 describe("parseGridRequest", () => {

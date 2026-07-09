@@ -48,12 +48,12 @@ describe("aio-commerce-lib-auth/ims-auth", () => {
       const config = {
         clientId: "test-client-id",
         clientSecrets: ["supersecret"],
-        technicalAccountId: "test-technical-account-id",
-        technicalAccountEmail: "test-email@example.com",
+        context: "test-context",
+        environment: "prod" as const,
         imsOrgId: "test-org-id",
         scopes: ["scope1", "scope2"],
-        environment: "prod" as const,
-        context: "test-context",
+        technicalAccountEmail: "test-email@example.com",
+        technicalAccountId: "test-technical-account-id",
       };
 
       const imsAuthProvider = getImsAuthProvider(config);
@@ -75,12 +75,12 @@ describe("aio-commerce-lib-auth/ims-auth", () => {
       const config = {
         clientId: "test-client-id",
         clientSecrets: ["supersecret"],
-        technicalAccountId: "test-technical-account-id",
-        technicalAccountEmail: "test-email@example.com",
+        context: "test-context",
+        environment: "prod" as const,
         imsOrgId: "test-org-id",
         scopes: ["scope1", "scope2"],
-        environment: "prod" as const,
-        context: "test-context",
+        technicalAccountEmail: "test-email@example.com",
+        technicalAccountId: "test-technical-account-id",
       };
 
       const imsAuthProvider = getImsAuthProvider(config);
@@ -89,14 +89,14 @@ describe("aio-commerce-lib-auth/ims-auth", () => {
       expect(context.set).toHaveBeenCalledWith(
         "test-context",
         expect.objectContaining({
-          scopes: ["scope1", "scope2"],
-          env: "prod",
-          context: "test-context",
           client_id: "test-client-id",
           client_secrets: ["supersecret"],
-          technical_account_id: "test-technical-account-id",
-          technical_account_email: "test-email@example.com",
+          context: "test-context",
+          env: "prod",
           ims_org_id: "test-org-id",
+          scopes: ["scope1", "scope2"],
+          technical_account_email: "test-email@example.com",
+          technical_account_id: "test-technical-account-id",
         }),
       );
     });
@@ -109,11 +109,11 @@ describe("aio-commerce-lib-auth/ims-auth", () => {
       const config: ImsAuthParams = {
         clientId: "test-client-id",
         clientSecrets: ["supersecret"],
-        technicalAccountId: "test-technical-account-id",
-        technicalAccountEmail: "test-email@example.com",
+        environment: "prod" as const,
         imsOrgId: "test-org-id",
         scopes: ["scope1", "scope2"],
-        environment: "prod" as const,
+        technicalAccountEmail: "test-email@example.com",
+        technicalAccountId: "test-technical-account-id",
       };
 
       const imsAuthProvider = getImsAuthProvider(config);
@@ -122,14 +122,14 @@ describe("aio-commerce-lib-auth/ims-auth", () => {
       expect(context.set).toHaveBeenCalledWith(
         "aio-commerce-lib-auth-creds",
         expect.objectContaining({
-          scopes: ["scope1", "scope2"],
-          env: "prod",
-          context: "aio-commerce-lib-auth-creds",
           client_id: "test-client-id",
           client_secrets: ["supersecret"],
-          technical_account_id: "test-technical-account-id",
-          technical_account_email: "test-email@example.com",
+          context: "aio-commerce-lib-auth-creds",
+          env: "prod",
           ims_org_id: "test-org-id",
+          scopes: ["scope1", "scope2"],
+          technical_account_email: "test-email@example.com",
+          technical_account_id: "test-technical-account-id",
         }),
       );
     });
@@ -142,11 +142,11 @@ describe("aio-commerce-lib-auth/ims-auth", () => {
       const config: ImsAuthParams = {
         clientId: "test-client-id",
         clientSecrets: ["supersecret"],
-        technicalAccountId: "test-technical-account-id",
-        technicalAccountEmail: "test-email@example.com",
+        context: "test-context",
         imsOrgId: "test-org-id",
         scopes: ["scope1", "scope2"],
-        context: "test-context",
+        technicalAccountEmail: "test-email@example.com",
+        technicalAccountId: "test-technical-account-id",
       };
 
       const imsAuthProvider = getImsAuthProvider(config);
@@ -155,14 +155,14 @@ describe("aio-commerce-lib-auth/ims-auth", () => {
       expect(context.set).toHaveBeenCalledWith(
         "test-context",
         expect.objectContaining({
-          scopes: ["scope1", "scope2"],
-          env: "prod", // Should default to "prod" when environment is undefined
-          context: "test-context",
           client_id: "test-client-id",
           client_secrets: ["supersecret"],
-          technical_account_id: "test-technical-account-id",
-          technical_account_email: "test-email@example.com",
+          context: "test-context",
+          env: "prod", // Should default to "prod" when environment is undefined
           ims_org_id: "test-org-id",
+          scopes: ["scope1", "scope2"],
+          technical_account_email: "test-email@example.com",
+          technical_account_id: "test-technical-account-id",
         }),
       );
     });
@@ -175,10 +175,10 @@ describe("aio-commerce-lib-auth/ims-auth", () => {
       const config: ImsAuthParams = {
         clientId: "test-client-id",
         clientSecrets: ["supersecret"],
-        technicalAccountId: "test-technical-account-id",
-        technicalAccountEmail: "test-email@example.com",
         imsOrgId: "test-org-id",
         scopes: ["scope1", "scope2"],
+        technicalAccountEmail: "test-email@example.com",
+        technicalAccountId: "test-technical-account-id",
       };
 
       const imsAuthProvider = getImsAuthProvider(config);
@@ -187,14 +187,14 @@ describe("aio-commerce-lib-auth/ims-auth", () => {
       expect(context.set).toHaveBeenCalledWith(
         "aio-commerce-lib-auth-creds",
         expect.objectContaining({
-          scopes: ["scope1", "scope2"],
-          env: "prod", // Should default to "prod" when environment is undefined
-          context: "aio-commerce-lib-auth-creds",
           client_id: "test-client-id",
           client_secrets: ["supersecret"],
-          technical_account_id: "test-technical-account-id",
-          technical_account_email: "test-email@example.com",
+          context: "aio-commerce-lib-auth-creds",
+          env: "prod", // Should default to "prod" when environment is undefined
           ims_org_id: "test-org-id",
+          scopes: ["scope1", "scope2"],
+          technical_account_email: "test-email@example.com",
+          technical_account_id: "test-technical-account-id",
         }),
       );
     });
@@ -207,12 +207,12 @@ describe("aio-commerce-lib-auth/ims-auth", () => {
       const config: ImsAuthParams = {
         clientId: "test-client-id",
         clientSecrets: ["supersecret"],
-        technicalAccountId: "test-technical-account-id",
-        technicalAccountEmail: "test-email@example.com",
+        context: "test-context",
+        environment: "stage" as const,
         imsOrgId: "test-org-id",
         scopes: ["scope1", "scope2"],
-        environment: "stage" as const,
-        context: "test-context",
+        technicalAccountEmail: "test-email@example.com",
+        technicalAccountId: "test-technical-account-id",
       };
 
       const imsAuthProvider = getImsAuthProvider(config);
@@ -221,14 +221,14 @@ describe("aio-commerce-lib-auth/ims-auth", () => {
       expect(context.set).toHaveBeenCalledWith(
         "test-context",
         expect.objectContaining({
-          scopes: ["scope1", "scope2"],
-          env: "stage",
-          context: "test-context",
           client_id: "test-client-id",
           client_secrets: ["supersecret"],
-          technical_account_id: "test-technical-account-id",
-          technical_account_email: "test-email@example.com",
+          context: "test-context",
+          env: "stage",
           ims_org_id: "test-org-id",
+          scopes: ["scope1", "scope2"],
+          technical_account_email: "test-email@example.com",
+          technical_account_id: "test-technical-account-id",
         }),
       );
     });
@@ -242,12 +242,12 @@ describe("aio-commerce-lib-auth/ims-auth", () => {
       const config = {
         clientId: "test-client-id",
         clientSecrets: ["supersecret"],
-        technicalAccountId: "test-technical-account-id",
-        technicalAccountEmail: "test-email@example.com",
+        context: "test-context",
+        environment: "prod" as const,
         imsOrgId: "test-org-id",
         scopes: ["scope1", "scope2"],
-        environment: "prod" as const,
-        context: "test-context",
+        technicalAccountEmail: "test-email@example.com",
+        technicalAccountId: "test-technical-account-id",
       };
 
       const imsAuthProvider = getImsAuthProvider(config);
@@ -265,12 +265,12 @@ describe("aio-commerce-lib-auth/ims-auth", () => {
         assertImsAuthParams({
           clientId: "test-client-id",
           clientSecrets: ["supersecret"],
-          technicalAccountId: "test-technical-account-id",
-          technicalAccountEmail: "test-email@example.com",
+          context: "test-context",
+          environment: "prod" as const,
           imsOrgId: "test-org-id",
           scopes: ["scope1", "scope2"],
-          environment: "prod" as const,
-          context: "test-context",
+          technicalAccountEmail: "test-email@example.com",
+          technicalAccountId: "test-technical-account-id",
         });
       }).not.toThrow();
 
@@ -278,10 +278,10 @@ describe("aio-commerce-lib-auth/ims-auth", () => {
         assertImsAuthParams({
           clientId: "test-client-id",
           clientSecrets: ["supersecret"],
-          technicalAccountId: "test-technical-account-id",
-          technicalAccountEmail: "test-email@example.com",
           imsOrgId: "test-org-id",
           scopes: ["scope1", "scope2"],
+          technicalAccountEmail: "test-email@example.com",
+          technicalAccountId: "test-technical-account-id",
         });
       }).not.toThrow();
     });
@@ -297,12 +297,12 @@ describe("aio-commerce-lib-auth/ims-auth", () => {
     const validConfig = {
       clientId: "test-client-id",
       clientSecrets: ["supersecret"],
-      technicalAccountId: "test-technical-account-id",
-      technicalAccountEmail: "test-email@example.com",
+      context: "test-context",
+      environment: "prod" as const,
       imsOrgId: "test-org-id",
       scopes: ["scope1", "scope2"],
-      environment: "prod" as const,
-      context: "test-context",
+      technicalAccountEmail: "test-email@example.com",
+      technicalAccountId: "test-technical-account-id",
     };
 
     test("should throw with missing clientId", () => {
@@ -467,8 +467,8 @@ describe("aio-commerce-lib-auth/ims-auth", () => {
       expect(() => {
         assertImsAuthParams({
           ...validConfig,
-          extraProperty: "should-be-ignored",
           anotherExtra: 123,
+          extraProperty: "should-be-ignored",
         });
       }).not.toThrow();
     });
@@ -504,12 +504,12 @@ describe("aio-commerce-lib-auth/ims-auth", () => {
       const params = {
         AIO_COMMERCE_AUTH_IMS_CLIENT_ID: "test-client-id",
         AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS: ["supersecret"],
-        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID: "test-technical-account-id",
-        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL: "test-email@example.com",
+        AIO_COMMERCE_AUTH_IMS_CONTEXT: "test-context",
+        AIO_COMMERCE_AUTH_IMS_ENVIRONMENT: "prod" as const,
         AIO_COMMERCE_AUTH_IMS_ORG_ID: "test-org-id",
         AIO_COMMERCE_AUTH_IMS_SCOPES: ["scope1", "scope2"],
-        AIO_COMMERCE_AUTH_IMS_ENVIRONMENT: "prod" as const,
-        AIO_COMMERCE_AUTH_IMS_CONTEXT: "test-context",
+        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL: "test-email@example.com",
+        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID: "test-technical-account-id",
       };
 
       const resolved = resolveImsAuthParams(params);
@@ -517,12 +517,12 @@ describe("aio-commerce-lib-auth/ims-auth", () => {
       expect(resolved).toEqual({
         clientId: "test-client-id",
         clientSecrets: ["supersecret"],
-        technicalAccountId: "test-technical-account-id",
-        technicalAccountEmail: "test-email@example.com",
+        context: "test-context",
+        environment: "prod",
         imsOrgId: "test-org-id",
         scopes: ["scope1", "scope2"],
-        environment: "prod",
-        context: "test-context",
+        technicalAccountEmail: "test-email@example.com",
+        technicalAccountId: "test-technical-account-id",
       });
     });
 
@@ -530,10 +530,10 @@ describe("aio-commerce-lib-auth/ims-auth", () => {
       const params = {
         AIO_COMMERCE_AUTH_IMS_CLIENT_ID: "test-client-id",
         AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS: ["supersecret"],
-        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID: "test-technical-account-id",
-        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL: "test-email@example.com",
         AIO_COMMERCE_AUTH_IMS_ORG_ID: "test-org-id",
         AIO_COMMERCE_AUTH_IMS_SCOPES: ["scope1", "scope2"],
+        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL: "test-email@example.com",
+        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID: "test-technical-account-id",
       };
 
       const resolved = resolveImsAuthParams(params);
@@ -541,12 +541,12 @@ describe("aio-commerce-lib-auth/ims-auth", () => {
       expect(resolved).toEqual({
         clientId: "test-client-id",
         clientSecrets: ["supersecret"],
-        technicalAccountId: "test-technical-account-id",
-        technicalAccountEmail: "test-email@example.com",
+        context: undefined,
+        environment: undefined,
         imsOrgId: "test-org-id",
         scopes: ["scope1", "scope2"],
-        environment: undefined,
-        context: undefined,
+        technicalAccountEmail: "test-email@example.com",
+        technicalAccountId: "test-technical-account-id",
       });
     });
 
@@ -554,10 +554,10 @@ describe("aio-commerce-lib-auth/ims-auth", () => {
       const params = {
         AIO_COMMERCE_AUTH_IMS_CLIENT_ID: "test-client-id",
         AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS: '["secret1","secret2"]',
-        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID: "test-technical-account-id",
-        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL: "test-email@example.com",
         AIO_COMMERCE_AUTH_IMS_ORG_ID: "test-org-id",
         AIO_COMMERCE_AUTH_IMS_SCOPES: ["scope1", "scope2"],
+        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL: "test-email@example.com",
+        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID: "test-technical-account-id",
       };
 
       const resolved = resolveImsAuthParams(params);
@@ -568,10 +568,10 @@ describe("aio-commerce-lib-auth/ims-auth", () => {
       const params = {
         AIO_COMMERCE_AUTH_IMS_CLIENT_ID: "test-client-id",
         AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS: "single-secret",
-        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID: "test-technical-account-id",
-        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL: "test-email@example.com",
         AIO_COMMERCE_AUTH_IMS_ORG_ID: "test-org-id",
         AIO_COMMERCE_AUTH_IMS_SCOPES: ["scope1", "scope2"],
+        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL: "test-email@example.com",
+        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID: "test-technical-account-id",
       };
 
       const resolved = resolveImsAuthParams(params);
@@ -593,10 +593,10 @@ describe("aio-commerce-lib-auth/ims-auth", () => {
       const params = {
         AIO_COMMERCE_AUTH_IMS_CLIENT_ID: "test-client-id",
         AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS: [], // Empty array - invalid
-        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID: "test-technical-account-id",
-        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL: "test-email@example.com",
         AIO_COMMERCE_AUTH_IMS_ORG_ID: "test-org-id",
         AIO_COMMERCE_AUTH_IMS_SCOPES: ["scope1", "scope2"],
+        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL: "test-email@example.com",
+        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID: "test-technical-account-id",
       };
 
       expect(() => {
@@ -608,10 +608,10 @@ describe("aio-commerce-lib-auth/ims-auth", () => {
       const params = {
         AIO_COMMERCE_AUTH_IMS_CLIENT_ID: "test-client-id",
         AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS: ["supersecret"],
-        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID: "test-technical-account-id",
-        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL: "test-email@example.com",
         AIO_COMMERCE_AUTH_IMS_ORG_ID: "test-org-id",
         AIO_COMMERCE_AUTH_IMS_SCOPES: '["scope1","scope2"]',
+        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL: "test-email@example.com",
+        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID: "test-technical-account-id",
       };
 
       const resolved = resolveImsAuthParams(params);
@@ -622,10 +622,10 @@ describe("aio-commerce-lib-auth/ims-auth", () => {
       const params = {
         AIO_COMMERCE_AUTH_IMS_CLIENT_ID: "test-client-id",
         AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS: ["supersecret"],
-        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID: "test-technical-account-id",
-        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL: "test-email@example.com",
         AIO_COMMERCE_AUTH_IMS_ORG_ID: "test-org-id",
         AIO_COMMERCE_AUTH_IMS_SCOPES: "single-scope",
+        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL: "test-email@example.com",
+        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID: "test-technical-account-id",
       };
 
       const resolved = resolveImsAuthParams(params);
@@ -636,10 +636,10 @@ describe("aio-commerce-lib-auth/ims-auth", () => {
       const params = {
         AIO_COMMERCE_AUTH_IMS_CLIENT_ID: "test-client-id",
         AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS: ["supersecret"],
-        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID: "test-technical-account-id",
-        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL: "test-email@example.com",
         AIO_COMMERCE_AUTH_IMS_ORG_ID: "test-org-id",
         AIO_COMMERCE_AUTH_IMS_SCOPES: [], // Empty array - invalid
+        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL: "test-email@example.com",
+        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID: "test-technical-account-id",
       };
 
       expect(() => {
@@ -651,10 +651,10 @@ describe("aio-commerce-lib-auth/ims-auth", () => {
       const params = {
         AIO_COMMERCE_AUTH_IMS_CLIENT_ID: "test-client-id",
         AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS: '["test", invalid]', // Invalid JSON syntax
-        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID: "test-technical-account-id",
-        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL: "test-email@example.com",
         AIO_COMMERCE_AUTH_IMS_ORG_ID: "test-org-id",
         AIO_COMMERCE_AUTH_IMS_SCOPES: ["scope1", "scope2"],
+        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL: "test-email@example.com",
+        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID: "test-technical-account-id",
       };
 
       expect(() => {
@@ -666,10 +666,10 @@ describe("aio-commerce-lib-auth/ims-auth", () => {
       const params = {
         AIO_COMMERCE_AUTH_IMS_CLIENT_ID: "test-client-id",
         AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS: ["supersecret"],
-        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID: "test-technical-account-id",
-        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL: "test-email@example.com",
         AIO_COMMERCE_AUTH_IMS_ORG_ID: "test-org-id",
         AIO_COMMERCE_AUTH_IMS_SCOPES: '["test", invalid]', // Invalid JSON syntax
+        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL: "test-email@example.com",
+        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID: "test-technical-account-id",
       };
 
       expect(() => {
@@ -685,10 +685,10 @@ describe("aio-commerce-lib-auth/ims-auth", () => {
       const params = {
         AIO_COMMERCE_AUTH_IMS_CLIENT_ID: "test-client-id",
         AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS: '["test"]', // Looks like array but mocked to return object
-        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID: "test-technical-account-id",
-        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL: "test-email@example.com",
         AIO_COMMERCE_AUTH_IMS_ORG_ID: "test-org-id",
         AIO_COMMERCE_AUTH_IMS_SCOPES: ["scope1", "scope2"],
+        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL: "test-email@example.com",
+        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID: "test-technical-account-id",
       };
 
       expect(() => {
@@ -706,10 +706,10 @@ describe("aio-commerce-lib-auth/ims-auth", () => {
       const params = {
         AIO_COMMERCE_AUTH_IMS_CLIENT_ID: "test-client-id",
         AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS: ["supersecret"],
-        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID: "test-technical-account-id",
-        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL: "test-email@example.com",
         AIO_COMMERCE_AUTH_IMS_ORG_ID: "test-org-id",
         AIO_COMMERCE_AUTH_IMS_SCOPES: '["test"]', // Looks like array but mocked to return object
+        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL: "test-email@example.com",
+        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID: "test-technical-account-id",
       };
 
       expect(() => {
@@ -725,10 +725,10 @@ describe("aio-commerce-lib-auth/ims-auth", () => {
       const provider = getImsAuthProvider({
         clientId: "test-client-id",
         clientSecrets: ["supersecret"],
-        technicalAccountId: "test-technical-account-id",
-        technicalAccountEmail: "test-email@example.com",
         imsOrgId: "test-org-id",
         scopes: ["scope1", "scope2"],
+        technicalAccountEmail: "test-email@example.com",
+        technicalAccountId: "test-technical-account-id",
       });
 
       expect(isImsAuthProvider(provider)).toBe(true);
@@ -738,10 +738,10 @@ describe("aio-commerce-lib-auth/ims-auth", () => {
       const params = {
         clientId: "test-client-id",
         clientSecrets: ["supersecret"],
-        technicalAccountId: "test-technical-account-id",
-        technicalAccountEmail: "test-email@example.com",
         imsOrgId: "test-org-id",
         scopes: ["scope1", "scope2"],
+        technicalAccountEmail: "test-email@example.com",
+        technicalAccountId: "test-technical-account-id",
       };
 
       expect(isImsAuthProvider(params)).toBe(false);
@@ -937,8 +937,8 @@ describe("aio-commerce-lib-auth/ims-auth", () => {
         const provider = getForwardedImsAuthProvider({
           from: "params",
           params: {
-            AIO_COMMERCE_AUTH_IMS_TOKEN: "params-token",
             AIO_COMMERCE_AUTH_IMS_API_KEY: "params-api-key",
+            AIO_COMMERCE_AUTH_IMS_TOKEN: "params-token",
           },
         });
 
@@ -990,8 +990,8 @@ describe("aio-commerce-lib-auth/ims-auth", () => {
           from: "params",
           params: {
             AIO_COMMERCE_AUTH_IMS_TOKEN: "params-token",
-            someOtherParam: "value",
             anotherParam: 123,
+            someOtherParam: "value",
           },
         });
 
@@ -1068,8 +1068,8 @@ describe("aio-commerce-lib-auth/ims-auth", () => {
   describe("forwardImsAuthProviderFromParams", () => {
     test("should forward auth from params object", () => {
       const params = {
-        AIO_COMMERCE_AUTH_IMS_TOKEN: "forwarded-token",
         AIO_COMMERCE_AUTH_IMS_API_KEY: "forwarded-api-key",
+        AIO_COMMERCE_AUTH_IMS_TOKEN: "forwarded-token",
       };
 
       const provider = forwardImsAuthProviderFromParams(params);
@@ -1115,8 +1115,8 @@ describe("aio-commerce-lib-auth/ims-auth", () => {
   describe("forwardImsAuthProvider", () => {
     test("should forward auth from params when AIO_COMMERCE_AUTH_IMS_TOKEN is present", () => {
       const params = {
-        AIO_COMMERCE_AUTH_IMS_TOKEN: "params-token",
         AIO_COMMERCE_AUTH_IMS_API_KEY: "params-api-key",
+        AIO_COMMERCE_AUTH_IMS_TOKEN: "params-token",
       };
 
       const provider = forwardImsAuthProvider(params);
@@ -1147,10 +1147,10 @@ describe("aio-commerce-lib-auth/ims-auth", () => {
 
     test("should prioritize params token over headers", () => {
       const params = {
-        AIO_COMMERCE_AUTH_IMS_TOKEN: "params-token",
         __ow_headers: {
           authorization: "Bearer header-token",
         },
+        AIO_COMMERCE_AUTH_IMS_TOKEN: "params-token",
       };
 
       const provider = forwardImsAuthProvider(params);

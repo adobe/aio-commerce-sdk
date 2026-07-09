@@ -25,7 +25,7 @@ import {
 } from "@adobe/aio-commerce-lib-core/responses";
 import {
   HttpActionRouter,
-  logger,
+  logger as withLogger,
 } from "@aio-commerce-sdk/common-utils/actions";
 import { inspect } from "@aio-commerce-sdk/common-utils/logging";
 
@@ -46,7 +46,7 @@ import type { SetCustomScopeTreeRequest } from "@adobe/aio-commerce-lib-config";
  * - DELETE /commerce   Unsync commerce scopes
  */
 export const router = new HttpActionRouter().use(
-  logger({
+  withLogger({
     name: () => "scope-tree",
   }),
 );
@@ -63,8 +63,8 @@ router.get("/", {
 
     if (result.isCachedData) {
       return nonAuthoritativeInformation({
-        headers: { "x-cache": "hit" },
         body: { scopes: result.scopeTree },
+        headers: { "x-cache": "hit" },
       });
     }
 
@@ -139,8 +139,8 @@ router.post("/commerce", {
       logger.error(`Error syncing commerce scopes: ${inspect(result.error)}`);
       return internalServerError({
         body: {
-          message: "An internal server error occurred",
           error: result.error,
+          message: "An internal server error occurred",
         },
       });
     }
@@ -151,11 +151,11 @@ router.post("/commerce", {
       );
 
       return nonAuthoritativeInformation({
-        headers: { "x-cache": "hit" },
         body: {
           scopes: result.scopeTree,
           synced: false,
         },
+        headers: { "x-cache": "hit" },
       });
     }
 

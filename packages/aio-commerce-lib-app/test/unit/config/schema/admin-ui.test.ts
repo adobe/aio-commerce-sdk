@@ -61,10 +61,10 @@ describe("AdminUiSchema", () => {
         const result = v.safeParse(AdminUiSchema, {
           order: {
             gridColumns: {
-              label: "Order grid",
+              columns: [{ align: "left", id: "col", label: "Col", type }],
               description: "Adds a column",
+              label: "Order grid",
               runtimeAction: "orders/fetch",
-              columns: [{ id: "col", label: "Col", type, align: "left" }],
             },
           },
         });
@@ -84,12 +84,12 @@ describe("AdminUiSchema", () => {
       const result = v.safeParse(AdminUiSchema, {
         order: {
           gridColumns: {
-            label: "Order grid",
-            description: "Adds a column",
-            runtimeAction: "orders/fetch",
             columns: [
-              { id: "col", label: "Col", type: "string", align: "left" },
+              { align: "left", id: "col", label: "Col", type: "string" },
             ],
+            description: "Adds a column",
+            label: "Order grid",
+            runtimeAction: "orders/fetch",
           },
         },
       });
@@ -100,23 +100,23 @@ describe("AdminUiSchema", () => {
       const result = v.safeParse(AdminUiSchema, {
         order: {
           gridColumns: {
-            label: "Order grid",
-            description: "Adds columns",
-            runtimeAction: "orders/fetch",
             columns: [
               {
+                align: "left",
                 id: "col_a",
                 label: "Col A",
                 type: "string",
-                align: "left",
               },
               {
+                align: "right",
                 id: "col_b",
                 label: "Col B",
                 type: "integer",
-                align: "right",
               },
             ],
+            description: "Adds columns",
+            label: "Order grid",
+            runtimeAction: "orders/fetch",
           },
         },
       });
@@ -126,7 +126,7 @@ describe("AdminUiSchema", () => {
     test("menu with required fields only", () => {
       const { id, label, description } = configWithAdminUiMenu.adminUi.menu;
       const result = v.safeParse(AdminUiSchema, {
-        menu: { id, label, description },
+        menu: { description, id, label },
       });
 
       expect(result.success).toBe(true);
@@ -154,7 +154,7 @@ describe("AdminUiSchema", () => {
     test("menu aclProtected omitted is accepted (optional)", () => {
       const { id, label, description } = configWithAdminUiMenu.adminUi.menu;
       const result = v.safeParse(AdminUiSchema, {
-        menu: { id, label, description },
+        menu: { description, id, label },
       });
       expect(result.success).toBe(true);
     });
@@ -171,15 +171,15 @@ describe("AdminUiSchema", () => {
       const result = v.safeParse(AdminUiSchema, {
         order: {
           gridColumns: {
-            label: "Order grid",
-            description: "Adds a column",
-            runtimeAction: "orders/fetch",
             columns: [
-              { id: "col", label: "Col", type: "string", align: "left" },
+              { align: "left", id: "col", label: "Col", type: "string" },
             ],
+            description: "Adds a column",
+            label: "Order grid",
+            runtimeAction: "orders/fetch",
           },
           massActions: [
-            { id: "action", label: "Action", type: "view", path: "#/action" },
+            { id: "action", label: "Action", path: "#/action", type: "view" },
           ],
         },
       });
@@ -221,15 +221,15 @@ describe("AdminUiSchema", () => {
             viewButtons: [
               {
                 ...viewButtonViewBase,
+                confirm: { message: "Are you sure?" },
                 description: "Permanently removes the order.",
                 level: 0,
-                sortOrder: 80,
-                sandboxPermissions: ["allow-modals", "allow-popups"],
-                confirm: { message: "Are you sure?" },
                 notifications: {
-                  success: "Done.",
                   error: "Failed.",
+                  success: "Done.",
                 },
+                sandboxPermissions: ["allow-modals", "allow-popups"],
+                sortOrder: 80,
               },
             ],
           },
@@ -243,15 +243,15 @@ describe("AdminUiSchema", () => {
             viewButtons: [
               {
                 ...viewButtonWorkerBase,
+                confirm: { message: "Sync now?" },
                 description: "Pushes stock counts.",
                 level: 1,
+                notifications: {
+                  error: "Sync failed.",
+                  success: "Synced.",
+                },
                 sortOrder: 10,
                 timeout: 15,
-                confirm: { message: "Sync now?" },
-                notifications: {
-                  success: "Synced.",
-                  error: "Sync failed.",
-                },
               },
             ],
           },
@@ -302,12 +302,12 @@ describe("AdminUiSchema", () => {
         const result = v.safeParse(AdminUiSchema, {
           order: {
             gridColumns: {
-              label: "Order grid",
-              description: "Adds a column",
-              runtimeAction: "orders/fetch",
               columns: [
-                { id: "col", label: "Col", type: "string", align: "left" },
+                { align: "left", id: "col", label: "Col", type: "string" },
               ],
+              description: "Adds a column",
+              label: "Order grid",
+              runtimeAction: "orders/fetch",
             },
             viewButtons: [viewButtonWorkerBase],
           },
@@ -407,12 +407,12 @@ describe("AdminUiSchema", () => {
       const result = v.safeParse(AdminUiSchema, {
         order: {
           gridColumns: {
-            label: "Order grid",
-            description: "Adds a column",
-            runtimeAction: "orders/fetch",
             columns: [
-              { id: "col", label: "Col", type: "decimal", align: "left" },
+              { align: "left", id: "col", label: "Col", type: "decimal" },
             ],
+            description: "Adds a column",
+            label: "Order grid",
+            runtimeAction: "orders/fetch",
           },
         },
       });
@@ -423,17 +423,17 @@ describe("AdminUiSchema", () => {
       const result = v.safeParse(AdminUiSchema, {
         order: {
           gridColumns: {
-            label: "Order grid",
-            description: "Adds a column",
-            runtimeAction: "orders/fetch",
             columns: [
               {
+                align: "justify",
                 id: "col",
                 label: "Col",
                 type: "string",
-                align: "justify",
               },
             ],
+            description: "Adds a column",
+            label: "Order grid",
+            runtimeAction: "orders/fetch",
           },
         },
       });
@@ -444,10 +444,10 @@ describe("AdminUiSchema", () => {
       const result = v.safeParse(AdminUiSchema, {
         order: {
           gridColumns: {
-            label: "Order grid",
-            description: "Adds a column",
-            runtimeAction: "orders/fetch",
             columns: [],
+            description: "Adds a column",
+            label: "Order grid",
+            runtimeAction: "orders/fetch",
           },
         },
       });
@@ -458,11 +458,11 @@ describe("AdminUiSchema", () => {
       const result = v.safeParse(AdminUiSchema, {
         order: {
           gridColumns: {
+            columns: [
+              { align: "left", id: "col", label: "Col", type: "string" },
+            ],
             description: "Adds a column",
             runtimeAction: "orders/fetch",
-            columns: [
-              { id: "col", label: "Col", type: "string", align: "left" },
-            ],
           },
         },
       });
@@ -473,11 +473,11 @@ describe("AdminUiSchema", () => {
       const result = v.safeParse(AdminUiSchema, {
         order: {
           gridColumns: {
-            label: "Order grid",
-            description: "Adds a column",
             columns: [
-              { id: "col", label: "Col", type: "string", align: "left" },
+              { align: "left", id: "col", label: "Col", type: "string" },
             ],
+            description: "Adds a column",
+            label: "Order grid",
           },
         },
       });
@@ -488,10 +488,10 @@ describe("AdminUiSchema", () => {
       const result = v.safeParse(AdminUiSchema, {
         order: {
           gridColumns: {
-            label: "Order grid",
+            columns: [{ align: "left", label: "Col", type: "string" }],
             description: "Adds a column",
+            label: "Order grid",
             runtimeAction: "orders/fetch",
-            columns: [{ label: "Col", type: "string", align: "left" }],
           },
         },
       });
@@ -619,9 +619,9 @@ describe("AdminUiSchema — mass actions", () => {
             {
               id: "action",
               label: "Action",
-              type: "view",
               path: "#/action",
               sandboxPermissions: ["allow-modals"],
+              type: "view",
             },
           ],
         },
@@ -636,8 +636,8 @@ describe("AdminUiSchema — mass actions", () => {
             {
               id: "action",
               label: "Action",
-              type: "worker",
               runtimeAction: "my-pkg/my-action",
+              type: "worker",
             },
           ],
         },
@@ -670,9 +670,9 @@ describe("AdminUiSchema — mass actions", () => {
             {
               id: "action",
               label: "Action",
-              type: "view",
               path: "#/action",
               runtimeAction: "pkg/action",
+              type: "view",
             },
           ],
         },
@@ -687,9 +687,9 @@ describe("AdminUiSchema — mass actions", () => {
             {
               id: "action",
               label: "Action",
-              type: "worker",
-              runtimeAction: "pkg/action",
               path: "#/action",
+              runtimeAction: "pkg/action",
+              type: "worker",
             },
           ],
         },
@@ -731,9 +731,9 @@ describe("AdminUiSchema — mass actions", () => {
             {
               id: "action",
               label: "Action",
-              type: "view",
               path: "#/action",
               timeout: 30,
+              type: "view",
             },
           ],
         },
@@ -742,12 +742,12 @@ describe("AdminUiSchema — mass actions", () => {
     });
 
     test.each([
-      { value: ["allow-scripts"], label: "invalid permission value" },
+      { label: "invalid permission value", value: ["allow-scripts"] },
       {
-        value: ["allow-popups", "allow-popups"],
         label: "duplicate permissions",
+        value: ["allow-popups", "allow-popups"],
       },
-      { value: [], label: "empty permissions array" },
+      { label: "empty permissions array", value: [] },
     ])("view mass action sandboxPermissions rejected when $label", ({
       value,
     }) => {
@@ -757,9 +757,9 @@ describe("AdminUiSchema — mass actions", () => {
             {
               id: "action",
               label: "Action",
-              type: "view",
               path: "#/action",
               sandboxPermissions: value,
+              type: "view",
             },
           ],
         },
@@ -774,9 +774,9 @@ describe("AdminUiSchema — mass actions", () => {
             {
               id: "action",
               label: "Action",
-              type: "worker",
               runtimeAction: "pkg/action",
               sandboxPermissions: ["allow-popups"],
+              type: "worker",
             },
           ],
         },
@@ -785,7 +785,7 @@ describe("AdminUiSchema — mass actions", () => {
     });
 
     test.each([
-      { timeout: -1, label: "negative" },
+      { label: "negative", timeout: -1 },
     ])("worker mass action with $label timeout is rejected", ({ timeout }) => {
       const result = v.safeParse(AdminUiSchema, {
         order: {
@@ -793,9 +793,9 @@ describe("AdminUiSchema — mass actions", () => {
             {
               id: "action",
               label: "Action",
-              type: "worker",
               runtimeAction: "pkg/action",
               timeout,
+              type: "worker",
             },
           ],
         },
@@ -805,34 +805,34 @@ describe("AdminUiSchema — mass actions", () => {
 
     test.each([
       {
-        massAction: {
-          id: "a",
-          label: "A",
-          type: "view" as const,
-          path: "#/a",
-          confirm: { message: "" },
-        },
         label: "empty confirm.message",
-      },
-      {
         massAction: {
+          confirm: { message: "" },
           id: "a",
           label: "A",
-          type: "view" as const,
           path: "#/a",
-          notifications: { success: "" },
+          type: "view" as const,
         },
-        label: "empty notifications.success",
       },
       {
+        label: "empty notifications.success",
         massAction: {
           id: "a",
           label: "A",
+          notifications: { success: "" },
+          path: "#/a",
           type: "view" as const,
+        },
+      },
+      {
+        label: "negative selectionLimit",
+        massAction: {
+          id: "a",
+          label: "A",
           path: "#/a",
           selectionLimit: -1,
+          type: "view" as const,
         },
-        label: "negative selectionLimit",
       },
     ])("mass action with $label is rejected", ({ massAction }) => {
       const result = v.safeParse(AdminUiSchema, {

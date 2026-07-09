@@ -48,10 +48,10 @@ export async function validateSchema<TInput, TOutput>(
       ),
     }));
 
-    return { success: false, issues } as const;
+    return { issues, success: false } as const;
   }
 
-  return { success: true, data: result.value } as const;
+  return { data: result.value, success: true } as const;
 }
 
 /**

@@ -54,6 +54,7 @@ export function getMissingOrEmptyHeaders(
   const normalized: Record<string, string> = {};
 
   // Handle null/undefined headers gracefully to avoid Object.keys() errors
+  // biome-ignore lint/suspicious/noUnnecessaryConditions: headers is typed as non-nullable, but untyped JS callers (e.g. raw action params) can still pass null/undefined at runtime
   if (headers && typeof headers === "object" && !Array.isArray(headers)) {
     for (const key of Object.keys(headers)) {
       const value = headers[key];
@@ -96,14 +97,14 @@ function buildHeadersSchema<
           return;
         }
 
-        const value = dataset.value;
+        const { value } = dataset;
 
         // Check if it's empty or whitespace-only
         if (value.trim() === "") {
           addIssue({
             expected: "a non-empty string value",
-            received: `"${value}"`,
             message: "Header value cannot be empty or contain only whitespace",
+            received: `"${value}"`,
           });
 
           return;
@@ -117,9 +118,9 @@ function buildHeadersSchema<
           if (!hasNonEmptyPart) {
             addIssue({
               expected: "at least one non-empty value in comma-separated list",
-              received: `[${parts.join(", ")}]`,
               message:
                 "Header value contains only empty or whitespace values when split by comma",
+              received: `[${parts.join(", ")}]`,
             });
           }
         }
@@ -166,6 +167,7 @@ function assertRequiredHeadersSchema<
   const normalized: Record<string, string> = {};
 
   // Handle null/undefined headers gracefully to avoid Object.keys() errors
+  // biome-ignore lint/suspicious/noUnnecessaryConditions: headers is typed as non-nullable, but untyped JS callers (e.g. raw action params) can still pass null/undefined at runtime
   if (headers && typeof headers === "object" && !Array.isArray(headers)) {
     for (const key of Object.keys(headers)) {
       const value = headers[key];

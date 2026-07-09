@@ -14,8 +14,8 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 
 const { mockGetAssociationData, MockAdobeCommerceHttpClient } = vi.hoisted(
   () => ({
-    mockGetAssociationData: vi.fn(),
     MockAdobeCommerceHttpClient: vi.fn(),
+    mockGetAssociationData: vi.fn(),
   }),
 );
 
@@ -116,7 +116,7 @@ describe("getCommerceClient", () => {
     };
     mockGetAssociationData.mockResolvedValue(data);
 
-    const fetchOptions = { timeout: 5000, headers: { "x-trace": "abc" } };
+    const fetchOptions = { headers: { "x-trace": "abc" }, timeout: 5000 };
     await getCommerceClient(auth, fetchOptions);
 
     expect(MockAdobeCommerceHttpClient).toHaveBeenCalledWith(

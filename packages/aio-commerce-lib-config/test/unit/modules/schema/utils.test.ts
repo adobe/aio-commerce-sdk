@@ -68,7 +68,7 @@ describe("schema/utils", () => {
     test("should accept a boolean field with default true", () => {
       expect(() =>
         validateBusinessConfigSchema([
-          { name: "enableFeature", type: "boolean", default: true },
+          { default: true, name: "enableFeature", type: "boolean" },
         ]),
       ).not.toThrow();
     });
@@ -76,7 +76,7 @@ describe("schema/utils", () => {
     test("should accept a boolean field with default false", () => {
       expect(() =>
         validateBusinessConfigSchema([
-          { name: "disabledByDefault", type: "boolean", default: false },
+          { default: false, name: "disabledByDefault", type: "boolean" },
         ]),
       ).not.toThrow();
     });
@@ -92,7 +92,7 @@ describe("schema/utils", () => {
     test("should reject a boolean field with a non-boolean default", () => {
       expect(() =>
         validateBusinessConfigSchema([
-          { name: "badField", type: "boolean", default: "true" as never },
+          { default: "true" as never, name: "badField", type: "boolean" },
         ]),
       ).toThrow();
     });
@@ -100,7 +100,7 @@ describe("schema/utils", () => {
     test("should accept a field without an env property", () => {
       expect(() =>
         validateBusinessConfigSchema([
-          { name: "anyEnv", type: "text", label: "Any Env" },
+          { label: "Any Env", name: "anyEnv", type: "text" },
         ]),
       ).not.toThrow();
     });
@@ -112,7 +112,7 @@ describe("schema/utils", () => {
     ])("should accept a field with env $env", ({ env }) => {
       expect(() =>
         validateBusinessConfigSchema([
-          { name: "scoped", type: "text", label: "Scoped", env },
+          { env, label: "Scoped", name: "scoped", type: "text" },
         ]),
       ).not.toThrow();
     });
@@ -120,7 +120,7 @@ describe("schema/utils", () => {
     test("should reject an empty env array", () => {
       expect(() =>
         validateBusinessConfigSchema([
-          { name: "scoped", type: "text", label: "Scoped", env: [] },
+          { env: [], label: "Scoped", name: "scoped", type: "text" },
         ]),
       ).toThrow();
     });
@@ -129,11 +129,11 @@ describe("schema/utils", () => {
       expect(() =>
         validateBusinessConfigSchema([
           {
-            name: "scoped",
-            type: "text",
-            label: "Scoped",
             // @ts-expect-error - Testing an invalid value on purpose
             env: ["onprem"],
+            label: "Scoped",
+            name: "scoped",
+            type: "text",
           },
         ] satisfies BusinessConfigSchema),
       ).toThrow();
@@ -143,9 +143,9 @@ describe("schema/utils", () => {
       expect(() =>
         validateBusinessConfigSchema([
           {
+            description: "See [docs](javascript:evil()) for details",
             name: "my-field",
             type: "text",
-            description: "See [docs](javascript:evil()) for details",
           },
         ]),
       ).toThrow();
@@ -154,9 +154,9 @@ describe("schema/utils", () => {
     test("preserves valid https links in field description", () => {
       const result = validateBusinessConfigSchema([
         {
+          description: "Click [here](https://example.com) for more",
           name: "my-field",
           type: "text",
-          description: "Click [here](https://example.com) for more",
         },
       ]);
 
@@ -174,11 +174,11 @@ describe("schema/utils", () => {
     test("returns true when a dynamicList field is present", () => {
       const schema: BusinessConfigSchema = [
         {
-          name: "paymentMethod",
-          type: "dynamicList",
-          selectionMode: "single",
-          options: () => [{ label: "Braintree", value: "braintree" }],
           default: (opts) => opts[0].value,
+          name: "paymentMethod",
+          options: () => [{ label: "Braintree", value: "braintree" }],
+          selectionMode: "single",
+          type: "dynamicList",
         },
       ];
       expect(hasDynamicSchema(schema)).toBe(true);
@@ -199,40 +199,40 @@ describe("schema/utils", () => {
     test("resolves a sync single-select dynamicList factory", async () => {
       const schema: BusinessConfigSchema = [
         {
-          name: "paymentMethod",
+          default: pickFirstOption,
           label: "Payment Method",
-          type: "dynamicList",
-          selectionMode: "single",
+          name: "paymentMethod",
           options: () => [
             { label: "Braintree", value: "braintree" },
             { label: "PayPal", value: "paypal" },
           ],
-          default: pickFirstOption,
+          selectionMode: "single",
+          type: "dynamicList",
         },
       ];
 
       const [resolved] = await resolveBusinessConfigSchema(schema, mockParams);
       expect(resolved).toEqual({
-        name: "paymentMethod",
+        default: "braintree",
         label: "Payment Method",
-        type: "list",
-        selectionMode: "single",
+        name: "paymentMethod",
         options: [
           { label: "Braintree", value: "braintree" },
           { label: "PayPal", value: "paypal" },
         ],
-        default: "braintree",
+        selectionMode: "single",
+        type: "list",
       });
     });
 
     test("awaits async option factories", async () => {
       const schema: BusinessConfigSchema = [
         {
-          name: "asyncField",
-          type: "dynamicList",
-          selectionMode: "single",
-          options: async () => [{ label: "One", value: "one" }],
           default: pickFirstOption,
+          name: "asyncField",
+          options: async () => [{ label: "One", value: "one" }],
+          selectionMode: "single",
+          type: "dynamicList",
         },
       ];
 
@@ -245,17 +245,17 @@ describe("schema/utils", () => {
       const seen: unknown[] = [];
       const schema: BusinessConfigSchema = [
         {
-          name: "paymentMethods",
-          type: "dynamicList",
-          selectionMode: "multiple",
-          options: () => [
-            { label: "A", value: "a" },
-            { label: "B", value: "b" },
-          ],
           default: (opts) => {
             seen.push(opts);
             return opts.map((o) => o.value);
           },
+          name: "paymentMethods",
+          options: () => [
+            { label: "A", value: "a" },
+            { label: "B", value: "b" },
+          ],
+          selectionMode: "multiple",
+          type: "dynamicList",
         },
       ];
 
@@ -274,9 +274,9 @@ describe("schema/utils", () => {
       const schema: BusinessConfigSchema = [
         {
           name: "paymentMethods",
-          type: "dynamicList",
-          selectionMode: "multiple",
           options: () => SINGLE_OPTION,
+          selectionMode: "multiple",
+          type: "dynamicList",
         },
       ];
 
@@ -289,9 +289,9 @@ describe("schema/utils", () => {
       const schema = [
         {
           name: "noDefault",
-          type: "dynamicList",
-          selectionMode: "single",
           options: () => SINGLE_OPTION,
+          selectionMode: "single",
+          type: "dynamicList",
         },
       ];
 
@@ -302,13 +302,13 @@ describe("schema/utils", () => {
       const cause = new Error("upstream failure");
       const schema: BusinessConfigSchema = [
         {
+          default: (opts) => opts[0]?.value ?? "",
           name: "boom",
-          type: "dynamicList",
-          selectionMode: "single",
           options: () => {
             throw cause;
           },
-          default: (opts) => opts[0]?.value ?? "",
+          selectionMode: "single",
+          type: "dynamicList",
         },
       ];
 
@@ -320,12 +320,12 @@ describe("schema/utils", () => {
     test("throws when factory returns malformed options", async () => {
       const schema: BusinessConfigSchema = [
         {
+          default: () => "x",
           name: "badShape",
-          type: "dynamicList",
-          selectionMode: "single",
           // @ts-expect-error - Testing an invalid value on purpose
           options: () => [{ label: 42 }],
-          default: () => "x",
+          selectionMode: "single",
+          type: "dynamicList",
         },
       ];
 
@@ -338,11 +338,11 @@ describe("schema/utils", () => {
       const factory = () => SINGLE_OPTION;
       const schema: BusinessConfigSchema = [
         {
-          name: "field",
-          type: "dynamicList",
-          selectionMode: "single",
-          options: factory,
           default: pickFirstOption,
+          name: "field",
+          options: factory,
+          selectionMode: "single",
+          type: "dynamicList",
         },
       ];
       const snapshot = JSON.parse(
