@@ -245,12 +245,28 @@ describe("commerceEventsStep orchestration", () => {
     expect(helperMocks.onboardCommerceEventing).toHaveBeenCalledTimes(1);
   });
 
-  test("persists provider id and event codes to system storage keyed by the provider storage key", async () => {
+  test("persists provider id and event codes to system storage keyed by provider.key", async () => {
     vi.stubEnv("__OW_NAMESPACE", "test-namespace");
     const context = createMockEventingInstallationContext();
 
     const { commerceEventsStep, helperMocks, utilsMocks, configMocks } =
       await importCommerceStepWithMocks();
+
+    const configWithKey = {
+      ...configWithCommerceEventing,
+      eventing: {
+        commerce: [
+          {
+            provider: {
+              key: "order-events-provider",
+              label: "Order Events Provider",
+              description: "Provides commerce events",
+            },
+            events: configWithCommerceEventing.eventing.commerce[0].events,
+          },
+        ],
+      },
+    };
 
     utilsMocks.makeWorkspaceConfig.mockReturnValue(
       createMockWorkspaceConfiguration(),
@@ -280,7 +296,7 @@ describe("commerceEventsStep orchestration", () => {
       subscriptions: [{}],
     });
 
-    await commerceEventsStep.install(configWithCommerceEventing, context);
+    await commerceEventsStep.install(configWithKey, context);
 
     expect(configMocks.setSystemConfigByKey).toHaveBeenCalledWith("events", {
       providers: {
@@ -300,6 +316,22 @@ describe("commerceEventsStep orchestration", () => {
 
     const { commerceEventsStep, helperMocks, utilsMocks, configMocks } =
       await importCommerceStepWithMocks();
+
+    const configWithKey = {
+      ...configWithCommerceEventing,
+      eventing: {
+        commerce: [
+          {
+            provider: {
+              key: "order-events-provider",
+              label: "Order Events Provider",
+              description: "Provides commerce events",
+            },
+            events: configWithCommerceEventing.eventing.commerce[0].events,
+          },
+        ],
+      },
+    };
 
     configMocks.getSystemConfigByKey.mockResolvedValue({
       providers: {
@@ -335,7 +367,7 @@ describe("commerceEventsStep orchestration", () => {
       subscriptions: [{}],
     });
 
-    await commerceEventsStep.install(configWithCommerceEventing, context);
+    await commerceEventsStep.install(configWithKey, context);
 
     expect(configMocks.setSystemConfigByKey).toHaveBeenCalledWith("events", {
       providers: {

@@ -201,14 +201,14 @@ describe("Adobe IO Events API - Integration Tests", () => {
         payload,
       });
 
-      expect(capture.body).not.toBeNull();
-      expect(capture.body?.specversion).toBe("1.0");
-      expect(capture.body?.source).toBe(`urn:uuid:${TEST_PROVIDER_ID}`);
-      expect(capture.body?.type).toBe(TEST_EVENT_CODE);
-      expect(capture.body?.datacontenttype).toBe("application/json");
-      expect(capture.body?.data).toEqual(payload);
-      expect(capture.body?.id).toBeTypeOf("string");
-      expect(capture.body?.time).toBeTypeOf("string");
+      expect.assert(capture.body);
+      expect(capture.body.specversion).toBe("1.0");
+      expect(capture.body.source).toBe(`urn:uuid:${TEST_PROVIDER_ID}`);
+      expect(capture.body.type).toBe(TEST_EVENT_CODE);
+      expect(capture.body.datacontenttype).toBe("application/json");
+      expect(capture.body.data).toEqual(payload);
+      expect(capture.body.id).toBeTypeOf("string");
+      expect(capture.body.time).toBeTypeOf("string");
     });
 
     test("should send correct Content-Type, Accept, and auth headers", async () => {
@@ -234,6 +234,43 @@ describe("Adobe IO Events API - Integration Tests", () => {
         "Bearer supersecrettoken",
       );
       expect(capture.headers?.get("x-api-key")).toBe("test-client-id");
+    });
+
+    test("should send x-event-phidata: true when hipaaAuditRequired is set", async () => {
+      const capture = { headers: null as Headers | null };
+      server.use(
+        http.post(`${ingressBaseUrl}/`, ({ request }) => {
+          capture.headers = request.headers;
+          return new HttpResponse(null, { status: 204 });
+        }),
+      );
+
+      await client.publishRawEvent({
+        providerId: TEST_PROVIDER_ID,
+        eventCode: TEST_EVENT_CODE,
+        payload: { foo: "bar" },
+        hipaaAuditRequired: true,
+      });
+
+      expect(capture.headers?.get("x-event-phidata")).toBe("true");
+    });
+
+    test("should not send x-event-phidata when hipaaAuditRequired is omitted", async () => {
+      const capture = { headers: null as Headers | null };
+      server.use(
+        http.post(`${ingressBaseUrl}/`, ({ request }) => {
+          capture.headers = request.headers;
+          return new HttpResponse(null, { status: 204 });
+        }),
+      );
+
+      await client.publishRawEvent({
+        providerId: TEST_PROVIDER_ID,
+        eventCode: TEST_EVENT_CODE,
+        payload: { foo: "bar" },
+      });
+
+      expect(capture.headers?.get("x-event-phidata")).toBeNull();
     });
   });
 

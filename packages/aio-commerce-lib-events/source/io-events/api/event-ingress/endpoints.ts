@@ -22,6 +22,12 @@ export type PublishRawEventParams<
   eventCode: string;
   /** The event payload. Must be a JSON object. */
   payload: TPayload;
+  /**
+   * When `true`, marks the event as containing Protected Health Information (PHI)
+   * by sending `x-event-phidata: true` to the ingress. Required for HIPAA compliance.
+   * Defaults to `false` when omitted.
+   */
+  hipaaAuditRequired?: boolean;
 };
 
 /**
@@ -41,7 +47,7 @@ export async function publishRawEvent<
   httpClient: AdobeIoEventsHttpClient,
   params: PublishRawEventParams<TPayload>,
 ): Promise<void> {
-  const { providerId, eventCode, payload } = params;
+  const { providerId, eventCode, payload, hipaaAuditRequired } = params;
 
   const cloudEvent = {
     specversion: "1.0",
@@ -66,6 +72,7 @@ export async function publishRawEvent<
     headers: {
       "content-type": "application/cloudevents+json",
       Accept: "application/json",
+      ...(hipaaAuditRequired && { "x-event-phidata": "true" }),
     },
   });
 }

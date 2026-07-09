@@ -17,10 +17,10 @@ import {
   EventsDataNotInitializedError,
   ProviderNotFoundError,
 } from "../errors/publish-event-errors";
-import { EVENTS_STORAGE_KEY } from "../management/installation/events/stored-events-data";
+import { EVENTS_STORAGE_KEY } from "../management/installation/events/types";
 
 import type { AdobeIoEventsApiClient } from "@adobe/aio-commerce-lib-events/io-events";
-import type { StoredEventsData } from "../management/installation/events/stored-events-data";
+import type { StoredEventsData } from "../management/installation/events/types";
 
 /**
  * Publishes an event declared in the app's eventing configuration.
@@ -33,6 +33,7 @@ import type { StoredEventsData } from "../management/installation/events/stored-
  * @param params.provider - The `key` of an event provider declared in `app.commerce.config.ts`.
  * @param params.event - The `name` of an event within that provider.
  * @param params.payload - The event payload. Must be a JSON object.
+ * @param params.hipaaAuditRequired - When `true`, marks the event as containing PHI data for HIPAA compliance.
  *
  * @throws {EventsDataNotInitializedError} If no eventing installation data is found in system storage.
  * @throws {ProviderNotFoundError} If the provider key is not found in the stored data.
@@ -66,8 +67,15 @@ export async function publishEvent<
   provider: string;
   event: string;
   payload: TPayload;
+  hipaaAuditRequired?: boolean;
 }): Promise<void> {
-  const { client, provider: providerKey, event: eventName, payload } = params;
+  const {
+    client,
+    provider: providerKey,
+    event: eventName,
+    payload,
+    hipaaAuditRequired,
+  } = params;
 
   const data = await getSystemConfigByKey<StoredEventsData>(EVENTS_STORAGE_KEY);
   if (!data) {
@@ -88,5 +96,6 @@ export async function publishEvent<
     providerId: providerEntry.id,
     eventCode,
     payload,
+    hipaaAuditRequired,
   });
 }

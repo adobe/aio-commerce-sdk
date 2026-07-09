@@ -42,25 +42,11 @@ const PROVIDER_TYPE_TO_LABEL = {
 const METADATA_ID_MAX_LENGTH_FOR_INSTANCE_ID = 100;
 
 /**
- * Resolves the stable storage key for an event provider.
- *
- * Uses the provider's explicit `key` when present, otherwise falls back to the
- * slugified `label`. This is the single source of truth for the key: it is used
- * both when persisting provider metadata at install time and when composing the
- * I/O Events `instance_id`, so runtime lookups always match what was stored.
- *
- * @param provider - The event provider to derive the key from.
- */
-export function getProviderStorageKey(provider: EventProvider) {
-  return provider.key ?? provider.label.toLowerCase().replace(/\s+/g, "-");
-}
-
-/**
  * Generates a unique instance ID for I/O Events for this app deployment.
- * Uses `{metadata.id (first 100 chars)}-{providerKeyOrSlug}-{workspaceId}` (lowercased).
+ * Uses `{metadata.id (first 100 chars)}-{providerKey}-{workspaceId}` (lowercased).
  *
  * @param metadata - The metadata of the application
- * @param provider - The event provider (optional `key`, else label is slugified)
+ * @param provider - The event provider; must have an explicit `key`
  * @param workspaceId - Adobe I/O Developer Console workspace ID for this deployment
  */
 export function generateInstanceId(
@@ -69,7 +55,9 @@ export function generateInstanceId(
   workspaceId: string,
 ) {
   const appId = metadata.id.slice(0, METADATA_ID_MAX_LENGTH_FOR_INSTANCE_ID);
-  return `${appId}-${getProviderStorageKey(provider)}-${workspaceId}`.toLowerCase();
+  const providerKey =
+    provider.key ?? provider.label.toLowerCase().replace(/\s+/g, "-");
+  return `${appId}-${providerKey}-${workspaceId}`.toLowerCase();
 }
 
 /**

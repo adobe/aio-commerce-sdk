@@ -26,12 +26,11 @@ import {
   onboardCommerceEventing,
   onboardIoEvents,
 } from "./helpers";
-import { EVENTS_STORAGE_KEY } from "./stored-events-data";
+import { EVENTS_STORAGE_KEY } from "./types";
 import {
   COMMERCE_PROVIDER_TYPE,
   getCommerceEventingExistingData,
   getIoEventsExistingData,
-  getProviderStorageKey,
   makeWorkspaceConfig,
   sanitizeEventingIdentifier,
 } from "./utils";
@@ -39,7 +38,7 @@ import {
 import type { CommerceEventsConfig } from "#config/schema/eventing";
 import type { InferStepOutput } from "#management/installation/workflow/step";
 import type { EventsExecutionContext } from "./context";
-import type { StoredEventsData } from "./stored-events-data";
+import type { StoredEventsData } from "./types";
 
 /** The output data of the Commerce Eventing step (auto-inferred). */
 export type CommerceEventsStepData = InferStepOutput<typeof commerceEventsStep>;
@@ -161,16 +160,17 @@ async function createCommerceEvents(
       },
     });
 
-    const providerKey = getProviderStorageKey(provider);
-    storedProviders[providerKey] = {
-      id: providerData.id,
-      events: Object.fromEntries(
-        eventsData.map(({ config: eventConfig, data: eventData }) => [
-          eventConfig.name,
-          eventData.metadata.event_code,
-        ]),
-      ),
-    };
+    if (provider.key) {
+      storedProviders[provider.key] = {
+        id: providerData.id,
+        events: Object.fromEntries(
+          eventsData.map(({ config: eventConfig, data: eventData }) => [
+            eventConfig.name,
+            eventData.metadata.event_code,
+          ]),
+        ),
+      };
+    }
   }
 
   const existing = (await getSystemConfigByKey<StoredEventsData>(

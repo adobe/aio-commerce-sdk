@@ -273,19 +273,16 @@ await ioEventsClient.publishRawEvent({
 });
 ```
 
-The `payload` must be a JSON object; it is placed in the CloudEvents `data` field. The provider is identified via the envelope's `source` (`urn:uuid:{providerId}`) and the event via `type` (`eventCode`). Errors from the ingress propagate to the caller.
-
-By default the client targets the production ingress (`https://eventsingress.adobe.io/`). To use a different endpoint, pass `config.ingressBaseUrl` when creating the client:
+When the event payload contains Protected Health Information (PHI), pass `hipaaAuditRequired: true` to send the `x-event-phidata: true` header required for HIPAA compliance:
 
 ```typescript
-const ioEventsClient = createAdobeIoEventsApiClient({
-  auth: {/* IMS auth params */},
-  config: { ingressBaseUrl: "https://your-ingress-endpoint" },
+await ioEventsClient.publishRawEvent({
+  providerId: "your-provider-uuid",
+  eventCode: "com.adobe.commerce.patient.updated",
+  payload: { patientId: "..." },
+  hipaaAuditRequired: true,
 });
 ```
-
-> [!TIP]
-> If you are emitting an event declared in your `app.commerce.config.ts`, prefer `publishEvent` from [`@adobe/aio-commerce-lib-app`](../../aio-commerce-lib-app/docs/usage.md#emitting-configured-events-from-runtime-actions). It resolves the provider ID and event code for you from the app configuration, so you only pass the provider key and event name. Use `publishRawEvent` when you already have the resolved provider ID and event code.
 
 ### Custom API Clients
 

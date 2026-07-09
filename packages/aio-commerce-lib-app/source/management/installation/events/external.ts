@@ -20,17 +20,13 @@ import { hasExternalEvents } from "#config/schema/eventing";
 import { defineLeafStep } from "#management/installation/workflow/step";
 
 import { offboardIoEvents, onboardIoEvents } from "./helpers";
-import { EVENTS_STORAGE_KEY } from "./stored-events-data";
-import {
-  EXTERNAL_PROVIDER_TYPE,
-  getIoEventsExistingData,
-  getProviderStorageKey,
-} from "./utils";
+import { EVENTS_STORAGE_KEY } from "./types";
+import { EXTERNAL_PROVIDER_TYPE, getIoEventsExistingData } from "./utils";
 
 import type { ExternalEventsConfig } from "#config/schema/eventing";
 import type { InferStepOutput } from "#management/installation/workflow/step";
 import type { EventsExecutionContext } from "./context";
-import type { StoredEventsData } from "./stored-events-data";
+import type { StoredEventsData } from "./types";
 
 /** The output data of the External Eventing step (auto-inferred). */
 export type ExternalEventsStepData = InferStepOutput<typeof externalEventsStep>;
@@ -105,16 +101,17 @@ async function createExternalEvents(
       },
     });
 
-    const providerKey = getProviderStorageKey(provider);
-    storedProviders[providerKey] = {
-      id: providerData.id,
-      events: Object.fromEntries(
-        eventsData.map(({ config: eventConfig, data: eventData }) => [
-          eventConfig.name,
-          eventData.metadata.event_code,
-        ]),
-      ),
-    };
+    if (provider.key) {
+      storedProviders[provider.key] = {
+        id: providerData.id,
+        events: Object.fromEntries(
+          eventsData.map(({ config: eventConfig, data: eventData }) => [
+            eventConfig.name,
+            eventData.metadata.event_code,
+          ]),
+        ),
+      };
+    }
   }
 
   const existing = (await getSystemConfigByKey<StoredEventsData>(

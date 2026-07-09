@@ -1027,16 +1027,15 @@ For an app that was already associated under the older SDK, re-associate it afte
 
 ### Emitting Configured Events from Runtime Actions
 
-Runtime actions can publish a custom I/O Event by referencing the provider and event exactly as declared in the `eventing` section of `app.commerce.config.ts` — no need to know the I/O Events provider UUID, the fully-qualified event code, or the CloudEvents envelope format.
-
-At installation time the SDK writes each configured provider's I/O Events ID and its event codes to system storage. `publishEvent` reads that metadata to resolve the provider key and event name at runtime, so there is no management API round-trip on the hot path.
+Runtime actions can publish a custom I/O Event by referencing the provider and event exactly as declared in the `eventing` section of `app.commerce.config.ts`. At installation time, the SDK writes each configured provider's I/O Events ID and event codes to system storage. `publishEvent` resolves those automatically by the given key and publishes the event.
 
 `publishEvent(params)` takes:
 
 - `client` — an [`AdobeIoEventsApiClient`](../../aio-commerce-lib-events/docs/usage.md) created with the IMS auth to use for the ingress call.
-- `provider` — the `key` of an event provider declared in `app.commerce.config.ts` (or the slugified `label` when `key` is omitted).
+- `provider` — the `key` of an event provider declared in `app.commerce.config.ts`.
 - `event` — the `name` of an event declared under that provider.
 - `payload` — the event payload; any JSON object. The SDK wraps it in a CloudEvents 1.0 envelope before sending.
+- `hipaaAuditRequired` — optional boolean. When `true`, the event is marked as containing PHI data by sending `x-event-phidata: true` to the ingress. Required for HIPAA compliance when the event payload includes protected health information.
 
 Given this configuration:
 
@@ -1107,9 +1106,6 @@ try {
   throw error;
 }
 ```
-
-> [!NOTE]
-> To target a non-production ingress endpoint, pass `config.ingressBaseUrl` when creating the client. The lower-level `publishRawEvent` (from `@adobe/aio-commerce-lib-events`) is available when you already have a resolved provider ID and event code; see the [`@adobe/aio-commerce-lib-events` usage guide](../../aio-commerce-lib-events/docs/usage.md).
 
 ## Best Practices
 

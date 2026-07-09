@@ -117,3 +117,22 @@ export type OffboardEventsParams = {
   provider: EventProvider;
   events: AppEvent[];
 };
+
+/** A single provider entry stored in system config after installation. */
+export type StoredProviderEntry = {
+  /** The I/O Events provider UUID. */
+  id: string;
+  /** Maps each event's declared `name` to its fully-qualified event code. */
+  events: Record<string, string>;
+};
+
+/**
+ * Shape of the `system.events` entry written to system storage at installation time.
+ * Keyed by `provider.key`.
+ */
+export type StoredEventsData = {
+  providers: Record<string, StoredProviderEntry>;
+};
+
+/** Storage key used for the events installation data. */
+export const EVENTS_STORAGE_KEY = "events";
