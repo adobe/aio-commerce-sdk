@@ -32,7 +32,7 @@ export type WebhookSuccessResponse = Omit<
 };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
-  return Boolean(value) && typeof value === "object";
+  return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
 /**
