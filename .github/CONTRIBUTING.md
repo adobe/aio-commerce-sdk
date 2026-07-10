@@ -41,6 +41,7 @@ be invited to the project. The existing committers employ an internal nomination
 process that must reach lazy consensus (silence is approval) before invitations
 are issued. If you feel you are qualified and want to get more deeply involved,
 feel free to reach out to existing committers to have a conversation about that.
+See [MAINTAINERS.md](./MAINTAINERS.md) for the operational responsibilities that come with that role.
 
 ## Security Issues
 
