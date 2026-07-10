@@ -10,9 +10,18 @@
  * governing permissions and limitations under the License.
  */
 
+import { readFile } from "node:fs/promises";
+import { join } from "node:path";
+
+import { withTempFiles } from "@aio-commerce-sdk/scripting-utils/filesystem";
 import { describe, expect, test } from "vitest";
 
-import { parseReleaseChannel, runGitHubScript } from "#ci/release/utils";
+import {
+  parseReleaseChannel,
+  readJson,
+  runGitHubScript,
+  writeJson,
+} from "#ci/release/utils";
 import { asCore, createCoreMock } from "#test/fixtures/release";
 
 describe("release/utils.ts", () => {
@@ -74,6 +83,45 @@ describe("release/utils.ts", () => {
 
     test("throws when the release channel is undefined", () => {
       expect(() => parseReleaseChannel(undefined)).toThrow();
+    });
+  });
+
+  describe("readJson", () => {
+    test("reads and parses a JSON file", async () => {
+      await withTempFiles(
+        { "data.json": JSON.stringify({ name: "test", version: "1.0.0" }) },
+        async (tempDir) => {
+          await expect(
+            readJson<{ name: string; version: string }>(
+              join(tempDir, "data.json"),
+            ),
+          ).resolves.toEqual({ name: "test", version: "1.0.0" });
+        },
+      );
+    });
+  });
+
+  describe("writeJson", () => {
+    test("writes a value as formatted JSON with a trailing newline", async () => {
+      await withTempFiles({}, async (tempDir) => {
+        const path = join(tempDir, "data.json");
+        await writeJson(path, { name: "test", version: "1.0.0" });
+
+        await expect(readFile(path, "utf-8")).resolves.toBe(
+          '{\n  "name": "test",\n  "version": "1.0.0"\n}\n',
+        );
+      });
+    });
+
+    test("formats the output with Biome, collapsing short arrays onto one line", async () => {
+      await withTempFiles({}, async (tempDir) => {
+        const path = join(tempDir, "data.json");
+        await writeJson(path, { keywords: ["commerce", "adobe"] });
+
+        await expect(readFile(path, "utf-8")).resolves.toBe(
+          '{\n  "keywords": ["commerce", "adobe"]\n}\n',
+        );
+      });
     });
   });
 });

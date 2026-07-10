@@ -18,8 +18,28 @@ Skills are available through two channels with different stability guarantees:
 | **Latest** | This repo (`adobe/aio-commerce-sdk`)              | Experimental — may change at any time | Contributors, early adopters, unreleased features |
 | **Stable** | [`adobe/skills`](https://github.com/adobe/skills) | Production-ready, tested releases     | Everyone else                                     |
 
-For most developers, install from `adobe/skills`. The commands in each plugin's README install from this repository and are intended for contributors and early adopters.
+For most developers, install from `adobe/skills`. The commands in each plugin's README target the stable channel.
 
 ## Contributing
 
 See [AGENTS.md](./AGENTS.md) for authoring guidelines.
+
+### Local testing
+
+Install skills directly from a local checkout into a target project:
+
+```sh
+cd ~/my-commerce-app
+pnpx skills add /path/to/aio-commerce-sdk/plugins/commerce/app-management --yes
+pnpx skills add /path/to/aio-commerce-sdk/plugins/commerce/app-migration --yes
+```
+
+### Quality review and evals
+
+Before shipping a skill, run the Tessl reviewer from the plugin directory:
+
+```sh
+pnpx tessl skill review skills/<skill-name>
+```
+
+Implemented skills may include evals in `skills/<skill-name>/evals/evals.json`. Eval results are excluded from version control; only `evals/evals.json` is committed.

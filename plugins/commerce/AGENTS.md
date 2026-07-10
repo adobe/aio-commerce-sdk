@@ -2,33 +2,62 @@
 
 Rules for modifying skills in `plugins/commerce/`. Follow these whenever you add, edit, or review a skill.
 
+## Plugin releases
+
+Each plugin is a private pnpm workspace package. Use changesets to express release intent:
+
+1. Run `pnpm changeset add`.
+2. Select the plugin package, for example `@adobe/aio-commerce-plugin-app-management`.
+3. Choose the semver bump for the plugin change.
+4. Write a concise, user-facing changeset message.
+
+Do not manually bump versions in `.tessl-plugin/plugin.json` or `.claude-plugin/plugin.json`. The
+plugin `package.json` is the authoritative version source; release automation syncs that version
+into the plugin manifests.
+
+Plugin semver rules:
+
+- `patch` — wording, examples, or minor clarifications with no behavioral change.
+- `minor` — new skills, new references or assets, or additive behavioral changes.
+- `major` — removed skills, renamed skills that break installs, or behavioral changes that break existing usage patterns.
+
+When adding a new skill to a plugin, also add its directory to `.tessl-plugin/plugin.json`'s
+`skills` array:
+
+```json
+"skills": ["skills/commerce-app-<name>"]
+```
+
+## Plugin README files
+
+Plugin `README.md` files are copied verbatim to `adobe/skills` and must be stable-channel-ready:
+
+- Installation commands reference `adobe/skills`, not `adobe/aio-commerce-sdk`.
+- Do not add experimental banners.
+- Do not include contributor-only sections such as local testing, quality review, or eval workflows. Put contributor guidance in this file or `plugins/commerce/README.md`.
+
 ## Skill frontmatter
 
-Every skill SKILL.md must include `metadata.version`. Increment it whenever the skill changes meaningfully (wording, logic, chaining, examples):
+Each `SKILL.md` must open with a YAML frontmatter block. Required fields:
+
+- `name` — kebab-case identifier; must match the skill's directory name as referenced in `.tessl-plugin/plugin.json`'s `skills` array
+- `description` — multi-line routing description (use `>` block scalar); written to tell the agent _when_ to invoke the skill, not to describe its contents
+- `license` — always `Apache-2.0`
+- `compatibility` — runtime and package requirements (use `>` block scalar)
+- `metadata.author` — always `adobe`
 
 ```yaml
+---
+name: commerce-app-example
+description: >
+  One or two sentences that tell the agent when to use this skill.
+license: Apache-2.0
+compatibility: >
+  Requires Node.js 22+, aio CLI, and @adobe/aio-commerce-lib-app.
+  Requires a base app initialized with commerce-app-init.
 metadata:
   author: adobe
-  sdk-package: "@adobe/aio-commerce-lib-app"
-  version: "0.0.1" # increment when the skill changes meaningfully
-```
-
-## Plugin version files
-
-`tile.json` and `.claude-plugin/plugin.json` at the plugin root carry the same `version` and `summary`. Bump both in lockstep whenever skills in the plugin change:
-
-```json
-{ "version": "1.1.1" }
-```
-
-When adding a new skill to a plugin, also add a matching entry to `tile.json`:
-
-```json
-"skills": {
-  "commerce-app-<name>": {
-    "path": "skills/commerce-app-<name>/SKILL.md"
-  }
-}
+---
 ```
 
 ## Inline examples are required

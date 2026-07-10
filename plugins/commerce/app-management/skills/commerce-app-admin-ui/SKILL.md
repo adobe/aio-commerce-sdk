@@ -17,8 +17,6 @@ compatibility: >
   Requires a base app initialized with commerce-app-init.
 metadata:
   author: adobe
-  sdk-package: "@adobe/aio-commerce-sdk"
-  version: "0.0.5"
 ---
 
 # Configure Commerce App Admin UI

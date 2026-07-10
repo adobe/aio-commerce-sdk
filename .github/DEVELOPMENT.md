@@ -496,6 +496,17 @@ When ready to publish to npm, use the **Promote to Release** workflow dispatch (
 
 If there were snapshot versions like `1.2.5-beta-20260313T120000` on Artifactory, the resulting stable release is `1.2.5`.
 
+Commerce plugins under `plugins/commerce/*` use the same changeset flow, but they are private
+workspace packages and are not published to npm. A changeset targeting a plugin package is the
+release intent for the stable skills channel. When the Release PR bumps a plugin version, the
+public release workflow opens or updates a promotion PR in
+[`adobe/skills`](https://github.com/adobe/skills) from the fixed branch
+`promote/adobe-aio-commerce-sdk`.
+
+Skill-only Release PRs are valid. They do not publish npm packages and do not send the package
+Slack notification, but they still run the `adobe/skills` promotion step and back-sync the
+plugin version/changelog updates to `main`.
+
 #### Back-sync
 
 After a public release, the back-sync is automatic — the workflow merges `release` directly into `main` via a merge commit. No manual step needed.
@@ -516,3 +527,12 @@ If the deploy key ever needs to be rotated:
 2. Add the public key under **Settings → Deploy keys** (enable write access) and note the new key ID.
 3. Update the `DEPLOY_KEY` Actions secret with the new private key.
 4. Update the ruleset bypass actor with the new key ID via `gh api`.
+
+The Commerce plugin promotion step also requires an `ADOBE_SKILLS_TOKEN` Actions secret. Provision
+it as a fine-grained GitHub personal access token with the following settings:
+
+- **Resource owner:** `adobe`
+- **Repository access:** `adobe/skills` only
+- **Permissions:** Metadata (read), Contents (read/write), Pull requests (read/write)
+- **Expiration:** 366 days (the maximum); set a calendar reminder to regenerate it before it
+  expires, then update the `ADOBE_SKILLS_TOKEN` Actions secret with the new value.

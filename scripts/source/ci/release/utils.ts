@@ -10,7 +10,13 @@
  * governing permissions and limitations under the License.
  */
 
+import { execFile } from "node:child_process";
+import { readFile, writeFile } from "node:fs/promises";
+import { promisify } from "node:util";
+
 import type { AsyncFunctionArguments, ReleaseChannel } from "./types.ts";
+
+const execFileAsync = promisify(execFile);
 
 /** Runs the given action in a safe way and returns the result. */
 export function runGitHubScript<T>(
@@ -23,6 +29,27 @@ export function runGitHubScript<T>(
     core.setFailed(error instanceof Error ? error : String(error));
     throw error;
   }
+}
+
+/** Reads and parses a JSON file. */
+export async function readJson<T>(path: string) {
+  return JSON.parse(await readFile(path, "utf-8")) as T;
+}
+
+/**
+ * Serializes and writes a value as a JSON file, then formats it with Biome so the
+ * result always matches this repo's formatting rules (e.g. array wrapping), which
+ * plain `JSON.stringify` output does not.
+ */
+export async function writeJson(path: string, value: unknown) {
+  await writeFile(path, `${JSON.stringify(value, null, 2)}\n`);
+  await execFileAsync("biome", [
+    "check",
+    "--write",
+    "--no-errors-on-unmatched",
+    "--files-ignore-unknown=true",
+    path,
+  ]);
 }
 
 /** Parses the release channel from the given value. */

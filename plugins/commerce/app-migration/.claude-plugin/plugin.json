@@ -6,6 +6,7 @@
     "name": "Adobe",
     "email": "commerce-app-management@adobe.com"
   },
+  "repository": "https://github.com/adobe/aio-commerce-sdk",
   "keywords": [
     "adobe-commerce",
     "app-builder",
