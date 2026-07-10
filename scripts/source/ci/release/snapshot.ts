@@ -229,8 +229,8 @@ function formatPreReleaseBody(
   pkg: PublishedPackage,
 ): string {
   const lines = [
-    "> [!IMPORTANT]",
-    "> Internal release only. This version is not publicly available.",
+    "> [!NOTE]",
+    "> Snapshot release published to the public npm registry. Not intended for production use.",
     "",
     changelog ?? `Snapshot release of \`${pkg.name}@${pkg.version}\`.`,
   ];
