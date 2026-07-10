@@ -12,7 +12,13 @@
 
 import { describe, expect, it } from "vitest";
 
-import { buildErrorResponse, buildSuccessResponse } from "#responses/helpers";
+import {
+  buildErrorResponse,
+  buildSuccessResponse,
+  isActionResponse,
+  isErrorResponse,
+  isSuccessResponse,
+} from "#responses/helpers";
 
 describe("responses/helpers", () => {
   describe("buildErrorResponse", () => {
@@ -246,6 +252,86 @@ describe("responses/helpers", () => {
       if (error.type === "error") {
         expect(error.error.statusCode).toBe(400);
       }
+    });
+  });
+
+  describe("isActionResponse", () => {
+    it("should return true for a success action response", () => {
+      const response = buildSuccessResponse(200, {
+        body: { message: "OK" },
+        headers: { "X-Request-Id": "abc123" },
+      });
+
+      expect(isActionResponse(response)).toBe(true);
+      expect(isSuccessResponse(response)).toBe(true);
+      expect(isErrorResponse(response)).toBe(false);
+    });
+
+    it("should return true for an error action response", () => {
+      const response = buildErrorResponse(400, {
+        body: { message: "Bad request" },
+        headers: { "X-Request-Id": "abc123" },
+      });
+
+      expect(isActionResponse(response)).toBe(true);
+      expect(isSuccessResponse(response)).toBe(false);
+      expect(isErrorResponse(response)).toBe(true);
+    });
+
+    it("should return false for non-object values", () => {
+      expect(isActionResponse(null)).toBe(false);
+      expect(isActionResponse(undefined)).toBe(false);
+      expect(isActionResponse("success")).toBe(false);
+      expect(isActionResponse([])).toBe(false);
+      expect(isSuccessResponse(null)).toBe(false);
+      expect(isErrorResponse(null)).toBe(false);
+    });
+
+    it("should return false when the response type is missing or unsupported", () => {
+      expect(isActionResponse({ statusCode: 200 })).toBe(false);
+      expect(isSuccessResponse({ statusCode: 200 })).toBe(false);
+      expect(isActionResponse({ statusCode: 200, type: "redirect" })).toBe(
+        false,
+      );
+    });
+
+    it("should return false for an invalid success response payload", () => {
+      expect(isActionResponse({ statusCode: "200", type: "success" })).toBe(
+        false,
+      );
+      expect(isSuccessResponse({ statusCode: "200", type: "success" })).toBe(
+        false,
+      );
+      expect(
+        isActionResponse({ body: null, statusCode: 200, type: "success" }),
+      ).toBe(false);
+      expect(
+        isActionResponse({ body: [], statusCode: 200, type: "success" }),
+      ).toBe(false);
+      expect(
+        isActionResponse({
+          headers: { "X-Request-Id": 123 },
+          statusCode: 200,
+          type: "success",
+        }),
+      ).toBe(false);
+    });
+
+    it("should return false for an invalid error response payload", () => {
+      expect(isActionResponse({ type: "error" })).toBe(false);
+      expect(isErrorResponse({ type: "error" })).toBe(false);
+      expect(
+        isActionResponse({
+          error: { body: "Bad request", statusCode: 400 },
+          type: "error",
+        }),
+      ).toBe(false);
+      expect(
+        isErrorResponse({
+          error: { body: "Bad request", statusCode: 400 },
+          type: "error",
+        }),
+      ).toBe(false);
     });
   });
 });

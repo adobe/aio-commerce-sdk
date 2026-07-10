@@ -12,10 +12,13 @@
 
 /** biome-ignore-all lint/performance/noBarrelFile: This is the public API for the webhook responses entrypoint */
 
+// Export response helpers
+export * from "./helpers";
 // Export all webhook operations
 export * from "./operations/presets";
 // Export HTTP response wrappers
 export * from "./presets";
+export { isWebhookSuccessResponse } from "./types";
 
 // Export webhook operation types
 export type {
@@ -26,3 +29,4 @@ export type {
   SuccessOperation,
   WebhookOperationResponse,
 } from "./operations/types";
+export type { WebhookSuccessResponse } from "./types";

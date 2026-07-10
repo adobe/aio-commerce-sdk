@@ -196,6 +196,32 @@ if (response.type === "success") {
 
 This allows TypeScript to narrow the type and provide accurate autocomplete and type checking.
 
+## Checking Unknown Responses
+
+Use `isActionResponse()`, `isSuccessResponse()`, or `isErrorResponse()` when you receive an unknown value and need to confirm that it matches the SDK action response shape before reading success or error fields:
+
+```typescript
+import {
+  isActionResponse,
+  isErrorResponse,
+  isSuccessResponse,
+} from "@adobe/aio-commerce-lib-core/responses";
+
+const result = await runAction(params);
+
+if (isSuccessResponse(result)) {
+  console.log(`Status: ${result.statusCode}`);
+}
+
+if (isErrorResponse(result)) {
+  console.log(`Error Status: ${result.error.statusCode}`);
+}
+
+if (isActionResponse(result)) {
+  console.log(`Response type: ${result.type}`);
+}
+```
+
 ## Custom Status Codes
 
 For custom status codes not covered by the presets, use the base functions directly:

@@ -38,7 +38,12 @@ throw new ApiError("Request failed", 500);
 ### Response Helpers
 
 ```typescript
-import { ok, badRequest } from "@adobe/aio-commerce-lib-core/responses";
+import {
+  ok,
+  badRequest,
+  isSuccessResponse,
+  isErrorResponse,
+} from "@adobe/aio-commerce-lib-core/responses";
 
 // Success response using string shorthand
 return ok("User retrieved");
@@ -48,6 +53,16 @@ return badRequest("Invalid input");
 
 // Or use full object syntax for additional data
 return ok({ body: { message: "User retrieved", id: "123" } });
+
+// Narrow unknown values before reading response fields
+const result = await runAction(params);
+if (isSuccessResponse(result)) {
+  console.log(result.statusCode);
+}
+
+if (isErrorResponse(result)) {
+  console.log(result.error.statusCode);
+}
 ```
 
 [Read the Response Helpers Guide →](./guides/response-helpers.md)

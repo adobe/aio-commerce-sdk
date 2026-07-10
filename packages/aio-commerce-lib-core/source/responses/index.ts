@@ -17,7 +17,13 @@
  * @packageDocumentation
  */
 
-export { buildErrorResponse, buildSuccessResponse } from "./helpers";
+export {
+  buildErrorResponse,
+  buildSuccessResponse,
+  isActionResponse,
+  isErrorResponse,
+  isSuccessResponse,
+} from "./helpers";
 export * from "./presets";
 
 export type { ActionResponse, ErrorResponse, SuccessResponse } from "./helpers";
