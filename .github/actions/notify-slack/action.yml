@@ -8,9 +8,6 @@ inputs:
   registry-package-base-url:
     description: Base URL for linking to published packages
     required: true
-  release-channel:
-    description: Release channel ("internal" or "public")
-    required: true
   slack-webhook-url:
     description: Slack incoming webhook URL
     required: true
@@ -24,7 +21,6 @@ runs:
       env:
         PUBLISHED_PACKAGES: ${{ inputs.published-packages }}
         REGISTRY_PACKAGE_BASE_URL: ${{ inputs.registry-package-base-url }}
-        RELEASE_CHANNEL: ${{ inputs.release-channel }}
       with:
         script: |
           const { default: execAnnouncement } = await import('${{ github.workspace }}/scripts/source/ci/release/announce.ts');

@@ -25,18 +25,14 @@ jobs:
 
       - uses: ./.github/actions/setup-release
         with:
-          registry-url: ${{ secrets.ARTIFACTORY_REPO_PUBLISH_URL }}
-          token: ${{ secrets.ARTIFACTORY_API_TOKEN }}
+          token: ${{ secrets.ADOBE_BOT_NPM_TOKEN }}
 
       - uses: ./.github/actions/publish-snapshot
         id: snapshot
-        with:
-          registry-url: ${{ secrets.ARTIFACTORY_REPO_PUBLISH_URL }}
 
       - uses: ./.github/actions/notify-slack
         if: inputs.notify_slack && steps.snapshot.outputs.published == 'true'
         with:
           published-packages: ${{ steps.snapshot.outputs.publishedPackages }}
-          registry-package-base-url: ${{ secrets.ARTIFACTORY_PACKAGE_BASE_URL }}
-          release-channel: internal
+          registry-package-base-url: "https://npmx.dev/package"
           slack-webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
