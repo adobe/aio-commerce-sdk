@@ -12,6 +12,12 @@ See [DEVELOPMENT.md](./DEVELOPMENT.md#release-process) for the full release proc
 (semantic versioning, changesets workflow, branch channels, snapshot flow, back-sync). The
 following steps require maintainer-level access to execute.
 
+### Requesting a PR snapshot
+
+Commenting `/snapshot` on an open PR publishes an `alpha` snapshot of that PR's changes to
+Artifactory without affecting `main`. The workflow that handles this comment checks that the
+commenter has **admin** permission on the repository, so this is restricted to maintainers.
+
 ### Triggering a public release
 
 When ready to publish to npm, use the **Promote to Release** workflow dispatch (`promote.yml`):

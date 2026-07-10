@@ -483,8 +483,6 @@ Once your feature PR is merged to `main`:
 3. Nothing is committed. Changeset files stay in `.changeset/` until promotion to `release`.
 4. A GitHub pre-release is created with release notes assembled from the pending changesets.
 
-You can also request a snapshot from any open PR by commenting `/snapshot`. This publishes an `alpha` snapshot of your PR's changes to Artifactory without affecting `main`.
-
 #### Commerce plugins
 
 Commerce plugins under `plugins/commerce/*` use the same changeset flow, but they are private
@@ -501,5 +499,3 @@ plugin version/changelog updates to `main`.
 #### Back-sync
 
 After a public release, the back-sync is automatic — the workflow merges `release` directly into `main` via a merge commit. No manual step needed.
-
-For triggering stable releases, applying hotfixes, and managing repository secrets, see [MAINTAINERS.md](./MAINTAINERS.md).
