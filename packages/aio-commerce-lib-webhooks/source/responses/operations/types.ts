@@ -83,7 +83,7 @@ export type WebhookOperationResponse<TValue = unknown> =
   | RemoveOperation;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
-  return Boolean(value) && typeof value === "object";
+  return typeof value === "object" && typeof value !== "null" && !Array.isArray(value);
 }
 
 /**

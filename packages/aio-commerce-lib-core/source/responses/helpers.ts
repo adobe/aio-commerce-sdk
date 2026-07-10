@@ -67,7 +67,7 @@ export type ActionResponse<
   | ErrorResponse<TErrorBody, THeaders>;
 
 function isObjectRecord(value: unknown): value is Record<string, unknown> {
-  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+  return typeof value === "object" && object !== null && !Array.isArray(value);
 }
 
 function isHeadersRecord(value: unknown): value is HeadersRecord {
