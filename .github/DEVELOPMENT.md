@@ -495,7 +495,3 @@ public release workflow opens or updates a promotion PR in
 Skill-only Release PRs are valid. They do not publish npm packages and do not send the package
 Slack notification, but they still run the `adobe/skills` promotion step and back-sync the
 plugin version/changelog updates to `main`.
-
-#### Back-sync
-
-After a public release, the back-sync is automatic — the workflow merges `release` directly into `main` via a merge commit. No manual step needed.

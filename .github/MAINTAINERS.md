@@ -9,8 +9,8 @@ a committer.
 ## Release Process
 
 See [DEVELOPMENT.md](./DEVELOPMENT.md#release-process) for the full release process overview
-(semantic versioning, changesets workflow, branch channels, snapshot flow, back-sync). The
-following steps require maintainer-level access to execute.
+(semantic versioning, changesets workflow, branch channels, snapshot flow). The following steps
+require maintainer-level access to execute.
 
 ### Requesting a PR snapshot
 
@@ -28,6 +28,10 @@ When ready to publish to npm, use the **Promote to Release** workflow dispatch (
 4. Merging that PR publishes stable versions to npm and writes changelogs.
 
 If there were snapshot versions like `1.2.5-beta-20260313T120000` on Artifactory, the resulting stable release is `1.2.5`.
+
+### Back-sync
+
+After a public release, the back-sync is automatic — the workflow merges `release` directly into `main` via a merge commit. No manual step needed.
 
 ### Hotfixes
 
