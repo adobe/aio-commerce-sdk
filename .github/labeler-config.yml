@@ -44,6 +44,14 @@
   - changed-files:
       - any-glob-to-any-file: "packages-private/common-utils/**"
 
+"plugin: aio-commerce-plugin-app-management":
+  - changed-files:
+      - any-glob-to-any-file: "plugins/commerce/app-management/**"
+
+"plugin: aio-commerce-plugin-app-migration":
+  - changed-files:
+      - any-glob-to-any-file: "plugins/commerce/app-migration/**"
+
 "scripts":
   - changed-files:
       - any-glob-to-any-file: "scripts/**"
