@@ -2,4 +2,4 @@
 "@adobe/aio-commerce-lib-webhooks": minor
 ---
 
-Add `isWebhookSuccessful()` to `@adobe/aio-commerce-lib-webhooks/responses` to determine whether a webhook action's result is successful, useful for tools that instrument actions generically (e.g. tracing libraries) and can't rely on the HTTP status code alone.
+Add `isWebhookSuccessful()` to `@adobe/aio-commerce-lib-webhooks/responses` to determine whether a webhook action response represents a successful outcome by inspecting its operation payload instead of relying on the HTTP status code alone.

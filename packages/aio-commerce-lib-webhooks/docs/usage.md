@@ -469,14 +469,14 @@ export async function customizeCheckout(params) {
 
 ### Checking Action Results
 
-Because webhook actions always respond with HTTP 200, tooling that instruments actions generically (for example, tracing libraries like `aio-lib-telemetry`) can't rely on the status code to know whether a webhook handler actually succeeded. Use `isWebhookSuccessful()` to inspect the returned response body instead:
+Because webhook actions can return HTTP 200 while still blocking the triggering process with an exception operation, callers can't rely on the status code alone to know whether a webhook handler actually succeeded. Use `isWebhookSuccessful()` to inspect the returned response body instead:
 
 ```typescript
 import { isWebhookSuccessful } from "@adobe/aio-commerce-sdk/webhooks/responses";
 
 const result = await handleWebhook(params);
 if (!isWebhookSuccessful(result)) {
-  span.setStatus({ code: SpanStatusCode.ERROR });
+  throw new Error("Webhook action failed");
 }
 ```
 
