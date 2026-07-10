@@ -81,3 +81,45 @@ export type WebhookOperationResponse<TValue = unknown> =
   | AddOperation<TValue>
   | ReplaceOperation<TValue>
   | RemoveOperation;
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === "object";
+}
+
+/**
+ * Determines whether a value is a webhook operation response.
+ *
+ * @param body - Value to inspect.
+ * @returns True when the value matches one of the webhook operation response shapes.
+ */
+export function isWebhookOperationResponse(
+  body: unknown,
+): body is WebhookOperationResponse {
+  if (!isRecord(body)) {
+    return false;
+  }
+
+  const { op, path } = body;
+
+  if (op === "success" || op === "exception") {
+    return true;
+  }
+
+  if (op === "add" || op === "replace") {
+    return typeof path === "string" && "value" in body;
+  }
+
+  return op === "remove" && typeof path === "string";
+}
+
+/**
+ * Determines whether a value is an array of webhook operation responses.
+ *
+ * @param body - Value to inspect.
+ * @returns True when every array item matches a webhook operation response shape.
+ */
+export function isWebhookOperationResponseArray(
+  body: unknown,
+): body is WebhookOperationResponse[] {
+  return Array.isArray(body) && body.every(isWebhookOperationResponse);
+}

@@ -10,10 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
-import { HTTP_OK } from "@adobe/aio-commerce-lib-api/utils";
-
-import type { SuccessResponse } from "@adobe/aio-commerce-lib-core/responses";
-import type { WebhookOperationResponse } from "./operations/types";
+import { isWebhookSuccessResponse } from "./types";
 
 /**
  * Determines whether a webhook action's result represents a successful outcome.
@@ -33,22 +30,17 @@ import type { WebhookOperationResponse } from "./operations/types";
  * ```
  */
 export function isWebhookSuccessful(result: unknown): boolean {
-  if (!result || typeof result !== "object") {
+  if (!isWebhookSuccessResponse(result)) {
     return false;
   }
 
-  const response = result as SuccessResponse<Record<string, unknown>>;
-  if (response.statusCode !== HTTP_OK) {
-    return false;
-  }
-
-  if (!response.body || typeof response.body !== "object") {
+  if (!result.body) {
     return true;
   }
 
-  const body = response.body as unknown as
-    | WebhookOperationResponse
-    | WebhookOperationResponse[];
+  if (Array.isArray(result.body)) {
+    return result.body.every((operation) => operation.op !== "exception");
+  }
 
-  return Array.isArray(body) || body.op !== "exception";
+  return result.body.op !== "exception";
 }

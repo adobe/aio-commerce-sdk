@@ -66,6 +66,97 @@ export type ActionResponse<
   | SuccessResponse<TSuccessBody, THeaders>
   | ErrorResponse<TErrorBody, THeaders>;
 
+function isObjectRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
+
+function isHeadersRecord(value: unknown): value is HeadersRecord {
+  return (
+    value === undefined ||
+    (isObjectRecord(value) &&
+      Object.values(value).every((entry) => typeof entry === "string"))
+  );
+}
+
+function isBodyRecord(value: unknown): value is BodyRecord | undefined {
+  return value === undefined || isObjectRecord(value);
+}
+
+function isResponsePayload(value: unknown): value is ResponsePayload {
+  return (
+    isObjectRecord(value) &&
+    typeof value.statusCode === "number" &&
+    isBodyRecord(value.body) &&
+    isHeadersRecord(value.headers)
+  );
+}
+
+/**
+ * Determines whether a value is a standardized SDK success response.
+ *
+ * @param response - Value to inspect.
+ * @returns True when the value matches the SDK success response shape.
+ *
+ * @example
+ * ```typescript
+ * const result = await runAction(params);
+ * if (isSuccessResponse(result)) {
+ *   console.log(result.statusCode);
+ * }
+ * ```
+ */
+export function isSuccessResponse(
+  response: unknown,
+): response is SuccessResponse {
+  return (
+    isObjectRecord(response) &&
+    response.type === "success" &&
+    isResponsePayload(response)
+  );
+}
+
+/**
+ * Determines whether a value is a standardized SDK error response.
+ *
+ * @param response - Value to inspect.
+ * @returns True when the value matches the SDK error response shape.
+ *
+ * @example
+ * ```typescript
+ * const result = await runAction(params);
+ * if (isErrorResponse(result)) {
+ *   console.log(result.error.statusCode);
+ * }
+ * ```
+ */
+export function isErrorResponse(response: unknown): response is ErrorResponse {
+  return (
+    isObjectRecord(response) &&
+    response.type === "error" &&
+    isResponsePayload(response.error)
+  );
+}
+
+/**
+ * Determines whether a value is a standardized SDK action response.
+ *
+ * @param response - Value to inspect.
+ * @returns True when the value matches the SDK action response shape.
+ *
+ * @example
+ * ```typescript
+ * const result = await runAction(params);
+ * if (isActionResponse(result) && result.type === "success") {
+ *   console.log(result.statusCode);
+ * }
+ * ```
+ */
+export function isActionResponse(
+  response: unknown,
+): response is ActionResponse {
+  return isSuccessResponse(response) || isErrorResponse(response);
+}
+
 /**
  * Creates a standardized error response for runtime actions
  * @see https://developer.adobe.com/app-builder/docs/guides/runtime_guides/creating-actions#unsuccessful-response
