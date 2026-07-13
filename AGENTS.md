@@ -42,6 +42,7 @@
 - Source is ESM only (`import/export`); build output ships both ESM and CJS (generated automatically by TSDown — don't modify format settings)
 - Build tool: TSDown; each package has a `tsdown.config.ts` extending `baseConfig` from `@aio-commerce-sdk/config-tsdown` via `mergeConfig`
 - New packages are scaffolded manually (interactive): `pnpm turbo gen create-package`
+- Every new package needs a matching entry in `.github/labeler-config.yml` so PRs touching it get labeled automatically — the `create-package` generator does not do this for you
 - Public packages: `@adobe/` scope (`"private": false`); internal: `@aio-commerce-sdk/` scope (`"private": true`)
 - Monorepo-local deps use `workspace:*`; third-party deps shared across multiple packages use `catalog:` (defined in `pnpm-workspace.yaml`)
 - Every public package must declare `"sideEffects"` in `package.json`: `false` if no side effects, or an array of files that do have side effects
