@@ -483,19 +483,6 @@ Once your feature PR is merged to `main`:
 3. Nothing is committed. Changeset files stay in `.changeset/` until promotion to `release`.
 4. A GitHub pre-release is created with release notes assembled from the pending changesets.
 
-You can also request a snapshot from any open PR by commenting `/snapshot`. This publishes an `alpha` snapshot of your PR's changes to the public npm registry without affecting `main`.
-
-#### Public stable flow (`release`)
-
-When ready to publish to npm, use the **Promote to Release** workflow dispatch (`promote.yml`):
-
-1. Trigger it from GitHub Actions, optionally specifying a commit SHA on `main` to promote (defaults to latest).
-2. The workflow merges that commit directly into `release` via a merge commit. No config changes needed — changeset files come along unconsumed.
-3. Changesets creates/updates a `[CI] Release Packages` PR on `release`, including regenerated API reference docs.
-4. Merging that PR publishes stable versions to npm and writes changelogs.
-
-If there were snapshot versions like `1.2.5-beta-20260313T120000` on npm, the resulting stable release is `1.2.5`.
-
 #### Commerce plugins
 
 Commerce plugins under `plugins/commerce/*` use the same changeset flow, but they are private
