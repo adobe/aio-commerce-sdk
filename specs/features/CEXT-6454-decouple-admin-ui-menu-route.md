@@ -347,4 +347,5 @@ detection) but not cleanly, because the hooks throw before the app can branch.
 ## Future possibilities
 
 - With a uniform route shape, the scaffold could pre-generate a page stub per
-  configured `adminUi` path, extending the CEXT-6338 scaffolding idea to menus.
+  configured `adminUi` path, extending the CEXT-6338 scaffolding idea to routes
+  instead of just the entry.
