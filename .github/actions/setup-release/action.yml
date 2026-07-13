@@ -2,10 +2,6 @@ name: Setup Release Environment
 description: Setup pnpm and Node.js with registry auth, and install dependencies
 
 inputs:
-  registry-url:
-    description: npm registry URL to publish @adobe scope packages to
-    required: false
-    default: "https://registry.npmjs.org"
   token:
     description: Auth token for the npm registry
     required: true
@@ -31,10 +27,7 @@ runs:
     - name: Configure publish auth
       shell: bash
       env:
-        REGISTRY_URL: ${{ inputs.registry-url }}
         TOKEN: ${{ inputs.token }}
       run: |
-        REGISTRY_HOST="${REGISTRY_URL#https://}"
-        REGISTRY_HOST="${REGISTRY_HOST%/}"
         echo "NODE_AUTH_TOKEN=${TOKEN}" >> "$GITHUB_ENV"
-        echo "//${REGISTRY_HOST}/:_authToken=\${NODE_AUTH_TOKEN}" >> "$HOME/.npmrc"
+        echo "//registry.npmjs.org/:_authToken=\${NODE_AUTH_TOKEN}" >> "$HOME/.npmrc"
