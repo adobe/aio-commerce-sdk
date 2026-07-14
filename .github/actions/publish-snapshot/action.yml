@@ -10,9 +10,6 @@ inputs:
     description: Skip creating GitHub pre-releases
     required: false
     default: "false"
-  registry-url:
-    description: npm registry URL for publishing
-    required: true
 
 outputs:
   published:
@@ -35,18 +32,6 @@ runs:
           const { default: execPrepare } = await import('${{ github.workspace }}/scripts/source/ci/release/prepare.ts');
           await execPrepare(core, exec);
 
-    - name: Override publish registry for Artifactory
-      shell: bash
-      env:
-        REGISTRY_URL: ${{ inputs.registry-url }}
-      run: |
-        for dir in packages/*/; do
-          npm pkg set \
-            "publishConfig.registry=$REGISTRY_URL" \
-            "publishConfig.access=restricted" \
-            --prefix "$dir"
-        done
-
     - name: Build packages
       run: pnpm turbo build
       shell: bash
@@ -58,7 +43,6 @@ runs:
         GITHUB_TOKEN: ${{ github.token }}
         SNAPSHOT_TAG: ${{ inputs.snapshot-tag }}
         SKIP_GITHUB_RELEASES: ${{ inputs.skip-github-releases }}
-        REGISTRY_URL: ${{ inputs.registry-url }}
       with:
         script: |
           const { default: execSnapshot } = await import('${{ github.workspace }}/scripts/source/ci/release/snapshot.ts');

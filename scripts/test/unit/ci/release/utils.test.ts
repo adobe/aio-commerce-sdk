@@ -16,12 +16,7 @@ import { join } from "node:path";
 import { withTempFiles } from "@aio-commerce-sdk/scripting-utils/filesystem";
 import { describe, expect, test } from "vitest";
 
-import {
-  parseReleaseChannel,
-  readJson,
-  runGitHubScript,
-  writeJson,
-} from "#ci/release/utils";
+import { readJson, runGitHubScript, writeJson } from "#ci/release/utils";
 import { asCore, createCoreMock } from "#test/fixtures/release";
 
 describe("release/utils.ts", () => {
@@ -72,17 +67,6 @@ describe("release/utils.ts", () => {
       ).rejects.toBe("boom");
 
       expect(core.setFailed).not.toHaveBeenCalled();
-    });
-  });
-
-  describe("parseReleaseChannel", () => {
-    test("returns the release channel when it is valid", () => {
-      expect(parseReleaseChannel("internal")).toBe("internal");
-      expect(parseReleaseChannel("public")).toBe("public");
-    });
-
-    test("throws when the release channel is undefined", () => {
-      expect(() => parseReleaseChannel(undefined)).toThrow();
     });
   });
 

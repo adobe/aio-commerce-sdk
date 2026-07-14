@@ -444,7 +444,7 @@ After that, a new file is generated in the `.changeset` folder at the repository
 This repository uses two release channels:
 
 - `main` is the internal integration channel
-  - Uses snapshot releases (`beta` tag) and publishes to Artifactory. Nothing is committed, changeset files stay in `.changeset/` until promotion.
+  - Uses snapshot releases (`beta` tag) and publishes to the public npm registry. Nothing is committed, changeset files stay in `.changeset/` until promotion.
 - `release` is the public channel
   - Uses stable semver and publishes to NPM via the standard changesets flow.
 
@@ -479,7 +479,7 @@ _⬤ commit · PR: pull request_
 Once your feature PR is merged to `main`:
 
 1. CI runs `changeset version --snapshot beta` and `changeset publish --tag beta`.
-2. Packages are published to Artifactory with ephemeral snapshot versions (e.g., `1.2.5-beta-20260313T120000`).
+2. Packages are published to the public npm registry with ephemeral snapshot versions (e.g., `1.2.5-beta-20260313T120000`).
 3. Nothing is committed. Changeset files stay in `.changeset/` until promotion to `release`.
 4. A GitHub pre-release is created with release notes assembled from the pending changesets.
 

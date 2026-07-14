@@ -14,7 +14,7 @@ import { execFile } from "node:child_process";
 import { readFile, writeFile } from "node:fs/promises";
 import { promisify } from "node:util";
 
-import type { AsyncFunctionArguments, ReleaseChannel } from "./types.ts";
+import type { AsyncFunctionArguments } from "./types.ts";
 
 const execFileAsync = promisify(execFile);
 
@@ -50,15 +50,4 @@ export async function writeJson(path: string, value: unknown) {
     "--files-ignore-unknown=true",
     path,
   ]);
-}
-
-/** Parses the release channel from the given value. */
-export function parseReleaseChannel(value: string | undefined): ReleaseChannel {
-  if (value === "internal" || value === "public") {
-    return value;
-  }
-
-  throw new Error(
-    `Unsupported channel "${value ?? ""}". Expected "internal" or "public".`,
-  );
 }
