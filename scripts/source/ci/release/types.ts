@@ -31,13 +31,7 @@ export type PublishedPackage = {
 
 /** Slack payload for release announcement messages. */
 export type SlackPayload = {
-  blocks: Array<{
-    type: string;
-    text: {
-      type: string;
-      text: string;
-    };
-  }>;
+  text: string;
 };
 
 /**
