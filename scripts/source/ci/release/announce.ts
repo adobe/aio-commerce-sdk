@@ -39,17 +39,7 @@ function announce(): SlackPayload {
     packageBaseUrl,
   );
 
-  return {
-    blocks: [
-      {
-        text: {
-          text: announcement,
-          type: "mrkdwn",
-        },
-        type: "section",
-      },
-    ],
-  };
+  return { text: announcement };
 }
 
 /** Reads the inputs from the environment variables. */

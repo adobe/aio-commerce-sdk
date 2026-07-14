@@ -67,7 +67,7 @@ describe("release/announce.ts", () => {
     });
 
     const payload = announce(asCore(core));
-    const text = payload.blocks[0]?.text.text ?? "";
+    const { text } = payload;
 
     expect(text).toContain("public (NPM)");
     expect(text).toContain(
@@ -89,7 +89,7 @@ describe("release/announce.ts", () => {
     });
 
     const payload = announce(asCore(core));
-    const text = payload.blocks[0]?.text.text ?? "";
+    const { text } = payload;
 
     expect(core.setFailed).not.toHaveBeenCalled();
     expect(text).toContain("public (NPM)");
@@ -106,7 +106,7 @@ describe("release/announce.ts", () => {
     });
 
     const payload = await announce(asCore(core));
-    const text = payload.blocks[0]?.text.text ?? "";
+    const { text } = payload;
 
     expect(text.indexOf("@adobe/aio-commerce-sdk@1.0.0")).toBeLessThan(
       text.indexOf("@adobe/aio-commerce-lib-alpha@1.0.0"),
