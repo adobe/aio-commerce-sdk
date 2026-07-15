@@ -110,9 +110,35 @@ export function getIntegrationAuthProvider(
 
   return {
     getHeaders: (method: HttpMethodInput, url: AdobeCommerceUrl) => {
-      const urlString = parse(UrlSchema, url);
+      const parsed = new URL(parse(UrlSchema, url));
+
+      // OAuth 1.0a signs the request parameters (RFC 5849 §3.4.1.3) merged into
+      // the base string (§3.4.1.1); the base-string URI itself excludes the
+      // query (§3.4.1.2). oauth-1.0a normally derives those parameters from the
+      // URL via `deParam`, which decodes parameter values but NOT keys — so
+      // percent-encoded keys (e.g. `searchCriteria%5B...%5D`) get double-encoded
+      // in the base string and Adobe Commerce rejects the request with "The
+      // signature is invalid.". Instead we decode the query with URLSearchParams
+      // (keys and values) and pass it as `request.data`, which oauth-1.0a folds
+      // into the very same parameter string (getParameterString merges `data`) —
+      // so the params stay signed, just sourced correctly — and we sign against
+      // the query-less base URI. Repeated keys collapse to an array, matching
+      // oauth-1.0a's own multi-value handling.
+      const data: Record<string, string | string[]> = {};
+      for (const [key, value] of parsed.searchParams) {
+        const existing = data[key];
+        if (existing === undefined) {
+          data[key] = value;
+        } else {
+          data[key] = Array.isArray(existing)
+            ? [...existing, value]
+            : [existing, value];
+        }
+      }
+
+      const baseUri = `${parsed.origin}${parsed.pathname}`;
       return oauth.toHeader(
-        oauth.authorize({ method, url: urlString }, oauthToken),
+        oauth.authorize({ data, method, url: baseUri }, oauthToken),
       );
     },
   };
