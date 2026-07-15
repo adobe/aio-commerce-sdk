@@ -115,15 +115,11 @@ export function getIntegrationAuthProvider(
       // oauth-1.0a's authorize method re-encodes keys even if already encoded
       // Split query parameters from base URL to avoid double encoding
       const data: Record<string, string | string[]> = {};
-      for (const [key, value] of parsed.searchParams) {
-        const existing = data[key];
-        if (existing === undefined) {
-          data[key] = value;
-        } else {
-          data[key] = Array.isArray(existing)
-            ? [...existing, value]
-            : [existing, value];
-        }
+      const uniqueKeys = Array.from(new Set(parsed.searchParams.keys()))
+      
+      for (const key of uniqueKeys) {
+        const values = parsed.searchParams.getAll(key);
+        data[key] = values.length > 1 ? values : values[0];
       }
 
       const baseUri = `${parsed.origin}${parsed.pathname}`;
