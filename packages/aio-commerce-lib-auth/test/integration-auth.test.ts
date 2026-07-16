@@ -10,7 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 
 import {
   getIntegrationAuthProvider,
@@ -54,6 +54,42 @@ describe("aio-commerce-lib-auth/integration-auth", () => {
         "Authorization",
         expect.stringMatching(OAUTH1_REGEX),
       );
+    });
+
+    test("signs array-style query params consistently regardless of key encoding", () => {
+      // Freeze the nonce and timestamp so signatures from two calls are directly
+      // comparable (oauth-1.0a derives both from Math.random / Date).
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date("2025-01-01T00:00:00.000Z"));
+      const randomSpy = vi.spyOn(Math, "random").mockReturnValue(0.5);
+
+      try {
+        const provider = getIntegrationAuthProvider({
+          accessToken: "test-access-token",
+          accessTokenSecret: "test-access-token-secret",
+          consumerKey: "test-consumer-key",
+          consumerSecret: "test-consumer-secret",
+        });
+
+        // Same logical request, brackets percent-encoded vs. literal.
+        const encoded = provider.getHeaders(
+          "GET",
+          "http://localhost/rest/all/V1/products?searchCriteria%5BpageSize%5D=1",
+        );
+        const literal = provider.getHeaders(
+          "GET",
+          "http://localhost/rest/all/V1/products?searchCriteria[pageSize]=1",
+        );
+
+        // Before the fix these diverged (the encoded key was double-encoded in
+        // the signature base string), which Adobe Commerce rejected as an
+        // invalid signature.
+        expect(encoded.Authorization).toBe(literal.Authorization);
+        expect(encoded.Authorization).toMatch(OAUTH1_REGEX);
+      } finally {
+        randomSpy.mockRestore();
+        vi.useRealTimers();
+      }
     });
   });
 

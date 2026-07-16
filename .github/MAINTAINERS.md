@@ -15,8 +15,9 @@ require maintainer-level access to execute.
 ### Requesting a PR snapshot
 
 Commenting `/snapshot` on an open PR publishes an `alpha` snapshot of that PR's changes to
-Artifactory without affecting `main`. The workflow that handles this comment checks that the
-commenter has **admin** permission on the repository, so this is restricted to maintainers.
+the public npm registry without affecting `main`. The workflow that handles this comment checks
+that the commenter has **admin** permission on the repository, so this is restricted to
+maintainers.
 
 ### Triggering a public release
 
@@ -27,7 +28,7 @@ When ready to publish to npm, use the **Promote to Release** workflow dispatch (
 3. Changesets creates/updates a `[CI] Release Packages` PR on `release`, including regenerated API reference docs.
 4. Merging that PR publishes stable versions to npm and writes changelogs.
 
-If there were snapshot versions like `1.2.5-beta-20260313T120000` on Artifactory, the resulting stable release is `1.2.5`.
+If there were snapshot versions like `1.2.5-beta-20260313T120000` on npm, the resulting stable release is `1.2.5`.
 
 ### Back-sync
 

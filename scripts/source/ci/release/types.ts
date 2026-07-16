@@ -10,14 +10,10 @@
  * governing permissions and limitations under the License.
  */
 
-/** The channel of the release. */
-export type ReleaseChannel = "internal" | "public";
-
 /** Environment variables for the release prepare script. */
 export type Environment = {
   REGISTRY_AUTH_TOKEN: string;
   REGISTRY_URL: string;
-  RELEASE_CHANNEL: ReleaseChannel;
   SNAPSHOT_TAG?: string;
 };
 
@@ -25,7 +21,6 @@ export type Environment = {
 export type AnnounceEnvironment = {
   PUBLISHED_PACKAGES: string;
   REGISTRY_PACKAGE_BASE_URL: string;
-  RELEASE_CHANNEL: ReleaseChannel;
 };
 
 /** A package published as part of a release. */
@@ -36,13 +31,7 @@ export type PublishedPackage = {
 
 /** Slack payload for release announcement messages. */
 export type SlackPayload = {
-  blocks: Array<{
-    type: string;
-    text: {
-      type: string;
-      text: string;
-    };
-  }>;
+  text: string;
 };
 
 /**

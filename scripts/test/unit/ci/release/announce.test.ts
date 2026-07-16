@@ -29,10 +29,8 @@ import {
 function stubAnnounceEnv(values: {
   publishedPackages?: string;
   registryPackageBaseUrl?: string;
-  releaseChannel?: string;
 }) {
   vi.stubEnv("PUBLISHED_PACKAGES", values.publishedPackages ?? "");
-  vi.stubEnv("RELEASE_CHANNEL", values.releaseChannel ?? "");
   vi.stubEnv("REGISTRY_PACKAGE_BASE_URL", values.registryPackageBaseUrl ?? "");
 }
 
@@ -47,7 +45,6 @@ describe("release/announce.ts", () => {
     stubAnnounceEnv({
       publishedPackages: SDK_AND_CORE_PACKAGES_JSON,
       registryPackageBaseUrl: PUBLIC_PACKAGE_BASE_URL,
-      releaseChannel: "public",
     });
 
     const payload = announce(asCore(core));
@@ -67,11 +64,10 @@ describe("release/announce.ts", () => {
     stubAnnounceEnv({
       publishedPackages: SDK_AND_CORE_PACKAGES_JSON,
       registryPackageBaseUrl: PUBLIC_PACKAGE_BASE_URL,
-      releaseChannel: "public",
     });
 
     const payload = announce(asCore(core));
-    const text = payload.blocks[0]?.text.text ?? "";
+    const { text } = payload;
 
     expect(text).toContain("public (NPM)");
     expect(text).toContain(
@@ -90,14 +86,13 @@ describe("release/announce.ts", () => {
     stubAnnounceEnv({
       publishedPackages: INTERNAL_SDK_PACKAGE_JSON,
       registryPackageBaseUrl: INTERNAL_PACKAGE_BASE_URL,
-      releaseChannel: "internal",
     });
 
     const payload = announce(asCore(core));
-    const text = payload.blocks[0]?.text.text ?? "";
+    const { text } = payload;
 
     expect(core.setFailed).not.toHaveBeenCalled();
-    expect(text).toContain("internal (Artifactory)");
+    expect(text).toContain("public (NPM)");
     expect(text).toContain(
       `${INTERNAL_PACKAGE_BASE_URL}@adobe/aio-commerce-sdk`,
     );
@@ -108,11 +103,10 @@ describe("release/announce.ts", () => {
     stubAnnounceEnv({
       publishedPackages: THREE_PACKAGES_JSON,
       registryPackageBaseUrl: PUBLIC_PACKAGE_BASE_URL,
-      releaseChannel: "public",
     });
 
     const payload = await announce(asCore(core));
-    const text = payload.blocks[0]?.text.text ?? "";
+    const { text } = payload;
 
     expect(text.indexOf("@adobe/aio-commerce-sdk@1.0.0")).toBeLessThan(
       text.indexOf("@adobe/aio-commerce-lib-alpha@1.0.0"),
@@ -127,7 +121,6 @@ describe("release/announce.ts", () => {
     const core = createCoreMock();
     stubAnnounceEnv({
       registryPackageBaseUrl: PUBLIC_PACKAGE_BASE_URL,
-      releaseChannel: "public",
     });
 
     expect(() => announce(asCore(core))).toThrow();
@@ -137,18 +130,6 @@ describe("release/announce.ts", () => {
     const core = createCoreMock();
     stubAnnounceEnv({
       publishedPackages: CORE_PACKAGE_JSON,
-      releaseChannel: "public",
-    });
-
-    expect(() => announce(asCore(core))).toThrow();
-  });
-
-  test("fails when the release channel is invalid", () => {
-    const core = createCoreMock();
-    stubAnnounceEnv({
-      publishedPackages: CORE_PACKAGE_JSON,
-      registryPackageBaseUrl: PUBLIC_PACKAGE_BASE_URL,
-      releaseChannel: "beta",
     });
 
     expect(() => announce(asCore(core))).toThrow();
@@ -159,7 +140,6 @@ describe("release/announce.ts", () => {
     stubAnnounceEnv({
       publishedPackages: INVALID_PACKAGES_JSON,
       registryPackageBaseUrl: PUBLIC_PACKAGE_BASE_URL,
-      releaseChannel: "public",
     });
 
     expect(() => announce(asCore(core))).toThrow();

@@ -111,15 +111,13 @@ jobs:
 
       - uses: ./.github/actions/setup-release
         with:
-          registry-url: ${{ secrets.ARTIFACTORY_REPO_PUBLISH_URL }}
-          token: ${{ secrets.ARTIFACTORY_API_TOKEN }}
+          token: ${{ secrets.ADOBE_BOT_NPM_TOKEN }}
 
       - uses: ./.github/actions/publish-snapshot
         id: snapshot
         with:
           snapshot-tag: alpha
           skip-github-releases: "true"
-          registry-url: ${{ secrets.ARTIFACTORY_REPO_PUBLISH_URL }}
 
   comment:
     name: Comment on PR
@@ -134,11 +132,9 @@ jobs:
         env:
           PR_NUMBER: ${{ needs.prepare.outputs.pr_number }}
           PUBLISHED_PACKAGES: ${{ needs.release.outputs.publishedPackages }}
-          REGISTRY_URL: ${{ secrets.ARTIFACTORY_REPO_PUBLISH_URL }}
         with:
           script: |
             const packages = JSON.parse(process.env.PUBLISHED_PACKAGES);
-            const registryUrl = process.env.REGISTRY_URL;
 
             const rows = packages.map(p => `| \`${p.name}\` | \`${p.version}\` |`).join('\n');
             const installs = packages.map(p =>

@@ -10,13 +10,12 @@
  * governing permissions and limitations under the License.
  */
 
-import { parseReleaseChannel, runGitHubScript } from "./utils.ts";
+import { runGitHubScript } from "./utils.ts";
 
 import type {
   AnnounceEnvironment,
   AsyncFunctionArguments,
   PublishedPackage,
-  ReleaseChannel,
   SlackPayload,
 } from "./types.ts";
 
@@ -34,24 +33,13 @@ export default function main(core: AsyncFunctionArguments["core"]) {
 
 /** Entrypoint of the script. */
 function announce(): SlackPayload {
-  const { publishedPackages, channelArg, packageBaseUrl } = readInputs();
+  const { publishedPackages, packageBaseUrl } = readInputs();
   const announcement = formatMarkdownAnnouncement(
     publishedPackages,
-    channelArg,
     packageBaseUrl,
   );
 
-  return {
-    blocks: [
-      {
-        text: {
-          text: announcement,
-          type: "mrkdwn",
-        },
-        type: "section",
-      },
-    ],
-  };
+  return { text: announcement };
 }
 
 /** Reads the inputs from the environment variables. */
@@ -59,7 +47,6 @@ function readInputs() {
   const {
     PUBLISHED_PACKAGES: publishedPackagesJson,
     REGISTRY_PACKAGE_BASE_URL: packageBaseUrl,
-    RELEASE_CHANNEL: channelArgValue,
   } = process.env as AnnounceEnvironment;
 
   if (!publishedPackagesJson) {
@@ -79,7 +66,6 @@ function readInputs() {
   ) as PublishedPackage[];
 
   return {
-    channelArg: parseReleaseChannel(channelArgValue),
     packageBaseUrl,
     publishedPackages,
   };
@@ -105,7 +91,6 @@ function joinPackageUrl(baseUrl: string, packageName: string): string {
  */
 function formatMarkdownAnnouncement(
   publishedPackages: PublishedPackage[],
-  channel: ReleaseChannel,
   packageBaseUrl: string,
 ): string {
   // Sort packages to ensure consistent order
@@ -120,10 +105,7 @@ function formatMarkdownAnnouncement(
     return a.name.localeCompare(b.name);
   });
 
-  const channelLabel =
-    channel === "internal" ? "internal (Artifactory)" : "public (NPM)";
-
-  let announcement = `:rocket: New ${channelLabel} packages for <${REPOSITORY_URL}|Adobe Commerce SDK for App Builder>\n\n`;
+  let announcement = `:rocket: New public (NPM) packages for <${REPOSITORY_URL}|Adobe Commerce SDK for App Builder>\n\n`;
 
   for (const pkg of publishedPackages) {
     const pkgRelease = `${pkg.name}@${pkg.version}`;
