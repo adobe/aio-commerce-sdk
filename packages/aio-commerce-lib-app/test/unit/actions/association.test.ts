@@ -24,7 +24,6 @@ vi.mock("#management/association/association-repository", () => ({
 
 import { associationRuntimeAction } from "#actions/association/index";
 import { createRuntimeActionParams } from "#test/fixtures/actions";
-import { minimalValidConfig, mockMetadata } from "#test/fixtures/config";
 
 describe("associationRuntimeAction", () => {
   beforeEach(() => {
@@ -33,9 +32,7 @@ describe("associationRuntimeAction", () => {
 
   describe("POST /", () => {
     test("stores valid association data and returns 204", async () => {
-      const action = associationRuntimeAction({
-        appConfig: minimalValidConfig,
-      });
+      const action = associationRuntimeAction();
       const params = createRuntimeActionParams({
         body: {
           commerceBaseUrl: "https://example.com",
@@ -48,7 +45,6 @@ describe("associationRuntimeAction", () => {
       const result = await action(params);
 
       expect(mockSetAssociationData).toHaveBeenCalledWith({
-        app: { metadata: mockMetadata },
         commerce: { baseUrl: "https://example.com", env: "paas" },
       });
       expect(result).toMatchObject({
@@ -58,9 +54,7 @@ describe("associationRuntimeAction", () => {
     });
 
     test("accepts saas as a valid env", async () => {
-      const action = associationRuntimeAction({
-        appConfig: minimalValidConfig,
-      });
+      const action = associationRuntimeAction();
       const params = createRuntimeActionParams({
         body: {
           commerceBaseUrl: "https://saas.example.com",
@@ -73,7 +67,6 @@ describe("associationRuntimeAction", () => {
       const result = await action(params);
 
       expect(mockSetAssociationData).toHaveBeenCalledWith({
-        app: { metadata: mockMetadata },
         commerce: { baseUrl: "https://saas.example.com", env: "saas" },
       });
       expect(result).toMatchObject({
@@ -83,9 +76,7 @@ describe("associationRuntimeAction", () => {
     });
 
     test("returns 400 for invalid env values", async () => {
-      const action = associationRuntimeAction({
-        appConfig: minimalValidConfig,
-      });
+      const action = associationRuntimeAction();
       const params = createRuntimeActionParams({
         body: {
           commerceBaseUrl: "https://example.com",
@@ -105,9 +96,7 @@ describe("associationRuntimeAction", () => {
     });
 
     test("returns 400 when commerceBaseUrl is not a valid URL", async () => {
-      const action = associationRuntimeAction({
-        appConfig: minimalValidConfig,
-      });
+      const action = associationRuntimeAction();
       const params = createRuntimeActionParams({
         body: {
           commerceBaseUrl: "not-a-url",
@@ -127,9 +116,7 @@ describe("associationRuntimeAction", () => {
     });
 
     test("returns 400 when the body is missing required fields", async () => {
-      const action = associationRuntimeAction({
-        appConfig: minimalValidConfig,
-      });
+      const action = associationRuntimeAction();
       const params = createRuntimeActionParams({
         body: {
           commerceBaseUrl: "https://example.com",
@@ -153,9 +140,7 @@ describe("associationRuntimeAction", () => {
         .mockImplementation(() => undefined);
       mockSetAssociationData.mockRejectedValueOnce(new Error("storage down"));
 
-      const action = associationRuntimeAction({
-        appConfig: minimalValidConfig,
-      });
+      const action = associationRuntimeAction();
       const params = createRuntimeActionParams({
         body: {
           commerceBaseUrl: "https://example.com",
@@ -178,9 +163,7 @@ describe("associationRuntimeAction", () => {
 
   describe("DELETE /", () => {
     test("clears the stored data and returns 204", async () => {
-      const action = associationRuntimeAction({
-        appConfig: minimalValidConfig,
-      });
+      const action = associationRuntimeAction();
       const params = createRuntimeActionParams({
         method: "delete",
         path: "/",
@@ -201,9 +184,7 @@ describe("associationRuntimeAction", () => {
         .mockImplementation(() => undefined);
       mockClearAssociationData.mockRejectedValueOnce(new Error("storage down"));
 
-      const action = associationRuntimeAction({
-        appConfig: minimalValidConfig,
-      });
+      const action = associationRuntimeAction();
       const params = createRuntimeActionParams({
         method: "delete",
         path: "/",

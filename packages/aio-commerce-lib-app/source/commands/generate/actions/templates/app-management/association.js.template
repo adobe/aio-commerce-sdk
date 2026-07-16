@@ -2,7 +2,5 @@
 // Do not modify this file directly
 
 import { associationRuntimeAction } from "@adobe/aio-commerce-lib-app/actions/association";
-import appConfig from "#app.commerce.config";
 
-const args = { appConfig };
-export const main = associationRuntimeAction(args);
+export const main = associationRuntimeAction();

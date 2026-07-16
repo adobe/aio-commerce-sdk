@@ -24,20 +24,9 @@ import {
 import { AssociationRequestBodySchema } from "./schema";
 
 import type { BaseContext } from "@aio-commerce-sdk/common-utils/actions";
-import type { CommerceAppConfig } from "#config/index";
-
-/** Arguments for the runtime action factory. */
-export type RuntimeActionFactoryArgs = {
-  appConfig: CommerceAppConfig;
-};
-
-/** Params received by all handlers. */
-type RuntimeActionArgs = RuntimeActionFactoryArgs;
 
 /** The context for the association action. */
-interface AssociationActionContext extends BaseContext {
-  rawParams: RuntimeActionArgs;
-}
+type AssociationActionContext = BaseContext;
 
 /**
  * Association action router.
@@ -59,17 +48,13 @@ export const router = new HttpActionRouter<AssociationActionContext>().use(
 router.post("/", {
   body: AssociationRequestBodySchema,
 
-  handler: async (req, { logger, rawParams }) => {
+  handler: async (req, { logger }) => {
     const { commerceBaseUrl, commerceEnv } = req.body;
     logger.debug(
       `Storing association data (baseUrl: "${commerceBaseUrl}", env: "${commerceEnv}")`,
     );
 
     await setAssociationData({
-      app: {
-        metadata: rawParams.appConfig.metadata,
-      },
-
       commerce: {
         baseUrl: commerceBaseUrl,
         env: commerceEnv,

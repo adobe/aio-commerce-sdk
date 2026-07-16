@@ -80,15 +80,7 @@ import {
 
 import type { CommerceEnv } from "@adobe/aio-commerce-lib-core/commerce";
 
-const metadata = {
-  description: "Test app",
-  displayName: "Test App",
-  id: "test-app",
-  version: "1.0.0",
-};
-
 const makeData = (baseUrl: string, env: CommerceEnv) => ({
-  app: { metadata },
   commerce: { baseUrl, env },
 });
 

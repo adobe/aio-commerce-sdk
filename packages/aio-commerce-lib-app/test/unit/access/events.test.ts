@@ -12,8 +12,7 @@
 
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
-const { mockGetSystemConfigByKey, mockGetAssociationData } = vi.hoisted(() => ({
-  mockGetAssociationData: vi.fn(),
+const { mockGetSystemConfigByKey } = vi.hoisted(() => ({
   mockGetSystemConfigByKey: vi.fn(),
 }));
 
@@ -21,12 +20,7 @@ vi.mock("@adobe/aio-commerce-lib-config", () => ({
   getSystemConfigByKey: mockGetSystemConfigByKey,
 }));
 
-vi.mock("#management/association/association-repository", () => ({
-  getAssociationData: mockGetAssociationData,
-}));
-
-import { getQualifiedEventCode, publishEvent } from "#access/events";
-import { AssociationRecordNotFoundError } from "#errors/association-record-not-found-error";
+import { publishEvent } from "#access/events";
 import {
   EventNotFoundError,
   EventsDataNotInitializedError,
@@ -157,55 +151,5 @@ describe("publishEvent", () => {
     ).rejects.toBeInstanceOf(EventNotFoundError);
 
     expect(client.publishEvent).not.toHaveBeenCalled();
-  });
-});
-
-describe("getQualifiedEventCode", () => {
-  const association = {
-    app: { metadata: { id: "my-app" } },
-    commerce: { baseUrl: "https://example.com", env: "paas" },
-  };
-
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
-  test("prefixes commerce events and sanitizes the app id namespace", async () => {
-    mockGetAssociationData.mockResolvedValue(association);
-
-    const code = await getQualifiedEventCode(
-      "observer.catalog_product_save_after",
-      "commerce",
-    );
-
-    expect(code).toBe(
-      "com.adobe.commerce.my_app.observer.catalog_product_save_after",
-    );
-  });
-
-  test("namespaces external events without the commerce prefix", async () => {
-    mockGetAssociationData.mockResolvedValue(association);
-
-    const code = await getQualifiedEventCode("my-custom-event", "external");
-
-    expect(code).toBe("my_app.my-custom-event");
-  });
-
-  test("throws AssociationRecordNotFoundError when no record is stored", async () => {
-    mockGetAssociationData.mockResolvedValue(null);
-
-    await expect(
-      getQualifiedEventCode("observer.order_placed", "commerce"),
-    ).rejects.toBeInstanceOf(AssociationRecordNotFoundError);
-  });
-
-  test("throws AssociationRecordNotFoundError for older records without app metadata", async () => {
-    mockGetAssociationData.mockResolvedValue({
-      commerce: { baseUrl: "https://example.com", env: "paas" },
-    });
-
-    await expect(
-      getQualifiedEventCode("observer.order_placed", "commerce"),
-    ).rejects.toBeInstanceOf(AssociationRecordNotFoundError);
   });
 });

@@ -23,11 +23,7 @@ export {
   getCommerceClient,
   getCommerceInstance,
 } from "./access/commerce";
-export {
-  type EventProviderType,
-  getQualifiedEventCode,
-  publishEvent,
-} from "./access/events";
+export { publishEvent } from "./access/events";
 export { AssociationRecordNotFoundError } from "./errors/association-record-not-found-error";
 export {
   EventNotFoundError,
