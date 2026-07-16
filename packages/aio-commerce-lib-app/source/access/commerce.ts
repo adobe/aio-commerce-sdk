@@ -12,7 +12,7 @@
 
 import { AdobeCommerceHttpClient } from "@adobe/aio-commerce-lib-api";
 
-import { AppNotAssociatedError } from "#errors/app-not-associated-error";
+import { AssociationRecordNotFoundError } from "#errors/association-record-not-found-error";
 import { getAssociationData } from "#management/association/association-repository";
 
 import type { CommerceHttpClientParams } from "@adobe/aio-commerce-lib-api";
@@ -20,12 +20,12 @@ import type {
   ImsAuthParams,
   ImsAuthProvider,
 } from "@adobe/aio-commerce-lib-auth";
-import type { AssociatedCommerceInstance } from "#management/association/types";
+import type { AssociatedCommerceData } from "#management/association/types";
 
 /**
  * Returns the Commerce instance this app is currently associated with.
  *
- * @throws {AppNotAssociatedError} If the app is not associated, was
+ * @throws {AssociationRecordNotFoundError} If the app is not associated, was
  *   unassociated, or was associated by an older SDK that did not store this
  *   data. Re-associating the app resolves the error.
  *
@@ -41,12 +41,12 @@ import type { AssociatedCommerceInstance } from "#management/association/types";
  * }
  * ```
  */
-export async function getCommerceInstance(): Promise<AssociatedCommerceInstance> {
-  const instance = await getAssociationData();
-  if (instance === null) {
-    throw new AppNotAssociatedError();
+export async function getCommerceInstance(): Promise<AssociatedCommerceData> {
+  const data = await getAssociationData();
+  if (!data?.commerce) {
+    throw new AssociationRecordNotFoundError();
   }
-  return instance;
+  return data.commerce;
 }
 
 /**
@@ -59,7 +59,7 @@ export async function getCommerceInstance(): Promise<AssociatedCommerceInstance>
  * @param auth - Resolved IMS auth params or an IMS auth provider.
  * @param fetchOptions - Optional global fetch options forwarded to the
  *   underlying `AdobeCommerceHttpClient` (e.g. `headers`, `timeout`, `retry`).
- * @throws {AppNotAssociatedError} If the app is not associated, was
+ * @throws {AssociationRecordNotFoundError} If the app is not associated, was
  *   unassociated, or was associated by an older SDK that did not store this
  *   data. Re-associating the app resolves the error.
  *

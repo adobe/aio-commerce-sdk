@@ -955,7 +955,7 @@ Two helpers are exposed from the root entrypoint:
 - `getCommerceClient(auth, fetchOptions?)` — returns a ready-to-use [`AdobeCommerceHttpClient`](../../aio-commerce-lib-api/docs/usage.md). Use this when you need to call the Commerce API. The base URL and flavor come from the stored association data; you supply the resolved IMS auth. App Management requires IMS, so this accepts only IMS auth: resolve params with `resolveImsAuthParams`, or pass an `ImsAuthProvider` built with `getImsAuthProvider` / `forwardImsAuthProvider` from [`@adobe/aio-commerce-lib-auth`](../../aio-commerce-lib-auth/docs/usage.md). The optional [`fetchOptions`](https://github.com/sindresorhus/ky#options) (ky's `Options`) are forwarded to the underlying client (e.g. `headers`, `timeout`, `retry`); see [Custom Fetch Options](../../aio-commerce-lib-api/docs/usage.md#custom-fetch-options).
 - `getCommerceInstance()` — returns the raw `{ baseUrl, env }`. Use this when you only need the metadata (e.g. for logging or building a custom client).
 
-Both helpers throw `AppNotAssociatedError` if the app is not currently associated, was unassociated, or was associated by an older SDK that did not store this data. Re-associating the app resolves the error.
+Both helpers throw `AssociationRecordNotFoundError` if the app is not currently associated, was unassociated, or was associated by an older SDK that did not store this data. Re-associating the app resolves the error.
 
 #### Primary pattern — get a ready-to-use client
 
@@ -989,7 +989,7 @@ If your action needs to gracefully handle the case where the app is not associat
 ```ts
 import { badRequest, ok } from "@adobe/aio-commerce-lib-core/responses";
 import {
-  AppNotAssociatedError,
+  AssociationRecordNotFoundError,
   getCommerceClient,
 } from "@adobe/aio-commerce-lib-app";
 import { resolveImsAuthParams } from "@adobe/aio-commerce-lib-auth";
@@ -999,7 +999,7 @@ export async function main(params) {
     const client = await getCommerceClient(resolveImsAuthParams(params));
     return ok({ body: await client.get("products").json() });
   } catch (error) {
-    if (error instanceof AppNotAssociatedError) {
+    if (error instanceof AssociationRecordNotFoundError) {
       return badRequest({
         body: { message: "App is not associated with a Commerce instance." },
       });
@@ -1020,7 +1020,7 @@ npx @adobe/aio-commerce-lib-app generate actions
 aio app deploy
 ```
 
-A plain `aio app deploy` on its own does not add the action: the `pre-app-build` hook only regenerates actions already declared in `ext.config.yaml`. Only `generate actions` (or `generate all`) rebuilds the manifest to pick up newly added SDK actions. Until the app is redeployed with the endpoint, the App Management client skips the store call and the helpers throw `AppNotAssociatedError`.
+A plain `aio app deploy` on its own does not add the action: the `pre-app-build` hook only regenerates actions already declared in `ext.config.yaml`. Only `generate actions` (or `generate all`) rebuilds the manifest to pick up newly added SDK actions. Until the app is redeployed with the endpoint, the App Management client skips the store call and the helpers throw `AssociationRecordNotFoundError`.
 
 For an app that was already associated under the older SDK, re-associate it after redeploying so the store call runs and backfills the instance data — a redeploy alone does not populate data for an existing association.
 

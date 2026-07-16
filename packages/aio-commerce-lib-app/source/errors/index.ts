@@ -11,4 +11,4 @@
  */
 
 // biome-ignore lint/performance/noBarrelFile: export as part of the Public API
-export { AppNotAssociatedError } from "./app-not-associated-error";
+export { AssociationRecordNotFoundError } from "./association-record-not-found-error";

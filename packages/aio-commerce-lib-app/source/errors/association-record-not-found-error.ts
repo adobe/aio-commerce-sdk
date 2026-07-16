@@ -15,42 +15,42 @@ import { CommerceSdkErrorBase } from "@adobe/aio-commerce-lib-core/error";
 import type { CommerceSdkErrorBaseOptions } from "@adobe/aio-commerce-lib-core/error";
 
 const DEFAULT_MESSAGE =
-  "App is not associated with a Commerce instance. Re-associate the app to resolve this error.";
+  "No association record was found for this app. Re-associate the app to resolve this error.";
 
-/** Options accepted by {@link AppNotAssociatedError}. */
+/** Options accepted by {@link AssociationRecordNotFoundError}. */
 // Aliased to `CommerceSdkErrorBaseOptions` for now; kept as a named seam so
 // future error-specific options can be added without changing the constructor
 // contract.
-type AppNotAssociatedErrorOptions = CommerceSdkErrorBaseOptions;
+type AssociationRecordNotFoundErrorOptions = CommerceSdkErrorBaseOptions;
 
 /**
- * Thrown when a runtime action calls `getCommerceInstance` or `getCommerceClient`
- * but the app has no stored association data — for example, when the app has
- * never been associated, has been unassociated, or was associated by an older
- * SDK that did not store this data.
+ * Thrown when a runtime action needs the app's stored association record but it
+ * is missing or incomplete — for example, when the app has never been
+ * associated, has been unassociated, or was associated by an older SDK that did
+ * not store the data being read.
  *
  * Re-associating the app resolves the error.
  *
  * @example
  * ```ts
- * import { getCommerceClient, AppNotAssociatedError } from "@adobe/aio-commerce-lib-app";
+ * import { getCommerceClient, AssociationRecordNotFoundError } from "@adobe/aio-commerce-lib-app";
  * import { resolveImsAuthParams } from "@adobe/aio-commerce-lib-auth";
  *
  * try {
  *   const client = await getCommerceClient(resolveImsAuthParams(params));
  *   // ... use client
  * } catch (error) {
- *   if (error instanceof AppNotAssociatedError) {
+ *   if (error instanceof AssociationRecordNotFoundError) {
  *     // handle the unassociated case (e.g. return a 400 response)
  *   }
  *   throw error;
  * }
  * ```
  */
-export class AppNotAssociatedError extends CommerceSdkErrorBase {
+export class AssociationRecordNotFoundError extends CommerceSdkErrorBase {
   public constructor(
     message: string = DEFAULT_MESSAGE,
-    options?: AppNotAssociatedErrorOptions,
+    options?: AssociationRecordNotFoundErrorOptions,
   ) {
     super(message, options);
   }

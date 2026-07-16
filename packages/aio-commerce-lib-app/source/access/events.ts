@@ -12,12 +12,21 @@
 
 import { getSystemConfigByKey } from "@adobe/aio-commerce-lib-config";
 
+import { AssociationRecordNotFoundError } from "#errors/association-record-not-found-error";
+import { getAssociationData } from "#management/association/association-repository";
+
 import {
   EventNotFoundError,
   EventsDataNotInitializedError,
   ProviderNotFoundError,
 } from "../errors/publish-event-errors";
-import { EVENTS_STORAGE_KEY } from "../management/installation/events/utils";
+import {
+  COMMERCE_PROVIDER_TYPE,
+  EVENTS_STORAGE_KEY,
+  EXTERNAL_PROVIDER_TYPE,
+  getIoEventCode,
+  getNamespacedEvent,
+} from "../management/installation/events/utils";
 
 import type { AdobeIoEventsApiClient } from "@adobe/aio-commerce-lib-events/io-events";
 import type { StoredEventsData } from "../management/installation/events/types";
@@ -90,4 +99,50 @@ export async function publishEvent<
     payload,
     providerId: providerEntry.id,
   });
+}
+
+/** The type of an event provider. */
+export type EventProviderType = "commerce" | "external";
+
+/**
+ * Returns an app's full I/O Events event code for a given provider type and event name.
+ *
+ * @throws {AssociationRecordNotFoundError} If the app is not associated, was unassociated, or was associated
+ * by an older SDK that did not store this data. Re-associating the app resolves the error.
+ *
+ * @param eventName - The name of the event.
+ * @param providerType - The type of the event provider.
+ *
+ * @example
+ * ```ts
+ * import { getQualifiedEventCode } from "@adobe/aio-commerce-lib-app";
+ *
+ * export async function main() {
+ *   // For an app whose metadata id is "my-app" (non-alphanumeric characters are
+ *   // sanitized to "_" in the namespace segment):
+ *   const commerceEventCode = await getQualifiedEventCode("observer.catalog_product_save_after", "commerce");
+ *   // commerceEventCode === "com.adobe.commerce.my_app.observer.catalog_product_save_after"
+ *
+ *   const externalEventCode = await getQualifiedEventCode("my-custom-event", "external");
+ *   // externalEventCode === "my_app.my-custom-event"
+ * }
+ * ```
+ */
+export async function getQualifiedEventCode(
+  eventName: string,
+  providerType: EventProviderType,
+): Promise<string> {
+  const data = await getAssociationData();
+  const metadata = data?.app?.metadata;
+
+  if (!metadata) {
+    throw new AssociationRecordNotFoundError();
+  }
+
+  return getIoEventCode(
+    getNamespacedEvent(metadata, eventName),
+    providerType === "commerce"
+      ? COMMERCE_PROVIDER_TYPE
+      : EXTERNAL_PROVIDER_TYPE,
+  );
 }

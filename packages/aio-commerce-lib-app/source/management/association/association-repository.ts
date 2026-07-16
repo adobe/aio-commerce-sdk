@@ -18,7 +18,7 @@ import {
 // @ts-expect-error MAX_TTL is a runtime export missing from the type definitions.
 import { MAX_TTL } from "@adobe/aio-lib-state";
 
-import type { AssociatedCommerceInstance } from "./types";
+import type { AssociationData } from "./types";
 
 /** Reserved key under which association data is stored. */
 const ASSOCIATION_KEY = "system.association";
@@ -34,11 +34,9 @@ const ASSOCIATION_CACHE_TTL_SECONDS: number = MAX_TTL;
  * Called by the `association` runtime action's `POST /` handler when App
  * Management registers the app with a Commerce instance.
  *
- * @param data - The Commerce instance details to persist.
+ * @param data - The data to store.
  */
-export async function setAssociationData(
-  data: AssociatedCommerceInstance,
-): Promise<void> {
+export async function setAssociationData(data: AssociationData): Promise<void> {
   await setSystemConfigByKey(
     ASSOCIATION_KEY,
     data,
@@ -51,8 +49,8 @@ export async function setAssociationData(
  *
  * @returns The stored association data, or `null` if the app is not associated.
  */
-export async function getAssociationData(): Promise<AssociatedCommerceInstance | null> {
-  return getSystemConfigByKey<AssociatedCommerceInstance>(
+export async function getAssociationData(): Promise<AssociationData | null> {
+  return getSystemConfigByKey<AssociationData>(
     ASSOCIATION_KEY,
     ASSOCIATION_CACHE_TTL_SECONDS,
   );

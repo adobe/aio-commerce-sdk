@@ -17,4 +17,4 @@ export {
   setAssociationData,
 } from "./association-repository";
 
-export type { AssociatedCommerceInstance } from "./types";
+export type { AssociatedCommerceData, AssociationData } from "./types";

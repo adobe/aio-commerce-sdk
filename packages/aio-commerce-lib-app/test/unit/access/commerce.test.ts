@@ -27,11 +27,8 @@ vi.mock("@adobe/aio-commerce-lib-api", () => ({
   AdobeCommerceHttpClient: MockAdobeCommerceHttpClient,
 }));
 
-import {
-  getCommerceClient,
-  getCommerceInstance,
-} from "#access/commerce-instance";
-import { AppNotAssociatedError } from "#errors/app-not-associated-error";
+import { getCommerceClient, getCommerceInstance } from "#access/commerce";
+import { AssociationRecordNotFoundError } from "#errors/association-record-not-found-error";
 
 const auth = { strategy: "ims" } as never;
 
@@ -40,35 +37,35 @@ describe("getCommerceInstance", () => {
     vi.clearAllMocks();
   });
 
-  test("returns the stored association data", async () => {
-    const data = {
+  test("returns the stored Commerce data", async () => {
+    const commerce = {
       baseUrl: "https://example.com",
       env: "paas" as const,
     };
-    mockGetAssociationData.mockResolvedValue(data);
+    mockGetAssociationData.mockResolvedValue({ commerce });
 
     const result = await getCommerceInstance();
 
-    expect(result).toEqual(data);
+    expect(result).toEqual(commerce);
   });
 
   test("returns saas env when stored", async () => {
-    const data = {
+    const commerce = {
       baseUrl: "https://saas.example.com",
       env: "saas" as const,
     };
-    mockGetAssociationData.mockResolvedValue(data);
+    mockGetAssociationData.mockResolvedValue({ commerce });
 
     const result = await getCommerceInstance();
 
-    expect(result).toEqual(data);
+    expect(result).toEqual(commerce);
   });
 
-  test("throws AppNotAssociatedError when no data is stored", async () => {
+  test("throws AssociationRecordNotFoundError when no data is stored", async () => {
     mockGetAssociationData.mockResolvedValue(null);
 
     await expect(getCommerceInstance()).rejects.toBeInstanceOf(
-      AppNotAssociatedError,
+      AssociationRecordNotFoundError,
     );
   });
 });
@@ -79,42 +76,42 @@ describe("getCommerceClient", () => {
   });
 
   test("builds the client from the stored instance and supplied auth", async () => {
-    const data = {
+    const commerce = {
       baseUrl: "https://example.com",
       env: "paas" as const,
     };
-    mockGetAssociationData.mockResolvedValue(data);
+    mockGetAssociationData.mockResolvedValue({ commerce });
 
     const result = await getCommerceClient(auth);
 
     expect(MockAdobeCommerceHttpClient).toHaveBeenCalledWith({
       auth,
-      config: { baseUrl: data.baseUrl, flavor: "paas" },
+      config: { baseUrl: commerce.baseUrl, flavor: "paas" },
     });
     expect(result).toBeInstanceOf(MockAdobeCommerceHttpClient);
   });
 
   test("passes the saas flavor from the stored env", async () => {
-    const data = {
+    const commerce = {
       baseUrl: "https://saas.example.com",
       env: "saas" as const,
     };
-    mockGetAssociationData.mockResolvedValue(data);
+    mockGetAssociationData.mockResolvedValue({ commerce });
 
     await getCommerceClient(auth);
 
     expect(MockAdobeCommerceHttpClient).toHaveBeenCalledWith({
       auth,
-      config: { baseUrl: data.baseUrl, flavor: "saas" },
+      config: { baseUrl: commerce.baseUrl, flavor: "saas" },
     });
   });
 
   test("forwards optional fetch options to the client", async () => {
-    const data = {
+    const commerce = {
       baseUrl: "https://example.com",
       env: "paas" as const,
     };
-    mockGetAssociationData.mockResolvedValue(data);
+    mockGetAssociationData.mockResolvedValue({ commerce });
 
     const fetchOptions = { headers: { "x-trace": "abc" }, timeout: 5000 };
     await getCommerceClient(auth, fetchOptions);
@@ -124,11 +121,11 @@ describe("getCommerceClient", () => {
     );
   });
 
-  test("throws AppNotAssociatedError when no data is stored", async () => {
+  test("throws AssociationRecordNotFoundError when no data is stored", async () => {
     mockGetAssociationData.mockResolvedValue(null);
 
     await expect(getCommerceClient(auth)).rejects.toBeInstanceOf(
-      AppNotAssociatedError,
+      AssociationRecordNotFoundError,
     );
 
     expect(MockAdobeCommerceHttpClient).not.toHaveBeenCalled();

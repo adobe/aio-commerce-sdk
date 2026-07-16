@@ -13,6 +13,7 @@
 import { router } from "./router";
 
 import type { RuntimeActionParams } from "@adobe/aio-commerce-lib-core/params";
+import type { RuntimeActionFactoryArgs } from "./router";
 
 /**
  * Factory to create the route handler for the `association` action.
@@ -23,7 +24,7 @@ import type { RuntimeActionParams } from "@adobe/aio-commerce-lib-core/params";
  * via `getCommerceInstance` / `getCommerceClient` from the root entrypoint.
  */
 export const associationRuntimeAction =
-  () => async (params: RuntimeActionParams) => {
+  (args: RuntimeActionFactoryArgs) => async (params: RuntimeActionParams) => {
     const handler = router.handler();
-    return await handler({ ...params });
+    return await handler({ ...params, appConfig: args.appConfig });
   };

@@ -13,47 +13,49 @@
 import { CommerceSdkErrorBase } from "@adobe/aio-commerce-lib-core/error";
 import { describe, expect, test } from "vitest";
 
-import { AppNotAssociatedError } from "#errors/app-not-associated-error";
+import { AssociationRecordNotFoundError } from "#errors/association-record-not-found-error";
 
-const NOT_ASSOCIATED_REGEX = /not associated/i;
+const ASSOCIATION_RECORD_REGEX = /association record/i;
 const RE_ASSOCIATE_REGEX = /re-associate/i;
 
-describe("AppNotAssociatedError", () => {
+describe("AssociationRecordNotFoundError", () => {
   test("extends CommerceSdkErrorBase", () => {
-    const error = new AppNotAssociatedError();
+    const error = new AssociationRecordNotFoundError();
     expect(error).toBeInstanceOf(CommerceSdkErrorBase);
     expect(error).toBeInstanceOf(Error);
   });
 
   test("has a default message describing the association requirement", () => {
-    const error = new AppNotAssociatedError();
-    expect(error.message).toMatch(NOT_ASSOCIATED_REGEX);
+    const error = new AssociationRecordNotFoundError();
+    expect(error.message).toMatch(ASSOCIATION_RECORD_REGEX);
     expect(error.message).toMatch(RE_ASSOCIATE_REGEX);
   });
 
   test("accepts a custom message", () => {
-    const error = new AppNotAssociatedError("Custom message");
+    const error = new AssociationRecordNotFoundError("Custom message");
     expect(error.message).toBe("Custom message");
   });
 
   test("accepts a cause via options", () => {
     const cause = new Error("Underlying failure");
-    const error = new AppNotAssociatedError("Custom", { cause });
+    const error = new AssociationRecordNotFoundError("Custom", { cause });
     expect(error.cause).toBe(cause);
   });
 
   test("accepts a traceId via options", () => {
-    const error = new AppNotAssociatedError("Custom", { traceId: "abc-123" });
+    const error = new AssociationRecordNotFoundError("Custom", {
+      traceId: "abc-123",
+    });
     expect(error.traceId).toBe("abc-123");
   });
 
   test("sets the error name to the class name", () => {
-    const error = new AppNotAssociatedError();
-    expect(error.name).toBe("AppNotAssociatedError");
+    const error = new AssociationRecordNotFoundError();
+    expect(error.name).toBe("AssociationRecordNotFoundError");
   });
 
   test("is detectable via CommerceSdkErrorBase.isSdkError", () => {
-    const error = new AppNotAssociatedError();
+    const error = new AssociationRecordNotFoundError();
     expect(CommerceSdkErrorBase.isSdkError(error)).toBe(true);
   });
 });

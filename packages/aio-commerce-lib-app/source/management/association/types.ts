@@ -11,13 +11,21 @@
  */
 
 import type { CommerceEnv } from "@adobe/aio-commerce-lib-core/commerce";
+import type { ApplicationMetadata } from "#config/schema/metadata";
 
-/**
- * The Commerce instance an app is associated with.
- */
-export type AssociatedCommerceInstance = {
+/** The Commerce instance data an app is associated with. */
+export type AssociatedCommerceData = {
   /** Commerce API base URL. */
   baseUrl: string;
+
   /** Deployment type of the Commerce instance. */
   env: CommerceEnv;
+};
+
+/** The data of an app that we store during association. */
+export type AssociationData = {
+  commerce: AssociatedCommerceData;
+  app: {
+    metadata: ApplicationMetadata;
+  };
 };

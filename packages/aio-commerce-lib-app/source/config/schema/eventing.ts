@@ -251,13 +251,33 @@ const ExternalEventSchema = v.object({
 
 /** Schema for Commerce event source configuration */
 export const CommerceEventSourceSchema = v.object({
-  events: v.array(CommerceEventSchema, "Expected an array of Commerce events"),
+  events: v.pipe(
+    v.array(CommerceEventSchema, "Expected an array of Commerce events"),
+    v.minLength(
+      1,
+      "The Commerce event source configuration must define at least one event",
+    ),
+    v.check(
+      (events) => new Set(events.map((e) => e.name)).size === events.length,
+      "Commerce event names must be unique. There must not be two events with the same name under the same provider.",
+    ),
+  ),
   provider: ProviderSchema,
 });
 
 /** Schema for external event source configuration */
 export const ExternalEventSourceSchema = v.object({
-  events: v.array(ExternalEventSchema, "Expected an array of external events"),
+  events: v.pipe(
+    v.array(ExternalEventSchema, "Expected an array of external events"),
+    v.minLength(
+      1,
+      "The external event source configuration must define at least one event",
+    ),
+    v.check(
+      (events) => new Set(events.map((e) => e.name)).size === events.length,
+      "External event names must be unique. There must not be two events with the same name under the same provider.",
+    ),
+  ),
   provider: ProviderSchema,
 });
 
