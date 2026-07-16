@@ -12,8 +12,9 @@
 
 import { AdobeCommerceHttpClient } from "@adobe/aio-commerce-lib-api";
 
-import { AssociationRecordNotFoundError } from "#errors/association-record-not-found-error";
-import { getAssociationData } from "#management/association/association-repository";
+import { getAssociationData } from "#management/association/repository";
+
+import { AssociationRecordNotFoundError } from "./errors";
 
 import type { CommerceHttpClientParams } from "@adobe/aio-commerce-lib-api";
 import type {

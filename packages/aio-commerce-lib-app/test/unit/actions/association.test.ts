@@ -17,7 +17,7 @@ const { mockSetAssociationData, mockClearAssociationData } = vi.hoisted(() => ({
   mockSetAssociationData: vi.fn(),
 }));
 
-vi.mock("#management/association/association-repository", () => ({
+vi.mock("#management/association/repository", () => ({
   clearAssociationData: mockClearAssociationData,
   setAssociationData: mockSetAssociationData,
 }));

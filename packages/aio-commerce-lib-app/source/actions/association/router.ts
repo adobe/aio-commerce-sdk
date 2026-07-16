@@ -19,7 +19,7 @@ import {
 import {
   clearAssociationData,
   setAssociationData,
-} from "#management/association/association-repository";
+} from "#management/association/repository";
 
 import { AssociationRequestBodySchema } from "./schema";
 

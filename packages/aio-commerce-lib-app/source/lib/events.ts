@@ -12,12 +12,12 @@
 
 import { getSystemConfigByKey } from "@adobe/aio-commerce-lib-config";
 
+import { EVENTS_STORAGE_KEY } from "../management/installation/events/utils";
 import {
   EventNotFoundError,
   EventsDataNotInitializedError,
   ProviderNotFoundError,
-} from "../errors/publish-event-errors";
-import { EVENTS_STORAGE_KEY } from "../management/installation/events/utils";
+} from "./errors";
 
 import type { AdobeIoEventsApiClient } from "@adobe/aio-commerce-lib-events/io-events";
 import type { StoredEventsData } from "../management/installation/events/types";

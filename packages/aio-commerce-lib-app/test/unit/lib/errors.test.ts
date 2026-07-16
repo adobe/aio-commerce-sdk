@@ -13,7 +13,7 @@
 import { CommerceSdkErrorBase } from "@adobe/aio-commerce-lib-core/error";
 import { describe, expect, test } from "vitest";
 
-import { AssociationRecordNotFoundError } from "#errors/association-record-not-found-error";
+import { AssociationRecordNotFoundError } from "#lib/errors";
 
 const ASSOCIATION_RECORD_REGEX = /association record/i;
 const RE_ASSOCIATE_REGEX = /re-associate/i;

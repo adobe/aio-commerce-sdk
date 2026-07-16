@@ -12,6 +12,41 @@
 
 import { CommerceSdkErrorBase } from "@adobe/aio-commerce-lib-core/error";
 
+import type { CommerceSdkErrorBaseOptions } from "@adobe/aio-commerce-lib-core/error";
+
+/**
+ * Thrown when a runtime action needs the app's stored association record but it
+ * is missing or incomplete — for example, when the app has never been
+ * associated, has been unassociated, or was associated by an older SDK that did
+ * not store the data being read.
+ *
+ * Re-associating the app resolves the error.
+ *
+ * @example
+ * ```ts
+ * import { getCommerceClient, AssociationRecordNotFoundError } from "@adobe/aio-commerce-lib-app";
+ * import { resolveImsAuthParams } from "@adobe/aio-commerce-lib-auth";
+ *
+ * try {
+ *   const client = await getCommerceClient(resolveImsAuthParams(params));
+ *   // ... use client
+ * } catch (error) {
+ *   if (error instanceof AssociationRecordNotFoundError) {
+ *     // handle the unassociated case (e.g. return a 400 response)
+ *   }
+ *   throw error;
+ * }
+ * ```
+ */
+export class AssociationRecordNotFoundError extends CommerceSdkErrorBase {
+  public constructor(
+    message = "No association record was found for this app. Re-associate the app to resolve this error.",
+    options?: CommerceSdkErrorBaseOptions,
+  ) {
+    super(message, options);
+  }
+}
+
 /**
  * Base error thrown by {@link publishEvent} when event resolution or publishing fails.
  * Catch this to handle all publish-event failures in a single clause.
@@ -36,9 +71,10 @@ export class PublishEventError extends CommerceSdkErrorBase {}
  * ```
  */
 export class EventsDataNotInitializedError extends PublishEventError {
-  public constructor() {
+  public constructor(options?: CommerceSdkErrorBaseOptions) {
     super(
       "No eventing installation data found. Re-run the app installation to initialize event provider metadata.",
+      options,
     );
   }
 }
@@ -59,9 +95,13 @@ export class EventsDataNotInitializedError extends PublishEventError {
  * ```
  */
 export class ProviderNotFoundError extends PublishEventError {
-  public constructor(providerKey: string) {
+  public constructor(
+    providerKey: string,
+    options?: CommerceSdkErrorBaseOptions,
+  ) {
     super(
       `No event provider with key '${providerKey}' found in the app eventing configuration.`,
+      options,
     );
   }
 }
@@ -82,9 +122,14 @@ export class ProviderNotFoundError extends PublishEventError {
  * ```
  */
 export class EventNotFoundError extends PublishEventError {
-  public constructor(eventName: string, providerKey: string) {
+  public constructor(
+    eventName: string,
+    providerKey: string,
+    options?: CommerceSdkErrorBaseOptions,
+  ) {
     super(
       `No event named '${eventName}' found under provider '${providerKey}'.`,
+      options,
     );
   }
 }

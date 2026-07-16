@@ -76,7 +76,7 @@ import {
   clearAssociationData,
   getAssociationData,
   setAssociationData,
-} from "#management/association/association-repository";
+} from "#management/association/repository";
 
 import type { CommerceEnv } from "@adobe/aio-commerce-lib-core/commerce";
 
@@ -84,7 +84,7 @@ const makeData = (baseUrl: string, env: CommerceEnv) => ({
   commerce: { baseUrl, env },
 });
 
-describe("association-repository", () => {
+describe("repository", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     state.clear();
