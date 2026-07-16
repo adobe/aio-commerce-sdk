@@ -22,14 +22,14 @@
 export {
   getCommerceClient,
   getCommerceInstance,
-} from "./access/commerce-instance";
-export { publishEvent } from "./access/events";
-export { AppNotAssociatedError } from "./errors/app-not-associated-error";
+} from "./lib/commerce";
 export {
+  AssociationRecordNotFoundError,
   EventNotFoundError,
   EventsDataNotInitializedError,
   ProviderNotFoundError,
   PublishEventError,
-} from "./errors/publish-event-errors";
+} from "./lib/errors";
+export { publishEvent } from "./lib/events";
 
-export type { AssociatedCommerceInstance } from "./management/association/types";
+export type { AssociatedCommerceData } from "./management/association/types";

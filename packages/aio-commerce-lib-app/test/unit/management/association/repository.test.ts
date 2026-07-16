@@ -76,9 +76,15 @@ import {
   clearAssociationData,
   getAssociationData,
   setAssociationData,
-} from "#management/association/association-repository";
+} from "#management/association/repository";
 
-describe("association-repository", () => {
+import type { CommerceEnv } from "@adobe/aio-commerce-lib-core/commerce";
+
+const makeData = (baseUrl: string, env: CommerceEnv) => ({
+  commerce: { baseUrl, env },
+});
+
+describe("repository", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     state.clear();
@@ -86,7 +92,7 @@ describe("association-repository", () => {
   });
 
   test("stores association data and reads it back unchanged", async () => {
-    const data = { baseUrl: "https://example.com", env: "paas" as const };
+    const data = makeData("https://example.com", "paas");
     await setAssociationData(data);
 
     expect(await getAssociationData()).toEqual(data);
@@ -97,29 +103,23 @@ describe("association-repository", () => {
   });
 
   test("overwrites previously stored association data", async () => {
-    await setAssociationData({
-      baseUrl: "https://first.example.com",
-      env: "paas",
-    });
+    await setAssociationData(makeData("https://first.example.com", "paas"));
 
-    const updated = {
-      baseUrl: "https://second.example.com",
-      env: "saas" as const,
-    };
+    const updated = makeData("https://second.example.com", "saas");
     await setAssociationData(updated);
 
     expect(await getAssociationData()).toEqual(updated);
   });
 
   test("clears stored association data", async () => {
-    await setAssociationData({ baseUrl: "https://example.com", env: "saas" });
+    await setAssociationData(makeData("https://example.com", "saas"));
     await clearAssociationData();
 
     expect(await getAssociationData()).toBeNull();
   });
 
   test("caches association data with the maximum TTL", async () => {
-    await setAssociationData({ baseUrl: "https://example.com", env: "paas" });
+    await setAssociationData(makeData("https://example.com", "paas"));
 
     expect(mockState.put).toHaveBeenCalledWith(
       expect.anything(),
@@ -131,7 +131,7 @@ describe("association-repository", () => {
   });
 
   test("re-caches with the maximum TTL when falling back to files", async () => {
-    const data = { baseUrl: "https://example.com", env: "paas" as const };
+    const data = makeData("https://example.com", "paas");
     await setAssociationData(data);
 
     // Drop only the cache entry so the next read falls back to files and

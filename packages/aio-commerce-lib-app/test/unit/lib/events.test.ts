@@ -20,12 +20,12 @@ vi.mock("@adobe/aio-commerce-lib-config", () => ({
   getSystemConfigByKey: mockGetSystemConfigByKey,
 }));
 
-import { publishEvent } from "#access/events";
 import {
   EventNotFoundError,
   EventsDataNotInitializedError,
   ProviderNotFoundError,
-} from "#errors/publish-event-errors";
+} from "#lib/errors";
+import { publishEvent } from "#lib/events";
 
 import type { AdobeIoEventsApiClient } from "@adobe/aio-commerce-lib-events/io-events";
 

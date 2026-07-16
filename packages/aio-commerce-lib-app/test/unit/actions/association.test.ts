@@ -17,7 +17,7 @@ const { mockSetAssociationData, mockClearAssociationData } = vi.hoisted(() => ({
   mockSetAssociationData: vi.fn(),
 }));
 
-vi.mock("#management/association/association-repository", () => ({
+vi.mock("#management/association/repository", () => ({
   clearAssociationData: mockClearAssociationData,
   setAssociationData: mockSetAssociationData,
 }));
@@ -45,8 +45,7 @@ describe("associationRuntimeAction", () => {
       const result = await action(params);
 
       expect(mockSetAssociationData).toHaveBeenCalledWith({
-        baseUrl: "https://example.com",
-        env: "paas",
+        commerce: { baseUrl: "https://example.com", env: "paas" },
       });
       expect(result).toMatchObject({
         statusCode: 204,
@@ -68,8 +67,7 @@ describe("associationRuntimeAction", () => {
       const result = await action(params);
 
       expect(mockSetAssociationData).toHaveBeenCalledWith({
-        baseUrl: "https://saas.example.com",
-        env: "saas",
+        commerce: { baseUrl: "https://saas.example.com", env: "saas" },
       });
       expect(result).toMatchObject({
         statusCode: 204,

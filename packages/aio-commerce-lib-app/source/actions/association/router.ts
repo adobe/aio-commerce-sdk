@@ -19,7 +19,7 @@ import {
 import {
   clearAssociationData,
   setAssociationData,
-} from "#management/association/association-repository";
+} from "#management/association/repository";
 
 import { AssociationRequestBodySchema } from "./schema";
 
@@ -54,7 +54,12 @@ router.post("/", {
       `Storing association data (baseUrl: "${commerceBaseUrl}", env: "${commerceEnv}")`,
     );
 
-    await setAssociationData({ baseUrl: commerceBaseUrl, env: commerceEnv });
+    await setAssociationData({
+      commerce: {
+        baseUrl: commerceBaseUrl,
+        env: commerceEnv,
+      },
+    });
 
     return noContent();
   },
