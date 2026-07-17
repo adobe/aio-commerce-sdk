@@ -10,6 +10,7 @@ The `@adobe/aio-commerce-lib-app` library provides:
 - **Admin UI Configuration** (`commerce/backend-ui/2`): Generate and manage the runtime action and `workerProcess` declarations for Admin UI extensions on `commerce/backend-ui/2`. Currently supports grid column extensions, mass actions, order view buttons, and menu declarations.
 - **Association Helpers**: Retrieve the Commerce instance the app is associated with from any runtime action via `getCommerceClient` and `getCommerceInstance`.
 - **Event Emission**: Publish a configured I/O Event from any runtime action by provider key and event name via `publishEvent`.
+- **Event Code Resolution**: Compute the I/O Events event code for a declared event via `resolveIoEventCode`, without reading it back from stored installation data.
 
 ## Reference
 
@@ -1102,6 +1103,24 @@ try {
   }
   throw error;
 }
+```
+
+### Resolving an Event's I/O Events Code
+
+`resolveIoEventCode(appId, eventName, providerType)` computes the same event code `publishEvent` sends, without needing installation to have run or reading it back from stored data. This is useful when a caller needs to know an event's code ahead of time, e.g. to match it against an incoming I/O Event.
+
+- `appId` — the application's `metadata.id`, as declared in `app.commerce.config.ts`.
+- `eventName` — the `name` of the event, as declared in `app.commerce.config.ts`.
+- `providerType` — `"commerce"` or `"external"`, matching the section the event is declared under.
+
+```ts
+import { resolveIoEventCode } from "@adobe/aio-commerce-lib-app";
+
+resolveIoEventCode("my-app", "observer.order_placed", "commerce");
+// => "com.adobe.commerce.my_app.observer.order_placed"
+
+resolveIoEventCode("my-app", "webhook.received", "external");
+// => "my_app.webhook.received"
 ```
 
 ## Best Practices
