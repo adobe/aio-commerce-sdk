@@ -91,7 +91,7 @@ This produces the following files, organized by extension point:
 - `src/commerce-extensibility-1/.generated/actions/app-management/installation.js`: drives the installation flow, including any custom scripts you define
 - `src/commerce-extensibility-1/ext.config.yaml`: extension manifest with the `pre-app-build` hook
 
-Generated application code should import app metadata from `#app.commerce.config`. For static configurations, the alias points to `src/commerce-extensibility-1/.generated/app.commerce.manifest.json`. For dynamic configurations, it points to a generated runtime-safe ESM module.
+Generated application code should import app metadata from `#app.commerce.config`. The alias can be used to import the config's default export, as well as any other symbols exported from your `app.commerce.config.*` file.
 
 **`commerce/configuration/1`**: Business configuration (generated when `businessConfig` is defined):
 

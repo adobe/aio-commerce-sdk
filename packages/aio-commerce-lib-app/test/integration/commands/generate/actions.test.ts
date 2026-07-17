@@ -230,6 +230,7 @@ describe("commands/generate/actions", () => {
           // JS config files get a passthrough wrapper.
           const moduleContents = await readFile(runtimeConfigPath, "utf-8");
           expect(moduleContents).toContain("import appConfig from");
+          expect(moduleContents).toContain("export * from");
           expect(moduleContents).toContain("export default appConfig");
 
           const pkg = JSON.parse(
@@ -238,6 +239,12 @@ describe("commands/generate/actions", () => {
           expect(pkg.imports["#app.commerce.config"]).toBe(
             "./src/commerce-extensibility-1/.generated/app.commerce.config.js",
           );
+
+          // Named exports from the source config file are re-exported alongside the default.
+          const mod = await import(runtimeConfigPath);
+          expect(mod.paymentMethodOptions).toEqual([
+            { label: "Braintree", value: "braintree" },
+          ]);
         },
       );
     });

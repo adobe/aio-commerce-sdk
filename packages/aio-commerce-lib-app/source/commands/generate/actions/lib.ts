@@ -145,6 +145,7 @@ async function writeJavaScriptAppConfigModule(
       "",
       `import appConfig from "${configImportPath}"${importAttributes};`,
       "",
+      `export * from "${configImportPath}"${importAttributes};`,
       "export default appConfig;",
       "",
     ].join("\n"),
