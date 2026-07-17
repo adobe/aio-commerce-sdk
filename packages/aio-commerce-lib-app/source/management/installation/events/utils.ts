@@ -131,7 +131,7 @@ export function findExistingRegistrations(
  * @param name
  */
 export function getNamespacedEvent(
-  metadata: ApplicationMetadata,
+  metadata: Pick<ApplicationMetadata, "id">,
   name: string,
 ) {
   const sanitizedId = metadata.id.toLowerCase().replace(/[^a-z0-9_]/g, "_");

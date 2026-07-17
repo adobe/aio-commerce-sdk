@@ -12,7 +12,13 @@
 
 import { getSystemConfigByKey } from "@adobe/aio-commerce-lib-config";
 
-import { EVENTS_STORAGE_KEY } from "../management/installation/events/utils";
+import {
+  COMMERCE_PROVIDER_TYPE,
+  EVENTS_STORAGE_KEY,
+  EXTERNAL_PROVIDER_TYPE,
+  getIoEventCode,
+  getNamespacedEvent,
+} from "../management/installation/events/utils";
 import {
   EventNotFoundError,
   EventsDataNotInitializedError,
@@ -90,4 +96,40 @@ export async function publishEvent<
     payload,
     providerId: providerEntry.id,
   });
+}
+
+/**
+ * Resolves the I/O Events event code for an event, matching what {@link publishEvent}
+ * sends once the app is installed.
+ *
+ * Applies the same app-ID namespacing and Commerce-provider prefixing rules used at
+ * installation time, so callers can determine an event's code without waiting for
+ * installation to complete or reading it back from stored data.
+ *
+ * @param appId - The application's `metadata.id`, as declared in `app.commerce.config`.
+ * @param eventName - The `name` of the event, as declared in `app.commerce.config`.
+ * @param providerType - Whether the event belongs to a `"commerce"` or `"external"` provider.
+ *
+ * @example
+ * ```ts
+ * import { resolveIoEventCode } from "@adobe/aio-commerce-lib-app";
+ *
+ * resolveIoEventCode("my-app", "observer.order_placed", "commerce");
+ * // => "com.adobe.commerce.my_app.observer.order_placed"
+ *
+ * resolveIoEventCode("my-app", "webhook.received", "external");
+ * // => "my_app.webhook.received"
+ * ```
+ */
+export function resolveIoEventCode(
+  appId: string,
+  eventName: string,
+  providerType: "commerce" | "external",
+): string {
+  return getIoEventCode(
+    getNamespacedEvent({ id: appId }, eventName),
+    providerType === "commerce"
+      ? COMMERCE_PROVIDER_TYPE
+      : EXTERNAL_PROVIDER_TYPE,
+  );
 }
