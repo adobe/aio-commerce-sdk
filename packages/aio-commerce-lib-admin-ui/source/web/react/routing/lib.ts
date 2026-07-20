@@ -18,28 +18,16 @@ import {
 } from "@tanstack/react-router";
 
 import type { RouterHistory } from "@tanstack/react-router";
-import type { IndexRoute, RouteEntry } from "./types";
+import type { ExtensionRoute } from "./types";
 
 const HASH_ROUTE_PREFIX_PATTERN = /^[#/]+/u;
-
-/**
- * Determines if a given route is an index route.
- * @param route The route to check.
- */
-function isIndexRoute(route: RouteEntry): route is IndexRoute {
-  return "index" in route && route.index;
-}
 
 /**
  * Returns the path for a given route, removing any leading hash or slash characters.
  * @param route The route to get the path for.
  */
-function getRoutePath(route: RouteEntry) {
-  if (isIndexRoute(route)) {
-    return "/";
-  }
-
-  return route.path.replace(HASH_ROUTE_PREFIX_PATTERN, "");
+function getRoutePath(route: ExtensionRoute) {
+  return route.path.replace(HASH_ROUTE_PREFIX_PATTERN, "") || "/";
 }
 
 /**
@@ -61,7 +49,7 @@ export function getRouteTo(path: string) {
  */
 export function createExtensionRouter(
   rootComponent: React.JSX.Element,
-  routeEntries: RouteEntry[],
+  routeEntries: ExtensionRoute[],
   history: RouterHistory = createHashHistory(),
 ) {
   const rootRoute = createRootRoute({

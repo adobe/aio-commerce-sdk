@@ -2,7 +2,7 @@
 
 - **Ticket:** [CEXT-6454](https://jira.corp.adobe.com/browse/CEXT-6454)
 - **Created:** 2026-07-13
-- [ ] **Implemented**
+- [x] **Implemented**
 
 ## Summary
 
@@ -29,6 +29,29 @@ combination:
 Both approaches share one cleanup: remove the special `index: true` route variant
 so every extension route uses one `{ path, element }` shape. The single-page
 setup keeps working under either approach.
+
+## Decision and implementation
+
+Approach B was selected on July 17, 2026, with one naming change: the custom
+`createExtensionApp` property is `menu`, not `entry`. The primary use case is an
+Adobe Commerce Admin menu, so the implementation favors that direct name despite
+the Experience Cloud Shell naming drawback discussed below.
+
+The implemented API uses the optional `menu` property for the single page
+rendered at `"/"` and uses `routes` for `{ path, element }` routes. When `menu`
+is present, a root-equivalent route alongside it is a runtime error because it
+declares the same page twice. When `menu` is absent, the app can declare its root
+page in `routes`. The iframe URL and `adminUi.menu` configuration remain
+unchanged.
+
+The six host hooks identified in Approach B return the documented
+`{ data, error }` result union instead of throwing when their host data isn't
+available. This lets the shared `menu` page render a fallback in Experience
+Cloud Shell or when it runs standalone. No Commerce module change is required.
+
+The original option analysis remains below as the record of the design discussion.
+Where it refers to the proposed `entry` property, the implemented property is
+`menu` as resolved above.
 
 ## Motivation
 
@@ -321,6 +344,15 @@ Approach B's degradation half is partly possible today (an app can branch on fra
 detection) but not cleanly, because the hooks throw before the app can branch.
 
 ## Unresolved questions
+
+The implementation resolves the original questions as follows. The discussion
+below remains unchanged as the record of what required alignment.
+
+- The menu keeps the app-root URL, as proposed by Approach B.
+- `createExtensionApp` uses the optional custom `menu` property rather than
+  `entry`; apps without a menu can use a slash-only route.
+- All six named host hooks use the result pattern.
+- `adminUi.menu` configuration remains unchanged, so no `menu.path` is added.
 
 - **The real fork: does the menu get its own path?** A (yes) means routing
   separation plus Commerce-module work — the menu opens a Commerce-specific page.

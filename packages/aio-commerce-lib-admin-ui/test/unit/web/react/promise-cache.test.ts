@@ -14,6 +14,8 @@ import { describe, expect, test, vi } from "vitest";
 
 import { createRetryablePromiseCache } from "#web/react/promise-cache";
 
+import type { Result } from "#web/react/types";
+
 describe("createRetryablePromiseCache", () => {
   test("returns the identical promise for the same key and runs create once", () => {
     const cache = createRetryablePromiseCache<string>();
@@ -64,8 +66,8 @@ describe("createRetryablePromiseCache", () => {
     expect(second).toBe(first);
     expect(create).toHaveBeenCalledTimes(1);
 
-    // evictIfRejected drops the failed entry, so the next lookup retries.
-    cache.evictIfRejected("key");
+    // evictIfFailed drops the failed entry, so the next lookup retries.
+    cache.evictIfFailed("key");
     const third = cache.get("key", create);
 
     expect(third).not.toBe(first);
@@ -74,17 +76,43 @@ describe("createRetryablePromiseCache", () => {
     await expect(third).resolves.toBe("recovered");
   });
 
-  test("evictIfRejected keeps a resolved promise", async () => {
+  test("evictIfFailed keeps a successful promise", async () => {
     const cache = createRetryablePromiseCache<string>();
     const create = vi.fn(() => Promise.resolve("value"));
 
     const first = cache.get("key", create);
     await expect(first).resolves.toBe("value");
 
-    cache.evictIfRejected("key");
+    cache.evictIfFailed("key");
     const second = cache.get("key", create);
 
     expect(second).toBe(first);
     expect(create).toHaveBeenCalledTimes(1);
+  });
+
+  test("evicts a fulfilled value classified as a failure", async () => {
+    const cache = createRetryablePromiseCache<Result<string>>(
+      ({ error }) => error !== null,
+    );
+    const create = vi
+      .fn<() => Promise<Result<string>>>()
+      .mockResolvedValueOnce({ data: null, error: new Error("boom") })
+      .mockResolvedValueOnce({ data: "recovered", error: null });
+
+    const first = cache.get("key", create);
+    await expect(first).resolves.toEqual({
+      data: null,
+      error: new Error("boom"),
+    });
+
+    cache.evictIfFailed("key");
+    const second = cache.get("key", create);
+
+    expect(second).not.toBe(first);
+    expect(create).toHaveBeenCalledTimes(2);
+    await expect(second).resolves.toEqual({
+      data: "recovered",
+      error: null,
+    });
   });
 });

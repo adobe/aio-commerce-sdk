@@ -16,7 +16,7 @@ import { RouterProvider } from "@tanstack/react-router";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 
-import { createExtensionRouter } from "#web/react/routing/lib";
+import { createExtensionRouter, getRouteTo } from "#web/react/routing/lib";
 import {
   createMockRuntime,
   loadExperienceCloudRuntime,
@@ -25,7 +25,8 @@ import {
 import { Entrypoint } from "./entrypoint";
 
 import type { RuntimeConfiguration } from "@adobe/exc-app";
-import type { ExtensionAppRoutes } from "#web/react/routing/types";
+import type { ReactNode } from "react";
+import type { ExtensionRoute } from "#web/react/routing/types";
 
 /** Configuration options when instantiating an extension app. */
 export type CreateExtensionAppOptions = {
@@ -35,11 +36,14 @@ export type CreateExtensionAppOptions = {
     extensionId: string;
   };
 
+  /** The optional app page opened from the Commerce Admin menu and by default in Experience Cloud Shell. */
+  menu?: ReactNode;
+
   /** Optional root element where the app will be mounted. */
   root?: HTMLElement;
 
-  /** A list of routes for the extension app, specifying an index route is mandatory. */
-  routes: ExtensionAppRoutes;
+  /** Additional path-based routes for the extension app. */
+  routes?: ExtensionRoute[];
 };
 
 /**
@@ -59,15 +63,25 @@ export type CreateExtensionAppOptions = {
  *
  * createExtensionApp({
  *   metadata: { extensionId: "my-extension-id" },
- *   routes: [{ index: true, element: <MainPage /> }],
+ *   menu: <MainPage />,
  * });
  * ```
  */
 export function createExtensionApp({
+  menu,
   metadata,
-  routes,
+  routes = [],
   root: customRoot,
 }: CreateExtensionAppOptions) {
+  if (
+    menu !== undefined &&
+    routes.some((route) => getRouteTo(route.path) === "/")
+  ) {
+    throw new Error(
+      'The "/" route is reserved for the menu. Pass its element through the menu option instead.',
+    );
+  }
+
   const rootElement = customRoot ?? document.getElementById("root");
   if (!rootElement) {
     throw new Error('Could not find an element with id "root".');
@@ -85,7 +99,10 @@ export function createExtensionApp({
     };
 
     const entrypoint = <Entrypoint {...entrypointProps} />;
-    const router = createExtensionRouter(entrypoint, routes);
+    const router = createExtensionRouter(
+      entrypoint,
+      menu === undefined ? routes : [{ element: menu, path: "/" }, ...routes],
+    );
 
     root.render(
       <StrictMode>

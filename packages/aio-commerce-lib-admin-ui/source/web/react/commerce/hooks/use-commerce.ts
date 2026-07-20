@@ -16,13 +16,18 @@ import { useInternalSharedContext } from "#web/react/commerce/context/shared-con
 import { createRetryablePromiseCache } from "#web/react/promise-cache";
 
 import type { GuestConnection } from "#web/react/commerce/types";
+import type { Result } from "#web/react/types";
 
 /** The host integration API exposed to every extension point. */
 type HostIntegration = {
   getCommerceHost: () => Promise<string>;
 };
 
-const commerceHosts = createRetryablePromiseCache<string>();
+type CommerceData = { commerceHost: string };
+
+const commerceHosts = createRetryablePromiseCache<Result<CommerceData>>(
+  ({ error }) => error !== null,
+);
 
 /**
  * Returns the cached Commerce Admin host promise for an extension, resolving it once over the
@@ -34,37 +39,59 @@ const commerceHosts = createRetryablePromiseCache<string>();
 function getCommerceHostPromise(
   extensionId: string,
   connection: GuestConnection,
-): Promise<string> {
-  const { integration } = connection.host as { integration?: HostIntegration };
+): Promise<Result<CommerceData>> {
+  return commerceHosts.get(extensionId, async () => {
+    const { integration } = connection.host as {
+      integration?: HostIntegration;
+    };
 
-  if (!integration) {
-    // Throw during render so the error surfaces to the boundary immediately: this is a static
-    // property of the connection, so there's nothing async to await or cache.
-    throw new Error(
-      "The host does not provide the integration API needed to resolve the Commerce host.",
-    );
-  }
+    if (!integration) {
+      return {
+        data: null,
+        error: new Error(
+          "The host does not provide the integration API needed to resolve the Commerce host.",
+        ),
+      };
+    }
 
-  return commerceHosts.get(extensionId, () => integration.getCommerceHost());
+    try {
+      const commerceHost = await integration.getCommerceHost();
+      return { data: { commerceHost }, error: null };
+    } catch (error) {
+      return {
+        data: null,
+        error: new Error("Failed to resolve the Commerce host.", {
+          cause: error,
+        }),
+      };
+    }
+  });
 }
 
 /** Drops a failed Commerce host resolution for `extensionId`, so a later render retries it. */
 export function retryCommerceHost(extensionId: string) {
-  commerceHosts.evictIfRejected(extensionId);
+  commerceHosts.evictIfFailed(extensionId);
 }
 
 /**
  * Returns the host (domain) of the Commerce Admin the extension is embedded in, resolving it over
  * the guest connection.
  *
- * @throws If used outside a Commerce Admin UI frame, or when the host does not expose the
- * Commerce integration API.
+ * Returns an error when used outside a Commerce Admin UI frame, when the host does not expose the
+ * Commerce integration API, or when resolving the host fails.
  */
-export function useCommerce() {
-  const { extensionId, guestConnection } = useInternalSharedContext();
-  const commerceHost = use(
-    getCommerceHostPromise(extensionId, guestConnection),
-  );
+export function useCommerce(): Result<CommerceData> {
+  const context = useInternalSharedContext();
+  if (!context) {
+    return {
+      data: null,
+      error: new Error(
+        "useCommerce requires running inside the Commerce Admin.",
+      ),
+    };
+  }
 
-  return { commerceHost };
+  return use(
+    getCommerceHostPromise(context.extensionId, context.guestConnection),
+  );
 }

@@ -490,7 +490,7 @@ The `./web` entrypoint provides the browser side of a `commerce/backend-ui/2` ap
 
 #### Mounting an app
 
-`createExtensionApp` mounts the app into the element with id `root` (or into the `root` element you pass). `routes` must start with the index route; additional routes are path-based:
+`createExtensionApp` mounts the app into the element with id `root` (or into the `root` element you pass). When your app has a Commerce Admin menu, pass its page through the optional `menu` property. Experience Cloud Shell also renders this page by default. Use `routes` for additional pages:
 
 ```jsx
 // src/app.jsx
@@ -502,38 +502,63 @@ import { SettingsPage } from "./pages/settings-page.jsx";
 
 createExtensionApp({
   metadata: { extensionId: "my-extension-id" },
-  routes: [
-    { index: true, element: <MainPage /> },
-    { path: "/settings", element: <SettingsPage /> },
-  ],
+  menu: <MainPage />,
+  routes: [{ path: "/settings", element: <SettingsPage /> }],
 });
 ```
+
+When you provide `menu`, it owns the root route. Don't also add a root-equivalent path such as `"/"` or `"#/"` to `routes`; `createExtensionApp` reports that duplicate declaration as an error. When your app doesn't have a menu, omit `menu` and declare the root page in `routes` instead.
 
 The whole app is wrapped in React's [`<StrictMode>`](https://react.dev/reference/react/StrictMode). When running locally with `aio app dev` or `aio app run` (which serve React's development build), StrictMode runs its extra development-only checks: components render twice, and effects run an extra setup + cleanup cycle on mount. Duplicated renders, effect runs, or requests fired from effects during development are therefore expected — not a bug — and surface unsafe side effects early. These checks do not run in production builds, where StrictMode has no effect.
 
 #### Reading IMS credentials
 
-`useIms` returns the IMS credentials provided by the host (`{ imsToken, imsOrgId }`). It works inside both the Commerce Admin and the Experience Cloud shell, and throws when the app runs standalone (no host provides credentials):
+The browser hooks return a `Result` with complementary `data` and `error` fields. When the requested host data is available, `data` contains it and `error` is `null`. Otherwise, `data` is `null` and `error` explains why the `data` can't be provided.
+
+You can forward an error to the app's error boundary when you don't need custom fallback UI:
+
+```jsx
+const { data, error } = useIms();
+if (error) throw error;
+```
+
+`useIms` returns the IMS credentials provided by the host (`{ imsToken, imsOrgId }`). It works inside both the Commerce Admin and the Experience Cloud shell, and returns an error when the app runs standalone because no host provides credentials:
 
 ```jsx
 import { useIms } from "@adobe/aio-commerce-lib-admin-ui/web";
 
 function Welcome() {
-  const { imsToken, imsOrgId } = useIms();
-  // Use imsToken to call IMS-authenticated APIs on behalf of the admin user.
+  const { data, error } = useIms();
+  if (error) return <span>{error.message}</span>;
+
+  // Use data.imsToken to call IMS-authenticated APIs on behalf of the admin user.
+  return <span>{data.imsOrgId}</span>;
 }
 ```
 
+When a component is guaranteed to render within a supported host and you intentionally don't need explicit error handling, you can ignore `error` and use optional chaining:
+
+```jsx
+function Welcome() {
+  const { data } = useIms();
+  return <span>{data?.imsOrgId}</span>;
+}
+```
+
+This is valid, but it is less explicit and not recommended. If the component renders outside the expected host, it silently renders an absent value instead of explaining or forwarding the error.
+
 #### Resolving the Commerce host
 
-`useCommerce` returns the host (domain) of the Commerce Admin the extension is embedded in. The value is resolved over the guest connection via the host's integration API. It throws when used outside the Commerce Admin frame, or when the host does not expose that integration API:
+`useCommerce` returns the host (domain) of the Commerce Admin the extension is embedded in. The value is resolved over the guest connection via the host's integration API. It returns an error when used outside the Commerce Admin frame, when the host doesn't expose that integration API, or when host resolution fails:
 
 ```jsx
 import { useCommerce } from "@adobe/aio-commerce-lib-admin-ui/web";
 
 function CommerceInfo() {
-  const { commerceHost } = useCommerce();
-  return <span>{commerceHost}</span>;
+  const { data, error } = useCommerce();
+  if (error) return <span>Commerce features aren't available here.</span>;
+
+  return <span>{data.commerceHost}</span>;
 }
 ```
 
@@ -545,34 +570,41 @@ function CommerceInfo() {
 import { useHostConnection } from "@adobe/aio-commerce-lib-admin-ui/web";
 
 function Actions() {
-  const { close, closeWithError } = useHostConnection();
-  // close() closes the current iframe and navigates back to the originating grid or order.
-  // closeWithError() does the same, flagging that an error occurred.
+  const { actions, error } = useHostConnection();
+  if (error) return null;
+
+  // actions.close() closes the current iframe and navigates back to the originating grid or order.
+  // actions.closeWithError() does the same, flagging that an error occurred.
 }
 ```
 
 #### Reading the mass-action selection
 
-`useMassActionContext` returns the row IDs the mass action was triggered with. It reads from the host-provided Commerce context and throws when that context does not include a mass-action selection:
+`useMassActionContext` returns the row IDs the mass action was triggered with. It reads from the host-provided Commerce context and returns an error when that context doesn't include a mass-action selection:
 
 ```jsx
 import { useMassActionContext } from "@adobe/aio-commerce-lib-admin-ui/web";
 
 function MassActionPage() {
-  const { selectedIds } = useMassActionContext();
-  // selectedIds is string[] (an empty selection is valid).
+  const { data, error } = useMassActionContext();
+  if (error) return null;
+
+  // data.selectedIds is string[] (an empty selection is valid).
 }
 ```
 
 #### Reading the order view-button context
 
-`useOrderViewButtonContext` returns the ID of the order the view button was triggered from. It throws when no order ID is present in the page URL:
+`useOrderViewButtonContext` returns the ID of the order the view button was triggered from. It returns an error when no order ID is present in the page URL:
 
 ```jsx
 import { useOrderViewButtonContext } from "@adobe/aio-commerce-lib-admin-ui/web";
 
 function OrderViewButtonPage() {
-  const { orderId } = useOrderViewButtonContext();
+  const { data, error } = useOrderViewButtonContext();
+  if (error) return null;
+
+  return <span>{data.orderId}</span>;
 }
 ```
 
@@ -584,9 +616,11 @@ function OrderViewButtonPage() {
 import { useSharedContext } from "@adobe/aio-commerce-lib-admin-ui/web";
 
 function Advanced() {
-  const { extensionId, sharedContext, host } = useSharedContext();
-  const selectedIds = sharedContext.get("selectedIds");
+  const { data, error } = useSharedContext();
+  if (error) return null;
+
+  const selectedIds = data.sharedContext.get("selectedIds");
 }
 ```
 
-`useSharedContext` (and the hooks built on it) require the Commerce guest connection, so they only work inside the Commerce Admin — not in the Experience Cloud shell.
+`useSharedContext` (and the hooks built on it) require the Commerce guest connection. In Experience Cloud Shell or a standalone page, they will always return an error.

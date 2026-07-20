@@ -37,24 +37,32 @@ describe("useHostConnection", () => {
       wrapper: provide({ field }),
     });
 
-    await result.current.close();
+    expect.assert.isNull(result.current.error);
+
+    await result.current.actions.close();
     expect(field.close).toHaveBeenCalledTimes(1);
 
-    await result.current.closeWithError();
+    await result.current.actions.closeWithError();
     expect(field.onError).toHaveBeenCalledTimes(1);
   });
 
-  test("throws when the host does not provide the frame actions", async () => {
+  test("returns an error when the host does not provide the frame actions", async () => {
     const { result } = await renderHook(() => useHostConnection(), {
       wrapper: provide({}),
     });
 
-    expect(() => result.current.close()).toThrow(
+    expect.assert.isNull(result.current.actions);
+    expect(result.current.error.message).toContain(
       "Host frame actions are unavailable",
     );
+  });
 
-    expect(() => result.current.closeWithError()).toThrow(
-      "Host frame actions are unavailable",
+  test("returns an error when used outside the Commerce shared context", async () => {
+    const { result } = await renderHook(() => useHostConnection());
+
+    expect.assert.isNull(result.current.actions);
+    expect(result.current.error.message).toContain(
+      "useSharedContext must be used inside a SharedContextProvider",
     );
   });
 });

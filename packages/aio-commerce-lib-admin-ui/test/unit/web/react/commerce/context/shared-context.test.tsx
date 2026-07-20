@@ -13,7 +13,6 @@
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { renderHook } from "vitest-browser-react";
 
-import { mockConsole } from "#test/utils/console";
 import { sharedContextProvider } from "#test/utils/shared-context.tsx";
 import { useSharedContext } from "#web/react/commerce/context/shared-context.tsx";
 
@@ -34,9 +33,11 @@ function makeConnection() {
 }
 
 describe("useSharedContext", () => {
-  test("throws when used outside a SharedContextProvider", async () => {
-    mockConsole("error");
-    await expect(renderHook(() => useSharedContext())).rejects.toThrow(
+  test("returns an error when used outside a SharedContextProvider", async () => {
+    const { result } = await renderHook(() => useSharedContext());
+
+    expect.assert.isNull(result.current.data);
+    expect(result.current.error.message).toContain(
       "useSharedContext must be used inside a SharedContextProvider",
     );
   });
@@ -47,9 +48,10 @@ describe("useSharedContext", () => {
       wrapper: sharedContextProvider(connection),
     });
 
-    expect(result.current.extensionId).toBe("ext-1");
-    expect(result.current.sharedContext).toBe(connection.sharedContext);
-    expect(result.current.host).toBe(connection.host);
+    expect.assert.isNull(result.current.error);
+    expect(result.current.data.extensionId).toBe("ext-1");
+    expect(result.current.data.sharedContext).toBe(connection.sharedContext);
+    expect(result.current.data.host).toBe(connection.host);
   });
 
   test("re-renders with the new shared context on a contextchange event", async () => {
@@ -72,6 +74,7 @@ describe("useSharedContext", () => {
     connection.sharedContext = newSharedContext;
     await act(() => onContextChange());
 
-    expect(result.current.sharedContext).toBe(newSharedContext);
+    expect.assert.isNull(result.current.error);
+    expect(result.current.data.sharedContext).toBe(newSharedContext);
   });
 });

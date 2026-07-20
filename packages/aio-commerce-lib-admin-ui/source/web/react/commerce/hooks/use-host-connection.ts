@@ -15,6 +15,7 @@ import { useMemo } from "react";
 import { useSharedContext } from "#web/react/commerce/context/shared-context.tsx";
 
 import type { HostConnection } from "#web/react/commerce/types";
+import type { ActionsResult } from "#web/react/types";
 
 /**
  * Host frame actions used to close the extension iframe and return control to the Commerce Admin.
@@ -27,37 +28,41 @@ type HostFrameField = {
 /**
  * Returns typed helpers for interacting with the Commerce Admin host.
  *
- * @throws If called before the guest connection is established, or when the host frame actions
- * are unavailable.
- *
  * @example
  * ```tsx
  * import { useHostConnection } from "@adobe/aio-commerce-lib-admin-ui/web";
  *
  * function DoneButton() {
- *   const { close } = useHostConnection();
- *   return <button onClick={() => void close()}>Done</button>;
+ *   const { actions, error } = useHostConnection();
+ *   if (error) return null;
+ *   return <button onClick={actions.close}>Done</button>;
  * }
  * ```
  */
-export function useHostConnection(): HostConnection {
-  const { host } = useSharedContext();
+export function useHostConnection(): ActionsResult<HostConnection> {
+  const { data, error } = useSharedContext();
 
-  return useMemo<HostConnection>(() => {
-    const { field } = host as { field?: HostFrameField };
-    const requireField = () => {
-      if (!field) {
-        throw new Error(
+  return useMemo<ActionsResult<HostConnection>>(() => {
+    if (error) {
+      return { actions: null, error };
+    }
+
+    const { field } = data.host as { field?: HostFrameField };
+    if (!field) {
+      return {
+        actions: null,
+        error: new Error(
           "Host frame actions are unavailable. They require an established guest connection with a host that exposes frame actions.",
-        );
-      }
-
-      return field;
-    };
+        ),
+      };
+    }
 
     return {
-      close: () => requireField().close(),
-      closeWithError: () => requireField().onError(),
+      actions: {
+        close: () => field.close(),
+        closeWithError: () => field.onError(),
+      },
+      error: null,
     };
-  }, [host]);
+  }, [data, error]);
 }

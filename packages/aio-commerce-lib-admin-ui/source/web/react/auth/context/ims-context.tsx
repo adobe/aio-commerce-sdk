@@ -16,6 +16,7 @@ import { isEmbeddedInHost } from "#web/react/commerce/lib";
 
 import type { ReactNode } from "react";
 import type { ImsContext } from "#web/react/auth/types";
+import type { Result } from "#web/react/types";
 
 // `undefined` means there is no provider (a usage error); `null` means the provider is mounted but no host
 // has provided credentials (running standalone, outside both the Commerce Admin and the Experience Cloud shell).
@@ -25,22 +26,27 @@ const ImsContextValue = createContext<ImsContext | null | undefined>(undefined);
  * Returns the IMS credentials provided by the host. Works inside the Commerce Admin and the
  * Experience Cloud shell.
  *
- * @throws If no host provides credentials (e.g. the app is running standalone, outside both the
- * Commerce Admin and the Experience Cloud shell).
+ * Returns an error when no host provides credentials.
  */
-export function useIms(): ImsContext {
+export function useIms(): Result<ImsContext> {
   const credentials = use(ImsContextValue);
   if (credentials === undefined) {
-    throw new Error("useIms must be used inside an ImsContextProvider.");
+    return {
+      data: null,
+      error: new Error("useIms must be used inside an ImsContextProvider."),
+    };
   }
 
   if (!credentials) {
-    throw new Error(
-      "useIms requires running inside the Commerce Admin or the Experience Cloud shell, which provide the IMS credentials.",
-    );
+    return {
+      data: null,
+      error: new Error(
+        "useIms requires running inside the Commerce Admin or the Experience Cloud shell, which provide the IMS credentials.",
+      ),
+    };
   }
 
-  return credentials;
+  return { data: credentials, error: null };
 }
 
 type ImsContextProviderProps = {
@@ -57,7 +63,7 @@ export function ImsContextProvider(props: Readonly<ImsContextProviderProps>) {
 
   // When embedded in a host, children are withheld until the credentials resolve, so consumers observe non-null
   // credentials and avoid a race against the asynchronous handshake. When running standalone (top-level window),
-  // children render immediately and `useIms` throws (as we won't have any host providing credentials).
+  // children render immediately and `useIms` reports the missing credentials.
   if (isEmbeddedInHost() && !credentials) {
     return null;
   }

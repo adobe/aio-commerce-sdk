@@ -11,11 +11,9 @@
  */
 
 import { Suspense } from "react";
-import { ErrorBoundary } from "react-error-boundary";
 import { afterEach, describe, expect, test, vi } from "vitest";
-import { render, renderHook } from "vitest-browser-react";
+import { renderHook } from "vitest-browser-react";
 
-import { mockConsole } from "#test/utils/console";
 import { SharedContextProvider } from "#web/react/commerce/context/shared-context.tsx";
 import { useCommerce } from "#web/react/commerce/hooks/use-commerce";
 
@@ -24,10 +22,6 @@ import type { ReactNode } from "react";
 afterEach(() => {
   vi.restoreAllMocks();
 });
-
-function renderNullFallback() {
-  return null;
-}
 
 /** Builds a minimal fake UIX guest connection with the given host object. */
 function makeConnection(host: object) {
@@ -57,39 +51,61 @@ describe("useCommerce", () => {
     const { result } = await renderHook(() => useCommerce(), { wrapper });
     await vi.waitFor(() => expect(result.current).not.toBeNull());
 
-    expect(result.current.commerceHost).toBe("my-store.example.com");
     expect(getCommerceHost).toHaveBeenCalledTimes(1);
+    expect(result.current).toEqual({
+      data: { commerceHost: "my-store.example.com" },
+      error: null,
+    });
   });
 
-  test("propagates the error to the error boundary when the host lacks the integration API", async () => {
-    mockConsole("error");
-
+  test("returns an error when the host lacks the integration API", async () => {
     const connection = makeConnection({});
-    const onError = vi.fn();
-
-    function HookProbe() {
-      useCommerce();
-      return null;
-    }
-
-    await render(
+    const wrapper = ({ children }: { children: ReactNode }) => (
       <SharedContextProvider
         extensionId="ext-use-commerce-no-integration"
         // @ts-expect-error -- fake connection cannot satisfy the uix-guest GuestConnection type
         guestConnection={connection}>
-        <ErrorBoundary fallbackRender={renderNullFallback} onError={onError}>
-          <Suspense fallback={null}>
-            <HookProbe />
-          </Suspense>
-        </ErrorBoundary>
-      </SharedContextProvider>,
+        <Suspense fallback={null}>{children}</Suspense>
+      </SharedContextProvider>
     );
 
-    await vi.waitFor(() => expect(onError).toHaveBeenCalled());
-    const [error] = onError.mock.calls[0] as [Error];
+    const { result } = await renderHook(() => useCommerce(), { wrapper });
+    await vi.waitFor(() => expect(result.current).not.toBeNull());
 
-    expect(error.message).toContain(
+    expect.assert.isNull(result.current.data);
+    expect(result.current.error.message).toContain(
       "The host does not provide the integration API",
+    );
+  });
+
+  test("returns an error when resolving the Commerce host rejects", async () => {
+    const getCommerceHost = vi.fn().mockRejectedValue(new Error("unavailable"));
+    const connection = makeConnection({ integration: { getCommerceHost } });
+
+    const wrapper = ({ children }: { children: ReactNode }) => (
+      <SharedContextProvider
+        extensionId="ext-use-commerce-reject"
+        // @ts-expect-error -- fake connection cannot satisfy the uix-guest GuestConnection type
+        guestConnection={connection}>
+        <Suspense fallback={null}>{children}</Suspense>
+      </SharedContextProvider>
+    );
+
+    const { result } = await renderHook(() => useCommerce(), { wrapper });
+    await vi.waitFor(() => expect(result.current).not.toBeNull());
+
+    expect(result.current).toEqual({
+      data: null,
+      error: new Error("unavailable"),
+    });
+  });
+
+  test("returns an error when used outside the Commerce shared context", async () => {
+    const { result } = await renderHook(() => useCommerce());
+
+    expect.assert.isNull(result.current.data);
+    expect(result.current.error.message).toContain(
+      "useCommerce requires running inside the Commerce Admin",
     );
   });
 });

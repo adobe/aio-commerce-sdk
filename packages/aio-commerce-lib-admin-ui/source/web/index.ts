@@ -35,8 +35,4 @@ export type {
   SharedContext,
 } from "#web/react/commerce/types";
 export type { CreateExtensionAppOptions } from "#web/react/extension/create-app.tsx";
-export type {
-  ExtensionAppRoutes,
-  ExtensionRoute,
-  IndexRoute,
-} from "#web/react/routing/types";
+export type { ExtensionRoute } from "#web/react/routing/types";

@@ -29,9 +29,9 @@ describe("getRouteTo", () => {
 });
 
 describe("createExtensionRouter", () => {
-  test("builds a router with the index and hash-stripped route paths", () => {
+  test("builds a router with root and hash-stripped route paths", () => {
     const router = createExtensionRouter(<div />, [
-      { element: <div>home</div>, index: true },
+      { element: <div>home</div>, path: "/" },
       { element: <div>settings</div>, path: "#/settings" },
     ]);
 
@@ -43,7 +43,7 @@ describe("createExtensionRouter", () => {
 
   test("renders the root component and the matched route element", async () => {
     const router = createExtensionRouter(<ActiveRoute />, [
-      { element: <div>home</div>, index: true },
+      { element: <div>home</div>, path: "/" },
     ]);
 
     const screen = await render(<RouterProvider router={router} />);

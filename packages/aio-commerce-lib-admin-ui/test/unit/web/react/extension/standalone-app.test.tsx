@@ -16,10 +16,10 @@ import { stubStandaloneFrame } from "#test/utils/frame";
 import { renderWithRouter } from "#test/utils/router.tsx";
 import { StandaloneExtensionApp } from "#web/react/extension/standalone-app.tsx";
 
-import type { RouteEntry } from "#web/react/routing/types";
+import type { ExtensionRoute } from "#web/react/routing/types";
 
-const ROUTES: RouteEntry[] = [
-  { element: <div data-testid="route-content" />, index: true },
+const ROUTES: ExtensionRoute[] = [
+  { element: <div data-testid="route-content" />, path: "/" },
 ];
 
 let restoreFrame: () => void = () => undefined;

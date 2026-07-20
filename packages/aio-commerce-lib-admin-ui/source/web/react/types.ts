@@ -10,22 +10,16 @@
  * governing permissions and limitations under the License.
  */
 
-import type { NavigateOptions, ToOptions } from "@tanstack/react-router";
-import type { ReactNode } from "react";
+/** The result of reading data that might not be available in the current host context. */
+export type Result<T, E = Error> =
+  | { data: T; error: null }
+  | { data: null; error: E };
 
-declare module "@react-spectrum/s2/Provider" {
-  // biome-ignore lint/style/useConsistentTypeDefinitions: For declaration merging, we need to use `interface` instead of `type`.
-  interface RouterConfig {
-    href: ToOptions;
-    routerOptions: Omit<NavigateOptions, keyof ToOptions>;
-  }
-}
-
-/** Defines a route that exists at a given path. */
-export type ExtensionRoute = {
-  /** The path for the route. */
-  path: string;
-
-  /** The React element to render for the route. */
-  element: ReactNode;
+type ActionMap = {
+  [key: string]: (...args: unknown[]) => PromiseLike<unknown>;
 };
+
+/** The result of exposing an API that might not be available in the current host context. */
+export type ActionsResult<T extends ActionMap, E = Error> =
+  | { actions: T; error: null }
+  | { actions: null; error: E };

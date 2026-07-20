@@ -19,46 +19,57 @@ import type {
   MassActionContext,
   OrderViewButtonContext,
 } from "#web/react/commerce/types";
+import type { Result } from "#web/react/types";
 
 /**
  * Returns the context for a mass-action extension point: the selected row IDs the action was
  * triggered with. The value is read from the host-provided Commerce context.
  *
- * @throws If used outside the Commerce shared context, or when that context does not include a
+ * Returns an error outside the Commerce shared context, or when that context does not include a
  * mass-action selection.
  */
-export function useMassActionContext(): MassActionContext {
-  const { sharedContext } = useSharedContext();
+export function useMassActionContext(): Result<MassActionContext> {
+  const { data, error } = useSharedContext();
 
-  return useMemo(() => {
-    // An empty selection is valid (a mass action with nothing selected), but a missing key means
-    // the shared context was never populated with the mass-action payload.
-    const selectedIds = sharedContext.get("selectedIds");
-    if (!Array.isArray(selectedIds)) {
-      throw new Error(
-        "Could not find `selectedIds` in the Commerce shared context. Is this frame running as a mass-action extension point?",
-      );
+  return useMemo<Result<MassActionContext>>(() => {
+    if (error) {
+      return { data: null, error };
     }
 
-    return { selectedIds: selectedIds as string[] };
-  }, [sharedContext]);
+    // An empty selection is valid (a mass action with nothing selected), but a missing key means
+    // the shared context was never populated with the mass-action payload.
+    const selectedIds = data.sharedContext.get("selectedIds");
+    if (!Array.isArray(selectedIds)) {
+      return {
+        data: null,
+        error: new Error(
+          "Could not find `selectedIds` in the Commerce shared context. Is this frame running as a mass-action extension point?",
+        ),
+      };
+    }
+
+    return { data: { selectedIds: selectedIds as string[] }, error: null };
+  }, [data, error]);
 }
 
 /**
  * Returns the context for an order view-button extension point: the order ID the button was
  * triggered from.
  *
- * @throws If no order ID is present in the page URL.
+ * Returns an error when no order ID is present in the page URL.
  */
-export function useOrderViewButtonContext(): OrderViewButtonContext {
-  return useMemo(() => {
+export function useOrderViewButtonContext(): Result<OrderViewButtonContext> {
+  return useMemo<Result<OrderViewButtonContext>>(() => {
     const orderId = parseOrderId(globalThis.location.href);
     if (orderId === null) {
-      throw new Error(
-        "Could not find an order ID. Is this frame running as an order view-button extension point?",
-      );
+      return {
+        data: null,
+        error: new Error(
+          "Could not find an order ID. Is this frame running as an order view-button extension point?",
+        ),
+      };
     }
 
-    return { orderId };
+    return { data: { orderId }, error: null };
   }, []);
 }

@@ -29,6 +29,7 @@ import type {
   SharedContext,
   SharedContextState,
 } from "#web/react/commerce/types";
+import type { Result } from "#web/react/types";
 
 const SharedContextValue = createContext<SharedContextState | undefined>(
   undefined,
@@ -37,15 +38,9 @@ const SharedContextValue = createContext<SharedContextState | undefined>(
 /**
  * Returns the current Commerce shared context provider state.
  */
-export function useInternalSharedContext(): SharedContextState {
-  const context = use(SharedContextValue);
-  if (context === undefined) {
-    throw new Error(
-      "useSharedContext must be used inside a SharedContextProvider, which is only available in the Commerce Admin.",
-    );
-  }
-
-  return context;
+export function useInternalSharedContext(): SharedContextState | undefined {
+  // Keep absence handleable so public hooks can return a Result instead of throwing first.
+  return use(SharedContextValue);
 }
 
 /**
@@ -56,26 +51,46 @@ export function useInternalSharedContext(): SharedContextState {
  * Prefer a purpose-built hook ({@link useCommerce}, {@link useMassActionContext},
  * {@link useOrderViewButtonContext}) when one covers what you need.
  *
- * @throws If used outside a {@link SharedContextProvider}.
- *
  * @example
  * ```tsx
  * import { useSharedContext } from "@adobe/aio-commerce-lib-admin-ui/web";
  *
  * function ImsTokenLabel() {
- *   const { sharedContext } = useSharedContext();
- *   return <span>{sharedContext.get("imsToken")}</span>;
+ *   const { data, error } = useSharedContext();
+ *   if (error) return null;
+ *   return <span>{data.sharedContext.get("imsToken")}</span>;
  * }
  * ```
  */
-export function useSharedContext(): SharedContext {
-  const { extensionId, guestConnection } = useInternalSharedContext();
-  const sharedContext = useLiveSharedContext(guestConnection);
+export function useSharedContext(): Result<SharedContext> {
+  const context = useInternalSharedContext();
+  const sharedContext = useLiveSharedContext(context?.guestConnection);
+
+  if (!context) {
+    return {
+      data: null,
+      error: new Error(
+        "useSharedContext must be used inside a SharedContextProvider, which is only available in the Commerce Admin.",
+      ),
+    };
+  }
+
+  if (!sharedContext) {
+    return {
+      data: null,
+      error: new Error(
+        "The Commerce host did not provide a shared context for this extension.",
+      ),
+    };
+  }
 
   return {
-    extensionId,
-    host: guestConnection.host,
-    sharedContext,
+    data: {
+      extensionId: context.extensionId,
+      host: context.guestConnection.host,
+      sharedContext,
+    },
+    error: null,
   };
 }
 
@@ -88,14 +103,22 @@ export function useSharedContext(): SharedContext {
  *
  * @param guestConnection - The established guest connection.
  */
-function useLiveSharedContext(guestConnection: GuestConnection) {
+function useLiveSharedContext(guestConnection?: GuestConnection) {
   const subscribe = useCallback(
-    (onContextChange: () => void) =>
-      guestConnection.addEventListener("contextchange", onContextChange),
+    (onContextChange: () => void) => {
+      if (!guestConnection) {
+        return () => undefined;
+      }
+
+      return guestConnection.addEventListener("contextchange", onContextChange);
+    },
     [guestConnection],
   );
 
-  return useSyncExternalStore(subscribe, () => guestConnection.sharedContext);
+  return useSyncExternalStore(
+    subscribe,
+    () => guestConnection?.sharedContext ?? null,
+  );
 }
 
 type SharedContextProviderProps = {

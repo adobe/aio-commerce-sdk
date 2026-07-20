@@ -13,7 +13,6 @@
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { render, renderHook } from "vitest-browser-react";
 
-import { mockConsole } from "#test/utils/console";
 import { stubControlFrame, stubStandaloneFrame } from "#test/utils/frame";
 import {
   ImsContextProvider,
@@ -31,9 +30,11 @@ afterEach(() => {
 });
 
 describe("useIms", () => {
-  test("throws when used outside an ImsContextProvider", async () => {
-    mockConsole("error");
-    await expect(renderHook(() => useIms())).rejects.toThrow(
+  test("returns an error when used outside an ImsContextProvider", async () => {
+    const { result } = await renderHook(() => useIms());
+
+    expect.assert.isNull(result.current.data);
+    expect(result.current.error.message).toBe(
       "useIms must be used inside an ImsContextProvider.",
     );
   });
@@ -46,10 +47,10 @@ describe("useIms", () => {
     );
 
     const { result } = await renderHook(() => useIms(), { wrapper });
-    expect(result.current).toEqual(CREDENTIALS);
+    expect(result.current).toEqual({ data: CREDENTIALS, error: null });
   });
 
-  test("renders children but throws when credentials are null and not embedded", async () => {
+  test("renders children but returns an error when credentials are null and not embedded", async () => {
     restoreFrame = stubStandaloneFrame();
 
     const screen = await render(
@@ -60,12 +61,13 @@ describe("useIms", () => {
 
     await expect.element(screen.getByTestId("child")).toBeInTheDocument();
 
-    mockConsole("error");
     const wrapper = ({ children }: { children: ReactNode }) => (
       <ImsContextProvider credentials={null}>{children}</ImsContextProvider>
     );
 
-    await expect(renderHook(() => useIms(), { wrapper })).rejects.toThrow(
+    const { result } = await renderHook(() => useIms(), { wrapper });
+    expect.assert.isNull(result.current.data);
+    expect(result.current.error.message).toContain(
       "useIms requires running inside the Commerce Admin or the Experience Cloud shell",
     );
   });

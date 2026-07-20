@@ -14,24 +14,29 @@ type RetryablePromiseCache<T> = {
   /** Returns the cached promise for `key`, or runs `create` to produce and cache one on a miss. */
   get: (key: string, create: () => Promise<T>) => Promise<T>;
 
-  /** Drops the cached promise for `key` only if it rejected, so the next lookup retries. */
-  evictIfRejected: (key: string) => void;
+  /** Drops the cached promise for `key` only if it failed, so the next lookup retries. */
+  evictIfFailed: (key: string) => void;
 };
 
 /**
- * Creates a keyed cache that memoizes in-flight, resolved, and rejected promises, giving `use()`
+ * Creates a keyed cache that memoizes in-flight, successful, and failed promises, giving `use()`
  * the reference-stable promise it needs while suspended and single-flighting side-effecting
  * establishment calls across re-renders, remounts, and StrictMode double-invocation.
  *
- * Rejections are retained (not evicted) so `use()` replays them to an error boundary instead of
- * suspending forever on a fresh pending promise. Retry a failed key via {@link RetryablePromiseCache.evict}.
+ * Promise rejections are failures by default. Pass `isFailure` when a fulfilled value, such as an
+ * error result, must also be retryable. Failed entries remain cached until `evictIfFailed` is
+ * called, so retries never replace a stable promise during render.
+ *
+ * @param isFailure - Determines whether a fulfilled value represents a failure.
  */
-export function createRetryablePromiseCache<T>(): RetryablePromiseCache<T> {
-  const cache = new Map<string, { promise: Promise<T>; rejected: boolean }>();
+export function createRetryablePromiseCache<T>(
+  isFailure: (value: T) => boolean = () => false,
+): RetryablePromiseCache<T> {
+  const cache = new Map<string, { promise: Promise<T>; failed: boolean }>();
 
   return {
-    evictIfRejected(key) {
-      if (cache.get(key)?.rejected) {
+    evictIfFailed(key) {
+      if (cache.get(key)?.failed) {
         cache.delete(key);
       }
     },
@@ -41,10 +46,14 @@ export function createRetryablePromiseCache<T>(): RetryablePromiseCache<T> {
         return cached.promise;
       }
 
-      const entry = { promise: create(), rejected: false };
-      entry.promise.catch(() => {
-        entry.rejected = true;
-      });
+      const entry = { failed: false, promise: create() };
+      entry.promise
+        .then((value) => {
+          entry.failed = isFailure(value);
+        })
+        .catch(() => {
+          entry.failed = true;
+        });
 
       cache.set(key, entry);
       return entry.promise;

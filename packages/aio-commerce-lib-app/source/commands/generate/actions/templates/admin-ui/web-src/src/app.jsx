@@ -5,9 +5,8 @@ import config from "#app.commerce.config";
 import { MainPage } from "#web/pages/main-page.jsx";
 
 createExtensionApp({
+  menu: <MainPage />,
   metadata: {
     extensionId: config.metadata.id,
   },
-
-  routes: [{ element: <MainPage />, index: true }],
 });
