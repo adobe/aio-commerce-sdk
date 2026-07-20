@@ -134,8 +134,8 @@ async function writeJavaScriptAppConfigModule(
   );
 
   // JSON imports require an import attribute under Node's ESM loader.
-  const importAttributes =
-    extname(configFilePath) === ".json" ? ' with { type: "json" }' : "";
+  const isJson = extname(configFilePath) === ".json";
+  const importAttributes = isJson ? ' with { type: "json" }' : "";
 
   await writeFile(
     outputPath,
@@ -145,10 +145,11 @@ async function writeJavaScriptAppConfigModule(
       "",
       `import appConfig from "${configImportPath}"${importAttributes};`,
       "",
-      `export * from "${configImportPath}"${importAttributes};`,
+      // JSON can't have any exports other than the default one.
+      isJson ? null : `export * from "${configImportPath}";`,
       "export default appConfig;",
       "",
-    ].join("\n"),
+    ].filter(item => item !== null).join("\n"),
     "utf-8",
   );
 }
