@@ -92,13 +92,14 @@ describe.concurrent("domains schema helpers", () => {
       { config: configWithAdminUiMenu, label: "menu only" },
       { config: configWithViewMassActions, label: "view mass actions" },
       { config: configWithWorkerMassActions, label: "worker mass actions" },
-    ])("should include adminUi domain when adminUi has $label", ({
-      config,
-    }) => {
-      const domains = getConfigDomains(config);
+    ])(
+      "should include adminUi domain when adminUi has $label",
+      ({ config }) => {
+        const domains = getConfigDomains(config);
 
-      expect(domains.has("adminUi")).toBe(true);
-    });
+        expect(domains.has("adminUi")).toBe(true);
+      },
+    );
 
     test("should include multiple domains when config has multiple features", () => {
       const domains = getConfigDomains(configWithEventingAndWebhooks);
@@ -155,12 +156,12 @@ describe.concurrent("domains schema helpers", () => {
         domain: "installation.customInstallationSteps",
       },
       { config: configWithAdminUiSingleGrid, domain: "adminUi" },
-    ] as const)('should return true for domain "$domain" when config with "$domain" domain is present', ({
-      config,
-      domain,
-    }) => {
-      expect(hasConfigDomain(config, domain)).toBe(true);
-    });
+    ] as const)(
+      'should return true for domain "$domain" when config with "$domain" domain is present',
+      ({ config, domain }) => {
+        expect(hasConfigDomain(config, domain)).toBe(true);
+      },
+    );
 
     test.concurrent.each([
       { config: {}, domain: "metadata" },
@@ -172,13 +173,13 @@ describe.concurrent("domains schema helpers", () => {
       { config: minimalValidConfig, domain: "adminUi" },
       { config: configWithCommerceEventing, domain: "eventing.external" },
       { config: configWithExternalEventing, domain: "eventing.commerce" },
-    ] as const)('should return false for domain "$domain" when config with "$domain" domain is not present', ({
-      config,
-      domain,
-    }) => {
-      // @ts-expect-error - There might be invalid configs (e.g. missing metadata)
-      expect(hasConfigDomain(config, domain)).toBe(false);
-    });
+    ] as const)(
+      'should return false for domain "$domain" when config with "$domain" domain is not present',
+      ({ config, domain }) => {
+        // @ts-expect-error - There might be invalid configs (e.g. missing metadata)
+        expect(hasConfigDomain(config, domain)).toBe(false);
+      },
+    );
 
     test.concurrent.each([
       { config: fullConfig, domain: "metadata" },
