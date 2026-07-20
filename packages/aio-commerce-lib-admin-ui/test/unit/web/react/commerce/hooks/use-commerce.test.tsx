@@ -79,7 +79,8 @@ describe("useCommerce", () => {
   });
 
   test("returns an error when resolving the Commerce host rejects", async () => {
-    const getCommerceHost = vi.fn().mockRejectedValue(new Error("unavailable"));
+    const error = new Error("unavailable");
+    const getCommerceHost = vi.fn().mockRejectedValue(error);
     const connection = makeConnection({ integration: { getCommerceHost } });
 
     const wrapper = ({ children }: { children: ReactNode }) => (
@@ -96,7 +97,10 @@ describe("useCommerce", () => {
 
     expect(result.current).toEqual({
       data: null,
-      error: new Error("unavailable"),
+      error: expect.objectContaining({
+        cause: error,
+        message: expect.stringContaining("Failed to resolve the Commerce host"),
+      }),
     });
   });
 
