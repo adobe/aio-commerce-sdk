@@ -99,19 +99,19 @@ describe("callHook", () => {
         },
         hookName: "onStepFailure" as const,
       },
-    ])("$hookName should receive event and state", async ({
-      hookName,
-      extraProps,
-    }) => {
-      const mockHook = vi.fn();
-      const hooks: InstallationHooks = { [hookName]: mockHook };
-      const state = createMockInProgressState();
-      const event = { ...createMockStepEvent(), ...extraProps };
+    ])(
+      "$hookName should receive event and state",
+      async ({ hookName, extraProps }) => {
+        const mockHook = vi.fn();
+        const hooks: InstallationHooks = { [hookName]: mockHook };
+        const state = createMockInProgressState();
+        const event = { ...createMockStepEvent(), ...extraProps };
 
-      await callHook(hooks, hookName, event, state);
+        await callHook(hooks, hookName, event, state);
 
-      expect(mockHook).toHaveBeenCalledOnce();
-      expect(mockHook).toHaveBeenCalledWith(event, state);
-    });
+        expect(mockHook).toHaveBeenCalledOnce();
+        expect(mockHook).toHaveBeenCalledWith(event, state);
+      },
+    );
   });
 });

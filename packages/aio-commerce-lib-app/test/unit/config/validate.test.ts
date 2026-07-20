@@ -215,20 +215,21 @@ describe("validateConfig", () => {
     { reason: "Has build metadata", version: "1.0.0+build" },
     { reason: "Has both prerelease and build", version: "1.0.0-beta+build" },
     { reason: "Not a version at all", version: "invalid" },
-  ])("should throw when version is not in semver format: $reason", ({
-    version,
-  }) => {
-    const config = {
-      metadata: {
-        description: "A test application",
-        displayName: "Test App",
-        id: "test-app",
-        version,
-      },
-    };
+  ])(
+    "should throw when version is not in semver format: $reason",
+    ({ version }) => {
+      const config = {
+        metadata: {
+          description: "A test application",
+          displayName: "Test App",
+          id: "test-app",
+          version,
+        },
+      };
 
-    expect(() => validateCommerceAppConfig(config)).toThrow();
-  });
+      expect(() => validateCommerceAppConfig(config)).toThrow();
+    },
+  );
 
   test.each([
     { version: "1.0.0" },
@@ -1451,32 +1452,31 @@ describe("validateConfigDomain", () => {
       expect(() => validateCommerceAppConfig(config)).toThrow();
     });
 
-    test.each([
-      ["paas"],
-      ["saas"],
-      ["paas", "saas"],
-    ])("should accept entry scoped to env %j", (...env) => {
-      const config = {
-        metadata: {
-          description: "Test",
-          displayName: "Test",
-          id: "test-app",
-          version: "1.0.0",
-        },
-        webhooks: [
-          {
-            ...baseWebhookEntry,
-            env,
-            runtimeAction: "my-package/handle-webhook",
-            webhook: baseWebhookDefinition,
+    test.each([["paas"], ["saas"], ["paas", "saas"]])(
+      "should accept entry scoped to env %j",
+      (...env) => {
+        const config = {
+          metadata: {
+            description: "Test",
+            displayName: "Test",
+            id: "test-app",
+            version: "1.0.0",
           },
-        ],
-      };
+          webhooks: [
+            {
+              ...baseWebhookEntry,
+              env,
+              runtimeAction: "my-package/handle-webhook",
+              webhook: baseWebhookDefinition,
+            },
+          ],
+        };
 
-      expect(() => validateCommerceAppConfig(config)).not.toThrow();
-      const validated = validateCommerceAppConfig(config);
-      expect(validated.webhooks?.[0]?.env).toEqual(env);
-    });
+        expect(() => validateCommerceAppConfig(config)).not.toThrow();
+        const validated = validateCommerceAppConfig(config);
+        expect(validated.webhooks?.[0]?.env).toEqual(env);
+      },
+    );
 
     test("should reject an empty env array", () => {
       const config = {

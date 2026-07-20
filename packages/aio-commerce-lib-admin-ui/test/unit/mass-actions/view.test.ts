@@ -29,14 +29,13 @@ describe("parseMassActionSelection", () => {
     });
   });
 
-  it.each([
-    "order",
-    "product",
-    "customer",
-  ] as const)("accepts gridType %s", (gridType) => {
-    const raw = JSON.stringify({ gridType, ids: ["1"] });
-    expect(parseMassActionSelection(raw).gridType).toBe(gridType);
-  });
+  it.each(["order", "product", "customer"] as const)(
+    "accepts gridType %s",
+    (gridType) => {
+      const raw = JSON.stringify({ gridType, ids: ["1"] });
+      expect(parseMassActionSelection(raw).gridType).toBe(gridType);
+    },
+  );
 
   it("accepts a single id", () => {
     const raw = JSON.stringify({ gridType: "order", ids: ["000000001"] });
