@@ -149,7 +149,9 @@ async function writeJavaScriptAppConfigModule(
       isJson ? null : `export * from "${configImportPath}";`,
       "export default appConfig;",
       "",
-    ].filter(item => item !== null).join("\n"),
+    ]
+      .filter((item) => item !== null)
+      .join("\n"),
     "utf-8",
   );
 }
