@@ -71,17 +71,17 @@ afterEach(() => {
 });
 
 describe("createExtensionApp", () => {
-  test.each([
-    "/",
-    "#/",
-  ])("throws when the menu is also declared as the %s root route", (path) => {
-    expect(() =>
-      createExtensionApp({
-        ...OPTIONS,
-        routes: [{ element: <div />, path }],
-      }),
-    ).toThrow('The "/" route is reserved for the menu.');
-  });
+  test.each(["/", "#/"])(
+    "throws when the menu is also declared as the %s root route",
+    (path) => {
+      expect(() =>
+        createExtensionApp({
+          ...OPTIONS,
+          routes: [{ element: <div />, path }],
+        }),
+      ).toThrow('The "/" route is reserved for the menu.');
+    },
+  );
 
   test("allows a root route when no menu is configured", async () => {
     mocks.createMockRuntime.mockReturnValue(createMockRuntime());
