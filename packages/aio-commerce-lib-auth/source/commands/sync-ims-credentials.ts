@@ -11,13 +11,11 @@ export async function run() {
 
     if (!result.ok) {
       switch (result.reason) {
-        // biome-ignore lint/suspicious/noUnnecessaryConditions: Biome can't resolve the SyncImsCredentialsResult union re-exported from @aio-commerce-sdk/scripting-utils across the package boundary; this case is reachable per the actual return type.
         case "missing-env":
           consola.warn(
             ".env not found — run `aio app use` to configure your workspace.",
           );
           break;
-        // biome-ignore lint/suspicious/noUnnecessaryConditions: same cross-package type inference limitation as the "missing-env" case above.
         case "no-ims-context":
           consola.warn(
             "No IMS context configured — run `aio login` to authenticate.",
