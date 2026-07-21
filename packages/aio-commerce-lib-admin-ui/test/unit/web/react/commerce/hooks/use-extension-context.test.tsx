@@ -14,7 +14,6 @@ import { afterEach, describe, expect, test, vi } from "vitest";
 import { renderHook } from "vitest-browser-react";
 
 import { createMockGuestConnection } from "#test/fixtures/uix-guest";
-import { mockConsole } from "#test/utils/console";
 import { sharedContextProvider } from "#test/utils/shared-context.tsx";
 import {
   useMassActionContext,
@@ -40,23 +39,63 @@ describe("useMassActionContext", () => {
       wrapper: provide({ selectedIds: ["1", "2"] }),
     });
 
-    expect(result.current).toEqual({ selectedIds: ["1", "2"] });
+    expect(result.current).toEqual({
+      data: { selectedIds: ["1", "2"] },
+      error: null,
+    });
   });
 
-  test("returns an empty selection when no rows are selected", async () => {
+  test("returns an error when no rows are selected", async () => {
     const { result } = await renderHook(() => useMassActionContext(), {
       wrapper: provide({ selectedIds: [] }),
     });
 
-    expect(result.current).toEqual({ selectedIds: [] });
+    expect.assert.isNull(result.current.data);
+    expect(result.current.error.message).toContain("No rows selected");
   });
 
-  test("throws when the shared context has no selectedIds key", async () => {
-    mockConsole("error");
-    await expect(
-      renderHook(() => useMassActionContext(), { wrapper: provide({}) }),
-    ).rejects.toThrow(
+  test("returns an error when a selected ID is not a string", async () => {
+    const { result } = await renderHook(() => useMassActionContext(), {
+      wrapper: provide({ selectedIds: ["1", 2] }),
+    });
+
+    expect.assert.isNull(result.current.data);
+    expect(result.current.error.message).toContain(
+      "All selected row IDs must be strings",
+    );
+  });
+
+  test("preserves the result when the shared context is unchanged", async () => {
+    const { result, rerender } = await renderHook(
+      () => useMassActionContext(),
+      {
+        wrapper: provide({ selectedIds: ["1", "2"] }),
+      },
+    );
+
+    const initialResult = result.current;
+    await rerender();
+
+    expect(result.current).toBe(initialResult);
+  });
+
+  test("returns an error when the shared context has no selectedIds key", async () => {
+    const { result } = await renderHook(() => useMassActionContext(), {
+      wrapper: provide({}),
+    });
+
+    expect.assert.isNull(result.current.data);
+    expect(result.current.error.message).toContain(
       "Could not find `selectedIds` in the Commerce shared context",
+    );
+  });
+
+  test("returns an error when used outside the Commerce shared context", async () => {
+    const { result } = await renderHook(() => useMassActionContext());
+
+    expect.assert.isNull(result.current.data);
+    expect(result.current.error.message).toContain(
+      "useSharedContext must be used inside a SharedContextProvider",
     );
   });
 });
@@ -69,20 +108,32 @@ describe("useOrderViewButtonContext", () => {
   test("returns the order ID from the URL search params", async () => {
     window.history.replaceState(null, "", "?orderId=000000123");
 
-    const { result } = await renderHook(() => useOrderViewButtonContext());
-    expect(result.current).toEqual({ orderId: "000000123" });
+    const { result, rerender } = await renderHook(() =>
+      useOrderViewButtonContext(),
+    );
+    expect(result.current).toEqual({
+      data: { orderId: "000000123" },
+      error: null,
+    });
+
+    const initialResult = result.current;
+    await rerender();
+
+    expect(result.current).toBe(initialResult);
   });
 
   test("returns the order ID from the URL hash", async () => {
     window.history.replaceState(null, "", "/#/view?orderId=7");
 
     const { result } = await renderHook(() => useOrderViewButtonContext());
-    expect(result.current).toEqual({ orderId: "7" });
+    expect(result.current).toEqual({ data: { orderId: "7" }, error: null });
   });
 
-  test("throws when the URL has no order ID", async () => {
-    mockConsole("error");
-    await expect(renderHook(() => useOrderViewButtonContext())).rejects.toThrow(
+  test("returns an error when the URL has no order ID", async () => {
+    const { result } = await renderHook(() => useOrderViewButtonContext());
+
+    expect.assert.isNull(result.current.data);
+    expect(result.current.error.message).toContain(
       "Could not find an order ID",
     );
   });

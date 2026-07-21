@@ -388,12 +388,20 @@ describe("commands/generate/actions", () => {
           expect(appContent).toContain("#app.commerce.config");
           expect(appContent).toContain("#web/pages/main-page.jsx");
           expect(appContent).toContain("createExtensionApp");
+          expect(appContent).toContain("menu: <MainPage />");
+          expect(appContent).not.toContain("index: true");
 
           const pageContent = await readFile(
             join(webSrcDir, "src", "pages", "main-page.jsx"),
             "utf-8",
           );
           expect(pageContent).toContain("#web/components/welcome.jsx");
+
+          const welcomeContent = await readFile(
+            join(webSrcDir, "src", "components", "welcome.jsx"),
+            "utf-8",
+          );
+          expect(welcomeContent).toContain("throw error");
 
           const pkg = JSON.parse(
             await readFile(join(tempDir, "package.json"), "utf-8"),

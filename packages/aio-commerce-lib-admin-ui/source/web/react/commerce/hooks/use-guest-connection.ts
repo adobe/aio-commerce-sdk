@@ -42,5 +42,5 @@ export function useGuestConnection(extensionId: string): GuestConnection {
 
 /** Drops a failed connection for `extensionId`, so a later render re-attaches. */
 export function retryGuestConnection(extensionId: string) {
-  guestConnections.evictIfRejected(extensionId);
+  guestConnections.evictIfFailed(extensionId);
 }

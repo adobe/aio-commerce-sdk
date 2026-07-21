@@ -101,10 +101,15 @@ import {
 } from "@adobe/aio-commerce-lib-admin-ui/web";
 
 function ExportCustomersPage() {
-  const { selectedIds } = useMassActionContext(); // string[] — the selected record ids
-  const { close, closeWithError } = useHostConnection();
-  // ...render the UI, then await close() on success or closeWithError() on failure
+  const { data, error: contextError } = useMassActionContext();
+  const { actions, error: hostError } = useHostConnection();
+  if (contextError) throw contextError;
+  if (hostError) throw hostError;
+
+  const { selectedIds } = data; // non-empty string[] — the selected record ids
+  // ...render the UI, then await actions.close() on success
+  // or actions.closeWithError() on failure
 }
 ```
 
-`useMassActionContext` throws if the frame is not running as a mass-action extension point within Commerce.
+`useMassActionContext` returns an error if the frame is not running as a mass-action extension point within Commerce, or if `selectedIds` is missing, empty, or contains a non-string row ID. `useHostConnection` similarly returns an error when host frame actions are unavailable. The example throws these errors during render so the SDK's error boundary replaces the extension content with its fallback UI. To keep the page mounted, render custom recovery or degraded UI instead. Either throw or handle each error before reading `data.selectedIds` or calling `actions.close()` or `actions.closeWithError()`.

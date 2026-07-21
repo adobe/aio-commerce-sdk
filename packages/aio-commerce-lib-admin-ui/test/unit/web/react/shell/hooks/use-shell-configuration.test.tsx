@@ -16,12 +16,12 @@ import { createMockRuntime } from "#test/fixtures/exc-app";
 import { renderHookWithRouter } from "#test/utils/router.tsx";
 import { useShellConfiguration } from "#web/react/shell/hooks/use-shell-configuration";
 
-import type { RouteEntry } from "#web/react/routing/types";
+import type { ExtensionRoute } from "#web/react/routing/types";
 
 const CURRENT_PATHNAME = "/current";
 
-const ROUTES: RouteEntry[] = [
-  { element: null, index: true },
+const ROUTES: ExtensionRoute[] = [
+  { element: null, path: "/" },
   { element: null, path: "current" },
   { element: null, path: "other" },
 ];

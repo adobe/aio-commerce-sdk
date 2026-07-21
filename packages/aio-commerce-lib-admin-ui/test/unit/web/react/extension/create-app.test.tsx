@@ -17,8 +17,6 @@ import { mockConsole } from "#test/utils/console";
 import { stubShellFrame, stubStandaloneFrame } from "#test/utils/frame";
 import { createExtensionApp } from "#web/react/extension/create-app.tsx";
 
-import type { ExtensionAppRoutes } from "#web/react/routing/types";
-
 // @adobe/exc-app and the runtime loader reach the real Experience Cloud shell/runtime; they are the
 // external boundaries faked here. react-dom, the router, and the Entrypoint all run for real.
 const mocks = vi.hoisted(() => ({
@@ -47,10 +45,10 @@ vi.mock("#web/runtime-loader", () => ({
   loadExperienceCloudRuntime: mocks.loadExperienceCloudRuntime,
 }));
 
-const ROUTES: ExtensionAppRoutes = [
-  { element: <div data-testid="route-content" />, index: true },
-];
-const OPTIONS = { metadata: { extensionId: "ext-1" }, routes: ROUTES };
+const OPTIONS = {
+  menu: <div data-testid="route-content" />,
+  metadata: { extensionId: "ext-1" },
+};
 
 let restoreFrame: () => void = () => undefined;
 
@@ -73,6 +71,36 @@ afterEach(() => {
 });
 
 describe("createExtensionApp", () => {
+  test.each(["/", "#/"])(
+    "throws when the menu is also declared as the %s root route",
+    (path) => {
+      expect(() =>
+        createExtensionApp({
+          ...OPTIONS,
+          routes: [{ element: <div />, path }],
+        }),
+      ).toThrow('The "/" route is reserved for the menu.');
+    },
+  );
+
+  test("allows a root route when no menu is configured", async () => {
+    mocks.createMockRuntime.mockReturnValue(createMockRuntime());
+    mocks.loadExperienceCloudRuntime.mockImplementation(() => {
+      throw new Error("no shell");
+    });
+
+    createExtensionApp({
+      metadata: OPTIONS.metadata,
+      routes: [{ element: <div data-testid="route-content" />, path: "#/" }],
+    });
+
+    await vi.waitFor(() =>
+      expect(
+        document.querySelector('[data-testid="route-content"]'),
+      ).not.toBeNull(),
+    );
+  });
+
   test("throws when no #root element exists and no root option is given", () => {
     document.body.innerHTML = "";
     expect(() => createExtensionApp(OPTIONS)).toThrow(

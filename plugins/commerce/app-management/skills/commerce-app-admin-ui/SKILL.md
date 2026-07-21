@@ -206,13 +206,15 @@ For each `view`-type **mass action** and **order view button** (both carry a `pa
 
 Pre-wire the hook by view type — all from `@adobe/aio-commerce-lib-admin-ui/web`:
 
-| View entry           | Context hook                                  | Also                                                         | Reference                                              |
-| -------------------- | --------------------------------------------- | ------------------------------------------------------------ | ------------------------------------------------------ |
-| Mass action (`view`) | `useMassActionContext()` → `{ selectedIds }`  | `useHostConnection()` → `{ close, closeWithError }` to close | [mass-actions](references/mass-actions.md)             |
-| Order view button    | `useOrderViewButtonContext()` → `{ orderId }` | `useHostConnection()` → `{ close, closeWithError }` to close | [order-view-buttons](references/order-view-buttons.md) |
-| Menu                 | none (plain index page)                       | —                                                            | [menu](references/menu.md)                             |
+| View entry           | Context hook                                                          | Also                                                                | Reference                                              |
+| -------------------- | --------------------------------------------------------------------- | ------------------------------------------------------------------- | ------------------------------------------------------ |
+| Mass action (`view`) | `useMassActionContext()` → `{ data, error }`; use `data.selectedIds`  | `useHostConnection()` → `{ actions, error }`; use `actions.close()` | [mass-actions](references/mass-actions.md)             |
+| Order view button    | `useOrderViewButtonContext()` → `{ data, error }`; use `data.orderId` | `useHostConnection()` → `{ actions, error }`; use `actions.close()` | [order-view-buttons](references/order-view-buttons.md) |
+| Menu                 | none (plain index page)                                               | —                                                                   | [menu](references/menu.md)                             |
 
-A route component may also call `useIms()` → `{ imsToken, imsOrgId }` and `useCommerce()` → `{ commerceHost }` to reach the Commerce REST API (`imsToken` for auth, `commerceHost` for the base URL; the generated `Welcome` component demonstrates `useIms`). Add those only when the page actually needs them.
+These hooks return errors instead of throwing them. A route can throw a returned error during render to send it to the SDK's error boundary, which replaces the extension content with its fallback UI. If the route must stay mounted, handle the error locally by rendering a message, offering a retry, disabling the affected feature, or providing another degraded state. The placeholder examples below throw because they don't define custom recovery UI.
+
+A route component may also call `useIms()` and `useCommerce()` to reach the Commerce REST API or retrieve data directly from the host, respectively. Both return `{ data, error }`; after handling `error`, read `data.imsToken` and `data.imsOrgId` from `useIms()`, and `data.commerceHost` from `useCommerce()`. The generated `Welcome` component demonstrates this result handling for `useIms()`. Add those hooks only when the page actually needs them.
 
 Example — a `view` mass action placeholder page and its route registration:
 
@@ -224,8 +226,13 @@ import {
 } from "@adobe/aio-commerce-lib-admin-ui/web";
 
 export function ExportCustomersPage() {
-  const { selectedIds } = useMassActionContext(); // string[] — the selected record ids
-  const { close } = useHostConnection(); // await close() (or closeWithError()) when done
+  const { data, error: contextError } = useMassActionContext();
+  const { actions, error: hostError } = useHostConnection();
+  if (contextError) throw contextError;
+  if (hostError) throw hostError;
+
+  const { selectedIds } = data; // non-empty string[] — the selected record ids
+  const { close } = actions; // await close() (or actions.closeWithError()) when done
 
   return (
     <main>
@@ -254,7 +261,7 @@ createExtensionApp({
 });
 ```
 
-For an order view button, swap the hook for `useOrderViewButtonContext()` (`{ orderId }`) — see [order-view-buttons](references/order-view-buttons.md).
+For an order view button, swap the hook for `useOrderViewButtonContext()` and read `data.orderId` after handling `error` — see [order-view-buttons](references/order-view-buttons.md).
 
 ## Step 5 — Validate
 

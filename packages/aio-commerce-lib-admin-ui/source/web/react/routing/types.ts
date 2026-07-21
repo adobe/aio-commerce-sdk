@@ -21,14 +21,6 @@ declare module "@react-spectrum/s2/Provider" {
   }
 }
 
-/** Defines a route that is marked as the index (entrypoint) */
-export type IndexRoute = {
-  index: true;
-
-  /** The React element to render for the index route. */
-  element: ReactNode;
-};
-
 /** Defines a route that exists at a given path. */
 export type ExtensionRoute = {
   /** The path for the route. */
@@ -37,9 +29,3 @@ export type ExtensionRoute = {
   /** The React element to render for the route. */
   element: ReactNode;
 };
-
-/** Defines a route entry, which can be either an index route or a path-based route. */
-export type RouteEntry = IndexRoute | ExtensionRoute;
-
-/** Defines the routes for an extension app, which must include at least one index route (first item). */
-export type ExtensionAppRoutes = [IndexRoute, ...ExtensionRoute[]];

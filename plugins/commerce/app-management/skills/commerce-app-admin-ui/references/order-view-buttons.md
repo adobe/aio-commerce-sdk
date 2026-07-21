@@ -102,10 +102,15 @@ import {
 } from "@adobe/aio-commerce-lib-admin-ui/web";
 
 function EditShippingPage() {
-  const { orderId } = useOrderViewButtonContext(); // the order the button was clicked on
-  const { close, closeWithError } = useHostConnection();
-  // ...do the work, then await close() on success or closeWithError() on failure
+  const { data, error: contextError } = useOrderViewButtonContext();
+  const { actions, error: hostError } = useHostConnection();
+  if (contextError) throw contextError;
+  if (hostError) throw hostError;
+
+  const { orderId } = data; // the order the button was clicked on
+  // ...do the work, then await actions.close() on success
+  // or actions.closeWithError() on failure
 }
 ```
 
-On `close()` / `closeWithError()`, Commerce closes the frame, redirects back to the order view page, and renders the configured notification. `useOrderViewButtonContext` throws when the frame is not running as an order view-button extension point within Commerce.
+On `actions.close()` / `actions.closeWithError()`, Commerce closes the frame, redirects back to the order view page, and renders the configured notification. `useOrderViewButtonContext` returns an error when the frame is not running as an order view-button extension point within Commerce. The example throws hook errors during render so the SDK's error boundary replaces the extension content with its fallback UI. To keep the page mounted, render custom recovery or degraded UI instead. Either throw or handle each error before reading `data.orderId` or calling the host actions.

@@ -18,10 +18,10 @@ import { renderWithRouter } from "#test/utils/router.tsx";
 import { ExperienceShellExtensionApp } from "#web/react/extension/experience-shell-app.tsx";
 
 import type { RuntimeConfiguration } from "@adobe/exc-app";
-import type { RouteEntry } from "#web/react/routing/types";
+import type { ExtensionRoute } from "#web/react/routing/types";
 
-const ROUTES: RouteEntry[] = [
-  { element: <div data-testid="route-content" />, index: true },
+const ROUTES: ExtensionRoute[] = [
+  { element: <div data-testid="route-content" />, path: "/" },
 ];
 
 // The runtime is the exc-app boundary; a minimal fake EventEmitter is enough.

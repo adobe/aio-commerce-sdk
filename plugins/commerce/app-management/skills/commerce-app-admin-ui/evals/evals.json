@@ -70,7 +70,7 @@
       "id": 4,
       "name": "product-mass-action-view",
       "prompt": "Add a view-based 'Export selected products' mass action to the product grid in my initialized Commerce admin app. It should open an iframe page in web-src where the user can download a CSV for the selected products. It should not call a backend worker action.",
-      "expected_output": "adminUi.product.massActions with a type: \"view\" entry containing id, label, path, and sandboxPermissions such as allow-downloads. The view entry must not include runtimeAction or timeout and must not scaffold/register a backend worker action. The iframe code reads the selection with useMassActionContext imported from @adobe/aio-commerce-lib-admin-ui/web (the web-src frontend is scaffolded by init/generate). Uses the v2 adminUi schema, avoids legacy wrappers (adminUiSdk.registration or commerce/backend-ui/1), and mentions running npx @adobe/aio-commerce-lib-app init and aio app build.",
+      "expected_output": "adminUi.product.massActions with a type: \"view\" entry containing id, label, path, and sandboxPermissions such as allow-downloads. The view entry must not include runtimeAction or timeout and must not scaffold/register a backend worker action. The iframe code imports useMassActionContext and useHostConnection from @adobe/aio-commerce-lib-admin-ui/web, checks their errors and either throws during render for the error boundary or renders local fallback UI, reads selectedIds through the context hook's data, and invokes close or closeWithError through the host hook's actions. The web-src frontend is scaffolded by init/generate. Uses the v2 adminUi schema, avoids legacy wrappers (adminUiSdk.registration or commerce/backend-ui/1), and mentions running npx @adobe/aio-commerce-lib-app init and aio app build.",
       "files": [],
       "assertions": [
         "Declares adminUi.product.massActions as an array containing a type: \"view\" entry",
@@ -78,7 +78,8 @@
         "View mass action includes sandboxPermissions for iframe downloads/modals/popups",
         "View mass action does NOT include worker-only fields (no runtimeAction, no timeout)",
         "Does not scaffold or register a backend worker action for the view mass action",
-        "Iframe/web-src code contains a route for the view mass action path and reads the selection with useMassActionContext from @adobe/aio-commerce-lib-admin-ui/web",
+        "Iframe/web-src code contains a route for the view mass action path and either throws the useMassActionContext error during render or renders local fallback UI before reading data.selectedIds",
+        "Iframe/web-src code either throws the useHostConnection error during render or renders local fallback UI before calling actions.close() or actions.closeWithError()",
         "Uses the v2 adminUi shape (no commerce/backend-ui/1 or adminUiSdk.registration legacy API)",
         "Notes mention running npx @adobe/aio-commerce-lib-app init and aio app build"
       ]
@@ -106,13 +107,14 @@
       "id": 6,
       "name": "order-view-button-view",
       "prompt": "Add a view-based 'Review fraud signals' button to the Commerce Admin order detail page in my initialized app. Clicking it should open an iframe route in web-src with the order id, not run a backend worker action.",
-      "expected_output": "adminUi.order.viewButtons with a type: \"view\" entry containing id, label, path, and sandboxPermissions. The view button must not include runtimeAction or timeout and must not scaffold/register a backend worker handler. The iframe code reads the order with useOrderViewButtonContext imported from @adobe/aio-commerce-lib-admin-ui/web (the web-src frontend is scaffolded by init/generate). It stays under the order entity only, uses the v2 adminUi schema, avoids legacy wrappers (adminUiSdk.registration or commerce/backend-ui/1), and mentions running npx @adobe/aio-commerce-lib-app init and aio app build.",
+      "expected_output": "adminUi.order.viewButtons with a type: \"view\" entry containing id, label, path, and sandboxPermissions. The view button must not include runtimeAction or timeout and must not scaffold/register a backend worker handler. The iframe code imports useOrderViewButtonContext and useHostConnection from @adobe/aio-commerce-lib-admin-ui/web, checks their errors and either throws during render for the error boundary or renders local fallback UI, reads orderId through the context hook's data, and invokes close or closeWithError through the host hook's actions. The web-src frontend is scaffolded by init/generate. It stays under the order entity only, uses the v2 adminUi schema, avoids legacy wrappers (adminUiSdk.registration or commerce/backend-ui/1), and mentions running npx @adobe/aio-commerce-lib-app init and aio app build.",
       "files": [],
       "assertions": [
         "Declares adminUi.order.viewButtons as an array containing a type: \"view\" entry",
         "View button has required id, label, and path fields",
         "View button has a valid path field (a web-src route); sandboxPermissions, if present, uses only valid values (allow-downloads, allow-modals, allow-popups)",
-        "Iframe/web-src code contains a route for the view button path and reads the order with useOrderViewButtonContext from @adobe/aio-commerce-lib-admin-ui/web",
+        "Iframe/web-src code contains a route for the view button path and either throws the useOrderViewButtonContext error during render or renders local fallback UI before reading data.orderId",
+        "Iframe/web-src code either throws the useHostConnection error during render or renders local fallback UI before calling actions.close() or actions.closeWithError()",
         "View button does NOT include worker-only fields (no runtimeAction, no timeout)",
         "Does not scaffold or register a backend worker action for the view button",
         "Does not declare viewButtons under product or customer because only order supports view buttons",

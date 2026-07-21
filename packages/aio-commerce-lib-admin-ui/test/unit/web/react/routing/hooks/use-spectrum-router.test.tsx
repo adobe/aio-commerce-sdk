@@ -15,10 +15,10 @@ import { describe, expect, test } from "vitest";
 import { renderHookWithRouter } from "#test/utils/router.tsx";
 import { useSpectrumRouter } from "#web/react/routing/hooks/use-spectrum-router";
 
-import type { RouteEntry } from "#web/react/routing/types";
+import type { ExtensionRoute } from "#web/react/routing/types";
 
-const ROUTES: RouteEntry[] = [
-  { element: null, index: true },
+const ROUTES: ExtensionRoute[] = [
+  { element: null, path: "/" },
   { element: null, path: "settings" },
   { element: null, path: "bar" },
 ];

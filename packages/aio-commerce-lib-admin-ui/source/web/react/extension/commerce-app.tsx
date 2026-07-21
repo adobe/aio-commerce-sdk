@@ -128,8 +128,12 @@ function CommerceGuestConnection(props: Readonly<{ extensionId: string }>) {
 
 /** Renders IMS-gated route content for a Commerce Admin UI frame. */
 function CommerceExtensionContent() {
-  const { sharedContext } = useSharedContext();
-  const credentials = resolveCommerceImsCredentials(sharedContext);
+  const { data, error } = useSharedContext();
+  if (error) {
+    throw error;
+  }
+
+  const credentials = resolveCommerceImsCredentials(data.sharedContext);
 
   return (
     <ImsContextProvider credentials={credentials}>

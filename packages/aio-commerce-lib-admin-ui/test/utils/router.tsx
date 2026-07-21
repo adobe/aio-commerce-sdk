@@ -15,11 +15,11 @@ import { render } from "vitest-browser-react";
 
 import { createExtensionRouter } from "#web/react/routing/lib";
 
-import type { RouteEntry } from "#web/react/routing/types";
+import type { ExtensionRoute } from "#web/react/routing/types";
 
 type RouterOptions = {
   /** Routes rendered into the root component's `<Outlet />`; declare every path a test navigates to. */
-  routes?: RouteEntry[];
+  routes?: ExtensionRoute[];
   /** Initial history stack; seed multiple entries to make `useCanGoBack` true. */
   initialEntries?: string[];
 };

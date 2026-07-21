@@ -25,15 +25,15 @@ import { renderWithRouter } from "#test/utils/router.tsx";
 import { Entrypoint } from "#web/react/extension/entrypoint.tsx";
 
 import type { RuntimeConfiguration } from "@adobe/exc-app";
-import type { RouteEntry } from "#web/react/routing/types";
+import type { ExtensionRoute } from "#web/react/routing/types";
 
 // @adobe/uix-guest reaches a real uix-host across the iframe bridge; it is the only external boundary faked here.
 vi.mock("@adobe/uix-guest", async () =>
   (await import("#test/fixtures/uix-guest")).uixGuestMock(),
 );
 
-const ROUTES: RouteEntry[] = [
-  { element: <div data-testid="route-content" />, index: true },
+const ROUTES: ExtensionRoute[] = [
+  { element: <div data-testid="route-content" />, path: "/" },
 ];
 
 function renderEntrypoint(
