@@ -99,12 +99,7 @@ export async function publishEvent<
 }
 
 /**
- * Resolves the I/O Events event code for an event, matching what {@link publishEvent}
- * sends once the app is installed.
- *
- * Applies the same app-ID namespacing and Commerce-provider prefixing rules used at
- * installation time, so callers can determine an event's code without waiting for
- * installation to complete or reading it back from stored data.
+ * Resolves the I/O Events event code for an event. Applies the same app-ID namespacing and Commerce-provider prefixing rules used at installation time.
  *
  * @param appId - The application's `metadata.id`, as declared in `app.commerce.config`.
  * @param eventName - The `name` of the event, as declared in `app.commerce.config`.
