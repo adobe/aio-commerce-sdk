@@ -25,7 +25,7 @@ import {
   EventsDataNotInitializedError,
   ProviderNotFoundError,
 } from "#lib/errors";
-import { publishEvent } from "#lib/events";
+import { publishEvent, resolveIoEventCode } from "#lib/events";
 
 import type { AdobeIoEventsApiClient } from "@adobe/aio-commerce-lib-events/io-events";
 
@@ -151,5 +151,25 @@ describe("publishEvent", () => {
     ).rejects.toBeInstanceOf(EventNotFoundError);
 
     expect(client.publishEvent).not.toHaveBeenCalled();
+  });
+});
+
+describe("resolveIoEventCode", () => {
+  test("prefixes with com.adobe.commerce. for commerce provider type", () => {
+    expect(
+      resolveIoEventCode("my-app", "observer.order_placed", "commerce"),
+    ).toBe("com.adobe.commerce.my_app.observer.order_placed");
+  });
+
+  test("does not prefix for external provider type", () => {
+    expect(resolveIoEventCode("my-app", "webhook.received", "external")).toBe(
+      "my_app.webhook.received",
+    );
+  });
+
+  test("sanitizes and lowercases the app id", () => {
+    expect(
+      resolveIoEventCode("My App!", "observer.order_placed", "commerce"),
+    ).toBe("com.adobe.commerce.my_app_.observer.order_placed");
   });
 });
