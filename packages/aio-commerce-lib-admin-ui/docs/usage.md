@@ -580,7 +580,7 @@ function Actions() {
 
 #### Reading the mass-action selection
 
-`useMassActionContext` returns the row IDs the mass action was triggered with. It reads from the host-provided Commerce context and returns an error when that context doesn't include a mass-action selection:
+`useMassActionContext` returns the row IDs the mass action was triggered with. It reads from the host-provided Commerce context and returns an error when the selection is missing, empty, or contains a non-string row ID:
 
 ```jsx
 import { useMassActionContext } from "@adobe/aio-commerce-lib-admin-ui/web";
@@ -589,7 +589,7 @@ function MassActionPage() {
   const { data, error } = useMassActionContext();
   if (error) return null;
 
-  // data.selectedIds is string[] (an empty selection is valid).
+  // data.selectedIds is a non-empty string[].
 }
 ```
 

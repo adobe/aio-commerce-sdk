@@ -45,12 +45,24 @@ describe("useMassActionContext", () => {
     });
   });
 
-  test("returns an empty selection when no rows are selected", async () => {
+  test("returns an error when no rows are selected", async () => {
     const { result } = await renderHook(() => useMassActionContext(), {
       wrapper: provide({ selectedIds: [] }),
     });
 
-    expect(result.current).toEqual({ data: { selectedIds: [] }, error: null });
+    expect.assert.isNull(result.current.data);
+    expect(result.current.error.message).toContain("No rows selected");
+  });
+
+  test("returns an error when a selected ID is not a string", async () => {
+    const { result } = await renderHook(() => useMassActionContext(), {
+      wrapper: provide({ selectedIds: ["1", 2] }),
+    });
+
+    expect.assert.isNull(result.current.data);
+    expect(result.current.error.message).toContain(
+      "All selected row IDs must be strings",
+    );
   });
 
   test("preserves the result when the shared context is unchanged", async () => {

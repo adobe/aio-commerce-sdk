@@ -25,8 +25,8 @@ import type { Result } from "#web/react/types";
  * Returns the context for a mass-action extension point: the selected row IDs the action was
  * triggered with. The value is read from the host-provided Commerce context.
  *
- * Returns an error outside the Commerce shared context, or when that context does not include a
- * mass-action selection.
+ * Returns an error outside the Commerce shared context, or when the mass-action selection is
+ * missing, empty, or contains a non-string row ID.
  */
 export function useMassActionContext(): Result<MassActionContext> {
   const { data, error } = useSharedContext();
@@ -36,14 +36,31 @@ export function useMassActionContext(): Result<MassActionContext> {
       return { data: null, error };
     }
 
-    // An empty selection is valid (a mass action with nothing selected), but a missing key means
-    // the shared context was never populated with the mass-action payload.
+    // A missing key means the shared context was never populated with the mass-action payload.
     const selectedIds = data.sharedContext.get("selectedIds");
     if (!Array.isArray(selectedIds)) {
       return {
         data: null,
         error: new Error(
           "Could not find `selectedIds` in the Commerce shared context. Is this frame running as a mass-action extension point?",
+        ),
+      };
+    }
+
+    if (selectedIds.length === 0) {
+      return {
+        data: null,
+        error: new Error(
+          "No rows selected. A mass-action extension point must be triggered with at least one selected row.",
+        ),
+      };
+    }
+
+    if (selectedIds.some((id) => typeof id !== "string")) {
+      return {
+        data: null,
+        error: new Error(
+          "Some of the `selectedIds` in the Commerce shared context are not strings. All selected row IDs must be strings.",
         ),
       };
     }
