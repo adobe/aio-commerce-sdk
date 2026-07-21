@@ -48,7 +48,10 @@ describe("useCommerce", () => {
       </SharedContextProvider>
     );
 
-    const { result } = await renderHook(() => useCommerce(), { wrapper });
+    const { result, rerender } = await renderHook(() => useCommerce(), {
+      wrapper,
+    });
+
     await vi.waitFor(() => expect(result.current).not.toBeNull());
 
     expect(getCommerceHost).toHaveBeenCalledTimes(1);
@@ -56,6 +59,12 @@ describe("useCommerce", () => {
       data: { commerceHost: "my-store.example.com" },
       error: null,
     });
+
+    const initialResult = result.current;
+    await rerender();
+
+    expect(result.current).toBe(initialResult);
+    expect(getCommerceHost).toHaveBeenCalledTimes(1);
   });
 
   test("returns an error when the host lacks the integration API", async () => {

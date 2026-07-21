@@ -53,6 +53,20 @@ describe("useMassActionContext", () => {
     expect(result.current).toEqual({ data: { selectedIds: [] }, error: null });
   });
 
+  test("preserves the result when the shared context is unchanged", async () => {
+    const { result, rerender } = await renderHook(
+      () => useMassActionContext(),
+      {
+        wrapper: provide({ selectedIds: ["1", "2"] }),
+      },
+    );
+
+    const initialResult = result.current;
+    await rerender();
+
+    expect(result.current).toBe(initialResult);
+  });
+
   test("returns an error when the shared context has no selectedIds key", async () => {
     const { result } = await renderHook(() => useMassActionContext(), {
       wrapper: provide({}),
@@ -82,11 +96,18 @@ describe("useOrderViewButtonContext", () => {
   test("returns the order ID from the URL search params", async () => {
     window.history.replaceState(null, "", "?orderId=000000123");
 
-    const { result } = await renderHook(() => useOrderViewButtonContext());
+    const { result, rerender } = await renderHook(() =>
+      useOrderViewButtonContext(),
+    );
     expect(result.current).toEqual({
       data: { orderId: "000000123" },
       error: null,
     });
+
+    const initialResult = result.current;
+    await rerender();
+
+    expect(result.current).toBe(initialResult);
   });
 
   test("returns the order ID from the URL hash", async () => {

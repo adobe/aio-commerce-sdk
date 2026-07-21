@@ -66,32 +66,34 @@ export function useSharedContext(): Result<SharedContext> {
   const context = useInternalSharedContext();
   const sharedContext = useLiveSharedContext(context?.guestConnection);
 
-  if (!context) {
-    return {
-      data: null,
-      error: new Error(
-        "useSharedContext must be used inside a SharedContextProvider, which is only available in the Commerce Admin.",
-      ),
-    };
-  }
+  return useMemo<Result<SharedContext>>(() => {
+    if (!context) {
+      return {
+        data: null,
+        error: new Error(
+          "useSharedContext must be used inside a SharedContextProvider, which is only available in the Commerce Admin.",
+        ),
+      };
+    }
 
-  if (!sharedContext) {
-    return {
-      data: null,
-      error: new Error(
-        "The Commerce host did not provide a shared context for this extension.",
-      ),
-    };
-  }
+    if (!sharedContext) {
+      return {
+        data: null,
+        error: new Error(
+          "The Commerce host did not provide a shared context for this extension.",
+        ),
+      };
+    }
 
-  return {
-    data: {
-      extensionId: context.extensionId,
-      host: context.guestConnection.host,
-      sharedContext,
-    },
-    error: null,
-  };
+    return {
+      data: {
+        extensionId: context.extensionId,
+        host: context.guestConnection.host,
+        sharedContext,
+      },
+      error: null,
+    };
+  }, [context, sharedContext]);
 }
 
 /**

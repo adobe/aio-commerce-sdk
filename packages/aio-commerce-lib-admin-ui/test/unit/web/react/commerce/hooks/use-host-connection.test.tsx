@@ -46,6 +46,22 @@ describe("useHostConnection", () => {
     expect(field.onError).toHaveBeenCalledTimes(1);
   });
 
+  test("preserves the actions when the host is unchanged", async () => {
+    const field = {
+      close: vi.fn().mockResolvedValue(undefined),
+      onError: vi.fn().mockResolvedValue(undefined),
+    };
+
+    const { result, rerender } = await renderHook(() => useHostConnection(), {
+      wrapper: provide({ field }),
+    });
+
+    const initialResult = result.current;
+    await rerender();
+
+    expect(result.current).toBe(initialResult);
+  });
+
   test("returns an error when the host does not provide the frame actions", async () => {
     const { result } = await renderHook(() => useHostConnection(), {
       wrapper: provide({}),

@@ -34,12 +34,16 @@ function makeConnection() {
 
 describe("useSharedContext", () => {
   test("returns an error when used outside a SharedContextProvider", async () => {
-    const { result } = await renderHook(() => useSharedContext());
+    const { result, rerender } = await renderHook(() => useSharedContext());
+    const initialResult = result.current;
 
     expect.assert.isNull(result.current.data);
     expect(result.current.error.message).toContain(
       "useSharedContext must be used inside a SharedContextProvider",
     );
+
+    await rerender();
+    expect(result.current).toBe(initialResult);
   });
 
   test("returns the extension ID, shared context and host from the provider", async () => {
@@ -52,6 +56,18 @@ describe("useSharedContext", () => {
     expect(result.current.data.extensionId).toBe("ext-1");
     expect(result.current.data.sharedContext).toBe(connection.sharedContext);
     expect(result.current.data.host).toBe(connection.host);
+  });
+
+  test("preserves the result when the shared context is unchanged", async () => {
+    const connection = makeConnection();
+    const { result, rerender } = await renderHook(() => useSharedContext(), {
+      wrapper: sharedContextProvider(connection),
+    });
+    const initialResult = result.current;
+
+    await rerender();
+
+    expect(result.current).toBe(initialResult);
   });
 
   test("re-renders with the new shared context on a contextchange event", async () => {
