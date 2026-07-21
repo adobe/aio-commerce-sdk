@@ -45,13 +45,16 @@ describe("getSharedState", () => {
     ["eu-west-1", "emea"],
     ["ap-northeast-1", "apac"],
     ["ap-southeast-2", "aus"],
-  ])("maps __OW_REGION '%s' to region '%s'", async (owRegion, expectedRegion) => {
-    vi.stubEnv("__OW_REGION", owRegion);
-    const { getSharedState } = await import("#utils/repository");
-    await getSharedState();
+  ])(
+    "maps __OW_REGION '%s' to region '%s'",
+    async (owRegion, expectedRegion) => {
+      vi.stubEnv("__OW_REGION", owRegion);
+      const { getSharedState } = await import("#utils/repository");
+      await getSharedState();
 
-    expect(mockInitState).toHaveBeenCalledWith({ region: expectedRegion });
-  });
+      expect(mockInitState).toHaveBeenCalledWith({ region: expectedRegion });
+    },
+  );
 
   test("falls back to 'amer' for an unknown __OW_REGION value", async () => {
     vi.stubEnv("__OW_REGION", "sa-east-1");

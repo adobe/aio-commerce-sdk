@@ -40,11 +40,12 @@ describe("hasAdminUi", () => {
     expect(hasAdminUi(config)).toBe(true);
   });
 
-  test.each([
-    { config: minimalValidConfig, label: "no adminUi property" },
-  ])("returns false when config has $label", ({ config }) => {
-    expect(hasAdminUi(config)).toBe(false);
-  });
+  test.each([{ config: minimalValidConfig, label: "no adminUi property" }])(
+    "returns false when config has $label",
+    ({ config }) => {
+      expect(hasAdminUi(config)).toBe(false);
+    },
+  );
 });
 
 describe("AdminUiSchema", () => {
@@ -516,17 +517,15 @@ describe("AdminUiSchema", () => {
       expect(result.success).toBe(false);
     });
 
-    test.each([
-      "with space",
-      "with-dash",
-      "with@at",
-      "with.dot",
-    ])("invalid menu id %s is rejected", (id) => {
-      const result = v.safeParse(AdminUiSchema, {
-        menu: { ...configWithAdminUiMenu.adminUi.menu, id },
-      });
-      expect(result.success, `id "${id}" should be rejected`).toBe(false);
-    });
+    test.each(["with space", "with-dash", "with@at", "with.dot"])(
+      "invalid menu id %s is rejected",
+      (id) => {
+        const result = v.safeParse(AdminUiSchema, {
+          menu: { ...configWithAdminUiMenu.adminUi.menu, id },
+        });
+        expect(result.success, `id "${id}" should be rejected`).toBe(false);
+      },
+    );
 
     test("empty menu id is rejected", () => {
       const result = v.safeParse(AdminUiSchema, {
@@ -748,24 +747,25 @@ describe("AdminUiSchema — mass actions", () => {
         value: ["allow-popups", "allow-popups"],
       },
       { label: "empty permissions array", value: [] },
-    ])("view mass action sandboxPermissions rejected when $label", ({
-      value,
-    }) => {
-      const result = v.safeParse(AdminUiSchema, {
-        order: {
-          massActions: [
-            {
-              id: "action",
-              label: "Action",
-              path: "#/action",
-              sandboxPermissions: value,
-              type: "view",
-            },
-          ],
-        },
-      });
-      expect(result.success).toBe(false);
-    });
+    ])(
+      "view mass action sandboxPermissions rejected when $label",
+      ({ value }) => {
+        const result = v.safeParse(AdminUiSchema, {
+          order: {
+            massActions: [
+              {
+                id: "action",
+                label: "Action",
+                path: "#/action",
+                sandboxPermissions: value,
+                type: "view",
+              },
+            ],
+          },
+        });
+        expect(result.success).toBe(false);
+      },
+    );
 
     test("worker mass action with sandboxPermissions is rejected (strict)", () => {
       const result = v.safeParse(AdminUiSchema, {
@@ -784,24 +784,25 @@ describe("AdminUiSchema — mass actions", () => {
       expect(result.success).toBe(false);
     });
 
-    test.each([
-      { label: "negative", timeout: -1 },
-    ])("worker mass action with $label timeout is rejected", ({ timeout }) => {
-      const result = v.safeParse(AdminUiSchema, {
-        order: {
-          massActions: [
-            {
-              id: "action",
-              label: "Action",
-              runtimeAction: "pkg/action",
-              timeout,
-              type: "worker",
-            },
-          ],
-        },
-      });
-      expect(result.success).toBe(false);
-    });
+    test.each([{ label: "negative", timeout: -1 }])(
+      "worker mass action with $label timeout is rejected",
+      ({ timeout }) => {
+        const result = v.safeParse(AdminUiSchema, {
+          order: {
+            massActions: [
+              {
+                id: "action",
+                label: "Action",
+                runtimeAction: "pkg/action",
+                timeout,
+                type: "worker",
+              },
+            ],
+          },
+        });
+        expect(result.success).toBe(false);
+      },
+    );
 
     test.each([
       {
