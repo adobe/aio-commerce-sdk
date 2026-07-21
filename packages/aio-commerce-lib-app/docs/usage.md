@@ -1107,7 +1107,7 @@ try {
 
 ### Resolving an Event's I/O Events Code
 
-`resolveIoEventCode(appId, eventName, providerType)` computes the same event code `publishEvent` sends, without needing installation to have run or reading it back from stored data. This is useful when a caller needs to know an event's code ahead of time, e.g. to match it against an incoming I/O Event.
+`resolveIoEventCode(appId, eventName, providerType)` computes an event code matching the prefixing rules used at installation time (and that `publishEvent` sends). This is useful when a caller needs to know an event's code ahead of time, e.g. to match it against an incoming I/O Event.
 
 - `appId` — the application's `metadata.id`, as declared in `app.commerce.config.ts`.
 - `eventName` — the `name` of the event, as declared in `app.commerce.config.ts`.
