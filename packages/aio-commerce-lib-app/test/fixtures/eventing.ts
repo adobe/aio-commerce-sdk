@@ -162,7 +162,7 @@ type IoEventRegistrationHalModel =
 /** Creates a mock {@link CommerceEventsApiClient} for testing. */
 export function createMockCommerceEventsClient(
   overrides?: Partial<CustomCommerceEventsApiClient>,
-) {
+): CustomCommerceEventsApiClient {
   return {
     createEventProvider: vi.fn(overrides?.createEventProvider),
     createEventSubscription: vi.fn(overrides?.createEventSubscription),
@@ -184,7 +184,7 @@ export function createMockCommerceEventsClient(
 
 export function createMockIoEventsClient(
   overrides?: Partial<CustomAdobeIoEventsApiClient>,
-) {
+): CustomAdobeIoEventsApiClient {
   return {
     createEventMetadataForProvider: vi.fn(
       overrides?.createEventMetadataForProvider,
