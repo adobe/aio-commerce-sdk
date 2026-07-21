@@ -30,6 +30,6 @@ export {
   ProviderNotFoundError,
   PublishEventError,
 } from "./lib/errors";
-export { publishEvent } from "./lib/events";
+export { publishEvent, resolveIoEventCode } from "./lib/events";
 
 export type { AssociatedCommerceData } from "./management/association/types";
