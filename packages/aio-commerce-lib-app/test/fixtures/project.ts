@@ -39,6 +39,12 @@ export const EMPTY_PROJECT = makeProjectFiles(null);
 /** The minimum set of files needed for our commands to work with a valid config. */
 export const MINIMAL_PROJECT = makeProjectFiles(minimalValidConfig);
 
+/** A static config with a named export that must be preserved during generation. */
+export const MINIMAL_PROJECT_WITH_NAMED_EXPORT = {
+  "app.commerce.config.js": `export default ${JSON.stringify(minimalValidConfig)};\nexport const appConfigVersion = "v1";`,
+  "package.json": JSON.stringify({ type: "module" }),
+};
+
 /** Project with business configuration schema for testing full generation flows. */
 export const BUSINESS_CONFIG_PROJECT = makeProjectFiles(
   configWithBusinessConfig,

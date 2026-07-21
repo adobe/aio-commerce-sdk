@@ -41,7 +41,7 @@ import {
   getExtConfigPath,
   getManifestPath,
   getRuntimeAppConfigPath,
-  hasDynamicAppConfig,
+  requiresJavaScriptAppConfig,
   runProjectInstall,
 } from "#commands/utils";
 import {
@@ -183,7 +183,7 @@ async function generateRuntimeAppConfigModule() {
 
   if (!configFilePath) {
     throw new Error(
-      "Dynamic list options require an app.commerce.config.* file so generated actions can import the option factories at runtime.",
+      "Generating a JavaScript app config module requires an app.commerce.config.* file.",
     );
   }
 
@@ -223,12 +223,13 @@ async function prepareStaticAppConfigImportAlias() {
  * Prepare runtime-side config artifacts consumed by generated actions: the
  * bundled ESM module and its `#app.commerce.config` package import alias.
  *
- * Dynamic schemas use the source config file, while static schemas use the generated JSON manifest.
+ * Configs that require JavaScript use the source config file, while serializable
+ * default-only configs use the generated JSON manifest.
  */
 export async function prepareRuntimeAppConfigModule(
   appManifest: CommerceAppConfigOutputModel,
 ) {
-  if (hasDynamicAppConfig(appManifest)) {
+  if (await requiresJavaScriptAppConfig(appManifest)) {
     await generateRuntimeAppConfigModule();
     return;
   }

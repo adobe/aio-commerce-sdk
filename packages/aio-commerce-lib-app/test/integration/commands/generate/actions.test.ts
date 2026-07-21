@@ -48,6 +48,7 @@ import {
   EMPTY_PROJECT,
   INVALID_PROJECT,
   MINIMAL_PROJECT,
+  MINIMAL_PROJECT_WITH_NAMED_EXPORT,
   makeProjectFiles,
   withTempProject,
 } from "#test/fixtures/project";
@@ -245,6 +246,26 @@ describe("commands/generate/actions", () => {
           expect(mod.paymentMethodOptions).toEqual([
             { label: "Braintree", value: "braintree" },
           ]);
+        },
+      );
+    });
+
+    test("generates a JavaScript config module when a static config has named exports", async () => {
+      await withTempProject(
+        {
+          ...MINIMAL_PROJECT_WITH_NAMED_EXPORT,
+          ...makeTemplateFiles(),
+        },
+        async (tempDir) => {
+          await run(minimalValidConfig, tempDir);
+
+          const runtimeConfigPath = join(tempDir, getRuntimeAppConfigPath());
+          const moduleContents = await readFile(runtimeConfigPath, "utf-8");
+
+          expect(moduleContents).not.toContain("app.commerce.manifest.json");
+          const mod = await import(runtimeConfigPath);
+          expect(mod.default).toEqual(minimalValidConfig);
+          expect(mod.appConfigVersion).toBe("v1");
         },
       );
     });
