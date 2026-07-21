@@ -513,7 +513,7 @@ The whole app is wrapped in React's [`<StrictMode>`](https://react.dev/reference
 
 #### Reading IMS credentials
 
-The browser hooks return a `Result` with complementary `data` and `error` fields. When the requested host data is available, `data` contains it and `error` is `null`. Otherwise, `data` is `null` and `error` explains why the `data` can't be provided.
+The browser hooks return an object with complementary `data` and `error` fields. When the requested host data is available, `data` contains it and `error` is `null`. Otherwise, `data` is `null` and `error` explains why the `data` can't be provided.
 
 You can forward an error to the app's error boundary when you don't need custom fallback UI:
 
