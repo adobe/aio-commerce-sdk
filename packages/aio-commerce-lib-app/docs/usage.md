@@ -10,7 +10,7 @@ The `@adobe/aio-commerce-lib-app` library provides:
 - **Admin UI Configuration** (`commerce/backend-ui/2`): Generate and manage the runtime action and `workerProcess` declarations for Admin UI extensions on `commerce/backend-ui/2`. Currently supports grid column extensions, mass actions, order view buttons, and menu declarations.
 - **Association Helpers**: Retrieve the Commerce instance the app is associated with from any runtime action via `getCommerceClient` and `getCommerceInstance`.
 - **Event Emission**: Publish a configured I/O Event from any runtime action by provider key and event name via `publishEvent`.
-- **Event Code Resolution**: Compute the I/O Events event code for a declared event via `resolveIoEventCode`, without reading it back from stored installation data.
+- **Event Code Resolution**: Compute the I/O Events event code for a declared event via `resolveIoEventCode`, matching the prefixing rules used at installation time.
 
 ## Reference
 
