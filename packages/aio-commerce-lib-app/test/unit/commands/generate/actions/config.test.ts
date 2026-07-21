@@ -82,15 +82,16 @@ describe("buildAppManagementExtConfig", () => {
     },
     { config: configWithWebhooks, label: "webhooks" },
     { config: configWithViewMassActions, label: "adminUi" },
-  ])("includes installation workerProcess entry when $label is configured", ({
-    config,
-  }) => {
-    const result = buildAppManagementExtConfig(config);
-    const workerImpls =
-      result.operations?.workerProcess?.map((worker) => worker.impl) ?? [];
+  ])(
+    "includes installation workerProcess entry when $label is configured",
+    ({ config }) => {
+      const result = buildAppManagementExtConfig(config);
+      const workerImpls =
+        result.operations?.workerProcess?.map((worker) => worker.impl) ?? [];
 
-    expect(workerImpls).toContain("app-management/installation");
-  });
+      expect(workerImpls).toContain("app-management/installation");
+    },
+  );
 
   test("installation action includes encryption key input when schema has password fields", () => {
     const configWithPassword = {

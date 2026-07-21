@@ -382,24 +382,23 @@ describe("commands/init/lib", () => {
         lockFile: ["bun.lockb", ""] as const,
         packageManager: "bun",
       },
-    ])("detects $packageManager from $lockFile.0 and returns the matching exec command", async ({
-      execCommand,
-      lockFile,
-      packageManager,
-    }) => {
-      await withTempProject(
-        {
-          ...EMPTY_PROJECT,
-          [lockFile[0]]: lockFile[1],
-        },
-        async (tempDir) => {
-          const result = await ensurePackageJson(tempDir);
+    ])(
+      "detects $packageManager from $lockFile.0 and returns the matching exec command",
+      async ({ execCommand, lockFile, packageManager }) => {
+        await withTempProject(
+          {
+            ...EMPTY_PROJECT,
+            [lockFile[0]]: lockFile[1],
+          },
+          async (tempDir) => {
+            const result = await ensurePackageJson(tempDir);
 
-          expect(result.packageManager).toBe(packageManager);
-          expect(result.execCommand).toBe(execCommand);
-        },
-      );
-    });
+            expect(result.packageManager).toBe(packageManager);
+            expect(result.execCommand).toBe(execCommand);
+          },
+        );
+      },
+    );
   });
 
   describe("writePostinstallHook", () => {
@@ -497,15 +496,16 @@ describe("commands/init/lib", () => {
       { config: configWithExternalEventing, domain: "eventing.external" },
       { config: configWithWebhooks, domain: "webhooks" },
       { config: configWithAdminUiSingleGrid, domain: "adminUi" },
-    ])("generates the installation action when $domain is configured", async ({
-      config,
-    }) => {
-      await withGeneratedProject(config, (tempDir) => {
-        expect(
-          existsSync(extensibilityActionFile(tempDir, "installation")),
-        ).toBe(true);
-      });
-    });
+    ])(
+      "generates the installation action when $domain is configured",
+      async ({ config }) => {
+        await withGeneratedProject(config, (tempDir) => {
+          expect(
+            existsSync(extensibilityActionFile(tempDir, "installation")),
+          ).toBe(true);
+        });
+      },
+    );
 
     test("generates business configuration actions and schema when businessConfig.schema is configured", async () => {
       await withGeneratedProject(configWithBusinessConfig, (tempDir) => {

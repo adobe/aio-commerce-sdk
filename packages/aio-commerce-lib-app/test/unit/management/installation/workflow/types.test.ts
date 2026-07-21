@@ -75,9 +75,10 @@ describe("isCompletedState", () => {
     expect(isCompletedState(state)).toBe(true);
   });
 
-  test.each([
-    { name: "in-progress", state: inProgressState },
-  ])("returns false for $name state", ({ state }) => {
-    expect(isCompletedState(state)).toBe(false);
-  });
+  test.each([{ name: "in-progress", state: inProgressState }])(
+    "returns false for $name state",
+    ({ state }) => {
+      expect(isCompletedState(state)).toBe(false);
+    },
+  );
 });

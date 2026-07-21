@@ -28,14 +28,13 @@ const VALID_REQUEST = {
 };
 
 describe("parseMassActionRequest", () => {
-  it.each([
-    "order",
-    "product",
-    "customer",
-  ] satisfies MassActionGridType[])("accepts gridType %s", (gridType) => {
-    const result = parseMassActionRequest({ ...VALID_REQUEST, gridType });
-    expect(result.gridType).toBe(gridType);
-  });
+  it.each(["order", "product", "customer"] satisfies MassActionGridType[])(
+    "accepts gridType %s",
+    (gridType) => {
+      const result = parseMassActionRequest({ ...VALID_REQUEST, gridType });
+      expect(result.gridType).toBe(gridType);
+    },
+  );
 
   it("returns the parsed request when input is valid", () => {
     expect(parseMassActionRequest(VALID_REQUEST)).toEqual(VALID_REQUEST);

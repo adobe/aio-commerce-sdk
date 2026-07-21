@@ -82,13 +82,14 @@ describe("commands/encryption/setup", () => {
         files: { ".env": "" },
         label: "package.json not found, falls back to cwd",
       },
-    ] as const)("runs successfully and does not exit ($label)", async ({
-      files,
-    }) => {
-      await withTempFiles(files, async (tempDir) => {
-        await withChdir(tempDir, () => exec());
-        expect(exitSpy).not.toHaveBeenCalled();
-      });
-    });
+    ] as const)(
+      "runs successfully and does not exit ($label)",
+      async ({ files }) => {
+        await withTempFiles(files, async (tempDir) => {
+          await withChdir(tempDir, () => exec());
+          expect(exitSpy).not.toHaveBeenCalled();
+        });
+      },
+    );
   });
 });

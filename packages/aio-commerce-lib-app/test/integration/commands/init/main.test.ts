@@ -153,43 +153,40 @@ describe("commands/init/main", () => {
       });
     });
 
-    test.each(
-      PACKAGE_MANAGER_CASES,
-    )("uses $packageManager commands throughout init when $lockFile.0 is present", async ({
-      execCommand,
-      installPrefix,
-      lockFile,
-    }) => {
-      await withTempProject(
-        {
-          ...EMPTY_PROJECT,
-          [lockFile[0]]: lockFile[1],
-        },
-        async (tempDir) => {
-          await run(
-            {
-              appName: "Package Manager App",
-              configFormat: "ts",
-              domains: ["businessConfig.schema"],
-            },
-            { formatConfig: false },
-          );
+    test.each(PACKAGE_MANAGER_CASES)(
+      "uses $packageManager commands throughout init when $lockFile.0 is present",
+      async ({ execCommand, installPrefix, lockFile }) => {
+        await withTempProject(
+          {
+            ...EMPTY_PROJECT,
+            [lockFile[0]]: lockFile[1],
+          },
+          async (tempDir) => {
+            await run(
+              {
+                appName: "Package Manager App",
+                configFormat: "ts",
+                domains: ["businessConfig.schema"],
+              },
+              { formatConfig: false },
+            );
 
-          const pkgJson: PackageJson = JSON.parse(
-            await readFile(join(tempDir, PACKAGE_JSON_FILE), "utf-8"),
-          );
-          expect(pkgJson.scripts?.postinstall).toBe(
-            `${execCommand} aio-commerce-lib-app hooks postinstall`,
-          );
+            const pkgJson: PackageJson = JSON.parse(
+              await readFile(join(tempDir, PACKAGE_JSON_FILE), "utf-8"),
+            );
+            expect(pkgJson.scripts?.postinstall).toBe(
+              `${execCommand} aio-commerce-lib-app hooks postinstall`,
+            );
 
-          const installCalls = getInstallCalls();
-          expect(installCalls).toHaveLength(2);
-          expect(
-            installCalls.every((call) => call.startsWith(installPrefix)),
-          ).toBe(true);
-        },
-      );
-    });
+            const installCalls = getInstallCalls();
+            expect(installCalls).toHaveLength(2);
+            expect(
+              installCalls.every((call) => call.startsWith(installPrefix)),
+            ).toBe(true);
+          },
+        );
+      },
+    );
   });
 
   describe("exec", () => {
