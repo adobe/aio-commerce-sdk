@@ -511,16 +511,20 @@ When you provide `menu`, it owns the root route. Don't also add a root-equivalen
 
 The whole app is wrapped in React's [`<StrictMode>`](https://react.dev/reference/react/StrictMode). When running locally with `aio app dev` or `aio app run` (which serve React's development build), StrictMode runs its extra development-only checks: components render twice, and effects run an extra setup + cleanup cycle on mount. Duplicated renders, effect runs, or requests fired from effects during development are therefore expected — not a bug — and surface unsafe side effects early. These checks do not run in production builds, where StrictMode has no effect.
 
-#### Reading IMS credentials
+#### Handling hook errors
 
 The browser hooks return an object with complementary `data` and `error` fields. When the requested host data is available, `data` contains it and `error` is `null`. Otherwise, `data` is `null` and `error` explains why the `data` can't be provided.
 
-You can forward an error to the app's error boundary when you don't need custom fallback UI:
+The hooks don't throw these errors themselves. When you throw a returned error during render, the SDK's error boundary catches it and replaces the extension content with its fallback UI. Use this when the current page can't continue without the requested data:
 
 ```jsx
 const { data, error } = useIms();
 if (error) throw error;
 ```
+
+To keep the page mounted, handle the error locally instead. You can render a message, offer a retry, disable the affected feature, or otherwise provide a degraded experience. Returning custom UI from the component, as in the next example, handles the error locally instead of sending it to the error boundary.
+
+#### Reading IMS credentials
 
 `useIms` returns the IMS credentials provided by the host (`{ imsToken, imsOrgId }`). It works inside both the Commerce Admin and the Experience Cloud shell, and returns an error when the app runs standalone because no host provides credentials:
 
