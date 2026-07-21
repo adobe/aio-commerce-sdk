@@ -14,9 +14,10 @@ import { use } from "react";
 
 import { useInternalSharedContext } from "#web/react/commerce/context/shared-context.tsx";
 import { createRetryablePromiseCache } from "#web/react/promise-cache";
+import { error, ok } from "#web/react/result";
 
 import type { GuestConnection } from "#web/react/commerce/types";
-import type { Result } from "#web/react/types";
+import type { Result } from "#web/react/result";
 
 /** The host integration API exposed to every extension point. */
 type HostIntegration = {
@@ -26,7 +27,7 @@ type HostIntegration = {
 type CommerceData = { commerceHost: string };
 
 const commerceHosts = createRetryablePromiseCache<Result<CommerceData>>(
-  ({ error }) => error !== null,
+  (result) => result.error !== null,
 );
 
 /**
@@ -46,24 +47,16 @@ function getCommerceHostPromise(
     };
 
     if (!integration) {
-      return {
-        data: null,
-        error: new Error(
-          "The host does not provide the integration API needed to resolve the Commerce host.",
-        ),
-      };
+      return error(
+        "The host does not provide the integration API needed to resolve the Commerce host.",
+      );
     }
 
     try {
       const commerceHost = await integration.getCommerceHost();
-      return { data: { commerceHost }, error: null };
-    } catch (error) {
-      return {
-        data: null,
-        error: new Error("Failed to resolve the Commerce host.", {
-          cause: error,
-        }),
-      };
+      return ok({ commerceHost });
+    } catch (cause) {
+      return error("Failed to resolve the Commerce host.", { cause });
     }
   });
 }
@@ -83,12 +76,7 @@ export function retryCommerceHost(extensionId: string) {
 export function useCommerce(): Result<CommerceData> {
   const context = useInternalSharedContext();
   if (!context) {
-    return {
-      data: null,
-      error: new Error(
-        "useCommerce requires running inside the Commerce Admin.",
-      ),
-    };
+    return error("useCommerce requires running inside the Commerce Admin.");
   }
 
   return use(

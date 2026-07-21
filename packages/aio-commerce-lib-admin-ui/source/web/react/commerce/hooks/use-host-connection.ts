@@ -13,9 +13,10 @@
 import { useMemo } from "react";
 
 import { useSharedContext } from "#web/react/commerce/context/shared-context.tsx";
+import { actionsError, okActions } from "#web/react/result";
 
 import type { HostConnection } from "#web/react/commerce/types";
-import type { ActionsResult } from "#web/react/types";
+import type { ActionsResult } from "#web/react/result";
 
 /**
  * Host frame actions used to close the extension iframe and return control to the Commerce Admin.
@@ -40,29 +41,23 @@ type HostFrameField = {
  * ```
  */
 export function useHostConnection(): ActionsResult<HostConnection> {
-  const { data, error } = useSharedContext();
+  const { data, error: contextError } = useSharedContext();
 
   return useMemo<ActionsResult<HostConnection>>(() => {
-    if (error) {
-      return { actions: null, error };
+    if (contextError) {
+      return actionsError(contextError.message, { cause: contextError });
     }
 
     const { field } = data.host as { field?: HostFrameField };
     if (!field) {
-      return {
-        actions: null,
-        error: new Error(
-          "Host frame actions are unavailable. They require an established guest connection with a host that exposes frame actions.",
-        ),
-      };
+      return actionsError(
+        "Host frame actions are unavailable. They require an established guest connection with a host that exposes frame actions.",
+      );
     }
 
-    return {
-      actions: {
-        close: () => field.close(),
-        closeWithError: () => field.onError(),
-      },
-      error: null,
-    };
-  }, [data, error]);
+    return okActions({
+      close: () => field.close(),
+      closeWithError: () => field.onError(),
+    });
+  }, [data, contextError]);
 }

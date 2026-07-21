@@ -18,6 +18,8 @@ import {
   useSyncExternalStore,
 } from "react";
 
+import { error, ok } from "#web/react/result";
+
 import type { ReactNode } from "react";
 import type { useCommerce } from "#web/react/commerce/hooks/use-commerce";
 import type {
@@ -29,7 +31,7 @@ import type {
   SharedContext,
   SharedContextState,
 } from "#web/react/commerce/types";
-import type { Result } from "#web/react/types";
+import type { Result } from "#web/react/result";
 
 const SharedContextValue = createContext<SharedContextState | undefined>(
   undefined,
@@ -68,31 +70,22 @@ export function useSharedContext(): Result<SharedContext> {
 
   return useMemo<Result<SharedContext>>(() => {
     if (!context) {
-      return {
-        data: null,
-        error: new Error(
-          "useSharedContext must be used inside a SharedContextProvider, which is only available in the Commerce Admin.",
-        ),
-      };
+      return error(
+        "useSharedContext must be used inside a SharedContextProvider, which is only available in the Commerce Admin.",
+      );
     }
 
     if (!sharedContext) {
-      return {
-        data: null,
-        error: new Error(
-          "The Commerce host did not provide a shared context for this extension.",
-        ),
-      };
+      return error(
+        "The Commerce host did not provide a shared context for this extension.",
+      );
     }
 
-    return {
-      data: {
-        extensionId: context.extensionId,
-        host: context.guestConnection.host,
-        sharedContext,
-      },
-      error: null,
-    };
+    return ok({
+      extensionId: context.extensionId,
+      host: context.guestConnection.host,
+      sharedContext,
+    });
   }, [context, sharedContext]);
 }
 

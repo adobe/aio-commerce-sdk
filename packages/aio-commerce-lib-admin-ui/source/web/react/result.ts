@@ -23,3 +23,31 @@ type ActionMap = {
 export type ActionsResult<T extends ActionMap, E = Error> =
   | { actions: T; error: null }
   | { actions: null; error: E };
+
+/** Creates a successful data result. */
+export function ok<T>(data: T): { data: T; error: null } {
+  return { data, error: null };
+}
+
+/** Creates a failed data result. */
+export function error(
+  message: string,
+  options?: ErrorOptions,
+): { data: null; error: Error } {
+  return { data: null, error: new Error(message, options) };
+}
+
+/** Creates a successful actions result. */
+export function okActions<T extends ActionMap>(
+  actions: T,
+): { actions: T; error: null } {
+  return { actions, error: null };
+}
+
+/** Creates a failed actions result. */
+export function actionsError(
+  message: string,
+  options?: ErrorOptions,
+): { actions: null; error: Error } {
+  return { actions: null, error: new Error(message, options) };
+}

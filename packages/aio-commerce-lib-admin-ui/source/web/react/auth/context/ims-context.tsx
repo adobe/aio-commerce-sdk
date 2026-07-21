@@ -13,10 +13,11 @@
 import { createContext, use } from "react";
 
 import { isEmbeddedInHost } from "#web/react/commerce/lib";
+import { error, ok } from "#web/react/result";
 
 import type { ReactNode } from "react";
 import type { ImsContext } from "#web/react/auth/types";
-import type { Result } from "#web/react/types";
+import type { Result } from "#web/react/result";
 
 // `undefined` means there is no provider (a usage error); `null` means the provider is mounted but no host
 // has provided credentials (running standalone, outside both the Commerce Admin and the Experience Cloud shell).
@@ -31,22 +32,16 @@ const ImsContextValue = createContext<ImsContext | null | undefined>(undefined);
 export function useIms(): Result<ImsContext> {
   const credentials = use(ImsContextValue);
   if (credentials === undefined) {
-    return {
-      data: null,
-      error: new Error("useIms must be used inside an ImsContextProvider."),
-    };
+    return error("useIms must be used inside an ImsContextProvider.");
   }
 
   if (!credentials) {
-    return {
-      data: null,
-      error: new Error(
-        "useIms requires running inside the Commerce Admin or the Experience Cloud shell, which provide the IMS credentials.",
-      ),
-    };
+    return error(
+      "useIms requires running inside the Commerce Admin or the Experience Cloud shell, which provide the IMS credentials.",
+    );
   }
 
-  return { data: credentials, error: null };
+  return ok(credentials);
 }
 
 type ImsContextProviderProps = {

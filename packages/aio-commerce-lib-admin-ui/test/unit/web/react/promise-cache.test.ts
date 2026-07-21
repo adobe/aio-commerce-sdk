@@ -14,7 +14,7 @@ import { describe, expect, test, vi } from "vitest";
 
 import { createRetryablePromiseCache } from "#web/react/promise-cache";
 
-import type { Result } from "#web/react/types";
+import type { Result } from "#web/react/result";
 
 describe("createRetryablePromiseCache", () => {
   test("returns the identical promise for the same key and runs create once", () => {
