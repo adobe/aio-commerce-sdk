@@ -2,14 +2,6 @@ name: Publish Public
 
 on:
   workflow_dispatch:
-    inputs:
-      # TODO: recovery-only for the run-29924129665 incident; remove this input
-      # (and the PLUGIN_DIFF_BASE fallback in promote-skills.ts) once this
-      # release's promotion + back-sync have succeeded.
-      plugin_diff_base:
-        description: "Git ref to diff Commerce plugin versions against (overrides HEAD^1, for recovery only)"
-        required: false
-        type: string
   push:
     branches:
       - release
@@ -33,11 +25,7 @@ jobs:
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
-          # TODO: recovery-only for the run-29924129665 incident; drop back to a
-          # plain `2` once plugin_diff_base (see below) is removed. A manual
-          # plugin_diff_base can point further back than a depth-2 shallow
-          # clone reaches, so fetch full history whenever it's set.
-          fetch-depth: ${{ inputs.plugin_diff_base && '0' || '2' }}
+          fetch-depth: 2
 
       - uses: ./.github/actions/setup-release
         with:
@@ -77,7 +65,6 @@ jobs:
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
           SOURCE_REPOSITORY_PATH: ${{ github.workspace }}
-          PLUGIN_DIFF_BASE: ${{ inputs.plugin_diff_base }}
         with:
           script: |
             const { detectChangedCommercePluginVersions } = await import('${{ github.workspace }}/scripts/source/ci/release/promote-skills.ts');
@@ -99,7 +86,6 @@ jobs:
         env:
           SOURCE_REPOSITORY_PATH: ${{ github.workspace }}
           SKILLS_REPOSITORY_PATH: ${{ github.workspace }}/adobe-skills
-          PLUGIN_DIFF_BASE: ${{ inputs.plugin_diff_base }}
         with:
           github-token: ${{ secrets.ADOBE_SKILLS_TOKEN }}
           script: |
