@@ -69,7 +69,7 @@ describe("release/announce.ts", () => {
     const payload = announce(asCore(core));
     const { text } = payload;
 
-    expect(text).toContain("public (NPM)");
+    expect(text).toContain("stable NPM packages");
     expect(text).toContain(
       `${PUBLIC_PACKAGE_BASE_URL}/@adobe/aio-commerce-sdk`,
     );
@@ -92,7 +92,7 @@ describe("release/announce.ts", () => {
     const { text } = payload;
 
     expect(core.setFailed).not.toHaveBeenCalled();
-    expect(text).toContain("public (NPM)");
+    expect(text).toContain("beta NPM packages");
     expect(text).toContain(
       `${INTERNAL_PACKAGE_BASE_URL}@adobe/aio-commerce-sdk`,
     );
