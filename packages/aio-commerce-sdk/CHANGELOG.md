@@ -1,5 +1,35 @@
 # @adobe/aio-commerce-sdk
 
+## 1.4.0
+
+### Minor Changes
+
+- [#510](https://github.com/adobe/aio-commerce-sdk/pull/510) [`ce7768e`](https://github.com/adobe/aio-commerce-sdk/commit/ce7768e0ddc6ca35ad6ccec60f584c8bb5a743f0) Thanks [@oshmyheliuk](https://github.com/oshmyheliuk)! - The shared Commerce environment schema (`COMMERCE_ENVS`, `CommerceEnv`, `CommerceEnvSchema`, `CommerceEnvArraySchema`) is now re-exported from `@adobe/aio-commerce-sdk/core/commerce`.
+
+- [#508](https://github.com/adobe/aio-commerce-sdk/pull/508) [`c36f825`](https://github.com/adobe/aio-commerce-sdk/commit/c36f825aff7329fc2831d8aaca032d17bbee373a) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Re-export the `grid-columns` entrypoint from `@adobe/aio-commerce-lib-admin-ui` under `@adobe/aio-commerce-sdk/admin-ui/grid-columns`.
+
+- [#492](https://github.com/adobe/aio-commerce-sdk/pull/492) [`ce63b2b`](https://github.com/adobe/aio-commerce-sdk/commit/ce63b2b46f7ef1f2f68780b13e52d1c13fd5fe6e) Thanks [@jcuerdo](https://github.com/jcuerdo)! - Re-export the `mass-actions` entrypoint from `@adobe/aio-commerce-lib-admin-ui` under `@adobe/aio-commerce-sdk/admin-ui/mass-actions`.
+
+- [#508](https://github.com/adobe/aio-commerce-sdk/pull/508) [`c36f825`](https://github.com/adobe/aio-commerce-sdk/commit/c36f825aff7329fc2831d8aaca032d17bbee373a) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Re-export the `menu` entrypoint from `@adobe/aio-commerce-lib-admin-ui` under `@adobe/aio-commerce-sdk/admin-ui/menu`.
+
+- [#542](https://github.com/adobe/aio-commerce-sdk/pull/542) [`c15b50f`](https://github.com/adobe/aio-commerce-sdk/commit/c15b50f667e6d1288270dbd4192c150db0ff0914) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Re-export Admin UI iframe helpers from the SDK package.
+
+- [#512](https://github.com/adobe/aio-commerce-sdk/pull/512) [`b259e61`](https://github.com/adobe/aio-commerce-sdk/commit/b259e61c05bcb7a025486d1515ce644fb6f4265b) Thanks [@jcuerdo](https://github.com/jcuerdo)! - Remove `commerce/backend-ui/1` support and the `adminUiSdk` config key. Migrate to `adminUi` and `commerce/backend-ui/2`.
+
+  **Migration:** Replace `adminUiSdk` in your `app.commerce.config.*` with the `adminUi` config key. See the updated `usage.md` for the new shape. The generated `src/commerce-backend-ui-1/` directory and its `pre-app-build` hook can be removed from your project.
+
+- [#516](https://github.com/adobe/aio-commerce-sdk/pull/516) [`bdcced9`](https://github.com/adobe/aio-commerce-sdk/commit/bdcced9297ae5e1b87ce86490a2b6fad76b2e341) Thanks [@obarcelonap](https://github.com/obarcelonap)! - Re-export `order-view-buttons` from the `admin-ui/order-view-buttons` entrypoint.
+
+### Patch Changes
+
+- Updated dependencies [[`0bb7d15`](https://github.com/adobe/aio-commerce-sdk/commit/0bb7d150961f631116b1ac421124960b5b857896), [`4396a64`](https://github.com/adobe/aio-commerce-sdk/commit/4396a647ad22dba063cdf03a16e04aef9387212f), [`c15b50f`](https://github.com/adobe/aio-commerce-sdk/commit/c15b50f667e6d1288270dbd4192c150db0ff0914), [`c36f825`](https://github.com/adobe/aio-commerce-sdk/commit/c36f825aff7329fc2831d8aaca032d17bbee373a), [`bdcced9`](https://github.com/adobe/aio-commerce-sdk/commit/bdcced9297ae5e1b87ce86490a2b6fad76b2e341), [`19400fb`](https://github.com/adobe/aio-commerce-sdk/commit/19400fbdfc03c5bbfc30f995a2acdd4272c5e032), [`e85bec4`](https://github.com/adobe/aio-commerce-sdk/commit/e85bec40f1eaa91dd6bb7bc6954b2ecfc3ea4029), [`a66f389`](https://github.com/adobe/aio-commerce-sdk/commit/a66f3892622584d27cd6b5d2fc633e15bf9942a8), [`ce7768e`](https://github.com/adobe/aio-commerce-sdk/commit/ce7768e0ddc6ca35ad6ccec60f584c8bb5a743f0), [`4396a64`](https://github.com/adobe/aio-commerce-sdk/commit/4396a647ad22dba063cdf03a16e04aef9387212f), [`e85bec4`](https://github.com/adobe/aio-commerce-sdk/commit/e85bec40f1eaa91dd6bb7bc6954b2ecfc3ea4029), [`413da36`](https://github.com/adobe/aio-commerce-sdk/commit/413da36dcd83e5a41c194f5af50611097659e725), [`a5b6d61`](https://github.com/adobe/aio-commerce-sdk/commit/a5b6d6138d5f048426ef655c4dc37f470aa74e2b), [`413da36`](https://github.com/adobe/aio-commerce-sdk/commit/413da36dcd83e5a41c194f5af50611097659e725), [`ca2c4fe`](https://github.com/adobe/aio-commerce-sdk/commit/ca2c4febcdfbe52b933775f08e9a53765fc306ab), [`ce63b2b`](https://github.com/adobe/aio-commerce-sdk/commit/ce63b2b46f7ef1f2f68780b13e52d1c13fd5fe6e), [`19400fb`](https://github.com/adobe/aio-commerce-sdk/commit/19400fbdfc03c5bbfc30f995a2acdd4272c5e032)]:
+  - @adobe/aio-commerce-lib-admin-ui@0.2.0
+  - @adobe/aio-commerce-lib-core@1.2.0
+  - @adobe/aio-commerce-lib-events@1.3.0
+  - @adobe/aio-commerce-lib-api@1.3.0
+  - @adobe/aio-commerce-lib-auth@1.1.2
+  - @adobe/aio-commerce-lib-webhooks@1.2.0
+
 ## 1.3.0
 
 ### Minor Changes

@@ -1,5 +1,12 @@
 # @aio-commerce-sdk/scripting-utils
 
+## 0.3.4
+
+### Patch Changes
+
+- Updated dependencies [[`19400fb`](https://github.com/adobe/aio-commerce-sdk/commit/19400fbdfc03c5bbfc30f995a2acdd4272c5e032), [`ce7768e`](https://github.com/adobe/aio-commerce-sdk/commit/ce7768e0ddc6ca35ad6ccec60f584c8bb5a743f0), [`4396a64`](https://github.com/adobe/aio-commerce-sdk/commit/4396a647ad22dba063cdf03a16e04aef9387212f), [`413da36`](https://github.com/adobe/aio-commerce-sdk/commit/413da36dcd83e5a41c194f5af50611097659e725)]:
+  - @adobe/aio-commerce-lib-core@1.2.0
+
 ## 0.3.3
 
 ### Patch Changes

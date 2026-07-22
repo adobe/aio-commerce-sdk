@@ -10,7 +10,7 @@ type SelectorByCommerceScopeId = {
 };
 ```
 
-Defined in: [config-utils.ts:653](https://github.com/adobe/aio-commerce-sdk/blob/f055aca3ba51e08584fb5e4c366fab9c7770bd5e/packages/aio-commerce-lib-config/source/config-utils.ts#L653)
+Defined in: [config-utils.ts:659](https://github.com/adobe/aio-commerce-sdk/blob/4d87f72a1eb376a4bae7e6bc80e12098f7b0f2b3/packages/aio-commerce-lib-config/source/config-utils.ts#L659)
 
 Selector type for identifying a system scope by its Commerce API ID.
 
@@ -30,7 +30,7 @@ by: {
 }
 ```
 
-Defined in: [config-utils.ts:654](https://github.com/adobe/aio-commerce-sdk/blob/f055aca3ba51e08584fb5e4c366fab9c7770bd5e/packages/aio-commerce-lib-config/source/config-utils.ts#L654)
+Defined in: [config-utils.ts:660](https://github.com/adobe/aio-commerce-sdk/blob/4d87f72a1eb376a4bae7e6bc80e12098f7b0f2b3/packages/aio-commerce-lib-config/source/config-utils.ts#L660)
 
 #### \_tag
 

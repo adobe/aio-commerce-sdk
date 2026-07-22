@@ -4,7 +4,7 @@
 function byStoreViewId(commerceScopeId: number): SelectorByCommerceScopeId;
 ```
 
-Defined in: [config-utils.ts:807](https://github.com/adobe/aio-commerce-sdk/blob/f055aca3ba51e08584fb5e4c366fab9c7770bd5e/packages/aio-commerce-lib-config/source/config-utils.ts#L807)
+Defined in: [config-utils.ts:813](https://github.com/adobe/aio-commerce-sdk/blob/4d87f72a1eb376a4bae7e6bc80e12098f7b0f2b3/packages/aio-commerce-lib-config/source/config-utils.ts#L813)
 
 Creates a scope selector that identifies a store view by its Commerce API ID.
 
