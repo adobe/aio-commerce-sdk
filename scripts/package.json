@@ -39,7 +39,8 @@
     "@actions/github": "^9.0.0",
     "@aio-commerce-sdk/config-typescript": "workspace:*",
     "@aio-commerce-sdk/config-vitest": "workspace:*",
-    "@aio-commerce-sdk/scripting-utils": "workspace:*"
+    "@aio-commerce-sdk/scripting-utils": "workspace:*",
+    "jsonc-parser": "^3.3.1"
   },
   "sideEffects": false
 }
