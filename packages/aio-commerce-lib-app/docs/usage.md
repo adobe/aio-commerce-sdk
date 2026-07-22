@@ -716,6 +716,23 @@ adminUi: {
 }
 ```
 
+###### Field applicability by variant
+
+| Field                | Common | `view` only | `worker` only |
+| :------------------- | :----: | :---------: | :-----------: |
+| `id`                 |   x    |             |               |
+| `label`              |   x    |             |               |
+| `level`              |   x    |             |               |
+| `sortOrder`          |   x    |             |               |
+| `confirm`            |   x    |             |               |
+| `notifications`      |   x    |             |               |
+| `path`               |        |      x      |               |
+| `sandboxPermissions` |        |      x      |               |
+| `runtimeAction`      |        |             |       x       |
+| `timeout`            |        |             |       x       |
+
+The `view` and `worker` variants are strict: `runtimeAction`/`timeout` on a `view` button and `path`/`sandboxPermissions` on a `worker` button are rejected at validation time.
+
 ###### Field Reference:
 
 Shared fields (both types):
