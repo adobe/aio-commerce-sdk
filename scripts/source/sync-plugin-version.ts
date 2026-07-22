@@ -15,10 +15,9 @@
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 
-import { readJson, writeJson } from "./ci/release/utils.ts";
+import { readJson, replaceInJson } from "./ci/release/utils.ts";
 
 type PackageJson = { version: string };
-type VersionedManifest = { version: string; [key: string]: unknown };
 
 /** Syncs a Commerce plugin's .tessl-plugin/plugin.json and .claude-plugin/plugin.json versions to its package.json version. */
 export default async function main() {
@@ -35,11 +34,9 @@ export default async function main() {
   ].filter((manifestPath) => existsSync(manifestPath));
 
   await Promise.all(
-    manifestPaths.map(async (manifestPath) => {
-      const manifest = await readJson<VersionedManifest>(manifestPath);
-      manifest.version = packageJson.version;
-      await writeJson(manifestPath, manifest);
-    }),
+    manifestPaths.map((manifestPath) =>
+      replaceInJson(manifestPath, { version: packageJson.version }),
+    ),
   );
 }
 
