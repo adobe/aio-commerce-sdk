@@ -33,7 +33,11 @@ jobs:
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
-          fetch-depth: 2
+          # TODO: recovery-only for the run-29924129665 incident; drop back to a
+          # plain `2` once plugin_diff_base (see below) is removed. A manual
+          # plugin_diff_base can point further back than a depth-2 shallow
+          # clone reaches, so fetch full history whenever it's set.
+          fetch-depth: ${{ inputs.plugin_diff_base && '0' || '2' }}
 
       - uses: ./.github/actions/setup-release
         with:
