@@ -13,7 +13,7 @@
 import { cp, mkdir, readFile, rm } from "node:fs/promises";
 import { basename, dirname, join } from "node:path";
 
-import { readJson, runGitHubScript, writeJson } from "./utils.ts";
+import { readJson, replaceInJson, runGitHubScript } from "./utils.ts";
 
 import type { AsyncFunctionArguments } from "./types.ts";
 
@@ -125,6 +125,12 @@ export async function promoteSkills(
   );
 }
 
+// TODO: recovery-only override, see publish-public.yml's plugin_diff_base
+// input — remove both once this incident's recovery is done.
+function getPluginDiffBase() {
+  return process.env.PLUGIN_DIFF_BASE || "HEAD^1";
+}
+
 export async function getChangedPluginPackagePaths(
   exec: AsyncFunctionArguments["exec"],
   sourceRepositoryPath: string,
@@ -136,7 +142,7 @@ export async function getChangedPluginPackagePaths(
       sourceRepositoryPath,
       "diff",
       "--name-only",
-      "HEAD^1",
+      getPluginDiffBase(),
       "HEAD",
       "--",
       "plugins/commerce/*/package.json",
@@ -273,7 +279,12 @@ async function readPreviousPackageJson(
 ) {
   const result = await exec.getExecOutput(
     "git",
-    ["-C", sourceRepositoryPath, "show", `HEAD^1:${packagePath}`],
+    [
+      "-C",
+      sourceRepositoryPath,
+      "show",
+      `${getPluginDiffBase()}:${packagePath}`,
+    ],
     { ignoreReturnCode: true, silent: true },
   );
 
@@ -294,8 +305,7 @@ async function rewritePluginRepository(targetPath: string) {
     );
   }
 
-  pluginJson.repository = TARGET_REPOSITORY_URL;
-  await writeJson(pluginJsonPath, pluginJson);
+  await replaceInJson(pluginJsonPath, { repository: TARGET_REPOSITORY_URL });
 }
 
 // @changesets/release-utils ships an equivalent getChangelogEntry, but it's

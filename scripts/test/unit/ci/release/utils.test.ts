@@ -16,7 +16,7 @@ import { join } from "node:path";
 import { withTempFiles } from "@aio-commerce-sdk/scripting-utils/filesystem";
 import { describe, expect, test } from "vitest";
 
-import { readJson, runGitHubScript, writeJson } from "#ci/release/utils";
+import { readJson, replaceInJson, runGitHubScript } from "#ci/release/utils";
 import { asCore, createCoreMock } from "#test/fixtures/release";
 
 describe("release/utils.ts", () => {
@@ -85,25 +85,63 @@ describe("release/utils.ts", () => {
     });
   });
 
-  describe("writeJson", () => {
-    test("writes a value as formatted JSON with a trailing newline", async () => {
-      await withTempFiles({}, async (tempDir) => {
+  describe("replaceInJson", () => {
+    test("replaces a top-level key's value, preserving everything else", async () => {
+      const original =
+        '{\n  "name": "test",\n  "version": "1.0.0",\n  "keywords": ["commerce", "adobe"]\n}\n';
+
+      await withTempFiles({ "data.json": original }, async (tempDir) => {
         const path = join(tempDir, "data.json");
-        await writeJson(path, { name: "test", version: "1.0.0" });
+        await replaceInJson(path, { version: "2.0.0" });
 
         await expect(readFile(path, "utf-8")).resolves.toBe(
-          '{\n  "name": "test",\n  "version": "1.0.0"\n}\n',
+          '{\n  "name": "test",\n  "version": "2.0.0",\n  "keywords": ["commerce", "adobe"]\n}\n',
         );
       });
     });
 
-    test("formats the output with Biome, collapsing short arrays onto one line", async () => {
-      await withTempFiles({}, async (tempDir) => {
+    test("recurses into nested plain objects", async () => {
+      const original =
+        '{\n  "name": "test",\n  "nested": {\n    "keep": "as-is",\n    "meta": {\n      "author": "Adobe"\n    }\n  }\n}\n';
+
+      await withTempFiles({ "data.json": original }, async (tempDir) => {
         const path = join(tempDir, "data.json");
-        await writeJson(path, { keywords: ["commerce", "adobe"] });
+        await replaceInJson(path, {
+          nested: { meta: { author: "Someone Else" } },
+        });
 
         await expect(readFile(path, "utf-8")).resolves.toBe(
-          '{\n  "keywords": ["commerce", "adobe"]\n}\n',
+          '{\n  "name": "test",\n  "nested": {\n    "keep": "as-is",\n    "meta": {\n      "author": "Someone Else"\n    }\n  }\n}\n',
+        );
+      });
+    });
+
+    test("applies multiple top-level and nested replacements in a single call", async () => {
+      const original =
+        '{\n  "name": "test",\n  "version": "1.0.0",\n  "nested": {\n    "author": "Adobe"\n  }\n}\n';
+
+      await withTempFiles({ "data.json": original }, async (tempDir) => {
+        const path = join(tempDir, "data.json");
+        await replaceInJson(path, {
+          nested: { author: "Someone Else" },
+          version: "2.0.0",
+        });
+
+        await expect(readFile(path, "utf-8")).resolves.toBe(
+          '{\n  "name": "test",\n  "version": "2.0.0",\n  "nested": {\n    "author": "Someone Else"\n  }\n}\n',
+        );
+      });
+    });
+
+    test("leaves keys not present in the replacement value untouched", async () => {
+      const original = '{\n  "a": 1,\n  "b": 2,\n  "c": 3\n}\n';
+
+      await withTempFiles({ "data.json": original }, async (tempDir) => {
+        const path = join(tempDir, "data.json");
+        await replaceInJson(path, { b: 20 });
+
+        await expect(readFile(path, "utf-8")).resolves.toBe(
+          '{\n  "a": 1,\n  "b": 20,\n  "c": 3\n}\n',
         );
       });
     });
