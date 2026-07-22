@@ -1,4 +1,4 @@
-name: Publish Internal
+name: Publish Beta
 
 on:
   workflow_dispatch:
@@ -12,7 +12,7 @@ concurrency: ${{ github.workflow }}-${{ github.ref }}
 
 jobs:
   release:
-    name: Release Internal
+    name: Release Beta
     if: github.repository == 'adobe/aio-commerce-sdk'
     runs-on: ubuntu-latest
     permissions:
@@ -21,6 +21,12 @@ jobs:
       packages: write
       id-token: write
     steps:
+      - name: Ensure running from main
+        if: github.ref != 'refs/heads/main'
+        run: |
+          echo "::error::Publish Beta should only be run from main (triggered from ${{ github.ref }}). Use Publish Alpha to snapshot other branches."
+          exit 1
+
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
       - uses: ./.github/actions/setup-release
