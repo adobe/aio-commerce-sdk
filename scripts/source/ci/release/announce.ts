@@ -105,7 +105,10 @@ function formatMarkdownAnnouncement(
     return a.name.localeCompare(b.name);
   });
 
-  let announcement = `:rocket: New public (NPM) packages for <${REPOSITORY_URL}|Adobe Commerce SDK for App Builder>\n\n`;
+  const isBetaRelease = publishedPackages.some((pkg) =>
+    pkg.version.includes("beta"),
+  );
+  let announcement = `:rocket: New ${isBetaRelease ? "beta" : "stable"} NPM packages for <${REPOSITORY_URL}|Adobe Commerce SDK for App Builder>\n\n`;
 
   for (const pkg of publishedPackages) {
     const pkgRelease = `${pkg.name}@${pkg.version}`;
