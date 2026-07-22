@@ -32,6 +32,7 @@
 | [IoEventRegistrationOneResponse](type-aliases/IoEventRegistrationOneResponse.md)                       | Defines the fields of an I/O event registration entity returned by the Adobe I/O Events API.                               |
 | [IoEventRegistrationPaginatedResponse](type-aliases/IoEventRegistrationPaginatedResponse.md)           | Defines the fields of paginated I/O event registration entities returned by the Adobe I/O Events API (consumer org-level). |
 | [PageMetadata](type-aliases/PageMetadata.md)                                                           | Defines the pagination metadata for paginated responses.                                                                   |
+| [PublishEventParams](type-aliases/PublishEventParams.md)                                               | Parameters required to publish an event to the I/O Events ingress.                                                         |
 | [SubscriberFilter](type-aliases/SubscriberFilter.md)                                                   | The subscriber-defined filter for a registration.                                                                          |
 | [SubscriberFilterModel](type-aliases/SubscriberFilterModel.md)                                         | Defines a subscriber-defined filter (from API response).                                                                   |
 | [UpdateRegistrationParams](type-aliases/UpdateRegistrationParams.md)                                   | The parameters for updating a registration.                                                                                |
@@ -84,4 +85,5 @@
 | [getEventMetadataForEventAndProvider](functions/getEventMetadataForEventAndProvider.md) | Gets event metadata for a specific event code and provider.                                                                   |
 | [getEventProviderById](functions/getEventProviderById.md)                               | Gets an event provider by ID.                                                                                                 |
 | [getRegistrationById](functions/getRegistrationById.md)                                 | Gets an event registration by ID.                                                                                             |
+| [publishEvent](functions/publishEvent.md)                                               | Publishes an event to the Adobe I/O Events ingress endpoint.                                                                  |
 | [updateRegistration](functions/updateRegistration.md)                                   | Updates an event registration.                                                                                                |

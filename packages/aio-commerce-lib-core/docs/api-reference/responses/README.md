@@ -42,4 +42,7 @@
 | --------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
 | [buildErrorResponse](functions/buildErrorResponse.md)     | Creates a standardized error response for runtime actions                                         |
 | [buildSuccessResponse](functions/buildSuccessResponse.md) | Creates a standardized success response for runtime actions                                       |
+| [isActionResponse](functions/isActionResponse.md)         | Determines whether a value is a standardized SDK action response.                                 |
+| [isErrorResponse](functions/isErrorResponse.md)           | Determines whether a value is a standardized SDK error response.                                  |
+| [isSuccessResponse](functions/isSuccessResponse.md)       | Determines whether a value is a standardized SDK success response.                                |
 | [noContent](functions/noContent.md)                       | Creates a success response with the HTTP status code 204 (No Content). This response has no body. |

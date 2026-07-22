@@ -1,11 +1,5 @@
 # `storage`: Module
 
-## Interfaces
-
-| Interface                                    | Description                        |
-| -------------------------------------------- | ---------------------------------- |
-| [KeyValueStore](interfaces/KeyValueStore.md) | Generic key-value store interface. |
-
 ## Type Aliases
 
 | Type Alias                                                   | Description                                                                                                                         |
@@ -13,6 +7,7 @@
 | [CombinedStoreOptions](type-aliases/CombinedStoreOptions.md) | Options for creating a combined store.                                                                                              |
 | [FilesStoreOptions](type-aliases/FilesStoreOptions.md)       | Options for creating a lib-files based store.                                                                                       |
 | [KeyExtractor](type-aliases/KeyExtractor.md)                 | Function to extract a key from data. Used when saving data without explicitly providing a key.                                      |
+| [KeyValueStore](type-aliases/KeyValueStore.md)               | Generic key-value store interface.                                                                                                  |
 | [PersistPredicate](type-aliases/PersistPredicate.md)         | Predicate function to determine if data should be persisted. Used by combined stores to decide when to write to persistent storage. |
 | [StateStoreOptions](type-aliases/StateStoreOptions.md)       | Options for creating a lib-state based store.                                                                                       |
 

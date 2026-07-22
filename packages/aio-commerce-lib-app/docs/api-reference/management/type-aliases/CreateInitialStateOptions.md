@@ -8,7 +8,7 @@ type CreateInitialStateOptions = {
 };
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/workflow/runner.ts:41](https://github.com/adobe/aio-commerce-sdk/blob/f055aca3ba51e08584fb5e4c366fab9c7770bd5e/packages/aio-commerce-lib-app/source/management/installation/workflow/runner.ts#L41)
+Defined in: [aio-commerce-lib-app/source/management/installation/workflow/runner.ts:41](https://github.com/adobe/aio-commerce-sdk/blob/4d87f72a1eb376a4bae7e6bc80e12098f7b0f2b3/packages/aio-commerce-lib-app/source/management/installation/workflow/runner.ts#L41)
 
 Options for creating an initial installation state.
 
@@ -20,7 +20,7 @@ Options for creating an initial installation state.
 config: CommerceAppConfigOutputModel;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/workflow/runner.ts:46](https://github.com/adobe/aio-commerce-sdk/blob/f055aca3ba51e08584fb5e4c366fab9c7770bd5e/packages/aio-commerce-lib-app/source/management/installation/workflow/runner.ts#L46)
+Defined in: [aio-commerce-lib-app/source/management/installation/workflow/runner.ts:46](https://github.com/adobe/aio-commerce-sdk/blob/4d87f72a1eb376a4bae7e6bc80e12098f7b0f2b3/packages/aio-commerce-lib-app/source/management/installation/workflow/runner.ts#L46)
 
 The app configuration used to determine applicable steps.
 
@@ -32,7 +32,7 @@ The app configuration used to determine applicable steps.
 optional mode?: ExecutionMode;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/workflow/runner.ts:49](https://github.com/adobe/aio-commerce-sdk/blob/f055aca3ba51e08584fb5e4c366fab9c7770bd5e/packages/aio-commerce-lib-app/source/management/installation/workflow/runner.ts#L49)
+Defined in: [aio-commerce-lib-app/source/management/installation/workflow/runner.ts:49](https://github.com/adobe/aio-commerce-sdk/blob/4d87f72a1eb376a4bae7e6bc80e12098f7b0f2b3/packages/aio-commerce-lib-app/source/management/installation/workflow/runner.ts#L49)
 
 The execution mode. When "uninstall", steps use `meta.uninstall` if defined; defaults to "install".
 
@@ -44,6 +44,6 @@ The execution mode. When "uninstall", steps use `meta.uninstall` if defined; def
 rootStep: BranchStep;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/workflow/runner.ts:43](https://github.com/adobe/aio-commerce-sdk/blob/f055aca3ba51e08584fb5e4c366fab9c7770bd5e/packages/aio-commerce-lib-app/source/management/installation/workflow/runner.ts#L43)
+Defined in: [aio-commerce-lib-app/source/management/installation/workflow/runner.ts:43](https://github.com/adobe/aio-commerce-sdk/blob/4d87f72a1eb376a4bae7e6bc80e12098f7b0f2b3/packages/aio-commerce-lib-app/source/management/installation/workflow/runner.ts#L43)
 
 The root branch step to build the state from.

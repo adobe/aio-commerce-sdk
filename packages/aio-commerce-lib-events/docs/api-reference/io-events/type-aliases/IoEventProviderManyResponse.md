@@ -11,7 +11,7 @@ type IoEventProviderManyResponse = {
 };
 ```
 
-Defined in: [io-events/api/event-providers/types.ts:44](https://github.com/adobe/aio-commerce-sdk/blob/f055aca3ba51e08584fb5e4c366fab9c7770bd5e/packages/aio-commerce-lib-events/source/io-events/api/event-providers/types.ts#L44)
+Defined in: [io-events/api/event-providers/types.ts:44](https://github.com/adobe/aio-commerce-sdk/blob/4d87f72a1eb376a4bae7e6bc80e12098f7b0f2b3/packages/aio-commerce-lib-events/source/io-events/api/event-providers/types.ts#L44)
 
 Defines the fields of many I/O event provider entities returned by the Adobe I/O Events API.
 
@@ -25,7 +25,7 @@ _embedded: {
 };
 ```
 
-Defined in: [io-events/api/event-providers/types.ts:45](https://github.com/adobe/aio-commerce-sdk/blob/f055aca3ba51e08584fb5e4c366fab9c7770bd5e/packages/aio-commerce-lib-events/source/io-events/api/event-providers/types.ts#L45)
+Defined in: [io-events/api/event-providers/types.ts:45](https://github.com/adobe/aio-commerce-sdk/blob/4d87f72a1eb376a4bae7e6bc80e12098f7b0f2b3/packages/aio-commerce-lib-events/source/io-events/api/event-providers/types.ts#L45)
 
 #### providers
 
@@ -43,7 +43,7 @@ _links: {
 }
 ```
 
-Defined in: [io-events/api/event-providers/types.ts:48](https://github.com/adobe/aio-commerce-sdk/blob/f055aca3ba51e08584fb5e4c366fab9c7770bd5e/packages/aio-commerce-lib-events/source/io-events/api/event-providers/types.ts#L48)
+Defined in: [io-events/api/event-providers/types.ts:48](https://github.com/adobe/aio-commerce-sdk/blob/4d87f72a1eb376a4bae7e6bc80e12098f7b0f2b3/packages/aio-commerce-lib-events/source/io-events/api/event-providers/types.ts#L48)
 
 #### self
 

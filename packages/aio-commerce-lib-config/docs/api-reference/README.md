@@ -1,4 +1,4 @@
-# `@adobe/aio-commerce-lib-config`: `v1.5.1`
+# `@adobe/aio-commerce-lib-config`: `v1.6.0`
 
 This module exports configuration management utilities for the AIO Commerce SDK.
 
@@ -63,11 +63,13 @@ This module exports configuration management utilities for the AIO Commerce SDK.
 | [getConfiguration](functions/getConfiguration.md)                       | Gets configuration for a scope.                                                                                                  |
 | [getConfigurationByKey](functions/getConfigurationByKey.md)             | Gets a specific configuration value by key for a scope.                                                                          |
 | [getScopeTree](functions/getScopeTree.md)                               | Gets the scope tree from cache or Commerce API.                                                                                  |
+| [getSystemConfigByKey](functions/getSystemConfigByKey.md)               | Retrieves a system configuration value by key.                                                                                   |
 | [hasDynamicSchema](functions/hasDynamicSchema.md)                       | Whether a business configuration schema contains any `dynamicList` fields that need runtime resolution before use.               |
 | [initialize](functions/initialize.md)                                   | Initializes the configuration library so that it works as expected.                                                              |
 | [resolveBusinessConfigSchema](functions/resolveBusinessConfigSchema.md) | Resolves any dynamic parts of a business configuration schema into a static one suitable for validation, storage, and rendering. |
 | [setConfiguration](functions/setConfiguration.md)                       | Sets configuration values for a scope.                                                                                           |
 | [setCustomScopeTree](functions/setCustomScopeTree.md)                   | Sets the custom scope tree, replacing all existing custom scopes with the provided ones.                                         |
+| [setSystemConfigByKey](functions/setSystemConfigByKey.md)               | Stores or clears a system configuration value by key.                                                                            |
 | [syncCommerceScopes](functions/syncCommerceScopes.md)                   | Syncs Commerce scopes by forcing a fresh fetch from Commerce API and updating the cache.                                         |
 | [unsyncCommerceScopes](functions/unsyncCommerceScopes.md)               | Removes the commerce scope from the persisted scope tree.                                                                        |
 | [validateEncryptionKey](functions/validateEncryptionKey.md)             | Validates the encryption key.                                                                                                    |

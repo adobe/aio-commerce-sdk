@@ -1,5 +1,17 @@
 # @adobe/aio-commerce-lib-core
 
+## 1.2.0
+
+### Minor Changes
+
+- [#563](https://github.com/adobe/aio-commerce-sdk/pull/563) [`19400fb`](https://github.com/adobe/aio-commerce-sdk/commit/19400fbdfc03c5bbfc30f995a2acdd4272c5e032) Thanks [@obarcelonap](https://github.com/obarcelonap)! - Add response type guards to identify standardized SDK action, success, and error responses.
+
+- [#510](https://github.com/adobe/aio-commerce-sdk/pull/510) [`ce7768e`](https://github.com/adobe/aio-commerce-sdk/commit/ce7768e0ddc6ca35ad6ccec60f584c8bb5a743f0) Thanks [@oshmyheliuk](https://github.com/oshmyheliuk)! - Add a `./commerce` export with the shared Commerce environment schema (`COMMERCE_ENVS`, `CommerceEnv`, `CommerceEnvSchema`, `CommerceEnvArraySchema`).
+
+- [#522](https://github.com/adobe/aio-commerce-sdk/pull/522) [`4396a64`](https://github.com/adobe/aio-commerce-sdk/commit/4396a647ad22dba063cdf03a16e04aef9387212f) Thanks [@oshmyheliuk](https://github.com/oshmyheliuk)! - Export the `CommerceSdkErrorBaseOptions` and `CommerceSdkErrorOptions` types from the `./error` entrypoint so error subclasses in other packages can build their own options types from them instead of re-deriving the base shape.
+
+- [#486](https://github.com/adobe/aio-commerce-sdk/pull/486) [`413da36`](https://github.com/adobe/aio-commerce-sdk/commit/413da36dcd83e5a41c194f5af50611097659e725) Thanks [@obarcelonap](https://github.com/obarcelonap)! - Response presets now accept an optional type argument for a typed return value.
+
 ## 1.1.1
 
 ### Patch Changes
