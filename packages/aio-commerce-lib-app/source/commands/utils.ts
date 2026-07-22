@@ -22,6 +22,7 @@ import consola from "consola";
 import * as prettier from "prettier";
 
 import { parseCommerceAppConfig } from "#config/index";
+import { hasNamedCommerceAppConfigExports } from "#config/lib/parser";
 
 import {
   APP_MANIFEST_FILE,
@@ -164,6 +165,15 @@ export function runProjectInstall(
 export function hasDynamicAppConfig(appConfig: CommerceAppConfigOutputModel) {
   const schema = appConfig.businessConfig?.schema;
   return Array.isArray(schema) && hasDynamicSchema(schema);
+}
+
+/** Whether preserving the app config requires generating a JavaScript module. */
+export async function requiresJavaScriptAppConfig(
+  appConfig: CommerceAppConfigOutputModel,
+) {
+  return (
+    hasDynamicAppConfig(appConfig) || (await hasNamedCommerceAppConfigExports())
+  );
 }
 
 /**

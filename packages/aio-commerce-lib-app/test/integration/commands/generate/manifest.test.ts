@@ -37,6 +37,7 @@ import {
   EMPTY_PROJECT,
   INVALID_PROJECT,
   MINIMAL_PROJECT,
+  MINIMAL_PROJECT_WITH_NAMED_EXPORT,
   withTempProject,
 } from "#test/fixtures/project";
 
@@ -101,6 +102,13 @@ describe("commands/generate/manifest", () => {
       await withTempProject(EMPTY_PROJECT, async (tempDir) => {
         await run(configWithDynamicListOptions);
         await expectFileToNotExist(getManifestPath(tempDir));
+      });
+    });
+
+    test("does not emit a JSON manifest when the config has named exports", async () => {
+      await withTempProject(MINIMAL_PROJECT_WITH_NAMED_EXPORT, async () => {
+        await run(minimalValidConfig);
+        await expectFileToNotExist(getManifestPath(process.cwd()));
       });
     });
 
