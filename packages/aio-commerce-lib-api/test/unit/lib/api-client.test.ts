@@ -37,7 +37,7 @@ describe("lib/api-client", () => {
 
     it("should bind provided functions to the client and preserve shape", async () => {
       const { testClient } = context;
-      const api = ApiClient.create(testClient, { sum, getApiKey, asyncOp });
+      const api = ApiClient.create(testClient, { asyncOp, getApiKey, sum });
 
       expect(api.sum).toBeDefined();
       expect(api.getApiKey).toBeDefined();

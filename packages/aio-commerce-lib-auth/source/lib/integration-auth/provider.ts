@@ -98,9 +98,9 @@ export function getIntegrationAuthProvider(
       key: authParams.consumerKey,
       secret: authParams.consumerSecret,
     },
-    signature_method: "HMAC-SHA256",
     hash_function: (baseString, key) =>
       crypto.createHmac("sha256", key).update(baseString).digest("base64"),
+    signature_method: "HMAC-SHA256",
   });
 
   const oauthToken = {
@@ -110,9 +110,21 @@ export function getIntegrationAuthProvider(
 
   return {
     getHeaders: (method: HttpMethodInput, url: AdobeCommerceUrl) => {
-      const urlString = parse(UrlSchema, url);
+      const parsed = new URL(parse(UrlSchema, url));
+
+      // oauth-1.0a's authorize method re-encodes keys even if already encoded
+      // Split query parameters from base URL to avoid double encoding
+      const data: Record<string, string | string[]> = {};
+      const uniqueKeys = Array.from(new Set(parsed.searchParams.keys()));
+
+      for (const key of uniqueKeys) {
+        const values = parsed.searchParams.getAll(key);
+        data[key] = values.length > 1 ? values : values[0];
+      }
+
+      const baseUri = `${parsed.origin}${parsed.pathname}`;
       return oauth.toHeader(
-        oauth.authorize({ url: urlString, method }, oauthToken),
+        oauth.authorize({ data, method, url: baseUri }, oauthToken),
       );
     },
   };

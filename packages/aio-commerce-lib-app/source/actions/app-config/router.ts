@@ -11,16 +11,18 @@
  */
 
 import { resolveBusinessConfigSchema } from "@adobe/aio-commerce-lib-config";
+import { CommerceEnvSchema } from "@adobe/aio-commerce-lib-core/commerce";
 import {
   internalServerError,
   ok,
 } from "@adobe/aio-commerce-lib-core/responses";
 import {
   HttpActionRouter,
-  logger,
+  logger as withLogger,
 } from "@aio-commerce-sdk/common-utils/actions";
 import * as v from "valibot";
 
+import { filterAppConfigByEnv } from "#config/lib/environment";
 import { validateCommerceAppConfig } from "#config/lib/validate";
 import { hasBusinessConfigSchema } from "#config/schema/business-configuration";
 import { getConfigDomains } from "#config/schema/domains";
@@ -52,12 +54,12 @@ interface AppConfigActionContext extends BaseContext {
  * - GET /openapi.json   Returns the OpenAPI spec for all SDK actions
  */
 export const router = new HttpActionRouter<AppConfigActionContext>().use(
-  logger({ name: () => "app-config" }),
+  withLogger({ name: () => "app-config" }),
 );
 
 /** GET / - Get app config */
 router.get("/", {
-  handler: async (_req, { logger, rawParams }) => {
+  handler: async (req, { logger, rawParams }) => {
     const rawAppConfig = rawParams.appConfig;
 
     if (!rawAppConfig) {
@@ -81,8 +83,13 @@ router.get("/", {
     }
 
     logger.debug("Validating app config...");
-    const config = validateCommerceAppConfig(appConfig);
+    const validatedConfig = validateCommerceAppConfig(appConfig);
     logger.debug("Successfully validated the app config");
+
+    const { commerceEnv } = req.query;
+    const config = commerceEnv
+      ? filterAppConfigByEnv(validatedConfig, commerceEnv)
+      : validatedConfig;
 
     const domains = getConfigDomains(rawParams.appConfig);
     const openApiSpecUrl = `${getServerUrl()}/app-config/openapi.json?ck=${getOpenApiCacheKey(domains)}`;
@@ -91,6 +98,7 @@ router.get("/", {
       body: { ...config, openApiSpecUrl },
     });
   },
+  query: v.object({ commerceEnv: v.optional(CommerceEnvSchema) }),
 });
 
 /**
@@ -98,7 +106,6 @@ router.get("/", {
  * @internal - Do not add to OpenAPI Spec.
  */
 router.get("/openapi.json", {
-  query: v.object({ ck: v.optional(v.string()) }),
   handler: async (req, { logger, rawParams }) => {
     const { ck } = req.query;
     const domains = getConfigDomains(rawParams.appConfig);
@@ -119,4 +126,5 @@ router.get("/openapi.json", {
       body: await buildOpenApiSpec(domains, logger),
     });
   },
+  query: v.object({ ck: v.optional(v.string()) }),
 });

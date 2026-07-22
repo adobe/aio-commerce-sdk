@@ -12,7 +12,13 @@
 
 import { describe, expect, it } from "vitest";
 
-import { buildErrorResponse, buildSuccessResponse } from "#responses/helpers";
+import {
+  buildErrorResponse,
+  buildSuccessResponse,
+  isActionResponse,
+  isErrorResponse,
+  isSuccessResponse,
+} from "#responses/helpers";
 
 describe("responses/helpers", () => {
   describe("buildErrorResponse", () => {
@@ -22,35 +28,35 @@ describe("responses/helpers", () => {
       });
 
       expect(result).toEqual({
-        type: "error",
         error: {
-          statusCode: 404,
           body: {
             message: "Resource not found",
           },
+          statusCode: 404,
         },
+        type: "error",
       });
     });
 
     it("should create an error response with additional body properties", () => {
       const result = buildErrorResponse(400, {
         body: {
-          message: "Invalid request",
-          field: "email",
           code: "INVALID_FORMAT",
+          field: "email",
+          message: "Invalid request",
         },
       });
 
       expect(result).toEqual({
-        type: "error",
         error: {
-          statusCode: 400,
           body: {
-            field: "email",
             code: "INVALID_FORMAT",
+            field: "email",
             message: "Invalid request",
           },
+          statusCode: 400,
         },
+        type: "error",
       });
     });
 
@@ -61,14 +67,14 @@ describe("responses/helpers", () => {
       });
 
       expect(result).toEqual({
-        type: "error",
         error: {
-          headers: { "Retry-After": "60" },
-          statusCode: 429,
           body: {
             message: "Rate limit exceeded",
           },
+          headers: { "Retry-After": "60" },
+          statusCode: 429,
         },
+        type: "error",
       });
     });
 
@@ -83,16 +89,16 @@ describe("responses/helpers", () => {
       });
 
       expect(result).toEqual({
-        type: "error",
         error: {
-          headers: { "X-Request-Id": "abc123" },
-          statusCode: 403,
           body: {
+            message: "Access denied",
             reason: "insufficient_permissions",
             resource: "/api/users",
-            message: "Access denied",
           },
+          headers: { "X-Request-Id": "abc123" },
+          statusCode: 403,
         },
+        type: "error",
       });
     });
 
@@ -121,21 +127,21 @@ describe("responses/helpers", () => {
       });
 
       expect(result).toEqual({
-        type: "success",
-        statusCode: 200,
         body: { message: "Operation successful" },
+        statusCode: 200,
+        type: "success",
       });
     });
 
     it("should create a success response with additional body properties", () => {
       const result = buildSuccessResponse(201, {
-        body: { message: "Resource created", id: "456", created: true },
+        body: { created: true, id: "456", message: "Resource created" },
       });
 
       expect(result).toEqual({
-        type: "success",
+        body: { created: true, id: "456", message: "Resource created" },
         statusCode: 201,
-        body: { message: "Resource created", id: "456", created: true },
+        type: "success",
       });
     });
 
@@ -146,24 +152,24 @@ describe("responses/helpers", () => {
       });
 
       expect(result).toEqual({
-        type: "success",
-        statusCode: 201,
-        headers: { Location: "/api/resources/456" },
         body: { message: "Resource created" },
+        headers: { Location: "/api/resources/456" },
+        statusCode: 201,
+        type: "success",
       });
     });
 
     it("should create a success response with both body and headers", () => {
       const result = buildSuccessResponse(200, {
-        body: { message: "Data retrieved", users: [], total: 0 },
+        body: { message: "Data retrieved", total: 0, users: [] },
         headers: { "X-Total-Count": "0" },
       });
 
       expect(result).toEqual({
-        type: "success",
-        statusCode: 200,
+        body: { message: "Data retrieved", total: 0, users: [] },
         headers: { "X-Total-Count": "0" },
-        body: { message: "Data retrieved", users: [], total: 0 },
+        statusCode: 200,
+        type: "success",
       });
     });
 
@@ -187,29 +193,29 @@ describe("responses/helpers", () => {
     it("should handle complex body data structures", () => {
       const result = buildSuccessResponse(200, {
         body: {
-          message: "Success",
+          array: [1, 2, 3],
           data: {
             nested: {
               value: 123,
             },
           },
-          array: [1, 2, 3],
+          message: "Success",
         },
       });
 
       // Body properties are nested under body property
       expect(result).toMatchObject({
-        type: "success",
-        statusCode: 200,
         body: {
-          message: "Success",
+          array: [1, 2, 3],
           data: {
             nested: {
               value: 123,
             },
           },
-          array: [1, 2, 3],
+          message: "Success",
         },
+        statusCode: 200,
+        type: "success",
       });
     });
 
@@ -217,8 +223,8 @@ describe("responses/helpers", () => {
       const result = buildSuccessResponse(204, {});
 
       expect(result).toEqual({
-        type: "success",
         statusCode: 204,
+        type: "success",
       });
     });
 
@@ -226,8 +232,8 @@ describe("responses/helpers", () => {
       const result = buildSuccessResponse(204);
 
       expect(result).toEqual({
-        type: "success",
         statusCode: 204,
+        type: "success",
       });
     });
   });
@@ -246,6 +252,86 @@ describe("responses/helpers", () => {
       if (error.type === "error") {
         expect(error.error.statusCode).toBe(400);
       }
+    });
+  });
+
+  describe("isActionResponse", () => {
+    it("should return true for a success action response", () => {
+      const response = buildSuccessResponse(200, {
+        body: { message: "OK" },
+        headers: { "X-Request-Id": "abc123" },
+      });
+
+      expect(isActionResponse(response)).toBe(true);
+      expect(isSuccessResponse(response)).toBe(true);
+      expect(isErrorResponse(response)).toBe(false);
+    });
+
+    it("should return true for an error action response", () => {
+      const response = buildErrorResponse(400, {
+        body: { message: "Bad request" },
+        headers: { "X-Request-Id": "abc123" },
+      });
+
+      expect(isActionResponse(response)).toBe(true);
+      expect(isSuccessResponse(response)).toBe(false);
+      expect(isErrorResponse(response)).toBe(true);
+    });
+
+    it("should return false for non-object values", () => {
+      expect(isActionResponse(null)).toBe(false);
+      expect(isActionResponse(undefined)).toBe(false);
+      expect(isActionResponse("success")).toBe(false);
+      expect(isActionResponse([])).toBe(false);
+      expect(isSuccessResponse(null)).toBe(false);
+      expect(isErrorResponse(null)).toBe(false);
+    });
+
+    it("should return false when the response type is missing or unsupported", () => {
+      expect(isActionResponse({ statusCode: 200 })).toBe(false);
+      expect(isSuccessResponse({ statusCode: 200 })).toBe(false);
+      expect(isActionResponse({ statusCode: 200, type: "redirect" })).toBe(
+        false,
+      );
+    });
+
+    it("should return false for an invalid success response payload", () => {
+      expect(isActionResponse({ statusCode: "200", type: "success" })).toBe(
+        false,
+      );
+      expect(isSuccessResponse({ statusCode: "200", type: "success" })).toBe(
+        false,
+      );
+      expect(
+        isActionResponse({ body: null, statusCode: 200, type: "success" }),
+      ).toBe(false);
+      expect(
+        isActionResponse({ body: [], statusCode: 200, type: "success" }),
+      ).toBe(false);
+      expect(
+        isActionResponse({
+          headers: { "X-Request-Id": 123 },
+          statusCode: 200,
+          type: "success",
+        }),
+      ).toBe(false);
+    });
+
+    it("should return false for an invalid error response payload", () => {
+      expect(isActionResponse({ type: "error" })).toBe(false);
+      expect(isErrorResponse({ type: "error" })).toBe(false);
+      expect(
+        isActionResponse({
+          error: { body: "Bad request", statusCode: 400 },
+          type: "error",
+        }),
+      ).toBe(false);
+      expect(
+        isErrorResponse({
+          error: { body: "Bad request", statusCode: 400 },
+          type: "error",
+        }),
+      ).toBe(false);
     });
   });
 });

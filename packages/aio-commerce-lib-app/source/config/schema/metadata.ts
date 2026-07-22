@@ -36,11 +36,11 @@ function nonEmptyString(fieldName: string) {
 
 /** The schema for the metadata of the application. */
 export const MetadataSchema = v.object({
-  id: v.pipe(
-    alphaNumericOrHyphenSchema("application id (metadata.id)"),
+  description: v.pipe(
+    nonEmptyString("metadata description"),
     v.maxLength(
-      MAX_ID_LENGTH,
-      `The application id must not be longer than ${MAX_ID_LENGTH} characters`,
+      MAX_DESCRIPTION_LENGTH,
+      `The metadata description must not be longer than ${MAX_DESCRIPTION_LENGTH} characters`,
     ),
   ),
   displayName: v.pipe(
@@ -50,12 +50,11 @@ export const MetadataSchema = v.object({
       `The application display name must not be longer than ${MAX_DISPLAY_NAME_LENGTH} characters`,
     ),
   ),
-
-  description: v.pipe(
-    nonEmptyString("metadata description"),
+  id: v.pipe(
+    alphaNumericOrHyphenSchema("application id (metadata.id)"),
     v.maxLength(
-      MAX_DESCRIPTION_LENGTH,
-      `The metadata description must not be longer than ${MAX_DESCRIPTION_LENGTH} characters`,
+      MAX_ID_LENGTH,
+      `The application id must not be longer than ${MAX_ID_LENGTH} characters`,
     ),
   ),
 

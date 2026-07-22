@@ -28,17 +28,15 @@ import {
 import {
   getGeneratedDir,
   getManifestPath,
-  hasDynamicAppConfig,
   loadAppManifest,
+  requiresJavaScriptAppConfig,
 } from "#commands/utils";
 
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 
 export async function run(appConfig: CommerceAppConfigOutputModel) {
-  // When the business config schema is dynamic, factory functions can't be
-  // JSON-serialized; generated actions read the config from the runtime ESM
-  // module instead. Remove any stale JSON from a previous static run.
-  if (hasDynamicAppConfig(appConfig)) {
+  // Remove stale JSON when generated actions need the source config module.
+  if (await requiresJavaScriptAppConfig(appConfig)) {
     const stalePath = join(await getProjectRootDirectory(), getManifestPath());
     const staleExists = await access(stalePath).then(
       () => true,

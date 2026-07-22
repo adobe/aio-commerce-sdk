@@ -42,6 +42,7 @@
 - Source is ESM only (`import/export`); build output ships both ESM and CJS (generated automatically by TSDown — don't modify format settings)
 - Build tool: TSDown; each package has a `tsdown.config.ts` extending `baseConfig` from `@aio-commerce-sdk/config-tsdown` via `mergeConfig`
 - New packages are scaffolded manually (interactive): `pnpm turbo gen create-package`
+- Every new package needs a matching entry in `.github/labeler-config.yml` so PRs touching it get labeled automatically — the `create-package` generator does not do this for you
 - Public packages: `@adobe/` scope (`"private": false`); internal: `@aio-commerce-sdk/` scope (`"private": true`)
 - Monorepo-local deps use `workspace:*`; third-party deps shared across multiple packages use `catalog:` (defined in `pnpm-workspace.yaml`)
 - Every public package must declare `"sideEffects"` in `package.json`: `false` if no side effects, or an array of files that do have side effects
@@ -117,18 +118,26 @@ For source code comments, follow these rules:
 
 Agentic tooling lives under `plugins/`. Each subdirectory is a self-contained plugin with its own `.claude-plugin/plugin.json` manifest and installable content (skills, MCP configs, etc.).
 
-@plugins/commerce/README.md
-
 When making changes to the SDK that affect a plugin's domain (e.g. changes to config schemas, CLI flags, installation APIs), update the relevant plugin content in the same PR. Plugin content must stay in sync with the SDK it describes — stale plugin content is treated the same as stale documentation.
+
+### Breaking changes
+
+Each package that has deprecated symbols or planned breaking changes maintains a `BREAKING.md` in its root. Keep it in sync:
+
+- Any time you add a `@deprecated` JSDoc tag to a public symbol, add a corresponding entry under `[Unreleased] > Deprecated` in the package's `BREAKING.md` — include the symbol being deprecated, its replacement, and why it was deprecated. Non-exported symbols do not qualify, even if tagged `@deprecated`.
+- Any time a breaking change is planned but deferred (e.g. pending a future major), document it under `[Unreleased] > Breaking Changes (planned)` with enough context for consumers to prepare: what changes, why, and what they will need to update.
+- Create `BREAKING.md` if it does not exist yet in the package.
 
 ### Changesets
 
 - Every code change that requires a release must include a changeset (test-only changes do not need one)
 - Create one with `pnpm changeset add --empty`, then edit the generated `.changeset/<name>.md` file
-- Changeset messages must be user-facing and concise — avoid implementation details
+- Changeset messages must be user-facing and concise — describe what the developer can now do or what changed for them, not what the implementation does internally; start with a capital letter and end with a period
 - Derive the bump type from semver rules:
   - `patch` — bug fixes, no API surface change
   - `minor` — additive non-breaking changes (new exports, new optional fields, enriched responses)
   - `major` — breaking changes (removed exports, required fields added to input/write types, renamed types)
 - If the bump type is ambiguous, ask before proceeding
+- Major changesets must include migration guidance in the changeset body: a link to an external migration guide if one exists, or inline before/after code snippets otherwise
+- When a package receives a major bump, also include `packages/aio-commerce-sdk` in the same changeset with a major bump — it re-exports every public library and must version in lockstep
 - Before each commit, check if the changeset message still accurately describes the change

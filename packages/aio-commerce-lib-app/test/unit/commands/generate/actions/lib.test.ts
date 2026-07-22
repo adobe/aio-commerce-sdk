@@ -10,52 +10,53 @@
  * governing permissions and limitations under the License.
  */
 
-import { readFile, writeFile } from "node:fs/promises";
+import { readFile } from "node:fs/promises";
 
-const QUOTED_MENU_ITEMS_RE = /"menuItems":/u;
+import { withTempFiles } from "@aio-commerce-sdk/scripting-utils/filesystem";
+import { afterEach, describe, expect, test, vi } from "vitest";
 
-import { beforeEach, describe, expect, test, vi } from "vitest";
-
-import {
-  BACKEND_UI_EXTENSION_POINT_ID,
-  EXTENSIBILITY_EXTENSION_POINT_ID,
-} from "#commands/constants";
+import { EXTENSIBILITY_EXTENSION_POINT_ID } from "#commands/constants";
 import {
   CUSTOM_IMPORTS_PLACEHOLDER,
   CUSTOM_SCRIPTS_LOADER_PLACEHOLDER,
   CUSTOM_SCRIPTS_MAP_PLACEHOLDER,
-} from "#commands/generate/actions/config";
+} from "#commands/generate/actions/constants";
 import {
   applyCustomScripts,
   generateCustomScriptsTemplate,
-  generateRegistrationActionFile,
+  prepareWebSourceImportAlias,
   readExtConfig,
 } from "#commands/generate/actions/lib";
 import { templates } from "#test/fixtures/commands";
 import {
   configWithCustomInstallationSteps,
-  configWithFullAdminUiSdk,
   minimalValidConfig,
 } from "#test/fixtures/config";
 
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 
-vi.mock("@aio-commerce-sdk/scripting-utils/project", () => ({
-  getProjectRootDirectory: () => "/fake/project/root",
-  makeOutputDirFor: vi.fn(() => Promise.resolve("/fake/output/dir")),
-}));
+const getProjectRootDirectory = vi.hoisted(() =>
+  vi.fn(() => "/fake/project/root"),
+);
+
+vi.mock("@aio-commerce-sdk/scripting-utils/project", async (importOriginal) => {
+  const actual =
+    await importOriginal<
+      typeof import("@aio-commerce-sdk/scripting-utils/project")
+    >();
+  return {
+    ...actual,
+    getProjectRootDirectory,
+    makeOutputDirFor: vi.fn(() => Promise.resolve("/fake/output/dir")),
+  };
+});
 
 vi.mock("@aio-commerce-sdk/scripting-utils/yaml/index", () => ({
   readYamlFile: vi.fn(),
 }));
 
-vi.mock("node:fs/promises", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("node:fs/promises")>();
-  return {
-    ...actual,
-    readFile: vi.fn(),
-    writeFile: vi.fn().mockResolvedValue(undefined),
-  };
+afterEach(() => {
+  vi.clearAllMocks();
 });
 
 describe("readExtConfig", () => {
@@ -71,6 +72,78 @@ describe("readExtConfig", () => {
     ).rejects.toThrow(
       "Could not read ext.config.yaml for commerce/extensibility/1",
     );
+  });
+});
+
+describe("prepareWebSourceImportAlias", () => {
+  test("throws when package.json is missing", async () => {
+    await withTempFiles({}, async (tempDir) => {
+      getProjectRootDirectory.mockReturnValue(tempDir);
+
+      await expect(
+        prepareWebSourceImportAlias({
+          operations: {
+            view: [
+              {
+                impl: "index.html",
+                type: "web",
+              },
+            ],
+          },
+          web: "web-src",
+        }),
+      ).rejects.toThrow("Could not find package.json.");
+    });
+  });
+
+  test("adds the #web import alias for a view operation", async () => {
+    await withTempFiles(
+      {
+        "package.json": JSON.stringify({
+          imports: {
+            "#app.commerce.config": "./src/commerce-app-config.js",
+          },
+        }),
+      },
+      async (tempDir) => {
+        getProjectRootDirectory.mockReturnValue(tempDir);
+
+        await prepareWebSourceImportAlias({
+          operations: {
+            view: [
+              {
+                impl: "index.html",
+                type: "web",
+              },
+            ],
+          },
+          web: "web-src",
+        });
+
+        await expect(
+          readFile(`${tempDir}/package.json`, "utf-8").then(JSON.parse),
+        ).resolves.toMatchObject({
+          imports: {
+            "#app.commerce.config": "./src/commerce-app-config.js",
+            "#web/*": "./src/commerce-backend-ui-2/web-src/src/*",
+          },
+        });
+      },
+    );
+  });
+
+  test("does nothing when there is no view operation", async () => {
+    await prepareWebSourceImportAlias({
+      operations: {
+        workerProcess: [
+          {
+            impl: "actions/worker/index.js",
+            type: "action",
+          },
+        ],
+      },
+    });
+    expect(getProjectRootDirectory).not.toHaveBeenCalled();
   });
 });
 
@@ -199,10 +272,10 @@ describe("generateCustomScriptsTemplate", () => {
         installation: {
           customInstallationSteps: [
             {
+              description: "Script inside the generated actions dir",
+              name: "Nested",
               script:
                 "src/commerce-extensibility-1/.generated/actions/app-management/nested.js",
-              name: "Nested",
-              description: "Script inside the generated actions dir",
             },
           ],
         },
@@ -215,55 +288,5 @@ describe("generateCustomScriptsTemplate", () => {
 
       expect(result).toContain('import * as customScript0 from "./nested.js"');
     });
-  });
-});
-
-describe("generateRegistrationActionFile", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    vi.mocked(readFile).mockResolvedValue(templates.registration);
-  });
-
-  test("writes registration.js with inlined registration JSON", async () => {
-    const mockReadFile = vi.mocked(readFile);
-    const mockWriteFile = vi.mocked(writeFile);
-
-    await generateRegistrationActionFile(
-      configWithFullAdminUiSdk,
-      BACKEND_UI_EXTENSION_POINT_ID,
-    );
-
-    expect(mockReadFile).toHaveBeenCalledOnce();
-    expect(mockWriteFile).toHaveBeenCalledOnce();
-
-    const [_path, content] = mockWriteFile.mock.calls[0];
-    const contentStr = content as string;
-
-    expect(contentStr).toContain("// This file has been auto-generated");
-    expect(contentStr).toContain(
-      'import { registrationRuntimeAction } from "@adobe/aio-commerce-lib-app/actions/registration"',
-    );
-    expect(contentStr).toContain("const registration =");
-    expect(contentStr).toContain(
-      "export const main = registrationRuntimeAction({ registration })",
-    );
-    expect(contentStr).toContain('"my-app::first"');
-    expect(contentStr).toContain("selectionLimit: 1");
-    expect(contentStr).toContain("productSelectLimit: 1");
-    expect(contentStr).toContain("customerSelectLimit: 1");
-    expect(contentStr).toContain("menuItems: [");
-    expect(contentStr).not.toMatch(QUOTED_MENU_ITEMS_RE);
-  });
-
-  test("writes to registration/index.js", async () => {
-    const mockWriteFile = vi.mocked(writeFile);
-
-    await generateRegistrationActionFile(
-      configWithFullAdminUiSdk,
-      BACKEND_UI_EXTENSION_POINT_ID,
-    );
-
-    const [filePath] = mockWriteFile.mock.calls[0];
-    expect(String(filePath)).toContain("index.js");
   });
 });

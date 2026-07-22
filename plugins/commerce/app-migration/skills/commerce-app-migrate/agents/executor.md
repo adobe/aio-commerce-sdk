@@ -433,10 +433,10 @@ Private helpers (e.g. `formatErrorMessage`) are removed — errors now throw dir
 
 ## Step 3a: Compute Documentation Recommendations
 
-**Run this step immediately after Step 3, before npm install.** Both Category C and
+**Run this step immediately after Step 3, before init.** Both Category C and
 Category D analyze static files that exist before any install command. Computing them
 now ensures the recommendations are always available in Step 10 regardless of whether
-Steps 4–5 succeed, time out, or are blocked.
+Step 4 succeeds, times out, or is blocked.
 
 In **doc-scan-only mode**, run this step using the modified inputs described in the
 "Operating Modes" section above. Skip Steps 1–3 entirely and begin here.
@@ -457,7 +457,7 @@ Store all results in memory, then:
 
       ── Documentation recommendations (computed before install) ────────
 
-  This ensures recommendations are visible if a later step (npm install, generate, commit)
+  This ensures recommendations are visible if a later step (init, commit)
   blocks, hangs, or fails. Step 10 includes the same block again — that is intentional.
 
 - **Doc-scan-only mode:** store results only. Do **not** print here. There are no risky
@@ -468,107 +468,74 @@ Proceed to Step 4 (or Step 10 in doc-scan-only mode) after storing.
 
 ---
 
-## Step 4: Install dependencies
+## Step 4: Detect Node runtime and initialize
 
-Build the package list from the table below, then run one install command.
+**CRITICAL: Execute the init command as a Bash shell command. Do NOT install packages manually or create files under `src/` manually — the CLI installs dependencies and generates the full extension structure from `app.commerce.config.ts`. Manually-crafted files will be wrong and will confuse the developer.**
 
-| Package                          | Install when                                    |
-| -------------------------------- | ----------------------------------------------- |
-| `@adobe/aio-commerce-lib-app`    | Always                                          |
-| `@adobe/aio-commerce-sdk`        | Always                                          |
-| `@adobe/aio-commerce-lib-config` | Assembled config has a `businessConfig` section |
+### Node version detection
 
-Note: `@adobe/aio-commerce-sdk` is an umbrella package that bundles
-`aio-commerce-lib-auth`, `aio-commerce-lib-core`, `aio-commerce-lib-api`,
-`aio-commerce-lib-events`, and `aio-commerce-lib-webhooks` as direct dependencies —
-those do not need to be installed separately.
+Before running init, detect the Node.js runtime version to use when scaffolding action
+handlers in Step 5a. Apply in order — first match wins:
+
+1. Scan all `ext.config.yaml` files in the project for a `runtime: nodejs:XX` declaration
+   in any action definition. Use the value found (e.g. `nodejs:24`).
+2. Read `.nvmrc` at the project root. Extract the major version number.
+   Format as `nodejs:<major>`.
+3. Read `package.json engines.node`. Extract the minimum major version from the semver range.
+   Format as `nodejs:<major>`.
+4. Default: `nodejs:24`
+
+Store as `detectedNodeRuntime`. Used only in Step 5a.
+
+### Pre-flight: ensure `.env` exists
+
+Before running init, check whether `.env` exists at the project root:
+
+    test -f .env
+
+- If `.env` exists: proceed.
+- If `.env` does not exist but `env.dist` exists: copy it — `cp env.dist .env`.
+- If neither exists: create an empty `.env` file — `touch .env`.
+
+This is required because the init CLI unconditionally reads `.env` during
+the configuration-schema generation sub-step.
+
+### Run init
 
 Run the appropriate command for the `packageManager` from `ProjectSnapshot`:
 
-| packageManager | command                  |
-| -------------- | ------------------------ |
-| `npm`          | `npm install <packages>` |
-| `pnpm`         | `pnpm add <packages>`    |
-| `yarn`         | `yarn add <packages>`    |
-| `bun`          | `bun add <packages>`     |
+| packageManager | command                               |
+| -------------- | ------------------------------------- |
+| `npm`          | `npx aio-commerce-lib-app init`       |
+| `pnpm`         | `pnpm exec aio-commerce-lib-app init` |
+| `yarn`         | `yarn exec aio-commerce-lib-app init` |
+| `bun`          | `bunx aio-commerce-lib-app init`      |
 
-**If the install command is denied or blocked (permission error, sandbox rejection,
+The `init` command installs required dependencies and generates the full `src/` extension
+structure from `app.commerce.config.ts` in one step.
+
+**If the init command is denied or blocked (permission error, sandbox rejection,
 or non-zero exit with no network output):**
 
 Do NOT retry. Record the failure and emit the following manual instruction in Step 10:
 
-    ✗ npm install BLOCKED (Claude Code sandbox restriction)
+    ✗ aio-commerce-lib-app init BLOCKED (Claude Code sandbox restriction)
 
     Run this manually in your terminal before continuing:
-        npm install <packages listed above>
-
-    Then re-run the generate step:
-        ./node_modules/.bin/aio-commerce-lib-app generate all
+        npx aio-commerce-lib-app init
 
     Then update app.config.yaml and install.yaml per the Next steps section.
 
-Continue to Step 5 even if install failed — attempt generate anyway in case the
-packages are already partially installed.
+Continue to Step 5a even if init failed.
 
-**Peer dependency conflicts (`--legacy-peer-deps`):**
-
-If npm install fails with `ERESOLVE` peer dependency conflicts, retry once with:
-
-    npm install --legacy-peer-deps <packages>
-
-If that also fails, record the error and emit it in Step 10 with the manual command.
-
-**Unavailable package versions (`ETARGET`):**
-
-If npm install fails with `ETARGET` (no matching version), check whether the
-project's existing `package.json` declares unavailable version ranges for any
-`@adobe/aio-commerce-*` packages. If so, emit in Step 10:
-
-    ✗ npm install FAILED: ETARGET — package version unavailable
-
-    The following packages may have version ranges with no published release:
-        <list affected packages and their version constraints>
-
-    Update these to the latest published version before retrying:
-        npm view @adobe/<package> version
-
----
-
-## Step 5: Generate artifacts
-
-**CRITICAL: Execute this as a Bash shell command. Do NOT create files under `src/` manually — the CLI reads `app.commerce.config.ts` and generates them. Manually-written files will be wrong and will confuse the developer.**
-
-**Pre-flight: ensure `.env` exists**
-
-Before running generate, check whether `.env` exists at the project root:
-
-    test -f .env
-
-- If `.env` exists: proceed directly to the generate command below.
-- If `.env` does not exist but `env.dist` exists: copy it — `cp env.dist .env`.
-- If neither exists: create an empty `.env` file — `touch .env`.
-
-This is required because the generate CLI unconditionally reads `.env` during
-the configuration-schema generation sub-step.
-
-Run:
-
-    ./node_modules/.bin/aio-commerce-lib-app generate all
-
-If `./node_modules/.bin/aio-commerce-lib-app` is not found (e.g. install failed or
-the binary was not linked), fall back to:
-
-    node node_modules/@adobe/aio-commerce-lib-app/bin/cli.mjs generate all
-
-**Diagnosing generate failures:**
+**Diagnosing init failures:**
 
 If the command exits with an error, inspect the output:
 
 1.  **"CLI was not built!"** — The installed package is missing its compiled `dist/`
-    directory (packaging defect). Record this specific error. In Step 10, emit the
-    following additional guidance:
+    directory (packaging defect). Record this specific error. In Step 10, emit:
 
-        ✗ generate all FAILED: CLI was not built! (dist/ missing from aio-commerce-lib-app)
+        ✗ aio-commerce-lib-app init FAILED: CLI was not built! (dist/ missing from aio-commerce-lib-app)
 
         This is a known packaging issue with the installed version of
         @adobe/aio-commerce-lib-app. To resolve:
@@ -576,151 +543,205 @@ If the command exits with an error, inspect the output:
                  npm view @adobe/aio-commerce-lib-app versions --json
           2. Install a newer version that includes dist/:
                  npm install @adobe/aio-commerce-lib-app@<latest>
-          3. Re-run: ./node_modules/.bin/aio-commerce-lib-app generate all
+          3. Re-run: npx aio-commerce-lib-app init
 
 2.  **Schema validation errors** — Record the error and report it in Step 10 so
-    the developer can fix the config and re-run generate manually.
+    the developer can fix the config and re-run init manually.
 
-3.  **Any other error** — Record the failure message and skip Steps 6 and 7.
-    Report the error in Step 10 so the developer knows to run it manually after
-    fixing the issue.
+3.  **Any other error** — Record the failure message and skip Step 5a.
+    Report the error in Step 10.
 
 After this command completes successfully, check which directories were created:
 
 - `src/commerce-extensibility-1/` — always expected
 - `src/commerce-configuration-1/` — present only if `businessConfig` was defined
-- `src/commerce-backend-ui-1/` — present only if `adminUiSdk.registration` was defined
+- `src/commerce-backend-ui-2/` — present only if `adminUi` was defined; when the
+  `adminUi` config has any `view` entry (view mass action, view button, or menu),
+  it also contains a generated `web-src/` frontend (mounted with `createExtensionApp`
+  from `@adobe/aio-commerce-lib-admin-ui/web`), plus additional dependencies installed (if not already present and compatible) needed by the frontend (`react`, `react-dom`, `@react-spectrum/s2`, and some `devDependencies` needed for proper TypeScript support/config).
 
-Note which directories exist — you will need this in Steps 6 and 7.
-
----
-
-## Step 6: Update app.config.yaml
-
-Read the existing `app.config.yaml`. Determine whether it already has a
-top-level `extensions:` key.
-
-**Case A — No existing `extensions:` block:**
-
-Prepend a new `extensions:` block at the TOP of the file (before the
-`application:` block). Include only extension points whose directories
-exist (from Step 5):
-
-    extensions:
-      commerce/extensibility/1:
-        $include: "src/commerce-extensibility-1/ext.config.yaml"
-      # Include below only if src/commerce-configuration-1/ was generated:
-      commerce/configuration/1:
-        $include: "src/commerce-configuration-1/ext.config.yaml"
-      # Include below only if src/commerce-backend-ui-1/ was generated:
-      commerce/backend-ui/1:
-        $include: "src/commerce-backend-ui-1/ext.config.yaml"
-
-**Case B — `extensions:` block already exists:**
-
-Do NOT add a second top-level `extensions:` key (YAML prohibits duplicate keys
-and the second block would be silently ignored). Instead, insert only the new
-extension point entries directly inside the existing `extensions:` block,
-preserving all existing entries. For example, if the file has:
-
-    extensions:
-      commerce/backend-ui/1:
-        $include: "src/..."
-
-Add the new entries below the existing ones:
-
-    extensions:
-      commerce/backend-ui/1:
-        $include: "src/..."
-      commerce/extensibility/1:
-        $include: "src/commerce-extensibility-1/ext.config.yaml"
-
-Do not duplicate entries that are already present.
-
-**Do not modify or remove any other existing content in `app.config.yaml`.**
+Note which directories exist — you will need this in Steps 5a and 6.
 
 ---
 
-## Step 7: Write install.yaml
+## Step 5a: Scaffold Admin UI SDK handlers
 
-Before writing, determine which file to update:
+Runs immediately after Step 4 init succeeds and `src/commerce-backend-ui-2/` exists.
+Skip this step entirely if the assembled config has no `adminUi` section.
 
-1. Check whether `install.yaml` exists at the project root.
-2. Check whether `install.yml` exists at the project root.
+Only **worker** entries require a handler — `view` entries (iframe) have no server-side handler.
 
-**If `install.yml` exists (with `.yml` extension):**
+### Grid columns
 
-- Use `install.yml` as the target file — do NOT create a separate `install.yaml`.
-- Read the existing `install.yml` content and merge: add missing `extensionPointId`
-  entries without removing existing ones.
-- Write the merged result back to `install.yml`.
+For each entity (`order`, `product`, `customer`) where `adminUi.<entity>.gridColumns.runtimeAction`
+is set in the assembled config and is not `"<FILL_IN>"`:
 
-**If `install.yaml` exists (with `.yaml` extension):**
+1. Parse `<package>/<action>` from the value.
+2. Target path: `src/commerce-backend-ui-2/actions/<action>/index.js`
+3. If the file already exists: skip.
+4. Scaffold:
 
-- Read it, merge new entries, write back to `install.yaml`.
+```javascript
+import {
+  parseGridRequest,
+  okGridResponse,
+  errorGridResponse,
+} from "@adobe/aio-commerce-sdk/admin-ui/grid-columns";
 
-**If neither exists:**
+export async function main(params) {
+  let request;
+  try {
+    request = parseGridRequest(params);
+  } catch (e) {
+    return errorGridResponse(400, e.message);
+  }
+  const data = {};
+  for (const id of request.ids) {
+    // TODO: fetch column data for id
+  }
+  return okGridResponse(data);
+}
+```
 
-- Create `install.yaml` (prefer `.yaml` extension for new files).
+5. Add the package definition to `src/commerce-backend-ui-2/ext.config.yaml` under
+   `runtimeManifest.packages` if the package is not already declared:
 
-The install file content (whichever extension is used) must include all
-extension points whose directories exist (from Step 5):
+```yaml
+<package>:
+  license: Apache-2.0
+  actions:
+    <action>:
+      function: actions/<action>/index.js
+      web: "yes"
+      runtime: "<detectedNodeRuntime>"
+      inputs:
+        LOG_LEVEL: debug
+      annotations:
+        require-adobe-auth: true
+        final: true
+```
 
-    extensions:
-      - extensionPointId: commerce/extensibility/1
+### Worker mass actions
 
-Add additional lines if generated:
+For each mass action in the assembled config where `type: "worker"`:
 
-      - extensionPointId: commerce/configuration/1
-      - extensionPointId: commerce/backend-ui/1
+1. Parse `<package>/<action>` from `runtimeAction` (skip if value is `"<FILL_IN>"`).
+2. Locate existing handler: search under `actions/`, `actions-src/`, `src/` for a file
+   whose path contains `<action>`.
+3. If found: rewrite to use lib utilities (preserve existing business logic; replace
+   request parsing and response construction with the builders below):
 
-**Never create both `install.yml` and `install.yaml` — use whichever already
-exists, or create `install.yaml` if neither exists.**
+   ```javascript
+   import { CommerceSdkValidationError } from "@adobe/aio-commerce-sdk/core/error";
+   import {
+     parseMassActionRequest,
+     okMassActionResponse,
+     massActionErrorResponse,
+   } from "@adobe/aio-commerce-sdk/admin-ui/mass-actions";
+
+   export async function main(params) {
+     try {
+       const { gridType, selectedIds } = parseMassActionRequest(params);
+
+       // existing business logic
+       return okMassActionResponse();
+     } catch (error) {
+       if (error instanceof CommerceSdkValidationError) {
+         return massActionErrorResponse(400, error.display(false));
+       }
+
+       return massActionErrorResponse(500, error.message);
+     }
+   }
+   ```
+
+4. If not found: scaffold a new handler at
+   `src/commerce-backend-ui-2/actions/<action>/index.js` using the same shape.
+
+- `parseMassActionRequest(params)` → `{ requestId, gridType, selectedIds }` — validates incoming shape.
+- `okMassActionResponse(body?)` → HTTP 200.
+- `massActionErrorResponse(statusCode, message)` → non-2xx.
+
+### Worker view buttons
+
+For each view button in the assembled config where `type: "worker"`:
+
+1. Parse `<package>/<action>` from `runtimeAction` (skip if value is `"<FILL_IN>"`).
+2. Locate existing handler: same search path as mass actions.
+3. If found: rewrite to use lib utilities:
+
+```javascript
+import { CommerceSdkValidationError } from "@adobe/aio-commerce-sdk/core/error";
+import {
+  parseOrderViewButtonRequest,
+  okOrderViewButtonResponse,
+  orderViewButtonErrorResponse,
+} from "@adobe/aio-commerce-sdk/admin-ui/order-view-buttons";
+
+export async function main(params) {
+  try {
+    const { id, orderId } = parseOrderViewButtonRequest(params);
+
+    // existing business logic
+    return okOrderViewButtonResponse();
+  } catch (error) {
+    if (error instanceof CommerceSdkValidationError) {
+      return orderViewButtonErrorResponse(400, error.display(false));
+    }
+
+    return orderViewButtonErrorResponse(500, error.message);
+  }
+}
+```
+
+4. If not found: scaffold a new handler at
+   `src/commerce-backend-ui-2/actions/<action>/index.js` using the same shape.
+
+- `parseOrderViewButtonRequest(params)` → `{ requestId, id, orderId }`.
+- `okOrderViewButtonResponse()` → success; empty `{}` body.
+- `orderViewButtonErrorResponse(statusCode, message)` → error.
+
+No copyright header on any scaffolded or rewritten file.
 
 ---
 
-## Step 8: Add postinstall hook to package.json
+## Step 6: Post-init cleanup
 
-Determine the exec prefix from `packageManager` in the ProjectSnapshot:
+`init` (Step 4) adds the new `commerce/backend-ui/2` extension point but never
+removes the old Adobe Commerce Admin UI SDK (`commerce/backend-ui/1`) artifacts
+it replaces. Perform the cleanup init does not:
 
-| packageManager | exec prefix |
-| -------------- | ----------- |
-| `npm`          | `npx`       |
-| `pnpm`         | `pnpm exec` |
-| `yarn`         | `yarn exec` |
-| `bun`          | `bunx`      |
+**1. Remove the old `commerce/backend-ui/1` extension point.**
+If `app.config.yaml` has a `commerce/backend-ui/1` entry under `extensions:`,
+remove it. `init` adds `commerce/backend-ui/2` alongside it but leaves the old
+entry in place, and keeping both is invalid.
 
-Read `package.json`. In the `scripts` section, add or update the `postinstall`
-script using the exec prefix:
+**2. Remove the old `pre-app-build` hook.**
+If `app.config.yaml` contains a `pre-app-build` hook that references
+`commerce-backend-ui-1` or its registration action path (e.g. a script under
+`src/commerce-backend-ui-1/`), remove that hook entry. That registration action
+is no longer generated by `commerce/backend-ui/2` and the hook will fail the build.
 
-    "postinstall": "<exec prefix> aio-commerce-lib-app hooks postinstall"
+**3. Reconcile the install file extension.**
+`init` always writes `install.yaml`. If the project already had `install.yml`
+(`.yml` extension), `init` created a separate `install.yaml` — delete the stale
+`install.yml` (or merge its extra entries into `install.yaml` first) so only one
+install file remains.
 
-For example, for an npm project:
-
-    "postinstall": "npx aio-commerce-lib-app hooks postinstall"
-
-If a `postinstall` script already exists and does not already contain
-`aio-commerce-lib-app hooks postinstall`, append with `&&`:
-
-    "<existing command> && <exec prefix> aio-commerce-lib-app hooks postinstall"
-
-Write the updated `package.json` back. Preserve all other fields exactly.
+**Do not modify any other content in `app.config.yaml`, the install file, or
+`package.json`.**
 
 ---
 
 ## Step 9: Stage changes and ask to commit
 
-Stage all migration-related files. Use the detected install file extension from Step 7:
+Stage all migration-related files:
 
     git add app.commerce.config.ts app.config.yaml package.json package-lock.json src/ scripts/
 
-Also stage the install file (whichever extension was used in Step 7):
+Also stage the install file (`init` writes `install.yaml`):
 
     git add install.yaml
-
-or:
-
-    git add install.yml
 
 If `yarn.lock`, `pnpm-lock.yaml`, or `bun.lockb` was modified (based on `packageManager`
 from ProjectSnapshot), stage the appropriate lockfile instead of `package-lock.json`.
@@ -982,20 +1003,68 @@ constraints, Next steps) when in doc-scan-only mode.
          ← one line per migrated script; omit section if none were migrated →
 
     ── Commands ───────────────────────────────────────────────────────
-      ✓  <packageManager> install  (<N> packages)
-      ✓  aio-commerce-lib-app generate all
+      ✓  aio-commerce-lib-app init
          ← replace ✓ with ✗  FAILED: <reason>  if the command failed →
 
     ── Generated ──────────────────────────────────────────────────────
-         ← omit this entire section if generate failed →
+         ← omit this entire section if init failed →
       src/commerce-extensibility-1/
       [src/commerce-configuration-1/]   ← only if generated
-      [src/commerce-backend-ui-1/]      ← only if generated
+      [src/commerce-backend-ui-2/]      ← only if generated
+
+    ── Safe to delete ─────────────────────────────────────────────────
+         ← omit this entire section if none of the items below apply →
+      [  src/commerce-backend-ui-1/   v1 generated directory; no longer wired up  ]
+            ← include only if src/commerce-backend-ui-1/ exists →
+      [  mesh.json                    API Mesh config; v2 calls the action directly  ]
+            ← include only if ProjectSnapshot.hasMeshConfig === true →
+      [  extension-manifest.json      metadata moved to app.commerce.config.ts  ]
+            ← include only if extension-manifest.json exists at the project root →
+      [  <path>                       orphaned v1 schema file  ]
+            ← for each .json under admin-ui-sdk/v1/ (or similar v1 paths) not referenced
+               anywhere in src/, actions/, or app.config.yaml (confirmed with grep) →
+
+      To remove:
+        git rm -r <list each path that applies>
+
+    ← include this block only if assembled config has an `adminUi` section →
+    ── Dependencies that may no longer be needed ───────────────────────
+      These packages were common in v1 Admin UI SDK projects but are not
+      needed in v2. Check which are present in package.json and not
+      imported in any action source file before removing.
+
+      v1 frontend packages (superseded by the v2 web-src scaffold, whose
+      shell/guest plumbing is provided by @adobe/aio-commerce-lib-admin-ui):
+        @adobe/exc-app  @adobe/react-spectrum  @adobe/uix-core  @adobe/uix-guest
+        @spectrum-icons/workflow  react-error-boundary  react-router-dom
+        core-js  crypto  crypto-browserify  https-browserify
+        os-browserify  regenerator-runtime
+
+      Do NOT remove react or react-dom when the adminUi config has any
+      `view` entry (view mass action, view button, or menu): init/generate scaffolds
+      src/commerce-backend-ui-2/web-src/ and pins react, react-dom,
+      @react-spectrum/s2, and @adobe/aio-commerce-lib-admin-ui for it.
+      If adminUi is worker-only (no view entries), react and react-dom are
+      removable as well.
+
+      Runtime packages replaced by @adobe/aio-commerce-sdk:
+        @adobe/aio-sdk  cloudevents  got  node-fetch  oauth-1.0a  uuid
+
+      Dev dependencies (v1 build tooling):
+        @babel/core  @babel/plugin-transform-react-jsx  @babel/polyfill
+        @babel/preset-env  @openwhisk/wskdebug
+
+      To verify a package is unused before removing:
+        grep -r "<package>" src/ actions/ actions-src/ 2>/dev/null
+
+      To remove confirmed-unused packages:
+        <packageManager remove command> <package1> <package2> ...
+    ← end conditional →
 
     ── Modified ───────────────────────────────────────────────────────
-         ← omit app.config.yaml line if generate failed →
+         ← omit app.config.yaml line if init failed →
       app.config.yaml    added extensions block
-      package.json       added postinstall hook · installed deps
+      package.json       added postinstall hook
 
     ── Installation steps ─────────────────────────────────────────────
          ← omit this entire section if no customInstallationSteps →
@@ -1150,7 +1219,7 @@ constraints, Next steps) when in doc-scan-only mode.
     ← end conditional block →
 
     ── Next steps ─────────────────────────────────────────────────────
-      [1. aio-commerce-lib-app generate all]   ← include ONLY if Step 5 failed
+      [1. npx aio-commerce-lib-app init]   ← include ONLY if Step 4 failed
        2. Review src/commerce-extensibility-1/.generated/ before deploying
        3. aio app deploy
 

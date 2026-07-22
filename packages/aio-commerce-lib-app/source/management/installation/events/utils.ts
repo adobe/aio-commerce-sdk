@@ -41,6 +41,9 @@ const PROVIDER_TYPE_TO_LABEL = {
 /** Max characters taken from `metadata.id` in the I/O Events provider `instance_id`. */
 const METADATA_ID_MAX_LENGTH_FOR_INSTANCE_ID = 100;
 
+/** Storage key used for the events installation data in system config. */
+export const EVENTS_STORAGE_KEY = "events";
+
 /**
  * Generates a unique instance ID for I/O Events for this app deployment.
  * Uses `{metadata.id (first 100 chars)}-{providerKeyOrSlug}-{workspaceId}` (lowercased).
@@ -55,8 +58,9 @@ export function generateInstanceId(
   workspaceId: string,
 ) {
   const appId = metadata.id.slice(0, METADATA_ID_MAX_LENGTH_FOR_INSTANCE_ID);
-  const slugLabel = provider.label.toLowerCase().replace(/\s+/g, "-");
-  return `${appId}-${provider.key ?? slugLabel}-${workspaceId}`.toLowerCase();
+  const providerKey =
+    provider.key ?? provider.label.toLowerCase().replace(/\s+/g, "-");
+  return `${appId}-${providerKey}-${workspaceId}`.toLowerCase();
 }
 
 /**
@@ -119,14 +123,19 @@ export function findExistingRegistrations(
 
 /**
  * Generates a namespaced event name by combining the application ID with the event name.
+ *
+ * The application ID is sanitized to comply with the Commerce Eventing API's event code
+ * format requirement (`[a-zA-Z0-9_.]`): any character outside that set is replaced with `_`.
+ *
  * @param metadata
  * @param name
  */
 export function getNamespacedEvent(
-  metadata: ApplicationMetadata,
+  metadata: Pick<ApplicationMetadata, "id">,
   name: string,
 ) {
-  return `${metadata.id}.${name}`.toLowerCase();
+  const sanitizedId = metadata.id.toLowerCase().replace(/[^a-z0-9_]/g, "_");
+  return `${sanitizedId}.${name}`.toLowerCase();
 }
 
 /**
@@ -349,36 +358,36 @@ export function makeWorkspaceConfig(context: EventsExecutionContext) {
     project: {
       id: projectId,
       name: projectName,
-      title: projectTitle,
 
       org: {
         id: consumerOrgId,
-        name: orgName,
         ims_org_id: imsOrgId,
+        name: orgName,
       },
+      title: projectTitle,
 
       workspace: {
-        id: workspaceId,
-        name: workspaceName,
-        title: workspaceTitle,
         action_url: `https://${process.env.__OW_NAMESPACE}.adobeioruntime.net`,
         app_url: `https://${process.env.__OW_NAMESPACE}.adobeio-static.net`,
         details: {
           credentials: [
             {
               id: "000000",
-              name: `aio-${workspaceId}`,
               integration_type: "oauth_server_to_server",
+              name: `aio-${workspaceId}`,
               oauth_server_to_server: {
                 client_id: clientId,
                 client_secrets: clientSecrets,
+                scopes: scopes.map((scope) => scope.trim()),
                 technical_account_email: technicalAccountEmail,
                 technical_account_id: technicalAccountId,
-                scopes: scopes.map((scope) => scope.trim()),
               },
             },
           ],
         },
+        id: workspaceId,
+        name: workspaceName,
+        title: workspaceTitle,
       },
     },
   };
@@ -410,9 +419,9 @@ export async function getIoEventsExistingData(context: EventsExecutionContext) {
 
     const metadataHal = _embedded?.eventmetadata ?? [];
     const actualMetadata = metadataHal.map(
-      ({ _embedded, _links, ...meta }) => ({
+      ({ _embedded: metadataEmbedded, _links: _metadataLinks, ...meta }) => ({
         ...meta,
-        sample: _embedded?.sample_event ?? null,
+        sample: metadataEmbedded?.sample_event ?? null,
       }),
     );
 

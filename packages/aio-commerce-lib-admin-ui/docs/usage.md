@@ -5,9 +5,14 @@
 
 ## Overview
 
-This package provides utilities for interacting with the Admin UI SDK API:
+This package provides utilities for interacting with the Admin UI SDK API and the Admin UI `commerce/backend-ui/2` extension points:
 
 - **[API Client](#api-client)**: Create typed HTTP clients for the Admin UI SDK API
+- **[Grid Column Wire Contract](#grid-column-wire-contract)**: Request and response builders for runtime actions handling `commerce/backend-ui/2` grid column extensions
+- **[Menu Constants](#menu-constants)**: Named constants and type guards for Commerce Admin menu IDs
+- **[Order View Button Wire Contract](#order-view-button-wire-contract)**: Request and response builders for runtime actions handling `commerce/backend-ui/2` order view button extensions
+- **[Permission Client](#permission-client)**: Check whether the current Commerce admin user has been granted a per-app ACL resource
+- **[Web Extension App](#web-extension-app)**: Mount a `commerce/backend-ui/2` iframe app in the browser and read host-provided context through React hooks
 
 ## API Reference
 
@@ -32,11 +37,14 @@ const client = createAdminUiApiClient({
   },
 });
 
+// Enable the Admin UI SDK. This must run before registering an extension,
+// otherwise Commerce will not serve the registered extension.
+await client.enableAdminUiSdk();
+
 // Register an extension
 await client.registerExtension({
   extensionName: "my_namespace",
   extensionTitle: "My App",
-  extensionUrl: "https://my_namespace.adobeio-static.net/index.html",
   extensionWorkspace: "prod-workspace",
 });
 
@@ -46,3 +54,577 @@ await client.unregisterExtension({
   extensionName: "my_namespace",
 });
 ```
+
+### Grid Column Wire Contract
+
+Apps that declare `adminUi.<grid>.gridColumns` on the `commerce/backend-ui/2` extension point expose a runtime action that Commerce calls to fetch cell values for custom columns. This package provides typed builders for the JSON wire contract used by those handlers.
+
+The registration side (declaring columns, runtime actions, and types) is configured through `@adobe/aio-commerce-lib-app`. The builders in this section cover the runtime handler side.
+
+#### Parsing the incoming request
+
+Commerce POSTs a body of the shape `{ requestId, gridType, ids }` to the handler. Use `parseGridRequest` to validate and narrow it:
+
+```typescript
+import { parseGridRequest } from "@adobe/aio-commerce-lib-admin-ui/grid-columns";
+
+export async function main(params: unknown) {
+  const { requestId, gridType, ids } = parseGridRequest(params);
+  // gridType is typed as "order" | "product" | "customer"
+  // ids is string[]
+  // ...
+}
+```
+
+`parseGridRequest` throws a `CommerceSdkValidationError` when the input is malformed.
+
+#### Building a success response
+
+`okGridResponse` wraps your data in the envelope Commerce expects, optionally including a `defaults` bag (serialized as the `"*"` key):
+
+```typescript
+import { okGridResponse } from "@adobe/aio-commerce-lib-admin-ui/grid-columns";
+
+return okGridResponse(
+  {
+    "000000001": { fulfillment_status: "shipped", risk_score: 12 },
+    "000000002": { fulfillment_status: "pending", risk_score: 47 },
+  },
+  { fulfillment_status: "unknown", risk_score: 0 },
+);
+```
+
+Commerce applies the second argument (defaults) to IDs missing from `data` and to individual cells whose value does not satisfy the declared `type` on the column registration. Omit it if you do not need fallback values.
+
+The column keys inside each row must match the `id` values declared in the corresponding `adminUi.<grid>.gridColumns.columns[].id` configuration.
+
+#### Building an error response
+
+`errorGridResponse` returns a non-2xx HTTP response. Commerce uses the status code to distinguish success from failure:
+
+```typescript
+import { errorGridResponse } from "@adobe/aio-commerce-lib-admin-ui/grid-columns";
+
+return errorGridResponse(500, "Could not reach inventory service");
+```
+
+### Order View Button Wire Contract
+
+Apps that expose a runtime action handler for `commerce/backend-ui/2` order view buttons receive a POST from Commerce when the button is clicked. This package provides typed builders for that JSON wire contract.
+
+#### Iframe buttons
+
+Commerce does not call a server-side handler. Instead, it opens an iframe pointing at the app's web entry with the button `path` appended and `orderId` as a query parameter:
+
+```
+https://<extension-host>/index.html<path>?orderId=<orderId>
+```
+
+The app signals completion to Commerce through the UIX Host connection — calling `close()` to indicate success or `onError()` to indicate failure. Commerce then redirects back to the order view page and renders the appropriate banner notification from the registration. No SDK builders are needed for this variant.
+
+#### Runtime action buttons
+
+When Commerce POSTs to the app's runtime action handler, this package provides typed builders for that JSON wire contract.
+
+##### Parsing the incoming request
+
+Commerce POSTs a body of the shape `{ requestId, id, orderId }` to the handler. Use `parseOrderViewButtonRequest` to validate and narrow it:
+
+```typescript
+import { parseOrderViewButtonRequest } from "@adobe/aio-commerce-lib-admin-ui/order-view-buttons";
+
+import type { RuntimeActionParams } from "@adobe/aio-commerce-lib-core/params";
+
+export async function main(params: RuntimeActionParams) {
+  const { requestId, id, orderId } = parseOrderViewButtonRequest(params);
+  // id identifies which button was clicked — useful when one handler serves multiple buttons
+  // orderId is the order currently being viewed
+  // ...
+}
+```
+
+`parseOrderViewButtonRequest` throws a `CommerceSdkValidationError` when the input is malformed.
+
+##### Building a success response
+
+`okOrderViewButtonResponse` returns the empty-object body Commerce expects on success:
+
+```typescript
+import { okOrderViewButtonResponse } from "@adobe/aio-commerce-lib-admin-ui/order-view-buttons";
+
+return okOrderViewButtonResponse();
+```
+
+Commerce renders `notifications.success` from the registration as the toast body when present, and a default success toast otherwise.
+
+##### Building an error response
+
+`orderViewButtonErrorResponse` returns an HTTP error response with a `{ message }` body. Commerce uses the HTTP status code to distinguish success from failure.
+
+```typescript
+import { orderViewButtonErrorResponse } from "@adobe/aio-commerce-lib-admin-ui/order-view-buttons";
+
+return orderViewButtonErrorResponse(500, "Could not reach inventory service");
+```
+
+### Mass Action Worker Contract
+
+Apps that declare `adminUi.<entity>.massActions` with `type: "worker"` expose a runtime
+action that Commerce calls when the user triggers the action on a selection of records.
+Commerce POSTs a JSON body and uses the HTTP status code to distinguish success from
+failure. This section covers the handler side.
+
+#### Parsing the incoming request
+
+Use `parseMassActionRequest` to validate and narrow the incoming body:
+
+```typescript
+import { parseMassActionRequest } from "@adobe/aio-commerce-lib-admin-ui/mass-actions";
+
+export async function main(params: unknown) {
+  const { requestId, gridType, selectedIds } = parseMassActionRequest(params);
+  // gridType is "order" | "product" | "customer"
+  // selectedIds is string[] with at least one entry
+}
+```
+
+Throws `CommerceSdkValidationError` when the input is malformed.
+
+#### Building a success response
+
+Return `okMassActionResponse` when the action completes. Commerce treats HTTP 200 as
+success. Optionally include any fields you need for logging:
+
+```typescript
+import { okMassActionResponse } from "@adobe/aio-commerce-lib-admin-ui/mass-actions";
+
+return okMassActionResponse();
+return okMassActionResponse({ exported: selectedIds.length });
+```
+
+#### Building an error response
+
+Return `massActionErrorResponse` when the action fails. Commerce treats any
+non-2xx status as failure and surfaces the `notifications.error` message from the app
+config to the user. The response body is always `{ message: string }`.
+
+```typescript
+import { massActionErrorResponse } from "@adobe/aio-commerce-lib-admin-ui/mass-actions";
+
+return massActionErrorResponse(404, "No records matched the given IDs");
+return massActionErrorResponse(500, "Could not reach the export service");
+```
+
+### Menu Constants
+
+The `./menu` entrypoint provides named constants for Commerce Admin menu IDs, typed collections of those IDs, and type guards for distinguishing menu IDs at runtime.
+
+#### Named constants
+
+Each top-level menu and its sub-menus are available as named exports:
+
+```typescript
+import {
+  MENU_SALES,
+  MENU_CATALOG,
+  MENU_CUSTOMERS,
+  MENU_MARKETING,
+} from "@adobe/aio-commerce-lib-admin-ui/menu";
+```
+
+#### Collection
+
+`COMMERCE_MENUS` is a readonly tuple of all supported Commerce Admin menu IDs:
+
+```typescript
+import { COMMERCE_MENUS } from "@adobe/aio-commerce-lib-admin-ui/menu";
+```
+
+#### Type guard
+
+`isCommerceMenu` narrows an arbitrary string to the `CommerceMenu` type:
+
+```typescript
+import { isCommerceMenu } from "@adobe/aio-commerce-lib-admin-ui/menu";
+
+if (isCommerceMenu(id)) {
+  // id is CommerceMenu
+}
+```
+
+### Permission Client
+
+Apps that set `adminUi.menu.aclProtected: true` in their `app.commerce.config.*` receive a dedicated per-app ACL resource node in the Commerce User Roles tree. Admins can grant or deny access to that app's menu on a per-role basis. Use `getAdminUiPermissionClient` from `@adobe/aio-commerce-lib-admin-ui/api` to check whether the current admin user holds that resource before serving menu content from a runtime action.
+
+> [!NOTE]
+> **Scope:** This client only checks ACL resources generated by the Admin UI SDK for installed Admin UI **V2** (`commerce/backend-ui/2`) apps — i.e. resources created from `aclProtected: true` config. It is **not** a general-purpose Commerce ACL checker: the `adminuisdk/permission/check` endpoint returns `false` for any resource the Admin UI module did not create, even if the current role actually holds it in Commerce. This is by design — pass an id from `getAclResourceId` / `getMenuAclResourceId` (or configure `appId`) so you are always checking an in-scope resource.
+
+#### Creating a client
+
+```typescript
+import { getAdminUiPermissionClient } from "@adobe/aio-commerce-lib-admin-ui/api";
+
+const permissionClient = getAdminUiPermissionClient({
+  httpClient, // AdobeCommerceHttpClient — reuse the one from createAdminUiApiClient
+  appId: "acme-promotions", // app id used to derive the ACL resource; enables no-argument check()/require(). Optional — or pass an explicit resource instead.
+  cacheTtlMs: 300_000, // default: 5 min; set to 0 to disable result caching
+  denyOnError: true, // default: true — returns false on network/parse errors instead of throwing
+});
+```
+
+`appId` is the `metadata.id` of your application (e.g. `"acme-promotions"`). When provided, `check()` and `require()` resolve the ACL resource id automatically — no argument required.
+
+#### Checking a permission
+
+```typescript
+// With appId set — no argument needed:
+const allowed = await permissionClient.check();
+
+// Or provide the full resource id explicitly:
+const allowed = await permissionClient.check(
+  "Magento_CommerceBackendUix::adminuisdk_app_acme_promotions",
+);
+
+if (!allowed) {
+  return { error: "Access denied", statusCode: 403 };
+}
+```
+
+`check()` returns `true` when access is granted and `false` when denied. With `denyOnError: true` (the default) it also returns `false` on network or parse errors. It always throws `AdminUiPermissionError` on 401, regardless of `denyOnError`.
+
+`check()` returns `false` immediately — without a network call — when neither `resource` nor a valid `appId` is available.
+
+#### Requiring a permission
+
+```typescript
+import {
+  AdminUiPermissionDeniedError,
+  AdminUiPermissionError,
+} from "@adobe/aio-commerce-lib-admin-ui/api";
+
+try {
+  await permissionClient.require();
+  // user is allowed — proceed with the request
+} catch (error) {
+  if (error instanceof AdminUiPermissionDeniedError) {
+    return { error: "Forbidden", statusCode: 403 };
+  }
+  if (error instanceof AdminUiPermissionError) {
+    // 401 or network/parse error when denyOnError is false
+    return { error: "Authorization error", statusCode: 401 };
+  }
+  throw error;
+}
+```
+
+`require()` resolves when the user has access. It throws `AdminUiPermissionDeniedError` when the resource is explicitly denied, and `AdminUiPermissionError` on 401 or other failures (when `denyOnError: false`).
+
+`require()` throws `AdminUiPermissionError` immediately — without a network call — when neither `resource` nor a valid `appId` is available.
+
+#### Caching and deduplication
+
+The client caches successful results for `cacheTtlMs` milliseconds (default: 5 minutes). Set `cacheTtlMs: 0` to disable result caching. Regardless of `cacheTtlMs`, **concurrent calls for the same resource share a single in-flight network request** — deduplication remains active even when caching is disabled.
+
+Call `invalidate` to clear cached results:
+
+```typescript
+// Clear a specific resource:
+permissionClient.invalidate(
+  "Magento_CommerceBackendUix::adminuisdk_app_acme_promotions",
+);
+
+// Clear all cached results and in-flight tracking:
+permissionClient.invalidate();
+```
+
+#### Deriving the resource id directly
+
+`getAclResourceId` converts a `metadata.id` value to the Commerce ACL resource id without making an HTTP request:
+
+```typescript
+import { getAclResourceId } from "@adobe/aio-commerce-lib-admin-ui/api";
+
+const resourceId = getAclResourceId("acme-promotions");
+// → "Magento_CommerceBackendUix::adminuisdk_app_acme_promotions"
+```
+
+This produces the same id that Commerce generates on the backend when `aclProtected: true` is configured. Pass it to `check()` or `require()` when you need explicit control, or use it directly for logging.
+
+Returns an empty string when called with a blank `metadataId`; this is the same sentinel that `check()` and `require()` treat as "no resource available."
+
+#### App-level vs menu-level resource ids
+
+The ACL tree Commerce builds for an app is hierarchical: the **app-root** node sits above a per-item **menu leaf** node. Granting a parent node covers everything beneath it, so checking the app-root answers "can this user reach _any_ of the app's protected items", while checking the menu leaf answers "can this user reach _this specific_ menu entry".
+
+- `getAclResourceId(metadataId)` returns the **app-root** id.
+- `getMenuAclResourceId(metadataId, menuId)` returns the **menu leaf** id for a single `adminUi.menu` item, where `menuId` is its `adminUi.menu.id`.
+
+```typescript
+import { getAclResourceId } from "@adobe/aio-commerce-lib-admin-ui/api";
+import { getMenuAclResourceId } from "@adobe/aio-commerce-lib-admin-ui/menu";
+
+getAclResourceId("approval-dashboard-app");
+// → "Magento_CommerceBackendUix::adminuisdk_app_approval_dashboard_app"
+
+getMenuAclResourceId("approval-dashboard-app", "approval_dashboard");
+// → "Magento_CommerceBackendUix::adminuisdk_app_approval_dashboard_app_menu_approval_dashboard"
+```
+
+Each segment is sanitized independently (trimmed, lowercased, non-`[a-z0-9_]` characters replaced with `_`), mirroring the Commerce module's id generator exactly. `getMenuAclResourceId` returns an empty string when `metadataId` is blank. Pass either id to `check()` or `require()`:
+
+```typescript
+const allowed = await permissionClient.check(
+  getMenuAclResourceId("approval-dashboard-app", "approval_dashboard"),
+);
+```
+
+#### Resource ids for grid columns, view buttons, and mass actions
+
+The same hierarchical scheme extends to the other Admin UI components. Each helper returns the **leaf** id for a single protected item, nested under its entity (`order` / `product` / `customer`) and item-type group in the Commerce ACL tree:
+
+- `getGridColumnAclResourceId(metadataId, entity, columnId)` — a grid column, where `columnId` is its `adminUi.<entity>.gridColumns.columns[].id`.
+- `getMassActionAclResourceId(metadataId, entity, actionId)` — a mass action, where `actionId` is its `adminUi.<entity>.massActions[].id`.
+- `getOrderViewButtonAclResourceId(metadataId, buttonId)` — an order view button (view buttons exist only on the order entity), where `buttonId` is its `adminUi.order.viewButtons[].id`.
+
+```typescript
+import { getGridColumnAclResourceId } from "@adobe/aio-commerce-lib-admin-ui/grid-columns";
+import { getMassActionAclResourceId } from "@adobe/aio-commerce-lib-admin-ui/mass-actions";
+import { getOrderViewButtonAclResourceId } from "@adobe/aio-commerce-lib-admin-ui/order-view-buttons";
+
+getGridColumnAclResourceId("approval-dashboard-app", "order", "order_status");
+// → "Magento_CommerceBackendUix::adminuisdk_app_approval_dashboard_app_order_gridcolumns_order_status"
+
+getMassActionAclResourceId("approval-dashboard-app", "order", "bulk-approve");
+// → "Magento_CommerceBackendUix::adminuisdk_app_approval_dashboard_app_order_massactions_bulk_approve"
+
+getOrderViewButtonAclResourceId("approval-dashboard-app", "approve-order");
+// → "Magento_CommerceBackendUix::adminuisdk_app_approval_dashboard_app_order_viewbuttons_approve_order"
+```
+
+Like the menu helper, each segment is sanitized independently and a blank `metadataId` yields an empty string. Pass any of these ids to `check()` or `require()`.
+
+#### End-to-end example: an ACL-protected mass action handler
+
+The resource-id helpers are designed to be used together with the request/response builders and the permission client inside a single runtime action. A typical handler parses the incoming request, derives the leaf resource id for the item that was invoked, gates the work behind `require()`, and then returns the matching response envelope.
+
+The example below is a mass action worker. Note how `gridType` from the parsed request flows directly into `getMassActionAclResourceId` as the `entity` segment — the builders and the id helpers share the same `order` / `product` / `customer` vocabulary, so they compose without extra mapping:
+
+```typescript
+import {
+  AdminUiPermissionDeniedError,
+  AdminUiPermissionError,
+  getAdminUiPermissionClient,
+} from "@adobe/aio-commerce-lib-admin-ui/api";
+import {
+  getMassActionAclResourceId,
+  massActionErrorResponse,
+  okMassActionResponse,
+  parseMassActionRequest,
+} from "@adobe/aio-commerce-lib-admin-ui/mass-actions";
+import { AdobeCommerceHttpClient } from "@adobe/aio-commerce-lib-api";
+
+import type { RuntimeActionParams } from "@adobe/aio-commerce-lib-core/params";
+
+// Your application's `metadata.id` and the `adminUi.<entity>.massActions[].id` it registered.
+const APP_ID = "approval-dashboard-app";
+const ACTION_ID = "bulk-approve";
+
+export async function main(params: RuntimeActionParams) {
+  // 1. Validate and narrow the body Commerce POSTed.
+  let request;
+  try {
+    request = parseMassActionRequest(params);
+  } catch {
+    return massActionErrorResponse(400, "Invalid mass action request");
+  }
+  const { gridType, selectedIds } = request;
+
+  // 2. Build a Commerce HTTP client and a permission client.
+  //    Hoist these to module scope if the action handles more than one request.
+  const httpClient = new AdobeCommerceHttpClient({
+    config: { baseUrl: params.COMMERCE_BASE_URL, flavor: "paas" },
+    auth: {
+      /* IMS or Integration auth params, typically read from `params` */
+    },
+  });
+  const permissionClient = getAdminUiPermissionClient({ httpClient });
+
+  // 3. Derive the leaf resource id for THIS action and require it.
+  //    `gridType` ("order" | "product" | "customer") is the entity segment.
+  const resource = getMassActionAclResourceId(APP_ID, gridType, ACTION_ID);
+  try {
+    await permissionClient.require(resource);
+  } catch (error) {
+    if (error instanceof AdminUiPermissionDeniedError) {
+      return massActionErrorResponse(
+        403,
+        "You do not have access to this action",
+      );
+    }
+    if (error instanceof AdminUiPermissionError) {
+      // HTTP 401, or a network/parse failure
+      return massActionErrorResponse(401, "Could not verify permissions");
+    }
+    throw error;
+  }
+
+  // 4. Run the work, then return the response envelope Commerce expects.
+  await approveOrders(selectedIds);
+  return okMassActionResponse({ approved: selectedIds.length });
+}
+```
+
+The same shape applies to the other components — swap in the matching trio of helpers:
+
+- **Grid columns**: `parseGridRequest` → `getGridColumnAclResourceId(appId, gridType, columnId)` → `okGridResponse` / `errorGridResponse`.
+- **Order view buttons**: `parseOrderViewButtonRequest` → `getOrderViewButtonAclResourceId(appId, buttonId)` → `okOrderViewButtonResponse` / `orderViewButtonErrorResponse`.
+
+For grid columns, gate the work per the request's `gridType`; for order view buttons, the entity is always `order`, so only the `appId` and `buttonId` segments vary.
+
+### Web Extension App
+
+The `./web` entrypoint provides the browser side of a `commerce/backend-ui/2` app: `createExtensionApp` mounts the iframe app (Experience Cloud Shell wiring, UIX registration, shared-context attachment, routing, and Spectrum setup included), and a set of React hooks expose the context the host shares with the frame.
+
+> [!NOTE]
+> This entrypoint is browser/ESM-only — there is no `require` (CJS) build. `react`, `react-dom`, and `@react-spectrum/s2` are optional peer dependencies of this package. If you use `./web`, install versions that satisfy this package's peer dependency ranges, even though those peers remain optional for consumers that don't use the browser entrypoint.
+
+#### Mounting an app
+
+`createExtensionApp` mounts the app into the element with id `root` (or into the `root` element you pass). When your app has a Commerce Admin menu, pass its page through the optional `menu` property. Experience Cloud Shell also renders this page by default. Use `routes` for additional pages:
+
+```jsx
+// src/app.jsx
+import { createExtensionApp } from "@adobe/aio-commerce-lib-admin-ui/web";
+import "@react-spectrum/s2/page.css";
+
+import { MainPage } from "./pages/main-page.jsx";
+import { SettingsPage } from "./pages/settings-page.jsx";
+
+createExtensionApp({
+  metadata: { extensionId: "my-extension-id" },
+  menu: <MainPage />,
+  routes: [{ path: "/settings", element: <SettingsPage /> }],
+});
+```
+
+When you provide `menu`, it owns the root route. Don't also add a root-equivalent path such as `"/"` or `"#/"` to `routes`; `createExtensionApp` reports that duplicate declaration as an error. When your app doesn't have a menu, omit `menu` and declare the root page in `routes` instead.
+
+The whole app is wrapped in React's [`<StrictMode>`](https://react.dev/reference/react/StrictMode). When running locally with `aio app dev` or `aio app run` (which serve React's development build), StrictMode runs its extra development-only checks: components render twice, and effects run an extra setup + cleanup cycle on mount. Duplicated renders, effect runs, or requests fired from effects during development are therefore expected — not a bug — and surface unsafe side effects early. These checks do not run in production builds, where StrictMode has no effect.
+
+#### Handling hook errors
+
+The browser hooks return an object with complementary `data` and `error` fields. When the requested host data is available, `data` contains it and `error` is `null`. Otherwise, `data` is `null` and `error` explains why the `data` can't be provided.
+
+The hooks don't throw these errors themselves. When you throw a returned error during render, the SDK's error boundary catches it and replaces the extension content with its fallback UI. Use this when the current page can't continue without the requested data:
+
+```jsx
+const { data, error } = useIms();
+if (error) throw error;
+```
+
+To keep the page mounted, handle the error locally instead. You can render a message, offer a retry, disable the affected feature, or otherwise provide a degraded experience. Returning custom UI from the component, as in the next example, handles the error locally instead of sending it to the error boundary.
+
+#### Reading IMS credentials
+
+`useIms` returns the IMS credentials provided by the host (`{ imsToken, imsOrgId }`). It works inside both the Commerce Admin and the Experience Cloud shell, and returns an error when the app runs standalone because no host provides credentials:
+
+```jsx
+import { useIms } from "@adobe/aio-commerce-lib-admin-ui/web";
+
+function Welcome() {
+  const { data, error } = useIms();
+  if (error) return <span>{error.message}</span>;
+
+  // Use data.imsToken to call IMS-authenticated APIs on behalf of the admin user.
+  return <span>{data.imsOrgId}</span>;
+}
+```
+
+When a component is guaranteed to render within a supported host and you intentionally don't need explicit error handling, you can ignore `error` and use optional chaining:
+
+```jsx
+function Welcome() {
+  const { data } = useIms();
+  return <span>{data?.imsOrgId}</span>;
+}
+```
+
+This is valid, but it is less explicit and not recommended. If the component renders outside the expected host, it silently renders an absent value instead of explaining or forwarding the error.
+
+#### Resolving the Commerce host
+
+`useCommerce` returns the host (domain) of the Commerce Admin the extension is embedded in. The value is resolved over the guest connection via the host's integration API. It returns an error when used outside the Commerce Admin frame, when the host doesn't expose that integration API, or when host resolution fails:
+
+```jsx
+import { useCommerce } from "@adobe/aio-commerce-lib-admin-ui/web";
+
+function CommerceInfo() {
+  const { data, error } = useCommerce();
+  if (error) return <span>Commerce features aren't available here.</span>;
+
+  return <span>{data.commerceHost}</span>;
+}
+```
+
+#### Interacting with the Commerce Admin host
+
+`useHostConnection` returns typed helpers for closing the extension iframe and returning control to the Commerce Admin. Note that these are only useful in flows that need to close the current iframe and navigate back, such as mass actions and order view buttons.
+
+```jsx
+import { useHostConnection } from "@adobe/aio-commerce-lib-admin-ui/web";
+
+function Actions() {
+  const { actions, error } = useHostConnection();
+  if (error) return null;
+
+  // actions.close() closes the current iframe and navigates back to the originating grid or order.
+  // actions.closeWithError() does the same, flagging that an error occurred.
+}
+```
+
+#### Reading the mass-action selection
+
+`useMassActionContext` returns the row IDs the mass action was triggered with. It reads from the host-provided Commerce context and returns an error when the selection is missing, empty, or contains a non-string row ID:
+
+```jsx
+import { useMassActionContext } from "@adobe/aio-commerce-lib-admin-ui/web";
+
+function MassActionPage() {
+  const { data, error } = useMassActionContext();
+  if (error) return null;
+
+  // data.selectedIds is a non-empty string[].
+}
+```
+
+#### Reading the order view-button context
+
+`useOrderViewButtonContext` returns the ID of the order the view button was triggered from. It returns an error when no order ID is present in the page URL:
+
+```jsx
+import { useOrderViewButtonContext } from "@adobe/aio-commerce-lib-admin-ui/web";
+
+function OrderViewButtonPage() {
+  const { data, error } = useOrderViewButtonContext();
+  if (error) return null;
+
+  return <span>{data.orderId}</span>;
+}
+```
+
+#### Low-level shared context access
+
+`useSharedContext` is an escape hatch that exposes the raw Commerce shared context and host proxy from the guest connection. Prefer a purpose-built hook (`useCommerce`, `useMassActionContext`, `useOrderViewButtonContext`, `useHostConnection`) when one covers what you need:
+
+```jsx
+import { useSharedContext } from "@adobe/aio-commerce-lib-admin-ui/web";
+
+function Advanced() {
+  const { data, error } = useSharedContext();
+  if (error) return null;
+
+  const selectedIds = data.sharedContext.get("selectedIds");
+}
+```
+
+`useSharedContext` (and the hooks built on it) require the Commerce guest connection. In Experience Cloud Shell or a standalone page, they will always return an error.

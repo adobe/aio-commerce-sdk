@@ -42,35 +42,35 @@ describe("executeWorkflow — multi-level interactions", () => {
     const installFn = vi.fn().mockReturnValue("result");
 
     const leafStep = defineLeafStep({
-      name: "child",
-      meta: { install: { label: "Child" } },
       install: installFn,
+      meta: { install: { label: "Child" } },
+      name: "child",
     });
 
     const branchStep = defineBranchStep({
-      name: "branch",
-      meta: { install: { label: "Branch" } },
-      context: async () => ({ sharedValue: "from-branch" }),
       children: [leafStep],
+      context: async () => ({ sharedValue: "from-branch" }),
+      meta: { install: { label: "Branch" } },
+      name: "branch",
     });
 
     const rootStep = defineBranchStep({
-      name: "root",
-      meta: { install: { label: "Root" } },
       children: [branchStep],
+      meta: { install: { label: "Root" } },
+      name: "root",
     });
 
     const installationContext = createMockInstallationContext();
     const initialState = createInitialState({
-      rootStep,
       config: minimalValidConfig,
+      rootStep,
     });
 
     await executeWorkflow({
-      rootStep,
-      installationContext,
       config: minimalValidConfig,
       initialState,
+      installationContext,
+      rootStep,
     });
 
     expect(installFn).toHaveBeenCalledWith(
@@ -85,42 +85,42 @@ describe("executeWorkflow — multi-level interactions", () => {
     const statusDuringExecution: string[] = [];
 
     const leafStep = defineLeafStep({
-      name: "step1",
-      meta: { install: { label: "Step 1" } },
       install: () => "result",
+      meta: { install: { label: "Step 1" } },
+      name: "step1",
     });
 
     const rootStep = defineBranchStep({
-      name: "root",
-      meta: { install: { label: "Root" } },
       children: [leafStep],
+      meta: { install: { label: "Root" } },
+      name: "root",
     });
 
     const hooks: InstallationHooks = {
       onStepStart: (info, state) => {
         if (info.stepName === "step1") {
-          const step1Status = state.step.children[0];
+          const [step1Status] = state.step.children;
           statusDuringExecution.push(`start:${step1Status.status}`);
         }
       },
       onStepSuccess: (info, state) => {
         if (info.stepName === "step1") {
-          const step1Status = state.step.children[0];
+          const [step1Status] = state.step.children;
           statusDuringExecution.push(`success:${step1Status.status}`);
         }
       },
     };
 
     const initialState = createInitialState({
-      rootStep,
       config: minimalValidConfig,
+      rootStep,
     });
     await executeWorkflow({
-      rootStep,
-      installationContext: createMockInstallationContext(),
       config: minimalValidConfig,
-      initialState,
       hooks,
+      initialState,
+      installationContext: createMockInstallationContext(),
+      rootStep,
     });
 
     expect(statusDuringExecution).toEqual([
@@ -133,44 +133,44 @@ describe("executeWorkflow — multi-level interactions", () => {
     const statusDuringExecution: string[] = [];
 
     const failingStep = defineLeafStep({
-      name: "failing",
-      meta: { install: { label: "Failing" } },
       install: () => {
         throw new Error("Failure");
       },
+      meta: { install: { label: "Failing" } },
+      name: "failing",
     });
 
     const rootStep = defineBranchStep({
-      name: "root",
-      meta: { install: { label: "Root" } },
       children: [failingStep],
+      meta: { install: { label: "Root" } },
+      name: "root",
     });
 
     const hooks: InstallationHooks = {
-      onStepStart: (info, state) => {
-        if (info.stepName === "failing") {
-          const stepStatus = state.step.children[0];
-          statusDuringExecution.push(`start:${stepStatus.status}`);
-        }
-      },
       onStepFailure: (info, state) => {
         if (info.stepName === "failing") {
-          const stepStatus = state.step.children[0];
+          const [stepStatus] = state.step.children;
           statusDuringExecution.push(`failure:${stepStatus.status}`);
+        }
+      },
+      onStepStart: (info, state) => {
+        if (info.stepName === "failing") {
+          const [stepStatus] = state.step.children;
+          statusDuringExecution.push(`start:${stepStatus.status}`);
         }
       },
     };
 
     const initialState = createInitialState({
-      rootStep,
       config: minimalValidConfig,
+      rootStep,
     });
     await executeWorkflow({
-      rootStep,
-      installationContext: createMockInstallationContext(),
       config: minimalValidConfig,
-      initialState,
       hooks,
+      initialState,
+      installationContext: createMockInstallationContext(),
+      rootStep,
     });
 
     expect(statusDuringExecution).toEqual([
@@ -183,155 +183,155 @@ describe("executeWorkflow — multi-level interactions", () => {
     const receivedContexts: Record<string, unknown>[] = [];
 
     const deepLeaf = defineLeafStep({
-      name: "deep-leaf",
-      meta: { install: { label: "Deep Leaf" } },
       install: (_config, ctx) => {
         receivedContexts.push({ ...ctx });
         return "deep-result";
       },
+      meta: { install: { label: "Deep Leaf" } },
+      name: "deep-leaf",
     });
 
     const innerBranch = defineBranchStep({
-      name: "inner-branch",
-      meta: { install: { label: "Inner Branch" } },
+      children: [deepLeaf],
       context: async () => ({
         innerValue: "from-inner",
         shared: "inner-override",
       }),
-      children: [deepLeaf],
+      meta: { install: { label: "Inner Branch" } },
+      name: "inner-branch",
     });
 
     const outerBranch = defineBranchStep({
-      name: "outer-branch",
-      meta: { install: { label: "Outer Branch" } },
+      children: [innerBranch],
       context: async () => ({
         outerValue: "from-outer",
         shared: "outer-original",
       }),
-      children: [innerBranch],
+      meta: { install: { label: "Outer Branch" } },
+      name: "outer-branch",
     });
 
     const rootStep = defineBranchStep({
-      name: "root",
-      meta: { install: { label: "Root" } },
       children: [outerBranch],
+      meta: { install: { label: "Root" } },
+      name: "root",
     });
 
     const installationContext = createMockInstallationContext();
     const initialState = createInitialState({
-      rootStep,
       config: minimalValidConfig,
+      rootStep,
     });
 
     await executeWorkflow({
-      rootStep,
-      installationContext,
       config: minimalValidConfig,
       initialState,
+      installationContext,
+      rootStep,
     });
 
     // The deep leaf should receive merged context from both branches
     // Inner branch context should override outer branch context for 'shared' key
     expect(receivedContexts).toHaveLength(1);
     expect(receivedContexts[0]).toMatchObject({
-      outerValue: "from-outer",
       innerValue: "from-inner",
+      outerValue: "from-outer",
       shared: "inner-override", // Inner overrides outer
     });
   });
 
   test("should accumulate results from multiple leaf steps in data", async () => {
     const step1 = defineLeafStep({
-      name: "step1",
+      install: () => ({ created: true, provider: "provider-123" }),
       meta: { install: { label: "Step 1" } },
-      install: () => ({ provider: "provider-123", created: true }),
+      name: "step1",
     });
 
     const step2 = defineLeafStep({
-      name: "step2",
-      meta: { install: { label: "Step 2" } },
       install: () => ({ registrations: ["reg-1", "reg-2"] }),
+      meta: { install: { label: "Step 2" } },
+      name: "step2",
     });
 
     const step3 = defineLeafStep({
-      name: "step3",
+      install: () => ({ status: "active", subscriptions: 5 }),
       meta: { install: { label: "Step 3" } },
-      install: () => ({ subscriptions: 5, status: "active" }),
+      name: "step3",
     });
 
     const rootStep = defineBranchStep({
-      name: "root",
-      meta: { install: { label: "Root" } },
       children: [step1, step2, step3],
+      meta: { install: { label: "Root" } },
+      name: "root",
     });
 
     const initialState = createInitialState({
-      rootStep,
       config: minimalValidConfig,
+      rootStep,
     });
     const result = await executeWorkflow({
-      rootStep,
-      installationContext: createMockInstallationContext(),
       config: minimalValidConfig,
       initialState,
+      installationContext: createMockInstallationContext(),
+      rootStep,
     });
 
     expect(result.status).toBe("succeeded");
     expect(result.data).toEqual({
       root: {
-        step1: { provider: "provider-123", created: true },
+        step1: { created: true, provider: "provider-123" },
         step2: { registrations: ["reg-1", "reg-2"] },
-        step3: { subscriptions: 5, status: "active" },
+        step3: { status: "active", subscriptions: 5 },
       },
     });
   });
 
   test("should accumulate results from nested branch structures", async () => {
     const eventsLeaf1 = defineLeafStep({
-      name: "commerce",
-      meta: { install: { label: "Commerce Events" } },
       install: () => ({ providerId: "commerce-provider" }),
+      meta: { install: { label: "Commerce Events" } },
+      name: "commerce",
     });
 
     const eventsLeaf2 = defineLeafStep({
-      name: "external",
-      meta: { install: { label: "External Events" } },
       install: () => ({ providerId: "external-provider" }),
+      meta: { install: { label: "External Events" } },
+      name: "external",
     });
 
     const eventsBranch = defineBranchStep({
-      name: "eventing",
-      meta: { install: { label: "Eventing" } },
       children: [eventsLeaf1, eventsLeaf2],
+      meta: { install: { label: "Eventing" } },
+      name: "eventing",
     });
 
     const webhooksLeaf = defineLeafStep({
-      name: "subscriptions",
-      meta: { install: { label: "Subscriptions" } },
       install: () => ({ count: 3 }),
+      meta: { install: { label: "Subscriptions" } },
+      name: "subscriptions",
     });
 
     const webhooksBranch = defineBranchStep({
-      name: "webhooks",
-      meta: { install: { label: "Webhooks" } },
       children: [webhooksLeaf],
+      meta: { install: { label: "Webhooks" } },
+      name: "webhooks",
     });
 
     const rootStep = defineBranchStep({
-      name: "installation",
-      meta: { install: { label: "Installation" } },
       children: [eventsBranch, webhooksBranch],
+      meta: { install: { label: "Installation" } },
+      name: "installation",
     });
 
     const initialState = createInitialState({
-      rootStep,
       config: minimalValidConfig,
+      rootStep,
     });
     const result = await executeWorkflow({
-      rootStep,
-      installationContext: createMockInstallationContext(),
       config: minimalValidConfig,
       initialState,
+      installationContext: createMockInstallationContext(),
+      rootStep,
     });
 
     expect(result.status).toBe("succeeded");

@@ -97,9 +97,9 @@ export async function validateStepTree(
   const summary = aggregateSummary(result);
 
   return {
-    valid: summary.errors === 0 && summary.warnings === 0,
     result,
     summary,
+    valid: summary.errors === 0 && summary.warnings === 0,
   };
 }
 
@@ -124,12 +124,13 @@ async function validateStep(
       }
 
       children.push(
+        // biome-ignore lint/performance/noAwaitInLoops: sibling steps validate in declared order against the same resolved child context
         await validateStep(child, config, resolved.childContext, path),
       );
     }
   }
 
-  return { name: step.name, path, meta: step.meta.install, issues, children };
+  return { children, issues, meta: step.meta.install, name: step.name, path };
 }
 
 /** Resolves the child context for a branch step, reporting errors as issues. */
@@ -191,9 +192,9 @@ function aggregateSummary(result: StepValidationResult): ValidationSummary {
 
   for (const issue of result.issues) {
     if (issue.severity === "error") {
-      errors++;
+      errors += 1;
     } else if (issue.severity === "warning") {
-      warnings++;
+      warnings += 1;
     }
   }
 
@@ -204,8 +205,8 @@ function aggregateSummary(result: StepValidationResult): ValidationSummary {
   }
 
   return {
-    totalIssues: errors + warnings,
     errors,
+    totalIssues: errors + warnings,
     warnings,
   };
 }

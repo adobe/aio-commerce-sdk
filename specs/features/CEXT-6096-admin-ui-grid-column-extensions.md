@@ -2,7 +2,7 @@
 
 - **Ticket:** [CEXT-6096](https://jira.corp.adobe.com/browse/CEXT-6096)
 - **Created:** 2026-05-29
-- [ ] **Implemented**
+- [x] **Implemented**
 
 > **Deprecation notice.** The v1 grid column schema (`commerce/backend-ui/1`, `data.meshId`,
 > `properties`, `columnId`) is deprecated and will be removed from the SDK in a future release.
@@ -16,7 +16,7 @@ order, product, and customer grids on `commerce/backend-ui/2`. The v1 schema (`a
 `commerce/backend-ui/1`, `data.meshId`, `properties`, `columnId`, `float` type) is deprecated and
 will be removed in a future release — it remains functional for now. The v2 shape introduces
 `runtimeAction` (a `workerProcess` operation name resolved by App Registry at runtime), `columns`
-(replacing `properties`), and `columnId` (unchanged from v1). The wire contract between Commerce and
+(replacing `properties`), and `id` (renamed from `columnId` in v1). The wire contract between Commerce and
 the handler is formally standardized for the first time. No separate registration action is
 generated for `commerce/backend-ui/2` — Commerce reads the `adminUi` config directly from the
 existing `app-config` endpoint on `commerce/extensibility/1`.
@@ -42,7 +42,7 @@ The v1 grid column design has four concrete problems that compound each other:
 
 - Introduce `adminUi` as the new top-level config key for `commerce/backend-ui/2` registrations.
 - Replace `data.meshId` with `runtimeAction` (a `workerProcess` operation name) in all three grids.
-- Rename `properties` → `columns`; keep `columnId` unchanged from v1.
+- Rename `properties` → `columns`; rename `columnId` → `id`.
 - Add `label` and `description` to each `gridColumns` block for display during installation.
 - Formally specify the request/response wire contract.
 - Deprecate `adminUiSdk`/`commerce/backend-ui/1` grid columns; keep them functional until removal.
@@ -75,13 +75,13 @@ export default defineConfig({
         runtimeAction: "orders/fetch-order-grid-data",
         columns: [
           {
-            columnId: "fulfillment_status",
+            id: "fulfillment_status",
             label: "Fulfillment",
             type: "string",
             align: "left",
           },
           {
-            columnId: "risk_score",
+            id: "risk_score",
             label: "Risk",
             type: "integer",
             align: "right",
@@ -96,7 +96,7 @@ export default defineConfig({
         runtimeAction: "products/fetch-product-grid-data",
         columns: [
           {
-            columnId: "inventory_status",
+            id: "inventory_status",
             label: "Inventory",
             type: "string",
             align: "left",
@@ -111,7 +111,7 @@ export default defineConfig({
         runtimeAction: "customers/fetch-customer-grid-data",
         columns: [
           {
-            columnId: "loyalty_tier",
+            id: "loyalty_tier",
             label: "Loyalty Tier",
             type: "string",
             align: "left",
@@ -180,22 +180,22 @@ the `workerProcess` operations.
 }
 ```
 
-### columnId uniqueness
+### id uniqueness
 
-`columnId` values are declared by the developer as plain identifiers (e.g. `external_id`). The
-`app-config` endpoint serves them as-is; no SDK-side prefixing is applied. `columnId` collision
+`id` values are declared by the developer as plain identifiers (e.g. `external_id`). The
+`app-config` endpoint serves them as-is; no SDK-side prefixing is applied. `id` collision
 handling across multiple installed apps is Commerce's responsibility.
 
 ### Column types
 
-| `type` value | Description                          |
-| ------------ | ------------------------------------ |
-| `boolean`    | Boolean value                        |
-| `date`       | Date (no time component)             |
-| `datetime`   | Date and time                        |
-| `decimal`    | Decimal number (replaces v1 `float`) |
-| `integer`    | Integer                              |
-| `string`     | Text                                 |
+| `type` value | Description              |
+| ------------ | ------------------------ |
+| `boolean`    | Boolean value            |
+| `date`       | Date (no time component) |
+| `datetime`   | Date and time            |
+| `float`      | Floating-point number    |
+| `integer`    | Integer                  |
+| `string`     | Text                     |
 
 ### Migration from v1
 
@@ -204,8 +204,8 @@ handling across multiple installed apps is Commerce's responsibility.
 | `adminUiSdk.registration.order`          | `adminUi.order`              | No `registration` wrapper in v2                               |
 | `data.meshId`                            | `runtimeAction`              | Operation name declared in `app.config.yaml`, not a Mesh hash |
 | `properties`                             | `columns`                    | Array of column declarations                                  |
-| `properties[].columnId`                  | `columns[].columnId`         | Unchanged from v1                                             |
-| `properties[].type: "float"`             | `columns[].type: "decimal"`  | Renamed                                                       |
+| `properties[].columnId`                  | `columns[].id`               | Renamed                                                       |
+| `properties[].type: "float"`             | `columns[].type: "float"`    | Same type name                                                |
 | _(absent)_                               | `columns[].type: "datetime"` | New type in v2                                                |
 | _(absent)_                               | `label`, `description`       | New block-level metadata for App Management installation UI   |
 | Extension point: `commerce/backend-ui/1` | `commerce/backend-ui/2`      | Required change in `app.config.yaml` and `install.yaml`       |
@@ -238,13 +238,13 @@ The v2 schema lives in a dedicated file:
 
 ```ts
 const GridColumnSchema = v.object({
-  columnId: nonEmptyStringValueSchema("column ID"),
+  id: nonEmptyStringValueSchema("column ID"),
   label: nonEmptyStringValueSchema("column label"),
   type: v.picklist([
     "boolean",
     "date",
     "datetime",
-    "decimal",
+    "float",
     "integer",
     "string",
   ]),

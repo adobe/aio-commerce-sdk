@@ -21,7 +21,7 @@ const DEFAULT_SNAPSHOT_TAG = "beta";
 const STATUS_OUTPUT_FILE = "changeset-status.json";
 
 /** Structured output from `changeset status --output`. */
-interface ChangesetStatus {
+type ChangesetStatus = {
   changesets: Array<{
     id: string;
     releases: Array<{ name: string; type: string }>;
@@ -34,14 +34,14 @@ interface ChangesetStatus {
     oldVersion: string;
     type: string;
   }>;
-}
+};
 
 /** Workspace package info from `pnpm ls`. */
-interface WorkspacePackage {
+type WorkspacePackage = {
   name: string;
   path: string;
   private?: boolean;
-}
+};
 
 export default async function main(
   core: AsyncFunctionArguments["core"],
@@ -120,6 +120,7 @@ async function snapshot(
       const tag = `${pkg.name}@${pkg.version}`;
 
       try {
+        // biome-ignore lint/performance/noAwaitInLoops: sequential to avoid tripping GitHub's secondary rate limits when publishing multiple pre-releases in the same workflow run.
         await github.rest.repos.createRelease({
           body,
           name: tag,
@@ -228,8 +229,8 @@ function formatPreReleaseBody(
   pkg: PublishedPackage,
 ): string {
   const lines = [
-    "> [!IMPORTANT]",
-    "> Internal release only. This version is not publicly available.",
+    "> [!NOTE]",
+    "> Snapshot release published to the public npm registry. Not intended for production use.",
     "",
     changelog ?? `Snapshot release of \`${pkg.name}@${pkg.version}\`.`,
   ];

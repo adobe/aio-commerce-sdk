@@ -20,6 +20,7 @@ import type {
 } from "./types";
 
 const DEFAULT_IO_EVENTS_BASE_URL = "https://api.adobe.io/events";
+const DEFAULT_IO_EVENTS_INGRESS_BASE_URL = "https://eventsingress.adobe.io/";
 
 export type RequiredIoEventsHttpClientConfig =
   RequiredDeep<IoEventsHttpClientConfig>;
@@ -43,6 +44,8 @@ export class AdobeIoEventsHttpClient extends HttpClientBase<RequiredIoEventsHttp
     const config: RequiredIoEventsHttpClientConfig = {
       ...params.config,
       baseUrl: params.config?.baseUrl ?? DEFAULT_IO_EVENTS_BASE_URL,
+      ingressBaseUrl:
+        params.config?.ingressBaseUrl ?? DEFAULT_IO_EVENTS_INGRESS_BASE_URL,
     };
 
     const httpClient = buildIoEventsHttpClient({ ...params, config });

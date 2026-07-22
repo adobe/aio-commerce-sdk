@@ -104,7 +104,7 @@ describe("CommerceSdkErrorBase", () => {
   describe("fullStack getter", () => {
     it("should return stack trace for single error", () => {
       const error = new TestError("Test error");
-      const fullStack = error.fullStack;
+      const { fullStack } = error;
 
       expect(fullStack).toBeDefined();
       expect(fullStack).toContain("TestError: Test error");
@@ -113,7 +113,7 @@ describe("CommerceSdkErrorBase", () => {
     it("should return stack trace with single cause", () => {
       const cause = new Error("Cause error");
       const error = new TestError("Test error", { cause });
-      const fullStack = error.fullStack;
+      const { fullStack } = error;
 
       expect(fullStack).toContain("TestError: Test error");
       expect(fullStack).toContain("Caused by: Error: Cause error");
@@ -125,7 +125,7 @@ describe("CommerceSdkErrorBase", () => {
       Object.defineProperty(middleCause, "cause", { value: rootCause });
 
       const error = new TestError("Test error", { cause: middleCause });
-      const fullStack = error.fullStack;
+      const { fullStack } = error;
 
       expect(fullStack).toContain("TestError: Test error");
       expect(fullStack).toContain("Caused by: Error: Middle cause");
@@ -182,16 +182,16 @@ describe("CommerceSdkErrorBase", () => {
     it("should return JSON representation with all properties", () => {
       const cause = new Error("Cause error");
       const error = new TestError("Test error", {
-        traceId: "trace-123",
         cause,
+        traceId: "trace-123",
       });
 
       const json = error.toJSON();
       expect(json).toEqual({
-        name: "TestError",
-        message: "Test error",
-        stack: expect.stringContaining("TestError: Test error"),
         cause,
+        message: "Test error",
+        name: "TestError",
+        stack: expect.stringContaining("TestError: Test error"),
         traceId: "trace-123",
       });
     });
@@ -201,10 +201,10 @@ describe("CommerceSdkErrorBase", () => {
       const json = error.toJSON();
 
       expect(json).toEqual({
-        name: "TestError",
-        message: "Test error",
-        stack: expect.stringContaining("TestError: Test error"),
         cause: undefined,
+        message: "Test error",
+        name: "TestError",
+        stack: expect.stringContaining("TestError: Test error"),
         traceId: undefined,
       });
     });
@@ -241,8 +241,8 @@ describe("CommerceSdkErrorBase", () => {
     it("should handle complex error structures in inspect mode", () => {
       const cause = new Error("Cause error");
       const error = new TestError("Test error", {
-        traceId: "trace-123",
         cause,
+        traceId: "trace-123",
       });
 
       const string = error.toString();
@@ -298,8 +298,8 @@ describe("CommerceSdkErrorBase", () => {
 
       // Temporarily remove captureStackTrace
       Object.defineProperty(Error, "captureStackTrace", {
-        value: undefined,
         configurable: true,
+        value: undefined,
       });
 
       const error = new TestError("Test error");
@@ -310,8 +310,8 @@ describe("CommerceSdkErrorBase", () => {
       // Restore captureStackTrace
       if (originalCaptureStackTrace) {
         Object.defineProperty(Error, "captureStackTrace", {
-          value: originalCaptureStackTrace,
           configurable: true,
+          value: originalCaptureStackTrace,
         });
       }
     });

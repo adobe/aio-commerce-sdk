@@ -8,6 +8,7 @@ This package provides core utilities for the Adobe Commerce SDK libraries:
 - **[Response Helpers](./guides/response-helpers.md)**: Standardized response builders for Adobe I/O Runtime actions
 - **[Params Utilities](./guides/params-utilities.md)**: Runtime action parameter validation helpers
 - **[Headers Utilities](./guides/headers-utilities.md)**: HTTP header extraction and validation helpers
+- **Commerce Environment**: Shared schema and constants for the Commerce environment (`"paas"` / `"saas"`)
 
 ## API Reference
 
@@ -37,7 +38,12 @@ throw new ApiError("Request failed", 500);
 ### Response Helpers
 
 ```typescript
-import { ok, badRequest } from "@adobe/aio-commerce-lib-core/responses";
+import {
+  ok,
+  badRequest,
+  isSuccessResponse,
+  isErrorResponse,
+} from "@adobe/aio-commerce-lib-core/responses";
 
 // Success response using string shorthand
 return ok("User retrieved");
@@ -47,6 +53,16 @@ return badRequest("Invalid input");
 
 // Or use full object syntax for additional data
 return ok({ body: { message: "User retrieved", id: "123" } });
+
+// Narrow unknown values before reading response fields
+const result = await runAction(params);
+if (isSuccessResponse(result)) {
+  console.log(result.statusCode);
+}
+
+if (isErrorResponse(result)) {
+  console.log(result.error.statusCode);
+}
 ```
 
 [Read the Response Helpers Guide →](./guides/response-helpers.md)
@@ -91,3 +107,23 @@ function main(params) {
 ```
 
 [Read the Headers Utilities Guide →](./guides/headers-utilities.md)
+
+### Commerce Environment
+
+```typescript
+import {
+  COMMERCE_ENVS,
+  CommerceEnvSchema,
+  CommerceEnvArraySchema,
+} from "@adobe/aio-commerce-lib-core/commerce";
+import * as v from "valibot";
+
+// The supported Commerce environments: ["paas", "saas"]
+COMMERCE_ENVS;
+
+// Validate a single environment value.
+v.parse(CommerceEnvSchema, "paas");
+
+// Validate a non-empty array of environments (e.g. to scope a field or resource).
+v.parse(CommerceEnvArraySchema, ["paas", "saas"]);
+```

@@ -10,6 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
+import { CommerceEnvArraySchema } from "@adobe/aio-commerce-lib-core/commerce";
 import * as v from "valibot";
 
 import type { RuntimeActionParams } from "@adobe/aio-commerce-lib-core/params";
@@ -35,38 +36,12 @@ const DEFAULT_BOOLEAN_VALUE = false as const;
 const DEFAULT_STRING_VALUE = "" as const;
 const DEFAULT_MULTIPLE_LIST_VALUE = [] as const;
 
-/** The list of supported Commerce environments a configuration field can be scoped to. */
-const COMMERCE_ENVS = ["paas", "saas"] as const;
-
-/** Schema for a single Commerce environment a configuration field can be scoped to. */
-const CommerceEnvSchema = v.picklist(
-  COMMERCE_ENVS,
-  `Expected one of: ${COMMERCE_ENVS.map((e) => `"${e}"`).join(", ")}`,
-);
-
-/**
- * Schema for the optional `env` property used to scope a configuration field to
- * specific Commerce environments. When omitted, the field applies to all environments.
- */
-const EnvSchema = v.pipe(
-  v.array(
-    CommerceEnvSchema,
-    'Expected an array of commerce environments for the field "env"',
-  ),
-  v.nonEmpty('The "env" array must contain at least one commerce environment'),
-);
-
 /**
  * Base schema for configuration field options with name, optional label,
  * optional description, and optional `env` to scope the field to specific
  * Commerce environments (when omitted, the field applies to all environments).
  */
 const BaseOptionSchema = v.object({
-  name: v.pipe(
-    v.string("Expected a string for the field name"),
-    v.nonEmpty("The field name must not be empty"),
-  ),
-  label: v.optional(v.string("Expected a string for the field label")),
   description: v.optional(
     v.pipe(
       v.string("Expected a string for the field description"),
@@ -76,7 +51,12 @@ const BaseOptionSchema = v.object({
       ),
     ),
   ),
-  env: v.optional(EnvSchema),
+  env: v.optional(CommerceEnvArraySchema),
+  label: v.optional(v.string("Expected a string for the field label")),
+  name: v.pipe(
+    v.string("Expected a string for the field name"),
+    v.nonEmpty("The field name must not be empty"),
+  ),
 });
 
 /** Schema for a single option in a list field, containing a display label and a value */
@@ -90,30 +70,26 @@ type ListOptionShape = v.InferInput<typeof ListOptionSchema>;
 /** Entries shared between the single- and multiple-selection list field schemas. */
 const ListEntriesCommon = {
   ...BaseOptionSchema.entries,
-  type: v.literal("list", "Expected the type to be 'list'"),
   options: v.array(ListOptionSchema, "Expected an array of list options"),
+  type: v.literal("list", "Expected the type to be 'list'"),
 };
 
 /** Schema for a list field that allows single selection from a list of options */
 const SingleListSchema = v.object({
   ...ListEntriesCommon,
-  selectionMode: v.literal(
-    "single",
-    "Expected the selectionMode to be 'single'",
-  ),
   default: v.pipe(
     v.string("Expected a string for the default value"),
     v.nonEmpty("The default value must not be empty"),
+  ),
+  selectionMode: v.literal(
+    "single",
+    "Expected the selectionMode to be 'single'",
   ),
 });
 
 /** Schema for a list field that allows multiple selections from a list of options */
 const MultipleListSchema = v.object({
   ...ListEntriesCommon,
-  selectionMode: v.literal(
-    "multiple",
-    "Expected the selectionMode to be 'multiple'",
-  ),
   default: v.optional(
     v.array(
       v.pipe(
@@ -123,6 +99,10 @@ const MultipleListSchema = v.object({
       "Expected an array of default values",
     ),
     DEFAULT_MULTIPLE_LIST_VALUE,
+  ),
+  selectionMode: v.literal(
+    "multiple",
+    "Expected the selectionMode to be 'multiple'",
   ),
 });
 
@@ -135,17 +115,16 @@ export const ListSchema = v.variant("selectionMode", [
 /** Schema for a text input field that accepts string values */
 const TextSchema = v.object({
   ...BaseOptionSchema.entries,
-  type: v.literal("text", "Expected the type to be 'text'"),
   default: v.optional(
     v.string("Expected a string for the default value"),
     DEFAULT_STRING_VALUE,
   ),
+  type: v.literal("text", "Expected the type to be 'text'"),
 });
 
 /** Schema for a password input field that accepts string values (typically masked in UI) */
 const PasswordSchema = v.object({
   ...BaseOptionSchema.entries,
-  type: v.literal("password", "Expected the type to be 'password'"),
   default: v.optional(
     v.literal(
       DEFAULT_STRING_VALUE,
@@ -153,12 +132,12 @@ const PasswordSchema = v.object({
     ),
     DEFAULT_STRING_VALUE,
   ),
+  type: v.literal("password", "Expected the type to be 'password'"),
 });
 
 /** Schema for an email input field that accepts and validates email addresses */
 const EmailSchema = v.object({
   ...BaseOptionSchema.entries,
-  type: v.literal("email", "Expected the type to be 'email'"),
   default: v.optional(
     v.union([
       v.literal(DEFAULT_STRING_VALUE),
@@ -169,12 +148,12 @@ const EmailSchema = v.object({
     ]),
     DEFAULT_STRING_VALUE,
   ),
+  type: v.literal("email", "Expected the type to be 'email'"),
 });
 
 /** Schema for a URL input field that accepts and validates URL strings */
 const UrlSchema = v.object({
   ...BaseOptionSchema.entries,
-  type: v.literal("url", "Expected the type to be 'url'"),
   default: v.optional(
     v.union([
       v.literal(DEFAULT_STRING_VALUE),
@@ -185,12 +164,12 @@ const UrlSchema = v.object({
     ]),
     DEFAULT_STRING_VALUE,
   ),
+  type: v.literal("url", "Expected the type to be 'url'"),
 });
 
 /** Schema for a phone number input field that accepts and validates telephone numbers */
 const PhoneSchema = v.object({
   ...BaseOptionSchema.entries,
-  type: v.literal("tel", "Expected the type to be 'tel'"),
   default: v.optional(
     v.union([
       v.literal(DEFAULT_STRING_VALUE),
@@ -204,16 +183,17 @@ const PhoneSchema = v.object({
     ]),
     DEFAULT_STRING_VALUE,
   ),
+  type: v.literal("tel", "Expected the type to be 'tel'"),
 });
 
 /** Schema for a boolean toggle field that accepts true/false values */
 const BooleanSchema = v.object({
   ...BaseOptionSchema.entries,
-  type: v.literal("boolean", "Expected the type to be 'boolean'"),
   default: v.optional(
     v.boolean("Expected a boolean for the default value"),
     DEFAULT_BOOLEAN_VALUE,
   ),
+  type: v.literal("boolean", "Expected the type to be 'boolean'"),
 });
 
 type OptionsFactory = (
@@ -223,11 +203,11 @@ type OptionsFactory = (
 /** Entries shared between the single- and multiple-selection dynamic list field schemas. */
 const DynamicListEntriesCommon = {
   ...BaseOptionSchema.entries,
-  type: v.literal("dynamicList", "Expected the type to be 'dynamicList'"),
   options: v.custom<OptionsFactory>(
     (input) => typeof input === "function",
     'Expected a function for "options"',
   ),
+  type: v.literal("dynamicList", "Expected the type to be 'dynamicList'"),
 };
 
 type SingleDefaultFactory = (resolvedOptions: ListOptionShape[]) => string;
@@ -235,13 +215,13 @@ type SingleDefaultFactory = (resolvedOptions: ListOptionShape[]) => string;
 /** Schema for a dynamic list field that allows single selection. */
 const SingleDynamicListSchema = v.object({
   ...DynamicListEntriesCommon,
-  selectionMode: v.literal(
-    "single",
-    "Expected the selectionMode to be 'single'",
-  ),
   default: v.custom<SingleDefaultFactory>(
     (input) => typeof input === "function",
     'Expected a function for "default"',
+  ),
+  selectionMode: v.literal(
+    "single",
+    "Expected the selectionMode to be 'single'",
   ),
 });
 
@@ -250,15 +230,15 @@ type MultipleDefaultFactory = (resolvedOptions: ListOptionShape[]) => string[];
 /** Schema for a dynamic list field that allows multiple selections. */
 const MultipleDynamicListSchema = v.object({
   ...DynamicListEntriesCommon,
-  selectionMode: v.literal(
-    "multiple",
-    "Expected the selectionMode to be 'multiple'",
-  ),
   default: v.optional(
     v.custom<MultipleDefaultFactory>(
       (input) => typeof input === "function",
       'Expected a function for "default"',
     ),
+  ),
+  selectionMode: v.literal(
+    "multiple",
+    "Expected the selectionMode to be 'multiple'",
   ),
 });
 

@@ -1,7 +1,5 @@
 # Commerce App Migration Skills
 
-> ⚠️ **Experimental** — These skills are under active development and subject to change.
-
 Agent skills for migrating Adobe Commerce App Builder projects to the App Management approach, following the [agentskills.io](https://agentskills.io) open standard. Compatible with Claude Code, Cursor, VS Code Copilot, Gemini CLI, and other supported agents.
 
 ## Available skills
@@ -48,18 +46,18 @@ Orchestrates the full migration workflow: project detection → domain analysis 
 **Claude Code plugin:**
 
 ```sh
-/plugin marketplace add adobe/aio-commerce-sdk
-/plugin install commerce-app-migration@adobe-aio-commerce-sdk
+/plugin marketplace add adobe/skills
+/plugin install commerce-app-migration@adobe-skills
 ```
 
 **Tessl CLI:**
 
 ```sh
-tessl install github:adobe/aio-commerce-sdk --skills commerce-app-migrate
+tessl install github:adobe/skills --skills commerce-app-migrate
 ```
 
 **npx skills:**
 
 ```sh
-npx skills add adobe/aio-commerce-sdk --skill commerce-app-migrate
+npx skills add adobe/skills --skill commerce-app-migrate
 ```

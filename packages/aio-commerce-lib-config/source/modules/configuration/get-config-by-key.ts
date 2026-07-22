@@ -61,7 +61,7 @@ export async function getConfigurationByKey(
   }
 
   return {
-    scope: configData.scope,
     config: configValue,
+    scope: configData.scope,
   } satisfies GetConfigurationByKeyResponse;
 }

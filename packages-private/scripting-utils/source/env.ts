@@ -27,10 +27,10 @@ const { context } = aioIms;
 const IMS_KEYS = {
   client_id: "AIO_COMMERCE_AUTH_IMS_CLIENT_ID",
   client_secrets: "AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS",
+  ims_org_id: "AIO_COMMERCE_AUTH_IMS_ORG_ID",
+  scopes: "AIO_COMMERCE_AUTH_IMS_SCOPES",
   technical_account_email: "AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL",
   technical_account_id: "AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID",
-  scopes: "AIO_COMMERCE_AUTH_IMS_SCOPES",
-  ims_org_id: "AIO_COMMERCE_AUTH_IMS_ORG_ID",
 } as const;
 
 type WorkspaceCredentials = {
@@ -92,12 +92,11 @@ function resolveImsS2SContext(): Promise<ImsContext | null> {
   const credentials: WorkspaceCredentials[] =
     config.get("project.workspace.details.credentials") ?? [];
 
-  const [credential] =
-    credentials
-      .filter(
-        ({ integration_type }) => integration_type === "oauth_server_to_server",
-      )
-      .map(({ name }) => name) ?? [];
+  const [credential] = credentials
+    .filter(
+      ({ integration_type }) => integration_type === "oauth_server_to_server",
+    )
+    .map(({ name }) => name);
 
   if (!credential) {
     return Promise.resolve(null);

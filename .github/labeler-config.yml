@@ -14,7 +14,7 @@
 
 "pkg: aio-commerce-lib-api":
   - changed-files:
-      - any-glob-to-any-file: "packages-private/aio-commerce-lib-api/**"
+      - any-glob-to-any-file: "packages/aio-commerce-lib-api/**"
 
 "pkg: aio-commerce-lib-events":
   - changed-files:
@@ -31,6 +31,10 @@
 "pkg: aio-commerce-lib-admin-ui":
   - changed-files:
       - any-glob-to-any-file: "packages/aio-commerce-lib-admin-ui/**"
+
+"pkg: aio-commerce-lib-webhooks":
+  - changed-files:
+      - any-glob-to-any-file: "packages/aio-commerce-lib-webhooks/**"
       
 "private-pkg: scripting-utils":
   - changed-files:
@@ -39,6 +43,14 @@
 "private-pkg: common-utils":
   - changed-files:
       - any-glob-to-any-file: "packages-private/common-utils/**"
+
+"plugin: aio-commerce-plugin-app-management":
+  - changed-files:
+      - any-glob-to-any-file: "plugins/commerce/app-management/**"
+
+"plugin: aio-commerce-plugin-app-migration":
+  - changed-files:
+      - any-glob-to-any-file: "plugins/commerce/app-migration/**"
 
 "scripts":
   - changed-files:

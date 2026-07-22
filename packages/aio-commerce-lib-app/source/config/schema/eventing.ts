@@ -10,6 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
+import { CommerceEnvArraySchema } from "@adobe/aio-commerce-lib-core/commerce";
 import {
   alphaNumericOrHyphenSchema,
   booleanValueSchema,
@@ -129,14 +130,6 @@ function commerceEventFieldSchema() {
 
 /** Schema for event provider configuration */
 const ProviderSchema = v.object({
-  label: v.pipe(
-    nonEmptyStringValueSchema("provider label"),
-    ioEventsTextSchema("Provider label"),
-    v.maxLength(
-      MAX_LABEL_LENGTH,
-      `The provider label must not be longer than ${MAX_LABEL_LENGTH} characters`,
-    ),
-  ),
   description: v.pipe(
     nonEmptyStringValueSchema("provider description"),
     ioEventsTextSchema("Provider description"),
@@ -154,25 +147,34 @@ const ProviderSchema = v.object({
       ),
     ),
   ),
+  label: v.pipe(
+    nonEmptyStringValueSchema("provider label"),
+    ioEventsTextSchema("Provider label"),
+    v.maxLength(
+      MAX_LABEL_LENGTH,
+      `The provider label must not be longer than ${MAX_LABEL_LENGTH} characters`,
+    ),
+  ),
 });
 
 /** Schema for base shared properties between event types. */
 const BaseEventSchema = v.object({
-  label: v.pipe(
-    nonEmptyStringValueSchema("event label"),
-    ioEventsTextSchema("Event label"),
-    v.maxLength(
-      MAX_LABEL_LENGTH,
-      `The event label must not be longer than ${MAX_LABEL_LENGTH} characters`,
-    ),
-  ),
-
   description: v.pipe(
     nonEmptyStringValueSchema("event description"),
     ioEventsTextSchema("Event description"),
     v.maxLength(
       MAX_DESCRIPTION_LENGTH,
       `The event description must not be longer than ${MAX_DESCRIPTION_LENGTH} characters`,
+    ),
+  ),
+
+  env: v.optional(CommerceEnvArraySchema),
+  label: v.pipe(
+    nonEmptyStringValueSchema("event label"),
+    ioEventsTextSchema("Event label"),
+    v.maxLength(
+      MAX_LABEL_LENGTH,
+      `The event label must not be longer than ${MAX_LABEL_LENGTH} characters`,
     ),
   ),
 
@@ -216,7 +218,7 @@ const CommerceEventRuleSchema = v.object({
 const CommerceEventSchema = v.object({
   ...BaseEventSchema.entries,
 
-  name: commerceEventNameSchema(),
+  destination: v.optional(nonEmptyStringValueSchema("destination")),
   fields: v.pipe(
     v.array(
       commerceEventFieldSchema(),
@@ -227,35 +229,56 @@ const CommerceEventSchema = v.object({
       "The Commerce event configuration must define at least one field",
     ),
   ),
+  force: v.optional(booleanValueSchema("force")),
+  hipaa_audit_required: v.optional(booleanValueSchema("hipaa_audit_required")),
+
+  name: commerceEventNameSchema(),
+  priority: v.optional(booleanValueSchema("priority")),
   rules: v.optional(
     v.array(
       CommerceEventRuleSchema,
       "Expected an array of event rules with field, operator, and value",
     ),
   ),
-
-  destination: v.optional(nonEmptyStringValueSchema("destination")),
-  hipaa_audit_required: v.optional(booleanValueSchema("hipaa_audit_required")),
-  priority: v.optional(booleanValueSchema("priority")),
-  force: v.optional(booleanValueSchema("force")),
 });
 
 /** Schema for external event configuration */
 const ExternalEventSchema = v.object({
   ...BaseEventSchema.entries,
+  hipaa_audit_required: v.optional(booleanValueSchema("hipaa_audit_required")),
   name: externalEventNameSchema(),
 });
 
 /** Schema for Commerce event source configuration */
 export const CommerceEventSourceSchema = v.object({
+  events: v.pipe(
+    v.array(CommerceEventSchema, "Expected an array of Commerce events"),
+    v.minLength(
+      1,
+      "The Commerce event source configuration must define at least one event",
+    ),
+    v.check(
+      (events) => new Set(events.map((e) => e.name)).size === events.length,
+      "Commerce event names must be unique. There must not be two events with the same name under the same provider.",
+    ),
+  ),
   provider: ProviderSchema,
-  events: v.array(CommerceEventSchema, "Expected an array of Commerce events"),
 });
 
 /** Schema for external event source configuration */
 export const ExternalEventSourceSchema = v.object({
+  events: v.pipe(
+    v.array(ExternalEventSchema, "Expected an array of external events"),
+    v.minLength(
+      1,
+      "The external event source configuration must define at least one event",
+    ),
+    v.check(
+      (events) => new Set(events.map((e) => e.name)).size === events.length,
+      "External event names must be unique. There must not be two events with the same name under the same provider.",
+    ),
+  ),
   provider: ProviderSchema,
-  events: v.array(ExternalEventSchema, "Expected an array of external events"),
 });
 
 /** Schema for eventing configuration with separate commerce and external arrays */

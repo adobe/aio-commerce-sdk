@@ -105,8 +105,8 @@ export async function setCustomScopeTree(
 
   return {
     message: "Custom scope tree updated successfully",
-    timestamp: new Date().toISOString(),
     scopes: convertToResponseFormat(processedCustomScopes),
+    timestamp: new Date().toISOString(),
   };
 }
 
@@ -171,14 +171,14 @@ function processSingleScope(
 ): ScopeNode {
   const id = findExistingId(inputScope, existingCustomScopes) || generateUUID();
   const baseCustomScope = {
-    id,
     code: inputScope.code,
-    label: inputScope.label,
-    level: inputScope.level ?? DEFAULT_CUSTOM_SCOPE_LEVEL,
+    id,
 
     is_editable: inputScope.is_editable,
     is_final: inputScope.is_final,
     is_removable: true, // Custom scopes are always removable
+    label: inputScope.label,
+    level: inputScope.level ?? DEFAULT_CUSTOM_SCOPE_LEVEL,
   };
 
   if (inputScope.children && inputScope.children.length > 0) {
@@ -259,12 +259,12 @@ function convertToResponseFormat(scopes: ScopeNode[]): CustomScopeOutput[] {
  */
 function convertSingleScopeToOutput(scope: ScopeNode): CustomScopeOutput {
   const baseScope = {
-    id: scope.id,
     code: scope.code,
-    label: scope.label,
-    level: scope.level,
+    id: scope.id,
     is_editable: scope.is_editable,
     is_final: scope.is_final,
+    label: scope.label,
+    level: scope.level,
   };
 
   // Only include children if they exist and are not empty

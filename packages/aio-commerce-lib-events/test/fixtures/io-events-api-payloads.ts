@@ -17,9 +17,7 @@ type AdobeIoEventsApiClient = ReturnType<typeof createAdobeIoEventsApiClient>;
 
 export const ADOBE_IO_EVENTS_API_PAYLOADS = [
   {
-    name: "getAllEventProviders",
-    method: "GET",
-    pathname: "consumer-org-1/providers",
+    hasInputValidation: true,
 
     invoke(client: AdobeIoEventsApiClient, fetchOptions?: Options) {
       return client.getAllEventProviders(
@@ -27,13 +25,12 @@ export const ADOBE_IO_EVENTS_API_PAYLOADS = [
         fetchOptions,
       );
     },
-
-    hasInputValidation: true,
+    method: "GET",
+    name: "getAllEventProviders",
+    pathname: "consumer-org-1/providers",
   },
   {
-    name: "getEventProviderById",
-    method: "GET",
-    pathname: "providers/provider-1",
+    hasInputValidation: true,
 
     invoke(client: AdobeIoEventsApiClient, fetchOptions?: Options) {
       return client.getEventProviderById(
@@ -43,34 +40,32 @@ export const ADOBE_IO_EVENTS_API_PAYLOADS = [
         fetchOptions,
       );
     },
-
-    hasInputValidation: true,
+    method: "GET",
+    name: "getEventProviderById",
+    pathname: "providers/provider-1",
   },
   {
-    name: "createEventProvider",
-    method: "POST",
-    pathname: "consumer-org-1/project-1/workspace-1/providers",
+    hasInputValidation: true,
 
     invoke(client: AdobeIoEventsApiClient, fetchOptions?: Options) {
       return client.createEventProvider(
         {
           consumerOrgId: "consumer-org-1",
-          projectId: "project-1",
-          workspaceId: "workspace-1",
+          description: "Provider 1 description",
           instanceId: "instance-1",
           label: "Provider 1",
-          description: "Provider 1 description",
+          projectId: "project-1",
+          workspaceId: "workspace-1",
         },
         fetchOptions,
       );
     },
-
-    hasInputValidation: true,
+    method: "POST",
+    name: "createEventProvider",
+    pathname: "consumer-org-1/project-1/workspace-1/providers",
   },
   {
-    name: "getAllCommerceEventProviders",
-    method: "GET",
-    pathname: "consumer-org-1/providers",
+    hasInputValidation: true,
 
     invoke(client: AdobeIoEventsApiClient, fetchOptions?: Options) {
       return client.getAllCommerceEventProviders(
@@ -78,13 +73,12 @@ export const ADOBE_IO_EVENTS_API_PAYLOADS = [
         fetchOptions,
       );
     },
-
-    hasInputValidation: true,
+    method: "GET",
+    name: "getAllCommerceEventProviders",
+    pathname: "consumer-org-1/providers",
   },
   {
-    name: "getAll3rdPartyCustomEventProviders",
-    method: "GET",
-    pathname: "consumer-org-1/providers",
+    hasInputValidation: true,
 
     invoke(client: AdobeIoEventsApiClient, fetchOptions?: Options) {
       return client.getAll3rdPartyCustomEventProviders(
@@ -92,55 +86,52 @@ export const ADOBE_IO_EVENTS_API_PAYLOADS = [
         fetchOptions,
       );
     },
-
-    hasInputValidation: true,
+    method: "GET",
+    name: "getAll3rdPartyCustomEventProviders",
+    pathname: "consumer-org-1/providers",
   },
   {
-    name: "createCommerceEventProvider",
-    method: "POST",
-    pathname: "consumer-org-1/project-1/workspace-1/providers",
+    hasInputValidation: true,
 
     invoke(client: AdobeIoEventsApiClient, fetchOptions?: Options) {
       return client.createCommerceEventProvider(
         {
           consumerOrgId: "consumer-org-1",
-          projectId: "project-1",
-          workspaceId: "workspace-1",
+          description: "Provider 1 description",
           instanceId: "instance-1",
           label: "Provider 1",
-          description: "Provider 1 description",
+          projectId: "project-1",
+          workspaceId: "workspace-1",
         },
         fetchOptions,
       );
     },
-
-    hasInputValidation: true,
+    method: "POST",
+    name: "createCommerceEventProvider",
+    pathname: "consumer-org-1/project-1/workspace-1/providers",
   },
   {
-    name: "create3rdPartyCustomEventProvider",
-    method: "POST",
-    pathname: "consumer-org-1/project-1/workspace-1/providers",
+    hasInputValidation: true,
 
     invoke(client: AdobeIoEventsApiClient, fetchOptions?: Options) {
       return client.create3rdPartyCustomEventProvider(
         {
           consumerOrgId: "consumer-org-1",
-          projectId: "project-1",
-          workspaceId: "workspace-1",
+          description: "Provider 1 description",
           instanceId: "instance-1",
           label: "Provider 1",
-          description: "Provider 1 description",
+          projectId: "project-1",
+          workspaceId: "workspace-1",
         },
         fetchOptions,
       );
     },
-
-    hasInputValidation: true,
+    method: "POST",
+    name: "create3rdPartyCustomEventProvider",
+    pathname: "consumer-org-1/project-1/workspace-1/providers",
   },
   {
-    name: "getAllEventMetadataForProvider",
-    method: "GET",
-    pathname: "providers/provider-1/eventmetadata",
+    hasInputValidation: true,
 
     invoke(client: AdobeIoEventsApiClient, fetchOptions?: Options) {
       return client.getAllEventMetadataForProvider(
@@ -148,50 +139,47 @@ export const ADOBE_IO_EVENTS_API_PAYLOADS = [
         fetchOptions,
       );
     },
-
-    hasInputValidation: true,
+    method: "GET",
+    name: "getAllEventMetadataForProvider",
+    pathname: "providers/provider-1/eventmetadata",
   },
   {
-    name: "getEventMetadataForEventAndProvider",
-    method: "GET",
-    pathname: "providers/provider-1/eventmetadata/event-1",
+    hasInputValidation: true,
 
     invoke(client: AdobeIoEventsApiClient, fetchOptions?: Options) {
       return client.getEventMetadataForEventAndProvider(
-        { providerId: "provider-1", eventCode: "event-1" },
+        { eventCode: "event-1", providerId: "provider-1" },
         fetchOptions,
       );
     },
-
-    hasInputValidation: true,
+    method: "GET",
+    name: "getEventMetadataForEventAndProvider",
+    pathname: "providers/provider-1/eventmetadata/event-1",
   },
   {
-    name: "createEventMetadataForProvider",
-    method: "POST",
-    pathname:
-      "consumer-org-1/project-1/workspace-1/providers/provider-1/eventmetadata",
+    hasInputValidation: true,
 
     invoke(client: AdobeIoEventsApiClient, fetchOptions?: Options) {
       return client.createEventMetadataForProvider(
         {
           consumerOrgId: "consumer-org-1",
-          projectId: "project-1",
-          workspaceId: "workspace-1",
-          providerId: "provider-1",
-          label: "Event 1",
           description: "Event 1 description",
           eventCode: "event-1",
+          label: "Event 1",
+          projectId: "project-1",
+          providerId: "provider-1",
+          workspaceId: "workspace-1",
         },
         fetchOptions,
       );
     },
-
-    hasInputValidation: true,
+    method: "POST",
+    name: "createEventMetadataForProvider",
+    pathname:
+      "consumer-org-1/project-1/workspace-1/providers/provider-1/eventmetadata",
   },
   {
-    name: "getAllRegistrationsByConsumerOrg",
-    method: "GET",
-    pathname: "consumer-org-1/registrations",
+    hasInputValidation: true,
 
     invoke(client: AdobeIoEventsApiClient, fetchOptions?: Options) {
       return client.getAllRegistrationsByConsumerOrg(
@@ -199,13 +187,12 @@ export const ADOBE_IO_EVENTS_API_PAYLOADS = [
         fetchOptions,
       );
     },
-
-    hasInputValidation: true,
+    method: "GET",
+    name: "getAllRegistrationsByConsumerOrg",
+    pathname: "consumer-org-1/registrations",
   },
   {
-    name: "getAllRegistrations",
-    method: "GET",
-    pathname: "consumer-org-1/project-1/workspace-1/registrations",
+    hasInputValidation: true,
 
     invoke(client: AdobeIoEventsApiClient, fetchOptions?: Options) {
       return client.getAllRegistrations(
@@ -217,183 +204,178 @@ export const ADOBE_IO_EVENTS_API_PAYLOADS = [
         fetchOptions,
       );
     },
-
-    hasInputValidation: true,
+    method: "GET",
+    name: "getAllRegistrations",
+    pathname: "consumer-org-1/project-1/workspace-1/registrations",
   },
   {
-    name: "getRegistrationById",
-    method: "GET",
-    pathname:
-      "consumer-org-1/project-1/workspace-1/registrations/registration-1",
+    hasInputValidation: true,
 
     invoke(client: AdobeIoEventsApiClient, fetchOptions?: Options) {
       return client.getRegistrationById(
         {
           consumerOrgId: "consumer-org-1",
           projectId: "project-1",
-          workspaceId: "workspace-1",
           registrationId: "registration-1",
+          workspaceId: "workspace-1",
         },
         fetchOptions,
       );
     },
-
-    hasInputValidation: true,
+    method: "GET",
+    name: "getRegistrationById",
+    pathname:
+      "consumer-org-1/project-1/workspace-1/registrations/registration-1",
   },
   {
-    name: "createRegistration",
-    method: "POST",
-    pathname: "consumer-org-1/project-1/workspace-1/registrations",
+    hasInputValidation: true,
 
     invoke(client: AdobeIoEventsApiClient, fetchOptions?: Options) {
       return client.createRegistration(
         {
           clientId: "client-1",
           consumerOrgId: "consumer-org-1",
-          projectId: "project-1",
-          workspaceId: "workspace-1",
-          name: "Test Registration",
-          description: "Test Description",
           deliveryType: "webhook",
-          webhookUrl: "https://example.com/webhook",
+          description: "Test Description",
           eventsOfInterest: [
             {
-              providerId: "provider-1",
               eventCode: "event-1",
+              providerId: "provider-1",
             },
           ],
+          name: "Test Registration",
+          projectId: "project-1",
           subscriberFilters: [
             {
               name: "Test Filter",
               subscriberFilter: '{"key": "value"}',
             },
           ],
+          webhookUrl: "https://example.com/webhook",
+          workspaceId: "workspace-1",
         },
         fetchOptions,
       );
     },
-
-    hasInputValidation: true,
+    method: "POST",
+    name: "createRegistration",
+    pathname: "consumer-org-1/project-1/workspace-1/registrations",
   },
   {
-    name: "createRegistration",
-    method: "POST",
-    pathname: "consumer-org-1/project-1/workspace-1/registrations",
+    hasInputValidation: false,
 
     invoke(client: AdobeIoEventsApiClient, fetchOptions?: Options) {
       return client.createRegistration(
         {
           clientId: "client-1",
           consumerOrgId: "consumer-org-1",
-          projectId: "project-1",
-          workspaceId: "workspace-1",
-          name: "AWS Registration",
           deliveryType: "aws_eventbridge",
+          destinationMetadata: {
+            awsAccountId: "123456789012",
+            awsRegion: "us-east-1",
+          },
           eventsOfInterest: [
             {
-              providerId: "provider-1",
               eventCode: "event-1",
+              providerId: "provider-1",
             },
           ],
-          destinationMetadata: {
-            awsRegion: "us-east-1",
-            awsAccountId: "123456789012",
-          },
+          name: "AWS Registration",
+          projectId: "project-1",
+          workspaceId: "workspace-1",
         },
         fetchOptions,
       );
     },
-
-    hasInputValidation: false,
+    method: "POST",
+    name: "createRegistration",
+    pathname: "consumer-org-1/project-1/workspace-1/registrations",
   },
   {
-    name: "updateRegistration",
-    method: "PUT",
-    pathname:
-      "consumer-org-1/project-1/workspace-1/registrations/registration-1",
+    hasInputValidation: true,
 
     invoke(client: AdobeIoEventsApiClient, fetchOptions?: Options) {
       return client.updateRegistration(
         {
           clientId: "client-1",
           consumerOrgId: "consumer-org-1",
-          projectId: "project-1",
-          workspaceId: "workspace-1",
-          registrationId: "registration-1",
-          name: "Updated Registration",
-          description: "Updated Description",
           deliveryType: "webhook",
-          webhookUrl: "https://example.com/webhook",
+          description: "Updated Description",
           eventsOfInterest: [
             {
-              providerId: "provider-1",
               eventCode: "event-1",
+              providerId: "provider-1",
             },
           ],
+          name: "Updated Registration",
+          projectId: "project-1",
+          registrationId: "registration-1",
           subscriberFilters: [
             {
               name: "Updated Filter",
               subscriberFilter: '{"key": "updated"}',
             },
           ],
+          webhookUrl: "https://example.com/webhook",
+          workspaceId: "workspace-1",
         },
         fetchOptions,
       );
     },
-
-    hasInputValidation: true,
-  },
-  {
-    name: "updateRegistration",
     method: "PUT",
+    name: "updateRegistration",
     pathname:
       "consumer-org-1/project-1/workspace-1/registrations/registration-1",
+  },
+  {
+    hasInputValidation: false,
 
     invoke(client: AdobeIoEventsApiClient, fetchOptions?: Options) {
       return client.updateRegistration(
         {
           clientId: "client-1",
           consumerOrgId: "consumer-org-1",
-          projectId: "project-1",
-          workspaceId: "workspace-1",
-          registrationId: "registration-1",
-          name: "AWS Registration",
           deliveryType: "aws_eventbridge",
+          destinationMetadata: {
+            awsAccountId: "987654321098",
+            awsRegion: "eu-west-1",
+          },
           eventsOfInterest: [
             {
-              providerId: "provider-1",
               eventCode: "event-1",
+              providerId: "provider-1",
             },
           ],
-          destinationMetadata: {
-            awsRegion: "eu-west-1",
-            awsAccountId: "987654321098",
-          },
+          name: "AWS Registration",
+          projectId: "project-1",
+          registrationId: "registration-1",
+          workspaceId: "workspace-1",
         },
         fetchOptions,
       );
     },
-
-    hasInputValidation: false,
-  },
-  {
-    name: "deleteRegistration",
-    method: "DELETE",
+    method: "PUT",
+    name: "updateRegistration",
     pathname:
       "consumer-org-1/project-1/workspace-1/registrations/registration-1",
+  },
+  {
+    hasInputValidation: true,
 
     invoke(client: AdobeIoEventsApiClient, fetchOptions?: Options) {
       return client.deleteRegistration(
         {
           consumerOrgId: "consumer-org-1",
           projectId: "project-1",
-          workspaceId: "workspace-1",
           registrationId: "registration-1",
+          workspaceId: "workspace-1",
         },
         fetchOptions,
       );
     },
-
-    hasInputValidation: true,
+    method: "DELETE",
+    name: "deleteRegistration",
+    pathname:
+      "consumer-org-1/project-1/workspace-1/registrations/registration-1",
   },
 ] as const;

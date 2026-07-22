@@ -14,7 +14,7 @@
 
 import * as v from "valibot";
 
-import { AdminUiSdkSchema } from "./admin-ui-sdk";
+import { AdminUiSchema } from "./admin-ui";
 import { SchemaBusinessConfig } from "./business-configuration";
 import { getConfigDomains } from "./domains";
 import { EventingSchema } from "./eventing";
@@ -26,12 +26,12 @@ import type { CommerceAppConfigDomain } from "./domains";
 
 /** The schema used to validate the commerce app config file. */
 export const CommerceAppConfigSchema = v.looseObject({
-  // TEMP: use `looseObject` for testing purposes, remove when all subsections of the config schema are implemented
-  metadata: MetadataSchema,
+  adminUi: v.optional(AdminUiSchema),
   businessConfig: v.optional(SchemaBusinessConfig),
   eventing: v.optional(EventingSchema),
-  adminUiSdk: v.optional(AdminUiSdkSchema),
   installation: v.optional(InstallationSchema),
+  // TEMP: use `looseObject` for testing purposes, remove when all subsections of the config schema are implemented
+  metadata: MetadataSchema,
   webhooks: v.optional(WebhooksSchema),
 });
 
@@ -60,7 +60,7 @@ export function requiresInstallationFromDomains(
     "eventing.commerce",
     "eventing.external",
     "webhooks",
-    "adminUiSdk",
+    "adminUi",
   ];
 
   return featuresRequiringInstallationAction.some((feature) =>

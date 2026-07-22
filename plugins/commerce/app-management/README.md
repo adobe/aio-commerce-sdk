@@ -1,7 +1,5 @@
 # Commerce App Management Skills
 
-> ⚠️ **Experimental** — These skills are under active development and subject to change.
-
 Agent skills for Adobe Commerce App Management, following the [agentskills.io](https://agentskills.io) open standard. Compatible with Claude Code, Cursor, VS Code Copilot, Gemini CLI, and other supported agents.
 
 ## Strategy
@@ -15,6 +13,8 @@ commerce-app-init
   └─→ commerce-app-eventing
   └─→ commerce-app-webhooks
   └─→ commerce-app-business-config
+  └─→ commerce-app-admin-ui
+  └─→ commerce-app-storage
 ```
 
 A developer creating an app that needs events and webhooks would run `commerce-app-init` first, then chain to `commerce-app-eventing` and `commerce-app-webhooks` in any order.
@@ -28,28 +28,30 @@ A developer creating an app that needs events and webhooks would run `commerce-a
 | [commerce-app-webhooks](./skills/commerce-app-webhooks/)               | Manage webhook interception                | Available |
 | [commerce-app-business-config](./skills/commerce-app-business-config/) | Manage custom business configuration       | Available |
 | [commerce-app-storage](./skills/commerce-app-storage/)                 | Integrate App Builder Database Storage     | Available |
+| [commerce-app-admin-ui](./skills/commerce-app-admin-ui/)               | Extend the Commerce Admin UI               | Available |
 
 ## Installation
 
 **Claude Code plugin:**
 
 ```sh
-/plugin marketplace add adobe/aio-commerce-sdk
-/plugin install commerce-app-management@adobe-aio-commerce-sdk
+/plugin marketplace add adobe/skills
+/plugin install commerce-app-management@adobe-skills
 ```
 
 **Tessl CLI:**
 
 ```sh
-tessl install github:adobe/aio-commerce-sdk --skills commerce-app-management
+tessl install github:adobe/skills --skills commerce-app-management
 ```
 
-**npx skills:**
+**pnpx skills:**
 
 ```sh
-npx skills add adobe/aio-commerce-sdk --skill commerce-app-init
-npx skills add adobe/aio-commerce-sdk --skill commerce-app-eventing
-npx skills add adobe/aio-commerce-sdk --skill commerce-app-webhooks
-npx skills add adobe/aio-commerce-sdk --skill commerce-app-business-config
-npx skills add adobe/aio-commerce-sdk --skill commerce-app-storage
+pnpx skills add adobe/skills --skill commerce-app-init
+pnpx skills add adobe/skills --skill commerce-app-eventing
+pnpx skills add adobe/skills --skill commerce-app-webhooks
+pnpx skills add adobe/skills --skill commerce-app-business-config
+pnpx skills add adobe/skills --skill commerce-app-storage
+pnpx skills add adobe/skills --skill commerce-app-admin-ui
 ```

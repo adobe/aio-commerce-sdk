@@ -26,8 +26,8 @@ type HttpClientFactory<TParams extends HttpClientParams, TClient> = new (
 const DEFAULT_MOCK_RESPONSE = Response.json(
   { hello: "world" },
   {
-    status: 200,
     headers: { "Content-Type": "application/json" },
+    status: 200,
   },
 );
 
@@ -51,16 +51,15 @@ export function setupTestContext<
   });
 
   return {
-    get testClient() {
-      return testClient;
+    get clientConfig() {
+      return testClient.config as ExtractConfig<TParams>;
     },
 
     get fetchMock() {
       return fetch;
     },
-
-    get clientConfig() {
-      return testClient.config as ExtractConfig<TParams>;
+    get testClient() {
+      return testClient;
     },
   };
 }

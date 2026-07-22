@@ -23,9 +23,14 @@ import {
   findUp,
   getExecCommand,
   getInstallCommand,
+  getInstalledPackageVersion,
+  getPackageDependencyInstallPlan,
+  getProjectInstallCommand,
   getProjectRootDirectory,
   isESM,
+  loadPackageJson,
   makeOutputDirFor,
+  mergePackageJsonDependencies,
   readPackageJson,
 } from "#project";
 
@@ -67,8 +72,8 @@ describe("findUp", () => {
   test("should find first match from multiple file names", async () => {
     await withTempFiles(
       {
-        "config.yaml": "{}",
         "config.json": "{}",
+        "config.yaml": "{}",
       },
       async (tempDir) => {
         const result = await findUp(["config.json", "config.yaml"], {
@@ -138,9 +143,9 @@ describe("findNearestPackageJson", () => {
 describe("readPackageJson", () => {
   test("should read and parse package.json", async () => {
     const packageData = {
+      description: "A test package",
       name: "test-package",
       version: "1.0.0",
-      description: "A test package",
     };
 
     await withTempFiles(
@@ -158,6 +163,269 @@ describe("readPackageJson", () => {
     await withTempFiles({}, async (tempDir) => {
       const result = await readPackageJson(tempDir);
       expect(result).toBeNull();
+    });
+  });
+});
+
+describe("loadPackageJson", () => {
+  test("should load package.json with npmcli package-json", async () => {
+    await withTempFiles(
+      {
+        "package.json": JSON.stringify({
+          name: "test-package",
+          version: "1.0.0",
+        }),
+      },
+      async (tempDir) => {
+        const pkg = await loadPackageJson(tempDir);
+        expect(pkg?.content.name).toBe("test-package");
+        expect(pkg?.content.version).toBe("1.0.0");
+      },
+    );
+  });
+
+  test("should return null when package.json is not found", async () => {
+    await withTempFiles({}, async (tempDir) => {
+      await expect(loadPackageJson(tempDir)).resolves.toBeNull();
+    });
+  });
+});
+
+describe("package.json dependency helpers", () => {
+  test("should resolve an installed package version from a project", async () => {
+    await withTempFiles(
+      {
+        "node_modules/react/package.json": JSON.stringify({
+          name: "react",
+          version: "19.2.7",
+        }),
+        "package.json": JSON.stringify({ name: "test-package" }),
+      },
+      async (tempDir) => {
+        await expect(
+          getInstalledPackageVersion("react", tempDir),
+        ).resolves.toBe("19.2.7");
+      },
+    );
+  });
+
+  test("should return null when an installed package cannot be resolved", async () => {
+    await withTempFiles(
+      {
+        "package.json": JSON.stringify({ name: "test-package" }),
+      },
+      async (tempDir) => {
+        await expect(
+          getInstalledPackageVersion("react", tempDir),
+        ).resolves.toBe(null);
+      },
+    );
+  });
+
+  test("should return null when an installed package has no version field", async () => {
+    await withTempFiles(
+      {
+        "node_modules/react/package.json": JSON.stringify({ name: "react" }),
+        "package.json": JSON.stringify({ name: "test-package" }),
+      },
+      async (tempDir) => {
+        await expect(
+          getInstalledPackageVersion("react", tempDir),
+        ).resolves.toBe(null);
+      },
+    );
+  });
+
+  test("should resolve a scoped installed package version from a project", async () => {
+    await withTempFiles(
+      {
+        "node_modules/@scope/package/package.json": JSON.stringify({
+          name: "@scope/package",
+          version: "1.2.3",
+        }),
+        "package.json": JSON.stringify({ name: "test-package" }),
+      },
+      async (tempDir) => {
+        await expect(
+          getInstalledPackageVersion("@scope/package", tempDir),
+        ).resolves.toBe("1.2.3");
+      },
+    );
+  });
+
+  test("should plan missing dependencies for installation", async () => {
+    await withTempFiles(
+      {
+        "package.json": JSON.stringify({ name: "test-package" }),
+      },
+      async (tempDir) => {
+        await expect(
+          getPackageDependencyInstallPlan(
+            [
+              { name: "react", version: "^19.0.0" },
+              { name: "react-dom", version: "^19.0.0" },
+            ],
+            tempDir,
+          ),
+        ).resolves.toEqual({
+          incompatible: [],
+          missing: [
+            { name: "react", version: "^19.0.0" },
+            { name: "react-dom", version: "^19.0.0" },
+          ],
+        });
+      },
+    );
+  });
+
+  test("should accept semver-compatible installed versions even when declared ranges differ", async () => {
+    await withTempFiles(
+      {
+        "node_modules/react/package.json": JSON.stringify({
+          name: "react",
+          version: "19.2.7",
+        }),
+        "package.json": JSON.stringify({
+          dependencies: { react: "19.2.7" },
+          name: "test-package",
+        }),
+      },
+      async (tempDir) => {
+        await expect(
+          getPackageDependencyInstallPlan(
+            [{ name: "react", version: "^19.0.0" }],
+            tempDir,
+          ),
+        ).resolves.toEqual({ incompatible: [], missing: [] });
+      },
+    );
+  });
+
+  test("should refuse incompatible installed versions", async () => {
+    await withTempFiles(
+      {
+        "node_modules/react/package.json": JSON.stringify({
+          name: "react",
+          version: "18.3.1",
+        }),
+        "package.json": JSON.stringify({ name: "test-package" }),
+      },
+      async (tempDir) => {
+        await expect(
+          getPackageDependencyInstallPlan(
+            [{ name: "react", version: "^19.0.0" }],
+            tempDir,
+          ),
+        ).resolves.toEqual({
+          incompatible: [
+            { installedVersion: "18.3.1", name: "react", version: "^19.0.0" },
+          ],
+          missing: [],
+        });
+      },
+    );
+  });
+
+  test("should treat dist-tag specifiers as compatible when installed", async () => {
+    await withTempFiles(
+      {
+        "node_modules/typescript/package.json": JSON.stringify({
+          name: "typescript",
+          version: "5.4.0",
+        }),
+        "package.json": JSON.stringify({ name: "test-package" }),
+      },
+      async (tempDir) => {
+        await expect(
+          getPackageDependencyInstallPlan(
+            [{ name: "typescript", version: "latest" }],
+            tempDir,
+          ),
+        ).resolves.toEqual({ incompatible: [], missing: [] });
+      },
+    );
+  });
+
+  test("should treat compatible installed prerelease versions as compatible", async () => {
+    await withTempFiles(
+      {
+        "node_modules/react/package.json": JSON.stringify({
+          name: "react",
+          version: "19.1.0-beta.1",
+        }),
+        "package.json": JSON.stringify({ name: "test-package" }),
+      },
+      async (tempDir) => {
+        await expect(
+          getPackageDependencyInstallPlan(
+            [{ name: "react", version: "^19.0.0" }],
+            tempDir,
+          ),
+        ).resolves.toEqual({ incompatible: [], missing: [] });
+      },
+    );
+  });
+
+  test("should return an empty plan when no dependencies are required", async () => {
+    await withTempFiles(
+      {
+        "package.json": JSON.stringify({ name: "test-package" }),
+      },
+      async (tempDir) => {
+        await expect(
+          getPackageDependencyInstallPlan([], tempDir),
+        ).resolves.toEqual({ incompatible: [], missing: [] });
+      },
+    );
+  });
+
+  test("should merge missing dependencies", () => {
+    expect(
+      mergePackageJsonDependencies(
+        { react: "^18.0.0", typescript: "^5.0.0" },
+        [
+          { name: "react", version: "^19.0.0" },
+          { name: "@types/react", version: "^19.0.0" },
+        ],
+        [{ react: "^18.0.0" }],
+      ),
+    ).toEqual({
+      "@types/react": "^19.0.0",
+      react: "^18.0.0",
+      typescript: "^5.0.0",
+    });
+  });
+
+  test("should preserve declared dependency ranges when the dependency already exists", () => {
+    expect(
+      mergePackageJsonDependencies({ react: "19.2.7" }, [
+        { name: "react", version: "^19.0.0" },
+      ]),
+    ).toEqual({ react: "19.2.7" });
+  });
+
+  test("should not merge dependencies that exist in another dependency map", () => {
+    expect(
+      mergePackageJsonDependencies(
+        {},
+        [{ name: "@types/react", version: "^19.0.0" }],
+        [{}, { "@types/react": "^18.0.0" }],
+      ),
+    ).toEqual({});
+  });
+
+  test("should drop dependencies with falsy versions when merging", () => {
+    expect(
+      mergePackageJsonDependencies(
+        { "left-pad": undefined, react: "^19.0.0", typescript: "" },
+        [],
+      ),
+    ).toEqual({ react: "^19.0.0" });
+  });
+
+  test("should leave dependencies unchanged when no dependencies are required", () => {
+    expect(mergePackageJsonDependencies({ react: "^19.0.0" }, [])).toEqual({
+      react: "^19.0.0",
     });
   });
 });
@@ -239,8 +507,8 @@ describe("detectPackageManager", () => {
   test("should detect npm from package-lock.json", async () => {
     await withTempFiles(
       {
-        "package.json": JSON.stringify({ name: "test" }),
         "package-lock.json": "{}",
+        "package.json": JSON.stringify({ name: "test" }),
       },
       async (tempDir) => {
         const result = await detectPackageManager(tempDir);
@@ -293,8 +561,8 @@ describe("detectPackageManager", () => {
   test("should detect bun from bun.lockb", async () => {
     await withTempFiles(
       {
-        "package.json": JSON.stringify({ name: "test" }),
         "bun.lockb": "",
+        "package.json": JSON.stringify({ name: "test" }),
       },
       async (tempDir) => {
         const result = await detectPackageManager(tempDir);
@@ -367,29 +635,93 @@ describe("getInstallCommand", () => {
 
   test("should return npm i <pkgs> for npm", () => {
     expect(getInstallCommand("npm", pkgs)).toEqual({
-      command: "npm",
       args: ["i", "foo", "bar"],
+      command: "npm",
     });
   });
 
   test("should return pnpm add <pkgs> for pnpm", () => {
     expect(getInstallCommand("pnpm", pkgs)).toEqual({
-      command: "pnpm",
       args: ["add", "foo", "bar"],
+      command: "pnpm",
     });
   });
 
   test("should return yarn add <pkgs> for yarn", () => {
     expect(getInstallCommand("yarn", pkgs)).toEqual({
-      command: "yarn",
       args: ["add", "foo", "bar"],
+      command: "yarn",
     });
   });
 
   test("should return bun add <pkgs> for bun", () => {
     expect(getInstallCommand("bun", pkgs)).toEqual({
-      command: "bun",
       args: ["add", "foo", "bar"],
+      command: "bun",
+    });
+  });
+
+  test("should return dev dependency install args", () => {
+    expect(getInstallCommand("npm", pkgs, { dev: true })).toEqual({
+      args: ["i", "--save-dev", "foo", "bar"],
+      command: "npm",
+    });
+    expect(getInstallCommand("pnpm", pkgs, { dev: true })).toEqual({
+      args: ["add", "--save-dev", "foo", "bar"],
+      command: "pnpm",
+    });
+    expect(getInstallCommand("yarn", pkgs, { dev: true })).toEqual({
+      args: ["add", "--dev", "foo", "bar"],
+      command: "yarn",
+    });
+    expect(getInstallCommand("bun", pkgs, { dev: true })).toEqual({
+      args: ["add", "--dev", "foo", "bar"],
+      command: "bun",
+    });
+  });
+
+  test("should return the bare add command for an empty package list", () => {
+    expect(getInstallCommand("npm", [])).toEqual({
+      args: ["i"],
+      command: "npm",
+    });
+    expect(getInstallCommand("pnpm", [])).toEqual({
+      args: ["add"],
+      command: "pnpm",
+    });
+    expect(getInstallCommand("npm", [], { dev: true })).toEqual({
+      args: ["i", "--save-dev"],
+      command: "npm",
+    });
+  });
+});
+
+describe("getProjectInstallCommand", () => {
+  test("should return the project install command for npm", () => {
+    expect(getProjectInstallCommand("npm")).toEqual({
+      args: ["i"],
+      command: "npm",
+    });
+  });
+
+  test("should return the project install command for pnpm", () => {
+    expect(getProjectInstallCommand("pnpm")).toEqual({
+      args: ["i"],
+      command: "pnpm",
+    });
+  });
+
+  test("should return the project install command for yarn", () => {
+    expect(getProjectInstallCommand("yarn")).toEqual({
+      args: ["install"],
+      command: "yarn",
+    });
+  });
+
+  test("should return the project install command for bun", () => {
+    expect(getProjectInstallCommand("bun")).toEqual({
+      args: ["install"],
+      command: "bun",
     });
   });
 });
@@ -408,7 +740,7 @@ describe("makeOutputDirFor", () => {
         expect(existsSync(outputPath)).toBe(true);
 
         // Clean up the created directory
-        await rm(outputPath, { recursive: true, force: true });
+        await rm(outputPath, { force: true, recursive: true });
       },
     );
   });
@@ -416,8 +748,8 @@ describe("makeOutputDirFor", () => {
   test("should not recreate existing directory", async () => {
     await withTempFiles(
       {
-        "package.json": JSON.stringify({ name: "test" }),
         "dist/file.txt": "test",
+        "package.json": JSON.stringify({ name: "test" }),
       },
       async () => {
         // Create dist directory first

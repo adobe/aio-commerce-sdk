@@ -15,26 +15,28 @@ import { syncImsCredentials } from "@aio-commerce-sdk/scripting-utils/env";
 import consola from "consola";
 
 import {
-  BACKEND_UI_EXTENSION_POINT_ID,
+  BACKEND_UI_V2_EXTENSION_POINT_ID,
   CONFIGURATION_EXTENSION_POINT_ID,
   EXTENSIBILITY_EXTENSION_POINT_ID,
 } from "#commands/constants";
 import { getRuntimeActions } from "#commands/generate/actions/config";
+import { TEMPLATES_DIR } from "#commands/generate/actions/constants";
 import {
   generateActionFiles,
-  generateRegistrationActionFile,
+  generateWebSrc,
   prepareRuntimeAppConfigModule,
+  prepareWebSourceImportAlias,
   readExtConfig,
-  TEMPLATES_DIR,
+  updateExtConfig,
 } from "#commands/generate/actions/lib";
 import { run as generateManifestCommand } from "#commands/generate/manifest/main";
 import { run as generateSchemaCommand } from "#commands/generate/schema/main";
 import { loadAppManifest } from "#commands/utils";
-import { hasAdminUiSdk } from "#config/index";
+import { hasAdminUi } from "#config/index";
 
 import type { ExtConfig } from "@aio-commerce-sdk/scripting-utils/yaml/types";
 
-type Extension = "extensibility/1" | "configuration/1" | "backend-ui/1";
+type Extension = "extensibility/1" | "configuration/1" | "backend-ui/2";
 
 /**
  * Runs the pre-app-build hook for the given extension.
@@ -86,12 +88,22 @@ export async function run(extension: Extension, templatesDir = TEMPLATES_DIR) {
     return;
   }
 
-  if (extension === "backend-ui/1") {
-    if (hasAdminUiSdk(appManifest)) {
-      await generateRegistrationActionFile(
+  if (extension === "backend-ui/2") {
+    if (hasAdminUi(appManifest)) {
+      const extConfig = await updateExtConfig(
         appManifest,
-        BACKEND_UI_EXTENSION_POINT_ID,
+        BACKEND_UI_V2_EXTENSION_POINT_ID,
       );
+
+      if (extConfig.operations?.view) {
+        await prepareWebSourceImportAlias(extConfig);
+        await generateWebSrc(
+          extConfig,
+          BACKEND_UI_V2_EXTENSION_POINT_ID,
+          appManifest.metadata.displayName,
+          templatesDir,
+        );
+      }
     }
     return;
   }
@@ -102,14 +114,14 @@ export async function run(extension: Extension, templatesDir = TEMPLATES_DIR) {
 /** Runs the pre-app-build hook */
 export async function exec() {
   consola.debug("Running lib-app pre-app-build hook");
-  const extension = process.env.EXTENSION as Extension;
+  const rawExtension = process.env.EXTENSION;
 
   try {
-    if (!extension) {
+    if (!rawExtension) {
       throw new Error("EXTENSION environment variable is not set");
     }
 
-    await run(extension);
+    await run(rawExtension as Extension);
   } catch (error) {
     if (error instanceof CommerceSdkValidationError) {
       consola.error(error.display());

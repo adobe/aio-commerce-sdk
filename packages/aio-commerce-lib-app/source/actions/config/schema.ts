@@ -10,6 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
+import { CommerceEnvSchema } from "@adobe/aio-commerce-lib-core/commerce";
 import { nonEmptyStringValueSchema } from "@aio-commerce-sdk/common-utils/valibot";
 import * as v from "valibot";
 
@@ -20,30 +21,25 @@ const AcceptedConfigurationValuesSchema = v.union([
   v.array(v.string()),
 ]);
 
-/** The set of valid Commerce environments a configuration field can be scoped to. */
-const COMMERCE_ENVS = ["paas", "saas"] as const;
-export type CommerceEnv = (typeof COMMERCE_ENVS)[number];
-
 /** Query parameters for GET / */
 export const GetConfigurationQuerySchema = v.object({
+  commerceEnv: v.optional(CommerceEnvSchema),
   scopeId: nonEmptyStringValueSchema("scopeId"),
-  commerceEnv: v.optional(v.picklist(COMMERCE_ENVS)),
 });
 
 /** Request body for PUT / */
 export const PutConfigBodySchema = v.object({
-  scopeId: nonEmptyStringValueSchema("scopeId"),
   config: v.array(
     v.object({
       name: nonEmptyStringValueSchema("config[i].name"),
       value: v.union([v.string(), v.array(v.string())]),
     }),
   ),
+  scopeId: nonEmptyStringValueSchema("scopeId"),
 });
 
 /** Request body for PATCH / */
 export const PatchConfigBodySchema = v.object({
-  scopeId: nonEmptyStringValueSchema("scopeId"),
   config: v.array(
     v.object({
       name: nonEmptyStringValueSchema("config[i].name"),
@@ -51,4 +47,5 @@ export const PatchConfigBodySchema = v.object({
       value: v.nullable(AcceptedConfigurationValuesSchema),
     }),
   ),
+  scopeId: nonEmptyStringValueSchema("scopeId"),
 });

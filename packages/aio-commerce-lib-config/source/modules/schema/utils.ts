@@ -74,14 +74,14 @@ async function resolveDynamicListField(
   }
 
   const candidate = {
-    name: field.name,
-    label: field.label,
+    default: field.default?.(options),
     description: field.description,
     env: field.env,
-    type: "list",
-    selectionMode: field.selectionMode,
+    label: field.label,
+    name: field.name,
     options,
-    default: field.default?.(options),
+    selectionMode: field.selectionMode,
+    type: "list",
   };
 
   return parseOrThrow(

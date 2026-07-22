@@ -54,8 +54,6 @@ function findStepStatusByPath(
       return found;
     }
   }
-
-  return;
 }
 
 describe("createInitialInstallationState", () => {
@@ -77,7 +75,7 @@ describe("createInitialInstallationState", () => {
 
     expect(state.step.children).toHaveLength(1);
 
-    const customBranch = state.step.children[0];
+    const [customBranch] = state.step.children;
     expect(customBranch.name).toBe("customInstallationSteps");
     expect(customBranch.path).toEqual([
       "installation",
@@ -97,8 +95,8 @@ describe("runInstallation - minimal config", () => {
 
     const result = await runInstallation({
       config,
-      installationContext: createMockInstallationContext(),
       initialState,
+      installationContext: createMockInstallationContext(),
     });
 
     expect(isSucceededState(result)).toBe(true);
@@ -122,8 +120,8 @@ describe("runInstallation - custom installation scripts", () => {
     const initialState = createInitialInstallationState({ config });
     const result = await runInstallation({
       config,
-      installationContext,
       initialState,
+      installationContext,
     });
 
     expect(isSucceededState(result)).toBe(true);
@@ -131,8 +129,8 @@ describe("runInstallation - custom installation scripts", () => {
       installation: {
         customInstallationSteps: {
           myScript: {
-            script: "./my-script.js",
             data: scriptOutput,
+            script: "./my-script.js",
           },
         },
       },
@@ -146,8 +144,8 @@ describe("runInstallation - custom installation scripts", () => {
 
     const result = await runInstallation({
       config,
-      installationContext,
       initialState,
+      installationContext,
     });
 
     expect.assert(isFailedState(result));
@@ -172,8 +170,8 @@ describe("runInstallation - custom installation scripts", () => {
     const initialState = createInitialInstallationState({ config });
     const result = await runInstallation({
       config,
-      installationContext,
       initialState,
+      installationContext,
     });
 
     expect.assert(isFailedState(result));
@@ -196,8 +194,8 @@ describe("runInstallation - custom installation scripts", () => {
     const initialState = createInitialInstallationState({ config });
     const result = await runInstallation({
       config,
-      installationContext,
       initialState,
+      installationContext,
     });
 
     const leafStatus = findStepStatusByPath(result.step as StepStatusNode, [
@@ -214,14 +212,14 @@ describe("runInstallation - custom installation scripts", () => {
     const config = configWithCustomInstallationSteps;
     const secondScript = vi.fn().mockResolvedValue({});
     const installationContext = createMockInstallationContextWithScripts({
+      "./demo-error.js": { default: secondScript },
       "./demo-success.js": {
         default: vi.fn().mockRejectedValue(new Error("first fails")),
       },
-      "./demo-error.js": { default: secondScript },
     });
 
     const initialState = createInitialInstallationState({ config });
-    await runInstallation({ config, installationContext, initialState });
+    await runInstallation({ config, initialState, installationContext });
 
     expect(secondScript).not.toHaveBeenCalled();
   });
@@ -235,8 +233,8 @@ describe("runInstallation - custom installation scripts", () => {
     const initialState = createInitialInstallationState({ config });
     const result = await runInstallation({
       config,
-      installationContext,
       initialState,
+      installationContext,
     });
 
     expect.assert(isFailedState(result));
@@ -261,9 +259,9 @@ describe("runInstallation - lifecycle hooks", () => {
 
     await runInstallation({
       config,
-      installationContext: createMockInstallationContext(),
-      initialState,
       hooks,
+      initialState,
+      installationContext: createMockInstallationContext(),
     });
 
     expect(order.slice(0, 2)).toEqual(["start", "stepStart"]);
@@ -278,9 +276,9 @@ describe("runInstallation - lifecycle hooks", () => {
 
     await runInstallation({
       config,
-      installationContext,
+      hooks: { onInstallationFailure, onInstallationSuccess },
       initialState,
-      hooks: { onInstallationSuccess, onInstallationFailure },
+      installationContext,
     });
 
     expect(onInstallationSuccess).not.toHaveBeenCalled();
@@ -302,9 +300,9 @@ describe("runInstallation - lifecycle hooks", () => {
 
     await runInstallation({
       config,
-      installationContext,
-      initialState,
       hooks: { onStepStart, onStepSuccess },
+      initialState,
+      installationContext,
     });
 
     const startedPaths = onStepStart.mock.calls.map(
@@ -337,9 +335,9 @@ describe("runInstallation - lifecycle hooks", () => {
 
     await runInstallation({
       config,
-      installationContext,
-      initialState,
       hooks: { onStepFailure },
+      initialState,
+      installationContext,
     });
 
     const failedPaths = onStepFailure.mock.calls.map(
@@ -371,8 +369,8 @@ describe("runValidation", () => {
     expect(result.valid).toBe(true);
     expect(result.summary).toEqual({
       errors: 0,
-      warnings: 0,
       totalIssues: 0,
+      warnings: 0,
     });
   });
 });

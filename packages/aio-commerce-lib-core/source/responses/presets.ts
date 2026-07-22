@@ -15,7 +15,9 @@ import { buildErrorResponse, buildSuccessResponse } from "./helpers";
 import type {
   BodyRecord,
   BodyRecordWithMessage,
+  ErrorResponse,
   HeadersRecord,
+  SuccessResponse,
 } from "./helpers";
 
 export const HTTP_OK = 200;
@@ -32,20 +34,26 @@ export const HTTP_CONFLICT = 409;
 export const HTTP_INTERNAL_SERVER_ERROR = 500;
 
 function curryBuildSuccessResponse(code: number) {
-  return (payload?: string | { body?: BodyRecord; headers?: HeadersRecord }) =>
+  return <TBody extends BodyRecord = BodyRecord>(
+    payload?: string | { body?: TBody; headers?: HeadersRecord },
+  ): SuccessResponse<TBody> =>
     buildSuccessResponse(
       code,
-      typeof payload === "string" ? { body: { message: payload } } : payload,
+      typeof payload === "string"
+        ? { body: { message: payload } as unknown as TBody }
+        : payload,
     );
 }
 
 function curryBuildErrorResponse(code: number) {
-  return (
-    payload: string | { body: BodyRecordWithMessage; headers?: HeadersRecord },
-  ) =>
+  return <TBody extends BodyRecordWithMessage = BodyRecordWithMessage>(
+    payload: string | { body: TBody; headers?: HeadersRecord },
+  ): ErrorResponse<TBody> =>
     buildErrorResponse(
       code,
-      typeof payload === "string" ? { body: { message: payload } } : payload,
+      typeof payload === "string"
+        ? { body: { message: payload } as unknown as TBody }
+        : payload,
     );
 }
 

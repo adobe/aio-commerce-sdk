@@ -23,10 +23,10 @@ import { workspaceConfigurationSchema } from "#commerce/lib/schema";
 export const UpdateEventingConfigurationParamsSchema = v.partial(
   v.object({
     enabled: booleanValueSchema("enabled"),
-    provider_id: alphaNumericOrUnderscoreOrHyphenSchema("provider_id"),
+    environment_id: alphaNumericOrUnderscoreSchema("environment_id"),
     instance_id: alphaNumericOrUnderscoreOrHyphenSchema("instance_id"),
     merchant_id: alphaNumericOrUnderscoreSchema("merchant_id"),
-    environment_id: alphaNumericOrUnderscoreSchema("environment_id"),
+    provider_id: alphaNumericOrUnderscoreOrHyphenSchema("provider_id"),
     workspace_configuration: workspaceConfigurationSchema(
       "workspace_configuration",
     ),

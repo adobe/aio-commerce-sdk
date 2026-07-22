@@ -18,8 +18,8 @@ describe("headers/helpers", () => {
   describe("getHeader", () => {
     test("should get header with exact case match", () => {
       const headers = {
-        "x-api-key": "test-key",
         Authorization: "Bearer token",
+        "x-api-key": "test-key",
       };
 
       expect(getHeader(headers, "x-api-key")).toBe("test-key");
@@ -35,8 +35,8 @@ describe("headers/helpers", () => {
 
     test("should prioritize exact match over case-insensitive match", () => {
       const headers = {
-        authorization: "Bearer lowercase",
         Authorization: "Bearer uppercase",
+        authorization: "Bearer lowercase",
       };
 
       // Exact match for "Authorization" returns uppercase value
@@ -100,16 +100,16 @@ describe("headers/helpers", () => {
     test("should extract __ow_headers from params", () => {
       const params = {
         __ow_headers: {
-          "x-api-key": "test-key",
           Authorization: "Bearer token",
+          "x-api-key": "test-key",
         },
         someOtherParam: "value",
       };
 
       const headers = getHeadersFromParams(params);
       expect(headers).toEqual({
-        "x-api-key": "test-key",
         Authorization: "Bearer token",
+        "x-api-key": "test-key",
       });
     });
 
@@ -158,16 +158,16 @@ describe("headers/helpers", () => {
     test("should preserve header values including empty strings", () => {
       const params = {
         __ow_headers: {
-          "x-api-key": "",
           Authorization: "Bearer token",
+          "x-api-key": "",
           "x-custom": undefined,
         },
       };
 
       const headers = getHeadersFromParams(params);
       expect(headers).toEqual({
-        "x-api-key": "",
         Authorization: "Bearer token",
+        "x-api-key": "",
         "x-custom": undefined,
       });
     });

@@ -14,14 +14,17 @@ import { describe, expect, test } from "vitest";
 
 import { requiresInstallation } from "#config/schema/app";
 import {
-  configWithAdminUiSdk,
+  configWithAdminUiMenu,
+  configWithAdminUiSingleGrid,
   configWithBusinessConfig,
   configWithCommerceEventing,
   configWithCustomInstallationSteps,
   configWithEventingAndWebhooks,
   configWithExternalEventing,
   configWithFullEventing,
+  configWithViewMassActions,
   configWithWebhooks,
+  configWithWorkerMassActions,
   fullConfig,
   minimalValidConfig,
   mockMetadata,
@@ -43,7 +46,13 @@ describe.concurrent("app schema helpers", () => {
       { config: configWithExternalEventing, name: "external eventing" },
       { config: configWithFullEventing, name: "full eventing" },
       { config: configWithWebhooks, name: "webhooks" },
-      { config: configWithAdminUiSdk, name: "Admin UI SDK" },
+      { config: configWithAdminUiSingleGrid, name: "Admin UI grid columns" },
+      { config: configWithAdminUiMenu, name: "Admin UI menu" },
+      { config: configWithViewMassActions, name: "Admin UI view mass actions" },
+      {
+        config: configWithWorkerMassActions,
+        name: "Admin UI worker mass actions",
+      },
       {
         config: configWithEventingAndWebhooks,
         name: "multiple installable features",
@@ -58,13 +67,13 @@ describe.concurrent("app schema helpers", () => {
       { config: configWithBusinessConfig, name: "business config" },
       {
         config: {
-          metadata: { ...mockMetadata, id: "test-app-installation-messages" },
           installation: {
             messages: {
-              preInstallation: "Preparing to install",
               postInstallation: "Installation complete",
+              preInstallation: "Preparing to install",
             },
           },
+          metadata: { ...mockMetadata, id: "test-app-installation-messages" },
         } satisfies CommerceAppConfigOutputModel,
         name: "installation messages without custom steps",
       },

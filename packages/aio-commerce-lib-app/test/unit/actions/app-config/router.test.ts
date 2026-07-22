@@ -17,7 +17,13 @@ import { getOpenApiCacheKey } from "#actions/app-config/openapi";
 import { getConfigDomains } from "#config/schema/domains";
 import { createRuntimeActionParams } from "#test/fixtures/actions";
 import {
+  configWithEnvScopedBusinessConfig,
+  configWithEnvScopedEventingAndWebhooks,
+  configWithPaasOnlyWebhook,
+} from "#test/fixtures/app-config-router";
+import {
   configWithDynamicListOptions,
+  configWithFullAdminUiV2,
   minimalValidConfig,
 } from "#test/fixtures/config";
 
@@ -36,8 +42,8 @@ describe("appConfigRuntimeAction", () => {
       const result = await handler(createRuntimeActionParams());
 
       expect(result).toMatchObject({
-        type: "success",
         body: minimalValidConfig,
+        type: "success",
       });
     });
 
@@ -50,8 +56,8 @@ describe("appConfigRuntimeAction", () => {
       const result = await handler(createRuntimeActionParams());
 
       expect(result).toMatchObject({
-        type: "error",
         error: { statusCode: 500 },
+        type: "error",
       });
     });
 
@@ -63,8 +69,8 @@ describe("appConfigRuntimeAction", () => {
 
       const result = await handler(createRuntimeActionParams());
       expect(result).toMatchObject({
-        type: "error",
         error: { statusCode: 500 },
+        type: "error",
       });
     });
 
@@ -75,21 +81,70 @@ describe("appConfigRuntimeAction", () => {
 
       const result = await handler(createRuntimeActionParams());
       expect(result).toMatchObject({
-        type: "success",
         body: {
           businessConfig: {
             schema: [
               expect.objectContaining({
-                name: "paymentMethod",
-                type: "list",
-                selectionMode: "single",
                 default: "braintree",
+                name: "paymentMethod",
                 options: [{ label: "Braintree", value: "braintree" }],
+                selectionMode: "single",
+                type: "list",
               }),
             ],
           },
         },
+        type: "success",
       });
+    });
+
+    test("filters webhooks and events to the commerceEnv query param", async () => {
+      const handler = appConfigRuntimeAction({
+        appConfig: configWithEnvScopedEventingAndWebhooks,
+      });
+
+      const result = await handler(
+        createRuntimeActionParams({ query: "commerceEnv=saas" }),
+      );
+
+      expect.assert(result.type === "success");
+      const body = result.body as {
+        webhooks: { label: string }[];
+        eventing: { commerce: unknown[] };
+      };
+      expect(body.webhooks.map((w) => w.label)).toEqual(["All envs"]);
+      // The single commerce provider has only a PaaS event, so it is dropped on SaaS.
+      expect(body.eventing.commerce).toHaveLength(0);
+    });
+
+    test("filters business-config fields to the commerceEnv query param", async () => {
+      const handler = appConfigRuntimeAction({
+        appConfig: configWithEnvScopedBusinessConfig,
+      });
+
+      const result = await handler(
+        createRuntimeActionParams({ query: "commerceEnv=saas" }),
+      );
+
+      expect.assert(result.type === "success");
+      const body = result.body as {
+        businessConfig: { schema: { name: string }[] };
+      };
+      expect(body.businessConfig.schema.map((field) => field.name)).toEqual([
+        "sharedField",
+      ]);
+    });
+
+    test("returns the full config when commerceEnv is omitted", async () => {
+      const handler = appConfigRuntimeAction({
+        appConfig: configWithPaasOnlyWebhook,
+      });
+
+      const result = await handler(createRuntimeActionParams());
+
+      expect.assert(result.type === "success");
+      const body = result.body as { webhooks: { label: string }[] };
+      expect(body.webhooks).toHaveLength(1);
     });
 
     test("includes openApiSpecUrl in the response body", async () => {
@@ -100,10 +155,38 @@ describe("appConfigRuntimeAction", () => {
       const ck = getOpenApiCacheKey(domains);
 
       expect(result).toMatchObject({
-        type: "success",
         body: {
           openApiSpecUrl: `https://test-namespace.adobeioruntime.net/api/v1/web/app-management/app-config/openapi.json?ck=${ck}`,
         },
+        type: "success",
+      });
+    });
+
+    test("returns the config unchanged when adminUi is absent", async () => {
+      const handler = appConfigRuntimeAction({
+        appConfig: minimalValidConfig,
+      });
+      const result = await handler(createRuntimeActionParams());
+
+      expect(result).toMatchObject({
+        body: minimalValidConfig,
+        type: "success",
+      });
+      expect.assert(result.type === "success");
+      expect(result.body as Record<string, unknown>).not.toHaveProperty(
+        "adminUi",
+      );
+    });
+
+    test("passes adminUi config through untouched to the response", async () => {
+      const handler = appConfigRuntimeAction({
+        appConfig: configWithFullAdminUiV2,
+      });
+      const result = await handler(createRuntimeActionParams());
+
+      expect(result).toMatchObject({
+        body: { adminUi: configWithFullAdminUiV2.adminUi },
+        type: "success",
       });
     });
   });
@@ -142,8 +225,8 @@ describe("appConfigRuntimeAction", () => {
       );
 
       expect(result).toMatchObject({
-        type: "success",
         headers: { "Cache-Control": "public, max-age=31536000, immutable" },
+        type: "success",
       });
     });
   });

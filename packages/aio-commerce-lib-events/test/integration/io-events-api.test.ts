@@ -161,6 +161,122 @@ describe("Adobe IO Events API - Integration Tests", () => {
     );
   });
 
+  describe("publishEvent", () => {
+    const ingressBaseUrl = "https://eventsingress.adobe.io";
+    const TEST_PROVIDER_ID = "test-provider-uuid";
+    const TEST_EVENT_CODE = "app.test.event";
+
+    test("should POST to the ingress base URL root", async () => {
+      const capture = { url: null as string | null };
+      server.use(
+        http.post(`${ingressBaseUrl}/`, ({ request }) => {
+          capture.url = request.url;
+          return new HttpResponse(null, { status: 204 });
+        }),
+      );
+
+      await client.publishEvent({
+        eventCode: TEST_EVENT_CODE,
+        payload: { foo: "bar" },
+        providerId: TEST_PROVIDER_ID,
+      });
+
+      expect(capture.url).toBe(`${ingressBaseUrl}/`);
+    });
+
+    test("should send a CloudEvents 1.0 envelope with provider in source", async () => {
+      const payload = { orderId: "100000123", total: 149.99 };
+      const capture = { body: null as Record<string, unknown> | null };
+
+      server.use(
+        http.post(`${ingressBaseUrl}/`, async ({ request }) => {
+          capture.body = (await request.json()) as Record<string, unknown>;
+          return new HttpResponse(null, { status: 204 });
+        }),
+      );
+
+      await client.publishEvent({
+        eventCode: TEST_EVENT_CODE,
+        payload,
+        providerId: TEST_PROVIDER_ID,
+      });
+
+      expect.assert(capture.body);
+      expect(capture.body.specversion).toBe("1.0");
+      expect(capture.body.source).toBe(`urn:uuid:${TEST_PROVIDER_ID}`);
+      expect(capture.body.type).toBe(TEST_EVENT_CODE);
+      expect(capture.body.datacontenttype).toBe("application/json");
+      expect(capture.body.data).toEqual(payload);
+      expect(capture.body.id).toBeTypeOf("string");
+      expect(capture.body.time).toBeTypeOf("string");
+    });
+
+    test("should send correct Content-Type, Accept, and auth headers", async () => {
+      const capture = { headers: null as Headers | null };
+      server.use(
+        http.post(`${ingressBaseUrl}/`, ({ request }) => {
+          capture.headers = request.headers;
+          return new HttpResponse(null, { status: 204 });
+        }),
+      );
+
+      await client.publishEvent({
+        eventCode: TEST_EVENT_CODE,
+        payload: { foo: "bar" },
+        providerId: TEST_PROVIDER_ID,
+      });
+
+      expect.assert(capture.headers);
+      expect(capture.headers.get("content-type")).toBe(
+        "application/cloudevents+json",
+      );
+      expect(capture.headers.get("Accept")).toBe("application/json");
+      expect(capture.headers.get("Authorization")).toBe(
+        "Bearer supersecrettoken",
+      );
+      expect(capture.headers.get("x-api-key")).toBe("test-client-id");
+    });
+
+    test("should send x-event-phidata: true when isPhiData is true", async () => {
+      const capture = { headers: null as Headers | null };
+      server.use(
+        http.post(`${ingressBaseUrl}/`, ({ request }) => {
+          capture.headers = request.headers;
+          return new HttpResponse(null, { status: 204 });
+        }),
+      );
+
+      await client.publishEvent({
+        eventCode: TEST_EVENT_CODE,
+        isPhiData: true,
+        payload: { foo: "bar" },
+        providerId: TEST_PROVIDER_ID,
+      });
+
+      expect.assert(capture.headers);
+      expect(capture.headers.get("x-event-phidata")).toBe("true");
+    });
+
+    test("should not send x-event-phidata when isPhiData is omitted", async () => {
+      const capture = { headers: null as Headers | null };
+      server.use(
+        http.post(`${ingressBaseUrl}/`, ({ request }) => {
+          capture.headers = request.headers;
+          return new HttpResponse(null, { status: 204 });
+        }),
+      );
+
+      await client.publishEvent({
+        eventCode: TEST_EVENT_CODE,
+        payload: { foo: "bar" },
+        providerId: TEST_PROVIDER_ID,
+      });
+
+      expect.assert(capture.headers);
+      expect(capture.headers.get("x-event-phidata")).toBeNull();
+    });
+  });
+
   describe("event metadata schema validation for sample event template", () => {
     const CONSUMER_ORG_ID = "test-consumer-org-id";
     const PROJECT_ID = "test-project-id";
@@ -170,8 +286,8 @@ describe("Adobe IO Events API - Integration Tests", () => {
     test("should encode sample event template to base64 in request body", async () => {
       const sampleEventTemplate = {
         name: "product name",
-        sku: "1234567890",
         price: 100,
+        sku: "1234567890",
       };
 
       const capture = { body: null as Record<string, unknown> | null };
@@ -189,13 +305,13 @@ describe("Adobe IO Events API - Integration Tests", () => {
 
       await client.createEventMetadataForProvider({
         consumerOrgId: CONSUMER_ORG_ID,
-        projectId: PROJECT_ID,
-        workspaceId: WORKSPACE_ID,
-        providerId: PROVIDER_ID,
-        label: "test-label",
         description: "test-description",
         eventCode: "test-event-code",
+        label: "test-label",
+        projectId: PROJECT_ID,
+        providerId: PROVIDER_ID,
         sampleEventTemplate,
+        workspaceId: WORKSPACE_ID,
       });
 
       if (!capture.body) {
@@ -222,8 +338,8 @@ describe("Adobe IO Events API - Integration Tests", () => {
     test("should handle already base64-encoded sample event template", async () => {
       const sampleEventTemplate = {
         name: "product name",
-        sku: "1234567890",
         price: 100,
+        sku: "1234567890",
       };
 
       const alreadyEncoded = Buffer.from(
@@ -245,13 +361,13 @@ describe("Adobe IO Events API - Integration Tests", () => {
 
       await client.createEventMetadataForProvider({
         consumerOrgId: CONSUMER_ORG_ID,
-        projectId: PROJECT_ID,
-        workspaceId: WORKSPACE_ID,
-        providerId: PROVIDER_ID,
-        label: "test-label",
         description: "test-description",
         eventCode: "test-event-code",
+        label: "test-label",
+        projectId: PROJECT_ID,
+        providerId: PROVIDER_ID,
         sampleEventTemplate: alreadyEncoded,
+        workspaceId: WORKSPACE_ID,
       });
 
       if (!capture.body) {
@@ -270,8 +386,8 @@ describe("Adobe IO Events API - Integration Tests", () => {
     test("should handle sample event template as JSON string", async () => {
       const sampleEventTemplate = {
         name: "product name",
-        sku: "1234567890",
         price: 100,
+        sku: "1234567890",
       };
 
       const jsonString = JSON.stringify(sampleEventTemplate);
@@ -291,13 +407,13 @@ describe("Adobe IO Events API - Integration Tests", () => {
 
       await client.createEventMetadataForProvider({
         consumerOrgId: CONSUMER_ORG_ID,
-        projectId: PROJECT_ID,
-        workspaceId: WORKSPACE_ID,
-        providerId: PROVIDER_ID,
-        label: "test-label",
         description: "test-description",
         eventCode: "test-event-code",
+        label: "test-label",
+        projectId: PROJECT_ID,
+        providerId: PROVIDER_ID,
         sampleEventTemplate: jsonString,
+        workspaceId: WORKSPACE_ID,
       });
 
       if (!capture.body) {

@@ -38,21 +38,12 @@ export const DeliveryTypeSchema = v.picklist(
 
 /** Schema for events of interest. */
 export const EventsOfInterestSchema = v.object({
-  providerId: stringValueSchema("providerId"),
   eventCode: stringValueSchema("eventCode"),
+  providerId: stringValueSchema("providerId"),
 });
 
 /** Schema for AWS EventBridge destination metadata. */
 export const DestinationMetadataSchema = v.object({
-  awsRegion: v.optional(
-    v.pipe(
-      stringValueSchema("awsRegion"),
-      v.regex(
-        AWS_REGION_REGEX,
-        "Expected AWS region in format like 'us-east-1'",
-      ),
-    ),
-  ),
   awsAccountId: v.optional(
     v.pipe(
       stringValueSchema("awsAccountId"),
@@ -62,10 +53,28 @@ export const DestinationMetadataSchema = v.object({
       ),
     ),
   ),
+  awsRegion: v.optional(
+    v.pipe(
+      stringValueSchema("awsRegion"),
+      v.regex(
+        AWS_REGION_REGEX,
+        "Expected AWS region in format like 'us-east-1'",
+      ),
+    ),
+  ),
 });
 
 /** Schema for subscriber-defined filter. */
 export const SubscriberFilterSchema = v.object({
+  description: v.optional(
+    v.pipe(
+      stringValueSchema("description"),
+      v.maxLength(
+        250,
+        "Expected subscriber filter description to be at most 250 characters",
+      ),
+    ),
+  ),
   name: v.pipe(
     stringValueSchema("name"),
     v.minLength(
@@ -75,15 +84,6 @@ export const SubscriberFilterSchema = v.object({
     v.maxLength(
       80,
       "Expected subscriber filter name to be at most 80 characters",
-    ),
-  ),
-  description: v.optional(
-    v.pipe(
-      stringValueSchema("description"),
-      v.maxLength(
-        250,
-        "Expected subscriber filter description to be at most 250 characters",
-      ),
     ),
   ),
   subscriberFilter: stringValueSchema("subscriberFilter"),
@@ -112,33 +112,27 @@ const RegistrationBodySchema = v.object({
     v.minLength(3, "Expected clientId to be at least 1 character"),
     v.maxLength(255, "Expected clientId to be at most 255 characters"),
   ),
-  name: v.pipe(
-    stringValueSchema("name"),
-    v.minLength(3, "Expected registration name to be at least 3 characters"),
-    v.maxLength(255, "Expected registration name to be at most 255 characters"),
-  ),
+  deliveryType: DeliveryTypeSchema,
   description: v.optional(
     v.pipe(
       stringValueSchema("description"),
       v.maxLength(5000, "Expected description to be at most 5000 characters"),
     ),
   ),
-  webhookUrl: v.optional(
-    v.pipe(
-      stringValueSchema("webhookUrl"),
-      v.maxLength(4000, "Expected webhook URL to be at most 4000 characters"),
-    ),
-  ),
+  destinationMetadata: v.optional(DestinationMetadataSchema),
+  enabled: v.optional(booleanValueSchema("enabled")),
   eventsOfInterest: EventsOfInterestArraySchema,
-  deliveryType: DeliveryTypeSchema,
+  name: v.pipe(
+    stringValueSchema("name"),
+    v.minLength(3, "Expected registration name to be at least 3 characters"),
+    v.maxLength(255, "Expected registration name to be at most 255 characters"),
+  ),
   runtimeAction: v.optional(
     v.pipe(
       stringValueSchema("runtimeAction"),
       v.maxLength(255, "Expected runtime action to be at most 255 characters"),
     ),
   ),
-  enabled: v.optional(booleanValueSchema("enabled")),
-  destinationMetadata: v.optional(DestinationMetadataSchema),
   subscriberFilters: v.optional(
     v.pipe(
       v.array(
@@ -146,6 +140,12 @@ const RegistrationBodySchema = v.object({
         "Expected subscriberFilters to be an array of subscriber filter objects",
       ),
       v.maxLength(1, "Expected at most 1 subscriber filter"),
+    ),
+  ),
+  webhookUrl: v.optional(
+    v.pipe(
+      stringValueSchema("webhookUrl"),
+      v.maxLength(4000, "Expected webhook URL to be at most 4000 characters"),
     ),
   ),
 });

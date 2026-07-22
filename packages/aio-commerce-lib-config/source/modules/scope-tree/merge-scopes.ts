@@ -77,19 +77,19 @@ export function mergeCommerceScopes(
     );
 
     return {
-      id: existingWebsite?.id || generateUUID(),
-      commerce_id: website.id,
-      code: website.code,
-      label: website.name,
-      level: "website",
-      is_editable: true,
-      is_final: true,
-      is_removable: false, // Commerce websites cannot be removed
       children: buildStoreGroups(
         storeGroups.filter((sg) => sg.website_id === website.id),
         storeViews,
         existingWebsite?.children || [],
       ),
+      code: website.code,
+      commerce_id: website.id,
+      id: existingWebsite?.id || generateUUID(),
+      is_editable: true,
+      is_final: true,
+      is_removable: false, // Commerce websites cannot be removed
+      label: website.name,
+      level: "website",
     };
   });
 }
@@ -115,18 +115,18 @@ function buildStoreGroups(
     );
 
     return {
-      id: existing?.id || generateUUID(),
-      commerce_id: storeGroup.id,
-      code: storeGroup.code,
-      label: storeGroup.name,
-      level: "store",
-      is_editable: false, // Store groups typically not directly editable
-      is_final: true,
-      is_removable: false, // Store groups cannot be removed
       children: buildStoreViews(
         allStoreViews.filter((sv) => sv.store_group_id === storeGroup.id),
         existing?.children || [],
       ),
+      code: storeGroup.code,
+      commerce_id: storeGroup.id,
+      id: existing?.id || generateUUID(),
+      is_editable: false, // Store groups typically not directly editable
+      is_final: true,
+      is_removable: false, // Store groups cannot be removed
+      label: storeGroup.name,
+      level: "store",
     };
   });
 }
@@ -150,14 +150,14 @@ function buildStoreViews(
     );
 
     return {
-      id: existing?.id || generateUUID(),
-      commerce_id: storeView.id,
       code: storeView.code,
-      label: storeView.name,
-      level: "store_view",
+      commerce_id: storeView.id,
+      id: existing?.id || generateUUID(),
       is_editable: true,
       is_final: true, // Leaf nodes
       is_removable: false, // Commerce store views cannot be removed
+      label: storeView.name,
+      level: "store_view",
     };
   });
 }
@@ -259,14 +259,14 @@ export function buildUpdatedScopeTree(
     return [
       ...existingTree,
       {
-        id: generateUUID(),
+        children: updatedCommerceScopes,
         code: "commerce",
+        id: generateUUID(),
+        is_editable: false,
+        is_final: true,
+        is_removable: false,
         label: "Commerce",
         level: "commerce",
-        is_editable: false,
-        is_removable: false,
-        is_final: true,
-        children: updatedCommerceScopes,
       },
     ];
   }

@@ -93,6 +93,42 @@ describe("createWebhookSubscriptions", () => {
     expect(result.subscribedWebhooks).toHaveLength(config.webhooks.length);
   });
 
+  test("skips webhooks scoped to a different environment", async () => {
+    const subscribeWebhook = vi.fn().mockResolvedValue(null);
+    const context = makeContext(
+      subscribeWebhook,
+      vi.fn().mockResolvedValue([]),
+      {
+        ...DEFAULT_PARAMS,
+        AIO_COMMERCE_API_FLAVOR: "saas",
+      },
+    );
+
+    const config = createMockWebhooksConfig({
+      webhooks: [
+        createMockRuntimeWebhookEntry({
+          env: ["paas"],
+          label: "PaaS only",
+          webhook: { hook_name: "paas_only" },
+        }),
+        createMockRuntimeWebhookEntry({
+          label: "All envs",
+          webhook: { hook_name: "all_envs" },
+        }),
+      ],
+    });
+
+    const result = await createWebhookSubscriptions(config, context);
+
+    expect(subscribeWebhook).toHaveBeenCalledTimes(1);
+    expect(result.subscribedWebhooks).toHaveLength(1);
+    expect(subscribeWebhook).toHaveBeenCalledWith(
+      expect.objectContaining({
+        hook_name: expect.stringContaining("all_envs"),
+      }),
+    );
+  });
+
   test("passes webhook.url directly when it is explicitly set", async () => {
     const subscribeWebhook = vi.fn().mockResolvedValue(null);
     const context = makeContext(subscribeWebhook);
@@ -101,13 +137,13 @@ describe("createWebhookSubscriptions", () => {
     const configWithExplicitUrl = createMockWebhooksConfig({
       webhooks: [
         createMockUrlWebhookEntry({
-          label: "Explicit URL Webhook",
           description: "Webhook with explicit url",
+          label: "Explicit URL Webhook",
           webhook: {
-            webhook_method: "plugin.order.api.order_created",
             batch_name: "default",
             hook_name: "order_created",
             url: explicitUrl,
+            webhook_method: "plugin.order.api.order_created",
           },
         }),
       ],
@@ -127,8 +163,8 @@ describe("createWebhookSubscriptions", () => {
     const configWithoutUrl = createMockWebhooksConfig({
       webhooks: [
         createMockRuntimeWebhookEntry({
-          label: "Generated URL Webhook",
           description: "Webhook without url",
+          label: "Generated URL Webhook",
           runtimeAction: "my-package/handle-webhook",
           webhook: {
             batch_name: "batch1",
@@ -155,8 +191,8 @@ describe("createWebhookSubscriptions", () => {
     const configWithoutUrl = createMockWebhooksConfig({
       webhooks: [
         createMockRuntimeWebhookEntry({
-          label: "Generated URL Webhook",
           description: "Webhook without url",
+          label: "Generated URL Webhook",
           runtimeAction: "my-package/handle-webhook",
           webhook: {
             batch_name: "batch1",
@@ -179,9 +215,9 @@ describe("createWebhookSubscriptions", () => {
 
     const config = createMockWebhooksConfig({
       metadata: createMockMetadata("test-app-webhooks", {
-        id: "my--app.v2",
-        displayName: "My App",
         description: "d",
+        displayName: "My App",
+        id: "my--app.v2",
       }),
       webhooks: [
         createMockRuntimeWebhookEntry({
@@ -214,8 +250,8 @@ describe("createWebhookSubscriptions", () => {
       webhooks: [
         ...createDefaultWebhooksConfig().webhooks,
         createMockRuntimeWebhookEntry({
-          label: "Second Webhook",
           description: "Second webhook",
+          label: "Second Webhook",
           runtimeAction: "my-package/second-hook",
           webhook: {
             batch_name: "batch2",
@@ -252,10 +288,10 @@ describe("createWebhookSubscriptions", () => {
       webhooks: [
         createMockRuntimeWebhookEntry({
           webhook: {
-            webhook_method: "observer.catalog_product_save_after",
             batch_name: "batch1",
             hook_name: "hook1",
             url: "https://example.com/hook",
+            webhook_method: "observer.catalog_product_save_after",
           },
         }),
       ],
@@ -335,23 +371,23 @@ describe("createWebhookSubscriptions", () => {
     const twoWebhookConfig = createMockWebhooksConfig({
       webhooks: [
         createMockRuntimeWebhookEntry({
-          label: "First Webhook",
           description: "First webhook",
+          label: "First Webhook",
           webhook: {
-            webhook_method: "plugin.order.api.order_created",
             batch_name: "default",
             hook_name: "order_created",
             url: "https://example.com/first",
+            webhook_method: "plugin.order.api.order_created",
           },
         }),
         createMockRuntimeWebhookEntry({
-          label: "Second Webhook",
           description: "Second webhook",
+          label: "Second Webhook",
           webhook: {
-            webhook_method: "observer.catalog_product_save_after",
             batch_name: "products",
             hook_name: "validate",
             url: "https://example.com/second",
+            webhook_method: "observer.catalog_product_save_after",
           },
         }),
       ],
@@ -367,9 +403,9 @@ describe("createWebhookSubscriptions", () => {
     expect(subscribeWebhook).toHaveBeenCalledTimes(1);
     expect(subscribeWebhook).toHaveBeenCalledWith(
       expect.objectContaining({
-        webhook_method: "observer.catalog_product_save_after",
         batch_name: "test_app_webhooks_products",
         hook_name: "test_app_webhooks_validate",
+        webhook_method: "observer.catalog_product_save_after",
       }),
     );
     expect(result.subscribedWebhooks).toHaveLength(2);
@@ -401,9 +437,9 @@ describe("createWebhookSubscriptions", () => {
           client_secret:
             DEFAULT_INSTALLATION_IMS_PARAMS
               .AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS[0],
+          environment: "production",
 
           org_id: DEFAULT_INSTALLATION_IMS_PARAMS.AIO_COMMERCE_AUTH_IMS_ORG_ID,
-          environment: "production",
         },
       }),
     );
@@ -439,9 +475,9 @@ describe("createWebhookSubscriptions", () => {
       AIO_COMMERCE_AUTH_IMS_CLIENT_ID: "",
       AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS: "",
       AIO_COMMERCE_AUTH_IMS_ORG_ID: "",
-      AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID: "",
-      AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL: "",
       AIO_COMMERCE_AUTH_IMS_SCOPES: "",
+      AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL: "",
+      AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID: "",
     });
 
     const context = makeContext(
@@ -653,14 +689,14 @@ describe("validateWebhookConflicts", () => {
     const config = createMockWebhooksConfig({
       webhooks: [
         createMockUrlWebhookEntry({
-          label: "Validation Webhook",
-          description: "Validation webhook",
           category: "validation",
+          description: "Validation webhook",
+          label: "Validation Webhook",
           webhook: {
-            webhook_method: "plugin.order.api.order_created",
-            webhook_type: "before",
             batch_name: "default",
             hook_name: "order_created",
+            webhook_method: "plugin.order.api.order_created",
+            webhook_type: "before",
           },
         }),
       ],
@@ -711,11 +747,11 @@ describe("validateWebhookConflicts", () => {
     });
     expect(issues[0].details?.conflictedWebhooks).toContainEqual(
       expect.objectContaining({
+        batch_name: "other_app_default",
+        hook_name: "other_app_order_created",
         label: "Order Created Webhook",
         webhook_method: "plugin.order.api.order_created",
         webhook_type: "after",
-        batch_name: "other_app_default",
-        hook_name: "other_app_order_created",
       }),
     );
   });
@@ -724,23 +760,23 @@ describe("validateWebhookConflicts", () => {
     const config = createMockWebhooksConfig({
       webhooks: [
         createMockRuntimeWebhookEntry({
-          label: "Order Created Webhook",
           description: "First modification webhook",
+          label: "Order Created Webhook",
           runtimeAction: "my-package/handle-order",
           webhook: {
-            webhook_method: "plugin.order.api.order_created",
             batch_name: "default",
             hook_name: "order_created",
+            webhook_method: "plugin.order.api.order_created",
           },
         }),
         createMockRuntimeWebhookEntry({
-          label: "Product Save Webhook",
           description: "Second modification webhook",
+          label: "Product Save Webhook",
           runtimeAction: "my-package/handle-product",
           webhook: {
-            webhook_method: "observer.catalog_product_save_after",
             batch_name: "products",
             hook_name: "validate",
+            webhook_method: "observer.catalog_product_save_after",
           },
         }),
       ],
@@ -751,9 +787,9 @@ describe("validateWebhookConflicts", () => {
       hook_name: "other_app_order_created",
     });
     const conflictForSecond = createMockExistingCommerceWebhook({
-      webhook_method: "observer.catalog_product_save_after",
       batch_name: "another_app_products",
       hook_name: "another_app_validate",
+      webhook_method: "observer.catalog_product_save_after",
     });
 
     const getWebhookList = vi
@@ -767,20 +803,20 @@ describe("validateWebhookConflicts", () => {
     expect(issues[0].details?.conflictedWebhooks).toHaveLength(2);
     expect(issues[0].details?.conflictedWebhooks).toContainEqual(
       expect.objectContaining({
+        batch_name: "other_app_default",
+        hook_name: "other_app_order_created",
         label: "Order Created Webhook",
         webhook_method: "plugin.order.api.order_created",
         webhook_type: "after",
-        batch_name: "other_app_default",
-        hook_name: "other_app_order_created",
       }),
     );
     expect(issues[0].details?.conflictedWebhooks).toContainEqual(
       expect.objectContaining({
+        batch_name: "another_app_products",
+        hook_name: "another_app_validate",
         label: "Product Save Webhook",
         webhook_method: "observer.catalog_product_save_after",
         webhook_type: "after",
-        batch_name: "another_app_products",
-        hook_name: "another_app_validate",
       }),
     );
   });
@@ -789,24 +825,24 @@ describe("validateWebhookConflicts", () => {
     const config = createMockWebhooksConfig({
       webhooks: [
         createMockUrlWebhookEntry({
-          label: "Append Webhook",
-          description: "Append webhook",
           category: "append",
+          description: "Append webhook",
+          label: "Append Webhook",
           webhook: {
-            webhook_method: "plugin.order.api.order_created",
             batch_name: "default",
             hook_name: "order_created",
+            webhook_method: "plugin.order.api.order_created",
           },
         }),
         createMockUrlWebhookEntry({
-          label: "No Category Webhook",
-          description: "No category webhook",
           category: undefined,
+          description: "No category webhook",
+          label: "No Category Webhook",
           webhook: {
-            webhook_method: "plugin.order.api.order_created",
             batch_name: "default2",
             hook_name: "order_created2",
             url: "https://example.com/hook2",
+            webhook_method: "plugin.order.api.order_created",
           },
         }),
       ],
@@ -818,6 +854,29 @@ describe("validateWebhookConflicts", () => {
     });
     const getWebhookList = vi.fn().mockResolvedValue([conflictingWebhook]);
     const context = makeContext(vi.fn(), getWebhookList);
+
+    await expect(validateWebhookConflicts(config, context)).resolves.toEqual(
+      [],
+    );
+    expect(getWebhookList).not.toHaveBeenCalled();
+  });
+
+  test("ignores modification webhooks scoped to a different environment", async () => {
+    const getWebhookList = vi.fn().mockResolvedValue([]);
+    const context = makeContext(vi.fn(), getWebhookList, {
+      ...DEFAULT_PARAMS,
+      AIO_COMMERCE_API_FLAVOR: "saas",
+    });
+
+    const config = createMockWebhooksConfig({
+      webhooks: [
+        createMockRuntimeWebhookEntry({
+          category: "modification",
+          env: ["paas"],
+          label: "PaaS only modification",
+        }),
+      ],
+    });
 
     await expect(validateWebhookConflicts(config, context)).resolves.toEqual(
       [],
@@ -841,8 +900,8 @@ describe("resolveDeveloperConsoleOAuthCredentials", () => {
     expect(result).toEqual({
       client_id: "client-id",
       client_secret: "client-secret",
-      org_id: "org-id",
       environment: "production",
+      org_id: "org-id",
     });
   });
 
@@ -858,8 +917,8 @@ describe("resolveDeveloperConsoleOAuthCredentials", () => {
     expect(result).toEqual({
       client_id: "client-id",
       client_secret: "primary-secret",
-      org_id: "org-id",
       environment: "production",
+      org_id: "org-id",
     });
   });
 
@@ -873,8 +932,8 @@ describe("resolveDeveloperConsoleOAuthCredentials", () => {
     expect(result).toEqual({
       client_id: "client-id",
       client_secret: "primary-secret",
-      org_id: "org-id",
       environment: "production",
+      org_id: "org-id",
     });
   });
 
@@ -936,10 +995,10 @@ describe("deleteWebhookSubscriptions", () => {
     // configWithWebhooks metadata.id = "test-app-webhooks" → prefix "test_app_webhooks_"
     // The first (and only) webhook has batch_name "default" and hook_name "order_created"
     const existingWebhook = {
-      webhook_method: "plugin.order.api.order_created",
-      webhook_type: "after",
       batch_name: "test_app_webhooks_default",
       hook_name: "test_app_webhooks_order_created",
+      webhook_method: "plugin.order.api.order_created",
+      webhook_type: "after",
     };
     const getWebhookList = vi.fn().mockResolvedValue([existingWebhook]);
     const context = makeContext(
@@ -956,12 +1015,41 @@ describe("deleteWebhookSubscriptions", () => {
 
     expect(unsubscribeWebhook).toHaveBeenCalledWith(
       expect.objectContaining({
-        webhook_method: "plugin.order.api.order_created",
-        webhook_type: "after",
         batch_name: "test_app_webhooks_default",
         hook_name: "test_app_webhooks_order_created",
+        webhook_method: "plugin.order.api.order_created",
+        webhook_type: "after",
       }),
     );
+    expect(result.unsubscribedWebhooks).toHaveLength(1);
+  });
+
+  test("does not filter by environment (offboards items scoped to other environments)", async () => {
+    const unsubscribeWebhook = vi.fn().mockResolvedValue(null);
+    const existingWebhook = createMockExistingCommerceWebhook();
+    const getWebhookList = vi.fn().mockResolvedValue([existingWebhook]);
+    // Install ran against "saas" but the webhook is scoped to "paas"; uninstall must
+    // still offboard it (offboarding is environment-agnostic and idempotent).
+    const context = makeContext(
+      vi.fn(),
+      getWebhookList,
+      { ...DEFAULT_PARAMS, AIO_COMMERCE_API_FLAVOR: "saas" },
+      unsubscribeWebhook,
+    );
+
+    const config = createMockWebhooksConfig({
+      webhooks: [
+        createMockRuntimeWebhookEntry({
+          category: "modification",
+          env: ["paas"],
+          label: "PaaS only",
+        }),
+      ],
+    });
+
+    const result = await deleteWebhookSubscriptions(config, context);
+
+    expect(unsubscribeWebhook).toHaveBeenCalledTimes(1);
     expect(result.unsubscribedWebhooks).toHaveLength(1);
   });
 
@@ -991,31 +1079,31 @@ describe("deleteWebhookSubscriptions", () => {
       ...configWithWebhooks,
       webhooks: [
         {
-          label: "First Webhook",
-          description: "First webhook",
-          runtimeAction: "my-package/handle-first",
           category: "modification" as const,
+          description: "First webhook",
+          label: "First Webhook",
+          runtimeAction: "my-package/handle-first",
           webhook: {
-            webhook_method: "plugin.order.api.order_created",
-            webhook_type: "after",
             batch_name: "default",
             hook_name: "order_created",
             method: "POST",
             url: "https://example.com/first",
+            webhook_method: "plugin.order.api.order_created",
+            webhook_type: "after",
           },
         },
         {
-          label: "Second Webhook",
-          description: "Second webhook",
-          runtimeAction: "my-package/handle-second",
           category: "modification" as const,
+          description: "Second webhook",
+          label: "Second Webhook",
+          runtimeAction: "my-package/handle-second",
           webhook: {
-            webhook_method: "observer.catalog_product_save_after",
-            webhook_type: "after",
             batch_name: "products",
             hook_name: "validate",
             method: "POST",
             url: "https://example.com/second",
+            webhook_method: "observer.catalog_product_save_after",
+            webhook_type: "after",
           },
         },
       ],
@@ -1023,10 +1111,10 @@ describe("deleteWebhookSubscriptions", () => {
 
     // Only the first webhook exists in Commerce
     const existingWebhook = {
-      webhook_method: "plugin.order.api.order_created",
-      webhook_type: "after",
       batch_name: "test_app_webhooks_default",
       hook_name: "test_app_webhooks_order_created",
+      webhook_method: "plugin.order.api.order_created",
+      webhook_type: "after",
     };
     const getWebhookList = vi.fn().mockResolvedValue([existingWebhook]);
     const context = makeContext(
@@ -1041,9 +1129,9 @@ describe("deleteWebhookSubscriptions", () => {
     expect(unsubscribeWebhook).toHaveBeenCalledTimes(1);
     expect(unsubscribeWebhook).toHaveBeenCalledWith(
       expect.objectContaining({
-        webhook_method: "plugin.order.api.order_created",
         batch_name: "test_app_webhooks_default",
         hook_name: "test_app_webhooks_order_created",
+        webhook_method: "plugin.order.api.order_created",
       }),
     );
     expect(result.unsubscribedWebhooks).toHaveLength(1);
@@ -1054,34 +1142,34 @@ describe("deleteWebhookSubscriptions", () => {
 
     const config = {
       metadata: {
-        id: "my--app.v2",
-        displayName: "My App",
         description: "d",
+        displayName: "My App",
+        id: "my--app.v2",
         version: "1.0.0",
       },
       webhooks: [
         {
-          label: "Test Webhook",
-          description: "Test webhook",
-          runtimeAction: "my-package/handle-webhook",
           category: "modification" as const,
+          description: "Test webhook",
+          label: "Test Webhook",
+          runtimeAction: "my-package/handle-webhook",
           webhook: {
-            webhook_method: "observer.catalog_product_save_after",
-            webhook_type: "after",
             batch_name: "products",
             hook_name: "validate",
             method: "POST",
             url: "https://example.com/hook",
+            webhook_method: "observer.catalog_product_save_after",
+            webhook_type: "after",
           },
         },
       ],
     };
 
     const existingWebhook = {
-      webhook_method: "observer.catalog_product_save_after",
-      webhook_type: "after",
       batch_name: "my_app_v2_products",
       hook_name: "my_app_v2_validate",
+      webhook_method: "observer.catalog_product_save_after",
+      webhook_type: "after",
     };
     const getWebhookList = vi.fn().mockResolvedValue([existingWebhook]);
     const context = makeContext(
@@ -1105,10 +1193,10 @@ describe("deleteWebhookSubscriptions", () => {
     const resolvedBatch = "test_app_webhooks_batch";
     const resolvedHook = "test_app_webhooks_hook";
     const existingWebhook = createMockExistingCommerceWebhook({
-      webhook_method: "observer.catalog_product_save_after",
-      webhook_type: "before",
       batch_name: resolvedBatch,
       hook_name: resolvedHook,
+      webhook_method: "observer.catalog_product_save_after",
+      webhook_type: "before",
     });
 
     const unsubscribeError = new Error("Commerce API unavailable");
@@ -1125,10 +1213,10 @@ describe("deleteWebhookSubscriptions", () => {
       webhooks: [
         createMockRuntimeWebhookEntry({
           webhook: {
-            webhook_method: "observer.catalog_product_save_after",
-            webhook_type: "before",
             batch_name: "batch",
             hook_name: "hook",
+            webhook_method: "observer.catalog_product_save_after",
+            webhook_type: "before",
           },
         }),
       ],

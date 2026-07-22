@@ -14,6 +14,8 @@ import { unwrapHttpError } from "@adobe/aio-commerce-lib-api/utils";
 import { resolveImsAuthParams } from "@adobe/aio-commerce-lib-auth";
 import { stringifyError } from "@aio-commerce-sdk/scripting-utils/error";
 
+import { appliesToEnv, getInstallCommerceEnv } from "#config/lib/environment";
+
 import type {
   CommerceWebhook,
   WebhookSubscribeParams,
@@ -27,12 +29,12 @@ import type { ValidationIssue } from "#management/installation/workflow/step";
 import type { WebhooksExecutionContext } from "./context";
 
 /** Minimal identity fields shared by subscribe and unsubscribe params. */
-export interface WebhookIdentity {
+export type WebhookIdentity = {
   batch_name: string;
   hook_name: string;
   webhook_method: string;
   webhook_type: string;
-}
+};
 
 /** Identity of a Commerce webhook that conflicts with a modification webhook from this app. */
 export type ConflictingWebhook = WebhookIdentity & {
@@ -78,10 +80,11 @@ export async function validateWebhookConflicts(
   config: WebhooksConfig,
   context: WebhooksExecutionContext,
 ): Promise<ValidationIssue[]> {
-  const { logger, commerceWebhooksClient } = context;
+  const { logger, commerceWebhooksClient, params } = context;
 
+  const env = getInstallCommerceEnv(params);
   const modificationWebhooks = config.webhooks.filter(
-    (entry) => entry.category === "modification",
+    (entry) => entry.category === "modification" && appliesToEnv(entry, env),
   );
 
   if (modificationWebhooks.length === 0) {
@@ -126,9 +129,9 @@ export async function validateWebhookConflicts(
     return [
       {
         code: "WEBHOOK_CONFLICTS",
+        details: { conflictedWebhooks },
         message: `Webhook conflicts detected: ${conflictedWebhooks.length} webhook(s) already registered for the same method and type by another app`,
         severity: "warning",
-        details: { conflictedWebhooks },
       },
     ];
   }
@@ -150,16 +153,24 @@ export async function createWebhookSubscriptions(
 ): Promise<WebhookSubscriptionResult> {
   const { logger, commerceWebhooksClient, params } = context;
 
-  logger.info(
-    `Subscribing ${config.webhooks.length} webhook(s) to Commerce...`,
-  );
+  const env = getInstallCommerceEnv(params);
+  const webhooks = config.webhooks.filter((entry) => appliesToEnv(entry, env));
+
+  if (webhooks.length === 0) {
+    logger.info(
+      "No webhooks apply to this environment, skipping subscription.",
+    );
+    return { subscribedWebhooks: [] };
+  }
+
+  logger.info(`Subscribing ${webhooks.length} webhook(s) to Commerce...`);
 
   const idPrefix = buildWebhookIdPrefix(config.metadata.id);
   const subscribedWebhooks: WebhookSubscribeParams[] = [];
 
   const existingWebhooks = await commerceWebhooksClient.getWebhookList();
 
-  for (const entry of config.webhooks) {
+  for (const entry of webhooks) {
     const { webhook } = entry;
     const resolvedUrl =
       "runtimeAction" in entry
@@ -172,9 +183,9 @@ export async function createWebhookSubscriptions(
 
     const resolvedWebhook = {
       ...webhook,
-      url: resolvedUrl,
       batch_name: `${idPrefix}${webhook.batch_name}`,
       hook_name: `${idPrefix}${webhook.hook_name}`,
+      url: resolvedUrl,
       ...("runtimeAction" in entry &&
         entry.requireAdobeAuth !== false && {
           developer_console_oauth:
@@ -183,6 +194,7 @@ export async function createWebhookSubscriptions(
     };
 
     subscribedWebhooks.push(
+      // biome-ignore lint/performance/noAwaitInLoops: subscriptions must be created sequentially so a failure aborts remaining subscriptions (see function docstring)
       await createOrGetWebhookSubscription(
         existingWebhooks,
         commerceWebhooksClient,
@@ -217,9 +229,10 @@ export async function deleteWebhookSubscriptions(
   );
 
   const idPrefix = buildWebhookIdPrefix(config.metadata.id);
-  const unsubscribedWebhooks: WebhookUnsubscribeParams[] = [];
 
   const existingWebhooks = await commerceWebhooksClient.getWebhookList();
+
+  const unsubscribedWebhooks: WebhookUnsubscribeParams[] = [];
 
   for (const entry of config.webhooks) {
     const { webhook } = entry;
@@ -227,10 +240,10 @@ export async function deleteWebhookSubscriptions(
     const resolvedHook = `${idPrefix}${webhook.hook_name}`;
 
     const params: WebhookUnsubscribeParams = {
-      webhook_method: webhook.webhook_method,
-      webhook_type: webhook.webhook_type,
       batch_name: resolvedBatch,
       hook_name: resolvedHook,
+      webhook_method: webhook.webhook_method,
+      webhook_type: webhook.webhook_type,
     };
 
     if (!isWebhookInList(existingWebhooks, params)) {
@@ -241,6 +254,7 @@ export async function deleteWebhookSubscriptions(
     }
 
     try {
+      // biome-ignore lint/performance/noAwaitInLoops: unsubscribes hit the Adobe Commerce API sequentially to avoid a rate-limit burst during uninstall
       await deleteWebhookSubscription(commerceWebhooksClient, webhook, params);
       logger.info(`Unsubscribed webhook: ${getWebhookName(webhook)}`);
       unsubscribedWebhooks.push(params);
@@ -358,11 +372,11 @@ export function resolveDeveloperConsoleOAuthCredentials(
   return {
     client_id: clientId,
     client_secret: clientSecrets[0],
-    org_id: imsOrgId,
     environment:
       !imsEnvironment || String(imsEnvironment).startsWith("prod")
         ? ENVIRONMENT_PRODUCTION
         : ENVIRONMENT_STAGING,
+    org_id: imsOrgId,
   };
 }
 

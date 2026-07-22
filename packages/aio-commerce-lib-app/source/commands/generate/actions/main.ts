@@ -2,19 +2,20 @@ import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
 import { consola } from "consola";
 
 import {
-  BACKEND_UI_EXTENSION_POINT_ID,
+  BACKEND_UI_V2_EXTENSION_POINT_ID,
   CONFIGURATION_EXTENSION_POINT_ID,
   EXTENSIBILITY_EXTENSION_POINT_ID,
 } from "#commands/constants";
 import { loadAppManifest } from "#commands/utils";
-import { hasAdminUiSdk, hasBusinessConfigSchema } from "#config/index";
+import { hasAdminUi, hasBusinessConfigSchema } from "#config/index";
 
 import { getRuntimeActions } from "./config";
+import { TEMPLATES_DIR } from "./constants";
 import {
   generateActionFiles,
-  generateRegistrationActionFile,
+  generateWebSrc,
   prepareRuntimeAppConfigModule,
-  TEMPLATES_DIR,
+  prepareWebSourceImportAlias,
   updateExtConfig,
 } from "./lib";
 
@@ -57,13 +58,21 @@ export async function run(
     );
   }
 
-  if (hasAdminUiSdk(appManifest)) {
-    await updateExtConfig(appManifest, BACKEND_UI_EXTENSION_POINT_ID);
-    await generateRegistrationActionFile(
+  if (hasAdminUi(appManifest)) {
+    const extConfig = await updateExtConfig(
       appManifest,
-      BACKEND_UI_EXTENSION_POINT_ID,
-      templatesDir,
+      BACKEND_UI_V2_EXTENSION_POINT_ID,
     );
+
+    if (extConfig.operations?.view) {
+      await prepareWebSourceImportAlias(extConfig);
+      await generateWebSrc(
+        extConfig,
+        BACKEND_UI_V2_EXTENSION_POINT_ID,
+        appManifest.metadata.displayName,
+        templatesDir,
+      );
+    }
   }
 }
 

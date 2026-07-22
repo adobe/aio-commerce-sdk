@@ -47,10 +47,10 @@ describe("business-configuration schema helpers", () => {
         businessConfig: {
           schema: [
             {
-              name: "test-field",
-              label: "Test Field",
-              type: "text",
               default: "",
+              label: "Test Field",
+              name: "test-field",
+              type: "text",
             },
           ],
         },
@@ -67,10 +67,10 @@ describe("business-configuration schema helpers", () => {
         businessConfig: {
           schema: [
             {
-              name: "test-field",
-              label: "Test Field",
-              type: "text",
               default: "",
+              label: "Test Field",
+              name: "test-field",
+              type: "text",
             },
           ],
         },
@@ -114,16 +114,16 @@ describe("business-configuration schema helpers", () => {
         businessConfig: {
           schema: [
             {
-              name: "field1",
-              label: "Field 1",
-              type: "text",
               default: "",
+              label: "Field 1",
+              name: "field1",
+              type: "text",
             },
             {
-              name: "field2",
-              label: "Field 2",
-              type: "email",
               default: "",
+              label: "Field 2",
+              name: "field2",
+              type: "email",
             },
           ],
         },

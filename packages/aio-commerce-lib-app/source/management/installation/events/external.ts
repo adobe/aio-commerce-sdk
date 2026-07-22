@@ -10,36 +10,47 @@
  * governing permissions and limitations under the License.
  */
 
+import {
+  getSystemConfigByKey,
+  setSystemConfigByKey,
+} from "@adobe/aio-commerce-lib-config";
+
+import { appliesToEnv, getInstallCommerceEnv } from "#config/lib/environment";
 import { hasExternalEvents } from "#config/schema/eventing";
 import { defineLeafStep } from "#management/installation/workflow/step";
 
 import { offboardIoEvents, onboardIoEvents } from "./helpers";
-import { EXTERNAL_PROVIDER_TYPE, getIoEventsExistingData } from "./utils";
+import {
+  EVENTS_STORAGE_KEY,
+  EXTERNAL_PROVIDER_TYPE,
+  getIoEventsExistingData,
+} from "./utils";
 
 import type { ExternalEventsConfig } from "#config/schema/eventing";
 import type { InferStepOutput } from "#management/installation/workflow/step";
 import type { EventsExecutionContext } from "./context";
+import type { StoredEventsData } from "./types";
 
 /** The output data of the External Eventing step (auto-inferred). */
 export type ExternalEventsStepData = InferStepOutput<typeof externalEventsStep>;
 
 /** Leaf step for installing external event sources. */
 export const externalEventsStep = defineLeafStep({
-  name: "external",
+  install: createExternalEvents,
   meta: {
     install: {
-      label: "Configure External Events",
       description: "Sets up I/O Events for external event sources",
+      label: "Configure External Events",
     },
     uninstall: {
-      label: "Remove External Events",
       description: "Removes I/O Events for external event sources",
+      label: "Remove External Events",
     },
   },
+  name: "external",
+  uninstall: removeExternalEvents,
 
   when: hasExternalEvents,
-  install: createExternalEvents,
-  uninstall: removeExternalEvents,
 });
 
 /**
@@ -54,39 +65,81 @@ async function createExternalEvents(
   const { logger } = context;
   logger.debug("Starting installation of External Events with config:", config);
 
-  // biome-ignore lint/suspicious/noEvolvingTypes: We want the type to be auto-inferred
-  const stepData = [];
+  const env = getInstallCommerceEnv(context.params);
   const existingIoEventsData = await getIoEventsExistingData(context);
+  const storedProviders: StoredEventsData["providers"] = {};
 
-  for (const { provider, events } of config.eventing.external) {
-    const { providerData, eventsData } = await onboardIoEvents(
-      {
-        context,
-        metadata: config.metadata,
-        provider,
-        events,
-        providerType: EXTERNAL_PROVIDER_TYPE,
-      },
-      existingIoEventsData,
-    );
+  const eligibleProviders = config.eventing.external
+    .map(({ provider, events: providerEvents }) => ({
+      events: providerEvents.filter((event) => appliesToEnv(event, env)),
+      provider,
+    }))
+    .filter(({ events, provider }) => {
+      if (events.length === 0) {
+        logger.debug(
+          `Skipping external event provider "${provider.label}": no events apply to environment "${env}".`,
+        );
+      }
 
-    stepData.push({
-      provider: {
-        config: provider,
-        data: {
-          ioEvents: providerData,
-          events: {
-            config: events,
-            data: eventsData,
+      return events.length > 0;
+    });
+
+  const stepData = await Promise.all(
+    eligibleProviders.map(async ({ provider, events }) => {
+      const { providerData, eventsData } = await onboardIoEvents(
+        {
+          context,
+          events,
+          metadata: config.metadata,
+          provider,
+          providerType: EXTERNAL_PROVIDER_TYPE,
+        },
+        existingIoEventsData,
+      );
+
+      if (provider.key) {
+        storedProviders[provider.key] = {
+          events: Object.fromEntries(
+            eventsData.map(({ config: eventConfig, data: eventData }) => [
+              eventConfig.name,
+              {
+                code: eventData.metadata.event_code,
+                isPhiData: eventConfig.hipaa_audit_required ?? false,
+              },
+            ]),
+          ),
+          id: providerData.id,
+        };
+      }
+
+      return {
+        provider: {
+          config: provider,
+          data: {
+            events: {
+              config: events,
+              data: eventsData,
+            },
+            ioEvents: providerData,
           },
         },
-      },
-    });
-  }
+      };
+    }),
+  );
+
+  const existing = (await getSystemConfigByKey<StoredEventsData>(
+    EVENTS_STORAGE_KEY,
+  )) ?? {
+    providers: {},
+  };
+  await setSystemConfigByKey(EVENTS_STORAGE_KEY, {
+    providers: { ...existing.providers, ...storedProviders },
+  });
 
   logger.debug("Completed External Events installation step.");
   return stepData;
 }
+
 /**
  * Removed all created entities for External Events during the installation
  * @param config - The configuration of the app, with external events.
@@ -102,8 +155,9 @@ async function removeExternalEvents(
   const existingIoEventsData = await getIoEventsExistingData(context);
 
   for (const { provider, events } of config.eventing.external) {
+    // biome-ignore lint/performance/noAwaitInLoops: offboards hit the Adobe I/O Events API sequentially to avoid a rate-limit burst during uninstall
     await offboardIoEvents(
-      { context, metadata: config.metadata, provider, events },
+      { context, events, metadata: config.metadata, provider },
       existingIoEventsData,
     );
   }

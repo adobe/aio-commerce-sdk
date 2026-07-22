@@ -27,23 +27,19 @@ import type { WebhooksConfig } from "#config/schema/webhooks";
 import type { WebhooksExecutionContext } from "./context";
 
 const subscriptionsStep = defineLeafStep({
-  name: "subscriptions",
-  meta: {
-    install: {
-      label: "Create Subscriptions",
-      description: "Creates webhook subscriptions in Adobe Commerce",
-    },
-    uninstall: {
-      label: "Delete Subscriptions",
-      description: "Deletes webhook subscriptions from Adobe Commerce",
-    },
-  },
-
-  validate: (config: WebhooksConfig, context: WebhooksExecutionContext) =>
-    validateWebhookConflicts(config, context),
-
   install: (config: WebhooksConfig, context: WebhooksExecutionContext) =>
     createWebhookSubscriptions(config, context),
+  meta: {
+    install: {
+      description: "Creates webhook subscriptions in Adobe Commerce",
+      label: "Create Subscriptions",
+    },
+    uninstall: {
+      description: "Deletes webhook subscriptions from Adobe Commerce",
+      label: "Delete Subscriptions",
+    },
+  },
+  name: "subscriptions",
 
   uninstall: async (
     config: WebhooksConfig,
@@ -51,23 +47,26 @@ const subscriptionsStep = defineLeafStep({
   ) => {
     await deleteWebhookSubscriptions(config, context);
   },
+
+  validate: (config: WebhooksConfig, context: WebhooksExecutionContext) =>
+    validateWebhookConflicts(config, context),
 });
 
 /** Branch step for setting up Commerce webhooks. */
 export const webhooksStep = defineBranchStep({
-  name: "webhooks",
+  children: [subscriptionsStep],
+  context: createWebhooksStepContext,
   meta: {
     install: {
-      label: "Webhooks",
       description: "Sets up Commerce webhooks",
+      label: "Webhooks",
     },
     uninstall: {
-      label: "Webhooks",
       description: "Removes Commerce webhooks",
+      label: "Webhooks",
     },
   },
+  name: "webhooks",
 
   when: hasWebhooks,
-  context: createWebhooksStepContext,
-  children: [subscriptionsStep],
 });

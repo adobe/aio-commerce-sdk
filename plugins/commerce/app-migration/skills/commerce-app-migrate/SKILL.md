@@ -1,6 +1,15 @@
 ---
 name: commerce-app-migrate
-description: Migrate an Adobe Commerce App Builder project from the Integration Starter Kit or Checkout Starter Kit to the new App Management approach. Run from the root of the App Builder project to be migrated. Pass --auto to skip confirmation prompts (suitable for CI or batch use) — auto mode prints a summary of all Q&A questions answered with their defaults. Pass --doc-scan-only to scan README.md and env.dist for outdated content without modifying any files. The migration output includes documentation recommendations: README.md sections flagged by 5 patterns (including semantic credential-family matching and env setup boilerplate detection), and env.dist entries grouped by action status (safe-to-remove, app-management-managed, review-manually, or onboarding-only). productDependencies version constraints from extension-manifest.json are auto-inserted as comments in the generated app.commerce.config.ts. Use when the user wants to migrate an App Builder project from the Integration Starter Kit or Checkout Starter Kit to the App Management approach, or mentions upgrading their Adobe Commerce extension architecture.
+description: >
+  Migrate an Adobe Commerce App Builder project from the Integration Starter Kit or Checkout Starter Kit to the new App Management approach. Run from the root of the App Builder project to be migrated. Pass --auto to skip confirmation prompts (suitable for CI or batch use) — auto mode prints a summary of all Q&A questions answered with their defaults. Pass --doc-scan-only to scan README.md and env.dist for outdated content without modifying any files. Use when the user wants to migrate an App Builder project from the Integration Starter Kit or Checkout Starter Kit to the App Management approach, or mentions upgrading their Adobe Commerce extension architecture.
+license: Apache-2.0
+compatibility: >
+  Requires Node.js 22+, aio CLI, and @adobe/aio-commerce-lib-app.
+  Run from the root of the App Builder project being migrated.
+metadata:
+  author: adobe
+  sdk-package: "@adobe/aio-commerce-lib-app"
+  version: "0.0.1"
 ---
 
 # Migrate to App Management
@@ -76,7 +85,7 @@ The Analyzer reads the current directory and returns a `ProjectSnapshot` JSON ob
 
     Re-running migration would overwrite your existing configuration.
     If you want to re-generate specific sections, please specify which
-    section to update: metadata / eventing / installation / adminUiSdk / businessConfig
+    section to update: metadata / eventing / installation / adminUi / businessConfig
 
 Then apply any applicable Cross-cutting Warnings (see subsection below).
 
@@ -131,9 +140,9 @@ Then ask:
 **Handle unknown starterKitType:**
 If `starterKitType === "unknown"`, check `extensionPointsInUse`:
 
-- If `"commerce/backend-ui/1"` is present → this is an **Admin UI SDK extension**, not a
-  Starter Kit. Proceed with `starterKitType = "unknown"` — the domain agents will handle it.
-  Print a note: "Detected an Admin UI SDK extension project. Proceeding with adminUiSdk migration."
+- If `"commerce/backend-ui/1"` is present → this is an **Admin UI SDK v1 extension**. Proceed
+  with `starterKitType = "unknown"` — the admin-ui-sdk domain agent will migrate it to v2.
+  Print a note: "Detected Admin UI SDK v1 (commerce/backend-ui/1). Migrating to v2 (commerce/backend-ui/2)."
 - If all confidence values are `"none"` AND `extensionPointsInUse` is empty:
   Output:
 
@@ -273,7 +282,7 @@ export default defineConfig({
   },
   // eventing: { ... }          ← from events DomainResult, if present
   // installation: { ... }      ← from webhooks DomainResult, if present
-  // adminUiSdk: { ... }        ← from admin-ui-sdk DomainResult, if present
+  // adminUi: { ... }           ← from admin-ui-sdk DomainResult (migrated from v1), if present
   // businessConfig: { ... }    ← from business-config DomainResult, if present
 });
 ```
@@ -331,7 +340,7 @@ Print the assembled TypeScript content to the terminal:
 
 **Handle rejection:**
 If the developer says no, ask: "Which section needs updating? (metadata / eventing /
-installation / adminUiSdk / businessConfig)"
+installation / adminUi / businessConfig)"
 
 Then ask the specific corrective question for that section, update the assembled
 config accordingly, re-print, and ask for confirmation again.

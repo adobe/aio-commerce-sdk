@@ -129,10 +129,10 @@ describe("params/helpers", () => {
 
     it("should ignore extra params not in required list", () => {
       const params = {
-        param1: "value1",
-        param2: "value2",
         extra1: "",
         extra2: undefined,
+        param1: "value1",
+        param2: "value2",
       };
 
       expect(allNonEmpty(params, ["param1", "param2"])).toBe(true);

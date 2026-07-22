@@ -22,6 +22,8 @@ import { validateCommerceAppConfig } from "./validate";
 
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 
+type ImportedConfig = Record<string, unknown> & { default?: unknown };
+
 // Config paths to search for. In order of likely appearance to speed up the check.
 const configPaths = Object.freeze([
   "app.commerce.config.js",
@@ -56,6 +58,7 @@ export async function resolveCommerceAppConfig(cwd = process.cwd()) {
   const rootDirectory = dirname(packageJsonPath);
 
   for (const configPath of configPaths) {
+    // biome-ignore lint/performance/noAwaitInLoops: must check paths in priority order and stop at the first match
     const configFilePath = await findUp(configPath, {
       cwd,
       stopAt: rootDirectory,
@@ -67,6 +70,23 @@ export async function resolveCommerceAppConfig(cwd = process.cwd()) {
   }
 
   return null;
+}
+
+/** Import a commerce app config module. */
+async function importCommerceAppConfig(configFilePath: string) {
+  try {
+    const { createJiti } = await import("jiti");
+    const jiti = createJiti(import.meta.url);
+    return await jiti.import<ImportedConfig>(configFilePath);
+  } catch (error) {
+    const message = stringifyError(error);
+    throw new Error(
+      `Failed to read commerce app config file at ${configFilePath}: ${message}`,
+      {
+        cause: error,
+      },
+    );
+  }
 }
 
 /**
@@ -90,24 +110,10 @@ export async function readCommerceAppConfig(
     );
   }
 
-  type ImportedConfig = { default: unknown };
-  let config: ImportedConfig | null = null;
-  try {
-    const { createJiti } = await import("jiti");
-    const jiti = createJiti(import.meta.url);
-    config = await jiti.import<ImportedConfig>(configFilePath);
-  } catch (error) {
-    const message = stringifyError(error);
-    throw new Error(
-      `Failed to read commerce app config file at ${configFilePath}: ${message}`,
-      {
-        cause: error,
-      },
-    );
-  }
+  const config = await importCommerceAppConfig(configFilePath);
 
   if (
-    !(config && "default" in config) ||
+    !("default" in config) ||
     config.default === undefined ||
     config.default === null ||
     (typeof config.default === "object" &&
@@ -119,6 +125,18 @@ export async function readCommerceAppConfig(
   }
 
   return config.default;
+}
+
+/** Whether the app config module exports any named symbols alongside its default export. */
+export async function hasNamedCommerceAppConfigExports(cwd = process.cwd()) {
+  const configFilePath = await resolveCommerceAppConfig(cwd);
+
+  if (!configFilePath) {
+    return false;
+  }
+
+  const config = await importCommerceAppConfig(configFilePath);
+  return Object.keys(config).some((exportName) => exportName !== "default");
 }
 
 /**

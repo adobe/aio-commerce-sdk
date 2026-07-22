@@ -11,8 +11,6 @@ compatibility: >
   Requires a base app initialized with commerce-app-init.
 metadata:
   author: adobe
-  sdk-package: "@adobe/aio-commerce-lib-app"
-  version: "0.0.1"
 ---
 
 # Configure Commerce App Webhooks
@@ -95,6 +93,8 @@ webhooks: [
   },
 ];
 ```
+
+Each entry also accepts an optional `env` array (`"paas"` / `"saas"`) to scope it to specific Commerce environments. When omitted, the webhook applies to all environments; when set, it is only subscribed at install time on the listed environments.
 
 See [assets/webhooks-config.ts](assets/webhooks-config.ts) for the full annotated reference.
 
@@ -197,6 +197,8 @@ After `aio app build` passes:
 
 - **Add merchant settings** — invoke `commerce-app-business-config` to expose configurable settings in Commerce Admin
 - **Add event subscriptions** — invoke `commerce-app-eventing` to subscribe to Commerce or external events
+- **Extend the Admin UI** — invoke `commerce-app-admin-ui` to add custom columns, mass actions, order view buttons, or menu entries in Commerce Admin
+- **Add persistent storage** — invoke `commerce-app-storage` to back webhook handlers with queryable DB storage
 
 ## References
 

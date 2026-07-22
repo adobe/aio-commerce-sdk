@@ -45,6 +45,7 @@
     }
   },
   "exports": {
+    "./commerce": "./source/commerce/index.ts",
     "./error": "./source/error/index.ts",
     "./headers": "./source/headers/index.ts",
     "./params": "./source/params/index.ts",

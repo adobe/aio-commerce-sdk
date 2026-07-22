@@ -118,6 +118,7 @@ export function getForwardedImsAuthProvider(
 
   // biome-ignore lint/style/useDefaultSwitchClause: `parseOrThrow` catches invalid sources.
   switch (validatedSource.from) {
+    // biome-ignore lint/suspicious/noUnnecessaryConditions: Biome can't follow the discriminant literal through parseOrThrow's generic InferOutput<TSchema> return; this case is reachable per ForwardedImsAuthSource.
     case "headers": {
       const { authorization } = createHeaderAccessor(validatedSource.headers, [
         "Authorization",
@@ -132,17 +133,19 @@ export function getForwardedImsAuthProvider(
       };
     }
 
+    // biome-ignore lint/suspicious/noUnnecessaryConditions: same parseOrThrow generic inference limitation as the "headers" case above.
     case "getter": {
       return {
-        getHeaders: validatedSource.getHeaders,
         getAccessToken: async () => {
           const headers = await validatedSource.getHeaders();
           const { token } = parseBearerToken(headers.Authorization);
           return token;
         },
+        getHeaders: validatedSource.getHeaders,
       };
     }
 
+    // biome-ignore lint/suspicious/noUnnecessaryConditions: same parseOrThrow generic inference limitation as the "headers" case above.
     case "params": {
       const { params } = validatedSource;
       const accessToken = params[IMS_AUTH_TOKEN_PARAM];

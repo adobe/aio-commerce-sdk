@@ -12,8 +12,6 @@ compatibility: >
   Requires a base app initialized with commerce-app-init.
 metadata:
   author: adobe
-  sdk-package: "@adobe/aio-commerce-lib-app"
-  version: "0.0.1"
 ---
 
 # Configure Commerce App Eventing
@@ -59,6 +57,7 @@ For each event source, gather:
 - Provider label, description, and optional key
 - For each event: name, label, description, and which runtime action(s) should handle it (format: `<package>/<action>`)
 - For Commerce events only: fields to extract from the event payload (empty array captures the full payload), and any optional filter rules
+- Optionally, which Commerce environments the event applies to (`env`)
 
 ## Step 2 — Derive config values
 
@@ -76,6 +75,7 @@ Apply the following validation rules before writing the config. Surface any issu
 | Field name           | `[a-zA-Z0-9_\-.[\]]+` or `*`                                                        |
 | Rule operator        | `greaterThan`, `lessThan`, `equal`, `regex`, `in`, or `onChange`                    |
 | Runtime action       | `<package>/<action>` (e.g., `my-package/handle-order-placed`)                       |
+| Event env (optional) | Non-empty array of `"paas"` / `"saas"`; omitted = all environments                  |
 
 ## Step 3 — Update `app.commerce.config.ts`
 
@@ -175,6 +175,8 @@ After `aio app build` passes:
 
 - **Add webhook interception** — invoke `commerce-app-webhooks` to intercept Commerce operations
 - **Add merchant settings** — invoke `commerce-app-business-config` to expose configurable settings in Commerce Admin
+- **Extend the Admin UI** — invoke `commerce-app-admin-ui` to add custom columns, mass actions, or menu entries in Commerce Admin
+- **Add persistent storage** — invoke `commerce-app-storage` to back event handlers with queryable DB storage
 
 ## References
 

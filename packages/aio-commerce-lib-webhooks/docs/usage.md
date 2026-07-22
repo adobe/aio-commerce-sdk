@@ -467,6 +467,26 @@ export async function customizeCheckout(params) {
 }
 ```
 
+### Checking Action Results
+
+Because webhook actions can return HTTP 200 while still blocking the triggering process with an exception operation, callers can't rely on the status code alone to know whether a webhook handler actually succeeded. Use `isWebhookSuccessful()` to inspect an SDK response body instead:
+
+```typescript
+import {
+  isWebhookSuccessful,
+  isWebhookSuccessResponse,
+} from "@adobe/aio-commerce-sdk/webhooks/responses";
+
+const result = await handleWebhook(params);
+if (!isWebhookSuccessful(result)) {
+  throw new Error("Webhook action failed");
+}
+
+if (isWebhookSuccessResponse(result)) {
+  console.log(result.body);
+}
+```
+
 ## Reference
 
 For complete API documentation and additional details, see:

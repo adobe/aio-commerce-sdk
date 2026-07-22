@@ -16,8 +16,8 @@ import { buildOpenApiSpec } from "#actions/app-config/openapi";
 import { getConfigDomains } from "#config/schema/domains";
 import openApiSpec from "#openapi.json" with { type: "json" };
 import {
+  configWithAdminUiAllGrids,
   configWithBusinessConfig,
-  configWithFullAdminUiSdk,
   configWithOneScript,
   minimalValidConfig,
   mockMetadata,
@@ -28,10 +28,10 @@ import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 
 /** Config exercising every capability, so no path is stripped. */
 const fullyCapableConfig = {
-  metadata: mockMetadata,
+  adminUi: configWithAdminUiAllGrids.adminUi,
   businessConfig: configWithBusinessConfig.businessConfig,
-  adminUiSdk: configWithFullAdminUiSdk.adminUiSdk,
   installation: configWithOneScript.installation,
+  metadata: mockMetadata,
 } satisfies CommerceAppConfigOutputModel;
 
 const logger = createMockLogger();
@@ -61,7 +61,6 @@ describe("buildOpenApiSpec", () => {
     expect(paths).not.toContain("/config");
     expect(paths).not.toContain("/scope-tree");
     expect(paths).not.toContain("/scope-tree/commerce");
-    expect(paths).not.toContain("/registration");
     expect(paths).not.toContain("/installation");
   });
 
@@ -92,10 +91,10 @@ describe("buildOpenApiSpec", () => {
     }
 
     // Still reachable from `/app-config` (its error response and the
-    // eventing / Admin UI SDK / webhook payloads it documents).
+    // eventing / Admin UI / webhook payloads it documents).
     for (const retained of [
       "ErrorResponse",
-      "AdminUiSdkRegistration",
+      "AdminUiGridColumns",
       "EventProvider",
       "RuntimeActionWebhookConfig",
       "WebhookDefinition",
@@ -115,7 +114,6 @@ describe("buildOpenApiSpec", () => {
     expect(tagNames).toContain("App Metadata");
     expect(tagNames).toContain("Business Configuration");
     expect(tagNames).toContain("Management");
-    expect(tagNames).toContain("Admin UI");
   });
 
   test("prunes tags left unreferenced by the stripped paths", async () => {
@@ -129,7 +127,6 @@ describe("buildOpenApiSpec", () => {
     expect(tagNames).toContain("App Metadata");
     expect(tagNames).not.toContain("Business Configuration");
     expect(tagNames).not.toContain("Management");
-    expect(tagNames).not.toContain("Admin UI");
   });
 
   test("does not mutate the shared spec import", async () => {

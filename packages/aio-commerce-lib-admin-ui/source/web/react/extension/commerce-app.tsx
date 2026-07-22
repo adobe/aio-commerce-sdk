@@ -1,0 +1,143 @@
+/*
+ * Copyright 2026 Adobe. All rights reserved.
+ * This file is licensed to you under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License. You may obtain a copy
+ * of the License at http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under
+ * the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR REPRESENTATIONS
+ * OF ANY KIND, either express or implied. See the License for the specific language
+ * governing permissions and limitations under the License.
+ */
+
+import { register } from "@adobe/uix-guest";
+import { Provider } from "@react-spectrum/s2/Provider";
+import { Outlet as ActiveRoute } from "@tanstack/react-router";
+import { Suspense, useCallback, useEffect } from "react";
+
+import { ImsContextProvider } from "#web/react/auth/context/ims-context.tsx";
+import { resolveCommerceImsCredentials } from "#web/react/auth/lib";
+import { CenteredProgress } from "#web/react/centered-progress.tsx";
+import {
+  SharedContextProvider,
+  useSharedContext,
+} from "#web/react/commerce/context/shared-context.tsx";
+import { retryCommerceHost } from "#web/react/commerce/hooks/use-commerce";
+import {
+  retryGuestConnection,
+  useGuestConnection,
+} from "#web/react/commerce/hooks/use-guest-connection";
+import { isControlFrame } from "#web/react/commerce/lib";
+import { createRetryablePromiseCache } from "#web/react/promise-cache";
+import { useSpectrumRouter } from "#web/react/routing/hooks/use-spectrum-router";
+import { syncRootColorScheme } from "#web/react/theme";
+
+import { ExtensionErrorBoundary } from "./error-boundary";
+
+const controlFrameRegistrations = createRetryablePromiseCache<unknown>();
+
+/**
+ * Registers a Commerce Admin control frame with the UIX host, once per extension. `register`
+ * has no teardown, so this is memoized rather than run inside an effect body every mount.
+ *
+ * @param extensionId - The unique identifier for the extension app.
+ */
+function registerControlFrame(extensionId: string) {
+  return controlFrameRegistrations.get(extensionId, () => {
+    const promise = register({ id: extensionId, methods: {} });
+    promise.catch((err) => {
+      console.error("UIX guest register failed:", err);
+    });
+
+    return promise;
+  });
+}
+
+/** The fallback UI shown when connecting to the Commerce host. */
+function ConnectionFallback() {
+  return <CenteredProgress aria-label="Connecting to Commerce Admin" />;
+}
+
+/**
+ * Renders the Commerce Admin flow: a control frame only needs to register itself with the UIX
+ * host (no visible content), while a UI frame renders the routed extension-point content once
+ * its guest connection is established.
+ *
+ * @param props - The props needed to initialize the extension app.
+ */
+export function CommerceExtensionApp(props: Readonly<{ extensionId: string }>) {
+  const { extensionId } = props;
+  const spectrumRouter = useSpectrumRouter();
+  const resetConnections = useCallback(() => {
+    // Retry only failed steps so "Try again" re-attaches after a connection failure but
+    // keeps a healthy connection when the error came from elsewhere.
+    retryGuestConnection(extensionId);
+    retryCommerceHost(extensionId);
+  }, [extensionId]);
+
+  // Commerce Admin always uses the light theme, so there's nothing to wait on for it, but the
+  // root attribute still needs syncing since Spectrum S2's page styles key off it.
+  useEffect(() => {
+    syncRootColorScheme("light");
+  }, []);
+
+  if (isControlFrame()) {
+    return <ControlFrameRegistration extensionId={extensionId} />;
+  }
+
+  return (
+    <Provider colorScheme="light" router={spectrumRouter}>
+      <ExtensionErrorBoundary onReset={resetConnections}>
+        <Suspense fallback={<ConnectionFallback />}>
+          <CommerceGuestConnection extensionId={extensionId} />
+        </Suspense>
+      </ExtensionErrorBoundary>
+    </Provider>
+  );
+}
+
+/**
+ * Registers a Commerce Admin control frame with the UIX host. Renders no visible content.
+ * @param props - The props needed to initialize the extension app.
+ */
+function ControlFrameRegistration(props: Readonly<{ extensionId: string }>) {
+  const { extensionId } = props;
+  useEffect(() => {
+    registerControlFrame(extensionId);
+  }, [extensionId]);
+
+  return null;
+}
+
+/**
+ * Suspends until the guest connection is established, then provides the Commerce shared context.
+ * @param props - The props needed to initialize the extension app.
+ */
+function CommerceGuestConnection(props: Readonly<{ extensionId: string }>) {
+  const { extensionId } = props;
+  const guestConnection = useGuestConnection(extensionId);
+
+  return (
+    <SharedContextProvider
+      extensionId={extensionId}
+      guestConnection={guestConnection}>
+      <CommerceExtensionContent />
+    </SharedContextProvider>
+  );
+}
+
+/** Renders IMS-gated route content for a Commerce Admin UI frame. */
+function CommerceExtensionContent() {
+  const { data, error } = useSharedContext();
+  if (error) {
+    throw error;
+  }
+
+  const credentials = resolveCommerceImsCredentials(data.sharedContext);
+
+  return (
+    <ImsContextProvider credentials={credentials}>
+      <ActiveRoute />
+    </ImsContextProvider>
+  );
+}
