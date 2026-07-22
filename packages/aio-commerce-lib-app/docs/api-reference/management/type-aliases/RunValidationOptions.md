@@ -7,7 +7,7 @@ type RunValidationOptions = {
 };
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/runner.ts:175](https://github.com/adobe/aio-commerce-sdk/blob/f055aca3ba51e08584fb5e4c366fab9c7770bd5e/packages/aio-commerce-lib-app/source/management/installation/runner.ts#L175)
+Defined in: [aio-commerce-lib-app/source/management/installation/runner.ts:175](https://github.com/adobe/aio-commerce-sdk/blob/4d87f72a1eb376a4bae7e6bc80e12098f7b0f2b3/packages/aio-commerce-lib-app/source/management/installation/runner.ts#L175)
 
 Options for running pre-installation validation.
 
@@ -19,7 +19,7 @@ Options for running pre-installation validation.
 config: CommerceAppConfigOutputModel;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/runner.ts:180](https://github.com/adobe/aio-commerce-sdk/blob/f055aca3ba51e08584fb5e4c366fab9c7770bd5e/packages/aio-commerce-lib-app/source/management/installation/runner.ts#L180)
+Defined in: [aio-commerce-lib-app/source/management/installation/runner.ts:180](https://github.com/adobe/aio-commerce-sdk/blob/4d87f72a1eb376a4bae7e6bc80e12098f7b0f2b3/packages/aio-commerce-lib-app/source/management/installation/runner.ts#L180)
 
 The app configuration.
 
@@ -31,6 +31,6 @@ The app configuration.
 validationContext: ValidationContext;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/runner.ts:177](https://github.com/adobe/aio-commerce-sdk/blob/f055aca3ba51e08584fb5e4c366fab9c7770bd5e/packages/aio-commerce-lib-app/source/management/installation/runner.ts#L177)
+Defined in: [aio-commerce-lib-app/source/management/installation/runner.ts:177](https://github.com/adobe/aio-commerce-sdk/blob/4d87f72a1eb376a4bae7e6bc80e12098f7b0f2b3/packages/aio-commerce-lib-app/source/management/installation/runner.ts#L177)
 
 Validation context (params, logger, appData — no customScripts).

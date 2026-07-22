@@ -1,4 +1,4 @@
-# `@aio-commerce-sdk/scripting-utils`: `v0.3.3`
+# `@aio-commerce-sdk/scripting-utils`: `v0.3.4`
 
 ## Modules
 

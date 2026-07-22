@@ -8,7 +8,7 @@ type ValidateStepTreeOptions = {
 };
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/workflow/validation.ts:72](https://github.com/adobe/aio-commerce-sdk/blob/f055aca3ba51e08584fb5e4c366fab9c7770bd5e/packages/aio-commerce-lib-app/source/management/installation/workflow/validation.ts#L72)
+Defined in: [aio-commerce-lib-app/source/management/installation/workflow/validation.ts:72](https://github.com/adobe/aio-commerce-sdk/blob/4d87f72a1eb376a4bae7e6bc80e12098f7b0f2b3/packages/aio-commerce-lib-app/source/management/installation/workflow/validation.ts#L72)
 
 Options for running validation over the step tree.
 
@@ -20,7 +20,7 @@ Options for running validation over the step tree.
 config: CommerceAppConfigOutputModel;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/workflow/validation.ts:80](https://github.com/adobe/aio-commerce-sdk/blob/f055aca3ba51e08584fb5e4c366fab9c7770bd5e/packages/aio-commerce-lib-app/source/management/installation/workflow/validation.ts#L80)
+Defined in: [aio-commerce-lib-app/source/management/installation/workflow/validation.ts:80](https://github.com/adobe/aio-commerce-sdk/blob/4d87f72a1eb376a4bae7e6bc80e12098f7b0f2b3/packages/aio-commerce-lib-app/source/management/installation/workflow/validation.ts#L80)
 
 The app configuration used to determine applicable steps.
 
@@ -32,7 +32,7 @@ The app configuration used to determine applicable steps.
 rootStep: BranchStep;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/workflow/validation.ts:74](https://github.com/adobe/aio-commerce-sdk/blob/f055aca3ba51e08584fb5e4c366fab9c7770bd5e/packages/aio-commerce-lib-app/source/management/installation/workflow/validation.ts#L74)
+Defined in: [aio-commerce-lib-app/source/management/installation/workflow/validation.ts:74](https://github.com/adobe/aio-commerce-sdk/blob/4d87f72a1eb376a4bae7e6bc80e12098f7b0f2b3/packages/aio-commerce-lib-app/source/management/installation/workflow/validation.ts#L74)
 
 The root branch step to validate.
 
@@ -44,6 +44,6 @@ The root branch step to validate.
 validationContext: ValidationContext;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/workflow/validation.ts:77](https://github.com/adobe/aio-commerce-sdk/blob/f055aca3ba51e08584fb5e4c366fab9c7770bd5e/packages/aio-commerce-lib-app/source/management/installation/workflow/validation.ts#L77)
+Defined in: [aio-commerce-lib-app/source/management/installation/workflow/validation.ts:77](https://github.com/adobe/aio-commerce-sdk/blob/4d87f72a1eb376a4bae7e6bc80e12098f7b0f2b3/packages/aio-commerce-lib-app/source/management/installation/workflow/validation.ts#L77)
 
 Validation context (params, logger, appData).

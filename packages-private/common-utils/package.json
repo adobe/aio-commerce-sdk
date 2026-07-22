@@ -1,7 +1,7 @@
 {
   "name": "@aio-commerce-sdk/common-utils",
   "type": "module",
-  "version": "0.2.5",
+  "version": "0.2.6",
   "private": true,
   "engines": {
     "node": ">=22 <=24"

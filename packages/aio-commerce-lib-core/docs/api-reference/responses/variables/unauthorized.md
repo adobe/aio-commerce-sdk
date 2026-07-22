@@ -1,27 +1,33 @@
 # `unauthorized`
 
 ```ts
-const unauthorized: (
+const unauthorized: <TBody>(
   payload:
     | string
     | {
-        body: BodyRecordWithMessage;
+        body: TBody;
         headers?: HeadersRecord;
       },
-) => ErrorResponse<BodyRecordWithMessage, HeadersRecord>;
+) => ErrorResponse<TBody>;
 ```
 
-Defined in: [responses/presets.ts:94](https://github.com/adobe/aio-commerce-sdk/blob/f055aca3ba51e08584fb5e4c366fab9c7770bd5e/packages/aio-commerce-lib-core/source/responses/presets.ts#L94)
+Defined in: [responses/presets.ts:102](https://github.com/adobe/aio-commerce-sdk/blob/4d87f72a1eb376a4bae7e6bc80e12098f7b0f2b3/packages/aio-commerce-lib-core/source/responses/presets.ts#L102)
 
 Creates an error response with the HTTP status code 401.
 See [buildErrorResponse](../functions/buildErrorResponse.md) for details on the response payload.
 
+## Type Parameters
+
+| Type Parameter                            | Default type            |
+| ----------------------------------------- | ----------------------- |
+| `TBody` _extends_ `BodyRecordWithMessage` | `BodyRecordWithMessage` |
+
 ## Parameters
 
-| Parameter | Type                                                                               |
-| --------- | ---------------------------------------------------------------------------------- |
-| `payload` | \| `string` \| \{ `body`: `BodyRecordWithMessage`; `headers?`: `HeadersRecord`; \} |
+| Parameter | Type                                                               |
+| --------- | ------------------------------------------------------------------ |
+| `payload` | \| `string` \| \{ `body`: `TBody`; `headers?`: `HeadersRecord`; \} |
 
 ## Returns
 
-[`ErrorResponse`](../type-aliases/ErrorResponse.md)\<`BodyRecordWithMessage`, `HeadersRecord`\>
+[`ErrorResponse`](../type-aliases/ErrorResponse.md)\<`TBody`\>
