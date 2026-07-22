@@ -1,17 +1,11 @@
-name: Publish Preview
+name: Publish Alpha
 
 on:
   issue_comment:
     types: [created]
-  workflow_dispatch:
-    inputs:
-      pr_number:
-        description: "PR number to publish preview packages for"
-        required: true
-        type: string
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.issue.number || github.event.inputs.pr_number }}
+  group: ${{ github.workflow }}-${{ github.event.issue.number }}
   cancel-in-progress: true
 
 jobs:
@@ -19,16 +13,15 @@ jobs:
     name: Resolve PR
     if: |
       github.repository == 'adobe/aio-commerce-sdk' &&
-      (
-        (github.event_name == 'workflow_dispatch') ||
-        (github.event.issue.pull_request && github.event.comment.user.type != 'Bot' && contains(github.event.comment.body, '/snapshot'))
-      )
+      github.event.issue.pull_request &&
+      github.event.comment.user.type != 'Bot' &&
+      contains(github.event.comment.body, '/snapshot')
     runs-on: ubuntu-latest
     permissions:
       contents: read
       pull-requests: write
     outputs:
-      pr_number: ${{ steps.pr.outputs.number }}
+      pr_number: ${{ github.event.issue.number }}
       head_sha: ${{ steps.pr_details.outputs.head_sha }}
 
     steps:
@@ -46,23 +39,11 @@ jobs:
               core.setFailed(`@${context.actor} does not have admin permission on this repository (actual: ${data.permission}).`);
             }
 
-      - name: Get PR number
-        id: pr
-        env:
-          PR_NUMBER: ${{ github.event.inputs.pr_number }}
-          ISSUE_NUMBER: ${{ github.event.issue.number }}
-        run: |
-          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
-            echo "number=$PR_NUMBER" >> $GITHUB_OUTPUT
-          else
-            echo "number=$ISSUE_NUMBER" >> $GITHUB_OUTPUT
-          fi
-
       - name: Get PR details
         id: pr_details
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
-          PR_NUMBER: ${{ steps.pr.outputs.number }}
+          PR_NUMBER: ${{ github.event.issue.number }}
         with:
           script: |
             const pr = await github.rest.pulls.get({
@@ -71,29 +52,15 @@ jobs:
               pull_number: Number(process.env.PR_NUMBER),
             });
 
+            if (pr.data.head.ref === 'main') {
+              core.setFailed("Publish Alpha can't snapshot a PR whose head branch is main. Use Publish Beta to snapshot main directly.");
+              return;
+            }
+
             core.setOutput('head_sha', pr.data.head.sha);
-            core.setOutput('base_ref', pr.data.base.ref);
-
-      - name: Checkout PR head
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
-        with:
-          ref: ${{ steps.pr_details.outputs.head_sha }}
-
-      - name: Verify PR contains new changesets
-        env:
-          BASE_REF: ${{ steps.pr_details.outputs.base_ref }}
-          PR_NUMBER: ${{ steps.pr.outputs.number }}
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          git fetch origin "$BASE_REF" --depth=1
-          NEW_CHANGESETS=$(git diff --name-only --diff-filter=A "origin/$BASE_REF" HEAD -- '.changeset/' | grep '\.md$' | grep -v 'README.md' || true)
-          if [ -z "$NEW_CHANGESETS" ]; then
-            gh pr comment "$PR_NUMBER" --body "No new changesets found in this PR. Run \`pnpm changeset add\` before requesting a snapshot."
-            exit 1
-          fi
 
   release:
-    name: Publish Preview Packages
+    name: Release Alpha
     needs: prepare
     runs-on: ubuntu-latest
     outputs:
@@ -142,7 +109,7 @@ jobs:
             ).join('\n');
 
             const body = [
-              '### 📦 Snapshot packages published',
+              '### 📦 Alpha packages published',
               '',
               '| Package | Version |',
               '| ------- | ------- |',
