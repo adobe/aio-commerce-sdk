@@ -172,10 +172,16 @@ export function createMockResolvedCommerceHttpClientParams(
 
 /** Creates a mock WebhooksExecutionContext for testing. */
 export function createMockWebhooksContext(
-  subscribeWebhookFn = vi.fn().mockResolvedValue(null),
-  getWebhookListFn = vi.fn().mockResolvedValue([]),
+  subscribeWebhookFn: WebhooksExecutionContext["commerceWebhooksClient"]["subscribeWebhook"] = vi
+    .fn()
+    .mockResolvedValue(null),
+  getWebhookListFn: WebhooksExecutionContext["commerceWebhooksClient"]["getWebhookList"] = vi
+    .fn()
+    .mockResolvedValue([]),
   params: Partial<WebhooksExecutionContext["params"]> = {},
-  unsubscribeWebhookFn = vi.fn().mockResolvedValue(null),
+  unsubscribeWebhookFn: WebhooksExecutionContext["commerceWebhooksClient"]["unsubscribeWebhook"] = vi
+    .fn()
+    .mockResolvedValue(null),
 ): WebhooksExecutionContext {
   const mockInstallation = createMockInstallationContext({
     logger: createMockLogger(),

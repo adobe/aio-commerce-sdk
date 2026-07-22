@@ -24,6 +24,7 @@ export type {
   IoEventMetadata,
   IoEventMetadataManyResponse,
   IoEventMetadataOneResponse,
+  SampleEventHalModel,
 } from "./api/event-metadata/types";
 export type * from "./api/event-providers/schema";
 export type {
@@ -33,6 +34,8 @@ export type {
 } from "./api/event-providers/types";
 export type * from "./api/event-registrations/schema";
 export type {
+  DestinationMetadata,
+  EventsOfInterest,
   IoEventRegistration,
   IoEventRegistrationManyResponse,
   IoEventRegistrationOneResponse,
