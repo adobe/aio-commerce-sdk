@@ -1047,6 +1047,12 @@ constraints, Next steps) when in doc-scan-only mode.
       If adminUi is worker-only (no view entries), react and react-dom are
       removable as well.
 
+      Each `view` entry only gets a placeholder page. Porting the old
+      iframe's UI content into it is out of scope for this migration —
+      suggest it to the user, targeting @react-spectrum/s2 (not
+      @adobe/react-spectrum; see ../references/spectrum-s2-upgrade.md),
+      but do not port it yourself unless the user explicitly asks.
+
       Runtime packages replaced by @adobe/aio-commerce-sdk:
         @adobe/aio-sdk  cloudevents  got  node-fetch  oauth-1.0a  uuid
 
