@@ -4,7 +4,7 @@
     {
       "id": 0,
       "name": "order-grid-column",
-      "prompt": "I've got a base Commerce app scaffolded with the aio-commerce-sdk (app.commerce.config.ts exists and the project is initialized). I need to add a 'Fulfillment' column to the Admin order grid \u2014 the value for each order comes from our warehouse API. Wire up the config and the runtime action handler.",
+      "prompt": "I've got a base Commerce app scaffolded with the aio-commerce-sdk (app.commerce.config.ts exists and the project is initialized). I need to add a 'Fulfillment' column to the Admin order grid, the value for each order comes from our warehouse API. Wire up the config and the runtime action handler.",
       "expected_output": "adminUi.order.gridColumns declared in app.commerce.config.ts with a single column (id, label, type, align) and a runtimeAction in <package>/<action> form. A handler under src/commerce-backend-ui-2/actions/ using parseGridRequest + okGridResponse/errorGridResponse from @adobe/aio-commerce-sdk/admin-ui/grid-columns, with row keys matching the column id. The action registered under runtimeManifest in src/commerce-backend-ui-2/ext.config.yaml with function: actions/<action>/index.js, require-adobe-auth: true, and final: true. Uses the v2 adminUi schema, does not use adminUiSdk.registration or commerce/backend-ui/1, and mentions running npx @adobe/aio-commerce-lib-app init and aio app build.",
       "files": [],
       "assertions": [
@@ -93,7 +93,7 @@
       "assertions": [
         "Declares adminUi.menu (single object) with id, label, and description",
         "Sets parentMenu to MENU_SALES imported from @adobe/aio-commerce-sdk/admin-ui/menu",
-        "Menu id uses only valid characters (letters, digits, /, :, _) \u2014 no hyphens or spaces",
+        "Menu id uses only valid characters (letters, digits, /, :, _), no hyphens or spaces",
         "Recognizes the menu has no runtime action handler; does not scaffold a menu-specific action under src/commerce-backend-ui-2/actions/",
         "Declares adminUi.order.viewButtons with a type: \"worker\" entry containing id, label, and runtimeAction",
         "View button handler imports parseOrderViewButtonRequest and okOrderViewButtonResponse/orderViewButtonErrorResponse from @adobe/aio-commerce-sdk/admin-ui/order-view-buttons",
@@ -144,7 +144,7 @@
       "id": 8,
       "name": "existing-web-src-classic-react-spectrum-suggestion",
       "prompt": "My initialized Commerce app already has an adminUi.menu entry wired up (commerce/backend-ui/2), with src/commerce-backend-ui-2/web-src/ already scaffolded. Its package.json lists \"@adobe/react-spectrum\": \"^3.34.2\" as a dependency (no @react-spectrum/s2). Add a new order view button 'Sync inventory' as a view (iframe) variant.",
-      "expected_output": "The order view button is added to app.commerce.config.ts (adminUi.order.viewButtons) as a type: \"view\" entry with a path, and a new placeholder page plus route are added to the existing web-src without touching the existing menu page/route. Separately, the agent notices the existing web-src's package.json depends on classic React Spectrum (@adobe/react-spectrum) instead of @react-spectrum/s2, explains the two are compatible but S2 is the version Adobe recommends moving to, and suggests installing/using the commerce-app-migrate skill (npx skills add adobe/skills --skill commerce-app-migrate) to run the upgrade \u2014 offering to help but not installing packages or rewriting components itself unless asked.",
+      "expected_output": "The order view button is added to app.commerce.config.ts (adminUi.order.viewButtons) as a type: \"view\" entry with a path, and a new placeholder page plus route are added to the existing web-src without touching the existing menu page/route. Separately, the agent notices the existing web-src's package.json depends on classic React Spectrum (@adobe/react-spectrum) instead of @react-spectrum/s2, explains the two are compatible but S2 is the version Adobe recommends moving to, and suggests installing/using the commerce-app-migrate skill (npx skills add adobe/skills --skill commerce-app-migrate) to run the upgrade, offering to help but not installing packages or rewriting components itself unless asked.",
       "files": [
         {
           "path": "app.commerce.config.ts",
