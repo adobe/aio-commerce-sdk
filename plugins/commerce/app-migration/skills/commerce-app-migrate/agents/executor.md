@@ -532,7 +532,8 @@ both files and pick the first matching rule:
 
 3.  Else, if `pnpm-workspace.yaml` exists: add a top-level list there —
 
-    onlyBuiltDependencies: - esbuild
+        onlyBuiltDependencies:
+          - esbuild
 
 4.  Else (neither location holds pnpm settings): add the `pnpm` section to
     `package.json` as in rule 2. Do not create `pnpm-workspace.yaml` on a project
@@ -571,14 +572,13 @@ structure from `app.commerce.config.ts` in one step.
 **If the init command is denied or blocked (permission error, sandbox rejection,
 or non-zero exit with no network output):**
 
-Do NOT retry. Record the failure and emit the following manual instruction in Step 8:
+Do NOT retry. Record the failure and emit the following manual instruction in Step 8,
+substituting the command matching the project's package manager from the table above:
 
     ✗ aio-commerce-lib-app init BLOCKED (Claude Code sandbox restriction)
 
     Run this manually in your terminal before continuing:
         npx --yes @adobe/aio-commerce-lib-app@latest init
-
-    Then update app.config.yaml and install.yaml per the Next steps section.
 
 Continue to Step 5a even if init failed.
 
@@ -1084,7 +1084,8 @@ constraints, Next steps) when in doc-scan-only mode.
 
     ── Files written ──────────────────────────────────────────────────
       ✓  app.commerce.config.ts                          new
-      ✓  install.yaml                                    new / updated
+      [✓  install.yaml                                   new / updated]
+         ← omit if init failed →
       [✓  scripts/<name>.js                              migrated → defineCustomInstallationStep]
          ← one line per migrated script; omit section if none were migrated →
 
@@ -1148,7 +1149,7 @@ constraints, Next steps) when in doc-scan-only mode.
     ← end conditional →
 
     ── Modified ───────────────────────────────────────────────────────
-         ← omit app.config.yaml line if init failed →
+         ← omit the next two lines if init failed →
       app.config.yaml    added extensions block
       package.json       added postinstall hook
       [package.json      description restored — init wrote the shortened config value back;
