@@ -475,7 +475,7 @@ Proceed to Step 4 (or Step 8 in doc-scan-only mode) after storing.
 ### Node version detection
 
 Before running init, detect the Node.js runtime version to use when scaffolding action
-handlers in Step 5a. Apply in order — first match wins:
+handlers in Step 5. Apply in order — first match wins:
 
 1. Scan all `ext.config.yaml` files in the project for a `runtime: nodejs:XX` declaration
    in any action definition. Use the value found (e.g. `nodejs:24`).
@@ -485,7 +485,7 @@ handlers in Step 5a. Apply in order — first match wins:
    Format as `nodejs:<major>`.
 4. Default: `nodejs:24`
 
-Store as `detectedNodeRuntime`. Used only in Step 5a.
+Store as `detectedNodeRuntime`. Used only in Step 5.
 
 ### Pre-flight: ensure `.env` exists
 
@@ -580,7 +580,7 @@ substituting the command matching the project's package manager from the table a
     Run this manually in your terminal before continuing:
         npx --yes @adobe/aio-commerce-lib-app@latest init
 
-Continue to Step 5a even if init failed.
+Continue to Step 5 even if init failed.
 
 **Diagnosing init failures:**
 
@@ -618,7 +618,7 @@ If the command exits with an error, inspect the output:
 3.  **Schema validation errors** — Record the error and report it in Step 8 so
     the developer can fix the config and re-run init manually.
 
-4.  **Any other error** — Record the failure message and skip Step 5a.
+4.  **Any other error** — Record the failure message and skip Step 5.
     Report the error in Step 8.
 
 After this command completes successfully, check which directories were created:
@@ -630,11 +630,11 @@ After this command completes successfully, check which directories were created:
   it also contains a generated `web-src/` frontend (mounted with `createExtensionApp`
   from `@adobe/aio-commerce-lib-admin-ui/web`), plus additional dependencies installed (if not already present and compatible) needed by the frontend (`react`, `react-dom`, `@react-spectrum/s2`, and some `devDependencies` needed for proper TypeScript support/config).
 
-Note which directories exist — you will need this in Steps 5a and 6.
+Note which directories exist — you will need this in Steps 5 and 6.
 
 ---
 
-## Step 5a: Scaffold Admin UI SDK handlers
+## Step 5: Scaffold Admin UI SDK handlers
 
 Runs immediately after Step 4 init succeeds and `src/commerce-backend-ui-2/` exists.
 Skip this step entirely if the assembled config has no `adminUi` section.
