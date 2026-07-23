@@ -26,8 +26,8 @@ Triggered when the orchestrating skill detects an already-migrated project.
 
 - **Skip:** Steps 1–3 (no branch, no file writes, no script migration)
 - **Run:** Step 3a with modified inputs (see Step 3a for details)
-- **Skip:** Steps 4–9
-- **Run:** Step 10 with a restricted output (documentation recommendations only)
+- **Skip:** Steps 4–7
+- **Run:** Step 8 with a restricted output (documentation recommendations only)
 
 In doc-scan-only mode the `assembled config` parameter is `null`. When Step 3a
 reads the config to build migration context, it reads the **existing config file**
@@ -41,7 +41,7 @@ from disk — `app.commerce.config.ts` if it exists, otherwise `app.commerce.con
   and extract the quoted string value as a script path. If none found, use `[]`
 - `convertedYamlFiles`: `[]` (no YAML conversion happened in this mode)
 
-The Step 10 report header is also modified for doc-scan-only mode — see Step 10.
+The Step 8 report header is also modified for doc-scan-only mode — see Step 8.
 
 ---
 
@@ -178,7 +178,7 @@ If the script reads a data file via `fs.readFileSync` (e.g. a YAML or JSON confi
   The `require()` string must be a **static literal** (not a variable) so webpack can
   analyse it at build time.
 
-  **Bookkeeping for Step 10:** Each time you create a `.json` sibling for a `.yaml`
+  **Bookkeeping for Step 8:** Each time you create a `.json` sibling for a `.yaml`
   file, record the original YAML path in an internal list called `convertedYamlFiles`.
   For example, converting `shipping-carriers.yaml` → add `"shipping-carriers.yaml"` to
   `convertedYamlFiles`. This list is used to populate the "Files that can be safely
@@ -435,36 +435,36 @@ Private helpers (e.g. `formatErrorMessage`) are removed — errors now throw dir
 
 **Run this step immediately after Step 3, before init.** Both Category C and
 Category D analyze static files that exist before any install command. Computing them
-now ensures the recommendations are always available in Step 10 regardless of whether
+now ensures the recommendations are always available in Step 8 regardless of whether
 Step 4 succeeds, times out, or is blocked.
 
 In **doc-scan-only mode**, run this step using the modified inputs described in the
 "Operating Modes" section above. Skip Steps 1–3 entirely and begin here.
 
-Apply all computation rules defined below in Step 10 (Categories A, B, C, D). Those rules
-are written in Step 10 for readability but execute here, before npm install.
+Apply all computation rules defined below in Step 8 (Categories A, B, C, D). Those rules
+are written in Step 8 for readability but execute here, before npm install.
 
 - `convertedYamlFiles` for Category B is the list built during Step 3
   (empty `[]` in doc-scan-only mode)
 - All other inputs are drawn from the assembled config and `ProjectSnapshot`
-  as described in Step 10
+  as described in Step 8
 
 Store all results in memory, then:
 
 - **Normal mode:** also print the "Documentation recommendations" block **immediately now**,
-  before Steps 4–9 run. Use the same format as defined in Step 10's
+  before Steps 4–7 run. Use the same format as defined in Step 8's
   "── Documentation recommendations" section. Prefix the block with:
 
       ── Documentation recommendations (computed before install) ────────
 
   This ensures recommendations are visible if a later step (init, commit)
-  blocks, hangs, or fails. Step 10 includes the same block again — that is intentional.
+  blocks, hangs, or fails. Step 8 includes the same block again — that is intentional.
 
 - **Doc-scan-only mode:** store results only. Do **not** print here. There are no risky
-  commands between Step 3a and Step 10, so printing twice would be pure noise. Print once
-  in Step 10's abbreviated report.
+  commands between Step 3a and Step 8, so printing twice would be pure noise. Print once
+  in Step 8's abbreviated report.
 
-Proceed to Step 4 (or Step 10 in doc-scan-only mode) after storing.
+Proceed to Step 4 (or Step 8 in doc-scan-only mode) after storing.
 
 ---
 
@@ -541,7 +541,7 @@ both files and pick the first matching rule:
 If `esbuild` is already present in the list, make no change.
 
 Record which file was modified (or that no change was needed) — it is reported in
-Step 10's "Modified" section.
+Step 8's "Modified" section.
 
 ### Run init
 
@@ -571,7 +571,7 @@ structure from `app.commerce.config.ts` in one step.
 **If the init command is denied or blocked (permission error, sandbox rejection,
 or non-zero exit with no network output):**
 
-Do NOT retry. Record the failure and emit the following manual instruction in Step 10:
+Do NOT retry. Record the failure and emit the following manual instruction in Step 8:
 
     ✗ aio-commerce-lib-app init BLOCKED (Claude Code sandbox restriction)
 
@@ -587,7 +587,7 @@ Continue to Step 5a even if init failed.
 If the command exits with an error, inspect the output:
 
 1.  **"CLI was not built!"** — The installed package is missing its compiled `dist/`
-    directory (packaging defect). Record this specific error. In Step 10, emit:
+    directory (packaging defect). Record this specific error. In Step 8, emit:
 
         ✗ aio-commerce-lib-app init FAILED: CLI was not built! (dist/ missing from aio-commerce-lib-app)
 
@@ -605,7 +605,7 @@ If the command exits with an error, inspect the output:
     approval (the pre-flight above covers `esbuild`; a different package may be
     named). Add the named package to the same `onlyBuiltDependencies` list the
     pre-flight wrote, then re-run init **once**. If it still fails, record the
-    failure and emit in Step 10:
+    failure and emit in Step 8:
 
         ✗ aio-commerce-lib-app init FAILED: ERR_PNPM_IGNORED_BUILDS (<package> build script blocked)
 
@@ -615,11 +615,11 @@ If the command exits with an error, inspect the output:
              pre-flight chose>, or run: pnpm approve-builds
           2. Re-run: pnpm --allow-build=esbuild dlx @adobe/aio-commerce-lib-app@latest init
 
-3.  **Schema validation errors** — Record the error and report it in Step 10 so
+3.  **Schema validation errors** — Record the error and report it in Step 8 so
     the developer can fix the config and re-run init manually.
 
 4.  **Any other error** — Record the failure message and skip Step 5a.
-    Report the error in Step 10.
+    Report the error in Step 8.
 
 After this command completes successfully, check which directories were created:
 
@@ -805,14 +805,14 @@ Compare `package.json`'s current `description` with the `originalPackageDescript
 recorded in Step 4 — if they differ, restore `originalPackageDescription`. The
 rewritten value belongs only in `app.commerce.config.ts` (App Management's 255-char
 limit); the full description stays in `package.json`. Record whether a restore
-happened — it is reported in Step 10's "Modified" section.
+happened — it is reported in Step 8's "Modified" section.
 
 **Do not modify any other content in `app.config.yaml`, the install file, or
 `package.json`.**
 
 ---
 
-## Step 9: Stage changes and ask to commit
+## Step 7: Stage changes and ask to commit
 
 Stage all migration-related files:
 
@@ -842,15 +842,15 @@ without prompting.
 
       git commit -m "feat: migrate to App Management"
 
-Then proceed to Step 10. Do not wait for the developer to commit before printing the summary.
+Then proceed to Step 8. Do not wait for the developer to commit before printing the summary.
 
 ---
 
-## Step 10: Print migration summary
+## Step 8: Print migration summary
 
 **Use the pre-computed results stored in Step 3a. The computation rules for
 Categories A–D are defined below — they run in Step 3a, not here.
-Step 10 only assembles and prints the report.**
+Step 8 only assembles and prints the report.**
 
 **Category A — Onboarding scripts not in `customInstallationSteps`:**
 
@@ -1077,7 +1077,7 @@ constraints, Next steps) when in doc-scan-only mode.
 
     TL;DR: staged <N> files · init <✓ ok / ✗ failed / ✗ blocked> · <K> manual follow-up(s)
 
-       ← N = number of files staged in Step 9; K = total count of items requiring
+       ← N = number of files staged in Step 7; K = total count of items requiring
           developer action across "Safe to delete", "Removable files",
           "Documentation recommendations" (Category C + D entries), and any failed
           command that must be re-run manually. Print "no manual follow-ups" if K is 0 →
