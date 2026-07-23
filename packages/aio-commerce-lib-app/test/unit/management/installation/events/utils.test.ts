@@ -110,9 +110,9 @@ describe("getNamespacedEvent", () => {
   test.each([
     [
       "should join id and event name with a dot",
-      "my-app",
+      "myapp",
       "observer.order_placed",
-      "my-app.observer.order_placed",
+      "myapp.observer.order_placed",
     ],
     [
       "should lowercase the result when id contains uppercase",
@@ -122,15 +122,27 @@ describe("getNamespacedEvent", () => {
     ],
     [
       "should lowercase the result when event name contains uppercase",
-      "my-app",
+      "myapp",
       "Observer.Order_Placed",
-      "my-app.observer.order_placed",
+      "myapp.observer.order_placed",
     ],
     [
       "should lowercase both parts when both contain uppercase",
       "MyApp",
       "Observer.OrderPlaced",
       "myapp.observer.orderplaced",
+    ],
+    [
+      "should replace hyphens in id with underscores",
+      "my-app",
+      "observer.order_placed",
+      "my_app.observer.order_placed",
+    ],
+    [
+      "should replace all non-alphanumeric/underscore characters in id with underscores",
+      "purchase-approval",
+      "plugin.magento.sales.api.order_management.place",
+      "purchase_approval.plugin.magento.sales.api.order_management.place",
     ],
   ])("%s", (_desc, id, name, expected) => {
     expect(getNamespacedEvent(createMockMetadata(id), name)).toBe(expected);
@@ -178,34 +190,34 @@ describe("workspace configuration", () => {
       project: {
         id: expect.any(String),
         name: expect.any(String),
-        title: expect.any(String),
         org: {
           id: expect.any(String),
-          name: expect.any(String),
           ims_org_id: expect.any(String),
-        },
-        workspace: {
-          id: expect.any(String),
           name: expect.any(String),
-          title: expect.any(String),
+        },
+        title: expect.any(String),
+        workspace: {
           action_url: "https://test-namespace.adobeioruntime.net",
           app_url: "https://test-namespace.adobeio-static.net",
           details: {
             credentials: [
               {
                 id: "000000",
-                name: expect.any(String),
                 integration_type: "oauth_server_to_server",
+                name: expect.any(String),
                 oauth_server_to_server: {
                   client_id: expect.any(String),
                   client_secrets: ["secret-1", "secret-2"],
+                  scopes: ["scope-a", "scope-b"],
                   technical_account_email: expect.any(String),
                   technical_account_id: expect.any(String),
-                  scopes: ["scope-a", "scope-b"],
                 },
               },
             ],
           },
+          id: expect.any(String),
+          name: expect.any(String),
+          title: expect.any(String),
         },
       },
     });
@@ -219,11 +231,11 @@ describe("workspace configuration", () => {
       // @ts-expect-error This test intentionally swaps IMS installation params
       // for valid Integration auth inputs to assert that IMS auth is required.
       params: {
-        AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_KEY: "consumer-key",
-        AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_SECRET: "consumer-secret",
         AIO_COMMERCE_AUTH_INTEGRATION_ACCESS_TOKEN: "access-token",
         AIO_COMMERCE_AUTH_INTEGRATION_ACCESS_TOKEN_SECRET:
           "access-token-secret",
+        AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_KEY: "consumer-key",
+        AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_SECRET: "consumer-secret",
       },
     };
 
@@ -297,37 +309,37 @@ describe("getCommerceEventingConfigurationUpdateParams", () => {
 describe("existing data normalization", () => {
   test("getIoEventsExistingData normalizes HAL providers and registrations", async () => {
     const ioProviderWithMetadata = createMockIoEventProviderHalModel({
-      id: "provider-1",
-      label: "Provider One",
-      instance_id: "instance-1",
       _embedded: {
         eventmetadata: [
           createMockIoEventMetadataHalModel({
-            event_code: "code-1",
-            label: "Code One",
             _embedded: {
               sample_event: {
+                _links: { self: { href: "/samples/1" } },
                 format: "application/json",
                 sample_payload: '{"hello":"world"}',
-                _links: { self: { href: "/samples/1" } },
               },
             },
+            event_code: "code-1",
+            label: "Code One",
           }),
           createMockIoEventMetadataHalModel({
+            _links: { self: { href: "/metadata/2" } },
             event_code: "code-2",
             label: "Code Two",
-            _links: { self: { href: "/metadata/2" } },
           }),
         ],
       },
+      id: "provider-1",
+      instance_id: "instance-1",
+      label: "Provider One",
     });
 
     const ioProviderWithoutMetadata = createMockIoEventProviderHalModel({
-      id: "provider-2",
-      label: "Provider Two",
-      instance_id: "instance-2",
       _embedded: undefined,
       _links: { self: { href: "/providers/2" } },
+      id: "provider-2",
+      instance_id: "instance-2",
+      label: "Provider Two",
     });
 
     const registration = createMockIoEventRegistrationHalModel({
@@ -362,56 +374,56 @@ describe("existing data normalization", () => {
     await expect(getIoEventsExistingData(context)).resolves.toEqual({
       providersWithMetadata: [
         {
-          id: "provider-1",
-          label: "Provider One",
-          instance_id: "instance-1",
-          source: "magento",
-          publisher: "adobe",
-          provider_metadata: "dx_commerce_events",
-          event_delivery_format: "cloud_events_v1",
           description: "A test provider",
+          event_delivery_format: "cloud_events_v1",
+          id: "provider-1",
+          instance_id: "instance-1",
+          label: "Provider One",
           metadata: [
             {
+              description: "Test metadata",
               event_code: "code-1",
               label: "Code One",
-              description: "Test metadata",
               sample: {
+                _links: { self: { href: "/samples/1" } },
                 format: "application/json",
                 sample_payload: '{"hello":"world"}',
-                _links: { self: { href: "/samples/1" } },
               },
             },
             {
+              description: "Test metadata",
               event_code: "code-2",
               label: "Code Two",
-              description: "Test metadata",
               sample: null,
             },
           ],
+          provider_metadata: "dx_commerce_events",
+          publisher: "adobe",
+          source: "magento",
         },
         {
-          id: "provider-2",
-          label: "Provider Two",
-          instance_id: "instance-2",
-          source: "magento",
-          publisher: "adobe",
-          provider_metadata: "dx_commerce_events",
-          event_delivery_format: "cloud_events_v1",
           description: "A test provider",
+          event_delivery_format: "cloud_events_v1",
+          id: "provider-2",
+          instance_id: "instance-2",
+          label: "Provider Two",
           metadata: [],
+          provider_metadata: "dx_commerce_events",
+          publisher: "adobe",
+          source: "magento",
         },
       ],
       registrations: [
         {
-          id: "registration-1",
-          name: "Registration One",
           client_id: "test-client-id",
+          delivery_type: "webhook",
+          events_of_interest: [],
+          id: "registration-1",
+          integration_status: "enabled",
+          name: "Registration One",
+          registration_id: "registration-id-1",
           status: "enabled",
           type: "workspace",
-          integration_status: "enabled",
-          events_of_interest: [],
-          registration_id: "registration-id-1",
-          delivery_type: "webhook",
         },
       ],
     });
@@ -420,22 +432,22 @@ describe("existing data normalization", () => {
   test("getCommerceEventingExistingData reports no default provider when all providers have an id", async () => {
     const existingProvider = createMockCommerceEventProvider({
       id: "provider-1",
-      provider_id: "provider-1",
       label: "Existing Provider",
+      provider_id: "provider-1",
     });
 
     const context = createMockEventingInstallationContext({
       commerceEventsClient: createMockCommerceEventsClient({
-        getAllEventSubscriptions: vi.fn(async () => []),
         getAllEventProviders: vi.fn(async () => [existingProvider]),
+        getAllEventSubscriptions: vi.fn(async () => []),
       }),
     });
 
     await expect(
       getCommerceEventingExistingData(context),
     ).resolves.toStrictEqual({
-      isDefaultWorkspaceConfigurationEmpty: true,
       isDefaultProviderConfigured: false,
+      isDefaultWorkspaceConfigurationEmpty: true,
       providers: [existingProvider],
       subscriptions: new Map(),
     });
@@ -444,24 +456,24 @@ describe("existing data normalization", () => {
   test("getCommerceEventingExistingData detects configured workspace when default provider has a non-empty configuration", async () => {
     const { id: _, ...defaultProvider } = createMockCommerceEventProvider({
       id: "default-provider",
-      provider_id: "default-provider-id",
       instance_id: "default-instance-id",
       label: "Default Provider",
+      provider_id: "default-provider-id",
       workspace_configuration: '{"project":{}}',
     });
 
     const context = createMockEventingInstallationContext({
       commerceEventsClient: createMockCommerceEventsClient({
-        getAllEventSubscriptions: vi.fn(async () => []),
         getAllEventProviders: vi.fn(async () => [defaultProvider]),
+        getAllEventSubscriptions: vi.fn(async () => []),
       }),
     });
 
     await expect(
       getCommerceEventingExistingData(context),
     ).resolves.toStrictEqual({
-      isDefaultWorkspaceConfigurationEmpty: false,
       isDefaultProviderConfigured: true,
+      isDefaultWorkspaceConfigurationEmpty: false,
       providers: [defaultProvider],
       subscriptions: new Map(),
     });
@@ -470,16 +482,16 @@ describe("existing data normalization", () => {
   test("getCommerceEventingExistingData detects empty default workspace configuration and provider and maps subscriptions by name", async () => {
     const { id: _, ...defaultProvider } = createMockCommerceEventProvider({
       id: "default-provider",
-      provider_id: "default-provider-id",
       instance_id: "default-instance-id",
       label: "Default Provider",
+      provider_id: "default-provider-id",
       workspace_configuration: "   ",
     });
 
     const existingProvider = createMockCommerceEventProvider({
       id: "provider-1",
-      provider_id: "provider-1",
       label: "Existing Provider",
+      provider_id: "provider-1",
     });
 
     const subscription = createMockCommerceEventSubscription({
@@ -489,19 +501,19 @@ describe("existing data normalization", () => {
 
     const context = createMockEventingInstallationContext({
       commerceEventsClient: createMockCommerceEventsClient({
-        getAllEventSubscriptions: vi.fn(async () => [subscription]),
         getAllEventProviders: vi.fn(async () => [
           defaultProvider,
           existingProvider,
         ]),
+        getAllEventSubscriptions: vi.fn(async () => [subscription]),
       }),
     });
 
     await expect(
       getCommerceEventingExistingData(context),
     ).resolves.toStrictEqual({
-      isDefaultWorkspaceConfigurationEmpty: true,
       isDefaultProviderConfigured: true,
+      isDefaultWorkspaceConfigurationEmpty: true,
       providers: [defaultProvider, existingProvider],
       subscriptions: new Map([[subscription.name, subscription]]),
     });

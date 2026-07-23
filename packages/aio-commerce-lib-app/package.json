@@ -2,7 +2,7 @@
   "name": "@adobe/aio-commerce-lib-app",
   "type": "module",
   "author": "Adobe Inc.",
-  "version": "1.7.0",
+  "version": "1.8.0",
   "private": false,
   "engines": {
     "node": ">=22 <=24"
@@ -35,6 +35,16 @@
     "registry": "https://registry.npmjs.org",
     "access": "public",
     "exports": {
+      ".": {
+        "import": {
+          "types": "./dist/es/index.d.mts",
+          "default": "./dist/es/index.mjs"
+        },
+        "require": {
+          "types": "./dist/cjs/index.d.cts",
+          "default": "./dist/cjs/index.cjs"
+        }
+      },
       "./actions/*": {
         "import": {
           "types": "./dist/es/actions/*/index.d.mts",
@@ -46,13 +56,17 @@
         }
       },
       "./config": {
+        "browser": {
+          "types": "./dist/es/config/index.browser.d.mts",
+          "default": "./dist/es/config/index.browser.mjs"
+        },
         "import": {
-          "types": "./dist/es/config/index.d.mts",
-          "default": "./dist/es/config/index.mjs"
+          "types": "./dist/es/config/index.node.d.mts",
+          "default": "./dist/es/config/index.node.mjs"
         },
         "require": {
-          "types": "./dist/cjs/config/index.d.cts",
-          "default": "./dist/cjs/config/index.cjs"
+          "types": "./dist/cjs/config/index.node.d.cts",
+          "default": "./dist/cjs/config/index.node.cjs"
         }
       },
       "./management": {
@@ -69,15 +83,21 @@
     }
   },
   "exports": {
+    ".": "./source/index.ts",
     "./actions/*": "./source/actions/*/index.ts",
-    "./config": "./source/config/index.ts",
+    "./config": {
+      "browser": "./source/config/index.browser.ts",
+      "default": "./source/config/index.node.ts"
+    },
     "./management": "./source/management/index.ts",
     "./package.json": "./package.json"
   },
   "imports": {
+    "#config/index": "./source/config/index.node.ts",
     "#*": "./source/*.ts",
     "#openapi.json": "./docs/openapi.json",
     "#test/*": "./test/*.ts",
+    "#templates/admin-ui/*": "./source/commands/generate/actions/templates/admin-ui/*",
     "#templates/*": "./source/commands/generate/actions/templates/*.template"
   },
   "files": [
@@ -106,7 +126,8 @@
     "lint": "biome lint --no-errors-on-unmatched && pnpm run lint:openapi",
     "lint:openapi": "redocly lint --config ../../redocly.yaml",
     "lint:fix": "biome lint --write --no-errors-on-unmatched",
-    "typecheck": "tsc --noEmit && echo '✅ No type errors found.'",
+    "typecheck": "tsc --noEmit && pnpm run typecheck:templates && echo '✅ No type errors found.'",
+    "typecheck:templates": "tsc -p source/commands/generate/actions/templates/admin-ui/tsconfig.json",
     "test": "vitest run --coverage",
     "test:watch": "vitest --coverage",
     "test:ui": "vitest --ui --coverage"
@@ -120,7 +141,7 @@
     "@adobe/aio-commerce-lib-events": "workspace:*",
     "@adobe/aio-commerce-lib-webhooks": "workspace:*",
     "@adobe/aio-lib-core-logging": "catalog:",
-    "@npmcli/package-json": "^8.0.0",
+    "@adobe/aio-lib-state": "catalog:",
     "camelcase": "catalog:",
     "consola": "catalog:",
     "esbuild": "^0.28.0",
@@ -134,6 +155,7 @@
     "yaml": "catalog:"
   },
   "devDependencies": {
+    "@adobe/aio-lib-files": "catalog:",
     "@aio-commerce-sdk/common-utils": "workspace:*",
     "@aio-commerce-sdk/config-tsdown": "workspace:*",
     "@aio-commerce-sdk/config-typedoc": "workspace:*",
@@ -141,9 +163,12 @@
     "@aio-commerce-sdk/config-vitest": "workspace:*",
     "@aio-commerce-sdk/scripting-utils": "workspace:*",
     "@aio-commerce-sdk/scripts": "workspace:*",
-    "@types/npmcli__package-json": "^4.0.4",
+    "@pnpm/lockfile.fs": "^1100.1.7",
+    "@react-spectrum/s2": "catalog:react",
+    "@types/react": "catalog:react",
     "msw": "catalog:",
-    "openapi-format": "1.33.0",
+    "openapi-format": "1.33.5",
+    "react": "catalog:react",
     "typescript": "catalog:"
   },
   "sideEffects": false

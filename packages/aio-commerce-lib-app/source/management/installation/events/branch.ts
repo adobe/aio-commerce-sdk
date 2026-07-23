@@ -19,21 +19,21 @@ import { externalEventsStep } from "./external";
 
 /** Root eventing step that contains commerce and external event sub-steps. */
 export const eventingStep = defineBranchStep({
-  name: "eventing",
+  children: [commerceEventsStep, externalEventsStep],
+  context: createEventsStepContext,
   meta: {
     install: {
-      label: "Eventing",
       description:
         "Sets up the I/O Events and the Commerce events required by the application",
+      label: "Eventing",
     },
     uninstall: {
-      label: "Eventing",
       description:
         "Removes the I/O Events and Commerce events configured by the application",
+      label: "Eventing",
     },
   },
+  name: "eventing",
 
   when: hasEventing,
-  context: createEventsStepContext,
-  children: [commerceEventsStep, externalEventsStep],
 });

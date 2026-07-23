@@ -214,21 +214,23 @@ The `resolveAuthParams` function automatically detects and resolves authenticati
 The resolver checks for the following parameter keys:
 
 **IMS Authentication** (requires all of these):
-| Parameter Key | Description |
-|---------------|-------------|
-| `AIO_COMMERCE_AUTH_IMS_CLIENT_ID` | IMS OAuth client ID |
-| `AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS` | IMS client secrets (comma-separated) |
-| `AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID` | Technical account ID |
-| `AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL` | Technical account email |
-| `AIO_COMMERCE_AUTH_IMS_ORG_ID` | IMS organization ID |
-| `AIO_COMMERCE_AUTH_IMS_SCOPES` | OAuth scopes (comma-separated) |
+
+| Parameter Key                                   | Description                          |
+| ----------------------------------------------- | ------------------------------------ |
+| `AIO_COMMERCE_AUTH_IMS_CLIENT_ID`               | IMS OAuth client ID                  |
+| `AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS`          | IMS client secrets (comma-separated) |
+| `AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID`    | Technical account ID                 |
+| `AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL` | Technical account email              |
+| `AIO_COMMERCE_AUTH_IMS_ORG_ID`                  | IMS organization ID                  |
+| `AIO_COMMERCE_AUTH_IMS_SCOPES`                  | OAuth scopes (comma-separated)       |
 
 **Integration Authentication** (requires all of these):
-| Parameter Key | Description |
-|---------------|-------------|
-| `AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_KEY` | OAuth consumer key |
-| `AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_SECRET` | OAuth consumer secret |
-| `AIO_COMMERCE_AUTH_INTEGRATION_ACCESS_TOKEN` | OAuth access token |
+
+| Parameter Key                                       | Description               |
+| --------------------------------------------------- | ------------------------- |
+| `AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_KEY`        | OAuth consumer key        |
+| `AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_SECRET`     | OAuth consumer secret     |
+| `AIO_COMMERCE_AUTH_INTEGRATION_ACCESS_TOKEN`        | OAuth access token        |
 | `AIO_COMMERCE_AUTH_INTEGRATION_ACCESS_TOKEN_SECRET` | OAuth access token secret |
 
 > **Note:** In App Builder runtime actions, these parameters are typically provided via runtime action inputs in your `app.config.yaml` file and automatically passed to your action's `params` object.

@@ -48,11 +48,11 @@ export function logger({
     const params = ctx.rawParams;
 
     const loggerName = `${params.__ow_method}-${name?.(ctx) ?? process.env.__OW_ACTION_NAME}`;
-    const logger = AioLogger(loggerName, {
+    const loggerInstance = AioLogger(loggerName, {
       level: `${params.LOG_LEVEL ?? "info"}`,
       ...restOptions,
     });
 
-    return { logger };
+    return { logger: loggerInstance };
   };
 }

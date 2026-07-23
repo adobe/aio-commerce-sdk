@@ -3,7 +3,7 @@
 //
 // What it does:
 //   - install:   creates the "held_orders" collection and a UNIQUE index on order_id
-//   - uninstall: drops the collection to reverse the install
+//   - uninstall: tear down your database state here; leave empty to preserve data across reinstalls
 //
 // Why a custom installation step (vs. ad-hoc setup on first request):
 //   It runs exactly once when the app is installed from the Commerce Admin,
@@ -51,9 +51,9 @@ async function openClient(context: { params: Record<string, unknown> }) {
   const authProvider = getImsAuthProvider(resolveImsAuthParams(context.params));
   const token = await authProvider.getAccessToken();
   const db = await initDb({
-    token,
     // region MUST match the manifest database.region. Omit to use AIO_DB_REGION.
     region: (context.params.DB_REGION as string) || "amer", // "amer" | "apac" | "emea" | "aus"
+    token,
   });
   return db.connect();
 }
@@ -73,7 +73,7 @@ export default defineCustomInstallationStep({
       await orders.createIndex({ order_id: 1 }, { unique: true });
 
       logger.info(`Created "${COLLECTION}" with a unique index on order_id`);
-      return { status: "success", collection: COLLECTION };
+      return { collection: COLLECTION, status: "success" };
     } catch (error) {
       if (error instanceof Error && error.name === "DbError") {
         logger.error("Database error during install", error.message);
@@ -90,23 +90,8 @@ export default defineCustomInstallationStep({
     }
   },
 
-  uninstall: async (config, context) => {
-    const { logger } = context;
-    logger.info(`Removing storage for ${config.metadata.displayName}...`);
-
-    let client: Awaited<ReturnType<typeof openClient>> | undefined;
-    try {
-      client = await openClient(context);
-      await client.collection(COLLECTION).drop();
-      logger.info(`Dropped "${COLLECTION}"`);
-    } finally {
-      if (client) {
-        await client
-          .close()
-          .catch((e: Error) =>
-            logger.warn("Failed to close DB client", e.message),
-          );
-      }
-    }
+  uninstall: async (_config, _context) => {
+    // Tear down your database state here.
+    // Leave empty to preserve data across reinstalls.
   },
 });

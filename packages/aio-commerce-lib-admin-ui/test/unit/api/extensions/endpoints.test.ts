@@ -24,7 +24,6 @@ const UNREGISTER_URL = `${BASE_URL}/rest/all/V1/adminuisdk/extension/prod-worksp
 const PARAMS = {
   extensionName: "my-namespace",
   extensionTitle: "My App",
-  extensionUrl: "https://my-namespace.adobeio-static.net/index.html",
   extensionWorkspace: "prod-workspace",
 };
 
@@ -72,8 +71,8 @@ describe("unregisterExtension", () => {
     });
 
     await unregisterExtension(makeHttpClient(fetchMock as typeof fetch), {
-      workspaceName: "prod-workspace",
       extensionName: "my-namespace",
+      workspaceName: "prod-workspace",
     });
 
     expect(capturedMethod).toBe("DELETE");
@@ -87,27 +86,14 @@ describe("unregisterExtension", () => {
 
     await expect(
       unregisterExtension(makeHttpClient(fetchMock as typeof fetch), {
-        workspaceName: "prod-workspace",
         extensionName: "my-namespace",
+        workspaceName: "prod-workspace",
       }),
     ).rejects.toThrow();
   });
 });
 
 describe("registerExtension — validation", () => {
-  it("throws when extensionUrl is not a valid URL", async () => {
-    const fetchMock = vi.fn();
-
-    await expect(
-      registerExtension(makeHttpClient(fetchMock as typeof fetch), {
-        ...PARAMS,
-        extensionUrl: "not-a-url",
-      }),
-    ).rejects.toThrow();
-
-    expect(fetchMock).not.toHaveBeenCalled();
-  });
-
   it("throws when extensionName is empty", async () => {
     const fetchMock = vi.fn();
 

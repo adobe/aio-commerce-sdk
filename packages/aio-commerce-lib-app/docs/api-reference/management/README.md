@@ -1,15 +1,10 @@
 # `management`: Module
 
-## Interfaces
-
-| Interface                        | Description                                           |
-| -------------------------------- | ----------------------------------------------------- |
-| [AnyStep](interfaces/AnyStep.md) | Loosely-typed step for use in non type-safe contexts. |
-
 ## Type Aliases
 
 | Type Alias                                                                                         | Description                                                                                                                                           |
 | -------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [AnyStep](type-aliases/AnyStep.md)                                                                 | Loosely-typed step for use in non type-safe contexts.                                                                                                 |
 | [BranchStep](type-aliases/BranchStep.md)                                                           | A branch step that contains children (no execution).                                                                                                  |
 | [BranchStepOptions](type-aliases/BranchStepOptions.md)                                             | Options for defining a branch step.                                                                                                                   |
 | [CreateInitialInstallationStateOptions](type-aliases/CreateInitialInstallationStateOptions.md)     | Options for creating an initial installation state.                                                                                                   |

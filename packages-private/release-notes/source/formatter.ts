@@ -54,10 +54,10 @@ export async function generatePackageNotes(
 ): Promise<PackageNotesResult> {
   const result = await generateText({
     model,
-    temperature: 0,
     output: Output.object({ schema: valibotSchema(PackageNotesSchema) }),
-    system: PACKAGE_NOTES_SYSTEM,
     prompt: `Package: ${entry.package} v${entry.version}\n\nCHANGELOG diff:\n${entry.markdown}`,
+    system: PACKAGE_NOTES_SYSTEM,
+    temperature: 0,
   });
 
   return { entry, notes: result.output, usage: result.usage };
@@ -83,9 +83,9 @@ export async function generateReleaseSummary(
 
   const result = await generateText({
     model,
-    temperature: 0,
-    system: RELEASE_SUMMARY_SYSTEM,
     prompt: `Package summaries:\n${packageSection}\n\nKey highlights:\n${highlightSection}`,
+    system: RELEASE_SUMMARY_SYSTEM,
+    temperature: 0,
   });
 
   return { summary: result.text, usage: result.usage };
@@ -114,15 +114,15 @@ export async function generateAllNotes(
 
   const allUsages = [...results.map((r) => r.usage), summaryUsage];
   const totalUsage: LanguageModelUsage = {
-    inputTokens: allUsages.reduce((sum, u) => sum + (u.inputTokens ?? 0), 0),
-    outputTokens: allUsages.reduce((sum, u) => sum + (u.outputTokens ?? 0), 0),
-    totalTokens: allUsages.reduce((sum, u) => sum + (u.totalTokens ?? 0), 0),
     inputTokenDetails: {
-      noCacheTokens: undefined,
       cacheReadTokens: undefined,
       cacheWriteTokens: undefined,
+      noCacheTokens: undefined,
     },
-    outputTokenDetails: { textTokens: undefined, reasoningTokens: undefined },
+    inputTokens: allUsages.reduce((sum, u) => sum + (u.inputTokens ?? 0), 0),
+    outputTokenDetails: { reasoningTokens: undefined, textTokens: undefined },
+    outputTokens: allUsages.reduce((sum, u) => sum + (u.outputTokens ?? 0), 0),
+    totalTokens: allUsages.reduce((sum, u) => sum + (u.totalTokens ?? 0), 0),
   };
 
   return { results, summary, totalUsage };
@@ -170,5 +170,5 @@ export function assembleReleaseNotes(
     })),
   );
 
-  return { headline, summary, highlights, breakingChanges };
+  return { breakingChanges, headline, highlights, summary };
 }

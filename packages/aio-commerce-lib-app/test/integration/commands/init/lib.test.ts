@@ -341,8 +341,8 @@ describe("commands/init/lib", () => {
         );
         expect(written).toMatchObject({
           name: "my-commerce-app",
-          version: "1.0.0",
           private: true,
+          version: "1.0.0",
         });
         expect(written.scripts).toBeUndefined();
         expect(result.execCommand).toBe(getExecCommand(result.packageManager));
@@ -382,24 +382,23 @@ describe("commands/init/lib", () => {
         lockFile: ["bun.lockb", ""] as const,
         packageManager: "bun",
       },
-    ])("detects $packageManager from $lockFile.0 and returns the matching exec command", async ({
-      execCommand,
-      lockFile,
-      packageManager,
-    }) => {
-      await withTempProject(
-        {
-          ...EMPTY_PROJECT,
-          [lockFile[0]]: lockFile[1],
-        },
-        async (tempDir) => {
-          const result = await ensurePackageJson(tempDir);
+    ])(
+      "detects $packageManager from $lockFile.0 and returns the matching exec command",
+      async ({ execCommand, lockFile, packageManager }) => {
+        await withTempProject(
+          {
+            ...EMPTY_PROJECT,
+            [lockFile[0]]: lockFile[1],
+          },
+          async (tempDir) => {
+            const result = await ensurePackageJson(tempDir);
 
-          expect(result.packageManager).toBe(packageManager);
-          expect(result.execCommand).toBe(execCommand);
-        },
-      );
-    });
+            expect(result.packageManager).toBe(packageManager);
+            expect(result.execCommand).toBe(execCommand);
+          },
+        );
+      },
+    );
   });
 
   describe("writePostinstallHook", () => {
@@ -420,10 +419,10 @@ describe("commands/init/lib", () => {
     test("leaves package.json untouched when postinstall is already configured", async () => {
       const execCommand = "npx";
       const original = JSON.stringify({
-        type: "module",
         scripts: {
           postinstall: `${execCommand} aio-commerce-lib-app hooks postinstall`,
         },
+        type: "module",
       });
 
       await withTempProject(
@@ -442,8 +441,8 @@ describe("commands/init/lib", () => {
 
     test("appends to an existing different postinstall script", async () => {
       const packageJson = JSON.stringify({
-        type: "module",
         scripts: { postinstall: "echo hello" },
+        type: "module",
       });
 
       await withTempProject(
@@ -490,22 +489,23 @@ describe("commands/init/lib", () => {
 
     test.each([
       {
-        domain: "installation.customInstallationSteps",
         config: configWithCustomInstallationSteps,
+        domain: "installation.customInstallationSteps",
       },
-      { domain: "eventing.commerce", config: configWithCommerceEventing },
-      { domain: "eventing.external", config: configWithExternalEventing },
-      { domain: "webhooks", config: configWithWebhooks },
-      { domain: "adminUi", config: configWithAdminUiSingleGrid },
-    ])("generates the installation action when $domain is configured", async ({
-      config,
-    }) => {
-      await withGeneratedProject(config, (tempDir) => {
-        expect(
-          existsSync(extensibilityActionFile(tempDir, "installation")),
-        ).toBe(true);
-      });
-    });
+      { config: configWithCommerceEventing, domain: "eventing.commerce" },
+      { config: configWithExternalEventing, domain: "eventing.external" },
+      { config: configWithWebhooks, domain: "webhooks" },
+      { config: configWithAdminUiSingleGrid, domain: "adminUi" },
+    ])(
+      "generates the installation action when $domain is configured",
+      async ({ config }) => {
+        await withGeneratedProject(config, (tempDir) => {
+          expect(
+            existsSync(extensibilityActionFile(tempDir, "installation")),
+          ).toBe(true);
+        });
+      },
+    );
 
     test("generates business configuration actions and schema when businessConfig.schema is configured", async () => {
       await withGeneratedProject(configWithBusinessConfig, (tempDir) => {

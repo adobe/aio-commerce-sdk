@@ -17,6 +17,26 @@ import { throwHttpError } from "../utils/http-error";
 import type { AdminUiExecutionContext } from "./utils";
 
 /**
+ * Enables the Admin UI SDK in Commerce via PUT /V1/adminuisdk/config.
+ * Must run before {@link registerExtension} so Commerce accepts the extension.
+ *
+ * @param context - The execution context providing the Admin UI client and logger.
+ */
+export async function enableAdminUiSdk(context: AdminUiExecutionContext) {
+  const { adminUiClient, logger } = context;
+
+  logger.info("Enabling Admin UI SDK in Adobe Commerce...");
+
+  await adminUiClient
+    .enableAdminUiSdk()
+    .catch((error: unknown) =>
+      throwHttpError(logger, error, "Failed to enable Admin UI SDK"),
+    );
+
+  logger.info("Admin UI SDK enabled successfully.");
+}
+
+/**
  * Registers the extension with Commerce via POST /V1/adminuisdk/extension.
  *
  * @param context - The execution context providing the Admin UI client and logger.
@@ -35,7 +55,6 @@ export async function registerExtension(context: AdminUiExecutionContext) {
     .registerExtension({
       extensionName,
       extensionTitle: appData.projectTitle,
-      extensionUrl: `https://${extensionName}.adobeio-static.net/index.html`,
       extensionWorkspace: appData.workspaceName,
     })
     .catch((error: unknown) =>
@@ -70,8 +89,8 @@ export async function unregisterExtension(
 
   try {
     await adminUiClient.unregisterExtension({
-      workspaceName: appData.workspaceName,
       extensionName,
+      workspaceName: appData.workspaceName,
     });
     logger.info(
       `Admin UI extension "${extensionName}" unregistered successfully.`,

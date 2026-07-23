@@ -24,7 +24,7 @@ import type { AdobeCommerceHttpClient } from "@adobe/aio-commerce-lib-api";
 const DEFAULT_CACHE_TTL_MS = 300_000;
 
 /** Options used to create an Admin UI SDK permission client. */
-export interface AdminUiPermissionClientOptions {
+export type AdminUiPermissionClientOptions = {
   /** The application's `metadata.id` value. When provided, `check()` and `require()` can be called with no resource argument. */
   appId?: string;
   /**
@@ -37,10 +37,10 @@ export interface AdminUiPermissionClientOptions {
   denyOnError?: boolean;
   /** Commerce HTTP client used to call the Admin UI SDK permission endpoint. */
   httpClient: AdobeCommerceHttpClient;
-}
+};
 
 /** Client for checking the current user's Admin UI SDK resource permissions. */
-export interface AdminUiPermissionClient {
+export type AdminUiPermissionClient = {
   /**
    * Checks whether the current user has the given ACL resource granted.
    *
@@ -49,14 +49,14 @@ export interface AdminUiPermissionClient {
    *   `true` (the default), or immediately when neither `resource` nor a valid `appId` is available.
    * @throws {@link AdminUiPermissionError} on HTTP 401, regardless of `denyOnError`.
    */
-  check(resource?: string): Promise<boolean>;
+  check: (resource?: string) => Promise<boolean>;
   /**
    * Clears cached permission results.
    *
    * @param resource - The ACL resource id whose cached result to clear. When omitted, clears all cached
    *   entries and in-flight tracking without aborting outstanding HTTP requests.
    */
-  invalidate(resource?: string): void;
+  invalidate: (resource?: string) => void;
   /**
    * Resolves when the current user has the given ACL resource granted.
    *
@@ -65,8 +65,8 @@ export interface AdminUiPermissionClient {
    * @throws {@link AdminUiPermissionError} on HTTP 401, on network or parse errors while `denyOnError` is
    *   `false`, or immediately when neither `resource` nor a valid `appId` is available.
    */
-  require(resource?: string): Promise<void>;
-}
+  require: (resource?: string) => Promise<void>;
+};
 
 type PermissionCheckResult =
   | {
@@ -130,8 +130,8 @@ export function getAdminUiPermissionClient(
 
       if (denyOnError) {
         return {
-          error: toPermissionError(error),
           cacheable: false,
+          error: toPermissionError(error),
         };
       }
 
@@ -171,8 +171,8 @@ export function getAdminUiPermissionClient(
           inFlight.get(resource) === trackedPromise
         ) {
           cache.set(resource, {
-            value: result.allowed,
             expiresAt: Date.now() + cacheTtlMs,
+            value: result.allowed,
           });
         }
 
@@ -206,6 +206,16 @@ export function getAdminUiPermissionClient(
       const result = await resolveCheck(resolved);
       return "error" in result ? false : result.allowed;
     },
+    invalidate(resource?: string) {
+      if (resource === undefined) {
+        cache.clear();
+        inFlight.clear();
+        return;
+      }
+
+      cache.delete(resource);
+      inFlight.delete(resource);
+    },
     async require(resource?: string) {
       const resolved = resolveResource(resource);
       if (resolved === "") {
@@ -222,16 +232,6 @@ export function getAdminUiPermissionClient(
       if (!result.allowed) {
         throw new AdminUiPermissionDeniedError(resolved);
       }
-    },
-    invalidate(resource?: string) {
-      if (resource === undefined) {
-        cache.clear();
-        inFlight.clear();
-        return;
-      }
-
-      cache.delete(resource);
-      inFlight.delete(resource);
     },
   };
 }

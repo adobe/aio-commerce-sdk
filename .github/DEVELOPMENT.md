@@ -444,7 +444,7 @@ After that, a new file is generated in the `.changeset` folder at the repository
 This repository uses two release channels:
 
 - `main` is the internal integration channel
-  - Uses snapshot releases (`beta` tag) and publishes to Artifactory. Nothing is committed, changeset files stay in `.changeset/` until promotion.
+  - Uses snapshot releases (`beta` tag) and publishes to the public npm registry. Nothing is committed, changeset files stay in `.changeset/` until promotion.
 - `release` is the public channel
   - Uses stable semver and publishes to NPM via the standard changesets flow.
 
@@ -479,40 +479,19 @@ _⬤ commit · PR: pull request_
 Once your feature PR is merged to `main`:
 
 1. CI runs `changeset version --snapshot beta` and `changeset publish --tag beta`.
-2. Packages are published to Artifactory with ephemeral snapshot versions (e.g., `1.2.5-beta-20260313T120000`).
+2. Packages are published to the public npm registry with ephemeral snapshot versions (e.g., `1.2.5-beta-20260313T120000`).
 3. Nothing is committed. Changeset files stay in `.changeset/` until promotion to `release`.
 4. A GitHub pre-release is created with release notes assembled from the pending changesets.
 
-You can also request a snapshot from any open PR by commenting `/snapshot`. This publishes an `alpha` snapshot of your PR's changes to Artifactory without affecting `main`.
+#### Commerce plugins
 
-#### Public stable flow (`release`)
+Commerce plugins under `plugins/commerce/*` use the same changeset flow, but they are private
+workspace packages and are not published to npm. A changeset targeting a plugin package is the
+release intent for the stable skills channel. When the Release PR bumps a plugin version, the
+public release workflow opens or updates a promotion PR in
+[`adobe/skills`](https://github.com/adobe/skills) from the fixed branch
+`promote/adobe-aio-commerce-sdk`.
 
-When ready to publish to npm, use the **Promote to Release** workflow dispatch (`promote.yml`):
-
-1. Trigger it from GitHub Actions, optionally specifying a commit SHA on `main` to promote (defaults to latest).
-2. The workflow merges that commit directly into `release` via a merge commit. No config changes needed — changeset files come along unconsumed.
-3. Changesets creates/updates a `[CI] Release Packages` PR on `release`, including regenerated API reference docs.
-4. Merging that PR publishes stable versions to npm and writes changelogs.
-
-If there were snapshot versions like `1.2.5-beta-20260313T120000` on Artifactory, the resulting stable release is `1.2.5`.
-
-#### Back-sync
-
-After a public release, the back-sync is automatic — the workflow merges `release` directly into `main` via a merge commit. No manual step needed.
-
-#### Hotfixes
-
-Urgent public fixes should be applied via a PR directly into `release` (patch changeset only) so the fix gets reviewed before going live. Once merged, changesets automatically opens a `[CI] Release Packages` PR — merge it to publish to npm. The back-sync to `main` runs automatically after publish.
-
-#### Repository secrets and deploy key
-
-The promotion and back-sync workflows push directly to `main` and `release`, both of which are protected branches. To allow this without a full admin bypass, the repository uses an SSH **deploy key** with write access, stored as the `DEPLOY_KEY` Actions secret.
-
-The corresponding public key is registered as a repository deploy key. Its `actor_id` is added to the branch ruleset as a `DeployKey` bypass actor (with `bypass_mode: always`), so CI pushes can land on protected branches without going through a pull request.
-
-If the deploy key ever needs to be rotated:
-
-1. Generate a new ed25519 key pair: `ssh-keygen -t ed25519 -C "ci deploy key" -f /tmp/deploy-key -N ""`
-2. Add the public key under **Settings → Deploy keys** (enable write access) and note the new key ID.
-3. Update the `DEPLOY_KEY` Actions secret with the new private key.
-4. Update the ruleset bypass actor with the new key ID via `gh api`.
+Skill-only Release PRs are valid. They do not publish npm packages and do not send the package
+Slack notification, but they still run the `adobe/skills` promotion step and back-sync the
+plugin version/changelog updates to `main`.

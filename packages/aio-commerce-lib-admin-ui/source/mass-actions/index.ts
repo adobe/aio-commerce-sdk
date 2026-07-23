@@ -18,14 +18,11 @@
  * - **Worker actions**: request parsing and response envelope construction for
  *   runtime actions registered under `adminUi.<entity>.massActions` with
  *   `type: "worker"`.
- * - **View actions**: `selection` query parameter parsing for the App Builder
- *   SPA rendered by `type: "view"` mass actions.
  *
  * @packageDocumentation
  */
 
-export { parseMassActionSelection } from "./view/presets";
-export { MassActionSelectionSchema } from "./view/schema";
+export { getMassActionAclResourceId } from "./acl-resource-id";
 export {
   massActionErrorResponse,
   okMassActionResponse,
@@ -36,7 +33,7 @@ export {
   MassActionRequestSchema,
 } from "./worker/schema";
 
-export type { MassActionSelection } from "./view/types";
+export type { AdminUiEntity } from "#api/lib/acl-resource-id";
 export type {
   MassActionErrorBody,
   MassActionGridType,

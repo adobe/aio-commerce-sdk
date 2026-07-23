@@ -43,8 +43,8 @@ describe("Commerce Events API", () => {
   describe("createCustomCommerceEventsApiClient", () => {
     test("should create an API client with only specified endpoints", () => {
       const customFunctions = {
-        getAllEventProviders,
         createEventProvider,
+        getAllEventProviders,
       };
 
       const client = createCustomCommerceEventsApiClient(

@@ -13,6 +13,7 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 import {
+  enableAdminUiSdk,
   registerExtension,
   unregisterExtension,
 } from "#management/installation/admin-ui/helpers";
@@ -22,6 +23,41 @@ import { createMockLogger } from "#test/fixtures/installation";
 
 const REGISTER_EXTENSION_COMBINED_PATTERN =
   /Failed to register Admin UI extension.*Insufficient permissions/;
+
+const ENABLE_SDK_COMBINED_PATTERN =
+  /Failed to enable Admin UI SDK.*Insufficient permissions/;
+
+describe("enableAdminUiSdk", () => {
+  test("calls the client and logs success when it resolves", async () => {
+    const logger = createMockLogger();
+    const context = createMockAdminUiContext({
+      enableAdminUiSdkImpl: () => Promise.resolve(true),
+      logger,
+    });
+
+    await expect(enableAdminUiSdk(context)).resolves.toBeUndefined();
+
+    expect(context.adminUiClient.enableAdminUiSdk).toHaveBeenCalledOnce();
+    expect(logger.info).toHaveBeenCalledWith(
+      expect.stringContaining("enabled successfully"),
+    );
+  });
+
+  test("throws enriched error when the client call fails", async () => {
+    const httpError = makeHttpError(
+      403,
+      "Forbidden",
+      JSON.stringify({ message: "Insufficient permissions" }),
+    );
+    const context = createMockAdminUiContext({
+      enableAdminUiSdkImpl: () => Promise.reject(httpError),
+    });
+
+    await expect(enableAdminUiSdk(context)).rejects.toThrow(
+      ENABLE_SDK_COMBINED_PATTERN,
+    );
+  });
+});
 
 describe("registerExtension", () => {
   beforeEach(() => {
@@ -34,20 +70,16 @@ describe("registerExtension", () => {
 
   test("logs success with extensionId when registerExtension call resolves", async () => {
     const logger = createMockLogger();
-    const context = {
-      ...createMockAdminUiContext({
-        registerExtensionImpl: () =>
-          Promise.resolve({ extensionId: "ext-123" }),
-      }),
+    const context = createMockAdminUiContext({
       logger,
-    };
+      registerExtensionImpl: () => Promise.resolve({ extensionId: "ext-123" }),
+    });
 
     await expect(registerExtension(context)).resolves.toBeUndefined();
 
     expect(context.adminUiClient.registerExtension).toHaveBeenCalledWith({
       extensionName: "test-ns",
       extensionTitle: context.appData.projectTitle,
-      extensionUrl: "https://test-ns.adobeio-static.net/index.html",
       extensionWorkspace: context.appData.workspaceName,
     });
     expect(logger.info).toHaveBeenCalledWith(
@@ -77,12 +109,10 @@ describe("registerExtension", () => {
       "Forbidden",
       JSON.stringify({ message: "Insufficient permissions" }),
     );
-    const context = {
-      ...createMockAdminUiContext({
-        registerExtensionImpl: () => Promise.reject(httpError),
-      }),
+    const context = createMockAdminUiContext({
       logger,
-    };
+      registerExtensionImpl: () => Promise.reject(httpError),
+    });
 
     await expect(registerExtension(context)).rejects.toThrow();
 

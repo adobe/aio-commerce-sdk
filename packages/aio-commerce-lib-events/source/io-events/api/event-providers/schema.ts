@@ -23,7 +23,6 @@ import {
 
 export const EventProviderListAllParamsSchema = v.object({
   consumerOrgId: stringValueSchema("consumerOrgId"),
-  withEventMetadata: v.optional(booleanValueSchema("withEventMetadata")),
 
   filterBy: v.optional(
     v.object({
@@ -38,6 +37,7 @@ export const EventProviderListAllParamsSchema = v.object({
       ),
     }),
   ),
+  withEventMetadata: v.optional(booleanValueSchema("withEventMetadata")),
 });
 
 export const EventProviderGetByIdParamsSchema = v.object({
@@ -47,16 +47,16 @@ export const EventProviderGetByIdParamsSchema = v.object({
 
 export const EventProviderCreateParamsSchema = v.object({
   consumerOrgId: stringValueSchema("consumerOrgId"),
-  projectId: stringValueSchema("projectId"),
-  workspaceId: stringValueSchema("workspaceId"),
-
-  label: stringValueSchema("label"),
+  dataResidencyRegion: v.optional(DataResidencyRegionSchema),
   description: v.optional(stringValueSchema("description")),
   docsUrl: v.optional(stringValueSchema("docsUrl")),
   instanceId: v.optional(stringValueSchema("instanceId")),
 
+  label: stringValueSchema("label"),
+  projectId: stringValueSchema("projectId"),
+
   providerType: v.optional(EventProviderTypeSchema),
-  dataResidencyRegion: v.optional(DataResidencyRegionSchema),
+  workspaceId: stringValueSchema("workspaceId"),
 });
 
 /**
@@ -78,8 +78,8 @@ export type EventProviderGetByIdParams = v.InferInput<
 export const EventProviderDeleteParamsSchema = v.object({
   consumerOrgId: stringValueSchema("consumerOrgId"),
   projectId: stringValueSchema("projectId"),
-  workspaceId: stringValueSchema("workspaceId"),
   providerId: stringValueSchema("providerId"),
+  workspaceId: stringValueSchema("workspaceId"),
 });
 
 /**

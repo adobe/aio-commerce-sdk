@@ -33,11 +33,11 @@ const SCRIPT_PATH_REGEX = /^(?:\.{0,2}\/)*[\w-/]*[\w-]+\.js$/;
  * Schema for custom installation step configuration
  */
 export const CustomInstallationStepSchema = v.object({
-  script: v.pipe(
-    nonEmptyStringValueSchema("script path"),
-    v.regex(
-      SCRIPT_PATH_REGEX,
-      'Script path must end with .js (e.g., "./setup.js", "./scripts/setup.js", or "../../scripts/setup.js")',
+  description: v.pipe(
+    nonEmptyStringValueSchema("step description"),
+    v.maxLength(
+      MAX_DESCRIPTION_LENGTH,
+      `The step description must not be longer than ${MAX_DESCRIPTION_LENGTH} characters`,
     ),
   ),
 
@@ -48,12 +48,11 @@ export const CustomInstallationStepSchema = v.object({
       `The step name must not be longer than ${MAX_NAME_LENGTH} characters`,
     ),
   ),
-
-  description: v.pipe(
-    nonEmptyStringValueSchema("step description"),
-    v.maxLength(
-      MAX_DESCRIPTION_LENGTH,
-      `The step description must not be longer than ${MAX_DESCRIPTION_LENGTH} characters`,
+  script: v.pipe(
+    nonEmptyStringValueSchema("script path"),
+    v.regex(
+      SCRIPT_PATH_REGEX,
+      'Script path must end with .js (e.g., "./setup.js", "./scripts/setup.js", or "../../scripts/setup.js")',
     ),
   ),
 });
@@ -62,16 +61,6 @@ export const CustomInstallationStepSchema = v.object({
  * Schema for installation messages configuration
  */
 const MessagesSchema = v.object({
-  preInstallation: v.optional(
-    v.pipe(
-      nonEmptyStringValueSchema("preInstallation message"),
-      v.maxLength(
-        MAX_MESSAGE_LENGTH,
-        `The preInstallation message must not be longer than ${MAX_MESSAGE_LENGTH} characters`,
-      ),
-    ),
-  ),
-
   postInstallation: v.optional(
     v.pipe(
       nonEmptyStringValueSchema("postInstallation message"),
@@ -81,14 +70,21 @@ const MessagesSchema = v.object({
       ),
     ),
   ),
+  preInstallation: v.optional(
+    v.pipe(
+      nonEmptyStringValueSchema("preInstallation message"),
+      v.maxLength(
+        MAX_MESSAGE_LENGTH,
+        `The preInstallation message must not be longer than ${MAX_MESSAGE_LENGTH} characters`,
+      ),
+    ),
+  ),
 });
 
 /**
  * Schema for installation configuration
  */
 export const InstallationSchema = v.object({
-  messages: v.optional(MessagesSchema),
-
   customInstallationSteps: v.pipe(
     v.optional(
       v.array(
@@ -104,6 +100,7 @@ export const InstallationSchema = v.object({
       return uniqueNames.size === steps.length;
     }, "Duplicate step names detected in custom installation steps. Each step must have a unique name."),
   ),
+  messages: v.optional(MessagesSchema),
 });
 
 /** The installation configuration for an Adobe Commerce application */

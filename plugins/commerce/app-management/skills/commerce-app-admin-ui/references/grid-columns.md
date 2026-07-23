@@ -25,16 +25,17 @@ adminUi: {
 
 ### Constraints
 
-| Field             | Constraint                                                                   |
-| ----------------- | ---------------------------------------------------------------------------- |
-| `label`           | Required, non-empty                                                          |
-| `description`     | Required, non-empty                                                          |
-| `runtimeAction`   | Required; `<package>/<action>`; resolves to a worker action you declare      |
-| `columns`         | Required array; at least one entry                                           |
-| `columns[].id`    | Required, non-empty; the key the handler returns for each row                |
-| `columns[].label` | Required, non-empty; column header shown in Admin                            |
-| `columns[].type`  | Required; one of `boolean`, `date`, `datetime`, `float`, `integer`, `string` |
-| `columns[].align` | Required; one of `left`, `center`, `right`                                   |
+| Field                    | Constraint                                                                                                                          |
+| ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `label`                  | Required, non-empty                                                                                                                 |
+| `description`            | Required, non-empty                                                                                                                 |
+| `runtimeAction`          | Required; `<package>/<action>`; resolves to a worker action you declare                                                             |
+| `columns`                | Required array; at least one entry                                                                                                  |
+| `columns[].id`           | Required, non-empty; the key the handler returns for each row                                                                       |
+| `columns[].label`        | Required, non-empty; column header shown in Admin                                                                                   |
+| `columns[].type`         | Required; one of `boolean`, `date`, `datetime`, `float`, `integer`, `string`                                                        |
+| `columns[].align`        | Required; one of `left`, `center`, `right`                                                                                          |
+| `columns[].aclProtected` | Optional boolean; when `true`, Commerce generates a per-app nested ACL resource for the column so admins can grant/deny it per role |
 
 ## Handler wire contract
 

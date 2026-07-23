@@ -56,10 +56,10 @@ function createCommerceEventsApiClient(params: RuntimeActionParams) {
 
   return createCustomCommerceEventsApiClient(commerceClientParams, {
     createEventProvider: createEventProviderCommerce,
-    getAllEventProviders: getAllEventProvidersCommerce,
     createEventSubscription,
     deleteEventProvider: deleteEventProviderCommerce,
     deleteEventSubscription,
+    getAllEventProviders: getAllEventProvidersCommerce,
     getAllEventSubscriptions,
     updateEventingConfiguration,
   });
@@ -80,8 +80,8 @@ function createIoEventsApiClient(params: RuntimeActionParams) {
   ioEventsClientParams.fetchOptions.timeout = 1000 * 60 * 2; // 2 minutes
 
   return createCustomAdobeIoEventsApiClient(ioEventsClientParams, {
-    createEventProvider,
     createEventMetadataForProvider,
+    createEventProvider,
     createRegistration,
     deleteEventMetadataForProvider,
     deleteEventProvider,

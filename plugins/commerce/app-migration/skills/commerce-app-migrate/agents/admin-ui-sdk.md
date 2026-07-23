@@ -80,20 +80,21 @@ are resolvable — substitute the constant and treat the result as static.
 
 V1 mass actions used `displayIframe` to distinguish iframe vs. worker handlers. Map them using the `type` discriminator in v2.
 
-| V1 field              | V2 field                 | Notes                                                                                       |
-| --------------------- | ------------------------ | ------------------------------------------------------------------------------------------- |
-| `actionId`            | `id`                     | Rename                                                                                      |
-| `label`               | `label`                  | Unchanged                                                                                   |
-| `title`               | `title`                  | Unchanged (optional)                                                                        |
-| `confirm.title`       | `confirm.title`          | Unchanged                                                                                   |
-| `confirm.message`     | `confirm.message`        | Unchanged                                                                                   |
-| `path`                | `path` / `runtimeAction` | If `type: "view"`: keep as `path`. If `type: "worker"`: rename to `runtimeAction`.          |
-| `sandbox`             | `sandboxPermissions`     | V1: space-separated string → V2: array of valid values (see below). Only on `type: "view"`. |
-| `selectionLimit`      | `selectionLimit`         | Unchanged (order)                                                                           |
-| `productSelectLimit`  | `selectionLimit`         | Rename (product)                                                                            |
-| `customerSelectLimit` | `selectionLimit`         | Rename (customer)                                                                           |
-| `displayIframe`       | `type`                   | `true` (or absent) → `"view"`; `false` → `"worker"`                                         |
-| `timeout`             | `timeout`                | Keep if `type: "worker"`; omit if `type: "view"`                                            |
+| V1 field              | V2 field                 | Notes                                                                                                                                          |
+| --------------------- | ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| `actionId`            | `id`                     | Rename                                                                                                                                         |
+| `label`               | `label`                  | Unchanged                                                                                                                                      |
+| `title`               | `title`                  | Unchanged (optional)                                                                                                                           |
+| `confirm.title`       | `confirm.title`          | Unchanged                                                                                                                                      |
+| `confirm.message`     | `confirm.message`        | Unchanged                                                                                                                                      |
+| `path`                | `path` / `runtimeAction` | If `type: "view"`: keep as `path`. If `type: "worker"`: rename to `runtimeAction`.                                                             |
+| `sandbox`             | `sandboxPermissions`     | V1: space-separated string → V2: array of valid values (see below). Only on `type: "view"`.                                                    |
+| `selectionLimit`      | `selectionLimit`         | Unchanged (order)                                                                                                                              |
+| `productSelectLimit`  | `selectionLimit`         | Rename (product)                                                                                                                               |
+| `customerSelectLimit` | `selectionLimit`         | Rename (customer)                                                                                                                              |
+| `displayIframe`       | `type`                   | `true` (or absent) → `"view"`; `false` → `"worker"`                                                                                            |
+| `timeout`             | `timeout`                | Keep if `type: "worker"`; omit if `type: "view"`                                                                                               |
+| _(absent)_            | `aclProtected`           | New optional v2 field (per-item ACL); no v1 equivalent — omit from configFragment. Developers may add it post-migration for role-based access. |
 
 **`type` from `displayIframe`:** Set `type` based on `displayIframe`:
 
@@ -123,13 +124,14 @@ on the corresponding v2 mass action entry.
 V1 grid columns used the API Mesh (`data.meshId`) to fetch column data. V2 uses
 a `runtimeAction` instead. This gap requires manual intervention.
 
-| V1 field                | V2 field          | Notes                                                    |
-| ----------------------- | ----------------- | -------------------------------------------------------- |
-| `properties[].columnId` | `columns[].id`    | Rename                                                   |
-| `properties[].label`    | `columns[].label` | Unchanged                                                |
-| `properties[].type`     | `columns[].type`  | All v1 values are valid in v2; v2 also adds `"datetime"` |
-| `properties[].align`    | `columns[].align` | Unchanged                                                |
-| `data.meshId`           | _(no equivalent)_ | Add unresolved question (see below)                      |
+| V1 field                | V2 field                 | Notes                                                                                                                                          |
+| ----------------------- | ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| `properties[].columnId` | `columns[].id`           | Rename                                                                                                                                         |
+| `properties[].label`    | `columns[].label`        | Unchanged                                                                                                                                      |
+| `properties[].type`     | `columns[].type`         | All v1 values are valid in v2; v2 also adds `"datetime"`                                                                                       |
+| `properties[].align`    | `columns[].align`        | Unchanged                                                                                                                                      |
+| `data.meshId`           | _(no equivalent)_        | Add unresolved question (see below)                                                                                                            |
+| _(absent)_              | `columns[].aclProtected` | New optional v2 field (per-item ACL); no v1 equivalent — omit from configFragment. Developers may add it post-migration for role-based access. |
 
 V2 grid columns also require `label` (grid title) and `description` (grid description)
 at the top level — these don't exist in V1. Add an unresolved question for each missing field.
@@ -165,18 +167,19 @@ If `properties` is absent or an empty array, treat the entity as having no gridC
 V1 order view buttons (`order.viewButtons`) are now supported in v2. Like mass actions, the v1
 `displayIframe` boolean is replaced by an explicit `type` discriminator.
 
-| V1 field        | V2 field                 | Notes                                                                                           |
-| --------------- | ------------------------ | ----------------------------------------------------------------------------------------------- |
-| `buttonId`      | `id`                     | Rename                                                                                          |
-| `label`         | `label`                  | Unchanged                                                                                       |
-| `displayIframe` | `type`                   | `true` (or absent) → `"view"`; `false` → `"worker"`                                             |
-| `path`          | `path` / `runtimeAction` | If `type: "view"`: keep as `path`. If `type: "worker"`: add unresolved question (see below).    |
-| `sandbox`       | `sandboxPermissions`     | Same rules as mass actions: split string, filter valid values. Only on `type: "view"`.          |
-| `level`         | `level`                  | Unchanged (optional)                                                                            |
-| `sortOrder`     | `sortOrder`              | Unchanged (optional)                                                                            |
-| `confirm`       | `confirm`                | V1 only had `confirm.message`; v2 adds optional `confirm.title` (new, omit from configFragment) |
-| `timeout`       | `timeout`                | Keep on `type: "worker"`; omit on `type: "view"`                                                |
-| _(absent)_      | `description`            | New optional v2 field; omit from configFragment                                                 |
+| V1 field        | V2 field                 | Notes                                                                                                                                          |
+| --------------- | ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| `buttonId`      | `id`                     | Rename                                                                                                                                         |
+| `label`         | `label`                  | Unchanged                                                                                                                                      |
+| `displayIframe` | `type`                   | `true` (or absent) → `"view"`; `false` → `"worker"`                                                                                            |
+| `path`          | `path` / `runtimeAction` | If `type: "view"`: keep as `path`. If `type: "worker"`: add unresolved question (see below).                                                   |
+| `sandbox`       | `sandboxPermissions`     | Same rules as mass actions: split string, filter valid values. Only on `type: "view"`.                                                         |
+| `level`         | `level`                  | Unchanged (optional)                                                                                                                           |
+| `sortOrder`     | `sortOrder`              | Unchanged (optional)                                                                                                                           |
+| `confirm`       | `confirm`                | V1 only had `confirm.message`; v2 adds optional `confirm.title` (new, omit from configFragment)                                                |
+| `timeout`       | `timeout`                | Keep on `type: "worker"`; omit on `type: "view"`                                                                                               |
+| _(absent)_      | `description`            | New optional v2 field; omit from configFragment                                                                                                |
+| _(absent)_      | `aclProtected`           | New optional v2 field (per-item ACL); no v1 equivalent — omit from configFragment. Developers may add it post-migration for role-based access. |
 
 **`type` from `displayIframe`:** Same rule as mass actions:
 
@@ -212,16 +215,17 @@ V1 `menuItems` is an array that typically contains a section item (`isSection: t
 menu item. V2 has a single `menu` object — skip any `isSection: true` entries and use the first
 non-section item.
 
-| V1 field     | V2 field             | Notes                                                         |
-| ------------ | -------------------- | ------------------------------------------------------------- |
-| `id`         | `id`                 | Unchanged                                                     |
-| `title`      | `label`              | Rename                                                        |
-| `page.title` | `pageTitle`          | Rename and flatten; omit if absent                            |
-| `parent`     | `parentMenu`         | Map only if value is a known Commerce menu ID (see below)     |
-| `sandbox`    | `sandboxPermissions` | Same rules as mass actions: split string, filter valid values |
-| `sortOrder`  | _(dropped)_          | No v2 equivalent; omit                                        |
-| `isSection`  | _(dropped)_          | Section is auto-generated by v2; skip items with this flag    |
-| _(absent)_   | `description`        | Required in v2; add unresolved question                       |
+| V1 field     | V2 field             | Notes                                                                                                                                          |
+| ------------ | -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`         | `id`                 | Unchanged                                                                                                                                      |
+| `title`      | `label`              | Rename                                                                                                                                         |
+| `page.title` | `pageTitle`          | Rename and flatten; omit if absent                                                                                                             |
+| `parent`     | `parentMenu`         | Map only if value is a known Commerce menu ID (see below)                                                                                      |
+| `sandbox`    | `sandboxPermissions` | Same rules as mass actions: split string, filter valid values                                                                                  |
+| `sortOrder`  | _(dropped)_          | No v2 equivalent; omit                                                                                                                         |
+| `isSection`  | _(dropped)_          | Section is auto-generated by v2; skip items with this flag                                                                                     |
+| _(absent)_   | `description`        | Required in v2; add unresolved question                                                                                                        |
+| _(absent)_   | `aclProtected`       | New optional v2 field (per-item ACL); no v1 equivalent — omit from configFragment. Developers may add it post-migration for role-based access. |
 
 **`parentMenu` mapping:** V2 `parentMenu` is constrained to known Commerce Admin menu IDs:
 `"sales"`, `"catalog"`, `"customers"`, `"marketing"`, `"content"`, `"reports"`, `"stores"`, `"system"`.

@@ -41,13 +41,12 @@ export const PRIVATE_PACKAGES_INFO = await Promise.all(
     );
 
     return {
-      name: `${pkgJson.name}`,
-      path: pkg.path,
-
       deps: {
         ...pkgJson.dependencies,
         ...pkgJson.peerDependencies,
       },
+      name: `${pkgJson.name}`,
+      path: pkg.path,
     };
   }),
 );

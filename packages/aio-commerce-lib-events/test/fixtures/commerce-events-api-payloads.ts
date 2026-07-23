@@ -17,20 +17,17 @@ type CommerceEventsApiClient = ReturnType<typeof createCommerceEventsApiClient>;
 
 export const COMMERCE_EVENTS_API_PAYLOADS = [
   {
-    name: "getAllEventProviders",
-    method: "GET",
-    pathname: "eventing/eventProvider",
+    hasInputValidation: false,
 
     invoke(client: CommerceEventsApiClient, fetchOptions?: Options) {
       return client.getAllEventProviders(fetchOptions);
     },
-
-    hasInputValidation: false,
+    method: "GET",
+    name: "getAllEventProviders",
+    pathname: "eventing/eventProvider",
   },
   {
-    name: "getEventProviderById",
-    method: "GET",
-    pathname: "eventing/eventProvider/provider-1",
+    hasInputValidation: true,
 
     invoke(client: CommerceEventsApiClient, fetchOptions?: Options) {
       return client.getEventProviderById(
@@ -40,62 +37,58 @@ export const COMMERCE_EVENTS_API_PAYLOADS = [
         fetchOptions,
       );
     },
-
-    hasInputValidation: true,
+    method: "GET",
+    name: "getEventProviderById",
+    pathname: "eventing/eventProvider/provider-1",
   },
   {
-    name: "createEventProvider",
-    method: "POST",
-    pathname: "eventing/eventProvider",
+    hasInputValidation: true,
 
     invoke(client: CommerceEventsApiClient, fetchOptions?: Options) {
       return client.createEventProvider(
         {
-          provider_id: "provider-1",
+          description: "Provider 1 description",
           instance_id: "instance-1",
           label: "Provider 1",
-          description: "Provider 1 description",
+          provider_id: "provider-1",
           workspace_configuration: {},
         },
         fetchOptions,
       );
     },
-
-    hasInputValidation: true,
+    method: "POST",
+    name: "createEventProvider",
+    pathname: "eventing/eventProvider",
   },
   {
-    name: "getAllEventSubscriptions",
-    method: "GET",
-    pathname: "eventing/getEventSubscriptions",
+    hasInputValidation: false,
 
     invoke(client: CommerceEventsApiClient, fetchOptions?: Options) {
       return client.getAllEventSubscriptions(fetchOptions);
     },
-
-    hasInputValidation: false,
+    method: "GET",
+    name: "getAllEventSubscriptions",
+    pathname: "eventing/getEventSubscriptions",
   },
   {
-    name: "createEventSubscription",
-    method: "POST",
-    pathname: "eventing/eventSubscribe",
+    hasInputValidation: true,
 
     invoke(client: CommerceEventsApiClient, fetchOptions?: Options) {
       return client.createEventSubscription(
         {
+          fields: [{ name: "field-1" }],
           name: "subscription-1",
           provider_id: "provider-1",
-          fields: [{ name: "field-1" }],
         },
         fetchOptions,
       );
     },
-
-    hasInputValidation: true,
+    method: "POST",
+    name: "createEventSubscription",
+    pathname: "eventing/eventSubscribe",
   },
   {
-    name: "updateEventingConfiguration",
-    method: "PUT",
-    pathname: "eventing/updateConfiguration",
+    hasInputValidation: true,
 
     invoke(client: CommerceEventsApiClient, fetchOptions?: Options) {
       return client.updateEventingConfiguration(
@@ -105,7 +98,8 @@ export const COMMERCE_EVENTS_API_PAYLOADS = [
         fetchOptions,
       );
     },
-
-    hasInputValidation: true,
+    method: "PUT",
+    name: "updateEventingConfiguration",
+    pathname: "eventing/updateConfiguration",
   },
 ] as const;

@@ -52,8 +52,8 @@ describe("Adobe I/O Events API", () => {
   describe("createCustomAdobeIoEventsApiClient", () => {
     test("should create an API client with only specified endpoints", () => {
       const customFunctions = {
-        getAllEventProviders,
         createEventProvider,
+        getAllEventProviders,
       };
 
       const client = createCustomAdobeIoEventsApiClient(

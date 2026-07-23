@@ -18,22 +18,22 @@ import type {
 /** Schema with a single list field whose options are a static array. */
 export const schemaWithStaticListOptions = [
   {
-    name: "paymentMethod",
-    type: "list",
-    selectionMode: "single",
     default: "braintree",
+    name: "paymentMethod",
     options: [{ label: "Braintree", value: "braintree" }],
+    selectionMode: "single",
+    type: "list",
   },
 ] satisfies ResolvedBusinessConfigSchema;
 
 /** Schema with a single dynamicList field whose options are resolved at runtime. */
 export const schemaWithDynamicListOptions = [
   {
-    name: "paymentMethod",
-    type: "dynamicList",
-    selectionMode: "single",
-    options: () => [{ label: "Braintree", value: "braintree" }],
     default: (opts) => opts[0].value,
+    name: "paymentMethod",
+    options: () => [{ label: "Braintree", value: "braintree" }],
+    selectionMode: "single",
+    type: "dynamicList",
   },
 ] satisfies BusinessConfigSchema;
 
@@ -42,7 +42,9 @@ export const schemaWithDynamicListOptions = [
  * fixtures so codegen integration tests can bundle a real config file with a
  * `dynamicList` factory.
  */
-export const dynamicOptionsConfigFile = `export default {
+export const dynamicOptionsConfigFile = `export const paymentMethodOptions = [{ label: "Braintree", value: "braintree" }];
+
+export default {
   metadata: {
     id: "dynamic-options",
     displayName: "Dynamic Options",
@@ -54,7 +56,7 @@ export const dynamicOptionsConfigFile = `export default {
       name: "paymentMethod",
       type: "dynamicList",
       selectionMode: "single",
-      options: () => [{ label: "Braintree", value: "braintree" }],
+      options: () => paymentMethodOptions,
       default: (opts) => opts[0].value,
     }],
   },

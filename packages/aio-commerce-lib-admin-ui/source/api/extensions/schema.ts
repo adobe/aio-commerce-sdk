@@ -16,14 +16,13 @@ import * as v from "valibot";
 export const ExtensionRegistrationParamsSchema = v.object({
   extensionName: v.pipe(v.string(), v.minLength(1)),
   extensionTitle: v.pipe(v.string(), v.minLength(1)),
-  extensionUrl: v.pipe(v.string(), v.url()),
   extensionWorkspace: v.pipe(v.string(), v.minLength(1)),
 });
 
 /** Parameters for DELETE /V1/adminuisdk/extension/{workspaceName}/{extensionName}. */
 export const UnregisterExtensionParamsSchema = v.object({
-  workspaceName: v.pipe(v.string(), v.minLength(1)),
   extensionName: v.pipe(v.string(), v.minLength(1)),
+  workspaceName: v.pipe(v.string(), v.minLength(1)),
 });
 
 /** The parameters accepted by POST /V1/adminuisdk/extension. */

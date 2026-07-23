@@ -91,6 +91,7 @@ Agentic tooling lives under [`plugins/`](./plugins/). Each plugin is independent
 - [Adobe App Builder Documentation](https://developer.adobe.com/app-builder/docs/overview/)
 - [Adobe Commerce Documentation](https://developer.adobe.com/commerce/docs/)
 - [Development Guide](./.github/DEVELOPMENT.md)
+- [Maintainers Guide](./.github/MAINTAINERS.md)
 - [Code of Conduct](./CODE_OF_CONDUCT.md)
 
 ## License

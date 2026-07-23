@@ -21,6 +21,12 @@ export type IoEventsHttpClientConfig = {
    * @default "https://api.adobe.io/events"
    */
   baseUrl?: string;
+
+  /**
+   * The base URL to use for the Adobe I/O Events ingress endpoint.
+   * @default "https://eventsingress.adobe.io/"
+   */
+  ingressBaseUrl?: string;
 };
 
 /** Defines the parameters required to build an HTTP client for the Adobe I/O Events API. */

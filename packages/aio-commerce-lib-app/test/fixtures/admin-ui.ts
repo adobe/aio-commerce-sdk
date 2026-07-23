@@ -15,31 +15,41 @@ import { vi } from "vitest";
 import { createMockInstallationContext } from "#test/fixtures/installation";
 
 export const viewButtonViewBase = {
-  type: "view" as const,
   id: "delete-order",
   label: "Delete",
   path: "#/delete-order",
+  type: "view" as const,
 };
 
 export const viewButtonWorkerBase = {
-  type: "worker" as const,
   id: "sync-inventory",
   label: "Sync inventory",
   runtimeAction: "orders/sync-inventory",
+  type: "worker" as const,
 };
 
 import type { AdminUiExecutionContext } from "#management/installation/admin-ui/utils";
 
 /** Creates a mock AdminUiExecutionContext with Admin UI client methods. */
-export function createMockAdminUiContext(overrides?: {
-  registerExtensionImpl?: () => Promise<{ extensionId: string }>;
-  unregisterExtensionImpl?: () => Promise<unknown>;
-}): AdminUiExecutionContext {
-  const mockInstallation = createMockInstallationContext();
+export function createMockAdminUiContext(
+  overrides?: NonNullable<
+    Parameters<typeof createMockInstallationContext>[0]
+  > & {
+    enableAdminUiSdkImpl?: () => Promise<boolean>;
+    registerExtensionImpl?: () => Promise<{ extensionId: string }>;
+    unregisterExtensionImpl?: () => Promise<unknown>;
+  },
+): AdminUiExecutionContext {
+  const mockInstallation = createMockInstallationContext(overrides);
 
   return {
     ...mockInstallation,
     adminUiClient: {
+      enableAdminUiSdk: vi
+        .fn()
+        .mockImplementation(
+          overrides?.enableAdminUiSdkImpl ?? (() => Promise.resolve(true)),
+        ),
       registerExtension: vi
         .fn()
         .mockImplementation(
@@ -51,6 +61,6 @@ export function createMockAdminUiContext(overrides?: {
         .mockImplementation(
           overrides?.unregisterExtensionImpl ?? (() => Promise.resolve()),
         ),
-    } as unknown as AdminUiExecutionContext["adminUiClient"],
+    },
   };
 }

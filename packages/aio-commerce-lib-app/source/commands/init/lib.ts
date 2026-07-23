@@ -10,18 +10,16 @@
  * governing permissions and limitations under the License.
  */
 
-import { spawnSync } from "node:child_process";
 import { writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 
 import {
   detectPackageManager,
   getExecCommand,
-  getInstallCommand,
   getProjectRootDirectory,
+  loadPackageJson,
   readPackageJson,
 } from "@aio-commerce-sdk/scripting-utils/project";
-import NpmPackageJson from "@npmcli/package-json";
 import { consola } from "consola";
 
 import {
@@ -34,7 +32,7 @@ import {
 import { run as generateActionsCommand } from "#commands/generate/actions/main";
 import { run as generateManifestCommand } from "#commands/generate/manifest/main";
 import { run as generateSchemaCommand } from "#commands/generate/schema/main";
-import { prettierFormat } from "#commands/utils";
+import { prettierFormat, runInstall } from "#commands/utils";
 import {
   getConfigDomains,
   parseCommerceAppConfig,
@@ -55,9 +53,6 @@ import type { PackageJson } from "type-fest";
 import type { CommerceAppConfigDomain } from "#config/index";
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 import type { InitFlags } from "./main";
-
-// __LIB_CONFIG_RANGE__ is injected and replaced at build time.
-declare const __LIB_CONFIG_RANGE__: string;
 
 /** Ensure app.commerce.config file exists, allow creating if it doesn't. When options are provided, prompts are skipped. */
 export async function ensureCommerceAppConfig(
@@ -95,9 +90,9 @@ export async function ensureCommerceAppConfig(
     const createConfig = await consola.prompt(
       `Do you want to create a ${COMMERCE_APP_CONFIG_FILE} file? (y/n)`,
       {
-        type: "confirm",
-        initial: true,
         default: false,
+        initial: true,
+        type: "confirm",
       },
     );
 
@@ -122,10 +117,10 @@ export async function ensureCommerceAppConfig(
       await writeFile(path, configContent, "utf-8");
     }
 
-    const config = await parseCommerceAppConfig(cwd);
+    const createdConfig = await parseCommerceAppConfig(cwd);
     consola.success(`Created ${answers.configFile}`);
 
-    return { config, domains: answers.domains };
+    return { config: createdConfig, domains: answers.domains };
   } catch (error) {
     throw new Error(`Failed to create ${answers.configFile}`, {
       cause: error,
@@ -147,8 +142,8 @@ export async function ensurePackageJson(cwd = process.cwd()) {
     consola.warn("package.json not found. Creating one...");
     packageJson = {
       name: "my-commerce-app",
-      version: "1.0.0",
       private: true,
+      version: "1.0.0",
     };
 
     await writeFile(
@@ -166,9 +161,9 @@ export async function ensurePackageJson(cwd = process.cwd()) {
   const execCommand = getExecCommand(packageManager);
 
   return {
+    execCommand,
     packageJson,
     packageManager,
-    execCommand,
   };
 }
 
@@ -182,7 +177,11 @@ export async function writePostinstallHook(
   cwd = process.cwd(),
 ) {
   const postinstallScript = `${execCommand} aio-commerce-lib-app hooks postinstall`;
-  const pkg = await NpmPackageJson.load(cwd);
+  const pkg = await loadPackageJson(cwd);
+  if (pkg === null) {
+    throw new Error("Could not find package.json.");
+  }
+
   const existing = pkg.content.scripts?.postinstall;
 
   if (existing === postinstallScript || existing?.includes(postinstallScript)) {
@@ -242,54 +241,6 @@ export async function ensureAppConfig(
     rootDirectory,
     " This extension is required for app management. Do not remove.",
   );
-}
-
-/**
- * Install the given dependencies.
- * @param packageManager - The detected package manager
- * @param dependencies - Package specifiers to install; no-op when empty
- * @param cwd - Working directory for the install command
- */
-export function runInstall(
-  packageManager: PackageManager,
-  dependencies: string[],
-  cwd = process.cwd(),
-) {
-  if (dependencies.length === 0) {
-    return;
-  }
-
-  const dependencyListString = dependencies
-    .map((dependency) => `  - ${dependency}`)
-    .join("\n");
-
-  consola.start(
-    [
-      `Installing the following dependencies with ${packageManager}:\n${dependencyListString}\n`,
-      "This may take a few seconds...\n",
-    ].join("\n"),
-  );
-
-  const { command, args } = getInstallCommand(packageManager, dependencies);
-  const displayCommand = [command, ...args].join(" ");
-  const result = spawnSync(command, args, {
-    cwd,
-    stdio: "inherit",
-  });
-
-  if (result.error || result.status !== 0) {
-    throw new Error(
-      `Failed to install dependencies automatically. Please install manually: ${displayCommand}`,
-      {
-        cause:
-          result.error ??
-          new Error(`Install exited with code ${result.status}`),
-      },
-    );
-  }
-
-  consola.log(""); // Add a newline after the install output for readability.
-  consola.success("Dependencies installed successfully");
 }
 
 /**

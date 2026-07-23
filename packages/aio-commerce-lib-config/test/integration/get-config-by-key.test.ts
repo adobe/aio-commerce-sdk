@@ -31,29 +31,29 @@ let mockFilesInstance = new MockFiles();
 
 // Only the external I/O boundary is mocked — aio-lib-state and aio-lib-files
 vi.mock("#utils/repository", () => ({
-  getSharedState: vi.fn(async () => mockStateInstance),
   getSharedFiles: vi.fn(async () => mockFilesInstance),
+  getSharedState: vi.fn(async () => mockStateInstance),
 }));
 
 vi.mock("#modules/scope-tree/scope-tree-repository", () => ({
   getCachedScopeTree: vi.fn(() => Promise.resolve(null)),
   getPersistedScopeTree: vi.fn(() => Promise.resolve(mockScopeTree)),
-  setCachedScopeTree: vi.fn(() => Promise.resolve()),
   saveScopeTree: vi.fn(() => Promise.resolve()),
+  setCachedScopeTree: vi.fn(() => Promise.resolve()),
 }));
 
 const integrationSchema = [
   {
+    default: "",
+    label: "Currency",
     name: "currency",
     type: "text",
-    label: "Currency",
-    default: "",
   },
   {
+    default: "",
+    label: "API Password",
     name: "apiPassword",
     type: "password",
-    label: "API Password",
-    default: "",
   },
 ] satisfies BusinessConfigSchema;
 
@@ -68,8 +68,8 @@ function buildPayload(
   }>,
 ) {
   return JSON.stringify({
-    scope: { id, code, level },
     config: entries,
+    scope: { code, id, level },
   });
 }
 
@@ -83,8 +83,8 @@ describe("getConfigurationByKey", () => {
     await mockFilesInstance.write(
       "aio-commerce-config/scope-tree.json",
       JSON.stringify({
-        scopes: mockScopeTree,
         lastUpdated: new Date().toISOString(),
+        scopes: mockScopeTree,
         version: "1.0",
       }),
     );
@@ -99,16 +99,16 @@ describe("getConfigurationByKey", () => {
     // Set up schema with both a plain text field and a password field
     const schema = [
       {
+        default: "",
+        label: "Currency",
         name: "currency",
         type: "text",
-        label: "Currency",
-        default: "",
       },
       {
+        default: "",
+        label: "API Password",
         name: "apiPassword",
         type: "password",
-        label: "API Password",
-        default: "",
       },
     ] satisfies BusinessConfigSchema;
 
@@ -132,8 +132,8 @@ describe("getConfigurationByKey", () => {
       buildPayload("id-global", "global", "global", [
         {
           name: "currency",
-          value: "USD",
           origin: { code: "global", level: "global" },
+          value: "USD",
         },
       ]),
     );
@@ -166,13 +166,13 @@ describe("getConfigurationByKey", () => {
       buildPayload("id-global", "global", "global", [
         {
           name: "currency",
-          value: "EUR",
           origin: { code: "global", level: "global" },
+          value: "EUR",
         },
         {
           name: "apiPassword",
-          value: encrypt("s3cr3t", encryptionKey),
           origin: { code: "global", level: "global" },
+          value: encrypt("s3cr3t", encryptionKey),
         },
       ]),
     );
@@ -194,8 +194,8 @@ describe("getConfigurationByKey", () => {
       buildPayload("id-global", "global", "global", [
         {
           name: "apiPassword",
-          value: encrypt(plainText, encryptionKey),
           origin: { code: "global", level: "global" },
+          value: encrypt(plainText, encryptionKey),
         },
       ]),
     );
@@ -216,8 +216,8 @@ describe("getConfigurationByKey", () => {
       buildPayload("id-global", "global", "global", [
         {
           name: "apiPassword",
-          value: encrypt("some-password", encryptionKey),
           origin: { code: "global", level: "global" },
+          value: encrypt("some-password", encryptionKey),
         },
       ]),
     );
@@ -233,8 +233,8 @@ describe("getConfigurationByKey", () => {
       buildPayload("id-global", "global", "global", [
         {
           name: "apiPassword",
-          value: "",
           origin: { code: "global", level: "global" },
+          value: "",
         },
       ]),
     );
@@ -254,8 +254,8 @@ describe("getConfigurationByKey", () => {
       buildPayload("id-base-region", "base_region", "base", [
         {
           name: "currency",
-          value: "CHF",
           origin: { code: "base_region", level: "base" },
+          value: "CHF",
         },
       ]),
     );
@@ -275,8 +275,8 @@ describe("getConfigurationByKey", () => {
       buildPayload("id-global", "global", "global", [
         {
           name: "currency",
-          value: "SGD",
           origin: { code: "global", level: "global" },
+          value: "SGD",
         },
       ]),
     );
@@ -296,8 +296,8 @@ describe("getConfigurationByKey", () => {
       buildPayload("id-global", "global", "global", [
         {
           name: "currency",
-          value: "JPY",
           origin: { code: "global", level: "global" },
+          value: "JPY",
         },
       ]),
     );
@@ -308,8 +308,8 @@ describe("getConfigurationByKey", () => {
     );
 
     expect(result.scope).toEqual({
-      id: "id-global",
       code: "global",
+      id: "id-global",
       level: "global",
     });
   });

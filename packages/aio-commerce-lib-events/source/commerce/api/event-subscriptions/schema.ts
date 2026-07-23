@@ -77,18 +77,17 @@ function rulesSchema(propertyName: string) {
 }
 
 export const EventSubscriptionCreateParamsSchema = v.object({
-  name: stringValueSchema("name"),
-
-  provider_id: v.optional(stringValueSchema("provider_id")),
-  parent: v.optional(stringValueSchema("parent")),
-  fields: fieldsSchema("fields"),
-  rules: v.optional(rulesSchema("rules")),
-
   destination: v.optional(stringValueSchema("destination")),
-  hipaa_audit_required: v.optional(booleanValueSchema("hipaa_audit_required")),
-  priority: v.optional(booleanValueSchema("priority")),
+  fields: fieldsSchema("fields"),
 
   force: v.optional(booleanValueSchema("force")),
+  hipaa_audit_required: v.optional(booleanValueSchema("hipaa_audit_required")),
+  name: stringValueSchema("name"),
+  parent: v.optional(stringValueSchema("parent")),
+  priority: v.optional(booleanValueSchema("priority")),
+
+  provider_id: v.optional(stringValueSchema("provider_id")),
+  rules: v.optional(rulesSchema("rules")),
 });
 
 export const EventSubscriptionDeleteParamsSchema = v.object({

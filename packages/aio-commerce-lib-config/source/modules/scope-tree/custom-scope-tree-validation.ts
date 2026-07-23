@@ -39,6 +39,7 @@ export function createValidationError(message: string) {
 export function validateCustomScopeRequest(
   request: SetCustomScopeTreeRequest,
 ): CustomScopeInput[] {
+  // biome-ignore lint/suspicious/noUnnecessaryConditions: request comes from an external caller and may violate the declared type at runtime.
   if (!(request.scopes && Array.isArray(request.scopes))) {
     throw createValidationError("Request must include a scopes array");
   }
@@ -99,6 +100,7 @@ export function validateFieldTypes(scope: CustomScopeInput): void {
 export function validateAndNormalizeSingleScope(
   scope: CustomScopeInput,
 ): CustomScopeInput {
+  // biome-ignore lint/suspicious/noUnnecessaryConditions: scope comes from an external caller and may violate the declared type at runtime.
   if (!scope || typeof scope !== "object") {
     throw createValidationError("Scope must be an object");
   }

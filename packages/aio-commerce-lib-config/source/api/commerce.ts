@@ -34,9 +34,11 @@ export async function getAllScopeData(
       getStoreViews(httpClient),
     ]);
 
-    return { websites, storeGroups, storeViews };
+    return { storeGroups, storeViews, websites };
   } catch (error) {
-    throw new Error(`Failed to fetch Commerce scope data: ${error}`);
+    throw new Error(`Failed to fetch Commerce scope data: ${error}`, {
+      cause: error,
+    });
   }
 }
 
@@ -51,7 +53,7 @@ export async function getWebsites(
   try {
     return await httpClient.get("store/websites").json<Website[]>();
   } catch (error) {
-    throw new Error(`Failed to fetch websites: ${error}`);
+    throw new Error(`Failed to fetch websites: ${error}`, { cause: error });
   }
 }
 
@@ -66,7 +68,9 @@ export async function getStoreGroups(
   try {
     return await httpClient.get("store/storeGroups").json<StoreGroup[]>();
   } catch (error) {
-    throw new Error(`Failed to fetch store groups: ${error}`);
+    throw new Error(`Failed to fetch store groups: ${error}`, {
+      cause: error,
+    });
   }
 }
 
@@ -81,6 +85,6 @@ export async function getStoreViews(
   try {
     return await httpClient.get("store/storeViews").json<StoreView[]>();
   } catch (error) {
-    throw new Error(`Failed to fetch store views: ${error}`);
+    throw new Error(`Failed to fetch store views: ${error}`, { cause: error });
   }
 }

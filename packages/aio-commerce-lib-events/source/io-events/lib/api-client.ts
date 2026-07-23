@@ -15,6 +15,7 @@ import {
   ApiClient,
 } from "@adobe/aio-commerce-lib-api";
 
+import * as eventIngressEndpoints from "#io-events/api/event-ingress/endpoints";
 import * as eventMetadataEndpoints from "#io-events/api/event-metadata/endpoints";
 import * as eventProviderEndpoints from "#io-events/api/event-providers/endpoints";
 import * as eventProviderShorthands from "#io-events/api/event-providers/shorthands";
@@ -37,6 +38,7 @@ export function createAdobeIoEventsApiClient(params: IoEventsHttpClientParams) {
     ...eventMetadataEndpoints,
     ...eventProviderShorthands,
     ...eventRegistrationEndpoints,
+    ...eventIngressEndpoints,
   });
 }
 

@@ -18,11 +18,11 @@ import { HttpActionRouter } from "#actions/http/router";
 
 import type { RuntimeActionParams } from "@adobe/aio-commerce-lib-core/params";
 
-interface LoggerContext {
+type LoggerContext = {
   logger: {
     info: (msg: string) => void;
   };
-}
+};
 
 describe("Middleware Plugins", () => {
   describe("logger()", () => {
@@ -44,8 +44,8 @@ describe("Middleware Plugins", () => {
       } as RuntimeActionParams);
 
       expect(result).toMatchObject({
-        statusCode: 200,
         body: { hasLogger: true },
+        statusCode: 200,
       });
     });
 
@@ -67,8 +67,8 @@ describe("Middleware Plugins", () => {
       } as RuntimeActionParams);
 
       expect(result).toMatchObject({
-        statusCode: 200,
         body: { hasLogger: true },
+        statusCode: 200,
       });
     });
 
@@ -91,8 +91,8 @@ describe("Middleware Plugins", () => {
       } as RuntimeActionParams);
 
       expect(result).toMatchObject({
-        statusCode: 200,
         body: { hasLogger: true },
+        statusCode: 200,
       });
     });
   });

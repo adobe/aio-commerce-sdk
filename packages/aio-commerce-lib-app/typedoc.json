@@ -4,7 +4,7 @@
 
   "entryPoints": [
     "./source/actions/index.ts",
-    "./source/config/index.ts",
+    "./source/config/index.node.ts",
     "./source/commands/index.ts",
     "./source/management/index.ts"
   ],

@@ -18,27 +18,27 @@ import type { RenderContext } from "#render";
 import type { ReleaseNotes } from "#schema";
 
 const SAMPLE_NOTES: ReleaseNotes = {
+  breakingChanges: [],
   headline:
     "Nested ACL permissions and environment-scoped webhooks are now available.",
-  summary:
-    "This release introduces nested ACL permissions and environment-scoped webhooks, reducing integration complexity for admin extensions.",
   highlights: [
     {
-      kind: "feat",
       description:
         "Added nested ACL permission helpers, enabling admins to delegate access to sub-resources without granting root access.",
+      kind: "feat",
       packages: ["@adobe/aio-commerce-lib-admin-ui"],
       prLinks: ["https://github.com/adobe/aio-commerce-sdk/pull/42"],
     },
     {
-      kind: "fix",
       description:
         "Fixed webhook exception class — now correctly sent under the `type` field.",
+      kind: "fix",
       packages: ["@adobe/aio-commerce-lib-webhooks"],
       prLinks: [],
     },
   ],
-  breakingChanges: [],
+  summary:
+    "This release introduces nested ACL permissions and environment-scoped webhooks, reducing integration complexity for admin extensions.",
 };
 
 const SAMPLE_CTX: RenderContext = {
@@ -84,9 +84,9 @@ describe("renderSlack", () => {
       ...SAMPLE_NOTES,
       breakingChanges: [
         {
-          title: "Removed legacy auth",
           migration: "Replace `legacyAuth()` with `auth()`.",
           packages: ["@adobe/aio-commerce-lib-auth"],
+          title: "Removed legacy auth",
         },
       ],
     };
@@ -99,8 +99,8 @@ describe("renderSlack", () => {
   test("skips highlights section when both arrays are empty", () => {
     const noHighlights: ReleaseNotes = {
       ...SAMPLE_NOTES,
-      highlights: [],
       breakingChanges: [],
+      highlights: [],
     };
     const md = renderSlack(noHighlights, SAMPLE_CTX);
     expect(md).not.toContain("*Highlights*");
@@ -156,14 +156,14 @@ describe("renderSlack", () => {
       ...SAMPLE_NOTES,
       highlights: [
         {
-          kind: "feat",
           description: "First feature.",
+          kind: "feat",
           packages: [],
           prLinks: [],
         },
         {
-          kind: "feat",
           description: "Second feature.",
+          kind: "feat",
           packages: [],
           prLinks: [],
         },
@@ -184,8 +184,8 @@ describe("renderSlack", () => {
       ...SAMPLE_NOTES,
       highlights: [
         {
-          kind: "unknown_xyz",
           description: "Unknown change.",
+          kind: "unknown_xyz",
           packages: [],
           prLinks: [],
         },

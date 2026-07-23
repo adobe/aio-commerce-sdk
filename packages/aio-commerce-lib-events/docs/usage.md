@@ -261,6 +261,29 @@ await ioEventsClient.deleteRegistration({
 });
 ```
 
+#### Publishing Events to the Ingress
+
+`publishEvent` sends an event to the Adobe I/O Events ingress. It builds a CloudEvents 1.0 envelope from the resolved `providerId` and `eventCode` you supply and POSTs it to the ingress endpoint configured on the client. Authentication is applied automatically from the client's IMS auth.
+
+```typescript
+await ioEventsClient.publishEvent({
+  providerId: "your-provider-uuid",
+  eventCode: "com.adobe.commerce.order.created",
+  payload: { orderId: "100000123", total: 149.99 },
+});
+```
+
+When the event payload contains Protected Health Information (PHI), pass `isPhiData: true` to send the `x-event-phidata: true` header required for HIPAA compliance:
+
+```typescript
+await ioEventsClient.publishEvent({
+  providerId: "your-provider-uuid",
+  eventCode: "com.adobe.commerce.patient.updated",
+  payload: { patientId: "..." },
+  isPhiData: true,
+});
+```
+
 ### Custom API Clients
 
 > [!TIP]

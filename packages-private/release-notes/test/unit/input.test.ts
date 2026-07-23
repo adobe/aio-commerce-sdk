@@ -29,7 +29,7 @@ function makeExec(
       .fn()
       .mockImplementation((_cmd: string, args?: string[]) => {
         const key = args?.join(" ") ?? "";
-        const defaults = { stdout: "", stderr: "", exitCode: 0 };
+        const defaults = { exitCode: 0, stderr: "", stdout: "" };
         for (const [pattern, result] of Object.entries(overrides)) {
           if (key.includes(pattern)) {
             return Promise.resolve({ ...defaults, ...result });
@@ -53,7 +53,7 @@ index abc123..def456 100644
 describe("resolvePrevTag", () => {
   test("returns the previous tag from git describe output", async () => {
     const exec = makeExec({
-      describe: { stdout: "@adobe/aio-commerce-lib-core@1.0.0\n", exitCode: 0 },
+      describe: { exitCode: 0, stdout: "@adobe/aio-commerce-lib-core@1.0.0\n" },
     });
     const tag = await resolvePrevTag(
       exec,
@@ -64,7 +64,7 @@ describe("resolvePrevTag", () => {
   });
 
   test("returns undefined when no previous tag exists", async () => {
-    const exec = makeExec({ describe: { stdout: "", exitCode: 128 } });
+    const exec = makeExec({ describe: { exitCode: 128, stdout: "" } });
     const tag = await resolvePrevTag(
       exec,
       "@adobe/aio-commerce-lib-core",
@@ -74,7 +74,7 @@ describe("resolvePrevTag", () => {
   });
 
   test("excludes pre-release tags via --exclude", async () => {
-    const exec = makeExec({ describe: { stdout: "", exitCode: 128 } });
+    const exec = makeExec({ describe: { exitCode: 128, stdout: "" } });
     await resolvePrevTag(
       exec,
       "@adobe/aio-commerce-lib-core",
@@ -88,7 +88,7 @@ describe("resolvePrevTag", () => {
 
 describe("fetchPackageDiff", () => {
   test("runs git diff between prevTag and newTag for the whole package", async () => {
-    const exec = makeExec({ diff: { stdout: SAMPLE_DIFF, exitCode: 0 } });
+    const exec = makeExec({ diff: { exitCode: 0, stdout: SAMPLE_DIFF } });
     const result = await fetchPackageDiff(
       exec,
       "packages/aio-commerce-lib-core",
@@ -118,32 +118,32 @@ describe("collectEntries", () => {
           if (argStr.includes("describe")) {
             if (argStr.includes("aio-commerce-lib-core")) {
               return Promise.resolve({
-                stdout: "@adobe/aio-commerce-lib-core@1.0.0\n",
-                stderr: "",
                 exitCode: 0,
+                stderr: "",
+                stdout: "@adobe/aio-commerce-lib-core@1.0.0\n",
               });
             }
             return Promise.resolve({
-              stdout: "@adobe/aio-commerce-sdk@1.9.0\n",
-              stderr: "",
               exitCode: 0,
+              stderr: "",
+              stdout: "@adobe/aio-commerce-sdk@1.9.0\n",
             });
           }
           if (argStr.includes("aio-commerce-lib-core")) {
             return Promise.resolve({
-              stdout: SAMPLE_DIFF,
-              stderr: "",
               exitCode: 0,
+              stderr: "",
+              stdout: SAMPLE_DIFF,
             });
           }
           if (argStr.includes("aio-commerce-sdk")) {
             return Promise.resolve({
-              stdout: SAMPLE_DIFF,
-              stderr: "",
               exitCode: 0,
+              stderr: "",
+              stdout: SAMPLE_DIFF,
             });
           }
-          return Promise.resolve({ stdout: "", stderr: "", exitCode: 0 });
+          return Promise.resolve({ exitCode: 0, stderr: "", stdout: "" });
         }),
     };
 
@@ -166,12 +166,12 @@ describe("collectEntries", () => {
         .mockImplementation((_cmd: string, args: string[]) => {
           if (args.join(" ").includes("describe")) {
             return Promise.resolve({
-              stdout: "@adobe/aio-commerce-lib-core@0.9.0\n",
-              stderr: "",
               exitCode: 0,
+              stderr: "",
+              stdout: "@adobe/aio-commerce-lib-core@0.9.0\n",
             });
           }
-          return Promise.resolve({ stdout: "", stderr: "", exitCode: 0 });
+          return Promise.resolve({ exitCode: 0, stderr: "", stdout: "" });
         }),
     };
     await expect(
@@ -184,7 +184,7 @@ describe("collectEntries", () => {
   });
 
   test("throws when no previous tag exists for a package", async () => {
-    const exec = makeExec({ describe: { stdout: "", exitCode: 128 } });
+    const exec = makeExec({ describe: { exitCode: 128, stdout: "" } });
     await expect(
       collectEntries(exec, [
         { name: "@adobe/aio-commerce-lib-core", version: "1.0.0" },

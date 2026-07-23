@@ -145,8 +145,8 @@ export async function saveScopeTree(
     const files = await getSharedFiles();
     const filePath = generateScopeFilePath(namespace);
     const data = {
-      scopes,
       lastUpdated: new Date().toISOString(),
+      scopes,
       version: "1.0",
     };
     await files.write(filePath, stringify(data, null, 2) as string);
@@ -167,13 +167,13 @@ export async function saveScopeTree(
 function createInitialScopeTree(): ScopeTree {
   return [
     {
-      id: generateUUID(),
       code: "global",
+      id: generateUUID(),
+      is_editable: true,
+      is_final: true,
+      is_removable: false,
       label: "Global",
       level: "global",
-      is_editable: true,
-      is_removable: false,
-      is_final: true,
     },
   ];
 }

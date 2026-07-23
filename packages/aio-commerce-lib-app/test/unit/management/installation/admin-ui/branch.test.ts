@@ -32,12 +32,12 @@ describe("admin-ui installation module", () => {
       expect(adminUiStep.name).toBe("admin-ui");
       expect(adminUiStep.meta).toEqual({
         install: {
-          label: "Admin UI",
           description: "Registers the extension with Adobe Commerce Admin UI",
+          label: "Admin UI",
         },
         uninstall: {
-          label: "Admin UI",
           description: "Removes the extension from Adobe Commerce Admin UI",
+          label: "Admin UI",
         },
       });
     });
@@ -54,15 +54,33 @@ describe("admin-ui installation module", () => {
       expect(adminUiStep.meta.uninstall).toBeDefined();
     });
 
-    test("should have one leaf child: register-extension", () => {
-      expect(adminUiStep.children).toHaveLength(1);
-      expect(adminUiStep.children[0].name).toBe("register-extension");
+    test("should have two leaf children: enable-admin-ui-sdk then register-extension", () => {
+      expect(adminUiStep.children).toHaveLength(2);
+      expect(adminUiStep.children[0].name).toBe("enable-admin-ui-sdk");
+      expect(adminUiStep.children[1].name).toBe("register-extension");
       expect(isLeafStep(adminUiStep.children[0])).toBe(true);
+      expect(isLeafStep(adminUiStep.children[1])).toBe(true);
     });
   });
 
-  describe("registerExtensionStep uninstall handler", () => {
-    const registerExtensionStep = adminUiStep.children[0];
+  describe("enableAdminUiSdkStep handlers", () => {
+    const [enableAdminUiSdkStep] = adminUiStep.children;
+
+    test("should have an install handler but no uninstall handler", () => {
+      expect(enableAdminUiSdkStep.install).toBeDefined();
+      expect(enableAdminUiSdkStep.uninstall).toBeUndefined();
+    });
+
+    test("should call enableAdminUiSdk on install", async () => {
+      const context = createMockAdminUiContext();
+
+      await enableAdminUiSdkStep.install(configWithFullAdminUiV2, context);
+      expect(context.adminUiClient.enableAdminUiSdk).toHaveBeenCalledOnce();
+    });
+  });
+
+  describe("registerExtensionStep handlers", () => {
+    const [, registerExtensionStep] = adminUiStep.children;
 
     beforeEach(() => {
       vi.stubEnv("__OW_NAMESPACE", "test-namespace");
@@ -72,7 +90,8 @@ describe("admin-ui installation module", () => {
       vi.unstubAllEnvs();
     });
 
-    test("should have an uninstall handler defined", () => {
+    test("should have install and uninstall handlers defined", () => {
+      expect(registerExtensionStep.install).toBeDefined();
       expect(registerExtensionStep.uninstall).toBeDefined();
     });
 
@@ -80,13 +99,24 @@ describe("admin-ui installation module", () => {
       expect(registerExtensionStep.meta.uninstall).toBeDefined();
     });
 
+    test("should call registerExtension with extensionName, title, and workspace", async () => {
+      const context = createMockAdminUiContext();
+
+      await registerExtensionStep.install(configWithFullAdminUiV2, context);
+      expect(context.adminUiClient.registerExtension).toHaveBeenCalledWith({
+        extensionName: "test-namespace",
+        extensionTitle: context.appData.projectTitle,
+        extensionWorkspace: context.appData.workspaceName,
+      });
+    });
+
     test("should call unregisterExtension with workspaceName and __OW_NAMESPACE", async () => {
       const context = createMockAdminUiContext();
       await registerExtensionStep.uninstall?.(configWithFullAdminUiV2, context);
 
       expect(context.adminUiClient.unregisterExtension).toHaveBeenCalledWith({
-        workspaceName: context.appData.workspaceName,
         extensionName: "test-namespace",
+        workspaceName: context.appData.workspaceName,
       });
     });
 

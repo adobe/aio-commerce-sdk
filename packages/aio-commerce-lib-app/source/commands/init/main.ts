@@ -11,8 +11,10 @@
  */
 
 import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
-import NpmPackageJson from "@npmcli/package-json";
+import { loadPackageJson } from "@aio-commerce-sdk/scripting-utils/project";
 import { consola } from "consola";
+
+import { runInstall } from "#commands/utils";
 
 import {
   ensureAppConfig,
@@ -21,14 +23,10 @@ import {
   ensurePackageJson,
   installDependencies,
   runGeneration,
-  runInstall,
   writePostinstallHook,
 } from "./lib";
 
 import type { CommerceAppConfigDomain } from "#config/index";
-
-// __PKG_VERSION__ is injected and replaced at build time.
-declare const __PKG_VERSION__: string;
 
 // Pin the self-install to the executing version so running `init` on a
 // specific release doesn't silently downgrade to the latest stable.
@@ -65,11 +63,15 @@ export async function run(flags?: InitFlags, extraOptions?: InitExtraOptions) {
   installDependencies(packageManager, domains);
 
   // Sync the package.json with the app config
-  const pkg = await NpmPackageJson.load(process.cwd());
+  const pkg = await loadPackageJson(process.cwd());
+  if (pkg === null) {
+    throw new Error("Could not find package.json.");
+  }
+
   pkg.update({
+    description: config.metadata.description,
     name: config.metadata.id,
     version: config.metadata.version,
-    description: config.metadata.description,
   });
 
   await pkg.save();

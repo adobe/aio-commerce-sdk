@@ -34,6 +34,7 @@ import {
   configWithBusinessConfig,
   configWithCommerceEventing,
   configWithFullAdminUiV2,
+  configWithWorkerMassActions,
 } from "#test/fixtures/config";
 import {
   businessConfigActionFile,
@@ -46,6 +47,12 @@ import {
   withTempProject,
 } from "#test/fixtures/project";
 
+const { mockSpawnSync } = vi.hoisted(() => ({
+  mockSpawnSync: vi.fn((..._args: unknown[]) => ({ status: 0 })),
+}));
+
+vi.mock("node:child_process", () => ({ spawnSync: mockSpawnSync }));
+
 // syncImsCredentials is the external boundary — reads AIO CLI credentials
 vi.mock("@aio-commerce-sdk/scripting-utils/env", () => ({
   syncImsCredentials: vi.fn(),
@@ -53,6 +60,7 @@ vi.mock("@aio-commerce-sdk/scripting-utils/env", () => ({
 
 describe("commands/hooks/pre-app-build", () => {
   afterEach(() => {
+    mockSpawnSync.mockClear();
     vi.clearAllMocks();
     vi.unstubAllEnvs();
   });
@@ -156,7 +164,10 @@ describe("commands/hooks/pre-app-build", () => {
 
     test("writes ext.config.yaml with view and web but no workerProcess for backend-ui/2 when only adminUi.menu is configured", async () => {
       await withTempProject(
-        makeProjectFiles(configWithAdminUiMenu),
+        {
+          ...makeProjectFiles(configWithAdminUiMenu),
+          ...makeTemplateFiles(),
+        },
         async (tempDir) => {
           await run("backend-ui/2");
 
@@ -171,6 +182,52 @@ describe("commands/hooks/pre-app-build", () => {
           expect(content).toContain("index.html");
           expect(content).toContain("web-src");
           expect(content).not.toContain("workerProcess");
+
+          const webSrcEntrypoint = join(
+            tempDir,
+            getExtConfigPath(BACKEND_UI_V2_EXTENSION_POINT_ID),
+            "..",
+            "web-src",
+            "index.html",
+          );
+          expect(existsSync(webSrcEntrypoint)).toBe(true);
+        },
+      );
+    });
+
+    test("does not scaffold web-src or write the #web/* alias for backend-ui/2 when adminUi has no view operation", async () => {
+      await withTempProject(
+        {
+          ...makeProjectFiles(configWithWorkerMassActions),
+          ...makeTemplateFiles(),
+        },
+        async (tempDir) => {
+          await run("backend-ui/2");
+
+          const extConfigPath = join(
+            tempDir,
+            getExtConfigPath(BACKEND_UI_V2_EXTENSION_POINT_ID),
+          );
+
+          expect(existsSync(extConfigPath)).toBe(true);
+
+          const content = await readFile(extConfigPath, "utf-8");
+          expect(content).toContain("workerProcess");
+          expect(content).not.toContain("web-src");
+
+          const webSrcDir = join(
+            tempDir,
+            getExtConfigPath(BACKEND_UI_V2_EXTENSION_POINT_ID),
+            "..",
+            "web-src",
+          );
+          expect(existsSync(webSrcDir)).toBe(false);
+
+          const pkg = JSON.parse(
+            await readFile(join(tempDir, "package.json"), "utf-8"),
+          );
+          expect(pkg.imports["#web/*"]).toBeUndefined();
+          expect(mockSpawnSync).not.toHaveBeenCalled();
         },
       );
     });

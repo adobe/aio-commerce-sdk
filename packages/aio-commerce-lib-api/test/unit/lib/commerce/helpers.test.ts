@@ -23,10 +23,10 @@ describe("lib/commerce/helpers", () => {
         AIO_COMMERCE_API_BASE_URL: "https://api.commerce.adobe.com/my-tenant/",
         AIO_COMMERCE_AUTH_IMS_CLIENT_ID: "test-client-id",
         AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS: ["supersecret"],
-        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID: "test-technical-account-id",
-        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL: "test-email@example.com",
         AIO_COMMERCE_AUTH_IMS_ORG_ID: "test-org-id",
         AIO_COMMERCE_AUTH_IMS_SCOPES: ["scope1", "scope2"],
+        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL: "test-email@example.com",
+        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID: "test-technical-account-id",
       };
 
       const result = resolveCommerceHttpClientParams(params);
@@ -46,10 +46,10 @@ describe("lib/commerce/helpers", () => {
           "https://my-env.api.commerce.adobe.com/my-tenant",
         AIO_COMMERCE_AUTH_IMS_CLIENT_ID: "test-client-id",
         AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS: ["supersecret"],
-        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID: "test-technical-account-id",
-        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL: "test-email@example.com",
         AIO_COMMERCE_AUTH_IMS_ORG_ID: "test-org-id",
         AIO_COMMERCE_AUTH_IMS_SCOPES: ["scope1", "scope2"],
+        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL: "test-email@example.com",
+        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID: "test-technical-account-id",
       };
 
       const result = resolveCommerceHttpClientParams(params);
@@ -63,11 +63,11 @@ describe("lib/commerce/helpers", () => {
     test("should resolve PaaS Commerce params with Integration auth", () => {
       const params = {
         AIO_COMMERCE_API_BASE_URL: "https://my-store.example.com/",
-        AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_KEY: "test-consumer-key",
-        AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_SECRET: "test-consumer-secret",
         AIO_COMMERCE_AUTH_INTEGRATION_ACCESS_TOKEN: "test-access-token",
         AIO_COMMERCE_AUTH_INTEGRATION_ACCESS_TOKEN_SECRET:
           "test-access-token-secret",
+        AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_KEY: "test-consumer-key",
+        AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_SECRET: "test-consumer-secret",
       };
 
       const result = resolveCommerceHttpClientParams(params);
@@ -84,10 +84,10 @@ describe("lib/commerce/helpers", () => {
         AIO_COMMERCE_API_BASE_URL: "https://my-store.example.com/",
         AIO_COMMERCE_AUTH_IMS_CLIENT_ID: "test-client-id",
         AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS: ["supersecret"],
-        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID: "test-technical-account-id",
-        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL: "test-email@example.com",
         AIO_COMMERCE_AUTH_IMS_ORG_ID: "test-org-id",
         AIO_COMMERCE_AUTH_IMS_SCOPES: ["scope1", "scope2"],
+        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL: "test-email@example.com",
+        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID: "test-technical-account-id",
       };
 
       const result = resolveCommerceHttpClientParams(params);
@@ -102,11 +102,11 @@ describe("lib/commerce/helpers", () => {
     test("should resolve PaaS Commerce params with custom domain", () => {
       const params = {
         AIO_COMMERCE_API_BASE_URL: "https://commerce.mycompany.com/api",
-        AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_KEY: "test-consumer-key",
-        AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_SECRET: "test-consumer-secret",
         AIO_COMMERCE_AUTH_INTEGRATION_ACCESS_TOKEN: "test-access-token",
         AIO_COMMERCE_AUTH_INTEGRATION_ACCESS_TOKEN_SECRET:
           "test-access-token-secret",
+        AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_KEY: "test-consumer-key",
+        AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_SECRET: "test-consumer-secret",
       };
 
       const result = resolveCommerceHttpClientParams(params);
@@ -119,10 +119,10 @@ describe("lib/commerce/helpers", () => {
       const params = {
         AIO_COMMERCE_AUTH_IMS_CLIENT_ID: "test-client-id",
         AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS: ["supersecret"],
-        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID: "test-technical-account-id",
-        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL: "test-email@example.com",
         AIO_COMMERCE_AUTH_IMS_ORG_ID: "test-org-id",
         AIO_COMMERCE_AUTH_IMS_SCOPES: ["scope1", "scope2"],
+        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL: "test-email@example.com",
+        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID: "test-technical-account-id",
       };
 
       expect(() => {
@@ -137,10 +137,10 @@ describe("lib/commerce/helpers", () => {
         AIO_COMMERCE_API_BASE_URL: "",
         AIO_COMMERCE_AUTH_IMS_CLIENT_ID: "test-client-id",
         AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS: ["supersecret"],
-        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID: "test-technical-account-id",
-        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL: "test-email@example.com",
         AIO_COMMERCE_AUTH_IMS_ORG_ID: "test-org-id",
         AIO_COMMERCE_AUTH_IMS_SCOPES: ["scope1", "scope2"],
+        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL: "test-email@example.com",
+        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID: "test-technical-account-id",
       };
 
       expect(() => {
@@ -177,11 +177,11 @@ describe("lib/commerce/helpers", () => {
     test("should throw error when SaaS is detected with Integration auth", () => {
       const params = {
         AIO_COMMERCE_API_BASE_URL: "https://api.commerce.adobe.com/my-tenant/",
-        AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_KEY: "test-consumer-key",
-        AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_SECRET: "test-consumer-secret",
         AIO_COMMERCE_AUTH_INTEGRATION_ACCESS_TOKEN: "test-access-token",
         AIO_COMMERCE_AUTH_INTEGRATION_ACCESS_TOKEN_SECRET:
           "test-access-token-secret",
+        AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_KEY: "test-consumer-key",
+        AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_SECRET: "test-consumer-secret",
       };
 
       expect(() => {
@@ -194,8 +194,8 @@ describe("lib/commerce/helpers", () => {
     test("should resolve SaaS Commerce params with forwarded IMS auth token when tryForwardAuthProvider is true", () => {
       const params = {
         AIO_COMMERCE_API_BASE_URL: "https://api.commerce.adobe.com/my-tenant/",
-        AIO_COMMERCE_AUTH_IMS_TOKEN: "forwarded-token",
         AIO_COMMERCE_AUTH_IMS_API_KEY: "forwarded-api-key",
+        AIO_COMMERCE_AUTH_IMS_TOKEN: "forwarded-token",
       };
 
       const result = resolveCommerceHttpClientParams(params, {
@@ -230,13 +230,13 @@ describe("lib/commerce/helpers", () => {
     test("should use forwarded IMS auth when tryForwardAuthProvider is true even with full IMS params", () => {
       const params = {
         AIO_COMMERCE_API_BASE_URL: "https://api.commerce.adobe.com/my-tenant/",
-        AIO_COMMERCE_AUTH_IMS_TOKEN: "forwarded-token",
         AIO_COMMERCE_AUTH_IMS_CLIENT_ID: "test-client-id",
         AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS: ["supersecret"],
-        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID: "test-technical-account-id",
-        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL: "test-email@example.com",
         AIO_COMMERCE_AUTH_IMS_ORG_ID: "test-org-id",
         AIO_COMMERCE_AUTH_IMS_SCOPES: ["scope1", "scope2"],
+        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL: "test-email@example.com",
+        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID: "test-technical-account-id",
+        AIO_COMMERCE_AUTH_IMS_TOKEN: "forwarded-token",
       };
 
       const result = resolveCommerceHttpClientParams(params, {
@@ -251,13 +251,13 @@ describe("lib/commerce/helpers", () => {
     test("should use full IMS params by default even when forwarded token is present", () => {
       const params = {
         AIO_COMMERCE_API_BASE_URL: "https://api.commerce.adobe.com/my-tenant/",
-        AIO_COMMERCE_AUTH_IMS_TOKEN: "forwarded-token",
         AIO_COMMERCE_AUTH_IMS_CLIENT_ID: "test-client-id",
         AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS: ["supersecret"],
-        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID: "test-technical-account-id",
-        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL: "test-email@example.com",
         AIO_COMMERCE_AUTH_IMS_ORG_ID: "test-org-id",
         AIO_COMMERCE_AUTH_IMS_SCOPES: ["scope1", "scope2"],
+        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL: "test-email@example.com",
+        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID: "test-technical-account-id",
+        AIO_COMMERCE_AUTH_IMS_TOKEN: "forwarded-token",
       };
 
       const result = resolveCommerceHttpClientParams(params);
@@ -270,8 +270,8 @@ describe("lib/commerce/helpers", () => {
     test("forwarded IMS auth provider should return correct token and headers", () => {
       const params = {
         AIO_COMMERCE_API_BASE_URL: "https://api.commerce.adobe.com/my-tenant/",
-        AIO_COMMERCE_AUTH_IMS_TOKEN: "my-forwarded-token",
         AIO_COMMERCE_AUTH_IMS_API_KEY: "my-api-key",
+        AIO_COMMERCE_AUTH_IMS_TOKEN: "my-forwarded-token",
       };
 
       const result = resolveCommerceHttpClientParams(params, {

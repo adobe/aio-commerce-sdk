@@ -24,7 +24,7 @@ Option C — External cron + REST API invocation:
 Use any external scheduler (GitHub Actions schedule, AWS EventBridge, cron server)
 to POST to the App Builder action's web URL on a schedule:
 curl -X POST https://<runtime-ns>.adobeioruntime.net/api/v1/web/<ns>/<pkg>/<action> \
- -H "Authorization: Bearer $AIO_TOKEN"
+-H "Authorization: Bearer $AIO_TOKEN"
 
 Note: AIO runtime actions must be web-accessible (web: 'yes') and authenticated
 to be invoked this way.

@@ -20,31 +20,31 @@ const OWNERS = "@decepticons @mercury";
 const COMPATIBILITY = ":white_check_mark: PAAS | :white_check_mark: ACCS";
 
 const KIND_EMOJI: Record<string, string> = {
-  feat: ":sparkles:",
-  fix: ":bug:",
-  perf: ":rocket:",
-  refactor: ":recycle:",
-  docs: ":scroll:",
+  build: ":package:",
   chore: ":wrench:",
   ci: ":construction_worker:",
-  build: ":package:",
+  docs: ":scroll:",
+  feat: ":sparkles:",
+  fix: ":bug:",
+  other: ":small_blue_diamond:",
+  perf: ":rocket:",
+  refactor: ":recycle:",
   style: ":art:",
   test: ":white_check_mark:",
-  other: ":small_blue_diamond:",
 };
 
 const KIND_LABEL: Record<string, string> = {
-  feat: "New Features",
-  fix: "Bug Fixes",
-  perf: "Performance",
-  refactor: "Refactoring",
-  docs: "Documentation",
+  build: "Build",
   chore: "Maintenance",
   ci: "CI/CD",
-  build: "Build",
+  docs: "Documentation",
+  feat: "New Features",
+  fix: "Bug Fixes",
+  other: "Other",
+  perf: "Performance",
+  refactor: "Refactoring",
   style: "Code Style",
   test: "Tests",
-  other: "Other",
 };
 
 export type RenderContext = {

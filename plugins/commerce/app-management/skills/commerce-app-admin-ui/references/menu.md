@@ -22,14 +22,15 @@ adminUi: {
 
 ### Constraints
 
-| Field                | Constraint                                                    |
-| -------------------- | ------------------------------------------------------------- |
-| `id`                 | Required; matches `^[A-Za-z0-9_/:]+$` — no hyphens or spaces  |
-| `label`              | Required, non-empty                                           |
-| `description`        | Required, non-empty                                           |
-| `parentMenu`         | Optional; one of the `COMMERCE_MENUS` constants               |
-| `pageTitle`          | Optional, non-empty                                           |
-| `sandboxPermissions` | Optional; `allow-downloads` / `allow-modals` / `allow-popups` |
+| Field                | Constraint                                                                                                                          |
+| -------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `id`                 | Required; matches `^[A-Za-z0-9_/:]+$` — no hyphens or spaces                                                                        |
+| `label`              | Required, non-empty                                                                                                                 |
+| `description`        | Required, non-empty                                                                                                                 |
+| `parentMenu`         | Optional; one of the `COMMERCE_MENUS` constants                                                                                     |
+| `pageTitle`          | Optional, non-empty                                                                                                                 |
+| `sandboxPermissions` | Optional; `allow-downloads` / `allow-modals` / `allow-popups`                                                                       |
+| `aclProtected`       | Optional boolean; when `true`, Commerce generates a per-app ACL resource for the menu so admins can grant/deny menu access per role |
 
 ## Parent menu constants
 
@@ -50,4 +51,21 @@ Import from `@adobe/aio-commerce-sdk/admin-ui/menu`. Use the named constant rath
 
 ## Rendering
 
-The menu entry opens the app's `web-src` at its route. Build the menu page in the app's web frontend. Because there is no runtime action, no Admin UI handler builders are needed for the menu — only the `/admin-ui/menu` constants for `parentMenu`.
+**The menu has no `path` — it always opens the app's index route.** The menu page _is_ the index route (`src/pages/main-page.jsx`, registered as `{ index: true }` in `src/app.jsx`). Unlike view mass actions and view buttons, there is no per-entry route to scaffold for the menu; it reuses the index page every app already has.
+
+That frontend is scaffolded automatically by init/generate (if it doesn't already exist; `index.html`, `src/app.jsx`, `src/pages/main-page.jsx`, `src/components/welcome.jsx`) — the generated `src/app.jsx` mounts the iframe app with `createExtensionApp` from `@adobe/aio-commerce-lib-admin-ui/web`:
+
+```jsx
+import { createExtensionApp } from "@adobe/aio-commerce-lib-admin-ui/web";
+import "@react-spectrum/s2/page.css";
+
+import config from "#app.commerce.config";
+import { MainPage } from "#web/pages/main-page.jsx";
+
+createExtensionApp({
+  metadata: { extensionId: config.metadata.id },
+  routes: [{ index: true, element: <MainPage /> }],
+});
+```
+
+The menu page renders as the index route — edit `src/pages/main-page.jsx` or add `{ path, element }` routes for more pages. Because there is no runtime action, no Admin UI handler builders are needed for the menu — only the `/admin-ui/menu` constants for `parentMenu`.

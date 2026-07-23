@@ -8,7 +8,7 @@ type ValidationResult = {
 };
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/workflow/validation.ts:57](https://github.com/adobe/aio-commerce-sdk/blob/f055aca3ba51e08584fb5e4c366fab9c7770bd5e/packages/aio-commerce-lib-app/source/management/installation/workflow/validation.ts#L57)
+Defined in: [aio-commerce-lib-app/source/management/installation/workflow/validation.ts:57](https://github.com/adobe/aio-commerce-sdk/blob/4d87f72a1eb376a4bae7e6bc80e12098f7b0f2b3/packages/aio-commerce-lib-app/source/management/installation/workflow/validation.ts#L57)
 
 The complete validation result returned by the validation endpoint.
 
@@ -20,7 +20,7 @@ The complete validation result returned by the validation endpoint.
 result: StepValidationResult;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/workflow/validation.ts:65](https://github.com/adobe/aio-commerce-sdk/blob/f055aca3ba51e08584fb5e4c366fab9c7770bd5e/packages/aio-commerce-lib-app/source/management/installation/workflow/validation.ts#L65)
+Defined in: [aio-commerce-lib-app/source/management/installation/workflow/validation.ts:65](https://github.com/adobe/aio-commerce-sdk/blob/4d87f72a1eb376a4bae7e6bc80e12098f7b0f2b3/packages/aio-commerce-lib-app/source/management/installation/workflow/validation.ts#L65)
 
 The full validation tree mirroring the step structure.
 
@@ -32,7 +32,7 @@ The full validation tree mirroring the step structure.
 summary: ValidationSummary;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/workflow/validation.ts:68](https://github.com/adobe/aio-commerce-sdk/blob/f055aca3ba51e08584fb5e4c366fab9c7770bd5e/packages/aio-commerce-lib-app/source/management/installation/workflow/validation.ts#L68)
+Defined in: [aio-commerce-lib-app/source/management/installation/workflow/validation.ts:68](https://github.com/adobe/aio-commerce-sdk/blob/4d87f72a1eb376a4bae7e6bc80e12098f7b0f2b3/packages/aio-commerce-lib-app/source/management/installation/workflow/validation.ts#L68)
 
 Flat summary of issue counts for quick frontend decisions.
 
@@ -44,7 +44,7 @@ Flat summary of issue counts for quick frontend decisions.
 valid: boolean;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/workflow/validation.ts:62](https://github.com/adobe/aio-commerce-sdk/blob/f055aca3ba51e08584fb5e4c366fab9c7770bd5e/packages/aio-commerce-lib-app/source/management/installation/workflow/validation.ts#L62)
+Defined in: [aio-commerce-lib-app/source/management/installation/workflow/validation.ts:62](https://github.com/adobe/aio-commerce-sdk/blob/4d87f72a1eb376a4bae7e6bc80e12098f7b0f2b3/packages/aio-commerce-lib-app/source/management/installation/workflow/validation.ts#L62)
 
 Whether installation can proceed without any confirmation.
 False if there are any error or warning severity issues.

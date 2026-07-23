@@ -31,15 +31,15 @@ function makeHttpClient(jsonResponse: unknown = null) {
     post: postMock,
   } as unknown as AdobeCommerceHttpClient;
 
-  return { client, getMock, postMock, jsonFn };
+  return { client, getMock, jsonFn, postMock };
 }
 
 const VALID_SUBSCRIBE_PARAMS = {
-  webhook_method: "observer.catalog_product_save_after",
-  webhook_type: "after",
   batch_name: "my_batch",
   hook_name: "my_hook",
   url: "https://example.com/webhook",
+  webhook_method: "observer.catalog_product_save_after",
+  webhook_type: "after",
 };
 
 describe("Webhook endpoints", () => {
@@ -53,11 +53,11 @@ describe("Webhook endpoints", () => {
     test("returns the parsed response", async () => {
       const payload = [
         {
-          webhook_method: "observer.catalog_product_save_after",
-          webhook_type: "after",
           batch_name: "my_batch",
           hook_name: "my_hook",
           url: "https://example.com/webhook",
+          webhook_method: "observer.catalog_product_save_after",
+          webhook_type: "after",
         },
       ];
       const { client } = makeHttpClient(payload);
@@ -97,10 +97,10 @@ describe("Webhook endpoints", () => {
       const { client, postMock } = makeHttpClient(null);
       const params = {
         ...VALID_SUBSCRIBE_PARAMS,
+        fields: [{ name: "sku" }],
+        method: "POST",
         priority: 10,
         required: true,
-        method: "POST",
-        fields: [{ name: "sku" }],
       };
       await subscribeWebhook(client, params);
       expect(postMock).toHaveBeenCalledWith(
@@ -112,10 +112,10 @@ describe("Webhook endpoints", () => {
 
   describe("unsubscribeWebhook", () => {
     const VALID_UNSUBSCRIBE_PARAMS = {
-      webhook_method: "observer.catalog_product_save_after",
-      webhook_type: "after",
       batch_name: "my_batch",
       hook_name: "my_hook",
+      webhook_method: "observer.catalog_product_save_after",
+      webhook_type: "after",
     };
 
     test("calls POST webhooks/unsubscribe with { webhook: params }", async () => {
@@ -133,9 +133,9 @@ describe("Webhook endpoints", () => {
       const { client } = makeHttpClient(null);
       expect(() =>
         unsubscribeWebhook(client, {
+          batch_name: "my_batch",
           webhook_method: "observer.catalog_product_save_after",
           webhook_type: "after",
-          batch_name: "my_batch",
           // missing hook_name
         } as Parameters<typeof unsubscribeWebhook>[1]),
       ).toThrow();

@@ -1,7 +1,7 @@
 {
   "name": "aio-commerce-sdk",
   "private": true,
-  "packageManager": "pnpm@11.6.0",
+  "packageManager": "pnpm@11.13.1",
   "engines": {
     "node": ">=22 <=24",
     "pnpm": ">=10"
@@ -33,16 +33,19 @@
     "typecheck": "turbo typecheck"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.4.16",
+    "@biomejs/biome": "2.5.4",
     "@changesets/changelog-github": "^0.7.0",
     "@changesets/cli": "^2.30.0",
     "@redocly/cli": "^2.31.4",
     "@turbo/gen": "^2.8.17",
     "@types/node": "^24.12.0",
+    "@vitejs/plugin-react": "^6.0.3",
+    "@vitest/browser-playwright": "^4.1.9",
     "@vitest/coverage-v8": "^4.1.0",
     "@vitest/ui": "^4.1.0",
     "husky": "^9.1.7",
     "lint-staged": "^17.0.0",
+    "playwright": "1.61.1",
     "prettier": "catalog:",
     "publint": "^0.3.18",
     "tsdown": "^0.22.0",
@@ -50,8 +53,9 @@
     "typedoc": "^0.28.17",
     "typedoc-plugin-markdown": "^4.10.0",
     "typescript": "catalog:",
-    "ultracite": "^7.3.2",
-    "vitest": "^4.1.0"
+    "ultracite": "7.9.4",
+    "vitest": "^4.1.0",
+    "vitest-browser-react": "^2.2.0"
   },
   "lint-staged": {
     "*.{js,ts,cjs,mjs,d.cts,d.mts,jsx,tsx,json,jsonc}": [

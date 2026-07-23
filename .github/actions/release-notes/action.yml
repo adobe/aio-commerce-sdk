@@ -5,9 +5,6 @@ inputs:
   published-packages:
     description: JSON array of published packages (from changesets/action outputs)
     required: true
-  release-channel:
-    description: Release channel ("internal" or "public")
-    required: true
   release-notes-model:
     description: Model ID override (uses provider default when omitted)
     required: false
@@ -37,7 +34,6 @@ runs:
       uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
       env:
         PUBLISHED_PACKAGES: ${{ inputs.published-packages }}
-        RELEASE_CHANNEL: ${{ inputs.release-channel }}
         RELEASE_NOTES_MODEL: ${{ inputs.release-notes-model }}
         RELEASE_NOTES_MODEL_ENDPOINT: ${{ inputs.release-notes-model-endpoint }}
         RELEASE_NOTES_ENABLED: ${{ inputs.release-notes-enabled }}

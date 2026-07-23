@@ -109,11 +109,11 @@ export function collectEntries(
       }
 
       return {
-        package: pkg.name,
-        version: pkg.version,
         markdown: diff,
-        prevTag,
         newTag,
+        package: pkg.name,
+        prevTag,
+        version: pkg.version,
       } satisfies ChangelogEntry;
     }),
   );

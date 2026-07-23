@@ -35,10 +35,10 @@ export function createCommerceWebhooksApiClient(
   params: CommerceHttpClientParams,
 ) {
   return ApiClient.create(new AdobeCommerceHttpClient(params), {
+    getSupportedWebhookList,
     getWebhookList,
     subscribeWebhook,
     unsubscribeWebhook,
-    getSupportedWebhookList,
   });
 }
 

@@ -99,19 +99,19 @@ describe("commands/generate/schema", () => {
         ...configWithBusinessConfig,
         businessConfig: {
           schema: [
-            { name: "field", label: "Field", type: "text", default: "val" },
+            { default: "val", label: "Field", name: "field", type: "text" },
           ],
         },
       };
 
       // Same values, different property insertion order within each schema field
       const schemaB: CommerceAppConfigOutputModel = {
-        metadata: configWithBusinessConfig.metadata,
         businessConfig: {
           schema: [
-            { default: "val", type: "text", label: "Field", name: "field" },
+            { default: "val", label: "Field", name: "field", type: "text" },
           ],
         },
+        metadata: configWithBusinessConfig.metadata,
       };
 
       await withTempProject(EMPTY_PROJECT, async (tempDirA) => {
@@ -135,10 +135,10 @@ describe("commands/generate/schema", () => {
         businessConfig: {
           schema: [
             {
-              name: "secret",
-              label: "Secret",
-              type: "password",
               default: "" as const,
+              label: "Secret",
+              name: "secret",
+              type: "password",
             },
           ],
         },
@@ -161,8 +161,8 @@ describe("commands/generate/schema", () => {
 
     test("does not emit a schema file when schema is dynamic", async () => {
       const projectFiles = {
-        "package.json": JSON.stringify({ type: "module" }),
         "app.commerce.config.js": dynamicOptionsConfigFile,
+        "package.json": JSON.stringify({ type: "module" }),
       };
 
       await withTempProject(projectFiles, async (tempDir) => {
@@ -179,10 +179,10 @@ describe("commands/generate/schema", () => {
         businessConfig: {
           schema: [
             {
-              name: "secret",
-              label: "Secret",
-              type: "password",
               default: "" as const,
+              label: "Secret",
+              name: "secret",
+              type: "password",
             },
           ],
         },

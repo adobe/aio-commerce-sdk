@@ -30,32 +30,32 @@ const MAX_DESCRIPTION_LENGTH = 255;
 describe("validateConfig", () => {
   test("should validate a complete valid config", () => {
     const config = {
-      metadata: {
-        id: "test-app",
-        displayName: "Test App",
-        description: "A test application",
-        version: "1.0.0",
-      },
       businessConfig: {
         schema: [
           {
+            description: "Your API key",
+            label: "API Key",
             name: "apiKey",
             type: "text",
-            label: "API Key",
-            description: "Your API key",
           },
           {
-            name: "environment",
-            type: "list",
+            default: "sandbox",
             label: "Environment",
-            selectionMode: "single",
+            name: "environment",
             options: [
               { label: "Production", value: "prod" },
               { label: "Sandbox", value: "sandbox" },
             ],
-            default: "sandbox",
+            selectionMode: "single",
+            type: "list",
           },
         ],
+      },
+      metadata: {
+        description: "A test application",
+        displayName: "Test App",
+        id: "test-app",
+        version: "1.0.0",
       },
     };
 
@@ -68,9 +68,9 @@ describe("validateConfig", () => {
   test("should validate config with only required metadata", () => {
     const config = {
       metadata: {
-        id: "minimal-app",
-        displayName: "Minimal App",
         description: "A minimal application",
+        displayName: "Minimal App",
+        id: "minimal-app",
         version: "1.0.0",
       },
     };
@@ -94,8 +94,8 @@ describe("validateConfig", () => {
   test("should throw CommerceSdkValidationError when metadata.id is missing", () => {
     const config = {
       metadata: {
-        displayName: "Test App",
         description: "A test application",
+        displayName: "Test App",
         version: "1.0.0",
       },
     };
@@ -106,9 +106,9 @@ describe("validateConfig", () => {
   test("should throw CommerceSdkValidationError when metadata.id contains invalid characters", () => {
     const config = {
       metadata: {
-        id: "test app!", // Invalid: contains space and special char
-        displayName: "Test App",
         description: "A test application",
+        displayName: "Test App",
+        id: "test app!", // Invalid: contains space and special char
         version: "1.0.0",
       },
     };
@@ -119,9 +119,9 @@ describe("validateConfig", () => {
   test("should accept metadata.id with alphanumeric and dashes", () => {
     const config = {
       metadata: {
-        id: "test-app-123",
-        displayName: "Test App",
         description: "A test application",
+        displayName: "Test App",
+        id: "test-app-123",
         version: "1.0.0",
       },
     };
@@ -132,9 +132,9 @@ describe("validateConfig", () => {
   test("should accept metadata.id at exactly 100 characters", () => {
     const config = {
       metadata: {
-        id: "a".repeat(MAX_ID_LENGTH),
-        displayName: "Test App",
         description: "A test application",
+        displayName: "Test App",
+        id: "a".repeat(MAX_ID_LENGTH),
         version: "1.0.0",
       },
     };
@@ -145,9 +145,9 @@ describe("validateConfig", () => {
   test("should throw when metadata.id exceeds 100 characters", () => {
     const config = {
       metadata: {
-        id: "a".repeat(MAX_ID_LENGTH + 1),
-        displayName: "Test App",
         description: "A test application",
+        displayName: "Test App",
+        id: "a".repeat(MAX_ID_LENGTH + 1),
         version: "1.0.0",
       },
     };
@@ -158,9 +158,9 @@ describe("validateConfig", () => {
   test("should throw when displayName exceeds 50 characters", () => {
     const config = {
       metadata: {
-        id: "test-app",
-        displayName: "A".repeat(MAX_DISPLAY_NAME_LENGTH + 1),
         description: "A test application",
+        displayName: "A".repeat(MAX_DISPLAY_NAME_LENGTH + 1),
+        id: "test-app",
         version: "1.0.0",
       },
     };
@@ -171,9 +171,9 @@ describe("validateConfig", () => {
   test("should accept displayName with exactly 50 characters", () => {
     const config = {
       metadata: {
-        id: "test-app",
-        displayName: "A".repeat(MAX_DISPLAY_NAME_LENGTH),
         description: "A test application",
+        displayName: "A".repeat(MAX_DISPLAY_NAME_LENGTH),
+        id: "test-app",
         version: "1.0.0",
       },
     };
@@ -184,9 +184,9 @@ describe("validateConfig", () => {
   test("should throw when description exceeds 255 characters", () => {
     const config = {
       metadata: {
-        id: "test-app",
-        displayName: "Test App",
         description: "A".repeat(MAX_DESCRIPTION_LENGTH + 1),
+        displayName: "Test App",
+        id: "test-app",
         version: "1.0.0",
       },
     };
@@ -197,9 +197,9 @@ describe("validateConfig", () => {
   test("should accept description with exactly 255 characters", () => {
     const config = {
       metadata: {
-        id: "test-app",
-        displayName: "Test App",
         description: "A".repeat(MAX_DESCRIPTION_LENGTH),
+        displayName: "Test App",
+        id: "test-app",
         version: "1.0.0",
       },
     };
@@ -208,27 +208,28 @@ describe("validateConfig", () => {
   });
 
   test.each([
-    { version: "1.0", reason: "Missing patch" },
-    { version: "1", reason: "Missing minor and patch" },
-    { version: "v1.0.0", reason: "Has 'v' prefix" },
-    { version: "1.0.0-beta", reason: "Has prerelease" },
-    { version: "1.0.0+build", reason: "Has build metadata" },
-    { version: "1.0.0-beta+build", reason: "Has both prerelease and build" },
-    { version: "invalid", reason: "Not a version at all" },
-  ])("should throw when version is not in semver format: $reason", ({
-    version,
-  }) => {
-    const config = {
-      metadata: {
-        id: "test-app",
-        displayName: "Test App",
-        description: "A test application",
-        version,
-      },
-    };
+    { reason: "Missing patch", version: "1.0" },
+    { reason: "Missing minor and patch", version: "1" },
+    { reason: "Has 'v' prefix", version: "v1.0.0" },
+    { reason: "Has prerelease", version: "1.0.0-beta" },
+    { reason: "Has build metadata", version: "1.0.0+build" },
+    { reason: "Has both prerelease and build", version: "1.0.0-beta+build" },
+    { reason: "Not a version at all", version: "invalid" },
+  ])(
+    "should throw when version is not in semver format: $reason",
+    ({ version }) => {
+      const config = {
+        metadata: {
+          description: "A test application",
+          displayName: "Test App",
+          id: "test-app",
+          version,
+        },
+      };
 
-    expect(() => validateCommerceAppConfig(config)).toThrow();
-  });
+      expect(() => validateCommerceAppConfig(config)).toThrow();
+    },
+  );
 
   test.each([
     { version: "1.0.0" },
@@ -238,9 +239,9 @@ describe("validateConfig", () => {
   ])("should accept valid semver version: $version", ({ version }) => {
     const config = {
       metadata: {
-        id: "test-app",
-        displayName: "Test App",
         description: "A test application",
+        displayName: "Test App",
+        id: "test-app",
         version,
       },
     };
@@ -250,14 +251,14 @@ describe("validateConfig", () => {
 
   test("should throw when businessConfig.schema is empty array", () => {
     const config = {
-      metadata: {
-        id: "test-app",
-        displayName: "Test App",
-        description: "A test application",
-        version: "1.0.0",
-      },
       businessConfig: {
         schema: [], // Empty array - invalid
+      },
+      metadata: {
+        description: "A test application",
+        displayName: "Test App",
+        id: "test-app",
+        version: "1.0.0",
       },
     };
 
@@ -266,22 +267,22 @@ describe("validateConfig", () => {
 
   test("should validate text field type", () => {
     const config = {
-      metadata: {
-        id: "test-app",
-        displayName: "Test App",
-        description: "A test application",
-        version: "1.0.0",
-      },
       businessConfig: {
         schema: [
           {
+            default: "default-key",
+            description: "Your API key",
+            label: "API Key",
             name: "apiKey",
             type: "text",
-            label: "API Key",
-            description: "Your API key",
-            default: "default-key",
           },
         ],
+      },
+      metadata: {
+        description: "A test application",
+        displayName: "Test App",
+        id: "test-app",
+        version: "1.0.0",
       },
     };
 
@@ -290,21 +291,21 @@ describe("validateConfig", () => {
 
   test("should validate email field type", () => {
     const config = {
-      metadata: {
-        id: "test-app",
-        displayName: "Test App",
-        description: "A test application",
-        version: "1.0.0",
-      },
       businessConfig: {
         schema: [
           {
+            default: "test@example.com",
+            label: "Contact Email",
             name: "contactEmail",
             type: "email",
-            label: "Contact Email",
-            default: "test@example.com",
           },
         ],
+      },
+      metadata: {
+        description: "A test application",
+        displayName: "Test App",
+        id: "test-app",
+        version: "1.0.0",
       },
     };
 
@@ -313,21 +314,21 @@ describe("validateConfig", () => {
 
   test("should throw when email field has invalid default email", () => {
     const config = {
-      metadata: {
-        id: "test-app",
-        displayName: "Test App",
-        description: "A test application",
-        version: "1.0.0",
-      },
       businessConfig: {
         schema: [
           {
+            default: "not-an-email", // Invalid email
+            label: "Contact Email",
             name: "contactEmail",
             type: "email",
-            label: "Contact Email",
-            default: "not-an-email", // Invalid email
           },
         ],
+      },
+      metadata: {
+        description: "A test application",
+        displayName: "Test App",
+        id: "test-app",
+        version: "1.0.0",
       },
     };
 
@@ -336,21 +337,21 @@ describe("validateConfig", () => {
 
   test("should validate url field type", () => {
     const config = {
-      metadata: {
-        id: "test-app",
-        displayName: "Test App",
-        description: "A test application",
-        version: "1.0.0",
-      },
       businessConfig: {
         schema: [
           {
+            default: "https://example.com/webhook",
+            label: "Webhook URL",
             name: "webhookUrl",
             type: "url",
-            label: "Webhook URL",
-            default: "https://example.com/webhook",
           },
         ],
+      },
+      metadata: {
+        description: "A test application",
+        displayName: "Test App",
+        id: "test-app",
+        version: "1.0.0",
       },
     };
 
@@ -359,21 +360,21 @@ describe("validateConfig", () => {
 
   test("should validate tel field type", () => {
     const config = {
-      metadata: {
-        id: "test-app",
-        displayName: "Test App",
-        description: "A test application",
-        version: "1.0.0",
-      },
       businessConfig: {
         schema: [
           {
+            default: "+1-555-123-4567",
+            label: "Support Phone",
             name: "supportPhone",
             type: "tel",
-            label: "Support Phone",
-            default: "+1-555-123-4567",
           },
         ],
+      },
+      metadata: {
+        description: "A test application",
+        displayName: "Test App",
+        id: "test-app",
+        version: "1.0.0",
       },
     };
 
@@ -382,26 +383,26 @@ describe("validateConfig", () => {
 
   test("should validate list field with single selection", () => {
     const config = {
-      metadata: {
-        id: "test-app",
-        displayName: "Test App",
-        description: "A test application",
-        version: "1.0.0",
-      },
       businessConfig: {
         schema: [
           {
-            name: "environment",
-            type: "list",
+            default: "sandbox",
             label: "Environment",
-            selectionMode: "single",
+            name: "environment",
             options: [
               { label: "Production", value: "prod" },
               { label: "Sandbox", value: "sandbox" },
             ],
-            default: "sandbox",
+            selectionMode: "single",
+            type: "list",
           },
         ],
+      },
+      metadata: {
+        description: "A test application",
+        displayName: "Test App",
+        id: "test-app",
+        version: "1.0.0",
       },
     };
 
@@ -410,26 +411,26 @@ describe("validateConfig", () => {
 
   test("should validate list field with multiple selection", () => {
     const config = {
-      metadata: {
-        id: "test-app",
-        displayName: "Test App",
-        description: "A test application",
-        version: "1.0.0",
-      },
       businessConfig: {
         schema: [
           {
-            name: "features",
-            type: "list",
+            default: ["feature_a"],
             label: "Enabled Features",
-            selectionMode: "multiple",
+            name: "features",
             options: [
               { label: "Feature A", value: "feature_a" },
               { label: "Feature B", value: "feature_b" },
             ],
-            default: ["feature_a"],
+            selectionMode: "multiple",
+            type: "list",
           },
         ],
+      },
+      metadata: {
+        description: "A test application",
+        displayName: "Test App",
+        id: "test-app",
+        version: "1.0.0",
       },
     };
 
@@ -438,26 +439,26 @@ describe("validateConfig", () => {
 
   test("should throw when list field with single selection has array default", () => {
     const config = {
-      metadata: {
-        id: "test-app",
-        displayName: "Test App",
-        description: "A test application",
-        version: "1.0.0",
-      },
       businessConfig: {
         schema: [
           {
-            name: "environment",
-            type: "list",
+            default: ["sandbox"], // Should be string, not array
             label: "Environment",
-            selectionMode: "single",
+            name: "environment",
             options: [
               { label: "Production", value: "prod" },
               { label: "Sandbox", value: "sandbox" },
             ],
-            default: ["sandbox"], // Should be string, not array
+            selectionMode: "single",
+            type: "list",
           },
         ],
+      },
+      metadata: {
+        description: "A test application",
+        displayName: "Test App",
+        id: "test-app",
+        version: "1.0.0",
       },
     };
 
@@ -466,26 +467,26 @@ describe("validateConfig", () => {
 
   test("should throw when list field with multiple selection has string default", () => {
     const config = {
-      metadata: {
-        id: "test-app",
-        displayName: "Test App",
-        description: "A test application",
-        version: "1.0.0",
-      },
       businessConfig: {
         schema: [
           {
-            name: "features",
-            type: "list",
+            default: "feature_a", // Should be array, not string
             label: "Enabled Features",
-            selectionMode: "multiple",
+            name: "features",
             options: [
               { label: "Feature A", value: "feature_a" },
               { label: "Feature B", value: "feature_b" },
             ],
-            default: "feature_a", // Should be array, not string
+            selectionMode: "multiple",
+            type: "list",
           },
         ],
+      },
+      metadata: {
+        description: "A test application",
+        displayName: "Test App",
+        id: "test-app",
+        version: "1.0.0",
       },
     };
 
@@ -494,20 +495,20 @@ describe("validateConfig", () => {
 
   test("should throw when schema field is missing required name", () => {
     const config = {
-      metadata: {
-        id: "test-app",
-        displayName: "Test App",
-        description: "A test application",
-        version: "1.0.0",
-      },
       businessConfig: {
         schema: [
           {
-            type: "text",
             label: "Some Field",
+            type: "text",
             // Missing 'name'
           },
         ],
+      },
+      metadata: {
+        description: "A test application",
+        displayName: "Test App",
+        id: "test-app",
+        version: "1.0.0",
       },
     };
 
@@ -516,20 +517,20 @@ describe("validateConfig", () => {
 
   test("should throw when schema field is missing required type", () => {
     const config = {
-      metadata: {
-        id: "test-app",
-        displayName: "Test App",
-        description: "A test application",
-        version: "1.0.0",
-      },
       businessConfig: {
         schema: [
           {
-            name: "someField",
             label: "Some Field",
+            name: "someField",
             // Missing 'type'
           },
         ],
+      },
+      metadata: {
+        description: "A test application",
+        displayName: "Test App",
+        id: "test-app",
+        version: "1.0.0",
       },
     };
 
@@ -538,12 +539,6 @@ describe("validateConfig", () => {
 
   test("should accept schema field without optional label", () => {
     const config = {
-      metadata: {
-        id: "test-app",
-        displayName: "Test App",
-        description: "A test application",
-        version: "1.0.0",
-      },
       businessConfig: {
         schema: [
           {
@@ -553,6 +548,12 @@ describe("validateConfig", () => {
           },
         ],
       },
+      metadata: {
+        description: "A test application",
+        displayName: "Test App",
+        id: "test-app",
+        version: "1.0.0",
+      },
     };
 
     expect(() => validateCommerceAppConfig(config)).not.toThrow();
@@ -560,10 +561,10 @@ describe("validateConfig", () => {
 
   test("should validate config with eventing - commerce type", () => {
     const config = createCommerceEventConfig("plugin.order_placed", {
-      label: "Order Placed",
-      fields: [{ name: "order_id" }, { name: "customer_id" }],
-      runtimeActions: ["my-package/handle-order"],
       description: "Triggered when an order is placed",
+      fields: [{ name: "order_id" }, { name: "customer_id" }],
+      label: "Order Placed",
+      runtimeActions: ["my-package/handle-order"],
     });
 
     expect(() => validateCommerceAppConfig(config)).not.toThrow();
@@ -573,34 +574,34 @@ describe("validateConfig", () => {
 
   test("should preserve optional commerce event fields in validated output", () => {
     const config = {
-      metadata: {
-        id: "test-app",
-        displayName: "Test App",
-        description: "A test application",
-        version: "1.0.0",
-      },
       eventing: {
         commerce: [
           {
-            provider: {
-              label: "Commerce Events Provider",
-              description: "Provides commerce events",
-            },
             events: [
               {
-                name: "plugin.order_placed",
-                label: "Order Placed",
                 description: "Triggered when an order is placed",
-                fields: [{ name: "order_id" }],
-                runtimeActions: ["my-package/handle-order"],
-                hipaa_audit_required: true,
                 destination: "my-destination",
+                fields: [{ name: "order_id" }],
                 force: true,
+                hipaa_audit_required: true,
+                label: "Order Placed",
+                name: "plugin.order_placed",
                 priority: false,
+                runtimeActions: ["my-package/handle-order"],
               },
             ],
+            provider: {
+              description: "Provides commerce events",
+              label: "Commerce Events Provider",
+            },
           },
         ],
+      },
+      metadata: {
+        description: "A test application",
+        displayName: "Test App",
+        id: "test-app",
+        version: "1.0.0",
       },
     };
 
@@ -614,29 +615,29 @@ describe("validateConfig", () => {
 
   test("should validate config with eventing - external type", () => {
     const config = {
-      metadata: {
-        id: "test-app",
-        displayName: "Test App",
-        description: "A test application",
-        version: "1.0.0",
-      },
       eventing: {
         external: [
           {
-            provider: {
-              label: "External Events Provider",
-              description: "Provides external events",
-            },
             events: [
               {
-                name: "external_event",
-                label: "External Event",
                 description: "An external event",
+                label: "External Event",
+                name: "external_event",
                 runtimeActions: ["my-package/external-handler"],
               },
             ],
+            provider: {
+              description: "Provides external events",
+              label: "External Events Provider",
+            },
           },
         ],
+      },
+      metadata: {
+        description: "A test application",
+        displayName: "Test App",
+        id: "test-app",
+        version: "1.0.0",
       },
     };
 
@@ -647,46 +648,46 @@ describe("validateConfig", () => {
 
   test("should validate config with multiple event sources", () => {
     const config = {
-      metadata: {
-        id: "test-app",
-        displayName: "Test App",
-        description: "A test application",
-        version: "1.0.0",
-      },
       eventing: {
         commerce: [
           {
-            provider: {
-              label: "Commerce Provider",
-              description: "Commerce events",
-            },
             events: [
               {
-                name: "observer.catalog_update",
-                label: "Catalog Update",
-                fields: [{ name: "product_id" }],
-                runtimeActions: ["my-package/sync-catalog"],
                 description: "Catalog update event",
+                fields: [{ name: "product_id" }],
+                label: "Catalog Update",
+                name: "observer.catalog_update",
+                runtimeActions: ["my-package/sync-catalog"],
               },
             ],
+            provider: {
+              description: "Commerce events",
+              label: "Commerce Provider",
+            },
           },
         ],
         external: [
           {
-            provider: {
-              label: "External Provider",
-              description: "External events",
-            },
             events: [
               {
-                name: "webhook_received",
-                label: "Webhook Received",
                 description: "Webhook event received",
+                label: "Webhook Received",
+                name: "webhook_received",
                 runtimeActions: ["my-package/webhook-handler"],
               },
             ],
+            provider: {
+              description: "External events",
+              label: "External Provider",
+            },
           },
         ],
+      },
+      metadata: {
+        description: "A test application",
+        displayName: "Test App",
+        id: "test-app",
+        version: "1.0.0",
       },
     };
 
@@ -698,13 +699,13 @@ describe("validateConfig", () => {
 
   test("should validate config with empty eventing object", () => {
     const config = {
+      eventing: {},
       metadata: {
-        id: "test-app",
-        displayName: "Test App",
         description: "A test application",
+        displayName: "Test App",
+        id: "test-app",
         version: "1.0.0",
       },
-      eventing: {},
     };
 
     expect(() => validateCommerceAppConfig(config)).not.toThrow();
@@ -712,9 +713,9 @@ describe("validateConfig", () => {
 
   test("should throw when commerce event name does not have required prefix", () => {
     const config = createCommerceEventConfig("invalid_event", {
+      description: "Invalid event",
       // Missing plugin. or observer. prefix
       label: "Invalid Event",
-      description: "Invalid event",
     });
 
     expect(() => validateCommerceAppConfig(config)).toThrow();
@@ -744,28 +745,28 @@ describe("validateConfig", () => {
 
   test("should throw when provider label exceeds max length", () => {
     const config = {
-      metadata: {
-        id: "test-app",
-        displayName: "Test App",
-        description: "A test application",
-        version: "1.0.0",
-      },
       eventing: {
         external: [
           {
-            provider: {
-              label: "A".repeat(101), // Max is 100
-              description: "Provider description",
-            },
             events: [
               {
-                name: "event",
-                label: "Event",
                 description: "An event",
+                label: "Event",
+                name: "event",
               },
             ],
+            provider: {
+              description: "Provider description",
+              label: "A".repeat(101), // Max is 100
+            },
           },
         ],
+      },
+      metadata: {
+        description: "A test application",
+        displayName: "Test App",
+        id: "test-app",
+        version: "1.0.0",
       },
     };
 
@@ -774,28 +775,28 @@ describe("validateConfig", () => {
 
   test("should throw when provider description exceeds max length", () => {
     const config = {
-      metadata: {
-        id: "test-app",
-        displayName: "Test App",
-        description: "A test application",
-        version: "1.0.0",
-      },
       eventing: {
         external: [
           {
-            provider: {
-              label: "Provider",
-              description: "A".repeat(256), // Max is 255
-            },
             events: [
               {
-                name: "event",
-                label: "Event",
                 description: "An event",
+                label: "Event",
+                name: "event",
               },
             ],
+            provider: {
+              description: "A".repeat(256), // Max is 255
+              label: "Provider",
+            },
           },
         ],
+      },
+      metadata: {
+        description: "A test application",
+        displayName: "Test App",
+        id: "test-app",
+        version: "1.0.0",
       },
     };
 
@@ -804,30 +805,30 @@ describe("validateConfig", () => {
 
   test("should accept provider with optional key", () => {
     const config = {
-      metadata: {
-        id: "test-app",
-        displayName: "Test App",
-        description: "A test application",
-        version: "1.0.0",
-      },
       eventing: {
         external: [
           {
-            provider: {
-              label: "Provider",
-              description: "Provider description",
-              key: "my-provider-key",
-            },
             events: [
               {
-                name: "event",
-                label: "Event",
                 description: "An event",
+                label: "Event",
+                name: "event",
                 runtimeActions: ["my-package/event-handler"],
               },
             ],
+            provider: {
+              description: "Provider description",
+              key: "my-provider-key",
+              label: "Provider",
+            },
           },
         ],
+      },
+      metadata: {
+        description: "A test application",
+        displayName: "Test App",
+        id: "test-app",
+        version: "1.0.0",
       },
     };
 
@@ -836,29 +837,29 @@ describe("validateConfig", () => {
 
   test("should throw when provider key exceeds max length", () => {
     const config = {
-      metadata: {
-        id: "test-app",
-        displayName: "Test App",
-        description: "A test application",
-        version: "1.0.0",
-      },
       eventing: {
         external: [
           {
-            provider: {
-              label: "Provider",
-              description: "Provider description",
-              key: "A".repeat(51), // Max is 50
-            },
             events: [
               {
-                name: "event",
-                label: "Event",
                 description: "An event",
+                label: "Event",
+                name: "event",
               },
             ],
+            provider: {
+              description: "Provider description",
+              key: "A".repeat(51), // Max is 50
+              label: "Provider",
+            },
           },
         ],
+      },
+      metadata: {
+        description: "A test application",
+        displayName: "Test App",
+        id: "test-app",
+        version: "1.0.0",
       },
     };
 
@@ -867,29 +868,29 @@ describe("validateConfig", () => {
 
   test("should throw when provider label contains invalid characters", () => {
     const config = {
-      metadata: {
-        id: "test-app",
-        displayName: "Test App",
-        description: "A test application",
-        version: "1.0.0",
-      },
       eventing: {
         external: [
           {
-            provider: {
-              label: "Catalog & Sales Rules Events", // & is not a valid character
-              description: "Provider description",
-            },
             events: [
               {
-                name: "event",
-                label: "Event",
                 description: "An event",
+                label: "Event",
+                name: "event",
                 runtimeActions: ["my-package/event-handler"],
               },
             ],
+            provider: {
+              description: "Provider description",
+              label: "Catalog & Sales Rules Events", // & is not a valid character
+            },
           },
         ],
+      },
+      metadata: {
+        description: "A test application",
+        displayName: "Test App",
+        id: "test-app",
+        version: "1.0.0",
       },
     };
 
@@ -898,29 +899,29 @@ describe("validateConfig", () => {
 
   test("should throw when provider description contains invalid characters", () => {
     const config = {
-      metadata: {
-        id: "test-app",
-        displayName: "Test App",
-        description: "A test application",
-        version: "1.0.0",
-      },
       eventing: {
         external: [
           {
-            provider: {
-              label: "Provider",
-              description: "Events for <Commerce>", // < and > are not valid characters
-            },
             events: [
               {
-                name: "event",
-                label: "Event",
                 description: "An event",
+                label: "Event",
+                name: "event",
                 runtimeActions: ["my-package/event-handler"],
               },
             ],
+            provider: {
+              description: "Events for <Commerce>", // < and > are not valid characters
+              label: "Provider",
+            },
           },
         ],
+      },
+      metadata: {
+        description: "A test application",
+        displayName: "Test App",
+        id: "test-app",
+        version: "1.0.0",
       },
     };
 
@@ -929,29 +930,29 @@ describe("validateConfig", () => {
 
   test("should accept provider label with all valid special characters", () => {
     const config = {
-      metadata: {
-        id: "test-app",
-        displayName: "Test App",
-        description: "A test application",
-        version: "1.0.0",
-      },
       eventing: {
         external: [
           {
-            provider: {
-              label: "Events: (Commerce) v1.0, @Adobe / sales_rules-test.v2",
-              description: "Provider description",
-            },
             events: [
               {
-                name: "event",
-                label: "Event",
                 description: "An event",
+                label: "Event",
+                name: "event",
                 runtimeActions: ["my-package/event-handler"],
               },
             ],
+            provider: {
+              description: "Provider description",
+              label: "Events: (Commerce) v1.0, @Adobe / sales_rules-test.v2",
+            },
           },
         ],
+      },
+      metadata: {
+        description: "A test application",
+        displayName: "Test App",
+        id: "test-app",
+        version: "1.0.0",
       },
     };
 
@@ -960,39 +961,39 @@ describe("validateConfig", () => {
 
   test("should throw when two commerce providers share the same label", () => {
     const config = {
-      metadata: {
-        id: "test-app",
-        displayName: "Test App",
-        description: "A test application",
-        version: "1.0.0",
-      },
       eventing: {
         commerce: [
           {
-            provider: { label: "Order Events", description: "First provider" },
             events: [
               {
-                name: "plugin.order_placed",
-                label: "Order Placed",
-                fields: [{ name: "order_id" }],
-                runtimeActions: ["my-package/handle-order"],
                 description: "An event",
+                fields: [{ name: "order_id" }],
+                label: "Order Placed",
+                name: "plugin.order_placed",
+                runtimeActions: ["my-package/handle-order"],
               },
             ],
+            provider: { description: "First provider", label: "Order Events" },
           },
           {
-            provider: { label: "Order Events", description: "Second provider" },
             events: [
               {
-                name: "plugin.order_cancelled",
-                label: "Order Cancelled",
-                fields: [{ name: "order_id" }],
-                runtimeActions: ["my-package/handle-order"],
                 description: "An event",
+                fields: [{ name: "order_id" }],
+                label: "Order Cancelled",
+                name: "plugin.order_cancelled",
+                runtimeActions: ["my-package/handle-order"],
               },
             ],
+            provider: { description: "Second provider", label: "Order Events" },
           },
         ],
+      },
+      metadata: {
+        description: "A test application",
+        displayName: "Test App",
+        id: "test-app",
+        version: "1.0.0",
       },
     };
 
@@ -1001,43 +1002,43 @@ describe("validateConfig", () => {
 
   test("should throw when two external providers share the same label", () => {
     const config = {
-      metadata: {
-        id: "test-app",
-        displayName: "Test App",
-        description: "A test application",
-        version: "1.0.0",
-      },
       eventing: {
         external: [
           {
-            provider: {
-              label: "External Events",
-              description: "First provider",
-            },
             events: [
               {
-                name: "event_one",
-                label: "Event One",
                 description: "An event",
+                label: "Event One",
+                name: "event_one",
                 runtimeActions: ["my-package/handle-event"],
               },
             ],
+            provider: {
+              description: "First provider",
+              label: "External Events",
+            },
           },
           {
-            provider: {
-              label: "External Events",
-              description: "Second provider",
-            },
             events: [
               {
-                name: "event_two",
-                label: "Event Two",
                 description: "An event",
+                label: "Event Two",
+                name: "event_two",
                 runtimeActions: ["my-package/handle-event"],
               },
             ],
+            provider: {
+              description: "Second provider",
+              label: "External Events",
+            },
           },
         ],
+      },
+      metadata: {
+        description: "A test application",
+        displayName: "Test App",
+        id: "test-app",
+        version: "1.0.0",
       },
     };
 
@@ -1054,26 +1055,26 @@ describe("validateConfig", () => {
 
   test("should throw when commerce event source is missing provider", () => {
     const config = {
-      metadata: {
-        id: "test-app",
-        displayName: "Test App",
-        description: "A test application",
-        version: "1.0.0",
-      },
       eventing: {
         commerce: [
           {
             // Missing provider
             events: [
               {
-                name: "plugin.my_event",
-                fields: [{ name: "field" }],
-                runtimeAction: "my-package/action",
                 description: "Event description",
+                fields: [{ name: "field" }],
+                name: "plugin.my_event",
+                runtimeAction: "my-package/action",
               },
             ],
           },
         ],
+      },
+      metadata: {
+        description: "A test application",
+        displayName: "Test App",
+        id: "test-app",
+        version: "1.0.0",
       },
     };
 
@@ -1098,18 +1099,18 @@ describe("validateConfig", () => {
         ...base.eventing,
         external: [
           {
-            provider: {
-              label: "External Provider",
-              description: "External events",
-            },
             events: [
               {
-                name: "external_event",
-                label: "External Event",
                 description: "An external event",
+                label: "External Event",
+                name: "external_event",
                 runtimeActions,
               },
             ],
+            provider: {
+              description: "External events",
+              label: "External Provider",
+            },
           },
         ],
       },
@@ -1139,9 +1140,9 @@ describe("validateConfig", () => {
 describe("validateConfigDomain", () => {
   test("should validate metadata domain", () => {
     const metadata = {
-      id: "test-app",
-      displayName: "Test App",
       description: "A test application",
+      displayName: "Test App",
+      id: "test-app",
       version: "1.0.0",
     };
 
@@ -1154,9 +1155,9 @@ describe("validateConfigDomain", () => {
 
   test("should throw when validating invalid metadata domain", () => {
     const metadata = {
-      id: "test app!", // Invalid characters
-      displayName: "Test App",
       description: "A test application",
+      displayName: "Test App",
+      id: "test app!", // Invalid characters
       version: "1.0.0",
     };
 
@@ -1202,15 +1203,15 @@ describe("validateConfigDomain", () => {
         type: "text",
       },
       {
-        name: "environment",
-        type: "list",
+        default: "sandbox",
         label: "Environment",
-        selectionMode: "single",
+        name: "environment",
         options: [
           { label: "Production", value: "prod" },
           { label: "Sandbox", value: "sandbox" },
         ],
-        default: "sandbox",
+        selectionMode: "single",
+        type: "list",
       },
     ];
 
@@ -1250,19 +1251,19 @@ describe("validateConfigDomain", () => {
     const eventing = {
       commerce: [
         {
-          provider: {
-            label: "My Commerce Provider",
-            description: "Provider for commerce events",
-          },
           events: [
             {
-              name: "plugin.my_event",
-              label: "My Event",
-              fields: [{ name: "field_one" }, { name: "field_two" }],
-              runtimeActions: ["my-package/my-action"],
               description: "My commerce event",
+              fields: [{ name: "field_one" }, { name: "field_two" }],
+              label: "My Event",
+              name: "plugin.my_event",
+              runtimeActions: ["my-package/my-action"],
             },
           ],
+          provider: {
+            description: "Provider for commerce events",
+            label: "My Commerce Provider",
+          },
         },
       ],
     };
@@ -1276,18 +1277,18 @@ describe("validateConfigDomain", () => {
     const eventing = {
       external: [
         {
-          provider: {
-            label: "External Provider",
-            description: "Provider for external events",
-          },
           events: [
             {
-              name: "external_event",
-              label: "External Event",
               description: "An external event",
+              label: "External Event",
+              name: "external_event",
               runtimeActions: ["my-package/external-handler"],
             },
           ],
+          provider: {
+            description: "Provider for external events",
+            label: "External Provider",
+          },
         },
       ],
     };
@@ -1307,25 +1308,25 @@ describe("validateConfigDomain", () => {
 
   describe("webhooks domain", () => {
     const baseWebhookDefinition = {
-      webhook_method: "observer.catalog_product_save_after",
-      webhook_type: "after",
       batch_name: "my_batch",
       hook_name: "my_hook",
       method: "POST",
+      webhook_method: "observer.catalog_product_save_after",
+      webhook_type: "after",
     };
 
     const baseWebhookEntry = {
-      label: "Test Webhook",
-      description: "A test webhook",
       category: "append",
+      description: "A test webhook",
+      label: "Test Webhook",
     };
 
     test("should accept entry with runtimeAction and no url", () => {
       const config = {
         metadata: {
-          id: "test-app",
-          displayName: "Test",
           description: "Test",
+          displayName: "Test",
+          id: "test-app",
           version: "1.0.0",
         },
         webhooks: [
@@ -1343,9 +1344,9 @@ describe("validateConfigDomain", () => {
     test("should accept entry with url and no runtimeAction", () => {
       const config = {
         metadata: {
-          id: "test-app",
-          displayName: "Test",
           description: "Test",
+          displayName: "Test",
+          id: "test-app",
           version: "1.0.0",
         },
         webhooks: [
@@ -1365,9 +1366,9 @@ describe("validateConfigDomain", () => {
     test("should reject entry with neither runtimeAction nor url", () => {
       const config = {
         metadata: {
-          id: "test-app",
-          displayName: "Test",
           description: "Test",
+          displayName: "Test",
+          id: "test-app",
           version: "1.0.0",
         },
         webhooks: [
@@ -1384,9 +1385,9 @@ describe("validateConfigDomain", () => {
     test("should accept batch_name and hook_name with only alphanumeric and underscore characters", () => {
       const config = {
         metadata: {
-          id: "test-app",
-          displayName: "Test",
           description: "Test",
+          displayName: "Test",
+          id: "test-app",
           version: "1.0.0",
         },
         webhooks: [
@@ -1408,9 +1409,9 @@ describe("validateConfigDomain", () => {
     test("should reject batch_name containing invalid characters", () => {
       const config = {
         metadata: {
-          id: "test-app",
-          displayName: "Test",
           description: "Test",
+          displayName: "Test",
+          id: "test-app",
           version: "1.0.0",
         },
         webhooks: [
@@ -1431,9 +1432,9 @@ describe("validateConfigDomain", () => {
     test("should reject hook_name containing invalid characters", () => {
       const config = {
         metadata: {
-          id: "test-app",
-          displayName: "Test",
           description: "Test",
+          displayName: "Test",
+          id: "test-app",
           version: "1.0.0",
         },
         webhooks: [
@@ -1451,39 +1452,38 @@ describe("validateConfigDomain", () => {
       expect(() => validateCommerceAppConfig(config)).toThrow();
     });
 
-    test.each([
-      ["paas"],
-      ["saas"],
-      ["paas", "saas"],
-    ])("should accept entry scoped to env %j", (...env) => {
-      const config = {
-        metadata: {
-          id: "test-app",
-          displayName: "Test",
-          description: "Test",
-          version: "1.0.0",
-        },
-        webhooks: [
-          {
-            ...baseWebhookEntry,
-            env,
-            runtimeAction: "my-package/handle-webhook",
-            webhook: baseWebhookDefinition,
+    test.each([["paas"], ["saas"], ["paas", "saas"]])(
+      "should accept entry scoped to env %j",
+      (...env) => {
+        const config = {
+          metadata: {
+            description: "Test",
+            displayName: "Test",
+            id: "test-app",
+            version: "1.0.0",
           },
-        ],
-      };
+          webhooks: [
+            {
+              ...baseWebhookEntry,
+              env,
+              runtimeAction: "my-package/handle-webhook",
+              webhook: baseWebhookDefinition,
+            },
+          ],
+        };
 
-      expect(() => validateCommerceAppConfig(config)).not.toThrow();
-      const validated = validateCommerceAppConfig(config);
-      expect(validated.webhooks?.[0]?.env).toEqual(env);
-    });
+        expect(() => validateCommerceAppConfig(config)).not.toThrow();
+        const validated = validateCommerceAppConfig(config);
+        expect(validated.webhooks?.[0]?.env).toEqual(env);
+      },
+    );
 
     test("should reject an empty env array", () => {
       const config = {
         metadata: {
-          id: "test-app",
-          displayName: "Test",
           description: "Test",
+          displayName: "Test",
+          id: "test-app",
           version: "1.0.0",
         },
         webhooks: [
@@ -1502,9 +1502,9 @@ describe("validateConfigDomain", () => {
     test("should reject an unknown env value", () => {
       const config = {
         metadata: {
-          id: "test-app",
-          displayName: "Test",
           description: "Test",
+          displayName: "Test",
+          id: "test-app",
           version: "1.0.0",
         },
         webhooks: [
@@ -1549,23 +1549,12 @@ describe("validateConfigDomain", () => {
 
   test("should validate commerce event with fields that have optional source", () => {
     const config = {
-      metadata: {
-        id: "test-app",
-        displayName: "Test App",
-        description: "A test application",
-        version: "1.0.0",
-      },
       eventing: {
         commerce: [
           {
-            provider: {
-              label: "Commerce Provider",
-              description: "Commerce events",
-            },
             events: [
               {
-                name: "observer.catalog_update",
-                label: "Catalog Update",
+                description: "Catalog update event",
                 fields: [
                   { name: "price" },
                   { name: "_origData" },
@@ -1574,12 +1563,23 @@ describe("validateConfigDomain", () => {
                     source: "context_checkout_session.get_quote.get_id",
                   },
                 ],
+                label: "Catalog Update",
+                name: "observer.catalog_update",
                 runtimeActions: ["my-package/sync-catalog"],
-                description: "Catalog update event",
               },
             ],
+            provider: {
+              description: "Commerce events",
+              label: "Commerce Provider",
+            },
           },
         ],
+      },
+      metadata: {
+        description: "A test application",
+        displayName: "Test App",
+        id: "test-app",
+        version: "1.0.0",
       },
     };
 

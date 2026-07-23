@@ -17,8 +17,8 @@ vi.mock("consola");
 vi.mock("#utils/logger", () => ({
   getLogger: vi.fn(() => ({
     debug: vi.fn(),
+    error: vi.fn(),
     info: vi.fn(),
     warn: vi.fn(),
-    error: vi.fn(),
   })),
 }));

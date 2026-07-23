@@ -22,10 +22,10 @@ describe("lib/io-events/helpers", () => {
       const params = {
         AIO_COMMERCE_AUTH_IMS_CLIENT_ID: "test-client-id",
         AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS: ["supersecret"],
-        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID: "test-technical-account-id",
-        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL: "test-email@example.com",
         AIO_COMMERCE_AUTH_IMS_ORG_ID: "test-org-id",
         AIO_COMMERCE_AUTH_IMS_SCOPES: ["scope1", "scope2"],
+        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL: "test-email@example.com",
+        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID: "test-technical-account-id",
       };
 
       const result = resolveIoEventsHttpClientParams(params);
@@ -38,13 +38,13 @@ describe("lib/io-events/helpers", () => {
 
     test("should resolve IO Events params with custom base URL", () => {
       const params = {
-        AIO_EVENTS_API_BASE_URL: "https://custom-events.adobe.io",
         AIO_COMMERCE_AUTH_IMS_CLIENT_ID: "test-client-id",
         AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS: ["supersecret"],
-        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID: "test-technical-account-id",
-        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL: "test-email@example.com",
         AIO_COMMERCE_AUTH_IMS_ORG_ID: "test-org-id",
         AIO_COMMERCE_AUTH_IMS_SCOPES: ["scope1", "scope2"],
+        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL: "test-email@example.com",
+        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID: "test-technical-account-id",
+        AIO_EVENTS_API_BASE_URL: "https://custom-events.adobe.io",
       };
 
       const result = resolveIoEventsHttpClientParams(params);
@@ -57,23 +57,23 @@ describe("lib/io-events/helpers", () => {
 
     test("should resolve IO Events params with all optional IMS fields", () => {
       const params = {
-        AIO_EVENTS_API_BASE_URL: "https://events.adobe.io",
         AIO_COMMERCE_AUTH_IMS_CLIENT_ID: "test-client-id",
         AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS: ["supersecret"],
-        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID: "test-technical-account-id",
-        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL: "test-email@example.com",
+        AIO_COMMERCE_AUTH_IMS_CONTEXT: "test-context",
+        AIO_COMMERCE_AUTH_IMS_ENVIRONMENT: "prod",
         AIO_COMMERCE_AUTH_IMS_ORG_ID: "test-org-id",
         AIO_COMMERCE_AUTH_IMS_SCOPES: ["scope1", "scope2"],
-        AIO_COMMERCE_AUTH_IMS_ENVIRONMENT: "prod",
-        AIO_COMMERCE_AUTH_IMS_CONTEXT: "test-context",
+        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL: "test-email@example.com",
+        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID: "test-technical-account-id",
+        AIO_EVENTS_API_BASE_URL: "https://events.adobe.io",
       };
 
       const result = resolveIoEventsHttpClientParams(params);
 
       expect(result.auth).toMatchObject({
         clientId: "test-client-id",
-        environment: "prod",
         context: "test-context",
+        environment: "prod",
       });
       expect(result.config?.baseUrl).toBe("https://events.adobe.io");
     });
@@ -99,13 +99,13 @@ describe("lib/io-events/helpers", () => {
 
     test("should handle empty string base URL correctly", () => {
       const params = {
-        AIO_EVENTS_API_BASE_URL: "",
         AIO_COMMERCE_AUTH_IMS_CLIENT_ID: "test-client-id",
         AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS: ["supersecret"],
-        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID: "test-technical-account-id",
-        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL: "test-email@example.com",
         AIO_COMMERCE_AUTH_IMS_ORG_ID: "test-org-id",
         AIO_COMMERCE_AUTH_IMS_SCOPES: ["scope1", "scope2"],
+        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL: "test-email@example.com",
+        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID: "test-technical-account-id",
+        AIO_EVENTS_API_BASE_URL: "",
       };
 
       const result = resolveIoEventsHttpClientParams(params);
@@ -116,8 +116,8 @@ describe("lib/io-events/helpers", () => {
 
     test("should resolve IO Events params with forwarded IMS auth token when tryForwardAuthProvider is true", () => {
       const params = {
-        AIO_COMMERCE_AUTH_IMS_TOKEN: "forwarded-token",
         AIO_COMMERCE_AUTH_IMS_API_KEY: "forwarded-api-key",
+        AIO_COMMERCE_AUTH_IMS_TOKEN: "forwarded-token",
       };
 
       const result = resolveIoEventsHttpClientParams(params, {
@@ -131,8 +131,8 @@ describe("lib/io-events/helpers", () => {
 
     test("should resolve IO Events params with forwarded IMS auth token and custom base URL", () => {
       const params = {
-        AIO_EVENTS_API_BASE_URL: "https://custom-events.adobe.io",
         AIO_COMMERCE_AUTH_IMS_TOKEN: "forwarded-token",
+        AIO_EVENTS_API_BASE_URL: "https://custom-events.adobe.io",
       };
 
       const result = resolveIoEventsHttpClientParams(params, {
@@ -145,13 +145,13 @@ describe("lib/io-events/helpers", () => {
 
     test("should use forwarded IMS auth when tryForwardAuthProvider is true even with full IMS params", () => {
       const params = {
-        AIO_COMMERCE_AUTH_IMS_TOKEN: "forwarded-token",
         AIO_COMMERCE_AUTH_IMS_CLIENT_ID: "test-client-id",
         AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS: ["supersecret"],
-        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID: "test-technical-account-id",
-        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL: "test-email@example.com",
         AIO_COMMERCE_AUTH_IMS_ORG_ID: "test-org-id",
         AIO_COMMERCE_AUTH_IMS_SCOPES: ["scope1", "scope2"],
+        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL: "test-email@example.com",
+        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID: "test-technical-account-id",
+        AIO_COMMERCE_AUTH_IMS_TOKEN: "forwarded-token",
       };
 
       const result = resolveIoEventsHttpClientParams(params, {
@@ -165,13 +165,13 @@ describe("lib/io-events/helpers", () => {
 
     test("should use full IMS params by default even when forwarded token is present", () => {
       const params = {
-        AIO_COMMERCE_AUTH_IMS_TOKEN: "forwarded-token",
         AIO_COMMERCE_AUTH_IMS_CLIENT_ID: "test-client-id",
         AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS: ["supersecret"],
-        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID: "test-technical-account-id",
-        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL: "test-email@example.com",
         AIO_COMMERCE_AUTH_IMS_ORG_ID: "test-org-id",
         AIO_COMMERCE_AUTH_IMS_SCOPES: ["scope1", "scope2"],
+        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL: "test-email@example.com",
+        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID: "test-technical-account-id",
+        AIO_COMMERCE_AUTH_IMS_TOKEN: "forwarded-token",
       };
 
       const result = resolveIoEventsHttpClientParams(params);
@@ -183,8 +183,8 @@ describe("lib/io-events/helpers", () => {
 
     test("forwarded IMS auth provider should return correct token and headers", () => {
       const params = {
-        AIO_COMMERCE_AUTH_IMS_TOKEN: "my-forwarded-token",
         AIO_COMMERCE_AUTH_IMS_API_KEY: "my-api-key",
+        AIO_COMMERCE_AUTH_IMS_TOKEN: "my-forwarded-token",
       };
 
       const result = resolveIoEventsHttpClientParams(params, {
@@ -217,11 +217,11 @@ describe("lib/io-events/helpers", () => {
 
     test("should throw error when Integration auth is used", () => {
       const params = {
-        AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_KEY: "test-consumer-key",
-        AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_SECRET: "test-consumer-secret",
         AIO_COMMERCE_AUTH_INTEGRATION_ACCESS_TOKEN: "test-access-token",
         AIO_COMMERCE_AUTH_INTEGRATION_ACCESS_TOKEN_SECRET:
           "test-access-token-secret",
+        AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_KEY: "test-consumer-key",
+        AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_SECRET: "test-consumer-secret",
       };
 
       expect(() => {

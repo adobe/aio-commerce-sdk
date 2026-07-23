@@ -67,13 +67,13 @@ describe.concurrent("app schema helpers", () => {
       { config: configWithBusinessConfig, name: "business config" },
       {
         config: {
-          metadata: { ...mockMetadata, id: "test-app-installation-messages" },
           installation: {
             messages: {
-              preInstallation: "Preparing to install",
               postInstallation: "Installation complete",
+              preInstallation: "Preparing to install",
             },
           },
+          metadata: { ...mockMetadata, id: "test-app-installation-messages" },
         } satisfies CommerceAppConfigOutputModel,
         name: "installation messages without custom steps",
       },

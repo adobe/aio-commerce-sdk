@@ -11,19 +11,41 @@
  */
 
 import { baseConfig } from "@aio-commerce-sdk/config-vitest/vitest.config.base";
-import { defineConfig, mergeConfig } from "vitest/config";
+import { playwright } from "@vitest/browser-playwright";
+import { mergeConfig } from "vitest/config";
 
-const BARREL_FILES = ["./source/index.ts"];
-
-export default mergeConfig(
-  baseConfig,
-  defineConfig({
-    plugins: [],
-    test: {
-      passWithNoTests: true,
-      coverage: {
-        exclude: [...BARREL_FILES, "./source/**/types.ts"],
-      },
+export default mergeConfig(baseConfig, {
+  test: {
+    coverage: {
+      exclude: [
+        "./source/**/index.ts",
+        "./source/**/types.ts",
+        "./source/web/runtime-loader.ts",
+      ],
     },
-  }),
-);
+    passWithNoTests: true,
+    projects: [
+      {
+        extends: true,
+        test: {
+          exclude: ["test/unit/web/react/**"],
+          include: ["test/unit/**/*.test.{ts,tsx}"],
+          name: "node",
+        },
+      },
+      {
+        extends: true,
+        test: {
+          browser: {
+            enabled: true,
+            headless: true,
+            instances: [{ browser: "chromium" }],
+            provider: playwright(),
+          },
+          include: ["test/unit/web/react/**/*.test.{ts,tsx}"],
+          name: "browser",
+        },
+      },
+    ],
+  },
+});

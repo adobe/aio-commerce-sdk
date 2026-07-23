@@ -17,10 +17,6 @@ import { requiresInstallationFromDomains } from "#config/schema/app";
 import type AioLogger from "@adobe/aio-lib-core-logging";
 import type { CommerceAppConfigDomain } from "#config/schema/domains";
 
-// __PKG_VERSION__ and __OPENAPI_VERSION__ are injected and replaced at build time.
-declare const __PKG_VERSION__: string;
-declare const __OPENAPI_VERSION__: string;
-
 /**
  * Loads the committed OpenAPI spec via dynamic import so it
  * lands in its own chunk and is not parsed on every cold start.
@@ -96,7 +92,7 @@ function pruneUnusedTags(spec: OpenApiSpec) {
     }
   }
 
-  for (let i = spec.tags.length - 1; i >= 0; i--) {
+  for (let i = spec.tags.length - 1; i >= 0; i -= 1) {
     if (!usedTags.has(spec.tags[i].name)) {
       spec.tags.splice(i, 1);
     }

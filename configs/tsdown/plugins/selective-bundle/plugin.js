@@ -54,6 +54,12 @@ export function selectiveBundlePlugin() {
   const privatePkgNames = new Set(PRIVATE_PACKAGES_INFO.map((pkg) => pkg.name));
 
   return {
+    generateBundle(_options, bundle) {
+      const manifest = buildManifest(bundle, externalizedByPlugin);
+      const pkg = buildEnrichedPackageJson(packageRoot, manifest);
+
+      writeBuildArtifacts(buildDir, manifest, pkg);
+    },
     name: "rolldown-plugin-selective-bundle-externals",
 
     resolveId(source, importer) {
@@ -84,14 +90,7 @@ export function selectiveBundlePlugin() {
 
       // Third-party dep from inside a private package — externalize
       externalizedByPlugin.add(bare);
-      return { id: source, external: true };
-    },
-
-    generateBundle(_options, bundle) {
-      const manifest = buildManifest(bundle, externalizedByPlugin);
-      const pkg = buildEnrichedPackageJson(packageRoot, manifest);
-
-      writeBuildArtifacts(buildDir, manifest, pkg);
+      return { external: true, id: source };
     },
   };
 }

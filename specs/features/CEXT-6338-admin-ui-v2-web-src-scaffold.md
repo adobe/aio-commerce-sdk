@@ -2,7 +2,7 @@
 
 - **Ticket:** [CEXT-6338](https://jira.corp.adobe.com/browse/CEXT-6338)
 - **Created:** 2026-06-10
-- [ ] **Implemented**
+- [x] **Implemented**
 
 ## Summary
 
@@ -112,12 +112,17 @@ web-src/
     pages/
       main-page.jsx
     components/
+      welcome.jsx
 ```
+
+When the app config is TypeScript (e.g. `app.commerce.config.ts`), the same tree is generated with
+`.tsx` files instead of `.jsx`, plus a `web-src/tsconfig.json`.
 
 Every generated file is owned by the developer from the moment it lands. The SDK generates the
 scaffold once — when the resolved `view` entrypoint does not yet exist — and never overwrites or
 regenerates anything afterwards. Developers are free to edit any file, including `app.jsx`;
-`src/components/` starts empty as the conventional home for shared UI primitives.
+`src/components/` is the conventional home for shared UI primitives and starts with a single
+`welcome.jsx` placeholder component.
 
 `app.jsx` is the Parcel entry point and the equivalent of `App.js` in the raw Commerce sample. It
 reads `metadata.id` from `#app.commerce.config`, imports `MainPage`, and delegates all shell wiring
@@ -129,16 +134,16 @@ import { MainPage } from "./pages/main-page";
 import config from "#app.commerce.config";
 
 createExtensionApp({
-  extensionId: config.metadata.id,
+  metadata: { extensionId: config.metadata.id },
   routes: [{ index: true, element: <MainPage /> }],
 });
 ```
 
 `createExtensionApp` handles all the wiring that `App.js` previously owned in the raw Commerce
-sample: the `HashRouter`, Spectrum 2 `Provider`, `ErrorBoundary` with a default fallback, UIX
-`register()` call, and the `runtime.on('configuration')` and `runtime.on('history')` EC shell
-event handlers. The generated `routes` array starts with `MainPage` as the index route; developers
-extend it inline when adding paths for additional mass actions:
+sample: a hash-based router, the Spectrum 2 `Provider`, a default error boundary, the UIX guest
+registration, and the Experience Cloud shell runtime wiring (configuration and navigation events).
+The generated `routes` array starts with `MainPage` as the index route; developers extend it inline
+when adding paths for additional mass actions:
 
 ```jsx
 import { createExtensionApp } from "@adobe/aio-commerce-lib-admin-ui/web";
@@ -148,7 +153,7 @@ import { ArchivePage } from "./pages/archive-page";
 import config from "#app.commerce.config";
 
 createExtensionApp({
-  extensionId: config.metadata.id,
+  metadata: { extensionId: config.metadata.id },
   routes: [
     { index: true, element: <MainPage /> },
     { path: "bulk-cancel", element: <BulkCancelPage /> },
@@ -161,16 +166,21 @@ Each `path` here corresponds to the hash fragment declared in `app.commerce.conf
 example `path: "#/bulk-cancel"` maps to the `"bulk-cancel"` route above. `BulkCancelPage` and
 `ArchivePage` are additional user-created components.
 
-`pages/main-page.jsx` is the starting point for all custom UI. It is pre-wired with
-`useSharedContext` so context values are immediately available:
+`pages/main-page.jsx` is the starting point for all custom UI. It renders the `Welcome` component
+from `components/welcome.jsx`, which demonstrates `useIms` so the host-provided IMS credentials are
+available from the start:
 
 ```jsx
-import { useSharedContext } from "@adobe/aio-commerce-lib-admin-ui/web";
-import { View } from "@react-spectrum/s2";
+import { useIms } from "@adobe/aio-commerce-lib-admin-ui/web";
 
-export function MainPage() {
-  const { extensionId, imsToken, imsOrgId } = useSharedContext();
-  return <View>{/* Add your UI here */}</View>;
+export function Welcome() {
+  const { imsOrgId } = useIms();
+  return (
+    <>
+      <h1>Welcome to your Adobe Commerce App</h1>
+      <p>Your IMS Org ID is {imsOrgId}</p>
+    </>
+  );
 }
 ```
 
@@ -184,34 +194,45 @@ nothing.
 
 ### `@adobe/aio-commerce-lib-admin-ui/web`
 
-A new `./web` entrypoint is added to `@adobe/aio-commerce-lib-admin-ui`. It exports two browser-
-side utilities that encapsulate the EC shell and UIX guest boilerplate:
+A new `./web` entrypoint is added to `@adobe/aio-commerce-lib-admin-ui`. It exports browser-side
+utilities that encapsulate the EC shell and UIX guest boilerplate:
 
-**`createExtensionApp({ extensionId, routes })`** — replaces the entire `index.js` +
+**`createExtensionApp({ metadata, routes, root? })`** — replaces the entire `index.js` +
 `exc-runtime.js` + `App.js` + `ExtensionRegistration.js` quad from the raw Commerce sample. It
 handles the EC runtime loading internally via `@adobe/exc-app`, bootstraps the shell with a
-fallback to a mock runtime for local development, mounts a `HashRouter` with a Spectrum 2
-`Provider` and a default `ErrorBoundary`, registers `runtime.on('configuration')` and
-`runtime.on('history')` EC shell event handlers, and calls `register()` from `@adobe/uix-guest`
-with the given `extensionId`. The `routes` array follows the React Router v6 route object format
-and is rendered inside the router — the index route is typically the main page component. Because
-the scaffold is fully developer-owned, apps that want a different routing setup edit `app.jsx`
-directly: drop the `routes` array, mount their own router, or render a single root component.
+fallback to a mock runtime for local development, mounts a hash-based router with a Spectrum 2
+`Provider` and a default error boundary, wires the Experience Cloud shell runtime (configuration and
+navigation events), and calls `register()` from `@adobe/uix-guest` with the extension ID. The
+`metadata` object carries the `extensionId`; the optional `root` overrides the mount element, which
+defaults to `#root`. The `routes` array follows a standard route object
+format — an index route plus optional path routes — and is rendered inside the router, with the
+index route typically being the main page component. Because the scaffold is fully developer-owned,
+apps that want a different routing setup edit `app.jsx` directly: drop the `routes` array, mount
+their own router, or render a single root component.
 
-**`useSharedContext()`** — a React hook that calls `attach()` from `@adobe/uix-guest` using the
-extension ID set by `createExtensionApp` via internal context, and returns
-`{ extensionId, imsToken, imsOrgId }`. `extensionId` is available synchronously; `imsToken` and
-`imsOrgId` are `null` until the shared context connection is established. Must be called inside a
+The entrypoint also exposes React hooks for reading host-provided context inside a rendered route.
+**`useIms()`** returns the IMS credentials `{ imsToken, imsOrgId }`, available in both the Commerce
+Admin and the Experience Cloud shell (it throws when the app runs standalone, outside any host).
+**`useSharedContext()`** returns the Commerce shared context (`{ extensionId, sharedContext, host }`)
+provided by the UIX host (it throws when used outside the Commerce Admin). While the connection to
+the host is still being established, `createExtensionApp` suspends the rendered route via `Suspense`
+instead of surfacing a connecting state through the hook, so consumers only ever observe a resolved
+context. **`useCommerce()`** returns `{ commerceHost }`, the domain of the Commerce Admin the
+extension is embedded in, resolved once over the guest connection and cached per extension
+(available on every Commerce extension point; it throws when used outside the Commerce Admin, same
+as `useSharedContext()`). Extension-point-specific helpers — `useMassActionContext`,
+`useOrderViewButtonContext`, and `useHostConnection` — build on these to expose the selected row
+IDs, the order ID, and host-frame actions (closing the iframe). All hooks must be called inside a
 component tree rendered by `createExtensionApp`.
 
-The `/web` entrypoint requires React and `@react-spectrum/s2` at runtime, but they are deliberately
-**not** declared as `peerDependencies` of `lib-admin-ui`. The package exposes several entrypoints
-and most consumers never touch `/web`; declaring React and Spectrum 2 as peers would impose that
-requirement (and the peer warnings that come with it) on every consumer regardless of which
-entrypoint they actually use. Instead, the SDK pins the exact versions the `/web` entrypoint expects
-and installs them into the app during scaffolding — the same approach the `init` workflow already
-uses for its pinned dependencies. `@adobe/uix-guest` and `@adobe/exc-app` are regular
-`dependencies` of `lib-admin-ui`: apps never import them directly.
+The `/web` entrypoint requires React (`react`, `react-dom`) and `@react-spectrum/s2` at runtime.
+These are declared as **optional** `peerDependencies` of `lib-admin-ui`: the package exposes several
+entrypoints and most consumers never touch `/web`, so marking the peers optional expresses the
+version expectation for `/web` consumers without imposing the requirement (and the peer warnings
+that come with it) on consumers of other entrypoints. The SDK still pins the exact versions the
+`/web` entrypoint expects and installs them into the app during scaffolding — the same approach the
+`init` workflow already uses for its pinned dependencies. `@adobe/uix-guest` and `@adobe/exc-app`
+are regular `dependencies` of `lib-admin-ui`: apps never import them directly.
 
 After copying the scaffold files, `generateWebSrc` installs the pinned `/web` dependencies (React
 and `@react-spectrum/s2`) into the app: it checks which are absent from the app's `package.json`
@@ -247,8 +268,19 @@ their own entrypoint — a custom React setup, a different framework, or a hand-
 is detected and left entirely untouched, because the SDK only generates when the entrypoint is
 absent and never overwrites.
 
-All files are static copies from the package's template directory — no interpolation is needed
-because `app.jsx` reads `metadata.id` from `#app.commerce.config` at runtime.
+Files are copied from the package's template directory with minimal processing: the `<title>` of
+`index.html` is interpolated with the app title, and everything else is copied verbatim — no
+per-app values need to be baked into the sources because `app.jsx` reads `metadata.id` from
+`#app.commerce.config` at runtime.
+
+The scaffold adapts to the app's language. When the commerce app config file is TypeScript (`.ts`,
+`.mts`, or `.cts`), the `.jsx` templates are emitted as `.tsx` (with `.jsx` import specifiers
+inside the copied files rewritten to `.tsx`), a `tsconfig.json` is written at the `web-src/` root
+so the scaffold type-checks out of the box, and the TypeScript dev dependencies (`typescript`,
+`@tsconfig/bases`) are installed alongside the other pinned dependencies. Otherwise the scaffold is
+emitted as plain `.jsx`. The templates themselves are type-checked inside the SDK package via an
+ambient `web-src-template.d.ts` declaration file (declaring the `#app.commerce.config` and `#web/*`
+module aliases); that file stays in the package and is never copied into the app.
 
 After copying files, `generateWebSrc` installs any missing pinned `/web` dependencies (React and
 `@react-spectrum/s2`) into the app at the SDK-pinned versions, using the package manager detected
@@ -256,12 +288,16 @@ from the app's lock file.
 
 ### Scaffold contents
 
-| File                      | Role                                                                                                     |
-| ------------------------- | -------------------------------------------------------------------------------------------------------- |
-| `index.html`              | Entry point loaded by the `view` operation URL; mounts the React app; references `index.css`             |
-| `src/app.jsx`             | Reads `metadata.id` from `#app.commerce.config`; declares the `routes` array; calls `createExtensionApp` |
-| `index.css`               | Global stylesheet; developers add styles directly or compose additional sheets via CSS `@import`         |
-| `src/pages/main-page.jsx` | Stub entry point for custom UI; pre-wired with `useSharedContext()` to access shared context values      |
+| File                           | Role                                                                                                     |
+| ------------------------------ | -------------------------------------------------------------------------------------------------------- |
+| `index.html`                   | Entry point loaded by the `view` operation URL; mounts the React app; references `index.css`             |
+| `src/app.jsx`                  | Reads `metadata.id` from `#app.commerce.config`; declares the `routes` array; calls `createExtensionApp` |
+| `index.css`                    | Global stylesheet; developers add styles directly or compose additional sheets via CSS `@import`         |
+| `src/pages/main-page.jsx`      | Stub entry point for custom UI; renders the `Welcome` component                                          |
+| `src/components/welcome.jsx`   | Sample `Welcome` component; demonstrates `useIms()` to access the host-provided IMS credentials          |
+| `tsconfig.json` (TS apps only) | TypeScript configuration for the scaffold; generated only when the app config is TypeScript              |
+
+For TypeScript apps, the `.jsx` files above are generated as `.tsx` instead.
 
 ### `generate all` integration
 
@@ -315,8 +351,9 @@ the template itself do not reach existing apps — only changes that live inside
 propagate through a package upgrade. Because the substance of the scaffold lives in the library,
 the frozen wrappers are intentionally thin and such template-level changes should be rare.
 
-The current design ties the scaffold to React: `createExtensionApp` mounts a `HashRouter` with a
-Spectrum 2 `Provider`, `useSharedContext` is a React hook, and the scaffold ships `.jsx` files.
+The current design ties the scaffold to React: `createExtensionApp` mounts a hash-based router with
+a Spectrum 2 `Provider`, the context hooks are React hooks, and the scaffold ships `.jsx` (or
+`.tsx`) files.
 Spectrum 2 is a deliberate requirement — Admin UI extensions should look consistent across vendors —
 so there is no built-in support for other frameworks. The escape hatch is all-or-nothing: a
 developer who wants a different framework (or any setup the scaffold does not provide) must own the
@@ -362,8 +399,8 @@ keeps routing declarative without dictating where components live.
 ## Future possibilities
 
 - `createExtensionApp` could accept an `onReady` callback or expose routing helpers so developers
-  can register multiple hash routes without wiring `HashRouter` manually.
-- As more `backend-ui/2` features use the shared context, `useSharedContext` could be extended to
+  can register multiple hash routes without wiring a router manually.
+- As more `backend-ui/2` features use the shared context, the context hooks could be extended to
   return additional context values (e.g., `locale`, `imsProfile`) with typed access.
 - A partial escape hatch could let developers keep the library's EC shell wiring and shared-context
   helpers while supplying their own UI layer, rather than the current all-or-nothing choice between

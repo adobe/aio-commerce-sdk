@@ -31,13 +31,13 @@ export type ChangelogEntry = {
  * Matches the subset of `@actions/exec` used here, enabling test mocking
  * without a dependency on the Actions runtime.
  */
-export interface ExecInterface {
-  getExecOutput(
+export type ExecInterface = {
+  getExecOutput: (
     command: string,
     args?: string[],
     options?: { silent?: boolean; ignoreReturnCode?: boolean },
-  ): Promise<{ stdout: string; stderr: string; exitCode: number }>;
-}
+  ) => Promise<{ stdout: string; stderr: string; exitCode: number }>;
+};
 
 /** Environment variables required by the LLM model selector. */
 export type ReleaseNotesEnvironment = {

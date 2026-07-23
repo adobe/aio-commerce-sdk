@@ -48,10 +48,11 @@ setup or client construction boilerplate.
 
 ```ts
 import { getCommerceClient } from "@adobe/aio-commerce-lib-app";
+import { resolveImsAuthParams } from "@adobe/aio-commerce-lib-auth";
 
 export async function main(params) {
-  const client = await getCommerceClient(params);
-  const products = await client.get("rest/V1/products").json();
+  const client = await getCommerceClient(resolveImsAuthParams(params));
+  const products = await client.get("products").json();
 }
 ```
 
@@ -60,8 +61,8 @@ export async function main(params) {
 ```ts
 import { getCommerceInstance } from "@adobe/aio-commerce-lib-app";
 
-export async function main(params) {
-  const instance = await getCommerceInstance(params);
+export async function main() {
+  const instance = await getCommerceInstance();
 
   // instance.baseUrl — e.g. "https://my-store.example.com"
   // instance.env     — "saas" | "paas"
@@ -76,10 +77,10 @@ package the action belongs to.
 
 **Available fields** on the `AssociatedCommerceInstance` object:
 
-| Field     | Type               | Description                              |
-| --------- | ------------------ | ---------------------------------------- |
-| `baseUrl` | `string`           | Commerce API base URL                    |
-| `env`     | `"saas" \| "paas"` | Deployment type of the Commerce instance |
+| Field     | Type          | Description                              |
+| --------- | ------------- | ---------------------------------------- |
+| `baseUrl` | `string`      | Commerce API base URL                    |
+| `env`     | `CommerceEnv` | Deployment type of the Commerce instance |
 
 ## Design
 
@@ -93,16 +94,25 @@ truth, no TTL) and `lib-state` as a performance cache (with TTL). When a cached 
 expires, `lib-config` falls back to `lib-files` and re-caches automatically — so the data
 is not lost when the cache entry expires.
 
-A new generic `system` submodule is added inside `aio-commerce-lib-config`'s existing
-`configuration` module (at `modules/configuration/system/`) for any SDK-managed system
-data. Grouping it under `configuration/` keeps related storage logic together while
-preserving distinct lookup semantics. It uses the same shared storage (`getSharedState()`
-and `getSharedFiles()`) but stores under `system.{key}` keys (e.g. `system.association`,
-future `system.events`) rather than the `configuration.{scopeCode}` keys used by Business
-Configuration. The `system.*` namespace keeps SDK-managed config cleanly separated from
-app-defined `configuration.*` keys. The submodule is fully domain-agnostic — it operates
-purely on opaque keys and values; domain-aware logic that uses it lives in
-`aio-commerce-lib-app`.
+The cache TTL defaults to 24 hours (`SYSTEM_CONFIG_CACHE_TTL_SECONDS`), and
+`getSystemConfigByKey` / `setSystemConfigByKey` accept an optional `ttlSeconds` argument to
+override it. Association data is written and read with the maximum TTL `aio-lib-state`
+allows — one year (`MAX_SYSTEM_CONFIG_CACHE_TTL_SECONDS` = 31_536_000s, mirroring
+`aio-lib-state`'s `MAX_TTL`, which it exports at runtime but does not declare in its types).
+Because association data changes only on associate/unassociate, the long TTL keeps reads
+served from the cache instead of falling back to `lib-files`, while `lib-files` remains the
+no-TTL source of truth so correctness never depends on the cache entry surviving.
+
+Generic `getSystemConfigByKey` / `setSystemConfigByKey` primitives are added to
+`aio-commerce-lib-config` for any SDK-managed system data. Rather than reimplementing the
+two-layer cache, they reuse `configuration-repository`'s `loadConfig` / `persistConfig` /
+`deleteConfig` parameterized by a separate `system.*` storage namespace, and are exported
+from the package root (no dedicated subpath). They store under `system.{key}` keys (e.g.
+`system.association`, future `system.events`) and `system/{key}.json` files, distinct from
+the `configuration.{scopeCode}` keys / `scope/` files used by Business Configuration. The
+`system.*` namespace keeps SDK-managed config cleanly separated from app-defined
+`configuration.*` keys. The primitives are fully domain-agnostic — they operate purely on
+opaque keys and values; domain-aware logic that uses them lives in `aio-commerce-lib-app`.
 
 System config does not participate in the Commerce scope tree — `getSystemConfigByKey`
 performs a direct key lookup with no inheritance or fallback chain. The `system.*` and
@@ -119,12 +129,13 @@ The storage uses a two-layered design:
 
 **`aio-commerce-lib-config`** exposes generic, domain-agnostic primitives — just key-value
 access for any SDK-managed system config, with no knowledge of what's being stored. Setting
-the value to `null` clears the entry, so there is no separate delete operation:
+the value to `null` or `undefined` clears the entry, so there is no separate delete
+operation:
 
 ```ts
-// aio-commerce-lib-config (generic system submodule under configuration/)
-setSystemConfigByKey(key: string, value: unknown | null): Promise<void>
-getSystemConfigByKey<T>(key: string): Promise<T | null>
+// aio-commerce-lib-config (generic primitives, exported from the package root)
+setSystemConfigByKey(key: string, value: unknown | null, ttlSeconds?: number): Promise<void>
+getSystemConfigByKey<T>(key: string, ttlSeconds?: number): Promise<T | null>
 ```
 
 **`aio-commerce-lib-app`** exposes typed, domain-aware wrappers on top of those primitives —
@@ -133,6 +144,7 @@ runtime actions get a strongly-typed API:
 
 ```ts
 // aio-commerce-lib-app (association module)
+// set/get pass MAX_SYSTEM_CONFIG_CACHE_TTL_SECONDS so association data stays cached for a year
 setAssociationData(data: AssociatedCommerceInstance): Promise<void>
 getAssociationData(): Promise<AssociatedCommerceInstance | null>
 clearAssociationData(): Promise<void> // calls setSystemConfigByKey("system.association", null)
@@ -145,9 +157,11 @@ the public-facing helpers. The public exports developers use are `getCommerceIns
 The stored type is:
 
 ```ts
+import type { CommerceEnv } from "@adobe/aio-commerce-lib-core/commerce";
+
 type AssociatedCommerceInstance = {
   baseUrl: string;
-  env: "saas" | "paas";
+  env: CommerceEnv;
 };
 ```
 
@@ -171,15 +185,16 @@ Request body:
 ```ts
 {
   commerceBaseUrl: string;
-  commerceEnv: "saas" | "paas";
+  commerceEnv: CommerceEnv;
 }
 ```
 
-The handler validates the body and calls `setAssociationData` from the new
-`aio-commerce-lib-app` association module. The operation is idempotent — re-associating
-with a different instance overwrites the previous values.
+The `commerceEnv` field is validated with `CommerceEnvSchema` from
+`@adobe/aio-commerce-lib-core/commerce`. The handler validates the body and calls
+`setAssociationData` from the new `aio-commerce-lib-app` association module. The operation
+is idempotent — re-associating with a different instance overwrites the previous values.
 
-Response: `200 OK`.
+Response: `204 No Content`.
 
 **`DELETE /`** — Clear association data
 
@@ -201,16 +216,14 @@ A new export is added to the root entrypoint of `@adobe/aio-commerce-lib-app`:
  * @throws {AppNotAssociatedError} If the app is not associated, was unassociated,
  *   or was associated by an older SDK that didn't store this data.
  */
-export async function getCommerceInstance(
-  params: RuntimeActionParams,
-): Promise<AssociatedCommerceInstance>;
+export async function getCommerceInstance(): Promise<AssociatedCommerceInstance>;
 ```
 
-`params` is the standard params object every runtime action receives. Internally it calls
-`getAssociationData` from the `aio-commerce-lib-app` association module, which in turn calls
-the generic `getSystemConfigByKey("system.association")` from `aio-commerce-lib-config`. The
-function is async because the underlying storage read (lib-state cache with lib-files
-fallback) is a network call.
+The helper takes no arguments — the instance details come entirely from storage. Internally
+it calls `getAssociationData` from the `aio-commerce-lib-app` association module, which in
+turn calls the generic `getSystemConfigByKey("system.association")` from
+`aio-commerce-lib-config`. The function is async because the underlying storage read
+(lib-state cache with lib-files fallback) is a network call.
 
 ### New `getCommerceClient` helper
 
@@ -223,21 +236,36 @@ A higher-level export from `@adobe/aio-commerce-lib-app` that builds on
  * Returns an initialised AdobeCommerceHttpClient for the Commerce instance this app
  * is currently associated with.
  *
+ * @param auth - Resolved IMS auth params or an IMS auth provider.
+ * @param fetchOptions - Optional global fetch options forwarded to the underlying
+ *   AdobeCommerceHttpClient (e.g. `headers`, `timeout`, `retry`).
  * @throws {AppNotAssociatedError} If the app is not associated, was unassociated,
  *   or was associated by an older SDK that didn't store this data.
  */
 export async function getCommerceClient(
-  params: RuntimeActionParams,
+  auth: ImsAuthParams | ImsAuthProvider,
+  fetchOptions?: CommerceHttpClientParams["fetchOptions"],
 ): Promise<AdobeCommerceHttpClient>;
 ```
 
-Internally it calls `getCommerceInstance` and constructs an `AdobeCommerceHttpClient` using
-`baseUrl` and `env` from the stored association data combined with the auth credentials
-present in `params`. If `getCommerceInstance` throws, the error propagates to the caller.
+The base URL and flavor come from the stored association data (`getCommerceInstance`); only
+the auth credentials are supplied by the caller, already resolved. App Management requires
+IMS, so the helper accepts only IMS auth: resolve params outside the helper with
+`resolveImsAuthParams` from `@adobe/aio-commerce-lib-auth`, or pass an `ImsAuthProvider`
+built with `getImsAuthProvider` / `forwardImsAuthProvider`. This keeps `getCommerceClient`
+composable and single-purpose — it builds the client for the associated instance and nothing
+else. If `getCommerceInstance` throws, the error propagates to the caller.
 
-This eliminates the repeated boilerplate of combining stored instance details with action
-params to construct the client — a pattern every action that calls Commerce would otherwise
-duplicate.
+```ts
+import { getCommerceClient } from "@adobe/aio-commerce-lib-app";
+import { resolveImsAuthParams } from "@adobe/aio-commerce-lib-auth";
+
+const client = await getCommerceClient(resolveImsAuthParams(params));
+```
+
+This eliminates the repeated boilerplate of combining stored instance details with the
+client config to construct the client — a pattern every action that calls Commerce would
+otherwise duplicate.
 
 ### Client integration
 
@@ -255,8 +283,12 @@ For older SDK versions where the `/association` endpoint isn't registered in the
 extension points metadata, the client should skip the `POST /` call and proceed with just
 the Extension Manager registration.
 
-**On unassociation** — after unassociation completes, the client calls `DELETE /` to remove
-the stored data. This step is best-effort — a failure does not block the unassociation.
+**On unassociation** — once uninstallation has fully completed, the client calls `DELETE /`
+to clear the stored data, and only marks the app unassociated in the Extension Manager if
+that call succeeds. This step is blocking: if it fails, the client aborts without flipping
+the status and surfaces an error so the user can retry. Leaving an app unassociated while it
+can still reach Commerce (e.g. through a third-party-triggered runtime action) is worse than
+asking the user to retry.
 
 ### Edge cases
 
@@ -286,15 +318,16 @@ the primary use case. `aio-commerce-lib-config`'s shared storage (lib-files for 
 - lib-state as a cache) is accessible to all actions within the same application regardless
   of package boundaries, and gives us persistence without expiry as a side effect.
 
-**Why a new generic `system` submodule inside `configuration/` rather than using `setConfiguration` directly?**
+**Why generic `getSystemConfigByKey` / `setSystemConfigByKey` primitives rather than using `setConfiguration` directly?**
 The existing `setConfiguration`/`getConfiguration` API in `aio-commerce-lib-config` is
 designed for Business Configuration — scope-tree based values keyed by Commerce scope codes
 with inheritance. The data we want to store is app-level metadata, not scope-specific, and
-doesn't need inheritance. A generic `system` submodule with `setSystemConfigByKey` /
-`getSystemConfigByKey` primitives keeps the two concerns clearly separated while reusing
-the same underlying storage infrastructure. The submodule is domain-agnostic — it operates
-purely on opaque keys and values — so it can be reused for other SDK-managed data in the
-future (`system.events`, etc.).
+doesn't need inheritance. Generic `setSystemConfigByKey` / `getSystemConfigByKey` primitives
+keep the two concerns clearly separated while reusing the same underlying storage. They are
+built on `configuration-repository`'s `loadConfig` / `persistConfig` / `deleteConfig`
+parameterized by a separate `system.*` namespace — reusing the two-layer cache logic instead
+of duplicating it — and stay domain-agnostic, operating purely on opaque keys and values, so
+they can back other SDK-managed data in the future (`system.events`, etc.).
 
 **Why a standalone `association` action?**
 The `installation` action is conditionally deployed, apps without custom install steps,

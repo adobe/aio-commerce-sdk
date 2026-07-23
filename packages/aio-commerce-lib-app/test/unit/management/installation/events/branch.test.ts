@@ -12,6 +12,17 @@
 
 import { describe, expect, test, vi } from "vitest";
 
+vi.mock("@adobe/aio-commerce-lib-config", async () => {
+  const actual = await vi.importActual<
+    typeof import("@adobe/aio-commerce-lib-config")
+  >("@adobe/aio-commerce-lib-config");
+  return {
+    ...actual,
+    getSystemConfigByKey: vi.fn().mockResolvedValue(null),
+    setSystemConfigByKey: vi.fn().mockResolvedValue(undefined),
+  };
+});
+
 import { eventingStep } from "#management/installation/events/branch";
 import { commerceEventsStep } from "#management/installation/events/commerce";
 import { createEventsStepContext } from "#management/installation/events/context";
@@ -34,14 +45,14 @@ describe("events installation module", () => {
       expect(eventingStep.name).toBe("eventing");
       expect(eventingStep.meta).toEqual({
         install: {
-          label: "Eventing",
           description:
             "Sets up the I/O Events and the Commerce events required by the application",
+          label: "Eventing",
         },
         uninstall: {
-          label: "Eventing",
           description:
             "Removes the I/O Events and Commerce events configured by the application",
+          label: "Eventing",
         },
       });
     });
@@ -67,12 +78,12 @@ describe("events installation module", () => {
       expect(commerceEventsStep.name).toBe("commerce");
       expect(commerceEventsStep.meta).toEqual({
         install: {
-          label: "Configure Commerce Events",
           description: "Sets up I/O Events for Adobe Commerce event sources",
+          label: "Configure Commerce Events",
         },
         uninstall: {
-          label: "Remove Commerce Events",
           description: "Removes I/O Events for Adobe Commerce event sources",
+          label: "Remove Commerce Events",
         },
       });
     });
@@ -88,40 +99,40 @@ describe("events installation module", () => {
 
     test("should create entities", async () => {
       const mockContext = createMockEventingInstallationContext({
-        params: {
-          AIO_COMMERCE_API_BASE_URL: "https://api.commerce.adobe.com",
-          AIO_COMMERCE_API_FLAVOR: "saas",
+        commerceEventsClient: {
+          createEventProvider: vi
+            .fn()
+            .mockResolvedValue({ id: "commerce-provider-123" }),
+          createEventSubscription: vi.fn().mockResolvedValue({
+            enabled: true,
+            name: "test-subscription",
+          }),
+          getAllEventProviders: vi.fn().mockResolvedValue([]),
+          getAllEventSubscriptions: vi.fn().mockResolvedValue([]),
+          updateEventingConfiguration: vi.fn().mockResolvedValue({}),
         },
         ioEventsClient: {
+          createEventMetadataForProvider: vi
+            .fn()
+            .mockResolvedValue({ event_code: "test-event-code" }),
+          createEventProvider: vi.fn().mockResolvedValue({
+            id: "provider-123",
+            provider_metadata: "dx_commerce_events",
+          }),
+          createRegistration: vi
+            .fn()
+            .mockResolvedValue({ id: "registration-123" }),
+          deleteRegistration: vi.fn().mockResolvedValue(undefined),
           getAllEventProviders: vi.fn().mockResolvedValue({
             _embedded: { providers: [] },
           }),
           getAllRegistrations: vi.fn().mockResolvedValue({
             _embedded: { registrations: [] },
           }),
-          createEventProvider: vi.fn().mockResolvedValue({
-            id: "provider-123",
-            provider_metadata: "dx_commerce_events",
-          }),
-          createEventMetadataForProvider: vi
-            .fn()
-            .mockResolvedValue({ event_code: "test-event-code" }),
-          createRegistration: vi
-            .fn()
-            .mockResolvedValue({ id: "registration-123" }),
-          deleteRegistration: vi.fn().mockResolvedValue(undefined),
         },
-        commerceEventsClient: {
-          getAllEventProviders: vi.fn().mockResolvedValue([]),
-          getAllEventSubscriptions: vi.fn().mockResolvedValue([]),
-          updateEventingConfiguration: vi.fn().mockResolvedValue({}),
-          createEventProvider: vi
-            .fn()
-            .mockResolvedValue({ id: "commerce-provider-123" }),
-          createEventSubscription: vi.fn().mockResolvedValue({
-            name: "test-subscription",
-            enabled: true,
-          }),
+        params: {
+          AIO_COMMERCE_API_BASE_URL: "https://api.commerce.adobe.com",
+          AIO_COMMERCE_API_FLAVOR: "saas",
         },
       });
 
@@ -144,42 +155,42 @@ describe("events installation module", () => {
 
     test("should forward rules to createEventSubscription", async () => {
       const mockCreateEventSubscription = vi.fn().mockResolvedValue({
-        name: "test-subscription",
         enabled: true,
+        name: "test-subscription",
       });
 
       const mockContext = createMockEventingInstallationContext({
-        params: {
-          AIO_COMMERCE_API_BASE_URL: "https://api.commerce.adobe.com",
-          AIO_COMMERCE_API_FLAVOR: "saas",
+        commerceEventsClient: {
+          createEventProvider: vi
+            .fn()
+            .mockResolvedValue({ id: "commerce-provider-123" }),
+          createEventSubscription: mockCreateEventSubscription,
+          getAllEventProviders: vi.fn().mockResolvedValue([]),
+          getAllEventSubscriptions: vi.fn().mockResolvedValue([]),
+          updateEventingConfiguration: vi.fn().mockResolvedValue({}),
         },
         ioEventsClient: {
+          createEventMetadataForProvider: vi
+            .fn()
+            .mockResolvedValue({ event_code: "test-event-code" }),
+          createEventProvider: vi.fn().mockResolvedValue({
+            id: "provider-123",
+            provider_metadata: "dx_commerce_events",
+          }),
+          createRegistration: vi
+            .fn()
+            .mockResolvedValue({ id: "registration-123" }),
+          deleteRegistration: vi.fn().mockResolvedValue(undefined),
           getAllEventProviders: vi.fn().mockResolvedValue({
             _embedded: { providers: [] },
           }),
           getAllRegistrations: vi.fn().mockResolvedValue({
             _embedded: { registrations: [] },
           }),
-          createEventProvider: vi.fn().mockResolvedValue({
-            id: "provider-123",
-            provider_metadata: "dx_commerce_events",
-          }),
-          createEventMetadataForProvider: vi
-            .fn()
-            .mockResolvedValue({ event_code: "test-event-code" }),
-          createRegistration: vi
-            .fn()
-            .mockResolvedValue({ id: "registration-123" }),
-          deleteRegistration: vi.fn().mockResolvedValue(undefined),
         },
-        commerceEventsClient: {
-          getAllEventProviders: vi.fn().mockResolvedValue([]),
-          getAllEventSubscriptions: vi.fn().mockResolvedValue([]),
-          updateEventingConfiguration: vi.fn().mockResolvedValue({}),
-          createEventProvider: vi
-            .fn()
-            .mockResolvedValue({ id: "commerce-provider-123" }),
-          createEventSubscription: mockCreateEventSubscription,
+        params: {
+          AIO_COMMERCE_API_BASE_URL: "https://api.commerce.adobe.com",
+          AIO_COMMERCE_API_FLAVOR: "saas",
         },
       });
 
@@ -200,12 +211,12 @@ describe("events installation module", () => {
       expect(externalEventsStep.name).toBe("external");
       expect(externalEventsStep.meta).toEqual({
         install: {
-          label: "Configure External Events",
           description: "Sets up I/O Events for external event sources",
+          label: "Configure External Events",
         },
         uninstall: {
-          label: "Remove External Events",
           description: "Removes I/O Events for external event sources",
+          label: "Remove External Events",
         },
       });
     });
@@ -222,23 +233,23 @@ describe("events installation module", () => {
     test("should create entities", async () => {
       const mockContext = createMockEventingInstallationContext({
         ioEventsClient: {
+          createEventMetadataForProvider: vi
+            .fn()
+            .mockResolvedValue({ event_code: "test-event-code" }),
+          createEventProvider: vi.fn().mockResolvedValue({
+            id: "provider-456",
+            provider_metadata: "3rd_party_custom_events",
+          }),
+          createRegistration: vi
+            .fn()
+            .mockResolvedValue({ id: "registration-456" }),
+          deleteRegistration: vi.fn().mockResolvedValue(undefined),
           getAllEventProviders: vi.fn().mockResolvedValue({
             _embedded: { providers: [] },
           }),
           getAllRegistrations: vi.fn().mockResolvedValue({
             _embedded: { registrations: [] },
           }),
-          createEventProvider: vi.fn().mockResolvedValue({
-            id: "provider-456",
-            provider_metadata: "3rd_party_custom_events",
-          }),
-          createEventMetadataForProvider: vi
-            .fn()
-            .mockResolvedValue({ event_code: "test-event-code" }),
-          createRegistration: vi
-            .fn()
-            .mockResolvedValue({ id: "registration-456" }),
-          deleteRegistration: vi.fn().mockResolvedValue(undefined),
         },
       });
 
@@ -268,16 +279,21 @@ describe("events installation module", () => {
       const mockDeleteRegistration = vi.fn().mockResolvedValue(undefined);
 
       const mockContext = createMockEventingInstallationContext({
+        commerceEventsClient: {
+          getAllEventProviders: vi.fn().mockResolvedValue([]),
+          getAllEventSubscriptions: vi.fn().mockResolvedValue([]),
+        },
         ioEventsClient: {
+          deleteRegistration: mockDeleteRegistration,
           getAllEventProviders: vi.fn().mockResolvedValue({
             _embedded: {
               providers: [
                 {
-                  id: "io-provider-123",
-                  label: "Order Events Provider",
-                  instance_id: instanceId,
-                  provider_metadata: "dx_commerce_events",
                   _embedded: { eventmetadata: [] },
+                  id: "io-provider-123",
+                  instance_id: instanceId,
+                  label: "Order Events Provider",
+                  provider_metadata: "dx_commerce_events",
                 },
               ],
             },
@@ -286,24 +302,19 @@ describe("events installation module", () => {
             _embedded: {
               registrations: [
                 {
-                  id: "616664",
-                  name: "Commerce Event Registration: Order Events Provider - Handle Order (My Package)",
                   client_id: "test-client-id",
+                  delivery_type: "webhook",
                   events_of_interest: [],
+                  id: "616664",
+                  integration_status: "VERIFIED",
+                  name: "Commerce Event Registration: Order Events Provider - Handle Order (My Package)",
+                  registration_id: "reg-1",
                   status: "VERIFIED",
                   type: "APP_REGISTRATION",
-                  integration_status: "VERIFIED",
-                  registration_id: "reg-1",
-                  delivery_type: "webhook",
                 },
               ],
             },
           }),
-          deleteRegistration: mockDeleteRegistration,
-        },
-        commerceEventsClient: {
-          getAllEventProviders: vi.fn().mockResolvedValue([]),
-          getAllEventSubscriptions: vi.fn().mockResolvedValue([]),
         },
       });
 
@@ -327,16 +338,21 @@ describe("events installation module", () => {
       const mockDeleteRegistration = vi.fn().mockResolvedValue(undefined);
 
       const mockContext = createMockEventingInstallationContext({
+        commerceEventsClient: {
+          getAllEventProviders: vi.fn().mockResolvedValue([]),
+          getAllEventSubscriptions: vi.fn().mockResolvedValue([]),
+        },
         ioEventsClient: {
+          deleteRegistration: mockDeleteRegistration,
           getAllEventProviders: vi.fn().mockResolvedValue({
             _embedded: {
               providers: [
                 {
-                  id: "io-provider-123",
-                  label: "Order Events Provider",
-                  instance_id: instanceId,
-                  provider_metadata: "dx_commerce_events",
                   _embedded: { eventmetadata: [] },
+                  id: "io-provider-123",
+                  instance_id: instanceId,
+                  label: "Order Events Provider",
+                  provider_metadata: "dx_commerce_events",
                 },
               ],
             },
@@ -345,25 +361,20 @@ describe("events installation module", () => {
             _embedded: {
               registrations: [
                 {
+                  client_id: "test-client-id",
+                  delivery_type: "webhook",
+                  events_of_interest: [],
                   id: "616664",
+                  integration_status: "VERIFIED",
                   // Legacy name format: uses generic type label "Commerce" instead of provider label
                   name: "Commerce Event Registration: Handle Order (My Package)",
-                  client_id: "test-client-id",
-                  events_of_interest: [],
+                  registration_id: "reg-legacy",
                   status: "VERIFIED",
                   type: "APP_REGISTRATION",
-                  integration_status: "VERIFIED",
-                  registration_id: "reg-legacy",
-                  delivery_type: "webhook",
                 },
               ],
             },
           }),
-          deleteRegistration: mockDeleteRegistration,
-        },
-        commerceEventsClient: {
-          getAllEventProviders: vi.fn().mockResolvedValue([]),
-          getAllEventSubscriptions: vi.fn().mockResolvedValue([]),
         },
       });
 
@@ -381,18 +392,18 @@ describe("events installation module", () => {
       const mockDeleteRegistration = vi.fn().mockResolvedValue(undefined);
 
       const mockContext = createMockEventingInstallationContext({
+        commerceEventsClient: {
+          getAllEventProviders: vi.fn().mockResolvedValue([]),
+          getAllEventSubscriptions: vi.fn().mockResolvedValue([]),
+        },
         ioEventsClient: {
+          deleteRegistration: mockDeleteRegistration,
           getAllEventProviders: vi.fn().mockResolvedValue({
             _embedded: { providers: [] },
           }),
           getAllRegistrations: vi.fn().mockResolvedValue({
             _embedded: { registrations: [] },
           }),
-          deleteRegistration: mockDeleteRegistration,
-        },
-        commerceEventsClient: {
-          getAllEventProviders: vi.fn().mockResolvedValue([]),
-          getAllEventSubscriptions: vi.fn().mockResolvedValue([]),
         },
       });
 
@@ -409,15 +420,20 @@ describe("events installation module", () => {
         "test-app-commerce-events-order-events-provider-test-workspace-id";
 
       const mockContext = createMockEventingInstallationContext({
+        commerceEventsClient: {
+          getAllEventProviders: vi.fn().mockResolvedValue([]),
+          getAllEventSubscriptions: vi.fn().mockResolvedValue([]),
+        },
         ioEventsClient: {
+          deleteRegistration: vi.fn().mockRejectedValue(new Error("API error")),
           getAllEventProviders: vi.fn().mockResolvedValue({
             _embedded: {
               providers: [
                 {
+                  _embedded: { eventmetadata: [] },
                   id: "io-provider-123",
                   instance_id: instanceId,
                   provider_metadata: "dx_commerce_events",
-                  _embedded: { eventmetadata: [] },
                 },
               ],
             },
@@ -426,29 +442,24 @@ describe("events installation module", () => {
             _embedded: {
               registrations: [
                 {
-                  id: "reg-1",
-                  name: "Commerce Event Registration",
                   client_id: "test-client-id",
+                  delivery_type: "webhook",
                   events_of_interest: [
                     {
-                      provider_id: "io-provider-123",
                       event_code: "test.event",
+                      provider_id: "io-provider-123",
                     },
                   ],
+                  id: "reg-1",
+                  integration_status: "VERIFIED",
+                  name: "Commerce Event Registration",
+                  registration_id: "reg-1",
                   status: "VERIFIED",
                   type: "APP_REGISTRATION",
-                  integration_status: "VERIFIED",
-                  registration_id: "reg-1",
-                  delivery_type: "webhook",
                 },
               ],
             },
           }),
-          deleteRegistration: vi.fn().mockRejectedValue(new Error("API error")),
-        },
-        commerceEventsClient: {
-          getAllEventProviders: vi.fn().mockResolvedValue([]),
-          getAllEventSubscriptions: vi.fn().mockResolvedValue([]),
         },
       });
 
@@ -464,15 +475,20 @@ describe("events installation module", () => {
       const mockDeleteRegistration = vi.fn().mockResolvedValue(undefined);
 
       const mockContext = createMockEventingInstallationContext({
+        commerceEventsClient: {
+          getAllEventProviders: vi.fn().mockResolvedValue([]),
+          getAllEventSubscriptions: vi.fn().mockResolvedValue([]),
+        },
         ioEventsClient: {
+          deleteRegistration: mockDeleteRegistration,
           getAllEventProviders: vi.fn().mockResolvedValue({
             _embedded: {
               providers: [
                 {
+                  _embedded: { eventmetadata: [] },
                   id: "io-provider-123",
                   instance_id: instanceId,
                   provider_metadata: "dx_commerce_events",
-                  _embedded: { eventmetadata: [] },
                 },
               ],
             },
@@ -482,11 +498,6 @@ describe("events installation module", () => {
               registrations: [],
             },
           }),
-          deleteRegistration: mockDeleteRegistration,
-        },
-        commerceEventsClient: {
-          getAllEventProviders: vi.fn().mockResolvedValue([]),
-          getAllEventSubscriptions: vi.fn().mockResolvedValue([]),
         },
       });
 
@@ -503,11 +514,27 @@ describe("events installation module", () => {
     test("should unsubscribe matching Commerce event subscriptions", async () => {
       const mockDeleteEventSubscription = vi.fn().mockResolvedValue(undefined);
       // configWithCommerceEventing: metadata.id = "test-app-commerce-events", event name = "plugin.order_placed"
-      // getNamespacedEvent => "test-app-commerce-events.plugin.order_placed"
+      // getNamespacedEvent => "test_app_commerce_events.plugin.order_placed"
       const expectedSubscriptionName =
-        "test-app-commerce-events.plugin.order_placed";
+        "test_app_commerce_events.plugin.order_placed";
 
       const mockContext = createMockEventingInstallationContext({
+        commerceEventsClient: {
+          deleteEventSubscription: mockDeleteEventSubscription,
+          getAllEventProviders: vi.fn().mockResolvedValue([]),
+          getAllEventSubscriptions: vi.fn().mockResolvedValue([
+            {
+              destination: "default",
+              fields: [],
+              hipaa_audit_required: false,
+              name: expectedSubscriptionName,
+              parent: "plugin.order_placed",
+              priority: false,
+              provider_id: "default",
+              rules: [],
+            },
+          ]),
+        },
         ioEventsClient: {
           getAllEventProviders: vi.fn().mockResolvedValue({
             _embedded: { providers: [] },
@@ -515,22 +542,6 @@ describe("events installation module", () => {
           getAllRegistrations: vi.fn().mockResolvedValue({
             _embedded: { registrations: [] },
           }),
-        },
-        commerceEventsClient: {
-          getAllEventProviders: vi.fn().mockResolvedValue([]),
-          getAllEventSubscriptions: vi.fn().mockResolvedValue([
-            {
-              name: expectedSubscriptionName,
-              parent: "plugin.order_placed",
-              provider_id: "default",
-              fields: [],
-              rules: [],
-              destination: "default",
-              priority: false,
-              hipaa_audit_required: false,
-            },
-          ]),
-          deleteEventSubscription: mockDeleteEventSubscription,
         },
       });
 
@@ -548,6 +559,11 @@ describe("events installation module", () => {
       const mockDeleteEventSubscription = vi.fn().mockResolvedValue(undefined);
 
       const mockContext = createMockEventingInstallationContext({
+        commerceEventsClient: {
+          deleteEventSubscription: mockDeleteEventSubscription,
+          getAllEventProviders: vi.fn().mockResolvedValue([]),
+          getAllEventSubscriptions: vi.fn().mockResolvedValue([]),
+        },
         ioEventsClient: {
           getAllEventProviders: vi.fn().mockResolvedValue({
             _embedded: { providers: [] },
@@ -555,11 +571,6 @@ describe("events installation module", () => {
           getAllRegistrations: vi.fn().mockResolvedValue({
             _embedded: { registrations: [] },
           }),
-        },
-        commerceEventsClient: {
-          getAllEventProviders: vi.fn().mockResolvedValue([]),
-          getAllEventSubscriptions: vi.fn().mockResolvedValue([]),
-          deleteEventSubscription: mockDeleteEventSubscription,
         },
       });
 
@@ -573,6 +584,24 @@ describe("events installation module", () => {
 
     test("should not throw when deleteEventSubscription fails (best-effort)", async () => {
       const mockContext = createMockEventingInstallationContext({
+        commerceEventsClient: {
+          deleteEventSubscription: vi
+            .fn()
+            .mockRejectedValue(new Error("API error")),
+          getAllEventProviders: vi.fn().mockResolvedValue([]),
+          getAllEventSubscriptions: vi.fn().mockResolvedValue([
+            {
+              destination: "default",
+              fields: [],
+              hipaa_audit_required: false,
+              name: "test-app-commerce-events.plugin.order_placed",
+              parent: "plugin.order_placed",
+              priority: false,
+              provider_id: "default",
+              rules: [],
+            },
+          ]),
+        },
         ioEventsClient: {
           getAllEventProviders: vi.fn().mockResolvedValue({
             _embedded: { providers: [] },
@@ -580,24 +609,6 @@ describe("events installation module", () => {
           getAllRegistrations: vi.fn().mockResolvedValue({
             _embedded: { registrations: [] },
           }),
-        },
-        commerceEventsClient: {
-          getAllEventProviders: vi.fn().mockResolvedValue([]),
-          getAllEventSubscriptions: vi.fn().mockResolvedValue([
-            {
-              name: "test-app-commerce-events.plugin.order_placed",
-              parent: "plugin.order_placed",
-              provider_id: "default",
-              fields: [],
-              rules: [],
-              destination: "default",
-              priority: false,
-              hipaa_audit_required: false,
-            },
-          ]),
-          deleteEventSubscription: vi
-            .fn()
-            .mockRejectedValue(new Error("API error")),
         },
       });
 
@@ -615,6 +626,17 @@ describe("events installation module", () => {
       const mockDeleteEventProvider = vi.fn().mockResolvedValue(undefined);
 
       const mockContext = createMockEventingInstallationContext({
+        commerceEventsClient: {
+          deleteEventProvider: mockDeleteEventProvider,
+          getAllEventProviders: vi.fn().mockResolvedValue([
+            {
+              instance_id: instanceId,
+              label: "Commerce Events Provider",
+              provider_id: "commerce-provider-uuid",
+            },
+          ]),
+          getAllEventSubscriptions: vi.fn().mockResolvedValue([]),
+        },
         ioEventsClient: {
           getAllEventProviders: vi.fn().mockResolvedValue({
             _embedded: { providers: [] },
@@ -622,17 +644,6 @@ describe("events installation module", () => {
           getAllRegistrations: vi.fn().mockResolvedValue({
             _embedded: { registrations: [] },
           }),
-        },
-        commerceEventsClient: {
-          getAllEventProviders: vi.fn().mockResolvedValue([
-            {
-              provider_id: "commerce-provider-uuid",
-              instance_id: instanceId,
-              label: "Commerce Events Provider",
-            },
-          ]),
-          getAllEventSubscriptions: vi.fn().mockResolvedValue([]),
-          deleteEventProvider: mockDeleteEventProvider,
         },
       });
 
@@ -650,6 +661,11 @@ describe("events installation module", () => {
       const mockDeleteEventProvider = vi.fn().mockResolvedValue(undefined);
 
       const mockContext = createMockEventingInstallationContext({
+        commerceEventsClient: {
+          deleteEventProvider: mockDeleteEventProvider,
+          getAllEventProviders: vi.fn().mockResolvedValue([]),
+          getAllEventSubscriptions: vi.fn().mockResolvedValue([]),
+        },
         ioEventsClient: {
           getAllEventProviders: vi.fn().mockResolvedValue({
             _embedded: { providers: [] },
@@ -657,11 +673,6 @@ describe("events installation module", () => {
           getAllRegistrations: vi.fn().mockResolvedValue({
             _embedded: { registrations: [] },
           }),
-        },
-        commerceEventsClient: {
-          getAllEventProviders: vi.fn().mockResolvedValue([]),
-          getAllEventSubscriptions: vi.fn().mockResolvedValue([]),
-          deleteEventProvider: mockDeleteEventProvider,
         },
       });
 
@@ -675,6 +686,19 @@ describe("events installation module", () => {
 
     test("should not throw when deleteEventProvider fails (best-effort)", async () => {
       const mockContext = createMockEventingInstallationContext({
+        commerceEventsClient: {
+          deleteEventProvider: vi
+            .fn()
+            .mockRejectedValue(new Error("provider API error")),
+          getAllEventProviders: vi.fn().mockResolvedValue([
+            {
+              instance_id: instanceId,
+              label: "Commerce Events Provider",
+              provider_id: "commerce-provider-uuid",
+            },
+          ]),
+          getAllEventSubscriptions: vi.fn().mockResolvedValue([]),
+        },
         ioEventsClient: {
           getAllEventProviders: vi.fn().mockResolvedValue({
             _embedded: { providers: [] },
@@ -682,19 +706,6 @@ describe("events installation module", () => {
           getAllRegistrations: vi.fn().mockResolvedValue({
             _embedded: { registrations: [] },
           }),
-        },
-        commerceEventsClient: {
-          getAllEventProviders: vi.fn().mockResolvedValue([
-            {
-              provider_id: "commerce-provider-uuid",
-              instance_id: instanceId,
-              label: "Commerce Events Provider",
-            },
-          ]),
-          getAllEventSubscriptions: vi.fn().mockResolvedValue([]),
-          deleteEventProvider: vi
-            .fn()
-            .mockRejectedValue(new Error("provider API error")),
         },
       });
 
@@ -713,23 +724,30 @@ describe("events installation module", () => {
       const mockDeleteEventProvider = vi.fn().mockResolvedValue(undefined);
 
       const mockContext = createMockEventingInstallationContext({
+        commerceEventsClient: {
+          getAllEventProviders: vi.fn().mockResolvedValue([]),
+          getAllEventSubscriptions: vi.fn().mockResolvedValue([]),
+        },
         ioEventsClient: {
+          deleteEventMetadataForProvider: mockDeleteEventMetadata,
+          deleteEventProvider: mockDeleteEventProvider,
+          deleteRegistration: mockDeleteRegistration,
           getAllEventProviders: vi.fn().mockResolvedValue({
             _embedded: {
               providers: [
                 {
-                  id: "io-provider-123",
-                  instance_id: instanceId,
-                  provider_metadata: "dx_commerce_events",
                   _embedded: {
                     eventmetadata: [
                       {
+                        description: "Test event",
                         event_code: "test-event-code",
                         label: "Test",
-                        description: "Test event",
                       },
                     ],
                   },
+                  id: "io-provider-123",
+                  instance_id: instanceId,
+                  provider_metadata: "dx_commerce_events",
                 },
               ],
             },
@@ -737,13 +755,6 @@ describe("events installation module", () => {
           getAllRegistrations: vi.fn().mockResolvedValue({
             _embedded: { registrations: [] },
           }),
-          deleteRegistration: mockDeleteRegistration,
-          deleteEventMetadataForProvider: mockDeleteEventMetadata,
-          deleteEventProvider: mockDeleteEventProvider,
-        },
-        commerceEventsClient: {
-          getAllEventProviders: vi.fn().mockResolvedValue([]),
-          getAllEventSubscriptions: vi.fn().mockResolvedValue([]),
         },
       });
 
@@ -754,8 +765,8 @@ describe("events installation module", () => {
 
       expect(mockDeleteEventMetadata).toHaveBeenCalledWith(
         expect.objectContaining({
-          providerId: "io-provider-123",
           eventCode: "test-event-code",
+          providerId: "io-provider-123",
         }),
       );
       expect(mockDeleteEventProvider).toHaveBeenCalledWith(
@@ -768,23 +779,31 @@ describe("events installation module", () => {
         "test-app-commerce-events-order-events-provider-test-workspace-id";
 
       const mockContext = createMockEventingInstallationContext({
+        commerceEventsClient: {
+          getAllEventProviders: vi.fn().mockResolvedValue([]),
+          getAllEventSubscriptions: vi.fn().mockResolvedValue([]),
+        },
         ioEventsClient: {
+          deleteEventMetadataForProvider: vi
+            .fn()
+            .mockRejectedValue(new Error("metadata API error")),
+          deleteEventProvider: vi.fn().mockResolvedValue(undefined),
           getAllEventProviders: vi.fn().mockResolvedValue({
             _embedded: {
               providers: [
                 {
-                  id: "io-provider-123",
-                  instance_id: instanceId,
-                  provider_metadata: "dx_commerce_events",
                   _embedded: {
                     eventmetadata: [
                       {
+                        description: "Test",
                         event_code: "test-event-code",
                         label: "Test",
-                        description: "Test",
                       },
                     ],
                   },
+                  id: "io-provider-123",
+                  instance_id: instanceId,
+                  provider_metadata: "dx_commerce_events",
                 },
               ],
             },
@@ -792,14 +811,6 @@ describe("events installation module", () => {
           getAllRegistrations: vi.fn().mockResolvedValue({
             _embedded: { registrations: [] },
           }),
-          deleteEventMetadataForProvider: vi
-            .fn()
-            .mockRejectedValue(new Error("metadata API error")),
-          deleteEventProvider: vi.fn().mockResolvedValue(undefined),
-        },
-        commerceEventsClient: {
-          getAllEventProviders: vi.fn().mockResolvedValue([]),
-          getAllEventSubscriptions: vi.fn().mockResolvedValue([]),
         },
       });
 
@@ -813,15 +824,22 @@ describe("events installation module", () => {
         "test-app-commerce-events-order-events-provider-test-workspace-id";
 
       const mockContext = createMockEventingInstallationContext({
+        commerceEventsClient: {
+          getAllEventProviders: vi.fn().mockResolvedValue([]),
+          getAllEventSubscriptions: vi.fn().mockResolvedValue([]),
+        },
         ioEventsClient: {
+          deleteEventProvider: vi
+            .fn()
+            .mockRejectedValue(new Error("provider API error")),
           getAllEventProviders: vi.fn().mockResolvedValue({
             _embedded: {
               providers: [
                 {
+                  _embedded: { eventmetadata: [] },
                   id: "io-provider-123",
                   instance_id: instanceId,
                   provider_metadata: "dx_commerce_events",
-                  _embedded: { eventmetadata: [] },
                 },
               ],
             },
@@ -829,13 +847,6 @@ describe("events installation module", () => {
           getAllRegistrations: vi.fn().mockResolvedValue({
             _embedded: { registrations: [] },
           }),
-          deleteEventProvider: vi
-            .fn()
-            .mockRejectedValue(new Error("provider API error")),
-        },
-        commerceEventsClient: {
-          getAllEventProviders: vi.fn().mockResolvedValue([]),
-          getAllEventSubscriptions: vi.fn().mockResolvedValue([]),
         },
       });
 
@@ -857,14 +868,15 @@ describe("events installation module", () => {
 
       const mockContext = createMockEventingInstallationContext({
         ioEventsClient: {
+          deleteRegistration: mockDeleteRegistration,
           getAllEventProviders: vi.fn().mockResolvedValue({
             _embedded: {
               providers: [
                 {
+                  _embedded: { eventmetadata: [] },
                   id: "io-provider-456",
                   instance_id: instanceId,
                   provider_metadata: "3rd_party_custom_events",
-                  _embedded: { eventmetadata: [] },
                 },
               ],
             },
@@ -873,20 +885,19 @@ describe("events installation module", () => {
             _embedded: {
               registrations: [
                 {
-                  id: "616664",
-                  name: "External Event Registration: Handle External Event (My Package)",
                   client_id: "test-client-id",
+                  delivery_type: "webhook",
                   events_of_interest: [],
+                  id: "616664",
+                  integration_status: "VERIFIED",
+                  name: "External Event Registration: Handle External Event (My Package)",
+                  registration_id: "reg-2",
                   status: "VERIFIED",
                   type: "APP_REGISTRATION",
-                  integration_status: "VERIFIED",
-                  registration_id: "reg-2",
-                  delivery_type: "webhook",
                 },
               ],
             },
           }),
-          deleteRegistration: mockDeleteRegistration,
         },
       });
 
@@ -909,13 +920,13 @@ describe("events installation module", () => {
 
       const mockContext = createMockEventingInstallationContext({
         ioEventsClient: {
+          deleteRegistration: mockDeleteRegistration,
           getAllEventProviders: vi.fn().mockResolvedValue({
             _embedded: { providers: [] },
           }),
           getAllRegistrations: vi.fn().mockResolvedValue({
             _embedded: { registrations: [] },
           }),
-          deleteRegistration: mockDeleteRegistration,
         },
       });
 
@@ -933,14 +944,16 @@ describe("events installation module", () => {
 
       const mockContext = createMockEventingInstallationContext({
         ioEventsClient: {
+          deleteEventProvider: vi.fn().mockResolvedValue(undefined),
+          deleteRegistration: vi.fn().mockRejectedValue(new Error("API error")),
           getAllEventProviders: vi.fn().mockResolvedValue({
             _embedded: {
               providers: [
                 {
+                  _embedded: { eventmetadata: [] },
                   id: "io-provider-456",
                   instance_id: instanceId,
                   provider_metadata: "3rd_party_custom_events",
-                  _embedded: { eventmetadata: [] },
                 },
               ],
             },
@@ -949,26 +962,24 @@ describe("events installation module", () => {
             _embedded: {
               registrations: [
                 {
-                  id: "reg-2",
-                  name: "External Event Registration",
                   client_id: "test-client-id",
+                  delivery_type: "webhook",
                   events_of_interest: [
                     {
-                      provider_id: "io-provider-456",
                       event_code: "test.event",
+                      provider_id: "io-provider-456",
                     },
                   ],
+                  id: "reg-2",
+                  integration_status: "VERIFIED",
+                  name: "External Event Registration",
+                  registration_id: "reg-2",
                   status: "VERIFIED",
                   type: "APP_REGISTRATION",
-                  integration_status: "VERIFIED",
-                  registration_id: "reg-2",
-                  delivery_type: "webhook",
                 },
               ],
             },
           }),
-          deleteRegistration: vi.fn().mockRejectedValue(new Error("API error")),
-          deleteEventProvider: vi.fn().mockResolvedValue(undefined),
         },
       });
 
@@ -987,22 +998,25 @@ describe("events installation module", () => {
 
       const mockContext = createMockEventingInstallationContext({
         ioEventsClient: {
+          deleteEventMetadataForProvider: mockDeleteEventMetadata,
+          deleteEventProvider: mockDeleteEventProvider,
+          deleteRegistration: mockDeleteRegistration,
           getAllEventProviders: vi.fn().mockResolvedValue({
             _embedded: {
               providers: [
                 {
-                  id: "io-provider-456",
-                  instance_id: instanceId,
-                  provider_metadata: "3rd_party_custom_events",
                   _embedded: {
                     eventmetadata: [
                       {
+                        description: "External event",
                         event_code: "ext-event-code",
                         label: "Ext",
-                        description: "External event",
                       },
                     ],
                   },
+                  id: "io-provider-456",
+                  instance_id: instanceId,
+                  provider_metadata: "3rd_party_custom_events",
                 },
               ],
             },
@@ -1010,9 +1024,6 @@ describe("events installation module", () => {
           getAllRegistrations: vi.fn().mockResolvedValue({
             _embedded: { registrations: [] },
           }),
-          deleteRegistration: mockDeleteRegistration,
-          deleteEventMetadataForProvider: mockDeleteEventMetadata,
-          deleteEventProvider: mockDeleteEventProvider,
         },
       });
 
@@ -1023,8 +1034,8 @@ describe("events installation module", () => {
 
       expect(mockDeleteEventMetadata).toHaveBeenCalledWith(
         expect.objectContaining({
-          providerId: "io-provider-456",
           eventCode: "ext-event-code",
+          providerId: "io-provider-456",
         }),
       );
       expect(mockDeleteEventProvider).toHaveBeenCalledWith(

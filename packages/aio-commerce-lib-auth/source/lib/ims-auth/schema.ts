@@ -76,8 +76,8 @@ export const StringArrayTransformSchema = (name: string) =>
               const parsed = JSON.parse(v);
               if (!Array.isArray(parsed)) {
                 addIssue({
-                  received: v,
                   message: `Expected a valid JSON array for the IMS auth parameter ${name}: ${v}`,
+                  received: v,
                 });
                 return NEVER;
               }
@@ -86,8 +86,8 @@ export const StringArrayTransformSchema = (name: string) =>
             } catch (error) {
               const errorMessage = (error as Error).message;
               addIssue({
-                received: v,
                 message: `Expected a valid JSON array for the IMS auth parameter ${name}: ${errorMessage}`,
+                received: v,
               });
 
               return NEVER;
@@ -107,17 +107,17 @@ const ImsAuthEnvSchema = picklist(["prod", "stage"]);
 export const ImsAuthParamsSchema = object({
   clientId: imsAuthParameter("clientId"),
   clientSecrets: stringArray("clientSecrets", 1),
-  technicalAccountId: imsAuthParameter("technicalAccountId"),
+  context: pipe(optional(string())),
+  environment: pipe(optional(ImsAuthEnvSchema)),
+  imsOrgId: imsAuthParameter("imsOrgId"),
+  scopes: stringArray("scopes", 1),
   technicalAccountEmail: pipe(
     string(
       "Expected a string value for the IMS auth parameter technicalAccountEmail",
     ),
     email("Expected a valid email format for technicalAccountEmail"),
   ),
-  imsOrgId: imsAuthParameter("imsOrgId"),
-  environment: pipe(optional(ImsAuthEnvSchema)),
-  context: pipe(optional(string())),
-  scopes: stringArray("scopes", 1),
+  technicalAccountId: imsAuthParameter("technicalAccountId"),
 });
 
 /** Defines the parameters for the IMS auth service. */

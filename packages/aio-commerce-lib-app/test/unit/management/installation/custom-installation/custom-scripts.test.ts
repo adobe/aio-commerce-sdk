@@ -87,9 +87,9 @@ describe("createCustomScriptSteps", () => {
       installation: {
         customInstallationSteps: [
           {
-            script: "./my-script.js",
-            name: "My Custom Step",
             description: "A test step",
+            name: "My Custom Step",
+            script: "./my-script.js",
           },
         ],
       },
@@ -97,17 +97,17 @@ describe("createCustomScriptSteps", () => {
 
     const steps = createCustomScriptSteps(config);
     expect(steps).toHaveLength(1);
-    expect(steps?.[0].name).toBe("myCustomStep");
+    expect(steps[0].name).toBe("myCustomStep");
   });
 });
 
 describe("createCustomScriptStep - run function", () => {
   test("should execute script successfully and return result", async () => {
-    const mockScriptResult = { status: "success", data: "test-data" };
+    const mockScriptResult = { data: "test-data", status: "success" };
     const mockScript = vi.fn().mockResolvedValue(mockScriptResult);
 
     const steps = createCustomScriptSteps(configWithCustomInstallationSteps);
-    const step = steps?.[0] as LeafStep;
+    const step = steps[0] as LeafStep;
 
     const mockContext = createMockInstallationContext();
     mockContext.customScripts = {
@@ -124,14 +124,14 @@ describe("createCustomScriptStep - run function", () => {
       mockContext,
     );
     expect(result).toEqual({
-      script: "./demo-success.js",
       data: mockScriptResult,
+      script: "./demo-success.js",
     });
   });
 
   test("should throw error when customScripts are not defined", async () => {
     const steps = createCustomScriptSteps(configWithCustomInstallationSteps);
-    const step = steps?.[0] as LeafStep;
+    const step = steps[0] as LeafStep;
 
     const mockContext = createMockInstallationContext();
     mockContext.customScripts = {};
@@ -143,7 +143,7 @@ describe("createCustomScriptStep - run function", () => {
 
   test("should throw error when customScripts is undefined on context", async () => {
     const steps = createCustomScriptSteps(configWithCustomInstallationSteps);
-    const step = steps?.[0] as LeafStep;
+    const step = steps[0] as LeafStep;
 
     const mockContext = createMockInstallationContext();
     mockContext.customScripts = undefined;
@@ -155,7 +155,7 @@ describe("createCustomScriptStep - run function", () => {
 
   test("should throw error when script module has no default export", async () => {
     const steps = createCustomScriptSteps(configWithCustomInstallationSteps);
-    const step = steps?.[0] as LeafStep;
+    const step = steps[0] as LeafStep;
 
     const mockContext = createMockInstallationContext();
     mockContext.customScripts = {
@@ -173,7 +173,7 @@ describe("createCustomScriptStep - run function", () => {
       .mockRejectedValue(new Error("Script execution failed"));
 
     const steps = createCustomScriptSteps(configWithCustomInstallationSteps);
-    const step = steps?.[0] as LeafStep;
+    const step = steps[0] as LeafStep;
 
     const mockContext = createMockInstallationContext();
     mockContext.customScripts = {
@@ -188,11 +188,11 @@ describe("createCustomScriptStep - run function", () => {
 
 describe("createCustomScriptStep - run function (CJS module.exports forms)", () => {
   test("should execute CJS function form (module.exports = fn) without .default wrapper", async () => {
-    const mockScriptResult = { status: "success", data: "cjs-fn" };
+    const mockScriptResult = { data: "cjs-fn", status: "success" };
     const mockScript = vi.fn().mockResolvedValue(mockScriptResult);
 
     const steps = createCustomScriptSteps(configWithCustomInstallationSteps);
-    const step = steps?.[0] as LeafStep;
+    const step = steps[0] as LeafStep;
 
     const mockContext = createMockInstallationContext();
     mockContext.customScripts = {
@@ -209,17 +209,17 @@ describe("createCustomScriptStep - run function (CJS module.exports forms)", () 
       mockContext,
     );
     expect(result).toEqual({
-      script: "./demo-success.js",
       data: mockScriptResult,
+      script: "./demo-success.js",
     });
   });
 
   test("should execute CJS object form (module.exports = { install }) without .default wrapper", async () => {
-    const mockInstallResult = { status: "success", data: "cjs-obj" };
+    const mockInstallResult = { data: "cjs-obj", status: "success" };
     const mockInstall = vi.fn().mockResolvedValue(mockInstallResult);
 
     const steps = createCustomScriptSteps(configWithCustomInstallationSteps);
-    const step = steps?.[0] as LeafStep;
+    const step = steps[0] as LeafStep;
 
     const mockContext = createMockInstallationContext();
     mockContext.customScripts = {
@@ -236,8 +236,8 @@ describe("createCustomScriptStep - run function (CJS module.exports forms)", () 
       mockContext,
     );
     expect(result).toEqual({
-      script: "./demo-success.js",
       data: mockInstallResult,
+      script: "./demo-success.js",
     });
   });
 
@@ -246,7 +246,7 @@ describe("createCustomScriptStep - run function (CJS module.exports forms)", () 
     const mockInstall = vi.fn().mockResolvedValue({ status: "success" });
 
     const steps = createCustomScriptSteps(configWithCustomInstallationSteps);
-    const step = steps?.[0] as LeafStep;
+    const step = steps[0] as LeafStep;
 
     const mockContext = createMockInstallationContext();
     mockContext.customScripts = {
@@ -265,7 +265,7 @@ describe("createCustomScriptStep - run function (CJS module.exports forms)", () 
     const mockScript = vi.fn().mockResolvedValue({ status: "success" });
 
     const steps = createCustomScriptSteps(configWithCustomInstallationSteps);
-    const step = steps?.[0] as LeafStep;
+    const step = steps[0] as LeafStep;
 
     const mockContext = createMockInstallationContext();
     mockContext.customScripts = {
@@ -280,11 +280,11 @@ describe("createCustomScriptStep - run function (CJS module.exports forms)", () 
 
 describe("createCustomScriptStep - run function (object form)", () => {
   test("should execute install handler from object form and return result", async () => {
-    const mockInstallResult = { status: "success", data: "object-form" };
+    const mockInstallResult = { data: "object-form", status: "success" };
     const mockInstall = vi.fn().mockResolvedValue(mockInstallResult);
 
     const steps = createCustomScriptSteps(configWithCustomInstallationSteps);
-    const step = steps?.[0] as LeafStep;
+    const step = steps[0] as LeafStep;
 
     const mockContext = createMockInstallationContext();
     mockContext.customScripts = {
@@ -301,14 +301,14 @@ describe("createCustomScriptStep - run function (object form)", () => {
       mockContext,
     );
     expect(result).toEqual({
-      script: "./demo-success.js",
       data: mockInstallResult,
+      script: "./demo-success.js",
     });
   });
 
   test("should throw when object form has no install method", async () => {
     const steps = createCustomScriptSteps(configWithCustomInstallationSteps);
-    const step = steps?.[0] as LeafStep;
+    const step = steps[0] as LeafStep;
 
     const mockContext = createMockInstallationContext();
     mockContext.customScripts = {
@@ -327,7 +327,7 @@ describe("createCustomScriptStep - uninstall function", () => {
     const mockInstall = vi.fn().mockResolvedValue({ status: "success" });
 
     const steps = createCustomScriptSteps(configWithCustomInstallationSteps);
-    const step = steps?.[0] as LeafStep;
+    const step = steps[0] as LeafStep;
 
     const mockContext = createMockInstallationContext();
     mockContext.customScripts = {
@@ -348,7 +348,7 @@ describe("createCustomScriptStep - uninstall function", () => {
     const mockRun = vi.fn().mockResolvedValue({ status: "success" });
 
     const steps = createCustomScriptSteps(configWithCustomInstallationSteps);
-    const step = steps?.[0] as LeafStep;
+    const step = steps[0] as LeafStep;
 
     const mockContext = createMockInstallationContext();
     mockContext.customScripts = {
@@ -361,16 +361,20 @@ describe("createCustomScriptStep - uninstall function", () => {
     ).resolves.toBeUndefined();
   });
 
-  test("should throw error when script module not found during uninstall", async () => {
+  test("should skip uninstall gracefully when script module not found", async () => {
     const steps = createCustomScriptSteps(configWithCustomInstallationSteps);
-    const step = steps?.[0] as LeafStep;
+    const step = steps[0] as LeafStep;
 
     const mockContext = createMockInstallationContext();
     mockContext.customScripts = {}; // Empty scripts
 
     await expect(
       step.uninstall?.(configWithCustomInstallationSteps, mockContext),
-    ).rejects.toThrow();
+    ).resolves.toBeUndefined();
+
+    expect(mockContext.logger.warn).toHaveBeenCalledWith(
+      expect.stringContaining("./demo-success.js"),
+    );
   });
 
   test("should handle uninstall function that throws an error", async () => {
@@ -379,7 +383,7 @@ describe("createCustomScriptStep - uninstall function", () => {
       .mockRejectedValue(new Error("Uninstall failed"));
 
     const steps = createCustomScriptSteps(configWithCustomInstallationSteps);
-    const step = steps?.[0] as LeafStep;
+    const step = steps[0] as LeafStep;
 
     const mockContext = createMockInstallationContext();
     mockContext.customScripts = {
@@ -398,16 +402,16 @@ describe("createCustomScriptStep - uninstall function", () => {
     const mockUninstall2 = vi.fn().mockResolvedValue(undefined);
 
     const steps = createCustomScriptSteps(configWithCustomInstallationSteps);
-    const step1 = steps?.[0] as LeafStep;
-    const step2 = steps?.[1] as LeafStep;
+    const step1 = steps[0] as LeafStep;
+    const step2 = steps[1] as LeafStep;
 
     const mockContext = createMockInstallationContext();
     mockContext.customScripts = {
-      "./demo-success.js": {
-        default: { install: vi.fn(), uninstall: mockUninstall1 },
-      },
       "./demo-error.js": {
         default: { install: vi.fn(), uninstall: mockUninstall2 },
+      },
+      "./demo-success.js": {
+        default: { install: vi.fn(), uninstall: mockUninstall1 },
       },
     };
 

@@ -20,11 +20,13 @@ import {
   EXTENSIBILITY_EXTENSION_POINT_ID,
 } from "#commands/constants";
 import { getRuntimeActions } from "#commands/generate/actions/config";
+import { TEMPLATES_DIR } from "#commands/generate/actions/constants";
 import {
   generateActionFiles,
+  generateWebSrc,
   prepareRuntimeAppConfigModule,
+  prepareWebSourceImportAlias,
   readExtConfig,
-  TEMPLATES_DIR,
   updateExtConfig,
 } from "#commands/generate/actions/lib";
 import { run as generateManifestCommand } from "#commands/generate/manifest/main";
@@ -88,7 +90,20 @@ export async function run(extension: Extension, templatesDir = TEMPLATES_DIR) {
 
   if (extension === "backend-ui/2") {
     if (hasAdminUi(appManifest)) {
-      await updateExtConfig(appManifest, BACKEND_UI_V2_EXTENSION_POINT_ID);
+      const extConfig = await updateExtConfig(
+        appManifest,
+        BACKEND_UI_V2_EXTENSION_POINT_ID,
+      );
+
+      if (extConfig.operations?.view) {
+        await prepareWebSourceImportAlias(extConfig);
+        await generateWebSrc(
+          extConfig,
+          BACKEND_UI_V2_EXTENSION_POINT_ID,
+          appManifest.metadata.displayName,
+          templatesDir,
+        );
+      }
     }
     return;
   }
@@ -99,14 +114,14 @@ export async function run(extension: Extension, templatesDir = TEMPLATES_DIR) {
 /** Runs the pre-app-build hook */
 export async function exec() {
   consola.debug("Running lib-app pre-app-build hook");
-  const extension = process.env.EXTENSION as Extension;
+  const rawExtension = process.env.EXTENSION;
 
   try {
-    if (!extension) {
+    if (!rawExtension) {
       throw new Error("EXTENSION environment variable is not set");
     }
 
-    await run(extension);
+    await run(rawExtension as Extension);
   } catch (error) {
     if (error instanceof CommerceSdkValidationError) {
       consola.error(error.display());

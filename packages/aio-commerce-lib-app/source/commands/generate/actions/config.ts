@@ -16,6 +16,8 @@ import { GENERATED_ACTIONS_PATH, PACKAGE_NAME } from "#commands/constants";
 import { requiresInstallation } from "#config/schema/app";
 import { hasBusinessConfigSchema } from "#config/schema/business-configuration";
 
+import { COMMERCE_ACTION_INPUTS } from "./constants";
+
 import type {
   ActionDefinition,
   ExtConfig,
@@ -33,28 +35,10 @@ export type TemplateAction = ActionConfig & {
   templateFile: string;
 };
 
-/** The list of Commerce variables that are required for the runtime actions */
-export const COMMERCE_VARIABLES = [
-  "AIO_COMMERCE_AUTH_IMS_CLIENT_ID",
-  "AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS",
-  "AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID",
-  "AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL",
-  "AIO_COMMERCE_AUTH_IMS_ORG_ID",
-  "AIO_COMMERCE_AUTH_IMS_SCOPES",
-] as const satisfies string[];
-
-/** The inputs for the generated runtime actions */
-export const COMMERCE_ACTION_INPUTS = Object.fromEntries(
-  COMMERCE_VARIABLES.map((variable) => [variable, `$${variable}`] as const),
-);
-
-export const CUSTOM_IMPORTS_PLACEHOLDER = "// {{CUSTOM_SCRIPTS_IMPORTS}}";
-export const CUSTOM_SCRIPTS_MAP_PLACEHOLDER = "// {{CUSTOM_SCRIPTS_MAP}}";
-export const CUSTOM_SCRIPTS_LOADER_PLACEHOLDER = "// {{CUSTOM_SCRIPTS_LOADER}}";
-
 /**
  * Creates a runtime action configuration.
  * @param actionName - The name of the action.
+ * @param config - Action generation options.
  * @param options - Optional configuration options.
  */
 function createActionDefinition(
@@ -64,14 +48,14 @@ function createActionDefinition(
 ) {
   const def: ActionDefinition = {
     ...options,
+    annotations: {
+      final: true,
+      "require-adobe-auth": true,
+    },
 
     function: `${GENERATED_ACTIONS_PATH}/${actionName}.js`,
-    web: options.web ?? "yes",
     runtime: "nodejs:24",
-    annotations: {
-      "require-adobe-auth": true,
-      final: true,
-    },
+    web: options.web ?? "yes",
   };
 
   if (config.requiresEncryptionKey) {
@@ -87,6 +71,7 @@ function createActionDefinition(
 /**
  * Gets the runtime actions to be generated from the ext.config.yaml configuration.
  * @param extConfig - The ext.config.yaml configuration.
+ * @param dir - Directory containing the runtime action templates.
  */
 export function getRuntimeActions(extConfig: ExtConfig, dir: string) {
   return Object.entries(
@@ -102,7 +87,7 @@ export function getRuntimeActions(extConfig: ExtConfig, dir: string) {
 
 /**
  * Builds the ext.config.yaml configuration for the extensibility extension.
- * @param features - The features that are enabled for the app.
+ * @param appConfig - Parsed app configuration.
  */
 export function buildAppManagementExtConfig(
   appConfig: CommerceAppConfigOutputModel,
@@ -116,8 +101,12 @@ export function buildAppManagementExtConfig(
     operations: {
       workerProcess: [
         {
-          type: "action",
           impl: `${PACKAGE_NAME}/app-config`,
+          type: "action",
+        },
+        {
+          impl: `${PACKAGE_NAME}/association`,
+          type: "action",
         },
       ],
     },
@@ -125,10 +114,11 @@ export function buildAppManagementExtConfig(
     runtimeManifest: {
       packages: {
         [PACKAGE_NAME]: {
-          license: "Apache-2.0",
           actions: {
             "app-config": createActionDefinition("app-config"),
+            association: createActionDefinition("association"),
           } as Record<string, ActionDefinition>,
+          license: "Apache-2.0",
         },
       },
     },
@@ -141,8 +131,8 @@ export function buildAppManagementExtConfig(
 
   if (needsInstallAction) {
     extConfig.operations.workerProcess.push({
-      type: "action",
       impl: `${PACKAGE_NAME}/installation`,
+      type: "action",
     });
 
     extConfig.runtimeManifest.packages[PACKAGE_NAME].actions.installation =
@@ -166,8 +156,8 @@ export function buildBusinessConfigurationExtConfig() {
   const actions = [
     {
       name: "config",
-      templateFile: "config.js.template",
       requiresEncryptionKey: true,
+      templateFile: "config.js.template",
     },
     {
       name: "scope-tree",
@@ -183,21 +173,21 @@ export function buildBusinessConfigurationExtConfig() {
 
     operations: {
       workerProcess: actions.map((action) => ({
-        type: "action",
         impl: `${PACKAGE_NAME}/${action.name}`,
+        type: "action",
       })),
     },
 
     runtimeManifest: {
       packages: {
         [PACKAGE_NAME]: {
-          license: "Apache-2.0",
           actions: Object.fromEntries(
             actions.map((action) => [
               action.name,
               createActionDefinition(action.name, action),
             ]),
           ),
+          license: "Apache-2.0",
         },
       },
     },
@@ -252,11 +242,12 @@ export function requiresWebSource(adminUi: AdminUi | undefined): boolean {
  * Builds the ext.config.yaml for the Admin UI v2 extension (`commerce/backend-ui/2`).
  * Derives `workerProcess` and `view` operation declarations from `adminUi` config.
  * Adds a `view` operation and `web` source when view-type entries or `adminUi.menu` is configured.
+ * @param appConfig - Parsed app configuration.
  */
 export function buildAdminUiV2ExtConfig(
   appConfig: CommerceAppConfigOutputModel,
 ) {
-  const adminUi = appConfig.adminUi;
+  const { adminUi } = appConfig;
   const runtimeActions = collectUniqueRuntimeActions(adminUi);
   const requiresWeb = requiresWebSource(adminUi);
   return {
@@ -266,12 +257,12 @@ export function buildAdminUiV2ExtConfig(
     },
     operations: {
       ...(requiresWeb && {
-        view: [{ type: "web" as const, impl: "index.html" }],
+        view: [{ impl: "index.html", type: "web" as const }],
       }),
       ...(runtimeActions.length > 0 && {
         workerProcess: runtimeActions.map((impl) => ({
-          type: "action" as const,
           impl,
+          type: "action" as const,
         })),
       }),
     },

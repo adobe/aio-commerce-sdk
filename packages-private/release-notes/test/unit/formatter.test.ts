@@ -19,50 +19,50 @@ import {
   generateReleaseSummary,
 } from "#formatter";
 
-import type { LanguageModelUsage } from "ai";
+import type { LanguageModel, LanguageModelUsage } from "ai";
 import type { PackageNotesResult } from "#formatter";
 import type { PackageNotes } from "#schema";
 import type { ChangelogEntry } from "#types";
 
 function makeUsage(totalTokens = 30): LanguageModelUsage {
   return {
-    inputTokens: 10,
-    outputTokens: 20,
-    totalTokens,
     inputTokenDetails: {
-      noCacheTokens: undefined,
       cacheReadTokens: undefined,
       cacheWriteTokens: undefined,
+      noCacheTokens: undefined,
     },
-    outputTokenDetails: { textTokens: undefined, reasoningTokens: undefined },
+    inputTokens: 10,
+    outputTokenDetails: { reasoningTokens: undefined, textTokens: undefined },
+    outputTokens: 20,
+    totalTokens,
   };
 }
 
 function makeEntry(pkg: string, version: string): ChangelogEntry {
   return {
-    package: pkg,
-    version,
     markdown: `## ${version}\n\n### Minor Changes\n\n- Added feature.`,
-    prevTag: `${pkg}@0.0.1`,
     newTag: `${pkg}@${version}`,
+    package: pkg,
+    prevTag: `${pkg}@0.0.1`,
+    version,
   };
 }
 
 function makeNotes(pkg: string, version: string): PackageNotes {
   return {
-    packageName: pkg,
-    version,
+    breakingChanges: [],
     bump: "minor",
     headline: `${pkg} now has a new feature.`,
-    summary: `${pkg} received a new feature improving user experience.`,
     highlights: [
       {
-        kind: "feat",
         description: "Added feature X, enabling users to do Y.",
+        kind: "feat",
         prLinks: ["https://github.com/adobe/aio-commerce-sdk/pull/1"],
       },
     ],
-    breakingChanges: [],
+    packageName: pkg,
+    summary: `${pkg} received a new feature improving user experience.`,
+    version,
   };
 }
 
@@ -196,7 +196,7 @@ describe("assembleReleaseNotes", () => {
       [
         makeResult(LIB, "1.0.0", {
           highlights: [
-            { kind: "fix", description: "Fixed a bug.", prLinks: [] },
+            { description: "Fixed a bug.", kind: "fix", prLinks: [] },
           ],
         }),
       ],
@@ -304,15 +304,15 @@ describe("generateAllNotes", () => {
   test("treats undefined token counts as zero when aggregating usage", async () => {
     const { generateText } = await import("ai");
     const undefinedUsage = {
-      inputTokens: undefined,
-      outputTokens: undefined,
-      totalTokens: undefined,
       inputTokenDetails: {
-        noCacheTokens: undefined,
         cacheReadTokens: undefined,
         cacheWriteTokens: undefined,
+        noCacheTokens: undefined,
       },
-      outputTokenDetails: { textTokens: undefined, reasoningTokens: undefined },
+      inputTokens: undefined,
+      outputTokenDetails: { reasoningTokens: undefined, textTokens: undefined },
+      outputTokens: undefined,
+      totalTokens: undefined,
     };
     (generateText as ReturnType<typeof vi.fn>)
       .mockResolvedValueOnce({

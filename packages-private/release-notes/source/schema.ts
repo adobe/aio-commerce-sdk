@@ -30,13 +30,19 @@ const HighlightKindSchema = v.picklist([
  * Per-package structured notes produced by a single parallel LLM call.
  */
 export const PackageNotesSchema = v.object({
-  packageName: v.pipe(
-    v.string(),
-    v.description("The npm package name, e.g. @adobe/aio-commerce-lib-core."),
-  ),
-  version: v.pipe(
-    v.string(),
-    v.description("The published version, e.g. 1.2.0."),
+  breakingChanges: v.pipe(
+    v.array(
+      v.object({
+        migration: v.pipe(
+          v.string(),
+          v.description(
+            "Concrete migration steps. Only present for major bumps.",
+          ),
+        ),
+        title: v.string(),
+      }),
+    ),
+    v.description("Empty array unless this is a major bump."),
   ),
   bump: v.picklist(["major", "minor", "patch"]),
   headline: v.pipe(
@@ -45,23 +51,17 @@ export const PackageNotesSchema = v.object({
       "One sentence summarizing the most important user-facing change in this package.",
     ),
   ),
-  summary: v.pipe(
-    v.string(),
-    v.description(
-      "One paragraph explaining the user-facing impact and motivation for this package's changes.",
-    ),
-  ),
   highlights: v.array(
     v.object({
-      kind: v.pipe(
-        HighlightKindSchema,
-        v.description("Conventional commit type (feat, fix, perf, etc.)."),
-      ),
       description: v.pipe(
         v.string(),
         v.description(
           "One concise sentence describing the change and its user-facing impact.",
         ),
+      ),
+      kind: v.pipe(
+        HighlightKindSchema,
+        v.description("Conventional commit type (feat, fix, perf, etc.)."),
       ),
       prLinks: v.array(
         v.pipe(
@@ -73,19 +73,19 @@ export const PackageNotesSchema = v.object({
       ),
     }),
   ),
-  breakingChanges: v.pipe(
-    v.array(
-      v.object({
-        title: v.string(),
-        migration: v.pipe(
-          v.string(),
-          v.description(
-            "Concrete migration steps. Only present for major bumps.",
-          ),
-        ),
-      }),
+  packageName: v.pipe(
+    v.string(),
+    v.description("The npm package name, e.g. @adobe/aio-commerce-lib-core."),
+  ),
+  summary: v.pipe(
+    v.string(),
+    v.description(
+      "One paragraph explaining the user-facing impact and motivation for this package's changes.",
     ),
-    v.description("Empty array unless this is a major bump."),
+  ),
+  version: v.pipe(
+    v.string(),
+    v.description("The published version, e.g. 1.2.0."),
   ),
 });
 
@@ -96,31 +96,31 @@ export type PackageNotes = v.InferOutput<typeof PackageNotesSchema>;
  * This is the final output shape published to the GitHub Release body.
  */
 export const ReleaseNotesSchema = v.object({
+  breakingChanges: v.pipe(
+    v.array(
+      v.object({
+        migration: v.string(),
+        packages: v.array(v.string()),
+        title: v.string(),
+      }),
+    ),
+    v.description("Empty array if no major bumps in this release."),
+  ),
   headline: v.pipe(
     v.string(),
     v.description(
       "One-sentence TL;DR of the release, user-impact first. No version numbers as the lead.",
     ),
   ),
-  summary: v.string(),
   highlights: v.array(
     v.object({
-      kind: HighlightKindSchema,
       description: v.string(),
+      kind: HighlightKindSchema,
       packages: v.array(v.string()),
       prLinks: v.array(v.string()),
     }),
   ),
-  breakingChanges: v.pipe(
-    v.array(
-      v.object({
-        title: v.string(),
-        migration: v.string(),
-        packages: v.array(v.string()),
-      }),
-    ),
-    v.description("Empty array if no major bumps in this release."),
-  ),
+  summary: v.string(),
 });
 
 export type ReleaseNotes = v.InferOutput<typeof ReleaseNotesSchema>;

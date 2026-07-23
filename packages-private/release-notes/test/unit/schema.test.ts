@@ -16,36 +16,36 @@ import { describe, expect, test } from "vitest";
 import { PackageNotesSchema, ReleaseNotesSchema } from "#schema";
 
 const VALID_PACKAGE_NOTES = {
-  packageName: "@adobe/aio-commerce-lib-core",
-  version: "2.1.0",
+  breakingChanges: [],
   bump: "minor",
   headline: "Nested ACL permissions are now supported.",
-  summary:
-    "This release adds hierarchical permission checks, enabling granular admin access delegation without requiring root access.",
   highlights: [
     {
-      kind: "feat",
       description:
         "Added hierarchical permission checks, enabling admins to delegate access to sub-resources.",
+      kind: "feat",
       prLinks: ["https://github.com/adobe/aio-commerce-sdk/pull/42"],
     },
   ],
-  breakingChanges: [],
+  packageName: "@adobe/aio-commerce-lib-core",
+  summary:
+    "This release adds hierarchical permission checks, enabling granular admin access delegation without requiring root access.",
+  version: "2.1.0",
 };
 
 const VALID_RELEASE_NOTES = {
+  breakingChanges: [],
   headline: "Nested ACL permissions and webhooks are now available.",
-  summary:
-    "This release introduces nested ACL permissions and environment-scoped webhooks, reducing integration complexity.",
   highlights: [
     {
-      kind: "feat",
       description: "Added hierarchical permission checks.",
+      kind: "feat",
       packages: ["@adobe/aio-commerce-lib-admin-ui"],
       prLinks: [],
     },
   ],
-  breakingChanges: [],
+  summary:
+    "This release introduces nested ACL permissions and environment-scoped webhooks, reducing integration complexity.",
 };
 
 describe("PackageNotesSchema", () => {
@@ -73,7 +73,7 @@ describe("PackageNotesSchema", () => {
   test("rejects an invalid highlight kind", () => {
     const result = v.safeParse(PackageNotesSchema, {
       ...VALID_PACKAGE_NOTES,
-      highlights: [{ kind: "hotfix", description: "Something.", prLinks: [] }],
+      highlights: [{ description: "Something.", kind: "hotfix", prLinks: [] }],
     });
     expect(result.success).toBe(false);
   });
@@ -100,8 +100,8 @@ describe("ReleaseNotesSchema", () => {
   test("accepts empty highlights and breakingChanges arrays", () => {
     const result = v.safeParse(ReleaseNotesSchema, {
       ...VALID_RELEASE_NOTES,
-      highlights: [],
       breakingChanges: [],
+      highlights: [],
     });
     expect(result.success).toBe(true);
   });
@@ -111,8 +111,8 @@ describe("ReleaseNotesSchema", () => {
       ...VALID_RELEASE_NOTES,
       highlights: [
         {
-          kind: "invalid",
           description: "Something.",
+          kind: "invalid",
           packages: [],
           prLinks: [],
         },

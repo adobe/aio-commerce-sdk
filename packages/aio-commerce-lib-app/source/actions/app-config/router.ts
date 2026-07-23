@@ -18,7 +18,7 @@ import {
 } from "@adobe/aio-commerce-lib-core/responses";
 import {
   HttpActionRouter,
-  logger,
+  logger as withLogger,
 } from "@aio-commerce-sdk/common-utils/actions";
 import * as v from "valibot";
 
@@ -54,12 +54,11 @@ interface AppConfigActionContext extends BaseContext {
  * - GET /openapi.json   Returns the OpenAPI spec for all SDK actions
  */
 export const router = new HttpActionRouter<AppConfigActionContext>().use(
-  logger({ name: () => "app-config" }),
+  withLogger({ name: () => "app-config" }),
 );
 
 /** GET / - Get app config */
 router.get("/", {
-  query: v.object({ commerceEnv: v.optional(CommerceEnvSchema) }),
   handler: async (req, { logger, rawParams }) => {
     const rawAppConfig = rawParams.appConfig;
 
@@ -99,6 +98,7 @@ router.get("/", {
       body: { ...config, openApiSpecUrl },
     });
   },
+  query: v.object({ commerceEnv: v.optional(CommerceEnvSchema) }),
 });
 
 /**
@@ -106,7 +106,6 @@ router.get("/", {
  * @internal - Do not add to OpenAPI Spec.
  */
 router.get("/openapi.json", {
-  query: v.object({ ck: v.optional(v.string()) }),
   handler: async (req, { logger, rawParams }) => {
     const { ck } = req.query;
     const domains = getConfigDomains(rawParams.appConfig);
@@ -127,4 +126,5 @@ router.get("/openapi.json", {
       body: await buildOpenApiSpec(domains, logger),
     });
   },
+  query: v.object({ ck: v.optional(v.string()) }),
 });

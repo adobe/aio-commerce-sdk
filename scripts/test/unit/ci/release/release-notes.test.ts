@@ -13,20 +13,20 @@
 import { afterEach, describe, expect, test, vi } from "vitest";
 
 vi.mock("@aio-commerce-sdk/release-notes", () => ({
-  selectModel: vi.fn().mockReturnValue({ model: {}, modelId: "test-model" }),
+  assembleReleaseNotes: vi.fn().mockReturnValue({
+    breakingChanges: [],
+    headline: "Test Release",
+    highlights: [],
+    summary: "This test release contains no changes.",
+  }),
   collectEntries: vi.fn().mockResolvedValue([]),
   generateAllNotes: vi.fn().mockResolvedValue({
     results: [],
     summary: "Test holistic summary.",
     totalUsage: { inputTokens: 10, outputTokens: 5, totalTokens: 15 },
   }),
-  assembleReleaseNotes: vi.fn().mockReturnValue({
-    headline: "Test Release",
-    summary: "This test release contains no changes.",
-    highlights: [],
-    breakingChanges: [],
-  }),
   renderSlack: vi.fn().mockReturnValue(":mega: Test Release :tada:\n"),
+  selectModel: vi.fn().mockReturnValue({ model: {}, modelId: "test-model" }),
 }));
 
 import main from "#ci/release/release-notes";
@@ -43,12 +43,10 @@ function stubEnv(values: {
   notesEnabled?: string;
   notesModel?: string;
   publishedPackages?: string;
-  releaseChannel?: string;
 }) {
   vi.stubEnv("RELEASE_NOTES_ENABLED", values.notesEnabled ?? "");
   vi.stubEnv("RELEASE_NOTES_MODEL", values.notesModel ?? "");
   vi.stubEnv("PUBLISHED_PACKAGES", values.publishedPackages ?? "");
-  vi.stubEnv("RELEASE_CHANNEL", values.releaseChannel ?? "");
 }
 
 function createSummaryMock() {
@@ -70,7 +68,7 @@ afterEach(() => {
 describe("release/release-notes.ts", () => {
   test("skips when RELEASE_NOTES_ENABLED is not 'true'", async () => {
     const core = createCoreMock();
-    stubEnv({ notesEnabled: "false", releaseChannel: "public" });
+    stubEnv({ notesEnabled: "false" });
 
     await main(asCore(core), asExec(createExecMock()));
 
@@ -78,26 +76,13 @@ describe("release/release-notes.ts", () => {
     expect(core.setOutput).not.toHaveBeenCalled();
   });
 
-  test("skips for non-public release channels", async () => {
-    const core = createCoreMock();
-    stubEnv({ notesEnabled: "true", releaseChannel: "internal" });
-
-    await main(asCore(core), asExec(createExecMock()));
-
-    expect(core.info).toHaveBeenCalledWith(
-      expect.stringContaining("public channel"),
-    );
-    expect(core.setOutput).not.toHaveBeenCalled();
-  });
-
   test("skips when no packages were published", async () => {
     const core = createCoreMock();
     stubEnv({
       notesEnabled: "true",
-      releaseChannel: "public",
-      publishedPackages: "[]",
 
       notesModel: "test-model",
+      publishedPackages: "[]",
     });
 
     await main(asCore(core), asExec(createExecMock()));
@@ -110,7 +95,7 @@ describe("release/release-notes.ts", () => {
 
   test("throws when PUBLISHED_PACKAGES is missing", async () => {
     const core = createCoreMock();
-    stubEnv({ notesEnabled: "true", releaseChannel: "public" });
+    stubEnv({ notesEnabled: "true" });
 
     await expect(main(asCore(core), asExec(createExecMock()))).rejects.toThrow(
       "Missing PUBLISHED_PACKAGES",
@@ -121,7 +106,6 @@ describe("release/release-notes.ts", () => {
     const core = createCoreMock();
     stubEnv({
       notesEnabled: "true",
-      releaseChannel: "public",
       publishedPackages: CORE_PACKAGE_JSON,
     });
 
@@ -135,10 +119,9 @@ describe("release/release-notes.ts", () => {
     const core = { ...createCoreMock(), summary };
     stubEnv({
       notesEnabled: "true",
-      releaseChannel: "public",
-      publishedPackages: SDK_AND_CORE_PACKAGES_JSON,
 
       notesModel: "test-model",
+      publishedPackages: SDK_AND_CORE_PACKAGES_JSON,
     });
 
     await main(asCore(core), asExec(createExecMock()));

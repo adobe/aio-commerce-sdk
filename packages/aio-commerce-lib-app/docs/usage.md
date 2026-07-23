@@ -8,6 +8,9 @@ The `@adobe/aio-commerce-lib-app` library provides:
 - **Business Configuration**: Generate and manage the runtime actions that power the `commerce/configuration/1` extension point.
 - **Installation Management**: Generate and manage the runtime action that powers the app installation flow.
 - **Admin UI Configuration** (`commerce/backend-ui/2`): Generate and manage the runtime action and `workerProcess` declarations for Admin UI extensions on `commerce/backend-ui/2`. Currently supports grid column extensions, mass actions, order view buttons, and menu declarations.
+- **Association Helpers**: Retrieve the Commerce instance the app is associated with from any runtime action via `getCommerceClient` and `getCommerceInstance`.
+- **Event Emission**: Publish a configured I/O Event from any runtime action by provider key and event name via `publishEvent`.
+- **Event Code Resolution**: Compute the I/O Events event code for a declared event via `resolveIoEventCode`, matching the prefixing rules used at installation time.
 
 ## Reference
 
@@ -89,19 +92,22 @@ This produces the following files, organized by extension point:
 - `src/commerce-extensibility-1/.generated/actions/app-management/installation.js`: drives the installation flow, including any custom scripts you define
 - `src/commerce-extensibility-1/ext.config.yaml`: extension manifest with the `pre-app-build` hook
 
+Generated application code should import app metadata from `#app.commerce.config`. The alias can be used to import the config's default export, as well as any other symbols exported from your `app.commerce.config.*` file.
+
 **`commerce/configuration/1`**: Business configuration (generated when `businessConfig` is defined):
 
-- `src/commerce-configuration-1/.generated/configuration-schema.json`: a validated JSON representation of your schema for runtime use
+- `src/commerce-configuration-1/.generated/configuration-schema.json`: a validated JSON representation of your schema, generated for static schemas
 - `src/commerce-configuration-1/.generated/actions/business-configuration/config.js`: handles retrieving and updating configuration values across scopes
 - `src/commerce-configuration-1/.generated/actions/business-configuration/scope-tree.js`: handles scope hierarchy management for both Adobe Commerce and custom external scopes
 - `src/commerce-configuration-1/ext.config.yaml`: extension manifest with the `pre-app-build` hook
 
 > [!NOTE]
-> When the business config schema contains `dynamicList` fields, the manifest is emitted as an ESM module (`app.commerce.manifest.js`) instead of JSON, and no separate `configuration-schema.json` is generated. Generated actions resolve `dynamicList` fields on every request. Any external credentials a factory uses must be declared as `inputs` for each action that resolves the schema (in the corresponding `ext.config.yaml` of each action).
+> Generated actions import app config through `#app.commerce.config`. When the business config schema contains `dynamicList` fields, no separate `configuration-schema.json` is generated. Generated actions resolve `dynamicList` fields on every request. Any external credentials a factory uses must be declared as `inputs` for each action that resolves the schema (in the corresponding `ext.config.yaml` of each action).
 
 **`commerce/backend-ui/2`**: Admin UI registration (generated when `adminUi` is defined):
 
 - `src/commerce-backend-ui-2/ext.config.yaml`: extension manifest with the `pre-app-build` hook and `workerProcess` declarations derived from `runtimeAction` values
+- `src/commerce-backend-ui-2/web-src/`: browser scaffold generated when iframe-based Admin UI features require a `view` operation. Existing `web-src/index.html` files are never overwritten.
 
 > [!NOTE]
 > Generated actions default to the `nodejs:24` runtime. To pin a different runtime, set the `runtime` field on the action in the generated `ext.config.yaml`. Codegen preserves a `runtime` you set there, so it survives regeneration.
@@ -283,7 +289,6 @@ eventing: {
   - **operator**: The comparison operator. Valid values: `"greaterThan"`, `"lessThan"`, `"equal"`, `"regex"`, `"in"`, `"onChange"`
   - **value**: The value to compare against
 - **destination**: Optional destination for the event. Must be a valid destination name.
-- **hipaaAuditRequired**: Optional boolean value to indicate if the event requires HIPAA audit.
 - **prioritary**: Optional boolean value to indicate if the event is prioritary.
 - **force**: Optional boolean value to indicate if the event should be forced.
 - **runtimeActions**: Array of runtime actions to invoke when the event is triggered, each in the format `<package>/<action>` (e.g., `["my-package/my-action"]`). Multiple actions can be specified to handle the same event.
@@ -595,7 +600,9 @@ export default defineCustomInstallationStep(async (config, context) => {
 > [!WARNING]
 > **Experimental:** Admin UI support on `commerce/backend-ui/2` is not yet production-ready. The API may change in future releases.
 
-The `adminUi` field declares Admin UI registrations for the `commerce/backend-ui/2` extension point. Unlike `commerce/backend-ui/1`, which required a dedicated registration action, V2 reads the registration directly from the `app-config` endpoint — no separate registration action is generated. Every field of `adminUi` is optional — configure only the extension points your application needs. When defined, `init` and `generate all` automatically wire up the extension, including the `pre-app-build` hook and the `workerProcess` declarations in `ext.config.yaml`. Currently supported: grid column extensions, mass actions, order view buttons, and menu declarations. For details on each extension point, see the [Admin UI SDK Extension Points documentation](https://developer.adobe.com/commerce/extensibility/admin-ui-sdk/extension-points/).
+The `adminUi` field declares Admin UI registrations for the `commerce/backend-ui/2` extension point. Unlike `commerce/backend-ui/1`, which required a dedicated registration action, V2 reads the registration directly from the `app-config` endpoint — no separate registration action is generated. Every field of `adminUi` is optional — configure only the extension points your application needs. When defined, `init` and `generate all` automatically wire up the extension, including the `pre-app-build` hook and the `workerProcess` declarations in `ext.config.yaml`.
+
+View-based features also get a minimal `web-src/` scaffold when the resolved `view` entrypoint does not exist yet. The scaffold uses `.tsx` files when your app config is TypeScript and `.jsx` files otherwise. It imports app metadata from `#app.commerce.config`, so custom Admin UI code should use the same alias instead of importing generated files by path. Currently supported: grid column extensions, mass actions, order view buttons, and menu declarations. For details on each extension point, see the [Admin UI SDK Extension Points documentation](https://developer.adobe.com/commerce/extensibility/admin-ui-sdk/extension-points/).
 
 ##### Grid Columns
 
@@ -664,6 +671,7 @@ export default defineConfig({
   - **label**: non-empty string — column header displayed in the grid
   - **type**: one of `"boolean"`, `"date"`, `"datetime"`, `"float"`, `"integer"`, `"string"`
   - **align**: one of `"left"`, `"center"`, `"right"`
+  - **aclProtected** (optional): boolean — when `true`, Commerce generates a per-app nested ACL resource for this column in the Adobe Commerce User Roles tree, so admins can grant or deny it per role; roles without the resource don't see the column. Derive the id with `getGridColumnAclResourceId` from `@adobe/aio-commerce-lib-admin-ui/api`. See the [`@adobe/aio-commerce-lib-admin-ui` Permission Client documentation](../../aio-commerce-lib-admin-ui/docs/usage.md#permission-client).
 
 Each of `order`, `product`, and `customer` is optional — configure only the grids your application extends.
 
@@ -708,6 +716,23 @@ adminUi: {
 }
 ```
 
+###### Field applicability by variant
+
+| Field                | Common | `view` only | `worker` only |
+| :------------------- | :----: | :---------: | :-----------: |
+| `id`                 |   x    |             |               |
+| `label`              |   x    |             |               |
+| `level`              |   x    |             |               |
+| `sortOrder`          |   x    |             |               |
+| `confirm`            |   x    |             |               |
+| `notifications`      |   x    |             |               |
+| `path`               |        |      x      |               |
+| `sandboxPermissions` |        |      x      |               |
+| `runtimeAction`      |        |             |       x       |
+| `timeout`            |        |             |       x       |
+
+The `view` and `worker` variants are strict: `runtimeAction`/`timeout` on a `view` button and `path`/`sandboxPermissions` on a `worker` button are rejected at validation time.
+
 ###### Field Reference:
 
 Shared fields (both types):
@@ -719,6 +744,7 @@ Shared fields (both types):
 - **sortOrder**: Optional — positive number controlling display order
 - **confirm**: Optional — `{ title?, message? }` confirmation dialog before the handler runs
 - **notifications**: Optional — `{ success?, error? }` toast strings displayed after the handler returns
+- **aclProtected**: Optional — boolean; when `true`, Commerce generates a per-app nested ACL resource for this button in the Adobe Commerce User Roles tree, so admins can grant or deny it per role; roles without the resource don't see the button and are blocked from invoking it. Derive the id with `getOrderViewButtonAclResourceId` from `@adobe/aio-commerce-lib-admin-ui/api`. See the [`@adobe/aio-commerce-lib-admin-ui` Permission Client documentation](../../aio-commerce-lib-admin-ui/docs/usage.md#permission-client).
 
 `type: "view"` specific:
 
@@ -784,6 +810,7 @@ Shared fields (both types):
 - **confirm**: Optional — `{ title?, message? }` confirmation dialog shown before the action runs
 - **notifications**: Optional — `{ success?, error? }` toast strings displayed after the action completes
 - **selectionLimit**: Optional — positive number capping how many records may be selected at once
+- **aclProtected**: Optional — boolean; when `true`, Commerce generates a per-app nested ACL resource for this mass action in the Adobe Commerce User Roles tree, so admins can grant or deny it per role; roles without the resource don't see the action and are blocked from invoking it. Derive the id with `getMassActionAclResourceId` from `@adobe/aio-commerce-lib-admin-ui/api`. See the [`@adobe/aio-commerce-lib-admin-ui` Permission Client documentation](../../aio-commerce-lib-admin-ui/docs/usage.md#permission-client).
 
 `type: "view"` specific:
 
@@ -836,7 +863,7 @@ adminUi: {
   ```
 
 - **sandboxPermissions** (optional): array of iframe sandbox permissions; allowed values: `"allow-downloads"`, `"allow-modals"`, `"allow-popups"`
-- **aclProtected** (optional): boolean — when `true`, Commerce auto-generates a per-app ACL resource id from `metadata.id` and registers it in the Magento User Roles permission tree. Admins can then grant or deny access to the app's menu on a per-role basis; users without the resource see neither the menu item nor its content.
+- **aclProtected** (optional): boolean — when `true`, Commerce auto-generates a per-app ACL resource id from `metadata.id` and registers it in the Adobe Commerce User Roles permission tree. Admins can then grant or deny access to the app's menu on a per-role basis; users without the resource see neither the menu item nor its content.
 
   The generated resource id follows the pattern `Magento_CommerceBackendUix::adminuisdk_app_<sanitized-id>`, where `<sanitized-id>` is `metadata.id` lowercased with non-alphanumeric characters replaced by `_`. Use `getAclResourceId` from `@adobe/aio-commerce-lib-admin-ui/api` to derive it programmatically, and `getAdminUiPermissionClient` to check access from your runtime actions. See the [`@adobe/aio-commerce-lib-admin-ui` Permission Client documentation](../../aio-commerce-lib-admin-ui/docs/usage.md#permission-client) for details.
 
@@ -935,6 +962,182 @@ try {
 } catch (error) {
   console.error("Validation failed:", error.message);
 }
+```
+
+### Accessing the Associated Commerce Instance from Runtime Actions
+
+After an app is associated with a Commerce instance via App Management, the SDK stores the Commerce base URL and deployment type (`saas` or `paas`) so any runtime action can retrieve them — without custom storage setup or threading parameters through every layer of the call stack.
+
+Two helpers are exposed from the root entrypoint:
+
+- `getCommerceClient(auth, fetchOptions?)` — returns a ready-to-use [`AdobeCommerceHttpClient`](../../aio-commerce-lib-api/docs/usage.md). Use this when you need to call the Commerce API. The base URL and flavor come from the stored association data; you supply the resolved IMS auth. App Management requires IMS, so this accepts only IMS auth: resolve params with `resolveImsAuthParams`, or pass an `ImsAuthProvider` built with `getImsAuthProvider` / `forwardImsAuthProvider` from [`@adobe/aio-commerce-lib-auth`](../../aio-commerce-lib-auth/docs/usage.md). The optional [`fetchOptions`](https://github.com/sindresorhus/ky#options) (ky's `Options`) are forwarded to the underlying client (e.g. `headers`, `timeout`, `retry`); see [Custom Fetch Options](../../aio-commerce-lib-api/docs/usage.md#custom-fetch-options).
+- `getCommerceInstance()` — returns the raw `{ baseUrl, env }`. Use this when you only need the metadata (e.g. for logging or building a custom client).
+
+Both helpers throw `AssociationRecordNotFoundError` if the app is not currently associated, was unassociated, or was associated by an older SDK that did not store this data. Re-associating the app resolves the error.
+
+#### Primary pattern — get a ready-to-use client
+
+```ts
+import { getCommerceClient } from "@adobe/aio-commerce-lib-app";
+import { resolveImsAuthParams } from "@adobe/aio-commerce-lib-auth";
+
+export async function main(params) {
+  const client = await getCommerceClient(resolveImsAuthParams(params));
+  const products = await client.get("products").json();
+}
+```
+
+#### Low-level pattern — get the raw instance data
+
+```ts
+import { getCommerceInstance } from "@adobe/aio-commerce-lib-app";
+
+export async function main() {
+  const instance = await getCommerceInstance();
+
+  // instance.baseUrl — Commerce API base URL
+  // instance.env     — "saas" | "paas"
+}
+```
+
+#### Handling the unassociated state
+
+If your action needs to gracefully handle the case where the app is not associated yet, wrap the call in `try/catch`:
+
+```ts
+import { badRequest, ok } from "@adobe/aio-commerce-lib-core/responses";
+import {
+  AssociationRecordNotFoundError,
+  getCommerceClient,
+} from "@adobe/aio-commerce-lib-app";
+import { resolveImsAuthParams } from "@adobe/aio-commerce-lib-auth";
+
+export async function main(params) {
+  try {
+    const client = await getCommerceClient(resolveImsAuthParams(params));
+    return ok({ body: await client.get("products").json() });
+  } catch (error) {
+    if (error instanceof AssociationRecordNotFoundError) {
+      return badRequest({
+        body: { message: "App is not associated with a Commerce instance." },
+      });
+    }
+    throw error;
+  }
+}
+```
+
+The data is managed automatically by the SDK during the app association lifecycle: a standalone `association` runtime action (always deployed alongside `app-config`) stores it on association and clears it on unassociation. Apps scaffolded with a version of the SDK that includes this feature have the `association` action wired in from the start — no extra setup beyond your normal deploy.
+
+#### Adopting association in an existing app
+
+Apps scaffolded before this feature was introduced do not have the `association` action yet. After upgrading `@adobe/aio-commerce-lib-app`, regenerate the runtime actions and redeploy so the `/association` endpoint exists:
+
+```bash
+npx @adobe/aio-commerce-lib-app generate actions
+aio app deploy
+```
+
+A plain `aio app deploy` on its own does not add the action: the `pre-app-build` hook only regenerates actions already declared in `ext.config.yaml`. Only `generate actions` (or `generate all`) rebuilds the manifest to pick up newly added SDK actions. Until the app is redeployed with the endpoint, the App Management client skips the store call and the helpers throw `AssociationRecordNotFoundError`.
+
+For an app that was already associated under the older SDK, re-associate it after redeploying so the store call runs and backfills the instance data — a redeploy alone does not populate data for an existing association.
+
+### Emitting Configured Events from Runtime Actions
+
+Runtime actions can publish a custom I/O Event by referencing the provider and event exactly as declared in the `eventing` section of `app.commerce.config.ts`. At installation time, the SDK writes each configured provider's I/O Events ID and event codes to system storage. `publishEvent` resolves those automatically by the given key and publishes the event.
+
+`publishEvent(params)` takes:
+
+- `client` — an [`AdobeIoEventsApiClient`](../../aio-commerce-lib-events/docs/usage.md) created with the IMS auth to use for the ingress call.
+- `provider` — the `key` of an event provider declared in `app.commerce.config.ts`.
+- `event` — the `name` of an event declared under that provider.
+- `payload` — the event payload; any JSON object. The SDK wraps it in a CloudEvents 1.0 envelope before sending.
+
+Given this configuration:
+
+```ts
+eventing: {
+  external: [
+    {
+      provider: {
+        key: "order-events",
+        label: "Order Events",
+        description: "Events related to order lifecycle",
+      },
+      events: [
+        {
+          name: "order.created",
+          label: "Order Created",
+          description: "Triggered when a new order is placed",
+        },
+      ],
+    },
+  ],
+}
+```
+
+a runtime action emits the event like this:
+
+```ts
+import { publishEvent } from "@adobe/aio-commerce-lib-app";
+import { createAdobeIoEventsApiClient } from "@adobe/aio-commerce-lib-events";
+import { resolveImsAuthParams } from "@adobe/aio-commerce-lib-auth";
+
+export async function main(params) {
+  const client = createAdobeIoEventsApiClient({
+    auth: resolveImsAuthParams(params),
+  });
+
+  await publishEvent({
+    client,
+    provider: "order-events",
+    event: "order.created",
+    payload: { orderId: "100000123", total: 149.99 },
+  });
+}
+```
+
+`publishEvent` validates the reference before sending and throws when it cannot be resolved. All three errors extend `PublishEventError`, so you can catch them individually or with a single clause:
+
+- `EventsDataNotInitializedError` — no eventing metadata is in system storage. The app installation has not run, or ran with an older SDK. Re-run the installation to initialize it.
+- `ProviderNotFoundError` — the `provider` key does not match any provider in the configuration.
+- `EventNotFoundError` — the `event` name does not match any event under the given provider.
+
+```ts
+import {
+  EventNotFoundError,
+  EventsDataNotInitializedError,
+  ProviderNotFoundError,
+  PublishEventError,
+  publishEvent,
+} from "@adobe/aio-commerce-lib-app";
+
+try {
+  await publishEvent({ client, provider, event, payload });
+} catch (error) {
+  if (error instanceof PublishEventError) {
+    // Handle any publish-event failure (or narrow with the specific subclasses).
+  }
+  throw error;
+}
+```
+
+### Resolving an Event's I/O Events Code
+
+`resolveIoEventCode(appId, eventName, providerType)` computes an event code matching the prefixing rules used at installation time (and that `publishEvent` sends). This is useful when a caller needs to know an event's code ahead of time, e.g. to match it against an incoming I/O Event.
+
+- `appId` — the application's `metadata.id`, as declared in `app.commerce.config.ts`.
+- `eventName` — the `name` of the event, as declared in `app.commerce.config.ts`.
+- `providerType` — `"commerce"` or `"external"`, matching the section the event is declared under.
+
+```ts
+import { resolveIoEventCode } from "@adobe/aio-commerce-lib-app";
+
+resolveIoEventCode("my-app", "observer.order_placed", "commerce");
+// => "com.adobe.commerce.my_app.observer.order_placed"
+
+resolveIoEventCode("my-app", "webhook.received", "external");
+// => "my_app.webhook.received"
 ```
 
 ## Best Practices

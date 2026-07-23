@@ -61,7 +61,7 @@ export async function getScopeTree(
     context.namespace,
   );
   if (cached) {
-    return { scopeTree: cached, isCachedData: true };
+    return { isCachedData: true, scopeTree: cached };
   }
 
   // Fallback to persisted data
@@ -75,8 +75,8 @@ export async function getScopeTree(
   );
 
   return {
-    scopeTree: persistedTree,
     isCachedData: true,
+    scopeTree: persistedTree,
   };
 }
 
@@ -116,8 +116,8 @@ async function buildTreeWithUpdatedCommerceScopes(
     );
 
     return {
-      scopeTree: finalTree,
       isCachedData: false,
+      scopeTree: finalTree,
     };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : "";
@@ -132,9 +132,9 @@ async function buildTreeWithUpdatedCommerceScopes(
     );
     if (cachedFlattenedTree) {
       return {
-        scopeTree: cachedFlattenedTree,
-        isCachedData: true,
         fallbackError: errorMessage,
+        isCachedData: true,
+        scopeTree: cachedFlattenedTree,
       };
     }
 
@@ -149,9 +149,9 @@ async function buildTreeWithUpdatedCommerceScopes(
     );
 
     return {
-      scopeTree: existingTree,
-      isCachedData: true,
       fallbackError: errorMessage,
+      isCachedData: true,
+      scopeTree: existingTree,
     };
   }
 }
@@ -170,6 +170,8 @@ function initializeCommerceClient(
   try {
     return new AdobeCommerceHttpClient(commerceConfig);
   } catch (error) {
-    throw new Error(`Failed to initialize Commerce client: ${error}`);
+    throw new Error(`Failed to initialize Commerce client: ${error}`, {
+      cause: error,
+    });
   }
 }

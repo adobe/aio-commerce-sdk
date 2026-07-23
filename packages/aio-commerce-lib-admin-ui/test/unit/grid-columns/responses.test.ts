@@ -25,14 +25,14 @@ describe("okGridResponse", () => {
     });
 
     expect(result).toEqual({
-      type: "success",
-      statusCode: 200,
       body: {
         data: {
           "000000001": { fulfillment_status: "shipped", risk_score: 12 },
           "000000002": { fulfillment_status: "pending", risk_score: 47 },
         },
       },
+      statusCode: 200,
+      type: "success",
     });
   });
 
@@ -45,8 +45,8 @@ describe("okGridResponse", () => {
     const result = okGridResponse({ "1": { col: "a" } }, { col: "default" });
 
     expect(result.body?.data).toEqual({
-      "1": { col: "a" },
       "*": { col: "default" },
+      "1": { col: "a" },
     });
   });
 
@@ -65,16 +65,16 @@ describe("errorGridResponse", () => {
   it("returns the given HTTP status code", () => {
     const result = errorGridResponse(500, "Could not reach inventory service");
     expect(result).toEqual({
-      type: "error",
       error: {
-        statusCode: 500,
         body: { message: "Could not reach inventory service" },
+        statusCode: 500,
       },
+      type: "error",
     });
   });
 
   it("wraps the error message in a message field", () => {
     const result = errorGridResponse(422, "Unprocessable entity");
-    expect(result.error?.body).toEqual({ message: "Unprocessable entity" });
+    expect(result.error.body).toEqual({ message: "Unprocessable entity" });
   });
 });

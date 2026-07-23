@@ -17,8 +17,6 @@ compatibility: >
   npx skills add adobe/skills --skill appbuilder-project-init -y
 metadata:
   author: adobe
-  sdk-package: "@adobe/aio-commerce-lib-app"
-  version: "0.0.2"
 ---
 
 # Initialize a new Commerce App

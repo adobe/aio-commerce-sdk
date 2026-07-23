@@ -1,0 +1,136 @@
+name: Publish Alpha
+
+on:
+  issue_comment:
+    types: [created]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.issue.number }}
+  cancel-in-progress: true
+
+jobs:
+  prepare:
+    name: Resolve PR
+    if: |
+      github.repository == 'adobe/aio-commerce-sdk' &&
+      github.event.issue.pull_request &&
+      github.event.comment.user.type != 'Bot' &&
+      contains(github.event.comment.body, '/snapshot')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    outputs:
+      pr_number: ${{ github.event.issue.number }}
+      head_sha: ${{ steps.pr_details.outputs.head_sha }}
+
+    steps:
+      - name: Check actor permission
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          script: |
+            const { data } = await github.rest.repos.getCollaboratorPermissionLevel({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              username: context.actor,
+            });
+
+            if (data.permission !== 'admin') {
+              core.setFailed(`@${context.actor} does not have admin permission on this repository (actual: ${data.permission}).`);
+            }
+
+      - name: Get PR details
+        id: pr_details
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          PR_NUMBER: ${{ github.event.issue.number }}
+        with:
+          script: |
+            const pr = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: Number(process.env.PR_NUMBER),
+            });
+
+            if (pr.data.head.ref === 'main') {
+              core.setFailed("Publish Alpha can't snapshot a PR whose head branch is main. Use Publish Beta to snapshot main directly.");
+              return;
+            }
+
+            core.setOutput('head_sha', pr.data.head.sha);
+
+  release:
+    name: Release Alpha
+    needs: prepare
+    runs-on: ubuntu-latest
+    outputs:
+      published: ${{ steps.snapshot.outputs.published }}
+      publishedPackages: ${{ steps.snapshot.outputs.publishedPackages }}
+    permissions:
+      contents: write
+      pull-requests: write
+      packages: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          ref: ${{ needs.prepare.outputs.head_sha }}
+
+      - uses: ./.github/actions/setup-release
+        with:
+          token: ${{ secrets.ADOBE_BOT_NPM_TOKEN }}
+
+      - uses: ./.github/actions/publish-snapshot
+        id: snapshot
+        with:
+          snapshot-tag: alpha
+          skip-github-releases: "true"
+
+  comment:
+    name: Comment on PR
+    needs: [prepare, release]
+    if: needs.release.outputs.published == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - name: Post published packages comment
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          PR_NUMBER: ${{ needs.prepare.outputs.pr_number }}
+          PUBLISHED_PACKAGES: ${{ needs.release.outputs.publishedPackages }}
+        with:
+          script: |
+            const packages = JSON.parse(process.env.PUBLISHED_PACKAGES);
+
+            const rows = packages.map(p => `| \`${p.name}\` | \`${p.version}\` |`).join('\n');
+            const installs = packages.map(p =>
+              `npm install ${p.name}@${p.version}`
+            ).join('\n');
+
+            const body = [
+              '### 📦 Alpha packages published',
+              '',
+              '| Package | Version |',
+              '| ------- | ------- |',
+              rows,
+              '',
+              '**Install:**',
+              '```sh',
+              installs,
+              '```',
+
+              'You can also install by just specifying the tag:',
+              '```sh',
+              'npm install @adobe/aio-commerce-sdk@alpha',
+              '```',
+              '',
+              'But note that the tag will always point to the latest `alpha` snapshot, so it may not be the same version as listed above.',
+            ].join('\n');
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: Number(process.env.PR_NUMBER),
+              body,
+            });

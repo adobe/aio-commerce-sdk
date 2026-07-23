@@ -10,7 +10,7 @@
       "name": "Apache-2.0"
     },
     "x-meta": {
-      "packageVersion": "1.7.0"
+      "packageVersion": "1.8.0"
     }
   },
   "servers": [
@@ -1390,6 +1390,11 @@
                         "step": {
                           "$ref": "#/components/schemas/StepStatus"
                         },
+                        "config": {
+                          "description": "The validated app configuration recorded at install time. Present so uninstallation can be sourced from what was actually installed rather than the current request config. Absent on states persisted before this field was introduced.",
+                          "type": "object",
+                          "additionalProperties": true
+                        },
                         "data": {
                           "anyOf": [
                             {
@@ -1426,6 +1431,11 @@
                         },
                         "step": {
                           "$ref": "#/components/schemas/StepStatus"
+                        },
+                        "config": {
+                          "description": "The validated app configuration recorded at install time. Present so uninstallation can be sourced from what was actually installed rather than the current request config. Absent on states persisted before this field was introduced.",
+                          "type": "object",
+                          "additionalProperties": true
                         },
                         "data": {
                           "anyOf": [
@@ -1479,6 +1489,11 @@
                         },
                         "step": {
                           "$ref": "#/components/schemas/StepStatus"
+                        },
+                        "config": {
+                          "description": "The validated app configuration recorded at install time. Present so uninstallation can be sourced from what was actually installed rather than the current request config. Absent on states persisted before this field was introduced.",
+                          "type": "object",
+                          "additionalProperties": true
                         },
                         "data": {
                           "anyOf": [
@@ -1636,6 +1651,11 @@
                     },
                     "step": {
                       "$ref": "#/components/schemas/StepStatus"
+                    },
+                    "config": {
+                      "description": "The validated app configuration recorded at install time. Present so uninstallation can be sourced from what was actually installed rather than the current request config. Absent on states persisted before this field was introduced.",
+                      "type": "object",
+                      "additionalProperties": true
                     },
                     "data": {
                       "anyOf": [
@@ -1869,6 +1889,11 @@
                         "step": {
                           "$ref": "#/components/schemas/StepStatus"
                         },
+                        "config": {
+                          "description": "The validated app configuration recorded at install time. Present so uninstallation can be sourced from what was actually installed rather than the current request config. Absent on states persisted before this field was introduced.",
+                          "type": "object",
+                          "additionalProperties": true
+                        },
                         "data": {
                           "anyOf": [
                             {
@@ -1905,6 +1930,11 @@
                         },
                         "step": {
                           "$ref": "#/components/schemas/StepStatus"
+                        },
+                        "config": {
+                          "description": "The validated app configuration recorded at install time. Present so uninstallation can be sourced from what was actually installed rather than the current request config. Absent on states persisted before this field was introduced.",
+                          "type": "object",
+                          "additionalProperties": true
                         },
                         "data": {
                           "anyOf": [
@@ -1958,6 +1988,11 @@
                         },
                         "step": {
                           "$ref": "#/components/schemas/StepStatus"
+                        },
+                        "config": {
+                          "description": "The validated app configuration recorded at install time. Present so uninstallation can be sourced from what was actually installed rather than the current request config. Absent on states persisted before this field was introduced.",
+                          "type": "object",
+                          "additionalProperties": true
                         },
                         "data": {
                           "anyOf": [
@@ -2115,6 +2150,11 @@
                     },
                     "step": {
                       "$ref": "#/components/schemas/StepStatus"
+                    },
+                    "config": {
+                      "description": "The validated app configuration recorded at install time. Present so uninstallation can be sourced from what was actually installed rather than the current request config. Absent on states persisted before this field was introduced.",
+                      "type": "object",
+                      "additionalProperties": true
                     },
                     "data": {
                       "anyOf": [
@@ -2589,6 +2629,117 @@
           }
         },
         "tags": ["Business Configuration"]
+      }
+    },
+    "/association": {
+      "post": {
+        "operationId": "setAssociation",
+        "summary": "Store Commerce Association",
+        "description": "Persists the Commerce instance the app is associated with so runtime actions can later retrieve it via the SDK helpers.",
+        "parameters": [
+          {
+            "name": "x-gw-ims-org-id",
+            "in": "header",
+            "description": "Adobe IMS organization ID that identifies the organization for the request.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "commerceBaseUrl": {
+                    "description": "Commerce API base URL of the associated instance.",
+                    "type": "string",
+                    "format": "uri"
+                  },
+                  "commerceEnv": {
+                    "description": "Deployment type of the associated Commerce instance.",
+                    "type": "string",
+                    "enum": ["saas", "paas"]
+                  }
+                },
+                "required": ["commerceBaseUrl", "commerceEnv"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Association data stored successfully."
+          },
+          "400": {
+            "description": "Bad request, the request body is invalid.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "You are not authorized to access this resource. Ensure the IMS token and the x-gw-ims-org-id header are correctly set and valid."
+          },
+          "403": {
+            "description": "The access token is valid, but it is not allowed to access the requested organization or operation."
+          },
+          "500": {
+            "description": "Internal server error while storing the association data.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Association"]
+      },
+      "delete": {
+        "operationId": "clearAssociation",
+        "summary": "Clear Commerce Association",
+        "description": "Removes the stored Commerce instance details. Called when the app is unassociated.",
+        "parameters": [
+          {
+            "name": "x-gw-ims-org-id",
+            "in": "header",
+            "description": "Adobe IMS organization ID that identifies the organization for the request.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Association data cleared successfully."
+          },
+          "401": {
+            "description": "You are not authorized to access this resource. Ensure the IMS token and the x-gw-ims-org-id header are correctly set and valid."
+          },
+          "403": {
+            "description": "The access token is valid, but it is not allowed to access the requested organization or operation."
+          },
+          "500": {
+            "description": "Internal server error while clearing the association data.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Association"]
       }
     }
   },

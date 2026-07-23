@@ -2,7 +2,7 @@
   "name": "@adobe/aio-commerce-sdk",
   "type": "module",
   "author": "Adobe Inc.",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "private": false,
   "engines": {
     "node": ">=22 <=24"
@@ -76,6 +76,16 @@
         "default": "./dist/cjs/webhooks/*.cjs"
       }
     },
+    "./admin-ui/web": {
+      "browser": {
+        "types": "./dist/es/admin-ui/web.d.mts",
+        "default": "./dist/es/admin-ui/web.mjs"
+      },
+      "import": {
+        "types": "./dist/es/admin-ui/web.d.mts",
+        "default": "./dist/es/admin-ui/web.mjs"
+      }
+    },
     "./admin-ui/*": {
       "import": {
         "types": "./dist/es/admin-ui/*.d.mts",
@@ -128,9 +138,30 @@
     "@adobe/aio-commerce-lib-webhooks": "workspace:*",
     "type-fest": "catalog:"
   },
+  "peerDependencies": {
+    "@react-spectrum/s2": "catalog:react",
+    "react": "catalog:react",
+    "react-dom": "catalog:react"
+  },
+  "peerDependenciesMeta": {
+    "@react-spectrum/s2": {
+      "optional": true
+    },
+    "react": {
+      "optional": true
+    },
+    "react-dom": {
+      "optional": true
+    }
+  },
   "devDependencies": {
     "@aio-commerce-sdk/config-tsdown": "workspace:*",
     "@aio-commerce-sdk/config-typescript": "workspace:*",
+    "@react-spectrum/s2": "catalog:react",
+    "@types/react": "catalog:react",
+    "@types/react-dom": "catalog:react",
+    "react": "catalog:react",
+    "react-dom": "catalog:react",
     "typescript": "catalog:"
   },
   "publishConfig": {

@@ -18,20 +18,19 @@ import { parseGridRequest } from "#grid-columns/requests/presets";
 import type { GridType } from "#grid-columns/requests/types";
 
 const VALID_REQUEST = {
-  requestId: "550e8400-e29b-41d4-a716-446655440000",
   gridType: "order",
   ids: ["000000001", "000000002"],
+  requestId: "550e8400-e29b-41d4-a716-446655440000",
 };
 
 describe("parseGridRequest", () => {
-  it.each([
-    "order",
-    "product",
-    "customer",
-  ] satisfies GridType[])("accepts gridType %s", (gridType) => {
-    const result = parseGridRequest({ ...VALID_REQUEST, gridType });
-    expect(result.gridType).toBe(gridType);
-  });
+  it.each(["order", "product", "customer"] satisfies GridType[])(
+    "accepts gridType %s",
+    (gridType) => {
+      const result = parseGridRequest({ ...VALID_REQUEST, gridType });
+      expect(result.gridType).toBe(gridType);
+    },
+  );
 
   it("returns the parsed request when input is valid", () => {
     expect(parseGridRequest(VALID_REQUEST)).toEqual(VALID_REQUEST);

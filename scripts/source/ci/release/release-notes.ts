@@ -18,7 +18,7 @@ import {
   selectModel,
 } from "@aio-commerce-sdk/release-notes";
 
-import { parseReleaseChannel, runGitHubScript } from "./utils.ts";
+import { runGitHubScript } from "./utils.ts";
 
 import type { AsyncFunctionArguments, PublishedPackage } from "./types.ts";
 
@@ -32,20 +32,11 @@ export default async function main(
       RELEASE_NOTES_MODEL_ENDPOINT,
       RELEASE_NOTES_MODEL,
       PUBLISHED_PACKAGES,
-      RELEASE_CHANNEL,
     } = process.env;
 
     if (RELEASE_NOTES_ENABLED !== "true") {
       core.info(
         "Release notes generation is disabled (RELEASE_NOTES_ENABLED != true). Skipping.",
-      );
-      return;
-    }
-
-    const channel = parseReleaseChannel(RELEASE_CHANNEL);
-    if (channel !== "public") {
-      core.info(
-        `Release notes only run for the public channel (current: ${channel}). Skipping.`,
       );
       return;
     }
