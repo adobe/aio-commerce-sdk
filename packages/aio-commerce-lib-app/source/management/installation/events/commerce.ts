@@ -32,6 +32,7 @@ import {
   getCommerceEventingExistingData,
   getIoEventsExistingData,
   makeWorkspaceConfig,
+  removeStoredEventProviders,
   sanitizeEventingIdentifier,
 } from "./utils";
 
@@ -220,6 +221,12 @@ async function removeCommerceEvents(
       existingIoEventsData,
     );
   }
+
+  await removeStoredEventProviders(
+    config.eventing.commerce
+      .map(({ provider }) => provider.key)
+      .filter((key): key is string => Boolean(key)),
+  );
 
   logger.debug("Completed Commerce Events uninstall step.");
 }

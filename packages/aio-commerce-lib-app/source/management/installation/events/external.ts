@@ -24,6 +24,7 @@ import {
   EVENTS_STORAGE_KEY,
   EXTERNAL_PROVIDER_TYPE,
   getIoEventsExistingData,
+  removeStoredEventProviders,
 } from "./utils";
 
 import type { ExternalEventsConfig } from "#config/schema/eventing";
@@ -161,6 +162,12 @@ async function removeExternalEvents(
       existingIoEventsData,
     );
   }
+
+  await removeStoredEventProviders(
+    config.eventing.external
+      .map(({ provider }) => provider.key)
+      .filter((key): key is string => Boolean(key)),
+  );
 
   logger.debug("Completed External Events uninstall step.");
 }

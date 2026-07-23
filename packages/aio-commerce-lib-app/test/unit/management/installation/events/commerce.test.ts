@@ -58,6 +58,8 @@ describe("commerceEventsStep orchestration", () => {
 
     const helperMocks = {
       configureCommerceEventing: vi.fn(),
+      offboardCommerceEventing: vi.fn(),
+      offboardIoEvents: vi.fn(),
       onboardCommerceEventing: vi.fn(),
       onboardIoEvents: vi.fn(),
     };
@@ -400,5 +402,172 @@ describe("commerceEventsStep orchestration", () => {
         },
       },
     });
+  });
+});
+
+describe("commerceEventsStep uninstall orchestration", () => {
+  async function importCommerceStepWithMocks() {
+    vi.resetModules();
+
+    const helperMocks = {
+      offboardCommerceEventing: vi.fn().mockResolvedValue(undefined),
+      offboardIoEvents: vi.fn().mockResolvedValue(undefined),
+    };
+
+    const utilsMocks = {
+      getCommerceEventingExistingData: vi.fn(),
+      getIoEventsExistingData: vi.fn(),
+    };
+
+    const configMocks = {
+      getSystemConfigByKey: vi.fn().mockResolvedValue(null),
+      setSystemConfigByKey: vi.fn().mockResolvedValue(undefined),
+    };
+
+    vi.doMock("#management/installation/events/helpers", async () => {
+      const actual = await vi.importActual<
+        typeof import("#management/installation/events/helpers")
+      >("#management/installation/events/helpers");
+      return { ...actual, ...helperMocks };
+    });
+
+    vi.doMock("#management/installation/events/utils", async () => {
+      const actual = await vi.importActual<
+        typeof import("#management/installation/events/utils")
+      >("#management/installation/events/utils");
+      return { ...actual, ...utilsMocks };
+    });
+
+    vi.doMock("@adobe/aio-commerce-lib-config", async () => {
+      const actual = await vi.importActual<
+        typeof import("@adobe/aio-commerce-lib-config")
+      >("@adobe/aio-commerce-lib-config");
+      return { ...actual, ...configMocks };
+    });
+
+    const commerceModule = await import(
+      "#management/installation/events/commerce"
+    );
+
+    return {
+      commerceEventsStep: commerceModule.commerceEventsStep,
+      configMocks,
+      helperMocks,
+      utilsMocks,
+    };
+  }
+
+  afterEach(() => {
+    vi.clearAllMocks();
+    vi.resetModules();
+    vi.doUnmock("#management/installation/events/helpers");
+    vi.doUnmock("#management/installation/events/utils");
+    vi.doUnmock("@adobe/aio-commerce-lib-config");
+  });
+
+  function configWithProviderKey(key: string) {
+    return {
+      ...configWithCommerceEventing,
+      eventing: {
+        commerce: [
+          {
+            events: configWithCommerceEventing.eventing.commerce[0].events,
+            provider: {
+              description: "Provides commerce events",
+              key,
+              label: "Order Events Provider",
+            },
+          },
+        ],
+      },
+    };
+  }
+
+  test("prunes the uninstalled provider's stored entry, preserving unrelated ones", async () => {
+    const context = createMockEventingInstallationContext();
+    const {
+      commerceEventsStep: mockedCommerceEventsStep,
+      utilsMocks,
+      configMocks,
+    } = await importCommerceStepWithMocks();
+
+    utilsMocks.getIoEventsExistingData.mockResolvedValue(
+      createMockExistingIoEventsData(),
+    );
+    utilsMocks.getCommerceEventingExistingData.mockResolvedValue(
+      createMockExistingCommerceEventingData(),
+    );
+    configMocks.getSystemConfigByKey.mockResolvedValue({
+      providers: {
+        "order-events-provider": { events: {}, id: "stale-uuid" },
+        "unrelated-provider": { events: {}, id: "keep-uuid" },
+      },
+    });
+
+    expect.assert(mockedCommerceEventsStep.uninstall);
+    await mockedCommerceEventsStep.uninstall(
+      configWithProviderKey("order-events-provider"),
+      context,
+    );
+
+    expect(configMocks.setSystemConfigByKey).toHaveBeenCalledWith("events", {
+      providers: {
+        "unrelated-provider": { events: {}, id: "keep-uuid" },
+      },
+    });
+  });
+
+  test("does not write to storage when the provider has no stored entry", async () => {
+    const context = createMockEventingInstallationContext();
+    const {
+      commerceEventsStep: mockedCommerceEventsStep,
+      utilsMocks,
+      configMocks,
+    } = await importCommerceStepWithMocks();
+
+    utilsMocks.getIoEventsExistingData.mockResolvedValue(
+      createMockExistingIoEventsData(),
+    );
+    utilsMocks.getCommerceEventingExistingData.mockResolvedValue(
+      createMockExistingCommerceEventingData(),
+    );
+    configMocks.getSystemConfigByKey.mockResolvedValue(null);
+
+    expect.assert(mockedCommerceEventsStep.uninstall);
+    await mockedCommerceEventsStep.uninstall(
+      configWithProviderKey("order-events-provider"),
+      context,
+    );
+
+    expect(configMocks.setSystemConfigByKey).not.toHaveBeenCalled();
+  });
+
+  test("does not write to storage when the provider has no explicit key", async () => {
+    const context = createMockEventingInstallationContext();
+    const {
+      commerceEventsStep: mockedCommerceEventsStep,
+      utilsMocks,
+      configMocks,
+    } = await importCommerceStepWithMocks();
+
+    utilsMocks.getIoEventsExistingData.mockResolvedValue(
+      createMockExistingIoEventsData(),
+    );
+    utilsMocks.getCommerceEventingExistingData.mockResolvedValue(
+      createMockExistingCommerceEventingData(),
+    );
+    configMocks.getSystemConfigByKey.mockResolvedValue({
+      providers: {
+        "unrelated-provider": { events: {}, id: "keep-uuid" },
+      },
+    });
+
+    expect.assert(mockedCommerceEventsStep.uninstall);
+    await mockedCommerceEventsStep.uninstall(
+      configWithCommerceEventing,
+      context,
+    );
+
+    expect(configMocks.setSystemConfigByKey).not.toHaveBeenCalled();
   });
 });

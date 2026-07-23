@@ -11,6 +11,10 @@
  */
 
 import { resolveAuthParams } from "@adobe/aio-commerce-lib-auth";
+import {
+  getSystemConfigByKey,
+  setSystemConfigByKey,
+} from "@adobe/aio-commerce-lib-config";
 
 import type {
   CommerceEventProvider,
@@ -26,7 +30,7 @@ import type {
 import type { ApplicationMetadata } from "#config/index";
 import type { AppEvent, EventProvider } from "#config/schema/eventing";
 import type { EventsExecutionContext } from "./context";
-import type { AppEventWithoutRuntimeActions } from "./types";
+import type { AppEventWithoutRuntimeActions, StoredEventsData } from "./types";
 
 // The two different provider types we support.
 export const COMMERCE_PROVIDER_TYPE = "dx_commerce_events";
@@ -43,6 +47,45 @@ const METADATA_ID_MAX_LENGTH_FOR_INSTANCE_ID = 100;
 
 /** Storage key used for the events installation data in system config. */
 export const EVENTS_STORAGE_KEY = "events";
+
+/**
+ * Removes the given provider keys' entries from the events storage written at
+ * installation time, if present, and writes back the pruned result.
+ *
+ * Only issues a write when at least one of the given keys has a stored entry;
+ * otherwise this is a no-op. Called during uninstall so a removed provider's
+ * stale `id` can never outlive the provider it points to.
+ *
+ * @param providerKeys - The `provider.key` values to remove from storage.
+ */
+export async function removeStoredEventProviders(
+  providerKeys: string[],
+): Promise<void> {
+  if (providerKeys.length === 0) {
+    return;
+  }
+
+  const existing =
+    await getSystemConfigByKey<StoredEventsData>(EVENTS_STORAGE_KEY);
+  if (!existing) {
+    return;
+  }
+
+  const providers = { ...existing.providers };
+  let changed = false;
+  for (const key of providerKeys) {
+    if (key in providers) {
+      delete providers[key];
+      changed = true;
+    }
+  }
+
+  if (!changed) {
+    return;
+  }
+
+  await setSystemConfigByKey(EVENTS_STORAGE_KEY, { providers });
+}
 
 /**
  * Generates a unique instance ID for I/O Events for this app deployment.
