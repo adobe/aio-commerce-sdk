@@ -64,11 +64,11 @@ export default async function main(
     core.info(`Generating release notes with model=${modelId}`);
 
     const entries = await collectEntries(exec, publishedPackages);
-    const { results, summary, totalUsage } = await generateAllNotes(
+    const { results, summary, highlights, totalUsage } = await generateAllNotes(
       entries,
       model,
     );
-    const notes = assembleReleaseNotes(results, summary);
+    const notes = assembleReleaseNotes(results, summary, highlights);
     const markdown = renderSlack(notes, {
       date: new Date().toISOString().split("T")[0],
       publishedPackages,

@@ -24,17 +24,11 @@ const SAMPLE_NOTES: ReleaseNotes = {
   highlights: [
     {
       description:
-        "Added nested ACL permission helpers, enabling admins to delegate access to sub-resources without granting root access.",
-      kind: "feat",
-      packages: ["@adobe/aio-commerce-lib-admin-ui"],
-      prLinks: ["https://github.com/adobe/aio-commerce-sdk/pull/42"],
+        "Admins can now delegate access to sub-resources without granting root access.",
     },
     {
       description:
-        "Fixed webhook exception class — now correctly sent under the `type` field.",
-      kind: "fix",
-      packages: ["@adobe/aio-commerce-lib-webhooks"],
-      prLinks: [],
+        "Fixed an issue where webhook failures were not always reported correctly.",
     },
   ],
   summary:
@@ -63,20 +57,25 @@ describe("renderSlack", () => {
     expect(md).toContain("*Compatibility:*");
   });
 
-  test("renders headline after metadata", () => {
+  test("does not render the headline between metadata and highlights", () => {
     const md = renderSlack(SAMPLE_NOTES, SAMPLE_CTX);
-    expect(md.indexOf("*Status:*")).toBeLessThan(
-      md.indexOf(SAMPLE_NOTES.headline),
+    expect(md).not.toContain(SAMPLE_NOTES.headline);
+    expect(md.indexOf("*Compatibility:*")).toBeLessThan(
+      md.indexOf("*Highlights*"),
     );
   });
 
-  test("renders highlights with kind emoji", () => {
+  test("renders a flat highlights list with no kind grouping", () => {
     const md = renderSlack(SAMPLE_NOTES, SAMPLE_CTX);
     expect(md).toContain("*Highlights*");
-    expect(md).toContain(":sparkles:");
-    expect(md).toContain(":bug:");
-    expect(md).toContain("Added nested ACL permission helpers");
-    expect(md).toContain("Fixed webhook exception class");
+    expect(md).toContain(
+      "  - Admins can now delegate access to sub-resources without granting root access.",
+    );
+    expect(md).toContain(
+      "  - Fixed an issue where webhook failures were not always reported correctly.",
+    );
+    expect(md).not.toContain("New Features");
+    expect(md).not.toContain("Bug Fixes");
   });
 
   test("renders breaking changes with warning emoji before regular highlights", () => {
@@ -93,7 +92,9 @@ describe("renderSlack", () => {
     const md = renderSlack(withBreaking, SAMPLE_CTX);
     expect(md).toContain(":warning: Breaking Changes :warning:");
     expect(md).toContain("  - Removed legacy auth");
-    expect(md.indexOf(":warning:")).toBeLessThan(md.indexOf(":sparkles:"));
+    expect(md.indexOf(":warning:")).toBeLessThan(
+      md.indexOf(SAMPLE_NOTES.highlights[0]?.description ?? ""),
+    );
   });
 
   test("skips highlights section when both arrays are empty", () => {
@@ -151,48 +152,18 @@ describe("renderSlack", () => {
     );
   });
 
-  test("groups multiple highlights of the same kind under one header", () => {
-    const twoFeat: ReleaseNotes = {
+  test("renders highlights in the order they were given", () => {
+    const twoHighlights: ReleaseNotes = {
       ...SAMPLE_NOTES,
       highlights: [
-        {
-          description: "First feature.",
-          kind: "feat",
-          packages: [],
-          prLinks: [],
-        },
-        {
-          description: "Second feature.",
-          kind: "feat",
-          packages: [],
-          prLinks: [],
-        },
+        { description: "First feature." },
+        { description: "Second feature." },
       ],
     };
-    const md = renderSlack(twoFeat, SAMPLE_CTX);
-    const firstIdx = md.indexOf(":sparkles: New Features :sparkles:");
-    expect(firstIdx).toBeGreaterThan(-1);
-    expect(md.indexOf(":sparkles: New Features :sparkles:", firstIdx + 1)).toBe(
-      -1,
+    const md = renderSlack(twoHighlights, SAMPLE_CTX);
+    expect(md.indexOf("First feature.")).toBeLessThan(
+      md.indexOf("Second feature."),
     );
-    expect(md).toContain("  - First feature.");
-    expect(md).toContain("  - Second feature.");
-  });
-
-  test("uses fallback emoji when kind is not in the map", () => {
-    const withUnknownKind = {
-      ...SAMPLE_NOTES,
-      highlights: [
-        {
-          description: "Unknown change.",
-          kind: "unknown_xyz",
-          packages: [],
-          prLinks: [],
-        },
-      ],
-    } as unknown as ReleaseNotes;
-    const md = renderSlack(withUnknownKind, SAMPLE_CTX);
-    expect(md).toContain(":small_blue_diamond:");
   });
 
   test("meta-package is first in links when it is already first in input", () => {

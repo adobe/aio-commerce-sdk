@@ -14,6 +14,7 @@ import { describe, expect, test, vi } from "vitest";
 
 import {
   assembleReleaseNotes,
+  consolidateHighlights,
   generateAllNotes,
   generatePackageNotes,
   generateReleaseSummary,
@@ -98,50 +99,28 @@ describe("assembleReleaseNotes", () => {
     const notes = assembleReleaseNotes(
       [makeResult(LIB, "1.0.0")],
       "Holistic release summary.",
+      [],
     );
     expect(notes.summary).toBe("Holistic release summary.");
+  });
+
+  test("uses the provided consolidated highlights as-is", () => {
+    const highlights = [{ description: "Merged cross-package feature." }];
+    const notes = assembleReleaseNotes(
+      [makeResult(LIB, "1.0.0")],
+      "",
+      highlights,
+    );
+    expect(notes.highlights).toBe(highlights);
   });
 
   test("uses the meta-package headline when present", () => {
     const notes = assembleReleaseNotes(
       [makeResult(LIB, "2.0.0"), makeResult(META, "3.0.0")],
       "",
+      [],
     );
     expect(notes.headline).toContain(META);
-  });
-
-  test("sorts non-meta packages alphabetically in highlights", () => {
-    const notes = assembleReleaseNotes(
-      [
-        makeResult("@adobe/aio-commerce-lib-zebra", "1.0.0"),
-        makeResult("@adobe/aio-commerce-lib-alpha", "1.0.0"),
-      ],
-      "",
-    );
-    expect(notes.highlights[0]?.packages[0]).toBe(
-      "@adobe/aio-commerce-lib-alpha",
-    );
-    expect(notes.highlights[1]?.packages[0]).toBe(
-      "@adobe/aio-commerce-lib-zebra",
-    );
-  });
-
-  test("places meta-package highlights first when sandwiched between other packages", () => {
-    const notes = assembleReleaseNotes(
-      [
-        makeResult("@adobe/aio-commerce-lib-zebra", "1.0.0"),
-        makeResult(META, "2.0.0"),
-        makeResult("@adobe/aio-commerce-lib-alpha", "1.0.0"),
-      ],
-      "",
-    );
-    expect(notes.highlights[0]?.packages[0]).toBe(META);
-    expect(notes.highlights[1]?.packages[0]).toBe(
-      "@adobe/aio-commerce-lib-alpha",
-    );
-    expect(notes.highlights[2]?.packages[0]).toBe(
-      "@adobe/aio-commerce-lib-zebra",
-    );
   });
 
   test("falls back to major-bump headline when no meta-package", () => {
@@ -153,6 +132,7 @@ describe("assembleReleaseNotes", () => {
         }),
       ],
       "",
+      [],
     );
     expect(notes.headline).toBe("Major headline.");
   });
@@ -166,6 +146,7 @@ describe("assembleReleaseNotes", () => {
         }),
       ],
       "",
+      [],
     );
     expect(notes.headline).toBe("Minor headline.");
   });
@@ -179,6 +160,7 @@ describe("assembleReleaseNotes", () => {
         }),
       ],
       "",
+      [],
     );
     expect(notes.headline).toBe("Patch headline.");
   });
@@ -187,23 +169,45 @@ describe("assembleReleaseNotes", () => {
     const notes = assembleReleaseNotes(
       [makeResult(LIB, "1.0.1", { headline: undefined as unknown as string })],
       "",
+      [],
     );
     expect(notes.headline).toContain("Release:");
   });
 
-  test("propagates kind and description from per-package highlights", () => {
+  test("sorts non-meta packages alphabetically for breaking changes", () => {
     const notes = assembleReleaseNotes(
       [
-        makeResult(LIB, "1.0.0", {
-          highlights: [
-            { description: "Fixed a bug.", kind: "fix", prLinks: [] },
+        makeResult("@adobe/aio-commerce-lib-zebra", "1.0.0", {
+          breakingChanges: [{ migration: "Migrate.", title: "Zebra change" }],
+        }),
+        makeResult("@adobe/aio-commerce-lib-alpha", "1.0.0", {
+          breakingChanges: [{ migration: "Migrate.", title: "Alpha change" }],
+        }),
+      ],
+      "",
+      [],
+    );
+    expect(notes.breakingChanges[0]?.title).toBe("Alpha change");
+    expect(notes.breakingChanges[1]?.title).toBe("Zebra change");
+  });
+
+  test("propagates breaking changes with package attribution", () => {
+    const notes = assembleReleaseNotes(
+      [
+        makeResult(LIB, "2.0.0", {
+          breakingChanges: [
+            {
+              migration: "Replace `foo()` with `bar()`.",
+              title: "Removed foo",
+            },
           ],
         }),
       ],
       "",
+      [],
     );
-    expect(notes.highlights[0]?.kind).toBe("fix");
-    expect(notes.highlights[0]?.description).toBe("Fixed a bug.");
+    expect(notes.breakingChanges[0]?.title).toBe("Removed foo");
+    expect(notes.breakingChanges[0]?.packages).toEqual([LIB]);
   });
 });
 
@@ -267,6 +271,70 @@ describe("generateReleaseSummary", () => {
   });
 });
 
+describe("consolidateHighlights", () => {
+  test("returns highlights and usage from generateText", async () => {
+    const { generateText } = await import("ai");
+    (generateText as ReturnType<typeof vi.fn>).mockResolvedValue({
+      output: {
+        highlights: [{ description: "Merged cross-package feature." }],
+      },
+      usage: makeUsage(60),
+    });
+
+    const results = [makeResult(LIB, "1.0.0"), makeResult(META, "2.0.0")];
+    const model = {} as Parameters<typeof consolidateHighlights>[1];
+    const { highlights, usage } = await consolidateHighlights(results, model);
+
+    expect(highlights).toEqual([
+      { description: "Merged cross-package feature." },
+    ]);
+    expect(usage.totalTokens).toBe(60);
+  });
+
+  test("includes per-package highlights, kind, and package name in the prompt", async () => {
+    const { generateText } = await import("ai");
+    (generateText as ReturnType<typeof vi.fn>).mockResolvedValue({
+      output: { highlights: [] },
+      usage: makeUsage(40),
+    });
+
+    const results = [makeResult(LIB, "1.0.0")];
+    const model = {} as Parameters<typeof consolidateHighlights>[1];
+    await consolidateHighlights(results, model);
+
+    const call = (generateText as ReturnType<typeof vi.fn>).mock.lastCall?.[0];
+    expect(call.prompt).toContain(LIB);
+    expect(call.prompt).toContain("feat");
+    expect(call.prompt).toContain("Added feature X");
+  });
+
+  test("handles results with no highlights", async () => {
+    const { generateText } = await import("ai");
+    (generateText as ReturnType<typeof vi.fn>).mockResolvedValue({
+      output: { highlights: [] },
+      usage: makeUsage(20),
+    });
+
+    const results = [makeResult(LIB, "1.0.1", { highlights: [] })];
+    const model = {} as Parameters<typeof consolidateHighlights>[1];
+    await consolidateHighlights(results, model);
+
+    const call = (generateText as ReturnType<typeof vi.fn>).mock.lastCall?.[0];
+    expect(call.prompt).toContain("(none)");
+  });
+
+  test("propagates errors from generateText", async () => {
+    const { generateText } = await import("ai");
+    (generateText as ReturnType<typeof vi.fn>).mockRejectedValue(
+      new Error("consolidation error"),
+    );
+
+    await expect(
+      consolidateHighlights([makeResult(LIB, "1.0.0")], {} as LanguageModel),
+    ).rejects.toThrow("consolidation error");
+  });
+});
+
 describe("generatePackageNotes", () => {
   test("calls generateText and returns structured notes", async () => {
     const { generateText } = await import("ai");
@@ -319,7 +387,11 @@ describe("generateAllNotes", () => {
         output: makeNotes(LIB, "2.0.0"),
         usage: undefinedUsage,
       })
-      .mockResolvedValueOnce({ text: "Summary.", usage: undefinedUsage });
+      .mockResolvedValueOnce({ text: "Summary.", usage: undefinedUsage })
+      .mockResolvedValueOnce({
+        output: { highlights: [] },
+        usage: undefinedUsage,
+      });
 
     const { totalUsage } = await generateAllNotes(
       [makeEntry(LIB, "2.0.0")],
@@ -330,7 +402,7 @@ describe("generateAllNotes", () => {
     expect(totalUsage.totalTokens).toBe(0);
   });
 
-  test("returns results, summary, and aggregated usage including the summary call", async () => {
+  test("returns results, summary, highlights, and aggregated usage", async () => {
     const { generateText } = await import("ai");
     (generateText as ReturnType<typeof vi.fn>)
       .mockResolvedValueOnce({
@@ -344,17 +416,26 @@ describe("generateAllNotes", () => {
       .mockResolvedValueOnce({
         text: "Holistic summary.",
         usage: makeUsage(100),
+      })
+      .mockResolvedValueOnce({
+        output: {
+          highlights: [{ description: "Merged cross-package feature." }],
+        },
+        usage: makeUsage(50),
       });
 
     const entries = [makeEntry(LIB, "2.0.0"), makeEntry(META, "3.0.0")];
-    const { results, summary, totalUsage } = await generateAllNotes(
+    const { results, summary, highlights, totalUsage } = await generateAllNotes(
       entries,
       {} as Parameters<typeof generateAllNotes>[1],
     );
 
     expect(results).toHaveLength(2);
     expect(summary).toBe("Holistic summary.");
-    expect(totalUsage.totalTokens).toBe(400); // 150 + 150 + 100
+    expect(highlights).toEqual([
+      { description: "Merged cross-package feature." },
+    ]);
+    expect(totalUsage.totalTokens).toBe(450); // 150 + 150 + 100 + 50
   });
 
   test("throws if any package generation fails", async () => {

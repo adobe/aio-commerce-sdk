@@ -13,7 +13,11 @@
 import * as v from "valibot";
 import { describe, expect, test } from "vitest";
 
-import { PackageNotesSchema, ReleaseNotesSchema } from "#schema";
+import {
+  ConsolidatedHighlightsSchema,
+  PackageNotesSchema,
+  ReleaseNotesSchema,
+} from "#schema";
 
 const VALID_PACKAGE_NOTES = {
   breakingChanges: [],
@@ -39,9 +43,6 @@ const VALID_RELEASE_NOTES = {
   highlights: [
     {
       description: "Added hierarchical permission checks.",
-      kind: "feat",
-      packages: ["@adobe/aio-commerce-lib-admin-ui"],
-      prLinks: [],
     },
   ],
   summary:
@@ -106,17 +107,33 @@ describe("ReleaseNotesSchema", () => {
     expect(result.success).toBe(true);
   });
 
-  test("rejects an invalid highlight kind in ReleaseNotesSchema", () => {
+  test("rejects a highlight missing a description", () => {
     const result = v.safeParse(ReleaseNotesSchema, {
       ...VALID_RELEASE_NOTES,
-      highlights: [
-        {
-          description: "Something.",
-          kind: "invalid",
-          packages: [],
-          prLinks: [],
-        },
-      ],
+      highlights: [{}],
+    });
+    expect(result.success).toBe(false);
+  });
+});
+
+describe("ConsolidatedHighlightsSchema", () => {
+  test("validates a well-formed list of highlights", () => {
+    const result = v.safeParse(ConsolidatedHighlightsSchema, {
+      highlights: [{ description: "Added hierarchical permission checks." }],
+    });
+    expect(result.success).toBe(true);
+  });
+
+  test("accepts an empty highlights array", () => {
+    const result = v.safeParse(ConsolidatedHighlightsSchema, {
+      highlights: [],
+    });
+    expect(result.success).toBe(true);
+  });
+
+  test("rejects a highlight missing a description", () => {
+    const result = v.safeParse(ConsolidatedHighlightsSchema, {
+      highlights: [{}],
     });
     expect(result.success).toBe(false);
   });

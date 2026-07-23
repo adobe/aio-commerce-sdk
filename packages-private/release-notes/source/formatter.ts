@@ -13,10 +13,14 @@
 import { valibotSchema } from "@ai-sdk/valibot";
 import { generateText, Output } from "ai";
 
-import { PackageNotesSchema } from "./schema.ts";
+import { ConsolidatedHighlightsSchema, PackageNotesSchema } from "./schema.ts";
 
 import type { LanguageModel, LanguageModelUsage } from "ai";
-import type { PackageNotes, ReleaseNotes } from "./schema.ts";
+import type {
+  ConsolidatedHighlight,
+  PackageNotes,
+  ReleaseNotes,
+} from "./schema.ts";
 import type { ChangelogEntry } from "./types.ts";
 
 const META_PACKAGE = "@adobe/aio-commerce-sdk";
@@ -32,10 +36,24 @@ const PACKAGE_NOTES_SYSTEM =
   "Populate breakingChanges only for major version bumps; use an empty array otherwise. " +
   "Write a summary paragraph explaining the user-facing impact and motivation for this package's release overall, focusing only on what consumers need to know.";
 
+const CONSOLIDATE_HIGHLIGHTS_SYSTEM =
+  "You merge structured per-package release highlights from a multi-package TypeScript SDK release into a single flat list of user-facing highlights for a release announcement. " +
+  "Merge highlights that describe the same underlying feature or fix into ONE bullet, even when they span multiple packages — never repeat the same capability twice just because multiple packages were touched. " +
+  "Also merge closely related highlights into a single bullet whenever they can be explained together as one coherent capability, even if they originate from different packages or extraction entries. " +
+  "Do not separate features from bug fixes into different groups — return one flat, unordered list covering everything. " +
+  "Write from the consumer's perspective: explain what changed and why it is useful, in up to 2 short sentences per bullet. " +
+  "Each sentence must be a single simple sentence of no more than 20 words — never join multiple ideas into one sentence with commas, semicolons, or 'and'/'with' lists. " +
+  "Each bullet must be under 35 words total. Drop secondary details rather than cramming them in. " +
+  "Never mention package names, exports, function names, file paths, config keys, or other code identifiers — describe the capability or behavior in plain language only. " +
+  "Only include changes a consumer of the SDK would actually notice or care about.";
+
 const RELEASE_SUMMARY_SYSTEM =
   "You write a concise 'why it matters' paragraph for a multi-package TypeScript SDK release. " +
-  "Given the per-package summaries and key highlights across all packages, explain in 2-3 sentences what this release means for developers who consume the SDK. " +
+  "Given the per-package summaries and key highlights across all packages, explain in up to 4-5 short sentences what this release means for developers who consume the SDK and why the included changes are relevant to them. " +
+  "Each sentence must be a single simple sentence of no more than 20 words — never join multiple ideas into one sentence with commas, semicolons, or 'and'/'with' lists. " +
+  "The whole paragraph must be under 100 words total. Pick only the 2-3 most impactful changes; do not try to mention everything. " +
   "Be concrete — name the specific capabilities unlocked or problems solved, not generic statements like 'improvements were made'. " +
+  "Write from the consumer's perspective, in plain language with no technical or code-level details such as package names, function names, or file paths. " +
   "Write plain prose, no bullet points or markdown formatting.";
 
 export type PackageNotesResult = {
@@ -92,8 +110,37 @@ export async function generateReleaseSummary(
 }
 
 /**
- * Generates notes for all packages in parallel, then synthesizes a holistic summary.
- * Any failure rejects the whole call.
+ * Merges per-package highlights into a flat, de-duplicated list of user-facing
+ * highlights via one LLM call, cutting across package and kind boundaries.
+ */
+export async function consolidateHighlights(
+  results: PackageNotesResult[],
+  model: LanguageModel,
+): Promise<{ highlights: ConsolidatedHighlight[]; usage: LanguageModelUsage }> {
+  const highlightLines = results.flatMap(({ entry, notes }) =>
+    notes.highlights.map(
+      (h) => `[${entry.package}] (${h.kind}) ${h.description}`,
+    ),
+  );
+  const highlightSection =
+    highlightLines.length > 0 ? highlightLines.join("\n") : "(none)";
+
+  const result = await generateText({
+    model,
+    output: Output.object({
+      schema: valibotSchema(ConsolidatedHighlightsSchema),
+    }),
+    prompt: `Per-package highlights:\n${highlightSection}`,
+    system: CONSOLIDATE_HIGHLIGHTS_SYSTEM,
+    temperature: 0,
+  });
+
+  return { highlights: result.output.highlights, usage: result.usage };
+}
+
+/**
+ * Generates notes for all packages in parallel, then synthesizes a holistic summary
+ * and a consolidated, cross-package highlight list. Any failure rejects the whole call.
  */
 export async function generateAllNotes(
   entries: ChangelogEntry[],
@@ -101,18 +148,26 @@ export async function generateAllNotes(
 ): Promise<{
   results: PackageNotesResult[];
   summary: string;
+  highlights: ConsolidatedHighlight[];
   totalUsage: LanguageModelUsage;
 }> {
   const results = await Promise.all(
     entries.map((entry) => generatePackageNotes(entry, model)),
   );
 
-  const { summary, usage: summaryUsage } = await generateReleaseSummary(
-    results,
-    model,
-  );
+  const [
+    { summary, usage: summaryUsage },
+    { highlights, usage: highlightsUsage },
+  ] = await Promise.all([
+    generateReleaseSummary(results, model),
+    consolidateHighlights(results, model),
+  ]);
 
-  const allUsages = [...results.map((r) => r.usage), summaryUsage];
+  const allUsages = [
+    ...results.map((r) => r.usage),
+    summaryUsage,
+    highlightsUsage,
+  ];
   const totalUsage: LanguageModelUsage = {
     inputTokenDetails: {
       cacheReadTokens: undefined,
@@ -125,16 +180,17 @@ export async function generateAllNotes(
     totalTokens: allUsages.reduce((sum, u) => sum + (u.totalTokens ?? 0), 0),
   };
 
-  return { results, summary, totalUsage };
+  return { highlights, results, summary, totalUsage };
 }
 
 /**
- * Assembles the final `ReleaseNotes` object deterministically from per-package results
- * and the holistic summary produced by `generateReleaseSummary`.
+ * Assembles the final `ReleaseNotes` object deterministically from per-package results,
+ * the holistic summary, and the consolidated highlights.
  */
 export function assembleReleaseNotes(
   results: PackageNotesResult[],
   summary: string,
+  highlights: ConsolidatedHighlight[],
 ): ReleaseNotes {
   // Meta-package first, then alphabetically.
   const sorted = [...results].sort((a, b) => {
@@ -155,13 +211,6 @@ export function assembleReleaseNotes(
     sorted.find((r) => r.notes.bump === "minor")?.notes.headline ??
     sorted[0]?.notes.headline ??
     `Release: ${packageList}`;
-
-  const highlights = sorted.flatMap(({ entry, notes }) =>
-    notes.highlights.map((h) => ({
-      ...h,
-      packages: [entry.package],
-    })),
-  );
 
   const breakingChanges = sorted.flatMap(({ entry, notes }) =>
     notes.breakingChanges.map((b) => ({

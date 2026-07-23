@@ -19,34 +19,6 @@ const META_PACKAGE = "@adobe/aio-commerce-sdk";
 const OWNERS = "@decepticons @mercury";
 const COMPATIBILITY = ":white_check_mark: PAAS | :white_check_mark: ACCS";
 
-const KIND_EMOJI: Record<string, string> = {
-  build: ":package:",
-  chore: ":wrench:",
-  ci: ":construction_worker:",
-  docs: ":scroll:",
-  feat: ":sparkles:",
-  fix: ":bug:",
-  other: ":small_blue_diamond:",
-  perf: ":rocket:",
-  refactor: ":recycle:",
-  style: ":art:",
-  test: ":white_check_mark:",
-};
-
-const KIND_LABEL: Record<string, string> = {
-  build: "Build",
-  chore: "Maintenance",
-  ci: "CI/CD",
-  docs: "Documentation",
-  feat: "New Features",
-  fix: "Bug Fixes",
-  other: "Other",
-  perf: "Performance",
-  refactor: "Refactoring",
-  style: "Code Style",
-  test: "Tests",
-};
-
 export type RenderContext = {
   date: string;
   publishedPackages: ReadonlyArray<{ name: string; version: string }>;
@@ -55,7 +27,7 @@ export type RenderContext = {
 /**
  * Renders a `ReleaseNotes` object as a Slack mrkdwn string.
  *
- * Render order: header > metadata > headline > highlights > summary > links > footer.
+ * Render order: header > metadata > highlights > summary > links > footer.
  */
 export function renderSlack(notes: ReleaseNotes, ctx: RenderContext): string {
   const lines: string[] = [];
@@ -66,8 +38,6 @@ export function renderSlack(notes: ReleaseNotes, ctx: RenderContext): string {
     `*Owner:* ${OWNERS}`,
     "*Status:* :white_check_mark: Released",
     `*Compatibility:* ${COMPATIBILITY}`,
-    "",
-    notes.headline,
     "",
   );
 
@@ -82,22 +52,10 @@ export function renderSlack(notes: ReleaseNotes, ctx: RenderContext): string {
       lines.push("");
     }
 
-    const groups = new Map<string, typeof notes.highlights>();
     for (const h of notes.highlights) {
-      const group = groups.get(h.kind) ?? [];
-      group.push(h);
-      groups.set(h.kind, group);
+      lines.push(`  - ${h.description}`);
     }
-
-    for (const [kind, items] of groups) {
-      const emoji = KIND_EMOJI[kind] ?? ":small_blue_diamond:";
-      const label = KIND_LABEL[kind] ?? "Other";
-      lines.push(`${emoji} ${label} ${emoji}`, "");
-      for (const h of items) {
-        lines.push(`  - ${h.description}`);
-      }
-      lines.push("");
-    }
+    lines.push("");
   }
 
   lines.push("*Why it matters*", notes.summary, "");

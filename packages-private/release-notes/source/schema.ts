@@ -91,6 +91,25 @@ export const PackageNotesSchema = v.object({
 
 export type PackageNotes = v.InferOutput<typeof PackageNotesSchema>;
 
+/** A single user-facing highlight, merged across packages and kinds. */
+const ConsolidatedHighlightSchema = v.object({
+  description: v.pipe(
+    v.string(),
+    v.description(
+      "Up to 2 short, plain-language sentences (under 35 words total) describing one feature or fix from the consumer's perspective, merging related or cross-package changes into one bullet. No package names, exports, or other code identifiers.",
+    ),
+  ),
+});
+
+export type ConsolidatedHighlight = v.InferOutput<
+  typeof ConsolidatedHighlightSchema
+>;
+
+/** Structured output of the cross-package highlight consolidation call. */
+export const ConsolidatedHighlightsSchema = v.object({
+  highlights: v.array(ConsolidatedHighlightSchema),
+});
+
 /**
  * Aggregate release notes assembled deterministically from per-package results.
  * This is the final output shape published to the GitHub Release body.
@@ -112,14 +131,7 @@ export const ReleaseNotesSchema = v.object({
       "One-sentence TL;DR of the release, user-impact first. No version numbers as the lead.",
     ),
   ),
-  highlights: v.array(
-    v.object({
-      description: v.string(),
-      kind: HighlightKindSchema,
-      packages: v.array(v.string()),
-      prLinks: v.array(v.string()),
-    }),
-  ),
+  highlights: v.array(ConsolidatedHighlightSchema),
   summary: v.string(),
 });
 
