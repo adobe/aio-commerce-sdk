@@ -265,6 +265,58 @@
         "Does not include runtimeAction on the view entry",
         "Does not emit an unresolved question for runtimeAction"
       ]
+    },
+    {
+      "id": 9,
+      "name": "description-rewrite-preserves-package-json",
+      "prompt": "I have a Commerce App Builder project with a package.json description longer than 255 characters. Migrate it to App Management.",
+      "expected_output": "metadata.description in app.commerce.config.ts is a rewritten summary of the original that fits in 255 characters, reads as complete sentences preserving the app's core purpose (Commerce-to-ERP sync of orders, customers, inventory), and does not end with \"...\" or cut off mid-sentence. The original full description in package.json is preserved: the executor records it before init and restores it if init writes the shortened config value back, reporting the restore in the migration summary.",
+      "files": [
+        {
+          "path": "app.config.yaml",
+          "content": "application:\n  runtimeManifest:\n    packages:\n      acme-app:\n        license: Apache-2.0\n        actions:\n          sync-orders:\n            function: actions/sync-orders/index.js\n            web: \"yes\"\n            runtime: nodejs:22\n"
+        },
+        {
+          "path": "package.json",
+          "content": "{\"name\": \"acme-app\", \"version\": \"1.0.0\", \"description\": \"Acme Commerce integration for Adobe App Builder that synchronizes orders, customers, and product inventory between Adobe Commerce and the Acme ERP platform, including bidirectional event-driven updates, scheduled reconciliation jobs, configurable field mappings, and audit logging for enterprise deployments.\"}\n"
+        },
+        {
+          "path": "actions/sync-orders/index.js",
+          "content": "async function main (params) {\n  return { statusCode: 200, body: { success: true } }\n}\n\nmodule.exports = { main }\n"
+        }
+      ],
+      "assertions": [
+        "metadata.description in app.commerce.config.ts is at most 255 characters",
+        "The description is a coherent rewrite, not a mechanical cut: it does not end with \"...\", does not stop mid-word or mid-sentence, and preserves the core purpose (synchronizing orders, customers, and inventory between Adobe Commerce and the Acme ERP)",
+        "The original full description remains in package.json after migration (restored if init wrote the shortened config value back)",
+        "If the description was restored after init, the migration summary's Modified section mentions the restore"
+      ]
+    },
+    {
+      "id": 10,
+      "name": "init-scoped-package-and-tldr-summary",
+      "prompt": "I have a Commerce App Builder project (npm) that has never used @adobe/aio-commerce-lib-app — it is not a dependency in package.json. Migrate it to App Management with --auto.",
+      "expected_output": "The executor runs init with the scoped package name (npx --yes @adobe/aio-commerce-lib-app@latest init), not the unscoped bin name (npx aio-commerce-lib-app init), which fails with \"could not determine executable to run\" when the package is not installed. The migration summary starts with a one-line TL;DR stating the number of staged files, the init outcome, and the number of manual follow-ups.",
+      "files": [
+        {
+          "path": "app.config.yaml",
+          "content": "application:\n  runtimeManifest:\n    packages:\n      acme-app:\n        license: Apache-2.0\n        actions:\n          sync-orders:\n            function: actions/sync-orders/index.js\n            web: \"yes\"\n            runtime: nodejs:22\n"
+        },
+        {
+          "path": "package.json",
+          "content": "{\"name\": \"acme-app\", \"version\": \"1.0.0\", \"description\": \"Acme order sync app.\", \"dependencies\": {\"@adobe/aio-sdk\": \"^6.0.0\"}}\n"
+        },
+        {
+          "path": "actions/sync-orders/index.js",
+          "content": "async function main (params) {\n  return { statusCode: 200, body: { success: true } }\n}\n\nmodule.exports = { main }\n"
+        }
+      ],
+      "assertions": [
+        "Runs init using the scoped package name: npx --yes @adobe/aio-commerce-lib-app@latest init",
+        "Does not run init with the unscoped bin name (npx aio-commerce-lib-app init)",
+        "The migration summary begins with a one-line TL;DR containing the staged file count, the init outcome, and the manual follow-up count",
+        "The TL;DR appears before the Files written section"
+      ]
     }
   ]
 }

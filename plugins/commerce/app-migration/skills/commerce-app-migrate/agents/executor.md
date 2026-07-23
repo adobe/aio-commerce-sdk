@@ -500,16 +500,70 @@ Before running init, check whether `.env` exists at the project root:
 This is required because the init CLI unconditionally reads `.env` during
 the configuration-schema generation sub-step.
 
+### Pre-flight: record the original package.json description
+
+Read `package.json` and store its `description` value as `originalPackageDescription`
+(may be absent). `init` writes the config's `metadata.description` back into
+`package.json` — if that value was rewritten during config assembly to fit the
+255-char limit, the original description would be silently replaced. Step 6
+restores it.
+
+### Pre-flight (pnpm only): approve the esbuild build script
+
+pnpm 10 blocks dependency build scripts by default. `init` runs `pnpm add` inside
+the project to install its dependencies, and the `--allow-build` flag on the outer
+`dlx` command does **not** carry over to that inner install — without persistent
+approval it fails with `ERR_PNPM_IGNORED_BUILDS: Ignored build scripts: esbuild@...`.
+
+Before running init on a pnpm project, approve esbuild persistently. Write the
+approval **where the project already keeps its pnpm configuration** — inspect
+both files and pick the first matching rule:
+
+1.  If either file already has an `onlyBuiltDependencies` list (`pnpm.onlyBuiltDependencies`
+    in `package.json`, or top-level `onlyBuiltDependencies` in `pnpm-workspace.yaml`):
+    merge `esbuild` into **that existing list**. Never create a second list in the
+    other file — pnpm reads only one of them, and a duplicate misleads.
+2.  Else, if `package.json` has a `pnpm` section: add the list there —
+
+        "pnpm": { "onlyBuiltDependencies": ["esbuild"] }
+
+    (This mirrors pnpm's own `approve-builds` behavior: when pnpm settings live in
+    `package.json`, it keeps writing them there.)
+
+3.  Else, if `pnpm-workspace.yaml` exists: add a top-level list there —
+
+    onlyBuiltDependencies: - esbuild
+
+4.  Else (neither location holds pnpm settings): add the `pnpm` section to
+    `package.json` as in rule 2. Do not create `pnpm-workspace.yaml` on a project
+    that does not already have one — its presence declares a pnpm workspace.
+
+If `esbuild` is already present in the list, make no change.
+
+Record which file was modified (or that no change was needed) — it is reported in
+Step 10's "Modified" section.
+
 ### Run init
 
 Run the appropriate command for the `packageManager` from `ProjectSnapshot`:
 
-| packageManager | command                               |
-| -------------- | ------------------------------------- |
-| `npm`          | `npx aio-commerce-lib-app init`       |
-| `pnpm`         | `pnpm exec aio-commerce-lib-app init` |
-| `yarn`         | `yarn exec aio-commerce-lib-app init` |
-| `bun`          | `bunx aio-commerce-lib-app init`      |
+| packageManager | command                                                                  |
+| -------------- | ------------------------------------------------------------------------ |
+| `npm`          | `npx --yes @adobe/aio-commerce-lib-app@latest init`                      |
+| `pnpm`         | `pnpm --allow-build=esbuild dlx @adobe/aio-commerce-lib-app@latest init` |
+| `yarn`         | `yarn dlx @adobe/aio-commerce-lib-app@latest init`                       |
+| `bun`          | `bunx @adobe/aio-commerce-lib-app@latest init`                           |
+
+The scoped package name (`@adobe/aio-commerce-lib-app`) is required: on a project
+where the package is not yet a local dependency, the unscoped bin name
+(`npx aio-commerce-lib-app init`) fails with
+`npm error could not determine executable to run`.
+
+For pnpm, `--allow-build=esbuild` covers the temporary `dlx` install of the CLI
+itself. The flag must come **before** `dlx` — `pnpm dlx --allow-build=...` fails
+with `ERR_PNPM_SPEC_NOT_SUPPORTED_BY_ANY_RESOLVER` on several pnpm versions.
+The install init runs inside the project is covered by the pre-flight approval
+above, not by this flag.
 
 The `init` command installs required dependencies and generates the full `src/` extension
 structure from `app.commerce.config.ts` in one step.
@@ -522,7 +576,7 @@ Do NOT retry. Record the failure and emit the following manual instruction in St
     ✗ aio-commerce-lib-app init BLOCKED (Claude Code sandbox restriction)
 
     Run this manually in your terminal before continuing:
-        npx aio-commerce-lib-app init
+        npx --yes @adobe/aio-commerce-lib-app@latest init
 
     Then update app.config.yaml and install.yaml per the Next steps section.
 
@@ -543,12 +597,28 @@ If the command exits with an error, inspect the output:
                  npm view @adobe/aio-commerce-lib-app versions --json
           2. Install a newer version that includes dist/:
                  npm install @adobe/aio-commerce-lib-app@<latest>
-          3. Re-run: npx aio-commerce-lib-app init
+          3. Re-run: npx --yes @adobe/aio-commerce-lib-app@latest init
 
-2.  **Schema validation errors** — Record the error and report it in Step 10 so
+2.  **`ERR_PNPM_IGNORED_BUILDS` (pnpm only)** — pnpm 10 blocked a dependency's build
+    script (the output names the package, e.g. `Ignored build scripts: esbuild@...`).
+    This means the blocked package is not covered by the project's persistent
+    approval (the pre-flight above covers `esbuild`; a different package may be
+    named). Add the named package to the same `onlyBuiltDependencies` list the
+    pre-flight wrote, then re-run init **once**. If it still fails, record the
+    failure and emit in Step 10:
+
+        ✗ aio-commerce-lib-app init FAILED: ERR_PNPM_IGNORED_BUILDS (<package> build script blocked)
+
+        pnpm blocks dependency build scripts by default. Approve the build for
+        this project, then re-run init:
+          1. Add <package> to the onlyBuiltDependencies list in <file the
+             pre-flight chose>, or run: pnpm approve-builds
+          2. Re-run: pnpm --allow-build=esbuild dlx @adobe/aio-commerce-lib-app@latest init
+
+3.  **Schema validation errors** — Record the error and report it in Step 10 so
     the developer can fix the config and re-run init manually.
 
-3.  **Any other error** — Record the failure message and skip Step 5a.
+4.  **Any other error** — Record the failure message and skip Step 5a.
     Report the error in Step 10.
 
 After this command completes successfully, check which directories were created:
@@ -727,6 +797,15 @@ is no longer generated by `commerce/backend-ui/2` and the hook will fail the bui
 (`.yml` extension), `init` created a separate `install.yaml` — delete the stale
 `install.yml` (or merge its extra entries into `install.yaml` first) so only one
 install file remains.
+
+**4. Restore the original `package.json` description.**
+`init` writes the config's `metadata.description` back into `package.json`. If the
+config value was rewritten during assembly, this silently replaces the original.
+Compare `package.json`'s current `description` with the `originalPackageDescription`
+recorded in Step 4 — if they differ, restore `originalPackageDescription`. The
+rewritten value belongs only in `app.commerce.config.ts` (App Management's 255-char
+limit); the full description stays in `package.json`. Record whether a restore
+happened — it is reported in Step 10's "Modified" section.
 
 **Do not modify any other content in `app.config.yaml`, the install file, or
 `package.json`.**
@@ -996,6 +1075,13 @@ constraints, Next steps) when in doc-scan-only mode.
     ║             App Management Migration — Complete                  ║
     ╚══════════════════════════════════════════════════════════════════╝
 
+    TL;DR: staged <N> files · init <✓ ok / ✗ failed / ✗ blocked> · <K> manual follow-up(s)
+
+       ← N = number of files staged in Step 9; K = total count of items requiring
+          developer action across "Safe to delete", "Removable files",
+          "Documentation recommendations" (Category C + D entries), and any failed
+          command that must be re-run manually. Print "no manual follow-ups" if K is 0 →
+
     ── Files written ──────────────────────────────────────────────────
       ✓  app.commerce.config.ts                          new
       ✓  install.yaml                                    new / updated
@@ -1065,6 +1151,12 @@ constraints, Next steps) when in doc-scan-only mode.
          ← omit app.config.yaml line if init failed →
       app.config.yaml    added extensions block
       package.json       added postinstall hook
+      [package.json      description restored — init wrote the shortened config value back;
+                         the original full description was kept (see Step 6)]
+         ← include only if Step 6 restored the description →
+      [pnpm-workspace.yaml   approved esbuild build script (onlyBuiltDependencies)]
+      [package.json          approved esbuild build script (pnpm.onlyBuiltDependencies)]
+         ← include only the line matching the file the Step 4 pnpm pre-flight modified →
 
     ── Installation steps ─────────────────────────────────────────────
          ← omit this entire section if no customInstallationSteps →
@@ -1219,7 +1311,7 @@ constraints, Next steps) when in doc-scan-only mode.
     ← end conditional block →
 
     ── Next steps ─────────────────────────────────────────────────────
-      [1. npx aio-commerce-lib-app init]   ← include ONLY if Step 4 failed
+      [1. npx --yes @adobe/aio-commerce-lib-app@latest init]   ← include ONLY if Step 4 failed
        2. Review src/commerce-extensibility-1/.generated/ before deploying
        3. aio app deploy
 
