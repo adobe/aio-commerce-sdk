@@ -49,14 +49,9 @@ const METADATA_ID_MAX_LENGTH_FOR_INSTANCE_ID = 100;
 export const EVENTS_STORAGE_KEY = "events";
 
 /**
- * Removes the given provider keys' entries from the events storage written at
- * installation time, if present, and writes back the pruned result.
+ * Removes event providers from installation storage.
  *
- * Only issues a write when at least one of the given keys has a stored entry;
- * otherwise this is a no-op. Called during uninstall so a removed provider's
- * stale `id` can never outlive the provider it points to.
- *
- * @param providerKeys - The `provider.key` values to remove from storage.
+ * @param providerKeys - The provider keys to remove.
  */
 export async function removeStoredEventProviders(
   providerKeys: string[],
@@ -71,18 +66,20 @@ export async function removeStoredEventProviders(
     return;
   }
 
-  const providers = { ...existing.providers };
-  let changed = false;
-  for (const key of providerKeys) {
-    if (key in providers) {
-      delete providers[key];
-      changed = true;
-    }
-  }
+  const providerKeysToRemove = new Set(providerKeys);
+  const hasStoredProvider = providerKeys.some((key) =>
+    Object.hasOwn(existing.providers, key),
+  );
 
-  if (!changed) {
+  if (!hasStoredProvider) {
     return;
   }
+
+  const providers = Object.fromEntries(
+    Object.entries(existing.providers).filter(
+      ([key]) => !providerKeysToRemove.has(key),
+    ),
+  );
 
   await setSystemConfigByKey(EVENTS_STORAGE_KEY, { providers });
 }
