@@ -14,6 +14,7 @@ Check the app's root `package.json` for:
 If ONLY `@react-spectrum/s2` is already present instead, no action is needed. The user might also be using a mix of the two.
 
 To be sure, check also the `import` statements in the source code; some users might have the dependencies but not actually use them.
+
 ## Why recommend upgrading
 
 The two are functionally compatible — they can even be mounted together in the same tree (S2's `Provider` must be the inner-most provider if nested). Classic React Spectrum (v3) is still maintained, but S2 is the version Adobe recommends moving to: smaller bundles via atomic/macro-based CSS, ongoing feature work, and the version this scaffold generates all new `web-src` code against. Recommend the upgrade so the extension's UI stays on one consistent system instead of drifting to two.
