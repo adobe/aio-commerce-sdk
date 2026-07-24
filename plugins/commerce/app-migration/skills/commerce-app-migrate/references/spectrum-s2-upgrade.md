@@ -11,7 +11,7 @@ Check the app's root `package.json` for:
 - `@adobe/react-spectrum`, or
 - `@react-spectrum/<component>` packages **without** an `s2` in the name (e.g. `@react-spectrum/button`, `@react-spectrum/provider`)
 
-If ONLY `@react-spectrum/s2` is already present instead, no action is needed. The user might also be using a mix of the two.
+If ONLY `@react-spectrum/s2` dependencies are present, no action is needed, but the user might also be using a mix of the two, in which case you should offer to migrate the remaining ones.
 
 To be sure, check also the `import` statements in the source code; some users might have the dependencies but not actually use them.
 
