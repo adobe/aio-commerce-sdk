@@ -630,4 +630,22 @@ describe("removeStoredEventProviders", () => {
       },
     });
   });
+
+  test("deletes the entire system config entry when removing the last remaining provider", async () => {
+    const { removeStoredEventProviders, configMocks } =
+      await importUtilsWithConfigMocks();
+
+    configMocks.getSystemConfigByKey.mockResolvedValue({
+      providers: {
+        "order-events-provider": { events: {}, id: "stale-uuid" },
+      },
+    });
+
+    await removeStoredEventProviders(["order-events-provider"]);
+
+    expect(configMocks.setSystemConfigByKey).toHaveBeenCalledWith(
+      "events",
+      null,
+    );
+  });
 });

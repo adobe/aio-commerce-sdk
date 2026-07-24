@@ -81,6 +81,11 @@ export async function removeStoredEventProviders(
     ),
   );
 
+  if (Object.keys(providers).length === 0) {
+    await setSystemConfigByKey(EVENTS_STORAGE_KEY, null);
+    return;
+  }
+
   await setSystemConfigByKey(EVENTS_STORAGE_KEY, { providers });
 }
 
