@@ -269,6 +269,25 @@ export function createExternalEventConfig(
   };
 }
 
+/** Config fixture with a single commerce eventing source with an explicit provider key. */
+export function createConfigWithCommerceProviderKey(key: string) {
+  return {
+    ...configWithCommerceEventing,
+    eventing: {
+      commerce: [
+        {
+          events: configWithCommerceEventing.eventing.commerce[0].events,
+          provider: {
+            description: "Provides commerce events",
+            key,
+            label: "Order Events Provider",
+          },
+        },
+      ],
+    },
+  } satisfies CommerceAppConfigOutputModel;
+}
+
 export function createConfigWithTwoCommerceEventingSources(options?: {
   firstSourceEnv?: CommerceEnv[];
 }) {

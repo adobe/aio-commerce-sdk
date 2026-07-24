@@ -519,3 +519,133 @@ describe("existing data normalization", () => {
     });
   });
 });
+
+describe("removeStoredEventProviders", () => {
+  async function importUtilsWithConfigMocks() {
+    vi.resetModules();
+
+    const configMocks = {
+      getSystemConfigByKey: vi.fn(),
+      setSystemConfigByKey: vi.fn().mockResolvedValue(undefined),
+    };
+
+    vi.doMock("@adobe/aio-commerce-lib-config", async () => {
+      const actual = await vi.importActual<
+        typeof import("@adobe/aio-commerce-lib-config")
+      >("@adobe/aio-commerce-lib-config");
+      return { ...actual, ...configMocks };
+    });
+
+    const utilsModule = await import("#management/installation/events/utils");
+
+    return {
+      configMocks,
+      removeStoredEventProviders: utilsModule.removeStoredEventProviders,
+    };
+  }
+
+  afterEach(() => {
+    vi.clearAllMocks();
+    vi.resetModules();
+    vi.doUnmock("@adobe/aio-commerce-lib-config");
+  });
+
+  test("does nothing when given no provider keys", async () => {
+    const { removeStoredEventProviders, configMocks } =
+      await importUtilsWithConfigMocks();
+
+    await removeStoredEventProviders([]);
+
+    expect(configMocks.getSystemConfigByKey).not.toHaveBeenCalled();
+    expect(configMocks.setSystemConfigByKey).not.toHaveBeenCalled();
+  });
+
+  test("does nothing when there is no stored data", async () => {
+    const { removeStoredEventProviders, configMocks } =
+      await importUtilsWithConfigMocks();
+
+    configMocks.getSystemConfigByKey.mockResolvedValue(null);
+
+    await removeStoredEventProviders(["order-events-provider"]);
+
+    expect(configMocks.setSystemConfigByKey).not.toHaveBeenCalled();
+  });
+
+  test("does nothing when none of the given keys have a stored entry", async () => {
+    const { removeStoredEventProviders, configMocks } =
+      await importUtilsWithConfigMocks();
+
+    configMocks.getSystemConfigByKey.mockResolvedValue({
+      providers: {
+        "other-provider": { events: {}, id: "other-uuid" },
+      },
+    });
+
+    await removeStoredEventProviders(["order-events-provider"]);
+
+    expect(configMocks.setSystemConfigByKey).not.toHaveBeenCalled();
+  });
+
+  test("removes matching provider entries and preserves unrelated ones", async () => {
+    const { removeStoredEventProviders, configMocks } =
+      await importUtilsWithConfigMocks();
+
+    configMocks.getSystemConfigByKey.mockResolvedValue({
+      providers: {
+        "keep-me": { events: {}, id: "keep-uuid" },
+        "order-events-provider": { events: {}, id: "stale-uuid" },
+      },
+    });
+
+    await removeStoredEventProviders(["order-events-provider"]);
+
+    expect(configMocks.setSystemConfigByKey).toHaveBeenCalledWith("events", {
+      providers: {
+        "keep-me": { events: {}, id: "keep-uuid" },
+      },
+    });
+  });
+
+  test("removes multiple matching keys in a single call, ignoring keys with no entry", async () => {
+    const { removeStoredEventProviders, configMocks } =
+      await importUtilsWithConfigMocks();
+
+    configMocks.getSystemConfigByKey.mockResolvedValue({
+      providers: {
+        "keep-me": { events: {}, id: "keep-uuid" },
+        "provider-a": { events: {}, id: "uuid-a" },
+        "provider-b": { events: {}, id: "uuid-b" },
+      },
+    });
+
+    await removeStoredEventProviders([
+      "provider-a",
+      "provider-b",
+      "never-stored",
+    ]);
+
+    expect(configMocks.setSystemConfigByKey).toHaveBeenCalledWith("events", {
+      providers: {
+        "keep-me": { events: {}, id: "keep-uuid" },
+      },
+    });
+  });
+
+  test("deletes the entire system config entry when removing the last remaining provider", async () => {
+    const { removeStoredEventProviders, configMocks } =
+      await importUtilsWithConfigMocks();
+
+    configMocks.getSystemConfigByKey.mockResolvedValue({
+      providers: {
+        "order-events-provider": { events: {}, id: "stale-uuid" },
+      },
+    });
+
+    await removeStoredEventProviders(["order-events-provider"]);
+
+    expect(configMocks.setSystemConfigByKey).toHaveBeenCalledWith(
+      "events",
+      null,
+    );
+  });
+});
