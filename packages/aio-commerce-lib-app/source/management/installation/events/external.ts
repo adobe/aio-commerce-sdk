@@ -166,7 +166,7 @@ async function removeExternalEvents(
   await removeStoredEventProviders(
     config.eventing.external
       .map(({ provider }) => provider.key)
-      .filter((key): key is string => Boolean(key)),
+      .filter((key): key is string => typeof key === "string"),
   );
 
   logger.debug("Completed External Events uninstall step.");

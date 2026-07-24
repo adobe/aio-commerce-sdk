@@ -17,14 +17,17 @@ import { isLeafStep } from "#management/installation/workflow/step";
 import {
   configWithCommerceEventing,
   configWithExternalEventing,
+  createConfigWithCommerceProviderKey,
   createConfigWithTwoCommerceEventingSources,
   minimalValidConfig,
 } from "#test/fixtures/config";
 import {
+  cleanupCommerceEventsStepMocks,
   createMockEventingInstallationContext,
   createMockExistingCommerceEventingData,
   createMockExistingIoEventsData,
   createMockWorkspaceConfiguration,
+  importCommerceEventsStepWithMocks,
 } from "#test/fixtures/eventing";
 
 describe("commerceEventsStep leaf step", () => {
@@ -53,79 +56,9 @@ describe("commerceEventsStep leaf step", () => {
 });
 
 describe("commerceEventsStep orchestration", () => {
-  async function importCommerceStepWithMocks() {
-    vi.resetModules();
-
-    const helperMocks = {
-      configureCommerceEventing: vi.fn(),
-      offboardCommerceEventing: vi.fn(),
-      offboardIoEvents: vi.fn(),
-      onboardCommerceEventing: vi.fn(),
-      onboardIoEvents: vi.fn(),
-    };
-
-    const utilsMocks = {
-      getCommerceEventingExistingData: vi.fn(),
-      getIoEventsExistingData: vi.fn(),
-      makeWorkspaceConfig: vi.fn(),
-    };
-
-    const configMocks = {
-      getSystemConfigByKey: vi.fn().mockResolvedValue(null),
-      setSystemConfigByKey: vi.fn().mockResolvedValue(undefined),
-    };
-
-    vi.doMock("#management/installation/events/helpers", async () => {
-      const actual = await vi.importActual<
-        typeof import("#management/installation/events/helpers")
-      >("#management/installation/events/helpers");
-
-      return {
-        ...actual,
-        ...helperMocks,
-      };
-    });
-
-    vi.doMock("#management/installation/events/utils", async () => {
-      const actual = await vi.importActual<
-        typeof import("#management/installation/events/utils")
-      >("#management/installation/events/utils");
-
-      return {
-        ...actual,
-        ...utilsMocks,
-      };
-    });
-
-    vi.doMock("@adobe/aio-commerce-lib-config", async () => {
-      const actual = await vi.importActual<
-        typeof import("@adobe/aio-commerce-lib-config")
-      >("@adobe/aio-commerce-lib-config");
-      return {
-        ...actual,
-        ...configMocks,
-      };
-    });
-
-    const commerceModule = await import(
-      "#management/installation/events/commerce"
-    );
-
-    return {
-      commerceEventsStep: commerceModule.commerceEventsStep,
-      configMocks,
-      helperMocks,
-      utilsMocks,
-    };
-  }
-
   afterEach(() => {
     vi.unstubAllEnvs();
-    vi.clearAllMocks();
-    vi.resetModules();
-    vi.doUnmock("#management/installation/events/helpers");
-    vi.doUnmock("#management/installation/events/utils");
-    vi.doUnmock("@adobe/aio-commerce-lib-config");
+    cleanupCommerceEventsStepMocks();
   });
 
   test("should configure Commerce Eventing only once when multiple commerce sources are installed", async () => {
@@ -141,7 +74,7 @@ describe("commerceEventsStep orchestration", () => {
       commerceEventsStep: mockedCommerceEventsStep,
       helperMocks,
       utilsMocks,
-    } = await importCommerceStepWithMocks();
+    } = await importCommerceEventsStepWithMocks();
 
     utilsMocks.makeWorkspaceConfig.mockReturnValue(
       createMockWorkspaceConfiguration(),
@@ -214,7 +147,7 @@ describe("commerceEventsStep orchestration", () => {
       commerceEventsStep: mockedCommerceEventsStep,
       helperMocks,
       utilsMocks,
-    } = await importCommerceStepWithMocks();
+    } = await importCommerceEventsStepWithMocks();
 
     utilsMocks.makeWorkspaceConfig.mockReturnValue(
       createMockWorkspaceConfiguration(),
@@ -262,23 +195,11 @@ describe("commerceEventsStep orchestration", () => {
       helperMocks,
       utilsMocks,
       configMocks,
-    } = await importCommerceStepWithMocks();
+    } = await importCommerceEventsStepWithMocks();
 
-    const configWithKey = {
-      ...configWithCommerceEventing,
-      eventing: {
-        commerce: [
-          {
-            events: configWithCommerceEventing.eventing.commerce[0].events,
-            provider: {
-              description: "Provides commerce events",
-              key: "order-events-provider",
-              label: "Order Events Provider",
-            },
-          },
-        ],
-      },
-    };
+    const configWithKey = createConfigWithCommerceProviderKey(
+      "order-events-provider",
+    );
 
     utilsMocks.makeWorkspaceConfig.mockReturnValue(
       createMockWorkspaceConfiguration(),
@@ -334,23 +255,11 @@ describe("commerceEventsStep orchestration", () => {
       helperMocks,
       utilsMocks,
       configMocks,
-    } = await importCommerceStepWithMocks();
+    } = await importCommerceEventsStepWithMocks();
 
-    const configWithKey = {
-      ...configWithCommerceEventing,
-      eventing: {
-        commerce: [
-          {
-            events: configWithCommerceEventing.eventing.commerce[0].events,
-            provider: {
-              description: "Provides commerce events",
-              key: "order-events-provider",
-              label: "Order Events Provider",
-            },
-          },
-        ],
-      },
-    };
+    const configWithKey = createConfigWithCommerceProviderKey(
+      "order-events-provider",
+    );
 
     configMocks.getSystemConfigByKey.mockResolvedValue({
       providers: {
@@ -406,82 +315,9 @@ describe("commerceEventsStep orchestration", () => {
 });
 
 describe("commerceEventsStep uninstall orchestration", () => {
-  async function importCommerceStepWithMocks() {
-    vi.resetModules();
-
-    const helperMocks = {
-      offboardCommerceEventing: vi.fn().mockResolvedValue(undefined),
-      offboardIoEvents: vi.fn().mockResolvedValue(undefined),
-    };
-
-    const utilsMocks = {
-      getCommerceEventingExistingData: vi.fn(),
-      getIoEventsExistingData: vi.fn(),
-    };
-
-    const configMocks = {
-      getSystemConfigByKey: vi.fn().mockResolvedValue(null),
-      setSystemConfigByKey: vi.fn().mockResolvedValue(undefined),
-    };
-
-    vi.doMock("#management/installation/events/helpers", async () => {
-      const actual = await vi.importActual<
-        typeof import("#management/installation/events/helpers")
-      >("#management/installation/events/helpers");
-      return { ...actual, ...helperMocks };
-    });
-
-    vi.doMock("#management/installation/events/utils", async () => {
-      const actual = await vi.importActual<
-        typeof import("#management/installation/events/utils")
-      >("#management/installation/events/utils");
-      return { ...actual, ...utilsMocks };
-    });
-
-    vi.doMock("@adobe/aio-commerce-lib-config", async () => {
-      const actual = await vi.importActual<
-        typeof import("@adobe/aio-commerce-lib-config")
-      >("@adobe/aio-commerce-lib-config");
-      return { ...actual, ...configMocks };
-    });
-
-    const commerceModule = await import(
-      "#management/installation/events/commerce"
-    );
-
-    return {
-      commerceEventsStep: commerceModule.commerceEventsStep,
-      configMocks,
-      helperMocks,
-      utilsMocks,
-    };
-  }
-
   afterEach(() => {
-    vi.clearAllMocks();
-    vi.resetModules();
-    vi.doUnmock("#management/installation/events/helpers");
-    vi.doUnmock("#management/installation/events/utils");
-    vi.doUnmock("@adobe/aio-commerce-lib-config");
+    cleanupCommerceEventsStepMocks();
   });
-
-  function configWithProviderKey(key: string) {
-    return {
-      ...configWithCommerceEventing,
-      eventing: {
-        commerce: [
-          {
-            events: configWithCommerceEventing.eventing.commerce[0].events,
-            provider: {
-              description: "Provides commerce events",
-              key,
-              label: "Order Events Provider",
-            },
-          },
-        ],
-      },
-    };
-  }
 
   test("prunes the uninstalled provider's stored entry, preserving unrelated ones", async () => {
     const context = createMockEventingInstallationContext();
@@ -489,7 +325,7 @@ describe("commerceEventsStep uninstall orchestration", () => {
       commerceEventsStep: mockedCommerceEventsStep,
       utilsMocks,
       configMocks,
-    } = await importCommerceStepWithMocks();
+    } = await importCommerceEventsStepWithMocks();
 
     utilsMocks.getIoEventsExistingData.mockResolvedValue(
       createMockExistingIoEventsData(),
@@ -506,7 +342,7 @@ describe("commerceEventsStep uninstall orchestration", () => {
 
     expect.assert(mockedCommerceEventsStep.uninstall);
     await mockedCommerceEventsStep.uninstall(
-      configWithProviderKey("order-events-provider"),
+      createConfigWithCommerceProviderKey("order-events-provider"),
       context,
     );
 
@@ -523,7 +359,7 @@ describe("commerceEventsStep uninstall orchestration", () => {
       commerceEventsStep: mockedCommerceEventsStep,
       utilsMocks,
       configMocks,
-    } = await importCommerceStepWithMocks();
+    } = await importCommerceEventsStepWithMocks();
 
     utilsMocks.getIoEventsExistingData.mockResolvedValue(
       createMockExistingIoEventsData(),
@@ -535,7 +371,7 @@ describe("commerceEventsStep uninstall orchestration", () => {
 
     expect.assert(mockedCommerceEventsStep.uninstall);
     await mockedCommerceEventsStep.uninstall(
-      configWithProviderKey("order-events-provider"),
+      createConfigWithCommerceProviderKey("order-events-provider"),
       context,
     );
 
@@ -548,7 +384,7 @@ describe("commerceEventsStep uninstall orchestration", () => {
       commerceEventsStep: mockedCommerceEventsStep,
       utilsMocks,
       configMocks,
-    } = await importCommerceStepWithMocks();
+    } = await importCommerceEventsStepWithMocks();
 
     utilsMocks.getIoEventsExistingData.mockResolvedValue(
       createMockExistingIoEventsData(),

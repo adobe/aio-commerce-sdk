@@ -225,7 +225,7 @@ async function removeCommerceEvents(
   await removeStoredEventProviders(
     config.eventing.commerce
       .map(({ provider }) => provider.key)
-      .filter((key): key is string => Boolean(key)),
+      .filter((key): key is string => typeof key === "string"),
   );
 
   logger.debug("Completed Commerce Events uninstall step.");
