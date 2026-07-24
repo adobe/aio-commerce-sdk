@@ -10,13 +10,12 @@
  * governing permissions and limitations under the License.
  */
 
-import { execFile } from "node:child_process";
 import { readFile, writeFile } from "node:fs/promises";
-import { promisify } from "node:util";
 
+import { applyEdits, modify } from "jsonc-parser";
+
+import type { JSONPath } from "jsonc-parser";
 import type { AsyncFunctionArguments } from "./types.ts";
-
-const execFileAsync = promisify(execFile);
 
 /** Runs the given action in a safe way and returns the result. */
 export function runGitHubScript<T>(
@@ -36,18 +35,44 @@ export async function readJson<T>(path: string) {
   return JSON.parse(await readFile(path, "utf-8")) as T;
 }
 
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+type JsonReplacement = { path: JSONPath; value: unknown };
+
+/** Flattens a (possibly nested) replacement value into a list of leaf paths. */
+function collectReplacements(
+  value: Record<string, unknown>,
+  path: JSONPath,
+): JsonReplacement[] {
+  return Object.entries(value).flatMap(([key, fieldValue]) => {
+    const fieldPath = [...path, key];
+
+    return isPlainObject(fieldValue)
+      ? collectReplacements(fieldValue, fieldPath)
+      : [{ path: fieldPath, value: fieldValue }];
+  });
+}
+
 /**
- * Serializes and writes a value as a JSON file, then formats it with Biome so the
- * result always matches this repo's formatting rules (e.g. array wrapping), which
- * plain `JSON.stringify` output does not.
+ * Replaces the given keys' values in a JSON file, recursing into nested plain
+ * objects. Only the matching keys' values change — the rest of the file's
+ * existing formatting (indentation, key order, array layout) is preserved,
+ * since this edits the source text directly instead of reserializing it.
  */
-export async function writeJson(path: string, value: unknown) {
-  await writeFile(path, `${JSON.stringify(value, null, 2)}\n`);
-  await execFileAsync("biome", [
-    "check",
-    "--write",
-    "--no-errors-on-unmatched",
-    "--files-ignore-unknown=true",
-    path,
-  ]);
+export async function replaceInJson(
+  path: string,
+  value: Record<string, unknown>,
+) {
+  const original = await readFile(path, "utf-8");
+  const replacements = collectReplacements(value, []);
+
+  const edits = replacements.flatMap(({ path: fieldPath, value: fieldValue }) =>
+    modify(original, fieldPath, fieldValue, {
+      formattingOptions: { insertSpaces: true, tabSize: 2 },
+    }),
+  );
+
+  await writeFile(path, applyEdits(original, edits));
 }

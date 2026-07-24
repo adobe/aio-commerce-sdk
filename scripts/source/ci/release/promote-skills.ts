@@ -13,7 +13,7 @@
 import { cp, mkdir, readFile, rm } from "node:fs/promises";
 import { basename, dirname, join } from "node:path";
 
-import { readJson, runGitHubScript, writeJson } from "./utils.ts";
+import { readJson, replaceInJson, runGitHubScript } from "./utils.ts";
 
 import type { AsyncFunctionArguments } from "./types.ts";
 
@@ -294,8 +294,7 @@ async function rewritePluginRepository(targetPath: string) {
     );
   }
 
-  pluginJson.repository = TARGET_REPOSITORY_URL;
-  await writeJson(pluginJsonPath, pluginJson);
+  await replaceInJson(pluginJsonPath, { repository: TARGET_REPOSITORY_URL });
 }
 
 // @changesets/release-utils ships an equivalent getChangelogEntry, but it's

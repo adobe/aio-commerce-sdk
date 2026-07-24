@@ -1,5 +1,17 @@
 # @adobe/aio-commerce-lib-webhooks
 
+## 1.2.0
+
+### Minor Changes
+
+- [#563](https://github.com/adobe/aio-commerce-sdk/pull/563) [`19400fb`](https://github.com/adobe/aio-commerce-sdk/commit/19400fbdfc03c5bbfc30f995a2acdd4272c5e032) Thanks [@obarcelonap](https://github.com/obarcelonap)! - Add webhook response helpers to identify webhook success responses and determine whether webhook action responses represent successful outcomes.
+
+### Patch Changes
+
+- Updated dependencies [[`19400fb`](https://github.com/adobe/aio-commerce-sdk/commit/19400fbdfc03c5bbfc30f995a2acdd4272c5e032), [`ce7768e`](https://github.com/adobe/aio-commerce-sdk/commit/ce7768e0ddc6ca35ad6ccec60f584c8bb5a743f0), [`4396a64`](https://github.com/adobe/aio-commerce-sdk/commit/4396a647ad22dba063cdf03a16e04aef9387212f), [`e85bec4`](https://github.com/adobe/aio-commerce-sdk/commit/e85bec40f1eaa91dd6bb7bc6954b2ecfc3ea4029), [`413da36`](https://github.com/adobe/aio-commerce-sdk/commit/413da36dcd83e5a41c194f5af50611097659e725)]:
+  - @adobe/aio-commerce-lib-core@1.2.0
+  - @adobe/aio-commerce-lib-api@1.3.0
+
 ## 1.1.2
 
 ### Patch Changes

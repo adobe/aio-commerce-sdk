@@ -2,11 +2,11 @@
 
 ```ts
 function ok<TValue>(
-  operations: WebhookOperationResponse<TValue> | WebhookOperationResponse[],
+  operations: WebhookOperationResponse[] | WebhookOperationResponse<TValue>,
 ): SuccessResponse;
 ```
 
-Defined in: [responses/presets.ts:43](https://github.com/adobe/aio-commerce-sdk/blob/f055aca3ba51e08584fb5e4c366fab9c7770bd5e/packages/aio-commerce-lib-webhooks/source/responses/presets.ts#L43)
+Defined in: [responses/presets.ts:43](https://github.com/adobe/aio-commerce-sdk/blob/4d87f72a1eb376a4bae7e6bc80e12098f7b0f2b3/packages/aio-commerce-lib-webhooks/source/responses/presets.ts#L43)
 
 Creates an HTTP 200 OK response with webhook operation(s)
 Webhook-optimized version of ok() that automatically wraps operations in the response body.
@@ -24,7 +24,7 @@ Instead of `ok({ body: operation })`, you can simply use `ok(operation)`.
 
 | Parameter    | Type                                                                                                                                                                    | Description                                     |
 | ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------- |
-| `operations` | \| [`WebhookOperationResponse`](../type-aliases/WebhookOperationResponse.md)\<`TValue`\> \| [`WebhookOperationResponse`](../type-aliases/WebhookOperationResponse.md)[] | Single webhook operation or array of operations |
+| `operations` | \| [`WebhookOperationResponse`](../type-aliases/WebhookOperationResponse.md)[] \| [`WebhookOperationResponse`](../type-aliases/WebhookOperationResponse.md)\<`TValue`\> | Single webhook operation or array of operations |
 
 ## Returns
 

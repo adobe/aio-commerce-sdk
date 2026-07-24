@@ -783,6 +783,9 @@ importers:
       '@aio-commerce-sdk/scripting-utils':
         specifier: workspace:*
         version: link:../packages-private/scripting-utils
+      jsonc-parser:
+        specifier: ^3.3.1
+        version: 3.3.1
 
   turbo/generators:
     dependencies:
