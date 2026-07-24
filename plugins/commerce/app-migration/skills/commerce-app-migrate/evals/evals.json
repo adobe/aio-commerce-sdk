@@ -38,7 +38,7 @@
       "id": 1,
       "name": "order-mass-action-view-sandbox",
       "prompt": "I have a Commerce App Builder project using Admin UI SDK v1. The registration at src/commerce-backend-ui-1/registration.js has an iframe mass action on the order grid with a space-separated sandbox string that includes an invalid value. Migrate it to App Management v2.",
-      "expected_output": "adminUi.order.massActions in app.commerce.config.ts with type: \"view\", path kept, sandbox string split into sandboxPermissions array — only valid values retained (allow-downloads, allow-modals, allow-popups). The invalid value allow-scripts is dropped.",
+      "expected_output": "adminUi.order.massActions in app.commerce.config.ts with type: \"view\", path kept, sandbox string split into sandboxPermissions array, only valid values retained (allow-downloads, allow-modals, allow-popups). The invalid value allow-scripts is dropped.",
       "files": [
         {
           "path": "app.config.yaml",
@@ -57,7 +57,7 @@
         "Produces adminUi.order.massActions with type: \"view\"",
         "Renames actionId to id (value: \"review-orders\")",
         "Keeps path as path (value: \"#/review\")",
-        "Converts sandbox string to sandboxPermissions array [\"allow-downloads\", \"allow-modals\"] — dropping \"allow-scripts\" as an invalid value",
+        "Converts sandbox string to sandboxPermissions array [\"allow-downloads\", \"allow-modals\"], dropping \"allow-scripts\" as an invalid value",
         "Does not include runtimeAction on the view entry"
       ]
     },
@@ -264,6 +264,38 @@
         "Converts sandbox string \"allow-popups allow-modals\" to sandboxPermissions array [\"allow-popups\", \"allow-modals\"]",
         "Does not include runtimeAction on the view entry",
         "Does not emit an unresolved question for runtimeAction"
+      ]
+    },
+    {
+      "id": 9,
+      "name": "classic-react-spectrum-upgrade-suggestion",
+      "prompt": "I have a Commerce App Builder project using Admin UI SDK v1. The registration at src/commerce-backend-ui-1/registration.js has a menuItems array with a single non-section item. The project's src/commerce-backend-ui-1/web-src/package.json lists \"@adobe/react-spectrum\": \"^3.34.2\" as a dependency. Migrate it to App Management v2.",
+      "expected_output": "adminUi.menu produced in app.commerce.config.ts from the non-section menu item. The v2 init scaffolds a fresh src/commerce-backend-ui-2/web-src/ pinned to @react-spectrum/s2. The migration report flags @adobe/react-spectrum under v1 frontend packages superseded by the v2 scaffold, notes that porting any existing iframe UI content is a manual follow-up that should target @react-spectrum/s2 rather than reinstalling classic React Spectrum, and offers to help run that S1-to-S2 upgrade, without actually rewriting UI components unless the user asks.",
+      "files": [
+        {
+          "path": "app.config.yaml",
+          "content": "application:\n  extensions:\n    commerce/backend-ui/1:\n      $include: src/commerce-backend-ui-1/ext.config.yaml\n"
+        },
+        {
+          "path": "package.json",
+          "content": "{\"name\": \"acme-app\", \"version\": \"1.0.0\"}\n"
+        },
+        {
+          "path": "src/commerce-backend-ui-1/registration.js",
+          "content": "module.exports = {\n  menuItems: [\n    {\n      id: 'dashboard',\n      title: 'Dashboard'\n    }\n  ]\n}\n"
+        },
+        {
+          "path": "src/commerce-backend-ui-1/web-src/package.json",
+          "content": "{\n  \"name\": \"acme-web-src\",\n  \"dependencies\": {\n    \"react\": \"^18.2.0\",\n    \"react-dom\": \"^18.2.0\",\n    \"@adobe/react-spectrum\": \"^3.34.2\",\n    \"@adobe/exc-app\": \"^1.0.0\",\n    \"@adobe/uix-guest\": \"^1.0.0\"\n  }\n}\n"
+        }
+      ],
+      "assertions": [
+        "Produces a single adminUi.menu object from the non-section item (id: \"dashboard\")",
+        "Lists @adobe/react-spectrum among v1 frontend packages superseded by the v2 web-src scaffold in the migration report",
+        "States that the v2 scaffold pins @react-spectrum/s2 for the new web-src, not classic React Spectrum",
+        "Notes that porting any existing iframe UI content into the new web-src is a manual follow-up that should target @react-spectrum/s2",
+        "Offers to help run the S1-to-S2 upgrade rather than only describing it",
+        "Does not rewrite or port any UI component code itself without the user explicitly asking"
       ]
     }
   ]
