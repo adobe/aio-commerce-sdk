@@ -1,5 +1,60 @@
 # @adobe/aio-commerce-lib-app
 
+## 1.8.0
+
+### Minor Changes
+
+- [#528](https://github.com/adobe/aio-commerce-sdk/pull/528) [`0bb7d15`](https://github.com/adobe/aio-commerce-sdk/commit/0bb7d150961f631116b1ac421124960b5b857896) Thanks [@oshmyheliuk](https://github.com/oshmyheliuk)! - Add the optional `aclProtected` field to Admin UI grid columns, mass actions, and order view buttons. When `true`, Commerce auto-generates a per-app ACL resource for the component from `metadata.id` for role-based access control, matching the existing menu behaviour.
+
+- [#522](https://github.com/adobe/aio-commerce-sdk/pull/522) [`4396a64`](https://github.com/adobe/aio-commerce-sdk/commit/4396a647ad22dba063cdf03a16e04aef9387212f) Thanks [@oshmyheliuk](https://github.com/oshmyheliuk)! - Add optional `aclProtected` field to Admin UI menu configuration. When `true`, Commerce auto-generates a per-app ACL resource from `metadata.id` for role-based menu access control.
+
+- [#561](https://github.com/adobe/aio-commerce-sdk/pull/561) [`e85bec4`](https://github.com/adobe/aio-commerce-sdk/commit/e85bec40f1eaa91dd6bb7bc6954b2ecfc3ea4029) Thanks [@jcuerdo](https://github.com/jcuerdo)! - New `publishEvent` export for publishing a configured I/O Event from a runtime action by provider key and event name as declared in `app.commerce.config.ts`. Provider and event resolution happens automatically from metadata stored at installation time.
+
+- [#511](https://github.com/adobe/aio-commerce-sdk/pull/511) [`caed6d5`](https://github.com/adobe/aio-commerce-sdk/commit/caed6d5cbc526bc980221a06a59542427752a1ab) Thanks [@vinayrao2000](https://github.com/vinayrao2000)! - Add helpers to retrieve the Commerce instance an app is associated with from any runtime action: `getCommerceInstance()` returns the stored instance data, and `getCommerceClient(auth)` returns a ready-to-use Commerce HTTP client built from that instance.
+
+- [#508](https://github.com/adobe/aio-commerce-sdk/pull/508) [`c36f825`](https://github.com/adobe/aio-commerce-sdk/commit/c36f825aff7329fc2831d8aaca032d17bbee373a) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Add support for Admin UI menus in `commerce/backend-ui/2` via `adminUi.menu`.
+
+- [#577](https://github.com/adobe/aio-commerce-sdk/pull/577) [`c78eae9`](https://github.com/adobe/aio-commerce-sdk/commit/c78eae9bb656f1b9698703685619f7d7f922be75) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Added `resolveIoEventCode` to compute an event's I/O Events event code from an app ID, event name, and provider type.
+
+- [#551](https://github.com/adobe/aio-commerce-sdk/pull/551) [`a66f389`](https://github.com/adobe/aio-commerce-sdk/commit/a66f3892622584d27cd6b5d2fc633e15bf9942a8) Thanks [@asalloum5](https://github.com/asalloum5)! - The app installation flow now enables the Admin UI SDK in Commerce before registering the extension, so Admin UI extensions are served correctly after install.
+
+- [#510](https://github.com/adobe/aio-commerce-sdk/pull/510) [`ce7768e`](https://github.com/adobe/aio-commerce-sdk/commit/ce7768e0ddc6ca35ad6ccec60f584c8bb5a743f0) Thanks [@oshmyheliuk](https://github.com/oshmyheliuk)! - Webhooks and events now accept an optional `env` array (`"paas"` / `"saas"`) to scope them to specific Commerce environments. Items without `env` apply everywhere; scoped items are only installed on matching environments, and an event provider left with no applicable events is skipped entirely. The `app-config` action also accepts an optional `commerceEnv` query param that returns business-config fields, webhooks, and events already filtered to that environment. The installation and `scope-tree` actions now validate `commerceEnv` against the supported values (`"paas"` / `"saas"`) instead of accepting any string; this only rejects values that were never valid in practice.
+
+- [#578](https://github.com/adobe/aio-commerce-sdk/pull/578) [`bcc02f2`](https://github.com/adobe/aio-commerce-sdk/commit/bcc02f26e8e5a58c8618f6b1b94dee70dd86a1a7) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - The generated `#app.commerce.config` module now re-exports any named exports from your `app.commerce.config.*` file, in addition to its default export.
+
+- [#486](https://github.com/adobe/aio-commerce-sdk/pull/486) [`413da36`](https://github.com/adobe/aio-commerce-sdk/commit/413da36dcd83e5a41c194f5af50611097659e725) Thanks [@obarcelonap](https://github.com/obarcelonap)! - Add support for Admin UI grid column extensions on `commerce/backend-ui/2`.
+
+- [#512](https://github.com/adobe/aio-commerce-sdk/pull/512) [`b259e61`](https://github.com/adobe/aio-commerce-sdk/commit/b259e61c05bcb7a025486d1515ce644fb6f4265b) Thanks [@jcuerdo](https://github.com/jcuerdo)! - Remove `commerce/backend-ui/1` support and the `adminUiSdk` config key. Migrate to `adminUi` and `commerce/backend-ui/2`.
+
+  **Migration:** Replace `adminUiSdk` in your `app.commerce.config.*` with the `adminUi` config key. See the updated `usage.md` for the new shape. The generated `src/commerce-backend-ui-1/` directory and its `pre-app-build` hook can be removed from your project.
+
+- [#492](https://github.com/adobe/aio-commerce-sdk/pull/492) [`ce63b2b`](https://github.com/adobe/aio-commerce-sdk/commit/ce63b2b46f7ef1f2f68780b13e52d1c13fd5fe6e) Thanks [@jcuerdo](https://github.com/jcuerdo)! - Support Admin UI SDK v2 mass actions. Declare mass actions under `adminUi` with explicit `type: "view"` (iframe) or `type: "worker"` (runtime action), support for notifications, and a unified `selectionLimit` across Order, Product, and Customer entities.
+
+- [#534](https://github.com/adobe/aio-commerce-sdk/pull/534) [`b33ad74`](https://github.com/adobe/aio-commerce-sdk/commit/b33ad741c30262279180496ab28a82516569a17f) Thanks [@obarcelonap](https://github.com/obarcelonap)! - Uninstallation now removes exactly the resources that were created at install time, even when the app configuration has since changed. Installs created before this change fall back to the current request config. The installation/uninstallation status responses now include an optional `config` field recording what was applied.
+
+- [#548](https://github.com/adobe/aio-commerce-sdk/pull/548) [`7670e39`](https://github.com/adobe/aio-commerce-sdk/commit/7670e39ae3cdf1172d9d9f09f0f100c19966d5a0) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Implement initial web source scaffolding for projects with Admin UI view operations
+
+- [#506](https://github.com/adobe/aio-commerce-sdk/pull/506) [`a18d900`](https://github.com/adobe/aio-commerce-sdk/commit/a18d900771df65a025dde2146da8422f08c5e4ae) Thanks [@obarcelonap](https://github.com/obarcelonap)! - Add `adminUi.order.viewButtons` support on `commerce/backend-ui/2`, with `type: "view"` (iframe) and `type: "worker"` (runtime action) variants.
+
+### Patch Changes
+
+- [#576](https://github.com/adobe/aio-commerce-sdk/pull/576) [`b0c86a5`](https://github.com/adobe/aio-commerce-sdk/commit/b0c86a512965a691b3497ff1c286249508297388) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Commerce and external event names are now validated to be non-empty and unique within each provider in `app.commerce.config.ts`.
+
+- [#525](https://github.com/adobe/aio-commerce-sdk/pull/525) [`2e40262`](https://github.com/adobe/aio-commerce-sdk/commit/2e402628f1cd21a85dfb7c8dc3660a454f1053c0) Thanks [@oshmyheliuk](https://github.com/oshmyheliuk)! - Characters in `metadata.id` that are disallowed by the Commerce Eventing API, such as hyphens, are now normalized to underscores in the generated event code.
+
+- [#528](https://github.com/adobe/aio-commerce-sdk/pull/528) [`0bb7d15`](https://github.com/adobe/aio-commerce-sdk/commit/0bb7d150961f631116b1ac421124960b5b857896) Thanks [@oshmyheliuk](https://github.com/oshmyheliuk)! - Grid column entries in `adminUi` config now reject unknown keys (strict validation), so a mistyped field such as `aclprotected` surfaces a validation error instead of being silently dropped — matching the existing behavior of mass actions and view buttons.
+
+- [#548](https://github.com/adobe/aio-commerce-sdk/pull/548) [`7670e39`](https://github.com/adobe/aio-commerce-sdk/commit/7670e39ae3cdf1172d9d9f09f0f100c19966d5a0) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - For static business configs, the `#app.commerce.config` alias now resolves to a generated ESM module that re-exports the app manifest, so generated runtime actions can import it directly without needing a JSON import attribute.
+
+- Updated dependencies [[`0bb7d15`](https://github.com/adobe/aio-commerce-sdk/commit/0bb7d150961f631116b1ac421124960b5b857896), [`4396a64`](https://github.com/adobe/aio-commerce-sdk/commit/4396a647ad22dba063cdf03a16e04aef9387212f), [`c15b50f`](https://github.com/adobe/aio-commerce-sdk/commit/c15b50f667e6d1288270dbd4192c150db0ff0914), [`c36f825`](https://github.com/adobe/aio-commerce-sdk/commit/c36f825aff7329fc2831d8aaca032d17bbee373a), [`bdcced9`](https://github.com/adobe/aio-commerce-sdk/commit/bdcced9297ae5e1b87ce86490a2b6fad76b2e341), [`19400fb`](https://github.com/adobe/aio-commerce-sdk/commit/19400fbdfc03c5bbfc30f995a2acdd4272c5e032), [`e85bec4`](https://github.com/adobe/aio-commerce-sdk/commit/e85bec40f1eaa91dd6bb7bc6954b2ecfc3ea4029), [`a66f389`](https://github.com/adobe/aio-commerce-sdk/commit/a66f3892622584d27cd6b5d2fc633e15bf9942a8), [`ce7768e`](https://github.com/adobe/aio-commerce-sdk/commit/ce7768e0ddc6ca35ad6ccec60f584c8bb5a743f0), [`4396a64`](https://github.com/adobe/aio-commerce-sdk/commit/4396a647ad22dba063cdf03a16e04aef9387212f), [`e85bec4`](https://github.com/adobe/aio-commerce-sdk/commit/e85bec40f1eaa91dd6bb7bc6954b2ecfc3ea4029), [`413da36`](https://github.com/adobe/aio-commerce-sdk/commit/413da36dcd83e5a41c194f5af50611097659e725), [`a5b6d61`](https://github.com/adobe/aio-commerce-sdk/commit/a5b6d6138d5f048426ef655c4dc37f470aa74e2b), [`413da36`](https://github.com/adobe/aio-commerce-sdk/commit/413da36dcd83e5a41c194f5af50611097659e725), [`ca2c4fe`](https://github.com/adobe/aio-commerce-sdk/commit/ca2c4febcdfbe52b933775f08e9a53765fc306ab), [`ce63b2b`](https://github.com/adobe/aio-commerce-sdk/commit/ce63b2b46f7ef1f2f68780b13e52d1c13fd5fe6e), [`caed6d5`](https://github.com/adobe/aio-commerce-sdk/commit/caed6d5cbc526bc980221a06a59542427752a1ab), [`19400fb`](https://github.com/adobe/aio-commerce-sdk/commit/19400fbdfc03c5bbfc30f995a2acdd4272c5e032)]:
+  - @adobe/aio-commerce-lib-admin-ui@0.2.0
+  - @adobe/aio-commerce-lib-core@1.2.0
+  - @adobe/aio-commerce-lib-events@1.3.0
+  - @adobe/aio-commerce-lib-api@1.3.0
+  - @adobe/aio-commerce-lib-auth@1.1.2
+  - @adobe/aio-commerce-lib-config@1.6.0
+  - @adobe/aio-commerce-lib-webhooks@1.2.0
+
 ## 1.7.0
 
 ### Minor Changes

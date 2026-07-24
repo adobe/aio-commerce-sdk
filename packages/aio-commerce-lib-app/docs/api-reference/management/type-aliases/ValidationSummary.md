@@ -8,7 +8,7 @@ type ValidationSummary = {
 };
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/workflow/validation.ts:45](https://github.com/adobe/aio-commerce-sdk/blob/f055aca3ba51e08584fb5e4c366fab9c7770bd5e/packages/aio-commerce-lib-app/source/management/installation/workflow/validation.ts#L45)
+Defined in: [aio-commerce-lib-app/source/management/installation/workflow/validation.ts:45](https://github.com/adobe/aio-commerce-sdk/blob/4d87f72a1eb376a4bae7e6bc80e12098f7b0f2b3/packages/aio-commerce-lib-app/source/management/installation/workflow/validation.ts#L45)
 
 Aggregated summary counts across the entire validation tree.
 
@@ -20,7 +20,7 @@ Aggregated summary counts across the entire validation tree.
 errors: number;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/workflow/validation.ts:50](https://github.com/adobe/aio-commerce-sdk/blob/f055aca3ba51e08584fb5e4c366fab9c7770bd5e/packages/aio-commerce-lib-app/source/management/installation/workflow/validation.ts#L50)
+Defined in: [aio-commerce-lib-app/source/management/installation/workflow/validation.ts:50](https://github.com/adobe/aio-commerce-sdk/blob/4d87f72a1eb376a4bae7e6bc80e12098f7b0f2b3/packages/aio-commerce-lib-app/source/management/installation/workflow/validation.ts#L50)
 
 Number of error-severity issues (these block installation).
 
@@ -32,7 +32,7 @@ Number of error-severity issues (these block installation).
 totalIssues: number;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/workflow/validation.ts:47](https://github.com/adobe/aio-commerce-sdk/blob/f055aca3ba51e08584fb5e4c366fab9c7770bd5e/packages/aio-commerce-lib-app/source/management/installation/workflow/validation.ts#L47)
+Defined in: [aio-commerce-lib-app/source/management/installation/workflow/validation.ts:47](https://github.com/adobe/aio-commerce-sdk/blob/4d87f72a1eb376a4bae7e6bc80e12098f7b0f2b3/packages/aio-commerce-lib-app/source/management/installation/workflow/validation.ts#L47)
 
 Total number of issues across all steps.
 
@@ -44,6 +44,6 @@ Total number of issues across all steps.
 warnings: number;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/workflow/validation.ts:53](https://github.com/adobe/aio-commerce-sdk/blob/f055aca3ba51e08584fb5e4c366fab9c7770bd5e/packages/aio-commerce-lib-app/source/management/installation/workflow/validation.ts#L53)
+Defined in: [aio-commerce-lib-app/source/management/installation/workflow/validation.ts:53](https://github.com/adobe/aio-commerce-sdk/blob/4d87f72a1eb376a4bae7e6bc80e12098f7b0f2b3/packages/aio-commerce-lib-app/source/management/installation/workflow/validation.ts#L53)
 
 Number of warning-severity issues (allow proceeding with confirmation).

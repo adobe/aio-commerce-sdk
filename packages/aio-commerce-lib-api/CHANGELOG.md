@@ -1,5 +1,17 @@
 # @adobe/aio-commerce-lib-api
 
+## 1.3.0
+
+### Minor Changes
+
+- [#561](https://github.com/adobe/aio-commerce-sdk/pull/561) [`e85bec4`](https://github.com/adobe/aio-commerce-sdk/commit/e85bec40f1eaa91dd6bb7bc6954b2ecfc3ea4029) Thanks [@jcuerdo](https://github.com/jcuerdo)! - `IoEventsHttpClientConfig` now accepts an optional `ingressBaseUrl` field to configure the Adobe I/O Events ingress endpoint used by the HTTP client.
+
+### Patch Changes
+
+- Updated dependencies [[`19400fb`](https://github.com/adobe/aio-commerce-sdk/commit/19400fbdfc03c5bbfc30f995a2acdd4272c5e032), [`ce7768e`](https://github.com/adobe/aio-commerce-sdk/commit/ce7768e0ddc6ca35ad6ccec60f584c8bb5a743f0), [`4396a64`](https://github.com/adobe/aio-commerce-sdk/commit/4396a647ad22dba063cdf03a16e04aef9387212f), [`413da36`](https://github.com/adobe/aio-commerce-sdk/commit/413da36dcd83e5a41c194f5af50611097659e725), [`a5b6d61`](https://github.com/adobe/aio-commerce-sdk/commit/a5b6d6138d5f048426ef655c4dc37f470aa74e2b)]:
+  - @adobe/aio-commerce-lib-core@1.2.0
+  - @adobe/aio-commerce-lib-auth@1.1.2
+
 ## 1.2.1
 
 ### Patch Changes
