@@ -54,6 +54,18 @@ jobs:
           registry-package-base-url: "https://npmx.dev/package"
           slack-webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
 
+      - name: Generate Release Notes
+        id: release-notes
+        if: steps.changesets.outputs.published == 'true'
+        uses: ./.github/actions/release-notes
+        with:
+          published-packages: ${{ steps.changesets.outputs.publishedPackages }}
+          notes-enabled: "false"
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+
       # hasChangesets is false only on the run that lands right after the "Version
       # Packages" PR merges, which is the one commit where diffing against HEAD^1
       # reflects the actual version bump. `published` can't gate this instead:

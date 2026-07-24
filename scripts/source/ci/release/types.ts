@@ -11,7 +11,7 @@
  */
 
 /** Environment variables for the release prepare script. */
-export type Environment = {
+export type PrepareEnvironment = {
   REGISTRY_AUTH_TOKEN: string;
   REGISTRY_URL: string;
   SNAPSHOT_TAG?: string;
