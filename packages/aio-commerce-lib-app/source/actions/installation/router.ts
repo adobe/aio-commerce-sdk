@@ -341,6 +341,7 @@ router.post("/execution", {
       AIO_COMMERCE_API_BASE_URL,
     } = params;
 
+    // biome-ignore lint/suspicious/noUnnecessaryConditions: params is an unchecked `as ExecutionRouteParams` cast over raw runtime action params, so initialState can genuinely be missing at runtime despite the asserted type.
     if (!initialState) {
       return badRequest("initialState is required for execution");
     }
@@ -546,6 +547,7 @@ router.post("/uninstallation/execution", {
       AIO_COMMERCE_API_BASE_URL,
     } = params;
 
+    // biome-ignore lint/suspicious/noUnnecessaryConditions: params is an unchecked `as ExecutionRouteParams` cast over raw runtime action params, so initialState can genuinely be missing at runtime despite the asserted type.
     if (!initialState) {
       return badRequest("initialState is required for execution");
     }
