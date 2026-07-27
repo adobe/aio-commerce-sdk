@@ -67,7 +67,6 @@ function issueToDisplay<TInput>(
     return `${returnChar} ${issueLine}`;
   });
 
-  // biome-ignore lint/suspicious/noUnnecessaryConditions: lines is string[] | undefined per tsc (issues is optional), the optional chain is required
   return lines?.join("\n") ?? "";
 }
 

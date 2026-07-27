@@ -198,7 +198,6 @@ function createCustomScriptStep(scriptConfig: CustomInstallationStep): AnyStep {
 
       const uninstall = resolveCustomScriptHandler(scriptModule, "uninstall");
 
-      // biome-ignore lint/suspicious/noUnnecessaryConditions: resolveCustomScriptHandler's "uninstall" overload returns `CustomInstallationStepHandler | null`; the check is required at runtime
       if (!uninstall) {
         logger.debug(
           `Script ${script} does not export an uninstall function, skipping uninstall.`,

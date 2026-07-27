@@ -531,9 +531,7 @@ function mergeCurrentConfigData(
         merged.set(entry.name, {
           name: entry.name,
           origin: entry.origin || {
-            // biome-ignore lint/suspicious/noUnnecessaryConditions: configData is deserialized from persisted storage with no runtime schema validation, so a legacy or corrupted record can lack `scope` despite the static type
             code: configData.scope?.code || scopeCode,
-            // biome-ignore lint/suspicious/noUnnecessaryConditions: same as above — configData.scope may be absent on legacy/corrupted persisted records
             level: configData.scope?.level || scopeLevel,
           },
           value: entry.value,
