@@ -282,3 +282,151 @@ describe("externalEventsStep orchestration", () => {
     expect(helperMocks.onboardIoEvents).not.toHaveBeenCalled();
   });
 });
+
+describe("externalEventsStep uninstall orchestration", () => {
+  async function importExternalStepWithMocks() {
+    vi.resetModules();
+
+    const helperMocks = {
+      offboardIoEvents: vi.fn().mockResolvedValue(undefined),
+    };
+    const utilsMocks = { getIoEventsExistingData: vi.fn() };
+    const configMocks = {
+      getSystemConfigByKey: vi.fn().mockResolvedValue(null),
+      setSystemConfigByKey: vi.fn().mockResolvedValue(undefined),
+    };
+
+    vi.doMock("#management/installation/events/helpers", async () => {
+      const actual = await vi.importActual<
+        typeof import("#management/installation/events/helpers")
+      >("#management/installation/events/helpers");
+      return { ...actual, ...helperMocks };
+    });
+
+    vi.doMock("#management/installation/events/utils", async () => {
+      const actual = await vi.importActual<
+        typeof import("#management/installation/events/utils")
+      >("#management/installation/events/utils");
+      return { ...actual, ...utilsMocks };
+    });
+
+    vi.doMock("@adobe/aio-commerce-lib-config", async () => {
+      const actual = await vi.importActual<
+        typeof import("@adobe/aio-commerce-lib-config")
+      >("@adobe/aio-commerce-lib-config");
+      return { ...actual, ...configMocks };
+    });
+
+    const module = await import("#management/installation/events/external");
+    return {
+      configMocks,
+      externalEventsStep: module.externalEventsStep,
+      utilsMocks,
+    };
+  }
+
+  afterEach(() => {
+    vi.clearAllMocks();
+    vi.resetModules();
+    vi.doUnmock("#management/installation/events/helpers");
+    vi.doUnmock("#management/installation/events/utils");
+    vi.doUnmock("@adobe/aio-commerce-lib-config");
+  });
+
+  function configWithProviderKey(key: string) {
+    return {
+      ...configWithExternalEventing,
+      eventing: {
+        external: [
+          {
+            events: configWithExternalEventing.eventing.external[0].events,
+            provider: {
+              description: "Provides external events",
+              key,
+              label: "Third Party Events Provider",
+            },
+          },
+        ],
+      },
+    };
+  }
+
+  test("prunes the uninstalled provider's stored entry, preserving unrelated ones", async () => {
+    const context = createMockEventingInstallationContext();
+    const {
+      externalEventsStep: mockedExternalEventsStep,
+      utilsMocks,
+      configMocks,
+    } = await importExternalStepWithMocks();
+
+    utilsMocks.getIoEventsExistingData.mockResolvedValue(
+      createMockExistingIoEventsData(),
+    );
+    configMocks.getSystemConfigByKey.mockResolvedValue({
+      providers: {
+        "third-party-events-provider": { events: {}, id: "stale-uuid" },
+        "unrelated-provider": { events: {}, id: "keep-uuid" },
+      },
+    });
+
+    expect.assert(mockedExternalEventsStep.uninstall);
+    await mockedExternalEventsStep.uninstall(
+      configWithProviderKey("third-party-events-provider"),
+      context,
+    );
+
+    expect(configMocks.setSystemConfigByKey).toHaveBeenCalledWith("events", {
+      providers: {
+        "unrelated-provider": { events: {}, id: "keep-uuid" },
+      },
+    });
+  });
+
+  test("does not write to storage when the provider has no stored entry", async () => {
+    const context = createMockEventingInstallationContext();
+    const {
+      externalEventsStep: mockedExternalEventsStep,
+      utilsMocks,
+      configMocks,
+    } = await importExternalStepWithMocks();
+
+    utilsMocks.getIoEventsExistingData.mockResolvedValue(
+      createMockExistingIoEventsData(),
+    );
+    configMocks.getSystemConfigByKey.mockResolvedValue(null);
+
+    expect.assert(mockedExternalEventsStep.uninstall);
+    await mockedExternalEventsStep.uninstall(
+      configWithProviderKey("third-party-events-provider"),
+      context,
+    );
+
+    expect(configMocks.setSystemConfigByKey).not.toHaveBeenCalled();
+  });
+
+  test("does not write to storage when the provider has no explicit key", async () => {
+    const context = createMockEventingInstallationContext();
+    const {
+      externalEventsStep: mockedExternalEventsStep,
+      utilsMocks,
+      configMocks,
+    } = await importExternalStepWithMocks();
+
+    utilsMocks.getIoEventsExistingData.mockResolvedValue(
+      createMockExistingIoEventsData(),
+    );
+    configMocks.getSystemConfigByKey.mockResolvedValue({
+      providers: {
+        "unrelated-provider": { events: {}, id: "keep-uuid" },
+      },
+    });
+
+    expect.assert(mockedExternalEventsStep.uninstall);
+    await mockedExternalEventsStep.uninstall(
+      configWithExternalEventing,
+      context,
+    );
+
+    expect(configMocks.setSystemConfigByKey).not.toHaveBeenCalled();
+  });
+});

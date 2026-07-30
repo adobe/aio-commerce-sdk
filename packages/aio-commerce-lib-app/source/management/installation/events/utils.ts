@@ -11,6 +11,10 @@
  */
 
 import { resolveAuthParams } from "@adobe/aio-commerce-lib-auth";
+import {
+  getSystemConfigByKey,
+  setSystemConfigByKey,
+} from "@adobe/aio-commerce-lib-config";
 
 import type {
   CommerceEventProvider,
@@ -26,7 +30,7 @@ import type {
 import type { ApplicationMetadata } from "#config/index";
 import type { AppEvent, EventProvider } from "#config/schema/eventing";
 import type { EventsExecutionContext } from "./context";
-import type { AppEventWithoutRuntimeActions } from "./types";
+import type { AppEventWithoutRuntimeActions, StoredEventsData } from "./types";
 
 // The two different provider types we support.
 export const COMMERCE_PROVIDER_TYPE = "dx_commerce_events";
@@ -43,6 +47,47 @@ const METADATA_ID_MAX_LENGTH_FOR_INSTANCE_ID = 100;
 
 /** Storage key used for the events installation data in system config. */
 export const EVENTS_STORAGE_KEY = "events";
+
+/**
+ * Removes event providers from installation storage.
+ *
+ * @param providerKeys - The provider keys to remove.
+ */
+export async function removeStoredEventProviders(
+  providerKeys: string[],
+): Promise<void> {
+  if (providerKeys.length === 0) {
+    return;
+  }
+
+  const existing =
+    await getSystemConfigByKey<StoredEventsData>(EVENTS_STORAGE_KEY);
+  if (!existing) {
+    return;
+  }
+
+  const providerKeysToRemove = new Set(providerKeys);
+  const hasStoredProvider = providerKeys.some((key) =>
+    Object.hasOwn(existing.providers, key),
+  );
+
+  if (!hasStoredProvider) {
+    return;
+  }
+
+  const providers = Object.fromEntries(
+    Object.entries(existing.providers).filter(
+      ([key]) => !providerKeysToRemove.has(key),
+    ),
+  );
+
+  if (Object.keys(providers).length === 0) {
+    await setSystemConfigByKey(EVENTS_STORAGE_KEY, null);
+    return;
+  }
+
+  await setSystemConfigByKey(EVENTS_STORAGE_KEY, { providers });
+}
 
 /**
  * Generates a unique instance ID for I/O Events for this app deployment.

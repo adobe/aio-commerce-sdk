@@ -302,3 +302,75 @@ export function createMockExistingCommerceEventingData(
     ...overrides,
   };
 }
+
+/**
+ * Re-imports the `commerce` installation step module with its `helpers`, `utils`,
+ * and `@adobe/aio-commerce-lib-config` dependencies mocked, for orchestration tests
+ * that need to assert on how the step calls into them.
+ */
+export async function importCommerceEventsStepWithMocks() {
+  vi.resetModules();
+
+  const helperMocks = {
+    configureCommerceEventing: vi.fn(),
+    offboardCommerceEventing: vi.fn().mockResolvedValue(undefined),
+    offboardIoEvents: vi.fn().mockResolvedValue(undefined),
+    onboardCommerceEventing: vi.fn(),
+    onboardIoEvents: vi.fn(),
+  };
+
+  const utilsMocks = {
+    getCommerceEventingExistingData: vi.fn(),
+    getIoEventsExistingData: vi.fn(),
+    makeWorkspaceConfig: vi.fn(),
+  };
+
+  const configMocks = {
+    getSystemConfigByKey: vi.fn().mockResolvedValue(null),
+    setSystemConfigByKey: vi.fn().mockResolvedValue(undefined),
+  };
+
+  vi.doMock("#management/installation/events/helpers", async () => {
+    const actual = await vi.importActual<
+      typeof import("#management/installation/events/helpers")
+    >("#management/installation/events/helpers");
+
+    return { ...actual, ...helperMocks };
+  });
+
+  vi.doMock("#management/installation/events/utils", async () => {
+    const actual = await vi.importActual<
+      typeof import("#management/installation/events/utils")
+    >("#management/installation/events/utils");
+
+    return { ...actual, ...utilsMocks };
+  });
+
+  vi.doMock("@adobe/aio-commerce-lib-config", async () => {
+    const actual = await vi.importActual<
+      typeof import("@adobe/aio-commerce-lib-config")
+    >("@adobe/aio-commerce-lib-config");
+
+    return { ...actual, ...configMocks };
+  });
+
+  const commerceModule = await import(
+    "#management/installation/events/commerce"
+  );
+
+  return {
+    commerceEventsStep: commerceModule.commerceEventsStep,
+    configMocks,
+    helperMocks,
+    utilsMocks,
+  };
+}
+
+/** Undoes the mocks set up by {@link importCommerceEventsStepWithMocks}. */
+export function cleanupCommerceEventsStepMocks() {
+  vi.clearAllMocks();
+  vi.resetModules();
+  vi.doUnmock("#management/installation/events/helpers");
+  vi.doUnmock("#management/installation/events/utils");
+  vi.doUnmock("@adobe/aio-commerce-lib-config");
+}

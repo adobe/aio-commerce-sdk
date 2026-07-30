@@ -125,12 +125,6 @@ export async function promoteSkills(
   );
 }
 
-// TODO: recovery-only override, see publish-public.yml's plugin_diff_base
-// input — remove both once this incident's recovery is done.
-function getPluginDiffBase() {
-  return process.env.PLUGIN_DIFF_BASE || "HEAD^1";
-}
-
 export async function getChangedPluginPackagePaths(
   exec: AsyncFunctionArguments["exec"],
   sourceRepositoryPath: string,
@@ -142,7 +136,7 @@ export async function getChangedPluginPackagePaths(
       sourceRepositoryPath,
       "diff",
       "--name-only",
-      getPluginDiffBase(),
+      "HEAD^1",
       "HEAD",
       "--",
       "plugins/commerce/*/package.json",
@@ -279,12 +273,7 @@ async function readPreviousPackageJson(
 ) {
   const result = await exec.getExecOutput(
     "git",
-    [
-      "-C",
-      sourceRepositoryPath,
-      "show",
-      `${getPluginDiffBase()}:${packagePath}`,
-    ],
+    ["-C", sourceRepositoryPath, "show", `HEAD^1:${packagePath}`],
     { ignoreReturnCode: true, silent: true },
   );
 
