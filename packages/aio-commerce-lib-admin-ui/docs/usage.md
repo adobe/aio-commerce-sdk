@@ -1,8 +1,5 @@
 # `@adobe/aio-commerce-lib-admin-ui` Documentation
 
-> [!WARNING]
-> **Experimental**: This package is not yet production-ready. The API may change in future releases.
-
 ## Overview
 
 This package provides utilities for interacting with the Admin UI SDK API and the Admin UI `commerce/backend-ui/2` extension points:
@@ -32,9 +29,7 @@ const client = createAdminUiApiClient({
     baseUrl: "https://my-commerce-instance.com",
     flavor: "paas", // or "saas"
   },
-  auth: {
-    /* IMS or Integration auth params */
-  },
+  auth: {/* IMS or Integration auth params */},
 });
 
 // Enable the Admin UI SDK. This must run before registering an extension,
@@ -443,9 +438,7 @@ export async function main(params: RuntimeActionParams) {
   //    Hoist these to module scope if the action handles more than one request.
   const httpClient = new AdobeCommerceHttpClient({
     config: { baseUrl: params.COMMERCE_BASE_URL, flavor: "paas" },
-    auth: {
-      /* IMS or Integration auth params, typically read from `params` */
-    },
+    auth: {/* IMS or Integration auth params, typically read from `params` */},
   });
   const permissionClient = getAdminUiPermissionClient({ httpClient });
 
