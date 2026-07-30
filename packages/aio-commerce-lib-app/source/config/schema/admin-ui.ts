@@ -213,7 +213,6 @@ const MenuSchema = v.object({
 /**
  * Schema for the `adminUi` config section.
  * Supports grid column extensions, mass actions, order view buttons, and menu on `commerce/backend-ui/2`.
- * @experimental
  */
 export const AdminUiSchema = v.object({
   customer: v.optional(AdminUiCustomerSchema),
@@ -226,55 +225,46 @@ export const AdminUiSchema = v.object({
 
 /**
  * The Admin UI configuration for an Adobe Commerce application.
- * @experimental
  */
 export type AdminUiConfiguration = v.InferInput<typeof AdminUiSchema>;
 
 /**
  * The validated Admin UI configuration for an Adobe Commerce application.
- * @experimental
  */
 export type AdminUi = v.InferOutput<typeof AdminUiSchema>;
 
 /**
  * Grid columns registration configuration.
- * @experimental
  */
 export type GridColumns = v.InferInput<typeof GridColumnsSchema>;
 
 /**
  * A single grid column definition.
- * @experimental
  */
 export type GridColumn = v.InferInput<typeof GridColumnSchema>;
 
 /**
  * A mass action registration entry (view or worker variant).
- * @experimental
  */
 export type MassAction = v.InferInput<typeof MassActionSchema>;
 
 /**
  * A view-type mass action.
- * @experimental
  */
 export type ViewMassAction = v.InferInput<typeof ViewMassActionSchema>;
 
 /**
  * A worker-type mass action.
- * @experimental
  */
 export type WorkerMassAction = v.InferInput<typeof WorkerMassActionSchema>;
 
 /**
  * An order view button registration entry (v2, `adminUi`).
- * @experimental
  */
 export type OrderViewButton = v.InferInput<typeof OrderViewButtonSchema>;
 
 /**
  * Inlined notification strings on an `adminUi` registration entry.
- * @experimental
  */
 export type Notifications = v.InferInput<typeof NotificationsSchema>;
 
@@ -282,7 +272,6 @@ export type Notifications = v.InferInput<typeof NotificationsSchema>;
  * Admin UI menu registration configuration.
  * Includes the optional `aclProtected` flag — when `true`, Commerce auto-generates
  * a per-app ACL resource from `metadata.id` for role-based menu access control.
- * @experimental
  */
 export type Menu = v.InferInput<typeof MenuSchema>;
 
@@ -295,7 +284,6 @@ export type AdminUiConfig<
 
 /**
  * Check if config has Admin UI configuration.
- * @experimental
  */
 export function hasAdminUi<T extends AnyCommerceAppConfig>(
   config: T,
