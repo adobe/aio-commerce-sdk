@@ -1,5 +1,14 @@
 # @adobe/aio-commerce-sdk
 
+## 1.4.1
+
+### Patch Changes
+
+- [#599](https://github.com/adobe/aio-commerce-sdk/pull/599) [`ac6c13b`](https://github.com/adobe/aio-commerce-sdk/commit/ac6c13b4124677820f8946c92e4cd63ab228eeae) Thanks [@obarcelonap](https://github.com/obarcelonap)! - Picks up the `@adobe/aio-commerce-lib-admin-ui` 1.0.0 release and the `@adobe/aio-commerce-lib-app` update stabilizing the `adminUi` config schema.
+
+- Updated dependencies [[`ac6c13b`](https://github.com/adobe/aio-commerce-sdk/commit/ac6c13b4124677820f8946c92e4cd63ab228eeae)]:
+  - @adobe/aio-commerce-lib-admin-ui@1.0.0
+
 ## 1.4.0
 
 ### Minor Changes

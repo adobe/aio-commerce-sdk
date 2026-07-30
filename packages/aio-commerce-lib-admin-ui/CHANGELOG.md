@@ -1,5 +1,11 @@
 # @adobe/aio-commerce-lib-admin-ui
 
+## 1.0.0
+
+### Major Changes
+
+- [#599](https://github.com/adobe/aio-commerce-sdk/pull/599) [`ac6c13b`](https://github.com/adobe/aio-commerce-sdk/commit/ac6c13b4124677820f8946c92e4cd63ab228eeae) Thanks [@obarcelonap](https://github.com/obarcelonap)! - Release the first stable version.
+
 ## 0.2.0
 
 ### Minor Changes

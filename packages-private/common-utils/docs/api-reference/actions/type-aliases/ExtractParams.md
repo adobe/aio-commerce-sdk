@@ -10,7 +10,7 @@ type ExtractParams<T> = T extends `${infer Before}/*`
   : ExtractNamedParams<T>;
 ```
 
-Defined in: [actions/http/types.ts:85](https://github.com/adobe/aio-commerce-sdk/blob/4d87f72a1eb376a4bae7e6bc80e12098f7b0f2b3/packages-private/common-utils/source/actions/http/types.ts#L85)
+Defined in: [actions/http/types.ts:85](https://github.com/adobe/aio-commerce-sdk/blob/97b39588c9be1d7c405453e1095714aa55bea129/packages-private/common-utils/source/actions/http/types.ts#L85)
 
 Extracts all route parameters from a path string, including both named parameters and wildcard segments.
 

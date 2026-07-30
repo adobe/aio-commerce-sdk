@@ -8,14 +8,14 @@
 
 ## Variables
 
-| Variable                                                              | Description                                        |
-| --------------------------------------------------------------------- | -------------------------------------------------- |
-| [HTTP_BAD_REQUEST](variables/HTTP_BAD_REQUEST.md)                     | The HTTP status code for a bad request.            |
-| [HTTP_FORBIDDEN](variables/HTTP_FORBIDDEN.md)                         | The HTTP status code for a forbidden request.      |
-| [HTTP_INTERNAL_SERVER_ERROR](variables/HTTP_INTERNAL_SERVER_ERROR.md) | The HTTP status code for an internal server error. |
-| [HTTP_NOT_FOUND](variables/HTTP_NOT_FOUND.md)                         | The HTTP status code for a not found request.      |
-| [HTTP_OK](variables/HTTP_OK.md)                                       | The HTTP status code for a successful request.     |
-| [HTTP_UNAUTHORIZED](variables/HTTP_UNAUTHORIZED.md)                   | The HTTP status code for an unauthorized request.  |
+| Variable                                                                 | Description                                        |
+| ------------------------------------------------------------------------ | -------------------------------------------------- |
+| [HTTP\_BAD\_REQUEST](variables/HTTP_BAD_REQUEST.md)                      | The HTTP status code for a bad request.            |
+| [HTTP\_FORBIDDEN](variables/HTTP_FORBIDDEN.md)                           | The HTTP status code for a forbidden request.      |
+| [HTTP\_INTERNAL\_SERVER\_ERROR](variables/HTTP_INTERNAL_SERVER_ERROR.md) | The HTTP status code for an internal server error. |
+| [HTTP\_NOT\_FOUND](variables/HTTP_NOT_FOUND.md)                          | The HTTP status code for a not found request.      |
+| [HTTP\_OK](variables/HTTP_OK.md)                                         | The HTTP status code for a successful request.     |
+| [HTTP\_UNAUTHORIZED](variables/HTTP_UNAUTHORIZED.md)                     | The HTTP status code for an unauthorized request.  |
 
 ## Functions
 

@@ -1,5 +1,18 @@
 # @adobe/aio-commerce-lib-app
 
+## 1.9.0
+
+### Minor Changes
+
+- [#599](https://github.com/adobe/aio-commerce-sdk/pull/599) [`ac6c13b`](https://github.com/adobe/aio-commerce-sdk/commit/ac6c13b4124677820f8946c92e4cd63ab228eeae) Thanks [@obarcelonap](https://github.com/obarcelonap)! - The `adminUi` config schema (menu, grid columns, mass actions, order view buttons) is now stable. Breaking changes to these types will follow standard semver going forward.
+
+### Patch Changes
+
+- [#592](https://github.com/adobe/aio-commerce-sdk/pull/592) [`14f285f`](https://github.com/adobe/aio-commerce-sdk/commit/14f285f6ad9e3eaa3a0eb81b72bf071a94d99532) Thanks [@jcuerdo](https://github.com/jcuerdo)! - Clear stored event provider data during uninstall.
+
+- Updated dependencies [[`ac6c13b`](https://github.com/adobe/aio-commerce-sdk/commit/ac6c13b4124677820f8946c92e4cd63ab228eeae)]:
+  - @adobe/aio-commerce-lib-admin-ui@1.0.0
+
 ## 1.8.0
 
 ### Minor Changes

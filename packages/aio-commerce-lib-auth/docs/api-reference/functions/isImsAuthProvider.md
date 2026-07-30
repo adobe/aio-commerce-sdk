@@ -4,7 +4,7 @@
 function isImsAuthProvider(provider: unknown): provider is ImsAuthProvider;
 ```
 
-Defined in: [ims-auth/provider.ts:69](https://github.com/adobe/aio-commerce-sdk/blob/4d87f72a1eb376a4bae7e6bc80e12098f7b0f2b3/packages/aio-commerce-lib-auth/source/lib/ims-auth/provider.ts#L69)
+Defined in: [ims-auth/provider.ts:69](https://github.com/adobe/aio-commerce-sdk/blob/97b39588c9be1d7c405453e1095714aa55bea129/packages/aio-commerce-lib-auth/source/lib/ims-auth/provider.ts#L69)
 
 Type guard to check if a value is an ImsAuthProvider instance.
 
