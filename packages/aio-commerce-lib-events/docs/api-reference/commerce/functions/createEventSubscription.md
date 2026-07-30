@@ -18,12 +18,7 @@ function createEventSubscription(
     rules?: {
       field: string;
       operator:
-        | "regex"
-        | "greaterThan"
-        | "lessThan"
-        | "equal"
-        | "in"
-        | "onChange";
+        "regex" | "greaterThan" | "lessThan" | "equal" | "in" | "onChange";
       value: string;
     }[];
   },
