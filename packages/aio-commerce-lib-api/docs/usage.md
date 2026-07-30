@@ -206,9 +206,7 @@ const updateProduct = async (
 };
 
 // Create the API client
-const commerceHttpClient = new AdobeCommerceHttpClient({
-  /* ... */
-});
+const commerceHttpClient = new AdobeCommerceHttpClient({/* ... */});
 
 const commerceApiClient = ApiClient.create(commerceHttpClient, {
   getProduct,
@@ -365,12 +363,8 @@ You can provide custom fetch options when creating HTTP clients:
 
 ```typescript
 const client = new AdobeCommerceHttpClient({
-  config: {
-    /* ... */
-  },
-  auth: {
-    /* ... */
-  },
+  config: {/* ... */},
+  auth: {/* ... */},
   fetchOptions: {
     timeout: 30000, // 30 seconds
     headers: {

@@ -597,9 +597,6 @@ export default defineCustomInstallationStep(async (config, context) => {
 
 #### Admin UI Configuration
 
-> [!WARNING]
-> **Experimental:** Admin UI support on `commerce/backend-ui/2` is not yet production-ready. The API may change in future releases.
-
 The `adminUi` field declares Admin UI registrations for the `commerce/backend-ui/2` extension point. Unlike `commerce/backend-ui/1`, which required a dedicated registration action, V2 reads the registration directly from the `app-config` endpoint — no separate registration action is generated. Every field of `adminUi` is optional — configure only the extension points your application needs. When defined, `init` and `generate all` automatically wire up the extension, including the `pre-app-build` hook and the `workerProcess` declarations in `ext.config.yaml`.
 
 View-based features also get a minimal `web-src/` scaffold when the resolved `view` entrypoint does not exist yet. The scaffold uses `.tsx` files when your app config is TypeScript and `.jsx` files otherwise. It imports app metadata from `#app.commerce.config`, so custom Admin UI code should use the same alias instead of importing generated files by path. Currently supported: grid column extensions, mass actions, order view buttons, and menu declarations. For details on each extension point, see the [Admin UI SDK Extension Points documentation](https://developer.adobe.com/commerce/extensibility/admin-ui-sdk/extension-points/).
