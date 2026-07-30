@@ -7,7 +7,7 @@ function resolveCommerceHttpClientParams(
 ): CommerceHttpClientParams;
 ```
 
-Defined in: [aio-commerce-lib-api/source/lib/commerce/helpers.ts:235](https://github.com/adobe/aio-commerce-sdk/blob/4d87f72a1eb376a4bae7e6bc80e12098f7b0f2b3/packages/aio-commerce-lib-api/source/lib/commerce/helpers.ts#L235)
+Defined in: [aio-commerce-lib-api/source/lib/commerce/helpers.ts:235](https://github.com/adobe/aio-commerce-sdk/blob/97b39588c9be1d7c405453e1095714aa55bea129/packages/aio-commerce-lib-api/source/lib/commerce/helpers.ts#L235)
 
 Resolves the [CommerceHttpClientParams](../type-aliases/CommerceHttpClientParams.md) from the given App Builder action inputs.
 
