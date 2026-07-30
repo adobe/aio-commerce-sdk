@@ -14,7 +14,7 @@ type ScopeNode = {
 };
 ```
 
-Defined in: [modules/scope-tree/types.ts:18](https://github.com/adobe/aio-commerce-sdk/blob/4d87f72a1eb376a4bae7e6bc80e12098f7b0f2b3/packages/aio-commerce-lib-config/source/modules/scope-tree/types.ts#L18)
+Defined in: [modules/scope-tree/types.ts:18](https://github.com/adobe/aio-commerce-sdk/blob/97b39588c9be1d7c405453e1095714aa55bea129/packages/aio-commerce-lib-config/source/modules/scope-tree/types.ts#L18)
 
 Represents a single node in the scope tree hierarchy.
 
@@ -26,7 +26,7 @@ Represents a single node in the scope tree hierarchy.
 optional children?: ScopeNode[];
 ```
 
-Defined in: [modules/scope-tree/types.ts:36](https://github.com/adobe/aio-commerce-sdk/blob/4d87f72a1eb376a4bae7e6bc80e12098f7b0f2b3/packages/aio-commerce-lib-config/source/modules/scope-tree/types.ts#L36)
+Defined in: [modules/scope-tree/types.ts:36](https://github.com/adobe/aio-commerce-sdk/blob/97b39588c9be1d7c405453e1095714aa55bea129/packages/aio-commerce-lib-config/source/modules/scope-tree/types.ts#L36)
 
 Optional child scopes for hierarchical structures.
 
@@ -38,19 +38,19 @@ Optional child scopes for hierarchical structures.
 code: string;
 ```
 
-Defined in: [modules/scope-tree/types.ts:22](https://github.com/adobe/aio-commerce-sdk/blob/4d87f72a1eb376a4bae7e6bc80e12098f7b0f2b3/packages/aio-commerce-lib-config/source/modules/scope-tree/types.ts#L22)
+Defined in: [modules/scope-tree/types.ts:22](https://github.com/adobe/aio-commerce-sdk/blob/97b39588c9be1d7c405453e1095714aa55bea129/packages/aio-commerce-lib-config/source/modules/scope-tree/types.ts#L22)
 
 Unique code identifier for the scope.
 
 ---
 
-### commerce_id?
+### commerce\_id?
 
 ```ts
 optional commerce_id?: number;
 ```
 
-Defined in: [modules/scope-tree/types.ts:34](https://github.com/adobe/aio-commerce-sdk/blob/4d87f72a1eb376a4bae7e6bc80e12098f7b0f2b3/packages/aio-commerce-lib-config/source/modules/scope-tree/types.ts#L34)
+Defined in: [modules/scope-tree/types.ts:34](https://github.com/adobe/aio-commerce-sdk/blob/97b39588c9be1d7c405453e1095714aa55bea129/packages/aio-commerce-lib-config/source/modules/scope-tree/types.ts#L34)
 
 Optional Commerce API ID for system scopes.
 
@@ -62,43 +62,43 @@ Optional Commerce API ID for system scopes.
 id: string;
 ```
 
-Defined in: [modules/scope-tree/types.ts:20](https://github.com/adobe/aio-commerce-sdk/blob/4d87f72a1eb376a4bae7e6bc80e12098f7b0f2b3/packages/aio-commerce-lib-config/source/modules/scope-tree/types.ts#L20)
+Defined in: [modules/scope-tree/types.ts:20](https://github.com/adobe/aio-commerce-sdk/blob/97b39588c9be1d7c405453e1095714aa55bea129/packages/aio-commerce-lib-config/source/modules/scope-tree/types.ts#L20)
 
 Unique identifier for the scope.
 
 ---
 
-### is_editable
+### is\_editable
 
 ```ts
 is_editable: boolean;
 ```
 
-Defined in: [modules/scope-tree/types.ts:28](https://github.com/adobe/aio-commerce-sdk/blob/4d87f72a1eb376a4bae7e6bc80e12098f7b0f2b3/packages/aio-commerce-lib-config/source/modules/scope-tree/types.ts#L28)
+Defined in: [modules/scope-tree/types.ts:28](https://github.com/adobe/aio-commerce-sdk/blob/97b39588c9be1d7c405453e1095714aa55bea129/packages/aio-commerce-lib-config/source/modules/scope-tree/types.ts#L28)
 
 Whether the scope configuration can be edited.
 
 ---
 
-### is_final
+### is\_final
 
 ```ts
 is_final: boolean;
 ```
 
-Defined in: [modules/scope-tree/types.ts:30](https://github.com/adobe/aio-commerce-sdk/blob/4d87f72a1eb376a4bae7e6bc80e12098f7b0f2b3/packages/aio-commerce-lib-config/source/modules/scope-tree/types.ts#L30)
+Defined in: [modules/scope-tree/types.ts:30](https://github.com/adobe/aio-commerce-sdk/blob/97b39588c9be1d7c405453e1095714aa55bea129/packages/aio-commerce-lib-config/source/modules/scope-tree/types.ts#L30)
 
 Whether this is a final (leaf) scope that cannot have children.
 
 ---
 
-### is_removable
+### is\_removable
 
 ```ts
 is_removable: boolean;
 ```
 
-Defined in: [modules/scope-tree/types.ts:32](https://github.com/adobe/aio-commerce-sdk/blob/4d87f72a1eb376a4bae7e6bc80e12098f7b0f2b3/packages/aio-commerce-lib-config/source/modules/scope-tree/types.ts#L32)
+Defined in: [modules/scope-tree/types.ts:32](https://github.com/adobe/aio-commerce-sdk/blob/97b39588c9be1d7c405453e1095714aa55bea129/packages/aio-commerce-lib-config/source/modules/scope-tree/types.ts#L32)
 
 Whether the scope can be removed.
 
@@ -110,7 +110,7 @@ Whether the scope can be removed.
 label: string;
 ```
 
-Defined in: [modules/scope-tree/types.ts:24](https://github.com/adobe/aio-commerce-sdk/blob/4d87f72a1eb376a4bae7e6bc80e12098f7b0f2b3/packages/aio-commerce-lib-config/source/modules/scope-tree/types.ts#L24)
+Defined in: [modules/scope-tree/types.ts:24](https://github.com/adobe/aio-commerce-sdk/blob/97b39588c9be1d7c405453e1095714aa55bea129/packages/aio-commerce-lib-config/source/modules/scope-tree/types.ts#L24)
 
 Human-readable label for the scope.
 
@@ -122,6 +122,6 @@ Human-readable label for the scope.
 level: string;
 ```
 
-Defined in: [modules/scope-tree/types.ts:26](https://github.com/adobe/aio-commerce-sdk/blob/4d87f72a1eb376a4bae7e6bc80e12098f7b0f2b3/packages/aio-commerce-lib-config/source/modules/scope-tree/types.ts#L26)
+Defined in: [modules/scope-tree/types.ts:26](https://github.com/adobe/aio-commerce-sdk/blob/97b39588c9be1d7c405453e1095714aa55bea129/packages/aio-commerce-lib-config/source/modules/scope-tree/types.ts#L26)
 
 The level of the scope (e.g., "global", "website", "store", "store_view").

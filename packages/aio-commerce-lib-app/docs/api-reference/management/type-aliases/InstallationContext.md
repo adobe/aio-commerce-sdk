@@ -16,7 +16,7 @@ type InstallationContext = {
 };
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/workflow/step.ts:40](https://github.com/adobe/aio-commerce-sdk/blob/4d87f72a1eb376a4bae7e6bc80e12098f7b0f2b3/packages/aio-commerce-lib-app/source/management/installation/workflow/step.ts#L40)
+Defined in: [aio-commerce-lib-app/source/management/installation/workflow/step.ts:40](https://github.com/adobe/aio-commerce-sdk/blob/97b39588c9be1d7c405453e1095714aa55bea129/packages/aio-commerce-lib-app/source/management/installation/workflow/step.ts#L40)
 
 Shared context available to all steps during installation.
 
@@ -28,7 +28,7 @@ Shared context available to all steps during installation.
 appData: AppData;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/workflow/step.ts:42](https://github.com/adobe/aio-commerce-sdk/blob/4d87f72a1eb376a4bae7e6bc80e12098f7b0f2b3/packages/aio-commerce-lib-app/source/management/installation/workflow/step.ts#L42)
+Defined in: [aio-commerce-lib-app/source/management/installation/workflow/step.ts:42](https://github.com/adobe/aio-commerce-sdk/blob/97b39588c9be1d7c405453e1095714aa55bea129/packages/aio-commerce-lib-app/source/management/installation/workflow/step.ts#L42)
 
 The credentials of the app being installed
 
@@ -40,7 +40,7 @@ The credentials of the app being installed
 optional customScripts?: Record<string, unknown>;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/workflow/step.ts:58](https://github.com/adobe/aio-commerce-sdk/blob/4d87f72a1eb376a4bae7e6bc80e12098f7b0f2b3/packages/aio-commerce-lib-app/source/management/installation/workflow/step.ts#L58)
+Defined in: [aio-commerce-lib-app/source/management/installation/workflow/step.ts:58](https://github.com/adobe/aio-commerce-sdk/blob/97b39588c9be1d7c405453e1095714aa55bea129/packages/aio-commerce-lib-app/source/management/installation/workflow/step.ts#L58)
 
 Custom scripts defined in the configuration (if any).
 
@@ -52,7 +52,7 @@ Custom scripts defined in the configuration (if any).
 logger: ReturnType<typeof AioLogger>;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/workflow/step.ts:55](https://github.com/adobe/aio-commerce-sdk/blob/4d87f72a1eb376a4bae7e6bc80e12098f7b0f2b3/packages/aio-commerce-lib-app/source/management/installation/workflow/step.ts#L55)
+Defined in: [aio-commerce-lib-app/source/management/installation/workflow/step.ts:55](https://github.com/adobe/aio-commerce-sdk/blob/97b39588c9be1d7c405453e1095714aa55bea129/packages/aio-commerce-lib-app/source/management/installation/workflow/step.ts#L55)
 
 Logger instance for installation logging.
 
@@ -71,43 +71,43 @@ params: RuntimeActionParams & {
 };
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/workflow/step.ts:45](https://github.com/adobe/aio-commerce-sdk/blob/4d87f72a1eb376a4bae7e6bc80e12098f7b0f2b3/packages/aio-commerce-lib-app/source/management/installation/workflow/step.ts#L45)
+Defined in: [aio-commerce-lib-app/source/management/installation/workflow/step.ts:45](https://github.com/adobe/aio-commerce-sdk/blob/97b39588c9be1d7c405453e1095714aa55bea129/packages/aio-commerce-lib-app/source/management/installation/workflow/step.ts#L45)
 
 The raw action parameters from the App Builder runtime action.
 
 #### Type Declaration
 
-##### AIO_COMMERCE_AUTH_IMS_CLIENT_ID
+##### AIO\_COMMERCE\_AUTH\_IMS\_CLIENT\_ID
 
 ```ts
 AIO_COMMERCE_AUTH_IMS_CLIENT_ID: string;
 ```
 
-##### AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS
+##### AIO\_COMMERCE\_AUTH\_IMS\_CLIENT\_SECRETS
 
 ```ts
 AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS: string | string[];
 ```
 
-##### AIO_COMMERCE_AUTH_IMS_ORG_ID
+##### AIO\_COMMERCE\_AUTH\_IMS\_ORG\_ID
 
 ```ts
 AIO_COMMERCE_AUTH_IMS_ORG_ID: string;
 ```
 
-##### AIO_COMMERCE_AUTH_IMS_SCOPES
+##### AIO\_COMMERCE\_AUTH\_IMS\_SCOPES
 
 ```ts
 AIO_COMMERCE_AUTH_IMS_SCOPES: string | string[];
 ```
 
-##### AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL
+##### AIO\_COMMERCE\_AUTH\_IMS\_TECHNICAL\_ACCOUNT\_EMAIL
 
 ```ts
 AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL: string;
 ```
 
-##### AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID
+##### AIO\_COMMERCE\_AUTH\_IMS\_TECHNICAL\_ACCOUNT\_ID
 
 ```ts
 AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID: string;

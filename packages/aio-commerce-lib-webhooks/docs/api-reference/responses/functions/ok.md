@@ -6,7 +6,7 @@ function ok<TValue>(
 ): SuccessResponse;
 ```
 
-Defined in: [responses/presets.ts:43](https://github.com/adobe/aio-commerce-sdk/blob/4d87f72a1eb376a4bae7e6bc80e12098f7b0f2b3/packages/aio-commerce-lib-webhooks/source/responses/presets.ts#L43)
+Defined in: [responses/presets.ts:43](https://github.com/adobe/aio-commerce-sdk/blob/97b39588c9be1d7c405453e1095714aa55bea129/packages/aio-commerce-lib-webhooks/source/responses/presets.ts#L43)
 
 Creates an HTTP 200 OK response with webhook operation(s)
 Webhook-optimized version of ok() that automatically wraps operations in the response body.
