@@ -215,7 +215,7 @@ describe("release/promote-skills.ts", () => {
     );
   });
 
-  test("copies promotion artifacts and excludes SDK-only files", async () => {
+  test("copies promotion artifacts and excludes package.json", async () => {
     await withTempFiles(
       {
         "skills/plugins/commerce/app-management/package.json": "{}",
@@ -292,8 +292,13 @@ describe("release/promote-skills.ts", () => {
           fileExists(join(targetRoot, "package.json")),
         ).resolves.toBe(false);
         await expect(
-          fileExists(join(targetRoot, "CHANGELOG.md")),
-        ).resolves.toBe(false);
+          readFile(join(targetRoot, "CHANGELOG.md"), "utf-8"),
+        ).resolves.toBe(
+          await readFile(
+            join(sourceRoot, "plugins/commerce/app-management/CHANGELOG.md"),
+            "utf-8",
+          ),
+        );
       },
     );
   });
@@ -312,6 +317,14 @@ describe("release/promote-skills.ts", () => {
             name: "adobe/commerce-app-management",
             version: "1.0.0",
           }),
+        "source/plugins/commerce/app-management/CHANGELOG.md": [
+          "# @adobe/aio-commerce-plugin-app-management",
+          "",
+          "## 1.0.0",
+          "",
+          "- Promote App Management skills.",
+          "",
+        ].join("\n"),
         "source/plugins/commerce/app-management/package.json": JSON.stringify({
           name: "@adobe/aio-commerce-plugin-app-management",
           version: "1.0.0",
