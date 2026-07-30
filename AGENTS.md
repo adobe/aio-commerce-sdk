@@ -133,6 +133,7 @@ Each package that has deprecated symbols or planned breaking changes maintains a
 - Every code change that requires a release must include a changeset (test-only changes do not need one)
 - Create one with `pnpm changeset add --empty`, then edit the generated `.changeset/<name>.md` file
 - Changeset messages must be user-facing and concise — describe what the developer can now do or what changed for them, not what the implementation does internally; start with a capital letter and end with a period
+- Don't repeat the package's own name in its changeset message — it's redundant with the CHANGELOG file/header the message lands in (e.g. write "Release the first stable version." not "`@adobe/aio-commerce-lib-admin-ui` is now stable and released as 1.0.0."). Naming a _different_ package is fine when explaining why a dependent bumped (e.g. a meta-package changeset that references the library it re-exports)
 - Derive the bump type from semver rules:
   - `patch` — bug fixes, no API surface change
   - `minor` — additive non-breaking changes (new exports, new optional fields, enriched responses)
