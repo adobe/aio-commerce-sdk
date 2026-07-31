@@ -19,6 +19,7 @@
 
 export { defineConfig } from "./lib/define";
 export {
+  isTypeScriptConfig,
   parseCommerceAppConfig,
   readCommerceAppConfig,
   resolveCommerceAppConfig,

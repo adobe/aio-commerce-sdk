@@ -10,6 +10,8 @@
  * governing permissions and limitations under the License.
  */
 
+import type { PackageDependency } from "@aio-commerce-sdk/scripting-utils/project";
+
 /** The name of the package containing all the generated runtime actions */
 export const PACKAGE_NAME = "app-management";
 
@@ -42,6 +44,18 @@ export const APP_CONFIG_IMPORT_ALIAS = "#app.commerce.config";
 
 /** The name of the commerce app configuration file */
 export const COMMERCE_APP_CONFIG_FILE = "app.commerce.config";
+
+/** TypeScript development dependencies shared by root and web-src scaffolding. */
+export const SHARED_TYPESCRIPT_DEV_DEPENDENCIES = [
+  { name: "@tsconfig/bases", version: __TSCONFIG_BASES_VERSION__ },
+  { name: "typescript", version: __TYPESCRIPT_VERSION__ },
+] as const satisfies readonly PackageDependency[];
+
+/** TypeScript loader required only by root Runtime action scaffolding. */
+export const TYPESCRIPT_WEBPACK_DEV_DEPENDENCY = {
+  name: "ts-loader",
+  version: __TS_LOADER_VERSION__,
+} as const satisfies PackageDependency;
 
 /** The name of the configuration schema file */
 export const CONFIG_SCHEMA_FILE_NAME = "configuration-schema.json";

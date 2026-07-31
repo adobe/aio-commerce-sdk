@@ -36,3 +36,30 @@ export async function stubInstallCommands() {
     return real(command, options);
   });
 }
+
+/**
+ * Creates a `spawnSync` implementation that stubs commands unless their
+ * arguments contain one of the packages that should execute.
+ */
+export function createSpawnSyncStub(
+  realSpawnSync: typeof ChildProcess.spawnSync,
+  executablePackages: readonly string[] = [],
+) {
+  return vi.fn(
+    (
+      command: string,
+      args?: readonly string[],
+      options?: ChildProcess.SpawnSyncOptions,
+    ) => {
+      const shouldExecute = args?.some((argument) =>
+        executablePackages.some((packageName) =>
+          argument.startsWith(`${packageName}@`),
+        ),
+      );
+
+      return shouldExecute
+        ? realSpawnSync(command, args, options)
+        : { status: 0 };
+    },
+  );
+}
