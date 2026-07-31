@@ -18,6 +18,7 @@ import { afterEach, describe, expect, test, vi } from "vitest";
 
 import { withTempFiles } from "#filesystem/temp";
 import {
+  appendCommand,
   detectPackageManager,
   findNearestPackageJson,
   findUp,
@@ -25,14 +26,34 @@ import {
   getInstallCommand,
   getInstalledPackageVersion,
   getPackageDependencyInstallPlan,
+  getPackageExecutionCommand,
   getProjectInstallCommand,
   getProjectRootDirectory,
+  getRunScriptCommand,
   isESM,
   loadPackageJson,
   makeOutputDirFor,
   mergePackageJsonDependencies,
   readPackageJson,
 } from "#project";
+
+describe("appendCommand", () => {
+  test("returns the command when no existing command is present", () => {
+    expect(appendCommand(undefined, "npm run build")).toBe("npm run build");
+  });
+
+  test("appends a command to an existing command chain", () => {
+    expect(appendCommand("eslint .", "npm run build")).toBe(
+      "eslint . && npm run build",
+    );
+  });
+
+  test("does not append a duplicate command", () => {
+    expect(appendCommand("eslint . && npm run build", "npm run build")).toBe(
+      "eslint . && npm run build",
+    );
+  });
+});
 
 describe("findUp", () => {
   test("should find a file in the current directory", async () => {
@@ -617,6 +638,17 @@ describe("getExecCommand", () => {
     expect(getExecCommand("npm")).toBe("npx");
   });
 
+  describe("getRunScriptCommand", () => {
+    test.each(["npm", "pnpm", "yarn", "bun"] as const)(
+      "returns the package script command for %s",
+      (packageManager) => {
+        expect(getRunScriptCommand(packageManager, "typecheck")).toBe(
+          `${packageManager} run typecheck`,
+        );
+      },
+    );
+  });
+
   test("should return pnpm exec for pnpm", () => {
     expect(getExecCommand("pnpm")).toBe("pnpm exec");
   });
@@ -627,6 +659,60 @@ describe("getExecCommand", () => {
 
   test("should return bun x for bun", () => {
     expect(getExecCommand("bun")).toBe("bun x");
+  });
+});
+
+describe("getPackageExecutionCommand", () => {
+  test.each([
+    {
+      expected: {
+        args: ["--yes", "esbuild@0.28.0", "--version"],
+        command: "npx",
+      },
+      packageManager: "npm" as const,
+    },
+    {
+      expected: {
+        args: ["dlx", "esbuild@0.28.0", "--version"],
+        command: "pnpm",
+      },
+      packageManager: "pnpm" as const,
+    },
+    {
+      expected: {
+        args: ["--yes", "esbuild@0.28.0", "--version"],
+        command: "npx",
+      },
+      packageManager: "yarn" as const,
+    },
+    {
+      expected: {
+        args: ["x", "esbuild@0.28.0", "--version"],
+        command: "bun",
+      },
+      packageManager: "bun" as const,
+    },
+  ])(
+    "returns the one-shot package command for $packageManager",
+    ({ expected, packageManager }) => {
+      expect(
+        getPackageExecutionCommand(packageManager, [
+          "esbuild@0.28.0",
+          "--version",
+        ]),
+      ).toEqual(expected);
+    },
+  );
+
+  test("allows a pnpm package build during one-shot execution", () => {
+    expect(
+      getPackageExecutionCommand("pnpm", ["esbuild@0.28.0", "--version"], {
+        allowBuild: "esbuild",
+      }),
+    ).toEqual({
+      args: ["--allow-build=esbuild", "dlx", "esbuild@0.28.0", "--version"],
+      command: "pnpm",
+    });
   });
 });
 

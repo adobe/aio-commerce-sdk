@@ -14,7 +14,7 @@ import { writeFile } from "node:fs/promises";
 
 import { Document, isMap, YAMLMap, YAMLSeq } from "yaml";
 
-import { detectPackageManager, getExecCommand } from "#project";
+import { appendCommand, detectPackageManager, getExecCommand } from "#project";
 import {
   getExistingInputs,
   getExistingString,
@@ -279,11 +279,7 @@ async function buildHooks(extConfig: Document, hooks: Record<string, string>) {
       );
     }
 
-    if (prevValue !== "" && !prevValue.includes(fullCommand)) {
-      hooksMap.set(name, `${prevValue} && ${fullCommand}`);
-    } else if (prevValue === "") {
-      hooksMap.set(name, fullCommand);
-    }
+    hooksMap.set(name, appendCommand(prevValue || undefined, fullCommand));
   }
 }
 

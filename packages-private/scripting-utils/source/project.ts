@@ -295,6 +295,25 @@ const DEV_DEPENDENCY_INSTALL_FLAGS = {
 export type PackageManager = (typeof VALID_PACKAGE_MANAGERS)[number];
 
 /**
+ * Append a command to an existing `&&` command chain without duplicating it.
+ * @param existingCommand Existing command chain.
+ * @param command Command to append.
+ */
+export function appendCommand(
+  existingCommand: string | undefined,
+  command: string,
+) {
+  const existing = existingCommand?.trim();
+  if (!existing) {
+    return command;
+  }
+
+  return existing.split(" && ").includes(command)
+    ? existing
+    : `${existing} && ${command}`;
+}
+
+/**
  * Type guard asserting that a value is a supported `PackageManager`.
  * @param value - The value to check
  */
@@ -342,6 +361,44 @@ export function getExecCommand(packageManager: PackageManager): string {
   }
 
   return [resolved.command, ...resolved.args].filter(Boolean).join(" ");
+}
+
+/**
+ * Get the command that runs a package script.
+ * @param packageManager The detected package manager.
+ * @param scriptName Package script name.
+ */
+export function getRunScriptCommand(
+  packageManager: PackageManager,
+  scriptName: string,
+) {
+  return `${packageManager} run ${scriptName}`;
+}
+
+/**
+ * Get the command that executes a package without adding it to the project.
+ * @param packageManager - The detected package manager.
+ * @param args - Package specifier followed by arguments for its binary.
+ * @param options - Package execution options.
+ * @param options.allowBuild - Package whose build script pnpm may execute.
+ */
+export function getPackageExecutionCommand(
+  packageManager: PackageManager,
+  args: string[],
+  options: { allowBuild?: string } = {},
+): { command: string; args: string[] } {
+  const resolved = resolveCommand(packageManager, "execute", args);
+  const command = resolved?.command ?? "npx";
+  let resolvedArgs = resolved?.args.filter(Boolean) ?? args;
+
+  if (packageManager === "pnpm" && options.allowBuild !== undefined) {
+    resolvedArgs = [`--allow-build=${options.allowBuild}`, ...resolvedArgs];
+  }
+
+  return {
+    args: command === "npx" ? ["--yes", ...resolvedArgs] : resolvedArgs,
+    command,
+  };
 }
 
 /**
