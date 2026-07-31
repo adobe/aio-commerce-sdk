@@ -11,6 +11,10 @@ Each plugin is a private pnpm workspace package. Use changesets to express relea
 3. Choose the semver bump for the plugin change.
 4. Write a concise, user-facing changeset message.
 
+The changeset message is published verbatim as a `CHANGELOG.md` entry in `adobe/skills`, not just
+used internally for the promotion PR body — write it as permanent, end-user-facing release
+history from the first patch changeset onward.
+
 Do not manually bump versions in `.tessl-plugin/plugin.json` or `.claude-plugin/plugin.json`. The
 plugin `package.json` is the authoritative version source; release automation syncs that version
 into the plugin manifests.

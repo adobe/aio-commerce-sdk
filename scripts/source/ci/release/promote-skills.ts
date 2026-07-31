@@ -28,6 +28,7 @@ const PROMOTED_ENTRIES = [
   "README.md",
   "skills",
   ".claude-plugin",
+  "CHANGELOG.md",
 ];
 
 type PluginPackageJson = {
