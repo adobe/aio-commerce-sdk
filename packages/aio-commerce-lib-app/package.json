@@ -144,7 +144,6 @@
     "@adobe/aio-lib-state": "catalog:",
     "camelcase": "catalog:",
     "consola": "catalog:",
-    "esbuild": "^0.28.0",
     "jiti": "^2.6.1",
     "ky": "catalog:",
     "openwhisk": "^3.21.8",

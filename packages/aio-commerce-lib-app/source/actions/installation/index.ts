@@ -13,7 +13,17 @@
 import { router } from "./router";
 
 import type { RuntimeActionParams } from "@adobe/aio-commerce-lib-core/params";
-import type { RuntimeActionFactoryArgs } from "./router";
+import type { CustomScriptsLoader, RuntimeActionFactoryArgs } from "./router";
+
+export type { CustomScriptsLoader } from "./router";
+
+/**
+ * Defines a type-safe custom installation scripts loader.
+ * @param loader - The custom scripts loader implementation.
+ */
+export function defineCustomScriptsLoader(loader: CustomScriptsLoader) {
+  return loader;
+}
 
 /**
  * Factory to create the route handler for the `installation` action.

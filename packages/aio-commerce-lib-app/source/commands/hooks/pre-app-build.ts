@@ -23,14 +23,16 @@ import { getRuntimeActions } from "#commands/generate/actions/config";
 import { TEMPLATES_DIR } from "#commands/generate/actions/constants";
 import {
   generateActionFiles,
-  generateWebSrc,
   prepareRuntimeAppConfigModule,
-  prepareWebSourceImportAlias,
   readExtConfig,
   updateExtConfig,
 } from "#commands/generate/actions/lib";
 import { run as generateManifestCommand } from "#commands/generate/manifest/main";
 import { run as generateSchemaCommand } from "#commands/generate/schema/main";
+import {
+  generateWebSrc,
+  prepareWebSourceImportAlias,
+} from "#commands/generate/web-src";
 import { loadAppManifest } from "#commands/utils";
 import { hasAdminUi } from "#config/index";
 
@@ -99,7 +101,6 @@ export async function run(extension: Extension, templatesDir = TEMPLATES_DIR) {
         await prepareWebSourceImportAlias(extConfig);
         await generateWebSrc(
           extConfig,
-          BACKEND_UI_V2_EXTENSION_POINT_ID,
           appManifest.metadata.displayName,
           templatesDir,
         );

@@ -10,23 +10,21 @@
  * governing permissions and limitations under the License.
  */
 
-import { existsSync } from "node:fs";
-import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
+import { spawnSync } from "node:child_process";
+import { readFile, writeFile } from "node:fs/promises";
 import { dirname, extname, join, relative, sep } from "node:path";
 
 import {
   detectPackageManager,
-  getPackageDependencyInstallPlan,
+  getPackageExecutionCommand,
   getProjectRootDirectory,
   loadPackageJson,
   makeOutputDirFor,
-  mergePackageJsonDependencies,
 } from "@aio-commerce-sdk/scripting-utils/project";
 import { createOrUpdateExtConfig } from "@aio-commerce-sdk/scripting-utils/yaml";
 import { readYamlFile } from "@aio-commerce-sdk/scripting-utils/yaml/index";
 import { consola } from "consola";
 import { formatTree } from "consola/utils";
-import { build } from "esbuild";
 
 import {
   APP_CONFIG_IMPORT_ALIAS,
@@ -42,10 +40,10 @@ import {
   getManifestPath,
   getRuntimeAppConfigPath,
   requiresJavaScriptAppConfig,
-  runProjectInstall,
 } from "#commands/utils";
 import {
   hasCustomInstallationSteps,
+  isTypeScriptConfig,
   resolveCommerceAppConfig,
 } from "#config/index";
 
@@ -55,22 +53,9 @@ import {
   buildBusinessConfigurationExtConfig,
 } from "./config";
 import {
-  APP_TITLE_PLACEHOLDER,
   CUSTOM_IMPORTS_PLACEHOLDER,
   CUSTOM_SCRIPTS_LOADER_PLACEHOLDER,
   CUSTOM_SCRIPTS_MAP_PLACEHOLDER,
-  JSX_FILE_EXTENSION,
-  TEMPLATES_DIR,
-  TSX_FILE_EXTENSION,
-  TYPESCRIPT_CONFIG_EXTENSIONS,
-  WEB_SOURCE_DEPENDENCIES,
-  WEB_SOURCE_DEV_DEPENDENCIES,
-  WEB_SOURCE_ENTRYPOINT_FILE,
-  WEB_SOURCE_IMPORT_ALIAS,
-  WEB_SOURCE_SHARED_BUNDLES,
-  WEB_SOURCE_TS_DEV_DEPENDENCIES,
-  WEB_SOURCE_TSCONFIG,
-  WEB_SOURCE_TSCONFIG_FILE,
 } from "./constants";
 
 import type { ExtConfig } from "@aio-commerce-sdk/scripting-utils/yaml";
@@ -83,9 +68,9 @@ type ValidExtensionPointId =
   | typeof CONFIGURATION_EXTENSION_POINT_ID
   | typeof BACKEND_UI_V2_EXTENSION_POINT_ID;
 
-type WebSourceExtension = "jsx" | "tsx";
-
+const ESBUILD_PACKAGE = "esbuild@0.28.0";
 const LEADING_DOT_SLASH_PATTERN = /^\.\//u;
+
 /** Normalize a path for use as an ESM import specifier. */
 function normalizeImportPath(path: string) {
   const normalizedPath = path.split(sep).join("/");
@@ -161,44 +146,40 @@ async function bundleTypeScriptAppConfigModule(
   configFilePath: string,
   outputPath: string,
 ) {
-  await build({
-    bundle: true,
-    entryPoints: [configFilePath],
-    format: "esm",
-    logLevel: "silent",
-    outfile: outputPath,
-    packages: "external",
-    platform: "node",
-    target: "node22",
-  });
-}
-
-/** Generate the runtime-safe app config module used by generated runtime actions. */
-async function generateRuntimeAppConfigModule() {
   const projectRoot = await getProjectRootDirectory();
-  const runtimeConfigPath = getRuntimeAppConfigPath();
-  await makeOutputDirFor(dirname(runtimeConfigPath));
-  const outputPath = join(projectRoot, runtimeConfigPath);
-  const configFilePath = await resolveCommerceAppConfig(projectRoot);
+  const packageManager = await detectPackageManager(projectRoot);
 
-  if (!configFilePath) {
+  const { command, args } = getPackageExecutionCommand(
+    packageManager,
+    [
+      ESBUILD_PACKAGE,
+      configFilePath,
+      "--bundle",
+      "--format=esm",
+      "--log-level=silent",
+      `--outfile=${outputPath}`,
+      "--packages=external",
+      "--platform=node",
+      "--target=node22",
+    ],
+    { allowBuild: "esbuild" },
+  );
+
+  const result = spawnSync(command, args, {
+    cwd: projectRoot,
+    stdio: "inherit",
+  });
+
+  if (result.error || result.status !== 0) {
     throw new Error(
-      "Generating a JavaScript app config module requires an app.commerce.config.* file.",
+      `Could not bundle the TypeScript app config with ${ESBUILD_PACKAGE}.`,
+      {
+        cause:
+          result.error ??
+          new Error(`Bundle command exited with code ${result.status}`),
+      },
     );
   }
-
-  consola.info("Generating JS config module...");
-
-  if (TYPESCRIPT_CONFIG_EXTENSIONS.has(extname(configFilePath))) {
-    await bundleTypeScriptAppConfigModule(configFilePath, outputPath);
-  } else {
-    await writeJavaScriptAppConfigModule(configFilePath, outputPath);
-  }
-
-  await updateAppConfigImportAlias(projectRoot, runtimeConfigPath);
-  consola.success(
-    `Generated JS config module: ${relative(process.cwd(), outputPath)}`,
-  );
 }
 
 /**
@@ -215,26 +196,42 @@ async function prepareStaticAppConfigImportAlias() {
     join(projectRoot, getManifestPath()),
     outputPath,
   );
-
-  await updateAppConfigImportAlias(projectRoot, runtimeConfigPath);
 }
 
 /**
- * Prepare runtime-side config artifacts consumed by generated actions: the
- * bundled ESM module and its `#app.commerce.config` package import alias.
+ * Prepare the runtime config module consumed by generated actions and its
+ * `#app.commerce.config` package import alias.
  *
- * Configs that require JavaScript use the source config file, while serializable
- * default-only configs use the generated JSON manifest.
+ * TypeScript configs are bundled into a generated runtime module. JavaScript
+ * configs use a passthrough module, while serializable default-only configs use
+ * a re-export of the validated JSON manifest.
  */
 export async function prepareRuntimeAppConfigModule(
   appManifest: CommerceAppConfigOutputModel,
 ) {
+  const projectRoot = await getProjectRootDirectory();
+  const configFilePath = await resolveCommerceAppConfig(projectRoot);
+
   if (await requiresJavaScriptAppConfig(appManifest)) {
-    await generateRuntimeAppConfigModule();
-    return;
+    if (configFilePath === null) {
+      throw new Error(
+        "Generating a runtime config module requires an app.commerce.config.* file.",
+      );
+    }
+
+    await makeOutputDirFor(dirname(getRuntimeAppConfigPath()));
+    const outputPath = join(projectRoot, getRuntimeAppConfigPath());
+
+    if (isTypeScriptConfig(configFilePath)) {
+      await bundleTypeScriptAppConfigModule(configFilePath, outputPath);
+    } else {
+      await writeJavaScriptAppConfigModule(configFilePath, outputPath);
+    }
+  } else {
+    await prepareStaticAppConfigImportAlias();
   }
 
-  await prepareStaticAppConfigImportAlias();
+  await updateAppConfigImportAlias(projectRoot, getRuntimeAppConfigPath());
 }
 
 /**
@@ -282,7 +279,6 @@ export async function updateExtConfig(
 
   let extConfig: ExtConfig;
 
-  // biome-ignore lint/style/useDefaultSwitchClause: The function can only be called with the two defined extension point IDs, so a default case is not necessary
   switch (extensionPointId) {
     case EXTENSIBILITY_EXTENSION_POINT_ID: {
       extConfig = buildAppManagementExtConfig(appConfig);
@@ -298,304 +294,14 @@ export async function updateExtConfig(
       extConfig = buildAdminUiV2ExtConfig(appConfig);
       break;
     }
+
+    default: {
+      throw new Error(`Unsupported extension point: ${extensionPointId}`);
+    }
   }
 
   await createOrUpdateExtConfig(extConfigPath, extConfig, extConfigDoc);
   return extConfig;
-}
-
-/**
- * Resolve the generated web-src entrypoint path from an extension config.
- * @param extConfig - Extension config containing the view operation.
- * @param extensionPointId - Extension point that owns the web source folder.
- */
-function getWebSourceEntrypoint(
-  extConfig: ExtConfig,
-  extensionPointId: ValidExtensionPointId,
-) {
-  const viewEntrypoint = extConfig.operations?.view?.[0]?.impl;
-  if (viewEntrypoint === undefined) {
-    return null;
-  }
-
-  return join(
-    getExtensionPointFolderPath(extensionPointId),
-    extConfig.web ?? "web-src",
-    viewEntrypoint,
-  );
-}
-
-/**
- * Ensure package.json has the dependencies and Parcel config needed by web-src.
- * @param projectRoot - Project root containing the package.json to update.
- */
-async function prepareWebSourcePackage(
-  projectRoot: string,
-  extension: WebSourceExtension,
-) {
-  const pkg = await loadPackageJson(projectRoot);
-  if (pkg === null) {
-    throw new Error("Could not find package.json.");
-  }
-
-  const requiredDevDependencies = [
-    ...WEB_SOURCE_DEV_DEPENDENCIES,
-    ...(extension === "tsx" ? WEB_SOURCE_TS_DEV_DEPENDENCIES : []),
-  ];
-
-  const installPlan = await getPackageDependencyInstallPlan(
-    [...WEB_SOURCE_DEPENDENCIES, ...requiredDevDependencies],
-    projectRoot,
-  );
-
-  if (installPlan.incompatible.length > 0) {
-    const incompatibleDependencies = installPlan.incompatible
-      .map(
-        ({ name, version, installedVersion }) =>
-          `${name}@${installedVersion} does not satisfy ${version}`,
-      )
-      .join("\n");
-
-    throw new Error(
-      `Cannot scaffold web-src because installed dependencies are incompatible:\n${incompatibleDependencies}`,
-    );
-  }
-
-  const dependencies = pkg.content.dependencies ?? {};
-  const devDependencies = pkg.content.devDependencies ?? {};
-  const dependencyMaps = [dependencies, devDependencies];
-  const declaredDependencyNames = new Set(
-    dependencyMaps.flatMap((depMap) => Object.keys(depMap)),
-  );
-  const dependenciesToDeclare = [
-    ...WEB_SOURCE_DEPENDENCIES,
-    ...requiredDevDependencies,
-  ].filter(({ name }) => !declaredDependencyNames.has(name));
-
-  if (dependenciesToDeclare.length > 0) {
-    consola.info("Adding web-src dependencies in package.json:");
-    consola.log.raw(
-      formatTree(
-        dependenciesToDeclare.map(({ name, version }) => ` ${name}@${version}`),
-      ),
-    );
-  } else {
-    consola.info("web-src dependencies are already declared in package.json.");
-  }
-
-  pkg.update({
-    // Required as per Spectrum S2 documentation: https://react-spectrum.adobe.com/getting-started#framework-setup
-    "@parcel/bundler-default": {
-      ...(pkg.content["@parcel/bundler-default"] as Record<string, unknown>),
-      manualSharedBundles: WEB_SOURCE_SHARED_BUNDLES,
-    },
-    // Required otherwise Parcel will fail when using our deps which export ESM.
-    "@parcel/resolver-default": {
-      ...(pkg.content["@parcel/resolver-default"] as Record<string, unknown>),
-      packageExports: true,
-    },
-    dependencies: mergePackageJsonDependencies(
-      dependencies,
-      WEB_SOURCE_DEPENDENCIES,
-      dependencyMaps,
-    ),
-    devDependencies: mergePackageJsonDependencies(
-      devDependencies,
-      requiredDevDependencies,
-      dependencyMaps,
-    ),
-  });
-
-  await pkg.save();
-
-  if (installPlan.missing.length === 0) {
-    consola.info("web-src dependencies are already installed.");
-    return;
-  }
-
-  consola.info("Installing missing web-src dependencies from package.json:");
-  consola.log.raw(
-    formatTree(
-      installPlan.missing.map(({ name, version }) => ` ${name}@${version}`),
-    ),
-  );
-  const packageManager = await detectPackageManager(projectRoot);
-  runProjectInstall(packageManager, projectRoot);
-}
-
-/**
- * Add the package import alias for an existing or generated web-src.
- * @param extConfig - Extension config containing the view operation.
- */
-export async function prepareWebSourceImportAlias(extConfig: ExtConfig) {
-  const entrypoint = getWebSourceEntrypoint(
-    extConfig,
-    BACKEND_UI_V2_EXTENSION_POINT_ID,
-  );
-
-  if (entrypoint === null) {
-    return;
-  }
-
-  const projectRoot = await getProjectRootDirectory();
-  const pkg = await loadPackageJson(projectRoot);
-  if (pkg === null) {
-    throw new Error("Could not find package.json.");
-  }
-
-  const existingImports =
-    typeof pkg.content.imports === "object" && pkg.content.imports !== null
-      ? pkg.content.imports
-      : {};
-
-  const webSourceSrcPath = join(dirname(entrypoint), "src");
-  pkg.update({
-    imports: {
-      ...existingImports,
-      [WEB_SOURCE_IMPORT_ALIAS]: `${normalizePackageJsonPath(
-        webSourceSrcPath,
-      )}/*`,
-    },
-  });
-
-  await pkg.save();
-}
-
-/**
- * Resolve the generated web-src file extension from the app config file type.
- * @param projectRoot - Project root used to find the commerce app config file.
- */
-async function resolveWebSourceExtension(
-  projectRoot: string,
-): Promise<WebSourceExtension> {
-  const configFilePath = await resolveCommerceAppConfig(projectRoot);
-  return configFilePath !== null &&
-    TYPESCRIPT_CONFIG_EXTENSIONS.has(extname(configFilePath))
-    ? "tsx"
-    : "jsx";
-}
-
-/**
- * Resolve the destination path for a web-src template file.
- * @param templatePath - Template file path relative to its source directory.
- * @param extension - Web source extension to generate.
- */
-function getWebSourceTemplateTargetPath(
-  templatePath: string,
-  extension: WebSourceExtension,
-) {
-  if (extension === "jsx" || !templatePath.endsWith(JSX_FILE_EXTENSION)) {
-    return templatePath;
-  }
-
-  return `${templatePath.slice(0, -JSX_FILE_EXTENSION.length)}${TSX_FILE_EXTENSION}`;
-}
-
-/**
- * Copy web-src templates directly to the final file extension and entrypoint.
- * @param sourceDir - Template web-src directory.
- * @param targetDir - Generated web-src directory.
- * @param extension - Web source extension to generate.
- */
-async function copyWebSourceTemplates(
-  sourceDir: string,
-  targetDir: string,
-  extension: WebSourceExtension,
-  appTitle: string,
-): Promise<string[]> {
-  await mkdir(targetDir, { recursive: true });
-
-  const entries = await readdir(sourceDir, { withFileTypes: true });
-  const outputFilesByEntry = await Promise.all(
-    entries.map(async (entry) => {
-      const sourcePath = join(sourceDir, entry.name);
-      const targetPath = join(
-        targetDir,
-        getWebSourceTemplateTargetPath(entry.name, extension),
-      );
-
-      if (entry.isDirectory()) {
-        return await copyWebSourceTemplates(
-          sourcePath,
-          targetPath,
-          extension,
-          appTitle,
-        );
-      }
-
-      let content = await readFile(sourcePath, "utf-8");
-
-      if (extension === "tsx") {
-        content = content.replaceAll(
-          `${JSX_FILE_EXTENSION}"`,
-          `${TSX_FILE_EXTENSION}"`,
-        );
-      }
-
-      if (targetPath.endsWith(WEB_SOURCE_ENTRYPOINT_FILE)) {
-        content = content.replaceAll(APP_TITLE_PLACEHOLDER, appTitle);
-      }
-
-      await writeFile(targetPath, content, { encoding: "utf-8", flag: "wx" });
-      return ` ${relative(process.cwd(), targetPath)}`;
-    }),
-  );
-
-  return outputFilesByEntry.flat();
-}
-
-/** Generate the web source scaffold for iframe-based Admin UI extensions. */
-export async function generateWebSrc(
-  extConfig: ExtConfig,
-  extensionPointId: ValidExtensionPointId,
-  appName: string,
-  templatesDir = TEMPLATES_DIR,
-) {
-  const entrypoint = getWebSourceEntrypoint(extConfig, extensionPointId);
-  if (entrypoint === null) {
-    return;
-  }
-
-  const projectRoot = await getProjectRootDirectory();
-  const entrypointPath = join(projectRoot, entrypoint);
-
-  if (existsSync(entrypointPath)) {
-    consola.info(
-      `web-src entrypoint already exists, skipping scaffold: ${relative(
-        process.cwd(),
-        entrypointPath,
-      )}`,
-    );
-    return;
-  }
-
-  consola.start(`Scaffolding web-src for ${extensionPointId}...`);
-
-  const sourceDir = join(templatesDir, "admin-ui", "web-src");
-  const targetDir = dirname(entrypointPath);
-  const extension = await resolveWebSourceExtension(projectRoot);
-
-  const outputFiles = await copyWebSourceTemplates(
-    sourceDir,
-    targetDir,
-    extension,
-    appName,
-  );
-
-  if (extension === "tsx") {
-    const tsconfigPath = join(targetDir, WEB_SOURCE_TSCONFIG_FILE);
-    await writeFile(
-      tsconfigPath,
-      JSON.stringify(WEB_SOURCE_TSCONFIG, null, 2),
-      "utf-8",
-    );
-    outputFiles.push(` ${relative(process.cwd(), tsconfigPath)}`);
-  }
-
-  await prepareWebSourcePackage(projectRoot, extension);
-
-  consola.success(`Scaffolded ${relative(process.cwd(), targetDir)}`);
-  consola.log.raw(formatTree(outputFiles));
 }
 
 /** Generate the action files */
