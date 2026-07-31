@@ -7,6 +7,10 @@
 
 ### Breaking Changes
 
+<!-- Internal tracking: https://jira.corp.adobe.com/browse/CEXT-6525 -->
+
+- The generated `app.commerce.config.js`, `app.commerce.manifest.json`, and `configuration-schema.json` compatibility artifacts will be removed, and `#app.commerce.config` will resolve to the root source config for every config format. After the change, importers will receive the input model and must validate it before using it. **Replacement:** import the root `app.commerce.config.*` file as the single source of truth.
+
 - `adminUiSdk` config key and `commerce/backend-ui/1` extension point support removed. The generated registration action (`src/commerce-backend-ui-1/.generated/actions/registration/index.js`) and its `pre-app-build` hook are no longer produced. **Replacement:** use `adminUi` and `commerce/backend-ui/2` — see the updated `usage.md`.
 - `buildAdminUiSdkExtConfig()` removed from the public API.
 - Types removed from the public API: `AdminUiSdkConfiguration`, `AdminUiSdkGridColumns`, `AdminUiSdkRegistration`, `AppConfigWithAdminUiSdk`, `BannerNotification`, `CustomerMassAction`, `CustomFee`, `MenuItem`, `OrderMassAction`, `OrderViewButton`, `ProductMassAction`.

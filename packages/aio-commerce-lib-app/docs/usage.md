@@ -32,11 +32,17 @@ The `init` command will:
 
 - Create `app.commerce.config.*` with a template (prompts you to choose format and features if the file doesn't exist)
 - Install required dependencies (`@adobe/aio-commerce-lib-app`, `@adobe/aio-commerce-sdk`, and `@adobe/aio-commerce-lib-config` when business configuration is enabled)
+- For a TypeScript config, add missing `webpack-config.cjs` and root `tsconfig.json` files and install the required development dependencies
+- For a TypeScript config, add or extend the `typecheck` package script to check generated actions and TypeScript Admin UI source
 - Add the `postinstall` hook to your `package.json`
 - Generate all required artifacts (`commerce/configuration/1` resources are only generated when `businessConfig` is defined in your config)
 - Update your `app.config.yaml` and `install.yaml` with the appropriate extension references, including `commerce/configuration/1` only when applicable
 
 The command automatically detects your package manager (npm, pnpm, yarn, or bun) by checking for lock files and uses the appropriate commands.
+
+When `init` uses a TypeScript Commerce config, it also scaffolds any missing TypeScript build setup. It creates missing `webpack-config.cjs` and root `tsconfig.json` files, installs the required development dependencies, and adds the project typecheck scripts. Generated runtime actions remain JavaScript because they don't need TypeScript. The root tsconfig checks the Commerce config and generated Runtime actions while excluding Admin UI `web-src` (if it exists), which has its own independent tsconfig.
+
+This scaffolding runs during `init` for both new and existing TypeScript Commerce configs. Existing project files are preserved, and only missing setup is added.
 
 After running `init`, you'll need to:
 
@@ -92,7 +98,7 @@ This produces the following files, organized by extension point:
 - `src/commerce-extensibility-1/.generated/actions/app-management/installation.js`: drives the installation flow, including any custom scripts you define
 - `src/commerce-extensibility-1/ext.config.yaml`: extension manifest with the `pre-app-build` hook
 
-Generated application code should import app metadata from `#app.commerce.config`. The alias can be used to import the config's default export, as well as any other symbols exported from your `app.commerce.config.*` file.
+Generated application code should import app metadata from `#app.commerce.config`. The alias points to a generated JavaScript compatibility module for every source config format.
 
 **`commerce/configuration/1`**: Business configuration (generated when `businessConfig` is defined):
 
@@ -104,6 +110,8 @@ Generated application code should import app metadata from `#app.commerce.config
 > [!NOTE]
 > Generated actions import app config through `#app.commerce.config`. When the business config schema contains `dynamicList` fields, no separate `configuration-schema.json` is generated. Generated actions resolve `dynamicList` fields on every request. Any external credentials a factory uses must be declared as `inputs` for each action that resolves the schema (in the corresponding `ext.config.yaml` of each action).
 
+Generated Runtime actions always use `.js`.
+
 **`commerce/backend-ui/2`**: Admin UI registration (generated when `adminUi` is defined):
 
 - `src/commerce-backend-ui-2/ext.config.yaml`: extension manifest with the `pre-app-build` hook and `workerProcess` declarations derived from `runtimeAction` values
@@ -112,7 +120,7 @@ Generated application code should import app metadata from `#app.commerce.config
 > [!NOTE]
 > Generated actions default to the `nodejs:24` runtime. To pin a different runtime, set the `runtime` field on the action in the generated `ext.config.yaml`. Codegen preserves a `runtime` you set there, so it survives regeneration.
 
-4. In your `app.config.yaml`, reference the generated extension configurations. If you have multiple extension points, add each as a new entry:
+1. In your `app.config.yaml`, reference the generated extension configurations. If you have multiple extension points, add each as a new entry:
 
 ```yaml
 extensions:
@@ -599,7 +607,7 @@ export default defineCustomInstallationStep(async (config, context) => {
 
 The `adminUi` field declares Admin UI registrations for the `commerce/backend-ui/2` extension point. Unlike `commerce/backend-ui/1`, which required a dedicated registration action, V2 reads the registration directly from the `app-config` endpoint — no separate registration action is generated. Every field of `adminUi` is optional — configure only the extension points your application needs. When defined, `init` and `generate all` automatically wire up the extension, including the `pre-app-build` hook and the `workerProcess` declarations in `ext.config.yaml`.
 
-View-based features also get a minimal `web-src/` scaffold when the resolved `view` entrypoint does not exist yet. The scaffold uses `.tsx` files when your app config is TypeScript and `.jsx` files otherwise. It imports app metadata from `#app.commerce.config`, so custom Admin UI code should use the same alias instead of importing generated files by path. Currently supported: grid column extensions, mass actions, order view buttons, and menu declarations. For details on each extension point, see the [Admin UI SDK Extension Points documentation](https://developer.adobe.com/commerce/extensibility/admin-ui-sdk/extension-points/).
+View-based features also get a minimal `web-src/` scaffold when the resolved `view` entrypoint does not exist yet. The scaffold uses `.tsx` files when the Commerce config uses a TypeScript extension and `.jsx` files otherwise, independently of Runtime action TypeScript enablement. A TypeScript `web-src/tsconfig.json` checks only the Admin UI source and remains independent from the root config. The scaffold imports app metadata from `#app.commerce.config`, so custom Admin UI code should use the same alias instead of importing generated files by path. Currently supported: grid column extensions, mass actions, order view buttons, and menu declarations. For details on each extension point, see the [Admin UI SDK Extension Points documentation](https://developer.adobe.com/commerce/extensibility/admin-ui-sdk/extension-points/).
 
 ##### Grid Columns
 
@@ -909,9 +917,25 @@ When you run `generate actions`, the CLI automatically:
 
 This ensures your installation action includes the latest script imports and configuration.
 
+Generated installation actions use `defineCustomScriptsLoader` from `@adobe/aio-commerce-lib-app/actions/installation` for contextual types without requiring a separate TypeScript template.
+
+The `#app.commerce.config` package import resolves to a generated JavaScript compatibility module. TypeScript configs are bundled into this module during generation, while JavaScript configs are re-exported. Generated Runtime actions therefore use the same stable import alias regardless of the source config format.
+
 ### Using the Configuration API
 
 The library provides functions for reading, parsing, and validating app configurations. These are primarily used in build scripts and CLI tools.
+
+Use `isTypeScriptConfig` to identify whether a resolved Commerce configuration path uses a supported TypeScript format:
+
+```javascript
+import {
+  isTypeScriptConfig,
+  resolveCommerceAppConfig,
+} from "@adobe/aio-commerce-lib-app/config";
+
+const configPath = await resolveCommerceAppConfig();
+const usesTypeScript = configPath !== null && isTypeScriptConfig(configPath);
+```
 
 #### Reading Configuration in Scripts
 

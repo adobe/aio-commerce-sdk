@@ -14,6 +14,7 @@ import { writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 
 import {
+  appendCommand,
   detectPackageManager,
   getExecCommand,
   getProjectRootDirectory,
@@ -35,8 +36,10 @@ import { run as generateSchemaCommand } from "#commands/generate/schema/main";
 import { prettierFormat, runInstall } from "#commands/utils";
 import {
   getConfigDomains,
+  isTypeScriptConfig,
   parseCommerceAppConfig,
   readCommerceAppConfig,
+  resolveCommerceAppConfig,
   validateCommerceAppConfig,
 } from "#config/index";
 
@@ -60,15 +63,11 @@ export async function ensureCommerceAppConfig(
   formatConfig = true,
   flags?: InitFlags,
 ) {
-  let config: unknown | null = null;
-  try {
-    config = await readCommerceAppConfig(cwd);
-  } catch {
-    // Ignore if not found.
-  }
+  const configFilePath = await resolveCommerceAppConfig(cwd);
 
-  if (config) {
+  if (configFilePath !== null) {
     try {
+      const config = await readCommerceAppConfig(cwd);
       const validatedConfig = validateCommerceAppConfig(config);
       consola.success(
         `${COMMERCE_APP_CONFIG_FILE} found and is valid. Continuing...`,
@@ -76,6 +75,9 @@ export async function ensureCommerceAppConfig(
 
       return {
         config: validatedConfig,
+        configFormat: isTypeScriptConfig(configFilePath)
+          ? ("ts" as const)
+          : ("js" as const),
         domains: getConfigDomains(validatedConfig),
       };
     } catch (error) {
@@ -120,7 +122,11 @@ export async function ensureCommerceAppConfig(
     const createdConfig = await parseCommerceAppConfig(cwd);
     consola.success(`Created ${answers.configFile}`);
 
-    return { config: createdConfig, domains: answers.domains };
+    return {
+      config: createdConfig,
+      configFormat: answers.configFormat,
+      domains: answers.domains,
+    };
   } catch (error) {
     throw new Error(`Failed to create ${answers.configFile}`, {
       cause: error,
@@ -192,9 +198,7 @@ export async function writePostinstallHook(
     return;
   }
 
-  const nextPostinstall = existing
-    ? `${existing} && ${postinstallScript}`
-    : postinstallScript;
+  const nextPostinstall = appendCommand(existing, postinstallScript);
 
   if (existing) {
     consola.warn(

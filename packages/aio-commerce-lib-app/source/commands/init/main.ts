@@ -14,6 +14,10 @@ import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
 import { loadPackageJson } from "@aio-commerce-sdk/scripting-utils/project";
 import { consola } from "consola";
 
+import {
+  scaffoldTypeScriptProject,
+  syncActionsTypecheckScript,
+} from "#commands/typescript";
 import { runInstall } from "#commands/utils";
 
 import {
@@ -54,13 +58,19 @@ export async function run(flags?: InitFlags, extraOptions?: InitExtraOptions) {
   const { execCommand, packageManager } = await ensurePackageJson();
   runInstall(packageManager, REQUIRED_DEPENDENCIES);
 
-  const { config, domains } = await ensureCommerceAppConfig(
+  const configResult = await ensureCommerceAppConfig(
     process.cwd(),
     extraOptions?.formatConfig ?? true,
     flags,
   );
 
+  const { config, domains, configFormat } = configResult;
+  const isTypeScriptProject = configFormat === "ts";
+
   installDependencies(packageManager, domains);
+  if (isTypeScriptProject) {
+    await scaffoldTypeScriptProject(packageManager);
+  }
 
   // Sync the package.json with the app config
   const pkg = await loadPackageJson(process.cwd());
@@ -75,6 +85,10 @@ export async function run(flags?: InitFlags, extraOptions?: InitExtraOptions) {
   });
 
   await pkg.save();
+
+  if (isTypeScriptProject) {
+    await syncActionsTypecheckScript();
+  }
 
   await runGeneration(config, execCommand);
   await ensureAppConfig(domains);
