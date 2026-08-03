@@ -67,6 +67,7 @@ function issueToDisplay<TInput>(
     return `${returnChar} ${issueLine}`;
   });
 
+  // biome-ignore lint/suspicious/noUnnecessaryConditions: Biome can't track that `issues?.map(...)` yields `undefined` when `issues` is undefined; `lines` is genuinely nullable.
   return lines?.join("\n") ?? "";
 }
 

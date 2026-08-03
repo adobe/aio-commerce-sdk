@@ -370,7 +370,7 @@ describe("onboardIoEvents", () => {
     );
 
     expect(result.providerData).toEqual(createdProvider);
-    expect(result.eventsData[0]?.data.metadata).toEqual(createdEventMetadata);
+    expect(result.eventsData[0].data.metadata).toEqual(createdEventMetadata);
     expect(ioEventsClient.createRegistration).toHaveBeenCalledOnce();
   });
 
@@ -421,12 +421,12 @@ describe("onboardIoEvents", () => {
     );
 
     expect(result.providerData).toMatchObject(existingProvider);
-    expect(result.eventsData[0]?.data.metadata).toEqual({
+    expect(result.eventsData[0].data.metadata).toEqual({
       ...existingMetadata,
       sample: null,
     });
 
-    expect(result.eventsData[0]?.data.registrations).toEqual([
+    expect(result.eventsData[0].data.registrations).toEqual([
       existingRegistration,
     ]);
 
