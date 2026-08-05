@@ -66,6 +66,7 @@ import {
   createMockFailedState,
   createMockInProgressState,
   createMockInstallationContext,
+  createMockStepStatus,
   createMockSucceededState,
   createMockValidationResult,
   DEFAULT_INSTALLATION_PARAMS,
@@ -75,6 +76,7 @@ import type { InstallationHooks } from "#management/installation/workflow/hooks"
 import type {
   InProgressInstallationState,
   InstallationState,
+  StepStatus,
 } from "#management/installation/workflow/types";
 import type { CleanupList, UpdatePlan } from "#management/upgrade/types";
 
@@ -781,6 +783,78 @@ describe("installation router — update routes", () => {
       );
       expect(planStore.delete).toHaveBeenCalledWith("current");
       expect(cleanupStore.delete).toHaveBeenCalledWith("current");
+    });
+
+    test("version-only plan: marks the entire step tree succeeded, not just the top-level status", async () => {
+      const plan = seedPlan({
+        diff: diffConfig(minimalValidConfig, minimalValidConfig),
+        targetConfig: minimalValidConfig,
+      });
+
+      // A nested tree with every node still "pending" — proves the fix walks
+      // the tree recursively rather than only setting the top-level status.
+      const step: StepStatus = createMockStepStatus({
+        children: [
+          createMockStepStatus({
+            children: [
+              createMockStepStatus({
+                id: "grandchild-1",
+                name: "grandchild-1",
+                path: ["root", "child-1", "grandchild-1"],
+              }),
+            ],
+            id: "child-1",
+            name: "child-1",
+            path: ["root", "child-1"],
+          }),
+          createMockStepStatus({
+            id: "child-2",
+            name: "child-2",
+            path: ["root", "child-2"],
+          }),
+        ],
+      });
+      const initialState = createMockInProgressState({
+        config: plan.targetConfig,
+        id: "update-1",
+        step,
+      });
+
+      const handler = installationRuntimeAction({
+        appConfig: minimalValidConfig,
+      });
+
+      await handler(
+        createRuntimeActionParams({
+          appData,
+          initialState,
+          method: "post",
+          path: "/update/execution",
+          ...DEFAULT_INSTALLATION_PARAMS,
+        }),
+      );
+
+      // GET /update returns the persisted state verbatim — read it back through
+      // the same path a real consumer would use to render per-step progress.
+      const getResult = await handler(
+        createRuntimeActionParams({ path: "/update" }),
+      );
+
+      expect(getResult).toMatchObject({ type: "success" });
+      const persistedStep =
+        getResult.type === "success"
+          ? (getResult.body as { step: StepStatus }).step
+          : undefined;
+
+      expect(persistedStep).toBeDefined();
+
+      function collectStatuses(node: StepStatus): string[] {
+        return [node.status, ...node.children.flatMap(collectStatuses)];
+      }
+
+      const statuses = collectStatuses(persistedStep as StepStatus);
+      expect(statuses).toHaveLength(4); // root + child-1 + grandchild-1 + child-2
+      expect(statuses.every((status) => status === "succeeded")).toBe(true);
     });
 
     test("version-only plan with pending cleanup entries still runs runUpdate (not a pure no-op)", async () => {

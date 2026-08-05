@@ -67,6 +67,7 @@ import type {
   FailedInstallationState,
   InProgressInstallationState,
   InstallationState,
+  StepStatus,
   SucceededInstallationState,
 } from "#management/installation/workflow/types";
 import type { UpdatePlan } from "#management/upgrade/types";
@@ -179,6 +180,21 @@ function buildInstallationContext(
 /** True when a stored workflow state represents an operation still running. */
 function isBusyState(state: InstallationState | null): boolean {
   return state !== null && isInProgressState(state);
+}
+
+/**
+ * Recursively marks every step in the tree as succeeded. A top-level
+ * `"succeeded"` status implies every step succeeded everywhere else in this
+ * workflow (the real execution path sets each step's status as it completes),
+ * so a synthesized succeeded state (e.g. the version-only no-op) must uphold
+ * the same invariant rather than leaving descendants at their initial status.
+ */
+function markStepTreeSucceeded(step: StepStatus): StepStatus {
+  return {
+    ...step,
+    children: step.children.map(markStepTreeSucceeded),
+    status: "succeeded",
+  };
 }
 
 /**
@@ -748,6 +764,7 @@ router.post("/update/execution", {
         ...initialState,
         completedAt: new Date().toISOString(),
         status: "succeeded",
+        step: markStepTreeSucceeded(initialState.step),
       };
     } else {
       result = await runUpdate({
