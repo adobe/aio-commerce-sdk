@@ -95,7 +95,11 @@ router.get("/", {
     const openApiSpecUrl = `${getServerUrl()}/app-config/openapi.json?ck=${getOpenApiCacheKey(domains)}`;
 
     return ok({
-      body: { ...config, openApiSpecUrl },
+      body: {
+        ...config,
+        deploymentVersion: process.env.__OW_ACTION_VERSION || undefined,
+        openApiSpecUrl,
+      },
     });
   },
   query: v.object({ commerceEnv: v.optional(CommerceEnvSchema) }),

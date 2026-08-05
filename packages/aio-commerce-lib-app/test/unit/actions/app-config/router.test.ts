@@ -162,6 +162,27 @@ describe("appConfigRuntimeAction", () => {
       });
     });
 
+    test("includes deploymentVersion from __OW_ACTION_VERSION in the response body", async () => {
+      vi.stubEnv("__OW_ACTION_VERSION", "42");
+      const handler = appConfigRuntimeAction({ appConfig: minimalValidConfig });
+      const result = await handler(createRuntimeActionParams());
+
+      expect(result).toMatchObject({
+        body: { deploymentVersion: "42" },
+        type: "success",
+      });
+    });
+
+    test("omits deploymentVersion when __OW_ACTION_VERSION is unset", async () => {
+      vi.stubEnv("__OW_ACTION_VERSION", "");
+      const handler = appConfigRuntimeAction({ appConfig: minimalValidConfig });
+      const result = await handler(createRuntimeActionParams());
+
+      expect(
+        (result as { body: Record<string, unknown> }).body.deploymentVersion,
+      ).toBeUndefined();
+    });
+
     test("returns the config unchanged when adminUi is absent", async () => {
       const handler = appConfigRuntimeAction({
         appConfig: minimalValidConfig,
