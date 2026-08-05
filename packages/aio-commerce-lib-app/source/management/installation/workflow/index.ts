@@ -16,6 +16,7 @@ export {
   createInitialState,
   createRetryState,
   executeUninstallWorkflow,
+  executeUpdateWorkflow,
   executeWorkflow,
 } from "./runner";
 export {

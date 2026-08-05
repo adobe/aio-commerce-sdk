@@ -18,11 +18,13 @@ import {
   createInitialState,
   createRetryState,
   executeUninstallWorkflow,
+  executeUpdateWorkflow,
   executeWorkflow,
 } from "./workflow";
 import { validateStepTree } from "./workflow/validation";
 
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
+import type { UpdatePlan } from "#management/upgrade/types";
 import type {
   FailedInstallationState,
   InProgressInstallationState,
@@ -104,6 +106,83 @@ export async function runInstallation(
   const retryState = createRetryState(firstResult);
   const retryResult = await executeWorkflow({
     config,
+    hooks: hooks && {
+      ...hooks,
+      onInstallationFailure: (state) =>
+        hooks.onInstallationFailure?.({
+          ...state,
+          metadata: { isRetry: true },
+        } as InstallationState),
+      onInstallationSuccess: (state) =>
+        hooks.onInstallationSuccess?.({
+          ...state,
+          metadata: { isRetry: true },
+        } as InstallationState),
+    },
+    initialState: retryState,
+    installationContext,
+    rootStep,
+  });
+
+  return { ...retryResult, metadata: { isRetry: true } };
+}
+
+/** Options for running an update. */
+export type RunUpdateOptions = {
+  /** Shared installation context (params, logger, etc.). */
+  installationContext: InstallationContext;
+
+  /** The app configuration. */
+  config: CommerceAppConfigOutputModel;
+
+  /** The initial installation state (with all steps pending). */
+  initialState: InProgressInstallationState;
+
+  /** The stored update plan, executed verbatim (spec §8.4). */
+  plan: UpdatePlan;
+
+  /** Lifecycle hooks for status change notifications. */
+  hooks?: InstallationHooks;
+};
+
+/**
+ * Runs the full update workflow against the plan's target config. Returns the
+ * final state (never throws).
+ *
+ * Retries once on failure. `onInstallationFailure` only fires if both attempts fail;
+ * `isRetry: true` is set on the result when the retry succeeds.
+ */
+export async function runUpdate(
+  options: RunUpdateOptions,
+): Promise<SucceededInstallationState | FailedInstallationState> {
+  const { installationContext, initialState, plan, hooks } = options;
+  const rootStep = createRootInstallationStep(plan.targetConfig);
+  const firstResult = await executeUpdateWorkflow({
+    config: plan.targetConfig,
+    diff: plan.diff,
+    hooks: {
+      ...hooks,
+      onInstallationFailure: undefined,
+      onStepFailure: undefined,
+    },
+    initialState,
+    installationContext,
+    rootStep,
+  });
+
+  if (firstResult.status === "succeeded") {
+    return firstResult;
+  }
+
+  const { error } = firstResult;
+  installationContext.logger.warn(
+    `Update attempt 1 failed: step "${error.path.join(".")}", key "${error.key}"${error.message ? `, message "${error.message}"` : ""}. Retrying once.`,
+  );
+
+  const retryState = createRetryState(firstResult);
+  const retryResult = await executeUpdateWorkflow({
+    config: plan.targetConfig,
+    diff: plan.diff,
     hooks: hooks && {
       ...hooks,
       onInstallationFailure: (state) =>
