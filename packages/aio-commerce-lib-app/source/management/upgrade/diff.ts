@@ -24,8 +24,10 @@ import {
   EXTERNAL_PROVIDER_TYPE,
   getIoEventCode,
   getNamespacedEvent,
+  getProviderKey,
   groupEventsByRuntimeActions,
 } from "#management/installation/events/utils";
+import { getWebhookIdentity } from "#management/installation/webhooks/helpers";
 
 import type { EventProviderType } from "@adobe/aio-commerce-lib-events/io-events";
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
@@ -177,14 +179,6 @@ function collectEventSources(
   return [...commerceSources, ...externalSources];
 }
 
-/**
- * The provider's own identity: its explicit `key`, or its label slugified — the same
- * fallback `generateInstanceId` uses when building the I/O Events `instance_id`.
- */
-function getProviderKey(provider: EventProvider): string {
-  return provider.key ?? provider.label.toLowerCase().replace(/\s+/g, "-");
-}
-
 /** Identity: the namespaced Commerce event name (matches the Commerce subscription `name`). */
 function collectCommerceSubs(
   config: CommerceAppConfigOutputModel,
@@ -224,15 +218,17 @@ function collectWebhooks(config: CommerceAppConfigOutputModel): ResourceMap {
   for (const entry of config.webhooks) {
     const { webhook, ...entryRest } = entry;
     const {
-      webhook_method: method,
-      webhook_type: type,
-      batch_name: batchName,
-      hook_name: hookName,
+      webhook_method: _method,
+      webhook_type: _type,
+      batch_name: _batchName,
+      hook_name: _hookName,
       ...webhookRest
     } = webhook;
 
-    const identity = `${method}:${type}:${batchName}:${hookName}`;
-    map.set(identity, { ...entryRest, webhook: webhookRest });
+    map.set(getWebhookIdentity(webhook), {
+      ...entryRest,
+      webhook: webhookRest,
+    });
   }
 
   return map;

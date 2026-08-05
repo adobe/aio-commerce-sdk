@@ -105,7 +105,7 @@ async function createIoEventProvider(params: CreateIoProviderParams) {
  * @param params - Parameters needed to create or get the provider.
  * @param existingData - Existing I/O Events data.
  */
-async function createOrGetIoEventProvider(
+export async function createOrGetIoEventProvider(
   params: CreateIoProviderParams,
   existingData: IoEventProvider[],
 ) {
@@ -185,7 +185,7 @@ async function createIoEventProviderEventMetadata(
  * @param params - The parameters necessary to create or get the event metadata.
  * @param existingData - Existing I/O Events metadata for the provider.
  */
-async function createOrGetIoProviderEventMetadata(
+export async function createOrGetIoProviderEventMetadata(
   params: CreateIoProviderEventsMetadataParams,
   existingData: IoEventMetadata[],
 ) {
@@ -275,7 +275,7 @@ async function createIoEventRegistration(params: CreateRegistrationParams) {
  * @param params - Parameters needed to create or get the registration.
  * @param existingData - Existing I/O Events data.
  */
-async function createOrGetIoEventRegistration(
+export async function createOrGetIoEventRegistration(
   params: CreateRegistrationParams,
   registrations: IoEventRegistration[],
 ) {
@@ -487,7 +487,7 @@ async function createCommerceEventSubscription(
  * @param params - Parameters needed to create or get the subscription.
  * @param existingData - Map of existing Commerce subscriptions keyed by event name.
  */
-async function createOrGetCommerceEventSubscription(
+export async function createOrGetCommerceEventSubscription(
   params: CreateCommerceEventSubscriptionParams,
   existingData: Map<string, CommerceEventSubscription>,
 ) {
@@ -653,7 +653,7 @@ export async function onboardCommerceEventing(
  * Registration names are reconstructed deterministically using the same logic as during installation.
  * Errors are caught and logged so that uninstall remains best-effort.
  */
-async function deleteIoEventRegistrations(
+export async function deleteIoEventRegistrations(
   providerData: IoEventProviderWithMetadata,
   provider: EventProvider,
   events: AppEvent[],
@@ -725,7 +725,7 @@ async function deleteIoEventRegistrations(
  * Deletes all event metadata entries from the given I/O Events provider.
  * Errors are caught and logged so that uninstall remains best-effort.
  */
-async function deleteIoEventMetadata(
+export async function deleteIoEventMetadata(
   providerData: IoEventProviderWithMetadata,
   provider: EventProvider,
   context: EventsExecutionContext,
@@ -778,7 +778,7 @@ async function deleteIoEventMetadata(
  * Deletes a single I/O Events provider.
  * Errors are caught and logged so that uninstall remains best-effort.
  */
-async function deleteIoEventProvider(
+export async function deleteIoEventProvider(
   providerData: IoEventProviderWithMetadata,
   provider: EventProvider,
   context: EventsExecutionContext,
@@ -865,7 +865,7 @@ export async function offboardIoEvents(
  * Subscriptions are matched by their namespaced name, built the same way as during installation.
  * Errors are caught and logged so that uninstall remains best-effort.
  */
-async function deleteCommerceEventSubscriptions(
+export async function deleteCommerceEventSubscriptions(
   events: AppEvent[],
   metadata: ApplicationMetadata,
   provider: EventProvider,

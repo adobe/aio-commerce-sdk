@@ -23,6 +23,7 @@ import type {
 } from "@adobe/aio-commerce-lib-webhooks/api";
 import type {
   WebhookDefinition,
+  WebhookEntry,
   WebhooksConfig,
 } from "#config/schema/webhooks";
 import type { ValidationIssue } from "#management/installation/workflow/step";
@@ -141,6 +142,42 @@ export async function validateWebhookConflicts(
 }
 
 /**
+ * Resolves a webhook entry's raw config shape into the fully-qualified params sent to
+ * Commerce: batch/hook names get the app's ID prefix, the URL is resolved (runtime action
+ * or literal), and `developer_console_oauth` is attached for Adobe-auth runtime actions.
+ *
+ * Shared by {@link createWebhookSubscriptions} (install) and the `commerceWebhook`
+ * reconcile handler, so both build the exact same subscribe payload for a given entry.
+ *
+ * @param entry - The webhook entry from the app config.
+ * @param idPrefix - The app's webhook ID prefix (see {@link buildWebhookIdPrefix}).
+ * @param params - The runtime action params (for resolving developer console OAuth credentials).
+ */
+export function resolveWebhookSubscribeParams(
+  entry: WebhookEntry,
+  idPrefix: string,
+  params: Record<string, unknown>,
+): WebhookSubscribeParams {
+  const { webhook } = entry;
+  const resolvedUrl =
+    "runtimeAction" in entry
+      ? generateUrlForRuntimeAction(entry.runtimeAction)
+      : entry.webhook.url;
+
+  return {
+    ...webhook,
+    batch_name: `${idPrefix}${webhook.batch_name}`,
+    hook_name: `${idPrefix}${webhook.hook_name}`,
+    url: resolvedUrl,
+    ...("runtimeAction" in entry &&
+      entry.requireAdobeAuth !== false && {
+        developer_console_oauth:
+          resolveDeveloperConsoleOAuthCredentials(params),
+      }),
+  };
+}
+
+/**
  * Subscribes each webhook from the app config to Adobe Commerce.
  * Throws on the first failure, aborting any remaining subscriptions.
  *
@@ -172,26 +209,15 @@ export async function createWebhookSubscriptions(
 
   for (const entry of webhooks) {
     const { webhook } = entry;
-    const resolvedUrl =
-      "runtimeAction" in entry
-        ? generateUrlForRuntimeAction(entry.runtimeAction)
-        : entry.webhook.url;
+    const resolvedWebhook = resolveWebhookSubscribeParams(
+      entry,
+      idPrefix,
+      params,
+    );
 
     logger.debug(
       `Subscribing webhook "${getWebhookName(webhook)}" (runtimeAction: ${"runtimeAction" in entry ? entry.runtimeAction : "none"})`,
     );
-
-    const resolvedWebhook = {
-      ...webhook,
-      batch_name: `${idPrefix}${webhook.batch_name}`,
-      hook_name: `${idPrefix}${webhook.hook_name}`,
-      url: resolvedUrl,
-      ...("runtimeAction" in entry &&
-        entry.requireAdobeAuth !== false && {
-          developer_console_oauth:
-            resolveDeveloperConsoleOAuthCredentials(params),
-        }),
-    };
 
     subscribedWebhooks.push(
       // biome-ignore lint/performance/noAwaitInLoops: subscriptions must be created sequentially so a failure aborts remaining subscriptions (see function docstring)
@@ -381,6 +407,18 @@ export function resolveDeveloperConsoleOAuthCredentials(
 }
 
 /**
+ * Builds the diff engine's stable identity string for a webhook: `` `${webhook_method}:${webhook_type}:${batch_name}:${hook_name}` ``,
+ * using the *raw* (unprefixed) config values. This must stay in sync with
+ * `collectWebhooks` in `#management/upgrade/diff`, which is the authoritative
+ * producer of this identity format.
+ *
+ * @param identity - The four identity fields of a webhook (raw, unprefixed).
+ */
+export function getWebhookIdentity(identity: WebhookIdentity): string {
+  return `${identity.webhook_method}:${identity.webhook_type}:${identity.batch_name}:${identity.hook_name}`;
+}
+
+/**
  * Returns true when a webhook with the given four-part identity exists in the list.
  *
  * The identity check uses: webhook_method, webhook_type, batch_name, hook_name.
@@ -388,7 +426,7 @@ export function resolveDeveloperConsoleOAuthCredentials(
  * `.magento` segment from plugin webhook methods on storage
  * (e.g. `plugin.magento.foo` and `plugin.foo` are treated as the same method).
  */
-function isWebhookInList(
+export function isWebhookInList(
   existing: CommerceWebhook[],
   candidate: WebhookIdentity,
 ): boolean {

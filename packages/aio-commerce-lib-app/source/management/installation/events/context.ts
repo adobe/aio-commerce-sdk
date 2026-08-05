@@ -34,6 +34,7 @@ import {
   deleteRegistration,
   getAllEventProviders,
   getAllRegistrations,
+  updateRegistration,
 } from "@adobe/aio-commerce-lib-events/io-events";
 
 import type { RuntimeActionParams } from "@adobe/aio-commerce-lib-core/params";
@@ -88,6 +89,7 @@ function createIoEventsApiClient(params: RuntimeActionParams) {
     deleteRegistration,
     getAllEventProviders,
     getAllRegistrations,
+    updateRegistration,
   });
 }
 

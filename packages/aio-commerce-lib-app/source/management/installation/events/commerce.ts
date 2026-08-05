@@ -26,6 +26,7 @@ import {
   onboardCommerceEventing,
   onboardIoEvents,
 } from "./helpers";
+import { reconcileCommerceSubscriptions, reconcileIoEvents } from "./reconcile";
 import {
   COMMERCE_PROVIDER_TYPE,
   EVENTS_STORAGE_KEY,
@@ -38,7 +39,9 @@ import {
 
 import type { CommerceEventsConfig } from "#config/schema/eventing";
 import type { InferStepOutput } from "#management/installation/workflow/step";
+import type { ConfigDiff } from "#management/upgrade/types";
 import type { EventsExecutionContext } from "./context";
+import type { EventSourceForReconcile } from "./reconcile";
 import type { StoredEventsData } from "./types";
 
 /** The output data of the Commerce Eventing step (auto-inferred). */
@@ -58,10 +61,47 @@ export const commerceEventsStep = defineLeafStep({
     },
   },
   name: "commerce",
+  reconcile: reconcileCommerceEvents,
   uninstall: removeCommerceEvents,
 
   when: hasCommerceEvents,
 });
+
+/**
+ * Applies the diff for Commerce-sourced I/O Events (provider/registration/metadata) and
+ * Commerce event subscriptions. See {@link reconcileIoEvents} and
+ * {@link reconcileCommerceSubscriptions} for the per-domain `added`/`removed`/`changed` rules.
+ *
+ * @param config - The target configuration, with commerce events.
+ * @param diff - The computed diff between the installed snapshot and the target config.
+ * @param context - The execution context for the events installation.
+ */
+async function reconcileCommerceEvents(
+  config: CommerceEventsConfig,
+  diff: ConfigDiff,
+  context: EventsExecutionContext,
+  // The install output shape isn't meaningful for a reconcile pass (it only reflects the
+  // resources touched by *this* update, not a full re-onboard); returning an empty array
+  // keeps the output type aligned with `install` without fabricating partial step data.
+): Promise<Awaited<ReturnType<typeof createCommerceEvents>>> {
+  const { logger } = context;
+  logger.debug("Reconciling Commerce Events with diff:", diff);
+
+  const sources: EventSourceForReconcile[] = config.eventing.commerce;
+
+  await reconcileIoEvents(
+    sources,
+    config.metadata,
+    COMMERCE_PROVIDER_TYPE,
+    diff,
+    context,
+  );
+
+  await reconcileCommerceSubscriptions(sources, config.metadata, diff, context);
+
+  logger.debug("Completed Commerce Events reconcile step.");
+  return [];
+}
 
 /**
  * Creates all needed entities for Eventing to work with Commerce and Adobe I/O Events.

@@ -90,6 +90,18 @@ export async function removeStoredEventProviders(
 }
 
 /**
+ * The provider's own identity: its explicit `key`, or its label slugified — the same
+ * fallback {@link generateInstanceId} uses when building the I/O Events `instance_id`.
+ * Shared between the diff engine (`#management/upgrade/diff`) and the reconcile handlers
+ * so both compute the same identity for a given provider.
+ *
+ * @param provider - The event provider to compute the identity for.
+ */
+export function getProviderKey(provider: EventProvider): string {
+  return provider.key ?? provider.label.toLowerCase().replace(/\s+/g, "-");
+}
+
+/**
  * Generates a unique instance ID for I/O Events for this app deployment.
  * Uses `{metadata.id (first 100 chars)}-{providerKeyOrSlug}-{workspaceId}` (lowercased).
  *

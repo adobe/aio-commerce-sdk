@@ -20,6 +20,7 @@ import { hasExternalEvents } from "#config/schema/eventing";
 import { defineLeafStep } from "#management/installation/workflow/step";
 
 import { offboardIoEvents, onboardIoEvents } from "./helpers";
+import { reconcileIoEvents } from "./reconcile";
 import {
   EVENTS_STORAGE_KEY,
   EXTERNAL_PROVIDER_TYPE,
@@ -29,7 +30,9 @@ import {
 
 import type { ExternalEventsConfig } from "#config/schema/eventing";
 import type { InferStepOutput } from "#management/installation/workflow/step";
+import type { ConfigDiff } from "#management/upgrade/types";
 import type { EventsExecutionContext } from "./context";
+import type { EventSourceForReconcile } from "./reconcile";
 import type { StoredEventsData } from "./types";
 
 /** The output data of the External Eventing step (auto-inferred). */
@@ -49,10 +52,42 @@ export const externalEventsStep = defineLeafStep({
     },
   },
   name: "external",
+  reconcile: reconcileExternalEvents,
   uninstall: removeExternalEvents,
 
   when: hasExternalEvents,
 });
+
+/**
+ * Applies the diff for externally-sourced I/O Events (provider/registration/metadata).
+ * See {@link reconcileIoEvents} for the per-domain `added`/`removed`/`changed` rules.
+ *
+ * @param config - The target configuration, with external events.
+ * @param diff - The computed diff between the installed snapshot and the target config.
+ * @param context - The execution context for the events installation.
+ */
+async function reconcileExternalEvents(
+  config: ExternalEventsConfig,
+  diff: ConfigDiff,
+  context: EventsExecutionContext,
+  // See the matching comment in `commerce.ts`'s `reconcileCommerceEvents`: an empty array
+  // keeps the output type aligned with `install` without fabricating partial step data.
+): Promise<Awaited<ReturnType<typeof createExternalEvents>>> {
+  const { logger } = context;
+  logger.debug("Reconciling External Events with diff:", diff);
+
+  const sources: EventSourceForReconcile[] = config.eventing.external;
+  await reconcileIoEvents(
+    sources,
+    config.metadata,
+    EXTERNAL_PROVIDER_TYPE,
+    diff,
+    context,
+  );
+
+  logger.debug("Completed External Events reconcile step.");
+  return [];
+}
 
 /**
  * Creates all needed entities for External Events to work with Adobe I/O Events.
