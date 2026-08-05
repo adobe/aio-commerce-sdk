@@ -20,6 +20,7 @@ export {
 } from "./diff";
 export { createEmStatusClient } from "./em-status-client";
 export { UnsupportedReconcileChangeError } from "./errors";
+export { buildAutoUpdatePlan, classifyAutoUpdate } from "./self-update";
 
 export type {
   EmStatusClient,
@@ -28,6 +29,7 @@ export type {
   UpdateStatusError,
   WriteUpdateStatusInput,
 } from "./em-status-client";
+export type { AutoUpdateDecision } from "./self-update";
 export type {
   CleanupEntry,
   CleanupList,
