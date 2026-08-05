@@ -21,6 +21,7 @@ import { describe, expect, test, vi } from "vitest";
 import {
   APP_CONFIG_FILE,
   BACKEND_UI_V2_EXTENSION_POINT_ID,
+  COMMERCE_APP_CONFIG_FILE,
   CONFIGURATION_EXTENSION_POINT_ID,
   EXTENSIBILITY_EXTENSION_POINT_ID,
   INSTALL_YAML_FILE,
@@ -68,16 +69,18 @@ describe("commands/init/lib", () => {
         async (tempDir) => {
           const result = await ensureCommerceAppConfig(tempDir);
           expect(result.config).toEqual(minimalValidConfig);
+          expect(result.configFormat).toBe("js");
         },
       );
     });
 
-    test("returns existing valid ESM config without creating a new one", async () => {
+    test("returns existing valid ESM TypeScript config without creating a new one", async () => {
       await withTempFiles(
         makeProjectFiles(minimalValidConfig, "esm"),
         async (tempDir) => {
           const result = await ensureCommerceAppConfig(tempDir);
           expect(result.config).toEqual(minimalValidConfig);
+          expect(result.configFormat).toBe("ts");
         },
       );
     });
@@ -118,6 +121,7 @@ describe("commands/init/lib", () => {
 
         expect(result.config.metadata.id).toBe("ts-app");
         expect(result.config.metadata.displayName).toBe("TS App");
+        expect(result.configFormat).toBe("ts");
 
         const content = await readFile(
           join(tempDir, "app.commerce.config.ts"),
@@ -163,6 +167,31 @@ describe("commands/init/lib", () => {
       await withTempFiles(INVALID_PROJECT, async (tempDir) => {
         await expect(ensureCommerceAppConfig(tempDir)).rejects.toThrow();
       });
+    });
+
+    test("preserves an existing config that cannot be loaded", async () => {
+      const configPath = "app.commerce.config.ts";
+      const configContent = "export default {";
+      const options: InitFlags = {
+        appName: "Replacement App",
+        configFormat: "ts",
+        domains: [],
+      };
+
+      await withTempFiles(
+        {
+          ...EMPTY_PROJECT,
+          [configPath]: configContent,
+        },
+        async (tempDir) => {
+          await expect(
+            ensureCommerceAppConfig(tempDir, false, options),
+          ).rejects.toThrow(`${COMMERCE_APP_CONFIG_FILE} is invalid`);
+          await expect(
+            readFile(join(tempDir, configPath), "utf-8"),
+          ).resolves.toBe(configContent);
+        },
+      );
     });
   });
 
