@@ -183,7 +183,7 @@ For an App Management app, create collections and indexes with a **custom instal
 Author the step with `defineCustomInstallationStep` (an `install` handler plus an optional `uninstall`). Inside it, resolve the IMS auth params from **`context.params`** — _not_ `config` — then follow the same init → connect → `close` lifecycle as Step 5, and call `createIndex` **on the collection object**:
 
 ```ts
-// ./scripts/setup-database.ts — referenced from config as ./scripts/setup-database.js
+// ./scripts/setup-database.ts — referenced from config as ./scripts/setup-database.ts
 import { defineCustomInstallationStep } from "@adobe/aio-commerce-lib-app/management";
 import {
   getImsAuthProvider,
@@ -217,16 +217,16 @@ export default defineCustomInstallationStep({
 });
 ```
 
-> **Author the install script as an ES module with `export default` — never `module.exports`.** The installation action loads each step via `import * as step from "<script>"` and reads `step.default`, so the script must default-export the `defineCustomInstallationStep(...)` result. CommonJS breaks this: `module.exports.default` surfaces as `step.default.default` and validation fails. The `script` path must end in `.js`; if you author in TypeScript, compile it and keep the emitted `.js` an ES module.
+> **Author the install script as an ES module with `export default` — never `module.exports`.** The installation action loads each step via `import * as step from "<script>"` and reads `step.default`, so the script must default-export the `defineCustomInstallationStep(...)` result. CommonJS breaks this: `module.exports.default` surfaces as `step.default.default` and validation fails. The `script` path must end in `.js` or `.ts` — author it directly in TypeScript, no separate compile step needed.
 
-Register the step in `app.commerce.config.ts` under `installation.customInstallationSteps`. The `script` path points at the compiled `.js` output:
+Register the step in `app.commerce.config.ts` under `installation.customInstallationSteps`. The `script` path points directly at your `.ts` file:
 
 ```ts
 // app.commerce.config.ts
 installation: {
   customInstallationSteps: [
     {
-      script: "./scripts/setup-database.js", // compiled output of setup-database.ts
+      script: "./scripts/setup-database.ts",
       name: "Set up held-orders collection",
       description: "Creates the held_orders collection and a unique index on order_id",
     },
@@ -234,11 +234,11 @@ installation: {
 },
 ```
 
-| Field         | Constraint                                                                                                                             |
-| ------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| `script`      | Path relative to the project root; must be an ES module (`export default`) ending in `.js` (compile from TS if you author it that way) |
-| `name`        | Non-empty string, ≤ 255 characters; **unique** across all installation steps                                                           |
-| `description` | Non-empty string, ≤ 255 characters                                                                                                     |
+| Field         | Constraint                                                                                          |
+| ------------- | --------------------------------------------------------------------------------------------------- |
+| `script`      | Path relative to the project root; must be an ES module (`export default`) ending in `.js` or `.ts` |
+| `name`        | Non-empty string, ≤ 255 characters; **unique** across all installation steps                        |
+| `description` | Non-empty string, ≤ 255 characters                                                                  |
 
 See [assets/setup-database.ts](assets/setup-database.ts) for the full annotated install/uninstall reference.
 

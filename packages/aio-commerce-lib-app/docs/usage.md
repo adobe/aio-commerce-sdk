@@ -493,9 +493,9 @@ installation: {
 
 ###### Configuration Fields:
 
-- **script**: Path to the `.js` script file **relative to your project root**. For example:
+- **script**: Path to the `.js` or `.ts` script file **relative to your project root**. For example:
   - `"./scripts/setup.js"` - Script in a `scripts` folder at project root
-  - `"./src/installation/configure.js"` - Script in a nested directory
+  - `"./src/installation/configure.ts"` - Script in a nested directory
   - `"./setup.js"` - Script at project root
 
   The generation process will automatically resolve these paths to the correct relative imports in the generated installation action.
@@ -920,6 +920,15 @@ This ensures your installation action includes the latest script imports and con
 Generated installation actions use `defineCustomScriptsLoader` from `@adobe/aio-commerce-lib-app/actions/installation` for contextual types without requiring a separate TypeScript template.
 
 The `#app.commerce.config` package import resolves to a generated JavaScript compatibility module. TypeScript configs are bundled into this module during generation, while JavaScript configs are re-exported. Generated Runtime actions therefore use the same stable import alias regardless of the source config format.
+
+###### Migrating an Existing Custom Installation Script to TypeScript
+
+Custom installation scripts can be `.ts` files. There's no automated conversion for existing scripts — `init` and the `typescript` command only scaffold the TypeScript build setup, they don't rewrite your script files. To migrate one manually:
+
+1. Rename the script file's extension from `.js` to `.ts` (e.g., `scripts/setup.js` → `scripts/setup.ts`).
+2. Update the corresponding `script` path in `installation.customInstallationSteps` in your `app.commerce.config.*` to point to the renamed file.
+3. Add type annotations as needed — `defineCustomInstallationStep` is generic and infers types from your Commerce config, so this is optional.
+4. Run `generate actions` again to regenerate the installation action with the updated import.
 
 ### Using the Configuration API
 
