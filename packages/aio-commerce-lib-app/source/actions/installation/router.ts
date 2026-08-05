@@ -37,6 +37,12 @@ import {
   runUninstallation,
   runValidation,
 } from "#management/index";
+import { diffConfig } from "#management/upgrade/diff";
+import {
+  createPlanStore,
+  generatePlanId,
+  PLAN_KEY,
+} from "#management/upgrade/plan-store";
 
 import { InstallationRequestBodySchema } from "./schema";
 
@@ -52,6 +58,7 @@ import type {
   InProgressInstallationState,
   InstallationState,
 } from "#management/installation/workflow/types";
+import type { UpdatePlan } from "#management/upgrade/types";
 
 // Action name for async invocation
 const DEFAULT_ACTION_NAME = "app-management/installation";
@@ -104,6 +111,11 @@ function createInstallationStore() {
 /** Creates the uninstallation state store. */
 function createUninstallationStore() {
   return createWorkflowStore("uninstallation");
+}
+
+/** Creates the update workflow state store. */
+function createUpdateStore() {
+  return createWorkflowStore("update");
 }
 
 /** Returns the storage key used to store the current installation ID. */
@@ -215,6 +227,8 @@ function createInstallationHooks(
  * - POST /                           Start installation (creates plan, invokes execution async)
  * - POST /execution                  Execute installation (internal, called async)
  * - POST /validation                 Pre-installation validation
+ * - POST /update/preview             Preview an update plan (computes diff, stores plan)
+ * - GET /update                      Get current update workflow status
  * - POST /uninstallation             Start uninstallation (creates plan, invokes execution async)
  * - GET /uninstallation              Get current uninstallation status
  * - POST /uninstallation/execution   Execute uninstallation (internal, called async)
@@ -432,6 +446,100 @@ router.post("/validation", {
     );
 
     return ok({ body: result });
+  },
+});
+
+/**
+ * POST /update/preview - Preview an update plan
+ *
+ * Computes the diff between the recorded installation snapshot and the
+ * target config, runs validation against the target config, and stores the
+ * resulting plan (overwriting any prior pending plan). Synchronous and does
+ * not touch any external (Commerce/IO Events) resources — POST /update
+ * (Task 9) is what consumes the stored plan and actually applies it.
+ *
+ * Flow:
+ * 1. Read the installed snapshot config via getInstallationSnapshot()
+ * 2. If none recorded: return 409 Conflict (code: "no-baseline")
+ * 3. Read the target config from rawParams.appConfig
+ * 4. Compute diffConfig(oldConfig, newConfig)
+ * 5. Run validation against the target config
+ * 6. Store the plan, overwriting any prior pending plan
+ * 7. Return 200 { planId, diff, validation }
+ */
+router.post("/update/preview", {
+  body: InstallationRequestBodySchema,
+
+  handler: async (req, { logger, rawParams }) => {
+    logger.debug("Previewing update plan...");
+
+    const installationSnapshot = await getInstallationSnapshot();
+    const oldConfig = installationSnapshot?.config;
+
+    if (!oldConfig) {
+      return conflict({
+        body: {
+          code: "no-baseline",
+          message:
+            "No installed snapshot to update from. Install the app before previewing an update.",
+        },
+      });
+    }
+
+    const rawAppConfig = rawParams.appConfig;
+    if (!rawAppConfig) {
+      return internalServerError(
+        "The app config is missing. Does the action receive it as a parameter?",
+      );
+    }
+
+    const newConfig = validateCommerceAppConfig(rawAppConfig);
+    const diff = diffConfig(oldConfig, newConfig);
+
+    const { appData, ...params } = buildWorkflowParams(req.body, rawParams);
+    const validationContext: ValidationContext = {
+      appData,
+      logger,
+      params,
+    };
+
+    const validation = await runValidation({
+      config: newConfig,
+      validationContext,
+    });
+
+    const planId = generatePlanId();
+    const plan: UpdatePlan = {
+      createdAt: new Date().toISOString(),
+      // Stamp with the installation action's own version (spec §8.4 staleness
+      // caveat), not the app-config action's value.
+      deploymentVersion: process.env.__OW_ACTION_VERSION ?? "",
+      diff,
+      planId,
+      targetConfig: newConfig,
+    };
+
+    const planStore = await createPlanStore();
+    await planStore.put(PLAN_KEY, plan);
+
+    logger.debug(
+      `Stored update plan ${planId} (${diff.changes.length} change(s))`,
+    );
+
+    return ok({ body: { diff, planId, validation } });
+  },
+});
+
+/**
+ * GET /update - Get current update workflow status
+ *
+ * Returns 200 with state if an update has been started, 204 otherwise.
+ */
+router.get("/update", {
+  handler: async (_req, { logger }) => {
+    logger.debug("Getting update execution status...");
+    const store = await createUpdateStore();
+    return readStateFromStore(store, (msg) => logger.debug(msg));
   },
 });
 
