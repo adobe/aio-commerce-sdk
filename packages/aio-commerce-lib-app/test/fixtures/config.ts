@@ -1,17 +1,16 @@
 import { schemaWithDynamicListOptions } from "#test/fixtures/business-config";
 
 import type { CommerceEnv } from "@adobe/aio-commerce-lib-core/commerce";
-import type { ApplicationMetadata } from "#config/index";
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 
-/** Base metadata for test configs. */
+/** Base metadata for test configs (typed as parsed/output model with defaults applied). */
 export const mockMetadata = {
   description: "A test application",
   displayName: "Test App",
   id: "test-app",
   updateType: "manual",
   version: "1.0.0",
-} satisfies ApplicationMetadata;
+} satisfies CommerceAppConfigOutputModel["metadata"];
 
 /** Business configuration part */
 const businessConfigPart = {
@@ -189,8 +188,8 @@ export const fullConfig = {
 
 export function createMockMetadata(
   id: string,
-  overrides: Partial<ApplicationMetadata> = {},
-): ApplicationMetadata {
+  overrides: Partial<CommerceAppConfigOutputModel["metadata"]> = {},
+): CommerceAppConfigOutputModel["metadata"] {
   return {
     ...mockMetadata,
     id,

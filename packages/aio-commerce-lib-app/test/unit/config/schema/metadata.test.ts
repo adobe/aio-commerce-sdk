@@ -32,7 +32,9 @@ describe("metadata schema helpers", () => {
 describe("MetadataSchema", () => {
   describe("updateType field", () => {
     test("should default to 'manual' when updateType is not provided", () => {
-      const result = v.safeParse(MetadataSchema, mockMetadata);
+      // Omit updateType entirely to test the default
+      const { updateType, ...metadataWithoutUpdateType } = mockMetadata;
+      const result = v.safeParse(MetadataSchema, metadataWithoutUpdateType);
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.output.updateType).toBe("manual");

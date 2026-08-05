@@ -70,7 +70,7 @@ export const MetadataSchema = v.object({
 });
 
 /** The metadata associated to an Adobe Commerce application. */
-export type ApplicationMetadata = v.InferOutput<typeof MetadataSchema>;
+export type ApplicationMetadata = v.InferInput<typeof MetadataSchema>;
 
 /** Config type when metadata is present. */
 export type AppConfigWithMetadata<T extends AnyCommerceAppConfig> = T & {
