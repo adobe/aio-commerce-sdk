@@ -33,6 +33,7 @@ The db-access code is identical regardless of action type — what differs is ho
   - the project initialized — signalled by the generated `src/commerce-extensibility-1/` directory and installed `node_modules` (the `@adobe/aio-commerce-lib-app` dependency).
 - If `app.commerce.config.ts` is **missing**, stop and invoke `commerce-app-init` first (it writes the config, then runs init).
 - If the config is **present but the project is not initialized** (no `src/commerce-extensibility-1/` or `node_modules`), run `npx @adobe/aio-commerce-lib-app init` before continuing. Init is idempotent — it finds the existing config, skips the interactive prompts, installs dependencies, and generates the project files.
+- Actions and custom installation scripts can be authored in TypeScript only once the project has the TypeScript build setup (`webpack-config.cjs` + root `tsconfig.json`) that `init` scaffolds for a TypeScript Commerce config — see `commerce-app-init`. Otherwise, author them in JavaScript.
 - The **App Builder Data Services** API (API code `AppBuilderDataServicesSDK`) must be **added to the project in the Adobe Developer Console** — in every workspace that uses the database (no special license beyond App Builder). Without it, runtime actions cannot authenticate to the database service.
 
 ## Step 1 — Provision the workspace database

@@ -55,7 +55,7 @@ npx @adobe/aio-commerce-lib-app init
 
 Since `app.commerce.config.ts` already exists, init skips the interactive prompts. Re-running is safe: when a config is present it installs dependencies and (re)generates the project files — the `app-management` package is regenerated, while user packages under `src/commerce-extensibility-1/actions/` are preserved (see Project structure below).
 
-For a TypeScript Commerce config, init also creates missing `webpack-config.cjs` and root `tsconfig.json` files, installs compatible `typescript`, `ts-loader`, and `@tsconfig/bases` development dependencies, and adds `typecheck:actions` to the project’s composed `typecheck` script. Generated Runtime actions remain JavaScript.
+For a TypeScript Commerce config, init also creates missing `webpack-config.cjs` and root `tsconfig.json` files, installs compatible `typescript`, `ts-loader`, and `@tsconfig/bases` development dependencies, and adds `typecheck:actions` to the project's composed `typecheck` script. Generated Runtime actions remain JavaScript. Once this scaffolding is in place, user-authored runtime actions (added via the domain skills below) and custom installation scripts (`commerce-app-storage`) can be written in `.ts` — see the [aio-commerce-lib-app usage guide](https://github.com/adobe/aio-commerce-sdk/blob/main/packages/aio-commerce-lib-app/docs/usage.md#setup) for the full migration steps if converting an existing JavaScript project.
 
 ### Project structure
 

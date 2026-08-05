@@ -44,6 +44,15 @@ When `init` uses a TypeScript Commerce config, it also scaffolds any missing Typ
 
 This scaffolding runs during `init` for both new and existing TypeScript Commerce configs. Existing project files are preserved, and only missing setup is added.
 
+##### Migrating an Existing Project to TypeScript
+
+There's no dedicated conversion command — `init` only scaffolds the TypeScript build setup, it doesn't rewrite your existing JavaScript files. To migrate an existing project manually:
+
+1. Rename `app.commerce.config.js` (or `.mjs`/`.cjs`) to `app.commerce.config.ts` (or `.mts`/`.cts`), and add type annotations as needed. `defineConfig` is generic and infers types from your config shape, so this is optional.
+2. Re-run `init` — it's idempotent, so it detects the existing project, scaffolds the missing `webpack-config.cjs` and root `tsconfig.json`, installs the required development dependencies, and adds the `typecheck` package script, without touching your existing runtime action files.
+3. Optionally, convert individual runtime actions (registered under `src/*/actions/`) and custom installation scripts to `.ts` at your own pace — see [Custom Installation Steps](#custom-installation-steps) for the constraints on the latter.
+4. Run `generate all` again to regenerate artifacts against the TypeScript config.
+
 After running `init`, you'll need to:
 
 1. Review and customize `app.commerce.config.*` with your app details
@@ -920,15 +929,6 @@ This ensures your installation action includes the latest script imports and con
 Generated installation actions use `defineCustomScriptsLoader` from `@adobe/aio-commerce-lib-app/actions/installation` for contextual types without requiring a separate TypeScript template.
 
 The `#app.commerce.config` package import resolves to a generated JavaScript compatibility module. TypeScript configs are bundled into this module during generation, while JavaScript configs are re-exported. Generated Runtime actions therefore use the same stable import alias regardless of the source config format.
-
-###### Migrating an Existing Custom Installation Script to TypeScript
-
-Custom installation scripts can be `.ts` files. There's no automated conversion for existing scripts — `init` and the `typescript` command only scaffold the TypeScript build setup, they don't rewrite your script files. To migrate one manually:
-
-1. Rename the script file's extension from `.js` to `.ts` (e.g., `scripts/setup.js` → `scripts/setup.ts`).
-2. Update the corresponding `script` path in `installation.customInstallationSteps` in your `app.commerce.config.*` to point to the renamed file.
-3. Add type annotations as needed — `defineCustomInstallationStep` is generic and infers types from your Commerce config, so this is optional.
-4. Run `generate actions` again to regenerate the installation action with the updated import.
 
 ### Using the Configuration API
 
