@@ -27,16 +27,15 @@ export type AutoUpdateDecision =
   | "review-required"
   | "reconcile";
 
-/**
- * Classifies an auto (unattended) update. Unsupported changes outrank
- * destructive ones: the auto path can neither apply an unsupported change nor
- * hand it to a merchant who could, whereas a destructive-but-supported change
- * is deferred to the manual review flow (spec §4.2).
- */
+/** Classifies an auto (unattended) update into the action the auto path should take. */
 export function classifyAutoUpdate(diff: ConfigDiff): AutoUpdateDecision {
   if (isEmptyPlan(diff)) {
     return "noop";
   }
+
+  // Unsupported outranks destructive: the auto path can neither apply an
+  // unsupported change nor hand it to a merchant who could, whereas a
+  // destructive-but-supported change is deferred to the manual review flow (spec §4.2).
   if (configHasUnsupportedChange(diff)) {
     return "unsupported";
   }
@@ -46,12 +45,13 @@ export function classifyAutoUpdate(diff: ConfigDiff): AutoUpdateDecision {
   return "reconcile";
 }
 
-/** Builds the inline plan the auto path executes in one pass (spec §6.2 — no stored-plan round-trip). */
+/** Builds the inline plan the auto path executes in one pass. */
 export function buildAutoUpdatePlan(
   diff: ConfigDiff,
   targetConfig: CommerceAppConfigOutputModel,
   deploymentVersion: string,
 ): UpdatePlan {
+  // No stored-plan round-trip needed here (spec §6.2).
   return {
     createdAt: new Date().toISOString(),
     deploymentVersion,
