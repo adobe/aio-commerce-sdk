@@ -96,6 +96,7 @@ import type {
   StepStatus,
 } from "#management/installation/workflow/types";
 import type {
+  CleanupEntry,
   CleanupList,
   ConfigDiff,
   UpdatePlan,
@@ -114,6 +115,33 @@ const DESTRUCTIVE_DIFF: ConfigDiff = {
       identity: "oldField",
       kind: "removed",
       supported: true,
+    },
+  ],
+};
+
+/**
+ * A diff mixing one SUPPORTED `added` change with one UNSUPPORTED `changed` change
+ * (a Commerce subscription, per `unsupportedOnChange: true`) — the shape that used to
+ * partially apply then throw mid-reconcile.
+ */
+const MIXED_UNSUPPORTED_DIFF: ConfigDiff = {
+  changes: [
+    {
+      after: { name: "newWebhook" },
+      destructive: false,
+      domain: "commerceWebhook",
+      identity: "newWebhook",
+      kind: "added",
+      supported: true,
+    },
+    {
+      after: { name: "changedSub" },
+      before: { name: "changedSub" },
+      destructive: false,
+      domain: "commerceSubscription",
+      identity: "changedSub",
+      kind: "changed",
+      supported: false,
     },
   ],
 };
@@ -483,6 +511,87 @@ describe("installation router — update routes", () => {
       });
     });
 
+    test("merges (unions) the new plan's operative changes into an existing cleanup list rather than overwriting it", async () => {
+      // Simulates a prior update (e.g. update A, adding webhook "staleWebhook")
+      // that failed after creating the resource but before the snapshot/plan
+      // advanced — leaving its cleanup entry behind for the next update to pick up.
+      const priorEntry: CleanupEntry = {
+        domain: "commerceWebhook",
+        identity: "staleWebhook",
+      };
+      cleanupStore = createMockStore<CleanupList>({ entries: [priorEntry] });
+
+      // A different plan (update B) that does not touch "staleWebhook" at all.
+      const plan = seedPlan();
+      const handler = installationRuntimeAction({
+        appConfig: minimalValidConfig,
+      });
+
+      await handler(
+        createRuntimeActionParams({
+          body: updateRequestBody,
+          method: "post",
+          path: "/update",
+          ...DEFAULT_INSTALLATION_PARAMS,
+        }),
+      );
+
+      const newEntries = plan.diff.changes
+        .filter((change) => change.kind !== "unchanged")
+        .map((change) => ({
+          domain: change.domain,
+          identity: change.identity,
+        }));
+
+      const putEntries = cleanupStore.put.mock.calls.at(-1)?.[1]
+        ?.entries as CleanupList["entries"];
+
+      // Union: the prior entry survives alongside the new plan's entries.
+      expect(putEntries).toEqual(
+        expect.arrayContaining([priorEntry, ...newEntries]),
+      );
+      expect(putEntries).toHaveLength(newEntries.length + 1);
+    });
+
+    test("de-dupes when the new plan's operative changes overlap an existing cleanup entry by domain+identity", async () => {
+      const sharedEntry: CleanupEntry = {
+        domain: "commerceWebhook",
+        identity: "newWebhook",
+      };
+      cleanupStore = createMockStore<CleanupList>({ entries: [sharedEntry] });
+
+      const overlappingDiff: ConfigDiff = {
+        changes: [
+          {
+            after: { name: "newWebhook" },
+            destructive: false,
+            domain: "commerceWebhook",
+            identity: "newWebhook",
+            kind: "added",
+            supported: true,
+          },
+        ],
+      };
+      seedPlan({ diff: overlappingDiff });
+
+      const handler = installationRuntimeAction({
+        appConfig: minimalValidConfig,
+      });
+
+      await handler(
+        createRuntimeActionParams({
+          body: updateRequestBody,
+          method: "post",
+          path: "/update",
+          ...DEFAULT_INSTALLATION_PARAMS,
+        }),
+      );
+
+      expect(cleanupStore.put).toHaveBeenCalledWith("current", {
+        entries: [sharedEntry],
+      });
+    });
+
     test("returns 409 plan-mismatch when body.planId does not match the stored plan", async () => {
       const handler = installationRuntimeAction({
         appConfig: minimalValidConfig,
@@ -617,7 +726,7 @@ describe("installation router — update routes", () => {
       });
     });
 
-    test("the three 409 error codes are distinct", async () => {
+    test("the four 409 error codes are distinct", async () => {
       const handler = installationRuntimeAction({
         appConfig: minimalValidConfig,
       });
@@ -655,14 +764,56 @@ describe("installation router — update routes", () => {
         }),
       );
 
-      const codes = [mismatchResult, staleResult, busyResult].map((result) =>
+      installationStore = createMockStore<InstallationState>();
+      seedPlan({ diff: MIXED_UNSUPPORTED_DIFF });
+      const unsupportedResult = await handler(
+        createRuntimeActionParams({
+          body: updateRequestBody,
+          method: "post",
+          path: "/update",
+          ...DEFAULT_INSTALLATION_PARAMS,
+        }),
+      );
+
+      const codes = [
+        mismatchResult,
+        staleResult,
+        busyResult,
+        unsupportedResult,
+      ].map((result) =>
         result.type === "error"
           ? (result.error.body as unknown as { code: string }).code
           : undefined,
       );
 
-      expect(codes).toEqual(["plan-mismatch", "stale", "busy"]);
-      expect(new Set(codes).size).toBe(3);
+      expect(codes).toEqual(["plan-mismatch", "stale", "busy", "unsupported"]);
+      expect(new Set(codes).size).toBe(4);
+    });
+
+    test("returns 409 unsupported and does not self-invoke or seed the cleanup list when the plan mixes a supported change with an unsupported one", async () => {
+      seedPlan({ diff: MIXED_UNSUPPORTED_DIFF });
+      const handler = installationRuntimeAction({
+        appConfig: minimalValidConfig,
+      });
+
+      const result = await handler(
+        createRuntimeActionParams({
+          body: updateRequestBody,
+          method: "post",
+          path: "/update",
+          ...DEFAULT_INSTALLATION_PARAMS,
+        }),
+      );
+
+      expect(result).toMatchObject({
+        error: { body: { code: "unsupported" }, statusCode: 409 },
+        type: "error",
+      });
+
+      // Fail-fast: no self-invoke, no cleanup-list seeding, no update state created.
+      expect(invokeMock).not.toHaveBeenCalled();
+      expect(cleanupStore.put).not.toHaveBeenCalled();
+      expect(updateStore.put).not.toHaveBeenCalled();
     });
 
     test("a destructive plan is NOT blocked on the manual path — it self-invokes execution like any other plan", async () => {

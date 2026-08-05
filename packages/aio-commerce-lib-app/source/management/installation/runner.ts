@@ -132,9 +132,6 @@ export type RunUpdateOptions = {
   /** Shared installation context (params, logger, etc.). */
   installationContext: InstallationContext;
 
-  /** The app configuration. */
-  config: CommerceAppConfigOutputModel;
-
   /** The initial installation state (with all steps pending). */
   initialState: InProgressInstallationState;
 

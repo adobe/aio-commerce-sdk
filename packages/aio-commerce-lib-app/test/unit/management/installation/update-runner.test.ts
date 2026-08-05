@@ -69,7 +69,6 @@ describe("runUpdate", () => {
     });
 
     const result = await runUpdate({
-      config: minimalValidConfig,
       initialState,
       installationContext: createMockInstallationContext(),
       plan: createMockUpdatePlan(),
@@ -92,7 +91,6 @@ describe("runUpdate", () => {
     });
 
     await runUpdate({
-      config: minimalValidConfig,
       hooks,
       initialState,
       installationContext: createMockInstallationContext(),
@@ -128,7 +126,6 @@ describe("runUpdate — retry behavior", () => {
       .mockResolvedValueOnce(createMockSucceededState());
 
     const result = await runUpdate({
-      config: minimalValidConfig,
       initialState,
       installationContext: createMockInstallationContext(),
       plan: createMockUpdatePlan(),
@@ -149,7 +146,6 @@ describe("runUpdate — retry behavior", () => {
       .mockResolvedValueOnce(failedState);
 
     const result = await runUpdate({
-      config: minimalValidConfig,
       initialState,
       installationContext: createMockInstallationContext(),
       plan: createMockUpdatePlan(),
@@ -169,7 +165,6 @@ describe("runUpdate — retry behavior", () => {
     const onInstallationFailure = vi.fn();
 
     await runUpdate({
-      config: minimalValidConfig,
       hooks: { onInstallationFailure },
       initialState,
       installationContext: createMockInstallationContext(),
@@ -187,7 +182,6 @@ describe("runUpdate — retry behavior", () => {
     const onStepFailure = vi.fn();
 
     await runUpdate({
-      config: minimalValidConfig,
       hooks: { onStepFailure },
       initialState,
       installationContext: createMockInstallationContext(),
@@ -212,7 +206,6 @@ describe("runUpdate — retry behavior", () => {
     const onInstallationFailure = vi.fn();
 
     const result = await runUpdate({
-      config: minimalValidConfig,
       hooks: { onInstallationFailure },
       initialState,
       installationContext: createMockInstallationContext(),
@@ -251,7 +244,6 @@ describe("runUpdate — retry behavior", () => {
       .mockResolvedValueOnce(createMockSucceededState());
 
     await runUpdate({
-      config: minimalValidConfig,
       initialState,
       installationContext: createMockInstallationContext(),
       plan: createMockUpdatePlan(),
@@ -279,7 +271,6 @@ describe("runUpdate — retry behavior", () => {
     const mockContext = createMockInstallationContext();
 
     await runUpdate({
-      config: minimalValidConfig,
       initialState,
       installationContext: mockContext,
       plan: createMockUpdatePlan(),
@@ -303,7 +294,6 @@ describe("runUpdate — retry behavior", () => {
 
     const diff = { changes: [] };
     await runUpdate({
-      config: minimalValidConfig,
       initialState,
       installationContext: createMockInstallationContext(),
       plan: createMockUpdatePlan({ diff }),

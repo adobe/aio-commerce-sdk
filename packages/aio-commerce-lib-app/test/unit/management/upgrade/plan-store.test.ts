@@ -72,10 +72,15 @@ import {
   createCleanupStore,
   createPlanStore,
   generatePlanId,
+  mergeCleanupEntries,
   PLAN_KEY,
 } from "#management/upgrade/plan-store";
 
-import type { CleanupList, UpdatePlan } from "#management/upgrade/types";
+import type {
+  CleanupEntry,
+  CleanupList,
+  UpdatePlan,
+} from "#management/upgrade/types";
 
 const UUID_REGEX =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -144,5 +149,48 @@ describe("plan-store", () => {
     expect(first).toMatch(UUID_REGEX);
     expect(second).toMatch(UUID_REGEX);
     expect(first).not.toBe(second);
+  });
+
+  describe("mergeCleanupEntries", () => {
+    test("unions two disjoint entry lists", () => {
+      const existing: CleanupEntry[] = [
+        { domain: "commerceWebhook", identity: "webhook-1" },
+      ];
+      const incoming: CleanupEntry[] = [
+        { domain: "commerceSubscription", identity: "sub-1" },
+      ];
+
+      expect(mergeCleanupEntries(existing, incoming)).toEqual([
+        ...existing,
+        ...incoming,
+      ]);
+    });
+
+    test("de-dupes entries sharing the same domain+identity", () => {
+      const shared: CleanupEntry = {
+        domain: "commerceWebhook",
+        identity: "webhook-1",
+      };
+
+      const result = mergeCleanupEntries([shared], [{ ...shared }]);
+
+      expect(result).toEqual([shared]);
+    });
+
+    test("returns the incoming list unchanged when there is nothing existing", () => {
+      const incoming: CleanupEntry[] = [
+        { domain: "adminUi", identity: "adminUi" },
+      ];
+
+      expect(mergeCleanupEntries([], incoming)).toEqual(incoming);
+    });
+
+    test("returns the existing list unchanged when there is nothing incoming", () => {
+      const existing: CleanupEntry[] = [
+        { domain: "ioEventsProvider", identity: "provider-1" },
+      ];
+
+      expect(mergeCleanupEntries(existing, [])).toEqual(existing);
+    });
   });
 });

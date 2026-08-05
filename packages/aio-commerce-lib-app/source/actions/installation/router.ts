@@ -42,6 +42,7 @@ import {
   runValidation,
 } from "#management/index";
 import {
+  configHasUnsupportedChange,
   diffConfig,
   getOperativeChanges,
   isEmptyPlan,
@@ -51,6 +52,7 @@ import {
   createCleanupStore,
   createPlanStore,
   generatePlanId,
+  mergeCleanupEntries,
   PLAN_KEY,
 } from "#management/upgrade/plan-store";
 
@@ -632,10 +634,13 @@ router.get("/update", {
  *    plan's, return 409 Conflict (code: "stale") — staleness guard.
  * 3. If an install, uninstall, or update is already in progress, return 409
  *    Conflict (code: "busy").
- * 4. Seed the cleanup list from the plan's operative (added/removed/changed)
- *    changes (spec §11), create the initial update state, invoke
+ * 4. If the plan contains a `changed` resource the reconcile engine cannot
+ *    apply in place, return 409 Conflict (code: "unsupported") — fail fast,
+ *    since the merchant already saw this warning at preview.
+ * 5. Merge the plan's operative (added/removed/changed) changes into the
+ *    cleanup list (union, spec §11), create the initial update state, invoke
  *    POST /update/execution async via openwhisk.
- * 5. Return 202 Accepted with the initial state.
+ * 6. Return 202 Accepted with the initial state.
  *
  * A destructive plan is NOT blocked here (spec §6.1 "Manual update"):
  * confirming with the previewed `planId` — which itself surfaced the
@@ -643,7 +648,9 @@ router.get("/update", {
  * execution exactly like any other. Halting on a destructive change and
  * reporting `UPDATE_REVIEW_REQUIRED` is a Phase-3 concern for the *auto*
  * self-update entry point (spec §6.2/§8.6, post-deploy hook), not this
- * manual path.
+ * manual path. An unsupported change, unlike a destructive one, IS blocked:
+ * there is no code path that can apply it, so proceeding would partially
+ * apply the plan and fail mid-reconcile.
  */
 router.post("/update", {
   body: UpdateRequestBodySchema,
@@ -718,12 +725,38 @@ router.post("/update", {
     // `UPDATE_REVIEW_REQUIRED` halt-and-report is a Phase-3 concern for the
     // auto self-update entry point (spec §6.2/§8.6), not this manual path.
 
+    // Unlike a destructive change, an unsupported one is NOT something the
+    // merchant can consent past: the reconcile engine has no code path to
+    // apply it, so proceeding would apply the plan's other (supported)
+    // changes, then throw mid-reconcile — a partial, forward-only-retrying
+    // failure. Fail fast instead; the merchant already saw this at preview.
+    if (configHasUnsupportedChange(plan.diff)) {
+      logger.debug(
+        "Update rejected: the plan contains a change the reconcile engine cannot apply in place",
+      );
+      return conflict({
+        body: {
+          code: "unsupported",
+          message:
+            "This update includes a change that cannot be applied in place yet (a Commerce subscription/webhook, or an I/O Events provider/metadata change). Adjust the target config to avoid this change before updating.",
+        },
+      });
+    }
+
     const cleanupStore = await createCleanupStore();
+    const existingCleanupList = await cleanupStore.get(PLAN_KEY);
+    const existingCleanupEntries = existingCleanupList
+      ? existingCleanupList.entries
+      : [];
+
     await cleanupStore.put(PLAN_KEY, {
-      entries: getOperativeChanges(plan.diff).map((change) => ({
-        domain: change.domain,
-        identity: change.identity,
-      })),
+      entries: mergeCleanupEntries(
+        existingCleanupEntries,
+        getOperativeChanges(plan.diff).map((change) => ({
+          domain: change.domain,
+          identity: change.identity,
+        })),
+      ),
     });
 
     const initialState = createInitialInstallationState({
@@ -843,7 +876,6 @@ router.post("/update/execution", {
       };
     } else {
       result = await runUpdate({
-        config: plan.targetConfig,
         hooks,
         initialState,
         installationContext,

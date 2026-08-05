@@ -13,7 +13,11 @@
 import { createCombinedStore } from "@aio-commerce-sdk/common-utils/storage";
 
 import type { KeyValueStore } from "@aio-commerce-sdk/common-utils/storage";
-import type { CleanupList, UpdatePlan } from "#management/upgrade/types";
+import type {
+  CleanupEntry,
+  CleanupList,
+  UpdatePlan,
+} from "#management/upgrade/types";
 
 /** Single-slot key used to store the current plan/cleanup list. */
 export const PLAN_KEY = "current";
@@ -37,4 +41,24 @@ export function createCleanupStore(): Promise<KeyValueStore<CleanupList>> {
 /** Generates a new plan ID used as the consent/staleness token for a computed update plan. */
 export function generatePlanId(): string {
   return crypto.randomUUID();
+}
+
+/**
+ * Unions two cleanup entry lists, de-duplicated by `domain:identity`. A failed update's
+ * cleanup entries must survive a subsequent update's seeding (spec §11) — otherwise the
+ * next update's `PUT` would overwrite the prior one's entries and the resources it
+ * touched before failing would go untracked (never torn down by uninstall's baseline
+ * walk, since they were never part of any recorded installation snapshot).
+ */
+export function mergeCleanupEntries(
+  existing: CleanupEntry[],
+  incoming: CleanupEntry[],
+): CleanupEntry[] {
+  const merged = new Map<string, CleanupEntry>();
+
+  for (const entry of [...existing, ...incoming]) {
+    merged.set(`${entry.domain}:${entry.identity}`, entry);
+  }
+
+  return [...merged.values()];
 }

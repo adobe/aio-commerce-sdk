@@ -96,7 +96,6 @@ async function runUpdateFor(
   const initialState = createInitialInstallationState({ config: newConfig });
 
   return runUpdate({
-    config: newConfig,
     initialState,
     installationContext,
     plan,

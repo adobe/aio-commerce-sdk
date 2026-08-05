@@ -1000,7 +1000,7 @@ try {
 App Management supports updating an already-installed app's configuration without a full uninstall/reinstall cycle. Two endpoints are added to the generated `installation` runtime action:
 
 - `POST /update/preview` — computes the diff between the recorded installation snapshot and the target `app.commerce.config.*`, runs validation against the target config, and stores the result as a pending update plan. Returns `{ planId, diff, validation }`. This is synchronous and does not touch any Commerce or I/O Events resources.
-- `POST /update` — applies the previously previewed plan (identified by `planId`) asynchronously, reconciling the deployed resources with the target config. Rejects with a 409 response if the plan is stale (the app was redeployed since the preview), the `planId` doesn't match the currently pending plan, or another install/uninstall/update is already in progress. Confirming with the previewed `planId` is the consent to apply the plan — including any destructive change it contains (`configHasDestructiveChange`, surfaced to the merchant at preview time) — so a destructive plan is applied like any other, not blocked.
+- `POST /update` — applies the previously previewed plan (identified by `planId`) asynchronously, reconciling the deployed resources with the target config. Rejects with a 409 response if the plan is stale (the app was redeployed since the preview), the `planId` doesn't match the currently pending plan, another install/uninstall/update is already in progress, or the plan contains a change the reconcile engine cannot apply in place (see [Handling Unsupported Changes](#handling-unsupported-changes)). Confirming with the previewed `planId` is the consent to apply the plan — including any destructive change it contains (`configHasDestructiveChange`, surfaced to the merchant at preview time) — so a destructive plan is applied like any other, not blocked. An unsupported change is different: there is no code path that can apply it, so it is rejected rather than applied.
 
 Each stage of applying an update — `UPDATING`, then `INSTALLED` or `UPDATE_FAILED` — is reported to the Extension Manager so it can track update lifecycle status. This reporting is best-effort: it is skipped (with a warning) when the app has no recorded `extensionId`, and a reporting failure never fails the update itself.
 
@@ -1048,7 +1048,9 @@ Each `ResourceChange` entry in `diff.changes` describes one managed resource:
 
 #### Handling Unsupported Changes
 
-When a stored plan is applied via `POST /update` and it contains a `changed` resource with no in-place update path yet, the corresponding reconcile handler throws `UnsupportedReconcileChangeError`, and the update fails with that error surfaced in the resulting failed state. Check `configHasUnsupportedChange` at preview time to warn the merchant before they apply the update, rather than relying on this failure at execution time.
+A config `changed` to a Commerce subscription/webhook, or to an I/O Events provider/metadata, has no in-place update path yet (no PUT endpoint) — `configHasUnsupportedChange` reports `true` for these. `POST /update` checks this before touching any resource: if the plan contains such a change, it rejects with a 409 response (`code: "unsupported"`) rather than partially applying the plan. The merchant should already have seen this warning at `POST /update/preview` time (via `configHasUnsupportedChange`); the check at `POST /update` is a fail-fast guard, not the primary place to surface it to the merchant.
+
+If you call the reconcile engine directly (e.g. `runUpdate` from `@adobe/aio-commerce-lib-app/management`) rather than through `POST /update`, this guard does not run: the corresponding reconcile handler throws `UnsupportedReconcileChangeError` instead, and the update fails with that error surfaced in the resulting failed state. Check `configHasUnsupportedChange` up front to avoid relying on this failure.
 
 ```ts
 import { UnsupportedReconcileChangeError } from "@adobe/aio-commerce-lib-app/management";
@@ -1063,6 +1065,10 @@ try {
   throw error;
 }
 ```
+
+#### Whole-Domain Removal
+
+Removals _within_ a still-present domain (e.g. one Commerce event subscription among several) are reconciled and torn down by `POST /update` like any other change. But if a new version removes an entire managed domain — for example, dropping all Commerce eventing configuration — those resources are not torn down by the update; there is nothing left in the target config to drive a per-resource `removed` diff for that domain. They remain in place until the app is uninstalled, at which point the baseline uninstall walk removes them.
 
 ### Accessing the Associated Commerce Instance from Runtime Actions
 
