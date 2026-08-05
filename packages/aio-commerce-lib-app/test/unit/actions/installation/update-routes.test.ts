@@ -18,11 +18,16 @@ const {
   createCombinedStoreMock,
   runUpdateMock,
   runValidationMock,
+  getAssociationDataMock,
+  createEmStatusClientMock,
+  writeUpdateStatusMock,
 } = vi.hoisted(() => {
   const actionInvokeMock = vi.fn();
 
   return {
     createCombinedStoreMock: vi.fn(),
+    createEmStatusClientMock: vi.fn(),
+    getAssociationDataMock: vi.fn(),
     invokeMock: actionInvokeMock,
     openwhiskMock: vi.fn(() => ({
       actions: {
@@ -31,6 +36,7 @@ const {
     })),
     runUpdateMock: vi.fn(),
     runValidationMock: vi.fn(),
+    writeUpdateStatusMock: vi.fn(),
   };
 });
 
@@ -54,6 +60,16 @@ vi.mock("#management/index", async () => {
     runValidation: runValidationMock,
   };
 });
+
+// Mocked so update-routes tests never hit the real state/files storage layer
+// (association data) or attempt a real network call (EM status writes).
+vi.mock("#management/association/repository", () => ({
+  getAssociationData: getAssociationDataMock,
+}));
+
+vi.mock("#management/upgrade/em-status-client", () => ({
+  createEmStatusClient: createEmStatusClientMock,
+}));
 
 import { installationRuntimeAction } from "#actions/installation/index";
 import { diffConfig } from "#management/upgrade/diff";
@@ -79,7 +95,28 @@ import type {
   InstallationState,
   StepStatus,
 } from "#management/installation/workflow/types";
-import type { CleanupList, UpdatePlan } from "#management/upgrade/types";
+import type {
+  CleanupList,
+  ConfigDiff,
+  UpdatePlan,
+} from "#management/upgrade/types";
+
+/** The extensionId returned by the default (present) association-data mock. */
+const TEST_EXTENSION_ID = "test-extension-id";
+
+/** A minimal diff with a single destructive `removed` businessConfig entry. */
+const DESTRUCTIVE_DIFF: ConfigDiff = {
+  changes: [
+    {
+      before: { label: "Old Field", type: "text" },
+      destructive: true,
+      domain: "businessConfig",
+      identity: "oldField",
+      kind: "removed",
+      supported: true,
+    },
+  ],
+};
 
 /** In-memory mock of a generic key/value store, mirroring the installation store fixture. */
 function createMockStore<T>(initialValue: T | null = null) {
@@ -152,6 +189,15 @@ describe("installation router — update routes", () => {
 
     invokeMock.mockResolvedValue({ activationId: "activation-123" });
     runValidationMock.mockResolvedValue(createMockValidationResult());
+
+    writeUpdateStatusMock.mockReset().mockResolvedValue(undefined);
+    createEmStatusClientMock
+      .mockReset()
+      .mockReturnValue({ writeUpdateStatus: writeUpdateStatusMock });
+    getAssociationDataMock.mockReset().mockResolvedValue({
+      commerce: { baseUrl: "https://commerce.example.com", env: "paas" },
+      extensionId: TEST_EXTENSION_ID,
+    });
   });
 
   afterEach(() => {
@@ -618,6 +664,38 @@ describe("installation router — update routes", () => {
       expect(codes).toEqual(["plan-mismatch", "stale", "busy"]);
       expect(new Set(codes).size).toBe(3);
     });
+
+    test("returns 409 review-required, writes UPDATE_REVIEW_REQUIRED, and never self-invokes execution for a destructive plan", async () => {
+      const plan = seedPlan({ diff: DESTRUCTIVE_DIFF });
+      const handler = installationRuntimeAction({
+        appConfig: minimalValidConfig,
+      });
+
+      const result = await handler(
+        createRuntimeActionParams({
+          body: updateRequestBody,
+          method: "post",
+          path: "/update",
+          ...DEFAULT_INSTALLATION_PARAMS,
+        }),
+      );
+
+      expect(result).toMatchObject({
+        error: { body: { code: "review-required" }, statusCode: 409 },
+        type: "error",
+      });
+
+      expect(writeUpdateStatusMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          deploymentVersion: plan.deploymentVersion,
+          extensionId: TEST_EXTENSION_ID,
+          status: "UPDATE_REVIEW_REQUIRED",
+          version: plan.targetConfig.metadata.version,
+        }),
+      );
+
+      expect(invokeMock).not.toHaveBeenCalled();
+    });
   });
 
   describe("POST /update/execution", () => {
@@ -883,6 +961,121 @@ describe("installation router — update routes", () => {
       );
 
       expect(runUpdateMock).toHaveBeenCalled();
+    });
+
+    test("writes UPDATING then INSTALLED (with version + deploymentVersion), in order, on success", async () => {
+      const plan = seedPlan();
+      const initialState = buildInitialState(plan.targetConfig);
+
+      const handler = installationRuntimeAction({
+        appConfig: minimalValidConfig,
+      });
+
+      await handler(
+        createRuntimeActionParams({
+          appData,
+          initialState,
+          method: "post",
+          path: "/update/execution",
+          ...DEFAULT_INSTALLATION_PARAMS,
+        }),
+      );
+
+      expect(writeUpdateStatusMock).toHaveBeenCalledTimes(2);
+      expect(writeUpdateStatusMock.mock.calls[0]?.[0]).toMatchObject({
+        extensionId: TEST_EXTENSION_ID,
+        status: "UPDATING",
+      });
+      expect(writeUpdateStatusMock.mock.calls[1]?.[0]).toMatchObject({
+        deploymentVersion: plan.deploymentVersion,
+        extensionId: TEST_EXTENSION_ID,
+        status: "INSTALLED",
+        version: plan.targetConfig.metadata.version,
+      });
+    });
+
+    test("writes UPDATING then UPDATE_FAILED (with the error), in order, when the update workflow fails", async () => {
+      const plan = seedPlan();
+      const initialState = buildInitialState(plan.targetConfig);
+      const failedState = createMockFailedState({ id: initialState.id });
+      runUpdateMock.mockResolvedValue(failedState);
+
+      const handler = installationRuntimeAction({
+        appConfig: minimalValidConfig,
+      });
+
+      await handler(
+        createRuntimeActionParams({
+          appData,
+          initialState,
+          method: "post",
+          path: "/update/execution",
+          ...DEFAULT_INSTALLATION_PARAMS,
+        }),
+      );
+
+      expect(writeUpdateStatusMock).toHaveBeenCalledTimes(2);
+      expect(writeUpdateStatusMock.mock.calls[0]?.[0]).toMatchObject({
+        extensionId: TEST_EXTENSION_ID,
+        status: "UPDATING",
+      });
+      expect(writeUpdateStatusMock.mock.calls[1]?.[0]).toMatchObject({
+        error: { message: failedState.error.message },
+        extensionId: TEST_EXTENSION_ID,
+        status: "UPDATE_FAILED",
+      });
+    });
+
+    test("skips the Extension Manager write and still succeeds when no extensionId is on record", async () => {
+      getAssociationDataMock.mockResolvedValue({
+        commerce: { baseUrl: "https://commerce.example.com", env: "paas" },
+      });
+
+      const plan = seedPlan();
+      const initialState = buildInitialState(plan.targetConfig);
+
+      const handler = installationRuntimeAction({
+        appConfig: minimalValidConfig,
+      });
+
+      const result = await handler(
+        createRuntimeActionParams({
+          appData,
+          initialState,
+          method: "post",
+          path: "/update/execution",
+          ...DEFAULT_INSTALLATION_PARAMS,
+        }),
+      );
+
+      expect(result).toMatchObject({ type: "success" });
+      expect(writeUpdateStatusMock).not.toHaveBeenCalled();
+    });
+
+    test("still completes the update when an Extension Manager write throws (best-effort)", async () => {
+      writeUpdateStatusMock.mockRejectedValue(
+        new Error("EM endpoint unavailable"),
+      );
+
+      const plan = seedPlan();
+      const initialState = buildInitialState(plan.targetConfig);
+
+      const handler = installationRuntimeAction({
+        appConfig: minimalValidConfig,
+      });
+
+      const result = await handler(
+        createRuntimeActionParams({
+          appData,
+          initialState,
+          method: "post",
+          path: "/update/execution",
+          ...DEFAULT_INSTALLATION_PARAMS,
+        }),
+      );
+
+      expect(result).toMatchObject({ type: "success" });
+      expect(writeUpdateStatusMock).toHaveBeenCalled();
     });
   });
 });

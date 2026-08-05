@@ -27,6 +27,7 @@ import { stringifyError } from "@aio-commerce-sdk/scripting-utils/error";
 import openwhisk from "openwhisk";
 
 import { validateCommerceAppConfig } from "#config/lib/validate";
+import { getAssociationData } from "#management/association/repository";
 import {
   createInitialInstallationState,
   createInitialUninstallationState,
@@ -41,10 +42,12 @@ import {
   runValidation,
 } from "#management/index";
 import {
+  configHasDestructiveChange,
   diffConfig,
   getOperativeChanges,
   isEmptyPlan,
 } from "#management/upgrade/diff";
+import { createEmStatusClient } from "#management/upgrade/em-status-client";
 import {
   createCleanupStore,
   createPlanStore,
@@ -72,6 +75,7 @@ import type {
   StepStatus,
   SucceededInstallationState,
 } from "#management/installation/workflow/types";
+import type { WriteUpdateStatusInput } from "#management/upgrade/em-status-client";
 import type { UpdatePlan } from "#management/upgrade/types";
 
 // Action name for async invocation
@@ -197,6 +201,44 @@ function markStepTreeSucceeded(step: StepStatus): StepStatus {
     children: step.children.map(markStepTreeSucceeded),
     status: "succeeded",
   };
+}
+
+/**
+ * Best-effort reports an update lifecycle status to the Extension Manager.
+ *
+ * Skips (with a warning, not a failure) when no `extensionId` is on record for
+ * this install — pre-backfill installs have no `extensionId` yet (spec §8.7).
+ * An Extension Manager failure never fails the update itself: the §7.3
+ * endpoint is an unresolved BLOCKER, hitting a mock in tests and a placeholder
+ * URL in prod until the contract lands.
+ */
+async function reportUpdateStatus(
+  rawParams: RuntimeActionArgs,
+  logger: InstallationContext["logger"],
+  input: Omit<WriteUpdateStatusInput, "extensionId" | "timestamp">,
+): Promise<void> {
+  const association = await getAssociationData();
+  const extensionId = association?.extensionId;
+
+  if (!extensionId) {
+    logger.warn(
+      `Skipping Extension Manager status write (${input.status}): no extensionId on record for this install.`,
+    );
+    return;
+  }
+
+  try {
+    const emClient = createEmStatusClient({ auth: rawParams });
+    await emClient.writeUpdateStatus({
+      ...input,
+      extensionId,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    logger.warn(
+      `Failed to write update status "${input.status}" to the Extension Manager: ${stringifyError(error)}`,
+    );
+  }
 }
 
 /**
@@ -589,10 +631,15 @@ router.get("/update", {
  *    plan's, return 409 Conflict (code: "stale") — staleness guard.
  * 3. If an install, uninstall, or update is already in progress, return 409
  *    Conflict (code: "busy").
- * 4. Seed the cleanup list from the plan's operative (added/removed/changed)
+ * 4. If the plan has a destructive change, report `UPDATE_REVIEW_REQUIRED` to
+ *    the Extension Manager and return 409 Conflict (code: "review-required")
+ *    without ever invoking execution (spec §5, §6.1). This guard lives here —
+ *    not in POST /update/execution — so a destructive plan never reaches the
+ *    self-invoke, matching the other consent/staleness/busy guards above.
+ * 5. Seed the cleanup list from the plan's operative (added/removed/changed)
  *    changes (spec §11), create the initial update state, invoke
  *    POST /update/execution async via openwhisk.
- * 5. Return 202 Accepted with the initial state.
+ * 6. Return 202 Accepted with the initial state.
  */
 router.post("/update", {
   body: UpdateRequestBodySchema,
@@ -661,6 +708,26 @@ router.post("/update", {
       });
     }
 
+    if (configHasDestructiveChange(plan.diff)) {
+      logger.debug(
+        "Update rejected: the plan has a destructive change and requires manual review",
+      );
+
+      await reportUpdateStatus(rawParams, logger, {
+        deploymentVersion: plan.deploymentVersion,
+        status: "UPDATE_REVIEW_REQUIRED",
+        version: plan.targetConfig.metadata.version,
+      });
+
+      return conflict({
+        body: {
+          code: "review-required",
+          message:
+            "This update contains a destructive change and requires manual review before it can be applied.",
+        },
+      });
+    }
+
     const cleanupStore = await createCleanupStore();
     await cleanupStore.put(PLAN_KEY, {
       entries: getOperativeChanges(plan.diff).map((change) => ({
@@ -718,6 +785,12 @@ router.post("/update", {
  * changes AND the cleanup list has no pending entries, no external calls are
  * made (runUpdate's reconcile is skipped) — the snapshot is still advanced
  * and the stores are still cleared.
+ *
+ * Reports lifecycle status to the Extension Manager (spec §5, §6.2):
+ * `UPDATING` right before the reconcile decision, then `INSTALLED` (with
+ * `version` + `deploymentVersion`) or `UPDATE_FAILED` (with the error) on the
+ * terminal outcome. Every write is best-effort — skipped with a warning when
+ * no `extensionId` is on record, and never allowed to fail the update itself.
  */
 router.post("/update/execution", {
   handler: async (_req, { logger, rawParams }) => {
@@ -757,6 +830,12 @@ router.post("/update/execution", {
     );
     const isVersionOnly = isEmptyPlan(plan.diff) && !hasPendingCleanup;
 
+    await reportUpdateStatus(rawParams, logger, {
+      deploymentVersion: plan.deploymentVersion,
+      status: "UPDATING",
+      version: plan.targetConfig.metadata.version,
+    });
+
     let result: SucceededInstallationState | FailedInstallationState;
     if (isVersionOnly) {
       logger.debug(
@@ -793,9 +872,22 @@ router.post("/update/execution", {
       logger.debug(
         "Advanced installation snapshot to the plan's target config; cleared plan and cleanup stores",
       );
+
+      await reportUpdateStatus(rawParams, logger, {
+        deploymentVersion: plan.deploymentVersion,
+        status: "INSTALLED",
+        version: plan.targetConfig.metadata.version,
+      });
     }
 
     if (isFailedState(result)) {
+      await reportUpdateStatus(rawParams, logger, {
+        deploymentVersion: plan.deploymentVersion,
+        error: { message: result.error.message ?? result.error.key },
+        status: "UPDATE_FAILED",
+        version: plan.targetConfig.metadata.version,
+      });
+
       return internalServerError({
         body: {
           error: result.error,

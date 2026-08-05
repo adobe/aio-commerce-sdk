@@ -1000,7 +1000,9 @@ try {
 App Management supports updating an already-installed app's configuration without a full uninstall/reinstall cycle. Two endpoints are added to the generated `installation` runtime action:
 
 - `POST /update/preview` — computes the diff between the recorded installation snapshot and the target `app.commerce.config.*`, runs validation against the target config, and stores the result as a pending update plan. Returns `{ planId, diff, validation }`. This is synchronous and does not touch any Commerce or I/O Events resources.
-- `POST /update` — applies the previously previewed plan (identified by `planId`) asynchronously, reconciling the deployed resources with the target config. Rejects with a 409 response if the plan is stale (the app was redeployed since the preview), the `planId` doesn't match the currently pending plan, or another install/uninstall/update is already in progress.
+- `POST /update` — applies the previously previewed plan (identified by `planId`) asynchronously, reconciling the deployed resources with the target config. Rejects with a 409 response if the plan is stale (the app was redeployed since the preview), the `planId` doesn't match the currently pending plan, another install/uninstall/update is already in progress, or the plan has a destructive change requiring manual review.
+
+Each stage of applying an update — `UPDATING`, `INSTALLED`, `UPDATE_FAILED`, and `UPDATE_REVIEW_REQUIRED` for a destructive plan — is reported to the Extension Manager so it can track update lifecycle status. This reporting is best-effort: it is skipped (with a warning) when the app has no recorded `extensionId`, and a reporting failure never fails the update itself.
 
 The diff is produced by a reconcile engine that compares the installed snapshot against the target config across every managed resource domain — I/O Events registrations, providers, and metadata; Commerce subscriptions and webhooks; Admin UI registrations; custom installation steps; and business configuration — and returns a `ConfigDiff`.
 
