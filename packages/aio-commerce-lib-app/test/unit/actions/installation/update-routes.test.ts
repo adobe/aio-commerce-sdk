@@ -1433,4 +1433,277 @@ describe("installation router — update routes", () => {
       });
     });
   });
+
+  describe("POST /update/self", () => {
+    /** The "deployed" target config used by the self-update tests, unless overridden. */
+    const autoTargetConfig: CommerceAppConfigOutputModel = {
+      ...configWithCommerceEventing,
+      metadata: { ...configWithCommerceEventing.metadata, updateType: "auto" },
+    };
+
+    /** The recorded installation snapshot's config — no eventing configured yet. */
+    const autoOldConfig: CommerceAppConfigOutputModel = {
+      ...minimalValidConfig,
+      metadata: { ...minimalValidConfig.metadata, updateType: "auto" },
+    };
+
+    /** Seeds the installation store with a completed snapshot for `autoOldConfig`. */
+    function seedInstalledSnapshot(
+      config: CommerceAppConfigOutputModel = autoOldConfig,
+    ) {
+      installationStore = createMockStore<InstallationState>(
+        createMockSucceededState({ config, id: "installation-1" }),
+      );
+    }
+
+    /** A config whose businessConfig field the target config below removes (destructive). */
+    const destructiveOldConfig: CommerceAppConfigOutputModel = {
+      ...autoOldConfig,
+      businessConfig: {
+        schema: [
+          { default: "x", label: "Old Field", name: "oldField", type: "text" },
+        ],
+      },
+    };
+
+    /** The webhook entry whose runtimeAction the target config below changes in place (unsupported). */
+    const unsupportedOldWebhook = {
+      category: "modification" as const,
+      description: "Webhook for order created",
+      label: "Order Created Webhook",
+      requireAdobeAuth: true,
+      runtimeAction: "my-package/handle-webhook-old",
+      webhook: {
+        batch_name: "default",
+        hook_name: "order_created",
+        method: "POST",
+        webhook_method: "plugin.order.api.order_created",
+        webhook_type: "after",
+      },
+    } satisfies NonNullable<CommerceAppConfigOutputModel["webhooks"]>[number];
+
+    const unsupportedOldConfig: CommerceAppConfigOutputModel = {
+      ...autoOldConfig,
+      webhooks: [unsupportedOldWebhook],
+    };
+    const unsupportedTargetConfig: CommerceAppConfigOutputModel = {
+      ...unsupportedOldConfig,
+      webhooks: [
+        {
+          ...unsupportedOldWebhook,
+          runtimeAction: "my-package/handle-webhook-new",
+        },
+      ],
+    };
+
+    test('returns skipped-manual when the target config\'s updateType is not "auto"', async () => {
+      const handler = installationRuntimeAction({
+        appConfig: minimalValidConfig, // mockMetadata.updateType is "manual"
+      });
+
+      const result = await handler(
+        createRuntimeActionParams({
+          body: { appData },
+          method: "post",
+          path: "/update/self",
+          ...DEFAULT_INSTALLATION_PARAMS,
+        }),
+      );
+
+      expect(result).toMatchObject({
+        body: { code: "skipped-manual" },
+        type: "success",
+      });
+      expect(invokeMock).not.toHaveBeenCalled();
+      expect(writeUpdateStatusMock).not.toHaveBeenCalled();
+    });
+
+    test("returns skipped-not-installed when there is no installation snapshot", async () => {
+      const handler = installationRuntimeAction({
+        appConfig: autoOldConfig,
+      });
+
+      const result = await handler(
+        createRuntimeActionParams({
+          body: { appData },
+          method: "post",
+          path: "/update/self",
+          ...DEFAULT_INSTALLATION_PARAMS,
+        }),
+      );
+
+      expect(result).toMatchObject({
+        body: { code: "skipped-not-installed" },
+        type: "success",
+      });
+      expect(invokeMock).not.toHaveBeenCalled();
+    });
+
+    test("returns 409 busy when an update is already in progress", async () => {
+      seedInstalledSnapshot();
+      updateStore = createMockStore<InstallationState>(
+        createMockInProgressState(),
+      );
+
+      const handler = installationRuntimeAction({
+        appConfig: autoTargetConfig,
+      });
+
+      const result = await handler(
+        createRuntimeActionParams({
+          body: { appData },
+          method: "post",
+          path: "/update/self",
+          ...DEFAULT_INSTALLATION_PARAMS,
+        }),
+      );
+
+      expect(result).toMatchObject({
+        error: { body: { code: "busy" }, statusCode: 409 },
+        type: "error",
+      });
+      expect(invokeMock).not.toHaveBeenCalled();
+    });
+
+    test("destructive plan halts to review-required and writes UPDATE_REVIEW_REQUIRED", async () => {
+      seedInstalledSnapshot(destructiveOldConfig);
+
+      const handler = installationRuntimeAction({
+        appConfig: autoOldConfig, // removes businessConfig.schema[0] ("oldField")
+      });
+
+      const result = await handler(
+        createRuntimeActionParams({
+          body: { appData },
+          method: "post",
+          path: "/update/self",
+          ...DEFAULT_INSTALLATION_PARAMS,
+        }),
+      );
+
+      expect(result).toMatchObject({
+        body: { code: "review-required" },
+        type: "success",
+      });
+      expect(invokeMock).not.toHaveBeenCalled();
+      expect(writeUpdateStatusMock).toHaveBeenCalledTimes(1);
+      expect(writeUpdateStatusMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          extensionId: TEST_EXTENSION_ID,
+          status: "UPDATE_REVIEW_REQUIRED",
+        }),
+      );
+    });
+
+    test("unsupported changed resource halts and writes UPDATE_FAILED", async () => {
+      seedInstalledSnapshot(unsupportedOldConfig);
+
+      const handler = installationRuntimeAction({
+        appConfig: unsupportedTargetConfig,
+      });
+
+      const result = await handler(
+        createRuntimeActionParams({
+          body: { appData },
+          method: "post",
+          path: "/update/self",
+          ...DEFAULT_INSTALLATION_PARAMS,
+        }),
+      );
+
+      expect(result).toMatchObject({
+        body: { code: "unsupported" },
+        type: "success",
+      });
+      expect(invokeMock).not.toHaveBeenCalled();
+      expect(writeUpdateStatusMock).toHaveBeenCalledTimes(1);
+      expect(writeUpdateStatusMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          extensionId: TEST_EXTENSION_ID,
+          status: "UPDATE_FAILED",
+        }),
+      );
+    });
+
+    test("reconcilable plan seeds cleanup and self-invokes execution with an inline plan + auto trigger", async () => {
+      seedInstalledSnapshot();
+
+      const handler = installationRuntimeAction({
+        appConfig: autoTargetConfig, // adds a supported commerce eventing source
+      });
+
+      const result = await handler(
+        createRuntimeActionParams({
+          body: { appData },
+          method: "post",
+          path: "/update/self",
+          ...DEFAULT_INSTALLATION_PARAMS,
+        }),
+      );
+
+      expect(result).toMatchObject({
+        body: expect.objectContaining({
+          activationId: "activation-123",
+          code: "started",
+          id: expect.any(String),
+          status: "in-progress",
+        }),
+        statusCode: 202,
+        type: "success",
+      });
+
+      expect(invokeMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          blocking: false,
+          name: "app-management/installation",
+          params: expect.objectContaining({
+            __ow_path: "/update/execution",
+            AIO_COMMERCE_API_BASE_URL: "https://commerce.example.com",
+            plan: expect.objectContaining({ targetConfig: autoTargetConfig }),
+            trigger: "auto",
+          }),
+          result: false,
+        }),
+      );
+
+      const diff = diffConfig(autoOldConfig, autoTargetConfig);
+      const expectedEntries = diff.changes
+        .filter((change) => change.kind !== "unchanged")
+        .map((change) => ({
+          domain: change.domain,
+          identity: change.identity,
+        }));
+
+      expect(cleanupStore.put).toHaveBeenCalledWith(
+        "current",
+        expect.objectContaining({
+          entries: expect.arrayContaining(expectedEntries),
+        }),
+      );
+    });
+
+    test("500 when there is no association data to self-source the Commerce base URL from", async () => {
+      seedInstalledSnapshot();
+      getAssociationDataMock.mockResolvedValue(null);
+
+      const handler = installationRuntimeAction({
+        appConfig: autoTargetConfig,
+      });
+
+      const result = await handler(
+        createRuntimeActionParams({
+          body: { appData },
+          method: "post",
+          path: "/update/self",
+          ...DEFAULT_INSTALLATION_PARAMS,
+        }),
+      );
+
+      expect(result).toMatchObject({
+        error: { statusCode: 500 },
+        type: "error",
+      });
+      expect(invokeMock).not.toHaveBeenCalled();
+    });
+  });
 });

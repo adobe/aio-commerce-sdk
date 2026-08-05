@@ -29,3 +29,8 @@ export const UpdateRequestBodySchema = v.object({
   ...InstallationRequestBodySchema.entries,
   planId: v.string(),
 });
+
+/** Request body for POST /update/self — the auto trigger self-sources Commerce/IO-Events params, so only appData is required. */
+export const SelfUpdateRequestBodySchema = v.object({
+  appData: AppDataSchema,
+});

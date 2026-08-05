@@ -55,9 +55,14 @@ import {
   mergeCleanupEntries,
   PLAN_KEY,
 } from "#management/upgrade/plan-store";
+import {
+  buildAutoUpdatePlan,
+  classifyAutoUpdate,
+} from "#management/upgrade/self-update";
 
 import {
   InstallationRequestBodySchema,
+  SelfUpdateRequestBodySchema,
   UpdateRequestBodySchema,
 } from "./schema";
 
@@ -312,6 +317,7 @@ function createInstallationHooks(
  * - GET /update                      Get current update workflow status
  * - POST /update                     Apply the stored update plan (consent + staleness guard)
  * - POST /update/execution           Execute update (internal, called async)
+ * - POST /update/self                Auto self-update entry point (post-deploy hook trigger)
  * - POST /uninstallation             Start uninstallation (creates plan, invokes execution async)
  * - GET /uninstallation              Get current uninstallation status
  * - POST /uninstallation/execution   Execute uninstallation (internal, called async)
@@ -958,6 +964,164 @@ router.post("/update/execution", {
     }
 
     return ok({ body: result });
+  },
+});
+
+/**
+ * POST /update/self - Auto self-update entry point (spec §6.2, §8.5).
+ *
+ * Invoked by the post-deploy hook (Task 4). Does auto-only gating, then hands
+ * an inline plan to POST /update/execution (no stored-plan round-trip, spec
+ * §6.2). Self-sources Commerce creds from association data and IMS/eventing
+ * creds from the action env (spec §8.5 step 3). Does NOT retry on busy — the
+ * hook owns bounded retry/backoff (spec §11).
+ */
+router.post("/update/self", {
+  body: SelfUpdateRequestBodySchema,
+
+  handler: async (req, { logger, rawParams }) => {
+    const rawAppConfig = rawParams.appConfig;
+    if (!rawAppConfig) {
+      return internalServerError(
+        "The app config is missing. Does the action receive it as a parameter?",
+      );
+    }
+    const targetConfig = validateCommerceAppConfig(rawAppConfig);
+
+    if (targetConfig.metadata.updateType !== "auto") {
+      logger.debug("Self-update skipped: updateType is not 'auto'.");
+      return ok({ body: { code: "skipped-manual" } });
+    }
+
+    const snapshot = await getInstallationSnapshot();
+    const oldConfig = snapshot?.config;
+    if (!oldConfig) {
+      logger.debug("Self-update skipped: app is not installed (no snapshot).");
+      return ok({ body: { code: "skipped-not-installed" } });
+    }
+
+    // Busy guard (spec §11): serialize against install/uninstall/update.
+    const installationStore = await createInstallationStore();
+    const uninstallationStore = await createUninstallationStore();
+    const updateStore = await createUpdateStore();
+
+    const [installationState, uninstallationState, updateState] =
+      await Promise.all([
+        installationStore.get(getStorageKey()),
+        uninstallationStore.get(getStorageKey()),
+        updateStore.get(getStorageKey()),
+      ]);
+
+    if (
+      isBusyState(installationState) ||
+      isBusyState(uninstallationState) ||
+      isBusyState(updateState)
+    ) {
+      logger.debug("Self-update rejected: another operation is in progress.");
+      return conflict({
+        body: {
+          code: "busy",
+          message:
+            "Another installation, uninstallation, or update operation is already in progress. Wait for it to complete.",
+        },
+      });
+    }
+
+    const diff = diffConfig(oldConfig, targetConfig);
+    const decision = classifyAutoUpdate(diff);
+    const deploymentVersion = process.env.__OW_ACTION_VERSION ?? "";
+
+    if (decision === "review-required") {
+      logger.debug(
+        "Self-update halted: destructive change requires merchant review.",
+      );
+      await reportUpdateStatus(rawParams, logger, {
+        deploymentVersion,
+        status: "UPDATE_REVIEW_REQUIRED",
+        version: targetConfig.metadata.version,
+      });
+      return ok({ body: { code: "review-required" } });
+    }
+
+    if (decision === "unsupported") {
+      logger.debug(
+        "Self-update halted: plan contains an unsupported changed resource.",
+      );
+      await reportUpdateStatus(rawParams, logger, {
+        deploymentVersion,
+        error: {
+          message:
+            "The update includes a change that cannot be applied in place yet.",
+        },
+        status: "UPDATE_FAILED",
+        version: targetConfig.metadata.version,
+      });
+      return ok({ body: { code: "unsupported" } });
+    }
+
+    // decision is "noop" or "reconcile": both execute (a noop advances the
+    // baseline; see /update/execution version-only handling). Seed the cleanup
+    // list from operative changes (spec §11).
+    const cleanupStore = await createCleanupStore();
+    const existingCleanupList = await cleanupStore.get(PLAN_KEY);
+    const existingCleanupEntries = existingCleanupList
+      ? existingCleanupList.entries
+      : [];
+
+    await cleanupStore.put(PLAN_KEY, {
+      entries: mergeCleanupEntries(
+        existingCleanupEntries,
+        getOperativeChanges(diff).map((change) => ({
+          domain: change.domain,
+          identity: change.identity,
+        })),
+      ),
+    });
+
+    const plan = buildAutoUpdatePlan(diff, targetConfig, deploymentVersion);
+    const initialState = createInitialInstallationState({
+      config: targetConfig,
+    });
+    await updateStore.put(getStorageKey(), initialState);
+
+    // Self-source Commerce creds from association; keep the IMS/eventing
+    // creds already present in rawParams (the deployed action's env).
+    const association = await getAssociationData();
+    if (association === null || association.commerce.baseUrl === "") {
+      return internalServerError(
+        "Cannot self-source the Commerce base URL for the auto update: no association data on record.",
+      );
+    }
+
+    const mergedParams = {
+      ...rawParams,
+      AIO_COMMERCE_API_BASE_URL: association.commerce.baseUrl,
+      AIO_COMMERCE_API_FLAVOR: association.commerce.env,
+      appData: req.body.appData,
+    };
+
+    const activation = await openwhisk().actions.invoke({
+      blocking: false,
+      name: DEFAULT_ACTION_NAME,
+      params: {
+        ...mergedParams,
+        __ow_method: "post",
+        __ow_path: "/update/execution",
+        initialState,
+        plan,
+        trigger: "auto",
+      },
+      result: false,
+    });
+
+    logger.debug(`Auto self-update started: ${activation.activationId}`);
+    return accepted({
+      body: {
+        activationId: activation.activationId,
+        code: "started",
+        ...initialState,
+      },
+    });
   },
 });
 
