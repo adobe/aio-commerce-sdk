@@ -7,6 +7,7 @@ The `@adobe/aio-commerce-lib-app` library provides:
 - **App Configuration**: Define, validate and read/parse configurations for Adobe Commerce App Builder applications
 - **Business Configuration**: Generate and manage the runtime actions that power the `commerce/configuration/1` extension point.
 - **Installation Management**: Generate and manage the runtime action that powers the app installation flow.
+- **Update Management**: Preview and apply configuration changes to an already-installed app through the reconcile engine, without a full uninstall/reinstall cycle.
 - **Admin UI Configuration** (`commerce/backend-ui/2`): Generate and manage the runtime action and `workerProcess` declarations for Admin UI extensions on `commerce/backend-ui/2`. Currently supports grid column extensions, mass actions, order view buttons, and menu declarations.
 - **Association Helpers**: Retrieve the Commerce instance the app is associated with from any runtime action via `getCommerceClient` and `getCommerceInstance`.
 - **Event Emission**: Publish a configured I/O Event from any runtime action by provider key and event name via `publishEvent`.
@@ -991,6 +992,73 @@ try {
   console.log("Configuration is valid!");
 } catch (error) {
   console.error("Validation failed:", error.message);
+}
+```
+
+### Updating an Installed App
+
+App Management supports updating an already-installed app's configuration without a full uninstall/reinstall cycle. Two endpoints are added to the generated `installation` runtime action:
+
+- `POST /update/preview` — computes the diff between the recorded installation snapshot and the target `app.commerce.config.*`, runs validation against the target config, and stores the result as a pending update plan. Returns `{ planId, diff, validation }`. This is synchronous and does not touch any Commerce or I/O Events resources.
+- `POST /update` — applies the previously previewed plan (identified by `planId`) asynchronously, reconciling the deployed resources with the target config. Rejects with a 409 response if the plan is stale (the app was redeployed since the preview), the `planId` doesn't match the currently pending plan, or another install/uninstall/update is already in progress.
+
+The diff is produced by a reconcile engine that compares the installed snapshot against the target config across every managed resource domain — I/O Events registrations, providers, and metadata; Commerce subscriptions and webhooks; Admin UI registrations; custom installation steps; and business configuration — and returns a `ConfigDiff`.
+
+For advanced use cases — such as building custom pre-update messaging around the computed diff — the diff engine's public functions and types are exported from `@adobe/aio-commerce-lib-app/management`:
+
+```ts
+import {
+  configHasDestructiveChange,
+  configHasUnsupportedChange,
+  diffConfig,
+  isEmptyPlan,
+} from "@adobe/aio-commerce-lib-app/management";
+import type {
+  ConfigDiff,
+  ResourceChange,
+} from "@adobe/aio-commerce-lib-app/management";
+
+const diff: ConfigDiff = diffConfig(oldConfig, newConfig);
+
+if (configHasDestructiveChange(diff)) {
+  // Warn the merchant: applying this update may lose merchant data or remove
+  // merchant-visible behavior.
+}
+
+if (configHasUnsupportedChange(diff)) {
+  // Warn the merchant: this update contains a change the reconcile engine
+  // cannot apply in place today.
+}
+
+if (isEmptyPlan(diff)) {
+  // No resource changes — this is a version-only update.
+}
+```
+
+Each `ResourceChange` entry in `diff.changes` describes one managed resource:
+
+- **domain**: the resource domain — `"ioEventsRegistration"`, `"ioEventsProvider"`, `"ioEventsMetadata"`, `"commerceSubscription"`, `"commerceWebhook"`, `"adminUi"`, `"customStep"`, or `"businessConfig"`
+- **identity**: the version-stable identity used to match the resource across versions (e.g. a subscription name)
+- **kind**: `"added"`, `"removed"`, `"changed"`, or `"unchanged"`
+- **destructive**: `true` when applying the change can lose merchant data or silently remove merchant-visible behavior
+- **supported**: `true` when the reconcile engine can apply the change in place today
+- **before** / **after**: the resource shape in the installed snapshot / target config (absent for `added` / `removed` respectively)
+
+#### Handling Unsupported Changes
+
+When a stored plan is applied via `POST /update` and it contains a `changed` resource with no in-place update path yet, the corresponding reconcile handler throws `UnsupportedReconcileChangeError`, and the update fails with that error surfaced in the resulting failed state. Check `configHasUnsupportedChange` at preview time to warn the merchant before they apply the update, rather than relying on this failure at execution time.
+
+```ts
+import { UnsupportedReconcileChangeError } from "@adobe/aio-commerce-lib-app/management";
+
+try {
+  // ... apply or inspect an update
+} catch (error) {
+  if (error instanceof UnsupportedReconcileChangeError) {
+    // error.domain   — the resource domain the unsupported change belongs to
+    // error.identity — the version-stable identity of the resource that changed
+  }
+  throw error;
 }
 ```
 

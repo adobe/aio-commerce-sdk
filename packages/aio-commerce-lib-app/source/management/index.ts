@@ -33,6 +33,13 @@ export {
   isInProgressState,
   isSucceededState,
 } from "./installation/workflow";
+export {
+  configHasDestructiveChange,
+  configHasUnsupportedChange,
+  diffConfig,
+  isEmptyPlan,
+  UnsupportedReconcileChangeError,
+} from "./upgrade";
 export { runCleanupTeardown } from "./upgrade/cleanup-teardown";
 
 export type {
@@ -48,3 +55,12 @@ export type {
   RunValidationOptions,
 } from "./installation/runner";
 export type * from "./installation/workflow";
+export type {
+  CleanupEntry,
+  CleanupList,
+  ConfigDiff,
+  ResourceChange,
+  ResourceDomain,
+  ResourceKind,
+  UpdatePlan,
+} from "./upgrade";
