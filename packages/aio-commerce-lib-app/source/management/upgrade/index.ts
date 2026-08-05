@@ -18,8 +18,16 @@ export {
   diffConfig,
   isEmptyPlan,
 } from "./diff";
+export { createEmStatusClient } from "./em-status-client";
 export { UnsupportedReconcileChangeError } from "./errors";
 
+export type {
+  EmStatusClient,
+  EmStatusClientParams,
+  UpdateStatus,
+  UpdateStatusError,
+  WriteUpdateStatusInput,
+} from "./em-status-client";
 export type {
   CleanupEntry,
   CleanupList,
