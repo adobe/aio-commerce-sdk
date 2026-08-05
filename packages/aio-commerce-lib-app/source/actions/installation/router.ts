@@ -42,7 +42,6 @@ import {
   runValidation,
 } from "#management/index";
 import {
-  configHasDestructiveChange,
   diffConfig,
   getOperativeChanges,
   isEmptyPlan,
@@ -208,26 +207,28 @@ function markStepTreeSucceeded(step: StepStatus): StepStatus {
  *
  * Skips (with a warning, not a failure) when no `extensionId` is on record for
  * this install — pre-backfill installs have no `extensionId` yet (spec §8.7).
- * An Extension Manager failure never fails the update itself: the §7.3
- * endpoint is an unresolved BLOCKER, hitting a mock in tests and a placeholder
- * URL in prod until the contract lands.
+ * The entire operation — resolving `extensionId` via `getAssociationData()`
+ * (real storage I/O that can itself throw) and the Extension Manager write —
+ * is wrapped in one try/catch so ANY failure here only warns and never fails
+ * the update. The §7.3 endpoint is an unresolved BLOCKER, hitting a mock in
+ * tests and a placeholder URL in prod until the contract lands.
  */
 async function reportUpdateStatus(
   rawParams: RuntimeActionArgs,
   logger: InstallationContext["logger"],
   input: Omit<WriteUpdateStatusInput, "extensionId" | "timestamp">,
 ): Promise<void> {
-  const association = await getAssociationData();
-  const extensionId = association?.extensionId;
-
-  if (!extensionId) {
-    logger.warn(
-      `Skipping Extension Manager status write (${input.status}): no extensionId on record for this install.`,
-    );
-    return;
-  }
-
   try {
+    const association = await getAssociationData();
+    const extensionId = association?.extensionId;
+
+    if (!extensionId) {
+      logger.warn(
+        `Skipping Extension Manager status write (${input.status}): no extensionId on record for this install.`,
+      );
+      return;
+    }
+
     const emClient = createEmStatusClient({ auth: rawParams });
     await emClient.writeUpdateStatus({
       ...input,
@@ -631,15 +632,18 @@ router.get("/update", {
  *    plan's, return 409 Conflict (code: "stale") — staleness guard.
  * 3. If an install, uninstall, or update is already in progress, return 409
  *    Conflict (code: "busy").
- * 4. If the plan has a destructive change, report `UPDATE_REVIEW_REQUIRED` to
- *    the Extension Manager and return 409 Conflict (code: "review-required")
- *    without ever invoking execution (spec §5, §6.1). This guard lives here —
- *    not in POST /update/execution — so a destructive plan never reaches the
- *    self-invoke, matching the other consent/staleness/busy guards above.
- * 5. Seed the cleanup list from the plan's operative (added/removed/changed)
+ * 4. Seed the cleanup list from the plan's operative (added/removed/changed)
  *    changes (spec §11), create the initial update state, invoke
  *    POST /update/execution async via openwhisk.
- * 6. Return 202 Accepted with the initial state.
+ * 5. Return 202 Accepted with the initial state.
+ *
+ * A destructive plan is NOT blocked here (spec §6.1 "Manual update"):
+ * confirming with the previewed `planId` — which itself surfaced the
+ * destructive warning — IS the consent, so a destructive plan proceeds to
+ * execution exactly like any other. Halting on a destructive change and
+ * reporting `UPDATE_REVIEW_REQUIRED` is a Phase-3 concern for the *auto*
+ * self-update entry point (spec §6.2/§8.6, post-deploy hook), not this
+ * manual path.
  */
 router.post("/update", {
   body: UpdateRequestBodySchema,
@@ -708,25 +712,11 @@ router.post("/update", {
       });
     }
 
-    if (configHasDestructiveChange(plan.diff)) {
-      logger.debug(
-        "Update rejected: the plan has a destructive change and requires manual review",
-      );
-
-      await reportUpdateStatus(rawParams, logger, {
-        deploymentVersion: plan.deploymentVersion,
-        status: "UPDATE_REVIEW_REQUIRED",
-        version: plan.targetConfig.metadata.version,
-      });
-
-      return conflict({
-        body: {
-          code: "review-required",
-          message:
-            "This update contains a destructive change and requires manual review before it can be applied.",
-        },
-      });
-    }
+    // NOTE: a destructive plan is intentionally NOT halted here. Confirming
+    // this request with the previewed `planId` (which already surfaced the
+    // destructive warning at /update/preview) IS the consent (spec §6.1). The
+    // `UPDATE_REVIEW_REQUIRED` halt-and-report is a Phase-3 concern for the
+    // auto self-update entry point (spec §6.2/§8.6), not this manual path.
 
     const cleanupStore = await createCleanupStore();
     await cleanupStore.put(PLAN_KEY, {
@@ -782,9 +772,13 @@ router.post("/update", {
  * to `plan.targetConfig` and clears the plan + cleanup stores.
  *
  * Version-only/no-op (spec §6.3): when the plan's diff has no operative
- * changes AND the cleanup list has no pending entries, no external calls are
- * made (runUpdate's reconcile is skipped) — the snapshot is still advanced
- * and the stores are still cleared.
+ * changes AND the cleanup list has no pending entries, no external resource/
+ * reconcile calls are made (runUpdate's reconcile is skipped) — the snapshot
+ * is still advanced and the stores are still cleared. The Extension Manager
+ * lifecycle status (`UPDATING` then `INSTALLED`) is still reported on this
+ * path — a version bump is a real lifecycle transition, and the EM write is
+ * best-effort so it doesn't compromise the "no external calls" guarantee for
+ * the actual reconcile.
  *
  * Reports lifecycle status to the Extension Manager (spec §5, §6.2):
  * `UPDATING` right before the reconcile decision, then `INSTALLED` (with

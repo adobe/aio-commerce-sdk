@@ -665,8 +665,8 @@ describe("installation router — update routes", () => {
       expect(new Set(codes).size).toBe(3);
     });
 
-    test("returns 409 review-required, writes UPDATE_REVIEW_REQUIRED, and never self-invokes execution for a destructive plan", async () => {
-      const plan = seedPlan({ diff: DESTRUCTIVE_DIFF });
+    test("a destructive plan is NOT blocked on the manual path — it self-invokes execution like any other plan", async () => {
+      seedPlan({ diff: DESTRUCTIVE_DIFF });
       const handler = installationRuntimeAction({
         appConfig: minimalValidConfig,
       });
@@ -681,20 +681,23 @@ describe("installation router — update routes", () => {
       );
 
       expect(result).toMatchObject({
-        error: { body: { code: "review-required" }, statusCode: 409 },
-        type: "error",
+        body: expect.objectContaining({ activationId: "activation-123" }),
+        statusCode: 202,
+        type: "success",
       });
 
-      expect(writeUpdateStatusMock).toHaveBeenCalledWith(
+      expect(invokeMock).toHaveBeenCalledWith(
         expect.objectContaining({
-          deploymentVersion: plan.deploymentVersion,
-          extensionId: TEST_EXTENSION_ID,
-          status: "UPDATE_REVIEW_REQUIRED",
-          version: plan.targetConfig.metadata.version,
+          params: expect.objectContaining({ __ow_path: "/update/execution" }),
         }),
       );
 
-      expect(invokeMock).not.toHaveBeenCalled();
+      // The consent guards above (plan-mismatch/stale/busy) may still report
+      // to the EM, but the destructive-change check itself no longer exists
+      // on this path, so nothing writes UPDATE_REVIEW_REQUIRED here.
+      expect(writeUpdateStatusMock).not.toHaveBeenCalledWith(
+        expect.objectContaining({ status: "UPDATE_REVIEW_REQUIRED" }),
+      );
     });
   });
 
@@ -765,6 +768,37 @@ describe("installation router — update routes", () => {
       expect(updateStore.put).toHaveBeenCalledWith(
         "current",
         expect.objectContaining({ status: "succeeded" }),
+      );
+    });
+
+    test("a destructive plan is not blocked — reconcile runs and UPDATING is written, not UPDATE_REVIEW_REQUIRED", async () => {
+      const plan = seedPlan({ diff: DESTRUCTIVE_DIFF });
+      const initialState = buildInitialState(plan.targetConfig);
+
+      const handler = installationRuntimeAction({
+        appConfig: minimalValidConfig,
+      });
+
+      const result = await handler(
+        createRuntimeActionParams({
+          appData,
+          initialState,
+          method: "post",
+          path: "/update/execution",
+          ...DEFAULT_INSTALLATION_PARAMS,
+        }),
+      );
+
+      expect(runUpdateMock).toHaveBeenCalledWith(
+        expect.objectContaining({ initialState, plan }),
+      );
+      expect(result).toMatchObject({ type: "success" });
+
+      expect(writeUpdateStatusMock).not.toHaveBeenCalledWith(
+        expect.objectContaining({ status: "UPDATE_REVIEW_REQUIRED" }),
+      );
+      expect(writeUpdateStatusMock).toHaveBeenCalledWith(
+        expect.objectContaining({ status: "UPDATING" }),
       );
     });
 
@@ -1076,6 +1110,32 @@ describe("installation router — update routes", () => {
 
       expect(result).toMatchObject({ type: "success" });
       expect(writeUpdateStatusMock).toHaveBeenCalled();
+    });
+
+    test("still completes the update when resolving the extensionId (getAssociationData) rejects", async () => {
+      getAssociationDataMock.mockRejectedValue(
+        new Error("association storage unavailable"),
+      );
+
+      const plan = seedPlan();
+      const initialState = buildInitialState(plan.targetConfig);
+
+      const handler = installationRuntimeAction({
+        appConfig: minimalValidConfig,
+      });
+
+      const result = await handler(
+        createRuntimeActionParams({
+          appData,
+          initialState,
+          method: "post",
+          path: "/update/execution",
+          ...DEFAULT_INSTALLATION_PARAMS,
+        }),
+      );
+
+      expect(result).toMatchObject({ type: "success" });
+      expect(writeUpdateStatusMock).not.toHaveBeenCalled();
     });
   });
 });
