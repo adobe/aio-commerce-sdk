@@ -23,3 +23,9 @@ export const InstallationRequestBodySchema = v.object({
   ioEventsEnv: v.string(),
   ioEventsUrl: v.string(),
 });
+
+/** Request body for POST /update — adds the consent/staleness `planId` token (spec §8.4). */
+export const UpdateRequestBodySchema = v.object({
+  ...InstallationRequestBodySchema.entries,
+  planId: v.string(),
+});

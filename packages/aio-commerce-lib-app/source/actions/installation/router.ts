@@ -35,16 +35,25 @@ import {
   isSucceededState,
   runInstallation,
   runUninstallation,
+  runUpdate,
   runValidation,
 } from "#management/index";
-import { diffConfig } from "#management/upgrade/diff";
 import {
+  diffConfig,
+  getOperativeChanges,
+  isEmptyPlan,
+} from "#management/upgrade/diff";
+import {
+  createCleanupStore,
   createPlanStore,
   generatePlanId,
   PLAN_KEY,
 } from "#management/upgrade/plan-store";
 
-import { InstallationRequestBodySchema } from "./schema";
+import {
+  InstallationRequestBodySchema,
+  UpdateRequestBodySchema,
+} from "./schema";
 
 import type { BaseContext } from "@aio-commerce-sdk/common-utils/actions";
 import type { KeyValueStore } from "@aio-commerce-sdk/common-utils/storage";
@@ -55,8 +64,10 @@ import type {
 import type { InstallationContext, ValidationContext } from "#management/index";
 import type { StepFailedEvent } from "#management/installation/workflow/hooks";
 import type {
+  FailedInstallationState,
   InProgressInstallationState,
   InstallationState,
+  SucceededInstallationState,
 } from "#management/installation/workflow/types";
 import type { UpdatePlan } from "#management/upgrade/types";
 
@@ -165,6 +176,11 @@ function buildInstallationContext(
   };
 }
 
+/** True when a stored workflow state represents an operation still running. */
+function isBusyState(state: InstallationState | null): boolean {
+  return state !== null && isInProgressState(state);
+}
+
 /**
  * Reads state from a store and returns 200 with body or 204.
  * Shared by GET / and GET /uninstallation.
@@ -229,6 +245,8 @@ function createInstallationHooks(
  * - POST /validation                 Pre-installation validation
  * - POST /update/preview             Preview an update plan (computes diff, stores plan)
  * - GET /update                      Get current update workflow status
+ * - POST /update                     Apply the stored update plan (consent + staleness guard)
+ * - POST /update/execution           Execute update (internal, called async)
  * - POST /uninstallation             Start uninstallation (creates plan, invokes execution async)
  * - GET /uninstallation              Get current uninstallation status
  * - POST /uninstallation/execution   Execute uninstallation (internal, called async)
@@ -540,6 +558,235 @@ router.get("/update", {
     logger.debug("Getting update execution status...");
     const store = await createUpdateStore();
     return readStateFromStore(store, (msg) => logger.debug(msg));
+  },
+});
+
+/**
+ * POST /update - Apply the stored update plan (async)
+ *
+ * Flow:
+ * 1. Load the stored plan; if none, or `body.planId` doesn't match it, return
+ *    409 Conflict (code: "plan-mismatch") — consent guard (spec §8.4).
+ * 2. If the live installation-action deployment version no longer matches the
+ *    plan's, return 409 Conflict (code: "stale") — staleness guard.
+ * 3. If an install, uninstall, or update is already in progress, return 409
+ *    Conflict (code: "busy").
+ * 4. Seed the cleanup list from the plan's operative (added/removed/changed)
+ *    changes (spec §11), create the initial update state, invoke
+ *    POST /update/execution async via openwhisk.
+ * 5. Return 202 Accepted with the initial state.
+ */
+router.post("/update", {
+  body: UpdateRequestBodySchema,
+
+  handler: async (req, { logger, rawParams }) => {
+    const { appData, commerceBaseUrl, planId } = req.body;
+    logger.debug(
+      `Starting update for app "${appData.projectName}" (workspace: "${appData.workspaceName}", commerce: "${commerceBaseUrl}")`,
+    );
+
+    const planStore = await createPlanStore();
+    const plan = await planStore.get(PLAN_KEY);
+
+    if (!plan || planId !== plan.planId) {
+      logger.debug(
+        "Update rejected: planId does not match the current pending plan",
+      );
+      return conflict({
+        body: {
+          code: "plan-mismatch",
+          message:
+            "The provided planId does not match the current pending update plan. Preview the update again before applying it.",
+        },
+      });
+    }
+
+    const liveDeploymentVersion = process.env.__OW_ACTION_VERSION ?? "";
+    if (liveDeploymentVersion !== plan.deploymentVersion) {
+      logger.debug(
+        "Update rejected: the app has been redeployed since this plan was computed",
+      );
+      return conflict({
+        body: {
+          code: "stale",
+          message:
+            "The app has been redeployed since this update plan was computed. Preview the update again before applying it.",
+        },
+      });
+    }
+
+    const installationStore = await createInstallationStore();
+    const uninstallationStore = await createUninstallationStore();
+    const updateStore = await createUpdateStore();
+
+    const [installationState, uninstallationState, updateState] =
+      await Promise.all([
+        installationStore.get(getStorageKey()),
+        uninstallationStore.get(getStorageKey()),
+        updateStore.get(getStorageKey()),
+      ]);
+
+    if (
+      isBusyState(installationState) ||
+      isBusyState(uninstallationState) ||
+      isBusyState(updateState)
+    ) {
+      logger.debug(
+        "Update rejected: another install/uninstall/update operation is in progress",
+      );
+      return conflict({
+        body: {
+          code: "busy",
+          message:
+            "Another installation, uninstallation, or update operation is already in progress. Wait for it to complete.",
+        },
+      });
+    }
+
+    const cleanupStore = await createCleanupStore();
+    await cleanupStore.put(PLAN_KEY, {
+      entries: getOperativeChanges(plan.diff).map((change) => ({
+        domain: change.domain,
+        identity: change.identity,
+      })),
+    });
+
+    const initialState = createInitialInstallationState({
+      config: plan.targetConfig,
+    });
+    logger.debug(`Created initial update state: ${initialState.id}`);
+    await updateStore.put(getStorageKey(), initialState);
+
+    const ow = openwhisk();
+    const mergedParams = buildWorkflowParams(req.body, rawParams);
+
+    const activation = await ow.actions.invoke({
+      blocking: false,
+      name: DEFAULT_ACTION_NAME,
+
+      params: {
+        ...mergedParams,
+        __ow_method: "post",
+
+        // Override path to hit the update execution endpoint
+        __ow_path: "/update/execution",
+
+        initialState,
+      },
+      result: false,
+    });
+
+    logger.debug(`Async update started: ${activation.activationId}`);
+    return accepted({
+      body: {
+        activationId: activation.activationId,
+        message: "Update started",
+        ...initialState,
+      },
+    });
+  },
+});
+
+/**
+ * POST /update/execution - Execute the stored update plan
+ * @internal - Do not add to OpenAPI Spec.
+ *
+ * This endpoint is called asynchronously by POST /update. It loads the
+ * stored plan (executed verbatim, spec §8.4), runs the update workflow, and
+ * persists state. On success it advances the recorded installation snapshot
+ * to `plan.targetConfig` and clears the plan + cleanup stores.
+ *
+ * Version-only/no-op (spec §6.3): when the plan's diff has no operative
+ * changes AND the cleanup list has no pending entries, no external calls are
+ * made (runUpdate's reconcile is skipped) — the snapshot is still advanced
+ * and the stores are still cleared.
+ */
+router.post("/update/execution", {
+  handler: async (_req, { logger, rawParams }) => {
+    const params = rawParams as ExecutionRouteParams;
+    const { initialState, appData, AIO_COMMERCE_API_BASE_URL } = params;
+
+    // biome-ignore lint/suspicious/noUnnecessaryConditions: params is an unchecked `as ExecutionRouteParams` cast over raw runtime action params, so initialState can genuinely be missing at runtime despite the asserted type.
+    if (!initialState) {
+      return badRequest("initialState is required for execution");
+    }
+
+    const planStore = await createPlanStore();
+    const plan = await planStore.get(PLAN_KEY);
+
+    if (!plan) {
+      return internalServerError(
+        "No stored update plan found for this execution",
+      );
+    }
+
+    const store = await createUpdateStore();
+    const hooks = createInstallationHooks(store, (msg) => logger.debug(msg));
+    const installationContext = buildInstallationContext(
+      params,
+      plan.targetConfig,
+      logger,
+    );
+
+    logger.debug(
+      `Executing update ${initialState.id} for app "${appData.projectName}" (workspace: "${appData.workspaceName}", commerce: "${AIO_COMMERCE_API_BASE_URL}")`,
+    );
+
+    const cleanupStore = await createCleanupStore();
+    const cleanupList = await cleanupStore.get(PLAN_KEY);
+    const hasPendingCleanup = Boolean(
+      cleanupList && cleanupList.entries.length > 0,
+    );
+    const isVersionOnly = isEmptyPlan(plan.diff) && !hasPendingCleanup;
+
+    let result: SucceededInstallationState | FailedInstallationState;
+    if (isVersionOnly) {
+      logger.debug(
+        "Update plan is version-only (no operative changes); skipping reconcile",
+      );
+      result = {
+        ...initialState,
+        completedAt: new Date().toISOString(),
+        status: "succeeded",
+      };
+    } else {
+      result = await runUpdate({
+        config: plan.targetConfig,
+        hooks,
+        initialState,
+        installationContext,
+        plan,
+      });
+    }
+
+    await store.put(getStorageKey(), result);
+    logger.debug(`Update completed: ${result.status}`);
+
+    if (isSucceededState(result)) {
+      const installationStore = await createInstallationStore();
+      await installationStore.put(getStorageKey(), {
+        ...result,
+        config: plan.targetConfig,
+      });
+
+      await planStore.delete(PLAN_KEY);
+      await cleanupStore.delete(PLAN_KEY);
+      logger.debug(
+        "Advanced installation snapshot to the plan's target config; cleared plan and cleanup stores",
+      );
+    }
+
+    if (isFailedState(result)) {
+      return internalServerError({
+        body: {
+          error: result.error,
+          message: "Update failed",
+          state: result,
+        },
+      });
+    }
+
+    return ok({ body: result });
   },
 });
 

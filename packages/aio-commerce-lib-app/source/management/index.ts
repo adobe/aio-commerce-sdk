@@ -24,6 +24,7 @@ export {
   createInitialUninstallationState,
   runInstallation,
   runUninstallation,
+  runUpdate,
   runValidation,
 } from "./installation/runner";
 export {
@@ -42,6 +43,7 @@ export type {
   CreateInitialUninstallationStateOptions,
   RunInstallationOptions,
   RunUninstallationOptions,
+  RunUpdateOptions,
   RunValidationOptions,
 } from "./installation/runner";
 export type * from "./installation/workflow";

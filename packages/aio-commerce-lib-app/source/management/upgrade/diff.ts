@@ -421,6 +421,11 @@ export function isEmptyPlan(diff: ConfigDiff): boolean {
   return !diff.changes.some((c) => OPERATIVE.has(c.kind));
 }
 
+/** The `added`/`removed`/`changed` entries a diff would actually apply (excludes `unchanged`). */
+export function getOperativeChanges(diff: ConfigDiff): ResourceChange[] {
+  return diff.changes.filter((c) => OPERATIVE.has(c.kind));
+}
+
 /** True when applying the diff would lose merchant data or silently remove merchant-visible behavior. */
 export function configHasDestructiveChange(diff: ConfigDiff): boolean {
   return diff.changes.some((c) => c.destructive && OPERATIVE.has(c.kind));

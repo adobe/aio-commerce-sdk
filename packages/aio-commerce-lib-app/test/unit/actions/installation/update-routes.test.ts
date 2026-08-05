@@ -16,6 +16,7 @@ const {
   invokeMock,
   openwhiskMock,
   createCombinedStoreMock,
+  runUpdateMock,
   runValidationMock,
 } = vi.hoisted(() => {
   const actionInvokeMock = vi.fn();
@@ -28,6 +29,7 @@ const {
         invoke: actionInvokeMock,
       },
     })),
+    runUpdateMock: vi.fn(),
     runValidationMock: vi.fn(),
   };
 });
@@ -48,25 +50,33 @@ vi.mock("#management/index", async () => {
 
   return {
     ...actual,
+    runUpdate: runUpdateMock,
     runValidation: runValidationMock,
   };
 });
 
 import { installationRuntimeAction } from "#actions/installation/index";
+import { diffConfig } from "#management/upgrade/diff";
 import { createRuntimeActionParams } from "#test/fixtures/actions";
 import {
   configWithCommerceEventing,
   minimalValidConfig,
 } from "#test/fixtures/config";
 import {
+  createMockFailedState,
+  createMockInProgressState,
   createMockInstallationContext,
   createMockSucceededState,
   createMockValidationResult,
   DEFAULT_INSTALLATION_PARAMS,
 } from "#test/fixtures/installation";
 
-import type { InstallationState } from "#management/installation/workflow/types";
-import type { UpdatePlan } from "#management/upgrade/types";
+import type { InstallationHooks } from "#management/installation/workflow/hooks";
+import type {
+  InProgressInstallationState,
+  InstallationState,
+} from "#management/installation/workflow/types";
+import type { CleanupList, UpdatePlan } from "#management/upgrade/types";
 
 /** In-memory mock of a generic key/value store, mirroring the installation store fixture. */
 function createMockStore<T>(initialValue: T | null = null) {
@@ -98,16 +108,20 @@ const requestBody = {
 
 describe("installation router — update routes", () => {
   let installationStore: MockStore<InstallationState>;
+  let uninstallationStore: MockStore<InstallationState>;
   let planStore: MockStore<UpdatePlan>;
   let updateStore: MockStore<InstallationState>;
+  let cleanupStore: MockStore<CleanupList>;
 
   beforeEach(() => {
     vi.clearAllMocks();
     process.env.__OW_ACTION_VERSION = "3";
 
     installationStore = createMockStore<InstallationState>();
+    uninstallationStore = createMockStore<InstallationState>();
     planStore = createMockStore<UpdatePlan>();
     updateStore = createMockStore<InstallationState>();
+    cleanupStore = createMockStore<CleanupList>();
 
     createCombinedStoreMock.mockImplementation(
       async (options?: { cache?: { keyPrefix?: string } }) => {
@@ -116,11 +130,17 @@ describe("installation router — update routes", () => {
         if (prefix === "installation") {
           return installationStore;
         }
+        if (prefix === "uninstallation") {
+          return uninstallationStore;
+        }
         if (prefix === "update-plan") {
           return planStore;
         }
         if (prefix === "update") {
           return updateStore;
+        }
+        if (prefix === "update-cleanup") {
+          return cleanupStore;
         }
 
         throw new Error(`Unexpected store prefix: ${String(prefix)}`);
@@ -325,6 +345,469 @@ describe("installation router — update routes", () => {
         body: existingState,
         type: "success",
       });
+    });
+  });
+
+  describe("POST /update", () => {
+    const updateRequestBody = { ...requestBody, planId: "plan-1" };
+
+    /** Seeds the plan store and returns the plan, so assertions can reference its computed diff. */
+    function seedPlan(overrides: Partial<UpdatePlan> = {}): UpdatePlan {
+      const plan: UpdatePlan = {
+        createdAt: "2026-01-01T00:00:00.000Z",
+        deploymentVersion: "3",
+        diff: diffConfig(minimalValidConfig, configWithCommerceEventing),
+        planId: "plan-1",
+        targetConfig: configWithCommerceEventing,
+        ...overrides,
+      };
+      planStore = createMockStore<UpdatePlan>(plan);
+      return plan;
+    }
+
+    beforeEach(() => {
+      seedPlan();
+    });
+
+    test("returns 202 and self-invokes /update/execution on a valid, matching, idle request", async () => {
+      const handler = installationRuntimeAction({
+        appConfig: minimalValidConfig,
+      });
+
+      const result = await handler(
+        createRuntimeActionParams({
+          body: updateRequestBody,
+          method: "post",
+          path: "/update",
+          ...DEFAULT_INSTALLATION_PARAMS,
+        }),
+      );
+
+      expect(result).toMatchObject({
+        body: expect.objectContaining({
+          activationId: "activation-123",
+          id: expect.any(String),
+        }),
+        statusCode: 202,
+        type: "success",
+      });
+
+      expect(invokeMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          blocking: false,
+          name: "app-management/installation",
+          params: expect.objectContaining({ __ow_path: "/update/execution" }),
+          result: false,
+        }),
+      );
+    });
+
+    test("stores the initial update state and seeds the cleanup list from operative changes", async () => {
+      const plan = seedPlan();
+      const handler = installationRuntimeAction({
+        appConfig: minimalValidConfig,
+      });
+
+      await handler(
+        createRuntimeActionParams({
+          body: updateRequestBody,
+          method: "post",
+          path: "/update",
+          ...DEFAULT_INSTALLATION_PARAMS,
+        }),
+      );
+
+      expect(updateStore.put).toHaveBeenCalledWith(
+        "current",
+        expect.objectContaining({ status: "in-progress" }),
+      );
+
+      const expectedEntries = plan.diff.changes
+        .filter((change) => change.kind !== "unchanged")
+        .map((change) => ({
+          domain: change.domain,
+          identity: change.identity,
+        }));
+
+      expect(cleanupStore.put).toHaveBeenCalledWith("current", {
+        entries: expectedEntries,
+      });
+    });
+
+    test("returns 409 plan-mismatch when body.planId does not match the stored plan", async () => {
+      const handler = installationRuntimeAction({
+        appConfig: minimalValidConfig,
+      });
+
+      const result = await handler(
+        createRuntimeActionParams({
+          body: { ...updateRequestBody, planId: "wrong-plan" },
+          method: "post",
+          path: "/update",
+          ...DEFAULT_INSTALLATION_PARAMS,
+        }),
+      );
+
+      expect(result).toMatchObject({
+        error: { body: { code: "plan-mismatch" }, statusCode: 409 },
+        type: "error",
+      });
+    });
+
+    test("returns 409 plan-mismatch when there is no stored plan at all", async () => {
+      planStore = createMockStore<UpdatePlan>(null);
+      const handler = installationRuntimeAction({
+        appConfig: minimalValidConfig,
+      });
+
+      const result = await handler(
+        createRuntimeActionParams({
+          body: updateRequestBody,
+          method: "post",
+          path: "/update",
+          ...DEFAULT_INSTALLATION_PARAMS,
+        }),
+      );
+
+      expect(result).toMatchObject({
+        error: { body: { code: "plan-mismatch" }, statusCode: 409 },
+        type: "error",
+      });
+    });
+
+    test("returns 409 stale when the live deployment version no longer matches the plan", async () => {
+      seedPlan({ deploymentVersion: "2" }); // process.env.__OW_ACTION_VERSION is "3"
+      const handler = installationRuntimeAction({
+        appConfig: minimalValidConfig,
+      });
+
+      const result = await handler(
+        createRuntimeActionParams({
+          body: updateRequestBody,
+          method: "post",
+          path: "/update",
+          ...DEFAULT_INSTALLATION_PARAMS,
+        }),
+      );
+
+      expect(result).toMatchObject({
+        error: { body: { code: "stale" }, statusCode: 409 },
+        type: "error",
+      });
+    });
+
+    test("returns 409 busy when an installation is already in progress", async () => {
+      installationStore = createMockStore<InstallationState>(
+        createMockInProgressState(),
+      );
+
+      const handler = installationRuntimeAction({
+        appConfig: minimalValidConfig,
+      });
+
+      const result = await handler(
+        createRuntimeActionParams({
+          body: updateRequestBody,
+          method: "post",
+          path: "/update",
+          ...DEFAULT_INSTALLATION_PARAMS,
+        }),
+      );
+
+      expect(result).toMatchObject({
+        error: { body: { code: "busy" }, statusCode: 409 },
+        type: "error",
+      });
+    });
+
+    test("returns 409 busy when an uninstallation is already in progress", async () => {
+      uninstallationStore = createMockStore<InstallationState>(
+        createMockInProgressState(),
+      );
+
+      const handler = installationRuntimeAction({
+        appConfig: minimalValidConfig,
+      });
+
+      const result = await handler(
+        createRuntimeActionParams({
+          body: updateRequestBody,
+          method: "post",
+          path: "/update",
+          ...DEFAULT_INSTALLATION_PARAMS,
+        }),
+      );
+
+      expect(result).toMatchObject({
+        error: { body: { code: "busy" }, statusCode: 409 },
+        type: "error",
+      });
+    });
+
+    test("returns 409 busy when another update is already in progress", async () => {
+      updateStore = createMockStore<InstallationState>(
+        createMockInProgressState(),
+      );
+
+      const handler = installationRuntimeAction({
+        appConfig: minimalValidConfig,
+      });
+
+      const result = await handler(
+        createRuntimeActionParams({
+          body: updateRequestBody,
+          method: "post",
+          path: "/update",
+          ...DEFAULT_INSTALLATION_PARAMS,
+        }),
+      );
+
+      expect(result).toMatchObject({
+        error: { body: { code: "busy" }, statusCode: 409 },
+        type: "error",
+      });
+    });
+
+    test("the three 409 error codes are distinct", async () => {
+      const handler = installationRuntimeAction({
+        appConfig: minimalValidConfig,
+      });
+
+      seedPlan();
+      const mismatchResult = await handler(
+        createRuntimeActionParams({
+          body: { ...updateRequestBody, planId: "wrong-plan" },
+          method: "post",
+          path: "/update",
+          ...DEFAULT_INSTALLATION_PARAMS,
+        }),
+      );
+
+      seedPlan({ deploymentVersion: "999" });
+      const staleResult = await handler(
+        createRuntimeActionParams({
+          body: updateRequestBody,
+          method: "post",
+          path: "/update",
+          ...DEFAULT_INSTALLATION_PARAMS,
+        }),
+      );
+
+      seedPlan();
+      installationStore = createMockStore<InstallationState>(
+        createMockInProgressState(),
+      );
+      const busyResult = await handler(
+        createRuntimeActionParams({
+          body: updateRequestBody,
+          method: "post",
+          path: "/update",
+          ...DEFAULT_INSTALLATION_PARAMS,
+        }),
+      );
+
+      const codes = [mismatchResult, staleResult, busyResult].map((result) =>
+        result.type === "error"
+          ? (result.error.body as unknown as { code: string }).code
+          : undefined,
+      );
+
+      expect(codes).toEqual(["plan-mismatch", "stale", "busy"]);
+      expect(new Set(codes).size).toBe(3);
+    });
+  });
+
+  describe("POST /update/execution", () => {
+    /** Seeds the plan store and returns the plan, so assertions can reference `targetConfig`/`diff`. */
+    function seedPlan(overrides: Partial<UpdatePlan> = {}): UpdatePlan {
+      const plan: UpdatePlan = {
+        createdAt: "2026-01-01T00:00:00.000Z",
+        deploymentVersion: "3",
+        diff: diffConfig(minimalValidConfig, configWithCommerceEventing),
+        planId: "plan-1",
+        targetConfig: configWithCommerceEventing,
+        ...overrides,
+      };
+      planStore = createMockStore<UpdatePlan>(plan);
+      return plan;
+    }
+
+    function buildInitialState(config: typeof minimalValidConfig) {
+      return createMockInProgressState({ config, id: "update-1" });
+    }
+
+    beforeEach(() => {
+      runUpdateMock.mockImplementation(
+        async ({
+          initialState,
+          hooks,
+        }: {
+          initialState: InProgressInstallationState;
+          hooks: InstallationHooks;
+        }) => {
+          const succeededState = createMockSucceededState({
+            config: initialState.config,
+            id: initialState.id,
+          });
+
+          await hooks.onInstallationStart?.(initialState);
+          await hooks.onInstallationSuccess?.(succeededState);
+
+          return succeededState;
+        },
+      );
+    });
+
+    test("runs runUpdate and persists the succeeded result for a non-empty plan", async () => {
+      const plan = seedPlan();
+      const initialState = buildInitialState(plan.targetConfig);
+
+      const handler = installationRuntimeAction({
+        appConfig: minimalValidConfig,
+      });
+
+      const result = await handler(
+        createRuntimeActionParams({
+          appData,
+          initialState,
+          method: "post",
+          path: "/update/execution",
+          ...DEFAULT_INSTALLATION_PARAMS,
+        }),
+      );
+
+      expect(runUpdateMock).toHaveBeenCalledWith(
+        expect.objectContaining({ initialState, plan }),
+      );
+
+      expect(result).toMatchObject({ type: "success" });
+      expect(updateStore.put).toHaveBeenCalledWith(
+        "current",
+        expect.objectContaining({ status: "succeeded" }),
+      );
+    });
+
+    test("advances the installation snapshot and clears the plan + cleanup stores on success", async () => {
+      const plan = seedPlan();
+      const initialState = buildInitialState(plan.targetConfig);
+      cleanupStore = createMockStore<CleanupList>({
+        entries: [{ domain: "adminUi", identity: "adminUi" }],
+      });
+
+      const handler = installationRuntimeAction({
+        appConfig: minimalValidConfig,
+      });
+
+      await handler(
+        createRuntimeActionParams({
+          appData,
+          initialState,
+          method: "post",
+          path: "/update/execution",
+          ...DEFAULT_INSTALLATION_PARAMS,
+        }),
+      );
+
+      expect(installationStore.put).toHaveBeenCalledWith(
+        "current",
+        expect.objectContaining({
+          config: plan.targetConfig,
+          status: "succeeded",
+        }),
+      );
+      expect(planStore.delete).toHaveBeenCalledWith("current");
+      expect(cleanupStore.delete).toHaveBeenCalledWith("current");
+    });
+
+    test("returns 500 and does not advance the snapshot when the update workflow fails", async () => {
+      const plan = seedPlan();
+      const initialState = buildInitialState(plan.targetConfig);
+      const failedState = createMockFailedState({ id: initialState.id });
+
+      runUpdateMock.mockResolvedValue(failedState);
+
+      const handler = installationRuntimeAction({
+        appConfig: minimalValidConfig,
+      });
+
+      const result = await handler(
+        createRuntimeActionParams({
+          appData,
+          initialState,
+          method: "post",
+          path: "/update/execution",
+          ...DEFAULT_INSTALLATION_PARAMS,
+        }),
+      );
+
+      expect(result).toMatchObject({
+        error: { statusCode: 500 },
+        type: "error",
+      });
+      expect(installationStore.put).not.toHaveBeenCalled();
+      expect(planStore.delete).not.toHaveBeenCalled();
+    });
+
+    test("version-only plan: succeeds with no reconcile calls, but still advances snapshot and clears stores", async () => {
+      const plan = seedPlan({
+        diff: diffConfig(minimalValidConfig, minimalValidConfig),
+        targetConfig: minimalValidConfig,
+      });
+      const initialState = buildInitialState(plan.targetConfig);
+
+      const handler = installationRuntimeAction({
+        appConfig: minimalValidConfig,
+      });
+
+      const result = await handler(
+        createRuntimeActionParams({
+          appData,
+          initialState,
+          method: "post",
+          path: "/update/execution",
+          ...DEFAULT_INSTALLATION_PARAMS,
+        }),
+      );
+
+      expect(runUpdateMock).not.toHaveBeenCalled();
+      expect(result).toMatchObject({ type: "success" });
+
+      expect(installationStore.put).toHaveBeenCalledWith(
+        "current",
+        expect.objectContaining({
+          config: minimalValidConfig,
+          status: "succeeded",
+        }),
+      );
+      expect(planStore.delete).toHaveBeenCalledWith("current");
+      expect(cleanupStore.delete).toHaveBeenCalledWith("current");
+    });
+
+    test("version-only plan with pending cleanup entries still runs runUpdate (not a pure no-op)", async () => {
+      const plan = seedPlan({
+        diff: diffConfig(minimalValidConfig, minimalValidConfig),
+        targetConfig: minimalValidConfig,
+      });
+      const initialState = buildInitialState(plan.targetConfig);
+      cleanupStore = createMockStore<CleanupList>({
+        entries: [{ domain: "adminUi", identity: "adminUi" }],
+      });
+
+      const handler = installationRuntimeAction({
+        appConfig: minimalValidConfig,
+      });
+
+      await handler(
+        createRuntimeActionParams({
+          appData,
+          initialState,
+          method: "post",
+          path: "/update/execution",
+          ...DEFAULT_INSTALLATION_PARAMS,
+        }),
+      );
+
+      expect(runUpdateMock).toHaveBeenCalled();
     });
   });
 });
