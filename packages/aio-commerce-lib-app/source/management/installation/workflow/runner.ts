@@ -22,6 +22,7 @@ import {
 } from "./utils";
 
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
+import type { ConfigDiff } from "#management/upgrade/types";
 import type { InstallationHooks } from "./hooks";
 import type {
   AnyStep,
@@ -65,10 +66,16 @@ export type ExecuteWorkflowOptions = {
 
   /** Lifecycle hooks for status change notifications. */
   hooks?: InstallationHooks;
+
+  /**
+   * The computed config diff, used in "update" mode. Passed to each leaf
+   * step's `reconcile` handler (or defaulted to an empty diff if absent).
+   */
+  diff?: ConfigDiff;
 };
 
-/** Execution mode: "install" or "uninstall". */
-type ExecutionMode = "install" | "uninstall";
+/** Execution mode: "install", "uninstall", or "update". */
+type ExecutionMode = "install" | "uninstall" | "update";
 
 /** Context for step execution containing all necessary dependencies. */
 type StepExecutionContext = {
@@ -81,6 +88,7 @@ type StepExecutionContext = {
   error: InstallationError | null;
   hooks?: InstallationHooks;
   mode: ExecutionMode;
+  diff?: ConfigDiff;
 };
 
 /**
@@ -150,13 +158,24 @@ export async function executeUninstallWorkflow(
 }
 
 /**
- * Internal implementation shared by executeWorkflow and executeUninstallWorkflow.
+ * Executes an update workflow from an initial state. Returns the final state (never throws).
+ * Steps with a `reconcile` handler get it called with the computed diff; steps without
+ * fall back to an idempotent re-apply of `install`.
+ */
+export async function executeUpdateWorkflow(
+  options: ExecuteWorkflowOptions,
+): Promise<SucceededInstallationState | FailedInstallationState> {
+  return executeWorkflowWithMode(options, "update");
+}
+
+/**
+ * Internal implementation shared by executeWorkflow, executeUninstallWorkflow, and executeUpdateWorkflow.
  */
 async function executeWorkflowWithMode(
   options: ExecuteWorkflowOptions,
   mode: ExecutionMode,
 ): Promise<SucceededInstallationState | FailedInstallationState> {
-  const { rootStep, installationContext, config, initialState, hooks } =
+  const { rootStep, installationContext, config, initialState, hooks, diff } =
     options;
 
   // Deep clone the step status so we don't mutate the original
@@ -164,6 +183,7 @@ async function executeWorkflowWithMode(
   const context: StepExecutionContext = {
     config,
     data: initialState.data as Record<string, unknown> | null,
+    diff,
     error: null,
     hooks,
     id: initialState.id,
@@ -353,6 +373,21 @@ async function executeLeafStep(
     if (step.uninstall) {
       await step.uninstall(context.config, executionContext);
     }
+    return;
+  }
+
+  if (context.mode === "update") {
+    // Fall back to an idempotent re-apply of install when reconcile is absent
+    const result = step.reconcile
+      ? await step.reconcile(
+          context.config,
+          context.diff ?? { changes: [] },
+          executionContext,
+        )
+      : await step.install(context.config, executionContext);
+
+    context.data ??= {};
+    setAtPath(context.data, stepStatus.path, result);
     return;
   }
 

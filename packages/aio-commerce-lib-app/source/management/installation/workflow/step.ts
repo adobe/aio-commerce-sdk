@@ -13,6 +13,7 @@
 import type { RuntimeActionParams } from "@adobe/aio-commerce-lib-core/params";
 import type AioLogger from "@adobe/aio-lib-core-logging";
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
+import type { ConfigDiff } from "#management/upgrade/types";
 import type { AppData } from "../schema";
 
 // Defined here (not in validation.ts) to avoid circular imports, since step
@@ -140,6 +141,16 @@ export type LeafStep<
     config: TConfig,
     context: ExecutionContext<TStepCtx>,
   ) => void | Promise<void>;
+
+  /**
+   * Optional reconcile handler, called in "update" mode with the computed diff.
+   * When absent, the runner falls back to an idempotent re-apply of `install`.
+   */
+  reconcile?: (
+    config: TConfig,
+    diff: ConfigDiff,
+    context: ExecutionContext<TStepCtx>,
+  ) => TOutput | Promise<TOutput>;
 };
 
 /** A branch step that contains children (no execution). */
@@ -188,6 +199,12 @@ export type AnyStep = {
   meta: StepMeta;
   name: string;
   type: "leaf" | "branch";
+
+  reconcile?: (
+    config: any,
+    diff: ConfigDiff,
+    context: any,
+  ) => unknown | Promise<unknown>;
 
   uninstall?: (config: any, context: any) => void | Promise<void>;
 
@@ -251,6 +268,7 @@ export function defineLeafStep<
     install: options.install,
     meta: options.meta,
     name: options.name,
+    reconcile: options.reconcile,
     type: "leaf",
     uninstall: options.uninstall,
     validate: options.validate,
