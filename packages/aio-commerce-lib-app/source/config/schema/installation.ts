@@ -21,13 +21,13 @@ const MAX_MESSAGE_LENGTH = 1000;
 
 /**
  * Regex for script paths that can be relative or absolute.
- * Must end with .js extension
+ * Must end with a .js or .ts extension
  * Examples:
  *   - "./scripts/setup.js"
- *   - "./setup.js"
+ *   - "./setup.ts"
  *   - "../../scripts/setup.js"
  */
-const SCRIPT_PATH_REGEX = /^(?:\.{0,2}\/)*[\w-/]*[\w-]+\.js$/;
+const SCRIPT_PATH_REGEX = /^(?:\.{0,2}\/)*(?:[\w-]+\/)*[\w-]+\.(?:js|ts)$/;
 
 /**
  * Schema for custom installation step configuration
@@ -52,7 +52,7 @@ export const CustomInstallationStepSchema = v.object({
     nonEmptyStringValueSchema("script path"),
     v.regex(
       SCRIPT_PATH_REGEX,
-      'Script path must end with .js (e.g., "./setup.js", "./scripts/setup.js", or "../../scripts/setup.js")',
+      'Script path must end with .js or .ts (e.g., "./setup.js", "./scripts/setup.ts", or "../../scripts/setup.js")',
     ),
   ),
 });
