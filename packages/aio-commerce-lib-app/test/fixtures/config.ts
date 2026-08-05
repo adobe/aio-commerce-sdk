@@ -9,6 +9,7 @@ export const mockMetadata = {
   description: "A test application",
   displayName: "Test App",
   id: "test-app",
+  updateType: "manual",
   version: "1.0.0",
 } satisfies ApplicationMetadata;
 

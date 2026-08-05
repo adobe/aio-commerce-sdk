@@ -72,6 +72,7 @@ import {
   DEFAULT_INSTALLATION_PARAMS,
 } from "#test/fixtures/installation";
 
+import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 import type { InstallationHooks } from "#management/installation/workflow/hooks";
 import type {
   InProgressInstallationState,
@@ -634,7 +635,7 @@ describe("installation router — update routes", () => {
       return plan;
     }
 
-    function buildInitialState(config: typeof minimalValidConfig) {
+    function buildInitialState(config: CommerceAppConfigOutputModel) {
       return createMockInProgressState({ config, id: "update-1" });
     }
 

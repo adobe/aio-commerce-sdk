@@ -58,6 +58,8 @@ export const MetadataSchema = v.object({
     ),
   ),
 
+  updateType: v.optional(v.picklist(["auto", "manual"]), "manual"),
+
   version: v.pipe(
     nonEmptyString("version"),
     v.regex(
@@ -68,7 +70,7 @@ export const MetadataSchema = v.object({
 });
 
 /** The metadata associated to an Adobe Commerce application. */
-export type ApplicationMetadata = v.InferInput<typeof MetadataSchema>;
+export type ApplicationMetadata = v.InferOutput<typeof MetadataSchema>;
 
 /** Config type when metadata is present. */
 export type AppConfigWithMetadata<T extends AnyCommerceAppConfig> = T & {

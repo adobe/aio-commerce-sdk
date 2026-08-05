@@ -10,10 +10,11 @@
  * governing permissions and limitations under the License.
  */
 
+import * as v from "valibot";
 import { describe, expect, test } from "vitest";
 
-import { hasMetadata } from "#config/schema/metadata";
-import { minimalValidConfig } from "#test/fixtures/config";
+import { hasMetadata, MetadataSchema } from "#config/schema/metadata";
+import { minimalValidConfig, mockMetadata } from "#test/fixtures/config";
 
 describe("metadata schema helpers", () => {
   describe("hasMetadata", () => {
@@ -24,6 +25,48 @@ describe("metadata schema helpers", () => {
     test("should return false when metadata is undefined", () => {
       // @ts-expect-error - testing behavior when metadata is missing
       expect(hasMetadata({})).toBe(false);
+    });
+  });
+});
+
+describe("MetadataSchema", () => {
+  describe("updateType field", () => {
+    test("should default to 'manual' when updateType is not provided", () => {
+      const result = v.safeParse(MetadataSchema, mockMetadata);
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.output.updateType).toBe("manual");
+      }
+    });
+
+    test("should parse 'auto' as a valid updateType", () => {
+      const result = v.safeParse(MetadataSchema, {
+        ...mockMetadata,
+        updateType: "auto",
+      });
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.output.updateType).toBe("auto");
+      }
+    });
+
+    test("should parse 'manual' as a valid updateType", () => {
+      const result = v.safeParse(MetadataSchema, {
+        ...mockMetadata,
+        updateType: "manual",
+      });
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.output.updateType).toBe("manual");
+      }
+    });
+
+    test("should reject invalid updateType values", () => {
+      const result = v.safeParse(MetadataSchema, {
+        ...mockMetadata,
+        updateType: "weekly",
+      });
+      expect(result.success).toBe(false);
     });
   });
 });

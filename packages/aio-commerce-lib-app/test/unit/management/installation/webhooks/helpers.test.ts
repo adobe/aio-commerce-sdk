@@ -1145,6 +1145,7 @@ describe("deleteWebhookSubscriptions", () => {
         description: "d",
         displayName: "My App",
         id: "my--app.v2",
+        updateType: "manual" as const,
         version: "1.0.0",
       },
       webhooks: [
