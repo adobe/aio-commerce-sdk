@@ -10,7 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
-import { dirname } from "node:path";
+import { basename, dirname } from "node:path";
 
 import { stringifyError } from "@aio-commerce-sdk/scripting-utils/error";
 import {
@@ -24,24 +24,40 @@ import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 
 type ImportedConfig = Record<string, unknown> & { default?: unknown };
 
-// Config paths to search for. In order of likely appearance to speed up the check.
-const configPaths = Object.freeze([
+const javaScriptConfigPaths = Object.freeze([
   "app.commerce.config.js",
-  "app.commerce.config.ts",
   "app.commerce.config.cjs",
   "app.commerce.config.mjs",
+]);
+
+const typeScriptConfigPaths = Object.freeze([
+  "app.commerce.config.ts",
   "app.commerce.config.mts",
   "app.commerce.config.cts",
 ]);
+
+const configPaths = Object.freeze([
+  ...javaScriptConfigPaths,
+  ...typeScriptConfigPaths,
+]);
+
+/**
+ * Check whether a commerce app config path uses a supported TypeScript format.
+ * @param configFilePath The path to the config file.
+ */
+export function isTypeScriptConfig(configFilePath: string) {
+  const configFileName = basename(configFilePath);
+  return typeScriptConfigPaths.includes(configFileName);
+}
 
 /**
  * Try to find (up to the nearest package.json file) the app config file.
  *
  * Searches for config files in the following order of priority:
  * 1. `app.commerce.config.js` - JavaScript (CommonJS or ESM)
- * 2. `app.commerce.config.ts` - TypeScript
- * 3. `app.commerce.config.cjs` - CommonJS
- * 4. `app.commerce.config.mjs` - ES Module
+ * 2. `app.commerce.config.cjs` - CommonJS
+ * 3. `app.commerce.config.mjs` - ES Module
+ * 4. `app.commerce.config.ts` - TypeScript
  * 5. `app.commerce.config.mts` - ES Module TypeScript
  * 6. `app.commerce.config.cts` - CommonJS TypeScript
  *

@@ -154,6 +154,22 @@
     "valibot": "catalog:",
     "yaml": "catalog:"
   },
+  "peerDependencies": {
+    "@tsconfig/bases": "^1.0.26",
+    "ts-loader": "^9.6.2",
+    "typescript": "^6.0.3"
+  },
+  "peerDependenciesMeta": {
+    "@tsconfig/bases": {
+      "optional": true
+    },
+    "ts-loader": {
+      "optional": true
+    },
+    "typescript": {
+      "optional": true
+    }
+  },
   "devDependencies": {
     "@adobe/aio-lib-files": "catalog:",
     "@aio-commerce-sdk/common-utils": "workspace:*",

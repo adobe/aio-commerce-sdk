@@ -14,10 +14,31 @@ import { withTempFiles } from "@aio-commerce-sdk/scripting-utils/filesystem";
 import { describe, expect, test } from "vitest";
 
 import {
+  isTypeScriptConfig,
   parseCommerceAppConfig,
   readCommerceAppConfig,
   resolveCommerceAppConfig,
 } from "#config/lib/parser";
+
+describe("isTypeScriptConfig", () => {
+  test.each([
+    "app.commerce.config.ts",
+    "app.commerce.config.mts",
+    "app.commerce.config.cts",
+    "/project/app.commerce.config.ts",
+  ])("should identify %s as TypeScript", (configFilePath) => {
+    expect(isTypeScriptConfig(configFilePath)).toBe(true);
+  });
+
+  test.each([
+    "app.commerce.config.js",
+    "app.commerce.config.mjs",
+    "app.commerce.config.cjs",
+    "other.config.ts",
+  ])("should identify %s as non-TypeScript", (configFilePath) => {
+    expect(isTypeScriptConfig(configFilePath)).toBe(false);
+  });
+});
 
 describe("resolveExtensibilityConfig", () => {
   test("should return null when no package.json is found", () => {
@@ -131,7 +152,7 @@ describe("resolveExtensibilityConfig", () => {
     );
   });
 
-  test("should prioritize .ts over .mjs", async () => {
+  test("should prioritize .mjs over .ts", async () => {
     await withTempFiles(
       {
         "app.commerce.config.mjs": "export default {};",
@@ -140,7 +161,7 @@ describe("resolveExtensibilityConfig", () => {
       },
       async (tempDir) => {
         const result = await resolveCommerceAppConfig(tempDir);
-        expect(result).toContain("app.commerce.config.ts");
+        expect(result).toContain("app.commerce.config.mjs");
       },
     );
   });
