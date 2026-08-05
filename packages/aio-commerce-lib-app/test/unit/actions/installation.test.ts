@@ -1146,6 +1146,47 @@ describe("installationRuntimeAction", () => {
         cleanupStoreValue,
       );
     });
+
+    test("does not fail the uninstall when cleanup-list teardown glue throws (best-effort)", async () => {
+      const cleanupStoreValue: CleanupList = {
+        entries: [
+          {
+            domain: "commerceWebhook",
+            identity: getWebhookIdentity(orphanedWebhook.webhook),
+          },
+        ],
+      };
+      await cleanupStore.put(PLAN_KEY, cleanupStoreValue);
+
+      // Simulate teardown glue (the cleanup-list read itself, ahead of any per-domain
+      // delete) throwing an error that isn't swallowed by the per-domain best-effort
+      // try/catches inside `runCleanupTeardown` — this must still not fail the uninstall,
+      // which has already completed (state persisted, installation store cleared).
+      cleanupStore.get.mockRejectedValueOnce(
+        new Error("cleanup store unavailable"),
+      );
+
+      const initialState = createMockInProgressState({
+        id: "uninstallation-1",
+      });
+      const handler = installationRuntimeAction({ appConfig: baselineConfig });
+
+      const result = await handler(
+        createRuntimeActionParams({
+          appData,
+          initialState,
+          method: "post",
+          path: "/uninstallation/execution",
+          ...DEFAULT_INSTALLATION_PARAMS,
+        }),
+      );
+
+      expect(result).toMatchObject({ statusCode: 200, type: "success" });
+      // Teardown never completed, so the cleanup store is left in place for a retry.
+      await expect(cleanupStore.get(PLAN_KEY)).resolves.toEqual(
+        cleanupStoreValue,
+      );
+    });
   });
 
   describe("DELETE /uninstallation", () => {

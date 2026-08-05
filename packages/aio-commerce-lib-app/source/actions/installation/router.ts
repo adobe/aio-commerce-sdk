@@ -23,6 +23,7 @@ import {
   logger as withLogger,
 } from "@aio-commerce-sdk/common-utils/actions";
 import { createCombinedStore } from "@aio-commerce-sdk/common-utils/storage";
+import { stringifyError } from "@aio-commerce-sdk/scripting-utils/error";
 import openwhisk from "openwhisk";
 
 import { validateCommerceAppConfig } from "#config/lib/validate";
@@ -908,10 +909,12 @@ router.post("/uninstallation", {
  * 1. Build InstallationContext from params
  * 2. Run uninstallation workflow with hooks (hooks persist state per step)
  * 3. Save final state to uninstallation store
- * 4. On success: clear the installation store, tear down any cleanup-list entries
- *    a failed in-flight update left behind that the baseline walk didn't already cover
- *    (spec §11), and clear the cleanup store. A failed uninstall leaves the cleanup
- *    list in place.
+ * 4. On success: clear the installation store, then best-effort tear down any cleanup-list
+ *    entries a failed in-flight update left behind that the baseline walk didn't already
+ *    cover (spec §11) and clear the cleanup store. Teardown is wrapped so it can never turn
+ *    an already-completed uninstall into a 500 — a failure there just leaves the cleanup
+ *    store in place for a future retry. A failed uninstall also leaves the cleanup list in
+ *    place.
  * 5. Return 200 on success, 500 on failure
  */
 router.post("/uninstallation/execution", {
@@ -959,13 +962,25 @@ router.post("/uninstallation/execution", {
       const installationStore = await createInstallationStore();
       await installationStore.delete(getStorageKey());
 
-      await runCleanupTeardown(appConfig, installationContext);
-      const cleanupStore = await createCleanupStore();
-      await cleanupStore.delete(PLAN_KEY);
+      // Cleanup-list teardown is best-effort: the uninstall has already succeeded (state
+      // persisted, installation store cleared) by this point, so a throw from the glue
+      // around the per-domain deletes (store reads, diffConfig, execution-context/client
+      // construction) must not turn an already-completed uninstall into a 500. Leaving the
+      // cleanup store uncleared on such a failure is fine — it's retried on the next
+      // uninstall.
+      try {
+        await runCleanupTeardown(appConfig, installationContext);
+        const cleanupStore = await createCleanupStore();
+        await cleanupStore.delete(PLAN_KEY);
 
-      logger.debug(
-        "Cleared installation state after successful uninstallation; tore down any pending cleanup-list entries and cleared the cleanup store",
-      );
+        logger.debug(
+          "Cleared installation state after successful uninstallation; tore down any pending cleanup-list entries and cleared the cleanup store",
+        );
+      } catch (error) {
+        logger.warn(
+          `Cleanup-list teardown failed after a successful uninstallation: ${stringifyError(error)}. Cleanup store left in place for a future retry.`,
+        );
+      }
     }
 
     if (isFailedState(result)) {
