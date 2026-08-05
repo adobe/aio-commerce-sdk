@@ -146,4 +146,20 @@ describe("repository", () => {
       { ttl: MAX_TTL },
     );
   });
+
+  test("stores and reads back an optional extensionId", async () => {
+    const data = {
+      ...makeData("https://example.com", "paas"),
+      extensionId: "ext-123",
+    };
+    await setAssociationData(data);
+
+    expect(await getAssociationData()).toEqual(data);
+  });
+
+  test("leaves extensionId undefined when not provided (backward compatible)", async () => {
+    await setAssociationData(makeData("https://example.com", "paas"));
+
+    expect((await getAssociationData())?.extensionId).toBeUndefined();
+  });
 });

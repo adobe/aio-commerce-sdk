@@ -24,4 +24,7 @@ export type AssociatedCommerceData = {
 /** The data of an app that we store during association. */
 export type AssociationData = {
   commerce: AssociatedCommerceData;
+
+  /** The Extension Manager identifier the app was associated under, if known. */
+  extensionId?: string;
 };

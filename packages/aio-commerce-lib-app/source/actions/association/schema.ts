@@ -22,4 +22,5 @@ export const AssociationRequestBodySchema = v.object({
     ),
   ),
   commerceEnv: CommerceEnvSchema,
+  extensionId: v.optional(v.string()),
 });

@@ -75,6 +75,53 @@ describe("associationRuntimeAction", () => {
       });
     });
 
+    test("stores the extensionId when provided", async () => {
+      const action = associationRuntimeAction();
+      const params = createRuntimeActionParams({
+        body: {
+          commerceBaseUrl: "https://example.com",
+          commerceEnv: "paas",
+          extensionId: "ext-123",
+        },
+        method: "post",
+        path: "/",
+      });
+
+      const result = await action(params);
+
+      expect(mockSetAssociationData).toHaveBeenCalledWith({
+        commerce: { baseUrl: "https://example.com", env: "paas" },
+        extensionId: "ext-123",
+      });
+      expect(result).toMatchObject({
+        statusCode: 204,
+        type: "success",
+      });
+    });
+
+    test("stores undefined extensionId when omitted (backward compatible)", async () => {
+      const action = associationRuntimeAction();
+      const params = createRuntimeActionParams({
+        body: {
+          commerceBaseUrl: "https://example.com",
+          commerceEnv: "paas",
+        },
+        method: "post",
+        path: "/",
+      });
+
+      const result = await action(params);
+
+      expect(mockSetAssociationData).toHaveBeenCalledWith({
+        commerce: { baseUrl: "https://example.com", env: "paas" },
+        extensionId: undefined,
+      });
+      expect(result).toMatchObject({
+        statusCode: 204,
+        type: "success",
+      });
+    });
+
     test("returns 400 for invalid env values", async () => {
       const action = associationRuntimeAction();
       const params = createRuntimeActionParams({

@@ -32,7 +32,7 @@ type AssociationActionContext = BaseContext;
  * Association action router.
  *
  * Routes:
- * - POST /   Store Commerce instance details (`baseUrl`, `env`)
+ * - POST /   Store Commerce instance details (`baseUrl`, `env`, optional `extensionId`)
  * - DELETE / Clear stored Commerce instance details
  */
 export const router = new HttpActionRouter<AssociationActionContext>().use(
@@ -49,7 +49,7 @@ router.post("/", {
   body: AssociationRequestBodySchema,
 
   handler: async (req, { logger }) => {
-    const { commerceBaseUrl, commerceEnv } = req.body;
+    const { commerceBaseUrl, commerceEnv, extensionId } = req.body;
     logger.debug(
       `Storing association data (baseUrl: "${commerceBaseUrl}", env: "${commerceEnv}")`,
     );
@@ -59,6 +59,7 @@ router.post("/", {
         baseUrl: commerceBaseUrl,
         env: commerceEnv,
       },
+      extensionId,
     });
 
     return noContent();
