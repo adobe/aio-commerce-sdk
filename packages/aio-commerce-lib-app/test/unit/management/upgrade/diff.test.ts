@@ -29,6 +29,7 @@ import {
   configWithBusinessConfig,
   configWithCommerceEventing,
   configWithCustomInstallationSteps,
+  configWithDynamicListOptions,
   configWithExternalEventing,
   configWithWebhooks,
   createCommerceEventConfig,
@@ -203,6 +204,55 @@ describe("diffConfig", () => {
         kind: "changed",
         supported: true,
       });
+    });
+
+    test("changed dynamicList options factory (same field name, different function source) is detected as changed, not silently unchanged", () => {
+      const changedConfig = {
+        ...configWithDynamicListOptions,
+        businessConfig: {
+          schema: [
+            {
+              ...configWithDynamicListOptions.businessConfig.schema[0],
+              options: () => [{ label: "PayPal", value: "paypal" }],
+            },
+          ],
+        },
+      } satisfies CommerceAppConfigOutputModel;
+
+      const diff = diffConfig(configWithDynamicListOptions, changedConfig);
+
+      const change = findChange(diff.changes, "businessConfig");
+      expect(change).toMatchObject({
+        destructive: false,
+        kind: "changed",
+        supported: true,
+      });
+      expect(isEmptyPlan(diff)).toBe(false);
+    });
+
+    test("identical dynamicList options factory (same source text, different function reference) is unchanged", () => {
+      // Two independently-defined functions with the same source text, built via
+      // separate calls, so this exercises source-based (not reference) equality.
+      const buildConfig = (): CommerceAppConfigOutputModel => ({
+        businessConfig: {
+          schema: [
+            {
+              default: (opts: { value: string }[]) => opts[0].value,
+              name: "paymentMethod",
+              options: () => [{ label: "Braintree", value: "braintree" }],
+              selectionMode: "single",
+              type: "dynamicList",
+            },
+          ],
+        },
+        metadata: mockMetadata,
+      });
+
+      const diff = diffConfig(buildConfig(), buildConfig());
+
+      const change = findChange(diff.changes, "businessConfig");
+      expect(change.kind).toBe("unchanged");
+      expect(isEmptyPlan(diff)).toBe(true);
     });
   });
 

@@ -38,7 +38,18 @@ function stableEqual(a: unknown, b: unknown): boolean {
   return JSON.stringify(sortKeys(a)) === JSON.stringify(sortKeys(b));
 }
 
+/** Marks a serialized function value so it's distinguishable from an equivalent string literal. */
+const FUNCTION_VALUE_MARKER = "__function__:";
+
 function sortKeys(value: unknown): unknown {
+  // JSON.stringify silently drops function-valued properties (e.g. a `dynamicList`
+  // field's `options`/`default` factory), which would make a function-only change
+  // invisible to `stableEqual`. Serializing to source text keeps the comparison
+  // deterministic: identical sources stay equal, a changed source is detected.
+  if (typeof value === "function") {
+    return `${FUNCTION_VALUE_MARKER}${value.toString()}`;
+  }
+
   if (Array.isArray(value)) {
     return value.map(sortKeys);
   }
