@@ -27,6 +27,17 @@ import type { InferStepOutput } from "#management/installation/workflow/step";
 import type { AdminUiConfig, AdminUiExecutionContext } from "./utils";
 
 /**
+ * No-op reconcile for Admin UI leaf steps: the extension's surfaces (grid columns, mass
+ * actions, menu entries) are served directly from the deployed frontend bundle, not from
+ * data sent through these API calls — a redeploy applies `adminUi` config changes, so
+ * there is no Commerce-side state to reconcile here. Enabling the SDK and registering the
+ * extension are one-time, workspace-level actions performed by `install`.
+ */
+function noopReconcile(): undefined {
+  // Intentionally empty — see the docstring above.
+}
+
+/**
  * Leaf step that enables the Admin UI SDK (PUT) on install. Runs before
  * {@link registerExtensionStep} so Commerce accepts the extension registration.
  * Install-only: enabling the SDK is not reverted on uninstall since other
@@ -42,6 +53,7 @@ const enableAdminUiSdkStep = defineLeafStep({
     },
   },
   name: "enable-admin-ui-sdk",
+  reconcile: noopReconcile,
 });
 
 /** Leaf step that registers the extension (POST) on install and unregisters it (DELETE) on uninstall. */
@@ -59,6 +71,7 @@ const registerExtensionStep = defineLeafStep({
     },
   },
   name: "register-extension",
+  reconcile: noopReconcile,
 
   uninstall: (_: AdminUiConfig, context: AdminUiExecutionContext) =>
     unregisterExtension(context),
