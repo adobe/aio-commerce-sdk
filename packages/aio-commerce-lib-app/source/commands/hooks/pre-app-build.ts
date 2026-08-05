@@ -49,6 +49,17 @@ export async function run(extension: Extension, templatesDir = TEMPLATES_DIR) {
   const appManifest = await loadAppManifest();
   await prepareRuntimeAppConfigModule(appManifest);
 
+  const { metadata } = appManifest;
+  const hasNotesForCurrentVersion = metadata.releaseNotes?.some(
+    (releaseNote) => releaseNote.version === metadata.version,
+  );
+
+  if (!hasNotesForCurrentVersion) {
+    consola.warn(
+      `No release notes found for version ${metadata.version}. Merchants upgrading to this version will see "No release notes provided".`,
+    );
+  }
+
   if (extension === "extensibility/1") {
     const { doc: extensibilityExtConfig } = await readExtConfig(
       EXTENSIBILITY_EXTENSION_POINT_ID,
