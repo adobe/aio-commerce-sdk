@@ -30,6 +30,7 @@ import type {
   AnyStep,
   ExecutionContext,
 } from "#management/installation/workflow/step";
+import type { ConfigDiff } from "#management/upgrade/types";
 
 type CamelcaseInterop = typeof camelcaseModule.default & {
   default?: typeof camelcaseModule.default;
@@ -138,39 +139,117 @@ type ScriptExecutionResult = {
   data?: unknown;
 };
 
+/** Diff kinds a reconcile handler needs to act on. */
+const OPERATIVE = new Set(["added", "removed", "changed"]);
+
 /**
  * Creates a leaf step for executing a single custom installation script.
  */
 function createCustomScriptStep(scriptConfig: CustomInstallationStep): AnyStep {
   const { script, name, description } = scriptConfig;
+
+  async function runInstall(
+    config: ConfigWithInstallationSteps,
+    context: ExecutionContext,
+  ): Promise<ScriptExecutionResult> {
+    const { logger } = context;
+    const customScripts = context.customScripts || {};
+
+    logger.info(`Executing custom installation script: ${name}`);
+    logger.debug(`Script path: ${script}`);
+
+    const scriptModule = getScriptModule(customScripts, script);
+    if (!scriptModule) {
+      throw new Error(
+        `Script ${script} not found in customScripts context. Make sure the script is defined in the configuration and the action was generated with custom scripts support.`,
+      );
+    }
+
+    const install = resolveCustomScriptHandler(scriptModule, "install");
+
+    const scriptResult = await install(config, context);
+    logger.info(`Successfully executed script: ${name}`);
+
+    return {
+      data: scriptResult,
+      script,
+    };
+  }
+
+  async function runUninstall(
+    config: ConfigWithInstallationSteps,
+    context: ExecutionContext,
+  ): Promise<void> {
+    const { logger } = context;
+    const customScripts = context.customScripts || {};
+    logger.debug(`Uninstalling custom script: ${name}`);
+
+    const scriptModule = getScriptModule(customScripts, script);
+    if (!scriptModule) {
+      logger.warn(
+        `Script ${script} not found in customScripts context, skipping uninstall. It may have been removed from the project after being configured.`,
+      );
+
+      return;
+    }
+
+    const uninstall = resolveCustomScriptHandler(scriptModule, "uninstall");
+
+    if (!uninstall) {
+      logger.debug(
+        `Script ${script} does not export an uninstall function, skipping uninstall.`,
+      );
+
+      return;
+    }
+
+    await uninstall(config, context);
+    logger.info(`Successfully uninstalled script: ${name}`);
+  }
+
+  /**
+   * Reconciles this custom step against the diff: `added` runs `install` (a genuine
+   * first run has no idempotency concern); `removed` runs `uninstall` (same as
+   * uninstall mode); `changed` skips with a warning instead of blindly re-running
+   * `install` — the config schema has no way for a script to declare itself
+   * idempotent (spec §8.3 idempotency-gap decision), so v1 defaults to the safe
+   * choice of not re-executing a script whose config changed. Steps with no
+   * relevant diff entry (unchanged, or not part of this update) are silently skipped.
+   */
+  async function reconcile(
+    config: ConfigWithInstallationSteps,
+    diff: ConfigDiff,
+    context: ExecutionContext,
+  ): Promise<ScriptExecutionResult | undefined> {
+    const change = diff.changes.find(
+      (candidate) =>
+        candidate.domain === "customStep" &&
+        candidate.identity === name &&
+        OPERATIVE.has(candidate.kind),
+    );
+
+    if (!change) {
+      return;
+    }
+
+    if (change.kind === "removed") {
+      await runUninstall(config, context);
+      return;
+    }
+
+    if (change.kind === "changed") {
+      context.logger.warn(
+        `Skipping re-apply of custom installation script "${name}": its configuration changed, but custom scripts have no way to declare themselves safe to re-run (idempotent) yet. Re-run install manually if this script needs to reflect the new configuration.`,
+      );
+      return;
+    }
+
+    // added: never executed before, so a first run has no idempotency concern.
+    return runInstall(config, context);
+  }
+
   return defineLeafStep({
-    install: async (
-      config: ConfigWithInstallationSteps,
-      context: ExecutionContext,
-    ): Promise<ScriptExecutionResult> => {
-      const { logger } = context;
-      const customScripts = context.customScripts || {};
-
-      logger.info(`Executing custom installation script: ${name}`);
-      logger.debug(`Script path: ${script}`);
-
-      const scriptModule = getScriptModule(customScripts, script);
-      if (!scriptModule) {
-        throw new Error(
-          `Script ${script} not found in customScripts context. Make sure the script is defined in the configuration and the action was generated with custom scripts support.`,
-        );
-      }
-
-      const install = resolveCustomScriptHandler(scriptModule, "install");
-
-      const scriptResult = await install(config, context);
-      logger.info(`Successfully executed script: ${name}`);
-
-      return {
-        data: scriptResult,
-        script,
-      };
-    },
+    install: runInstall,
     meta: {
       install: {
         description,
@@ -178,37 +257,8 @@ function createCustomScriptStep(scriptConfig: CustomInstallationStep): AnyStep {
       },
     },
     name: camelcase(name),
-
-    uninstall: async (
-      config: ConfigWithInstallationSteps,
-      context: ExecutionContext,
-    ): Promise<void> => {
-      const { logger } = context;
-      const customScripts = context.customScripts || {};
-      logger.debug(`Uninstalling custom script: ${name}`);
-
-      const scriptModule = getScriptModule(customScripts, script);
-      if (!scriptModule) {
-        logger.warn(
-          `Script ${script} not found in customScripts context, skipping uninstall. It may have been removed from the project after being configured.`,
-        );
-
-        return;
-      }
-
-      const uninstall = resolveCustomScriptHandler(scriptModule, "uninstall");
-
-      if (!uninstall) {
-        logger.debug(
-          `Script ${script} does not export an uninstall function, skipping uninstall.`,
-        );
-
-        return;
-      }
-
-      await uninstall(config, context);
-      logger.info(`Successfully uninstalled script: ${name}`);
-    },
+    reconcile,
+    uninstall: runUninstall,
   });
 }
 
