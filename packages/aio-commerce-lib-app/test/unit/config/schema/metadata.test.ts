@@ -71,4 +71,85 @@ describe("MetadataSchema", () => {
       expect(result.success).toBe(false);
     });
   });
+
+  describe("releaseNotes field", () => {
+    test("should parse a valid releaseNotes array", () => {
+      const result = v.safeParse(MetadataSchema, {
+        ...mockMetadata,
+        releaseNotes: [
+          {
+            date: "2024-01-01",
+            notes: "Initial release",
+            version: "1.0.0",
+          },
+          {
+            notes: "Bug fixes",
+            version: "1.0.1",
+          },
+        ],
+      });
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.output.releaseNotes).toHaveLength(2);
+        expect(result.output.releaseNotes?.[0]?.version).toBe("1.0.0");
+        expect(result.output.releaseNotes?.[0]?.notes).toBe("Initial release");
+        expect(result.output.releaseNotes?.[0]?.date).toBe("2024-01-01");
+        expect(result.output.releaseNotes?.[1]?.version).toBe("1.0.1");
+        expect(result.output.releaseNotes?.[1]?.notes).toBe("Bug fixes");
+        expect(result.output.releaseNotes?.[1]?.date).toBeUndefined();
+      }
+    });
+
+    test("should reject a non-semver version", () => {
+      const result = v.safeParse(MetadataSchema, {
+        ...mockMetadata,
+        releaseNotes: [
+          {
+            notes: "Invalid version",
+            version: "1.0",
+          },
+        ],
+      });
+      expect(result.success).toBe(false);
+    });
+
+    test("should reject notes that exceed 5000 characters", () => {
+      const longNotes = "a".repeat(5001);
+      const result = v.safeParse(MetadataSchema, {
+        ...mockMetadata,
+        releaseNotes: [
+          {
+            notes: longNotes,
+            version: "1.0.0",
+          },
+        ],
+      });
+      expect(result.success).toBe(false);
+    });
+
+    test("should parse metadata without releaseNotes (field is optional)", () => {
+      const result = v.safeParse(MetadataSchema, mockMetadata);
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.output.releaseNotes).toBeUndefined();
+      }
+    });
+
+    test("should allow notes of exactly 5000 characters", () => {
+      const maxNotes = "a".repeat(5000);
+      const result = v.safeParse(MetadataSchema, {
+        ...mockMetadata,
+        releaseNotes: [
+          {
+            notes: maxNotes,
+            version: "1.0.0",
+          },
+        ],
+      });
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.output.releaseNotes?.[0]?.notes).toHaveLength(5000);
+      }
+    });
+  });
 });

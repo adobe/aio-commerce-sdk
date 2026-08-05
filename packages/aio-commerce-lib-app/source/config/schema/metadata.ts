@@ -58,6 +58,22 @@ export const MetadataSchema = v.object({
     ),
   ),
 
+  releaseNotes: v.optional(
+    v.array(
+      v.object({
+        date: v.optional(v.string()),
+        notes: v.pipe(nonEmptyString("release note text"), v.maxLength(5000)),
+        version: v.pipe(
+          nonEmptyString("release note version"),
+          v.regex(
+            SEMVER_REGEX,
+            "The release note version must follow Major.Minor.Patch",
+          ),
+        ),
+      }),
+    ),
+  ),
+
   updateType: v.optional(v.picklist(["auto", "manual"]), "manual"),
 
   version: v.pipe(
