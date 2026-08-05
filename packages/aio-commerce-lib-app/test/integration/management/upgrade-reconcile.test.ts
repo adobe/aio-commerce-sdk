@@ -803,6 +803,174 @@ describe("I/O Events registration/metadata + Commerce subscription reconcile —
     expect(capture.deleteMetadataEventCode).toBe(removedEventCode);
     expect(capture.unsubscribedName).toBe(removedNamespacedName);
   });
+
+  test("a failing registration or metadata delete is logged and does not abort the update", async () => {
+    const installationContext = createMockInstallationContext();
+    const {
+      consumerOrgId: orgId,
+      projectId,
+      workspaceId,
+    } = installationContext.appData;
+
+    const metadata = {
+      ...mockMetadata,
+      id: "test-app-reconcile-removed-failure",
+    };
+    const providerConfig = {
+      description: "Provides commerce events",
+      key: "orders",
+      label: "Order Events Provider",
+    };
+
+    const keptEvent = {
+      description: "Triggered when an order is placed",
+      fields: [{ name: "order_id" }],
+      label: "Order Placed",
+      name: "plugin.order_placed",
+      runtimeActions: ["my-package/handle-order"],
+    };
+
+    const removedEvent = {
+      description: "Triggered when an order ships",
+      fields: [{ name: "order_id" }],
+      label: "Order Shipped",
+      name: "plugin.order_shipped",
+      runtimeActions: ["my-package/handle-shipped"],
+    };
+
+    const oldConfig = {
+      eventing: {
+        commerce: [
+          { events: [keptEvent, removedEvent], provider: providerConfig },
+        ],
+      },
+      metadata,
+    } satisfies CommerceAppConfigOutputModel;
+
+    const newConfig = {
+      eventing: {
+        commerce: [{ events: [keptEvent], provider: providerConfig }],
+      },
+      metadata,
+    } satisfies CommerceAppConfigOutputModel;
+
+    const removedEventCode = getIoEventCode(
+      getNamespacedEvent(metadata, removedEvent.name),
+      COMMERCE_PROVIDER_TYPE,
+    );
+    const removedNamespacedName = getNamespacedEvent(
+      metadata,
+      removedEvent.name,
+    );
+
+    const deployedProvider = createMockIoEventProvider({
+      description: providerConfig.description,
+      id: "io-provider-orders",
+      instance_id: `${metadata.id}-orders-${workspaceId}`.toLowerCase(),
+      label: providerConfig.label,
+      provider_metadata: "dx_commerce_events",
+    });
+
+    const removedRegistration = createMockIoEventRegistration({
+      client_id: installationContext.params.AIO_COMMERCE_AUTH_IMS_CLIENT_ID,
+      id: "registration-removed",
+      name: "Commerce Event Registration: Order Events Provider - Handle Shipped (My Package)",
+      registration_id: "registration-id-removed",
+    });
+
+    apiServer.use(
+      http.get(`${IO_EVENTS_BASE_URL}/${orgId}/providers`, () =>
+        HttpResponse.json({
+          _embedded: {
+            providers: [
+              {
+                ...createMockIoEventProviderHalModel(deployedProvider),
+                _embedded: {
+                  eventmetadata: [
+                    createMockIoEventMetadataHalModel(
+                      createMockIoEventMetadata({
+                        event_code: getIoEventCode(
+                          getNamespacedEvent(metadata, keptEvent.name),
+                          COMMERCE_PROVIDER_TYPE,
+                        ),
+                      }),
+                    ),
+                    createMockIoEventMetadataHalModel(
+                      createMockIoEventMetadata({
+                        event_code: removedEventCode,
+                      }),
+                    ),
+                  ],
+                },
+              },
+            ],
+          },
+          _links: { self: { href: "/providers" } },
+        }),
+      ),
+
+      http.get(
+        `${IO_EVENTS_BASE_URL}/${orgId}/${projectId}/${workspaceId}/registrations`,
+        () =>
+          HttpResponse.json({
+            _embedded: {
+              registrations: [
+                createMockIoEventRegistrationHalModel(removedRegistration),
+              ],
+            },
+            _links: { self: { href: "/registrations" } },
+          }),
+      ),
+
+      // Both direct deletes fail (transient error / 404-style failure) — reconcile
+      // must log and continue rather than throw and abort the whole update.
+      http.delete(
+        `${IO_EVENTS_BASE_URL}/${orgId}/${projectId}/${workspaceId}/registrations/${removedRegistration.registration_id}`,
+        () =>
+          HttpResponse.json(
+            { message: "Registration not found" },
+            { status: 404 },
+          ),
+      ),
+      http.delete(
+        `${IO_EVENTS_BASE_URL}/${orgId}/${projectId}/${workspaceId}/providers/${deployedProvider.id}/eventmetadata/:eventCode`,
+        () =>
+          HttpResponse.json({ message: "Metadata not found" }, { status: 404 }),
+      ),
+
+      http.get(`${COMMERCE_BASE_URL}/eventing/eventProvider`, () =>
+        HttpResponse.json([{ workspace_configuration: '{"project":{}}' }]),
+      ),
+      http.get(`${COMMERCE_BASE_URL}/eventing/getEventSubscriptions`, () =>
+        HttpResponse.json([]),
+      ),
+      http.post(
+        `${COMMERCE_BASE_URL}/eventing/eventUnsubscribe/${removedNamespacedName}`,
+        () => HttpResponse.json([]),
+      ),
+    );
+
+    const result = await runUpdateFor(
+      oldConfig,
+      newConfig,
+      installationContext,
+    );
+
+    expect.assert(
+      isSucceededState(result),
+      "Expected the update to succeed despite the delete failures",
+    );
+    expect(installationContext.logger.warn).toHaveBeenCalledWith(
+      expect.stringContaining(
+        `Failed to delete I/O Events registration "${removedRegistration.name}"`,
+      ),
+    );
+    expect(installationContext.logger.warn).toHaveBeenCalledWith(
+      expect.stringContaining(
+        `Failed to delete I/O Events metadata "${removedEventCode}"`,
+      ),
+    );
+  });
 });
 
 describe("Commerce subscription reconcile", () => {

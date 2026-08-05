@@ -332,12 +332,19 @@ async function reconcileRegistrationChange(
     return;
   }
 
-  await context.ioEventsClient.deleteRegistration({
-    consumerOrgId: context.appData.consumerOrgId,
-    projectId: context.appData.projectId,
-    registrationId: existing.registration_id,
-    workspaceId: context.appData.workspaceId,
-  });
+  try {
+    await context.ioEventsClient.deleteRegistration({
+      consumerOrgId: context.appData.consumerOrgId,
+      projectId: context.appData.projectId,
+      registrationId: existing.registration_id,
+      workspaceId: context.appData.workspaceId,
+    });
+  } catch (error) {
+    const msg = await unwrapHttpError(error);
+    context.logger.warn(
+      `Failed to delete I/O Events registration "${existing.name}" (ID: ${existing.id}) during reconcile: ${msg}. Continuing.`,
+    );
+  }
 }
 
 async function reconcileMetadataChange(
@@ -420,14 +427,31 @@ async function reconcileMetadataChange(
     return;
   }
 
-  await context.ioEventsClient.deleteEventMetadataForProvider({
-    consumerOrgId: context.appData.consumerOrgId,
-    eventCode,
-    projectId: context.appData.projectId,
-    providerId: providerData.id,
-    workspaceId: context.appData.workspaceId,
-  });
+  try {
+    await context.ioEventsClient.deleteEventMetadataForProvider({
+      consumerOrgId: context.appData.consumerOrgId,
+      eventCode,
+      projectId: context.appData.projectId,
+      providerId: providerData.id,
+      workspaceId: context.appData.workspaceId,
+    });
+  } catch (error) {
+    const msg = await unwrapHttpError(error);
+    context.logger.warn(
+      `Failed to delete I/O Events metadata "${eventCode}" from provider "${providerData.id}" during reconcile: ${msg}. Continuing.`,
+    );
+  }
 }
+
+// KNOWN GAP (App Upgrade Phase 1): whole-domain removal is not reconciled. The update
+// step tree is built from the target config only (see `createRootInstallationStep` /
+// `createInitialState`), so a branch's `when` guard (e.g. `hasCommerceEvents`,
+// `hasExternalEvents`) excludes it entirely once every source of that kind is removed —
+// meaning this function, and its `removed` cleanup, never runs at all for that domain.
+// Removals WITHIN a still-present domain (e.g. one of several providers/events/
+// registrations removed while at least one sibling remains) DO reconcile correctly.
+// Tracked for a future task: either union old+new config when building the update tree,
+// or route whole-domain removals through the existing cleanup-list/uninstall path.
 
 /**
  * Reconciles I/O Events provider/registration/metadata changes for one set of event

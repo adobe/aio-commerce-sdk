@@ -401,7 +401,7 @@ describe("diffConfig", () => {
       expect(providerChange.identity).toBe("custom-provider-key");
     });
 
-    test("changed I/O Events metadata (label change, same event) is supported and non-destructive", () => {
+    test("changed I/O Events metadata (label change, same event) is unsupported (no PUT wrapper exists)", () => {
       const oldC = createCommerceEventConfig("plugin.order_created", {
         label: "Original Label",
       });
@@ -418,8 +418,128 @@ describe("diffConfig", () => {
       expect(metadataChange).toMatchObject({
         destructive: false,
         kind: "changed",
+        supported: false,
+      });
+      expect(configHasUnsupportedChange(diff)).toBe(true);
+    });
+
+    test("changed I/O Events provider (description change, same key) is unsupported (no PUT wrapper exists)", () => {
+      const baseEvent = {
+        description: "Triggered when an order is placed",
+        fields: [{ name: "order_id" }],
+        label: "Order Placed",
+        name: "plugin.order_placed",
+        runtimeActions: ["my-package/handle-order"],
+      };
+
+      const oldC = {
+        eventing: {
+          commerce: [
+            {
+              events: [baseEvent],
+              provider: {
+                description: "Original description",
+                key: "orders",
+                label: "Order Events Provider",
+              },
+            },
+          ],
+        },
+        metadata: minimalValidConfig.metadata,
+      } satisfies CommerceAppConfigOutputModel;
+
+      const newC = {
+        eventing: {
+          commerce: [
+            {
+              events: [baseEvent],
+              provider: {
+                description: "Updated description",
+                key: "orders",
+                label: "Order Events Provider",
+              },
+            },
+          ],
+        },
+        metadata: minimalValidConfig.metadata,
+      } satisfies CommerceAppConfigOutputModel;
+
+      const diff = diffConfig(oldC, newC);
+
+      const providerChange = findChange(diff.changes, "ioEventsProvider");
+      expect(providerChange).toMatchObject({
+        destructive: false,
+        kind: "changed",
+        supported: false,
+      });
+      expect(configHasUnsupportedChange(diff)).toBe(true);
+    });
+
+    test("changed I/O Events registration (event set change, same provider+runtimeAction) remains supported (full-replace PUT)", () => {
+      const diff = diffConfig(
+        createConfigWithTwoCommerceEventingSourcesOnSameAction("before"),
+        createConfigWithTwoCommerceEventingSourcesOnSameAction("after"),
+      );
+
+      const registrationChange = findChange(
+        diff.changes,
+        "ioEventsRegistration",
+      );
+      expect(registrationChange).toMatchObject({
+        kind: "changed",
         supported: true,
       });
+      expect(configHasUnsupportedChange(diff)).toBe(false);
     });
   });
 });
+
+/** Builds a commerce config with two events sharing one runtime action, so changing
+ * which events route there produces a `changed` (not added/removed) registration. */
+function createConfigWithTwoCommerceEventingSourcesOnSameAction(
+  variant: "before" | "after",
+): CommerceAppConfigOutputModel {
+  const events =
+    variant === "before"
+      ? [
+          {
+            description: "Order placed",
+            fields: [{ name: "order_id" }],
+            label: "Order Placed",
+            name: "plugin.order_placed",
+            runtimeActions: ["my-package/handle-order"],
+          },
+        ]
+      : [
+          {
+            description: "Order placed",
+            fields: [{ name: "order_id" }],
+            label: "Order Placed",
+            name: "plugin.order_placed",
+            runtimeActions: ["my-package/handle-order"],
+          },
+          {
+            description: "Order shipped",
+            fields: [{ name: "order_id" }],
+            label: "Order Shipped",
+            name: "plugin.order_shipped",
+            runtimeActions: ["my-package/handle-order"],
+          },
+        ];
+
+  return {
+    eventing: {
+      commerce: [
+        {
+          events,
+          provider: {
+            description: "Provides commerce events",
+            key: "orders",
+            label: "Order Events Provider",
+          },
+        },
+      ],
+    },
+    metadata: minimalValidConfig.metadata,
+  } satisfies CommerceAppConfigOutputModel;
+}

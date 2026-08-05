@@ -368,19 +368,24 @@ export function diffConfig(
       "ioEventsProvider",
       collectIoProviders(oldConfig),
       collectIoProviders(newConfig),
-      { destructiveOnRemove: true, unsupportedOnChange: false },
+      // No PUT wrapper exists to update a deployed I/O Events provider in place
+      // (source/management/installation/events/reconcile.ts throws on `changed`).
+      { destructiveOnRemove: true, unsupportedOnChange: true },
     ),
     ...diffDomain(
       "ioEventsRegistration",
       collectIoRegistrations(oldConfig),
       collectIoRegistrations(newConfig),
+      // Supported: `changed` is a full-replace PUT via `updateRegistration`.
       { destructiveOnRemove: true, unsupportedOnChange: false },
     ),
     ...diffDomain(
       "ioEventsMetadata",
       collectIoMetadata(oldConfig),
       collectIoMetadata(newConfig),
-      { destructiveOnRemove: true, unsupportedOnChange: false },
+      // No PUT wrapper exists to update deployed I/O Events metadata in place
+      // (source/management/installation/events/reconcile.ts throws on `changed`).
+      { destructiveOnRemove: true, unsupportedOnChange: true },
     ),
     ...diffDomain(
       "adminUi",

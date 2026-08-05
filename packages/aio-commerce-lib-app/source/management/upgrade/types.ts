@@ -41,8 +41,11 @@ export type ResourceChange = {
   destructive: boolean;
 
   /**
-   * True when the reconcile engine can apply this change today. `changed` for Commerce
-   * subscriptions/webhooks is `false` until the Commerce PUT endpoints (spec §7.1/§7.2) land.
+   * True when the reconcile engine can apply this change today. `changed` is `false` for:
+   * Commerce subscriptions/webhooks, until the Commerce PUT endpoints (spec §7.1/§7.2)
+   * land; and I/O Events providers/metadata, which have no PUT wrapper to update a
+   * deployed resource in place. I/O Events registrations ARE supported (full-replace PUT
+   * via `updateRegistration`).
    */
   supported: boolean;
 
