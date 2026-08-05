@@ -1288,5 +1288,149 @@ describe("installation router — update routes", () => {
       expect(result).toMatchObject({ type: "success" });
       expect(writeUpdateStatusMock).not.toHaveBeenCalled();
     });
+
+    test("execution uses an inline plan without touching the plan store", async () => {
+      seedPlan({ planId: "manual-A" });
+      installationStore = createMockStore<InstallationState>(
+        createMockSucceededState({
+          config: minimalValidConfig,
+          id: "installation-1",
+        }),
+      );
+
+      const inlinePlan: UpdatePlan = {
+        createdAt: "2026-01-02T00:00:00.000Z",
+        deploymentVersion: "3",
+        diff: { changes: [] },
+        planId: "auto-B",
+        targetConfig: configWithCommerceEventing,
+      };
+      const initialState = buildInitialState(inlinePlan.targetConfig);
+
+      const handler = installationRuntimeAction({
+        appConfig: minimalValidConfig,
+      });
+
+      const result = await handler(
+        createRuntimeActionParams({
+          appData,
+          initialState,
+          method: "post",
+          path: "/update/execution",
+          plan: inlinePlan,
+          trigger: "auto",
+          ...DEFAULT_INSTALLATION_PARAMS,
+        }),
+      );
+
+      expect(result).toMatchObject({ type: "success" });
+      expect(planStore.get).not.toHaveBeenCalled();
+      expect(planStore.delete).not.toHaveBeenCalled();
+      await expect(planStore.get("current")).resolves.toMatchObject({
+        planId: "manual-A",
+      });
+
+      expect(installationStore.put).toHaveBeenCalledWith(
+        "current",
+        expect.objectContaining({ config: inlinePlan.targetConfig }),
+      );
+    });
+
+    test("auto version-only with unchanged version suppresses the INSTALLED EM write", async () => {
+      const installedConfig = configWithCommerceEventing;
+      const targetConfig = minimalValidConfig; // same metadata.version, different content
+
+      installationStore = createMockStore<InstallationState>(
+        createMockSucceededState({
+          config: installedConfig,
+          id: "installation-1",
+        }),
+      );
+
+      const inlinePlan: UpdatePlan = {
+        createdAt: "2026-01-02T00:00:00.000Z",
+        deploymentVersion: "3",
+        diff: { changes: [] },
+        planId: "auto-same-version",
+        targetConfig,
+      };
+      const initialState = buildInitialState(inlinePlan.targetConfig);
+
+      const handler = installationRuntimeAction({
+        appConfig: minimalValidConfig,
+      });
+
+      const result = await handler(
+        createRuntimeActionParams({
+          appData,
+          initialState,
+          method: "post",
+          path: "/update/execution",
+          plan: inlinePlan,
+          trigger: "auto",
+          ...DEFAULT_INSTALLATION_PARAMS,
+        }),
+      );
+
+      expect(result).toMatchObject({ type: "success" });
+      expect(writeUpdateStatusMock).toHaveBeenCalledTimes(1);
+      expect(writeUpdateStatusMock).toHaveBeenCalledWith(
+        expect.objectContaining({ status: "UPDATING" }),
+      );
+      expect(writeUpdateStatusMock).not.toHaveBeenCalledWith(
+        expect.objectContaining({ status: "INSTALLED" }),
+      );
+    });
+
+    test("auto version-only with a version bump still writes INSTALLED", async () => {
+      const installedConfig = configWithCommerceEventing;
+      const targetConfig: CommerceAppConfigOutputModel = {
+        ...minimalValidConfig,
+        metadata: { ...minimalValidConfig.metadata, version: "2.0.0" },
+      };
+
+      installationStore = createMockStore<InstallationState>(
+        createMockSucceededState({
+          config: installedConfig,
+          id: "installation-1",
+        }),
+      );
+
+      const inlinePlan: UpdatePlan = {
+        createdAt: "2026-01-02T00:00:00.000Z",
+        deploymentVersion: "3",
+        diff: { changes: [] },
+        planId: "auto-version-bump",
+        targetConfig,
+      };
+      const initialState = buildInitialState(inlinePlan.targetConfig);
+
+      const handler = installationRuntimeAction({
+        appConfig: minimalValidConfig,
+      });
+
+      const result = await handler(
+        createRuntimeActionParams({
+          appData,
+          initialState,
+          method: "post",
+          path: "/update/execution",
+          plan: inlinePlan,
+          trigger: "auto",
+          ...DEFAULT_INSTALLATION_PARAMS,
+        }),
+      );
+
+      expect(result).toMatchObject({ type: "success" });
+      expect(writeUpdateStatusMock).toHaveBeenCalledTimes(2);
+      expect(writeUpdateStatusMock.mock.calls[0]?.[0]).toMatchObject({
+        status: "UPDATING",
+      });
+      expect(writeUpdateStatusMock.mock.calls[1]?.[0]).toMatchObject({
+        deploymentVersion: inlinePlan.deploymentVersion,
+        status: "INSTALLED",
+        version: targetConfig.metadata.version,
+      });
+    });
   });
 });

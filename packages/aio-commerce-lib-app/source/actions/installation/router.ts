@@ -163,8 +163,10 @@ function buildWorkflowParams(
 }
 
 type ExecutionRouteParams = RuntimeActionArgs & {
-  initialState: InProgressInstallationState;
   appData: InstallationContext["appData"];
+  initialState: InProgressInstallationState;
+  plan?: UpdatePlan;
+  trigger?: "auto" | "manual";
 };
 
 /**
@@ -796,22 +798,30 @@ router.post("/update", {
 });
 
 /**
- * POST /update/execution - Execute the stored update plan
+ * POST /update/execution - Execute the stored or an inline update plan
  * @internal - Do not add to OpenAPI Spec.
  *
- * This endpoint is called asynchronously by POST /update. It loads the
- * stored plan (executed verbatim, spec §8.4), runs the update workflow, and
- * persists state. On success it advances the recorded installation snapshot
- * to `plan.targetConfig` and clears the plan + cleanup stores.
+ * This endpoint is called asynchronously by POST /update, or invoked with an
+ * inline `plan` + `trigger: "auto"` by the auto-update path (spec §6.2), which
+ * never round-trips its plan through the `PLAN_KEY` plan store so it doesn't
+ * clobber a merchant's pending manual preview. It runs the update workflow
+ * and persists state; on success it advances the recorded installation
+ * snapshot to `plan.targetConfig`. The plan store is only cleared when the
+ * plan came from storage (`inlinePlan` absent) — an inline (auto) execution
+ * leaves it untouched. The cleanup store is always cleared.
  *
  * Version-only/no-op (spec §6.3): when the plan's diff has no operative
  * changes AND the cleanup list has no pending entries, no external resource/
  * reconcile calls are made (runUpdate's reconcile is skipped) — the snapshot
- * is still advanced and the stores are still cleared. The Extension Manager
- * lifecycle status (`UPDATING` then `INSTALLED`) is still reported on this
- * path — a version bump is a real lifecycle transition, and the EM write is
- * best-effort so it doesn't compromise the "no external calls" guarantee for
- * the actual reconcile.
+ * is still advanced and the stores are still cleared as above. The Extension
+ * Manager lifecycle status (`UPDATING` then `INSTALLED`) is still reported on
+ * this path — a version bump is a real lifecycle transition, and the EM
+ * write is best-effort so it doesn't compromise the "no external calls"
+ * guarantee for the actual reconcile. Exception (spec §11): for an auto
+ * execution, when the plan is version-only AND `plan.targetConfig`'s version
+ * matches the previously installed version, the terminal `INSTALLED` append
+ * is suppressed to avoid growing EM history with a no-op entry — the local
+ * snapshot/`deploymentVersion` baseline still advances.
  *
  * Reports lifecycle status to the Extension Manager (spec §5, §6.2):
  * `UPDATING` right before the reconcile decision, then `INSTALLED` (with
@@ -829,8 +839,14 @@ router.post("/update/execution", {
       return badRequest("initialState is required for execution");
     }
 
+    // Read the pre-advance installed version before the installation store is
+    // overwritten below, so the auto no-op suppression check (spec §11) can
+    // compare it against the plan's target version.
+    const installationSnapshotBeforeAdvance = await getInstallationSnapshot();
+
+    const inlinePlan = params.plan;
     const planStore = await createPlanStore();
-    const plan = await planStore.get(PLAN_KEY);
+    const plan = inlinePlan ?? (await planStore.get(PLAN_KEY));
 
     if (!plan) {
       return internalServerError(
@@ -893,17 +909,35 @@ router.post("/update/execution", {
         config: plan.targetConfig,
       });
 
-      await planStore.delete(PLAN_KEY);
+      // Only a manual (stored-plan) execution owns the pending-plan slot. An
+      // auto execution carries its plan inline and must not delete a
+      // merchant's pending preview plan (spec §6.2 — auto never round-trips
+      // through the plan store).
+      if (!inlinePlan) {
+        await planStore.delete(PLAN_KEY);
+      }
       await cleanupStore.delete(PLAN_KEY);
       logger.debug(
-        "Advanced installation snapshot to the plan's target config; cleared plan and cleanup stores",
+        inlinePlan
+          ? "Advanced installation snapshot to the plan's target config; cleared cleanup store"
+          : "Advanced installation snapshot to the plan's target config; cleared plan and cleanup stores",
       );
 
-      await reportUpdateStatus(rawParams, logger, {
-        deploymentVersion: plan.deploymentVersion,
-        status: "INSTALLED",
-        version: plan.targetConfig.metadata.version,
-      });
+      const installedVersion =
+        installationSnapshotBeforeAdvance?.config?.metadata.version;
+      const targetVersion = plan.targetConfig.metadata.version;
+      const suppressInstalledAppend =
+        params.trigger === "auto" &&
+        isVersionOnly &&
+        installedVersion === targetVersion;
+
+      if (!suppressInstalledAppend) {
+        await reportUpdateStatus(rawParams, logger, {
+          deploymentVersion: plan.deploymentVersion,
+          status: "INSTALLED",
+          version: targetVersion,
+        });
+      }
     }
 
     if (isFailedState(result)) {
