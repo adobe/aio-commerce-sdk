@@ -24,11 +24,11 @@ import {
   GENERATED_ACTIONS_PATH,
   getExtensionPointFolderPath,
 } from "#commands/constants";
+import { exec, run } from "#commands/generate/actions/main";
 import {
   WEB_SOURCE_DEPENDENCIES,
   WEB_SOURCE_DEV_DEPENDENCIES,
-} from "#commands/generate/actions/constants";
-import { exec, run } from "#commands/generate/actions/main";
+} from "#commands/generate/web-src";
 import { getManifestPath, getRuntimeAppConfigPath } from "#commands/utils";
 import {
   dynamicOptionsConfigFile,
@@ -53,13 +53,22 @@ import {
   withTempProject,
 } from "#test/fixtures/project";
 
-const { mockSpawnSync } = vi.hoisted(() => ({
-  mockSpawnSync: vi.fn((..._args: unknown[]) => ({ status: 0 })),
+const childProcessMocks = vi.hoisted(() => ({
+  mockSpawnSync: vi.fn(),
 }));
 
+const { mockSpawnSync } = childProcessMocks;
 const LEADING_CARET_PATTERN = /^\^/u;
 
-vi.mock("node:child_process", () => ({ spawnSync: mockSpawnSync }));
+vi.mock("node:child_process", async (importOriginal) => {
+  const original = await importOriginal<typeof import("node:child_process")>();
+  const { createSpawnSyncStub } = await import("#test/fixtures/exec");
+  childProcessMocks.mockSpawnSync = createSpawnSyncStub(original.spawnSync, [
+    "esbuild",
+  ]);
+
+  return { ...original, spawnSync: childProcessMocks.mockSpawnSync };
+});
 
 function getActionsDir(tempDir: string, extensionPointId: string) {
   return join(
@@ -260,9 +269,7 @@ describe("commands/generate/actions", () => {
           await run(minimalValidConfig, tempDir);
 
           const runtimeConfigPath = join(tempDir, getRuntimeAppConfigPath());
-          const moduleContents = await readFile(runtimeConfigPath, "utf-8");
-
-          expect(moduleContents).not.toContain("app.commerce.manifest.json");
+          expect(existsSync(runtimeConfigPath)).toBe(true);
           const mod = await import(runtimeConfigPath);
           expect(mod.default).toEqual(minimalValidConfig);
           expect(mod.appConfigVersion).toBe("v1");
@@ -270,7 +277,7 @@ describe("commands/generate/actions", () => {
       );
     });
 
-    test("bundles a TypeScript app config file via esbuild", async () => {
+    test("bundles a TypeScript app config for JavaScript actions", async () => {
       await withTempProject(
         {
           "app.commerce.config.ts": dynamicOptionsConfigFileTs,
@@ -283,14 +290,68 @@ describe("commands/generate/actions", () => {
           const runtimeConfigPath = join(tempDir, getRuntimeAppConfigPath());
           expect(existsSync(runtimeConfigPath)).toBe(true);
 
-          const mod = await import(runtimeConfigPath);
-          expect(mod.default.metadata.id).toBe("dynamic-options");
-          expect(typeof mod.default.businessConfig.schema[0].options).toBe(
-            "function",
+          const actionsDir = getActionsDir(
+            tempDir,
+            EXTENSIBILITY_EXTENSION_POINT_ID,
+          );
+
+          expect(existsSync(join(actionsDir, "app-config.js"))).toBe(true);
+          const pkg = JSON.parse(
+            await readFile(join(tempDir, "package.json"), "utf-8"),
+          );
+
+          expect(pkg.imports["#app.commerce.config"]).toBe(
+            "./src/commerce-extensibility-1/.generated/app.commerce.config.js",
           );
         },
       );
     });
+
+    test("reports TypeScript config bundling failures", async () => {
+      mockSpawnSync.mockReturnValueOnce({ status: 1 });
+
+      await withTempProject(
+        {
+          "app.commerce.config.ts": dynamicOptionsConfigFileTs,
+          "package.json": JSON.stringify({ type: "module" }),
+          ...makeTemplateFiles(),
+        },
+        async () => {
+          await expect(run(configWithDynamicListOptions)).rejects.toThrow(
+            "Could not bundle the TypeScript app config with esbuild@",
+          );
+        },
+      );
+    });
+
+    test.each(["ts", "mts", "cts"] as const)(
+      "keeps JavaScript actions for a .%s config outside init",
+      async (extension) => {
+        await withTempProject(
+          {
+            [`app.commerce.config.${extension}`]: `export default ${JSON.stringify(minimalValidConfig)};`,
+            "package.json": JSON.stringify({ type: "module" }),
+            ...makeTemplateFiles(),
+          },
+          async (tempDir) => {
+            await run(minimalValidConfig, tempDir);
+
+            const actionsDir = getActionsDir(
+              tempDir,
+              EXTENSIBILITY_EXTENSION_POINT_ID,
+            );
+            expect(existsSync(join(actionsDir, "app-config.js"))).toBe(true);
+
+            const pkg = JSON.parse(
+              await readFile(join(tempDir, "package.json"), "utf-8"),
+            );
+            expect(pkg.imports["#app.commerce.config"]).toBe(
+              "./src/commerce-extensibility-1/.generated/app.commerce.config.js",
+            );
+          },
+        );
+      },
+    );
 
     test("writes a JSON passthrough module and #app.commerce.config alias for static config", async () => {
       await withTempProject(
@@ -477,6 +538,7 @@ describe("commands/generate/actions", () => {
         {
           ...makeProjectFiles(configWithAdminUiMenu),
           ...makeTemplateFiles(),
+          "package-lock.json": "{}",
         },
         async (tempDir) => {
           await run(configWithAdminUiMenu, tempDir);
@@ -517,14 +579,26 @@ describe("commands/generate/actions", () => {
           const tsconfig = JSON.parse(
             await readFile(join(webSrcDir, "tsconfig.json"), "utf-8"),
           );
-          expect(tsconfig.extends).toContain("@tsconfig/bases/recommended");
+          expect(tsconfig.extends).toEqual(["@tsconfig/bases/recommended"]);
           expect(tsconfig.compilerOptions.jsx).toBe("react-jsx");
+          expect(tsconfig.include).toEqual([
+            "src/**/*.js",
+            "src/**/*.ts",
+            "src/**/*.tsx",
+            "src/**/*.jsx",
+          ]);
 
           const pkg = JSON.parse(
             await readFile(join(tempDir, "package.json"), "utf-8"),
           );
-          expect(pkg.devDependencies["@tsconfig/bases"]).toBe("latest");
-          expect(pkg.devDependencies.typescript).toBe("latest");
+          expect(pkg.devDependencies["@tsconfig/bases"]).toBe(
+            __TSCONFIG_BASES_VERSION__,
+          );
+          expect(pkg.devDependencies.typescript).toBe(__TYPESCRIPT_VERSION__);
+          expect(pkg.scripts.typecheck).toBe("npm run typecheck:web-src");
+          expect(pkg.scripts["typecheck:web-src"]).toBe(
+            "tsc --noEmit -p src/commerce-backend-ui-2/web-src/tsconfig.json",
+          );
         },
       );
     });

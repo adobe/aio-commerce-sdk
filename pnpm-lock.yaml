@@ -404,9 +404,6 @@ importers:
       consola:
         specifier: 'catalog:'
         version: 3.4.2
-      esbuild:
-        specifier: ^0.28.0
-        version: 0.28.1
       jiti:
         specifier: ^2.6.1
         version: 2.7.0
