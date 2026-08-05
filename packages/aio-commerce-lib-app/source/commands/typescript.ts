@@ -47,6 +47,7 @@ const ROOT_TYPESCRIPT_CONFIG = {
     checkJs: true,
     module: "esnext",
     moduleResolution: "bundler",
+    noEmit: true,
   },
   exclude: ["src/**/web-src/**"],
   extends: [

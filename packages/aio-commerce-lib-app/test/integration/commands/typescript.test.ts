@@ -50,7 +50,16 @@ describe("commands/typescript", () => {
         const require = createRequire(import.meta.url);
         expect(require(webpackPath)).toMatchObject({
           module: {
-            rules: [expect.objectContaining({ use: "ts-loader" })],
+            rules: [
+              expect.objectContaining({
+                use: {
+                  loader: "ts-loader",
+                  options: expect.objectContaining({
+                    compilerOptions: { noEmit: false },
+                  }),
+                },
+              }),
+            ],
           },
         });
 

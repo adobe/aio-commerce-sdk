@@ -15,7 +15,14 @@ module.exports = {
       {
         exclude: /node_modules/,
         test: /\.[cm]?tsx?$/,
-        use: "ts-loader",
+        use: {
+          loader: "ts-loader",
+          options: {
+            compilerOptions: {
+              noEmit: false,
+            },
+          },
+        },
       },
     ],
   },
