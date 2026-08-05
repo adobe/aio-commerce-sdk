@@ -1704,6 +1704,41 @@ describe("installation router — update routes", () => {
         type: "error",
       });
       expect(invokeMock).not.toHaveBeenCalled();
+
+      // Regression guard: the self-source failure must be checked before any
+      // store mutation, so the update/cleanup stores are left untouched, not
+      // wedged in-progress/seeded.
+      expect(await updateStore.get("current")).toBeNull();
+      expect(await cleanupStore.get("current")).toBeNull();
+    });
+
+    test("500 when the association record exists but has an empty Commerce base URL", async () => {
+      seedInstalledSnapshot();
+      getAssociationDataMock.mockResolvedValue({
+        commerce: { baseUrl: "", env: "paas" },
+        extensionId: TEST_EXTENSION_ID,
+      });
+
+      const handler = installationRuntimeAction({
+        appConfig: autoTargetConfig,
+      });
+
+      const result = await handler(
+        createRuntimeActionParams({
+          body: { appData },
+          method: "post",
+          path: "/update/self",
+          ...DEFAULT_INSTALLATION_PARAMS,
+        }),
+      );
+
+      expect(result).toMatchObject({
+        error: { statusCode: 500 },
+        type: "error",
+      });
+      expect(invokeMock).not.toHaveBeenCalled();
+      expect(await updateStore.get("current")).toBeNull();
+      expect(await cleanupStore.get("current")).toBeNull();
     });
   });
 });

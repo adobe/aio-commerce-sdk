@@ -1060,8 +1060,28 @@ router.post("/update/self", {
     }
 
     // decision is "noop" or "reconcile": both execute (a noop advances the
-    // baseline; see /update/execution version-only handling). Seed the cleanup
-    // list from operative changes (spec §11).
+    // baseline; see /update/execution version-only handling).
+
+    // Self-source Commerce creds from association up front — before any store
+    // mutation below — so a failure to self-source fails fast with no
+    // partial state (no cleanup entries seeded, no update store left
+    // in-progress). Keep the IMS/eventing creds already present in rawParams
+    // (the deployed action's env).
+    const association = await getAssociationData();
+    if (association === null || association.commerce.baseUrl === "") {
+      return internalServerError(
+        "Cannot self-source the Commerce base URL for the auto update: no association data on record.",
+      );
+    }
+
+    const mergedParams = {
+      ...rawParams,
+      AIO_COMMERCE_API_BASE_URL: association.commerce.baseUrl,
+      AIO_COMMERCE_API_FLAVOR: association.commerce.env,
+      appData: req.body.appData,
+    };
+
+    // Seed the cleanup list from operative changes (spec §11).
     const cleanupStore = await createCleanupStore();
     const existingCleanupList = await cleanupStore.get(PLAN_KEY);
     const existingCleanupEntries = existingCleanupList
@@ -1083,22 +1103,6 @@ router.post("/update/self", {
       config: targetConfig,
     });
     await updateStore.put(getStorageKey(), initialState);
-
-    // Self-source Commerce creds from association; keep the IMS/eventing
-    // creds already present in rawParams (the deployed action's env).
-    const association = await getAssociationData();
-    if (association === null || association.commerce.baseUrl === "") {
-      return internalServerError(
-        "Cannot self-source the Commerce base URL for the auto update: no association data on record.",
-      );
-    }
-
-    const mergedParams = {
-      ...rawParams,
-      AIO_COMMERCE_API_BASE_URL: association.commerce.baseUrl,
-      AIO_COMMERCE_API_FLAVOR: association.commerce.env,
-      appData: req.body.appData,
-    };
 
     const activation = await openwhisk().actions.invoke({
       blocking: false,
