@@ -48,11 +48,14 @@ const OPERATIVE = new Set(["added", "removed", "changed"]);
  * (the identity fields are enough to rebuild the unsubscribe params, no config lookup
  * needed); `changed` has no in-place update endpoint yet, so it throws.
  *
+ * Exported so uninstall's cleanup-list union teardown (spec §11) can reuse the same
+ * `removed` delete path for a synthetic diff of cleanup entries.
+ *
  * @param config - The target configuration (must have a non-empty `webhooks` array).
  * @param diff - The computed diff between the installed snapshot and the target config.
  * @param context - The webhooks execution context.
  */
-async function reconcileWebhookSubscriptions(
+export async function reconcileWebhookSubscriptions(
   config: WebhooksConfig,
   diff: ConfigDiff,
   context: WebhooksExecutionContext,

@@ -33,6 +33,7 @@ import {
   isFailedState,
   isInProgressState,
   isSucceededState,
+  runCleanupTeardown,
   runInstallation,
   runUninstallation,
   runUpdate,
@@ -907,7 +908,10 @@ router.post("/uninstallation", {
  * 1. Build InstallationContext from params
  * 2. Run uninstallation workflow with hooks (hooks persist state per step)
  * 3. Save final state to uninstallation store
- * 4. On success, clear installation store
+ * 4. On success: clear the installation store, tear down any cleanup-list entries
+ *    a failed in-flight update left behind that the baseline walk didn't already cover
+ *    (spec §11), and clear the cleanup store. A failed uninstall leaves the cleanup
+ *    list in place.
  * 5. Return 200 on success, 500 on failure
  */
 router.post("/uninstallation/execution", {
@@ -954,8 +958,13 @@ router.post("/uninstallation/execution", {
     if (isSucceededState(result)) {
       const installationStore = await createInstallationStore();
       await installationStore.delete(getStorageKey());
+
+      await runCleanupTeardown(appConfig, installationContext);
+      const cleanupStore = await createCleanupStore();
+      await cleanupStore.delete(PLAN_KEY);
+
       logger.debug(
-        "Cleared installation state after successful uninstallation",
+        "Cleared installation state after successful uninstallation; tore down any pending cleanup-list entries and cleared the cleanup store",
       );
     }
 

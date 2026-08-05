@@ -33,6 +33,7 @@ export {
   isInProgressState,
   isSucceededState,
 } from "./installation/workflow";
+export { runCleanupTeardown } from "./upgrade/cleanup-teardown";
 
 export type {
   CustomInstallationStepDefinition,

@@ -10,6 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
+import { HttpResponse, http } from "msw";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
 const {
@@ -65,10 +66,13 @@ vi.mock("#management/index", async () => {
 });
 
 import { installationRuntimeAction } from "#actions/installation/index";
+import { getWebhookIdentity } from "#management/installation/webhooks/helpers";
+import { PLAN_KEY } from "#management/upgrade/plan-store";
 import { createRuntimeActionParams } from "#test/fixtures/actions";
 import {
   configWithCommerceEventing,
   minimalValidConfig,
+  mockMetadata,
 } from "#test/fixtures/config";
 import {
   createMockCombinedStoreImpl,
@@ -80,14 +84,39 @@ import {
   createMockValidationResult,
   DEFAULT_INSTALLATION_PARAMS,
 } from "#test/fixtures/installation";
+import { createMockExistingCommerceWebhook } from "#test/fixtures/webhooks";
+import { apiServer, setupApiTestLifecycle } from "#test/setup/api";
 
+import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 import type { InstallationHooks } from "#management/installation/workflow/hooks";
 import type { InProgressInstallationState } from "#management/installation/workflow/types";
+import type { CleanupList } from "#management/upgrade/types";
 
 type WorkflowRunnerArgs = {
   initialState: InProgressInstallationState;
   hooks: InstallationHooks;
 };
+
+const COMMERCE_BASE_URL = "https://api.commerce.adobe.com/V1";
+
+/** In-memory mock of a generic key/value store, mirroring the installation store fixture. */
+function createMockGenericStore<T>() {
+  let value: T | null = null;
+
+  return {
+    delete: vi.fn(async (_key: string) => {
+      const hasValue = value !== null;
+      value = null;
+      return hasValue;
+    }),
+    get: vi.fn(async (_key: string) => value),
+    put: vi.fn(async (_key: string, nextValue: T) => {
+      value = nextValue;
+    }),
+  };
+}
+
+setupApiTestLifecycle();
 
 const { appData } = createMockInstallationContext();
 const requestBody = {
@@ -858,6 +887,264 @@ describe("installationRuntimeAction", () => {
         error: { statusCode: 500 },
         type: "error",
       });
+    });
+  });
+
+  describe("POST /uninstallation/execution — cleanup-list union teardown (spec §11)", () => {
+    const metadata = { ...mockMetadata, id: "test-app-cleanup-teardown" };
+
+    const keptWebhook = {
+      category: "modification" as const,
+      description: "Webhook kept from the baseline",
+      label: "Order Created Webhook",
+      requireAdobeAuth: true,
+      runtimeAction: "my-package/handle-webhook",
+      webhook: {
+        batch_name: "default",
+        hook_name: "order_created",
+        method: "POST",
+        webhook_method: "plugin.order.api.order_created",
+        webhook_type: "after",
+      },
+    };
+
+    /** Not part of the baseline config — simulates a failed update's leftover resource. */
+    const orphanedWebhook = {
+      category: "modification" as const,
+      description: "Webhook added by a failed in-flight update",
+      label: "Order Cancelled Webhook",
+      requireAdobeAuth: true,
+      runtimeAction: "my-package/handle-cancel-webhook",
+      webhook: {
+        batch_name: "default",
+        hook_name: "order_cancelled",
+        method: "POST",
+        webhook_method: "plugin.order.api.order_cancelled",
+        webhook_type: "after",
+      },
+    };
+
+    const baselineConfig = {
+      metadata,
+      webhooks: [keptWebhook],
+    } satisfies CommerceAppConfigOutputModel;
+
+    let cleanupStore: ReturnType<typeof createMockGenericStore<CleanupList>>;
+
+    beforeEach(() => {
+      cleanupStore = createMockGenericStore<CleanupList>();
+
+      createCombinedStoreMock.mockImplementation(
+        async (options?: { cache?: { keyPrefix?: string } }) => {
+          const prefix = options?.cache?.keyPrefix;
+
+          if (prefix === "installation") {
+            return installationStore;
+          }
+          if (prefix === "uninstallation") {
+            return uninstallationStore;
+          }
+          if (prefix === "update-cleanup") {
+            return cleanupStore;
+          }
+
+          throw new Error(`Unexpected store prefix: ${String(prefix)}`);
+        },
+      );
+    });
+
+    test("tears down a cleanup-list entry not covered by the baseline config, and clears the cleanup store on success", async () => {
+      // The cleanup list carries one entry the baseline walk already covers (the
+      // kept webhook) and one it doesn't (the orphaned webhook) — only the latter
+      // should be torn down.
+      const cleanupStoreValue: CleanupList = {
+        entries: [
+          {
+            domain: "commerceWebhook",
+            identity: getWebhookIdentity(keptWebhook.webhook),
+          },
+          {
+            domain: "commerceWebhook",
+            identity: getWebhookIdentity(orphanedWebhook.webhook),
+          },
+        ],
+      };
+      await cleanupStore.put(PLAN_KEY, cleanupStoreValue);
+
+      const unsubscribeCalls: Record<string, unknown>[] = [];
+      apiServer.use(
+        http.get(`${COMMERCE_BASE_URL}/webhooks/list`, () =>
+          HttpResponse.json([
+            createMockExistingCommerceWebhook({
+              batch_name: "test_app_cleanup_teardown_default",
+              hook_name: "test_app_cleanup_teardown_order_cancelled",
+              webhook_method: orphanedWebhook.webhook.webhook_method,
+              webhook_type: orphanedWebhook.webhook.webhook_type,
+            }),
+          ]),
+        ),
+        http.post(
+          `${COMMERCE_BASE_URL}/webhooks/unsubscribe`,
+          async ({ request }) => {
+            unsubscribeCalls.push(
+              (await request.json()) as Record<string, unknown>,
+            );
+            return HttpResponse.json({});
+          },
+        ),
+      );
+
+      const initialState = createMockInProgressState({
+        id: "uninstallation-1",
+      });
+      const handler = installationRuntimeAction({ appConfig: baselineConfig });
+
+      const result = await handler(
+        createRuntimeActionParams({
+          appData,
+          initialState,
+          method: "post",
+          path: "/uninstallation/execution",
+          ...DEFAULT_INSTALLATION_PARAMS,
+        }),
+      );
+
+      expect(result).toMatchObject({ statusCode: 200, type: "success" });
+
+      expect(unsubscribeCalls).toHaveLength(1);
+      expect(unsubscribeCalls[0]).toEqual({
+        webhook: expect.objectContaining({
+          batch_name: "test_app_cleanup_teardown_default",
+          hook_name: "test_app_cleanup_teardown_order_cancelled",
+        }),
+      });
+
+      await expect(cleanupStore.get(PLAN_KEY)).resolves.toBeNull();
+    });
+
+    test("swallows a resource-already-gone (404) delete without failing the uninstall", async () => {
+      await cleanupStore.put(PLAN_KEY, {
+        entries: [
+          {
+            domain: "commerceWebhook",
+            identity: getWebhookIdentity(orphanedWebhook.webhook),
+          },
+        ],
+      });
+
+      apiServer.use(
+        http.get(`${COMMERCE_BASE_URL}/webhooks/list`, () =>
+          HttpResponse.json([
+            createMockExistingCommerceWebhook({
+              batch_name: "test_app_cleanup_teardown_default",
+              hook_name: "test_app_cleanup_teardown_order_cancelled",
+              webhook_method: orphanedWebhook.webhook.webhook_method,
+              webhook_type: orphanedWebhook.webhook.webhook_type,
+            }),
+          ]),
+        ),
+        http.post(
+          `${COMMERCE_BASE_URL}/webhooks/unsubscribe`,
+          () => new HttpResponse(null, { status: 404 }),
+        ),
+      );
+
+      const initialState = createMockInProgressState({
+        id: "uninstallation-1",
+      });
+      const handler = installationRuntimeAction({ appConfig: baselineConfig });
+
+      const result = await handler(
+        createRuntimeActionParams({
+          appData,
+          initialState,
+          method: "post",
+          path: "/uninstallation/execution",
+          ...DEFAULT_INSTALLATION_PARAMS,
+        }),
+      );
+
+      expect(result).toMatchObject({ statusCode: 200, type: "success" });
+      await expect(cleanupStore.get(PLAN_KEY)).resolves.toBeNull();
+    });
+
+    test("clears the cleanup store on a successful uninstall even with no uncovered entries", async () => {
+      await cleanupStore.put(PLAN_KEY, {
+        entries: [
+          {
+            domain: "commerceWebhook",
+            identity: getWebhookIdentity(keptWebhook.webhook),
+          },
+        ],
+      });
+
+      const initialState = createMockInProgressState({
+        id: "uninstallation-1",
+      });
+      const handler = installationRuntimeAction({ appConfig: baselineConfig });
+
+      const result = await handler(
+        createRuntimeActionParams({
+          appData,
+          initialState,
+          method: "post",
+          path: "/uninstallation/execution",
+          ...DEFAULT_INSTALLATION_PARAMS,
+        }),
+      );
+
+      expect(result).toMatchObject({ statusCode: 200, type: "success" });
+      await expect(cleanupStore.get(PLAN_KEY)).resolves.toBeNull();
+    });
+
+    test("leaves the cleanup list in place when the uninstall fails", async () => {
+      const cleanupStoreValue: CleanupList = {
+        entries: [
+          {
+            domain: "commerceWebhook",
+            identity: getWebhookIdentity(orphanedWebhook.webhook),
+          },
+        ],
+      };
+      await cleanupStore.put(PLAN_KEY, cleanupStoreValue);
+
+      const initialState = createMockInProgressState({
+        id: "uninstallation-1",
+      });
+      const failedState = createMockFailedState({ id: "uninstallation-1" });
+
+      runUninstallationMock.mockImplementation(
+        async ({
+          initialState: failedInitialState,
+          hooks,
+        }: WorkflowRunnerArgs) => {
+          const inProgressState = createMockInProgressState({
+            id: failedInitialState.id,
+          });
+
+          await hooks.onInstallationStart?.(inProgressState);
+          await hooks.onInstallationFailure?.(failedState);
+
+          return failedState;
+        },
+      );
+
+      const handler = installationRuntimeAction({ appConfig: baselineConfig });
+
+      const result = await handler(
+        createRuntimeActionParams({
+          appData,
+          initialState,
+          method: "post",
+          path: "/uninstallation/execution",
+          ...DEFAULT_INSTALLATION_PARAMS,
+        }),
+      );
+
+      expect(result).toMatchObject({ error: { statusCode: 500 } });
+      await expect(cleanupStore.get(PLAN_KEY)).resolves.toEqual(
+        cleanupStoreValue,
+      );
     });
   });
 
