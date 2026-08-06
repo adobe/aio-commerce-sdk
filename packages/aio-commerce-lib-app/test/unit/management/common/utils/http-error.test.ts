@@ -12,7 +12,7 @@
 
 import { describe, expect, test, vi } from "vitest";
 
-import { throwHttpError } from "#management/installation/utils/http-error";
+import { throwHttpError } from "#management/common/utils/http-error";
 import { makeHttpError } from "#test/fixtures/http-error";
 
 describe("throwHttpError", () => {

@@ -29,16 +29,16 @@ export type ValidationIssue = {
   /** Human-readable description of the issue. */
   message: string;
 
-  /** Severity of the issue. Only "error" severity blocks installation. */
+  /** Severity of the issue. Only "error" severity blocks the workflow. */
   severity: ValidationIssueSeverity;
 
   /** Optional additional context about the issue. */
   details?: Record<string, unknown>;
 };
 
-/** Shared context available to all steps during installation. */
-export type InstallationContext = {
-  /** The credentials of the app being installed */
+/** Shared context available to all steps during a lifecycle workflow. */
+export type LifecycleContext = {
+  /** The credentials of the app being managed. */
   appData: AppData;
 
   /** The raw action parameters from the App Builder runtime action. */
@@ -51,7 +51,7 @@ export type InstallationContext = {
     AIO_COMMERCE_AUTH_IMS_SCOPES: string | string[];
   };
 
-  /** Logger instance for installation logging. */
+  /** Logger instance for workflow logging. */
   logger: ReturnType<typeof AioLogger>;
 
   /** Custom scripts defined in the configuration (if any). */
@@ -61,18 +61,18 @@ export type InstallationContext = {
 /** Factory function type for creating step-specific context. */
 export type StepContextFactory<
   TStepCtx extends Record<string, unknown> = Record<string, unknown>,
-> = (context: InstallationContext) => TStepCtx | Promise<TStepCtx>;
+> = (context: LifecycleContext) => TStepCtx | Promise<TStepCtx>;
 
 /** The execution context passed to leaf step run handlers. */
 export type ExecutionContext<
   TStepCtx extends Record<string, unknown> = Record<string, unknown>,
-> = InstallationContext & TStepCtx;
+> = LifecycleContext & TStepCtx;
 
 /**
  * A narrowed context available to step `validate` handlers.
- * Excludes `customScripts` — those only apply during installation, not pre-flight validation.
+ * Excludes `customScripts` — those only apply during execution, not pre-flight validation.
  */
-export type ValidationContext = Omit<InstallationContext, "customScripts">;
+export type ValidationContext = Omit<LifecycleContext, "customScripts">;
 
 /** The context passed to step `validate` handlers (base validation context merged with step-level context). */
 export type ValidationExecutionContext<
@@ -85,10 +85,11 @@ export type StepMetaInfo = {
   description?: string;
 };
 
-/** Step metadata keyed by execution mode. */
+/** Step metadata keyed by lifecycle mode. */
 export type StepMeta = {
   install: StepMetaInfo;
   uninstall?: StepMetaInfo;
+  upgrade?: StepMetaInfo;
 };
 
 /** Defines the base properties of a step. */
@@ -99,7 +100,7 @@ export type StepBase<
   /** The name of this step. */
   name: TName;
 
-  /** Metadata associated with the step, keyed by execution mode. */
+  /** Metadata associated with the step, keyed by lifecycle mode. */
   meta: StepMeta;
 
   /** Whether the step should be taken into consideration. */
@@ -122,8 +123,8 @@ export type LeafStep<
   ) => TOutput | Promise<TOutput>;
 
   /**
-   * Optional pre-installation validation handler.
-   * Called before installation begins to surface issues (errors or warnings).
+   * Optional pre-execution validation handler.
+   * Called before the workflow begins to surface issues (errors or warnings).
    * Returning an empty array means the step has no issues.
    */
   validate?: (
@@ -158,7 +159,7 @@ export type BranchStep<
   children: TChildren;
 
   /**
-   * Optional pre-installation validation handler for the branch itself.
+   * Optional pre-execution validation handler for the branch itself.
    * Called before children are validated. Returning an empty array means
    * the branch has no issues at this level.
    */
@@ -168,7 +169,7 @@ export type BranchStep<
   ) => ValidationIssue[] | Promise<ValidationIssue[]>;
 };
 
-/** A step in the installation tree (discriminated union by `type`). */
+/** A step in the workflow tree (discriminated union by `type`). */
 export type Step<
   TName extends string = string,
   TConfig extends CommerceAppConfigOutputModel = CommerceAppConfigOutputModel,
@@ -183,7 +184,7 @@ export type AnyStep = {
   children?: AnyStep[];
 
   // biome-ignore-start lint/suspicious/noExplicitAny: We need the flexibility here
-  context?: (context: InstallationContext) => any;
+  context?: (context: LifecycleContext) => any;
   install?: (config: any, context: any) => unknown | Promise<unknown>;
   meta: StepMeta;
   name: string;

@@ -13,7 +13,8 @@
 import { unwrapHttpError } from "@adobe/aio-commerce-lib-api/utils";
 import { inspect } from "@aio-commerce-sdk/common-utils/logging";
 
-import { throwHttpError } from "../utils/http-error";
+import { throwHttpError } from "#management/common/utils/http-error";
+
 import {
   findExistingProvider,
   findExistingProviderMetadata,

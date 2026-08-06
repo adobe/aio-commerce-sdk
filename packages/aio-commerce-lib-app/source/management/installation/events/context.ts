@@ -39,8 +39,8 @@ import {
 import type { RuntimeActionParams } from "@adobe/aio-commerce-lib-core/params";
 import type {
   ExecutionContext,
-  InstallationContext,
-} from "#management/installation/workflow/index";
+  LifecycleContext,
+} from "#management/common/workflow/index";
 
 /**
  * Create a custom Commerce API Client with only the operations we need for optimal package size.
@@ -97,7 +97,7 @@ export type CustomAdobeIoEventsApiClient = ReturnType<
 >;
 
 /** Creates the events step context with lazy-initialized API clients. */
-export function createEventsStepContext(installation: InstallationContext) {
+export function createEventsStepContext(installation: LifecycleContext) {
   const { params } = installation;
 
   let commerceEventsClient: CustomCommerceEventsApiClient | null = null;

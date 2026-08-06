@@ -15,8 +15,8 @@ import { describe, expect, test, vi } from "vitest";
 import {
   defineBranchStep,
   defineLeafStep,
-} from "#management/installation/workflow/step";
-import { validateStepTree } from "#management/installation/workflow/validation";
+} from "#management/common/workflow/step";
+import { validateStepTree } from "#management/common/workflow/validation";
 import { minimalValidConfig } from "#test/fixtures/config";
 import { createMockInstallationContext } from "#test/fixtures/installation";
 

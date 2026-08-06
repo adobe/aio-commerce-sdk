@@ -21,8 +21,8 @@ import {
 import type { RuntimeActionParams } from "@adobe/aio-commerce-lib-core/params";
 import type {
   ExecutionContext,
-  InstallationContext,
-} from "#management/installation/workflow/index";
+  LifecycleContext,
+} from "#management/common/workflow/index";
 
 /**
  * Create a custom Commerce Webhooks API Client with only the operations needed for installation.
@@ -49,7 +49,7 @@ export type CustomCommerceWebhooksApiClient = ReturnType<
 >;
 
 /** Creates the webhooks step context with a lazy-initialized API client. */
-export function createWebhooksStepContext(installation: InstallationContext) {
+export function createWebhooksStepContext(installation: LifecycleContext) {
   const { params } = installation;
 
   let commerceWebhooksClient: CustomCommerceWebhooksApiClient | null = null;

@@ -33,25 +33,21 @@ export {
 export { validateStepTree } from "./validation";
 
 export type {
-  InstallationHooks,
   StepEvent,
   StepFailedEvent,
   StepStartedEvent,
   StepSucceededEvent,
+  WorkflowHooks,
 } from "./hooks";
-export type {
-  CreateInitialStateOptions,
-  ExecuteWorkflowOptions,
-} from "./runner";
 export type {
   AnyStep,
   BranchStep,
   BranchStepOptions,
   ExecutionContext,
   InferStepOutput,
-  InstallationContext,
   LeafStep,
   LeafStepOptions,
+  LifecycleContext,
   Step,
   StepContextFactory,
   StepMeta,
@@ -63,15 +59,14 @@ export type {
 } from "./step";
 export type {
   ExecutionStatus,
-  FailedInstallationState,
-  InProgressInstallationState,
-  InstallationData,
-  InstallationError,
-  InstallationRetryMetadata,
-  InstallationState,
-  InstallationStatus,
+  FailedWorkflowState,
+  InProgressWorkflowState,
   StepStatus,
-  SucceededInstallationState,
+  SucceededWorkflowState,
+  WorkflowData,
+  WorkflowError,
+  WorkflowRunState,
+  WorkflowStateMetadata,
 } from "./types";
 export type {
   StepValidationResult,

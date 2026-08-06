@@ -16,9 +16,9 @@ import { resolveCommerceHttpClientParams } from "@adobe/aio-commerce-lib-api";
 import type { RuntimeActionParams } from "@adobe/aio-commerce-lib-core/params";
 import type {
   ExecutionContext,
-  InstallationContext,
+  LifecycleContext,
   StepContextFactory,
-} from "#management/installation/workflow/step";
+} from "#management/common/workflow/step";
 
 export type { AdminUiConfig } from "#config/schema/admin-ui";
 
@@ -44,7 +44,7 @@ export type AdminUiExecutionContext = ExecutionContext<AdminUiStepContext>;
 /** Creates the Admin UI step context with a lazy-initialized API client. */
 export const createAdminUiStepContext: StepContextFactory<
   AdminUiStepContext
-> = (installation: InstallationContext) => {
+> = (installation: LifecycleContext) => {
   const { params } = installation;
   let adminUiClient: AdminUiApiClient | null = null;
 

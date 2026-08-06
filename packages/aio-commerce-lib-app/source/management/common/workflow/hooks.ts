@@ -10,16 +10,16 @@
  * governing permissions and limitations under the License.
  */
 
-import type { InstallationError, InstallationState } from "./types";
+import type { WorkflowError, WorkflowRunState } from "./types";
 
 /** Hook function that receives an event and the current state. */
 type HookFunction<TEvent> = (
   event: TEvent,
-  state: InstallationState,
+  state: WorkflowRunState,
 ) => void | Promise<void>;
 
 /** Hook function that only receives the current state. */
-type InstallationHook = (state: InstallationState) => void | Promise<void>;
+type WorkflowHook = (state: WorkflowRunState) => void | Promise<void>;
 
 /** Base event payload for step events. */
 export type StepEvent = {
@@ -45,14 +45,14 @@ export type StepSucceededEvent = StepEvent & {
 /** Event payload when a step fails. */
 export type StepFailedEvent = StepEvent & {
   /** Error information. */
-  error: InstallationError;
+  error: WorkflowError;
 };
 
-/** Lifecycle hooks for installation execution. */
-export type InstallationHooks = {
-  onInstallationStart?: InstallationHook;
-  onInstallationSuccess?: InstallationHook;
-  onInstallationFailure?: InstallationHook;
+/** Lifecycle hooks for workflow execution. */
+export type WorkflowHooks = {
+  onStart?: WorkflowHook;
+  onSuccess?: WorkflowHook;
+  onFailure?: WorkflowHook;
 
   onStepStart?: HookFunction<StepStartedEvent>;
   onStepSuccess?: HookFunction<StepSucceededEvent>;
@@ -60,10 +60,10 @@ export type InstallationHooks = {
 };
 
 /** Helper to call a hook if it exists. */
-export async function callHook<THookName extends keyof InstallationHooks>(
-  hooks: InstallationHooks | undefined,
+export async function callHook<THookName extends keyof WorkflowHooks>(
+  hooks: WorkflowHooks | undefined,
   hookName: THookName,
-  ...args: Parameters<NonNullable<InstallationHooks[THookName]>>
+  ...args: Parameters<NonNullable<WorkflowHooks[THookName]>>
 ): Promise<void> {
   const hook = hooks?.[hookName];
   if (hook) {

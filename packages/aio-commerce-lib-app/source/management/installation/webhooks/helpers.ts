@@ -25,7 +25,7 @@ import type {
   WebhookDefinition,
   WebhooksConfig,
 } from "#config/schema/webhooks";
-import type { ValidationIssue } from "#management/installation/workflow/step";
+import type { ValidationIssue } from "#management/common/workflow/step";
 import type { WebhooksExecutionContext } from "./context";
 
 /** Minimal identity fields shared by subscribe and unsubscribe params. */

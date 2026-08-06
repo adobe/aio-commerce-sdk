@@ -12,10 +12,10 @@
 
 import { describe, expect, test, vi } from "vitest";
 
-import { callHook } from "#management/installation/workflow/hooks";
+import { callHook } from "#management/common/workflow/hooks";
 import { createMockInProgressState } from "#test/fixtures/installation";
 
-import type { InstallationHooks } from "#management/installation/workflow/hooks";
+import type { WorkflowHooks } from "#management/common/workflow/hooks";
 
 /** Creates a mock step event for testing. */
 function createMockStepEvent() {
@@ -29,10 +29,10 @@ function createMockStepEvent() {
 describe("callHook", () => {
   test("should call sync hook with correct arguments", async () => {
     const mockHook = vi.fn();
-    const hooks: InstallationHooks = { onInstallationStart: mockHook };
+    const hooks: WorkflowHooks = { onStart: mockHook };
     const state = createMockInProgressState();
 
-    await callHook(hooks, "onInstallationStart", state);
+    await callHook(hooks, "onStart", state);
 
     expect(mockHook).toHaveBeenCalledOnce();
     expect(mockHook).toHaveBeenCalledWith(state);
@@ -40,46 +40,41 @@ describe("callHook", () => {
 
   test("should await async hook and resolve", async () => {
     const mockHook = vi.fn().mockResolvedValue(undefined);
-    const hooks: InstallationHooks = { onInstallationStart: mockHook };
+    const hooks: WorkflowHooks = { onStart: mockHook };
     const state = createMockInProgressState();
 
-    await expect(
-      callHook(hooks, "onInstallationStart", state),
-    ).resolves.toBeUndefined();
+    await expect(callHook(hooks, "onStart", state)).resolves.toBeUndefined();
     expect(mockHook).toHaveBeenCalledOnce();
   });
 
   test("should not throw when hook is undefined", async () => {
-    const hooks: InstallationHooks = {};
+    const hooks: WorkflowHooks = {};
     const state = createMockInProgressState();
 
-    await expect(
-      callHook(hooks, "onInstallationStart", state),
-    ).resolves.toBeUndefined();
+    await expect(callHook(hooks, "onStart", state)).resolves.toBeUndefined();
   });
 
   test("should not throw when hooks object is undefined", async () => {
     const state = createMockInProgressState();
     await expect(
-      callHook(undefined, "onInstallationStart", state),
+      callHook(undefined, "onStart", state),
     ).resolves.toBeUndefined();
   });
 
-  describe("installation hooks (state only)", () => {
-    test.each([
-      "onInstallationStart",
-      "onInstallationSuccess",
-      "onInstallationFailure",
-    ] as const)("%s should receive the state", async (hookName) => {
-      const mockHook = vi.fn();
-      const hooks: InstallationHooks = { [hookName]: mockHook };
-      const state = createMockInProgressState();
+  describe("workflow hooks (state only)", () => {
+    test.each(["onStart", "onSuccess", "onFailure"] as const)(
+      "%s should receive the state",
+      async (hookName) => {
+        const mockHook = vi.fn();
+        const hooks: WorkflowHooks = { [hookName]: mockHook };
+        const state = createMockInProgressState();
 
-      await callHook(hooks, hookName, state);
+        await callHook(hooks, hookName, state);
 
-      expect(mockHook).toHaveBeenCalledOnce();
-      expect(mockHook).toHaveBeenCalledWith(state);
-    });
+        expect(mockHook).toHaveBeenCalledOnce();
+        expect(mockHook).toHaveBeenCalledWith(state);
+      },
+    );
   });
 
   describe("step hooks (event and state)", () => {
@@ -103,7 +98,7 @@ describe("callHook", () => {
       "$hookName should receive event and state",
       async ({ hookName, extraProps }) => {
         const mockHook = vi.fn();
-        const hooks: InstallationHooks = { [hookName]: mockHook };
+        const hooks: WorkflowHooks = { [hookName]: mockHook };
         const state = createMockInProgressState();
         const event = { ...createMockStepEvent(), ...extraProps };
 

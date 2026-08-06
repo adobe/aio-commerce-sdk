@@ -17,7 +17,7 @@ import {
   isFailedState,
   isInProgressState,
   isSucceededState,
-} from "#management/installation/workflow/types";
+} from "#management/common/workflow/types";
 import {
   createMockFailedState,
   createMockInProgressState,

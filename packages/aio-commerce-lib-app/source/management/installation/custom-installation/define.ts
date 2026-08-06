@@ -11,7 +11,7 @@
  */
 
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
-import type { ExecutionContext } from "#management/installation/workflow/step";
+import type { ExecutionContext } from "#management/common/workflow/step";
 
 /**
  * Handler function type for custom installation steps.

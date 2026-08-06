@@ -12,7 +12,7 @@
 
 import { unwrapHttpError } from "@adobe/aio-commerce-lib-api/utils";
 
-import { throwHttpError } from "../utils/http-error";
+import { throwHttpError } from "#management/common/utils/http-error";
 
 import type { AdminUiExecutionContext } from "./utils";
 

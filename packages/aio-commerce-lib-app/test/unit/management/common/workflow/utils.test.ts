@@ -14,12 +14,12 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 
 import {
   createFailedState,
-  createInstallationError,
   createSucceededState,
+  createWorkflowError,
   getAtPath,
   nowIsoString,
   setAtPath,
-} from "#management/installation/workflow/utils";
+} from "#management/common/workflow/utils";
 import { makeHttpError } from "#test/fixtures/http-error";
 import {
   createMockInstallationError,
@@ -101,10 +101,10 @@ describe("getAtPath", () => {
   });
 });
 
-describe("createInstallationError", () => {
+describe("createWorkflowError", () => {
   test("should create error from Error instance", async () => {
     const err = new Error("Something went wrong");
-    const result = await createInstallationError(err, ["step", "child"]);
+    const result = await createWorkflowError(err, ["step", "child"]);
     expect(result).toEqual({
       key: "STEP_EXECUTION_FAILED",
       message: "Something went wrong",
@@ -113,7 +113,7 @@ describe("createInstallationError", () => {
   });
 
   test("should create error from string", async () => {
-    const result = await createInstallationError("string error", ["a", "b"]);
+    const result = await createWorkflowError("string error", ["a", "b"]);
     expect(result).toEqual({
       key: "STEP_EXECUTION_FAILED",
       message: "string error",
@@ -123,7 +123,7 @@ describe("createInstallationError", () => {
 
   test("should use custom key when provided", async () => {
     const err = new Error("Error message");
-    const result = await createInstallationError(err, ["path"], "CUSTOM_KEY");
+    const result = await createWorkflowError(err, ["path"], "CUSTOM_KEY");
     expect(result).toEqual({
       key: "CUSTOM_KEY",
       message: "Error message",
@@ -138,7 +138,7 @@ describe("createInstallationError", () => {
       JSON.stringify({ message: "API error detail" }),
     );
 
-    const result = await createInstallationError(err, ["step"]);
+    const result = await createWorkflowError(err, ["step"]);
     expect(result).toEqual({
       key: "STEP_EXECUTION_FAILED",
       message: "HTTP 400 Bad Request — API error detail",

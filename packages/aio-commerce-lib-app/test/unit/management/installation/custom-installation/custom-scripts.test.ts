@@ -20,7 +20,7 @@ import {
 } from "#test/fixtures/config";
 import { createMockInstallationContext } from "#test/fixtures/installation";
 
-import type { LeafStep } from "#management/installation/workflow/step";
+import type { LeafStep } from "#management/common/workflow/step";
 
 describe("hasCustomInstallationSteps", () => {
   test("should return false when config has no installation property", () => {

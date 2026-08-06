@@ -15,7 +15,7 @@ import * as camelcaseModule from "camelcase";
 import * as v from "valibot";
 
 import { hasCustomInstallationSteps } from "#config/schema/installation";
-import { defineLeafStep } from "#management/installation/workflow/step";
+import { defineLeafStep } from "#management/common/workflow/step";
 
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 import type {
@@ -23,13 +23,13 @@ import type {
   CustomInstallationStep,
 } from "#config/schema/installation";
 import type {
+  AnyStep,
+  ExecutionContext,
+} from "#management/common/workflow/step";
+import type {
   CustomInstallationStepDefinition,
   CustomInstallationStepHandler,
 } from "#management/installation/custom-installation/define";
-import type {
-  AnyStep,
-  ExecutionContext,
-} from "#management/installation/workflow/step";
 
 type CamelcaseInterop = typeof camelcaseModule.default & {
   default?: typeof camelcaseModule.default;

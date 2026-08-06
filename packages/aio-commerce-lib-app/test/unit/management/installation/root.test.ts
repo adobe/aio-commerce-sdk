@@ -12,6 +12,7 @@
 
 import { describe, expect, test } from "vitest";
 
+import { isBranchStep } from "#management/common/workflow/step";
 import { adminUiStep } from "#management/installation/admin-ui/branch";
 import { eventingStep } from "#management/installation/events/branch";
 import {
@@ -19,7 +20,6 @@ import {
   createRootUninstallationStep,
 } from "#management/installation/root";
 import { webhooksStep } from "#management/installation/webhooks/branch";
-import { isBranchStep } from "#management/installation/workflow/step";
 import {
   configWithCustomInstallationSteps,
   minimalValidConfig,

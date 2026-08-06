@@ -11,8 +11,8 @@
  */
 
 import { hasCustomInstallationSteps } from "#config/schema/installation";
+import { defineBranchStep } from "#management/common/workflow/index";
 
-import { defineBranchStep } from "../workflow";
 import { createCustomScriptSteps } from "./custom-scripts";
 
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";

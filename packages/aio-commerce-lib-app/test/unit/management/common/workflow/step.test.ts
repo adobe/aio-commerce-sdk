@@ -17,7 +17,7 @@ import {
   defineLeafStep,
   isBranchStep,
   isLeafStep,
-} from "#management/installation/workflow/step";
+} from "#management/common/workflow/step";
 
 describe("defineLeafStep", () => {
   test("returns a step with type: 'leaf'", () => {

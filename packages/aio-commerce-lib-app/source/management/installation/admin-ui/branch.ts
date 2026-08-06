@@ -14,7 +14,7 @@ import { hasAdminUi } from "#config/schema/admin-ui";
 import {
   defineBranchStep,
   defineLeafStep,
-} from "#management/installation/workflow/step";
+} from "#management/common/workflow/step";
 
 import {
   enableAdminUiSdk,
@@ -23,7 +23,7 @@ import {
 } from "./helpers";
 import { createAdminUiStepContext } from "./utils";
 
-import type { InferStepOutput } from "#management/installation/workflow/step";
+import type { InferStepOutput } from "#management/common/workflow/step";
 import type { AdminUiConfig, AdminUiExecutionContext } from "./utils";
 
 /**
