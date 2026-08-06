@@ -17,7 +17,7 @@ function createCommerceEventProvider(
 ): Promise<IoEventProviderHalModel>;
 ```
 
-Defined in: [io-events/api/event-providers/shorthands.ts:93](https://github.com/adobe/aio-commerce-sdk/blob/97b39588c9be1d7c405453e1095714aa55bea129/packages/aio-commerce-lib-events/source/io-events/api/event-providers/shorthands.ts#L93)
+Defined in: [io-events/api/event-providers/shorthands.ts:93](https://github.com/adobe/aio-commerce-sdk/blob/aa606961236cac6f4a3cebc105d643da71d5ddb8/packages/aio-commerce-lib-events/source/io-events/api/event-providers/shorthands.ts#L93)
 
 Creates a Commerce (of type `dx_commerce_events`) event provider.
 

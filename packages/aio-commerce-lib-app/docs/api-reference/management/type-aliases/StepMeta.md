@@ -7,7 +7,7 @@ type StepMeta = {
 };
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/workflow/step.ts:89](https://github.com/adobe/aio-commerce-sdk/blob/97b39588c9be1d7c405453e1095714aa55bea129/packages/aio-commerce-lib-app/source/management/installation/workflow/step.ts#L89)
+Defined in: [aio-commerce-lib-app/source/management/installation/workflow/step.ts:89](https://github.com/adobe/aio-commerce-sdk/blob/aa606961236cac6f4a3cebc105d643da71d5ddb8/packages/aio-commerce-lib-app/source/management/installation/workflow/step.ts#L89)
 
 Step metadata keyed by execution mode.
 
@@ -19,7 +19,7 @@ Step metadata keyed by execution mode.
 install: StepMetaInfo;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/workflow/step.ts:90](https://github.com/adobe/aio-commerce-sdk/blob/97b39588c9be1d7c405453e1095714aa55bea129/packages/aio-commerce-lib-app/source/management/installation/workflow/step.ts#L90)
+Defined in: [aio-commerce-lib-app/source/management/installation/workflow/step.ts:90](https://github.com/adobe/aio-commerce-sdk/blob/aa606961236cac6f4a3cebc105d643da71d5ddb8/packages/aio-commerce-lib-app/source/management/installation/workflow/step.ts#L90)
 
 ---
 
@@ -29,4 +29,4 @@ Defined in: [aio-commerce-lib-app/source/management/installation/workflow/step.t
 optional uninstall?: StepMetaInfo;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/workflow/step.ts:91](https://github.com/adobe/aio-commerce-sdk/blob/97b39588c9be1d7c405453e1095714aa55bea129/packages/aio-commerce-lib-app/source/management/installation/workflow/step.ts#L91)
+Defined in: [aio-commerce-lib-app/source/management/installation/workflow/step.ts:91](https://github.com/adobe/aio-commerce-sdk/blob/aa606961236cac6f4a3cebc105d643da71d5ddb8/packages/aio-commerce-lib-app/source/management/installation/workflow/step.ts#L91)

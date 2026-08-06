@@ -1,5 +1,11 @@
 # @aio-commerce-sdk/scripts
 
+## 0.1.1
+
+### Patch Changes
+
+- [#602](https://github.com/adobe/aio-commerce-sdk/pull/602) [`1dc6031`](https://github.com/adobe/aio-commerce-sdk/commit/1dc6031bcf4aadbbdeb65d01910b34ad7567e9b8) Thanks [@obarcelonap](https://github.com/obarcelonap)! - Plugin promotion now publishes each plugin's `CHANGELOG.md` to `adobe/skills` alongside its skills.
+
 ## 0.1.0
 
 ### Minor Changes
