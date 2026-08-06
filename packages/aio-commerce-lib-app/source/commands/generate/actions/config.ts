@@ -92,11 +92,13 @@ export function getRuntimeActions(extConfig: ExtConfig, dir: string) {
 export function buildAppManagementExtConfig(
   appConfig: CommerceAppConfigOutputModel,
 ) {
+  const hooks: Record<string, string> = {
+    "pre-app-build":
+      "EXTENSION=extensibility/1 $packageExec aio-commerce-lib-app hooks pre-app-build",
+  };
+
   const extConfig = {
-    hooks: {
-      "pre-app-build":
-        "EXTENSION=extensibility/1 $packageExec aio-commerce-lib-app hooks pre-app-build",
-    },
+    hooks,
 
     operations: {
       workerProcess: [
@@ -146,6 +148,14 @@ export function buildAppManagementExtConfig(
           },
         },
       );
+
+    // WHY: post-app-deploy is aio's canonical lifecycle hook firing after `aio app deploy`.
+    // Whether it actually fires post-deploy, whether it can reach the deployed installation
+    // action, and whether that action can self-source Commerce + IMS S2S credentials at deploy
+    // time are all unverified in-repo (spec §8.5) — accepted pending validation against the
+    // real aio runtime.
+    hooks["post-app-deploy"] =
+      "$packageExec aio-commerce-lib-app hooks post-deploy";
   }
 
   return extConfig;

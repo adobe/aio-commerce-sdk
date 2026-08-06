@@ -143,6 +143,20 @@ describe("buildAppManagementExtConfig", () => {
     expect(preBuildHook).toMatch(EXTENSIBILITY_EXTENSION_MATCHER);
   });
 
+  test("declares post-app-deploy hook when installation action is required", () => {
+    const result = buildAppManagementExtConfig(configWithCommerceEventing);
+
+    expect(result.hooks?.["post-app-deploy"]).toBe(
+      "$packageExec aio-commerce-lib-app hooks post-deploy",
+    );
+  });
+
+  test("omits post-app-deploy hook for minimal config (no installation action)", () => {
+    const result = buildAppManagementExtConfig(minimalValidConfig);
+
+    expect(result.hooks?.["post-app-deploy"]).toBeUndefined();
+  });
+
   test("declares workerProcess operations for each runtime action", () => {
     const result = buildAppManagementExtConfig(configWithCommerceEventing);
     const workerImpls =
