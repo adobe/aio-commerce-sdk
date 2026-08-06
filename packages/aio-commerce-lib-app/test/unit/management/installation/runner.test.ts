@@ -10,11 +10,9 @@
  * governing permissions and limitations under the License.
  */
 
-vi.mock("#management/installation/workflow/index", async (importOriginal) => {
+vi.mock("#management/common/workflow/index", async (importOriginal) => {
   const actual =
-    await importOriginal<
-      typeof import("#management/installation/workflow/index")
-    >();
+    await importOriginal<typeof import("#management/common/workflow/index")>();
   return {
     ...actual,
     executeWorkflow: vi.fn().mockImplementation(actual.executeWorkflow),
@@ -23,13 +21,13 @@ vi.mock("#management/installation/workflow/index", async (importOriginal) => {
 
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
+import { executeWorkflow } from "#management/common/workflow/index";
 import {
   createInitialInstallationState,
   createInitialUninstallationState,
   runInstallation,
   runUninstallation,
 } from "#management/installation/runner";
-import { executeWorkflow } from "#management/installation/workflow/index";
 import {
   configWithCommerceEventing,
   configWithWebhooks,
@@ -43,7 +41,7 @@ import {
   FAKE_SYSTEM_TIME,
 } from "#test/fixtures/installation";
 
-import type { InstallationHooks } from "#management/installation/workflow/hooks";
+import type { InstallationHooks } from "#management/installation/runner";
 
 describe("createInitialInstallationState", () => {
   beforeEach(() => {
@@ -426,8 +424,7 @@ describe("runInstallation — retry behavior", () => {
     expect(result.status).toBe("failed");
     expect(vi.mocked(executeWorkflow)).toHaveBeenCalledTimes(2);
     expect(
-      typeof vi.mocked(executeWorkflow).mock.calls[1][0].hooks
-        ?.onInstallationFailure,
+      typeof vi.mocked(executeWorkflow).mock.calls[1][0].hooks?.onFailure,
     ).toBe("function");
   });
 

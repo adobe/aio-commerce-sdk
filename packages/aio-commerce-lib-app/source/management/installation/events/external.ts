@@ -17,7 +17,7 @@ import {
 
 import { appliesToEnv, getInstallCommerceEnv } from "#config/lib/environment";
 import { hasExternalEvents } from "#config/schema/eventing";
-import { defineLeafStep } from "#management/installation/workflow/step";
+import { defineLeafStep } from "#management/common/workflow/step";
 
 import { offboardIoEvents, onboardIoEvents } from "./helpers";
 import {
@@ -28,7 +28,7 @@ import {
 } from "./utils";
 
 import type { ExternalEventsConfig } from "#config/schema/eventing";
-import type { InferStepOutput } from "#management/installation/workflow/step";
+import type { InferStepOutput } from "#management/common/workflow/step";
 import type { EventsExecutionContext } from "./context";
 import type { StoredEventsData } from "./types";
 

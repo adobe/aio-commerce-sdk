@@ -20,15 +20,8 @@ export type ExecutionStatus =
   | "succeeded"
   | "failed";
 
-/** Overall installation status. */
-export type InstallationStatus =
-  | "pending"
-  | "in-progress"
-  | "succeeded"
-  | "failed";
-
 /** A structured error with path to the failing step. */
-export type InstallationError<TPayload = unknown> = {
+export type WorkflowError<TPayload = unknown> = {
   /** Path to the step that failed (e.g., ["eventing", "commerce", "providers"]). */
   path: string[];
 
@@ -42,7 +35,7 @@ export type InstallationError<TPayload = unknown> = {
   payload?: TPayload;
 };
 
-/** Status of a step in the installation tree. */
+/** Status of a step in the workflow tree. */
 export type StepStatus = {
   /** Step name (unique among siblings). */
   name: string;
@@ -63,21 +56,21 @@ export type StepStatus = {
   children: StepStatus[];
 };
 
-/** Data collected during installation as a nested structure following step paths. */
-export type InstallationData = {
-  [key: string]: unknown | InstallationData;
+/** Data collected during a workflow run as a nested structure following step paths. */
+export type WorkflowData = {
+  [key: string]: unknown | WorkflowData;
 };
 
-/** Base properties shared by all installation states. */
-type InstallationStateBase = {
-  /** Unique installation identifier. */
+/** Base properties shared by all workflow run states. */
+type WorkflowRunStateBase = {
+  /** Unique workflow run identifier. */
   id: string;
 
   /** Root step status. */
   step: StepStatus;
 
   /** Results from executed leaf steps, keyed by path. */
-  data: InstallationData | null;
+  data: WorkflowData | null;
 
   /**
    * The validated app configuration that drove this workflow. May be
@@ -86,86 +79,84 @@ type InstallationStateBase = {
   config?: CommerceAppConfigOutputModel;
 };
 
-/** Installation state when in progress. */
-export type InProgressInstallationState = InstallationStateBase & {
+/** Workflow run state when in progress. */
+export type InProgressWorkflowState = WorkflowRunStateBase & {
   status: "in-progress";
 
-  /** ISO timestamp when installation started. */
+  /** ISO timestamp when the workflow started. */
   startedAt: string;
 };
 
-/** Metadata set when a retry was attempted, regardless of outcome. */
-export type InstallationRetryMetadata = {
-  /** True when installation was attempted more than once. */
+/** Per-run state metadata captured alongside a workflow run's outcome. */
+export type WorkflowStateMetadata = {
+  /** True when the workflow was attempted more than once. */
   isRetry: boolean;
 };
 
-/** Installation state when completed successfully. */
-export type SucceededInstallationState = InstallationStateBase & {
+/** Workflow run state when completed successfully. */
+export type SucceededWorkflowState = WorkflowRunStateBase & {
   status: "succeeded";
 
-  /** ISO timestamp when installation started. */
+  /** ISO timestamp when the workflow started. */
   startedAt: string;
 
-  /** ISO timestamp when installation completed. */
+  /** ISO timestamp when the workflow completed. */
   completedAt: string;
 
-  /** Retry metadata, present when a retry was attempted. */
-  metadata?: InstallationRetryMetadata;
+  /** Per-run state metadata, present when a retry was attempted. */
+  metadata?: WorkflowStateMetadata;
 };
 
-/** Installation state when failed. */
-export type FailedInstallationState = InstallationStateBase & {
+/** Workflow run state when failed. */
+export type FailedWorkflowState = WorkflowRunStateBase & {
   status: "failed";
 
-  /** ISO timestamp when installation started. */
+  /** ISO timestamp when the workflow started. */
   startedAt: string;
 
-  /** ISO timestamp when installation failed. */
+  /** ISO timestamp when the workflow failed. */
   completedAt: string;
 
   /** Error information about the failure. */
-  error: InstallationError;
+  error: WorkflowError;
 
-  /** Retry metadata, present when a retry was attempted. */
-  metadata?: InstallationRetryMetadata;
+  /** Per-run state metadata, present when a retry was attempted. */
+  metadata?: WorkflowStateMetadata;
 };
 
 /**
- * The full installation state (persisted and returned by status endpoints).
+ * The full workflow run state (persisted and returned by status endpoints).
  * Discriminated union by `status` field.
  */
-export type InstallationState =
-  | InProgressInstallationState
-  | SucceededInstallationState
-  | FailedInstallationState;
+export type WorkflowRunState =
+  | InProgressWorkflowState
+  | SucceededWorkflowState
+  | FailedWorkflowState;
 
-/** Type guard for pending installation state. */
-
-/** Type guard for in-progress installation state. */
+/** Type guard for in-progress workflow run state. */
 export function isInProgressState(
-  state: InstallationState,
-): state is InProgressInstallationState {
+  state: WorkflowRunState,
+): state is InProgressWorkflowState {
   return state.status === "in-progress";
 }
 
-/** Type guard for succeeded installation state. */
+/** Type guard for succeeded workflow run state. */
 export function isSucceededState(
-  state: InstallationState,
-): state is SucceededInstallationState {
+  state: WorkflowRunState,
+): state is SucceededWorkflowState {
   return state.status === "succeeded";
 }
 
-/** Type guard for failed installation state. */
+/** Type guard for failed workflow run state. */
 export function isFailedState(
-  state: InstallationState,
-): state is FailedInstallationState {
+  state: WorkflowRunState,
+): state is FailedWorkflowState {
   return state.status === "failed";
 }
 
-/** Type guard for completed installation state (succeeded or failed). */
+/** Type guard for completed workflow run state (succeeded or failed). */
 export function isCompletedState(
-  state: InstallationState,
-): state is SucceededInstallationState | FailedInstallationState {
+  state: WorkflowRunState,
+): state is SucceededWorkflowState | FailedWorkflowState {
   return state.status === "succeeded" || state.status === "failed";
 }

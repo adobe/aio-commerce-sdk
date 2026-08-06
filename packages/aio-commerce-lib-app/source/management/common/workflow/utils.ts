@@ -14,10 +14,10 @@ import { unwrapHttpError } from "@adobe/aio-commerce-lib-api/utils";
 
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 import type {
-  FailedInstallationState,
-  InstallationError,
+  FailedWorkflowState,
   StepStatus,
-  SucceededInstallationState,
+  SucceededWorkflowState,
+  WorkflowError,
 } from "./types";
 
 /** Returns the current time as an ISO string. */
@@ -64,12 +64,12 @@ export function getAtPath(
   return current;
 }
 
-/** Creates an installation error from an exception. */
-export async function createInstallationError(
+/** Creates a workflow error from an exception. */
+export async function createWorkflowError(
   err: unknown,
   path: string[],
   key = "STEP_EXECUTION_FAILED",
-): Promise<InstallationError> {
+): Promise<WorkflowError> {
   return {
     key,
     message: await unwrapHttpError(err),
@@ -77,7 +77,7 @@ export async function createInstallationError(
   };
 }
 
-/** Base properties for creating final installation states. */
+/** Base properties for creating final workflow run states. */
 type FinalStateBase = {
   id: string;
   startedAt: string;
@@ -86,10 +86,10 @@ type FinalStateBase = {
   config?: CommerceAppConfigOutputModel;
 };
 
-/** Creates a succeeded installation state. */
+/** Creates a succeeded workflow run state. */
 export function createSucceededState(
   base: FinalStateBase,
-): SucceededInstallationState {
+): SucceededWorkflowState {
   return {
     ...base,
     completedAt: nowIsoString(),
@@ -97,11 +97,11 @@ export function createSucceededState(
   };
 }
 
-/** Creates a failed installation state. */
+/** Creates a failed workflow run state. */
 export function createFailedState(
   base: FinalStateBase,
-  error: InstallationError,
-): FailedInstallationState {
+  error: WorkflowError,
+): FailedWorkflowState {
   return {
     ...base,
     completedAt: nowIsoString(),

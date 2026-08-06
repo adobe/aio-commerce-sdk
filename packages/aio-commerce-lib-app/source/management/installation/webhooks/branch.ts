@@ -14,7 +14,7 @@ import { hasWebhooks } from "#config/schema/webhooks";
 import {
   defineBranchStep,
   defineLeafStep,
-} from "#management/installation/workflow/step";
+} from "#management/common/workflow/step";
 
 import { createWebhooksStepContext } from "./context";
 import {

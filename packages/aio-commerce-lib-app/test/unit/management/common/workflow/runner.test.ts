@@ -17,11 +17,11 @@ import {
   createRetryState,
   executeUninstallWorkflow,
   executeWorkflow,
-} from "#management/installation/workflow/runner";
+} from "#management/common/workflow/runner";
 import {
   defineBranchStep,
   defineLeafStep,
-} from "#management/installation/workflow/step";
+} from "#management/common/workflow/step";
 import { minimalValidConfig } from "#test/fixtures/config";
 import {
   createMockFailedState,
@@ -30,7 +30,7 @@ import {
   FAKE_SYSTEM_TIME,
 } from "#test/fixtures/installation";
 
-import type { InstallationHooks } from "#management/installation/workflow/hooks";
+import type { WorkflowHooks } from "#management/common/workflow/hooks";
 
 describe("createInitialState", () => {
   beforeEach(() => {
@@ -267,7 +267,7 @@ describe("executeWorkflow", () => {
     const result = await executeWorkflow({
       config: minimalValidConfig,
       initialState,
-      installationContext: createMockInstallationContext(),
+      lifecycleContext: createMockInstallationContext(),
       rootStep,
     });
 
@@ -275,7 +275,7 @@ describe("executeWorkflow", () => {
     expect(result.id).toBe(initialState.id);
   });
 
-  test("should fall back to INSTALLATION_FAILED when a success hook throws after execution completes", async () => {
+  test("should fall back to WORKFLOW_FAILED when a success hook throws after execution completes", async () => {
     const rootStep = defineBranchStep({
       children: [],
       meta: { install: { label: "Root" } },
@@ -290,18 +290,18 @@ describe("executeWorkflow", () => {
     const result = await executeWorkflow({
       config: minimalValidConfig,
       hooks: {
-        onInstallationSuccess: () => {
+        onSuccess: () => {
           throw new Error("hook failed");
         },
       },
       initialState,
-      installationContext: createMockInstallationContext(),
+      lifecycleContext: createMockInstallationContext(),
       rootStep,
     });
 
     expect(result.status).toBe("failed");
     if (result.status === "failed") {
-      expect(result.error.key).toBe("INSTALLATION_FAILED");
+      expect(result.error.key).toBe("WORKFLOW_FAILED");
       expect(result.error.path).toEqual([]);
       expect(result.error.message).toBe("hook failed");
     }
@@ -329,7 +329,7 @@ describe("executeWorkflow", () => {
     const result = await executeWorkflow({
       config: minimalValidConfig,
       initialState,
-      installationContext: createMockInstallationContext(),
+      lifecycleContext: createMockInstallationContext(),
       rootStep,
     });
 
@@ -340,7 +340,7 @@ describe("executeWorkflow", () => {
     }
   });
 
-  test("should call onInstallationStart hook at the beginning", async () => {
+  test("should call onStart hook at the beginning", async () => {
     const leafStep = defineLeafStep({
       install: () => "result",
       meta: { install: { label: "Step 1" } },
@@ -353,8 +353,8 @@ describe("executeWorkflow", () => {
       name: "root",
     });
 
-    const hooks: InstallationHooks = {
-      onInstallationStart: vi.fn(),
+    const hooks: WorkflowHooks = {
+      onStart: vi.fn(),
     };
 
     const initialState = createInitialState({
@@ -365,12 +365,12 @@ describe("executeWorkflow", () => {
       config: minimalValidConfig,
       hooks,
       initialState,
-      installationContext: createMockInstallationContext(),
+      lifecycleContext: createMockInstallationContext(),
       rootStep,
     });
 
-    expect(hooks.onInstallationStart).toHaveBeenCalledTimes(1);
-    expect(hooks.onInstallationStart).toHaveBeenCalledWith(
+    expect(hooks.onStart).toHaveBeenCalledTimes(1);
+    expect(hooks.onStart).toHaveBeenCalledWith(
       expect.objectContaining({
         id: initialState.id,
         status: "in-progress",
@@ -378,7 +378,7 @@ describe("executeWorkflow", () => {
     );
   });
 
-  test("should call onInstallationSuccess hook on success", async () => {
+  test("should call onSuccess hook on success", async () => {
     const leafStep = defineLeafStep({
       install: () => "result",
       meta: { install: { label: "Step 1" } },
@@ -391,8 +391,8 @@ describe("executeWorkflow", () => {
       name: "root",
     });
 
-    const hooks: InstallationHooks = {
-      onInstallationSuccess: vi.fn(),
+    const hooks: WorkflowHooks = {
+      onSuccess: vi.fn(),
     };
 
     const initialState = createInitialState({
@@ -403,12 +403,12 @@ describe("executeWorkflow", () => {
       config: minimalValidConfig,
       hooks,
       initialState,
-      installationContext: createMockInstallationContext(),
+      lifecycleContext: createMockInstallationContext(),
       rootStep,
     });
 
-    expect(hooks.onInstallationSuccess).toHaveBeenCalledTimes(1);
-    expect(hooks.onInstallationSuccess).toHaveBeenCalledWith(
+    expect(hooks.onSuccess).toHaveBeenCalledTimes(1);
+    expect(hooks.onSuccess).toHaveBeenCalledWith(
       expect.objectContaining({
         id: initialState.id,
         status: "succeeded",
@@ -416,7 +416,7 @@ describe("executeWorkflow", () => {
     );
   });
 
-  test("should call onInstallationFailure hook on failure", async () => {
+  test("should call onFailure hook on failure", async () => {
     const failingStep = defineLeafStep({
       install: () => {
         throw new Error("Failure");
@@ -431,8 +431,8 @@ describe("executeWorkflow", () => {
       name: "root",
     });
 
-    const hooks: InstallationHooks = {
-      onInstallationFailure: vi.fn(),
+    const hooks: WorkflowHooks = {
+      onFailure: vi.fn(),
     };
 
     const initialState = createInitialState({
@@ -443,12 +443,12 @@ describe("executeWorkflow", () => {
       config: minimalValidConfig,
       hooks,
       initialState,
-      installationContext: createMockInstallationContext(),
+      lifecycleContext: createMockInstallationContext(),
       rootStep,
     });
 
-    expect(hooks.onInstallationFailure).toHaveBeenCalledTimes(1);
-    expect(hooks.onInstallationFailure).toHaveBeenCalledWith(
+    expect(hooks.onFailure).toHaveBeenCalledTimes(1);
+    expect(hooks.onFailure).toHaveBeenCalledWith(
       expect.objectContaining({
         error: expect.objectContaining({
           message: "Failure",
@@ -472,7 +472,7 @@ describe("executeWorkflow", () => {
       name: "root",
     });
 
-    const hooks: InstallationHooks = {
+    const hooks: WorkflowHooks = {
       onStepStart: vi.fn(),
       onStepSuccess: vi.fn(),
     };
@@ -485,7 +485,7 @@ describe("executeWorkflow", () => {
       config: minimalValidConfig,
       hooks,
       initialState,
-      installationContext: createMockInstallationContext(),
+      lifecycleContext: createMockInstallationContext(),
       rootStep,
     });
 
@@ -520,7 +520,7 @@ describe("executeWorkflow", () => {
       name: "root",
     });
 
-    const hooks: InstallationHooks = {
+    const hooks: WorkflowHooks = {
       onStepFailure: vi.fn(),
     };
 
@@ -532,7 +532,7 @@ describe("executeWorkflow", () => {
       config: minimalValidConfig,
       hooks,
       initialState,
-      installationContext: createMockInstallationContext(),
+      lifecycleContext: createMockInstallationContext(),
       rootStep,
     });
 
@@ -571,7 +571,7 @@ describe("executeWorkflow", () => {
     await executeWorkflow({
       config: minimalValidConfig,
       initialState,
-      installationContext,
+      lifecycleContext: installationContext,
       rootStep,
     });
 
@@ -605,7 +605,7 @@ describe("executeWorkflow", () => {
     const result = await executeWorkflow({
       config: minimalValidConfig,
       initialState,
-      installationContext: createMockInstallationContext(),
+      lifecycleContext: createMockInstallationContext(),
       rootStep,
     });
 
@@ -660,7 +660,7 @@ describe("executeWorkflow", () => {
     await executeWorkflow({
       config: minimalValidConfig,
       initialState,
-      installationContext: createMockInstallationContext(),
+      lifecycleContext: createMockInstallationContext(),
       rootStep,
     });
 
@@ -691,7 +691,7 @@ describe("executeWorkflow", () => {
     const result = await executeWorkflow({
       config: minimalValidConfig,
       initialState,
-      installationContext: createMockInstallationContext(),
+      lifecycleContext: createMockInstallationContext(),
       rootStep,
     });
 
@@ -717,7 +717,7 @@ describe("executeWorkflow", () => {
     const result = await executeWorkflow({
       config: minimalValidConfig,
       initialState,
-      installationContext: createMockInstallationContext(),
+      lifecycleContext: createMockInstallationContext(),
       rootStep,
     });
 
@@ -760,7 +760,7 @@ describe("executeUninstallWorkflow", () => {
     const result = await executeUninstallWorkflow({
       config: minimalValidConfig,
       initialState,
-      installationContext,
+      lifecycleContext: installationContext,
       rootStep,
     });
 
@@ -798,7 +798,7 @@ describe("executeUninstallWorkflow", () => {
     const result = await executeUninstallWorkflow({
       config: minimalValidConfig,
       initialState,
-      installationContext: createMockInstallationContext(),
+      lifecycleContext: createMockInstallationContext(),
       rootStep,
     });
 
@@ -832,7 +832,7 @@ describe("executeUninstallWorkflow", () => {
     const result = await executeUninstallWorkflow({
       config: minimalValidConfig,
       initialState,
-      installationContext: createMockInstallationContext(),
+      lifecycleContext: createMockInstallationContext(),
       rootStep,
     });
 
@@ -857,11 +857,11 @@ describe("executeUninstallWorkflow", () => {
       name: "root",
     });
 
-    const hooks: InstallationHooks = {
-      onInstallationStart: vi.fn(),
-      onInstallationSuccess: vi.fn(),
+    const hooks: WorkflowHooks = {
+      onStart: vi.fn(),
       onStepStart: vi.fn(),
       onStepSuccess: vi.fn(),
+      onSuccess: vi.fn(),
     };
 
     const initialState = createInitialState({
@@ -873,12 +873,12 @@ describe("executeUninstallWorkflow", () => {
       config: minimalValidConfig,
       hooks,
       initialState,
-      installationContext: createMockInstallationContext(),
+      lifecycleContext: createMockInstallationContext(),
       rootStep,
     });
 
-    expect(hooks.onInstallationStart).toHaveBeenCalledTimes(1);
-    expect(hooks.onInstallationSuccess).toHaveBeenCalledTimes(1);
+    expect(hooks.onStart).toHaveBeenCalledTimes(1);
+    expect(hooks.onSuccess).toHaveBeenCalledTimes(1);
     // Called for root and step1
     expect(hooks.onStepStart).toHaveBeenCalledTimes(2);
     expect(hooks.onStepSuccess).toHaveBeenCalledTimes(2);
@@ -906,7 +906,7 @@ describe("executeUninstallWorkflow", () => {
     const result = await executeUninstallWorkflow({
       config: minimalValidConfig,
       initialState,
-      installationContext: createMockInstallationContext(),
+      lifecycleContext: createMockInstallationContext(),
       rootStep,
     });
 
@@ -916,7 +916,7 @@ describe("executeUninstallWorkflow", () => {
     expect(result.data).not.toHaveProperty("root.step1");
   });
 
-  test("should call onInstallationFailure hook when uninstall handler throws", async () => {
+  test("should call onFailure hook when uninstall handler throws", async () => {
     const leafStep = defineLeafStep({
       install: vi.fn(),
       meta: { install: { label: "Step 1" } },
@@ -932,8 +932,8 @@ describe("executeUninstallWorkflow", () => {
       name: "root",
     });
 
-    const hooks: InstallationHooks = {
-      onInstallationFailure: vi.fn(),
+    const hooks: WorkflowHooks = {
+      onFailure: vi.fn(),
     };
 
     const initialState = createInitialState({
@@ -945,12 +945,12 @@ describe("executeUninstallWorkflow", () => {
       config: minimalValidConfig,
       hooks,
       initialState,
-      installationContext: createMockInstallationContext(),
+      lifecycleContext: createMockInstallationContext(),
       rootStep,
     });
 
-    expect(hooks.onInstallationFailure).toHaveBeenCalledTimes(1);
-    expect(hooks.onInstallationFailure).toHaveBeenCalledWith(
+    expect(hooks.onFailure).toHaveBeenCalledTimes(1);
+    expect(hooks.onFailure).toHaveBeenCalledWith(
       expect.objectContaining({
         error: expect.objectContaining({
           message: "Uninstall error",
@@ -993,7 +993,7 @@ describe("executeUninstallWorkflow", () => {
     const result = await executeUninstallWorkflow({
       config: minimalValidConfig,
       initialState,
-      installationContext: createMockInstallationContext(),
+      lifecycleContext: createMockInstallationContext(),
       rootStep,
     });
 
@@ -1095,7 +1095,7 @@ describe("executeWorkflow — skip already-succeeded steps", () => {
     await executeWorkflow({
       config: minimalValidConfig,
       initialState,
-      installationContext: createMockInstallationContext(),
+      lifecycleContext: createMockInstallationContext(),
       rootStep,
     });
 
@@ -1124,7 +1124,7 @@ describe("executeWorkflow — skip already-succeeded steps", () => {
     const result = await executeWorkflow({
       config: minimalValidConfig,
       initialState,
-      installationContext: createMockInstallationContext(),
+      lifecycleContext: createMockInstallationContext(),
       rootStep,
     });
 

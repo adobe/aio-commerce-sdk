@@ -13,7 +13,7 @@
 import { nonEmptyStringValueSchema } from "@aio-commerce-sdk/common-utils/valibot";
 import * as v from "valibot";
 
-/** Schema for validating Adobe I/O app credentials required for installation. */
+/** Schema for validating the Adobe I/O app credentials used across lifecycle workflows. */
 export const AppDataSchema = v.object({
   consumerOrgId: nonEmptyStringValueSchema("consumerOrgId"),
   orgName: nonEmptyStringValueSchema("orgName"),

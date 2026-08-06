@@ -46,7 +46,7 @@ export type ValidationSummary = {
   /** Total number of issues across all steps. */
   totalIssues: number;
 
-  /** Number of error-severity issues (these block installation). */
+  /** Number of error-severity issues (these block the workflow). */
   errors: number;
 
   /** Number of warning-severity issues (allow proceeding with confirmation). */
@@ -56,7 +56,7 @@ export type ValidationSummary = {
 /** The complete validation result returned by the validation endpoint. */
 export type ValidationResult = {
   /**
-   * Whether installation can proceed without any confirmation.
+   * Whether the workflow can proceed without any confirmation.
    * False if there are any error or warning severity issues.
    */
   valid: boolean;

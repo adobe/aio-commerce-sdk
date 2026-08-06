@@ -12,8 +12,8 @@
 
 import { afterEach, describe, expect, test, vi } from "vitest";
 
+import { isLeafStep } from "#management/common/workflow/step";
 import { externalEventsStep } from "#management/installation/events/external";
-import { isLeafStep } from "#management/installation/workflow/step";
 import {
   configWithCommerceEventing,
   configWithExternalEventing,

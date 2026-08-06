@@ -11,7 +11,7 @@
  */
 
 import { hasEventing } from "#config/schema/eventing";
-import { defineBranchStep } from "#management/installation/workflow/index";
+import { defineBranchStep } from "#management/common/workflow/index";
 
 import { commerceEventsStep } from "./commerce";
 import { createEventsStepContext } from "./context";

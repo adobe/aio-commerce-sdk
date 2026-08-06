@@ -14,30 +14,25 @@ import { callHook } from "./hooks";
 import { isBranchStep, isLeafStep } from "./step";
 import {
   createFailedState,
-  createInstallationError,
   createSucceededState,
+  createWorkflowError,
   getAtPath,
   nowIsoString,
   setAtPath,
 } from "./utils";
 
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
-import type { InstallationHooks } from "./hooks";
+import type { WorkflowHooks } from "./hooks";
+import type { AnyStep, BranchStep, LeafStep, LifecycleContext } from "./step";
 import type {
-  AnyStep,
-  BranchStep,
-  InstallationContext,
-  LeafStep,
-} from "./step";
-import type {
-  FailedInstallationState,
-  InProgressInstallationState,
-  InstallationError,
+  FailedWorkflowState,
+  InProgressWorkflowState,
   StepStatus,
-  SucceededInstallationState,
+  SucceededWorkflowState,
+  WorkflowError,
 } from "./types";
 
-/** Options for creating an initial installation state. */
+/** Options for creating an initial workflow run state. */
 export type CreateInitialStateOptions = {
   /** The root branch step to build the state from. */
   rootStep: BranchStep;
@@ -54,17 +49,20 @@ export type ExecuteWorkflowOptions = {
   /** The root branch step to execute. */
   rootStep: BranchStep;
 
-  /** Shared installation context (params, logger, etc.). */
-  installationContext: InstallationContext;
+  /** Shared lifecycle context (params, logger, etc.). */
+  lifecycleContext: LifecycleContext;
 
   /** The app configuration. */
   config: CommerceAppConfigOutputModel;
 
-  /** The initial installation state (with all steps pending). */
-  initialState: InProgressInstallationState;
+  /** The initial workflow run state (with all steps pending). */
+  initialState: InProgressWorkflowState;
 
   /** Lifecycle hooks for status change notifications. */
-  hooks?: InstallationHooks;
+  hooks?: WorkflowHooks;
+
+  /** Error key used for the top-level failure when no step-level error was captured. */
+  failureKey?: string;
 };
 
 /** Execution mode: "install" or "uninstall". */
@@ -72,26 +70,26 @@ type ExecutionMode = "install" | "uninstall";
 
 /** Context for step execution containing all necessary dependencies. */
 type StepExecutionContext = {
-  installationContext: InstallationContext;
+  lifecycleContext: LifecycleContext;
   config: CommerceAppConfigOutputModel;
   id: string;
   startedAt: string;
   step: StepStatus;
   data: Record<string, unknown> | null;
-  error: InstallationError | null;
-  hooks?: InstallationHooks;
+  error: WorkflowError | null;
+  hooks?: WorkflowHooks;
   mode: ExecutionMode;
 };
 
 /**
- * Creates an initial installation state from a root step and config.
+ * Creates an initial workflow run state from a root step and config.
  *
  * Filters steps based on their `when` conditions and builds a
  * tree structure with all steps set to "pending".
  */
 export function createInitialState(
   options: CreateInitialStateOptions,
-): InProgressInstallationState {
+): InProgressWorkflowState {
   const { rootStep, config, mode } = options;
   return {
     config,
@@ -109,8 +107,8 @@ export function createInitialState(
  * the failed step rather than restarting from scratch.
  */
 export function createRetryState(
-  failedState: FailedInstallationState,
-): InProgressInstallationState {
+  failedState: FailedWorkflowState,
+): InProgressWorkflowState {
   return {
     config: failedState.config,
     data: failedState.data,
@@ -135,7 +133,7 @@ function resetFailedSteps(step: StepStatus): StepStatus {
  */
 export async function executeWorkflow(
   options: ExecuteWorkflowOptions,
-): Promise<SucceededInstallationState | FailedInstallationState> {
+): Promise<SucceededWorkflowState | FailedWorkflowState> {
   return executeWorkflowWithMode(options, "install");
 }
 
@@ -145,7 +143,7 @@ export async function executeWorkflow(
  */
 export async function executeUninstallWorkflow(
   options: ExecuteWorkflowOptions,
-): Promise<SucceededInstallationState | FailedInstallationState> {
+): Promise<SucceededWorkflowState | FailedWorkflowState> {
   return executeWorkflowWithMode(options, "uninstall");
 }
 
@@ -155,9 +153,15 @@ export async function executeUninstallWorkflow(
 async function executeWorkflowWithMode(
   options: ExecuteWorkflowOptions,
   mode: ExecutionMode,
-): Promise<SucceededInstallationState | FailedInstallationState> {
-  const { rootStep, installationContext, config, initialState, hooks } =
-    options;
+): Promise<SucceededWorkflowState | FailedWorkflowState> {
+  const {
+    rootStep,
+    lifecycleContext,
+    config,
+    initialState,
+    hooks,
+    failureKey = "WORKFLOW_FAILED",
+  } = options;
 
   // Deep clone the step status so we don't mutate the original
   const step = structuredClone(initialState.step);
@@ -167,13 +171,13 @@ async function executeWorkflowWithMode(
     error: null,
     hooks,
     id: initialState.id,
-    installationContext,
+    lifecycleContext,
     mode,
     startedAt: initialState.startedAt,
     step,
   };
 
-  await callHook(hooks, "onInstallationStart", snapshot(context));
+  await callHook(hooks, "onStart", snapshot(context));
   try {
     // Execute the root step
     await executeStep(rootStep, context.step, {}, context);
@@ -185,12 +189,11 @@ async function executeWorkflowWithMode(
       step: context.step,
     });
 
-    await callHook(hooks, "onInstallationSuccess", succeeded);
+    await callHook(hooks, "onSuccess", succeeded);
     return succeeded;
   } catch (err) {
     const error =
-      context.error ??
-      (await createInstallationError(err, [], "INSTALLATION_FAILED"));
+      context.error ?? (await createWorkflowError(err, [], failureKey));
 
     const failed = createFailedState(
       {
@@ -203,7 +206,7 @@ async function executeWorkflowWithMode(
       error,
     );
 
-    await callHook(hooks, "onInstallationFailure", failed);
+    await callHook(hooks, "onFailure", failed);
     return failed;
   }
 }
@@ -245,8 +248,8 @@ function buildInitialStepStatus(
   };
 }
 
-/** Snapshot current execution as InProgressInstallationState. */
-function snapshot(context: StepExecutionContext): InProgressInstallationState {
+/** Snapshot current execution as InProgressWorkflowState. */
+function snapshot(context: StepExecutionContext): InProgressWorkflowState {
   return {
     config: context.config,
     data: context.data,
@@ -303,7 +306,7 @@ async function executeStep(
   } catch (err) {
     stepStatus.status = "failed";
 
-    context.error ??= await createInstallationError(err, path);
+    context.error ??= await createWorkflowError(err, path);
     await callHook(
       context.hooks,
       "onStepFailure",
@@ -324,7 +327,7 @@ async function executeBranchStep(
 ): Promise<void> {
   let childContext = inherited;
   if (step.context) {
-    const stepContext = await step.context(context.installationContext);
+    const stepContext = await step.context(context.lifecycleContext);
     childContext = { ...inherited, ...stepContext };
   }
 
@@ -334,7 +337,7 @@ async function executeBranchStep(
       throw new Error(`Step "${child.name}" not found`);
     }
 
-    // biome-ignore lint/performance/noAwaitInLoops: sibling steps run in declared order and can read data/state written by earlier steps into the shared installation context
+    // biome-ignore lint/performance/noAwaitInLoops: sibling steps run in declared order and can read data/state written by earlier steps into the shared lifecycle context
     await executeStep(childStep, child, childContext, context);
   }
 }
@@ -346,7 +349,7 @@ async function executeLeafStep(
   inherited: Record<string, unknown>,
   context: StepExecutionContext,
 ): Promise<void> {
-  const executionContext = { ...context.installationContext, ...inherited };
+  const executionContext = { ...context.lifecycleContext, ...inherited };
 
   if (context.mode === "uninstall") {
     // Silently skip steps that don't have an uninstall handler
