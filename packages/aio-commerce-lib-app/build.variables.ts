@@ -38,6 +38,24 @@ function defineString(value: string) {
 }
 
 /**
+ * Returns a peer dependency range for build-time injection.
+ * @param packageName - The peer dependency to resolve.
+ */
+function getPeerDependencySpecifier(
+  packageName: keyof typeof pkg.peerDependencies,
+) {
+  const specifier = pkg.peerDependencies[packageName];
+
+  if (!specifier) {
+    throw new Error(
+      `Could not find peer dependency "${packageName}" in package.json.`,
+    );
+  }
+
+  return defineString(specifier);
+}
+
+/**
  * Ensures the package is in the catalog and returns its specifier.
  * @param packageName - The name of the package to get the specifier for.
  * @param catalogEntries - The catalog entries to search.
@@ -88,6 +106,9 @@ export async function getVariables() {
     __REACT_TYPES_VERSION__: getSpecifier("@types/react", reactCatalog),
     __REACT_VERSION__: getSpecifier("react", reactCatalog),
     __SPECTRUM_S2_VERSION__: getSpecifier("@react-spectrum/s2", reactCatalog),
+    __TS_LOADER_VERSION__: getPeerDependencySpecifier("ts-loader"),
+    __TSCONFIG_BASES_VERSION__: getPeerDependencySpecifier("@tsconfig/bases"),
+    __TYPESCRIPT_VERSION__: getPeerDependencySpecifier("typescript"),
   };
 }
 
@@ -97,6 +118,9 @@ declare global {
   var __REACT_DOM_TYPES_VERSION__: string;
   var __REACT_TYPES_VERSION__: string;
   var __SPECTRUM_S2_VERSION__: string;
+  var __TSCONFIG_BASES_VERSION__: string;
+  var __TS_LOADER_VERSION__: string;
+  var __TYPESCRIPT_VERSION__: string;
 
   var __LIB_ADMIN_UI_RANGE__: string;
   var __LIB_CONFIG_RANGE__: string;

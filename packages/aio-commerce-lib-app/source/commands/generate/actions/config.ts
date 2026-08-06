@@ -77,7 +77,7 @@ export function getRuntimeActions(extConfig: ExtConfig, dir: string) {
   return Object.entries(
     extConfig.runtimeManifest?.packages?.[PACKAGE_NAME]?.actions ?? {},
   ).map(
-    ([name, _]) =>
+    ([name]) =>
       ({
         name,
         templateFile: join(dir, `${name}.js.template`),

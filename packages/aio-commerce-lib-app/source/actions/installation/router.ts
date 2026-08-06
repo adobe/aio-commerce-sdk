@@ -56,7 +56,8 @@ import type {
 // Action name for async invocation
 const DEFAULT_ACTION_NAME = "app-management/installation";
 
-type CustomScriptsLoader = (
+/** Loads generated custom installation script modules. */
+export type CustomScriptsLoader = (
   config: CommerceAppConfigOutputModel,
   logger: InstallationContext["logger"],
 ) => Record<string, unknown>;

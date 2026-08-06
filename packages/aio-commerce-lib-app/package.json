@@ -144,7 +144,6 @@
     "@adobe/aio-lib-state": "catalog:",
     "camelcase": "catalog:",
     "consola": "catalog:",
-    "esbuild": "^0.28.0",
     "jiti": "^2.6.1",
     "ky": "catalog:",
     "openwhisk": "^3.21.8",
@@ -153,6 +152,22 @@
     "type-fest": "catalog:",
     "valibot": "catalog:",
     "yaml": "catalog:"
+  },
+  "peerDependencies": {
+    "@tsconfig/bases": "^1.0.26",
+    "ts-loader": "^9.6.2",
+    "typescript": "^6.0.3"
+  },
+  "peerDependenciesMeta": {
+    "@tsconfig/bases": {
+      "optional": true
+    },
+    "ts-loader": {
+      "optional": true
+    },
+    "typescript": {
+      "optional": true
+    }
   },
   "devDependencies": {
     "@adobe/aio-lib-files": "catalog:",

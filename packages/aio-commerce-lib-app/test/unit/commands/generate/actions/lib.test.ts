@@ -10,9 +10,6 @@
  * governing permissions and limitations under the License.
  */
 
-import { readFile } from "node:fs/promises";
-
-import { withTempFiles } from "@aio-commerce-sdk/scripting-utils/filesystem";
 import { afterEach, describe, expect, test, vi } from "vitest";
 
 import { EXTENSIBILITY_EXTENSION_POINT_ID } from "#commands/constants";
@@ -24,7 +21,6 @@ import {
 import {
   applyCustomScripts,
   generateCustomScriptsTemplate,
-  prepareWebSourceImportAlias,
   readExtConfig,
 } from "#commands/generate/actions/lib";
 import { templates } from "#test/fixtures/commands";
@@ -75,78 +71,6 @@ describe("readExtConfig", () => {
   });
 });
 
-describe("prepareWebSourceImportAlias", () => {
-  test("throws when package.json is missing", async () => {
-    await withTempFiles({}, async (tempDir) => {
-      getProjectRootDirectory.mockReturnValue(tempDir);
-
-      await expect(
-        prepareWebSourceImportAlias({
-          operations: {
-            view: [
-              {
-                impl: "index.html",
-                type: "web",
-              },
-            ],
-          },
-          web: "web-src",
-        }),
-      ).rejects.toThrow("Could not find package.json.");
-    });
-  });
-
-  test("adds the #web import alias for a view operation", async () => {
-    await withTempFiles(
-      {
-        "package.json": JSON.stringify({
-          imports: {
-            "#app.commerce.config": "./src/commerce-app-config.js",
-          },
-        }),
-      },
-      async (tempDir) => {
-        getProjectRootDirectory.mockReturnValue(tempDir);
-
-        await prepareWebSourceImportAlias({
-          operations: {
-            view: [
-              {
-                impl: "index.html",
-                type: "web",
-              },
-            ],
-          },
-          web: "web-src",
-        });
-
-        await expect(
-          readFile(`${tempDir}/package.json`, "utf-8").then(JSON.parse),
-        ).resolves.toMatchObject({
-          imports: {
-            "#app.commerce.config": "./src/commerce-app-config.js",
-            "#web/*": "./src/commerce-backend-ui-2/web-src/src/*",
-          },
-        });
-      },
-    );
-  });
-
-  test("does nothing when there is no view operation", async () => {
-    await prepareWebSourceImportAlias({
-      operations: {
-        workerProcess: [
-          {
-            impl: "actions/worker/index.js",
-            type: "action",
-          },
-        ],
-      },
-    });
-    expect(getProjectRootDirectory).not.toHaveBeenCalled();
-  });
-});
-
 describe("applyCustomScripts", () => {
   describe("when no custom installation steps are configured", () => {
     test("should not replace args or import customScriptsLoader", async () => {
@@ -162,7 +86,7 @@ describe("applyCustomScripts", () => {
 
       expect(result).toContain("const args = { appConfig };");
       expect(result).toContain("// No custom installation scripts configured");
-      expect(result).not.toContain("function customScriptsLoader");
+      expect(result).not.toContain("defineCustomScriptsLoader");
       expect(result).not.toContain(CUSTOM_SCRIPTS_LOADER_PLACEHOLDER);
     });
   });
@@ -179,7 +103,7 @@ describe("applyCustomScripts", () => {
         scriptsTemplate,
       );
 
-      expect(result).toContain("function customScriptsLoader");
+      expect(result).toContain("defineCustomScriptsLoader");
       expect(result).toContain(
         "const args = { appConfig, customScriptsLoader };",
       );
@@ -206,7 +130,7 @@ describe("applyCustomScripts", () => {
 
       expect(result).toContain("const args = { appConfig };");
       expect(result).toContain("// No custom installation scripts configured");
-      expect(result).not.toContain("function customScriptsLoader");
+      expect(result).not.toContain("defineCustomScriptsLoader");
     });
   });
 });

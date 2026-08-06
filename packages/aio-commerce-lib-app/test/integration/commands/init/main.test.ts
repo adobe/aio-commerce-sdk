@@ -25,10 +25,12 @@ import {
 } from "#commands/constants";
 import { exec, run } from "#commands/init/main";
 import { getGeneratedDir } from "#commands/utils";
+import { minimalValidConfig } from "#test/fixtures/config";
 import { INSTALL_COMMAND_RE } from "#test/fixtures/exec";
 import {
   EMPTY_PROJECT,
   INVALID_PROJECT,
+  makeProjectFiles,
   withTempProject,
 } from "#test/fixtures/project";
 
@@ -153,9 +155,67 @@ describe("commands/init/main", () => {
       });
     });
 
+    test("does not scaffold TypeScript for an existing JavaScript Commerce config", async () => {
+      await withTempProject(
+        makeProjectFiles(minimalValidConfig, "cjs"),
+        async (tempDir) => {
+          await run();
+
+          expect(existsSync(join(tempDir, "webpack-config.cjs"))).toBe(false);
+          expect(existsSync(join(tempDir, "tsconfig.json"))).toBe(false);
+
+          const pkgJson: PackageJson = JSON.parse(
+            await readFile(join(tempDir, PACKAGE_JSON_FILE), "utf-8"),
+          );
+
+          expect(pkgJson.scripts?.typecheck).toBeUndefined();
+          expect(pkgJson.scripts?.["typecheck:actions"]).toBeUndefined();
+        },
+      );
+    });
+
+    test("scaffolds missing TypeScript files for an existing TypeScript Commerce config", async () => {
+      await withTempProject(
+        {
+          "app.commerce.config.ts": `export default ${JSON.stringify(minimalValidConfig)};`,
+          "package-lock.json": "{}",
+          "package.json": JSON.stringify({ type: "module" }),
+        },
+        async (tempDir) => {
+          await run();
+
+          expect(existsSync(join(tempDir, "webpack-config.cjs"))).toBe(true);
+          expect(existsSync(join(tempDir, "tsconfig.json"))).toBe(true);
+
+          const pkgJson: PackageJson = JSON.parse(
+            await readFile(join(tempDir, PACKAGE_JSON_FILE), "utf-8"),
+          );
+
+          expect(pkgJson.imports?.["#app.commerce.config"]).toBe(
+            "./src/commerce-extensibility-1/.generated/app.commerce.config.js",
+          );
+
+          expect(pkgJson.scripts?.typecheck).toBe("npm run typecheck:actions");
+          expect(pkgJson.scripts?.["typecheck:actions"]).toBe(
+            "tsc --noEmit -p tsconfig.json",
+          );
+
+          expect(
+            existsSync(
+              join(
+                tempDir,
+                getGeneratedDir(EXTENSIBILITY_EXTENSION_POINT_ID),
+                "app.commerce.config.js",
+              ),
+            ),
+          ).toBe(true);
+        },
+      );
+    });
+
     test.each(PACKAGE_MANAGER_CASES)(
       "uses $packageManager commands throughout init when $lockFile.0 is present",
-      async ({ execCommand, installPrefix, lockFile }) => {
+      async ({ execCommand, installPrefix, lockFile, packageManager }) => {
         await withTempProject(
           {
             ...EMPTY_PROJECT,
@@ -179,10 +239,24 @@ describe("commands/init/main", () => {
             );
 
             const installCalls = getInstallCalls();
-            expect(installCalls).toHaveLength(2);
+            expect(installCalls).toHaveLength(3);
             expect(
               installCalls.every((call) => call.startsWith(installPrefix)),
             ).toBe(true);
+
+            expect(
+              installCalls.some(
+                (call) =>
+                  call.includes(`typescript@${__TYPESCRIPT_VERSION__}`) &&
+                  call.includes(
+                    `@tsconfig/bases@${__TSCONFIG_BASES_VERSION__}`,
+                  ),
+              ),
+            ).toBe(true);
+
+            expect(pkgJson.scripts?.typecheck).toBe(
+              `${packageManager} run typecheck:actions`,
+            );
           },
         );
       },
