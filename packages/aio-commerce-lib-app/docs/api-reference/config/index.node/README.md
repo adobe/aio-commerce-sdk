@@ -49,23 +49,24 @@
 
 ## Functions
 
-| Function                                                                        | Description                                                                |
-| ------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
-| [defineConfig](functions/defineConfig.md)                                       | Helper to type-safely define the app config.                               |
-| [getConfigDomains](functions/getConfigDomains.md)                               | Get the config domains that are present in the config.                     |
-| [hasAdminUi](functions/hasAdminUi.md)                                           | Check if config has Admin UI configuration.                                |
-| [hasBusinessConfig](functions/hasBusinessConfig.md)                             | Check if config has business config.                                       |
-| [hasBusinessConfigSchema](functions/hasBusinessConfigSchema.md)                 | Check if config has business config schema.                                |
-| [hasCommerceEvents](functions/hasCommerceEvents.md)                             | Check if config has commerce event sources.                                |
-| [hasConfigDomain](functions/hasConfigDomain.md)                                 | Check if the config has a specific domain.                                 |
-| [hasCustomInstallation](functions/hasCustomInstallation.md)                     | Check if config has custom installation settings.                          |
-| [hasCustomInstallationSteps](functions/hasCustomInstallationSteps.md)           | Check if config has custom installation steps.                             |
-| [hasEventing](functions/hasEventing.md)                                         | Check if config has any eventing configuration.                            |
-| [hasExternalEvents](functions/hasExternalEvents.md)                             | Check if config has external event sources.                                |
-| [hasMetadata](functions/hasMetadata.md)                                         | Check if config has metadata.                                              |
-| [hasWebhooks](functions/hasWebhooks.md)                                         | Check if config has webhooks (non-empty array).                            |
-| [parseCommerceAppConfig](functions/parseCommerceAppConfig.md)                   | Read the commerce app config file and parse its contents into its schema.  |
-| [readCommerceAppConfig](functions/readCommerceAppConfig.md)                     | Read the commerce app config file as-is, without validating it.            |
-| [resolveCommerceAppConfig](functions/resolveCommerceAppConfig.md)               | Try to find (up to the nearest package.json file) the app config file.     |
-| [validateCommerceAppConfig](functions/validateCommerceAppConfig.md)             | Validates a complete commerce app configuration object against the schema. |
-| [validateCommerceAppConfigDomain](functions/validateCommerceAppConfigDomain.md) | Validates a specific domain configuration within the commerce app config.  |
+| Function                                                                        | Description                                                                  |
+| ------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| [defineConfig](functions/defineConfig.md)                                       | Helper to type-safely define the app config.                                 |
+| [getConfigDomains](functions/getConfigDomains.md)                               | Get the config domains that are present in the config.                       |
+| [hasAdminUi](functions/hasAdminUi.md)                                           | Check if config has Admin UI configuration.                                  |
+| [hasBusinessConfig](functions/hasBusinessConfig.md)                             | Check if config has business config.                                         |
+| [hasBusinessConfigSchema](functions/hasBusinessConfigSchema.md)                 | Check if config has business config schema.                                  |
+| [hasCommerceEvents](functions/hasCommerceEvents.md)                             | Check if config has commerce event sources.                                  |
+| [hasConfigDomain](functions/hasConfigDomain.md)                                 | Check if the config has a specific domain.                                   |
+| [hasCustomInstallation](functions/hasCustomInstallation.md)                     | Check if config has custom installation settings.                            |
+| [hasCustomInstallationSteps](functions/hasCustomInstallationSteps.md)           | Check if config has custom installation steps.                               |
+| [hasEventing](functions/hasEventing.md)                                         | Check if config has any eventing configuration.                              |
+| [hasExternalEvents](functions/hasExternalEvents.md)                             | Check if config has external event sources.                                  |
+| [hasMetadata](functions/hasMetadata.md)                                         | Check if config has metadata.                                                |
+| [hasWebhooks](functions/hasWebhooks.md)                                         | Check if config has webhooks (non-empty array).                              |
+| [isTypeScriptConfig](functions/isTypeScriptConfig.md)                           | Check whether a commerce app config path uses a supported TypeScript format. |
+| [parseCommerceAppConfig](functions/parseCommerceAppConfig.md)                   | Read the commerce app config file and parse its contents into its schema.    |
+| [readCommerceAppConfig](functions/readCommerceAppConfig.md)                     | Read the commerce app config file as-is, without validating it.              |
+| [resolveCommerceAppConfig](functions/resolveCommerceAppConfig.md)               | Try to find (up to the nearest package.json file) the app config file.       |
+| [validateCommerceAppConfig](functions/validateCommerceAppConfig.md)             | Validates a complete commerce app configuration object against the schema.   |
+| [validateCommerceAppConfigDomain](functions/validateCommerceAppConfigDomain.md) | Validates a specific domain configuration within the commerce app config.    |

@@ -1,5 +1,22 @@
 # @adobe/aio-commerce-lib-app
 
+## 1.10.0
+
+### Minor Changes
+
+- [#606](https://github.com/adobe/aio-commerce-sdk/pull/606) [`a18a250`](https://github.com/adobe/aio-commerce-sdk/commit/a18a2506b9d6fafb0b96ca8b7960208e51546dc3) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Custom installation step scripts can now be TypeScript (`.ts`) files, not just JavaScript.
+
+- [#606](https://github.com/adobe/aio-commerce-sdk/pull/606) [`a18a250`](https://github.com/adobe/aio-commerce-sdk/commit/a18a2506b9d6fafb0b96ca8b7960208e51546dc3) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Add TypeScript project scaffolding and support TypeScript Commerce configuration in generated Runtime actions.
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @adobe/aio-commerce-lib-admin-ui@1.0.0
+  - @adobe/aio-commerce-lib-auth@1.1.2
+  - @adobe/aio-commerce-lib-config@1.6.0
+  - @adobe/aio-commerce-lib-events@1.3.0
+  - @adobe/aio-commerce-lib-webhooks@1.2.0
+
 ## 1.9.0
 
 ### Minor Changes

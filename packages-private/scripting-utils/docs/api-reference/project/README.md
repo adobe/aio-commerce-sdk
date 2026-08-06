@@ -14,6 +14,7 @@ This module exports shared project utilities for the AIO Commerce SDK.
 
 | Function                                                                        | Description                                                                                                                  |
 | ------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| [appendCommand](functions/appendCommand.md)                                     | Append a command to an existing `&&` command chain without duplicating it.                                                   |
 | [detectPackageManager](functions/detectPackageManager.md)                       | Detect the package manager for a project.                                                                                    |
 | [findNearestPackageJson](functions/findNearestPackageJson.md)                   | Find the nearest package.json file in the current working directory or its parents                                           |
 | [findUp](functions/findUp.md)                                                   | Find a file by walking up parent directories                                                                                 |
@@ -21,8 +22,10 @@ This module exports shared project utilities for the AIO Commerce SDK.
 | [getInstallCommand](functions/getInstallCommand.md)                             | Get the command to install the given dependencies with the given package manager (e.g. `pnpm add foo bar`, `npm i foo bar`). |
 | [getInstalledPackageVersion](functions/getInstalledPackageVersion.md)           | Resolve the installed package version from a project root.                                                                   |
 | [getPackageDependencyInstallPlan](functions/getPackageDependencyInstallPlan.md) | Resolve which dependencies are missing or installed with incompatible versions.                                              |
+| [getPackageExecutionCommand](functions/getPackageExecutionCommand.md)           | Get the command that executes a package without adding it to the project.                                                    |
 | [getProjectInstallCommand](functions/getProjectInstallCommand.md)               | Get the command that installs a project's declared dependencies.                                                             |
 | [getProjectRootDirectory](functions/getProjectRootDirectory.md)                 | Get the root directory of the project                                                                                        |
+| [getRunScriptCommand](functions/getRunScriptCommand.md)                         | Get the command that runs a package script.                                                                                  |
 | [isESM](functions/isESM.md)                                                     | Check if the current working directory is an ESM project.                                                                    |
 | [loadPackageJson](functions/loadPackageJson.md)                                 | Load the nearest package.json file with npmcli's package.json helper.                                                        |
 | [makeOutputDirFor](functions/makeOutputDirFor.md)                               | Create the output directory for the given file or folder (relative to the project root)                                      |
