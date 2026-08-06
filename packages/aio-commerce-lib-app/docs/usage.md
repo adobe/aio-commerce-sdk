@@ -1070,6 +1070,26 @@ try {
 
 Removals _within_ a still-present domain (e.g. one Commerce event subscription among several) are reconciled and torn down by `POST /update` like any other change. But if a new version removes an entire managed domain — for example, dropping all Commerce eventing configuration — those resources are not torn down by the update; there is nothing left in the target config to drive a per-resource `removed` diff for that domain. They remain in place until the app is uninstalled, at which point the baseline uninstall walk removes them.
 
+#### Automatic Updates (`updateType: auto`)
+
+By default an installed app only updates through the manual preview/confirm flow above. A developer can opt an app into unattended updates by setting `metadata.updateType: "auto"` in `app.commerce.config.*` (the default is `"manual"`).
+
+When `updateType` is `"auto"`, running `aio app deploy` drives a self-update as part of the deploy: the generated app's `post-app-deploy` lifecycle hook invokes the installation action, which diffs the installed snapshot against the newly deployed config. If there are no applicable changes, nothing happens. Otherwise the app reconciles the changes unattended, reporting the same `UPDATING` → `INSTALLED` / `UPDATE_FAILED` lifecycle statuses to the Extension Manager as the manual path.
+
+Two situations stop an auto update short of reconciling:
+
+- **Destructive changes.** If the diff contains a change that could lose merchant data or remove merchant-visible behavior (`configHasDestructiveChange`), the auto update halts and reports `UPDATE_REVIEW_REQUIRED` instead of applying it. The merchant then completes the update through the manual `POST /update/preview` / `POST /update` flow — a destructive change is only ever applied with that explicit consent, never unattended.
+- **Unsupported changes.** If the diff contains a `changed` resource the reconcile engine cannot apply in place today (a Commerce subscription/webhook or an I/O Events provider/metadata change — see [Handling Unsupported Changes](#handling-unsupported-changes)), the auto update halts and reports `UPDATE_FAILED`.
+
+If an install, uninstall, or update is already in progress when the hook runs, the self-update is rejected as busy; the hook retries with bounded exponential backoff and, if every attempt is still rejected as busy, gives up and reports a terminal `UPDATE_FAILED` to the Extension Manager — so the app surfaces as needing attention rather than silently drifting out of sync with the deployed config.
+
+**Limitations of the current implementation:**
+
+- Extension Manager status reporting (for both the auto and manual paths) targets a placeholder endpoint; the real endpoint contract is not yet finalized.
+- The post-deploy hook's ability to reach the deployed installation action, and the action's ability to self-source Commerce credentials at deploy time, have not yet been validated against a real `aio app deploy` run.
+- If the app crashes before its first status write to the Extension Manager, that crash is not automatically recovered — it surfaces on the next deploy attempt rather than immediately.
+- There are no dedicated metrics for the auto path yet; observability is limited to structured logs.
+
 ### Accessing the Associated Commerce Instance from Runtime Actions
 
 After an app is associated with a Commerce instance via App Management, the SDK stores the Commerce base URL and deployment type (`saas` or `paas`) so any runtime action can retrieve them — without custom storage setup or threading parameters through every layer of the call stack.
