@@ -13,13 +13,13 @@
 import { describe, expect, test } from "vitest";
 
 import { isBranchStep } from "#management/common/workflow/step";
-import { adminUiStep } from "#management/installation/admin-ui/branch";
-import { eventingStep } from "#management/installation/events/branch";
+import { adminUiStep } from "#management/domains/admin-ui/branch";
+import { eventingStep } from "#management/domains/events/branch";
+import { webhooksStep } from "#management/domains/webhooks/branch";
 import {
   createRootInstallationStep,
   createRootUninstallationStep,
 } from "#management/installation/root";
-import { webhooksStep } from "#management/installation/webhooks/branch";
 import {
   configWithCustomInstallationSteps,
   minimalValidConfig,

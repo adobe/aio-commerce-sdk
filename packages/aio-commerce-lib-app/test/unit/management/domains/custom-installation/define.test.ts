@@ -12,14 +12,14 @@
 
 import { describe, expect, test, vi } from "vitest";
 
-import { defineCustomInstallationStep } from "#management/installation/custom-installation/define";
+import { defineCustomInstallationStep } from "#management/domains/custom-installation/define";
 import { minimalValidConfig } from "#test/fixtures/config";
 import { createMockInstallationContext } from "#test/fixtures/installation";
 
 import type {
   CustomInstallationStepDefinition,
   CustomInstallationStepHandler,
-} from "#management/installation/custom-installation/define";
+} from "#management/domains/custom-installation/define";
 
 describe("defineCustomInstallationStep - function form (legacy)", () => {
   test("should preserve handler functionality", () => {

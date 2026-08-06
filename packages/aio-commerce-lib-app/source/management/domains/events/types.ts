@@ -22,7 +22,7 @@ import type {
   EventProvider,
 } from "#config/schema/eventing";
 import type { ApplicationMetadata } from "#config/schema/metadata";
-import type { onboardIoEvents } from "#management/installation/events/helpers";
+import type { onboardIoEvents } from "#management/domains/events/helpers";
 import type { EventsExecutionContext } from "./context";
 
 /** Augmented provider data with it's type. */

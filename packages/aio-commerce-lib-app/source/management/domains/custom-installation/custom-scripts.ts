@@ -29,7 +29,7 @@ import type {
 import type {
   CustomInstallationStepDefinition,
   CustomInstallationStepHandler,
-} from "#management/installation/custom-installation/define";
+} from "#management/domains/custom-installation/define";
 
 type CamelcaseInterop = typeof camelcaseModule.default & {
   default?: typeof camelcaseModule.default;

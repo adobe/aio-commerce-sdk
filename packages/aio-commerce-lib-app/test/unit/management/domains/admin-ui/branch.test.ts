@@ -13,7 +13,7 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 import { isBranchStep, isLeafStep } from "#management/common/workflow/step";
-import { adminUiStep } from "#management/installation/admin-ui/branch";
+import { adminUiStep } from "#management/domains/admin-ui/branch";
 import { createMockAdminUiContext } from "#test/fixtures/admin-ui";
 import {
   configWithFullAdminUiV2,

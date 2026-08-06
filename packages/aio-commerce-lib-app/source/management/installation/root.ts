@@ -11,11 +11,10 @@
  */
 
 import { defineBranchStep } from "#management/common/workflow/index";
-
-import { adminUiStep } from "./admin-ui";
-import { createCustomInstallationStep } from "./custom-installation";
-import { eventingStep } from "./events";
-import { webhooksStep } from "./webhooks";
+import { adminUiStep } from "#management/domains/admin-ui/index";
+import { createCustomInstallationStep } from "#management/domains/custom-installation/index";
+import { eventingStep } from "#management/domains/events/index";
+import { webhooksStep } from "#management/domains/webhooks/index";
 
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 import type { AnyStep, BranchStep } from "#management/common/workflow/index";
