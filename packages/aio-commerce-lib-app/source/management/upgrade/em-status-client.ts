@@ -48,9 +48,6 @@ export type WriteUpdateStatusInput = {
   /** The version the extension is updating to, when known. */
   version?: string;
 
-  /** The deployment version the update was computed against. */
-  deploymentVersion?: string;
-
   /** Present when `status` is `UPDATE_FAILED`. */
   error?: UpdateStatusError;
 

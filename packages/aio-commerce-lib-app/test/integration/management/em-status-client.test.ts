@@ -66,13 +66,11 @@ describe("createEmStatusClient", () => {
     },
     {
       expectedBody: {
-        deploymentVersion: "3",
         status: "INSTALLED",
         timestamp: FAKE_TIMESTAMP,
         version: "1.2.0",
       },
       input: {
-        deploymentVersion: "3",
         extensionId: EXTENSION_ID,
         status: "INSTALLED",
         timestamp: FAKE_TIMESTAMP,

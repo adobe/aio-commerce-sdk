@@ -600,9 +600,6 @@ router.post("/update/preview", {
     const planId = generatePlanId();
     const plan: UpdatePlan = {
       createdAt: new Date().toISOString(),
-      // Stamp with the installation action's own version (spec §8.4 staleness
-      // caveat), not the app-config action's value.
-      deploymentVersion: process.env.__OW_ACTION_VERSION ?? "",
       diff,
       planId,
       targetConfig: newConfig,
@@ -638,8 +635,9 @@ router.get("/update", {
  * Flow:
  * 1. Load the stored plan; if none, or `body.planId` doesn't match it, return
  *    409 Conflict (code: "plan-mismatch") — consent guard (spec §8.4).
- * 2. If the live installation-action deployment version no longer matches the
- *    plan's, return 409 Conflict (code: "stale") — staleness guard.
+ * 2. If the live target config's `metadata.version` no longer matches the
+ *    plan's target `metadata.version`, return 409 Conflict (code: "stale") —
+ *    staleness guard.
  * 3. If an install, uninstall, or update is already in progress, return 409
  *    Conflict (code: "busy").
  * 4. If the plan contains a `changed` resource the reconcile engine cannot
@@ -685,10 +683,18 @@ router.post("/update", {
       });
     }
 
-    const liveDeploymentVersion = process.env.__OW_ACTION_VERSION ?? "";
-    if (liveDeploymentVersion !== plan.deploymentVersion) {
+    const rawAppConfig = rawParams.appConfig;
+    if (!rawAppConfig) {
+      return internalServerError(
+        "The app config is missing. Does the action receive it as a parameter?",
+      );
+    }
+
+    const liveTargetVersion =
+      validateCommerceAppConfig(rawAppConfig).metadata.version;
+    if (liveTargetVersion !== plan.targetConfig.metadata.version) {
       logger.debug(
-        "Update rejected: the app has been redeployed since this plan was computed",
+        "Update rejected: the app's declared version no longer matches this plan's target version",
       );
       return conflict({
         body: {
@@ -827,13 +833,13 @@ router.post("/update", {
  * execution, when the plan is version-only AND `plan.targetConfig`'s version
  * matches the previously installed version, the terminal `INSTALLED` append
  * is suppressed to avoid growing EM history with a no-op entry — the local
- * snapshot/`deploymentVersion` baseline still advances.
+ * snapshot still advances.
  *
  * Reports lifecycle status to the Extension Manager (spec §5, §6.2):
  * `UPDATING` right before the reconcile decision, then `INSTALLED` (with
- * `version` + `deploymentVersion`) or `UPDATE_FAILED` (with the error) on the
- * terminal outcome. Every write is best-effort — skipped with a warning when
- * no `extensionId` is on record, and never allowed to fail the update itself.
+ * `version`) or `UPDATE_FAILED` (with the error) on the terminal outcome.
+ * Every write is best-effort — skipped with a warning when no `extensionId`
+ * is on record, and never allowed to fail the update itself.
  */
 router.post("/update/execution", {
   handler: async (_req, { logger, rawParams }) => {
@@ -880,7 +886,6 @@ router.post("/update/execution", {
     const isVersionOnly = isEmptyPlan(plan.diff) && !hasPendingCleanup;
 
     await reportUpdateStatus(rawParams, logger, {
-      deploymentVersion: plan.deploymentVersion,
       status: "UPDATING",
       version: plan.targetConfig.metadata.version,
     });
@@ -939,7 +944,6 @@ router.post("/update/execution", {
 
       if (!suppressInstalledAppend) {
         await reportUpdateStatus(rawParams, logger, {
-          deploymentVersion: plan.deploymentVersion,
           status: "INSTALLED",
           version: targetVersion,
         });
@@ -948,7 +952,6 @@ router.post("/update/execution", {
 
     if (isFailedState(result)) {
       await reportUpdateStatus(rawParams, logger, {
-        deploymentVersion: plan.deploymentVersion,
         error: { message: result.error.message ?? result.error.key },
         status: "UPDATE_FAILED",
         version: plan.targetConfig.metadata.version,
@@ -1029,14 +1032,12 @@ router.post("/update/self", {
 
     const diff = diffConfig(oldConfig, targetConfig);
     const decision = classifyAutoUpdate(diff);
-    const deploymentVersion = process.env.__OW_ACTION_VERSION ?? "";
 
     if (decision === "review-required") {
       logger.debug(
         "Self-update halted: destructive change requires merchant review.",
       );
       await reportUpdateStatus(rawParams, logger, {
-        deploymentVersion,
         status: "UPDATE_REVIEW_REQUIRED",
         version: targetConfig.metadata.version,
       });
@@ -1048,7 +1049,6 @@ router.post("/update/self", {
         "Self-update halted: plan contains an unsupported changed resource.",
       );
       await reportUpdateStatus(rawParams, logger, {
-        deploymentVersion,
         error: {
           message:
             "The update includes a change that cannot be applied in place yet.",
@@ -1098,7 +1098,7 @@ router.post("/update/self", {
       ),
     });
 
-    const plan = buildAutoUpdatePlan(diff, targetConfig, deploymentVersion);
+    const plan = buildAutoUpdatePlan(diff, targetConfig);
     const initialState = createInitialInstallationState({
       config: targetConfig,
     });

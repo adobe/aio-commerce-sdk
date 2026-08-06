@@ -10,7 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
-import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 
 const {
   invokeMock,
@@ -183,7 +183,6 @@ describe("installation router — update routes", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    process.env.__OW_ACTION_VERSION = "3";
 
     installationStore = createMockStore<InstallationState>();
     uninstallationStore = createMockStore<InstallationState>();
@@ -226,10 +225,6 @@ describe("installation router — update routes", () => {
       commerce: { baseUrl: "https://commerce.example.com", env: "paas" },
       extensionId: TEST_EXTENSION_ID,
     });
-  });
-
-  afterEach(() => {
-    delete process.env.__OW_ACTION_VERSION;
   });
 
   describe("POST /update/preview", () => {
@@ -293,7 +288,7 @@ describe("installation router — update routes", () => {
       });
     });
 
-    test("stores the plan, stamped with the installation action's deployment version", async () => {
+    test("stores the plan, targeting the new config", async () => {
       installationStore = createMockStore<InstallationState>(
         createMockSucceededState({
           config: minimalValidConfig,
@@ -318,7 +313,6 @@ describe("installation router — update routes", () => {
         "current",
         expect.objectContaining({
           createdAt: expect.any(String),
-          deploymentVersion: "3",
           diff: { changes: expect.any(Array) },
           planId: expect.any(String),
           targetConfig: configWithCommerceEventing,
@@ -432,7 +426,6 @@ describe("installation router — update routes", () => {
     function seedPlan(overrides: Partial<UpdatePlan> = {}): UpdatePlan {
       const plan: UpdatePlan = {
         createdAt: "2026-01-01T00:00:00.000Z",
-        deploymentVersion: "3",
         diff: diffConfig(minimalValidConfig, configWithCommerceEventing),
         planId: "plan-1",
         targetConfig: configWithCommerceEventing,
@@ -633,10 +626,17 @@ describe("installation router — update routes", () => {
       });
     });
 
-    test("returns 409 stale when the live deployment version no longer matches the plan", async () => {
-      seedPlan({ deploymentVersion: "2" }); // process.env.__OW_ACTION_VERSION is "3"
+    test("returns 409 stale when the live app's declared version no longer matches the plan's target version", async () => {
+      // The live (currently deployed) config declares a newer version than the
+      // one the plan's targetConfig was computed against — i.e. the app was
+      // redeployed since the plan was previewed.
+      const redeployedConfig: CommerceAppConfigOutputModel = {
+        ...minimalValidConfig,
+        metadata: { ...minimalValidConfig.metadata, version: "2.0.0" },
+      };
+      seedPlan(); // plan.targetConfig.metadata.version is "1.0.0"
       const handler = installationRuntimeAction({
-        appConfig: minimalValidConfig,
+        appConfig: redeployedConfig,
       });
 
       const result = await handler(
@@ -741,7 +741,15 @@ describe("installation router — update routes", () => {
         }),
       );
 
-      seedPlan({ deploymentVersion: "999" });
+      seedPlan({
+        targetConfig: {
+          ...configWithCommerceEventing,
+          metadata: {
+            ...configWithCommerceEventing.metadata,
+            version: "999.0.0",
+          },
+        },
+      });
       const staleResult = await handler(
         createRuntimeActionParams({
           body: updateRequestBody,
@@ -857,7 +865,6 @@ describe("installation router — update routes", () => {
     function seedPlan(overrides: Partial<UpdatePlan> = {}): UpdatePlan {
       const plan: UpdatePlan = {
         createdAt: "2026-01-01T00:00:00.000Z",
-        deploymentVersion: "3",
         diff: diffConfig(minimalValidConfig, configWithCommerceEventing),
         planId: "plan-1",
         targetConfig: configWithCommerceEventing,
@@ -1148,7 +1155,7 @@ describe("installation router — update routes", () => {
       expect(runUpdateMock).toHaveBeenCalled();
     });
 
-    test("writes UPDATING then INSTALLED (with version + deploymentVersion), in order, on success", async () => {
+    test("writes UPDATING then INSTALLED (with version), in order, on success", async () => {
       const plan = seedPlan();
       const initialState = buildInitialState(plan.targetConfig);
 
@@ -1172,7 +1179,6 @@ describe("installation router — update routes", () => {
         status: "UPDATING",
       });
       expect(writeUpdateStatusMock.mock.calls[1]?.[0]).toMatchObject({
-        deploymentVersion: plan.deploymentVersion,
         extensionId: TEST_EXTENSION_ID,
         status: "INSTALLED",
         version: plan.targetConfig.metadata.version,
@@ -1300,7 +1306,6 @@ describe("installation router — update routes", () => {
 
       const inlinePlan: UpdatePlan = {
         createdAt: "2026-01-02T00:00:00.000Z",
-        deploymentVersion: "3",
         diff: { changes: [] },
         planId: "auto-B",
         targetConfig: configWithCommerceEventing,
@@ -1349,7 +1354,6 @@ describe("installation router — update routes", () => {
 
       const inlinePlan: UpdatePlan = {
         createdAt: "2026-01-02T00:00:00.000Z",
-        deploymentVersion: "3",
         diff: { changes: [] },
         planId: "auto-same-version",
         targetConfig,
@@ -1398,7 +1402,6 @@ describe("installation router — update routes", () => {
 
       const inlinePlan: UpdatePlan = {
         createdAt: "2026-01-02T00:00:00.000Z",
-        deploymentVersion: "3",
         diff: { changes: [] },
         planId: "auto-version-bump",
         targetConfig,
@@ -1427,7 +1430,6 @@ describe("installation router — update routes", () => {
         status: "UPDATING",
       });
       expect(writeUpdateStatusMock.mock.calls[1]?.[0]).toMatchObject({
-        deploymentVersion: inlinePlan.deploymentVersion,
         status: "INSTALLED",
         version: targetConfig.metadata.version,
       });

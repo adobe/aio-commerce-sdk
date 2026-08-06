@@ -79,7 +79,6 @@ function createUpdatePlan(
 ): UpdatePlan {
   return {
     createdAt: "2026-08-05T00:00:00.000Z",
-    deploymentVersion: "1",
     diff: diffConfig(oldConfig, newConfig),
     planId: "plan-1",
     targetConfig: newConfig,

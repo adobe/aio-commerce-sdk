@@ -74,11 +74,10 @@ describe("classifyAutoUpdate", () => {
   });
 });
 
-test("buildAutoUpdatePlan stamps a fresh planId + deploymentVersion", () => {
+test("buildAutoUpdatePlan stamps a fresh planId", () => {
   const diff = { changes: [change({ kind: "added" })] };
   const target = { metadata: { version: "1.2.0" } } as never;
-  const plan = buildAutoUpdatePlan(diff, target, "77");
-  expect(plan.deploymentVersion).toBe("77");
+  const plan = buildAutoUpdatePlan(diff, target);
   expect(plan.diff).toBe(diff);
   expect(plan.targetConfig).toBe(target);
   expect(plan.planId).toMatch(UUID_LIKE_PATTERN);

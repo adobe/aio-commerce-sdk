@@ -87,7 +87,6 @@ const UUID_REGEX =
 
 const makePlan = (planId: string): UpdatePlan => ({
   createdAt: "2026-08-05T00:00:00.000Z",
-  deploymentVersion: "1.0.0",
   diff: { changes: [] },
   planId,
   targetConfig: {} as UpdatePlan["targetConfig"],

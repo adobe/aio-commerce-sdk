@@ -45,7 +45,6 @@ import type { UpdatePlan } from "#management/upgrade/types";
 function createMockUpdatePlan(overrides: Partial<UpdatePlan> = {}): UpdatePlan {
   return {
     createdAt: FAKE_SYSTEM_TIME,
-    deploymentVersion: "1",
     diff: { changes: [] },
     planId: "plan-1",
     targetConfig: minimalValidConfig,

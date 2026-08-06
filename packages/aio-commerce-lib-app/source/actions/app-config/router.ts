@@ -97,7 +97,6 @@ router.get("/", {
     return ok({
       body: {
         ...config,
-        deploymentVersion: process.env.__OW_ACTION_VERSION || undefined,
         openApiSpecUrl,
       },
     });

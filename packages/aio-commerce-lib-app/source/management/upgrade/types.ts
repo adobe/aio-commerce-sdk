@@ -66,9 +66,6 @@ export type UpdatePlan = {
   /** Consent/staleness token generated at preview. */
   planId: string;
 
-  /** The deployment version the plan was computed against (staleness guard). */
-  deploymentVersion: string;
-
   /** The computed diff. */
   diff: ConfigDiff;
 

@@ -49,12 +49,10 @@ export function classifyAutoUpdate(diff: ConfigDiff): AutoUpdateDecision {
 export function buildAutoUpdatePlan(
   diff: ConfigDiff,
   targetConfig: CommerceAppConfigOutputModel,
-  deploymentVersion: string,
 ): UpdatePlan {
   // No stored-plan round-trip needed here (spec §6.2).
   return {
     createdAt: new Date().toISOString(),
-    deploymentVersion,
     diff,
     planId: generatePlanId(),
     targetConfig,
