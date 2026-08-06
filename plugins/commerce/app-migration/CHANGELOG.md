@@ -1,5 +1,13 @@
 # @adobe/aio-commerce-plugin-app-migration
 
+## 1.3.1
+
+### Patch Changes
+
+- [#602](https://github.com/adobe/aio-commerce-sdk/pull/602) [`1dc6031`](https://github.com/adobe/aio-commerce-sdk/commit/1dc6031bcf4aadbbdeb65d01910b34ad7567e9b8) Thanks [@obarcelonap](https://github.com/obarcelonap)! - Publish this plugin's changelog history alongside its skills.
+
+- [#606](https://github.com/adobe/aio-commerce-sdk/pull/606) [`a18a250`](https://github.com/adobe/aio-commerce-sdk/commit/a18a2506b9d6fafb0b96ca8b7960208e51546dc3) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Remove obsolete pnpm esbuild build approval steps from Commerce app migrations.
+
 ## 1.3.0
 
 ### Minor Changes

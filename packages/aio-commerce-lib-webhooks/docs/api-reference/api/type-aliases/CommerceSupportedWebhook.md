@@ -6,7 +6,7 @@ type CommerceSupportedWebhook = {
 };
 ```
 
-Defined in: [api/webhooks/types.ts:65](https://github.com/adobe/aio-commerce-sdk/blob/97b39588c9be1d7c405453e1095714aa55bea129/packages/aio-commerce-lib-webhooks/source/api/webhooks/types.ts#L65)
+Defined in: [api/webhooks/types.ts:65](https://github.com/adobe/aio-commerce-sdk/blob/aa606961236cac6f4a3cebc105d643da71d5ddb8/packages/aio-commerce-lib-webhooks/source/api/webhooks/types.ts#L65)
 
 A single entry from GET /webhooks/supportedList (SaaS only).
 
@@ -18,4 +18,4 @@ A single entry from GET /webhooks/supportedList (SaaS only).
 name: string;
 ```
 
-Defined in: [api/webhooks/types.ts:66](https://github.com/adobe/aio-commerce-sdk/blob/97b39588c9be1d7c405453e1095714aa55bea129/packages/aio-commerce-lib-webhooks/source/api/webhooks/types.ts#L66)
+Defined in: [api/webhooks/types.ts:66](https://github.com/adobe/aio-commerce-sdk/blob/aa606961236cac6f4a3cebc105d643da71d5ddb8/packages/aio-commerce-lib-webhooks/source/api/webhooks/types.ts#L66)

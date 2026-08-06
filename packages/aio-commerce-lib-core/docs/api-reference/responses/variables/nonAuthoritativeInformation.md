@@ -11,7 +11,7 @@ const nonAuthoritativeInformation: <TBody>(
 ) => SuccessResponse<TBody>;
 ```
 
-Defined in: [responses/presets.ts:82](https://github.com/adobe/aio-commerce-sdk/blob/97b39588c9be1d7c405453e1095714aa55bea129/packages/aio-commerce-lib-core/source/responses/presets.ts#L82)
+Defined in: [responses/presets.ts:82](https://github.com/adobe/aio-commerce-sdk/blob/aa606961236cac6f4a3cebc105d643da71d5ddb8/packages/aio-commerce-lib-core/source/responses/presets.ts#L82)
 
 Creates a success response with the HTTP status code 203.
 See [buildSuccessResponse](../functions/buildSuccessResponse.md) for details on the response payload.
