@@ -46,6 +46,7 @@ import type {
   CommerceAppConfig,
   CommerceAppConfigOutputModel,
 } from "#config/schema/app";
+import type { LifecycleRequestContext } from "#management/common/schema";
 import type { StepFailedEvent } from "#management/common/workflow/hooks";
 import type {
   InProgressWorkflowState,
@@ -75,14 +76,6 @@ type RuntimeActionArgs = LifecycleContext["params"] & RuntimeActionFactoryArgs;
 interface InstallationActionContext extends BaseContext {
   rawParams: RuntimeActionArgs;
 }
-
-type WorkflowRequestBody = {
-  appData: LifecycleContext["appData"];
-  commerceBaseUrl: string;
-  commerceEnv: string;
-  ioEventsUrl: string;
-  ioEventsEnv: string;
-};
 
 /** Creates a workflow state store with the given prefix. */
 function createWorkflowStore(prefix: string) {
@@ -117,7 +110,7 @@ function getStorageKey() {
  * Shared by POST /, POST /execution, POST /uninstallation, POST /uninstallation/execution.
  */
 function buildWorkflowParams(
-  body: WorkflowRequestBody,
+  body: LifecycleRequestContext,
   rawParams: RuntimeActionArgs,
 ) {
   return {
