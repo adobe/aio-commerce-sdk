@@ -13,8 +13,8 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 import { isBranchStep, isLeafStep } from "#management/common/workflow/step";
-import { webhooksStep } from "#management/installation/webhooks/branch";
-import { createWebhooksStepContext } from "#management/installation/webhooks/context";
+import { webhooksStep } from "#management/domains/webhooks/branch";
+import { createWebhooksStepContext } from "#management/domains/webhooks/context";
 import { configWithWebhooks, minimalValidConfig } from "#test/fixtures/config";
 
 describe("webhooks installation module", () => {

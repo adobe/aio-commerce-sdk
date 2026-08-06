@@ -20,7 +20,7 @@ import {
   deleteWebhookSubscriptions,
   resolveDeveloperConsoleOAuthCredentials,
   validateWebhookConflicts,
-} from "#management/installation/webhooks/helpers";
+} from "#management/domains/webhooks/helpers";
 import { configWithWebhooks, createMockMetadata } from "#test/fixtures/config";
 import { makeHttpError } from "#test/fixtures/http-error";
 import {
@@ -39,7 +39,7 @@ import {
   createMockWebhooksContext,
 } from "#test/fixtures/webhooks";
 
-import type { WebhooksExecutionContext } from "#management/installation/webhooks/context";
+import type { WebhooksExecutionContext } from "#management/domains/webhooks/context";
 
 const DEFAULT_PARAMS = DEFAULT_INSTALLATION_PARAMS;
 

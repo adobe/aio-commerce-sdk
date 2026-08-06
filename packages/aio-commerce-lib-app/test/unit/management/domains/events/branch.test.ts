@@ -24,10 +24,10 @@ vi.mock("@adobe/aio-commerce-lib-config", async () => {
 });
 
 import { isBranchStep, isLeafStep } from "#management/common/workflow/step";
-import { eventingStep } from "#management/installation/events/branch";
-import { commerceEventsStep } from "#management/installation/events/commerce";
-import { createEventsStepContext } from "#management/installation/events/context";
-import { externalEventsStep } from "#management/installation/events/external";
+import { eventingStep } from "#management/domains/events/branch";
+import { commerceEventsStep } from "#management/domains/events/commerce";
+import { createEventsStepContext } from "#management/domains/events/context";
+import { externalEventsStep } from "#management/domains/events/external";
 import {
   configWithCommerceEventing,
   configWithExternalEventing,

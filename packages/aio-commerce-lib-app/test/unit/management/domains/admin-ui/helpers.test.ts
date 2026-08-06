@@ -16,7 +16,7 @@ import {
   enableAdminUiSdk,
   registerExtension,
   unregisterExtension,
-} from "#management/installation/admin-ui/helpers";
+} from "#management/domains/admin-ui/helpers";
 import { createMockAdminUiContext } from "#test/fixtures/admin-ui";
 import { makeHttpError } from "#test/fixtures/http-error";
 import { createMockLogger } from "#test/fixtures/installation";

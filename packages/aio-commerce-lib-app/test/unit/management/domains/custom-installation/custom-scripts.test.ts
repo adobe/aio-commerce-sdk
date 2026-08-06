@@ -13,7 +13,7 @@
 import { describe, expect, test, vi } from "vitest";
 
 import { hasCustomInstallationSteps } from "#config/index";
-import { createCustomScriptSteps } from "#management/installation/custom-installation/custom-scripts";
+import { createCustomScriptSteps } from "#management/domains/custom-installation/custom-scripts";
 import {
   configWithCustomInstallationSteps,
   minimalValidConfig,

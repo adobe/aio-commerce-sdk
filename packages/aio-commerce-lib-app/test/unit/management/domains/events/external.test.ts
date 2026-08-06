@@ -13,7 +13,7 @@
 import { afterEach, describe, expect, test, vi } from "vitest";
 
 import { isLeafStep } from "#management/common/workflow/step";
-import { externalEventsStep } from "#management/installation/events/external";
+import { externalEventsStep } from "#management/domains/events/external";
 import {
   configWithCommerceEventing,
   configWithExternalEventing,
@@ -61,17 +61,17 @@ describe("externalEventsStep orchestration", () => {
       setSystemConfigByKey: vi.fn().mockResolvedValue(undefined),
     };
 
-    vi.doMock("#management/installation/events/helpers", async () => {
+    vi.doMock("#management/domains/events/helpers", async () => {
       const actual = await vi.importActual<
-        typeof import("#management/installation/events/helpers")
-      >("#management/installation/events/helpers");
+        typeof import("#management/domains/events/helpers")
+      >("#management/domains/events/helpers");
       return { ...actual, ...helperMocks };
     });
 
-    vi.doMock("#management/installation/events/utils", async () => {
+    vi.doMock("#management/domains/events/utils", async () => {
       const actual = await vi.importActual<
-        typeof import("#management/installation/events/utils")
-      >("#management/installation/events/utils");
+        typeof import("#management/domains/events/utils")
+      >("#management/domains/events/utils");
       return { ...actual, ...utilsMocks };
     });
 
@@ -85,7 +85,7 @@ describe("externalEventsStep orchestration", () => {
       };
     });
 
-    const module = await import("#management/installation/events/external");
+    const module = await import("#management/domains/events/external");
     return {
       configMocks,
       externalEventsStep: module.externalEventsStep,
@@ -97,8 +97,8 @@ describe("externalEventsStep orchestration", () => {
   afterEach(() => {
     vi.clearAllMocks();
     vi.resetModules();
-    vi.doUnmock("#management/installation/events/helpers");
-    vi.doUnmock("#management/installation/events/utils");
+    vi.doUnmock("#management/domains/events/helpers");
+    vi.doUnmock("#management/domains/events/utils");
     vi.doUnmock("@adobe/aio-commerce-lib-config");
   });
 
@@ -296,17 +296,17 @@ describe("externalEventsStep uninstall orchestration", () => {
       setSystemConfigByKey: vi.fn().mockResolvedValue(undefined),
     };
 
-    vi.doMock("#management/installation/events/helpers", async () => {
+    vi.doMock("#management/domains/events/helpers", async () => {
       const actual = await vi.importActual<
-        typeof import("#management/installation/events/helpers")
-      >("#management/installation/events/helpers");
+        typeof import("#management/domains/events/helpers")
+      >("#management/domains/events/helpers");
       return { ...actual, ...helperMocks };
     });
 
-    vi.doMock("#management/installation/events/utils", async () => {
+    vi.doMock("#management/domains/events/utils", async () => {
       const actual = await vi.importActual<
-        typeof import("#management/installation/events/utils")
-      >("#management/installation/events/utils");
+        typeof import("#management/domains/events/utils")
+      >("#management/domains/events/utils");
       return { ...actual, ...utilsMocks };
     });
 
@@ -317,7 +317,7 @@ describe("externalEventsStep uninstall orchestration", () => {
       return { ...actual, ...configMocks };
     });
 
-    const module = await import("#management/installation/events/external");
+    const module = await import("#management/domains/events/external");
     return {
       configMocks,
       externalEventsStep: module.externalEventsStep,
@@ -328,8 +328,8 @@ describe("externalEventsStep uninstall orchestration", () => {
   afterEach(() => {
     vi.clearAllMocks();
     vi.resetModules();
-    vi.doUnmock("#management/installation/events/helpers");
-    vi.doUnmock("#management/installation/events/utils");
+    vi.doUnmock("#management/domains/events/helpers");
+    vi.doUnmock("#management/domains/events/utils");
     vi.doUnmock("@adobe/aio-commerce-lib-config");
   });
 

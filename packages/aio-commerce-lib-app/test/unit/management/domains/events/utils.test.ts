@@ -23,7 +23,7 @@ import {
   getNamespacedEvent,
   makeWorkspaceConfig,
   sanitizeEventingIdentifier,
-} from "#management/installation/events/utils";
+} from "#management/domains/events/utils";
 import { createMockMetadata } from "#test/fixtures/config";
 import {
   createMockCommerceEventProvider,
@@ -536,7 +536,7 @@ describe("removeStoredEventProviders", () => {
       return { ...actual, ...configMocks };
     });
 
-    const utilsModule = await import("#management/installation/events/utils");
+    const utilsModule = await import("#management/domains/events/utils");
 
     return {
       configMocks,

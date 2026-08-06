@@ -52,7 +52,7 @@ describe("createWebhooksStepContext", () => {
     }));
 
     const { createWebhooksStepContext } = await import(
-      "#management/installation/webhooks/context"
+      "#management/domains/webhooks/context"
     );
 
     const installation = createMockInstallationContext();

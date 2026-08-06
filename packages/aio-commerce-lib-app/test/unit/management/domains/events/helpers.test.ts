@@ -18,7 +18,7 @@ import {
   offboardIoEvents,
   onboardCommerceEventing,
   onboardIoEvents,
-} from "#management/installation/events/helpers";
+} from "#management/domains/events/helpers";
 import {
   COMMERCE_PROVIDER_TYPE,
   generateInstanceId,
@@ -26,7 +26,7 @@ import {
   getIoEventCode,
   getNamespacedEvent,
   getRegistrationName,
-} from "#management/installation/events/utils";
+} from "#management/domains/events/utils";
 import {
   createCommerceEventConfig,
   createMockMetadata,
@@ -49,12 +49,12 @@ import {
 import { makeHttpError } from "#test/fixtures/http-error";
 
 import type { EventProvider } from "#config/schema/eventing";
-import type { EventsExecutionContext } from "#management/installation/events/context";
+import type { EventsExecutionContext } from "#management/domains/events/context";
 import type {
   EventsDataFromIo,
   OnboardCommerceEventingParams,
   OnboardIoEventsParams,
-} from "#management/installation/events/types";
+} from "#management/domains/events/types";
 
 type MockCommerceEvent = ReturnType<
   typeof createCommerceEventConfig
