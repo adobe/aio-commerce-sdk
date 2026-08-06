@@ -10,6 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
+import { CommerceEnvSchema } from "@adobe/aio-commerce-lib-core/commerce";
 import { nonEmptyStringValueSchema } from "@aio-commerce-sdk/common-utils/valibot";
 import * as v from "valibot";
 
@@ -27,3 +28,20 @@ export const AppDataSchema = v.object({
 
 /** Type for Adobe I/O app credentials. */
 export type AppData = v.InferOutput<typeof AppDataSchema>;
+
+/**
+ * Schema for the request body shared by lifecycle runtime actions
+ * (installation, uninstallation, and upgrade).
+ */
+export const LifecycleRequestContextSchema = v.object({
+  appData: AppDataSchema,
+  commerceBaseUrl: v.string(),
+  commerceEnv: CommerceEnvSchema,
+  ioEventsEnv: v.string(),
+  ioEventsUrl: v.string(),
+});
+
+/** The request context passed to lifecycle runtime actions. */
+export type LifecycleRequestContext = v.InferOutput<
+  typeof LifecycleRequestContextSchema
+>;

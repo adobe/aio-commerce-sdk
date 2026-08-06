@@ -23,8 +23,27 @@ import {
   validateWebhookConflicts,
 } from "./helpers";
 
+import type { WebhookSubscribeParams } from "@adobe/aio-commerce-lib-webhooks/api";
 import type { WebhooksConfig } from "#config/schema/webhooks";
-import type { WebhooksExecutionContext } from "./context";
+import type { ValidationExecutionContext } from "#management/common/workflow/step";
+import type {
+  UpgradeDomainPlan,
+  UpgradeExecutionContext,
+  UpgradeExecutionResult,
+  UpgradePlanningInput,
+  UpgradePlanningResult,
+} from "#management/common/workflow/upgrade";
+import type { WebhooksExecutionContext, WebhooksStepContext } from "./context";
+import type { WebhookIdentity, WebhookSubscriptionResult } from "./helpers";
+
+/** The upgrade plan the webhooks domain proposes: subscription changes keyed by webhook identity. */
+type WebhookUpgradePlan = UpgradeDomainPlan<
+  WebhookSubscribeParams,
+  WebhookIdentity
+>;
+
+/** The snapshot data the webhooks domain persists after an upgrade. */
+type WebhookUpgradeSnapshotData = WebhookSubscriptionResult;
 
 const subscriptionsStep = defineLeafStep({
   install: (config: WebhooksConfig, context: WebhooksExecutionContext) =>
@@ -41,11 +60,43 @@ const subscriptionsStep = defineLeafStep({
   },
   name: "subscriptions",
 
+  planUpgrade: (
+    _input: UpgradePlanningInput<
+      WebhooksConfig,
+      WebhookUpgradeSnapshotData,
+      WebhookIdentity
+    >,
+    _context: ValidationExecutionContext<WebhooksStepContext>,
+  ): Promise<UpgradePlanningResult<WebhookUpgradePlan>> => {
+    // TODO(CEXT-6527): implement webhook upgrade planning
+    return Promise.resolve({
+      kind: "planned",
+      plan: {
+        domain: "webhooks",
+        operations: [],
+        possibleCleanupResources: [],
+      },
+    });
+  },
+
   uninstall: async (
     config: WebhooksConfig,
     context: WebhooksExecutionContext,
   ) => {
     await deleteWebhookSubscriptions(config, context);
+  },
+
+  upgrade: (
+    _plan: WebhookUpgradePlan,
+    _context: UpgradeExecutionContext<WebhooksStepContext>,
+  ): Promise<
+    UpgradeExecutionResult<WebhookUpgradeSnapshotData, WebhookIdentity>
+  > => {
+    // TODO(CEXT-6527): implement webhook upgrade execution
+    return Promise.resolve({
+      resolvedCleanupResources: [],
+      snapshotData: null,
+    });
   },
 
   validate: (config: WebhooksConfig, context: WebhooksExecutionContext) =>

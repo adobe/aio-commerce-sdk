@@ -14,6 +14,8 @@ import type { RuntimeActionParams } from "@adobe/aio-commerce-lib-core/params";
 import type AioLogger from "@adobe/aio-lib-core-logging";
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 import type { AppData } from "../schema";
+import type { WorkflowData } from "./types";
+import type { UpgradeCapability, UpgradeDomainPlan } from "./upgrade";
 
 // Defined here (not in validation.ts) to avoid circular imports, since step
 // validate handlers need this type and validation.ts imports from step.ts.
@@ -107,12 +109,19 @@ export type StepBase<
   when?: (config: CommerceAppConfigOutputModel) => config is TConfig;
 };
 
-/** A leaf step that executes work (no children). */
+/**
+ * A leaf step that executes work (no children).
+ *
+ * May optionally implement the upgrade capability; `planUpgrade` and `upgrade`
+ * are meant to be provided together (plan the changes, then apply them).
+ */
 export type LeafStep<
   TName extends string = string,
   TConfig extends CommerceAppConfigOutputModel = CommerceAppConfigOutputModel,
   TStepCtx extends Record<string, unknown> = Record<string, unknown>,
   TOutput = unknown,
+  TPlan extends UpgradeDomainPlan = UpgradeDomainPlan,
+  TSnapshotData extends WorkflowData = WorkflowData,
 > = StepBase<TName, TConfig> & {
   type: "leaf";
 
@@ -141,7 +150,7 @@ export type LeafStep<
     config: TConfig,
     context: ExecutionContext<TStepCtx>,
   ) => void | Promise<void>;
-};
+} & Partial<UpgradeCapability<TConfig, TStepCtx, TPlan, TSnapshotData>>;
 
 /** A branch step that contains children (no execution). */
 export type BranchStep<
@@ -188,9 +197,11 @@ export type AnyStep = {
   install?: (config: any, context: any) => unknown | Promise<unknown>;
   meta: StepMeta;
   name: string;
+  planUpgrade?: (input: any, context: any) => unknown | Promise<unknown>;
   type: "leaf" | "branch";
 
   uninstall?: (config: any, context: any) => void | Promise<void>;
+  upgrade?: (plan: any, context: any) => unknown | Promise<unknown>;
 
   validate?: (
     config: any,
@@ -217,7 +228,12 @@ export type LeafStepOptions<
   TConfig extends CommerceAppConfigOutputModel,
   TStepCtx extends Record<string, unknown> = Record<string, unknown>,
   TOutput = unknown,
-> = Omit<LeafStep<TName, TConfig, TStepCtx, TOutput>, "type">;
+  TPlan extends UpgradeDomainPlan = UpgradeDomainPlan,
+  TSnapshotData extends WorkflowData = WorkflowData,
+> = Omit<
+  LeafStep<TName, TConfig, TStepCtx, TOutput, TPlan, TSnapshotData>,
+  "type"
+>;
 
 /** Options for defining a branch step. */
 export type BranchStepOptions<
@@ -247,16 +263,29 @@ export function defineLeafStep<
   TConfig extends CommerceAppConfigOutputModel,
   TStepCtx extends Record<string, unknown> = Record<string, unknown>,
   TOutput = unknown,
->(options: LeafStepOptions<TName, TConfig, TStepCtx, TOutput>) {
+  TPlan extends UpgradeDomainPlan = UpgradeDomainPlan,
+  TSnapshotData extends WorkflowData = WorkflowData,
+>(
+  options: LeafStepOptions<
+    TName,
+    TConfig,
+    TStepCtx,
+    TOutput,
+    TPlan,
+    TSnapshotData
+  >,
+) {
   return {
     install: options.install,
     meta: options.meta,
     name: options.name,
+    planUpgrade: options.planUpgrade,
     type: "leaf",
     uninstall: options.uninstall,
+    upgrade: options.upgrade,
     validate: options.validate,
     when: options.when,
-  } satisfies LeafStep<TName, TConfig, TStepCtx, TOutput>;
+  } satisfies LeafStep<TName, TConfig, TStepCtx, TOutput, TPlan, TSnapshotData>;
 }
 
 /**

@@ -10,7 +10,6 @@
  * governing permissions and limitations under the License.
  */
 
-import { LifecycleRequestContextSchema } from "#management/common/schema";
+/** biome-ignore-all lint/performance/noBarrelFile: Convenience entrypoint for the upgrade module */
 
-/** Request body for POST / and POST /validation — the shared lifecycle request shape. */
-export const InstallationRequestBodySchema = LifecycleRequestContextSchema;
+export type * from "./types";
