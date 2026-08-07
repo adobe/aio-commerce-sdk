@@ -48,4 +48,3 @@ export type {
   RunUninstallationOptions,
   RunValidationOptions,
 } from "./installation/runner";
-export type * from "./upgrade";
