@@ -13,10 +13,8 @@
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 import type { ExecutionContext, ValidationExecutionContext } from "./step";
 
-// Deliberately not the engine's `ValidationIssue`: planning issues are always
-// blocking (no severity gradation) and carry `domain` for cross-domain aggregation.
 /** A planning problem that prevents a domain from producing an executable plan. */
-export type UpgradeIssue = {
+export type PlanningIssue = {
   /** The domain that raised the issue. */
   domain: string;
 
@@ -28,10 +26,10 @@ export type UpgradeIssue = {
 };
 
 /**
- * A single change a domain proposes to apply during an upgrade, discriminated
- * by `kind`: `add` creates a resource, `update` mutates one, `remove` deletes one.
+ * A single change a domain proposes to apply to a resource, discriminated by
+ * `kind`: `add` creates a resource, `update` mutates one, `remove` deletes one.
  */
-export type UpgradeOperation<TValue> = {
+export type ResourceOperation<TValue> = {
   /** Stable identifier of the operation within its plan. */
   id: string;
 
@@ -52,8 +50,8 @@ export type CleanupResource<TIdentity = Record<string, unknown>> = {
   identity: TIdentity;
 };
 
-/** A domain's proposed set of operations for an upgrade, plus resources to reconcile. */
-export type UpgradeDomainPlan<
+/** A domain's proposed set of resource operations, plus resources to reconcile. */
+export type DomainPlan<
   TValue = unknown,
   TCleanupIdentity = Record<string, unknown>,
 > = {
@@ -61,34 +59,34 @@ export type UpgradeDomainPlan<
   domain: string;
 
   /** The operations the domain proposes to apply. */
-  operations: UpgradeOperation<TValue>[];
+  operations: ResourceOperation<TValue>[];
 
   /** Resources that may need cleanup as a result of applying the plan. */
   possibleCleanupResources: CleanupResource<TCleanupIdentity>[];
 };
 
-/** The execution context passed to a step's `upgrade` handler. */
-export type UpgradeExecutionContext<
+/** The execution context passed to a step's `apply` handler. */
+export type ApplyContext<
   TStepCtx extends Record<string, unknown> = Record<string, unknown>,
 > = ExecutionContext<TStepCtx> & {
-  /** Identifier of the upgrade attempt currently executing. */
+  /** Identifier of the lifecycle attempt currently executing. */
   attemptId: string;
 };
 
-/** Inputs a domain needs to plan an upgrade: the prior baseline and the target. */
-export type UpgradePlanningInput<TConfig, TSnapshotData, TCleanupIdentity> = {
+/** Inputs a domain needs to plan its changes: the prior baseline and the target. */
+export type PlanningInput<TConfig, TSnapshotData, TCleanupIdentity> = {
   /** The last successful state (config and snapshot data), or `null` on first run. */
   baseline: { config: TConfig; data: TSnapshotData } | null;
 
-  /** The target configuration to upgrade to, or `null` when none is available. */
+  /** The target configuration to converge to, or `null` when none is available. */
   targetConfig: TConfig | null;
 
   /** Cleanup resources still pending resolution from prior attempts. */
   unresolvedCleanupResources: CleanupResource<TCleanupIdentity>[];
 };
 
-/** The outcome a domain reports after executing its upgrade. */
-export type UpgradeExecutionResult<TSnapshotData, TCleanupIdentity> = {
+/** The outcome a domain reports after applying its plan. */
+export type ApplyResult<TSnapshotData, TCleanupIdentity> = {
   /** The snapshot data describing the resulting state, or `null` if none. */
   snapshotData: TSnapshotData | null;
 
@@ -100,41 +98,35 @@ export type UpgradeExecutionResult<TSnapshotData, TCleanupIdentity> = {
  * The outcome of a domain's planning pass, discriminated by `kind`: `planned`
  * carries the executable plan, `blocked` carries the issues preventing one.
  */
-export type UpgradePlanningResult<
-  TPlan extends UpgradeDomainPlan = UpgradeDomainPlan,
-> =
+export type PlanningResult<TPlan extends DomainPlan = DomainPlan> =
   | { kind: "planned"; plan: TPlan }
-  | { kind: "blocked"; issues: UpgradeIssue[] };
+  | { kind: "blocked"; issues: PlanningIssue[] };
 
-/** Infers the cleanup identity type carried by an {@link UpgradeDomainPlan}. */
+/** Infers the cleanup identity type carried by a {@link DomainPlan}. */
 export type CleanupIdentityOf<TPlan> =
   // biome-ignore lint/suspicious/noExplicitAny: Only the identity is inferred here, so the value type is irrelevant.
-  TPlan extends UpgradeDomainPlan<any, infer TCleanupIdentity>
+  TPlan extends DomainPlan<any, infer TCleanupIdentity>
     ? TCleanupIdentity
     : never;
 
 /**
- * The upgrade behavior a step contributes: planning proposes a domain plan (or
- * reports blocking issues) using a side-effect-free context, and execution
- * applies the plan under an attempt-scoped context.
+ * The resource-reconciliation behavior a step contributes: planning proposes a
+ * domain plan (or reports blocking issues) using a side-effect-free context, and
+ * applying executes the plan under an attempt-scoped context.
  */
-export type UpgradeCapability<
+export type ResourceCapability<
   TConfig extends CommerceAppConfigOutputModel,
   TStepCtx extends Record<string, unknown>,
-  TPlan extends UpgradeDomainPlan,
+  TPlan extends DomainPlan,
   TSnapshotData,
 > = {
-  planUpgrade: (
-    input: UpgradePlanningInput<
-      TConfig,
-      TSnapshotData,
-      CleanupIdentityOf<TPlan>
-    >,
+  plan: (
+    input: PlanningInput<TConfig, TSnapshotData, CleanupIdentityOf<TPlan>>,
     context: ValidationExecutionContext<TStepCtx>,
-  ) => Promise<UpgradePlanningResult<TPlan>>;
+  ) => Promise<PlanningResult<TPlan>>;
 
-  upgrade: (
+  apply: (
     plan: TPlan,
-    context: UpgradeExecutionContext<TStepCtx>,
-  ) => Promise<UpgradeExecutionResult<TSnapshotData, CleanupIdentityOf<TPlan>>>;
+    context: ApplyContext<TStepCtx>,
+  ) => Promise<ApplyResult<TSnapshotData, CleanupIdentityOf<TPlan>>>;
 };

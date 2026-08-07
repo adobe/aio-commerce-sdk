@@ -25,27 +25,34 @@ import {
 
 import type { WebhookSubscribeParams } from "@adobe/aio-commerce-lib-webhooks/api";
 import type { WebhooksConfig } from "#config/schema/webhooks";
-import type { ValidationExecutionContext } from "#management/common/workflow/step";
 import type {
-  UpgradeDomainPlan,
-  UpgradeExecutionContext,
-  UpgradeExecutionResult,
-  UpgradePlanningInput,
-  UpgradePlanningResult,
-} from "#management/common/workflow/upgrade";
+  ApplyContext,
+  ApplyResult,
+  DomainPlan,
+  PlanningInput,
+  PlanningResult,
+} from "#management/common/workflow/resource";
+import type { ValidationExecutionContext } from "#management/common/workflow/step";
 import type { WebhooksExecutionContext, WebhooksStepContext } from "./context";
 import type { WebhookIdentity, WebhookSubscriptionResult } from "./helpers";
 
-/** The upgrade plan the webhooks domain proposes: subscription changes keyed by webhook identity. */
-type WebhookUpgradePlan = UpgradeDomainPlan<
-  WebhookSubscribeParams,
-  WebhookIdentity
->;
+/** The plan the webhooks domain proposes: subscription changes keyed by webhook identity. */
+type WebhookDomainPlan = DomainPlan<WebhookSubscribeParams, WebhookIdentity>;
 
-/** The snapshot data the webhooks domain persists after an upgrade. */
-type WebhookUpgradeSnapshotData = WebhookSubscriptionResult;
+/** The snapshot data the webhooks domain persists after applying its plan. */
+type WebhookSnapshotData = WebhookSubscriptionResult;
 
 const subscriptionsStep = defineLeafStep({
+  apply: (
+    _plan: WebhookDomainPlan,
+    _context: ApplyContext<WebhooksStepContext>,
+  ): Promise<ApplyResult<WebhookSnapshotData, WebhookIdentity>> => {
+    // TODO(CEXT-6527): implement webhook resource apply
+    return Promise.resolve({
+      resolvedCleanupResources: [],
+      snapshotData: null,
+    });
+  },
   install: (config: WebhooksConfig, context: WebhooksExecutionContext) =>
     createWebhookSubscriptions(config, context),
   meta: {
@@ -60,15 +67,11 @@ const subscriptionsStep = defineLeafStep({
   },
   name: "subscriptions",
 
-  planUpgrade: (
-    _input: UpgradePlanningInput<
-      WebhooksConfig,
-      WebhookUpgradeSnapshotData,
-      WebhookIdentity
-    >,
+  plan: (
+    _input: PlanningInput<WebhooksConfig, WebhookSnapshotData, WebhookIdentity>,
     _context: ValidationExecutionContext<WebhooksStepContext>,
-  ): Promise<UpgradePlanningResult<WebhookUpgradePlan>> => {
-    // TODO(CEXT-6527): implement webhook upgrade planning
+  ): Promise<PlanningResult<WebhookDomainPlan>> => {
+    // TODO(CEXT-6527): implement webhook resource planning
     return Promise.resolve({
       kind: "planned",
       plan: {
@@ -84,19 +87,6 @@ const subscriptionsStep = defineLeafStep({
     context: WebhooksExecutionContext,
   ) => {
     await deleteWebhookSubscriptions(config, context);
-  },
-
-  upgrade: (
-    _plan: WebhookUpgradePlan,
-    _context: UpgradeExecutionContext<WebhooksStepContext>,
-  ): Promise<
-    UpgradeExecutionResult<WebhookUpgradeSnapshotData, WebhookIdentity>
-  > => {
-    // TODO(CEXT-6527): implement webhook upgrade execution
-    return Promise.resolve({
-      resolvedCleanupResources: [],
-      snapshotData: null,
-    });
   },
 
   validate: (config: WebhooksConfig, context: WebhooksExecutionContext) =>

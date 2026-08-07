@@ -69,18 +69,6 @@ export type {
   WorkflowStateMetadata,
 } from "./types";
 export type {
-  CleanupIdentityOf,
-  CleanupResource,
-  UpgradeCapability,
-  UpgradeDomainPlan,
-  UpgradeExecutionContext,
-  UpgradeExecutionResult,
-  UpgradeIssue,
-  UpgradeOperation,
-  UpgradePlanningInput,
-  UpgradePlanningResult,
-} from "./upgrade";
-export type {
   StepValidationResult,
   ValidateStepTreeOptions,
   ValidationResult,

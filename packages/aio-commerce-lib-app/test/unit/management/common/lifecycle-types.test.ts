@@ -16,22 +16,26 @@ import { defineLeafStep } from "#management/common/workflow/step";
 
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 import type {
+  LifecycleAttempt,
+  LifecycleOperation,
+  SuccessfulResult,
+} from "#management/common/orchestration";
+import type {
+  ApplyContext,
+  ApplyResult,
+  CleanupIdentityOf,
+  CleanupResource,
+  DomainPlan,
+  PlanningInput,
+  PlanningIssue,
+  PlanningResult,
+  ResourceOperation,
+} from "#management/common/workflow/resource";
+import type {
   LeafStep,
   ValidationExecutionContext,
 } from "#management/common/workflow/step";
 import type { WorkflowError } from "#management/common/workflow/types";
-import type {
-  CleanupIdentityOf,
-  CleanupResource,
-  UpgradeDomainPlan,
-  UpgradeExecutionContext,
-  UpgradeExecutionResult,
-  UpgradeIssue,
-  UpgradeOperation,
-  UpgradePlanningInput,
-  UpgradePlanningResult,
-} from "#management/common/workflow/upgrade";
-import type { StoredUpgradeAttempt } from "#management/upgrade/types";
 
 // Domain-specific stand-ins the shared surface intentionally does not know about.
 // The real webhook types live in their domain package; the point here is only to
@@ -46,9 +50,9 @@ type WebhookIdentity = {
   webhookName: string;
 };
 
-type WebhookPlan = UpgradeDomainPlan<Partial<WebhookEntry>, WebhookIdentity>;
+type WebhookPlan = DomainPlan<Partial<WebhookEntry>, WebhookIdentity>;
 
-type WebhookUpgradeStep = LeafStep<
+type WebhookLeafStep = LeafStep<
   "webhooks",
   CommerceAppConfigOutputModel,
   { webhookClient: { apply: () => void } },
@@ -57,24 +61,24 @@ type WebhookUpgradeStep = LeafStep<
   { webhooks: WebhookEntry[] }
 >;
 
-describe("upgrade type surface", () => {
+describe("lifecycle type surface", () => {
   test("CleanupIdentityOf infers the plan's cleanup identity", () => {
     expectTypeOf<
       CleanupIdentityOf<WebhookPlan>
     >().toEqualTypeOf<WebhookIdentity>();
   });
 
-  test("UpgradeOperation discriminates on kind", () => {
-    const add: UpgradeOperation<Partial<WebhookEntry>> = {
+  test("ResourceOperation discriminates on kind", () => {
+    const add: ResourceOperation<Partial<WebhookEntry>> = {
       after: { name: "orders" },
       id: "op-1",
       kind: "add",
       label: "Add order webhook",
     };
-    expectTypeOf(add).toMatchTypeOf<UpgradeOperation<Partial<WebhookEntry>>>();
+    expectTypeOf(add).toMatchTypeOf<ResourceOperation<Partial<WebhookEntry>>>();
 
     // "update" carries both before and after.
-    const update: UpgradeOperation<Partial<WebhookEntry>> = {
+    const update: ResourceOperation<Partial<WebhookEntry>> = {
       after: { name: "orders", url: "https://example.test" },
       before: { name: "orders" },
       id: "op-2",
@@ -82,10 +86,10 @@ describe("upgrade type surface", () => {
       label: "Update order webhook",
     };
     expectTypeOf(update).toMatchTypeOf<
-      UpgradeOperation<Partial<WebhookEntry>>
+      ResourceOperation<Partial<WebhookEntry>>
     >();
 
-    const invalid: UpgradeOperation<Partial<WebhookEntry>> = {
+    const invalid: ResourceOperation<Partial<WebhookEntry>> = {
       after: { name: "orders" },
       // @ts-expect-error - "add" operations do not carry a `before` value.
       before: { name: "orders" },
@@ -97,44 +101,42 @@ describe("upgrade type surface", () => {
   });
 
   test("LeafStep threads the domain generics through the optional capability", () => {
-    expectTypeOf<WebhookUpgradeStep>().toMatchTypeOf<{ type: "leaf" }>();
+    expectTypeOf<WebhookLeafStep>().toMatchTypeOf<{ type: "leaf" }>();
 
-    // The upgrade handlers are optional members of a leaf step.
-    type PlanUpgrade = NonNullable<WebhookUpgradeStep["planUpgrade"]>;
-    type Upgrade = NonNullable<WebhookUpgradeStep["upgrade"]>;
+    // The resource-capability handlers are optional members of a leaf step.
+    type Plan = NonNullable<WebhookLeafStep["plan"]>;
+    type Apply = NonNullable<WebhookLeafStep["apply"]>;
 
-    // planUpgrade receives the specialized planning input and returns a
-    // discriminated plan-or-issues result.
-    expectTypeOf<PlanUpgrade>()
+    // plan receives the specialized planning input and returns a discriminated
+    // plan-or-issues result.
+    expectTypeOf<Plan>()
       .parameter(0)
       .toEqualTypeOf<
-        UpgradePlanningInput<
+        PlanningInput<
           CommerceAppConfigOutputModel,
           { webhooks: WebhookEntry[] },
           WebhookIdentity
         >
       >();
-    expectTypeOf<PlanUpgrade>().returns.resolves.toEqualTypeOf<
-      UpgradePlanningResult<WebhookPlan>
+    expectTypeOf<Plan>().returns.resolves.toEqualTypeOf<
+      PlanningResult<WebhookPlan>
     >();
 
-    // planUpgrade runs under the side-effect-free validation context (no customScripts).
-    expectTypeOf<PlanUpgrade>()
+    // plan runs under the side-effect-free validation context (no customScripts).
+    expectTypeOf<Plan>()
       .parameter(1)
       .toEqualTypeOf<
         ValidationExecutionContext<{ webhookClient: { apply: () => void } }>
       >();
 
-    // upgrade receives the specialized plan under the attempt-scoped context and
+    // apply receives the specialized plan under the attempt-scoped context and
     // returns the specialized result.
-    expectTypeOf<Upgrade>().parameter(0).toEqualTypeOf<WebhookPlan>();
-    expectTypeOf<Upgrade>()
+    expectTypeOf<Apply>().parameter(0).toEqualTypeOf<WebhookPlan>();
+    expectTypeOf<Apply>()
       .parameter(1)
-      .toEqualTypeOf<
-        UpgradeExecutionContext<{ webhookClient: { apply: () => void } }>
-      >();
-    expectTypeOf<Upgrade>().returns.resolves.toEqualTypeOf<
-      UpgradeExecutionResult<{ webhooks: WebhookEntry[] }, WebhookIdentity>
+      .toEqualTypeOf<ApplyContext<{ webhookClient: { apply: () => void } }>>();
+    expectTypeOf<Apply>().returns.resolves.toEqualTypeOf<
+      ApplyResult<{ webhooks: WebhookEntry[] }, WebhookIdentity>
     >();
   });
 
@@ -144,35 +146,51 @@ describe("upgrade type surface", () => {
     >().toEqualTypeOf<WebhookIdentity>();
   });
 
-  test("StoredUpgradeAttempt.failure reuses the engine WorkflowError", () => {
-    expectTypeOf<StoredUpgradeAttempt["failure"]>().toEqualTypeOf<
-      WorkflowError<{ operationId?: string }> | undefined
-    >();
+  test("LifecycleAttempt discriminates result and failure on status", () => {
+    // A succeeded attempt carries its result; a failed attempt carries its
+    // failure (reusing the engine WorkflowError). Neither leaks onto the other.
+    expectTypeOf<
+      Extract<LifecycleAttempt, { status: "succeeded" }>["result"]
+    >().toEqualTypeOf<SuccessfulResult>();
+    expectTypeOf<
+      Extract<LifecycleAttempt, { status: "failed" }>["failure"]
+    >().toEqualTypeOf<WorkflowError<{ operationId?: string }>>();
   });
 
-  test("UpgradePlanningResult discriminates on kind", () => {
-    type Result = UpgradePlanningResult<WebhookPlan>;
+  test("LifecycleAttempt records the lifecycle operation", () => {
+    expectTypeOf<
+      LifecycleAttempt["operation"]
+    >().toEqualTypeOf<LifecycleOperation>();
+  });
+
+  test("PlanningResult discriminates on kind", () => {
+    type Result = PlanningResult<WebhookPlan>;
     expectTypeOf<
       Extract<Result, { kind: "planned" }>["plan"]
     >().toEqualTypeOf<WebhookPlan>();
     expectTypeOf<
       Extract<Result, { kind: "blocked" }>["issues"]
-    >().toEqualTypeOf<UpgradeIssue[]>();
+    >().toEqualTypeOf<PlanningIssue[]>();
   });
 
-  test("defineLeafStep infers the upgrade generics from the handlers", () => {
+  test("defineLeafStep infers the resource generics from the handlers", () => {
     const step = defineLeafStep({
+      apply: (
+        _plan: WebhookPlan,
+        _context: ApplyContext,
+      ): Promise<ApplyResult<{ webhooks: WebhookEntry[] }, WebhookIdentity>> =>
+        Promise.resolve({ resolvedCleanupResources: [], snapshotData: null }),
       install: (_config: CommerceAppConfigOutputModel) => undefined,
       meta: { install: { label: "Demo" } },
       name: "demo",
-      planUpgrade: (
-        _input: UpgradePlanningInput<
+      plan: (
+        _input: PlanningInput<
           CommerceAppConfigOutputModel,
           { webhooks: WebhookEntry[] },
           WebhookIdentity
         >,
         _context: ValidationExecutionContext,
-      ): Promise<UpgradePlanningResult<WebhookPlan>> =>
+      ): Promise<PlanningResult<WebhookPlan>> =>
         Promise.resolve({
           kind: "planned",
           plan: {
@@ -181,20 +199,13 @@ describe("upgrade type surface", () => {
             possibleCleanupResources: [],
           },
         }),
-      upgrade: (
-        _plan: WebhookPlan,
-        _context: UpgradeExecutionContext,
-      ): Promise<
-        UpgradeExecutionResult<{ webhooks: WebhookEntry[] }, WebhookIdentity>
-      > =>
-        Promise.resolve({ resolvedCleanupResources: [], snapshotData: null }),
     });
 
-    expectTypeOf<NonNullable<typeof step.upgrade>>()
+    expectTypeOf<NonNullable<typeof step.apply>>()
       .parameter(0)
       .toEqualTypeOf<WebhookPlan>();
     expectTypeOf<
-      NonNullable<typeof step.planUpgrade>
-    >().returns.resolves.toEqualTypeOf<UpgradePlanningResult<WebhookPlan>>();
+      NonNullable<typeof step.plan>
+    >().returns.resolves.toEqualTypeOf<PlanningResult<WebhookPlan>>();
   });
 });

@@ -10,27 +10,28 @@
  * governing permissions and limitations under the License.
  */
 
-import type { LifecycleRequestContext } from "#management/common/schema";
 import type {
-  ExecutionStatus,
+  CleanupResource,
+  DomainPlan,
+} from "#management/common/workflow/resource";
+import type {
   StepStatus,
   SucceededWorkflowState,
   WorkflowError,
 } from "#management/common/workflow/types";
-import type {
-  CleanupResource,
-  UpgradeDomainPlan,
-} from "#management/common/workflow/upgrade";
 
-/** A resolved, executable upgrade plan spanning every participating domain. */
-export type UpgradePlan = {
+/** The kind of lifecycle operation an orchestration run performs. */
+export type LifecycleOperation = "install" | "upgrade" | "uninstall";
+
+/** A resolved, executable plan spanning every participating domain. */
+export type LifecyclePlan = {
   /** Unique plan identifier. */
   id: string;
 
   /** Version of the action that produced the plan. */
   actionVersion: string;
 
-  /** The state the plan upgrades from. */
+  /** The state the plan transitions from. */
   source: {
     /** Identifier of the baseline snapshot. */
     snapshotId: string;
@@ -39,58 +40,65 @@ export type UpgradePlan = {
     appVersion: string;
   };
 
-  /** The state the plan upgrades to. */
+  /** The state the plan transitions to. */
   target: {
-    /** App version being upgraded to. */
+    /** App version being transitioned to. */
     appVersion: string;
   };
 
-  /** Per-domain plans that compose the upgrade. */
-  domains: UpgradeDomainPlan[];
+  /** Per-domain plans that compose the operation. */
+  domains: DomainPlan[];
 };
 
-/** The result recorded when an upgrade attempt succeeds. */
-export type SuccessfulUpgradeResult = {
-  /** Identifier of the snapshot captured after the upgrade. */
+/** The result recorded when a lifecycle attempt succeeds. */
+export type SuccessfulResult = {
+  /** Identifier of the snapshot captured after the operation. */
   snapshotId: string;
 
-  /** App version the upgrade landed on. */
+  /** App version the operation landed on. */
   appVersion: string;
 };
 
-/** A persisted record of a single upgrade attempt and its progress. */
-export type StoredUpgradeAttempt = {
+/** Properties shared by every lifecycle attempt, regardless of status. */
+type LifecycleAttemptBase = {
   /** Unique attempt identifier. */
   id: string;
 
-  /** The plan this attempt is executing. */
-  plan: UpgradePlan;
+  /** The lifecycle operation this attempt performs. */
+  operation: LifecycleOperation;
 
-  /** Current status of the attempt. */
-  status: ExecutionStatus;
+  /** The plan this attempt is executing. */
+  plan: LifecyclePlan;
 
   /** Step-tree progress of the attempt. */
   progress: StepStatus;
-
-  /** The step-execution error, present when the attempt failed. */
-  failure?: WorkflowError<{ operationId?: string }>;
-
-  /** Success details, present when the attempt succeeded. */
-  result?: SuccessfulUpgradeResult;
 };
 
+/**
+ * A persisted record of a single lifecycle attempt and its progress,
+ * discriminated by `status`: a `succeeded` attempt carries its `result`, a
+ * `failed` attempt carries its `failure`, and neither is present while the
+ * attempt is pending or in progress.
+ */
+export type LifecycleAttempt = LifecycleAttemptBase &
+  (
+    | { status: "pending" | "in-progress" }
+    | { status: "succeeded"; result: SuccessfulResult }
+    | { status: "failed"; failure: WorkflowError<{ operationId?: string }> }
+  );
+
 /** A captured snapshot of app state: its configuration and collected workflow data. */
-export type StateSnapshot = Required<
+export type AppStateSnapshot = Required<
   Pick<SucceededWorkflowState, "id" | "config" | "data">
 >;
 
-/** The persisted orchestration state driving the upgrade lifecycle. */
-export type UpgradeOrchestrationState = {
+/** The persisted orchestration state driving a lifecycle. */
+export type OrchestrationState = {
   /** A plan awaiting execution, or `null` when none is pending. */
-  pendingPlan: UpgradePlan | null;
+  pendingPlan: LifecyclePlan | null;
 
   /** The most recent attempt, or `null` when none has run. */
-  latestAttempt: StoredUpgradeAttempt | null;
+  latestAttempt: LifecycleAttempt | null;
 
   /** Identifier of the current baseline snapshot, or `null` when none exists. */
   baselineSnapshotId: string | null;
@@ -98,9 +106,3 @@ export type UpgradeOrchestrationState = {
   /** Cleanup resources still awaiting reconciliation. */
   unresolvedCleanupResources: CleanupResource[];
 };
-
-/**
- * The request context available to upgrade orchestration runtime actions — the
- * shared lifecycle request shape reused across install, uninstall, and upgrade.
- */
-export type UpgradeRequestContext = LifecycleRequestContext;
