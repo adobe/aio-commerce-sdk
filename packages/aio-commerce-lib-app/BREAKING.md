@@ -17,6 +17,19 @@
 
 - `PUT /config` action endpoint will be removed in a future major — use `PATCH /config` instead. The PUT endpoint overwrites all values for the scope and does not support partial updates or unset semantics.
 
+<!-- Internal tracking: https://jira.corp.adobe.com/browse/CEXT-6527 -->
+
+- The workflow engine was generalized to lifecycle-neutral names so it can be shared across lifecycle modules (installation, upgrade). The following installation-branded types are now `@deprecated` aliases and will be removed in a future major — migrate to their lifecycle-neutral replacements from `@adobe/aio-commerce-lib-app/management`:
+  - `InstallationContext` → `LifecycleContext`
+  - `InstallationData` → `WorkflowData`
+  - `InstallationError` → `WorkflowError`
+  - `InstallationStatus` → `ExecutionStatus`
+  - `InstallationState` → `WorkflowRunState`
+  - `InProgressInstallationState` → `InProgressWorkflowState`
+  - `SucceededInstallationState` → `SucceededWorkflowState`
+  - `FailedInstallationState` → `FailedWorkflowState`
+  - `InstallationRetryMetadata` → `WorkflowStateMetadata`
+
 ## Released
 
 ### [1.8.0]

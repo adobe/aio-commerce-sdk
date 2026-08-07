@@ -11,28 +11,68 @@
  */
 
 import {
-  createRootInstallationStep,
-  createRootUninstallationStep,
-} from "./root";
-import {
   createInitialState,
   createRetryState,
   executeUninstallWorkflow,
   executeWorkflow,
-} from "./workflow";
-import { validateStepTree } from "./workflow/validation";
+} from "#management/common/workflow/index";
+import { validateStepTree } from "#management/common/workflow/validation";
+
+import {
+  createRootInstallationStep,
+  createRootUninstallationStep,
+} from "./root";
 
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 import type {
-  FailedInstallationState,
-  InProgressInstallationState,
-  InstallationContext,
-  InstallationHooks,
-  InstallationState,
-  SucceededInstallationState,
+  FailedWorkflowState,
+  InProgressWorkflowState,
+  LifecycleContext,
+  StepFailedEvent,
+  StepStartedEvent,
+  StepSucceededEvent,
+  SucceededWorkflowState,
   ValidationContext,
-} from "./workflow";
-import type { ValidationResult } from "./workflow/validation";
+  WorkflowHooks,
+  WorkflowRunState,
+} from "#management/common/workflow/index";
+import type { ValidationResult } from "#management/common/workflow/validation";
+
+/** Lifecycle hooks for an installation or uninstallation run. */
+export type InstallationHooks = {
+  onInstallationStart?: (state: WorkflowRunState) => void | Promise<void>;
+  onInstallationSuccess?: (state: WorkflowRunState) => void | Promise<void>;
+  onInstallationFailure?: (state: WorkflowRunState) => void | Promise<void>;
+
+  onStepStart?: (
+    event: StepStartedEvent,
+    state: WorkflowRunState,
+  ) => void | Promise<void>;
+  onStepSuccess?: (
+    event: StepSucceededEvent,
+    state: WorkflowRunState,
+  ) => void | Promise<void>;
+  onStepFailure?: (
+    event: StepFailedEvent,
+    state: WorkflowRunState,
+  ) => void | Promise<void>;
+};
+
+/** Adapts historical installation hooks to the neutral workflow hook shape. */
+function toWorkflowHooks(hooks?: InstallationHooks): WorkflowHooks | undefined {
+  if (!hooks) {
+    return;
+  }
+
+  return {
+    onFailure: hooks.onInstallationFailure,
+    onStart: hooks.onInstallationStart,
+    onStepFailure: hooks.onStepFailure,
+    onStepStart: hooks.onStepStart,
+    onStepSuccess: hooks.onStepSuccess,
+    onSuccess: hooks.onInstallationSuccess,
+  };
+}
 
 /** Options for creating an initial installation state. */
 export type CreateInitialInstallationStateOptions = {
@@ -43,13 +83,13 @@ export type CreateInitialInstallationStateOptions = {
 /** Options for running an installation. */
 export type RunInstallationOptions = {
   /** Shared installation context (params, logger, etc.). */
-  installationContext: InstallationContext;
+  installationContext: LifecycleContext;
 
   /** The app configuration. */
   config: CommerceAppConfigOutputModel;
 
   /** The initial installation state (with all steps pending). */
-  initialState: InProgressInstallationState;
+  initialState: InProgressWorkflowState;
 
   /** Lifecycle hooks for status change notifications. */
   hooks?: InstallationHooks;
@@ -62,7 +102,7 @@ export type RunInstallationOptions = {
  */
 export function createInitialInstallationState(
   options: CreateInitialInstallationStateOptions,
-): InProgressInstallationState {
+): InProgressWorkflowState {
   const { config } = options;
   const rootStep = createRootInstallationStep(config);
 
@@ -72,23 +112,25 @@ export function createInitialInstallationState(
 /**
  * Runs the full installation workflow. Returns the final state (never throws).
  *
- * Retries once on failure. `onInstallationFailure` only fires if both attempts fail;
- * `isRetry: true` is set on the result when the retry succeeds.
+ * Retries once on failure. `onInstallationFailure` only fires if both attempts
+ * fail; `isRetry: true` is set on the result when the retry succeeds.
  */
 export async function runInstallation(
   options: RunInstallationOptions,
-): Promise<SucceededInstallationState | FailedInstallationState> {
+): Promise<SucceededWorkflowState | FailedWorkflowState> {
   const { installationContext, config, initialState, hooks } = options;
+  const workflowHooks = toWorkflowHooks(hooks);
   const rootStep = createRootInstallationStep(config);
   const firstResult = await executeWorkflow({
     config,
+    failureKey: "INSTALLATION_FAILED",
     hooks: {
-      ...hooks,
-      onInstallationFailure: undefined,
+      ...workflowHooks,
+      onFailure: undefined,
       onStepFailure: undefined,
     },
     initialState,
-    installationContext,
+    lifecycleContext: installationContext,
     rootStep,
   });
 
@@ -104,21 +146,22 @@ export async function runInstallation(
   const retryState = createRetryState(firstResult);
   const retryResult = await executeWorkflow({
     config,
-    hooks: hooks && {
-      ...hooks,
-      onInstallationFailure: (state) =>
-        hooks.onInstallationFailure?.({
+    failureKey: "INSTALLATION_FAILED",
+    hooks: workflowHooks && {
+      ...workflowHooks,
+      onFailure: (state) =>
+        workflowHooks.onFailure?.({
           ...state,
           metadata: { isRetry: true },
-        } as InstallationState),
-      onInstallationSuccess: (state) =>
-        hooks.onInstallationSuccess?.({
+        } as WorkflowRunState),
+      onSuccess: (state) =>
+        workflowHooks.onSuccess?.({
           ...state,
           metadata: { isRetry: true },
-        } as InstallationState),
+        } as WorkflowRunState),
     },
     initialState: retryState,
-    installationContext,
+    lifecycleContext: installationContext,
     rootStep,
   });
 
@@ -134,11 +177,11 @@ export type CreateInitialUninstallationStateOptions = {
 /** Options for running an uninstallation. */
 export type RunUninstallationOptions = {
   /** Shared installation context (params, logger, etc.). */
-  installationContext: InstallationContext;
+  installationContext: LifecycleContext;
   /** The app configuration. */
   config: CommerceAppConfigOutputModel;
   /** The initial uninstallation state (with all steps pending). */
-  initialState: InProgressInstallationState;
+  initialState: InProgressWorkflowState;
   /** Lifecycle hooks for status change notifications. */
   hooks?: InstallationHooks;
 };
@@ -148,7 +191,7 @@ export type RunUninstallationOptions = {
  */
 export function createInitialUninstallationState(
   options: CreateInitialUninstallationStateOptions,
-): InProgressInstallationState {
+): InProgressWorkflowState {
   const { config } = options;
   const rootStep = createRootUninstallationStep(config);
   return createInitialState({ config, mode: "uninstall", rootStep });
@@ -159,14 +202,15 @@ export function createInitialUninstallationState(
  */
 export function runUninstallation(
   options: RunUninstallationOptions,
-): Promise<SucceededInstallationState | FailedInstallationState> {
+): Promise<SucceededWorkflowState | FailedWorkflowState> {
   const { installationContext, config, initialState, hooks } = options;
   const rootStep = createRootUninstallationStep(config);
   return executeUninstallWorkflow({
     config,
-    hooks,
+    failureKey: "INSTALLATION_FAILED",
+    hooks: toWorkflowHooks(hooks),
     initialState,
-    installationContext,
+    lifecycleContext: installationContext,
     rootStep,
   });
 }

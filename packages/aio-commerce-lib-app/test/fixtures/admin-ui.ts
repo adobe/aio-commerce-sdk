@@ -28,7 +28,7 @@ export const viewButtonWorkerBase = {
   type: "worker" as const,
 };
 
-import type { AdminUiExecutionContext } from "#management/installation/admin-ui/utils";
+import type { AdminUiExecutionContext } from "#management/domains/admin-ui/utils";
 
 /** Creates a mock AdminUiExecutionContext with Admin UI client methods. */
 export function createMockAdminUiContext(

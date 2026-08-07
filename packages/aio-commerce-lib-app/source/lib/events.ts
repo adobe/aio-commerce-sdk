@@ -18,7 +18,7 @@ import {
   EXTERNAL_PROVIDER_TYPE,
   getIoEventCode,
   getNamespacedEvent,
-} from "../management/installation/events/utils";
+} from "../management/domains/events/utils";
 import {
   EventNotFoundError,
   EventsDataNotInitializedError,
@@ -26,7 +26,7 @@ import {
 } from "./errors";
 
 import type { AdobeIoEventsApiClient } from "@adobe/aio-commerce-lib-events/io-events";
-import type { StoredEventsData } from "../management/installation/events/types";
+import type { StoredEventsData } from "../management/domains/events/types";
 
 /**
  * Publishes an event declared in the app's eventing configuration.

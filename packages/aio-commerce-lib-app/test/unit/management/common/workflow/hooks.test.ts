@@ -1,0 +1,112 @@
+/*
+ * Copyright 2026 Adobe. All rights reserved.
+ * This file is licensed to you under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License. You may obtain a copy
+ * of the License at http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under
+ * the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR REPRESENTATIONS
+ * OF ANY KIND, either express or implied. See the License for the specific language
+ * governing permissions and limitations under the License.
+ */
+
+import { describe, expect, test, vi } from "vitest";
+
+import { callHook } from "#management/common/workflow/hooks";
+import { createMockInProgressState } from "#test/fixtures/installation";
+
+import type { WorkflowHooks } from "#management/common/workflow/hooks";
+
+/** Creates a mock step event for testing. */
+function createMockStepEvent() {
+  return {
+    isLeaf: true,
+    path: ["root", "child"],
+    stepName: "child",
+  };
+}
+
+describe("callHook", () => {
+  test("should call sync hook with correct arguments", async () => {
+    const mockHook = vi.fn();
+    const hooks: WorkflowHooks = { onStart: mockHook };
+    const state = createMockInProgressState();
+
+    await callHook(hooks, "onStart", state);
+
+    expect(mockHook).toHaveBeenCalledOnce();
+    expect(mockHook).toHaveBeenCalledWith(state);
+  });
+
+  test("should await async hook and resolve", async () => {
+    const mockHook = vi.fn().mockResolvedValue(undefined);
+    const hooks: WorkflowHooks = { onStart: mockHook };
+    const state = createMockInProgressState();
+
+    await expect(callHook(hooks, "onStart", state)).resolves.toBeUndefined();
+    expect(mockHook).toHaveBeenCalledOnce();
+  });
+
+  test("should not throw when hook is undefined", async () => {
+    const hooks: WorkflowHooks = {};
+    const state = createMockInProgressState();
+
+    await expect(callHook(hooks, "onStart", state)).resolves.toBeUndefined();
+  });
+
+  test("should not throw when hooks object is undefined", async () => {
+    const state = createMockInProgressState();
+    await expect(
+      callHook(undefined, "onStart", state),
+    ).resolves.toBeUndefined();
+  });
+
+  describe("workflow hooks (state only)", () => {
+    test.each(["onStart", "onSuccess", "onFailure"] as const)(
+      "%s should receive the state",
+      async (hookName) => {
+        const mockHook = vi.fn();
+        const hooks: WorkflowHooks = { [hookName]: mockHook };
+        const state = createMockInProgressState();
+
+        await callHook(hooks, hookName, state);
+
+        expect(mockHook).toHaveBeenCalledOnce();
+        expect(mockHook).toHaveBeenCalledWith(state);
+      },
+    );
+  });
+
+  describe("step hooks (event and state)", () => {
+    test.each([
+      { extraProps: {}, hookName: "onStepStart" as const },
+      {
+        extraProps: { result: { success: true } },
+        hookName: "onStepSuccess" as const,
+      },
+      {
+        extraProps: {
+          error: {
+            key: "STEP_EXECUTION_FAILED",
+            message: "Something went wrong",
+            path: ["root", "child"],
+          },
+        },
+        hookName: "onStepFailure" as const,
+      },
+    ])(
+      "$hookName should receive event and state",
+      async ({ hookName, extraProps }) => {
+        const mockHook = vi.fn();
+        const hooks: WorkflowHooks = { [hookName]: mockHook };
+        const state = createMockInProgressState();
+        const event = { ...createMockStepEvent(), ...extraProps };
+
+        await callHook(hooks, hookName, event, state);
+
+        expect(mockHook).toHaveBeenCalledOnce();
+        expect(mockHook).toHaveBeenCalledWith(event, state);
+      },
+    );
+  });
+});

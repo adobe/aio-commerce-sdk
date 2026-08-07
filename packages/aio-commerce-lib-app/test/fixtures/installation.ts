@@ -15,22 +15,22 @@ import { vi } from "vitest";
 
 import type {
   BranchStep,
-  InstallationContext,
-} from "#management/installation/workflow/step";
+  LifecycleContext,
+} from "#management/common/workflow/step";
 import type {
   ExecutionStatus,
-  FailedInstallationState,
-  InProgressInstallationState,
-  InstallationError,
-  InstallationState,
+  FailedWorkflowState,
+  InProgressWorkflowState,
   StepStatus,
-  SucceededInstallationState,
-} from "#management/installation/workflow/types";
+  SucceededWorkflowState,
+  WorkflowError,
+  WorkflowRunState,
+} from "#management/common/workflow/types";
 import type {
   StepValidationResult,
   ValidationResult,
   ValidationSummary,
-} from "#management/installation/workflow/validation";
+} from "#management/common/workflow/validation";
 
 export const FAKE_SYSTEM_TIME = "2026-01-30T10:00:00.000Z";
 export const FAKE_COMPLETED_TIME = "2026-01-30T10:05:00.000Z";
@@ -55,25 +55,25 @@ export function createMockLogger(): ReturnType<typeof AioLogger> {
 }
 
 /**
- * Builds an InstallationContext with a pre-populated customScripts map.
+ * Builds a LifecycleContext with a pre-populated customScripts map.
  * Use this when testing steps that load and execute custom installation scripts.
  */
 export function createMockInstallationContextWithScripts(
   customScripts: Record<string, unknown> = {},
-): InstallationContext {
+): LifecycleContext {
   // createMockInstallationContext does not forward customScripts, so spread it in.
   return { ...createMockInstallationContext(), customScripts };
 }
 
 type InstallationContextOverrides = Omit<
-  Partial<InstallationContext>,
+  Partial<LifecycleContext>,
   "appData" | "params"
 > & {
-  appData?: Partial<InstallationContext["appData"]>;
-  params?: Partial<InstallationContext["params"]>;
+  appData?: Partial<LifecycleContext["appData"]>;
+  params?: Partial<LifecycleContext["params"]>;
 };
 
-type InstallationParams = InstallationContext["params"];
+type InstallationParams = LifecycleContext["params"];
 
 type InstallationImsParams = Pick<
   InstallationParams,
@@ -113,10 +113,10 @@ export function createMockInstallationParams(
   };
 }
 
-/** Creates a mock InstallationContext with params and logger. */
+/** Creates a mock LifecycleContext with params and logger. */
 export function createMockInstallationContext(
   overrides?: InstallationContextOverrides,
-): InstallationContext {
+): LifecycleContext {
   return {
     appData: {
       consumerOrgId: "test-consumer-org-id",
@@ -177,10 +177,10 @@ export function createMockInstallationStepStatus(
   });
 }
 
-/** Creates a mock InstallationError for testing. */
+/** Creates a mock WorkflowError for testing. */
 export function createMockInstallationError(
-  overrides?: Partial<InstallationError>,
-): InstallationError {
+  overrides?: Partial<WorkflowError>,
+): WorkflowError {
   return {
     key: "STEP_EXECUTION_FAILED",
     message: "Step execution failed",
@@ -196,10 +196,10 @@ const baseStateProps = {
   step: createMockStepStatus(),
 };
 
-/** Creates a mock InProgressInstallationState. */
+/** Creates a mock InProgressWorkflowState. */
 export function createMockInProgressState(
-  overrides?: Partial<InProgressInstallationState>,
-): InProgressInstallationState {
+  overrides?: Partial<InProgressWorkflowState>,
+): InProgressWorkflowState {
   return {
     ...baseStateProps,
     startedAt: FAKE_SYSTEM_TIME,
@@ -211,8 +211,8 @@ export function createMockInProgressState(
 
 /** Creates a default installation in-progress state for runner tests. */
 export function createMockInstallationInProgressState(
-  overrides?: Partial<InProgressInstallationState>,
-): InProgressInstallationState {
+  overrides?: Partial<InProgressWorkflowState>,
+): InProgressWorkflowState {
   return createMockInProgressState({
     data: null,
     id: "installation-id",
@@ -222,10 +222,10 @@ export function createMockInstallationInProgressState(
   });
 }
 
-/** Creates a mock SucceededInstallationState. */
+/** Creates a mock SucceededWorkflowState. */
 export function createMockSucceededState(
-  overrides?: Partial<SucceededInstallationState>,
-): SucceededInstallationState {
+  overrides?: Partial<SucceededWorkflowState>,
+): SucceededWorkflowState {
   return {
     ...baseStateProps,
     completedAt: FAKE_COMPLETED_TIME,
@@ -238,8 +238,8 @@ export function createMockSucceededState(
 
 /** Creates a default successful installation state for runner tests. */
 export function createMockInstallationSucceededState(
-  overrides?: Partial<SucceededInstallationState>,
-): SucceededInstallationState {
+  overrides?: Partial<SucceededWorkflowState>,
+): SucceededWorkflowState {
   return createMockSucceededState({
     completedAt: FAKE_COMPLETED_TIME,
     data: null,
@@ -250,10 +250,10 @@ export function createMockInstallationSucceededState(
   });
 }
 
-/** Creates a mock FailedInstallationState. */
+/** Creates a mock FailedWorkflowState. */
 export function createMockFailedState(
-  overrides?: Partial<FailedInstallationState>,
-): FailedInstallationState {
+  overrides?: Partial<FailedWorkflowState>,
+): FailedWorkflowState {
   return {
     ...baseStateProps,
     completedAt: FAKE_COMPLETED_TIME,
@@ -305,7 +305,7 @@ export function createMockValidationResult(
 
 /** Creates an in-memory mock of a key/value store for installation state. */
 export function createMockInstallationStore(
-  initialValue: InstallationState | null = null,
+  initialValue: WorkflowRunState | null = null,
 ) {
   let value = initialValue;
 
@@ -316,7 +316,7 @@ export function createMockInstallationStore(
       return hasValue;
     }),
     get: vi.fn(async (_key: string) => value),
-    put: vi.fn(async (_key: string, nextValue: InstallationState) => {
+    put: vi.fn(async (_key: string, nextValue: WorkflowRunState) => {
       value = nextValue;
     }),
   };

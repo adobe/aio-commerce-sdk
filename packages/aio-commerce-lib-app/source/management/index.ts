@@ -17,7 +17,13 @@
  * @packageDocumentation
  */
 
-export { defineCustomInstallationStep } from "./installation/custom-installation";
+export {
+  isCompletedState,
+  isFailedState,
+  isInProgressState,
+  isSucceededState,
+} from "./common/workflow";
+export { defineCustomInstallationStep } from "./domains/custom-installation";
 // Export installation-specific functions
 export {
   createInitialInstallationState,
@@ -26,22 +32,19 @@ export {
   runUninstallation,
   runValidation,
 } from "./installation/runner";
-export {
-  isCompletedState,
-  isFailedState,
-  isInProgressState,
-  isSucceededState,
-} from "./installation/workflow";
 
+export type * from "./common/workflow";
 export type {
   CustomInstallationStepDefinition,
   CustomInstallationStepHandler,
-} from "./installation/custom-installation";
+} from "./domains/custom-installation";
+// Deprecated back-compat aliases for the renamed workflow engine types.
+export type * from "./installation/compat";
 export type {
   CreateInitialInstallationStateOptions,
   CreateInitialUninstallationStateOptions,
+  InstallationHooks,
   RunInstallationOptions,
   RunUninstallationOptions,
   RunValidationOptions,
 } from "./installation/runner";
-export type * from "./installation/workflow";
