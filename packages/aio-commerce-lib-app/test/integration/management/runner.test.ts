@@ -13,14 +13,14 @@
 import { describe, expect, test, vi } from "vitest";
 
 import {
+  isFailedState,
+  isSucceededState,
+} from "#management/common/workflow/types";
+import {
   createInitialInstallationState,
   runInstallation,
   runValidation,
 } from "#management/installation/runner";
-import {
-  isFailedState,
-  isSucceededState,
-} from "#management/installation/workflow/types";
 import {
   configWithCustomInstallationSteps,
   configWithOneScript,
@@ -31,7 +31,7 @@ import {
   createMockInstallationContextWithScripts,
 } from "#test/fixtures/installation";
 
-import type { InstallationHooks } from "#management/installation/workflow/hooks";
+import type { InstallationHooks } from "#management/installation/runner";
 
 type StepStatusNode = {
   name: string;

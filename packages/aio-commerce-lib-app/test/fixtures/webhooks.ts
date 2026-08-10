@@ -24,7 +24,7 @@ import type {
   WebhookSubscribeParams,
 } from "@adobe/aio-commerce-lib-webhooks/api";
 import type { WebhookDefinition, WebhookEntry } from "#config/schema/webhooks";
-import type { WebhooksExecutionContext } from "#management/installation/webhooks/context";
+import type { WebhooksExecutionContext } from "#management/domains/webhooks/context";
 
 export function createMockWebhookDefinition(
   overrides: Partial<WebhookDefinition> = {

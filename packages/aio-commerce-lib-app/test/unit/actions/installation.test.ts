@@ -81,11 +81,11 @@ import {
   DEFAULT_INSTALLATION_PARAMS,
 } from "#test/fixtures/installation";
 
-import type { InstallationHooks } from "#management/installation/workflow/hooks";
-import type { InProgressInstallationState } from "#management/installation/workflow/types";
+import type { InProgressWorkflowState } from "#management/common/workflow/types";
+import type { InstallationHooks } from "#management/installation/runner";
 
 type WorkflowRunnerArgs = {
-  initialState: InProgressInstallationState;
+  initialState: InProgressWorkflowState;
   hooks: InstallationHooks;
 };
 

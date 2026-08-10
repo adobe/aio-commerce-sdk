@@ -13,7 +13,7 @@
 import { CommerceEnvSchema } from "@adobe/aio-commerce-lib-core/commerce";
 import * as v from "valibot";
 
-import { AppDataSchema } from "#management/installation/schema";
+import { AppDataSchema } from "#management/common/schema";
 
 /** Request body for POST / and POST /validation (shared shape) */
 export const InstallationRequestBodySchema = v.object({

@@ -13,12 +13,12 @@
 import { HttpResponse, http } from "msw";
 import { afterEach, describe, expect, test, vi } from "vitest";
 
+import { isSucceededState } from "#management/common/workflow/types";
 import {
   createInitialInstallationState,
   runInstallation,
   runValidation,
 } from "#management/installation/runner";
-import { isSucceededState } from "#management/installation/workflow/types";
 import { configWithWebhooks } from "#test/fixtures/config";
 import { createMockInstallationContext } from "#test/fixtures/installation";
 import { createMockExistingCommerceWebhook } from "#test/fixtures/webhooks";

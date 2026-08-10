@@ -46,12 +46,12 @@ import type {
   CommerceAppConfig,
   CommerceAppConfigOutputModel,
 } from "#config/schema/app";
-import type { InstallationContext, ValidationContext } from "#management/index";
-import type { StepFailedEvent } from "#management/installation/workflow/hooks";
+import type { StepFailedEvent } from "#management/common/workflow/hooks";
 import type {
-  InProgressInstallationState,
-  InstallationState,
-} from "#management/installation/workflow/types";
+  InProgressWorkflowState,
+  WorkflowRunState,
+} from "#management/common/workflow/types";
+import type { LifecycleContext, ValidationContext } from "#management/index";
 
 // Action name for async invocation
 const DEFAULT_ACTION_NAME = "app-management/installation";
@@ -59,7 +59,7 @@ const DEFAULT_ACTION_NAME = "app-management/installation";
 /** Loads generated custom installation script modules. */
 export type CustomScriptsLoader = (
   config: CommerceAppConfigOutputModel,
-  logger: InstallationContext["logger"],
+  logger: LifecycleContext["logger"],
 ) => Record<string, unknown>;
 
 /** Arguments for the runtime action factory. */
@@ -69,8 +69,7 @@ export type RuntimeActionFactoryArgs = {
 };
 
 /** Params received by all handlers. */
-type RuntimeActionArgs = InstallationContext["params"] &
-  RuntimeActionFactoryArgs;
+type RuntimeActionArgs = LifecycleContext["params"] & RuntimeActionFactoryArgs;
 
 /** The context for the installation action. */
 interface InstallationActionContext extends BaseContext {
@@ -78,7 +77,7 @@ interface InstallationActionContext extends BaseContext {
 }
 
 type WorkflowRequestBody = {
-  appData: InstallationContext["appData"];
+  appData: LifecycleContext["appData"];
   commerceBaseUrl: string;
   commerceEnv: string;
   ioEventsUrl: string;
@@ -87,7 +86,7 @@ type WorkflowRequestBody = {
 
 /** Creates a workflow state store with the given prefix. */
 function createWorkflowStore(prefix: string) {
-  return createCombinedStore<InstallationState>({
+  return createCombinedStore<WorkflowRunState>({
     cache: { keyPrefix: prefix },
     persistent: {
       dirPrefix: prefix,
@@ -132,19 +131,19 @@ function buildWorkflowParams(
 }
 
 type ExecutionRouteParams = RuntimeActionArgs & {
-  initialState: InProgressInstallationState;
-  appData: InstallationContext["appData"];
+  initialState: InProgressWorkflowState;
+  appData: LifecycleContext["appData"];
 };
 
 /**
- * Builds an InstallationContext from merged workflow params.
+ * Builds a LifecycleContext from merged workflow params.
  * Shared by POST /execution and POST /uninstallation/execution.
  */
 function buildInstallationContext(
   params: ExecutionRouteParams,
   appConfig: CommerceAppConfigOutputModel,
-  logFn: InstallationContext["logger"],
-): InstallationContext {
+  logFn: LifecycleContext["logger"],
+): LifecycleContext {
   return {
     appData: params.appData,
     customScripts: params.customScriptsLoader?.(appConfig, logFn) ?? {},
@@ -158,7 +157,7 @@ function buildInstallationContext(
  * Shared by GET / and GET /uninstallation.
  */
 async function readStateFromStore(
-  store: KeyValueStore<InstallationState>,
+  store: KeyValueStore<WorkflowRunState>,
   logFn: (msg: string) => void,
 ) {
   const state = await store.get(getStorageKey());
@@ -174,35 +173,34 @@ async function readStateFromStore(
  * Creates hooks to sync installation state to storage.
  */
 function createInstallationHooks(
-  store: KeyValueStore<InstallationState>,
+  store: KeyValueStore<WorkflowRunState>,
   logFn: (message: string) => void,
 ) {
-  const logAndSave = async (message: string, data: InstallationState) => {
+  const logAndSave = async (message: string, data: WorkflowRunState) => {
     logFn(message);
     await store.put(getStorageKey(), data);
   };
 
   return {
-    onInstallationFailure: (state: InstallationState) =>
+    onInstallationFailure: (state: WorkflowRunState) =>
       logAndSave("Installation failed", state),
-    onInstallationStart: (state: InstallationState) =>
+    onInstallationStart: (state: WorkflowRunState) =>
       logAndSave("Installation started", state),
-    onInstallationSuccess: (state: InstallationState) =>
+    onInstallationSuccess: (state: WorkflowRunState) =>
       logAndSave(
         state.status === "succeeded" && state.metadata?.isRetry
           ? "Installation succeeded on retry"
           : "Installation succeeded",
         state,
       ),
-    onStepFailure: (event: StepFailedEvent, state: InstallationState) =>
+    onStepFailure: (event: StepFailedEvent, state: WorkflowRunState) =>
       logAndSave(
         `Step failed: ${event.stepName} — ${event.error.message ?? `(key: ${event.error.key})`}`,
         state,
       ),
-
-    onStepStart: (event: { stepName: string }, state: InstallationState) =>
+    onStepStart: (event: { stepName: string }, state: WorkflowRunState) =>
       logAndSave(`Step started: ${event.stepName}`, state),
-    onStepSuccess: (event: { stepName: string }, state: InstallationState) =>
+    onStepSuccess: (event: { stepName: string }, state: WorkflowRunState) =>
       logAndSave(`Step succeeded: ${event.stepName}`, state),
   };
 }
@@ -532,7 +530,7 @@ router.post("/uninstallation", {
  * @internal - Do not add to OpenAPI Spec.
  *
  * Flow:
- * 1. Build InstallationContext from params
+ * 1. Build LifecycleContext from params
  * 2. Run uninstallation workflow with hooks (hooks persist state per step)
  * 3. Save final state to uninstallation store
  * 4. On success, clear installation store
