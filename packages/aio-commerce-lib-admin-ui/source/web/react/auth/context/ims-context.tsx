@@ -35,7 +35,6 @@ export function useIms(): Result<ImsContext> {
     return error("useIms must be used inside an ImsContextProvider.");
   }
 
-  // biome-ignore lint/suspicious/noUnnecessaryConditions: Biome can't track the `| null` branch of ImsContext | null | undefined through React's generic use()/createContext(); credentials is genuinely null when running standalone, outside any host.
   if (!credentials) {
     return error(
       "useIms requires running inside the Commerce Admin or the Experience Cloud shell, which provide the IMS credentials.",
