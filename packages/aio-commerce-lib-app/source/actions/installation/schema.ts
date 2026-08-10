@@ -10,16 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
-import { CommerceEnvSchema } from "@adobe/aio-commerce-lib-core/commerce";
-import * as v from "valibot";
+import { LifecycleRequestContextSchema } from "#management/common/schema";
 
-import { AppDataSchema } from "#management/common/schema";
-
-/** Request body for POST / and POST /validation (shared shape) */
-export const InstallationRequestBodySchema = v.object({
-  appData: AppDataSchema,
-  commerceBaseUrl: v.string(),
-  commerceEnv: CommerceEnvSchema,
-  ioEventsEnv: v.string(),
-  ioEventsUrl: v.string(),
-});
+/** Request body for POST / and POST /validation — the shared lifecycle request shape. */
+export const InstallationRequestBodySchema = LifecycleRequestContextSchema;

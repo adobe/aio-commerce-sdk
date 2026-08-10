@@ -73,6 +73,8 @@ export type RegisterExtensionStepData = InferStepOutput<
 export const adminUiStep = defineBranchStep({
   children: [enableAdminUiSdkStep, registerExtensionStep],
   context: createAdminUiStepContext,
+
+  isConfigured: hasAdminUi,
   meta: {
     install: {
       description: "Registers the extension with Adobe Commerce Admin UI",
@@ -84,6 +86,4 @@ export const adminUiStep = defineBranchStep({
     },
   },
   name: "admin-ui",
-
-  when: hasAdminUi,
 });

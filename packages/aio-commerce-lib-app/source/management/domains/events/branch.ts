@@ -21,6 +21,8 @@ import { externalEventsStep } from "./external";
 export const eventingStep = defineBranchStep({
   children: [commerceEventsStep, externalEventsStep],
   context: createEventsStepContext,
+
+  isConfigured: hasEventing,
   meta: {
     install: {
       description:
@@ -34,6 +36,4 @@ export const eventingStep = defineBranchStep({
     },
   },
   name: "eventing",
-
-  when: hasEventing,
 });

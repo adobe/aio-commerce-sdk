@@ -47,11 +47,15 @@ describe("commerceEventsStep leaf step", () => {
   });
 
   test("should only run if eventing.commerce is defined", () => {
-    expect.assert(commerceEventsStep.when);
+    expect.assert(commerceEventsStep.isConfigured);
 
-    expect(commerceEventsStep.when(configWithCommerceEventing)).toBe(true);
-    expect(commerceEventsStep.when(configWithExternalEventing)).toBe(false);
-    expect(commerceEventsStep.when(minimalValidConfig)).toBe(false);
+    expect(commerceEventsStep.isConfigured(configWithCommerceEventing)).toBe(
+      true,
+    );
+    expect(commerceEventsStep.isConfigured(configWithExternalEventing)).toBe(
+      false,
+    );
+    expect(commerceEventsStep.isConfigured(minimalValidConfig)).toBe(false);
   });
 });
 

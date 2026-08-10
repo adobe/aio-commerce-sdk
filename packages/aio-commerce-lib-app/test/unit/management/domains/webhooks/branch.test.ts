@@ -43,9 +43,9 @@ describe("webhooks installation module", () => {
     });
 
     test("should only run if webhooks is defined", () => {
-      expect.assert(webhooksStep.when);
-      expect(webhooksStep.when(configWithWebhooks)).toBe(true);
-      expect(webhooksStep.when(minimalValidConfig)).toBe(false);
+      expect.assert(webhooksStep.isConfigured);
+      expect(webhooksStep.isConfigured(configWithWebhooks)).toBe(true);
+      expect(webhooksStep.isConfigured(minimalValidConfig)).toBe(false);
     });
 
     test("should have subscriptions leaf step", () => {

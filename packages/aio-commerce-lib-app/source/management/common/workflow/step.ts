@@ -14,6 +14,8 @@ import type { RuntimeActionParams } from "@adobe/aio-commerce-lib-core/params";
 import type AioLogger from "@adobe/aio-lib-core-logging";
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 import type { AppData } from "../schema";
+import type { DomainPlan, ResourceCapability } from "./resource";
+import type { WorkflowData } from "./types";
 
 // Defined here (not in validation.ts) to avoid circular imports, since step
 // validate handlers need this type and validation.ts imports from step.ts.
@@ -103,16 +105,29 @@ export type StepBase<
   /** Metadata associated with the step, keyed by lifecycle mode. */
   meta: StepMeta;
 
-  /** Whether the step should be taken into consideration. */
+  /** Whether the step's domain is represented in the configuration. */
+  isConfigured?: (config: CommerceAppConfigOutputModel) => config is TConfig;
+
+  /**
+   * Whether the step's domain is represented in the configuration.
+   * @deprecated Use `isConfigured` instead.
+   */
   when?: (config: CommerceAppConfigOutputModel) => config is TConfig;
 };
 
-/** A leaf step that executes work (no children). */
+/**
+ * A leaf step that executes work (no children).
+ *
+ * May optionally contribute the resource-reconciliation capability; `plan` and
+ * `apply` are meant to be provided together (plan the changes, then apply them).
+ */
 export type LeafStep<
   TName extends string = string,
   TConfig extends CommerceAppConfigOutputModel = CommerceAppConfigOutputModel,
   TStepCtx extends Record<string, unknown> = Record<string, unknown>,
   TOutput = unknown,
+  TPlan extends DomainPlan = DomainPlan,
+  TSnapshotData extends WorkflowData = WorkflowData,
 > = StepBase<TName, TConfig> & {
   type: "leaf";
 
@@ -141,7 +156,7 @@ export type LeafStep<
     config: TConfig,
     context: ExecutionContext<TStepCtx>,
   ) => void | Promise<void>;
-};
+} & Partial<ResourceCapability<TConfig, TStepCtx, TPlan, TSnapshotData>>;
 
 /** A branch step that contains children (no execution). */
 export type BranchStep<
@@ -184,10 +199,12 @@ export type AnyStep = {
   children?: AnyStep[];
 
   // biome-ignore-start lint/suspicious/noExplicitAny: We need the flexibility here
+  apply?: (plan: any, context: any) => unknown | Promise<unknown>;
   context?: (context: LifecycleContext) => any;
   install?: (config: any, context: any) => unknown | Promise<unknown>;
   meta: StepMeta;
   name: string;
+  plan?: (input: any, context: any) => unknown | Promise<unknown>;
   type: "leaf" | "branch";
 
   uninstall?: (config: any, context: any) => void | Promise<void>;
@@ -197,6 +214,7 @@ export type AnyStep = {
     context: any,
   ) => ValidationIssue[] | Promise<ValidationIssue[]>;
 
+  isConfigured?: (config: CommerceAppConfigOutputModel) => boolean;
   when?: (config: CommerceAppConfigOutputModel) => boolean;
   // biome-ignore-end lint/suspicious/noExplicitAny: We no longer need the flexibility
 };
@@ -217,7 +235,12 @@ export type LeafStepOptions<
   TConfig extends CommerceAppConfigOutputModel,
   TStepCtx extends Record<string, unknown> = Record<string, unknown>,
   TOutput = unknown,
-> = Omit<LeafStep<TName, TConfig, TStepCtx, TOutput>, "type">;
+  TPlan extends DomainPlan = DomainPlan,
+  TSnapshotData extends WorkflowData = WorkflowData,
+> = Omit<
+  LeafStep<TName, TConfig, TStepCtx, TOutput, TPlan, TSnapshotData>,
+  "type"
+>;
 
 /** Options for defining a branch step. */
 export type BranchStepOptions<
@@ -247,16 +270,30 @@ export function defineLeafStep<
   TConfig extends CommerceAppConfigOutputModel,
   TStepCtx extends Record<string, unknown> = Record<string, unknown>,
   TOutput = unknown,
->(options: LeafStepOptions<TName, TConfig, TStepCtx, TOutput>) {
+  TPlan extends DomainPlan = DomainPlan,
+  TSnapshotData extends WorkflowData = WorkflowData,
+>(
+  options: LeafStepOptions<
+    TName,
+    TConfig,
+    TStepCtx,
+    TOutput,
+    TPlan,
+    TSnapshotData
+  >,
+) {
   return {
+    apply: options.apply,
     install: options.install,
+    isConfigured: options.isConfigured,
     meta: options.meta,
     name: options.name,
+    plan: options.plan,
     type: "leaf",
     uninstall: options.uninstall,
     validate: options.validate,
     when: options.when,
-  } satisfies LeafStep<TName, TConfig, TStepCtx, TOutput>;
+  } satisfies LeafStep<TName, TConfig, TStepCtx, TOutput, TPlan, TSnapshotData>;
 }
 
 /**
@@ -267,7 +304,7 @@ export function defineLeafStep<
  * const eventing = defineBranchStep({
  *   name: "eventing",
  *   meta: { install: { label: "Eventing", description: "Sets up I/O Events" } },
- *   when: hasEventing,
+ *   isConfigured: hasEventing,
  *   context: async (ctx) => ({ eventsClient: await createEventsClient(ctx) }),
  *   children: [commerceEventsStep, externalEventsStep],
  * });
@@ -282,6 +319,7 @@ export function defineBranchStep<
   return {
     children: options.children,
     context: options.context,
+    isConfigured: options.isConfigured,
     meta: options.meta,
     name: options.name,
     type: "branch",

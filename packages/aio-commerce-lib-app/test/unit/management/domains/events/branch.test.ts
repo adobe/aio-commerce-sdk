@@ -55,11 +55,11 @@ describe("events installation module", () => {
     });
 
     test("should only run if eventing is defined", () => {
-      expect.assert(eventingStep.when);
+      expect.assert(eventingStep.isConfigured);
 
-      expect(eventingStep.when(configWithCommerceEventing)).toBe(true);
-      expect(eventingStep.when(configWithExternalEventing)).toBe(true);
-      expect(eventingStep.when(minimalValidConfig)).toBe(false);
+      expect(eventingStep.isConfigured(configWithCommerceEventing)).toBe(true);
+      expect(eventingStep.isConfigured(configWithExternalEventing)).toBe(true);
+      expect(eventingStep.isConfigured(minimalValidConfig)).toBe(false);
     });
 
     test("should have commerce and external leaf steps", () => {
@@ -86,12 +86,16 @@ describe("events installation module", () => {
     });
 
     test("should only run if eventing.commerce is defined", () => {
-      expect.assert(commerceEventsStep.when);
+      expect.assert(commerceEventsStep.isConfigured);
 
-      expect(commerceEventsStep.when?.(configWithCommerceEventing)).toBe(true);
+      expect(
+        commerceEventsStep.isConfigured?.(configWithCommerceEventing),
+      ).toBe(true);
 
-      expect(commerceEventsStep.when?.(configWithExternalEventing)).toBe(false);
-      expect(commerceEventsStep.when?.(minimalValidConfig)).toBe(false);
+      expect(
+        commerceEventsStep.isConfigured?.(configWithExternalEventing),
+      ).toBe(false);
+      expect(commerceEventsStep.isConfigured?.(minimalValidConfig)).toBe(false);
     });
 
     test("should create entities", async () => {
@@ -219,12 +223,16 @@ describe("events installation module", () => {
     });
 
     test("should only run if eventing.external is defined", () => {
-      expect.assert(externalEventsStep.when);
+      expect.assert(externalEventsStep.isConfigured);
 
-      expect(externalEventsStep.when?.(configWithExternalEventing)).toBe(true);
+      expect(
+        externalEventsStep.isConfigured?.(configWithExternalEventing),
+      ).toBe(true);
 
-      expect(externalEventsStep.when?.(configWithCommerceEventing)).toBe(false);
-      expect(externalEventsStep.when?.(minimalValidConfig)).toBe(false);
+      expect(
+        externalEventsStep.isConfigured?.(configWithCommerceEventing),
+      ).toBe(false);
+      expect(externalEventsStep.isConfigured?.(minimalValidConfig)).toBe(false);
     });
 
     test("should create entities", async () => {

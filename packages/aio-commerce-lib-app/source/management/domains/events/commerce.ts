@@ -47,6 +47,8 @@ export type CommerceEventsStepData = InferStepOutput<typeof commerceEventsStep>;
 /** Leaf step for installing commerce event sources. */
 export const commerceEventsStep = defineLeafStep({
   install: createCommerceEvents,
+
+  isConfigured: hasCommerceEvents,
   meta: {
     install: {
       description: "Sets up I/O Events for Adobe Commerce event sources",
@@ -59,8 +61,6 @@ export const commerceEventsStep = defineLeafStep({
   },
   name: "commerce",
   uninstall: removeCommerceEvents,
-
-  when: hasCommerceEvents,
 });
 
 /**

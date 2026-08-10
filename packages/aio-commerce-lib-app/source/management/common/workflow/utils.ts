@@ -13,6 +13,7 @@
 import { unwrapHttpError } from "@adobe/aio-commerce-lib-api/utils";
 
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
+import type { AnyStep } from "./step";
 import type {
   FailedWorkflowState,
   StepStatus,
@@ -43,6 +44,15 @@ export function setAtPath(
     current = current[key] as Record<string, unknown>;
   }
   current[lastKey] = value;
+}
+
+/** Returns whether a workflow step is present in an app configuration. */
+export function isStepConfigured(
+  step: AnyStep,
+  config: CommerceAppConfigOutputModel,
+): boolean {
+  const predicate = step.isConfigured ?? step.when;
+  return !predicate || predicate(config);
 }
 
 /** Gets a value at a nested path in the data object. */

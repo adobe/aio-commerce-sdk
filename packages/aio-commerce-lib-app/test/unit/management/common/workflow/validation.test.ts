@@ -385,8 +385,8 @@ describe("validateStepTree — resolveBranchContext", () => {
   });
 });
 
-describe("validateStepTree — when condition", () => {
-  test("skips child whose when() returns false", async () => {
+describe("validateStepTree — configuration presence", () => {
+  test("falls back to deprecated when", async () => {
     const validate = vi.fn().mockResolvedValue([]);
     const child = defineLeafStep({
       install: vi.fn(),
@@ -408,13 +408,15 @@ describe("validateStepTree — when condition", () => {
     expect(validate).not.toHaveBeenCalled();
   });
 
-  test("includes child whose when() returns true", async () => {
+  test("prefers isConfigured over deprecated when", async () => {
     const child = defineLeafStep({
       install: vi.fn(),
+      // @ts-expect-error It's for testing
+      isConfigured: () => true,
       meta: { install: childMeta },
       name: "child",
       // @ts-expect-error It's for testing
-      when: () => true,
+      when: () => false,
     });
     const rootStep = makeRoot([child]);
 
@@ -444,20 +446,20 @@ describe("validateStepTree — when condition", () => {
     expect(result.children).toHaveLength(1);
   });
 
-  test("includes only children whose when() is true when siblings differ", async () => {
+  test("filters siblings with isConfigured", async () => {
     const included = defineLeafStep({
       install: vi.fn(),
+      // @ts-expect-error - It's for testing
+      isConfigured: () => true,
       meta: { install: childMeta },
       name: "included",
-      // @ts-expect-error - It's for testing
-      when: () => true,
     });
     const excluded = defineLeafStep({
       install: vi.fn(),
+      // @ts-expect-error - It's for testing
+      isConfigured: () => false,
       meta: { install: childMeta },
       name: "excluded",
-      // @ts-expect-error - It's for testing
-      when: () => false,
     });
     const rootStep = makeRoot([included, excluded]);
 

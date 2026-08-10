@@ -23,10 +23,36 @@ import {
   validateWebhookConflicts,
 } from "./helpers";
 
+import type { WebhookSubscribeParams } from "@adobe/aio-commerce-lib-webhooks/api";
 import type { WebhooksConfig } from "#config/schema/webhooks";
-import type { WebhooksExecutionContext } from "./context";
+import type {
+  ApplyContext,
+  ApplyResult,
+  DomainPlan,
+  PlanningInput,
+  PlanningResult,
+} from "#management/common/workflow/resource";
+import type { ValidationExecutionContext } from "#management/common/workflow/step";
+import type { WebhooksExecutionContext, WebhooksStepContext } from "./context";
+import type { WebhookIdentity, WebhookSubscriptionResult } from "./helpers";
+
+/** The plan the webhooks domain proposes: subscription changes keyed by webhook identity. */
+type WebhookDomainPlan = DomainPlan<WebhookSubscribeParams, WebhookIdentity>;
+
+/** The snapshot data the webhooks domain persists after applying its plan. */
+type WebhookSnapshotData = WebhookSubscriptionResult;
 
 const subscriptionsStep = defineLeafStep({
+  apply: (
+    _plan: WebhookDomainPlan,
+    _context: ApplyContext<WebhooksStepContext>,
+  ): Promise<ApplyResult<WebhookSnapshotData, WebhookIdentity>> => {
+    // TODO(CEXT-6527): implement webhook resource apply
+    return Promise.resolve({
+      resolvedCleanupResources: [],
+      snapshotData: null,
+    });
+  },
   install: (config: WebhooksConfig, context: WebhooksExecutionContext) =>
     createWebhookSubscriptions(config, context),
   meta: {
@@ -40,6 +66,21 @@ const subscriptionsStep = defineLeafStep({
     },
   },
   name: "subscriptions",
+
+  plan: (
+    input: PlanningInput<WebhooksConfig, WebhookSnapshotData, WebhookIdentity>,
+    _context: ValidationExecutionContext<WebhooksStepContext>,
+  ): Promise<PlanningResult<WebhookDomainPlan>> => {
+    // TODO(CEXT-6527): implement webhook resource planning
+    return Promise.resolve({
+      kind: "planned",
+      plan: {
+        operations: [],
+        path: input.path,
+        possibleCleanupResources: [],
+      },
+    });
+  },
 
   uninstall: async (
     config: WebhooksConfig,
@@ -56,6 +97,8 @@ const subscriptionsStep = defineLeafStep({
 export const webhooksStep = defineBranchStep({
   children: [subscriptionsStep],
   context: createWebhooksStepContext,
+
+  isConfigured: hasWebhooks,
   meta: {
     install: {
       description: "Sets up Commerce webhooks",
@@ -67,6 +110,4 @@ export const webhooksStep = defineBranchStep({
     },
   },
   name: "webhooks",
-
-  when: hasWebhooks,
 });
