@@ -68,15 +68,15 @@ const subscriptionsStep = defineLeafStep({
   name: "subscriptions",
 
   plan: (
-    _input: PlanningInput<WebhooksConfig, WebhookSnapshotData, WebhookIdentity>,
+    input: PlanningInput<WebhooksConfig, WebhookSnapshotData, WebhookIdentity>,
     _context: ValidationExecutionContext<WebhooksStepContext>,
   ): Promise<PlanningResult<WebhookDomainPlan>> => {
     // TODO(CEXT-6527): implement webhook resource planning
     return Promise.resolve({
       kind: "planned",
       plan: {
-        domain: "webhooks",
         operations: [],
+        path: input.path,
         possibleCleanupResources: [],
       },
     });
@@ -97,6 +97,8 @@ const subscriptionsStep = defineLeafStep({
 export const webhooksStep = defineBranchStep({
   children: [subscriptionsStep],
   context: createWebhooksStepContext,
+
+  isConfigured: hasWebhooks,
   meta: {
     install: {
       description: "Sets up Commerce webhooks",
@@ -108,6 +110,4 @@ export const webhooksStep = defineBranchStep({
     },
   },
   name: "webhooks",
-
-  when: hasWebhooks,
 });

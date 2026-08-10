@@ -10,20 +10,23 @@
  * governing permissions and limitations under the License.
  */
 
+import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 import type {
   CleanupResource,
   DomainPlan,
+  PlanningIssue,
 } from "#management/common/workflow/resource";
 import type {
   StepStatus,
   SucceededWorkflowState,
+  WorkflowData,
   WorkflowError,
 } from "#management/common/workflow/types";
 
 /** The kind of lifecycle operation an orchestration run performs. */
 export type LifecycleOperation = "install" | "upgrade" | "uninstall";
 
-/** A resolved, executable plan spanning every participating domain. */
+/** A persisted plan spanning every participating domain. */
 export type LifecyclePlan = {
   /** Unique plan identifier. */
   id: string;
@@ -44,10 +47,16 @@ export type LifecyclePlan = {
   target: {
     /** App version being transitioned to. */
     appVersion: string;
+
+    /** Validated configuration used to produce and execute the plan. */
+    config: CommerceAppConfigOutputModel;
   };
 
   /** Per-domain plans that compose the operation. */
   domains: DomainPlan[];
+
+  /** Blocking issues reported while planning. */
+  issues: PlanningIssue[];
 };
 
 /** The result recorded when a lifecycle attempt succeeds. */
@@ -72,6 +81,18 @@ type LifecycleAttemptBase = {
 
   /** Step-tree progress of the attempt. */
   progress: StepStatus;
+
+  /** ISO timestamp when the attempt started. */
+  startedAt: string;
+
+  /** ISO timestamp after which an active attempt no longer blocks orchestration. */
+  executionDeadline: string;
+
+  /** Snapshot data produced by completed leaves. */
+  data: WorkflowData | null;
+
+  /** Cleanup resources resolved by completed leaves. */
+  resolvedCleanupResources: CleanupResource[];
 };
 
 /**

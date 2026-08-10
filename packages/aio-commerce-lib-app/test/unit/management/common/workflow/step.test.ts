@@ -36,18 +36,18 @@ describe("defineLeafStep", () => {
 
     const step = defineLeafStep({
       install: installFn,
-      meta: { install: { description: "A test step", label: "Test Step" } },
-      name: "test-step",
 
       // @ts-expect-error It's for testing
-      when: whenFn,
+      isConfigured: whenFn,
+      meta: { install: { description: "A test step", label: "Test Step" } },
+      name: "test-step",
     });
 
     expect(step.name).toBe("test-step");
     expect(step.meta).toEqual({
       install: { description: "A test step", label: "Test Step" },
     });
-    expect(step.when).toBe(whenFn);
+    expect(step.isConfigured).toBe(whenFn);
     expect(step.install).toBe(installFn);
   });
 
@@ -64,10 +64,10 @@ describe("defineLeafStep", () => {
     expect(step.name).toBe("minimal-step");
     expect(step.meta).toEqual({ install: { label: "Minimal Step" } });
     expect(step.install).toBe(installFn);
-    expect(step.when).toBeUndefined();
+    expect(step.isConfigured).toBeUndefined();
   });
 
-  test("works with optional when condition", () => {
+  test("preserves the deprecated when condition", () => {
     const whenFn = vi.fn((_config) => true);
 
     const step = defineLeafStep({
@@ -106,18 +106,18 @@ describe("defineBranchStep", () => {
     const step = defineBranchStep({
       children: [childStep],
       context: contextFn,
-      meta: { install: { description: "A test branch", label: "Test Branch" } },
-      name: "test-branch",
 
       // @ts-expect-error It's for testing
-      when: whenFn,
+      isConfigured: whenFn,
+      meta: { install: { description: "A test branch", label: "Test Branch" } },
+      name: "test-branch",
     });
 
     expect(step.name).toBe("test-branch");
     expect(step.meta).toEqual({
       install: { description: "A test branch", label: "Test Branch" },
     });
-    expect(step.when).toBe(whenFn);
+    expect(step.isConfigured).toBe(whenFn);
     expect(step.context).toBe(contextFn);
     expect(step.children).toEqual([childStep]);
   });
@@ -133,7 +133,7 @@ describe("defineBranchStep", () => {
     expect(step.name).toBe("minimal-branch");
     expect(step.meta).toEqual({ install: { label: "Minimal Branch" } });
     expect(step.children).toEqual([]);
-    expect(step.when).toBeUndefined();
+    expect(step.isConfigured).toBeUndefined();
     expect(step.context).toBeUndefined();
   });
 

@@ -38,6 +38,8 @@ export type ExternalEventsStepData = InferStepOutput<typeof externalEventsStep>;
 /** Leaf step for installing external event sources. */
 export const externalEventsStep = defineLeafStep({
   install: createExternalEvents,
+
+  isConfigured: hasExternalEvents,
   meta: {
     install: {
       description: "Sets up I/O Events for external event sources",
@@ -50,8 +52,6 @@ export const externalEventsStep = defineLeafStep({
   },
   name: "external",
   uninstall: removeExternalEvents,
-
-  when: hasExternalEvents,
 });
 
 /**

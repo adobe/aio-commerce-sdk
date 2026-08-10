@@ -20,6 +20,8 @@ import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 /** Root custom installation step that executes custom installation scripts. */
 const customInstallationStepBase = defineBranchStep({
   children: [],
+
+  isConfigured: hasCustomInstallationSteps,
   meta: {
     install: {
       description:
@@ -33,8 +35,6 @@ const customInstallationStepBase = defineBranchStep({
     },
   },
   name: "customInstallationSteps",
-
-  when: hasCustomInstallationSteps,
 });
 
 /**

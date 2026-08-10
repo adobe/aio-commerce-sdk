@@ -42,11 +42,15 @@ describe("externalEventsStep leaf step", () => {
   });
 
   test("should only run if eventing.external is defined", () => {
-    expect.assert(externalEventsStep.when);
+    expect.assert(externalEventsStep.isConfigured);
 
-    expect(externalEventsStep.when(configWithExternalEventing)).toBe(true);
-    expect(externalEventsStep.when(configWithCommerceEventing)).toBe(false);
-    expect(externalEventsStep.when(minimalValidConfig)).toBe(false);
+    expect(externalEventsStep.isConfigured(configWithExternalEventing)).toBe(
+      true,
+    );
+    expect(externalEventsStep.isConfigured(configWithCommerceEventing)).toBe(
+      false,
+    );
+    expect(externalEventsStep.isConfigured(minimalValidConfig)).toBe(false);
   });
 });
 

@@ -17,6 +17,7 @@ import {
   createSucceededState,
   createWorkflowError,
   getAtPath,
+  isStepConfigured,
   nowIsoString,
   setAtPath,
 } from "./utils";
@@ -84,7 +85,7 @@ type StepExecutionContext = {
 /**
  * Creates an initial workflow run state from a root step and config.
  *
- * Filters steps based on their `when` conditions and builds a
+ * Filters steps based on whether their domains are configured and builds a
  * tree structure with all steps set to "pending".
  */
 export function createInitialState(
@@ -147,9 +148,7 @@ export async function executeUninstallWorkflow(
   return executeWorkflowWithMode(options, "uninstall");
 }
 
-/**
- * Internal implementation shared by executeWorkflow and executeUninstallWorkflow.
- */
+/** Executes a workflow using install or uninstall handlers for the selected mode. */
 async function executeWorkflowWithMode(
   options: ExecuteWorkflowOptions,
   mode: ExecutionMode,
@@ -226,8 +225,7 @@ function buildInitialStepStatus(
 
   if (isBranchStep(step) && step.children.length > 0) {
     for (const child of step.children) {
-      // Skip steps that don't match their `when` condition
-      if (child.when && !child.when(config)) {
+      if (!isStepConfigured(child, config)) {
         continue;
       }
 

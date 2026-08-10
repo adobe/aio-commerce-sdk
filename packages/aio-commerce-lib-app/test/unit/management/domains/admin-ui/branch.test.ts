@@ -40,11 +40,11 @@ describe("admin-ui installation module", () => {
     });
 
     test("should only run if adminUi is defined", () => {
-      expect.assert(adminUiStep.when);
+      expect.assert(adminUiStep.isConfigured);
 
-      expect(adminUiStep.when(configWithFullAdminUiV2)).toBe(true);
-      expect(adminUiStep.when(minimalValidConfig)).toBe(false);
-      expect(adminUiStep.when(configWithWebhooks)).toBe(false);
+      expect(adminUiStep.isConfigured(configWithFullAdminUiV2)).toBe(true);
+      expect(adminUiStep.isConfigured(minimalValidConfig)).toBe(false);
+      expect(adminUiStep.isConfigured(configWithWebhooks)).toBe(false);
     });
 
     test("should have meta.uninstall defined", () => {

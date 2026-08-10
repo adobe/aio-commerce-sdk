@@ -17,6 +17,8 @@
 
 ### Deprecated
 
+- `StepBase.when` is deprecated in favor of `StepBase.isConfigured`, which clarifies that the predicate identifies whether the step's domain is represented in a configuration.
+
 <!-- Internal tracking: https://jira.corp.adobe.com/browse/CEXT-6337 -->
 
 - `PUT /config` action endpoint will be removed in a future major — use `PATCH /config` instead. The PUT endpoint overwrites all values for the scope and does not support partial updates or unset semantics.

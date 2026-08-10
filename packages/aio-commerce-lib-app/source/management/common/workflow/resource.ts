@@ -35,6 +35,9 @@ export type ResourceOperation<TValue> = {
 
   /** Human-readable label for display. */
   label: string;
+
+  /** Whether the operation converges configuration or resolves cleanup. */
+  category: "configuration" | "cleanup";
 } & (
   | { kind: "add"; after: TValue }
   | { kind: "update"; before: TValue; after: TValue }
@@ -43,8 +46,8 @@ export type ResourceOperation<TValue> = {
 
 /** A durable reminder that a resource may have been created and could need cleanup. */
 export type CleanupResource<TIdentity = Record<string, unknown>> = {
-  /** The domain that owns the resource. */
-  domain: string;
+  /** Full workflow path of the step that owns the resource. */
+  path: string[];
 
   /** Domain-specific identity used to locate the resource for cleanup. */
   identity: TIdentity;
@@ -55,8 +58,8 @@ export type DomainPlan<
   TValue = unknown,
   TCleanupIdentity = Record<string, unknown>,
 > = {
-  /** The domain this plan belongs to. */
-  domain: string;
+  /** Full workflow path of the step this plan belongs to. */
+  path: string[];
 
   /** The operations the domain proposes to apply. */
   operations: ResourceOperation<TValue>[];
@@ -75,7 +78,10 @@ export type ApplyContext<
 
 /** Inputs a domain needs to plan its changes: the prior baseline and the target. */
 export type PlanningInput<TConfig, TSnapshotData, TCleanupIdentity> = {
-  /** The last successful state (config and snapshot data), or `null` on first run. */
+  /** Full workflow path of the step being planned. */
+  path: string[];
+
+  /** The last successful state for this domain, or `null` when the domain was absent. */
   baseline: { config: TConfig; data: TSnapshotData } | null;
 
   /** The target configuration to converge to, or `null` when none is available. */

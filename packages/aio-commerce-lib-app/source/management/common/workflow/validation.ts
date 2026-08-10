@@ -83,7 +83,7 @@ export type ValidateStepTreeOptions = {
 /**
  * Runs validation over the full step tree, returning a structured result.
  *
- * - Respects `when` conditions (skips steps that don't apply to the config)
+ * - Skips steps whose domains are not represented in the configuration
  * - Calls each step's optional `validate` handler
  * - Sets up branch context factories before validating children
  * - Never throws; all errors from validate handlers are caught and reported as issues
@@ -119,7 +119,8 @@ async function validateStep(
     issues.push(...resolved.issues);
 
     for (const child of step.children) {
-      if (child.when && !child.when(config)) {
+      const predicate = child.isConfigured ?? child.when;
+      if (predicate && !predicate(config)) {
         continue;
       }
 

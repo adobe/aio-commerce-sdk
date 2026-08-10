@@ -71,6 +71,7 @@ describe("lifecycle type surface", () => {
   test("ResourceOperation discriminates on kind", () => {
     const add: ResourceOperation<Partial<WebhookEntry>> = {
       after: { name: "orders" },
+      category: "configuration",
       id: "op-1",
       kind: "add",
       label: "Add order webhook",
@@ -81,6 +82,7 @@ describe("lifecycle type surface", () => {
     const update: ResourceOperation<Partial<WebhookEntry>> = {
       after: { name: "orders", url: "https://example.test" },
       before: { name: "orders" },
+      category: "configuration",
       id: "op-2",
       kind: "update",
       label: "Update order webhook",
@@ -93,6 +95,7 @@ describe("lifecycle type surface", () => {
       after: { name: "orders" },
       // @ts-expect-error - "add" operations do not carry a `before` value.
       before: { name: "orders" },
+      category: "configuration",
       id: "op-3",
       kind: "add",
       label: "Invalid",
@@ -184,7 +187,7 @@ describe("lifecycle type surface", () => {
       meta: { install: { label: "Demo" } },
       name: "demo",
       plan: (
-        _input: PlanningInput<
+        input: PlanningInput<
           CommerceAppConfigOutputModel,
           { webhooks: WebhookEntry[] },
           WebhookIdentity
@@ -194,8 +197,8 @@ describe("lifecycle type surface", () => {
         Promise.resolve({
           kind: "planned",
           plan: {
-            domain: "demo",
             operations: [],
+            path: input.path,
             possibleCleanupResources: [],
           },
         }),

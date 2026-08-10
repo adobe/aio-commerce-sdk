@@ -105,7 +105,13 @@ export type StepBase<
   /** Metadata associated with the step, keyed by lifecycle mode. */
   meta: StepMeta;
 
-  /** Whether the step should be taken into consideration. */
+  /** Whether the step's domain is represented in the configuration. */
+  isConfigured?: (config: CommerceAppConfigOutputModel) => config is TConfig;
+
+  /**
+   * Whether the step's domain is represented in the configuration.
+   * @deprecated Use `isConfigured` instead.
+   */
   when?: (config: CommerceAppConfigOutputModel) => config is TConfig;
 };
 
@@ -208,6 +214,7 @@ export type AnyStep = {
     context: any,
   ) => ValidationIssue[] | Promise<ValidationIssue[]>;
 
+  isConfigured?: (config: CommerceAppConfigOutputModel) => boolean;
   when?: (config: CommerceAppConfigOutputModel) => boolean;
   // biome-ignore-end lint/suspicious/noExplicitAny: We no longer need the flexibility
 };
@@ -278,6 +285,7 @@ export function defineLeafStep<
   return {
     apply: options.apply,
     install: options.install,
+    isConfigured: options.isConfigured,
     meta: options.meta,
     name: options.name,
     plan: options.plan,
@@ -296,7 +304,7 @@ export function defineLeafStep<
  * const eventing = defineBranchStep({
  *   name: "eventing",
  *   meta: { install: { label: "Eventing", description: "Sets up I/O Events" } },
- *   when: hasEventing,
+ *   isConfigured: hasEventing,
  *   context: async (ctx) => ({ eventsClient: await createEventsClient(ctx) }),
  *   children: [commerceEventsStep, externalEventsStep],
  * });
@@ -311,6 +319,7 @@ export function defineBranchStep<
   return {
     children: options.children,
     context: options.context,
+    isConfigured: options.isConfigured,
     meta: options.meta,
     name: options.name,
     type: "branch",

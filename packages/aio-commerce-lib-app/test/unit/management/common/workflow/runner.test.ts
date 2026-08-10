@@ -102,7 +102,7 @@ describe("createInitialState", () => {
     expect(state.step.status).toBe("pending");
   });
 
-  test("should filter children based on when conditions (include steps where when returns true)", () => {
+  test("prefers isConfigured and falls back to deprecated when", () => {
     const includedStep = defineLeafStep({
       install: vi.fn(),
       meta: { install: { label: "Included" } },
@@ -114,11 +114,13 @@ describe("createInitialState", () => {
 
     const excludedStep = defineLeafStep({
       install: vi.fn(),
-      meta: { install: { label: "Excluded" } },
-      name: "excluded",
 
       // @ts-expect-error It's for testing
-      when: () => false,
+      isConfigured: () => false,
+      meta: { install: { label: "Excluded" } },
+      name: "excluded",
+      // @ts-expect-error It's for testing
+      when: () => true,
     });
 
     const rootStep = defineBranchStep({
