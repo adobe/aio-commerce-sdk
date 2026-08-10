@@ -1,13 +1,7 @@
 {
   "name": "@adobe/aio-commerce-lib-config",
-  "type": "module",
-  "author": "Adobe Inc.",
   "version": "1.6.0",
   "private": false,
-  "engines": {
-    "node": ">=22 <=24"
-  },
-  "license": "Apache-2.0",
   "description": "Configuration management utilities for Adobe Commerce apps deployed in Adobe App Builder",
   "keywords": [
     "aio",
@@ -29,14 +23,80 @@
     "url": "git+https://github.com/adobe/aio-commerce-sdk.git",
     "directory": "packages/aio-commerce-lib-config"
   },
+  "license": "Apache-2.0",
+  "author": "Adobe Inc.",
+  "sideEffects": false,
+  "type": "module",
+  "imports": {
+    "#*": "./source/*.ts",
+    "#test/*": "./test/*.ts"
+  },
+  "exports": {
+    ".": "./source/index.ts",
+    "./package.json": "./package.json"
+  },
   "main": "./dist/cjs/index.cjs",
   "module": "./dist/es/index.mjs",
   "types": "./dist/cjs/index.d.cts",
   "bin": {
     "aio-commerce-lib-config": "./bin/cli.mjs"
   },
+  "files": [
+    "bin",
+    "dist",
+    "package.json",
+    "CHANGELOG.md",
+    "README.md"
+  ],
+  "scripts": {
+    "assist": "biome check --formatter-enabled=false --linter-enabled=false --assist-enabled=true --no-errors-on-unmatched",
+    "assist:apply": "biome check --write --formatter-enabled=false --linter-enabled=false --assist-enabled=true --no-errors-on-unmatched",
+    "build": "tsdown",
+    "check:ci": "biome ci --formatter-enabled=true --linter-enabled=true --assist-enabled=true --no-errors-on-unmatched",
+    "code:fix": "pnpm run lint:fix && pnpm run assist:apply && pnpm run format && pnpm run format:markdown",
+    "docs": "typedoc && prettier --write '**/*.md'",
+    "format": "biome format --write --no-errors-on-unmatched",
+    "format:check": "biome format --no-errors-on-unmatched",
+    "format:markdown": "prettier --no-error-on-unmatched-pattern --write '**/*.md' \"!**/{CODE_OF_CONDUCT.md,COPYRIGHT,LICENSE,SECURITY.md,CONTRIBUTING.md}\"",
+    "lint": "biome lint --no-errors-on-unmatched",
+    "lint:fix": "biome lint --write --no-errors-on-unmatched",
+    "prepack": "sdk-prepack",
+    "pack": "pnpm pack",
+    "postpack": "sdk-postpack",
+    "publint": "publint",
+    "test": "vitest run --coverage",
+    "test:ui": "vitest --ui",
+    "test:watch": "vitest --coverage",
+    "typecheck": "tsc --noEmit && echo '✅ No type errors found.'"
+  },
+  "dependencies": {
+    "@adobe/aio-commerce-lib-api": "workspace:*",
+    "@adobe/aio-commerce-lib-core": "workspace:*",
+    "@adobe/aio-lib-core-logging": "catalog:",
+    "@adobe/aio-lib-files": "catalog:",
+    "@adobe/aio-lib-state": "catalog:",
+    "consola": "catalog:",
+    "safe-stable-stringify": "catalog:",
+    "type-fest": "catalog:",
+    "uuid": "^14.0.0",
+    "valibot": "catalog:"
+  },
+  "devDependencies": {
+    "@adobe/aio-commerce-lib-auth": "workspace:*",
+    "@aio-commerce-sdk/common-utils": "workspace:*",
+    "@aio-commerce-sdk/config-tsdown": "workspace:*",
+    "@aio-commerce-sdk/config-typedoc": "workspace:*",
+    "@aio-commerce-sdk/config-typescript": "workspace:*",
+    "@aio-commerce-sdk/config-vitest": "workspace:*",
+    "@aio-commerce-sdk/scripting-utils": "workspace:*",
+    "@aio-commerce-sdk/scripts": "workspace:*",
+    "msw": "catalog:",
+    "typescript": "catalog:"
+  },
+  "engines": {
+    "node": ">=22 <=24"
+  },
   "publishConfig": {
-    "registry": "https://registry.npmjs.org",
     "access": "public",
     "exports": {
       ".": {
@@ -49,67 +109,7 @@
           "default": "./dist/cjs/index.cjs"
         }
       }
-    }
-  },
-  "exports": {
-    ".": "./source/index.ts",
-    "./package.json": "./package.json"
-  },
-  "imports": {
-    "#*": "./source/*.ts",
-    "#test/*": "./test/*.ts"
-  },
-  "files": [
-    "bin",
-    "dist",
-    "package.json",
-    "CHANGELOG.md",
-    "README.md"
-  ],
-  "scripts": {
-    "build": "tsdown",
-    "prepack": "sdk-prepack",
-    "pack": "pnpm pack",
-    "postpack": "sdk-postpack",
-    "publint": "publint",
-    "docs": "typedoc && prettier --write '**/*.md'",
-    "assist": "biome check --formatter-enabled=false --linter-enabled=false --assist-enabled=true --no-errors-on-unmatched",
-    "assist:apply": "biome check --write --formatter-enabled=false --linter-enabled=false --assist-enabled=true --no-errors-on-unmatched",
-    "check:ci": "biome ci --formatter-enabled=true --linter-enabled=true --assist-enabled=true --no-errors-on-unmatched",
-    "code:fix": "pnpm run lint:fix && pnpm run assist:apply && pnpm run format && pnpm run format:markdown",
-    "format": "biome format --write --no-errors-on-unmatched",
-    "format:markdown": "prettier --no-error-on-unmatched-pattern --write '**/*.md' \"!**/{CODE_OF_CONDUCT.md,COPYRIGHT,LICENSE,SECURITY.md,CONTRIBUTING.md}\"",
-    "format:check": "biome format --no-errors-on-unmatched",
-    "lint": "biome lint --no-errors-on-unmatched",
-    "lint:fix": "biome lint --write --no-errors-on-unmatched",
-    "typecheck": "tsc --noEmit && echo '✅ No type errors found.'",
-    "test": "vitest run --coverage",
-    "test:watch": "vitest --coverage",
-    "test:ui": "vitest --ui"
-  },
-  "dependencies": {
-    "@adobe/aio-commerce-lib-api": "workspace:*",
-    "@adobe/aio-commerce-lib-core": "workspace:*",
-    "@adobe/aio-lib-core-logging": "catalog:",
-    "@adobe/aio-lib-files": "catalog:",
-    "@adobe/aio-lib-state": "catalog:",
-    "consola": "catalog:",
-    "type-fest": "catalog:",
-    "safe-stable-stringify": "catalog:",
-    "uuid": "^14.0.0",
-    "valibot": "catalog:"
-  },
-  "devDependencies": {
-    "@aio-commerce-sdk/common-utils": "workspace:*",
-    "@adobe/aio-commerce-lib-auth": "workspace:*",
-    "msw": "catalog:",
-    "@aio-commerce-sdk/config-tsdown": "workspace:*",
-    "@aio-commerce-sdk/config-typedoc": "workspace:*",
-    "@aio-commerce-sdk/config-typescript": "workspace:*",
-    "@aio-commerce-sdk/config-vitest": "workspace:*",
-    "@aio-commerce-sdk/scripting-utils": "workspace:*",
-    "@aio-commerce-sdk/scripts": "workspace:*",
-    "typescript": "catalog:"
-  },
-  "sideEffects": false
+    },
+    "registry": "https://registry.npmjs.org"
+  }
 }

@@ -1,18 +1,18 @@
 {
   "name": "@aio-commerce-sdk/generators",
-  "description": "Generators used to scaffold code within the AIO Commerce SDK monorepo",
-  "type": "commonjs",
   "version": "1.0.1",
   "private": true,
+  "description": "Generators used to scaffold code within the AIO Commerce SDK monorepo",
+  "type": "commonjs",
   "scripts": {
-    "gen:create-package": "turbo gen create-package",
     "assist": "biome check --formatter-enabled=false --linter-enabled=false --assist-enabled=true --no-errors-on-unmatched",
     "assist:apply": "biome check --write --formatter-enabled=false --linter-enabled=false --assist-enabled=true --no-errors-on-unmatched",
     "check:ci": "biome ci --formatter-enabled=true --linter-enabled=true --assist-enabled=true --no-errors-on-unmatched",
     "code:fix": "pnpm run lint:fix && pnpm run assist:apply && pnpm run format && pnpm run format:markdown",
     "format": "biome format --write --no-errors-on-unmatched",
-    "format:markdown": "prettier --no-error-on-unmatched-pattern --write '**/*.md' \"!**/{CODE_OF_CONDUCT.md,COPYRIGHT,LICENSE,SECURITY.md,CONTRIBUTING.md}\"",
     "format:check": "biome format --no-errors-on-unmatched",
+    "format:markdown": "prettier --no-error-on-unmatched-pattern --write '**/*.md' \"!**/{CODE_OF_CONDUCT.md,COPYRIGHT,LICENSE,SECURITY.md,CONTRIBUTING.md}\"",
+    "gen:create-package": "turbo gen create-package",
     "lint": "biome lint --no-errors-on-unmatched",
     "lint:fix": "biome lint --write --no-errors-on-unmatched",
     "typecheck": "tsc --noEmit && echo '✅ No type errors found.'"

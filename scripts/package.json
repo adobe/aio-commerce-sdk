@@ -1,21 +1,19 @@
 {
   "name": "@aio-commerce-sdk/scripts",
-  "type": "module",
-  "author": "Adobe Inc.",
   "version": "0.1.1",
   "private": true,
-  "engines": {
-    "node": ">=22 <=24"
-  },
-  "license": "Apache-2.0",
   "description": "Scripts for the AIO Commerce SDK monorepo",
+  "license": "Apache-2.0",
+  "author": "Adobe Inc.",
+  "sideEffects": false,
+  "type": "module",
   "imports": {
     "#*": "./source/*.ts",
     "#test/*": "./test/*.ts"
   },
   "bin": {
-    "sdk-prepack": "./source/prepack.ts",
     "sdk-postpack": "./source/postpack.ts",
+    "sdk-prepack": "./source/prepack.ts",
     "sdk-sync-plugin-version": "./source/sync-plugin-version.ts"
   },
   "scripts": {
@@ -24,13 +22,13 @@
     "check:ci": "biome ci --formatter-enabled=true --linter-enabled=true --assist-enabled=true --no-errors-on-unmatched",
     "code:fix": "pnpm run lint:fix && pnpm run assist:apply && pnpm run format && pnpm run format:markdown",
     "format": "biome format --write --no-errors-on-unmatched",
-    "format:markdown": "prettier --no-error-on-unmatched-pattern --write '**/*.md' \"!**/{CODE_OF_CONDUCT.md,COPYRIGHT,LICENSE,SECURITY.md,CONTRIBUTING.md}\"",
     "format:check": "biome format --no-errors-on-unmatched",
+    "format:markdown": "prettier --no-error-on-unmatched-pattern --write '**/*.md' \"!**/{CODE_OF_CONDUCT.md,COPYRIGHT,LICENSE,SECURITY.md,CONTRIBUTING.md}\"",
     "lint": "biome lint --no-errors-on-unmatched",
     "lint:fix": "biome lint --write --no-errors-on-unmatched",
     "test": "vitest run --coverage",
-    "test:watch": "vitest --coverage",
     "test:ui": "vitest --ui --coverage",
+    "test:watch": "vitest --coverage",
     "typecheck": "tsc --noEmit && echo '✅ No type errors found.'"
   },
   "devDependencies": {
@@ -42,5 +40,7 @@
     "@aio-commerce-sdk/scripting-utils": "workspace:*",
     "jsonc-parser": "^3.3.1"
   },
-  "sideEffects": false
+  "engines": {
+    "node": ">=22 <=24"
+  }
 }

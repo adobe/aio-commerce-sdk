@@ -1,13 +1,7 @@
 {
   "name": "@adobe/aio-commerce-lib-app",
-  "type": "module",
-  "author": "Adobe Inc.",
   "version": "1.10.0",
   "private": false,
-  "engines": {
-    "node": ">=22 <=24"
-  },
-  "license": "Apache-2.0",
   "description": "App configuration management library for Adobe Commerce applications",
   "keywords": [
     "aio",
@@ -28,11 +22,121 @@
     "url": "git+https://github.com/adobe/aio-commerce-sdk.git",
     "directory": "packages/aio-commerce-lib-app"
   },
+  "license": "Apache-2.0",
+  "author": "Adobe Inc.",
+  "sideEffects": false,
+  "type": "module",
+  "imports": {
+    "#config/index": "./source/config/index.node.ts",
+    "#*": "./source/*.ts",
+    "#openapi.json": "./docs/openapi.json",
+    "#test/*": "./test/*.ts",
+    "#templates/admin-ui/*": "./source/commands/generate/actions/templates/admin-ui/*",
+    "#templates/*": "./source/commands/generate/actions/templates/*.template"
+  },
+  "exports": {
+    ".": "./source/index.ts",
+    "./actions/*": "./source/actions/*/index.ts",
+    "./config": {
+      "browser": "./source/config/index.browser.ts",
+      "default": "./source/config/index.node.ts"
+    },
+    "./management": "./source/management/index.ts",
+    "./package.json": "./package.json"
+  },
   "bin": {
     "aio-commerce-lib-app": "./bin/cli.mjs"
   },
+  "files": [
+    "bin",
+    "dist",
+    "package.json",
+    "CHANGELOG.md",
+    "README.md"
+  ],
+  "scripts": {
+    "assist": "biome check --formatter-enabled=false --linter-enabled=false --assist-enabled=true --no-errors-on-unmatched",
+    "assist:apply": "biome check --write --formatter-enabled=false --linter-enabled=false --assist-enabled=true --no-errors-on-unmatched",
+    "build": "tsdown",
+    "check:ci": "biome ci --formatter-enabled=true --linter-enabled=true --assist-enabled=true --no-errors-on-unmatched && pnpm run lint:openapi",
+    "code:fix": "pnpm run lint:fix && pnpm run assist:apply && pnpm run format:openapi && pnpm run format && pnpm run format:markdown",
+    "docs": "typedoc && prettier --write '**/*.md'",
+    "format": "biome format --write --no-errors-on-unmatched",
+    "format:check": "biome format --no-errors-on-unmatched",
+    "format:markdown": "prettier --no-error-on-unmatched-pattern --write '**/*.md' \"!**/{CODE_OF_CONDUCT.md,COPYRIGHT,LICENSE,SECURITY.md,CONTRIBUTING.md}\"",
+    "format:openapi": "openapi-format docs/openapi.json -o docs/openapi.json -c openapi-format.json && biome format --write --no-errors-on-unmatched docs/openapi.json",
+    "lint": "biome lint --no-errors-on-unmatched && pnpm run lint:openapi",
+    "lint:fix": "biome lint --write --no-errors-on-unmatched",
+    "lint:openapi": "redocly lint --config ../../redocly.yaml",
+    "prepack": "sdk-prepack",
+    "pack": "pnpm pack",
+    "postpack": "sdk-postpack",
+    "publint": "publint",
+    "test": "vitest run --coverage",
+    "test:ui": "vitest --ui --coverage",
+    "test:watch": "vitest --coverage",
+    "typecheck": "tsc --noEmit && pnpm run typecheck:templates && echo '✅ No type errors found.'",
+    "typecheck:templates": "tsc -p source/commands/generate/actions/templates/admin-ui/tsconfig.json",
+    "version": "pnpx tsx scripts/sync-openapi-version.ts"
+  },
+  "dependencies": {
+    "@adobe/aio-commerce-lib-admin-ui": "workspace:*",
+    "@adobe/aio-commerce-lib-api": "workspace:*",
+    "@adobe/aio-commerce-lib-auth": "workspace:*",
+    "@adobe/aio-commerce-lib-config": "workspace:*",
+    "@adobe/aio-commerce-lib-core": "workspace:*",
+    "@adobe/aio-commerce-lib-events": "workspace:*",
+    "@adobe/aio-commerce-lib-webhooks": "workspace:*",
+    "@adobe/aio-lib-core-logging": "catalog:",
+    "@adobe/aio-lib-state": "catalog:",
+    "camelcase": "catalog:",
+    "consola": "catalog:",
+    "jiti": "^2.6.1",
+    "ky": "catalog:",
+    "openwhisk": "^3.21.8",
+    "prettier": "catalog:",
+    "safe-stable-stringify": "catalog:",
+    "type-fest": "catalog:",
+    "valibot": "catalog:",
+    "yaml": "catalog:"
+  },
+  "devDependencies": {
+    "@adobe/aio-lib-files": "catalog:",
+    "@aio-commerce-sdk/common-utils": "workspace:*",
+    "@aio-commerce-sdk/config-tsdown": "workspace:*",
+    "@aio-commerce-sdk/config-typedoc": "workspace:*",
+    "@aio-commerce-sdk/config-typescript": "workspace:*",
+    "@aio-commerce-sdk/config-vitest": "workspace:*",
+    "@aio-commerce-sdk/scripting-utils": "workspace:*",
+    "@aio-commerce-sdk/scripts": "workspace:*",
+    "@pnpm/lockfile.fs": "^1100.1.7",
+    "@react-spectrum/s2": "catalog:react",
+    "@types/react": "catalog:react",
+    "msw": "catalog:",
+    "openapi-format": "1.33.6",
+    "react": "catalog:react",
+    "typescript": "catalog:"
+  },
+  "peerDependencies": {
+    "@tsconfig/bases": "^1.0.26",
+    "ts-loader": "^9.6.2",
+    "typescript": "^6.0.3"
+  },
+  "peerDependenciesMeta": {
+    "@tsconfig/bases": {
+      "optional": true
+    },
+    "ts-loader": {
+      "optional": true
+    },
+    "typescript": {
+      "optional": true
+    }
+  },
+  "engines": {
+    "node": ">=22 <=24"
+  },
   "publishConfig": {
-    "registry": "https://registry.npmjs.org",
     "access": "public",
     "exports": {
       ".": {
@@ -80,111 +184,7 @@
         }
       },
       "./package.json": "./package.json"
-    }
-  },
-  "exports": {
-    ".": "./source/index.ts",
-    "./actions/*": "./source/actions/*/index.ts",
-    "./config": {
-      "browser": "./source/config/index.browser.ts",
-      "default": "./source/config/index.node.ts"
     },
-    "./management": "./source/management/index.ts",
-    "./package.json": "./package.json"
-  },
-  "imports": {
-    "#config/index": "./source/config/index.node.ts",
-    "#*": "./source/*.ts",
-    "#openapi.json": "./docs/openapi.json",
-    "#test/*": "./test/*.ts",
-    "#templates/admin-ui/*": "./source/commands/generate/actions/templates/admin-ui/*",
-    "#templates/*": "./source/commands/generate/actions/templates/*.template"
-  },
-  "files": [
-    "bin",
-    "dist",
-    "package.json",
-    "CHANGELOG.md",
-    "README.md"
-  ],
-  "scripts": {
-    "version": "pnpx tsx scripts/sync-openapi-version.ts",
-    "build": "tsdown",
-    "prepack": "sdk-prepack",
-    "pack": "pnpm pack",
-    "postpack": "sdk-postpack",
-    "publint": "publint",
-    "docs": "typedoc && prettier --write '**/*.md'",
-    "assist": "biome check --formatter-enabled=false --linter-enabled=false --assist-enabled=true --no-errors-on-unmatched",
-    "assist:apply": "biome check --write --formatter-enabled=false --linter-enabled=false --assist-enabled=true --no-errors-on-unmatched",
-    "check:ci": "biome ci --formatter-enabled=true --linter-enabled=true --assist-enabled=true --no-errors-on-unmatched && pnpm run lint:openapi",
-    "code:fix": "pnpm run lint:fix && pnpm run assist:apply && pnpm run format:openapi && pnpm run format && pnpm run format:markdown",
-    "format": "biome format --write --no-errors-on-unmatched",
-    "format:markdown": "prettier --no-error-on-unmatched-pattern --write '**/*.md' \"!**/{CODE_OF_CONDUCT.md,COPYRIGHT,LICENSE,SECURITY.md,CONTRIBUTING.md}\"",
-    "format:openapi": "openapi-format docs/openapi.json -o docs/openapi.json -c openapi-format.json && biome format --write --no-errors-on-unmatched docs/openapi.json",
-    "format:check": "biome format --no-errors-on-unmatched",
-    "lint": "biome lint --no-errors-on-unmatched && pnpm run lint:openapi",
-    "lint:openapi": "redocly lint --config ../../redocly.yaml",
-    "lint:fix": "biome lint --write --no-errors-on-unmatched",
-    "typecheck": "tsc --noEmit && pnpm run typecheck:templates && echo '✅ No type errors found.'",
-    "typecheck:templates": "tsc -p source/commands/generate/actions/templates/admin-ui/tsconfig.json",
-    "test": "vitest run --coverage",
-    "test:watch": "vitest --coverage",
-    "test:ui": "vitest --ui --coverage"
-  },
-  "dependencies": {
-    "@adobe/aio-commerce-lib-admin-ui": "workspace:*",
-    "@adobe/aio-commerce-lib-api": "workspace:*",
-    "@adobe/aio-commerce-lib-auth": "workspace:*",
-    "@adobe/aio-commerce-lib-config": "workspace:*",
-    "@adobe/aio-commerce-lib-core": "workspace:*",
-    "@adobe/aio-commerce-lib-events": "workspace:*",
-    "@adobe/aio-commerce-lib-webhooks": "workspace:*",
-    "@adobe/aio-lib-core-logging": "catalog:",
-    "@adobe/aio-lib-state": "catalog:",
-    "camelcase": "catalog:",
-    "consola": "catalog:",
-    "jiti": "^2.6.1",
-    "ky": "catalog:",
-    "openwhisk": "^3.21.8",
-    "prettier": "catalog:",
-    "safe-stable-stringify": "catalog:",
-    "type-fest": "catalog:",
-    "valibot": "catalog:",
-    "yaml": "catalog:"
-  },
-  "peerDependencies": {
-    "@tsconfig/bases": "^1.0.26",
-    "ts-loader": "^9.6.2",
-    "typescript": "^6.0.3"
-  },
-  "peerDependenciesMeta": {
-    "@tsconfig/bases": {
-      "optional": true
-    },
-    "ts-loader": {
-      "optional": true
-    },
-    "typescript": {
-      "optional": true
-    }
-  },
-  "devDependencies": {
-    "@adobe/aio-lib-files": "catalog:",
-    "@aio-commerce-sdk/common-utils": "workspace:*",
-    "@aio-commerce-sdk/config-tsdown": "workspace:*",
-    "@aio-commerce-sdk/config-typedoc": "workspace:*",
-    "@aio-commerce-sdk/config-typescript": "workspace:*",
-    "@aio-commerce-sdk/config-vitest": "workspace:*",
-    "@aio-commerce-sdk/scripting-utils": "workspace:*",
-    "@aio-commerce-sdk/scripts": "workspace:*",
-    "@pnpm/lockfile.fs": "^1100.1.7",
-    "@react-spectrum/s2": "catalog:react",
-    "@types/react": "catalog:react",
-    "msw": "catalog:",
-    "openapi-format": "1.33.6",
-    "react": "catalog:react",
-    "typescript": "catalog:"
-  },
-  "sideEffects": false
+    "registry": "https://registry.npmjs.org"
+  }
 }

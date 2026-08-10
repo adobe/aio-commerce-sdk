@@ -1,13 +1,7 @@
 {
   "name": "@adobe/aio-commerce-sdk",
-  "type": "module",
-  "author": "Adobe Inc.",
   "version": "1.4.1",
   "private": false,
-  "engines": {
-    "node": ">=22 <=24"
-  },
-  "license": "Apache-2.0",
   "description": "Meta-package re-exporting Adobe Commerce SDK libraries for Adobe App Builder applications.",
   "keywords": [
     "aio",
@@ -25,6 +19,10 @@
     "type": "git",
     "url": "git+https://github.com/adobe/aio-commerce-sdk.git"
   },
+  "license": "Apache-2.0",
+  "author": "Adobe Inc.",
+  "sideEffects": false,
+  "type": "module",
   "exports": {
     "./api": {
       "import": {
@@ -115,28 +113,38 @@
     "README.md"
   ],
   "scripts": {
-    "build": "tsdown",
-    "pack": "pnpm pack",
-    "publint": "publint",
     "assist": "biome check --formatter-enabled=false --linter-enabled=false --assist-enabled=true --no-errors-on-unmatched",
     "assist:apply": "biome check --write --formatter-enabled=false --linter-enabled=false --assist-enabled=true --no-errors-on-unmatched",
+    "build": "tsdown",
     "check:ci": "biome ci --formatter-enabled=true --linter-enabled=true --assist-enabled=true --no-errors-on-unmatched",
     "code:fix": "pnpm run lint:fix && pnpm run assist:apply && pnpm run format && pnpm run format:markdown",
     "format": "biome format --write --no-errors-on-unmatched",
-    "format:markdown": "prettier --no-error-on-unmatched-pattern --write '**/*.md' \"!**/{CODE_OF_CONDUCT.md,COPYRIGHT,LICENSE,SECURITY.md,CONTRIBUTING.md}\"",
     "format:check": "biome format --no-errors-on-unmatched",
+    "format:markdown": "prettier --no-error-on-unmatched-pattern --write '**/*.md' \"!**/{CODE_OF_CONDUCT.md,COPYRIGHT,LICENSE,SECURITY.md,CONTRIBUTING.md}\"",
     "lint": "biome lint --no-errors-on-unmatched",
     "lint:fix": "biome lint --write --no-errors-on-unmatched",
+    "pack": "pnpm pack",
+    "publint": "publint",
     "typecheck": "tsc --noEmit && echo '✅ No type errors found.'"
   },
   "dependencies": {
+    "@adobe/aio-commerce-lib-admin-ui": "workspace:*",
+    "@adobe/aio-commerce-lib-api": "workspace:*",
     "@adobe/aio-commerce-lib-auth": "workspace:*",
     "@adobe/aio-commerce-lib-core": "workspace:*",
-    "@adobe/aio-commerce-lib-api": "workspace:*",
-    "@adobe/aio-commerce-lib-admin-ui": "workspace:*",
     "@adobe/aio-commerce-lib-events": "workspace:*",
     "@adobe/aio-commerce-lib-webhooks": "workspace:*",
     "type-fest": "catalog:"
+  },
+  "devDependencies": {
+    "@aio-commerce-sdk/config-tsdown": "workspace:*",
+    "@aio-commerce-sdk/config-typescript": "workspace:*",
+    "@react-spectrum/s2": "catalog:react",
+    "@types/react": "catalog:react",
+    "@types/react-dom": "catalog:react",
+    "react": "catalog:react",
+    "react-dom": "catalog:react",
+    "typescript": "catalog:"
   },
   "peerDependencies": {
     "@react-spectrum/s2": "catalog:react",
@@ -154,19 +162,11 @@
       "optional": true
     }
   },
-  "devDependencies": {
-    "@aio-commerce-sdk/config-tsdown": "workspace:*",
-    "@aio-commerce-sdk/config-typescript": "workspace:*",
-    "@react-spectrum/s2": "catalog:react",
-    "@types/react": "catalog:react",
-    "@types/react-dom": "catalog:react",
-    "react": "catalog:react",
-    "react-dom": "catalog:react",
-    "typescript": "catalog:"
+  "engines": {
+    "node": ">=22 <=24"
   },
   "publishConfig": {
-    "registry": "https://registry.npmjs.org",
-    "access": "public"
-  },
-  "sideEffects": false
+    "access": "public",
+    "registry": "https://registry.npmjs.org"
+  }
 }
