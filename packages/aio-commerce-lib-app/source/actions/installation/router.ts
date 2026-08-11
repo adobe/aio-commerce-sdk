@@ -26,19 +26,26 @@ import { createCombinedStore } from "@aio-commerce-sdk/common-utils/storage";
 import openwhisk from "openwhisk";
 
 import { validateCommerceAppConfig } from "#config/lib/validate";
+import { getAssociationData } from "#management/association/repository";
 import {
+  classifyAutoUpdate,
   createInitialInstallationState,
   createInitialUninstallationState,
   isCompletedState,
   isFailedState,
   isInProgressState,
   isSucceededState,
+  previewUpgrade,
   runInstallation,
   runUninstallation,
+  runUpgrade,
   runValidation,
 } from "#management/index";
 
-import { InstallationRequestBodySchema } from "./schema";
+import {
+  InstallationRequestBodySchema,
+  SelfUpdateRequestBodySchema,
+} from "./schema";
 
 import type { BaseContext } from "@aio-commerce-sdk/common-utils/actions";
 import type { KeyValueStore } from "@aio-commerce-sdk/common-utils/storage";
@@ -52,7 +59,11 @@ import type {
   InProgressWorkflowState,
   WorkflowRunState,
 } from "#management/common/workflow/types";
-import type { LifecycleContext, ValidationContext } from "#management/index";
+import type {
+  ConfigDiff,
+  LifecycleContext,
+  ValidationContext,
+} from "#management/index";
 
 // Action name for async invocation
 const DEFAULT_ACTION_NAME = "app-management/installation";
@@ -98,6 +109,58 @@ function createUninstallationStore() {
   return createWorkflowStore("uninstallation");
 }
 
+/** State tracked for an async self-update run. */
+type UpdateRunState = {
+  id: string;
+  status: "in-progress" | "succeeded" | "failed";
+  startedAt: string;
+  trigger: "auto";
+  diff?: ConfigDiff;
+  error?: { message: string };
+};
+
+/** The discriminated `code` returned by POST /update/self. */
+type SelfUpdateResponseCode =
+  | "started"
+  | "skipped-manual"
+  | "skipped-not-installed"
+  | "skipped-not-associated"
+  | "noop"
+  | "review-required"
+  | "unsupported"
+  | "busy";
+
+/** Creates the self-update state store. */
+function createUpdateStore() {
+  return createCombinedStore<UpdateRunState>({
+    cache: { keyPrefix: "update" },
+    persistent: {
+      dirPrefix: "update",
+      shouldPersist: (state) => state.status !== "in-progress",
+    },
+  });
+}
+
+/** True when an installation, uninstallation, or self-update is currently in progress. */
+async function isAnyLifecycleBusy(): Promise<boolean> {
+  const [installStore, uninstallStore, updateStore] = await Promise.all([
+    createInstallationStore(),
+    createUninstallationStore(),
+    createUpdateStore(),
+  ]);
+  const [install, uninstall, update] = await Promise.all([
+    installStore.get(getStorageKey()),
+    uninstallStore.get(getStorageKey()),
+    updateStore.get(getStorageKey()),
+  ]);
+
+  return Boolean(
+    (install && isInProgressState(install)) ||
+      (uninstall && isInProgressState(uninstall)) ||
+      (update && update.status === "in-progress"),
+  );
+}
+
 /** Returns the storage key used to store the current installation ID. */
 function getStorageKey() {
   // For simplicity, we use a single key to store the current installation state.
@@ -125,6 +188,12 @@ function buildWorkflowParams(
 
 type ExecutionRouteParams = RuntimeActionArgs & {
   initialState: InProgressWorkflowState;
+  appData: LifecycleContext["appData"];
+};
+
+type UpdateExecutionParams = RuntimeActionArgs & {
+  initialState: UpdateRunState;
+  baselineConfig: CommerceAppConfigOutputModel;
   appData: LifecycleContext["appData"];
 };
 
@@ -604,6 +673,190 @@ router.delete("/uninstallation", {
     await store.delete(getStorageKey());
     logger.debug("Uninstallation state cleared");
     return noContent();
+  },
+});
+
+/**
+ * GET /update - Get current self-update status
+ *
+ * Returns 200 with the self-update state if one has run, 204 otherwise.
+ */
+router.get("/update", {
+  handler: async (_req, { logger }) => {
+    logger.debug("Getting self-update status...");
+    const store = await createUpdateStore();
+    const state = await store.get(getStorageKey());
+    if (state) {
+      return ok({ body: state });
+    }
+    return noContent();
+  },
+});
+
+/**
+ * POST /update/self - Trigger an unattended self-update (post-deploy hook entry point)
+ *
+ * Self-sources everything: gated on `metadata.updateType === "auto"`, baseline from the completed
+ * install snapshot, Commerce credentials from the association, IMS/eventing from the action env, and
+ * the target from the bundled app config. Classifies the diff and, only for a safe `reconcile`,
+ * async-invokes POST /update/execution. Always returns 200/202 with a discriminated `{ code }` so
+ * the calling hook can branch (and retry on `busy`) without treating non-2xx as a failure.
+ */
+router.post("/update/self", {
+  body: SelfUpdateRequestBodySchema,
+
+  handler: async (req, { logger, rawParams }) => {
+    const rawAppConfig = rawParams.appConfig;
+    if (!rawAppConfig) {
+      return internalServerError(
+        "The app config is missing. Does the action receive it as a parameter?",
+      );
+    }
+
+    const targetConfig = validateCommerceAppConfig(rawAppConfig);
+    const code = (value: SelfUpdateResponseCode) => value;
+
+    if (targetConfig.metadata.updateType !== "auto") {
+      logger.debug("Self-update skipped: metadata.updateType is not 'auto'.");
+      return ok({ body: { code: code("skipped-manual") } });
+    }
+
+    const snapshot = await getInstallationSnapshot();
+    if (!snapshot?.config) {
+      logger.debug("Self-update skipped: no completed installation snapshot.");
+      return ok({ body: { code: code("skipped-not-installed") } });
+    }
+
+    if (await isAnyLifecycleBusy()) {
+      logger.debug(
+        "Self-update deferred: another lifecycle operation is in progress.",
+      );
+      return ok({ body: { code: code("busy") } });
+    }
+
+    const baselineConfig = validateCommerceAppConfig(snapshot.config);
+    const diff = previewUpgrade(baselineConfig, targetConfig);
+    const decision = classifyAutoUpdate(diff);
+
+    if (decision !== "reconcile") {
+      logger.debug(`Self-update classified as "${decision}"; not reconciling.`);
+      return ok({ body: { code: code(decision) } });
+    }
+
+    const association = await getAssociationData();
+    if (!association?.commerce) {
+      logger.debug(
+        "Self-update skipped: app is not associated with a Commerce instance.",
+      );
+      return ok({ body: { code: code("skipped-not-associated") } });
+    }
+
+    const initialState: UpdateRunState = {
+      id: crypto.randomUUID(),
+      startedAt: new Date().toISOString(),
+      status: "in-progress",
+      trigger: "auto",
+    };
+    const store = await createUpdateStore();
+    await store.put(getStorageKey(), initialState);
+
+    const ow = openwhisk();
+    const activation = await ow.actions.invoke({
+      blocking: false,
+      name: DEFAULT_ACTION_NAME,
+      params: {
+        ...rawParams,
+        __ow_method: "post",
+        __ow_path: "/update/execution",
+        AIO_COMMERCE_API_BASE_URL: association.commerce.baseUrl,
+        AIO_COMMERCE_API_FLAVOR: association.commerce.env,
+        appConfig: targetConfig,
+        appData: req.body.appData,
+        baselineConfig: snapshot.config,
+        initialState,
+      },
+      result: false,
+    });
+
+    logger.debug(`Async self-update started: ${activation.activationId}`);
+    return accepted({
+      body: {
+        activationId: activation.activationId,
+        code: code("started"),
+        id: initialState.id,
+      },
+    });
+  },
+});
+
+/**
+ * POST /update/execution - Execute a self-update
+ * @internal - Do not add to OpenAPI Spec.
+ *
+ * Called asynchronously by POST /update/self. Runs the upgrade reconcile and records the outcome.
+ */
+router.post("/update/execution", {
+  handler: async (_req, { logger, rawParams }) => {
+    const params = rawParams as UpdateExecutionParams;
+    const {
+      initialState,
+      appConfig: rawAppConfig,
+      baselineConfig,
+      appData,
+    } = params;
+
+    // biome-ignore lint/suspicious/noUnnecessaryConditions: params is an unchecked `as` cast over raw runtime action params, so these can genuinely be missing at runtime despite the asserted type.
+    if (!initialState) {
+      return badRequest("initialState is required for execution");
+    }
+
+    if (!(rawAppConfig && baselineConfig)) {
+      return badRequest(
+        "appConfig and baselineConfig are required for execution",
+      );
+    }
+
+    const targetConfig = validateCommerceAppConfig(rawAppConfig);
+    const baseline = validateCommerceAppConfig(baselineConfig);
+    const store = await createUpdateStore();
+    const context: LifecycleContext = {
+      appData,
+      customScripts: params.customScriptsLoader?.(targetConfig, logger) ?? {},
+      logger,
+      params,
+    };
+
+    logger.debug(
+      `Executing self-update ${initialState.id} for app "${appData.projectName}"`,
+    );
+
+    try {
+      const result = await runUpgrade({
+        baseline: { config: baseline },
+        context,
+        targetConfig,
+      });
+      const finalState: UpdateRunState = {
+        ...initialState,
+        diff: result.diff,
+        status: "succeeded",
+      };
+      await store.put(getStorageKey(), finalState);
+      logger.debug(`Self-update completed: ${result.status}`);
+      return ok({ body: finalState });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      const finalState: UpdateRunState = {
+        ...initialState,
+        error: { message },
+        status: "failed",
+      };
+      await store.put(getStorageKey(), finalState);
+      logger.debug(`Self-update failed: ${message}`);
+      return internalServerError({
+        body: { message: "Self-update failed", state: finalState },
+      });
+    }
   },
 });
 

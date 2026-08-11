@@ -36,6 +36,7 @@ export {
 } from "./installation/runner";
 // Generic, domain-agnostic upgrade config diff engine + orchestrator.
 export {
+  classifyAutoUpdate,
   configHasDestructiveChange,
   configHasUnsupportedChange,
   diffConfig,
@@ -73,6 +74,7 @@ export type {
   RunValidationOptions,
 } from "./installation/runner";
 export type {
+  AutoUpdateDecision,
   ConfigDiff,
   DomainCollector,
   DomainRule,

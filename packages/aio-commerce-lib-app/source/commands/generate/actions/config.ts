@@ -94,6 +94,7 @@ export function buildAppManagementExtConfig(
 ) {
   const extConfig = {
     hooks: {
+      "post-app-deploy": "$packageExec aio-commerce-lib-app hooks post-deploy",
       "pre-app-build":
         "EXTENSION=extensibility/1 $packageExec aio-commerce-lib-app hooks pre-app-build",
     },

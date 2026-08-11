@@ -18,6 +18,7 @@ import consola from "consola";
 import { exec as generateActionsCommand } from "#commands/generate/actions/main";
 import { exec as generateManifestCommand } from "#commands/generate/manifest/main";
 import { exec as generateSchemaCommand } from "#commands/generate/schema/main";
+import { exec as postDeployHookCommand } from "#commands/hooks/post-deploy";
 import { exec as postinstallHookCommand } from "#commands/hooks/postinstall";
 import { exec as preAppBuildHookCommand } from "#commands/hooks/pre-app-build";
 import { exec as initCommand } from "#commands/init/main";
@@ -68,6 +69,7 @@ const COMMANDS = {
   // Hooks are "internal" commands.
   // Users should not need to run these commands directly.
   hooks: {
+    "post-deploy": postDeployHookCommand,
     postinstall: postinstallHookCommand,
     "pre-app-build": preAppBuildHookCommand,
   },

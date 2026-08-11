@@ -143,6 +143,14 @@ describe("buildAppManagementExtConfig", () => {
     expect(preBuildHook).toMatch(EXTENSIBILITY_EXTENSION_MATCHER);
   });
 
+  test("wires the post-app-deploy hook to the self-update command", () => {
+    const result = buildAppManagementExtConfig(configWithCommerceEventing);
+
+    expect(result.hooks?.["post-app-deploy"]).toBe(
+      "$packageExec aio-commerce-lib-app hooks post-deploy",
+    );
+  });
+
   test("declares workerProcess operations for each runtime action", () => {
     const result = buildAppManagementExtConfig(configWithCommerceEventing);
     const workerImpls =

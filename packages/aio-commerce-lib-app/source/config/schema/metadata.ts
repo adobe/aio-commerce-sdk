@@ -58,6 +58,11 @@ export const MetadataSchema = v.object({
     ),
   ),
 
+  // Whether the app self-upgrades after a deploy (`auto`) or waits for a merchant to trigger the
+  // update (`manual`). Absent is treated as `manual`; the post-deploy hook only triggers a
+  // self-upgrade when this is `auto`.
+  updateType: v.optional(v.picklist(["auto", "manual"])),
+
   version: v.pipe(
     nonEmptyString("version"),
     v.regex(

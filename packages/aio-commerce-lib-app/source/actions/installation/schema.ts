@@ -10,7 +10,21 @@
  * governing permissions and limitations under the License.
  */
 
-import { LifecycleRequestContextSchema } from "#management/common/schema";
+import * as v from "valibot";
+
+import {
+  AppDataSchema,
+  LifecycleRequestContextSchema,
+} from "#management/common/schema";
 
 /** Request body for POST / and POST /validation — the shared lifecycle request shape. */
 export const InstallationRequestBodySchema = LifecycleRequestContextSchema;
+
+/**
+ * Request body for POST /update/self (the post-deploy auto self-update trigger). Only `appData` is
+ * provided; the action self-sources the baseline config (install snapshot), Commerce credentials
+ * (association), and the target config (bundled app config).
+ */
+export const SelfUpdateRequestBodySchema = v.object({
+  appData: AppDataSchema,
+});

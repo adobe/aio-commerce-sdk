@@ -27,6 +27,11 @@ export const COMMERCE_VARIABLES = [
   "AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL",
   "AIO_COMMERCE_AUTH_IMS_ORG_ID",
   "AIO_COMMERCE_AUTH_IMS_SCOPES",
+  // The IMS environment (prod/stage) and the I/O Events API base URL are deployment constants.
+  // Baking them into the action's inputs lets the self-update path resolve them — the interactive
+  // install receives them per request instead.
+  "AIO_COMMERCE_AUTH_IMS_ENVIRONMENT",
+  "AIO_EVENTS_API_BASE_URL",
 ] as const satisfies string[];
 
 /** The inputs for the generated runtime actions. */

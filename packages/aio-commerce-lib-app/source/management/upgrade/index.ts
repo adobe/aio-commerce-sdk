@@ -28,6 +28,7 @@ export {
   isEmptyPlan,
 } from "./diff";
 export { executeUpgrade, planUpgrade, UnsupportedUpgradeError } from "./runner";
+export { classifyAutoUpdate } from "./self-update";
 
 export type {
   ExecuteUpgradeOptions,
@@ -36,6 +37,7 @@ export type {
   UpgradeResult,
   UpgradeStatus,
 } from "./runner";
+export type { AutoUpdateDecision } from "./self-update";
 export type {
   ConfigDiff,
   DomainCollector,

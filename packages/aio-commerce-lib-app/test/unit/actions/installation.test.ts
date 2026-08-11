@@ -895,4 +895,47 @@ describe("installationRuntimeAction", () => {
       });
     });
   });
+
+  describe("POST /update/self", () => {
+    test("returns skipped-manual when updateType is not 'auto'", async () => {
+      const handler = installationRuntimeAction({
+        appConfig: minimalValidConfig,
+      });
+
+      const result = await handler(
+        createRuntimeActionParams({
+          body: { appData },
+          method: "post",
+          path: "/update/self",
+        }),
+      );
+
+      expect(result).toMatchObject({
+        body: { code: "skipped-manual" },
+        type: "success",
+      });
+    });
+
+    test("returns skipped-not-installed when auto but there is no install snapshot", async () => {
+      const handler = installationRuntimeAction({
+        appConfig: {
+          ...minimalValidConfig,
+          metadata: { ...minimalValidConfig.metadata, updateType: "auto" },
+        },
+      });
+
+      const result = await handler(
+        createRuntimeActionParams({
+          body: { appData },
+          method: "post",
+          path: "/update/self",
+        }),
+      );
+
+      expect(result).toMatchObject({
+        body: { code: "skipped-not-installed" },
+        type: "success",
+      });
+    });
+  });
 });
