@@ -22,6 +22,7 @@ import type {
   EventProvider,
 } from "#config/schema/eventing";
 import type { ApplicationMetadata } from "#config/schema/metadata";
+import type { DomainPlan } from "#management/common/workflow/resource";
 import type { onboardIoEvents } from "#management/domains/events/helpers";
 import type { EventsExecutionContext } from "./context";
 
@@ -140,4 +141,95 @@ export type StoredProviderEntry = {
  */
 export type StoredEventsData = {
   providers: Record<string, StoredProviderEntry>;
+};
+
+// ---------------------------------------------------------------------------
+// Upgrade (plan/apply) types
+// ---------------------------------------------------------------------------
+
+/**
+ * One deployed event source recorded after an install/apply, used as the baseline for the next
+ * upgrade diff and to reconstruct idempotent onboard/offboard input. `events` is already scoped to
+ * the environment the source was deployed under.
+ */
+export type EventingProviderSnapshot = {
+  key: string;
+  type: EventProviderType;
+  provider: EventProvider;
+  events: AppEvent[];
+};
+
+/**
+ * The snapshot data an eventing leaf persists after applying its plan: the set of providers (with
+ * their deployed events) it currently owns. Serves as `baseline.data` for the next plan.
+ */
+export type EventingSnapshotData = {
+  providers: EventingProviderSnapshot[];
+};
+
+/** The eventing resource kinds a plan operation can target. */
+export type EventingResourceType =
+  | "provider"
+  | "metadata"
+  | "registration"
+  | "subscription";
+
+/**
+ * The value carried by a plan operation, discriminated by `resourceType`. Secret-free: creds are
+ * resolved fresh at apply from the context, never persisted in a plan.
+ */
+export type EventingOperationValue =
+  | {
+      resourceType: "provider";
+      providerKey: string;
+      type: EventProviderType;
+      label: string;
+      description?: string;
+    }
+  | {
+      resourceType: "metadata";
+      providerKey: string;
+      type: EventProviderType;
+      eventCode: string;
+      label: string;
+      description?: string;
+    }
+  | {
+      resourceType: "registration";
+      providerKey: string;
+      type: EventProviderType;
+      runtimeAction: string;
+      eventCodes: string[];
+    }
+  | {
+      resourceType: "subscription";
+      providerKey: string;
+      name: string;
+    };
+
+/** A cleanup resource identity for one eventing resource, matched during apply/teardown. */
+export type EventingCleanupIdentity =
+  | { resourceType: "provider"; providerKey: string }
+  | { resourceType: "metadata"; providerKey: string; eventCode: string }
+  | { resourceType: "registration"; providerKey: string; runtimeAction: string }
+  | { resourceType: "subscription"; name: string };
+
+/**
+ * An eventing domain plan. Beyond the generic operations/cleanup, it carries the provider sets apply
+ * needs to converge deployed state idempotently: `targetProviders` to onboard, `removedProviders` to
+ * offboard, and `baselineProviders` to compute sub-resource removals on providers present in both.
+ */
+export type EventingDomainPlan = DomainPlan<
+  EventingOperationValue,
+  EventingCleanupIdentity
+> & {
+  /** The target app metadata, used to namespace event codes/names when onboarding. */
+  metadata: ApplicationMetadata;
+
+  /** The baseline app metadata, used to resolve deployed resources during teardown. Null on first upgrade. */
+  baselineMetadata: ApplicationMetadata | null;
+
+  targetProviders: EventingProviderSnapshot[];
+  removedProviders: EventingProviderSnapshot[];
+  baselineProviders: EventingProviderSnapshot[];
 };

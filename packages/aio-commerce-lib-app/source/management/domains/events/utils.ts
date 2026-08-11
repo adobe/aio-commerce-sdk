@@ -124,6 +124,17 @@ export function generateInstanceIdDeprecated(
 }
 
 /**
+ * Returns a provider's version-stable identity, used to match a provider across config
+ * versions during an upgrade diff. Prefers the explicit `key`; falls back to the `label`,
+ * which the eventing schema requires to be unique across event sources.
+ *
+ * @param provider - The event provider to identify.
+ */
+export function getProviderKey(provider: EventProvider) {
+  return provider.key ?? provider.label;
+}
+
+/**
  * Find an existing event provider by its instance ID.
  * @param allProviders - The list of all existing event providers.
  * @param instanceId - The instance ID to search for.
