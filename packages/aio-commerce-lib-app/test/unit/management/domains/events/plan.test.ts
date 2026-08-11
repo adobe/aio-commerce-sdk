@@ -83,6 +83,39 @@ async function planCommerce(
   return (result as { kind: "planned"; plan: EventingDomainPlan }).plan;
 }
 
+function externalInput(
+  baseline: ExternalEventsConfig | null,
+  target: ExternalEventsConfig | null,
+): PlanningInput<ExternalEventsConfig, EventingSnapshotData, never> {
+  return {
+    baseline: baseline ? { config: baseline, data: null } : null,
+    path: ["eventing", "external"],
+    targetConfig: target,
+    unresolvedCleanupResources: [],
+  } as unknown as PlanningInput<
+    ExternalEventsConfig,
+    EventingSnapshotData,
+    never
+  >;
+}
+
+async function planExternal(
+  input: PlanningInput<ExternalEventsConfig, EventingSnapshotData, never>,
+): Promise<EventingDomainPlan> {
+  const result = await planExternalEvents(input, context);
+  expect(result.kind).toBe("planned");
+  return (result as { kind: "planned"; plan: EventingDomainPlan }).plan;
+}
+
+/** True when the plan contains no subscription operation of any kind. */
+function hasNoSubscriptionOps(plan: EventingDomainPlan): boolean {
+  return plan.operations.every((operation) => {
+    const value =
+      operation.kind === "remove" ? operation.before : operation.after;
+    return value.resourceType !== "subscription";
+  });
+}
+
 /** Filters operations by kind and (optionally) resource type. */
 function pick(
   plan: EventingDomainPlan,
@@ -211,6 +244,49 @@ describe("planCommerceEvents", () => {
     expect(pick(plan, "update", "registration")).toHaveLength(1);
   });
 
+  test("removed event that was the sole event on its runtime action removes the registration", async () => {
+    const baseline = commerceConfig([
+      {
+        events: [event("a", ["pkg/a"]), event("b", ["pkg/b"])],
+        provider: { label: "P1" },
+      },
+    ]);
+    const target = commerceConfig([
+      { events: [event("a", ["pkg/a"])], provider: { label: "P1" } },
+    ]);
+
+    const plan = await planCommerce(commerceInput(baseline, target));
+
+    // b was the only event on pkg/b, so its registration is removed outright, not updated.
+    expect(pick(plan, "remove", "metadata")).toHaveLength(1);
+    expect(pick(plan, "remove", "subscription")).toHaveLength(1);
+    expect(pick(plan, "update", "registration")).toHaveLength(0);
+
+    const removedRegistrations = pick(plan, "remove", "registration");
+    expect(removedRegistrations).toHaveLength(1);
+    expect(
+      (removedRegistrations[0] as { runtimeAction: string }).runtimeAction,
+    ).toBe("pkg/b");
+    // pkg/a is untouched: a still routes to it.
+    expect(plan.removedProviders).toHaveLength(0);
+  });
+
+  test("emptying a provider's events tears down the whole provider", async () => {
+    const baseline = commerceConfig([
+      { events: [event("a", ["pkg/a"])], provider: { label: "P1" } },
+    ]);
+    // The provider entry survives in config but declares no events; it must collapse to a removal.
+    const target = commerceConfig([{ events: [], provider: { label: "P1" } }]);
+
+    const plan = await planCommerce(commerceInput(baseline, target));
+
+    expect(plan.removedProviders.map((p) => p.key)).toEqual(["P1"]);
+    expect(pick(plan, "remove", "provider").map((v) => v.providerKey)).toEqual([
+      "P1",
+    ]);
+    expect(plan.targetProviders).toHaveLength(0);
+  });
+
   test("a provider matched by key ignores a cosmetic label change", async () => {
     const baseline = commerceConfig([
       {
@@ -255,38 +331,115 @@ describe("planCommerceEvents", () => {
 });
 
 describe("planExternalEvents", () => {
-  test("never emits Commerce subscription operations", async () => {
+  test("added external provider emits provider + metadata + registration but no subscription", async () => {
     const baseline = externalConfig([]);
     const target = externalConfig([
       { events: [event("ext", ["pkg/x"])], provider: { label: "EP" } },
     ]);
 
-    const result = await planExternalEvents(
-      {
-        baseline: { config: baseline, data: null },
-        path: ["eventing", "external"],
-        targetConfig: target,
-        unresolvedCleanupResources: [],
-      } as unknown as PlanningInput<
-        ExternalEventsConfig,
-        EventingSnapshotData,
-        never
-      >,
-      context,
-    );
+    const plan = await planExternal(externalInput(baseline, target));
 
-    expect(result.kind).toBe("planned");
-    const { plan } = result as { kind: "planned"; plan: EventingDomainPlan };
-
-    expect(
-      plan.operations.some((operation) => {
-        const value =
-          operation.kind === "remove" ? operation.before : operation.after;
-        return value.resourceType === "subscription";
-      }),
-    ).toBe(false);
     expect(pick(plan, "add", "provider").map((v) => v.providerKey)).toEqual([
       "EP",
     ]);
+    expect(pick(plan, "add", "metadata")).toHaveLength(1);
+    expect(pick(plan, "add", "registration")).toHaveLength(1);
+    expect(hasNoSubscriptionOps(plan)).toBe(true);
+  });
+
+  test("event added to an existing external provider under a new runtime action creates its registration", async () => {
+    const baseline = externalConfig([
+      { events: [event("a", ["pkg/a"])], provider: { label: "EP1" } },
+    ]);
+    const target = externalConfig([
+      {
+        events: [event("a", ["pkg/a"]), event("b", ["pkg/b"])],
+        provider: { label: "EP1" },
+      },
+    ]);
+
+    const plan = await planExternal(externalInput(baseline, target));
+
+    expect(pick(plan, "add", "metadata")).toHaveLength(1);
+    expect(pick(plan, "add", "registration")).toHaveLength(1);
+    expect(pick(plan, "update")).toHaveLength(0);
+    expect(hasNoSubscriptionOps(plan)).toBe(true);
+  });
+
+  test("event added to an existing external runtime action updates the registration", async () => {
+    const baseline = externalConfig([
+      { events: [event("a", ["pkg/a"])], provider: { label: "EP1" } },
+    ]);
+    const target = externalConfig([
+      {
+        events: [event("a", ["pkg/a"]), event("b", ["pkg/a"])],
+        provider: { label: "EP1" },
+      },
+    ]);
+
+    const plan = await planExternal(externalInput(baseline, target));
+
+    expect(pick(plan, "add", "metadata")).toHaveLength(1);
+    expect(pick(plan, "add", "registration")).toHaveLength(0);
+    expect(pick(plan, "update", "registration")).toHaveLength(1);
+    expect(hasNoSubscriptionOps(plan)).toBe(true);
+  });
+
+  test("removed external provider records teardown with no subscription ops", async () => {
+    const baseline = externalConfig([
+      { events: [event("a", ["pkg/a"])], provider: { label: "EP1" } },
+      { events: [event("b", ["pkg/b"])], provider: { label: "EP2" } },
+    ]);
+    const target = externalConfig([
+      { events: [event("a", ["pkg/a"])], provider: { label: "EP1" } },
+    ]);
+
+    const plan = await planExternal(externalInput(baseline, target));
+
+    expect(pick(plan, "remove", "provider").map((v) => v.providerKey)).toEqual([
+      "EP2",
+    ]);
+    expect(plan.removedProviders.map((p) => p.key)).toEqual(["EP2"]);
+    expect(hasNoSubscriptionOps(plan)).toBe(true);
+  });
+
+  test("removed external event drops metadata and updates the registration without any subscription op", async () => {
+    const baseline = externalConfig([
+      {
+        events: [event("a", ["pkg/a"]), event("b", ["pkg/a"])],
+        provider: { label: "EP1" },
+      },
+    ]);
+    const target = externalConfig([
+      { events: [event("a", ["pkg/a"])], provider: { label: "EP1" } },
+    ]);
+
+    const plan = await planExternal(externalInput(baseline, target));
+
+    expect(pick(plan, "remove", "metadata")).toHaveLength(1);
+    expect(pick(plan, "update", "registration")).toHaveLength(1);
+    expect(hasNoSubscriptionOps(plan)).toBe(true);
+  });
+
+  test("removed external event on its sole action removes the registration, still no subscription op", async () => {
+    const baseline = externalConfig([
+      {
+        events: [event("a", ["pkg/a"]), event("b", ["pkg/b"])],
+        provider: { label: "EP1" },
+      },
+    ]);
+    const target = externalConfig([
+      { events: [event("a", ["pkg/a"])], provider: { label: "EP1" } },
+    ]);
+
+    const plan = await planExternal(externalInput(baseline, target));
+
+    expect(pick(plan, "remove", "metadata")).toHaveLength(1);
+    expect(
+      pick(plan, "remove", "registration").map(
+        (v) => (v as { runtimeAction: string }).runtimeAction,
+      ),
+    ).toEqual(["pkg/b"]);
+    expect(hasNoSubscriptionOps(plan)).toBe(true);
   });
 });
