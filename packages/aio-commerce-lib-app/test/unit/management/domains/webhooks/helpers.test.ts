@@ -13,11 +13,13 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 import {
+  applyWebhookSubscriptions,
   buildWebhookIdPrefix,
   createOrGetWebhookSubscription,
   createWebhookSubscription,
   createWebhookSubscriptions,
   deleteWebhookSubscriptions,
+  planWebhookSubscriptions,
   resolveDeveloperConsoleOAuthCredentials,
   validateWebhookConflicts,
 } from "#management/domains/webhooks/helpers";
@@ -1260,5 +1262,670 @@ describe("buildWebhookIdPrefix", () => {
     ],
   ] as const)("%s", (_desc, appId, expected) => {
     expect(buildWebhookIdPrefix(appId)).toBe(expected);
+  });
+});
+
+const UPGRADE_PATH = ["upgrade", "webhooks", "subscriptions"];
+
+/** Resolved identity of configWithWebhooks' default webhook entry. */
+const DEFAULT_RESOLVED_IDENTITY = {
+  batch_name: "test_app_webhooks_default",
+  hook_name: "test_app_webhooks_order_created",
+  webhook_method: "plugin.order.api.order_created",
+  webhook_type: "after",
+};
+
+describe("planWebhookSubscriptions", () => {
+  beforeEach(() => {
+    vi.stubEnv("__OW_NAMESPACE", "test-namespace");
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  test("plans an add for every desired webhook when there is no baseline", async () => {
+    const result = await planWebhookSubscriptions(
+      {
+        baseline: null,
+        path: UPGRADE_PATH,
+        targetConfig: createDefaultWebhooksConfig(),
+        unresolvedCleanupResources: [],
+      },
+      makeContext(),
+    );
+
+    expect.assert(result.kind === "planned");
+    expect(result.plan.operations).toHaveLength(1);
+    expect(result.plan.operations[0]).toMatchObject({
+      after: expect.objectContaining(DEFAULT_RESOLVED_IDENTITY),
+      category: "configuration",
+      kind: "add",
+    });
+    expect(result.plan.possibleCleanupResources).toEqual([
+      { identity: DEFAULT_RESOLVED_IDENTITY, path: UPGRADE_PATH },
+    ]);
+    expect(result.plan.retainedWebhooks).toHaveLength(0);
+  });
+
+  test("never resolves developer_console_oauth into a planned add", async () => {
+    const result = await planWebhookSubscriptions(
+      {
+        baseline: null,
+        path: UPGRADE_PATH,
+        targetConfig: createDefaultWebhooksConfig(),
+        unresolvedCleanupResources: [],
+      },
+      makeContext(),
+    );
+
+    expect.assert(result.kind === "planned");
+    expect(result.plan.operations[0]).toMatchObject({
+      after: { requiresAdobeAuth: true },
+    });
+    expect(result.plan.operations[0]).not.toHaveProperty(
+      "after.developer_console_oauth",
+    );
+  });
+
+  test("plans a remove for every baseline webhook when the domain is no longer configured", async () => {
+    const baselineWebhook = createMockResolvedWebhook(
+      DEFAULT_RESOLVED_IDENTITY,
+    );
+
+    const result = await planWebhookSubscriptions(
+      {
+        baseline: {
+          config: createDefaultWebhooksConfig(),
+          data: { subscribedWebhooks: [baselineWebhook] },
+        },
+        path: UPGRADE_PATH,
+        targetConfig: null,
+        unresolvedCleanupResources: [],
+      },
+      makeContext(),
+    );
+
+    expect.assert(result.kind === "planned");
+    expect(result.plan.operations).toEqual([
+      expect.objectContaining({
+        before: baselineWebhook,
+        category: "configuration",
+        kind: "remove",
+      }),
+    ]);
+    expect(result.plan.possibleCleanupResources).toHaveLength(0);
+  });
+
+  test("retains desired webhooks already present in the baseline and proposes no operations", async () => {
+    const config = createDefaultWebhooksConfig();
+    const baselineWebhook = createMockResolvedWebhook(
+      DEFAULT_RESOLVED_IDENTITY,
+    );
+
+    const result = await planWebhookSubscriptions(
+      {
+        baseline: { config, data: { subscribedWebhooks: [baselineWebhook] } },
+        path: UPGRADE_PATH,
+        targetConfig: config,
+        unresolvedCleanupResources: [],
+      },
+      makeContext(),
+    );
+
+    expect.assert(result.kind === "planned");
+    expect(result.plan.operations).toHaveLength(0);
+    expect(result.plan.retainedWebhooks).toEqual([baselineWebhook]);
+  });
+
+  test("plans an add and a remove when the target and baseline differ", async () => {
+    const targetConfig = createMockWebhooksConfig({
+      webhooks: [
+        createMockRuntimeWebhookEntry({
+          webhook: {
+            batch_name: "products",
+            hook_name: "validate",
+            webhook_method: "observer.catalog_product_save_after",
+          },
+        }),
+      ],
+    });
+    const baselineWebhook = createMockResolvedWebhook(
+      DEFAULT_RESOLVED_IDENTITY,
+    );
+
+    const result = await planWebhookSubscriptions(
+      {
+        baseline: {
+          config: createDefaultWebhooksConfig(),
+          data: { subscribedWebhooks: [baselineWebhook] },
+        },
+        path: UPGRADE_PATH,
+        targetConfig,
+        unresolvedCleanupResources: [],
+      },
+      makeContext(),
+    );
+
+    expect.assert(result.kind === "planned");
+    expect(result.plan.operations).toHaveLength(2);
+    expect(result.plan.operations).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ category: "configuration", kind: "add" }),
+        expect.objectContaining({
+          before: baselineWebhook,
+          category: "configuration",
+          kind: "remove",
+        }),
+      ]),
+    );
+  });
+
+  test("orders the remove before the add when a webhook is renamed (same method/type, different batch/hook)", async () => {
+    const targetConfig = createMockWebhooksConfig({
+      webhooks: [
+        createMockRuntimeWebhookEntry({
+          webhook: {
+            batch_name: "default",
+            hook_name: "order_created_v2",
+            webhook_method: DEFAULT_RESOLVED_IDENTITY.webhook_method,
+            webhook_type: DEFAULT_RESOLVED_IDENTITY.webhook_type,
+          },
+        }),
+      ],
+    });
+    const baselineWebhook = createMockResolvedWebhook(
+      DEFAULT_RESOLVED_IDENTITY,
+    );
+
+    const result = await planWebhookSubscriptions(
+      {
+        baseline: {
+          config: createDefaultWebhooksConfig(),
+          data: { subscribedWebhooks: [baselineWebhook] },
+        },
+        path: UPGRADE_PATH,
+        targetConfig,
+        unresolvedCleanupResources: [],
+      },
+      makeContext(),
+    );
+
+    expect.assert(result.kind === "planned");
+    expect(result.plan.operations).toHaveLength(2);
+    expect(result.plan.operations[0]).toMatchObject({ kind: "remove" });
+    expect(result.plan.operations[1]).toMatchObject({ kind: "add" });
+  });
+
+  test("proposes a cleanup removal for an unresolved identity outside the target and baseline", async () => {
+    const orphan = {
+      batch_name: "test_app_webhooks_orphan_batch",
+      hook_name: "test_app_webhooks_orphan_hook",
+      webhook_method: "observer.catalog_product_save_after",
+      webhook_type: "after",
+    };
+
+    const result = await planWebhookSubscriptions(
+      {
+        baseline: null,
+        path: UPGRADE_PATH,
+        targetConfig: null,
+        unresolvedCleanupResources: [{ identity: orphan, path: UPGRADE_PATH }],
+      },
+      makeContext(),
+    );
+
+    expect.assert(result.kind === "planned");
+    expect(result.plan.operations).toEqual([
+      expect.objectContaining({
+        before: orphan,
+        category: "cleanup",
+        kind: "remove",
+      }),
+    ]);
+  });
+
+  test("does not duplicate a removal when an identity is both stale in the baseline and unresolved", async () => {
+    const baselineWebhook = createMockResolvedWebhook(
+      DEFAULT_RESOLVED_IDENTITY,
+    );
+
+    const result = await planWebhookSubscriptions(
+      {
+        baseline: {
+          config: createDefaultWebhooksConfig(),
+          data: { subscribedWebhooks: [baselineWebhook] },
+        },
+        path: UPGRADE_PATH,
+        targetConfig: null,
+        unresolvedCleanupResources: [
+          { identity: DEFAULT_RESOLVED_IDENTITY, path: UPGRADE_PATH },
+        ],
+      },
+      makeContext(),
+    );
+
+    expect.assert(result.kind === "planned");
+    expect(result.plan.operations).toEqual([
+      expect.objectContaining({
+        before: baselineWebhook,
+        category: "configuration",
+        kind: "remove",
+      }),
+    ]);
+  });
+
+  test("treats an unresolved identity that is still desired as a normal add, without duplicating it", async () => {
+    const result = await planWebhookSubscriptions(
+      {
+        baseline: null,
+        path: UPGRADE_PATH,
+        targetConfig: createDefaultWebhooksConfig(),
+        unresolvedCleanupResources: [
+          { identity: DEFAULT_RESOLVED_IDENTITY, path: UPGRADE_PATH },
+        ],
+      },
+      makeContext(),
+    );
+
+    expect.assert(result.kind === "planned");
+    expect(result.plan.operations).toHaveLength(1);
+    expect(result.plan.operations[0].kind).toBe("add");
+  });
+
+  test("treats plugin.magento.X and plugin.X as the same identity when diffing", async () => {
+    const targetConfig = createMockWebhooksConfig({
+      webhooks: [
+        createMockRuntimeWebhookEntry({
+          webhook: {
+            batch_name: "default",
+            hook_name: "order_created",
+            webhook_method: "plugin.magento.order.api.order_created",
+          },
+        }),
+      ],
+    });
+    const baselineWebhook = createMockResolvedWebhook(
+      DEFAULT_RESOLVED_IDENTITY,
+    );
+
+    const result = await planWebhookSubscriptions(
+      {
+        baseline: {
+          config: createDefaultWebhooksConfig(),
+          data: { subscribedWebhooks: [baselineWebhook] },
+        },
+        path: UPGRADE_PATH,
+        targetConfig,
+        unresolvedCleanupResources: [],
+      },
+      makeContext(),
+    );
+
+    expect.assert(result.kind === "planned");
+    expect(result.plan.operations).toHaveLength(0);
+    expect(result.plan.retainedWebhooks).toHaveLength(1);
+  });
+
+  test("excludes webhooks scoped to a different environment from the desired set", async () => {
+    const targetConfig = createMockWebhooksConfig({
+      webhooks: [
+        createMockRuntimeWebhookEntry({
+          env: ["paas"],
+          label: "PaaS only",
+          webhook: { hook_name: "paas_only" },
+        }),
+      ],
+    });
+    const context = makeContext(vi.fn(), vi.fn().mockResolvedValue([]), {
+      ...DEFAULT_PARAMS,
+      AIO_COMMERCE_API_FLAVOR: "saas",
+    });
+
+    const result = await planWebhookSubscriptions(
+      {
+        baseline: null,
+        path: UPGRADE_PATH,
+        targetConfig,
+        unresolvedCleanupResources: [],
+      },
+      context,
+    );
+
+    expect.assert(result.kind === "planned");
+    expect(result.plan.operations).toHaveLength(0);
+  });
+
+  test("never reads or writes external resources", async () => {
+    const subscribeWebhook = vi.fn();
+    const getWebhookList = vi.fn();
+    const unsubscribeWebhook = vi.fn();
+    const context = makeContext(
+      subscribeWebhook,
+      getWebhookList,
+      DEFAULT_PARAMS,
+      unsubscribeWebhook,
+    );
+
+    await planWebhookSubscriptions(
+      {
+        baseline: null,
+        path: UPGRADE_PATH,
+        targetConfig: createDefaultWebhooksConfig(),
+        unresolvedCleanupResources: [],
+      },
+      context,
+    );
+
+    expect(getWebhookList).not.toHaveBeenCalled();
+    expect(subscribeWebhook).not.toHaveBeenCalled();
+    expect(unsubscribeWebhook).not.toHaveBeenCalled();
+  });
+});
+
+describe("applyWebhookSubscriptions", () => {
+  function makeApplyContext(
+    subscribeWebhookFn = vi.fn().mockResolvedValue(null),
+    getWebhookListFn = vi.fn().mockResolvedValue([]),
+    unsubscribeWebhookFn = vi.fn().mockResolvedValue(null),
+  ) {
+    return {
+      ...makeContext(
+        subscribeWebhookFn,
+        getWebhookListFn,
+        DEFAULT_PARAMS,
+        unsubscribeWebhookFn,
+      ),
+      attemptId: "attempt-1",
+    };
+  }
+
+  const addWebhook = createMockResolvedWebhook({
+    batch_name: "test_app_webhooks_products",
+    hook_name: "test_app_webhooks_validate",
+    webhook_method: "observer.catalog_product_save_after",
+    webhook_type: "after",
+  });
+
+  const retainedWebhook = createMockResolvedWebhook(DEFAULT_RESOLVED_IDENTITY);
+
+  test("subscribes a planned add that is not yet live", async () => {
+    const subscribeWebhook = vi.fn().mockResolvedValue(null);
+    const context = makeApplyContext(subscribeWebhook);
+
+    const plan = {
+      operations: [
+        {
+          after: addWebhook,
+          category: "configuration" as const,
+          id: "op-1",
+          kind: "add" as const,
+          label: "Subscribe",
+        },
+      ],
+      path: UPGRADE_PATH,
+      possibleCleanupResources: [],
+      retainedWebhooks: [retainedWebhook],
+    };
+
+    const result = await applyWebhookSubscriptions(plan, context);
+
+    expect(subscribeWebhook).toHaveBeenCalledWith(addWebhook);
+    expect(result.snapshotData?.subscribedWebhooks).toEqual([
+      retainedWebhook,
+      addWebhook,
+    ]);
+    expect(result.resolvedCleanupResources).toEqual([
+      {
+        identity: expect.objectContaining({
+          batch_name: addWebhook.batch_name,
+        }),
+        path: UPGRADE_PATH,
+      },
+    ]);
+  });
+
+  test("attaches credentials to the subscribe call but keeps the snapshot secret-free", async () => {
+    const subscribeWebhook = vi.fn().mockResolvedValue(null);
+    const context = makeApplyContext(subscribeWebhook);
+
+    const plan = {
+      operations: [
+        {
+          after: { ...addWebhook, requiresAdobeAuth: true },
+          category: "configuration" as const,
+          id: "op-1",
+          kind: "add" as const,
+          label: "Subscribe",
+        },
+      ],
+      path: UPGRADE_PATH,
+      possibleCleanupResources: [],
+      retainedWebhooks: [],
+    };
+
+    const result = await applyWebhookSubscriptions(plan, context);
+
+    expect(subscribeWebhook).toHaveBeenCalledWith(
+      expect.objectContaining({ developer_console_oauth: expect.any(Object) }),
+    );
+    expect(result.snapshotData?.subscribedWebhooks).toEqual([addWebhook]);
+    expect(result.snapshotData?.subscribedWebhooks[0]).not.toHaveProperty(
+      "developer_console_oauth",
+    );
+  });
+
+  test("skips subscribing an add that is already live, but still reports it resolved", async () => {
+    const subscribeWebhook = vi.fn();
+    const getWebhookList = vi.fn().mockResolvedValue([addWebhook]);
+    const context = makeApplyContext(subscribeWebhook, getWebhookList);
+
+    const plan = {
+      operations: [
+        {
+          after: addWebhook,
+          category: "configuration" as const,
+          id: "op-1",
+          kind: "add" as const,
+          label: "Subscribe",
+        },
+      ],
+      path: UPGRADE_PATH,
+      possibleCleanupResources: [],
+      retainedWebhooks: [],
+    };
+
+    const result = await applyWebhookSubscriptions(plan, context);
+
+    expect(subscribeWebhook).not.toHaveBeenCalled();
+    expect(result.snapshotData?.subscribedWebhooks).toEqual([addWebhook]);
+    expect(result.resolvedCleanupResources).toHaveLength(1);
+  });
+
+  test("unsubscribes a planned remove that is live", async () => {
+    const unsubscribeWebhook = vi.fn().mockResolvedValue(null);
+    const getWebhookList = vi.fn().mockResolvedValue([retainedWebhook]);
+    const context = makeApplyContext(
+      vi.fn(),
+      getWebhookList,
+      unsubscribeWebhook,
+    );
+
+    const plan = {
+      operations: [
+        {
+          before: retainedWebhook,
+          category: "configuration" as const,
+          id: "op-1",
+          kind: "remove" as const,
+          label: "Unsubscribe",
+        },
+      ],
+      path: UPGRADE_PATH,
+      possibleCleanupResources: [],
+      retainedWebhooks: [],
+    };
+
+    const result = await applyWebhookSubscriptions(plan, context);
+
+    expect(unsubscribeWebhook).toHaveBeenCalledWith(
+      expect.objectContaining({ batch_name: retainedWebhook.batch_name }),
+    );
+    expect(result.snapshotData?.subscribedWebhooks).toEqual([]);
+    expect(result.resolvedCleanupResources).toHaveLength(1);
+  });
+
+  test("skips unsubscribing a remove that is already absent, and still reports it resolved", async () => {
+    const unsubscribeWebhook = vi.fn();
+    const context = makeApplyContext(
+      vi.fn(),
+      vi.fn().mockResolvedValue([]),
+      unsubscribeWebhook,
+    );
+
+    const plan = {
+      operations: [
+        {
+          before: retainedWebhook,
+          category: "configuration" as const,
+          id: "op-1",
+          kind: "remove" as const,
+          label: "Unsubscribe",
+        },
+      ],
+      path: UPGRADE_PATH,
+      possibleCleanupResources: [],
+      retainedWebhooks: [],
+    };
+
+    const result = await applyWebhookSubscriptions(plan, context);
+
+    expect(unsubscribeWebhook).not.toHaveBeenCalled();
+    expect(result.resolvedCleanupResources).toHaveLength(1);
+  });
+
+  test("aborts on the first add failure without processing remaining operations", async () => {
+    const subscribeWebhook = vi
+      .fn()
+      .mockRejectedValue(new Error("Commerce API error"));
+    const context = makeApplyContext(subscribeWebhook);
+
+    const secondAdd = createMockResolvedWebhook({
+      batch_name: "test_app_webhooks_second",
+      hook_name: "test_app_webhooks_second",
+      webhook_method: "observer.catalog_product_save_before",
+      webhook_type: "before",
+    });
+
+    const plan = {
+      operations: [
+        {
+          after: addWebhook,
+          category: "configuration" as const,
+          id: "op-1",
+          kind: "add" as const,
+          label: "Subscribe",
+        },
+        {
+          after: secondAdd,
+          category: "configuration" as const,
+          id: "op-2",
+          kind: "add" as const,
+          label: "Subscribe",
+        },
+      ],
+      path: UPGRADE_PATH,
+      possibleCleanupResources: [],
+      retainedWebhooks: [],
+    };
+
+    await expect(applyWebhookSubscriptions(plan, context)).rejects.toThrow();
+    expect(subscribeWebhook).toHaveBeenCalledTimes(1);
+  });
+
+  test("aborts on the first remove failure without processing remaining operations", async () => {
+    const unsubscribeWebhook = vi
+      .fn()
+      .mockRejectedValue(new Error("Commerce API error"));
+    const getWebhookList = vi
+      .fn()
+      .mockResolvedValue([retainedWebhook, addWebhook]);
+    const context = makeApplyContext(
+      vi.fn(),
+      getWebhookList,
+      unsubscribeWebhook,
+    );
+
+    const plan = {
+      operations: [
+        {
+          before: retainedWebhook,
+          category: "configuration" as const,
+          id: "op-1",
+          kind: "remove" as const,
+          label: "Unsubscribe",
+        },
+        {
+          before: addWebhook,
+          category: "configuration" as const,
+          id: "op-2",
+          kind: "remove" as const,
+          label: "Unsubscribe",
+        },
+      ],
+      path: UPGRADE_PATH,
+      possibleCleanupResources: [],
+      retainedWebhooks: [],
+    };
+
+    await expect(applyWebhookSubscriptions(plan, context)).rejects.toThrow();
+    expect(unsubscribeWebhook).toHaveBeenCalledTimes(1);
+  });
+
+  test("unsubscribes the old identity before subscribing the new one for a renamed webhook", async () => {
+    const callOrder: string[] = [];
+    const subscribeWebhook = vi.fn().mockImplementation(async () => {
+      callOrder.push("subscribe");
+    });
+    const unsubscribeWebhook = vi.fn().mockImplementation(async () => {
+      callOrder.push("unsubscribe");
+    });
+    const getWebhookList = vi.fn().mockResolvedValue([retainedWebhook]);
+    const context = makeApplyContext(
+      subscribeWebhook,
+      getWebhookList,
+      unsubscribeWebhook,
+    );
+
+    const renamedWebhook = createMockResolvedWebhook({
+      ...DEFAULT_RESOLVED_IDENTITY,
+      hook_name: "test_app_webhooks_order_created_v2",
+    });
+
+    const plan = {
+      operations: [
+        {
+          before: retainedWebhook,
+          category: "configuration" as const,
+          id: "op-1",
+          kind: "remove" as const,
+          label: "Unsubscribe",
+        },
+        {
+          after: renamedWebhook,
+          category: "configuration" as const,
+          id: "op-2",
+          kind: "add" as const,
+          label: "Subscribe",
+        },
+      ],
+      path: UPGRADE_PATH,
+      possibleCleanupResources: [],
+      retainedWebhooks: [],
+    };
+
+    await applyWebhookSubscriptions(plan, context);
+
+    expect(callOrder).toEqual(["unsubscribe", "subscribe"]);
   });
 });

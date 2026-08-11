@@ -21,12 +21,21 @@ import type {
   WebhookSubscribeParams,
   WebhookUnsubscribeParams,
 } from "@adobe/aio-commerce-lib-webhooks/api";
+import type { WebhookEntry, WebhooksConfig } from "#config/schema/webhooks";
 import type {
-  WebhookDefinition,
-  WebhooksConfig,
-} from "#config/schema/webhooks";
-import type { ValidationIssue } from "#management/common/workflow/step";
-import type { WebhooksExecutionContext } from "./context";
+  ApplyContext,
+  ApplyResult,
+  CleanupResource,
+  DomainPlan,
+  PlanningInput,
+  PlanningResult,
+  ResourceOperation,
+} from "#management/common/workflow/resource";
+import type {
+  ValidationExecutionContext,
+  ValidationIssue,
+} from "#management/common/workflow/step";
+import type { WebhooksExecutionContext, WebhooksStepContext } from "./context";
 
 /** Minimal identity fields shared by subscribe and unsubscribe params. */
 export type WebhookIdentity = {
@@ -62,6 +71,45 @@ export type WebhookSubscriptionResult = {
 export type WebhookUnsubscriptionResult = {
   unsubscribedWebhooks: WebhookUnsubscribeParams[];
 };
+
+/**
+ * Value carried by an add/remove operation. Never includes `developer_console_oauth` —
+ * plans and snapshots must stay secret-free; `apply` resolves credentials fresh
+ * for an `add` when `requiresAdobeAuth` is set.
+ */
+export type WebhookOperationValue = WebhookIdentity &
+  Partial<Omit<WebhookSubscribeParams, "developer_console_oauth">> & {
+    requiresAdobeAuth?: boolean;
+  };
+
+/** The webhooks domain plan. `retainedWebhooks` lets `apply` rebuild the full resulting state without needing the baseline. */
+export type WebhookDomainPlan = DomainPlan<
+  WebhookOperationValue,
+  WebhookIdentity
+> & {
+  retainedWebhooks: WebhookSubscribeParams[];
+};
+
+/** The snapshot data the webhooks domain persists after applying its plan. */
+export type WebhookSnapshotData = WebhookSubscriptionResult;
+
+/** Narrows any webhook-like value down to its identity fields. */
+function toIdentity(webhook: WebhookIdentity): WebhookIdentity {
+  return {
+    batch_name: webhook.batch_name,
+    hook_name: webhook.hook_name,
+    webhook_method: webhook.webhook_method,
+    webhook_type: webhook.webhook_type,
+  };
+}
+
+/** Builds a stable, human-traceable id for a planned add/remove operation. */
+function webhookOperationId(
+  kind: "add" | "remove",
+  identity: WebhookIdentity,
+): string {
+  return `${kind}:${identity.webhook_method}:${identity.webhook_type}:${identity.batch_name}:${identity.hook_name}`;
+}
 
 /**
  * Validates that no modification webhooks in the app config conflict with webhooks
@@ -172,26 +220,16 @@ export async function createWebhookSubscriptions(
 
   for (const entry of webhooks) {
     const { webhook } = entry;
-    const resolvedUrl =
-      "runtimeAction" in entry
-        ? generateUrlForRuntimeAction(entry.runtimeAction)
-        : entry.webhook.url;
 
     logger.debug(
       `Subscribing webhook "${getWebhookName(webhook)}" (runtimeAction: ${"runtimeAction" in entry ? entry.runtimeAction : "none"})`,
     );
 
-    const resolvedWebhook = {
-      ...webhook,
-      batch_name: `${idPrefix}${webhook.batch_name}`,
-      hook_name: `${idPrefix}${webhook.hook_name}`,
-      url: resolvedUrl,
-      ...("runtimeAction" in entry &&
-        entry.requireAdobeAuth !== false && {
-          developer_console_oauth:
-            resolveDeveloperConsoleOAuthCredentials(params),
-        }),
-    };
+    const resolvedWebhook = resolveWebhookSubscribeParams(
+      entry,
+      idPrefix,
+      params,
+    );
 
     subscribedWebhooks.push(
       // biome-ignore lint/performance/noAwaitInLoops: subscriptions must be created sequentially so a failure aborts remaining subscriptions (see function docstring)
@@ -270,6 +308,242 @@ export async function deleteWebhookSubscriptions(
   return { unsubscribedWebhooks };
 }
 
+/** A fully-resolved webhook payload, minus credentials, plus whether they're required. */
+type ResolvedWebhookPayload = WebhookIdentity &
+  Omit<WebhookSubscribeParams, "developer_console_oauth"> & {
+    requiresAdobeAuth: boolean;
+  };
+
+/** Resolves a config webhook entry's identity/payload (idPrefix, URL) — no credentials. Pure. */
+function resolveWebhookPayload(
+  entry: WebhookEntry,
+  idPrefix: string,
+): ResolvedWebhookPayload {
+  const { webhook } = entry;
+  const resolvedUrl =
+    "runtimeAction" in entry
+      ? generateUrlForRuntimeAction(entry.runtimeAction)
+      : entry.webhook.url;
+
+  return {
+    ...webhook,
+    batch_name: `${idPrefix}${webhook.batch_name}`,
+    hook_name: `${idPrefix}${webhook.hook_name}`,
+    requiresAdobeAuth:
+      "runtimeAction" in entry && entry.requireAdobeAuth !== false,
+    url: resolvedUrl,
+  };
+}
+
+/** Resolves a config webhook entry into wire-format subscribe params, attaching OAuth credentials when required. */
+function resolveWebhookSubscribeParams(
+  entry: WebhookEntry,
+  idPrefix: string,
+  params: WebhooksExecutionContext["params"],
+): WebhookSubscribeParams {
+  const { requiresAdobeAuth, ...resolved } = resolveWebhookPayload(
+    entry,
+    idPrefix,
+  );
+
+  return {
+    ...resolved,
+    ...(requiresAdobeAuth && {
+      developer_console_oauth: resolveDeveloperConsoleOAuthCredentials(params),
+    }),
+  };
+}
+
+/** Resolves every config webhook entry that applies to `env` — no credentials, for planning only. */
+function resolveDesiredWebhooks(
+  config: WebhooksConfig,
+  env: ReturnType<typeof getInstallCommerceEnv>,
+): WebhookOperationValue[] {
+  const idPrefix = buildWebhookIdPrefix(config.metadata.id);
+  return config.webhooks
+    .filter((entry) => appliesToEnv(entry, env))
+    .map((entry) => resolveWebhookPayload(entry, idPrefix));
+}
+
+/**
+ * Diffs the target config against the baseline (plus any unresolved cleanup)
+ * into add/remove operations. Pure — no external reads or writes, since an
+ * observation made here could be stale by execution time.
+ */
+export function planWebhookSubscriptions(
+  input: PlanningInput<WebhooksConfig, WebhookSnapshotData, WebhookIdentity>,
+  context: ValidationExecutionContext<WebhooksStepContext>,
+): Promise<PlanningResult<WebhookDomainPlan>> {
+  const { path, baseline, targetConfig, unresolvedCleanupResources } = input;
+  const { params } = context;
+
+  const env = getInstallCommerceEnv(params);
+  const desired = targetConfig ? resolveDesiredWebhooks(targetConfig, env) : [];
+
+  const ownedFromBaseline = baseline?.data.subscribedWebhooks ?? [];
+  const unresolvedIdentities = unresolvedCleanupResources.map(
+    (resource) => resource.identity,
+  );
+
+  // Removes precede adds (see the concat below): a rename plans as an
+  // unrelated add+remove pair on the same hook point, and adding first would
+  // briefly double-register it.
+  const addOperations: ResourceOperation<WebhookOperationValue>[] = [];
+  const removeOperations: ResourceOperation<WebhookOperationValue>[] = [];
+  const possibleCleanupResources: CleanupResource<WebhookIdentity>[] = [];
+  const retainedWebhooks: WebhookSubscribeParams[] = [];
+
+  for (const webhook of desired) {
+    // Keep the baseline's recorded value: no operation runs for a retained webhook.
+    const owned = ownedFromBaseline.find((candidate) =>
+      webhookIdentitiesMatch(candidate, webhook),
+    );
+
+    if (owned) {
+      retainedWebhooks.push(owned);
+      continue;
+    }
+
+    const identity = toIdentity(webhook);
+    addOperations.push({
+      after: webhook,
+      category: "configuration",
+      id: webhookOperationId("add", identity),
+      kind: "add",
+      label: `Subscribe webhook: ${getWebhookName(identity)}`,
+    });
+    possibleCleanupResources.push({ identity, path });
+  }
+
+  const staleFromBaseline = ownedFromBaseline.filter(
+    (owned) =>
+      !desired.some((webhook) => webhookIdentitiesMatch(webhook, owned)),
+  );
+
+  const staleFromCleanup = unresolvedIdentities.filter(
+    (identity) =>
+      !(
+        desired.some((webhook) => webhookIdentitiesMatch(webhook, identity)) ||
+        ownedFromBaseline.some((owned) =>
+          webhookIdentitiesMatch(owned, identity),
+        )
+      ),
+  );
+
+  for (const stale of staleFromBaseline) {
+    const identity = toIdentity(stale);
+    removeOperations.push({
+      before: stale,
+      category: "configuration",
+      id: webhookOperationId("remove", identity),
+      kind: "remove",
+      label: `Unsubscribe webhook: ${getWebhookName(identity)}`,
+    });
+  }
+
+  for (const identity of staleFromCleanup) {
+    removeOperations.push({
+      before: identity,
+      category: "cleanup",
+      id: webhookOperationId("remove", identity),
+      kind: "remove",
+      label: `Unsubscribe webhook: ${getWebhookName(identity)}`,
+    });
+  }
+
+  return Promise.resolve({
+    kind: "planned",
+    plan: {
+      operations: [...removeOperations, ...addOperations],
+      path,
+      possibleCleanupResources,
+      retainedWebhooks,
+    },
+  });
+}
+
+/**
+ * Applies a webhooks domain plan: re-checks live Commerce state before each
+ * add/remove (idempotent under retry), then returns the resulting subscription
+ * set and resolved cleanup identities. Aborts on the first failure so the
+ * attempt retries instead of reporting success over a partial apply.
+ */
+export async function applyWebhookSubscriptions(
+  plan: WebhookDomainPlan,
+  context: ApplyContext<WebhooksStepContext>,
+): Promise<ApplyResult<WebhookSnapshotData, WebhookIdentity>> {
+  const { logger, commerceWebhooksClient, params } = context;
+
+  let liveIdentities = (await commerceWebhooksClient.getWebhookList()).map(
+    toIdentity,
+  );
+
+  const resolvedCleanupResources: CleanupResource<WebhookIdentity>[] = [];
+  const subscribedWebhooks: WebhookSubscribeParams[] = [
+    ...plan.retainedWebhooks,
+  ];
+
+  for (const operation of plan.operations) {
+    if (operation.kind === "add") {
+      // `after` is always fully resolved for `add` (see planWebhookSubscriptions).
+      const { requiresAdobeAuth, ...resolvedWebhook } =
+        operation.after as ResolvedWebhookPayload;
+      const identity = toIdentity(resolvedWebhook);
+
+      if (
+        liveIdentities.some((live) => webhookIdentitiesMatch(live, identity))
+      ) {
+        logger.info(
+          `Webhook already subscribed, skipping: ${getWebhookName(identity)}`,
+        );
+      } else {
+        const toSubscribe: WebhookSubscribeParams = {
+          ...resolvedWebhook,
+          ...(requiresAdobeAuth && {
+            developer_console_oauth:
+              resolveDeveloperConsoleOAuthCredentials(params),
+          }),
+        };
+
+        // biome-ignore lint/performance/noAwaitInLoops: operations must run sequentially so a failure aborts the remaining ones
+        await createWebhookSubscription(commerceWebhooksClient, toSubscribe);
+        logger.info(`Subscribed webhook: ${getWebhookName(identity)}`);
+        liveIdentities = [...liveIdentities, identity];
+      }
+
+      subscribedWebhooks.push(resolvedWebhook);
+      resolvedCleanupResources.push({ identity, path: plan.path });
+    } else if (operation.kind === "remove") {
+      const identity = toIdentity(operation.before);
+
+      if (
+        liveIdentities.some((live) => webhookIdentitiesMatch(live, identity))
+      ) {
+        await deleteWebhookSubscription(
+          commerceWebhooksClient,
+          identity,
+          identity,
+        );
+        logger.info(`Unsubscribed webhook: ${getWebhookName(identity)}`);
+        liveIdentities = liveIdentities.filter(
+          (live) => !webhookIdentitiesMatch(live, identity),
+        );
+      } else {
+        logger.debug(
+          `Webhook not found, skipping unsubscribe: ${getWebhookName(identity)}`,
+        );
+      }
+
+      resolvedCleanupResources.push({ identity, path: plan.path });
+    }
+  }
+
+  return {
+    resolvedCleanupResources,
+    snapshotData: { subscribedWebhooks },
+  };
+}
+
 /**
  * Subscribes a single webhook to Commerce, skipping the API call if the webhook
  * is already subscribed (matched by webhook_method, webhook_type, batch_name, hook_name).
@@ -332,7 +606,7 @@ export async function createWebhookSubscription(
  */
 async function deleteWebhookSubscription(
   client: WebhooksExecutionContext["commerceWebhooksClient"],
-  resolvedWebhook: WebhookDefinition,
+  resolvedWebhook: WebhookIdentity,
   params: WebhookUnsubscribeParams,
 ): Promise<void> {
   try {
@@ -381,25 +655,32 @@ export function resolveDeveloperConsoleOAuthCredentials(
 }
 
 /**
- * Returns true when a webhook with the given four-part identity exists in the list.
+ * Returns true when two webhook identities refer to the same Commerce webhook.
  *
  * The identity check uses: webhook_method, webhook_type, batch_name, hook_name.
  * `webhook_method` is normalised before comparison to handle the case where Commerce strips the
  * `.magento` segment from plugin webhook methods on storage
  * (e.g. `plugin.magento.foo` and `plugin.foo` are treated as the same method).
  */
+function webhookIdentitiesMatch(
+  a: WebhookIdentity,
+  b: WebhookIdentity,
+): boolean {
+  return (
+    normalizeWebhookMethod(a.webhook_method) ===
+      normalizeWebhookMethod(b.webhook_method) &&
+    a.webhook_type === b.webhook_type &&
+    a.batch_name === b.batch_name &&
+    a.hook_name === b.hook_name
+  );
+}
+
+/** Returns true when a webhook with the given four-part identity exists in the list. */
 function isWebhookInList(
   existing: CommerceWebhook[],
   candidate: WebhookIdentity,
 ): boolean {
-  const normalizedCandidate = normalizeWebhookMethod(candidate.webhook_method);
-  return existing.some(
-    (w) =>
-      normalizeWebhookMethod(w.webhook_method) === normalizedCandidate &&
-      w.webhook_type === candidate.webhook_type &&
-      w.batch_name === candidate.batch_name &&
-      w.hook_name === candidate.hook_name,
-  );
+  return existing.some((w) => webhookIdentitiesMatch(w, candidate));
 }
 
 /**
@@ -460,7 +741,7 @@ export function buildWebhookIdPrefix(appId: string): string {
  * @return A string in the format "webhook_method:webhook_type" to identify the webhook.
  */
 function getWebhookName(
-  webhook: WebhookDefinition | WebhookSubscribeParams,
+  webhook: Pick<WebhookIdentity, "webhook_method" | "webhook_type">,
 ): string {
   return `${webhook.webhook_method}:${webhook.webhook_type}`;
 }
