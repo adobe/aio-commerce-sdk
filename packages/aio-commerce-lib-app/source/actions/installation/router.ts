@@ -26,6 +26,7 @@ import { createCombinedStore } from "@aio-commerce-sdk/common-utils/storage";
 import openwhisk from "openwhisk";
 
 import { validateCommerceAppConfig } from "#config/lib/validate";
+import { getAssociationData } from "#management/association/repository";
 import {
   createInitialInstallationState,
   createInitialUninstallationState,
@@ -37,8 +38,20 @@ import {
   runUninstallation,
   runValidation,
 } from "#management/index";
+import { createRootInstallationStep } from "#management/installation/root";
+import { executeLifecycleAttempt } from "#management/lifecycle/execution";
+import { planLifecycle } from "#management/lifecycle/planning";
+import { startLifecycleAttempt } from "#management/lifecycle/start";
+import { CURRENT_STATE_KEY } from "#management/lifecycle/state";
+import {
+  createAppStateSnapshotStore,
+  createOrchestrationStateStore,
+} from "#management/lifecycle/storage";
 
-import { InstallationRequestBodySchema } from "./schema";
+import {
+  InstallationRequestBodySchema,
+  UpgradeRequestBodySchema,
+} from "./schema";
 
 import type { BaseContext } from "@aio-commerce-sdk/common-utils/actions";
 import type { KeyValueStore } from "@aio-commerce-sdk/common-utils/storage";
@@ -46,6 +59,7 @@ import type {
   CommerceAppConfig,
   CommerceAppConfigOutputModel,
 } from "#config/schema/app";
+import type { AppStateSnapshot } from "#management/common/orchestration";
 import type { LifecycleRequestContext } from "#management/common/schema";
 import type { StepFailedEvent } from "#management/common/workflow/hooks";
 import type {
@@ -107,7 +121,7 @@ function getStorageKey() {
 
 /**
  * Merges rawParams with body fields, overriding API URLs.
- * Shared by POST /, POST /execution, POST /uninstallation, POST /uninstallation/execution.
+ * Shared by lifecycle start and execution routes.
  */
 function buildWorkflowParams(
   body: LifecycleRequestContext,
@@ -123,17 +137,24 @@ function buildWorkflowParams(
   };
 }
 
-type ExecutionRouteParams = RuntimeActionArgs & {
-  initialState: InProgressWorkflowState;
+type WorkflowRouteParams = RuntimeActionArgs & {
   appData: LifecycleContext["appData"];
+};
+
+type ExecutionRouteParams = WorkflowRouteParams & {
+  initialState: InProgressWorkflowState;
+};
+
+type LifecycleExecutionRouteParams = WorkflowRouteParams & {
+  attemptId: string;
 };
 
 /**
  * Builds a LifecycleContext from merged workflow params.
- * Shared by POST /execution and POST /uninstallation/execution.
+ * Shared by installation, uninstallation, and upgrade execution.
  */
 function buildInstallationContext(
-  params: ExecutionRouteParams,
+  params: WorkflowRouteParams,
   appConfig: CommerceAppConfigOutputModel,
   logFn: LifecycleContext["logger"],
 ): LifecycleContext {
@@ -210,6 +231,8 @@ function createInstallationHooks(
  * - GET /uninstallation              Get current uninstallation status
  * - POST /uninstallation/execution   Execute uninstallation (internal, called async)
  * - DELETE /uninstallation           Clear uninstallation state only (no offboarding)
+ * - POST /upgrade                     Plan an upgrade and optionally start it
+ * - POST /upgrade/execution           Execute an upgrade (internal, called async)
  */
 export const router = new HttpActionRouter<InstallationActionContext>().use(
   withLogger({ name: () => "installation" }),
@@ -370,6 +393,146 @@ router.post("/execution", {
           error: result.error,
           message: "Installation failed",
           state: result,
+        },
+      });
+    }
+
+    return ok({ body: result });
+  },
+});
+
+/**
+ * POST /installation/upgrade - Plan an upgrade and optionally start it.
+ *
+ * Creates or reuses the plan for the current deployment. Automatic upgrades
+ * persist an attempt and invoke execution asynchronously.
+ */
+router.post("/upgrade", {
+  body: UpgradeRequestBodySchema,
+
+  handler: async (req, { logger, rawParams }) => {
+    const actionVersion = process.env.__OW_ACTION_VERSION;
+    const rawExecutionDeadline = process.env.__OW_DEADLINE;
+    const rawAppConfig = rawParams.appConfig;
+
+    if (!actionVersion) {
+      return internalServerError(
+        "The OpenWhisk action version is required to plan an upgrade",
+      );
+    }
+    if (!rawAppConfig) {
+      return internalServerError(
+        "The app config is missing. Does the action receive it as a parameter?",
+      );
+    }
+
+    const appConfig = validateCommerceAppConfig(rawAppConfig);
+    const association = await getAssociationData();
+    if (!association) {
+      return ok({ body: { reason: "not-associated", skipped: true } });
+    }
+
+    const params = {
+      ...rawParams,
+      AIO_COMMERCE_API_BASE_URL: association.commerce.baseUrl,
+      AIO_COMMERCE_API_FLAVOR: association.commerce.env,
+      appData: req.body.appData,
+    } as WorkflowRouteParams;
+    const runtime = await createLifecycleRuntime(params, appConfig, logger);
+    const state = await runtime.stateStore.get(CURRENT_STATE_KEY);
+    const baseline = await runtime.baselineProvider.get(
+      state?.baselineSnapshotId ?? null,
+    );
+    if (!baseline) {
+      return ok({ body: { reason: "not-installed", skipped: true } });
+    }
+    if (baseline.config.metadata.version === appConfig.metadata.version) {
+      return ok({ body: { reason: "already-current", skipped: true } });
+    }
+    const planning = await planLifecycle({
+      ...runtime,
+      actionVersion,
+      targetAppVersion: appConfig.metadata.version,
+      targetConfig: appConfig,
+    });
+
+    if (planning.kind === "blocked") {
+      return conflict({
+        body: {
+          issues: planning.plan.issues,
+          message: "Upgrade planning is blocked",
+        },
+      });
+    }
+
+    const upgradeMode = appConfig.metadata.upgradeMode ?? "auto";
+    if (upgradeMode === "manual") {
+      return accepted({ body: planning.plan });
+    }
+
+    if (!rawExecutionDeadline) {
+      return internalServerError(
+        "The OpenWhisk action deadline is required to start an upgrade",
+      );
+    }
+
+    const attempt = await startLifecycleAttempt({
+      ...runtime,
+      actionVersion,
+      executionDeadline: new Date(Number(rawExecutionDeadline)).toISOString(),
+      planId: planning.plan.id,
+    });
+    const activation = await openwhisk().actions.invoke({
+      blocking: false,
+      name: DEFAULT_ACTION_NAME,
+      params: {
+        ...params,
+        __ow_method: "post",
+        __ow_path: "/upgrade/execution",
+
+        attemptId: attempt.id,
+      },
+      result: false,
+    });
+
+    logger.debug(`Async upgrade execution started: ${activation.activationId}`);
+    return accepted({ body: planning.plan });
+  },
+});
+
+/**
+ * POST /installation/upgrade/execution - Execute an upgrade.
+ * @internal - Do not add to OpenAPI Spec.
+ */
+router.post("/upgrade/execution", {
+  handler: async (_req, { logger, rawParams }) => {
+    const params = rawParams as LifecycleExecutionRouteParams;
+    const { attemptId, appConfig: rawAppConfig } = params;
+
+    if (!attemptId) {
+      return badRequest("attemptId is required for upgrade execution");
+    }
+    if (!rawAppConfig) {
+      return badRequest("appConfig is required for upgrade execution");
+    }
+
+    const appConfig = validateCommerceAppConfig(rawAppConfig);
+    const runtime = await createLifecycleRuntime(params, appConfig, logger);
+    const result = await executeLifecycleAttempt({
+      attemptId,
+      lifecycleContext: runtime.lifecycleContext,
+      rootStep: runtime.rootStep,
+      snapshotStore: runtime.snapshotStore,
+      stateStore: runtime.stateStore,
+    });
+
+    logger.debug(`Upgrade completed: ${result.status}`);
+    if (result.status === "failed") {
+      return internalServerError({
+        body: {
+          attempt: result,
+          failure: result.failure,
+          message: "Upgrade failed",
         },
       });
     }
@@ -612,12 +775,45 @@ router.delete("/uninstallation", {
  * when none is authoritative (no install, an in-progress install, or a legacy
  * record persisted before the config was recorded).
  */
-async function getInstallationSnapshot() {
+async function getInstallationSnapshot(): Promise<AppStateSnapshot | null> {
   const installationStore = await createInstallationStore();
   const installSnapshot = await installationStore.get(getStorageKey());
-  return installSnapshot &&
-    isCompletedState(installSnapshot) &&
-    installSnapshot.config
-    ? installSnapshot
-    : null;
+  if (
+    !(
+      installSnapshot &&
+      isSucceededState(installSnapshot) &&
+      installSnapshot.config
+    )
+  ) {
+    return null;
+  }
+
+  return {
+    config: installSnapshot.config,
+    data: installSnapshot.data,
+    id: installSnapshot.id,
+  };
+}
+
+/** Creates the shared dependencies used by lifecycle orchestration. */
+async function createLifecycleRuntime(
+  params: WorkflowRouteParams,
+  appConfig: CommerceAppConfigOutputModel,
+  logger: LifecycleContext["logger"],
+) {
+  const [stateStore, snapshotStore] = await Promise.all([
+    createOrchestrationStateStore(),
+    createAppStateSnapshotStore(),
+  ]);
+
+  return {
+    baselineProvider: {
+      get: (snapshotId: string | null) =>
+        snapshotId ? snapshotStore.get(snapshotId) : getInstallationSnapshot(),
+    },
+    lifecycleContext: buildInstallationContext(params, appConfig, logger),
+    rootStep: createRootInstallationStep(appConfig),
+    snapshotStore,
+    stateStore,
+  };
 }

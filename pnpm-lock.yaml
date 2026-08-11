@@ -389,9 +389,15 @@ importers:
       '@adobe/aio-commerce-lib-webhooks':
         specifier: workspace:*
         version: link:../aio-commerce-lib-webhooks
+      '@adobe/aio-lib-core-config':
+        specifier: ^5.0.1
+        version: 5.0.1(supports-color@8.1.1)
       '@adobe/aio-lib-core-logging':
         specifier: 'catalog:'
         version: 3.0.2(supports-color@8.1.1)
+      '@adobe/aio-lib-ims':
+        specifier: 'catalog:'
+        version: 8.1.2(supports-color@8.1.1)
       '@adobe/aio-lib-state':
         specifier: 'catalog:'
         version: 5.3.1(supports-color@8.1.1)
