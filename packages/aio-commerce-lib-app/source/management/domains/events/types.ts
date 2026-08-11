@@ -163,13 +163,6 @@ export type EventingSnapshotData = {
   providers: EventingProviderSnapshot[];
 };
 
-/** The eventing resource kinds a plan operation can target. */
-export type EventingResourceType =
-  | "provider"
-  | "metadata"
-  | "registration"
-  | "subscription";
-
 /**
  * The value carried by a plan operation, discriminated by `resourceType`. Secret-free: creds are
  * resolved fresh at apply from the context, never persisted in a plan.
