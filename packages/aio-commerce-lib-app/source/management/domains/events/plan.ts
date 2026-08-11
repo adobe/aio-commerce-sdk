@@ -17,10 +17,11 @@ import { appliesToEnv, getInstallCommerceEnv } from "#config/lib/environment";
 import {
   COMMERCE_PROVIDER_TYPE,
   EXTERNAL_PROVIDER_TYPE,
-  getIoEventCode,
+  eventCodeOf,
   getNamespacedEvent,
   getProviderKey,
   groupEventsByRuntimeActions,
+  partitionByKey,
 } from "./utils";
 
 import type { EventProviderType } from "@adobe/aio-commerce-lib-events/io-events";
@@ -86,15 +87,6 @@ function sourcesToSnapshots(
   }
 
   return snapshots;
-}
-
-/** The fully-qualified I/O Events code for an event under a provider type. */
-function eventCodeOf(
-  event: AppEvent,
-  metadata: ApplicationMetadata,
-  type: EventProviderType,
-): string {
-  return getIoEventCode(getNamespacedEvent(metadata, event.name), type);
 }
 
 /** Builds a version-stable id for a plan operation. */
@@ -283,20 +275,15 @@ class LeafPlanBuilder {
     baselineMetadata: ApplicationMetadata,
   ): void {
     const { key, type } = target;
-    const baselineCodes = new Set(
-      baseline.events.map((event) =>
-        eventCodeOf(event, baselineMetadata, type),
-      ),
-    );
-    const targetCodes = new Set(
-      target.events.map((event) => eventCodeOf(event, targetMetadata, type)),
+    const { added, removed } = partitionByKey(
+      target.events,
+      baseline.events,
+      (event) => eventCodeOf(event, targetMetadata, type),
+      (event) => eventCodeOf(event, baselineMetadata, type),
     );
 
-    for (const event of target.events) {
+    for (const event of added) {
       const eventCode = eventCodeOf(event, targetMetadata, type);
-      if (baselineCodes.has(eventCode)) {
-        continue;
-      }
       this.add(
         {
           description: event.description,
@@ -311,11 +298,8 @@ class LeafPlanBuilder {
       );
     }
 
-    for (const event of baseline.events) {
+    for (const event of removed) {
       const eventCode = eventCodeOf(event, baselineMetadata, type);
-      if (targetCodes.has(eventCode)) {
-        continue;
-      }
       this.remove(
         {
           description: event.description,
@@ -408,22 +392,15 @@ class LeafPlanBuilder {
     baselineMetadata: ApplicationMetadata,
   ): void {
     const { key } = target;
-    const baselineNames = new Set(
-      baseline.events.map((event) =>
-        getNamespacedEvent(baselineMetadata, event.name),
-      ),
-    );
-    const targetNames = new Set(
-      target.events.map((event) =>
-        getNamespacedEvent(targetMetadata, event.name),
-      ),
+    const { added, removed } = partitionByKey(
+      target.events,
+      baseline.events,
+      (event) => getNamespacedEvent(targetMetadata, event.name),
+      (event) => getNamespacedEvent(baselineMetadata, event.name),
     );
 
-    for (const event of target.events) {
+    for (const event of added) {
       const name = getNamespacedEvent(targetMetadata, event.name);
-      if (baselineNames.has(name)) {
-        continue;
-      }
       this.add(
         { name, providerKey: key, resourceType: "subscription" },
         `Create Commerce subscription: ${name}`,
@@ -431,11 +408,8 @@ class LeafPlanBuilder {
       );
     }
 
-    for (const event of baseline.events) {
+    for (const event of removed) {
       const name = getNamespacedEvent(baselineMetadata, event.name);
-      if (targetNames.has(name)) {
-        continue;
-      }
       this.remove(
         { name, providerKey: key, resourceType: "subscription" },
         `Remove Commerce subscription: ${name}`,

@@ -17,16 +17,17 @@ import { externalEventsStep } from "./external";
 import {
   COMMERCE_PROVIDER_TYPE,
   EXTERNAL_PROVIDER_TYPE,
+  eventCodeOf,
   findExistingRegistrations,
   generateInstanceId,
   generateInstanceIdDeprecated,
-  getIoEventCode,
   getIoEventsExistingData,
   getLegacyRegistrationName,
   getNamespacedEvent,
   getRegistrationDescription,
   getRegistrationName,
   groupEventsByRuntimeActions,
+  partitionByKey,
 } from "./utils";
 
 import type { EventProviderType } from "@adobe/aio-commerce-lib-events/io-events";
@@ -295,11 +296,7 @@ function eventCodeSet(
   type: EventProviderType,
   metadata: ApplicationMetadata,
 ): Set<string> {
-  return new Set(
-    events.map((event) =>
-      getIoEventCode(getNamespacedEvent(metadata, event.name), type),
-    ),
-  );
+  return new Set(events.map((event) => eventCodeOf(event, metadata, type)));
 }
 
 /** Whether two string sets contain exactly the same members. */
@@ -395,10 +392,7 @@ async function putRegistration(
       ),
       enabled: true,
       eventsOfInterest: events.map((event) => ({
-        eventCode: getIoEventCode(
-          getNamespacedEvent(metadata, event.name),
-          type,
-        ),
+        eventCode: eventCodeOf(event, metadata, type),
         providerId: providerData.id,
       })),
       name: getRegistrationName(providerData, runtimeAction),
@@ -465,16 +459,15 @@ async function removeDroppedMetadata(
   context: EventsExecutionContext,
 ): Promise<void> {
   const { ioEventsClient, appData, logger } = context;
-  const targetCodes = eventCodeSet(targetEvents, type, targetMetadata);
+  const { removed } = partitionByKey(
+    targetEvents,
+    baselineEvents,
+    (event) => eventCodeOf(event, targetMetadata, type),
+    (event) => eventCodeOf(event, baselineMetadata, type),
+  );
 
-  for (const event of baselineEvents) {
-    const eventCode = getIoEventCode(
-      getNamespacedEvent(baselineMetadata, event.name),
-      type,
-    );
-    if (targetCodes.has(eventCode)) {
-      continue;
-    }
+  for (const event of removed) {
+    const eventCode = eventCodeOf(event, baselineMetadata, type);
 
     try {
       // biome-ignore lint/performance/noAwaitInLoops: metadata deletes hit the Adobe I/O Events API sequentially to avoid a rate-limit burst
@@ -506,15 +499,15 @@ async function removeDroppedSubscriptions(
   context: EventsExecutionContext,
 ): Promise<void> {
   const { commerceEventsClient, logger } = context;
-  const targetNames = new Set(
-    targetEvents.map((event) => getNamespacedEvent(targetMetadata, event.name)),
+  const { removed } = partitionByKey(
+    targetEvents,
+    baselineEvents,
+    (event) => getNamespacedEvent(targetMetadata, event.name),
+    (event) => getNamespacedEvent(baselineMetadata, event.name),
   );
 
-  for (const event of baselineEvents) {
+  for (const event of removed) {
     const name = getNamespacedEvent(baselineMetadata, event.name);
-    if (targetNames.has(name)) {
-      continue;
-    }
 
     try {
       // biome-ignore lint/performance/noAwaitInLoops: subscription deletes hit the Commerce API sequentially to avoid a rate-limit burst

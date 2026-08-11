@@ -205,6 +205,47 @@ export function getIoEventCode(name: string, providerType: EventProviderType) {
     : name;
 }
 
+/**
+ * The fully-qualified I/O Events code for an event under a provider type: the event name is
+ * namespaced with the application id and then qualified by {@link getIoEventCode}.
+ *
+ * @param event - The event to compute the code for.
+ * @param metadata - The application metadata used to namespace the event name.
+ * @param providerType - The type of the event provider.
+ */
+export function eventCodeOf(
+  event: AppEvent,
+  metadata: ApplicationMetadata,
+  providerType: EventProviderType,
+) {
+  return getIoEventCode(getNamespacedEvent(metadata, event.name), providerType);
+}
+
+/**
+ * Partitions two keyed collections into the items unique to each side. `added` holds `target`
+ * items whose key is absent from `baseline`; `removed` holds `baseline` items whose key is absent
+ * from `target`. The two sides may key differently (e.g. namespaced under different metadata).
+ *
+ * @param target - The target-side items.
+ * @param baseline - The baseline-side items.
+ * @param targetKey - Derives the comparison key for a target item.
+ * @param baselineKey - Derives the comparison key for a baseline item.
+ */
+export function partitionByKey<T>(
+  target: T[],
+  baseline: T[],
+  targetKey: (item: T) => string,
+  baselineKey: (item: T) => string,
+): { added: T[]; removed: T[] } {
+  const targetKeys = new Set(target.map(targetKey));
+  const baselineKeys = new Set(baseline.map(baselineKey));
+
+  return {
+    added: target.filter((item) => !baselineKeys.has(targetKey(item))),
+    removed: baseline.filter((item) => !targetKeys.has(baselineKey(item))),
+  };
+}
+
 /** Maps a provider's metadata type to its human-readable label ("Commerce" or "External"). */
 function getProviderTypeLabel(provider: IoEventProvider) {
   return PROVIDER_TYPE_TO_LABEL[
