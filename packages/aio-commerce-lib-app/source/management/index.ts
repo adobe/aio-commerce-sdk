@@ -24,6 +24,8 @@ export {
   isSucceededState,
 } from "./common/workflow";
 export { defineCustomInstallationStep } from "./domains/custom-installation";
+// Eventing upgrade reconcile (add / remove / registration update).
+export { reconcileEventing } from "./domains/events/index";
 // Export installation-specific functions
 export {
   createInitialInstallationState,
@@ -32,12 +34,34 @@ export {
   runUninstallation,
   runValidation,
 } from "./installation/runner";
+// Generic, domain-agnostic upgrade config diff engine + orchestrator.
+export {
+  configHasDestructiveChange,
+  configHasUnsupportedChange,
+  diffConfig,
+  executeUpgrade,
+  getChangesForDomain,
+  getOperativeChanges,
+  isEmptyPlan,
+  planUpgrade,
+  UnsupportedUpgradeError,
+} from "./upgrade/index";
+// App-upgrade registry + entry points (drives every built-in domain).
+export {
+  appUpgradeDomains,
+  previewUpgrade,
+  runUpgrade,
+} from "./upgrade-domains";
 
 export type * from "./common/workflow";
 export type {
   CustomInstallationStepDefinition,
   CustomInstallationStepHandler,
 } from "./domains/custom-installation";
+export type {
+  EventingReconcileResult,
+  ReconcileEventingOptions,
+} from "./domains/events/index";
 // Deprecated back-compat aliases for the renamed workflow engine types.
 export type * from "./installation/compat";
 export type {
@@ -48,3 +72,16 @@ export type {
   RunUninstallationOptions,
   RunValidationOptions,
 } from "./installation/runner";
+export type {
+  ConfigDiff,
+  DomainCollector,
+  DomainRule,
+  ExecuteUpgradeOptions,
+  ResourceChange,
+  ResourceKind,
+  UpgradeBaseline,
+  UpgradeDomain,
+  UpgradeResult,
+  UpgradeStatus,
+} from "./upgrade/index";
+export type { RunUpgradeOptions } from "./upgrade-domains";

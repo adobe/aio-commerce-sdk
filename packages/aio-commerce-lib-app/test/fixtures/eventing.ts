@@ -208,6 +208,7 @@ export function createMockIoEventsClient(
       ),
     getAllEventProviders: vi.fn(overrides?.getAllEventProviders),
     getAllRegistrations: vi.fn(overrides?.getAllRegistrations),
+    updateRegistration: vi.fn(overrides?.updateRegistration),
   };
 }
 

@@ -14,6 +14,19 @@
 
 export { eventingStep } from "./branch";
 export { commerceEventsStep } from "./commerce";
+export { createEventsStepContext } from "./context";
+export {
+  COMMERCE_SUBSCRIPTION_DOMAIN,
+  eventingDomainCollectors,
+  IO_EVENTS_METADATA_DOMAIN,
+  IO_EVENTS_PROVIDER_DOMAIN,
+  IO_EVENTS_REGISTRATION_DOMAIN,
+} from "./diff";
 export { externalEventsStep } from "./external";
+export { eventingUpgradeDomain, reconcileEventing } from "./reconcile";
 
 export type { EventsStepContext } from "./context";
+export type {
+  EventingReconcileResult,
+  ReconcileEventingOptions,
+} from "./reconcile";
