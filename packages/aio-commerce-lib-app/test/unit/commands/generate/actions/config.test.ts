@@ -50,11 +50,11 @@ describe("buildAppManagementExtConfig", () => {
     expect(actions?.["app-config"]).toBeDefined();
   });
 
-  test("does not include installation action for minimal config", () => {
+  test("includes installation action for minimal config", () => {
     const result = buildAppManagementExtConfig(minimalValidConfig);
 
     const actions = result.runtimeManifest?.packages?.[PACKAGE_NAME]?.actions;
-    expect(actions?.installation).toBeUndefined();
+    expect(actions?.installation).toBeDefined();
   });
 
   test.concurrent.each([
