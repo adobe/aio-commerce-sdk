@@ -1308,6 +1308,24 @@ describe("planWebhookSubscriptions", () => {
     expect(result.plan.retainedWebhooks).toHaveLength(0);
   });
 
+  test("treats a baseline with null data as no prior state instead of throwing", async () => {
+    const result = await planWebhookSubscriptions(
+      {
+        // @ts-expect-error - baseline.data should never be null per the type, but a
+        // malformed caller can still pass this at runtime; this must not throw.
+        baseline: { config: createDefaultWebhooksConfig(), data: null },
+        path: UPGRADE_PATH,
+        targetConfig: createDefaultWebhooksConfig(),
+        unresolvedCleanupResources: [],
+      },
+      makeContext(),
+    );
+
+    expect.assert(result.kind === "planned");
+    expect(result.plan.operations).toHaveLength(1);
+    expect(result.plan.operations[0]).toMatchObject({ kind: "add" });
+  });
+
   test("never resolves developer_console_oauth into a planned add", async () => {
     const result = await planWebhookSubscriptions(
       {

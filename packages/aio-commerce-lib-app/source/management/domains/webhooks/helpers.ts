@@ -380,7 +380,7 @@ export function planWebhookSubscriptions(
   const env = getInstallCommerceEnv(params);
   const desired = targetConfig ? resolveDesiredWebhooks(targetConfig, env) : [];
 
-  const ownedFromBaseline = baseline?.data.subscribedWebhooks ?? [];
+  const ownedFromBaseline = baseline?.data?.subscribedWebhooks ?? [];
   const unresolvedIdentities = unresolvedCleanupResources.map(
     (resource) => resource.identity,
   );
