@@ -143,10 +143,6 @@ export type StoredEventsData = {
   providers: Record<string, StoredProviderEntry>;
 };
 
-// ---------------------------------------------------------------------------
-// Upgrade (plan/apply) types
-// ---------------------------------------------------------------------------
-
 /**
  * One deployed event source recorded after an install/apply, used as the baseline for the next
  * upgrade diff and to reconstruct idempotent onboard/offboard input. `events` is already scoped to
