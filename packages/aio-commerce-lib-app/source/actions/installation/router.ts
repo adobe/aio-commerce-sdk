@@ -39,6 +39,7 @@ import {
   runValidation,
 } from "#management/index";
 import { createRootInstallationStep } from "#management/installation/root";
+import { createLifecycleBaselineProvider } from "#management/lifecycle/baseline";
 import { executeLifecycleAttempt } from "#management/lifecycle/execution";
 import { planLifecycle } from "#management/lifecycle/planning";
 import { startLifecycleAttempt } from "#management/lifecycle/start";
@@ -807,10 +808,9 @@ async function createLifecycleRuntime(
   ]);
 
   return {
-    baselineProvider: {
-      get: (snapshotId: string | null) =>
-        snapshotId ? snapshotStore.get(snapshotId) : getInstallationSnapshot(),
-    },
+    baselineProvider: createLifecycleBaselineProvider(snapshotStore, {
+      get: getInstallationSnapshot,
+    }),
     lifecycleContext: buildInstallationContext(params, appConfig, logger),
     rootStep: createRootInstallationStep(appConfig),
     snapshotStore,
