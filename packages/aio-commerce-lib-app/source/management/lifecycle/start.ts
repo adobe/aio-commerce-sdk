@@ -77,7 +77,7 @@ export async function startLifecycleAttempt(
     data: baseline.data,
     executionDeadline: options.executionDeadline,
     id: crypto.randomUUID(),
-    operation: "upgrade",
+    operation: plan.operation,
     plan,
     progress: workflow.step,
     resolvedCleanupResources: [],

@@ -460,6 +460,7 @@ router.post("/upgrade", {
     const planning = await planLifecycle({
       ...runtime,
       actionVersion,
+      operation: "upgrade",
       targetAppVersion: appConfig.metadata.version,
       targetConfig: appConfig,
     });

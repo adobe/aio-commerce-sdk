@@ -21,6 +21,7 @@ import {
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 import type {
   AppStateSnapshot,
+  LifecycleOperation,
   LifecyclePlan,
   OrchestrationState,
 } from "#management/common/orchestration";
@@ -29,6 +30,7 @@ import type { LifecycleRuntime } from "./state";
 /** Inputs used to produce a lifecycle plan. */
 export type PlanLifecycleOptions = LifecycleRuntime & {
   actionVersion: string;
+  operation: LifecycleOperation;
   targetAppVersion: string;
   targetConfig: CommerceAppConfigOutputModel;
 };
@@ -53,7 +55,11 @@ export async function planLifecycle(
     throw new Error("A lifecycle attempt is already in progress");
   }
 
-  const existingPlan = findReusablePlan(state, options.actionVersion);
+  const existingPlan = findReusablePlan(
+    state,
+    options.actionVersion,
+    options.operation,
+  );
   if (existingPlan) {
     return createPlanningResult(existingPlan, true);
   }
@@ -73,6 +79,7 @@ export async function planLifecycle(
     domains: planning.domains,
     id: crypto.randomUUID(),
     issues: planning.issues,
+    operation: options.operation,
     source: {
       appVersion: getBaselineAppVersion(state, baseline),
       snapshotId: state.baselineSnapshotId ?? baseline.id,
@@ -94,12 +101,19 @@ export async function planLifecycle(
 function findReusablePlan(
   state: OrchestrationState,
   actionVersion: string,
+  operation: LifecycleOperation,
 ): LifecyclePlan | null {
-  if (state.pendingPlan?.actionVersion === actionVersion) {
+  if (
+    state.pendingPlan?.actionVersion === actionVersion &&
+    state.pendingPlan.operation === operation
+  ) {
     return state.pendingPlan;
   }
   const latestPlan = state.latestAttempt?.plan;
-  return latestPlan?.actionVersion === actionVersion ? latestPlan : null;
+  return latestPlan?.actionVersion === actionVersion &&
+    latestPlan.operation === operation
+    ? latestPlan
+    : null;
 }
 
 /** Resolves the version of the app represented by the current baseline. */

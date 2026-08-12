@@ -103,10 +103,18 @@ function buildInitialPlanExecutionStepStatus(
         .map((child) => buildInitialPlanExecutionStepStatus(child, path, plan))
     : [];
 
+  const meta = step.meta[plan.operation];
+
+  if (!meta) {
+    throw new Error(
+      `Step "${step.name}" does not define metadata for an "${plan.operation}" lifecycle operation`,
+    );
+  }
+
   return {
     children,
     id: crypto.randomUUID(),
-    meta: step.meta.upgrade ?? step.meta.install,
+    meta,
     name: step.name,
     path,
     status: "pending",

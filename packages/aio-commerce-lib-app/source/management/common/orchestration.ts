@@ -31,6 +31,9 @@ export type LifecyclePlan = {
   /** Unique plan identifier. */
   id: string;
 
+  /** The lifecycle operation this plan performs. */
+  operation: LifecycleOperation;
+
   /** Version of the action that produced the plan. */
   actionVersion: string;
 
