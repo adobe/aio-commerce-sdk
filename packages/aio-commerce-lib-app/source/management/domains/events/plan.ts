@@ -20,6 +20,7 @@ import {
   eventCodeOf,
   getNamespacedEvent,
   getProviderKey,
+  getSubscriptionChangeKind,
   groupEventsByRuntimeActions,
   partitionByKey,
 } from "./utils";
@@ -27,6 +28,7 @@ import {
 import type { EventProviderType } from "@adobe/aio-commerce-lib-events/io-events";
 import type {
   AppEvent,
+  CommerceEvent,
   CommerceEventsConfig,
   EventProvider,
   ExternalEventsConfig,
@@ -415,6 +417,39 @@ class LeafPlanBuilder {
         `Remove Commerce subscription: ${name}`,
       );
     }
+
+    // Subscriptions present on both sides: reconcile in-place config changes (fields, rules,
+    // priority, hipaa) that the add/remove partition above never examines.
+    const baselineByName = new Map(
+      baseline.events.map((event) => [
+        getNamespacedEvent(baselineMetadata, event.name),
+        event,
+      ]),
+    );
+
+    for (const targetEvent of target.events) {
+      const name = getNamespacedEvent(targetMetadata, targetEvent.name);
+      const baselineEvent = baselineByName.get(name);
+      if (!baselineEvent) {
+        continue;
+      }
+
+      const changeMode = getSubscriptionChangeKind(
+        baselineEvent as CommerceEvent,
+        targetEvent as CommerceEvent,
+      );
+      if (changeMode === "none") {
+        continue;
+      }
+
+      this.update(
+        { name, providerKey: key, resourceType: "subscription" },
+        { changeMode, name, providerKey: key, resourceType: "subscription" },
+        changeMode === "in-place"
+          ? `Update Commerce subscription in place: ${name}`
+          : `Recreate Commerce subscription: ${name}`,
+      );
+    }
   }
 }
 
@@ -496,8 +531,8 @@ function planEventingLeaf(
 /**
  * Plans the Commerce eventing changes between the installed baseline and the target config. Pure:
  * diffs provider/metadata/registration/subscription resources into add/remove/update operations
- * without any I/O. In-place provider/metadata/subscription changes have no update API and are left
- * as-is; registration event-set changes are emitted as `update` (applied via a full-replace PUT).
+ * without any I/O. In-place provider/metadata changes have no update API and are left as-is;
+ * registration event-set changes and Commerce subscription config changes are emitted as `update`.
  *
  * @param input - The planning input (baseline config + snapshot, target config, path).
  * @param context - The side-effect-free execution context (used to resolve the install environment).

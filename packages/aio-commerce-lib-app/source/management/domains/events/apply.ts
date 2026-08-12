@@ -26,6 +26,7 @@ import {
   getNamespacedEvent,
   getRegistrationDescription,
   getRegistrationName,
+  getSubscriptionChangeKind,
   groupEventsByRuntimeActions,
   partitionByKey,
 } from "./utils";
@@ -33,6 +34,7 @@ import {
 import type { EventProviderType } from "@adobe/aio-commerce-lib-events/io-events";
 import type {
   AppEvent,
+  CommerceEvent,
   CommerceEventsConfig,
   ExternalEventsConfig,
 } from "#config/schema/eventing";
@@ -259,6 +261,14 @@ async function reconcileProviderSubResources(
 
   if (options.isCommerce) {
     await removeDroppedSubscriptions(
+      target.events,
+      baseline.events,
+      targetMetadata,
+      baselineMetadata,
+      context,
+    );
+    await reconcileChangedSubscriptions(
+      providerData.id,
       target.events,
       baseline.events,
       targetMetadata,
@@ -517,6 +527,87 @@ async function removeDroppedSubscriptions(
       const message = await unwrapHttpError(error);
       logger.warn(
         `Failed to delete Commerce event subscription "${name}": ${message}. Continuing apply.`,
+      );
+    }
+  }
+}
+
+/**
+ * Reconciles configuration changes on Commerce subscriptions present on both the baseline and
+ * target. Additive/same-key changes are applied in place via the Commerce merge-update endpoint;
+ * orphaning changes (field/rule removal, rename, rule operator/field change) are applied by
+ * unsubscribe + resubscribe. Unlike the best-effort removals above, a failure here fails the
+ * upgrade step: a silently stale subscription diverges from the applied config.
+ */
+async function reconcileChangedSubscriptions(
+  providerId: string,
+  targetEvents: AppEvent[],
+  baselineEvents: AppEvent[],
+  targetMetadata: ApplicationMetadata,
+  baselineMetadata: ApplicationMetadata,
+  context: EventsExecutionContext,
+): Promise<void> {
+  const { commerceEventsClient, logger } = context;
+  const baselineByName = new Map(
+    baselineEvents.map((event) => [
+      getNamespacedEvent(baselineMetadata, event.name),
+      event,
+    ]),
+  );
+
+  for (const targetEvent of targetEvents) {
+    const name = getNamespacedEvent(targetMetadata, targetEvent.name);
+    const baselineEvent = baselineByName.get(name);
+    if (!baselineEvent) {
+      // Added event — created by the idempotent install pass.
+      continue;
+    }
+
+    const changeMode = getSubscriptionChangeKind(
+      baselineEvent as CommerceEvent,
+      targetEvent as CommerceEvent,
+    );
+    if (changeMode === "none") {
+      continue;
+    }
+
+    const event = targetEvent as CommerceEvent;
+    try {
+      if (changeMode === "in-place") {
+        // biome-ignore lint/performance/noAwaitInLoops: subscriptions are updated sequentially to avoid a Commerce rate-limit burst
+        await commerceEventsClient.updateEventSubscription({
+          fields: event.fields,
+          hipaa_audit_required: event.hipaa_audit_required,
+          name,
+          parent: event.name,
+          priority: event.priority,
+          provider_id: providerId,
+          rules: event.rules,
+        });
+        logger.info(`Updated Commerce event subscription "${name}" in place.`);
+      } else {
+        // The merge-update endpoint cannot remove or re-key fields/rules, so re-subscribe. The
+        // Commerce unsubscribe/subscribe cascade churns the event's I/O metadata; the registration
+        // re-links by event code and is left untouched.
+        await commerceEventsClient.deleteEventSubscription({ name });
+        await commerceEventsClient.createEventSubscription({
+          destination: event.destination,
+          fields: event.fields,
+          force: event.force,
+          hipaa_audit_required: event.hipaa_audit_required,
+          name,
+          parent: event.name,
+          priority: event.priority,
+          provider_id: providerId,
+          rules: event.rules,
+        });
+        logger.info(`Recreated Commerce event subscription "${name}".`);
+      }
+    } catch (error) {
+      const message = await unwrapHttpError(error);
+      throw new Error(
+        `Failed to update Commerce event subscription "${name}": ${message}`,
+        { cause: error },
       );
     }
   }

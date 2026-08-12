@@ -15,6 +15,7 @@ import {
   getSystemConfigByKey,
   setSystemConfigByKey,
 } from "@adobe/aio-commerce-lib-config";
+import stringify from "safe-stable-stringify";
 
 import type {
   CommerceEventProvider,
@@ -28,7 +29,11 @@ import type {
   IoEventRegistration,
 } from "@adobe/aio-commerce-lib-events/io-events";
 import type { ApplicationMetadata } from "#config/index";
-import type { AppEvent, EventProvider } from "#config/schema/eventing";
+import type {
+  AppEvent,
+  CommerceEvent,
+  EventProvider,
+} from "#config/schema/eventing";
 import type { EventsExecutionContext } from "./context";
 import type { AppEventWithoutRuntimeActions, StoredEventsData } from "./types";
 
@@ -244,6 +249,80 @@ export function partitionByKey<T>(
     added: target.filter((item) => !baselineKeys.has(targetKey(item))),
     removed: baseline.filter((item) => !targetKeys.has(baselineKey(item))),
   };
+}
+
+/** How a persisting Commerce subscription's configuration changed between baseline and target. */
+export type SubscriptionChangeKind = "none" | "in-place" | "recreate";
+
+/** Order-independent, default-normalized view of the subscription attributes we reconcile. */
+function canonicalSubscriptionConfig(event: CommerceEvent) {
+  const fields = event.fields
+    .map((field) => ({ name: field.name, source: field.source ?? null }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+
+  const rules = (event.rules ?? [])
+    .map((rule) => ({
+      field: rule.field,
+      operator: rule.operator,
+      value: rule.value,
+    }))
+    .sort((a, b) =>
+      `${a.field}:${a.operator}`.localeCompare(`${b.field}:${b.operator}`),
+    );
+
+  return {
+    fields,
+    hipaa_audit_required: event.hipaa_audit_required ?? false,
+    priority: event.priority ?? false,
+    rules,
+  };
+}
+
+/** The Commerce merge-update keys for an event's fields (by name) and rules (by `field:operator`). */
+function subscriptionMergeKeys(event: CommerceEvent): {
+  fields: Set<string>;
+  rules: Set<string>;
+} {
+  return {
+    fields: new Set(event.fields.map((field) => field.name)),
+    rules: new Set(
+      (event.rules ?? []).map((rule) => `${rule.field}:${rule.operator}`),
+    ),
+  };
+}
+
+/**
+ * Classifies how a persisting Commerce event subscription's configuration changed:
+ *
+ * - `none` — identical after normalization (field/rule reordering and omitted-optional defaults
+ *   do not count as a change).
+ * - `in-place` — only additive or same-key changes (new field/rule, changed field source, changed
+ *   rule value, toggled `priority`/`hipaa_audit_required`), which the Commerce merge-update endpoint
+ *   can express.
+ * - `recreate` — a field or rule identity was dropped (removed field/rule, renamed field, changed
+ *   rule operator/field). Merge cannot remove entries, so these require re-subscribing the event.
+ *
+ * `destination` is intentionally not compared: it is internal routing, not developer-facing config.
+ */
+export function getSubscriptionChangeKind(
+  baseline: CommerceEvent,
+  target: CommerceEvent,
+): SubscriptionChangeKind {
+  if (
+    stringify(canonicalSubscriptionConfig(baseline)) ===
+    stringify(canonicalSubscriptionConfig(target))
+  ) {
+    return "none";
+  }
+
+  const baselineKeys = subscriptionMergeKeys(baseline);
+  const targetKeys = subscriptionMergeKeys(target);
+
+  const droppedKey =
+    [...baselineKeys.fields].some((key) => !targetKeys.fields.has(key)) ||
+    [...baselineKeys.rules].some((key) => !targetKeys.rules.has(key));
+
+  return droppedKey ? "recreate" : "in-place";
 }
 
 /** Maps a provider's metadata type to its human-readable label ("Commerce" or "External"). */

@@ -410,6 +410,189 @@ describe("applyCommerceEvents", () => {
     // The persisting pkg/a registration's event set is unchanged, so no PUT is issued.
     expect(context.ioEventsClient.updateRegistration).not.toHaveBeenCalled();
   });
+
+  /** Builds a context whose deployed provider resolves to `prov-1` for a persisting provider. */
+  function persistingProviderContext(
+    provider: EventProvider,
+    overrides?: {
+      commerceEventsClient?: Record<string, unknown>;
+    },
+  ) {
+    const instanceId = generateInstanceId(
+      metadata,
+      provider,
+      "test-workspace-id",
+    );
+    const providerData = createMockIoEventProvider({
+      id: "prov-1",
+      instance_id: instanceId,
+      label: provider.label,
+      provider_metadata: "dx_commerce_events",
+    });
+    const registrationName = getRegistrationName(providerData, "pkg/a");
+
+    return createMockEventingInstallationContext({
+      commerceEventsClient: overrides?.commerceEventsClient as never,
+      ioEventsClient: ioEventsClient({
+        providers: [{ ...providerData, _embedded: { eventmetadata: [] } }],
+        registrations: [
+          createMockIoEventRegistration({
+            client_id: "test-client-id",
+            name: registrationName,
+            registration_id: "reg-1",
+          }),
+        ],
+      }) as never,
+      params: { AIO_COMMERCE_AUTH_IMS_CLIENT_ID: "test-client-id" },
+    });
+  }
+
+  test("updates a persisting subscription in place for an additive config change", async () => {
+    vi.spyOn(commerceEventsStep, "install").mockResolvedValue([]);
+    const provider: EventProvider = {
+      description: "P1",
+      key: "k1",
+      label: "P1",
+    };
+    const context = persistingProviderContext(provider);
+
+    const plan = await planCommerce(
+      commerceConfig([
+        {
+          events: [{ ...event("a", ["pkg/a"]), fields: [{ name: "field_a" }] }],
+          provider,
+        },
+      ]),
+      commerceConfig([
+        {
+          events: [
+            {
+              ...event("a", ["pkg/a"]),
+              fields: [{ name: "field_a" }, { name: "field_b" }],
+            },
+          ],
+          provider,
+        },
+      ]),
+    );
+
+    await applyCommerceEvents(plan, context as ApplyContext<EventsStepContext>);
+
+    const name = getNamespacedEvent(metadata, "a");
+    expect(
+      context.commerceEventsClient.updateEventSubscription,
+    ).toHaveBeenCalledTimes(1);
+    expect(
+      context.commerceEventsClient.updateEventSubscription,
+    ).toHaveBeenCalledWith(
+      expect.objectContaining({
+        fields: [{ name: "field_a" }, { name: "field_b" }],
+        name,
+        provider_id: "prov-1",
+      }),
+    );
+    expect(
+      context.commerceEventsClient.deleteEventSubscription,
+    ).not.toHaveBeenCalled();
+  });
+
+  test("recreates a persisting subscription (unsubscribe then resubscribe) for an orphaning change", async () => {
+    vi.spyOn(commerceEventsStep, "install").mockResolvedValue([]);
+    const provider: EventProvider = {
+      description: "P1",
+      key: "k1",
+      label: "P1",
+    };
+    const context = persistingProviderContext(provider);
+
+    const plan = await planCommerce(
+      commerceConfig([
+        {
+          events: [
+            {
+              ...event("a", ["pkg/a"]),
+              fields: [{ name: "field_a" }, { name: "field_b" }],
+            },
+          ],
+          provider,
+        },
+      ]),
+      commerceConfig([
+        {
+          events: [{ ...event("a", ["pkg/a"]), fields: [{ name: "field_a" }] }],
+          provider,
+        },
+      ]),
+    );
+
+    await applyCommerceEvents(plan, context as ApplyContext<EventsStepContext>);
+
+    const name = getNamespacedEvent(metadata, "a");
+    expect(
+      context.commerceEventsClient.deleteEventSubscription,
+    ).toHaveBeenCalledWith({ name });
+    expect(
+      context.commerceEventsClient.createEventSubscription,
+    ).toHaveBeenCalledWith(
+      expect.objectContaining({
+        fields: [{ name: "field_a" }],
+        name,
+        provider_id: "prov-1",
+      }),
+    );
+    expect(
+      context.commerceEventsClient.updateEventSubscription,
+    ).not.toHaveBeenCalled();
+
+    const firstCallOrder = (fn: unknown) => {
+      const { mock } = fn as { mock: { invocationCallOrder: number[] } };
+      return mock.invocationCallOrder[0];
+    };
+    expect(
+      firstCallOrder(context.commerceEventsClient.deleteEventSubscription),
+    ).toBeLessThan(
+      firstCallOrder(context.commerceEventsClient.createEventSubscription),
+    );
+  });
+
+  test("fails the apply when a subscription config update cannot be applied", async () => {
+    vi.spyOn(commerceEventsStep, "install").mockResolvedValue([]);
+    const provider: EventProvider = {
+      description: "P1",
+      key: "k1",
+      label: "P1",
+    };
+    const context = persistingProviderContext(provider, {
+      commerceEventsClient: {
+        updateEventSubscription: () =>
+          Promise.reject(new Error("update failed")),
+      },
+    });
+
+    const plan = await planCommerce(
+      commerceConfig([
+        {
+          events: [{ ...event("a", ["pkg/a"]), fields: [{ name: "field_a" }] }],
+          provider,
+        },
+      ]),
+      commerceConfig([
+        {
+          events: [
+            {
+              ...event("a", ["pkg/a"]),
+              fields: [{ name: "field_a" }, { name: "field_b" }],
+            },
+          ],
+          provider,
+        },
+      ]),
+    );
+
+    await expect(
+      applyCommerceEvents(plan, context as ApplyContext<EventsStepContext>),
+    ).rejects.toThrow();
+  });
 });
 
 describe("applyExternalEvents", () => {

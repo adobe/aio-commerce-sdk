@@ -179,6 +179,11 @@ export function createMockCommerceEventsClient(
     getAllEventProviders: vi.fn(overrides?.getAllEventProviders),
     getAllEventSubscriptions: vi.fn(overrides?.getAllEventSubscriptions),
     updateEventingConfiguration: vi.fn(overrides?.updateEventingConfiguration),
+    updateEventSubscription: vi
+      .fn()
+      .mockImplementation(
+        overrides?.updateEventSubscription ?? (() => Promise.resolve()),
+      ),
   };
 }
 
