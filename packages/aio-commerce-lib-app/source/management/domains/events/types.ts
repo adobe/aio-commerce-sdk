@@ -178,21 +178,23 @@ export type EventingOperationValue =
   | {
       resourceType: "metadata";
       providerKey: string;
+      providerLabel: string;
       type: EventProviderType;
       eventCode: string;
-      label: string;
+      label?: string;
       description?: string;
     }
   | {
       resourceType: "registration";
       providerKey: string;
+      providerLabel: string;
       type: EventProviderType;
       runtimeAction: string;
-      eventCodes: string[];
+      eventCodes?: string[];
     }
   | {
       resourceType: "subscription";
-      providerKey: string;
+      providerKey?: string;
       name: string;
 
       /**
@@ -203,11 +205,25 @@ export type EventingOperationValue =
       changeMode?: "in-place" | "recreate";
     };
 
-/** A cleanup resource identity for one eventing resource, matched during apply/teardown. */
+/**
+ * A cleanup resource identity for one eventing resource, matched during apply/teardown. The
+ * provider-scoped variants carry `providerLabel` so apply can resolve the deployed provider (by
+ * its app-scoped instance id) to delete an orphan from a stored identity alone.
+ */
 export type EventingCleanupIdentity =
-  | { resourceType: "provider"; providerKey: string }
-  | { resourceType: "metadata"; providerKey: string; eventCode: string }
-  | { resourceType: "registration"; providerKey: string; runtimeAction: string }
+  | { resourceType: "provider"; providerKey: string; providerLabel: string }
+  | {
+      resourceType: "metadata";
+      providerKey: string;
+      providerLabel: string;
+      eventCode: string;
+    }
+  | {
+      resourceType: "registration";
+      providerKey: string;
+      providerLabel: string;
+      runtimeAction: string;
+    }
   | { resourceType: "subscription"; name: string };
 
 /**

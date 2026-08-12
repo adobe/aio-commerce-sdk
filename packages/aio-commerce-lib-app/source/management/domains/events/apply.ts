@@ -12,6 +12,11 @@
 
 import { unwrapHttpError } from "@adobe/aio-commerce-lib-api/utils";
 
+import {
+  isHttpNotFoundError,
+  throwHttpError,
+} from "#management/common/utils/http-error";
+
 import { commerceEventsStep } from "./commerce";
 import { externalEventsStep } from "./external";
 import {
@@ -21,6 +26,7 @@ import {
   findExistingRegistrations,
   generateInstanceId,
   generateInstanceIdDeprecated,
+  getCommerceEventingExistingData,
   getIoEventsExistingData,
   getLegacyRegistrationName,
   getNamespacedEvent,
@@ -36,6 +42,7 @@ import type {
   AppEvent,
   CommerceEvent,
   CommerceEventsConfig,
+  EventProvider,
   ExternalEventsConfig,
 } from "#config/schema/eventing";
 import type { ApplicationMetadata } from "#config/schema/metadata";
@@ -53,6 +60,7 @@ import type {
   EventingSnapshotData,
 } from "./types";
 import type {
+  ExistingCommerceEventingData,
   ExistingIoEventsData,
   IoEventProviderWithMetadata,
 } from "./utils";
@@ -145,16 +153,35 @@ async function applyEventingLeaf(
     );
   }
 
-  // 3. Reconcile sub-resources of providers present on both sides: registration event-set changes
-  //    (PUT) and per-event metadata/subscription/registration removals — none of which `install` does.
-  if (plan.baselineMetadata) {
+  // 3. Reconcile sub-resources of providers present on both sides (registration event-set changes
+  //    and per-event removals) and remove orphaned resources carried over from prior attempts'
+  //    unresolved cleanup — both need live I/O Events state.
+  const cleanupRemovals: EventingOperationValue[] = [];
+  for (const operation of plan.operations) {
+    if (operation.category === "cleanup" && operation.kind === "remove") {
+      cleanupRemovals.push(operation.before);
+    }
+  }
+
+  if (plan.baselineMetadata || cleanupRemovals.length > 0) {
     const existingData = await getIoEventsExistingData(eventsContext);
-    await reconcilePersistingProviders(
-      plan,
-      existingData,
-      eventsContext,
-      options,
-    );
+    if (plan.baselineMetadata) {
+      await reconcilePersistingProviders(
+        plan,
+        existingData,
+        eventsContext,
+        options,
+      );
+    }
+    if (cleanupRemovals.length > 0) {
+      await applyCleanupRemovals(
+        cleanupRemovals,
+        plan,
+        existingData,
+        eventsContext,
+        options,
+      );
+    }
   }
 
   return {
@@ -223,7 +250,6 @@ async function reconcileProviderSubResources(
   context: EventsExecutionContext,
   options: LeafApplyOptions,
 ): Promise<void> {
-  const { logger } = context;
   const providerData = resolveDeployedProvider(
     target,
     targetMetadata,
@@ -233,10 +259,9 @@ async function reconcileProviderSubResources(
   );
 
   if (!providerData) {
-    logger.warn(
-      `Could not resolve deployed provider "${target.key}" during apply; skipping its sub-resource updates.`,
+    throw new Error(
+      `Could not resolve deployed provider "${target.key}" during apply; cannot converge its sub-resources.`,
     );
-    return;
   }
 
   await reconcileRegistrations(
@@ -249,16 +274,10 @@ async function reconcileProviderSubResources(
     existingData,
     context,
   );
-  await removeDroppedMetadata(
-    providerData,
-    options.type,
-    target.events,
-    baseline.events,
-    targetMetadata,
-    baselineMetadata,
-    context,
-  );
 
+  // Delete Commerce subscriptions before I/O Events metadata: unsubscribing a Commerce
+  // event cascades into deleting its I/O Events metadata, so the metadata may already be
+  // gone by the time removeDroppedMetadata runs.
   if (options.isCommerce) {
     await removeDroppedSubscriptions(
       target.events,
@@ -276,6 +295,16 @@ async function reconcileProviderSubResources(
       context,
     );
   }
+
+  await removeDroppedMetadata(
+    providerData,
+    options.type,
+    target.events,
+    baseline.events,
+    targetMetadata,
+    baselineMetadata,
+    context,
+  );
 }
 
 /** Finds the deployed I/O Events provider by its current or legacy instance id. */
@@ -298,6 +327,346 @@ function resolveDeployedProvider(
       candidates.has(candidate.instance_id),
     ) ?? null
   );
+}
+
+/**
+ * The app-scoped instance-id candidates for a cleanup value's provider. Reconstructs the original
+ * provider from the stored key/label: when the stored key equals the label the provider had no
+ * explicit key, so the instance id was derived from the slugified label.
+ */
+function cleanupInstanceIds(
+  providerKey: string,
+  providerLabel: string,
+  plan: EventingDomainPlan,
+  workspaceId: string,
+): Set<string> {
+  const provider = {
+    key: providerKey === providerLabel ? undefined : providerKey,
+    label: providerLabel,
+  } as EventProvider;
+  const baselineMetadata = plan.baselineMetadata ?? plan.metadata;
+
+  return new Set([
+    generateInstanceId(plan.metadata, provider, workspaceId),
+    generateInstanceIdDeprecated(plan.metadata, provider),
+    generateInstanceId(baselineMetadata, provider, workspaceId),
+    generateInstanceIdDeprecated(baselineMetadata, provider),
+  ]);
+}
+
+/** Finds the deployed I/O Events provider for a cleanup value from its stored key/label. */
+function resolveCleanupProvider(
+  providerKey: string,
+  providerLabel: string,
+  plan: EventingDomainPlan,
+  workspaceId: string,
+  existingData: ExistingIoEventsData,
+): IoEventProviderWithMetadata | null {
+  const candidates = cleanupInstanceIds(
+    providerKey,
+    providerLabel,
+    plan,
+    workspaceId,
+  );
+  return (
+    existingData.providersWithMetadata.find((candidate) =>
+      candidates.has(candidate.instance_id),
+    ) ?? null
+  );
+}
+
+/** Teardown order for orphaned resources: sub-resources before the provider that owns them. */
+function cleanupOrder(
+  resourceType: EventingOperationValue["resourceType"],
+): number {
+  switch (resourceType) {
+    case "subscription":
+      return 0;
+    case "metadata":
+      return 1;
+    case "registration":
+      return 2;
+    default:
+      return 3;
+  }
+}
+
+/**
+ * Removes orphaned resources carried over from prior attempts' unresolved cleanup. Each is resolved
+ * against live state from its stored identity and deleted; a not-found target is treated as already
+ * removed. A real failure aborts the apply so the attempt retries.
+ */
+async function applyCleanupRemovals(
+  removals: EventingOperationValue[],
+  plan: EventingDomainPlan,
+  existingData: ExistingIoEventsData,
+  context: EventsExecutionContext,
+  options: LeafApplyOptions,
+): Promise<void> {
+  const ordered = [...removals].sort(
+    (a, b) => cleanupOrder(a.resourceType) - cleanupOrder(b.resourceType),
+  );
+
+  // The Commerce provider list is only needed to tear down provider orphans on the Commerce side.
+  const commerceData =
+    options.isCommerce &&
+    ordered.some((value) => value.resourceType === "provider")
+      ? await getCommerceEventingExistingData(context)
+      : null;
+
+  for (const value of ordered) {
+    // biome-ignore lint/performance/noAwaitInLoops: orphan deletes run sequentially to avoid a rate-limit burst
+    await applyCleanupRemoval(
+      value,
+      plan,
+      existingData,
+      commerceData,
+      context,
+      options,
+    );
+  }
+}
+
+/** Removes a single orphaned resource, dispatching on its type. */
+async function applyCleanupRemoval(
+  value: EventingOperationValue,
+  plan: EventingDomainPlan,
+  existingData: ExistingIoEventsData,
+  commerceData: ExistingCommerceEventingData | null,
+  context: EventsExecutionContext,
+  options: LeafApplyOptions,
+): Promise<void> {
+  switch (value.resourceType) {
+    case "subscription":
+      await removeOrphanedSubscription(value.name, context);
+      return;
+    case "metadata":
+      await removeOrphanedMetadata(value, plan, existingData, context);
+      return;
+    case "registration":
+      await removeOrphanedRegistration(value, plan, existingData, context);
+      return;
+    default:
+      await removeOrphanedProvider(
+        value,
+        plan,
+        existingData,
+        commerceData,
+        context,
+        options,
+      );
+  }
+}
+
+/** Deletes an orphaned Commerce event subscription by name, tolerating a not-found. */
+async function removeOrphanedSubscription(
+  name: string,
+  context: EventsExecutionContext,
+): Promise<void> {
+  const { commerceEventsClient, logger } = context;
+  try {
+    await commerceEventsClient.deleteEventSubscription({ name });
+    logger.info(`Removed orphaned Commerce event subscription "${name}".`);
+  } catch (error) {
+    if (isHttpNotFoundError(error)) {
+      logger.info(
+        `Orphaned Commerce event subscription "${name}" already removed; skipping.`,
+      );
+      return;
+    }
+    await throwHttpError(
+      logger,
+      error,
+      `Failed to remove orphaned Commerce event subscription "${name}"`,
+    );
+  }
+}
+
+/** Deletes orphaned event metadata from its provider, tolerating a not-found. */
+async function removeOrphanedMetadata(
+  value: Extract<EventingOperationValue, { resourceType: "metadata" }>,
+  plan: EventingDomainPlan,
+  existingData: ExistingIoEventsData,
+  context: EventsExecutionContext,
+): Promise<void> {
+  const { ioEventsClient, appData, logger } = context;
+  const providerData = resolveCleanupProvider(
+    value.providerKey,
+    value.providerLabel,
+    plan,
+    appData.workspaceId,
+    existingData,
+  );
+  if (!providerData) {
+    logger.info(
+      `Provider "${value.providerLabel}" for orphaned event metadata "${value.eventCode}" not found; skipping.`,
+    );
+    return;
+  }
+
+  try {
+    await ioEventsClient.deleteEventMetadataForProvider({
+      consumerOrgId: appData.consumerOrgId,
+      eventCode: value.eventCode,
+      projectId: appData.projectId,
+      providerId: providerData.id,
+      workspaceId: appData.workspaceId,
+    });
+    logger.info(
+      `Removed orphaned event metadata "${value.eventCode}" from provider "${providerData.label}".`,
+    );
+  } catch (error) {
+    if (isHttpNotFoundError(error)) {
+      logger.info(
+        `Orphaned event metadata "${value.eventCode}" already removed from provider "${providerData.label}"; skipping.`,
+      );
+      return;
+    }
+    await throwHttpError(
+      logger,
+      error,
+      `Failed to remove orphaned event metadata "${value.eventCode}" from provider "${providerData.label}"`,
+    );
+  }
+}
+
+/** Deletes an orphaned registration from its provider, tolerating a not-found. */
+async function removeOrphanedRegistration(
+  value: Extract<EventingOperationValue, { resourceType: "registration" }>,
+  plan: EventingDomainPlan,
+  existingData: ExistingIoEventsData,
+  context: EventsExecutionContext,
+): Promise<void> {
+  const { ioEventsClient, appData, logger } = context;
+  const providerData = resolveCleanupProvider(
+    value.providerKey,
+    value.providerLabel,
+    plan,
+    appData.workspaceId,
+    existingData,
+  );
+  if (!providerData) {
+    logger.info(
+      `Provider "${value.providerLabel}" for orphaned registration (action "${value.runtimeAction}") not found; skipping.`,
+    );
+    return;
+  }
+
+  const registration = findDeployedRegistration(
+    providerData,
+    value.runtimeAction,
+    existingData,
+    context,
+  );
+  if (!registration) {
+    logger.info(
+      `Orphaned registration (action "${value.runtimeAction}") on provider "${providerData.label}" already removed; skipping.`,
+    );
+    return;
+  }
+
+  try {
+    await ioEventsClient.deleteRegistration({
+      consumerOrgId: appData.consumerOrgId,
+      projectId: appData.projectId,
+      registrationId: registration.registration_id,
+      workspaceId: appData.workspaceId,
+    });
+    logger.info(
+      `Removed orphaned registration "${registration.name}" from provider "${providerData.label}".`,
+    );
+  } catch (error) {
+    if (isHttpNotFoundError(error)) {
+      logger.info(
+        `Orphaned registration "${registration.name}" already removed; skipping.`,
+      );
+      return;
+    }
+    await throwHttpError(
+      logger,
+      error,
+      `Failed to remove orphaned registration "${registration.name}" from provider "${providerData.label}"`,
+    );
+  }
+}
+
+/** Tears down an orphaned provider (I/O Events, plus Commerce for the Commerce leaf). */
+async function removeOrphanedProvider(
+  value: Extract<EventingOperationValue, { resourceType: "provider" }>,
+  plan: EventingDomainPlan,
+  existingData: ExistingIoEventsData,
+  commerceData: ExistingCommerceEventingData | null,
+  context: EventsExecutionContext,
+  options: LeafApplyOptions,
+): Promise<void> {
+  const { ioEventsClient, commerceEventsClient, appData, logger } = context;
+  const candidates = cleanupInstanceIds(
+    value.providerKey,
+    value.label,
+    plan,
+    appData.workspaceId,
+  );
+
+  const providerData =
+    existingData.providersWithMetadata.find((candidate) =>
+      candidates.has(candidate.instance_id),
+    ) ?? null;
+
+  if (providerData) {
+    try {
+      await ioEventsClient.deleteEventProvider({
+        consumerOrgId: appData.consumerOrgId,
+        projectId: appData.projectId,
+        providerId: providerData.id,
+        workspaceId: appData.workspaceId,
+      });
+      logger.info(
+        `Removed orphaned I/O Events provider "${providerData.label}".`,
+      );
+    } catch (error) {
+      if (!isHttpNotFoundError(error)) {
+        await throwHttpError(
+          logger,
+          error,
+          `Failed to remove orphaned I/O Events provider "${value.label}"`,
+        );
+      }
+    }
+  } else {
+    logger.info(
+      `Orphaned I/O Events provider "${value.label}" not found; skipping.`,
+    );
+  }
+
+  if (!(options.isCommerce && commerceData)) {
+    return;
+  }
+
+  const commerceProvider = commerceData.providers.find(
+    (provider) =>
+      "instance_id" in provider &&
+      provider.instance_id !== undefined &&
+      candidates.has(provider.instance_id),
+  );
+  if (!(commerceProvider && "provider_id" in commerceProvider)) {
+    return;
+  }
+
+  try {
+    await commerceEventsClient.deleteEventProvider({
+      provider_id: commerceProvider.provider_id,
+    });
+    logger.info(`Removed orphaned Commerce event provider "${value.label}".`);
+  } catch (error) {
+    if (isHttpNotFoundError(error)) {
+      return;
+    }
+    await throwHttpError(
+      logger,
+      error,
+      `Failed to remove orphaned Commerce event provider "${value.label}"`,
+    );
+  }
 }
 
 /** The fully-qualified I/O Events code set for a group of events under a provider type. */
@@ -366,7 +735,12 @@ async function reconcileRegistrations(
   }
 }
 
-/** Full-replace PUT of a registration's event set to the target. Best-effort. */
+/**
+ * Converges a registration's event set to the target: updates the deployed registration, or
+ * recreates it from the target config when it is missing (self-healing when a registration was
+ * removed out-of-band). Throws on an actual API failure, since the application depends on its
+ * registrations reflecting the target event set.
+ */
 async function putRegistration(
   providerData: IoEventProviderWithMetadata,
   type: EventProviderType,
@@ -383,46 +757,66 @@ async function putRegistration(
     existingData,
     context,
   );
+
+  const name = getRegistrationName(providerData, runtimeAction);
+  const payload = {
+    clientId: params.AIO_COMMERCE_AUTH_IMS_CLIENT_ID,
+    consumerOrgId: appData.consumerOrgId,
+    deliveryType: "webhook",
+    description: getRegistrationDescription(
+      providerData,
+      events,
+      runtimeAction,
+    ),
+    enabled: true,
+    eventsOfInterest: events.map((event) => ({
+      eventCode: eventCodeOf(event, metadata, type),
+      providerId: providerData.id,
+    })),
+    name,
+    projectId: appData.projectId,
+    runtimeAction,
+    workspaceId: appData.workspaceId,
+  } as const;
+
   if (!registration) {
-    logger.warn(
-      `No deployed registration found for action "${runtimeAction}" on provider "${providerData.label}"; skipping update.`,
-    );
+    try {
+      await ioEventsClient.createRegistration(payload);
+      logger.info(
+        `Created missing registration "${name}" (action "${runtimeAction}") on provider "${providerData.label}".`,
+      );
+    } catch (error) {
+      await throwHttpError(
+        logger,
+        error,
+        `Failed to create registration "${name}" on provider "${providerData.label}"`,
+      );
+    }
     return;
   }
 
   try {
     await ioEventsClient.updateRegistration({
-      clientId: params.AIO_COMMERCE_AUTH_IMS_CLIENT_ID,
-      consumerOrgId: appData.consumerOrgId,
-      deliveryType: "webhook",
-      description: getRegistrationDescription(
-        providerData,
-        events,
-        runtimeAction,
-      ),
-      enabled: true,
-      eventsOfInterest: events.map((event) => ({
-        eventCode: eventCodeOf(event, metadata, type),
-        providerId: providerData.id,
-      })),
-      name: getRegistrationName(providerData, runtimeAction),
-      projectId: appData.projectId,
+      ...payload,
       registrationId: registration.registration_id,
-      runtimeAction,
-      workspaceId: appData.workspaceId,
     });
     logger.info(
       `Updated registration "${registration.name}" (action "${runtimeAction}") on provider "${providerData.label}".`,
     );
   } catch (error) {
-    const message = await unwrapHttpError(error);
-    logger.warn(
-      `Failed to update registration "${registration.name}" on provider "${providerData.label}": ${message}. Continuing apply.`,
+    await throwHttpError(
+      logger,
+      error,
+      `Failed to update registration "${registration.name}" on provider "${providerData.label}"`,
     );
   }
 }
 
-/** Deletes the registration for a dropped runtime action. Best-effort. */
+/**
+ * Deletes the registration for a dropped runtime action. Throws on failure: leaving the
+ * registration behind keeps I/O Events delivering to an action the config no longer declares.
+ * Idempotent under retry — a registration already gone from live state is not found and skipped.
+ */
 async function deleteRegistrationForAction(
   providerData: IoEventProviderWithMetadata,
   runtimeAction: string,
@@ -451,14 +845,19 @@ async function deleteRegistrationForAction(
       `Deleted registration "${registration.name}" (action "${runtimeAction}") from provider "${providerData.label}".`,
     );
   } catch (error) {
-    const message = await unwrapHttpError(error);
-    logger.warn(
-      `Failed to delete registration "${registration.name}" from provider "${providerData.label}": ${message}. Continuing apply.`,
+    await throwHttpError(
+      logger,
+      error,
+      `Failed to delete registration "${registration.name}" from provider "${providerData.label}"`,
     );
   }
 }
 
-/** Deletes metadata for events dropped from a provider that still exists. Best-effort. */
+/**
+ * Deletes I/O Events metadata for events dropped from a provider that still exists. Best-effort:
+ * an orphaned metadata entry does not itself deliver events, and for Commerce providers the metadata
+ * is often already gone via the subscription-removal cascade (see reconcileProviderSubResources).
+ */
 async function removeDroppedMetadata(
   providerData: IoEventProviderWithMetadata,
   type: EventProviderType,
@@ -492,6 +891,12 @@ async function removeDroppedMetadata(
         `Deleted event metadata "${eventCode}" from provider "${providerData.label}".`,
       );
     } catch (error) {
+      if (isHttpNotFoundError(error)) {
+        logger.info(
+          `Event metadata "${eventCode}" already removed from provider "${providerData.label}"; skipping.`,
+        );
+        continue;
+      }
       const message = await unwrapHttpError(error);
       logger.warn(
         `Failed to delete event metadata "${eventCode}" from provider "${providerData.label}": ${message}. Continuing apply.`,
@@ -500,7 +905,11 @@ async function removeDroppedMetadata(
   }
 }
 
-/** Deletes Commerce subscriptions for events dropped from a provider that still exists. Best-effort. */
+/**
+ * Deletes Commerce subscriptions for events dropped from a provider that still exists. Throws on
+ * failure: a lingering subscription keeps Commerce emitting the dropped event to the app. A
+ * not-found response means the subscription is already gone and is treated as success.
+ */
 async function removeDroppedSubscriptions(
   targetEvents: AppEvent[],
   baselineEvents: AppEvent[],
@@ -524,9 +933,16 @@ async function removeDroppedSubscriptions(
       await commerceEventsClient.deleteEventSubscription({ name });
       logger.info(`Deleted Commerce event subscription "${name}".`);
     } catch (error) {
-      const message = await unwrapHttpError(error);
-      logger.warn(
-        `Failed to delete Commerce event subscription "${name}": ${message}. Continuing apply.`,
+      if (isHttpNotFoundError(error)) {
+        logger.info(
+          `Commerce event subscription "${name}" already removed; skipping.`,
+        );
+        continue;
+      }
+      await throwHttpError(
+        logger,
+        error,
+        `Failed to delete Commerce event subscription "${name}"`,
       );
     }
   }
@@ -653,16 +1069,22 @@ function valueToCleanupIdentity(
 ): EventingCleanupIdentity {
   switch (value.resourceType) {
     case "provider":
-      return { providerKey: value.providerKey, resourceType: "provider" };
+      return {
+        providerKey: value.providerKey,
+        providerLabel: value.label,
+        resourceType: "provider",
+      };
     case "metadata":
       return {
         eventCode: value.eventCode,
         providerKey: value.providerKey,
+        providerLabel: value.providerLabel,
         resourceType: "metadata",
       };
     case "registration":
       return {
         providerKey: value.providerKey,
+        providerLabel: value.providerLabel,
         resourceType: "registration",
         runtimeAction: value.runtimeAction,
       };

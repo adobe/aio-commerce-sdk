@@ -63,6 +63,7 @@ type PlanLeafInput = {
   baselineSources: EventSource[];
   baselineSnapshot: EventingProviderSnapshot[] | null;
   baselineMetadata: ApplicationMetadata | null;
+  unresolvedCleanupResources: CleanupResource<EventingCleanupIdentity>[];
   env: ReturnType<typeof getInstallCommerceEnv>;
 };
 
@@ -110,6 +111,44 @@ function operationId(
   }
 }
 
+/**
+ * Reconstructs a minimal operation value from a stored cleanup identity, so a cleanup remove can be
+ * emitted from the identity alone. Round-trips through {@link valueToCleanupIdentity}: the resulting
+ * value maps back to the same identity that `operationsToCleanup` uses to mark it resolved.
+ */
+function cleanupIdentityToValue(
+  identity: EventingCleanupIdentity,
+  type: EventProviderType,
+): EventingOperationValue {
+  switch (identity.resourceType) {
+    case "provider":
+      return {
+        label: identity.providerLabel,
+        providerKey: identity.providerKey,
+        resourceType: "provider",
+        type,
+      };
+    case "metadata":
+      return {
+        eventCode: identity.eventCode,
+        providerKey: identity.providerKey,
+        providerLabel: identity.providerLabel,
+        resourceType: "metadata",
+        type,
+      };
+    case "registration":
+      return {
+        providerKey: identity.providerKey,
+        providerLabel: identity.providerLabel,
+        resourceType: "registration",
+        runtimeAction: identity.runtimeAction,
+        type,
+      };
+    default:
+      return { name: identity.name, resourceType: "subscription" };
+  }
+}
+
 /** Accumulates the operations, cleanup resources and removed providers for one leaf. */
 class LeafPlanBuilder {
   public readonly operations: ResourceOperation<EventingOperationValue>[] = [];
@@ -152,6 +191,26 @@ class LeafPlanBuilder {
     });
   }
 
+  /**
+   * Emits a cleanup-category remove for an orphaned resource carried over from a prior attempt's
+   * unresolved cleanup, reconstructing the operation value from the stored identity. Re-arms the
+   * identity so it stays tracked until an apply actually resolves it.
+   */
+  public removeFromCleanup(
+    identity: EventingCleanupIdentity,
+    type: EventProviderType,
+  ): void {
+    const value = cleanupIdentityToValue(identity, type);
+    this.operations.push({
+      before: value,
+      category: "cleanup",
+      id: operationId("remove", value),
+      kind: "remove",
+      label: `Remove orphaned ${identity.resourceType}`,
+    });
+    this.possibleCleanupResources.push({ identity, path: this.path });
+  }
+
   private update(
     before: EventingOperationValue,
     after: EventingOperationValue,
@@ -184,7 +243,11 @@ class LeafPlanBuilder {
         type,
       },
       `Create event provider: ${provider.label}`,
-      { providerKey: key, resourceType: "provider" },
+      {
+        providerKey: key,
+        providerLabel: provider.label,
+        resourceType: "provider",
+      },
     );
 
     for (const event of events) {
@@ -195,11 +258,17 @@ class LeafPlanBuilder {
           eventCode,
           label: event.label,
           providerKey: key,
+          providerLabel: provider.label,
           resourceType: "metadata",
           type,
         },
         `Register event metadata: ${eventCode}`,
-        { eventCode, providerKey: key, resourceType: "metadata" },
+        {
+          eventCode,
+          providerKey: key,
+          providerLabel: provider.label,
+          resourceType: "metadata",
+        },
       );
     }
 
@@ -212,12 +281,18 @@ class LeafPlanBuilder {
             .map((event) => eventCodeOf(event, metadata, type))
             .sort((a, b) => a.localeCompare(b)),
           providerKey: key,
+          providerLabel: provider.label,
           resourceType: "registration",
           runtimeAction,
           type,
         },
         `Create registration: ${provider.label} → ${runtimeAction}`,
-        { providerKey: key, resourceType: "registration", runtimeAction },
+        {
+          providerKey: key,
+          providerLabel: provider.label,
+          resourceType: "registration",
+          runtimeAction,
+        },
       );
     }
 
@@ -276,7 +351,7 @@ class LeafPlanBuilder {
     targetMetadata: ApplicationMetadata,
     baselineMetadata: ApplicationMetadata,
   ): void {
-    const { key, type } = target;
+    const { key, provider, type } = target;
     const { added, removed } = partitionByKey(
       target.events,
       baseline.events,
@@ -292,11 +367,17 @@ class LeafPlanBuilder {
           eventCode,
           label: event.label,
           providerKey: key,
+          providerLabel: provider.label,
           resourceType: "metadata",
           type,
         },
         `Register event metadata: ${eventCode}`,
-        { eventCode, providerKey: key, resourceType: "metadata" },
+        {
+          eventCode,
+          providerKey: key,
+          providerLabel: provider.label,
+          resourceType: "metadata",
+        },
       );
     }
 
@@ -308,6 +389,7 @@ class LeafPlanBuilder {
           eventCode,
           label: event.label,
           providerKey: key,
+          providerLabel: provider.label,
           resourceType: "metadata",
           type,
         },
@@ -336,6 +418,7 @@ class LeafPlanBuilder {
       const after: EventingOperationValue = {
         eventCodes: codes(events, targetMetadata),
         providerKey: key,
+        providerLabel: provider.label,
         resourceType: "registration",
         runtimeAction,
         type,
@@ -345,7 +428,12 @@ class LeafPlanBuilder {
         this.add(
           after,
           `Create registration: ${provider.label} → ${runtimeAction}`,
-          { providerKey: key, resourceType: "registration", runtimeAction },
+          {
+            providerKey: key,
+            providerLabel: provider.label,
+            resourceType: "registration",
+            runtimeAction,
+          },
         );
         continue;
       }
@@ -353,6 +441,7 @@ class LeafPlanBuilder {
       const before: EventingOperationValue = {
         eventCodes: codes(baselineForAction, baselineMetadata),
         providerKey: key,
+        providerLabel: provider.label,
         resourceType: "registration",
         runtimeAction,
         type,
@@ -378,6 +467,7 @@ class LeafPlanBuilder {
             baselineMetadata,
           ),
           providerKey: key,
+          providerLabel: provider.label,
           resourceType: "registration",
           runtimeAction,
           type,
@@ -453,6 +543,48 @@ class LeafPlanBuilder {
   }
 }
 
+/**
+ * Whether a cleanup identity still corresponds to a resource in the given provider set — used to
+ * decide whether an unresolved cleanup entry is an orphan (represented nowhere) or is already
+ * handled by the normal target/baseline diff.
+ */
+function isIdentityRepresented(
+  identity: EventingCleanupIdentity,
+  providers: EventingProviderSnapshot[],
+  metadata: ApplicationMetadata,
+  type: EventProviderType,
+): boolean {
+  switch (identity.resourceType) {
+    case "provider":
+      return providers.some(
+        (provider) => provider.key === identity.providerKey,
+      );
+    case "metadata":
+      return providers.some(
+        (provider) =>
+          provider.key === identity.providerKey &&
+          provider.events.some(
+            (event) =>
+              eventCodeOf(event, metadata, type) === identity.eventCode,
+          ),
+      );
+    case "registration":
+      return providers.some(
+        (provider) =>
+          provider.key === identity.providerKey &&
+          groupEventsByRuntimeActions(provider.events).has(
+            identity.runtimeAction,
+          ),
+      );
+    default:
+      return providers.some((provider) =>
+        provider.events.some(
+          (event) => getNamespacedEvent(metadata, event.name) === identity.name,
+        ),
+      );
+  }
+}
+
 /** Diffs one event kind (commerce or external) into an eventing domain plan. */
 function planEventingLeaf(
   params: PlanLeafInput,
@@ -512,6 +644,27 @@ function planEventingLeaf(
     );
   }
 
+  // Reconcile cleanup resources carried over from prior attempts: any that no longer correspond to
+  // a target or baseline resource are orphans to remove. Ones still in the target are reconverged by
+  // the idempotent install; ones in the baseline are already handled by the diff removes above.
+  for (const { identity } of params.unresolvedCleanupResources) {
+    const inTarget =
+      targetMetadata !== null &&
+      isIdentityRepresented(identity, targetProviders, targetMetadata, type);
+    const inBaseline =
+      baselineMetadata !== null &&
+      isIdentityRepresented(
+        identity,
+        baselineProviders,
+        baselineMetadata,
+        type,
+      );
+    if (inTarget || inBaseline) {
+      continue;
+    }
+    builder.removeFromCleanup(identity, type);
+  }
+
   return {
     kind: "planned",
     plan: {
@@ -556,6 +709,7 @@ export function planCommerceEvents(
       targetMetadata: input.targetConfig?.metadata ?? null,
       targetSources: input.targetConfig?.eventing.commerce ?? [],
       type: COMMERCE_PROVIDER_TYPE,
+      unresolvedCleanupResources: input.unresolvedCleanupResources,
     }),
   );
 }
@@ -586,6 +740,7 @@ export function planExternalEvents(
       targetMetadata: input.targetConfig?.metadata ?? null,
       targetSources: input.targetConfig?.eventing.external ?? [],
       type: EXTERNAL_PROVIDER_TYPE,
+      unresolvedCleanupResources: input.unresolvedCleanupResources,
     }),
   );
 }

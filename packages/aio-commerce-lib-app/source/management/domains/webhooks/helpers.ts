@@ -10,71 +10,37 @@
  * governing permissions and limitations under the License.
  */
 
-import { unwrapHttpError } from "@adobe/aio-commerce-lib-api/utils";
-import { resolveImsAuthParams } from "@adobe/aio-commerce-lib-auth";
 import { stringifyError } from "@aio-commerce-sdk/scripting-utils/error";
 
 import { appliesToEnv, getInstallCommerceEnv } from "#config/lib/environment";
+
+import {
+  buildWebhookIdPrefix,
+  createWebhookSubscription,
+  deleteWebhookSubscription,
+  getWebhookName,
+  isWebhookInList,
+  resolveWebhookSubscribeParams,
+} from "./utils";
 
 import type {
   CommerceWebhook,
   WebhookSubscribeParams,
   WebhookUnsubscribeParams,
 } from "@adobe/aio-commerce-lib-webhooks/api";
-import type {
-  WebhookDefinition,
-  WebhooksConfig,
-} from "#config/schema/webhooks";
+import type { WebhooksConfig } from "#config/schema/webhooks";
 import type { ValidationIssue } from "#management/common/workflow/step";
 import type { WebhooksExecutionContext } from "./context";
-
-/** Minimal identity fields shared by subscribe and unsubscribe params. */
-export type WebhookIdentity = {
-  batch_name: string;
-  hook_name: string;
-  webhook_method: string;
-  webhook_type: string;
-};
-
-/** Identity of a Commerce webhook that conflicts with a modification webhook from this app. */
-export type ConflictingWebhook = WebhookIdentity & {
-  label: string;
-};
-
-/** Matches any character that is not a valid identifier character (letter, digit, or underscore). */
-const NON_IDENTIFIER_CHAR_REGEX = /[^a-zA-Z0-9_]/g;
-
-/** Matches two or more consecutive underscores. */
-const MULTIPLE_UNDERSCORES_REGEX = /_+/g;
-
-/** Matches the `.magento` segment in plugin webhook method names (e.g. `plugin.magento.foo`). */
-const PLUGIN_MAGENTO_REGEX = /^plugin\.magento\./;
-
-const ENVIRONMENT_PRODUCTION = "production";
-const ENVIRONMENT_STAGING = "staging";
-
-/** Summary of webhook subscription results after a run. */
-export type WebhookSubscriptionResult = {
-  subscribedWebhooks: WebhookSubscribeParams[];
-};
-
-/** Summary of webhook unsubscription results after a run. */
-export type WebhookUnsubscriptionResult = {
-  unsubscribedWebhooks: WebhookUnsubscribeParams[];
-};
+import type {
+  ConflictingWebhook,
+  WebhookSubscriptionResult,
+  WebhookUnsubscriptionResult,
+} from "./types";
 
 /**
- * Validates that no modification webhooks in the app config conflict with webhooks
- * already registered in Commerce by another app.
- *
- * A conflict is: Commerce has a webhook with the same `webhook_method` and `webhook_type`
- * that does NOT belong to this app (i.e. different `batch_name` or `hook_name` after prefix).
- *
- * Returns a `ValidationIssue` with code `WEBHOOK_CONFLICTS` and `details.conflictedWebhooks` listing
- * every conflicting Commerce webhook when conflicts are found, or an empty array otherwise.
- *
- * @param config - The app config (must have a non-empty `webhooks` array).
- * @param context - The webhooks execution context (provides the Commerce API client and logger).
+ * Validates that no modification webhooks conflict with webhooks Commerce already has
+ * registered for another app (same `webhook_method`/`webhook_type`, different identity).
+ * Returns a `WEBHOOK_CONFLICTS` issue listing them, or an empty array otherwise.
  */
 export async function validateWebhookConflicts(
   config: WebhooksConfig,
@@ -143,9 +109,6 @@ export async function validateWebhookConflicts(
 /**
  * Subscribes each webhook from the app config to Adobe Commerce.
  * Throws on the first failure, aborting any remaining subscriptions.
- *
- * @param config - The app config (must have a non-empty `webhooks` array).
- * @param context - The webhooks execution context (provides the Commerce API client and logger).
  */
 export async function createWebhookSubscriptions(
   config: WebhooksConfig,
@@ -172,26 +135,16 @@ export async function createWebhookSubscriptions(
 
   for (const entry of webhooks) {
     const { webhook } = entry;
-    const resolvedUrl =
-      "runtimeAction" in entry
-        ? generateUrlForRuntimeAction(entry.runtimeAction)
-        : entry.webhook.url;
 
     logger.debug(
       `Subscribing webhook "${getWebhookName(webhook)}" (runtimeAction: ${"runtimeAction" in entry ? entry.runtimeAction : "none"})`,
     );
 
-    const resolvedWebhook = {
-      ...webhook,
-      batch_name: `${idPrefix}${webhook.batch_name}`,
-      hook_name: `${idPrefix}${webhook.hook_name}`,
-      url: resolvedUrl,
-      ...("runtimeAction" in entry &&
-        entry.requireAdobeAuth !== false && {
-          developer_console_oauth:
-            resolveDeveloperConsoleOAuthCredentials(params),
-        }),
-    };
+    const resolvedWebhook = resolveWebhookSubscribeParams(
+      entry,
+      idPrefix,
+      params,
+    );
 
     subscribedWebhooks.push(
       // biome-ignore lint/performance/noAwaitInLoops: subscriptions must be created sequentially so a failure aborts remaining subscriptions (see function docstring)
@@ -214,9 +167,6 @@ export async function createWebhookSubscriptions(
 /**
  * Unsubscribes each webhook from the app config in Adobe Commerce.
  * If a webhook is not found in the existing list, it is silently skipped (idempotent).
- *
- * @param config - The app config (must have a non-empty `webhooks` array).
- * @param context - The webhooks execution context (provides the Commerce API client and logger).
  */
 export async function deleteWebhookSubscriptions(
   config: WebhooksConfig,
@@ -289,178 +239,4 @@ export async function createOrGetWebhookSubscription(
   const subscribed = await createWebhookSubscription(client, resolvedWebhook);
   logger.info(`Subscribed webhook: ${getWebhookName(resolvedWebhook)}`);
   return subscribed;
-}
-
-/**
- * Re-throws `err` as a new Error with an enriched message that includes the webhook name
- * and the unwrapped HTTP response body (if available).
- */
-async function rethrowWithWebhookName(
-  err: unknown,
-  webhookName: string,
-  operation: string,
-): Promise<never> {
-  const msg = await unwrapHttpError(err);
-  throw new Error(
-    `Failed to ${operation} webhook subscription for "${webhookName}": ${msg}`,
-  );
-}
-
-/**
- * Subscribes a single webhook to Commerce, enriching the error with the webhook name
- * if the API responds with a string `message`.
- */
-export async function createWebhookSubscription(
-  client: WebhooksExecutionContext["commerceWebhooksClient"],
-  resolvedWebhook: WebhookSubscribeParams,
-): Promise<WebhookSubscribeParams> {
-  try {
-    await client.subscribeWebhook(resolvedWebhook);
-    return resolvedWebhook;
-  } catch (err) {
-    return await rethrowWithWebhookName(
-      err,
-      getWebhookName(resolvedWebhook),
-      "create",
-    );
-  }
-}
-
-/**
- * Unsubscribes a single webhook from Commerce, enriching the error with the webhook name
- * if the API responds with a string `message`.
- */
-async function deleteWebhookSubscription(
-  client: WebhooksExecutionContext["commerceWebhooksClient"],
-  resolvedWebhook: WebhookDefinition,
-  params: WebhookUnsubscribeParams,
-): Promise<void> {
-  try {
-    await client.unsubscribeWebhook(params);
-  } catch (err) {
-    return rethrowWithWebhookName(
-      err,
-      getWebhookName(resolvedWebhook),
-      "delete",
-    );
-  }
-}
-
-/** Shape of the developer_console_oauth credential block expected by the Commerce Webhooks API. */
-type DeveloperConsoleOAuth = {
-  client_id: string;
-  client_secret: string;
-  org_id: string;
-  environment: string;
-};
-
-/**
- * Resolves and validates the IMS credentials required for `developer_console_oauth`.
- *
- * Delegates parsing and validation to `resolveImsAuthParams` from `aio-commerce-lib-auth`,
- * which correctly handles `AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS` whether it arrives as a
- * real array or as a JSON-stringified array string.
- */
-export function resolveDeveloperConsoleOAuthCredentials(
-  params: Record<string, unknown>,
-): DeveloperConsoleOAuth {
-  const { AIO_COMMERCE_AUTH_IMS_ENVIRONMENT: imsEnvironment, ...imsParams } =
-    params;
-
-  const { clientId, clientSecrets, imsOrgId } = resolveImsAuthParams(imsParams);
-
-  return {
-    client_id: clientId,
-    client_secret: clientSecrets[0],
-    environment:
-      !imsEnvironment || String(imsEnvironment).startsWith("prod")
-        ? ENVIRONMENT_PRODUCTION
-        : ENVIRONMENT_STAGING,
-    org_id: imsOrgId,
-  };
-}
-
-/**
- * Returns true when a webhook with the given four-part identity exists in the list.
- *
- * The identity check uses: webhook_method, webhook_type, batch_name, hook_name.
- * `webhook_method` is normalised before comparison to handle the case where Commerce strips the
- * `.magento` segment from plugin webhook methods on storage
- * (e.g. `plugin.magento.foo` and `plugin.foo` are treated as the same method).
- */
-function isWebhookInList(
-  existing: CommerceWebhook[],
-  candidate: WebhookIdentity,
-): boolean {
-  const normalizedCandidate = normalizeWebhookMethod(candidate.webhook_method);
-  return existing.some(
-    (w) =>
-      normalizeWebhookMethod(w.webhook_method) === normalizedCandidate &&
-      w.webhook_type === candidate.webhook_type &&
-      w.batch_name === candidate.batch_name &&
-      w.hook_name === candidate.hook_name,
-  );
-}
-
-/**
- * Normalises a webhook method name by removing the `.magento` segment that Commerce
- * may drop when persisting plugin webhook methods.
- *
- * @example
- * normalizeWebhookMethod("plugin.magento.foo.bar") // → "plugin.foo.bar"
- * normalizeWebhookMethod("plugin.foo.bar")         // → "plugin.foo.bar" (unchanged)
- */
-function normalizeWebhookMethod(method: string): string {
-  return method.replace(PLUGIN_MAGENTO_REGEX, "plugin.");
-}
-
-/**
- * Generates a URL for a given runtime action using the AIO Runtime API host and namespace.
- * @param runtimeAction
- * @return The generated URL for the runtime action.
- */
-function generateUrlForRuntimeAction(runtimeAction: string): string {
-  const namespace = process.env.__OW_NAMESPACE;
-
-  if (!namespace) {
-    throw new Error(
-      `Cannot generate URL for runtime action "${runtimeAction}": namespace environment variable is not set.`,
-    );
-  }
-
-  return `https://${namespace}.adobeioruntime.net/api/v1/web/${runtimeAction}`;
-}
-
-/**
- * Builds a prefix string from the app ID to namespace webhook batch/hook names.
- * Non-identifier characters are replaced with underscores; consecutive underscores
- * are collapsed to one; a trailing underscore is appended. The result is lowercased
- * to ensure consistent matching regardless of input casing.
- *
- * @example
- * ```typescript
- * buildWebhookIdPrefix("my--app.v2") // => "my_app_v2_"
- * buildWebhookIdPrefix("MyApp") // => "myapp_"
- * ```
- * @param appId - The app ID to build the prefix from.
- * @return The built prefix string.
- */
-export function buildWebhookIdPrefix(appId: string): string {
-  const prefix = appId
-    .toLowerCase()
-    .replace(NON_IDENTIFIER_CHAR_REGEX, "_")
-    .replace(MULTIPLE_UNDERSCORES_REGEX, "_");
-  return prefix.endsWith("_") ? prefix : `${prefix}_`;
-}
-
-/**
- * Generates a name for a webhook based on its method and type.
- *
- * @param webhook
- * @return A string in the format "webhook_method:webhook_type" to identify the webhook.
- */
-function getWebhookName(
-  webhook: WebhookDefinition | WebhookSubscribeParams,
-): string {
-  return `${webhook.webhook_method}:${webhook.webhook_type}`;
 }
