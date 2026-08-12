@@ -12,6 +12,11 @@
 
 import { unwrapHttpError } from "@adobe/aio-commerce-lib-api/utils";
 
+import {
+  isHttpNotFoundError,
+  throwHttpError,
+} from "#management/common/utils/http-error";
+
 import { commerceEventsStep } from "./commerce";
 import { externalEventsStep } from "./external";
 import {
@@ -221,7 +226,6 @@ async function reconcileProviderSubResources(
   context: EventsExecutionContext,
   options: LeafApplyOptions,
 ): Promise<void> {
-  const { logger } = context;
   const providerData = resolveDeployedProvider(
     target,
     targetMetadata,
@@ -231,10 +235,9 @@ async function reconcileProviderSubResources(
   );
 
   if (!providerData) {
-    logger.warn(
-      `Could not resolve deployed provider "${target.key}" during apply; skipping its sub-resource updates.`,
+    throw new Error(
+      `Could not resolve deployed provider "${target.key}" during apply; cannot converge its sub-resources.`,
     );
-    return;
   }
 
   await reconcileRegistrations(
@@ -247,16 +250,10 @@ async function reconcileProviderSubResources(
     existingData,
     context,
   );
-  await removeDroppedMetadata(
-    providerData,
-    options.type,
-    target.events,
-    baseline.events,
-    targetMetadata,
-    baselineMetadata,
-    context,
-  );
 
+  // Delete Commerce subscriptions before I/O Events metadata: unsubscribing a Commerce
+  // event cascades into deleting its I/O Events metadata, so the metadata may already be
+  // gone by the time removeDroppedMetadata runs.
   if (options.isCommerce) {
     await removeDroppedSubscriptions(
       target.events,
@@ -266,6 +263,16 @@ async function reconcileProviderSubResources(
       context,
     );
   }
+
+  await removeDroppedMetadata(
+    providerData,
+    options.type,
+    target.events,
+    baseline.events,
+    targetMetadata,
+    baselineMetadata,
+    context,
+  );
 }
 
 /** Finds the deployed I/O Events provider by its current or legacy instance id. */
@@ -356,7 +363,12 @@ async function reconcileRegistrations(
   }
 }
 
-/** Full-replace PUT of a registration's event set to the target. Best-effort. */
+/**
+ * Converges a registration's event set to the target: updates the deployed registration, or
+ * recreates it from the target config when it is missing (self-healing when a registration was
+ * removed out-of-band). Throws on an actual API failure, since the application depends on its
+ * registrations reflecting the target event set.
+ */
 async function putRegistration(
   providerData: IoEventProviderWithMetadata,
   type: EventProviderType,
@@ -373,46 +385,66 @@ async function putRegistration(
     existingData,
     context,
   );
+
+  const name = getRegistrationName(providerData, runtimeAction);
+  const payload = {
+    clientId: params.AIO_COMMERCE_AUTH_IMS_CLIENT_ID,
+    consumerOrgId: appData.consumerOrgId,
+    deliveryType: "webhook",
+    description: getRegistrationDescription(
+      providerData,
+      events,
+      runtimeAction,
+    ),
+    enabled: true,
+    eventsOfInterest: events.map((event) => ({
+      eventCode: eventCodeOf(event, metadata, type),
+      providerId: providerData.id,
+    })),
+    name,
+    projectId: appData.projectId,
+    runtimeAction,
+    workspaceId: appData.workspaceId,
+  } as const;
+
   if (!registration) {
-    logger.warn(
-      `No deployed registration found for action "${runtimeAction}" on provider "${providerData.label}"; skipping update.`,
-    );
+    try {
+      await ioEventsClient.createRegistration(payload);
+      logger.info(
+        `Created missing registration "${name}" (action "${runtimeAction}") on provider "${providerData.label}".`,
+      );
+    } catch (error) {
+      await throwHttpError(
+        logger,
+        error,
+        `Failed to create registration "${name}" on provider "${providerData.label}"`,
+      );
+    }
     return;
   }
 
   try {
     await ioEventsClient.updateRegistration({
-      clientId: params.AIO_COMMERCE_AUTH_IMS_CLIENT_ID,
-      consumerOrgId: appData.consumerOrgId,
-      deliveryType: "webhook",
-      description: getRegistrationDescription(
-        providerData,
-        events,
-        runtimeAction,
-      ),
-      enabled: true,
-      eventsOfInterest: events.map((event) => ({
-        eventCode: eventCodeOf(event, metadata, type),
-        providerId: providerData.id,
-      })),
-      name: getRegistrationName(providerData, runtimeAction),
-      projectId: appData.projectId,
+      ...payload,
       registrationId: registration.registration_id,
-      runtimeAction,
-      workspaceId: appData.workspaceId,
     });
     logger.info(
       `Updated registration "${registration.name}" (action "${runtimeAction}") on provider "${providerData.label}".`,
     );
   } catch (error) {
-    const message = await unwrapHttpError(error);
-    logger.warn(
-      `Failed to update registration "${registration.name}" on provider "${providerData.label}": ${message}. Continuing apply.`,
+    await throwHttpError(
+      logger,
+      error,
+      `Failed to update registration "${registration.name}" on provider "${providerData.label}"`,
     );
   }
 }
 
-/** Deletes the registration for a dropped runtime action. Best-effort. */
+/**
+ * Deletes the registration for a dropped runtime action. Throws on failure: leaving the
+ * registration behind keeps I/O Events delivering to an action the config no longer declares.
+ * Idempotent under retry — a registration already gone from live state is not found and skipped.
+ */
 async function deleteRegistrationForAction(
   providerData: IoEventProviderWithMetadata,
   runtimeAction: string,
@@ -441,14 +473,19 @@ async function deleteRegistrationForAction(
       `Deleted registration "${registration.name}" (action "${runtimeAction}") from provider "${providerData.label}".`,
     );
   } catch (error) {
-    const message = await unwrapHttpError(error);
-    logger.warn(
-      `Failed to delete registration "${registration.name}" from provider "${providerData.label}": ${message}. Continuing apply.`,
+    await throwHttpError(
+      logger,
+      error,
+      `Failed to delete registration "${registration.name}" from provider "${providerData.label}"`,
     );
   }
 }
 
-/** Deletes metadata for events dropped from a provider that still exists. Best-effort. */
+/**
+ * Deletes I/O Events metadata for events dropped from a provider that still exists. Best-effort:
+ * an orphaned metadata entry does not itself deliver events, and for Commerce providers the metadata
+ * is often already gone via the subscription-removal cascade (see reconcileProviderSubResources).
+ */
 async function removeDroppedMetadata(
   providerData: IoEventProviderWithMetadata,
   type: EventProviderType,
@@ -482,6 +519,12 @@ async function removeDroppedMetadata(
         `Deleted event metadata "${eventCode}" from provider "${providerData.label}".`,
       );
     } catch (error) {
+      if (isHttpNotFoundError(error)) {
+        logger.info(
+          `Event metadata "${eventCode}" already removed from provider "${providerData.label}"; skipping.`,
+        );
+        continue;
+      }
       const message = await unwrapHttpError(error);
       logger.warn(
         `Failed to delete event metadata "${eventCode}" from provider "${providerData.label}": ${message}. Continuing apply.`,
@@ -490,7 +533,11 @@ async function removeDroppedMetadata(
   }
 }
 
-/** Deletes Commerce subscriptions for events dropped from a provider that still exists. Best-effort. */
+/**
+ * Deletes Commerce subscriptions for events dropped from a provider that still exists. Throws on
+ * failure: a lingering subscription keeps Commerce emitting the dropped event to the app. A
+ * not-found response means the subscription is already gone and is treated as success.
+ */
 async function removeDroppedSubscriptions(
   targetEvents: AppEvent[],
   baselineEvents: AppEvent[],
@@ -514,9 +561,16 @@ async function removeDroppedSubscriptions(
       await commerceEventsClient.deleteEventSubscription({ name });
       logger.info(`Deleted Commerce event subscription "${name}".`);
     } catch (error) {
-      const message = await unwrapHttpError(error);
-      logger.warn(
-        `Failed to delete Commerce event subscription "${name}": ${message}. Continuing apply.`,
+      if (isHttpNotFoundError(error)) {
+        logger.info(
+          `Commerce event subscription "${name}" already removed; skipping.`,
+        );
+        continue;
+      }
+      await throwHttpError(
+        logger,
+        error,
+        `Failed to delete Commerce event subscription "${name}"`,
       );
     }
   }
