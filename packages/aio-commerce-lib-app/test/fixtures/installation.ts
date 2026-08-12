@@ -346,6 +346,12 @@ export function createMockCombinedStoreImpl(
     if (prefix === "uninstallation") {
       return stores.uninstallation;
     }
+    if (
+      prefix === "lifecycle-orchestration-state" ||
+      prefix === "lifecycle-app-state-snapshot"
+    ) {
+      return createMockInstallationStore();
+    }
 
     throw new Error(`Unexpected store prefix: ${String(prefix)}`);
   };
