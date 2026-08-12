@@ -16,11 +16,13 @@ import {
   defineLeafStep,
 } from "#management/common/workflow/step";
 
+import { applyAdminUi } from "./apply";
 import {
   enableAdminUiSdk,
   registerExtension,
   unregisterExtension,
 } from "./helpers";
+import { planAdminUi } from "./plan";
 import { createAdminUiStepContext } from "./utils";
 
 import type { InferStepOutput } from "#management/common/workflow/step";
@@ -44,8 +46,12 @@ const enableAdminUiSdkStep = defineLeafStep({
   name: "enable-admin-ui-sdk",
 });
 
-/** Leaf step that registers the extension (POST) on install and unregisters it (DELETE) on uninstall. */
+/**
+ * Leaf step that registers the extension (POST) on install and unregisters it
+ * (DELETE) on uninstall, and reconciles it during upgrade via `plan`/`apply`.
+ */
 const registerExtensionStep = defineLeafStep({
+  apply: applyAdminUi,
   install: (_: AdminUiConfig, context: AdminUiExecutionContext) =>
     registerExtension(context),
   meta: {
@@ -59,6 +65,7 @@ const registerExtensionStep = defineLeafStep({
     },
   },
   name: "register-extension",
+  plan: planAdminUi,
 
   uninstall: (_: AdminUiConfig, context: AdminUiExecutionContext) =>
     unregisterExtension(context),

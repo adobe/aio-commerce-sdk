@@ -16,6 +16,7 @@ import {
   enableAdminUiSdk,
   registerExtension,
   unregisterExtension,
+  unregisterExtensionForUpgrade,
 } from "#management/domains/admin-ui/helpers";
 import { createMockAdminUiContext } from "#test/fixtures/admin-ui";
 import { makeHttpError } from "#test/fixtures/http-error";
@@ -26,6 +27,9 @@ const REGISTER_EXTENSION_COMBINED_PATTERN =
 
 const ENABLE_SDK_COMBINED_PATTERN =
   /Failed to enable Admin UI SDK.*Insufficient permissions/;
+
+const UNREGISTER_FAILURE_PATTERN =
+  /Failed to unregister Admin UI extension.*Service unavailable/;
 
 describe("enableAdminUiSdk", () => {
   test("calls the client and logs success when it resolves", async () => {
@@ -75,7 +79,9 @@ describe("registerExtension", () => {
       registerExtensionImpl: () => Promise.resolve({ extensionId: "ext-123" }),
     });
 
-    await expect(registerExtension(context)).resolves.toBeUndefined();
+    await expect(registerExtension(context)).resolves.toEqual({
+      extensionId: "ext-123",
+    });
 
     expect(context.adminUiClient.registerExtension).toHaveBeenCalledWith({
       extensionName: "test-ns",
@@ -170,5 +176,85 @@ describe("unregisterExtension", () => {
     expect(logger.warn).toHaveBeenCalledWith(
       expect.stringContaining("Continuing uninstall."),
     );
+  });
+});
+
+describe("unregisterExtensionForUpgrade", () => {
+  beforeEach(() => {
+    vi.stubEnv("__OW_NAMESPACE", "test-ns");
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  test("throws when __OW_NAMESPACE is not set", async () => {
+    vi.unstubAllEnvs();
+    const context = createMockAdminUiContext({});
+
+    await expect(unregisterExtensionForUpgrade(context)).rejects.toThrow(
+      "__OW_NAMESPACE",
+    );
+    expect(context.adminUiClient.unregisterExtension).not.toHaveBeenCalled();
+  });
+
+  test("unregisters and logs success when the client resolves", async () => {
+    const logger = createMockLogger();
+    const context = { ...createMockAdminUiContext({}), logger };
+
+    await expect(
+      unregisterExtensionForUpgrade(context),
+    ).resolves.toBeUndefined();
+
+    expect(context.adminUiClient.unregisterExtension).toHaveBeenCalledWith({
+      extensionName: "test-ns",
+      workspaceName: context.appData.workspaceName,
+    });
+    expect(logger.info).toHaveBeenCalledWith(
+      expect.stringContaining("unregistered successfully"),
+    );
+  });
+
+  test("treats a 404 as already removed and resolves", async () => {
+    const logger = createMockLogger();
+    const httpError = makeHttpError(
+      404,
+      "Not Found",
+      JSON.stringify({ message: "No such entity" }),
+    );
+    const context = {
+      ...createMockAdminUiContext({
+        unregisterExtensionImpl: () => Promise.reject(httpError),
+      }),
+      logger,
+    };
+
+    await expect(
+      unregisterExtensionForUpgrade(context),
+    ).resolves.toBeUndefined();
+
+    expect(logger.info).toHaveBeenCalledWith(
+      expect.stringContaining("already absent"),
+    );
+  });
+
+  test("throws an enriched error on a non-404 failure", async () => {
+    const logger = createMockLogger();
+    const httpError = makeHttpError(
+      500,
+      "Internal Server Error",
+      JSON.stringify({ message: "Service unavailable" }),
+    );
+    const context = {
+      ...createMockAdminUiContext({
+        unregisterExtensionImpl: () => Promise.reject(httpError),
+      }),
+      logger,
+    };
+
+    await expect(unregisterExtensionForUpgrade(context)).rejects.toThrow(
+      UNREGISTER_FAILURE_PATTERN,
+    );
+    expect(logger.error).toHaveBeenCalledOnce();
   });
 });
