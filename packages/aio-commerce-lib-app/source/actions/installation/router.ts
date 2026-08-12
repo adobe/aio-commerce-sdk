@@ -187,9 +187,7 @@ async function readStateFromStore(
   return noContent();
 }
 
-/**
- * Creates hooks to sync installation state to storage.
- */
+/** Creates hooks to sync installation state to storage. */
 function createInstallationHooks(
   store: KeyValueStore<WorkflowRunState>,
   logFn: (message: string) => void,
@@ -235,8 +233,8 @@ function createInstallationHooks(
  * - GET /uninstallation              Get current uninstallation status
  * - POST /uninstallation/execution   Execute uninstallation (internal, called async)
  * - DELETE /uninstallation           Clear uninstallation state only (no offboarding)
- * - POST /upgrade                     Plan an upgrade and optionally start it
- * - POST /upgrade/execution           Execute an upgrade (internal, called async)
+ * - POST /upgrade                    Plan an upgrade and optionally start it
+ * - POST /upgrade/execution          Execute an upgrade (internal, called async)
  */
 export const router = new HttpActionRouter<InstallationActionContext>().use(
   withLogger({ name: () => "installation" }),
@@ -424,6 +422,7 @@ router.post("/upgrade", {
         "The OpenWhisk action version is required to plan an upgrade",
       );
     }
+
     if (!rawAppConfig) {
       return internalServerError(
         "The app config is missing. Does the action receive it as a parameter?",
@@ -432,6 +431,7 @@ router.post("/upgrade", {
 
     const appConfig = validateCommerceAppConfig(rawAppConfig);
     const association = await getAssociationData();
+
     if (!association) {
       return ok({ body: { reason: "not-associated", skipped: true } });
     }
@@ -442,17 +442,21 @@ router.post("/upgrade", {
       AIO_COMMERCE_API_FLAVOR: association.commerce.env,
       appData: req.body.appData,
     } as WorkflowRouteParams;
+
     const runtime = await createLifecycleRuntime(params, appConfig, logger);
     const state = await runtime.stateStore.get(CURRENT_STATE_KEY);
     const baseline = await runtime.baselineProvider.get(
       state?.baselineSnapshotId ?? null,
     );
+
     if (!baseline) {
       return ok({ body: { reason: "not-installed", skipped: true } });
     }
+
     if (baseline.config.metadata.version === appConfig.metadata.version) {
       return ok({ body: { reason: "already-current", skipped: true } });
     }
+
     const planning = await planLifecycle({
       ...runtime,
       actionVersion,
@@ -471,7 +475,7 @@ router.post("/upgrade", {
 
     const upgradeMode = appConfig.metadata.upgradeMode ?? "auto";
     if (upgradeMode === "manual") {
-      return accepted({ body: planning.plan });
+      return ok({ body: { plan: planning.plan } });
     }
 
     if (!rawExecutionDeadline) {
@@ -486,9 +490,11 @@ router.post("/upgrade", {
       executionDeadline: new Date(Number(rawExecutionDeadline)).toISOString(),
       planId: planning.plan.id,
     });
+
     const activation = await openwhisk().actions.invoke({
       blocking: false,
       name: DEFAULT_ACTION_NAME,
+
       params: {
         ...params,
         __ow_method: "post",
@@ -496,11 +502,12 @@ router.post("/upgrade", {
 
         attemptId: attempt.id,
       },
+
       result: false,
     });
 
     logger.debug(`Async upgrade execution started: ${activation.activationId}`);
-    return accepted({ body: planning.plan });
+    return accepted({ body: { plan: planning.plan } });
   },
 });
 
@@ -516,6 +523,7 @@ router.post("/upgrade/execution", {
     if (!attemptId) {
       return badRequest("attemptId is required for upgrade execution");
     }
+
     if (!rawAppConfig) {
       return badRequest("appConfig is required for upgrade execution");
     }
@@ -731,6 +739,7 @@ router.post("/uninstallation/execution", {
     logger.debug(
       `Executing uninstallation ${initialState.id} for app "${appData.projectName}" (workspace: "${appData.workspaceName}", commerce: "${AIO_COMMERCE_API_BASE_URL}")`,
     );
+
     const result = await runUninstallation({
       config: appConfig,
       hooks,
@@ -742,10 +751,18 @@ router.post("/uninstallation/execution", {
     logger.debug(`Uninstallation completed: ${result.status}`);
 
     if (isSucceededState(result)) {
-      const installationStore = await createInstallationStore();
-      await installationStore.delete(getStorageKey());
+      const [installationStore, orchestrationStateStore] = await Promise.all([
+        createInstallationStore(),
+        createOrchestrationStateStore(),
+      ]);
+
+      await Promise.all([
+        installationStore.delete(getStorageKey()),
+        orchestrationStateStore.delete(CURRENT_STATE_KEY),
+      ]);
+
       logger.debug(
-        "Cleared installation state after successful uninstallation",
+        "Cleared installation and lifecycle orchestration state after successful uninstallation",
       );
     }
 
@@ -798,6 +815,7 @@ async function getInstallationSnapshot(): Promise<AppStateSnapshot | null> {
 
   return {
     config: installSnapshot.config,
+    createdAt: installSnapshot.completedAt,
     data: installSnapshot.data,
     id: installSnapshot.id,
   };
@@ -814,6 +832,7 @@ async function createLifecyclePersistence() {
     baselineProvider: createLifecycleBaselineProvider(snapshotStore, {
       get: getInstallationSnapshot,
     }),
+
     snapshotStore,
     stateStore,
   };

@@ -333,6 +333,7 @@ export type MockInstallationStore = ReturnType<
 export function createMockCombinedStoreImpl(
   getStores: () => {
     installation: MockInstallationStore;
+    orchestrationState?: MockInstallationStore;
     uninstallation: MockInstallationStore;
   },
 ) {
@@ -346,10 +347,10 @@ export function createMockCombinedStoreImpl(
     if (prefix === "uninstallation") {
       return stores.uninstallation;
     }
-    if (
-      prefix === "lifecycle-orchestration-state" ||
-      prefix === "lifecycle-app-state-snapshot"
-    ) {
+    if (prefix === "lifecycle-orchestration-state") {
+      return stores.orchestrationState ?? createMockInstallationStore();
+    }
+    if (prefix === "lifecycle-app-state-snapshot") {
       return createMockInstallationStore();
     }
 

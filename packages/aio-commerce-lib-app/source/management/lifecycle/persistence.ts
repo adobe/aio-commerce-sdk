@@ -34,6 +34,7 @@ export async function persistProgress(
 ): Promise<void> {
   const state = await requireCurrentAttempt(stateStore, attemptId);
   const current = state.latestAttempt as LifecycleAttempt;
+
   await stateStore.put(CURRENT_STATE_KEY, {
     ...state,
     latestAttempt: {
@@ -70,10 +71,12 @@ export async function persistApplyFailure(
     resolvedCleanupResources,
     status: "failed",
   };
+
   await stateStore.put(CURRENT_STATE_KEY, {
     ...state,
     latestAttempt: failed,
   });
+
   return failed;
 }
 
@@ -97,10 +100,12 @@ export async function persistCleanupFailure(
     resolvedCleanupResources,
     status: "failed",
   };
+
   await stateStore.put(CURRENT_STATE_KEY, {
     ...state,
     latestAttempt: failed,
   });
+
   return failed;
 }
 
@@ -115,9 +120,11 @@ export async function persistSuccess(
 ): Promise<LifecycleAttempt> {
   const snapshot: AppStateSnapshot = {
     config: attempt.plan.target.config,
+    createdAt: workflow.completedAt,
     data: workflow.data,
     id: crypto.randomUUID(),
   };
+
   await stores.snapshotStore.put(snapshot.id, snapshot);
   const succeeded: LifecycleAttempt = {
     ...attempt,
@@ -130,11 +137,13 @@ export async function persistSuccess(
     },
     status: "succeeded",
   };
+
   await stores.stateStore.put(CURRENT_STATE_KEY, {
     ...state,
     baselineSnapshotId: snapshot.id,
     latestAttempt: succeeded,
     unresolvedCleanupResources: remainingCleanupResources,
   });
+
   return succeeded;
 }

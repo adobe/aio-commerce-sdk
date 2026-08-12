@@ -109,9 +109,10 @@ export type LifecycleAttempt = LifecycleAttemptBase &
   );
 
 /** A captured snapshot of app state: its configuration and collected workflow data. */
-export type AppStateSnapshot = Required<
-  Pick<SucceededWorkflowState, "id" | "config" | "data">
->;
+export type AppStateSnapshot = {
+  /** ISO timestamp when the captured state became authoritative. */
+  createdAt: string;
+} & Required<Pick<SucceededWorkflowState, "id" | "config" | "data">>;
 
 /** The persisted orchestration state driving a lifecycle. */
 export type OrchestrationState = {
