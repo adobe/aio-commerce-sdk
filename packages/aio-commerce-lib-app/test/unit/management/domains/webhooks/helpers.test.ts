@@ -1396,7 +1396,12 @@ describe("planWebhookSubscriptions", () => {
         kind: "remove",
       }),
     ]);
-    expect(result.plan.possibleCleanupResources).toHaveLength(0);
+    // A remove's fate is uncertain until an attempt confirms it (e.g. a later
+    // operation in the same apply could still fail), so it's tracked as a
+    // possible cleanup resource just like an add is.
+    expect(result.plan.possibleCleanupResources).toEqual([
+      { identity: DEFAULT_RESOLVED_IDENTITY, path: UPGRADE_PATH },
+    ]);
   });
 
   test("retains desired webhooks already present in the baseline and proposes no operations", async () => {
@@ -1573,6 +1578,34 @@ describe("planWebhookSubscriptions", () => {
     expect.assert(result.kind === "planned");
     expect(result.plan.operations).toHaveLength(1);
     expect(result.plan.operations[0].kind).toBe("add");
+  });
+
+  test("re-plans a desired webhook as an add instead of trusting a retained baseline with a pending unresolved cleanup", async () => {
+    const config = createDefaultWebhooksConfig();
+    const baselineWebhook = createMockResolvedWebhook(
+      DEFAULT_RESOLVED_IDENTITY,
+    );
+
+    const result = await planWebhookSubscriptions(
+      {
+        baseline: { config, data: { subscribedWebhooks: [baselineWebhook] } },
+        path: UPGRADE_PATH,
+        targetConfig: config,
+        unresolvedCleanupResources: [
+          { identity: DEFAULT_RESOLVED_IDENTITY, path: UPGRADE_PATH },
+        ],
+      },
+      makeContext(),
+    );
+
+    expect.assert(result.kind === "planned");
+    expect(result.plan.retainedWebhooks).toHaveLength(0);
+    expect(result.plan.operations).toEqual([
+      expect.objectContaining({
+        category: "configuration",
+        kind: "add",
+      }),
+    ]);
   });
 
   test("treats plugin.magento.X and plugin.X as the same identity when diffing", async () => {

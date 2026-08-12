@@ -313,4 +313,86 @@ describe("webhooks upgrade planning integration", () => {
     expect(applyResult.snapshotData?.subscribedWebhooks).toEqual([]);
     expect(applyResult.resolvedCleanupResources).toHaveLength(1);
   });
+
+  test("re-subscribes a webhook whose baseline is stale after a partially-applied removal", async () => {
+    vi.stubEnv("__OW_NAMESPACE", "test-namespace");
+
+    const [subscribedWebhook] = configWithWebhooks.webhooks;
+    const baselineWebhook = {
+      batch_name: "test_app_webhooks_default",
+      hook_name: "test_app_webhooks_order_created",
+      method: subscribedWebhook.webhook.method,
+      url: "https://test-namespace.adobeioruntime.net/api/v1/web/my-package/handle-webhook",
+      webhook_method: subscribedWebhook.webhook.webhook_method,
+      webhook_type: subscribedWebhook.webhook.webhook_type,
+    };
+    const baselineIdentity = {
+      batch_name: baselineWebhook.batch_name,
+      hook_name: baselineWebhook.hook_name,
+      webhook_method: baselineWebhook.webhook_method,
+      webhook_type: baselineWebhook.webhook_type,
+    };
+
+    const capture = {
+      subscribeBody: null as Record<string, unknown> | null,
+    };
+
+    apiServer.use(
+      // A prior attempt already unsubscribed this webhook from Commerce, but
+      // never got to record it (a later step in that attempt failed first).
+      http.get(`${COMMERCE_BASE_URL}/webhooks/list`, () =>
+        HttpResponse.json([]),
+      ),
+      http.post(
+        `${COMMERCE_BASE_URL}/webhooks/subscribe`,
+        async ({ request }) => {
+          capture.subscribeBody = (await request.json()) as Record<
+            string,
+            unknown
+          >;
+
+          return HttpResponse.json({});
+        },
+      ),
+    );
+
+    const lifecycleContext = createMockInstallationContext();
+    const context = {
+      ...lifecycleContext,
+      ...createWebhooksStepContext(lifecycleContext),
+    };
+
+    const planResult = await planWebhookSubscriptions(
+      {
+        baseline: {
+          config: configWithWebhooks,
+          data: { subscribedWebhooks: [baselineWebhook] },
+        },
+        path: UPGRADE_PATH,
+        targetConfig: configWithWebhooks,
+        unresolvedCleanupResources: [
+          { identity: baselineIdentity, path: UPGRADE_PATH },
+        ],
+      },
+      context,
+    );
+
+    expect.assert(planResult.kind === "planned");
+    expect(planResult.plan.retainedWebhooks).toHaveLength(0);
+    expect(planResult.plan.operations).toEqual([
+      expect.objectContaining({ category: "configuration", kind: "add" }),
+    ]);
+
+    await applyWebhookSubscriptions(planResult.plan, {
+      ...context,
+      attemptId: "attempt-1",
+    });
+
+    expect(capture.subscribeBody).toMatchObject({
+      webhook: expect.objectContaining({
+        batch_name: "test_app_webhooks_default",
+        hook_name: "test_app_webhooks_order_created",
+      }),
+    });
+  });
 });

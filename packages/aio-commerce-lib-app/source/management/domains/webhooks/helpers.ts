@@ -72,15 +72,21 @@ export type WebhookUnsubscriptionResult = {
   unsubscribedWebhooks: WebhookUnsubscribeParams[];
 };
 
+/** A fully-resolved webhook payload, minus credentials, plus whether they're required. */
+type ResolvedWebhookPayload = WebhookIdentity &
+  Omit<WebhookSubscribeParams, "developer_console_oauth"> & {
+    requiresAdobeAuth: boolean;
+  };
+
 /**
- * Value carried by an add/remove operation. Never includes `developer_console_oauth` —
- * plans and snapshots must stay secret-free; `apply` resolves credentials fresh
- * for an `add` when `requiresAdobeAuth` is set.
+ * Value carried by an add/remove operation: a {@link ResolvedWebhookPayload} with
+ * every non-identity field optional, since a cleanup-driven remove may carry only
+ * the bare identity. Never includes `developer_console_oauth` — plans and
+ * snapshots must stay secret-free; `apply` resolves credentials fresh for an
+ * `add` when `requiresAdobeAuth` is set.
  */
 export type WebhookOperationValue = WebhookIdentity &
-  Partial<Omit<WebhookSubscribeParams, "developer_console_oauth">> & {
-    requiresAdobeAuth?: boolean;
-  };
+  Partial<Omit<ResolvedWebhookPayload, keyof WebhookIdentity>>;
 
 /** The webhooks domain plan. `retainedWebhooks` lets `apply` rebuild the full resulting state without needing the baseline. */
 export type WebhookDomainPlan = DomainPlan<
@@ -94,7 +100,7 @@ export type WebhookDomainPlan = DomainPlan<
 export type WebhookSnapshotData = WebhookSubscriptionResult;
 
 /** Narrows any webhook-like value down to its identity fields. */
-function toIdentity(webhook: WebhookIdentity): WebhookIdentity {
+function toIdentity<T extends WebhookIdentity>(webhook: T): WebhookIdentity {
   return {
     batch_name: webhook.batch_name,
     hook_name: webhook.hook_name,
@@ -308,12 +314,6 @@ export async function deleteWebhookSubscriptions(
   return { unsubscribedWebhooks };
 }
 
-/** A fully-resolved webhook payload, minus credentials, plus whether they're required. */
-type ResolvedWebhookPayload = WebhookIdentity &
-  Omit<WebhookSubscribeParams, "developer_console_oauth"> & {
-    requiresAdobeAuth: boolean;
-  };
-
 /** Resolves a config webhook entry's identity/payload (idPrefix, URL) — no credentials. Pure. */
 function resolveWebhookPayload(
   entry: WebhookEntry,
@@ -419,12 +419,20 @@ export function planWebhookSubscriptions(
   const retainedWebhooks: WebhookSubscribeParams[] = [];
 
   for (const webhook of desired) {
-    // Keep the baseline's recorded value: no operation runs for a retained webhook.
     const owned = ownedFromBaseline.find((candidate) =>
       webhookIdentitiesMatch(candidate, webhook),
     );
 
-    if (owned) {
+    // A pending unresolved-cleanup entry means this identity's fate from a
+    // prior interrupted attempt is uncertain (it may have actually been
+    // unsubscribed) — don't trust the baseline's "retained" fast path over
+    // it. Re-plan as an add instead: `apply` checks live Commerce state
+    // before subscribing, so this safely no-ops if it's still there.
+    const hasUnresolvedCleanup = unresolvedIdentities.some((pending) =>
+      webhookIdentitiesMatch(pending, webhook),
+    );
+
+    if (owned && !hasUnresolvedCleanup) {
       retainedWebhooks.push(owned);
       continue;
     }
@@ -464,6 +472,7 @@ export function planWebhookSubscriptions(
       kind: "remove",
       label: `Unsubscribe webhook: ${getWebhookName(identity)}`,
     });
+    possibleCleanupResources.push({ identity, path });
   }
 
   for (const identity of staleFromCleanup) {
@@ -474,6 +483,7 @@ export function planWebhookSubscriptions(
       kind: "remove",
       label: `Unsubscribe webhook: ${getWebhookName(identity)}`,
     });
+    possibleCleanupResources.push({ identity, path });
   }
 
   return Promise.resolve({
