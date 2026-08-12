@@ -66,7 +66,7 @@ type PlannedStepExecutionContext = {
   config: CommerceAppConfigOutputModel;
   id: string;
   startedAt: string;
-  step: StepStatus;
+  rootStep: StepStatus;
   data: Record<string, unknown> | null;
   error: WorkflowError | null;
   hooks?: WorkflowHooks;
@@ -146,19 +146,19 @@ export async function executePlannedWorkflow(
     lifecycleContext,
     plan,
     resolvedCleanupResources: options.resolvedCleanupResources ?? [],
+    rootStep: step,
     startedAt: initialState.startedAt,
-    step,
   };
 
   await callHook(hooks, "onStart", snapshot(context));
   try {
-    await executePlannedStep(rootStep, context.step, {}, context);
+    await executePlannedStep(rootStep, context.rootStep, {}, context);
     const succeeded = createSucceededState({
       config: context.config,
       data: context.data,
       id: context.id,
       startedAt: context.startedAt,
-      step: context.step,
+      step: context.rootStep,
     });
 
     await callHook(hooks, "onSuccess", succeeded);
@@ -176,7 +176,7 @@ export async function executePlannedWorkflow(
         data: context.data,
         id: context.id,
         startedAt: context.startedAt,
-        step: context.step,
+        step: context.rootStep,
       },
       workflowError,
     );
@@ -218,24 +218,24 @@ function snapshot(
     id: context.id,
     startedAt: context.startedAt,
     status: "in-progress",
-    step: context.step,
+    step: context.rootStep,
   };
 }
 
 /** Executes one planned step and updates its persisted progress snapshot. */
 async function executePlannedStep(
   step: AnyStep,
-  stepStatus: StepStatus,
+  currentStep: StepStatus,
   accumulatedContext: Record<string, unknown>,
   context: PlannedStepExecutionContext,
 ): Promise<void> {
-  if (stepStatus.status === "succeeded") {
+  if (currentStep.status === "succeeded") {
     return;
   }
 
-  const { path } = stepStatus;
+  const { path } = currentStep;
   const isLeaf = isLeafStep(step);
-  stepStatus.status = "in-progress";
+  currentStep.status = "in-progress";
 
   await callHook(
     context.hooks,
@@ -248,7 +248,7 @@ async function executePlannedStep(
     if (isBranchStep(step)) {
       let childContext = accumulatedContext;
 
-      if (step.context && stepStatus.children.length > 0) {
+      if (step.context && currentStep.children.length > 0) {
         const stepContext = await step.context(context.lifecycleContext);
         childContext = {
           ...accumulatedContext,
@@ -256,7 +256,7 @@ async function executePlannedStep(
         };
       }
 
-      for (const childStatus of stepStatus.children) {
+      for (const childStatus of currentStep.children) {
         const child = step.children.find(
           (candidate) => candidate.name === childStatus.name,
         );
@@ -289,7 +289,7 @@ async function executePlannedStep(
       setAtPath(context.data, path, result.snapshotData);
     }
 
-    stepStatus.status = "succeeded";
+    currentStep.status = "succeeded";
     context.data ??= {};
 
     await callHook(
@@ -304,7 +304,7 @@ async function executePlannedStep(
       snapshot(context),
     );
   } catch (error) {
-    stepStatus.status = "failed";
+    currentStep.status = "failed";
     context.error ??= await createWorkflowError(error, path);
 
     await callHook(
