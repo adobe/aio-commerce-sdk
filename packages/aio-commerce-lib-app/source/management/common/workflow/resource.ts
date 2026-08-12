@@ -29,7 +29,7 @@ export type PlanningIssue = {
  * A single change a domain proposes to apply to a resource, discriminated by
  * `kind`: `add` creates a resource, `update` mutates one, `remove` deletes one.
  */
-export type ResourceOperation<TValue> = {
+export type ResourceOperation<TBefore, TAfter = TBefore> = {
   /** Stable identifier of the operation within its plan. */
   id: string;
 
@@ -39,9 +39,9 @@ export type ResourceOperation<TValue> = {
   /** Whether the operation converges configuration or resolves cleanup. */
   category: "configuration" | "cleanup";
 } & (
-  | { kind: "add"; after: TValue }
-  | { kind: "update"; before: TValue; after: TValue }
-  | { kind: "remove"; before: TValue }
+  | { kind: "add"; after: TAfter }
+  | { kind: "update"; before: TBefore; after: TAfter }
+  | { kind: "remove"; before: TBefore }
 );
 
 /** A durable reminder that a resource may have been created and could need cleanup. */
@@ -55,14 +55,15 @@ export type CleanupResource<TIdentity = Record<string, unknown>> = {
 
 /** A domain's proposed set of resource operations, plus resources to reconcile. */
 export type DomainPlan<
-  TValue = unknown,
+  TBefore = unknown,
   TCleanupIdentity = Record<string, unknown>,
+  TAfter = TBefore,
 > = {
   /** Full workflow path of the step this plan belongs to. */
   path: string[];
 
   /** The operations the domain proposes to apply. */
-  operations: ResourceOperation<TValue>[];
+  operations: ResourceOperation<TBefore, TAfter>[];
 
   /** Resources that may need cleanup as a result of applying the plan. */
   possibleCleanupResources: CleanupResource<TCleanupIdentity>[];
@@ -111,7 +112,7 @@ export type PlanningResult<TPlan extends DomainPlan = DomainPlan> =
 /** Infers the cleanup identity type carried by a {@link DomainPlan}. */
 export type CleanupIdentityOf<TPlan> =
   // biome-ignore lint/suspicious/noExplicitAny: Only the identity is inferred here, so the value type is irrelevant.
-  TPlan extends DomainPlan<any, infer TCleanupIdentity>
+  TPlan extends DomainPlan<any, infer TCleanupIdentity, any>
     ? TCleanupIdentity
     : never;
 

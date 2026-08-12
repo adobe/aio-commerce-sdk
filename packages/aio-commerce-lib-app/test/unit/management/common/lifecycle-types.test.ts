@@ -51,6 +51,11 @@ type WebhookIdentity = {
 };
 
 type WebhookPlan = DomainPlan<Partial<WebhookEntry>, WebhookIdentity>;
+type WebhookMigrationPlan = DomainPlan<
+  Partial<WebhookEntry>,
+  WebhookIdentity,
+  WebhookEntry
+>;
 
 type WebhookLeafStep = LeafStep<
   "webhooks",
@@ -65,6 +70,15 @@ describe("lifecycle type surface", () => {
   test("CleanupIdentityOf infers the plan's cleanup identity", () => {
     expectTypeOf<
       CleanupIdentityOf<WebhookPlan>
+    >().toEqualTypeOf<WebhookIdentity>();
+  });
+
+  test("DomainPlan supports distinct before and after values", () => {
+    expectTypeOf<WebhookMigrationPlan["operations"]>().toEqualTypeOf<
+      ResourceOperation<Partial<WebhookEntry>, WebhookEntry>[]
+    >();
+    expectTypeOf<
+      CleanupIdentityOf<WebhookMigrationPlan>
     >().toEqualTypeOf<WebhookIdentity>();
   });
 
