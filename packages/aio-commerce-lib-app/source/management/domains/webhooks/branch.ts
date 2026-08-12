@@ -16,14 +16,14 @@ import {
   defineLeafStep,
 } from "#management/common/workflow/step";
 
+import { applyWebhookSubscriptions } from "./apply";
 import { createWebhooksStepContext } from "./context";
 import {
-  applyWebhookSubscriptions,
   createWebhookSubscriptions,
   deleteWebhookSubscriptions,
-  planWebhookSubscriptions,
   validateWebhookConflicts,
 } from "./helpers";
+import { planWebhookSubscriptions } from "./plan";
 
 import type { WebhooksConfig } from "#config/schema/webhooks";
 import type { WebhooksExecutionContext } from "./context";

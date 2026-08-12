@@ -14,11 +14,9 @@ import { HttpResponse, http } from "msw";
 import { afterEach, describe, expect, test, vi } from "vitest";
 
 import { isSucceededState } from "#management/common/workflow/types";
+import { applyWebhookSubscriptions } from "#management/domains/webhooks/apply";
 import { createWebhooksStepContext } from "#management/domains/webhooks/context";
-import {
-  applyWebhookSubscriptions,
-  planWebhookSubscriptions,
-} from "#management/domains/webhooks/helpers";
+import { planWebhookSubscriptions } from "#management/domains/webhooks/plan";
 import {
   createInitialInstallationState,
   runInstallation,
