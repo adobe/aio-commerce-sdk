@@ -369,6 +369,10 @@ function resolveDesiredWebhooks(
  * Diffs the target config against the baseline (plus any unresolved cleanup)
  * into add/remove operations. Pure — no external reads or writes, since an
  * observation made here could be stale by execution time.
+ *
+ * Blocks with a `WEBHOOK_BASELINE_UNRESOLVED` issue when a baseline exists but
+ * its subscribed-webhooks data couldn't be resolved, rather than guessing that
+ * nothing was previously owned.
  */
 export function planWebhookSubscriptions(
   input: PlanningInput<WebhooksConfig, WebhookSnapshotData, WebhookIdentity>,
@@ -376,6 +380,27 @@ export function planWebhookSubscriptions(
 ): Promise<PlanningResult<WebhookDomainPlan>> {
   const { path, baseline, targetConfig, unresolvedCleanupResources } = input;
   const { params } = context;
+
+  // `baseline: null` means the domain was absent (nothing to own yet), which is
+  // fine. A `baseline` that exists but whose `data` didn't resolve is different:
+  // some webhooks may still be live in Commerce, and silently treating it as
+  // "nothing owned" would drop their removal. Block instead of guessing.
+  // `data` is typed as non-optional, but a malformed caller (e.g. a stale-path
+  // lookup) can still pass null/undefined at runtime — guard against that.
+  // biome-ignore lint/suspicious/noUnnecessaryConditions: see comment above
+  if (baseline && !baseline.data?.subscribedWebhooks) {
+    return Promise.resolve({
+      issues: [
+        {
+          code: "WEBHOOK_BASELINE_UNRESOLVED",
+          domain: "webhooks",
+          message:
+            "A prior webhooks baseline exists, but its subscribed-webhooks data could not be resolved. Refusing to plan without it, since previously subscribed webhooks could otherwise go unremoved.",
+        },
+      ],
+      kind: "blocked",
+    });
+  }
 
   const env = getInstallCommerceEnv(params);
   const desired = targetConfig ? resolveDesiredWebhooks(targetConfig, env) : [];

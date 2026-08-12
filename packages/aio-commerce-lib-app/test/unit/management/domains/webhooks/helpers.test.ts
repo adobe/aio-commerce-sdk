@@ -1308,12 +1308,36 @@ describe("planWebhookSubscriptions", () => {
     expect(result.plan.retainedWebhooks).toHaveLength(0);
   });
 
-  test("treats a baseline with null data as no prior state instead of throwing", async () => {
+  test("blocks planning instead of guessing when a baseline's data didn't resolve", async () => {
     const result = await planWebhookSubscriptions(
       {
         // @ts-expect-error - baseline.data should never be null per the type, but a
-        // malformed caller can still pass this at runtime; this must not throw.
+        // malformed caller (e.g. a stale-path lookup) can still pass this at runtime;
+        // this must not throw, nor silently drop previously owned webhooks.
         baseline: { config: createDefaultWebhooksConfig(), data: null },
+        path: UPGRADE_PATH,
+        targetConfig: createDefaultWebhooksConfig(),
+        unresolvedCleanupResources: [],
+      },
+      makeContext(),
+    );
+
+    expect.assert(result.kind === "blocked");
+    expect(result.issues).toEqual([
+      expect.objectContaining({
+        code: "WEBHOOK_BASELINE_UNRESOLVED",
+        domain: "webhooks",
+      }),
+    ]);
+  });
+
+  test("plans normally when a resolved baseline previously owned no webhooks", async () => {
+    const result = await planWebhookSubscriptions(
+      {
+        baseline: {
+          config: createDefaultWebhooksConfig(),
+          data: { subscribedWebhooks: [] },
+        },
         path: UPGRADE_PATH,
         targetConfig: createDefaultWebhooksConfig(),
         unresolvedCleanupResources: [],
