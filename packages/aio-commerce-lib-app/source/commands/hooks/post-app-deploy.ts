@@ -118,7 +118,7 @@ export async function run() {
     );
   } else {
     consola.success(
-      `You have set ${colors.cyan("metadata.upgradeMode")} to ${colors.cyan("automatic")}. The upgrade plan has been created. Execution will begin shortly (automatic mode).`,
+      `You have set ${colors.cyan("metadata.upgradeMode")} to ${colors.cyan("automatic")}. The upgrade plan has been created. Execution will begin shortly.`,
     );
   }
 
