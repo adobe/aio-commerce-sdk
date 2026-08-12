@@ -10,11 +10,16 @@
  * governing permissions and limitations under the License.
  */
 
+import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
 // @ts-expect-error - The library doesn't export types.
 import config from "@adobe/aio-lib-core-config";
 import aioIms from "@adobe/aio-lib-ims";
+import { consola } from "consola";
+import { colors } from "consola/utils";
 
 import { parseCommerceAppConfig } from "#config/lib/parser";
+
+import type { DomainPlan } from "#management/common/workflow/resource";
 
 type ProjectConfig = {
   id: string;
@@ -32,10 +37,22 @@ type ProjectConfig = {
   };
 };
 
+type Environment = "stage" | "prod" | undefined;
+
+type SkippedResult = { skipped: true; reason: string };
+type UpgradePlanResult = { plan: DomainPlan };
+type UpgradeResult = SkippedResult | UpgradePlanResult;
+
+/** Returns true if the result indicates that the upgrade was skipped. */
+function isSkippedResult(result: UpgradeResult): result is SkippedResult {
+  return "skipped" in result;
+}
+
 /** Invokes the deployed app's upgrade endpoint. */
 export async function run() {
   const appConfig = await parseCommerceAppConfig();
-  const upgradeMode = appConfig.metadata.upgradeMode ?? "auto";
+  const { upgradeMode } = appConfig.metadata;
+
   const project = config.get("project") as ProjectConfig | undefined;
   const namespace = config.get("runtime.namespace") as string | undefined;
 
@@ -49,9 +66,10 @@ export async function run() {
   const token = await aioIms.getToken(contextName, {});
   const endpoint = `https://${namespace}.adobeioruntime.net/api/v1/web/app-management/installation/upgrade`;
 
-  console.log(`\nTriggering the app upgrade endpoint: ${endpoint}`);
+  consola.start("Checking for app upgrades...");
+  consola.debug(`Upgrade endpoint: ${endpoint}`);
 
-  const ioEventsEnv = process.env.AIO_CLI_ENV ?? "prod";
+  const ioEventsEnv = (config.get("cli.env") as Environment) ?? "prod";
   const ioEventsUrl =
     ioEventsEnv === "stage"
       ? "https://events-stage.adobe.io"
@@ -73,37 +91,55 @@ export async function run() {
       ioEventsEnv,
       ioEventsUrl,
     }),
+
     headers: {
       Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
-      "X-OW-EXTRA-LOGGING": "on",
       "x-gw-ims-org-id": project.org.ims_org_id,
     },
+
     method: "POST",
   });
-
-  const result = await response.json();
-  console.log(
-    `App upgrade endpoint returned ${response.status}:\n${JSON.stringify(result, null, 2)}`,
-  );
 
   if (!response.ok) {
     throw new Error(`Failed to trigger app upgrade: ${response.status}`);
   }
 
+  const result = (await response.json()) as UpgradeResult;
+
+  if (isSkippedResult(result)) {
+    consola.info(`No upgrade was run: ${result.reason}.`);
+    return result;
+  }
+
   if (upgradeMode === "manual") {
-    console.log("Upgrade plan created.");
+    consola.success(
+      `You have set ${colors.cyan("metadata.upgradeMode")} to ${colors.cyan("manual")}. The upgrade plan has been created. Apply it from the App Management UI`,
+    );
   } else {
-    console.log(
-      "Upgrade is automatic. The plan was created and execution will begin shortly.",
+    consola.success(
+      `You have set ${colors.cyan("metadata.upgradeMode")} to ${colors.cyan("automatic")}. The upgrade plan has been created. Execution will begin shortly (automatic mode).`,
     );
   }
 
-  console.log();
+  consola.box(
+    ["Upgrade plan", JSON.stringify(result.plan, null, 2)].join("\n\n"),
+  );
+
   return result;
 }
 
 /** Runs the post-app-deploy hook. */
 export async function exec() {
-  await run();
+  try {
+    await run();
+  } catch (error) {
+    if (error instanceof CommerceSdkValidationError) {
+      consola.error(error.display());
+    } else {
+      consola.error(error);
+    }
+
+    process.exit(1);
+  }
 }

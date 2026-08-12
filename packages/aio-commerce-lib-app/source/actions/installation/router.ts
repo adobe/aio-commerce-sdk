@@ -473,7 +473,7 @@ router.post("/upgrade", {
       });
     }
 
-    const upgradeMode = appConfig.metadata.upgradeMode ?? "auto";
+    const { upgradeMode } = appConfig.metadata;
     if (upgradeMode === "manual") {
       return ok({ body: { plan: planning.plan } });
     }
