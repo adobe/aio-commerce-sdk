@@ -39,7 +39,10 @@ import {
   runValidation,
 } from "#management/index";
 import { createRootInstallationStep } from "#management/installation/root";
-import { createLifecycleBaselineProvider } from "#management/lifecycle/baseline";
+import {
+  createLifecycleBaselineProvider,
+  getCurrentLifecycleBaseline,
+} from "#management/lifecycle/baseline";
 import { executeLifecycleAttempt } from "#management/lifecycle/execution";
 import { planLifecycle } from "#management/lifecycle/planning";
 import { startLifecycleAttempt } from "#management/lifecycle/start";
@@ -634,20 +637,24 @@ router.post("/uninstallation", {
       );
     }
 
-    const installationSnapshot = await getInstallationSnapshot();
-    const installAppConfig = installationSnapshot?.config;
+    const { baselineProvider, stateStore } = await createLifecyclePersistence();
+    const installationSnapshot = await getCurrentLifecycleBaseline(
+      stateStore,
+      baselineProvider,
+    );
+    const baselineAppConfig = installationSnapshot?.config;
 
-    const uninstallConfig = installAppConfig ?? rawParams.appConfig;
+    const uninstallConfig = baselineAppConfig ?? rawParams.appConfig;
     if (!uninstallConfig) {
       return internalServerError(
-        "Cannot determine what to uninstall: no recorded installation snapshot and no app config was provided.",
+        "Cannot determine what to uninstall: no recorded lifecycle baseline and no app config was provided.",
       );
     }
 
     logger.debug(
-      installAppConfig
-        ? "Sourcing uninstallation from recorded install snapshot"
-        : "No recorded install config found; falling back to request config",
+      baselineAppConfig
+        ? "Sourcing uninstallation from recorded lifecycle baseline"
+        : "No recorded lifecycle baseline found; falling back to request config",
     );
 
     const initialState = createInitialUninstallationState({
@@ -797,11 +804,7 @@ async function getInstallationSnapshot(): Promise<AppStateSnapshot | null> {
 }
 
 /** Creates the shared dependencies used by lifecycle orchestration. */
-async function createLifecycleRuntime(
-  params: WorkflowRouteParams,
-  appConfig: CommerceAppConfigOutputModel,
-  logger: LifecycleContext["logger"],
-) {
+async function createLifecyclePersistence() {
   const [stateStore, snapshotStore] = await Promise.all([
     createOrchestrationStateStore(),
     createAppStateSnapshotStore(),
@@ -811,9 +814,20 @@ async function createLifecycleRuntime(
     baselineProvider: createLifecycleBaselineProvider(snapshotStore, {
       get: getInstallationSnapshot,
     }),
-    lifecycleContext: buildInstallationContext(params, appConfig, logger),
-    rootStep: createRootInstallationStep(appConfig),
     snapshotStore,
     stateStore,
+  };
+}
+
+/** Creates the shared dependencies used by lifecycle orchestration. */
+async function createLifecycleRuntime(
+  params: WorkflowRouteParams,
+  appConfig: CommerceAppConfigOutputModel,
+  logger: LifecycleContext["logger"],
+) {
+  return {
+    ...(await createLifecyclePersistence()),
+    lifecycleContext: buildInstallationContext(params, appConfig, logger),
+    rootStep: createRootInstallationStep(appConfig),
   };
 }

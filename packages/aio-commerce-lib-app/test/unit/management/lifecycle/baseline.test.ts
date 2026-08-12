@@ -12,7 +12,10 @@
 
 import { describe, expect, test, vi } from "vitest";
 
-import { createLifecycleBaselineProvider } from "#management/lifecycle/baseline";
+import {
+  createLifecycleBaselineProvider,
+  getCurrentLifecycleBaseline,
+} from "#management/lifecycle/baseline";
 import { minimalValidConfig } from "#test/fixtures/config";
 
 import type { AppStateSnapshot } from "#management/common/orchestration";
@@ -63,5 +66,36 @@ describe("createLifecycleBaselineProvider", () => {
       lifecycleBaseline,
     );
     expect(snapshotGet).toHaveBeenCalledWith(lifecycleBaseline.id);
+  });
+});
+
+describe("getCurrentLifecycleBaseline", () => {
+  test("uses the lifecycle snapshot selected by orchestration state", async () => {
+    const providerGet = vi.fn().mockResolvedValue(lifecycleBaseline);
+
+    await expect(
+      getCurrentLifecycleBaseline(
+        {
+          get: vi.fn().mockResolvedValue({
+            baselineSnapshotId: lifecycleBaseline.id,
+          }),
+          put: vi.fn(),
+        },
+        { get: providerGet },
+      ),
+    ).resolves.toBe(lifecycleBaseline);
+    expect(providerGet).toHaveBeenCalledWith(lifecycleBaseline.id);
+  });
+
+  test("uses the compatibility baseline before lifecycle state exists", async () => {
+    const providerGet = vi.fn().mockResolvedValue(compatibilityBaseline);
+
+    await expect(
+      getCurrentLifecycleBaseline(
+        { get: vi.fn().mockResolvedValue(null), put: vi.fn() },
+        { get: providerGet },
+      ),
+    ).resolves.toBe(compatibilityBaseline);
+    expect(providerGet).toHaveBeenCalledWith(null);
   });
 });

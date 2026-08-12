@@ -10,7 +10,12 @@
  * governing permissions and limitations under the License.
  */
 
-import type { AppStateSnapshot } from "#management/common/orchestration";
+import { CURRENT_STATE_KEY } from "./state";
+
+import type {
+  AppStateSnapshot,
+  OrchestrationState,
+} from "#management/common/orchestration";
 import type { LifecycleBaselineProvider, LifecycleStore } from "./state";
 
 /** Source temporarily used to establish whether a compatible app is installed. */
@@ -36,4 +41,13 @@ export function createLifecycleBaselineProvider(
       return snapshotId ? snapshotStore.get(snapshotId) : compatibilityBaseline;
     },
   };
+}
+
+/** Resolves the baseline selected by the current lifecycle state. */
+export async function getCurrentLifecycleBaseline(
+  stateStore: LifecycleStore<OrchestrationState>,
+  baselineProvider: LifecycleBaselineProvider,
+): Promise<AppStateSnapshot | null> {
+  const state = await stateStore.get(CURRENT_STATE_KEY);
+  return baselineProvider.get(state?.baselineSnapshotId ?? null);
 }
