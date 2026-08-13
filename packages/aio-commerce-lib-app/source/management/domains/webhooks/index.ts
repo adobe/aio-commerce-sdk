@@ -15,4 +15,4 @@
 export { webhooksStep } from "./branch";
 
 export type { WebhooksConfig } from "#config/schema/webhooks";
-export type { ConflictingWebhook } from "./helpers";
+export type { ConflictingWebhook } from "./types";
