@@ -822,7 +822,7 @@ async function getInstallationSnapshot(): Promise<AppStateSnapshot | null> {
   };
 }
 
-/** Creates the shared dependencies used by lifecycle orchestration. */
+/** Creates the shared storage read/write dependencies used by lifecycle orchestration. */
 async function createLifecyclePersistence() {
   const [stateStore, snapshotStore] = await Promise.all([
     createOrchestrationStateStore(),
