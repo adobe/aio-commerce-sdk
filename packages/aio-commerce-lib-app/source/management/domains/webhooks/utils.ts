@@ -12,6 +12,7 @@
 
 import { unwrapHttpError } from "@adobe/aio-commerce-lib-api/utils";
 import { resolveImsAuthParams } from "@adobe/aio-commerce-lib-auth";
+import { stringify } from "safe-stable-stringify";
 
 import { appliesToEnv } from "#config/lib/environment";
 
@@ -22,7 +23,31 @@ import type {
 import type { getInstallCommerceEnv } from "#config/lib/environment";
 import type { WebhookEntry } from "#config/schema/webhooks";
 import type { WebhooksExecutionContext } from "./context";
-import type { ResolvedWebhookPayload, WebhookIdentity } from "./types";
+import type {
+  ResolvedWebhookPayload,
+  WebhookIdentity,
+  WebhookOperationValue,
+} from "./types";
+
+/** Mutable (non-identity) scalar fields compared to detect a config change. */
+const MUTABLE_SCALAR_FIELDS = [
+  "url",
+  "priority",
+  "method",
+  "required",
+  "soft_timeout",
+  "timeout",
+  "fallback_error_message",
+  "ttl",
+  "batch_order",
+] as const satisfies (keyof WebhookSubscribeParams)[];
+
+/** Mutable (non-identity) array fields compared to detect a config change. */
+const MUTABLE_ARRAY_FIELDS = [
+  "fields",
+  "rules",
+  "headers",
+] as const satisfies (keyof WebhookSubscribeParams)[];
 
 /** Matches any character that is not a valid identifier character (letter, digit, or underscore). */
 const NON_IDENTIFIER_CHAR_REGEX = /[^a-zA-Z0-9_]/g;
@@ -48,9 +73,9 @@ export function toIdentity<T extends WebhookIdentity>(
   };
 }
 
-/** Builds a stable, human-traceable id for a planned add/remove operation. */
+/** Builds a stable, human-traceable id for a planned add/update/remove operation. */
 export function webhookOperationId(
-  kind: "add" | "remove",
+  kind: "add" | "update" | "remove",
   identity: WebhookIdentity,
 ): string {
   return `${kind}:${identity.webhook_method}:${identity.webhook_type}:${identity.batch_name}:${identity.hook_name}`;
@@ -94,6 +119,42 @@ export function isDesiredWebhook(
   desiredWebhooks: readonly WebhookIdentity[],
 ): boolean {
   return isWebhookInList(desiredWebhooks, webhook);
+}
+
+/** True when two optional arrays contain the same elements, regardless of order. Treats `undefined` and `[]` as equal. */
+function arraysEqualUnordered(
+  a: unknown[] | undefined,
+  b: unknown[] | undefined,
+): boolean {
+  // `stringify` sorts object keys, so equal elements serialize identically regardless of key order.
+  const normalizedA = (a ?? []).map((item) => stringify(item) ?? "").sort();
+  const normalizedB = (b ?? []).map((item) => stringify(item) ?? "").sort();
+  return (
+    normalizedA.length === normalizedB.length &&
+    normalizedA.every((value, index) => value === normalizedB[index])
+  );
+}
+
+/**
+ * True when any mutable (non-identity) field differs between a baseline webhook and
+ * its desired target payload. `batch_name`/`hook_name`/`webhook_method`/`webhook_type`
+ * are identity fields — a change there is a rename (remove+add), not a config update.
+ */
+export function hasWebhookConfigChanged(
+  before: WebhookSubscribeParams,
+  after: WebhookOperationValue,
+): boolean {
+  const scalarChanged = MUTABLE_SCALAR_FIELDS.some(
+    (field) => before[field] !== after[field],
+  );
+
+  if (scalarChanged) {
+    return true;
+  }
+
+  return MUTABLE_ARRAY_FIELDS.some(
+    (field) => !arraysEqualUnordered(before[field], after[field]),
+  );
 }
 
 /** Strips the `.magento` segment Commerce drops when persisting plugin webhook methods. */

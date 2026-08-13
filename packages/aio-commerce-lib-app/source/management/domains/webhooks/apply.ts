@@ -25,22 +25,26 @@ import {
   webhookIdentitiesMatch,
 } from "./utils";
 
-import type { WebhookSubscribeParams } from "@adobe/aio-commerce-lib-webhooks/api";
+import type {
+  CommerceWebhook,
+  WebhookSubscribeParams,
+} from "@adobe/aio-commerce-lib-webhooks/api";
 import type { WebhooksConfig } from "#config/schema/webhooks";
 import type {
   ApplyContext,
   ApplyResult,
 } from "#management/common/workflow/resource";
-import type { WebhooksStepContext } from "./context";
+import type { WebhooksExecutionContext, WebhooksStepContext } from "./context";
 import type {
   ResolvedWebhookPayload,
   WebhookDomainPlan,
+  WebhookIdentity,
   WebhookSnapshotData,
 } from "./types";
 
 /**
- * Applies a webhooks domain plan and prunes live app-owned webhooks absent from
- * the target. Aborts on the first failure rather than report partial success.
+ * Applies add, update, and remove operations while pruning live app-owned
+ * webhooks absent from the target. Aborts on the first failure.
  */
 export async function applyWebhookSubscriptions(
   plan: WebhookDomainPlan,
@@ -53,7 +57,6 @@ export async function applyWebhookSubscriptions(
   const { logger, commerceWebhooksClient, params } = context;
 
   const liveWebhooks = await commerceWebhooksClient.getWebhookList();
-  let liveIdentities = liveWebhooks.map(toIdentity);
 
   let subscribedWebhooks: WebhookSubscribeParams[] = [
     ...(context.baseline?.data.subscribedWebhooks ?? []),
@@ -71,23 +74,12 @@ export async function applyWebhookSubscriptions(
     ? resolveDesiredWebhooks(context.targetConfig, env)
     : [];
 
-  const staleWebhooks = liveWebhooks.filter(
-    (webhook) =>
-      isWebhookOwnedByApp(webhook, appConfig.metadata.id) &&
-      !isDesiredWebhook(webhook, desired),
+  let liveIdentities = await pruneStaleWebhooks(
+    liveWebhooks,
+    desired,
+    appConfig.metadata.id,
+    context,
   );
-
-  for (const stale of staleWebhooks) {
-    const identity = toIdentity(stale);
-
-    // biome-ignore lint/performance/noAwaitInLoops: removals must run sequentially so a failure aborts the remaining work
-    await deleteWebhookSubscription(commerceWebhooksClient, identity, identity);
-
-    logger.info(`Unsubscribed webhook: ${getWebhookName(identity)}`);
-    liveIdentities = liveIdentities.filter(
-      (live) => !webhookIdentitiesMatch(live, identity),
-    );
-  }
 
   for (const operation of plan.operations) {
     if (operation.kind === "add") {
@@ -101,13 +93,11 @@ export async function applyWebhookSubscriptions(
           `Webhook already subscribed, skipping: ${getWebhookName(identity)}`,
         );
       } else {
-        const toSubscribe: WebhookSubscribeParams = {
-          ...resolvedWebhook,
-          ...(requiresAdobeAuth && {
-            developer_console_oauth:
-              resolveDeveloperConsoleOAuthCredentials(params),
-          }),
-        };
+        const toSubscribe = createSubscribeParams(
+          resolvedWebhook,
+          requiresAdobeAuth,
+          params,
+        );
 
         // biome-ignore lint/performance/noAwaitInLoops: operations must run sequentially so a failure aborts the remaining ones
         await createWebhookSubscription(commerceWebhooksClient, toSubscribe);
@@ -118,6 +108,42 @@ export async function applyWebhookSubscriptions(
       if (!isWebhookInList(subscribedWebhooks, identity)) {
         subscribedWebhooks.push(resolvedWebhook);
       }
+    } else if (operation.kind === "update") {
+      const identity = toIdentity(operation.before);
+
+      // `after` is always fully resolved for `update` (see planWebhookSubscriptions).
+      const { requiresAdobeAuth, ...resolvedWebhook } =
+        operation.after as ResolvedWebhookPayload;
+
+      // Commerce's subscribe endpoint is a guarded insert, not an upsert — it rejects a
+      // still-live identity, so an update must unsubscribe before it can resubscribe.
+      if (isWebhookInList(liveIdentities, identity)) {
+        await deleteWebhookSubscription(
+          commerceWebhooksClient,
+          identity,
+          identity,
+        );
+        liveIdentities = liveIdentities.filter(
+          (live) => !webhookIdentitiesMatch(live, identity),
+        );
+      }
+
+      const toSubscribe = createSubscribeParams(
+        resolvedWebhook,
+        requiresAdobeAuth,
+        params,
+      );
+
+      await createWebhookSubscription(commerceWebhooksClient, toSubscribe);
+      logger.info(`Updated webhook: ${getWebhookName(identity)}`);
+      liveIdentities = [...liveIdentities, identity];
+
+      subscribedWebhooks = [
+        ...subscribedWebhooks.filter(
+          (subscribed) => !webhookIdentitiesMatch(subscribed, identity),
+        ),
+        resolvedWebhook,
+      ];
     } else if (operation.kind === "remove") {
       const identity = toIdentity(operation.before);
 
@@ -145,5 +171,50 @@ export async function applyWebhookSubscriptions(
 
   return {
     snapshotData: { subscribedWebhooks },
+  };
+}
+
+/** Removes live webhooks owned by this app that are absent from the target. */
+async function pruneStaleWebhooks(
+  liveWebhooks: CommerceWebhook[],
+  desiredWebhooks: readonly WebhookIdentity[],
+  appId: string,
+  context: WebhooksExecutionContext,
+): Promise<WebhookIdentity[]> {
+  const { commerceWebhooksClient, logger } = context;
+  let liveIdentities = liveWebhooks.map(toIdentity);
+  const staleWebhooks = liveWebhooks.filter(
+    (webhook) =>
+      isWebhookOwnedByApp(webhook, appId) &&
+      !isDesiredWebhook(webhook, desiredWebhooks),
+  );
+
+  for (const stale of staleWebhooks) {
+    const identity = toIdentity(stale);
+
+    // biome-ignore lint/performance/noAwaitInLoops: removals must run sequentially so a failure aborts the remaining work
+    await deleteWebhookSubscription(commerceWebhooksClient, identity, identity);
+
+    logger.info(`Unsubscribed webhook: ${getWebhookName(identity)}`);
+    liveIdentities = liveIdentities.filter(
+      (live) => !webhookIdentitiesMatch(live, identity),
+    );
+  }
+  return liveIdentities;
+}
+
+/** Attaches Developer Console credentials when the webhook requires Adobe authentication. */
+function createSubscribeParams(
+  webhook: WebhookSubscribeParams,
+  requiresAdobeAuth: boolean,
+  params: Record<string, unknown>,
+): WebhookSubscribeParams {
+  if (!requiresAdobeAuth) {
+    return webhook;
+  }
+
+  return {
+    ...webhook,
+    developer_console_oauth: resolveDeveloperConsoleOAuthCredentials(params),
   };
 }

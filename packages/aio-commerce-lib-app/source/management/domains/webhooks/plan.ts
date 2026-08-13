@@ -14,6 +14,7 @@ import { getInstallCommerceEnv } from "#config/lib/environment";
 
 import {
   getWebhookName,
+  hasWebhookConfigChanged,
   isDesiredWebhook,
   resolveDesiredWebhooks,
   toIdentity,
@@ -36,10 +37,10 @@ import type {
 } from "./types";
 
 /**
- * Diffs the target config against the baseline into add/remove operations. Pure —
- * no external reads or writes, since an observation made here could be stale by
- * execution time. Blocks with `WEBHOOK_BASELINE_UNRESOLVED` if a baseline exists
- * but its data couldn't be resolved, rather than guessing.
+ * Diffs the target config against the baseline into add, update, and remove
+ * operations. Pure — no external reads or writes, since an observation made
+ * here could be stale by execution time. Blocks with
+ * `WEBHOOK_BASELINE_UNRESOLVED` if the baseline data cannot be resolved.
  */
 export function planWebhookSubscriptions(
   input: PlanningInput<WebhooksConfig, WebhookSnapshotData>,
@@ -72,6 +73,7 @@ export function planWebhookSubscriptions(
 
   // Removes precede adds (see the concat below) so a rename never briefly double-registers a hook point.
   const addOperations: ResourceOperation<WebhookOperationValue>[] = [];
+  const updateOperations: ResourceOperation<WebhookOperationValue>[] = [];
   const removeOperations: ResourceOperation<WebhookOperationValue>[] = [];
 
   for (const webhook of desired) {
@@ -80,6 +82,16 @@ export function planWebhookSubscriptions(
     );
 
     if (owned) {
+      if (hasWebhookConfigChanged(owned, webhook)) {
+        const identity = toIdentity(webhook);
+        updateOperations.push({
+          after: webhook,
+          before: identity,
+          id: webhookOperationId("update", identity),
+          kind: "update",
+          label: `Update webhook: ${getWebhookName(identity)}`,
+        });
+      }
       continue;
     }
 
@@ -109,7 +121,7 @@ export function planWebhookSubscriptions(
   return Promise.resolve({
     kind: "planned",
     plan: {
-      operations: [...removeOperations, ...addOperations],
+      operations: [...removeOperations, ...updateOperations, ...addOperations],
       path,
     },
   });
