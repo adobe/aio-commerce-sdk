@@ -157,7 +157,7 @@ type LifecycleExecutionRouteParams = WorkflowRouteParams & {
  * Builds a LifecycleContext from merged workflow params.
  * Shared by installation, uninstallation, and upgrade execution.
  */
-function buildInstallationContext(
+function buildLifecycleContext(
   params: WorkflowRouteParams,
   appConfig: CommerceAppConfigOutputModel,
   logFn: LifecycleContext["logger"],
@@ -370,7 +370,7 @@ router.post("/execution", {
     const appConfig = validateCommerceAppConfig(rawAppConfig);
     const store = await createInstallationStore();
     const hooks = createInstallationHooks(store, (msg) => logger.debug(msg));
-    const installationContext = buildInstallationContext(
+    const installationContext = buildLifecycleContext(
       params,
       appConfig,
       logger,
@@ -731,7 +731,7 @@ router.post("/uninstallation/execution", {
     const appConfig = validateCommerceAppConfig(rawAppConfig);
     const store = await createUninstallationStore();
     const hooks = createInstallationHooks(store, (msg) => logger.debug(msg));
-    const installationContext = buildInstallationContext(
+    const installationContext = buildLifecycleContext(
       params,
       appConfig,
       logger,
@@ -847,7 +847,7 @@ async function createLifecycleRuntime(
 ) {
   return {
     ...(await createLifecyclePersistence()),
-    lifecycleContext: buildInstallationContext(params, appConfig, logger),
+    lifecycleContext: buildLifecycleContext(params, appConfig, logger),
     rootStep: createRootInstallationStep(appConfig),
   };
 }
