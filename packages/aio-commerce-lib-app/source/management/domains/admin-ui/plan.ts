@@ -124,6 +124,43 @@ function enumerateComponents(
   return components;
 }
 
+/** Reads the baseline's persisted `extensionId`, or `null` when there is no baseline. */
+function extractBaselineExtensionId(
+  baseline: { data: AdminUiSnapshotData } | null,
+): string | null {
+  return baseline?.data.extensionId ?? null;
+}
+
+/** Builds an `add` or `remove` operation for a single enumerated component. */
+function buildComponentOperation(
+  kind: "add" | "remove",
+  key: string,
+  component: AdminUiComponentDescriptor,
+): ResourceOperation<AdminUiOperationValue> {
+  const value: AdminUiOperationValue = {
+    component: component.ref,
+    config: component.config,
+  };
+
+  if (kind === "add") {
+    return {
+      after: value,
+      category: "configuration",
+      id: `add:${key}`,
+      kind: "add",
+      label: `Add Admin UI ${component.label}`,
+    };
+  }
+
+  return {
+    before: value,
+    category: "configuration",
+    id: `remove:${key}`,
+    kind: "remove",
+    label: `Remove Admin UI ${component.label}`,
+  };
+}
+
 /**
  * Plans the Admin UI extension transition by diffing the baseline and target
  * `adminUi` blocks component-by-component. Deterministic and free of network I/O
@@ -157,28 +194,16 @@ export function planAdminUi(
 
   for (const [key, component] of targetComponents) {
     if (!baselineComponents.has(key)) {
-      operations.push({
-        after: { component: component.ref, config: component.config },
-        category: "configuration",
-        id: `add:${key}`,
-        kind: "add",
-        label: `Add Admin UI ${component.label}`,
-      });
+      operations.push(buildComponentOperation("add", key, component));
     }
   }
 
   for (const [key, component] of baselineComponents) {
     if (!targetComponents.has(key)) {
-      operations.push({
-        before: { component: component.ref, config: component.config },
-        category: "configuration",
-        id: `remove:${key}`,
-        kind: "remove",
-        label: `Remove Admin UI ${component.label}`,
-      });
+      operations.push(buildComponentOperation("remove", key, component));
     }
-    // A changed config for a component on both sides is a modification, owned by
-    // CEXT-6510; this ticket intentionally leaves it out.
+    // A changed config for a component on both sides is a modification, which this
+    // step intentionally does not emit.
   }
 
   // The engine runs `apply` only for domains that report operations
@@ -222,6 +247,12 @@ export function planAdminUi(
 
   return Promise.resolve({
     kind: "planned",
-    plan: { extensionAction, operations, path, possibleCleanupResources },
+    plan: {
+      baselineExtensionId: extractBaselineExtensionId(baseline),
+      extensionAction,
+      operations,
+      path,
+      possibleCleanupResources,
+    },
   });
 }

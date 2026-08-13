@@ -258,6 +258,20 @@ describe("planAdminUi", () => {
     expect(result.kind).toBe("planned");
   });
 
+  test("carries the baseline's extensionId forward on the plan, or null when there is no baseline", async () => {
+    const noBaseline = await planned(
+      null,
+      configWithAdminUiSingleGrid as AdminUiConfig,
+    );
+    expect(noBaseline.plan.baselineExtensionId).toBeNull();
+
+    const withBaseline = await planned(
+      configWithAdminUiSingleGrid as AdminUiConfig,
+      configWithAdminUiAllGrids as AdminUiConfig,
+    );
+    expect(withBaseline.plan.baselineExtensionId).toBe("ext-123");
+  });
+
   test("makes no external calls during planning", async () => {
     const { context } = await planned(
       configWithAdminUiSingleGrid as AdminUiConfig,
@@ -266,6 +280,7 @@ describe("planAdminUi", () => {
 
     expect(context.adminUiClient.enableAdminUiSdk).not.toHaveBeenCalled();
     expect(context.adminUiClient.registerExtension).not.toHaveBeenCalled();
+    expect(context.adminUiClient.refreshExtension).not.toHaveBeenCalled();
     expect(context.adminUiClient.unregisterExtension).not.toHaveBeenCalled();
   });
 });

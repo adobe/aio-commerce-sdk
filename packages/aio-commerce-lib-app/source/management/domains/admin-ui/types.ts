@@ -19,9 +19,15 @@ export type AdminUiIdentity = {
   workspaceName: string;
 };
 
-/** Snapshot data persisted after a successful Admin UI registration or refresh. */
+/**
+ * Snapshot data persisted after a successful Admin UI registration or refresh.
+ * `extensionId` is `null` when the dedicated refresh endpoint handles the sync:
+ * it re-syncs registrations without returning one, and there is no read endpoint
+ * to fetch it back, so the baseline's id is carried forward instead (see
+ * {@link AdminUiDomainPlan.baselineExtensionId}).
+ */
 export type AdminUiSnapshotData = {
-  extensionId: string;
+  extensionId: string | null;
 };
 
 /** The Commerce entity an Admin UI component attaches to (absent for the menu). */
@@ -79,4 +85,7 @@ export type AdminUiDomainPlan = DomainPlan<
   AdminUiIdentity
 > & {
   extensionAction: AdminUiExtensionAction | null;
+
+  /** The `extensionId` from the baseline snapshot, or `null` when there is no baseline. */
+  baselineExtensionId: string | null;
 };

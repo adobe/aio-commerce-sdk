@@ -23,6 +23,23 @@ import type { AdminUiExecutionContext, AdminUiStepContext } from "./utils";
 /** HTTP status Commerce returns when the extension to delete no longer exists. */
 const HTTP_NOT_FOUND = 404;
 
+/** The Admin UI extension name (the deployment namespace), or `undefined` when unset. */
+function getExtensionName(): string | undefined {
+  return process.env.__OW_NAMESPACE;
+}
+
+/**
+ * The Admin UI extension name, throwing when the deployment namespace
+ * (`__OW_NAMESPACE`) is unavailable.
+ */
+function requireExtensionName(): string {
+  const extensionName = getExtensionName();
+  if (!extensionName) {
+    throw new Error("__OW_NAMESPACE environment variable is not set");
+  }
+  return extensionName;
+}
+
 /**
  * Enables the Admin UI SDK in Commerce via PUT /V1/adminuisdk/config.
  * Must run before {@link registerExtension} so Commerce accepts the extension.
@@ -50,11 +67,7 @@ export async function enableAdminUiSdk(context: AdminUiExecutionContext) {
  */
 export async function registerExtension(context: AdminUiExecutionContext) {
   const { adminUiClient, appData, logger } = context;
-  const extensionName = process.env.__OW_NAMESPACE;
-
-  if (!extensionName) {
-    throw new Error("__OW_NAMESPACE environment variable is not set");
-  }
+  const extensionName = requireExtensionName();
 
   logger.info(`Registering Admin UI extension: ${appData.projectName}`);
 
@@ -73,22 +86,58 @@ export async function registerExtension(context: AdminUiExecutionContext) {
 }
 
 /**
- * Refreshes an existing extension's registrations from the App Registry.
+ * Refreshes an existing extension's registrations from the App Registry via the
+ * dedicated `POST .../refresh` endpoint, which re-syncs registrations without
+ * modifying the extension record. The endpoint returns no body, so on success
+ * this returns `{ extensionId: null }`.
  *
- * Interim implementation: re-POSTs the registration, which is idempotent and
- * re-syncs the registrations without duplicating the extension. Swap to the
- * dedicated `POST .../refresh` endpoint (CEXT-6559) once it ships to instances.
+ * Not every Commerce instance exposes the refresh route: on PaaS, merchants
+ * control their own Admin UI SDK upgrade cadence, so the route may be absent
+ * (unlike ACCS, which Adobe upgrades centrally). A 404 (route absent, or the
+ * extension not registered) therefore re-registers instead, which re-syncs the
+ * registrations idempotently.
  *
  * @param context - The execution context providing the Admin UI client and logger.
  */
-export function refreshExtension(context: AdminUiExecutionContext) {
-  return registerExtension(context);
+export async function refreshExtension(
+  context: AdminUiExecutionContext,
+): Promise<{ extensionId: string | null }> {
+  const { adminUiClient, appData, logger } = context;
+  const extensionName = requireExtensionName();
+
+  try {
+    await adminUiClient.refreshExtension({
+      extensionName,
+      workspaceName: appData.workspaceName,
+    });
+    logger.info(
+      `Admin UI extension "${extensionName}" refreshed successfully.`,
+    );
+    return { extensionId: null };
+  } catch (error: unknown) {
+    if (
+      error instanceof HTTPError &&
+      error.response.status === HTTP_NOT_FOUND
+    ) {
+      logger.info(
+        `Refresh unavailable for Admin UI extension "${extensionName}" (endpoint missing or extension not registered); falling back to re-registering.`,
+      );
+      return registerExtension(context);
+    }
+
+    return throwHttpError(
+      logger,
+      error,
+      "Failed to refresh Admin UI extension",
+    );
+  }
 }
 
 /**
  * Performs the DELETE against Commerce for the given extension, logging the start
- * and success. Throws the raw client error on failure so callers can apply their
- * own error policy (best-effort warn vs. strict 404-tolerant throw).
+ * and success. Throws the raw client error on failure without classifying it — the
+ * two unregister paths differ in how they treat failures (best-effort warn vs.
+ * strict 404-tolerant throw).
  *
  * @param context - The execution context providing the Admin UI client and logger.
  * @param extensionName - The resolved extension name (the deployment namespace).
@@ -123,7 +172,7 @@ export async function unregisterExtension(
   context: AdminUiExecutionContext,
 ): Promise<void> {
   const { logger } = context;
-  const extensionName = process.env.__OW_NAMESPACE;
+  const extensionName = getExtensionName();
 
   if (!extensionName) {
     logger.warn(
@@ -154,11 +203,7 @@ export async function unregisterExtensionForUpgrade(
   context: AdminUiExecutionContext,
 ): Promise<void> {
   const { logger } = context;
-  const extensionName = process.env.__OW_NAMESPACE;
-
-  if (!extensionName) {
-    throw new Error("__OW_NAMESPACE environment variable is not set");
-  }
+  const extensionName = requireExtensionName();
 
   try {
     await deleteExtensionRegistration(context, extensionName);
@@ -183,16 +228,14 @@ export async function unregisterExtensionForUpgrade(
 
 /**
  * Resolves the identity of this app's Admin UI extension from context, or `null`
- * when the deployment namespace (`__OW_NAMESPACE`) is not available. Used by
- * `plan`, which must not throw — a missing namespace is surfaced as a blocking
- * issue instead of crashing the whole planning pass.
+ * when the deployment namespace (`__OW_NAMESPACE`) is not available.
  */
 export function tryResolveExtensionIdentity(
   context:
     | ValidationExecutionContext<AdminUiStepContext>
     | ApplyContext<AdminUiStepContext>,
 ): AdminUiIdentity | null {
-  const extensionName = process.env.__OW_NAMESPACE;
+  const extensionName = getExtensionName();
   if (!extensionName) {
     return null;
   }
@@ -201,8 +244,8 @@ export function tryResolveExtensionIdentity(
 }
 
 /**
- * Resolves the extension identity, throwing when the namespace is unavailable.
- * Used by `apply`, where a throw is reported as the attempt's failure.
+ * Resolves the identity of this app's Admin UI extension from context, throwing
+ * when the deployment namespace (`__OW_NAMESPACE`) is not available.
  */
 export function resolveExtensionIdentity(
   context:

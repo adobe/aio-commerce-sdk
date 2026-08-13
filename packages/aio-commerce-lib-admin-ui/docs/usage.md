@@ -48,6 +48,13 @@ await client.unregisterExtension({
   workspaceName: "prod-workspace",
   extensionName: "my_namespace",
 });
+
+// Refresh an extension's registrations from the App Registry without
+// modifying the extension record.
+await client.refreshExtension({
+  workspaceName: "prod-workspace",
+  extensionName: "my_namespace",
+});
 ```
 
 ### Grid Column Wire Contract

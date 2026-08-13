@@ -35,9 +35,10 @@ import type { AdminUiStepContext } from "./utils";
  *
  * - `register`: enable the SDK (its install-only step is skipped during upgrade
  *   planning), then register the extension.
- * - `refresh`: enable the SDK (idempotent) as a safeguard, then re-register to
- *   re-sync the extension's components from the App Registry (component adds and
- *   removes converge in one call).
+ * - `refresh`: enable the SDK (idempotent) as a safeguard, then call the dedicated
+ *   refresh endpoint to re-sync the extension's components from the App Registry.
+ *   Falls back to re-registering when that endpoint is unavailable on this
+ *   Commerce instance (see {@link refreshExtension}).
  * - `unregister`: remove the extension, validating that the removal succeeded.
  *
  * The calls throw on failure, so a failed attempt never reports partial success.
@@ -59,12 +60,18 @@ export async function applyAdminUi(
   }
 
   if (plan.extensionAction === "refresh") {
-    // Enable defensively: refresh re-POSTs the registration, which Commerce
-    // rejects unless the SDK is enabled. Enabling is an idempotent PUT, so it
-    // guards against the SDK being disabled out-of-band at no meaningful cost.
+    // Enable defensively: refresh (and the re-register fallback) require the SDK
+    // to be enabled, and Commerce rejects them otherwise. Enabling is an
+    // idempotent PUT, so it guards against the SDK being disabled out-of-band at
+    // no meaningful cost.
     await enableAdminUiSdk(context);
     const { extensionId } = await refreshExtension(context);
-    return { resolvedCleanupResources: [], snapshotData: { extensionId } };
+    // The dedicated refresh endpoint returns no id (and there is no read endpoint
+    // to fetch one), so preserve the baseline's id in that case.
+    return {
+      resolvedCleanupResources: [],
+      snapshotData: { extensionId: extensionId ?? plan.baselineExtensionId },
+    };
   }
 
   if (plan.extensionAction === "unregister") {
