@@ -11,33 +11,18 @@
  */
 
 import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
-// @ts-expect-error - The library doesn't export types.
-import config from "@adobe/aio-lib-core-config";
-import aioIms from "@adobe/aio-lib-ims";
+import {
+  getAioCliEnv,
+  getAioProjectContext,
+  getUserToken,
+} from "@aio-commerce-sdk/scripting-utils/aio";
 import { consola } from "consola";
 import { colors } from "consola/utils";
+import ky, { HTTPError } from "ky";
 
 import { parseCommerceAppConfig } from "#config/lib/parser";
 
 import type { DomainPlan } from "#management/common/workflow/resource";
-
-type ProjectConfig = {
-  id: string;
-  name: string;
-  org: {
-    id: string;
-    ims_org_id: string;
-    name: string;
-  };
-  title: string;
-  workspace: {
-    id: string;
-    name: string;
-    title: string;
-  };
-};
-
-type Environment = "stage" | "prod" | undefined;
 
 type SkippedResult = { skipped: true; reason: string };
 type UpgradePlanResult = { plan: DomainPlan };
@@ -48,64 +33,67 @@ function isSkippedResult(result: UpgradeResult): result is SkippedResult {
   return "skipped" in result;
 }
 
-/** Invokes the deployed app's upgrade endpoint. */
-export async function run() {
-  const appConfig = await parseCommerceAppConfig();
-  const { upgradeMode } = appConfig.metadata;
+/** Invokes the upgrade action. */
+async function invokeAction() {
+  const { project, namespace } = getAioProjectContext();
+  const token = await getUserToken();
 
-  const project = config.get("project") as ProjectConfig | undefined;
-  const namespace = config.get("runtime.namespace") as string | undefined;
-
-  if (!(project && namespace)) {
-    throw new Error(
-      "The current App Builder project and Runtime namespace are required",
-    );
-  }
-
-  const contextName = (await aioIms.context.getCurrent()) ?? "cli";
-  const token = await aioIms.getToken(contextName, {});
   const endpoint = `https://${namespace}.adobeioruntime.net/api/v1/web/app-management/installation/upgrade`;
-
-  consola.start("Checking for app upgrades...");
   consola.debug(`Upgrade endpoint: ${endpoint}`);
 
-  const ioEventsEnv = (config.get("cli.env") as Environment) ?? "prod";
+  const ioEventsEnv = getAioCliEnv();
   const ioEventsUrl =
     ioEventsEnv === "stage"
       ? "https://events-stage.adobe.io"
       : "https://events.adobe.io";
 
-  const response = await fetch(endpoint, {
-    body: JSON.stringify({
-      appData: {
-        consumerOrgId: project.org.id,
-        orgName: project.org.name,
-        projectId: project.id,
-        projectName: project.name,
-        projectTitle: project.title,
-        workspaceId: project.workspace.id,
-        workspaceName: project.workspace.name,
-        workspaceTitle: project.workspace.title,
-      },
+  let result: UpgradeResult;
+  try {
+    result = await ky
+      .post(endpoint, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "x-gw-ims-org-id": project.org.ims_org_id,
+        },
+        json: {
+          appData: {
+            consumerOrgId: project.org.id,
+            orgName: project.org.name,
+            projectId: project.id,
+            projectName: project.name,
+            projectTitle: project.title,
+            workspaceId: project.workspace.id,
+            workspaceName: project.workspace.name,
+            workspaceTitle: project.workspace.title,
+          },
 
-      ioEventsEnv,
-      ioEventsUrl,
-    }),
+          ioEventsEnv,
+          ioEventsUrl,
+        },
+      })
+      .json<UpgradeResult>();
+  } catch (error) {
+    if (error instanceof HTTPError) {
+      const details = await error.response.json();
+      throw new Error(
+        `Failed to trigger app upgrade (HTTP ${error.response.status}): ${JSON.stringify(details, null, 2)}`,
+        { cause: error },
+      );
+    }
 
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-      "x-gw-ims-org-id": project.org.ims_org_id,
-    },
-
-    method: "POST",
-  });
-
-  if (!response.ok) {
-    throw new Error(`Failed to trigger app upgrade: ${response.status}`);
+    throw error;
   }
 
-  const result = (await response.json()) as UpgradeResult;
+  return result;
+}
+
+/** Invokes the deployed app's upgrade endpoint. */
+export async function run() {
+  const appConfig = await parseCommerceAppConfig();
+  const { upgradeMode } = appConfig.metadata;
+
+  consola.start("Checking for app upgrades...");
+  const result = await invokeAction();
 
   if (isSkippedResult(result)) {
     consola.info(`No upgrade was run: ${result.reason}.`);
@@ -118,7 +106,7 @@ export async function run() {
     );
   } else {
     consola.success(
-      `You have set ${colors.cyan("metadata.upgradeMode")} to ${colors.cyan("automatic")}. The upgrade plan has been created. Execution will begin shortly.`,
+      `You have set ${colors.cyan("metadata.upgradeMode")} to ${colors.cyan("auto")}. The upgrade plan has been created. Execution will begin shortly.`,
     );
   }
 
