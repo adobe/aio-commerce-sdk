@@ -250,6 +250,7 @@ export function planAdminUi(
     plan: {
       baselineExtensionId: extractBaselineExtensionId(baseline),
       extensionAction,
+      identity,
       operations,
       path,
       possibleCleanupResources,

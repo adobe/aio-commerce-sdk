@@ -256,6 +256,21 @@ describe("planAdminUi", () => {
     const result = await planAdminUi(planInput(null, null), context);
 
     expect(result.kind).toBe("planned");
+    if (result.kind === "planned") {
+      expect(result.plan.identity).toBeNull();
+    }
+  });
+
+  test("resolves the identity on the plan when the namespace is available", async () => {
+    const { context, plan } = await planned(
+      null,
+      configWithAdminUiSingleGrid as AdminUiConfig,
+    );
+
+    expect(plan.identity).toEqual({
+      extensionName: "test-ns",
+      workspaceName: context.appData.workspaceName,
+    });
   });
 
   test("carries the baseline's extensionId forward on the plan, or null when there is no baseline", async () => {

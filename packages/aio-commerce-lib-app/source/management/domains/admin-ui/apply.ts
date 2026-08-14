@@ -14,7 +14,6 @@ import {
   enableAdminUiSdk,
   refreshExtension,
   registerExtension,
-  resolveExtensionIdentity,
   unregisterExtensionForUpgrade,
 } from "./helpers";
 
@@ -75,11 +74,19 @@ export async function applyAdminUi(
   }
 
   if (plan.extensionAction === "unregister") {
+    const { identity } = plan;
+    // Planning already blocks (rather than producing an "unregister" action)
+    // when identity can't be resolved, so a null identity here means the plan
+    // was tampered with or built incorrectly.
+    if (!identity) {
+      throw new Error(
+        "Cannot unregister the Admin UI extension: the plan has no resolved identity.",
+      );
+    }
+
     await unregisterExtensionForUpgrade(context);
     return {
-      resolvedCleanupResources: [
-        { identity: resolveExtensionIdentity(context), path: plan.path },
-      ],
+      resolvedCleanupResources: [{ identity, path: plan.path }],
       snapshotData: null,
     };
   }

@@ -19,6 +19,7 @@ import { makeHttpError } from "#test/fixtures/http-error";
 import type {
   AdminUiDomainPlan,
   AdminUiExtensionAction,
+  AdminUiIdentity,
 } from "#management/domains/admin-ui/types";
 
 const UNREGISTER_FAILURE_PATTERN =
@@ -28,6 +29,11 @@ const REFRESH_FAILURE_PATTERN =
   /Failed to refresh Admin UI extension.*Service unavailable/;
 
 const OPERATION_PATH = ["admin-ui", "register-extension"];
+
+const TEST_IDENTITY: AdminUiIdentity = {
+  extensionName: "test-ns",
+  workspaceName: "test-workspace-name",
+};
 
 describe("applyAdminUi", () => {
   beforeEach(() => {
@@ -48,10 +54,12 @@ describe("applyAdminUi", () => {
     extensionAction: AdminUiExtensionAction | null,
     possibleCleanupResources: AdminUiDomainPlan["possibleCleanupResources"] = [],
     baselineExtensionId: string | null = null,
+    identity: AdminUiIdentity | null = TEST_IDENTITY,
   ): AdminUiDomainPlan {
     return {
       baselineExtensionId,
       extensionAction,
+      identity,
       operations: [],
       path: OPERATION_PATH,
       possibleCleanupResources,
@@ -60,15 +68,7 @@ describe("applyAdminUi", () => {
 
   test("register: enables the SDK, registers, and resolves the plan's cleanup resource", async () => {
     const context = applyContext();
-    const cleanup = [
-      {
-        identity: {
-          extensionName: "test-ns",
-          workspaceName: context.appData.workspaceName,
-        },
-        path: OPERATION_PATH,
-      },
-    ];
+    const cleanup = [{ identity: TEST_IDENTITY, path: OPERATION_PATH }];
     const result = await applyAdminUi(makePlan("register", cleanup), context);
 
     expect(context.adminUiClient.enableAdminUiSdk).toHaveBeenCalledOnce();
@@ -135,14 +135,17 @@ describe("applyAdminUi", () => {
     expect(context.adminUiClient.unregisterExtension).toHaveBeenCalledOnce();
     expect(result.snapshotData).toBeNull();
     expect(result.resolvedCleanupResources).toEqual([
-      {
-        identity: {
-          extensionName: "test-ns",
-          workspaceName: context.appData.workspaceName,
-        },
-        path: OPERATION_PATH,
-      },
+      { identity: TEST_IDENTITY, path: OPERATION_PATH },
     ]);
+  });
+
+  test("unregister: throws when the plan has no resolved identity", async () => {
+    const context = applyContext();
+
+    await expect(
+      applyAdminUi(makePlan("unregister", [], null, null), context),
+    ).rejects.toThrow("the plan has no resolved identity");
+    expect(context.adminUiClient.unregisterExtension).not.toHaveBeenCalled();
   });
 
   test("no-op: does nothing when the extension action is null", async () => {
@@ -200,13 +203,7 @@ describe("applyAdminUi", () => {
     expect(context.adminUiClient.unregisterExtension).toHaveBeenCalledOnce();
     expect(result.snapshotData).toBeNull();
     expect(result.resolvedCleanupResources).toEqual([
-      {
-        identity: {
-          extensionName: "test-ns",
-          workspaceName: context.appData.workspaceName,
-        },
-        path: OPERATION_PATH,
-      },
+      { identity: TEST_IDENTITY, path: OPERATION_PATH },
     ]);
   });
 });

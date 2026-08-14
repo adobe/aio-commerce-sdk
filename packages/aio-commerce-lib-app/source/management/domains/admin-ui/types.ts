@@ -88,4 +88,10 @@ export type AdminUiDomainPlan = DomainPlan<
 
   /** The `extensionId` from the baseline snapshot, or `null` when there is no baseline. */
   baselineExtensionId: string | null;
+
+  /**
+   * The extension identity, or `null` when the deployment namespace
+   * (`__OW_NAMESPACE`) was unavailable.
+   */
+  identity: AdminUiIdentity | null;
 };

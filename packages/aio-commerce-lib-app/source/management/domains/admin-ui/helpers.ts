@@ -242,20 +242,3 @@ export function tryResolveExtensionIdentity(
 
   return { extensionName, workspaceName: context.appData.workspaceName };
 }
-
-/**
- * Resolves the identity of this app's Admin UI extension from context, throwing
- * when the deployment namespace (`__OW_NAMESPACE`) is not available.
- */
-export function resolveExtensionIdentity(
-  context:
-    | ValidationExecutionContext<AdminUiStepContext>
-    | ApplyContext<AdminUiStepContext>,
-): AdminUiIdentity {
-  const identity = tryResolveExtensionIdentity(context);
-  if (!identity) {
-    throw new Error("__OW_NAMESPACE environment variable is not set");
-  }
-
-  return identity;
-}
