@@ -11,10 +11,10 @@
  */
 
 import { isBranchStep, isLeafStep } from "./step";
-import { getAtPath, isStepConfigured, pathsEqual } from "./utils";
+import { getAtPath, isStepConfigured } from "./utils";
 
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
-import type { CleanupResource, DomainPlan, PlanningIssue } from "./resource";
+import type { DomainPlan, PlanningIssue } from "./resource";
 import type { AnyStep, BranchStep, LifecycleContext } from "./step";
 import type { WorkflowData } from "./types";
 
@@ -29,7 +29,6 @@ export type PlanWorkflowOptions = {
   target: {
     config: CommerceAppConfigOutputModel;
   };
-  unresolvedCleanupResources: CleanupResource[];
 };
 
 /** Aggregated output of a workflow planning pass. */
@@ -116,9 +115,6 @@ async function planStep(
     : null;
 
   const domainTargetConfig = configuredInTarget ? options.target.config : null;
-  const domainCleanupResources = options.unresolvedCleanupResources.filter(
-    (resource) => pathsEqual(resource.path, path),
-  );
 
   const domainContext = {
     ...options.lifecycleContext,
@@ -129,7 +125,6 @@ async function planStep(
     baseline: domainBaseline,
     path,
     targetConfig: domainTargetConfig,
-    unresolvedCleanupResources: domainCleanupResources,
   };
 
   const result = await step.plan(planningInput, domainContext);

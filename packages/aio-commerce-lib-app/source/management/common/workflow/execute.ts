@@ -25,7 +25,6 @@ import {
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 import type { LifecyclePlan } from "#management/common/orchestration";
 import type { WorkflowHooks } from "./hooks";
-import type { CleanupResource } from "./resource";
 import type { AnyStep, BranchStep, LifecycleContext } from "./step";
 import type {
   FailedWorkflowState,
@@ -51,13 +50,11 @@ export type ExecutePlannedWorkflowOptions = {
   failureKey?: string;
   attemptId: string;
   plan: LifecyclePlan;
-  resolvedCleanupResources?: CleanupResource[];
 };
 
 /** Outcome of executing the `apply` methods selected by a persisted plan. */
 export type PlannedWorkflowResult = {
   state: SucceededWorkflowState | FailedWorkflowState;
-  resolvedCleanupResources: CleanupResource[];
 };
 
 /** Mutable state shared while executing a persisted lifecycle plan. */
@@ -72,7 +69,6 @@ type PlannedStepExecutionContext = {
   hooks?: WorkflowHooks;
   attemptId: string;
   plan: LifecyclePlan;
-  resolvedCleanupResources: CleanupResource[];
 };
 
 /** Creates an initial execution state pruned to leaves with planned operations. */
@@ -145,7 +141,6 @@ export async function executePlannedWorkflow(
     id: initialState.id,
     lifecycleContext,
     plan,
-    resolvedCleanupResources: options.resolvedCleanupResources ?? [],
     rootStep: step,
     startedAt: initialState.startedAt,
   };
@@ -162,10 +157,7 @@ export async function executePlannedWorkflow(
     });
 
     await callHook(hooks, "onSuccess", succeeded);
-    return {
-      resolvedCleanupResources: context.resolvedCleanupResources,
-      state: succeeded,
-    };
+    return { state: succeeded };
   } catch (error) {
     const workflowError =
       context.error ?? (await createWorkflowError(error, [], failureKey));
@@ -182,10 +174,7 @@ export async function executePlannedWorkflow(
     );
 
     await callHook(hooks, "onFailure", failed);
-    return {
-      resolvedCleanupResources: context.resolvedCleanupResources,
-      state: failed,
-    };
+    return { state: failed };
   }
 }
 
@@ -283,7 +272,6 @@ async function executePlannedStep(
         attemptId: context.attemptId,
       });
 
-      context.resolvedCleanupResources.push(...result.resolvedCleanupResources);
       context.data ??= {};
 
       setAtPath(context.data, path, result.snapshotData);

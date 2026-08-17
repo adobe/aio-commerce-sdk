@@ -13,10 +13,8 @@
 import { executePlannedWorkflow } from "#management/common/workflow/execute";
 import { createRetryState } from "#management/common/workflow/runner";
 
-import { removeResolvedCleanupResources } from "./cleanup";
 import {
   persistApplyFailure,
-  persistCleanupFailure,
   persistProgress,
   persistSuccess,
 } from "./persistence";
@@ -32,7 +30,6 @@ import type {
   OrchestrationState,
 } from "#management/common/orchestration";
 import type { WorkflowHooks } from "#management/common/workflow/hooks";
-import type { CleanupResource } from "#management/common/workflow/resource";
 import type {
   FailedWorkflowState,
   InProgressWorkflowState,
@@ -66,67 +63,24 @@ export async function executeLifecycleAttempt(
     return attempt;
   }
 
-  const resolvedCleanupResources = [...attempt.resolvedCleanupResources];
-  const hooks = createProgressHooks(
-    options.stateStore,
-    attempt.id,
-    resolvedCleanupResources,
-  );
-  const workflow = await executePlanWithRetry(
-    options,
-    attempt,
-    hooks,
-    resolvedCleanupResources,
-  );
+  const hooks = createProgressHooks(options.stateStore, attempt.id);
+  const workflow = await executePlanWithRetry(options, attempt, hooks);
 
   state = await requireCurrentAttempt(options.stateStore, attempt.id);
   if (workflow.status === "failed") {
-    return persistApplyFailure(
-      options.stateStore,
-      state,
-      attempt,
-      workflow,
-      resolvedCleanupResources,
-    );
+    return persistApplyFailure(options.stateStore, state, attempt, workflow);
   }
 
-  const remainingCleanupResources = removeResolvedCleanupResources(
-    state.unresolvedCleanupResources,
-    resolvedCleanupResources,
-  );
-  if (remainingCleanupResources.length > 0) {
-    return persistCleanupFailure(
-      options.stateStore,
-      state,
-      attempt,
-      workflow,
-      resolvedCleanupResources,
-    );
-  }
-
-  return persistSuccess(
-    options,
-    state,
-    attempt,
-    workflow,
-    resolvedCleanupResources,
-    remainingCleanupResources,
-  );
+  return persistSuccess(options, state, attempt, workflow);
 }
 
 /** Creates hooks that persist execution progress after every step transition. */
 function createProgressHooks(
   stateStore: LifecycleStore<OrchestrationState>,
   attemptId: string,
-  resolvedCleanupResources: CleanupResource[],
 ): WorkflowHooks {
   const persistExecutionProgress = (progressState: WorkflowRunState) =>
-    persistProgress(
-      stateStore,
-      attemptId,
-      progressState,
-      resolvedCleanupResources,
-    );
+    persistProgress(stateStore, attemptId, progressState);
   return {
     onStepFailure: (_event, progressState) =>
       persistExecutionProgress(progressState),
@@ -142,7 +96,6 @@ async function executePlanWithRetry(
   options: ExecuteLifecycleAttemptOptions,
   attempt: LifecycleAttempt,
   hooks: WorkflowHooks,
-  resolvedCleanupResources: CleanupResource[],
 ): Promise<SucceededWorkflowState | FailedWorkflowState> {
   const executionOptions = {
     attemptId: attempt.id,
@@ -150,7 +103,6 @@ async function executePlanWithRetry(
     hooks,
     lifecycleContext: options.lifecycleContext,
     plan: attempt.plan,
-    resolvedCleanupResources,
     rootStep: options.rootStep,
   };
   let result = await executePlannedWorkflow({

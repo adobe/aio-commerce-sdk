@@ -17,7 +17,6 @@ import type {
   LifecycleAttempt,
   OrchestrationState,
 } from "#management/common/orchestration";
-import type { CleanupResource } from "#management/common/workflow/resource";
 import type {
   FailedWorkflowState,
   SucceededWorkflowState,
@@ -30,7 +29,6 @@ export async function persistProgress(
   stateStore: LifecycleStore<OrchestrationState>,
   attemptId: string,
   progressState: WorkflowRunState,
-  resolvedCleanupResources: CleanupResource[],
 ): Promise<void> {
   const state = await requireCurrentAttempt(stateStore, attemptId);
   const current = state.latestAttempt as LifecycleAttempt;
@@ -41,7 +39,6 @@ export async function persistProgress(
       ...current,
       data: progressState.data,
       progress: progressState.step,
-      resolvedCleanupResources,
       status: "in-progress",
     },
   });
@@ -53,7 +50,6 @@ export async function persistApplyFailure(
   state: OrchestrationState,
   attempt: LifecycleAttempt,
   workflow: FailedWorkflowState,
-  resolvedCleanupResources: CleanupResource[],
 ): Promise<LifecycleAttempt> {
   const failed: LifecycleAttempt = {
     ...attempt,
@@ -68,36 +64,6 @@ export async function persistApplyFailure(
           : undefined,
     },
     progress: workflow.step,
-    resolvedCleanupResources,
-    status: "failed",
-  };
-
-  await stateStore.put(CURRENT_STATE_KEY, {
-    ...state,
-    latestAttempt: failed,
-  });
-
-  return failed;
-}
-
-/** Persists a failure when planned execution leaves cleanup unresolved. */
-export async function persistCleanupFailure(
-  stateStore: LifecycleStore<OrchestrationState>,
-  state: OrchestrationState,
-  attempt: LifecycleAttempt,
-  workflow: SucceededWorkflowState,
-  resolvedCleanupResources: CleanupResource[],
-): Promise<LifecycleAttempt> {
-  const failed: LifecycleAttempt = {
-    ...attempt,
-    data: workflow.data,
-    failure: {
-      key: "LIFECYCLE_CLEANUP_UNRESOLVED",
-      message: "The lifecycle plan did not resolve every cleanup resource",
-      path: [],
-    },
-    progress: workflow.step,
-    resolvedCleanupResources,
     status: "failed",
   };
 
@@ -115,8 +81,6 @@ export async function persistSuccess(
   state: OrchestrationState,
   attempt: LifecycleAttempt,
   workflow: SucceededWorkflowState,
-  resolvedCleanupResources: CleanupResource[],
-  remainingCleanupResources: CleanupResource[],
 ): Promise<LifecycleAttempt> {
   const snapshot: AppStateSnapshot = {
     config: attempt.plan.target.config,
@@ -130,7 +94,6 @@ export async function persistSuccess(
     ...attempt,
     data: workflow.data,
     progress: workflow.step,
-    resolvedCleanupResources,
     result: {
       appVersion: attempt.plan.target.appVersion,
       snapshotId: snapshot.id,
@@ -142,7 +105,6 @@ export async function persistSuccess(
     ...state,
     baselineSnapshotId: snapshot.id,
     latestAttempt: succeeded,
-    unresolvedCleanupResources: remainingCleanupResources,
   });
 
   return succeeded;

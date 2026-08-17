@@ -12,7 +12,6 @@
 
 import { createInitialPlanExecutionState } from "#management/common/workflow/execute";
 
-import { mergeCleanupResources } from "./cleanup";
 import {
   CURRENT_STATE_KEY,
   normalizeExpiredAttempt,
@@ -80,7 +79,6 @@ export async function startLifecycleAttempt(
     operation: plan.operation,
     plan,
     progress: workflow.step,
-    resolvedCleanupResources: [],
     startedAt: workflow.startedAt,
     status: "pending",
   };
@@ -89,10 +87,6 @@ export async function startLifecycleAttempt(
     ...state,
     latestAttempt: attempt,
     pendingPlan: null,
-    unresolvedCleanupResources: mergeCleanupResources(
-      state.unresolvedCleanupResources,
-      plan.domains.flatMap((domain) => domain.possibleCleanupResources),
-    ),
   });
   return attempt;
 }

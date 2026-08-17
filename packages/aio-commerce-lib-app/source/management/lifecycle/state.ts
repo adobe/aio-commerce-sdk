@@ -77,7 +77,6 @@ export async function readOrInitializeState(
     baselineSnapshotId: baseline.id,
     latestAttempt: null,
     pendingPlan: null,
-    unresolvedCleanupResources: [],
   };
 
   await runtime.stateStore.put(CURRENT_STATE_KEY, state);

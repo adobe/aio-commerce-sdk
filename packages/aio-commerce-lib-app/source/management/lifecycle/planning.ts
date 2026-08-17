@@ -71,7 +71,6 @@ export async function planLifecycle(
     target: {
       config: options.targetConfig,
     },
-    unresolvedCleanupResources: state.unresolvedCleanupResources,
   });
 
   const plan: LifecyclePlan = {

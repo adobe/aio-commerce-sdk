@@ -12,7 +12,6 @@
 
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 import type {
-  CleanupResource,
   DomainPlan,
   PlanningIssue,
 } from "#management/common/workflow/resource";
@@ -93,9 +92,6 @@ type LifecycleAttemptBase = {
 
   /** Snapshot data produced by completed leaves. */
   data: WorkflowData | null;
-
-  /** Cleanup resources resolved by completed leaves. */
-  resolvedCleanupResources: CleanupResource[];
 };
 
 /**
@@ -127,7 +123,4 @@ export type OrchestrationState = {
 
   /** Identifier of the current baseline snapshot, or `null` when none exists. */
   baselineSnapshotId: string | null;
-
-  /** Cleanup resources still awaiting reconciliation. */
-  unresolvedCleanupResources: CleanupResource[];
 };
