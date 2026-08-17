@@ -36,6 +36,8 @@ import {
   getAllRegistrations,
 } from "@adobe/aio-commerce-lib-events/io-events";
 
+import { LIFECYCLE_HTTP_CLIENT_TIMEOUT_MS } from "#management/common/constants";
+
 import type { RuntimeActionParams } from "@adobe/aio-commerce-lib-core/params";
 import type {
   ExecutionContext,
@@ -52,7 +54,7 @@ function createCommerceEventsApiClient(params: RuntimeActionParams) {
   });
 
   commerceClientParams.fetchOptions ??= {};
-  commerceClientParams.fetchOptions.timeout = 1000 * 60 * 2; // 2 minutes
+  commerceClientParams.fetchOptions.timeout = LIFECYCLE_HTTP_CLIENT_TIMEOUT_MS;
 
   return createCustomCommerceEventsApiClient(commerceClientParams, {
     createEventProvider: createEventProviderCommerce,
@@ -77,7 +79,7 @@ export type CustomCommerceEventsApiClient = ReturnType<
 function createIoEventsApiClient(params: RuntimeActionParams) {
   const ioEventsClientParams = resolveIoEventsHttpClientParams(params);
   ioEventsClientParams.fetchOptions ??= {};
-  ioEventsClientParams.fetchOptions.timeout = 1000 * 60 * 2; // 2 minutes
+  ioEventsClientParams.fetchOptions.timeout = LIFECYCLE_HTTP_CLIENT_TIMEOUT_MS;
 
   return createCustomAdobeIoEventsApiClient(ioEventsClientParams, {
     createEventMetadataForProvider,
