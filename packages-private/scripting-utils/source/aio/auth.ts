@@ -10,7 +10,12 @@
  * governing permissions and limitations under the License.
  */
 
-import { LifecycleRequestContextSchema } from "#management/common/schema";
+import aioIms from "@adobe/aio-lib-ims";
 
-/** Request body for POST / and POST /validation — the shared lifecycle request shape. */
-export const InstallationRequestBodySchema = LifecycleRequestContextSchema;
+const { context, getToken } = aioIms;
+
+/** Gets an IMS access token for the current CLI IMS context. */
+export async function getUserToken(): Promise<string> {
+  const contextName = (await context.getCurrent()) ?? "cli";
+  return getToken(contextName, {});
+}

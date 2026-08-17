@@ -80,14 +80,12 @@ describe("applyWebhookSubscriptions", () => {
       operations: [
         {
           after: addWebhook,
-          category: "configuration" as const,
           id: "op-1",
           kind: "add" as const,
           label: "Subscribe",
         },
       ],
       path: UPGRADE_PATH,
-      possibleCleanupResources: [],
       retainedWebhooks: [retainedWebhook],
     };
 
@@ -97,14 +95,6 @@ describe("applyWebhookSubscriptions", () => {
     expect(result.snapshotData?.subscribedWebhooks).toEqual([
       retainedWebhook,
       addWebhook,
-    ]);
-    expect(result.resolvedCleanupResources).toEqual([
-      {
-        identity: expect.objectContaining({
-          batch_name: addWebhook.batch_name,
-        }),
-        path: UPGRADE_PATH,
-      },
     ]);
   });
 
@@ -116,14 +106,12 @@ describe("applyWebhookSubscriptions", () => {
       operations: [
         {
           after: { ...addWebhook, requiresAdobeAuth: true },
-          category: "configuration" as const,
           id: "op-1",
           kind: "add" as const,
           label: "Subscribe",
         },
       ],
       path: UPGRADE_PATH,
-      possibleCleanupResources: [],
       retainedWebhooks: [],
     };
 
@@ -138,7 +126,7 @@ describe("applyWebhookSubscriptions", () => {
     );
   });
 
-  test("skips subscribing an add that is already live, but still reports it resolved", async () => {
+  test("skips subscribing an add that is already live", async () => {
     const subscribeWebhook = vi.fn();
     const getWebhookList = vi.fn().mockResolvedValue([addWebhook]);
     const context = makeApplyContext(subscribeWebhook, getWebhookList);
@@ -147,14 +135,12 @@ describe("applyWebhookSubscriptions", () => {
       operations: [
         {
           after: addWebhook,
-          category: "configuration" as const,
           id: "op-1",
           kind: "add" as const,
           label: "Subscribe",
         },
       ],
       path: UPGRADE_PATH,
-      possibleCleanupResources: [],
       retainedWebhooks: [],
     };
 
@@ -162,7 +148,6 @@ describe("applyWebhookSubscriptions", () => {
 
     expect(subscribeWebhook).not.toHaveBeenCalled();
     expect(result.snapshotData?.subscribedWebhooks).toEqual([addWebhook]);
-    expect(result.resolvedCleanupResources).toHaveLength(1);
   });
 
   test("unsubscribes a planned remove that is live", async () => {
@@ -178,14 +163,12 @@ describe("applyWebhookSubscriptions", () => {
       operations: [
         {
           before: retainedWebhook,
-          category: "configuration" as const,
           id: "op-1",
           kind: "remove" as const,
           label: "Unsubscribe",
         },
       ],
       path: UPGRADE_PATH,
-      possibleCleanupResources: [],
       retainedWebhooks: [],
     };
 
@@ -195,10 +178,9 @@ describe("applyWebhookSubscriptions", () => {
       expect.objectContaining({ batch_name: retainedWebhook.batch_name }),
     );
     expect(result.snapshotData?.subscribedWebhooks).toEqual([]);
-    expect(result.resolvedCleanupResources).toHaveLength(1);
   });
 
-  test("skips unsubscribing a remove that is already absent, and still reports it resolved", async () => {
+  test("skips unsubscribing a remove that is already absent", async () => {
     const unsubscribeWebhook = vi.fn();
     const context = makeApplyContext(
       vi.fn(),
@@ -210,21 +192,18 @@ describe("applyWebhookSubscriptions", () => {
       operations: [
         {
           before: retainedWebhook,
-          category: "configuration" as const,
           id: "op-1",
           kind: "remove" as const,
           label: "Unsubscribe",
         },
       ],
       path: UPGRADE_PATH,
-      possibleCleanupResources: [],
       retainedWebhooks: [],
     };
 
-    const result = await applyWebhookSubscriptions(plan, context);
+    await applyWebhookSubscriptions(plan, context);
 
     expect(unsubscribeWebhook).not.toHaveBeenCalled();
-    expect(result.resolvedCleanupResources).toHaveLength(1);
   });
 
   test("aborts on the first add failure without processing remaining operations", async () => {
@@ -244,21 +223,18 @@ describe("applyWebhookSubscriptions", () => {
       operations: [
         {
           after: addWebhook,
-          category: "configuration" as const,
           id: "op-1",
           kind: "add" as const,
           label: "Subscribe",
         },
         {
           after: secondAdd,
-          category: "configuration" as const,
           id: "op-2",
           kind: "add" as const,
           label: "Subscribe",
         },
       ],
       path: UPGRADE_PATH,
-      possibleCleanupResources: [],
       retainedWebhooks: [],
     };
 
@@ -283,21 +259,18 @@ describe("applyWebhookSubscriptions", () => {
       operations: [
         {
           before: retainedWebhook,
-          category: "configuration" as const,
           id: "op-1",
           kind: "remove" as const,
           label: "Unsubscribe",
         },
         {
           before: addWebhook,
-          category: "configuration" as const,
           id: "op-2",
           kind: "remove" as const,
           label: "Unsubscribe",
         },
       ],
       path: UPGRADE_PATH,
-      possibleCleanupResources: [],
       retainedWebhooks: [],
     };
 
@@ -329,21 +302,18 @@ describe("applyWebhookSubscriptions", () => {
       operations: [
         {
           before: retainedWebhook,
-          category: "configuration" as const,
           id: "op-1",
           kind: "remove" as const,
           label: "Unsubscribe",
         },
         {
           after: renamedWebhook,
-          category: "configuration" as const,
           id: "op-2",
           kind: "add" as const,
           label: "Subscribe",
         },
       ],
       path: UPGRADE_PATH,
-      possibleCleanupResources: [],
       retainedWebhooks: [],
     };
 

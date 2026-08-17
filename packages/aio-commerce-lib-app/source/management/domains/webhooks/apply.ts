@@ -23,13 +23,11 @@ import type { WebhookSubscribeParams } from "@adobe/aio-commerce-lib-webhooks/ap
 import type {
   ApplyContext,
   ApplyResult,
-  CleanupResource,
 } from "#management/common/workflow/resource";
 import type { WebhooksStepContext } from "./context";
 import type {
   ResolvedWebhookPayload,
   WebhookDomainPlan,
-  WebhookIdentity,
   WebhookSnapshotData,
 } from "./types";
 
@@ -40,14 +38,13 @@ import type {
 export async function applyWebhookSubscriptions(
   plan: WebhookDomainPlan,
   context: ApplyContext<WebhooksStepContext>,
-): Promise<ApplyResult<WebhookSnapshotData, WebhookIdentity>> {
+): Promise<ApplyResult<WebhookSnapshotData>> {
   const { logger, commerceWebhooksClient, params } = context;
 
   let liveIdentities = (await commerceWebhooksClient.getWebhookList()).map(
     toIdentity,
   );
 
-  const resolvedCleanupResources: CleanupResource<WebhookIdentity>[] = [];
   const subscribedWebhooks: WebhookSubscribeParams[] = [
     ...plan.retainedWebhooks,
   ];
@@ -81,7 +78,6 @@ export async function applyWebhookSubscriptions(
       }
 
       subscribedWebhooks.push(resolvedWebhook);
-      resolvedCleanupResources.push({ identity, path: plan.path });
     } else if (operation.kind === "remove") {
       const identity = toIdentity(operation.before);
 
@@ -102,13 +98,10 @@ export async function applyWebhookSubscriptions(
           `Webhook not found, skipping unsubscribe: ${getWebhookName(identity)}`,
         );
       }
-
-      resolvedCleanupResources.push({ identity, path: plan.path });
     }
   }
 
   return {
-    resolvedCleanupResources,
     snapshotData: { subscribedWebhooks },
   };
 }

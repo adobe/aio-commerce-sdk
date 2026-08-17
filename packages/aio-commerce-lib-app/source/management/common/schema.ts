@@ -35,8 +35,12 @@ export type AppData = v.InferOutput<typeof AppDataSchema>;
  */
 export const LifecycleRequestContextSchema = v.object({
   appData: AppDataSchema,
-  commerceBaseUrl: v.string(),
-  commerceEnv: CommerceEnvSchema,
+
+  // Optional because an upgrade derives the Commerce instance from the existing
+  // association; install and uninstall read these from the body and guard them.
+  commerceBaseUrl: v.optional(v.string()),
+  commerceEnv: v.optional(CommerceEnvSchema),
+
   ioEventsEnv: v.string(),
   ioEventsUrl: v.string(),
 });

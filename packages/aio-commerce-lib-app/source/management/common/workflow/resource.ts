@@ -29,43 +29,25 @@ export type PlanningIssue = {
  * A single change a domain proposes to apply to a resource, discriminated by
  * `kind`: `add` creates a resource, `update` mutates one, `remove` deletes one.
  */
-export type ResourceOperation<TValue> = {
+export type ResourceOperation<TBefore, TAfter = TBefore> = {
   /** Stable identifier of the operation within its plan. */
   id: string;
 
   /** Human-readable label for display. */
   label: string;
-
-  /** Whether the operation converges configuration or resolves cleanup. */
-  category: "configuration" | "cleanup";
 } & (
-  | { kind: "add"; after: TValue }
-  | { kind: "update"; before: TValue; after: TValue }
-  | { kind: "remove"; before: TValue }
+  | { kind: "add"; after: TAfter }
+  | { kind: "update"; before: TBefore; after: TAfter }
+  | { kind: "remove"; before: TBefore }
 );
 
-/** A durable reminder that a resource may have been created and could need cleanup. */
-export type CleanupResource<TIdentity = Record<string, unknown>> = {
-  /** Full workflow path of the step that owns the resource. */
-  path: string[];
-
-  /** Domain-specific identity used to locate the resource for cleanup. */
-  identity: TIdentity;
-};
-
-/** A domain's proposed set of resource operations, plus resources to reconcile. */
-export type DomainPlan<
-  TValue = unknown,
-  TCleanupIdentity = Record<string, unknown>,
-> = {
+/** A domain's proposed set of resource operations. */
+export type DomainPlan<TBefore = unknown, TAfter = TBefore> = {
   /** Full workflow path of the step this plan belongs to. */
   path: string[];
 
   /** The operations the domain proposes to apply. */
-  operations: ResourceOperation<TValue>[];
-
-  /** Resources that may need cleanup as a result of applying the plan. */
-  possibleCleanupResources: CleanupResource<TCleanupIdentity>[];
+  operations: ResourceOperation<TBefore, TAfter>[];
 };
 
 /** The execution context passed to a step's `apply` handler. */
@@ -77,7 +59,7 @@ export type ApplyContext<
 };
 
 /** Inputs a domain needs to plan its changes: the prior baseline and the target. */
-export type PlanningInput<TConfig, TSnapshotData, TCleanupIdentity> = {
+export type PlanningInput<TConfig, TSnapshotData> = {
   /** Full workflow path of the step being planned. */
   path: string[];
 
@@ -86,18 +68,12 @@ export type PlanningInput<TConfig, TSnapshotData, TCleanupIdentity> = {
 
   /** The target configuration to converge to, or `null` when none is available. */
   targetConfig: TConfig | null;
-
-  /** Cleanup resources still pending resolution from prior attempts. */
-  unresolvedCleanupResources: CleanupResource<TCleanupIdentity>[];
 };
 
 /** The outcome a domain reports after applying its plan. */
-export type ApplyResult<TSnapshotData, TCleanupIdentity> = {
+export type ApplyResult<TSnapshotData> = {
   /** The snapshot data describing the resulting state, or `null` if none. */
   snapshotData: TSnapshotData | null;
-
-  /** Cleanup resources resolved (reconciled) during this execution. */
-  resolvedCleanupResources: CleanupResource<TCleanupIdentity>[];
 };
 
 /**
@@ -107,13 +83,6 @@ export type ApplyResult<TSnapshotData, TCleanupIdentity> = {
 export type PlanningResult<TPlan extends DomainPlan = DomainPlan> =
   | { kind: "planned"; plan: TPlan }
   | { kind: "blocked"; issues: PlanningIssue[] };
-
-/** Infers the cleanup identity type carried by a {@link DomainPlan}. */
-export type CleanupIdentityOf<TPlan> =
-  // biome-ignore lint/suspicious/noExplicitAny: Only the identity is inferred here, so the value type is irrelevant.
-  TPlan extends DomainPlan<any, infer TCleanupIdentity>
-    ? TCleanupIdentity
-    : never;
 
 /**
  * The resource-reconciliation behavior a step contributes: planning proposes a
@@ -127,12 +96,12 @@ export type ResourceCapability<
   TSnapshotData,
 > = {
   plan: (
-    input: PlanningInput<TConfig, TSnapshotData, CleanupIdentityOf<TPlan>>,
+    input: PlanningInput<TConfig, TSnapshotData>,
     context: ValidationExecutionContext<TStepCtx>,
   ) => Promise<PlanningResult<TPlan>>;
 
   apply: (
     plan: TPlan,
     context: ApplyContext<TStepCtx>,
-  ) => Promise<ApplyResult<TSnapshotData, CleanupIdentityOf<TPlan>>>;
+  ) => Promise<ApplyResult<TSnapshotData>>;
 };

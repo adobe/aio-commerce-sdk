@@ -16,15 +16,15 @@ import { defineLeafStep } from "#management/common/workflow/step";
 
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 import type {
+  AppStateSnapshot,
   LifecycleAttempt,
   LifecycleOperation,
+  LifecyclePlan,
   SuccessfulResult,
 } from "#management/common/orchestration";
 import type {
   ApplyContext,
   ApplyResult,
-  CleanupIdentityOf,
-  CleanupResource,
   DomainPlan,
   PlanningInput,
   PlanningIssue,
@@ -46,11 +46,8 @@ type WebhookEntry = {
   events: string[];
 };
 
-type WebhookIdentity = {
-  webhookName: string;
-};
-
-type WebhookPlan = DomainPlan<Partial<WebhookEntry>, WebhookIdentity>;
+type WebhookPlan = DomainPlan<Partial<WebhookEntry>>;
+type WebhookMigrationPlan = DomainPlan<Partial<WebhookEntry>, WebhookEntry>;
 
 type WebhookLeafStep = LeafStep<
   "webhooks",
@@ -62,27 +59,29 @@ type WebhookLeafStep = LeafStep<
 >;
 
 describe("lifecycle type surface", () => {
-  test("CleanupIdentityOf infers the plan's cleanup identity", () => {
-    expectTypeOf<
-      CleanupIdentityOf<WebhookPlan>
-    >().toEqualTypeOf<WebhookIdentity>();
+  test("AppStateSnapshot records when it became authoritative", () => {
+    expectTypeOf<AppStateSnapshot["createdAt"]>().toEqualTypeOf<string>();
+  });
+
+  test("DomainPlan supports distinct before and after values", () => {
+    expectTypeOf<WebhookMigrationPlan["operations"]>().toEqualTypeOf<
+      ResourceOperation<Partial<WebhookEntry>, WebhookEntry>[]
+    >();
   });
 
   test("ResourceOperation discriminates on kind", () => {
     const add: ResourceOperation<Partial<WebhookEntry>> = {
       after: { name: "orders" },
-      category: "configuration",
       id: "op-1",
       kind: "add",
       label: "Add order webhook",
     };
-    expectTypeOf(add).toMatchTypeOf<ResourceOperation<Partial<WebhookEntry>>>();
+    expectTypeOf(add).toExtend<ResourceOperation<Partial<WebhookEntry>>>();
 
     // "update" carries both before and after.
     const update: ResourceOperation<Partial<WebhookEntry>> = {
       after: { name: "orders", url: "https://example.test" },
       before: { name: "orders" },
-      category: "configuration",
       id: "op-2",
       kind: "update",
       label: "Update order webhook",
@@ -95,7 +94,6 @@ describe("lifecycle type surface", () => {
       after: { name: "orders" },
       // @ts-expect-error - "add" operations do not carry a `before` value.
       before: { name: "orders" },
-      category: "configuration",
       id: "op-3",
       kind: "add",
       label: "Invalid",
@@ -117,8 +115,7 @@ describe("lifecycle type surface", () => {
       .toEqualTypeOf<
         PlanningInput<
           CommerceAppConfigOutputModel,
-          { webhooks: WebhookEntry[] },
-          WebhookIdentity
+          { webhooks: WebhookEntry[] }
         >
       >();
     expectTypeOf<Plan>().returns.resolves.toEqualTypeOf<
@@ -139,14 +136,8 @@ describe("lifecycle type surface", () => {
       .parameter(1)
       .toEqualTypeOf<ApplyContext<{ webhookClient: { apply: () => void } }>>();
     expectTypeOf<Apply>().returns.resolves.toEqualTypeOf<
-      ApplyResult<{ webhooks: WebhookEntry[] }, WebhookIdentity>
+      ApplyResult<{ webhooks: WebhookEntry[] }>
     >();
-  });
-
-  test("CleanupResource carries the domain-specific identity", () => {
-    expectTypeOf<
-      CleanupResource<WebhookIdentity>["identity"]
-    >().toEqualTypeOf<WebhookIdentity>();
   });
 
   test("LifecycleAttempt discriminates result and failure on status", () => {
@@ -166,6 +157,12 @@ describe("lifecycle type surface", () => {
     >().toEqualTypeOf<LifecycleOperation>();
   });
 
+  test("LifecyclePlan records the lifecycle operation", () => {
+    expectTypeOf<
+      LifecyclePlan["operation"]
+    >().toEqualTypeOf<LifecycleOperation>();
+  });
+
   test("PlanningResult discriminates on kind", () => {
     type Result = PlanningResult<WebhookPlan>;
     expectTypeOf<
@@ -181,16 +178,15 @@ describe("lifecycle type surface", () => {
       apply: (
         _plan: WebhookPlan,
         _context: ApplyContext,
-      ): Promise<ApplyResult<{ webhooks: WebhookEntry[] }, WebhookIdentity>> =>
-        Promise.resolve({ resolvedCleanupResources: [], snapshotData: null }),
+      ): Promise<ApplyResult<{ webhooks: WebhookEntry[] }>> =>
+        Promise.resolve({ snapshotData: null }),
       install: (_config: CommerceAppConfigOutputModel) => undefined,
       meta: { install: { label: "Demo" } },
       name: "demo",
       plan: (
         input: PlanningInput<
           CommerceAppConfigOutputModel,
-          { webhooks: WebhookEntry[] },
-          WebhookIdentity
+          { webhooks: WebhookEntry[] }
         >,
         _context: ValidationExecutionContext,
       ): Promise<PlanningResult<WebhookPlan>> =>
@@ -199,7 +195,6 @@ describe("lifecycle type surface", () => {
           plan: {
             operations: [],
             path: input.path,
-            possibleCleanupResources: [],
           },
         }),
     });
