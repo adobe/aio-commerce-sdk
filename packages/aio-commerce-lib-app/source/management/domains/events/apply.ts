@@ -17,11 +17,7 @@ import {
   throwHttpError,
 } from "#management/common/utils/http-error";
 
-import { commerceEventsStep } from "./commerce";
-import { externalEventsStep } from "./external";
 import {
-  COMMERCE_PROVIDER_TYPE,
-  EXTERNAL_PROVIDER_TYPE,
   eventCodeOf,
   findExistingRegistrations,
   generateInstanceId,
@@ -61,7 +57,7 @@ import type {
 type EventingLeafConfig = CommerceEventsConfig & ExternalEventsConfig;
 
 /** Per-leaf hooks that differ between the Commerce and external event apply. */
-type LeafApplyOptions = {
+export type LeafApplyOptions = {
   type: EventProviderType;
   isCommerce: boolean;
   install: (
@@ -75,53 +71,20 @@ type LeafApplyOptions = {
 };
 
 /**
- * Applies a Commerce eventing domain plan against live Adobe I/O Events + Commerce state. Idempotent:
+ * Applies an eventing domain plan against live Adobe I/O Events + Commerce state. Idempotent:
  * offboards providers dropped from the target, re-runs the (create-or-get) install to converge added
  * providers/events/registrations, then issues the targeted registration PUTs and metadata/subscription
  * deletes the install cannot express. Reuses the same helpers as install/uninstall.
  *
- * @param plan - The eventing domain plan produced by `planCommerceEvents`.
- * @param context - The attempt-scoped execution context (carries the provisioned clients).
- */
-export function applyCommerceEvents(
-  plan: EventingDomainPlan,
-  context: ApplyContext<EventsStepContext>,
-): Promise<ApplyResult<EventingSnapshotData>> {
-  return applyEventingLeaf(plan, context, {
-    install: async (config, ctx) =>
-      await commerceEventsStep.install(config as CommerceEventsConfig, ctx),
-    isCommerce: true,
-    type: COMMERCE_PROVIDER_TYPE,
-    uninstall: async (config, ctx) => {
-      await commerceEventsStep.uninstall?.(config as CommerceEventsConfig, ctx);
-    },
-  });
-}
-
-/**
- * Applies an external eventing domain plan. Same convergence as {@link applyCommerceEvents} but for
- * external event sources (no Commerce subscriptions).
+ * The per-leaf `install`/`uninstall` hooks are supplied by the calling leaf (see
+ * `commerce.ts`/`external.ts`), which keeps this module free of any dependency on the step
+ * definitions that in turn depend on it.
  *
- * @param plan - The eventing domain plan produced by `planExternalEvents`.
- * @param context - The attempt-scoped execution context.
+ * @param plan - The eventing domain plan produced by the leaf's `plan` function.
+ * @param context - The attempt-scoped execution context (carries the provisioned clients).
+ * @param options - The per-leaf install/uninstall hooks and provider-type discriminators.
  */
-export function applyExternalEvents(
-  plan: EventingDomainPlan,
-  context: ApplyContext<EventsStepContext>,
-): Promise<ApplyResult<EventingSnapshotData>> {
-  return applyEventingLeaf(plan, context, {
-    install: async (config, ctx) =>
-      await externalEventsStep.install(config as ExternalEventsConfig, ctx),
-    isCommerce: false,
-    type: EXTERNAL_PROVIDER_TYPE,
-    uninstall: async (config, ctx) => {
-      await externalEventsStep.uninstall?.(config as ExternalEventsConfig, ctx);
-    },
-  });
-}
-
-/** Shared convergence for both eventing leaves. */
-async function applyEventingLeaf(
+export async function applyEventingLeaf(
   plan: EventingDomainPlan,
   context: ApplyContext<EventsStepContext>,
   options: LeafApplyOptions,

@@ -98,6 +98,11 @@ describe("events installation module", () => {
           description: "Removes I/O Events for Adobe Commerce event sources",
           label: "Remove Commerce Events",
         },
+        upgrade: {
+          description:
+            "Reconciles Commerce event providers, metadata, registrations and subscriptions",
+          label: "Update Commerce Events",
+        },
       });
     });
 
@@ -234,6 +239,11 @@ describe("events installation module", () => {
         uninstall: {
           description: "Removes I/O Events for external event sources",
           label: "Remove External Events",
+        },
+        upgrade: {
+          description:
+            "Reconciles external event providers, metadata and registrations",
+          label: "Update External Events",
         },
       });
     });

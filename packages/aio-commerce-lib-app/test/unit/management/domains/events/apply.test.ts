@@ -15,10 +15,12 @@ import { afterEach, describe, expect, test, vi } from "vitest";
 
 import {
   applyCommerceEvents,
+  commerceEventsStep,
+} from "#management/domains/events/commerce";
+import {
   applyExternalEvents,
-} from "#management/domains/events/apply";
-import { commerceEventsStep } from "#management/domains/events/commerce";
-import { externalEventsStep } from "#management/domains/events/external";
+  externalEventsStep,
+} from "#management/domains/events/external";
 import {
   planCommerceEvents,
   planExternalEvents,
