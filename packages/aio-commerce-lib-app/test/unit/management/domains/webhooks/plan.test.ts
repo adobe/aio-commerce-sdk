@@ -67,7 +67,6 @@ describe("planWebhookSubscriptions", () => {
         baseline: null,
         path: UPGRADE_PATH,
         targetConfig: createDefaultWebhooksConfig(),
-        unresolvedCleanupResources: [],
       },
       makeContext(),
     );
@@ -76,12 +75,8 @@ describe("planWebhookSubscriptions", () => {
     expect(result.plan.operations).toHaveLength(1);
     expect(result.plan.operations[0]).toMatchObject({
       after: expect.objectContaining(DEFAULT_RESOLVED_IDENTITY),
-      category: "configuration",
       kind: "add",
     });
-    expect(result.plan.possibleCleanupResources).toEqual([
-      { identity: DEFAULT_RESOLVED_IDENTITY, path: UPGRADE_PATH },
-    ]);
     expect(result.plan.retainedWebhooks).toHaveLength(0);
   });
 
@@ -94,7 +89,6 @@ describe("planWebhookSubscriptions", () => {
         baseline: { config: createDefaultWebhooksConfig(), data: null },
         path: UPGRADE_PATH,
         targetConfig: createDefaultWebhooksConfig(),
-        unresolvedCleanupResources: [],
       },
       makeContext(),
     );
@@ -117,7 +111,6 @@ describe("planWebhookSubscriptions", () => {
         },
         path: UPGRADE_PATH,
         targetConfig: createDefaultWebhooksConfig(),
-        unresolvedCleanupResources: [],
       },
       makeContext(),
     );
@@ -133,7 +126,6 @@ describe("planWebhookSubscriptions", () => {
         baseline: null,
         path: UPGRADE_PATH,
         targetConfig: createDefaultWebhooksConfig(),
-        unresolvedCleanupResources: [],
       },
       makeContext(),
     );
@@ -160,7 +152,6 @@ describe("planWebhookSubscriptions", () => {
         },
         path: UPGRADE_PATH,
         targetConfig: null,
-        unresolvedCleanupResources: [],
       },
       makeContext(),
     );
@@ -169,15 +160,8 @@ describe("planWebhookSubscriptions", () => {
     expect(result.plan.operations).toEqual([
       expect.objectContaining({
         before: baselineWebhook,
-        category: "configuration",
         kind: "remove",
       }),
-    ]);
-    // A remove's fate is uncertain until an attempt confirms it (e.g. a later
-    // operation in the same apply could still fail), so it's tracked as a
-    // possible cleanup resource just like an add is.
-    expect(result.plan.possibleCleanupResources).toEqual([
-      { identity: DEFAULT_RESOLVED_IDENTITY, path: UPGRADE_PATH },
     ]);
   });
 
@@ -192,7 +176,6 @@ describe("planWebhookSubscriptions", () => {
         baseline: { config, data: { subscribedWebhooks: [baselineWebhook] } },
         path: UPGRADE_PATH,
         targetConfig: config,
-        unresolvedCleanupResources: [],
       },
       makeContext(),
     );
@@ -226,7 +209,6 @@ describe("planWebhookSubscriptions", () => {
         },
         path: UPGRADE_PATH,
         targetConfig,
-        unresolvedCleanupResources: [],
       },
       makeContext(),
     );
@@ -235,10 +217,9 @@ describe("planWebhookSubscriptions", () => {
     expect(result.plan.operations).toHaveLength(2);
     expect(result.plan.operations).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ category: "configuration", kind: "add" }),
+        expect.objectContaining({ kind: "add" }),
         expect.objectContaining({
           before: baselineWebhook,
-          category: "configuration",
           kind: "remove",
         }),
       ]),
@@ -270,7 +251,6 @@ describe("planWebhookSubscriptions", () => {
         },
         path: UPGRADE_PATH,
         targetConfig,
-        unresolvedCleanupResources: [],
       },
       makeContext(),
     );
@@ -279,110 +259,6 @@ describe("planWebhookSubscriptions", () => {
     expect(result.plan.operations).toHaveLength(2);
     expect(result.plan.operations[0]).toMatchObject({ kind: "remove" });
     expect(result.plan.operations[1]).toMatchObject({ kind: "add" });
-  });
-
-  test("proposes a cleanup removal for an unresolved identity outside the target and baseline", async () => {
-    const orphan = {
-      batch_name: "test_app_webhooks_orphan_batch",
-      hook_name: "test_app_webhooks_orphan_hook",
-      webhook_method: "observer.catalog_product_save_after",
-      webhook_type: "after",
-    };
-
-    const result = await planWebhookSubscriptions(
-      {
-        baseline: null,
-        path: UPGRADE_PATH,
-        targetConfig: null,
-        unresolvedCleanupResources: [{ identity: orphan, path: UPGRADE_PATH }],
-      },
-      makeContext(),
-    );
-
-    expect.assert(result.kind === "planned");
-    expect(result.plan.operations).toEqual([
-      expect.objectContaining({
-        before: orphan,
-        category: "cleanup",
-        kind: "remove",
-      }),
-    ]);
-  });
-
-  test("does not duplicate a removal when an identity is both stale in the baseline and unresolved", async () => {
-    const baselineWebhook = createMockResolvedWebhook(
-      DEFAULT_RESOLVED_IDENTITY,
-    );
-
-    const result = await planWebhookSubscriptions(
-      {
-        baseline: {
-          config: createDefaultWebhooksConfig(),
-          data: { subscribedWebhooks: [baselineWebhook] },
-        },
-        path: UPGRADE_PATH,
-        targetConfig: null,
-        unresolvedCleanupResources: [
-          { identity: DEFAULT_RESOLVED_IDENTITY, path: UPGRADE_PATH },
-        ],
-      },
-      makeContext(),
-    );
-
-    expect.assert(result.kind === "planned");
-    expect(result.plan.operations).toEqual([
-      expect.objectContaining({
-        before: baselineWebhook,
-        category: "configuration",
-        kind: "remove",
-      }),
-    ]);
-  });
-
-  test("treats an unresolved identity that is still desired as a normal add, without duplicating it", async () => {
-    const result = await planWebhookSubscriptions(
-      {
-        baseline: null,
-        path: UPGRADE_PATH,
-        targetConfig: createDefaultWebhooksConfig(),
-        unresolvedCleanupResources: [
-          { identity: DEFAULT_RESOLVED_IDENTITY, path: UPGRADE_PATH },
-        ],
-      },
-      makeContext(),
-    );
-
-    expect.assert(result.kind === "planned");
-    expect(result.plan.operations).toHaveLength(1);
-    expect(result.plan.operations[0].kind).toBe("add");
-  });
-
-  test("re-plans a desired webhook as an add instead of trusting a retained baseline with a pending unresolved cleanup", async () => {
-    const config = createDefaultWebhooksConfig();
-    const baselineWebhook = createMockResolvedWebhook(
-      DEFAULT_RESOLVED_IDENTITY,
-    );
-
-    const result = await planWebhookSubscriptions(
-      {
-        baseline: { config, data: { subscribedWebhooks: [baselineWebhook] } },
-        path: UPGRADE_PATH,
-        targetConfig: config,
-        unresolvedCleanupResources: [
-          { identity: DEFAULT_RESOLVED_IDENTITY, path: UPGRADE_PATH },
-        ],
-      },
-      makeContext(),
-    );
-
-    expect.assert(result.kind === "planned");
-    expect(result.plan.retainedWebhooks).toHaveLength(0);
-    expect(result.plan.operations).toEqual([
-      expect.objectContaining({
-        category: "configuration",
-        kind: "add",
-      }),
-    ]);
   });
 
   test("treats plugin.magento.X and plugin.X as the same identity when diffing", async () => {
@@ -409,7 +285,6 @@ describe("planWebhookSubscriptions", () => {
         },
         path: UPGRADE_PATH,
         targetConfig,
-        unresolvedCleanupResources: [],
       },
       makeContext(),
     );
@@ -439,7 +314,6 @@ describe("planWebhookSubscriptions", () => {
         baseline: null,
         path: UPGRADE_PATH,
         targetConfig,
-        unresolvedCleanupResources: [],
       },
       context,
     );
@@ -464,7 +338,6 @@ describe("planWebhookSubscriptions", () => {
         baseline: null,
         path: UPGRADE_PATH,
         targetConfig: createDefaultWebhooksConfig(),
-        unresolvedCleanupResources: [],
       },
       context,
     );

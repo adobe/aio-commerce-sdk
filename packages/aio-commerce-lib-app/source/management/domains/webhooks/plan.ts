@@ -24,7 +24,6 @@ import {
 import type { WebhookSubscribeParams } from "@adobe/aio-commerce-lib-webhooks/api";
 import type { WebhooksConfig } from "#config/schema/webhooks";
 import type {
-  CleanupResource,
   PlanningInput,
   PlanningResult,
   ResourceOperation,
@@ -33,7 +32,6 @@ import type { ValidationExecutionContext } from "#management/common/workflow/ste
 import type { WebhooksStepContext } from "./context";
 import type {
   WebhookDomainPlan,
-  WebhookIdentity,
   WebhookOperationValue,
   WebhookSnapshotData,
 } from "./types";
@@ -50,16 +48,16 @@ function resolveDesiredWebhooks(
 }
 
 /**
- * Diffs the target config against the baseline (plus any unresolved cleanup) into
- * add/remove operations. Pure — no external reads or writes, since an observation
- * made here could be stale by execution time. Blocks with `WEBHOOK_BASELINE_UNRESOLVED`
- * if a baseline exists but its data couldn't be resolved, rather than guessing.
+ * Diffs the target config against the baseline into add/remove operations. Pure —
+ * no external reads or writes, since an observation made here could be stale by
+ * execution time. Blocks with `WEBHOOK_BASELINE_UNRESOLVED` if a baseline exists
+ * but its data couldn't be resolved, rather than guessing.
  */
 export function planWebhookSubscriptions(
-  input: PlanningInput<WebhooksConfig, WebhookSnapshotData, WebhookIdentity>,
+  input: PlanningInput<WebhooksConfig, WebhookSnapshotData>,
   context: ValidationExecutionContext<WebhooksStepContext>,
 ): Promise<PlanningResult<WebhookDomainPlan>> {
-  const { path, baseline, targetConfig, unresolvedCleanupResources } = input;
+  const { path, baseline, targetConfig } = input;
   const { params } = context;
 
   // An existing baseline with unresolved data isn't "no prior state" — webhooks may
@@ -83,14 +81,10 @@ export function planWebhookSubscriptions(
   const desired = targetConfig ? resolveDesiredWebhooks(targetConfig, env) : [];
 
   const ownedFromBaseline = baseline?.data?.subscribedWebhooks ?? [];
-  const unresolvedIdentities = unresolvedCleanupResources.map(
-    (resource) => resource.identity,
-  );
 
   // Removes precede adds (see the concat below) so a rename never briefly double-registers a hook point.
   const addOperations: ResourceOperation<WebhookOperationValue>[] = [];
   const removeOperations: ResourceOperation<WebhookOperationValue>[] = [];
-  const possibleCleanupResources: CleanupResource<WebhookIdentity>[] = [];
   const retainedWebhooks: WebhookSubscribeParams[] = [];
 
   for (const webhook of desired) {
@@ -98,13 +92,7 @@ export function planWebhookSubscriptions(
       webhookIdentitiesMatch(candidate, webhook),
     );
 
-    // A pending unresolved-cleanup entry means this identity's fate is uncertain —
-    // re-plan as an add instead of trusting "retained" (apply checks live state first).
-    const hasUnresolvedCleanup = unresolvedIdentities.some((pending) =>
-      webhookIdentitiesMatch(pending, webhook),
-    );
-
-    if (owned && !hasUnresolvedCleanup) {
+    if (owned) {
       retainedWebhooks.push(owned);
       continue;
     }
@@ -112,12 +100,10 @@ export function planWebhookSubscriptions(
     const identity = toIdentity(webhook);
     addOperations.push({
       after: webhook,
-      category: "configuration",
       id: webhookOperationId("add", identity),
       kind: "add",
       label: `Subscribe webhook: ${getWebhookName(identity)}`,
     });
-    possibleCleanupResources.push({ identity, path });
   }
 
   const staleFromBaseline = ownedFromBaseline.filter(
@@ -125,37 +111,14 @@ export function planWebhookSubscriptions(
       !desired.some((webhook) => webhookIdentitiesMatch(webhook, owned)),
   );
 
-  const staleFromCleanup = unresolvedIdentities.filter(
-    (identity) =>
-      !(
-        desired.some((webhook) => webhookIdentitiesMatch(webhook, identity)) ||
-        ownedFromBaseline.some((owned) =>
-          webhookIdentitiesMatch(owned, identity),
-        )
-      ),
-  );
-
   for (const stale of staleFromBaseline) {
     const identity = toIdentity(stale);
     removeOperations.push({
       before: stale,
-      category: "configuration",
       id: webhookOperationId("remove", identity),
       kind: "remove",
       label: `Unsubscribe webhook: ${getWebhookName(identity)}`,
     });
-    possibleCleanupResources.push({ identity, path });
-  }
-
-  for (const identity of staleFromCleanup) {
-    removeOperations.push({
-      before: identity,
-      category: "cleanup",
-      id: webhookOperationId("remove", identity),
-      kind: "remove",
-      label: `Unsubscribe webhook: ${getWebhookName(identity)}`,
-    });
-    possibleCleanupResources.push({ identity, path });
   }
 
   return Promise.resolve({
@@ -163,7 +126,6 @@ export function planWebhookSubscriptions(
     plan: {
       operations: [...removeOperations, ...addOperations],
       path,
-      possibleCleanupResources,
       retainedWebhooks,
     },
   });

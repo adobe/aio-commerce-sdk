@@ -9,6 +9,7 @@ export const mockMetadata = {
   description: "A test application",
   displayName: "Test App",
   id: "test-app",
+  upgradeMode: "auto",
   version: "1.0.0",
 } satisfies ApplicationMetadata;
 
@@ -189,11 +190,14 @@ export const fullConfig = {
 export function createMockMetadata(
   id: string,
   overrides: Partial<ApplicationMetadata> = {},
-): ApplicationMetadata {
+): CommerceAppConfigOutputModel["metadata"] {
   return {
     ...mockMetadata,
     id,
     ...overrides,
+    // `upgradeMode` is optional on the input model but required on the output
+    // model (it defaults to "auto"); keep it present so fixtures are output-shaped.
+    upgradeMode: overrides.upgradeMode ?? mockMetadata.upgradeMode,
   };
 }
 

@@ -7,10 +7,12 @@
   "sideEffects": false,
   "type": "module",
   "imports": {
-    "#*": "./source/*.ts"
+    "#*": "./source/*.ts",
+    "#test/*": "./test/*.ts"
   },
   "exports": {
     "./*": "./source/*.ts",
+    "./aio": "./source/aio/index.ts",
     "./env": "./source/env.ts",
     "./yaml": "./source/yaml/index.ts",
     "./filesystem": "./source/filesystem/index.ts",
