@@ -11,8 +11,9 @@
  */
 
 /**
- * Timeout (in milliseconds) applied to the HTTP clients used during lifecycle
- * workflows. Commerce can take a while to respond to some installation
- * operations, so we raise it well above the underlying client's default.
+ * Timeout (in milliseconds) applied to Commerce HTTP clients used for
+ * long-running operations (e.g. lifecycle/installation steps, scope syncing).
+ * Commerce can take a while to respond to some of these, so we raise it well
+ * above the underlying client's default.
  */
 export const LIFECYCLE_HTTP_CLIENT_TIMEOUT_MS = 1000 * 60 * 2; // 2 minutes
