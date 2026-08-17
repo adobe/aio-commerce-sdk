@@ -3,7 +3,7 @@
   "info": {
     "title": "App Management API",
     "description": "REST API for managing Adobe Commerce App Builder apps: resolving app configuration, managing configuration values, running the installation and uninstallation lifecycle, and managing the scope tree.",
-    "version": "2.0.0",
+    "version": "3.0.0",
     "contact": {},
     "license": {
       "identifier": "Apache-2.0",
@@ -1075,140 +1075,6 @@
             }
           }
         },
-        "tags": ["Business Configuration"]
-      },
-      "put": {
-        "operationId": "putConfiguration",
-        "summary": "Set Configuration Values (Deprecated)",
-        "description": "Replaces all configuration values for a scope. This endpoint is deprecated in favor of PATCH.",
-        "parameters": [
-          {
-            "name": "x-gw-ims-org-id",
-            "in": "header",
-            "description": "Adobe IMS organization ID that identifies the organization for the request.",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "scopeId": {
-                    "type": "string",
-                    "minLength": 1
-                  },
-                  "config": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "properties": {
-                        "name": {
-                          "type": "string",
-                          "minLength": 1
-                        },
-                        "value": {
-                          "anyOf": [
-                            {
-                              "type": "string"
-                            },
-                            {
-                              "type": "array",
-                              "items": {
-                                "type": "string"
-                              }
-                            }
-                          ]
-                        }
-                      },
-                      "required": ["name", "value"]
-                    }
-                  }
-                },
-                "required": ["scopeId", "config"]
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "The configuration values were successfully updated. Returns the updated configuration with password fields masked.",
-            "headers": {
-              "Cache-Control": {
-                "description": "Prevents clients from caching configuration mutation responses.",
-                "schema": {
-                  "const": "no-store"
-                }
-              },
-              "Deprecation": {
-                "description": "Date when the deprecated PUT configuration endpoint was marked deprecated.",
-                "schema": {
-                  "type": "string",
-                  "pattern": "^[A-Z][a-z]{2}, \\d{2} [A-Z][a-z]{2} \\d{4} \\d{2}:\\d{2}:\\d{2} GMT$"
-                }
-              }
-            },
-            "content": {
-              "application/json": {
-                "schema": {
-                  "description": "Configuration values updated. Use PATCH instead.",
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    },
-                    "timestamp": {
-                      "type": "string",
-                      "format": "date-time"
-                    },
-                    "scope": {
-                      "$ref": "#/components/schemas/ConfigScope"
-                    },
-                    "config": {
-                      "type": "array",
-                      "items": {
-                        "$ref": "#/components/schemas/ConfigUpdateEntry"
-                      }
-                    }
-                  },
-                  "required": ["message", "timestamp", "scope", "config"]
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "The request is invalid or could not be parsed.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "You are not authorized to access this resource. Ensure the IMS token and the x-gw-ims-org-id header are correctly set and valid."
-          },
-          "403": {
-            "description": "The access token is valid, but it is not allowed to access the requested organization or operation."
-          },
-          "500": {
-            "description": "An unexpected server error occurred.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          }
-        },
-        "deprecated": true,
         "tags": ["Business Configuration"]
       },
       "patch": {
