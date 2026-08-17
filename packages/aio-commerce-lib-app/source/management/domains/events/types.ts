@@ -196,22 +196,12 @@ export type EventingOperationValue =
       name: string;
     };
 
-/** A cleanup resource identity for one eventing resource, matched during apply/teardown. */
-export type EventingCleanupIdentity =
-  | { resourceType: "provider"; providerKey: string }
-  | { resourceType: "metadata"; providerKey: string; eventCode: string }
-  | { resourceType: "registration"; providerKey: string; runtimeAction: string }
-  | { resourceType: "subscription"; name: string };
-
 /**
- * An eventing domain plan. Beyond the generic operations/cleanup, it carries the provider sets apply
- * needs to converge deployed state idempotently: `targetProviders` to onboard, `removedProviders` to
+ * An eventing domain plan. Beyond the generic operations, it carries the provider sets apply needs
+ * to converge deployed state idempotently: `targetProviders` to onboard, `removedProviders` to
  * offboard, and `baselineProviders` to compute sub-resource removals on providers present in both.
  */
-export type EventingDomainPlan = DomainPlan<
-  EventingOperationValue,
-  EventingCleanupIdentity
-> & {
+export type EventingDomainPlan = DomainPlan<EventingOperationValue> & {
   /** The target app metadata, used to namespace event codes/names when onboarding. */
   metadata: ApplicationMetadata;
 

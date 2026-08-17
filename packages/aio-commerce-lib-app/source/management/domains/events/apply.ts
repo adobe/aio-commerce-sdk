@@ -45,13 +45,10 @@ import type { ApplicationMetadata } from "#config/schema/metadata";
 import type {
   ApplyContext,
   ApplyResult,
-  CleanupResource,
 } from "#management/common/workflow/resource";
 import type { EventsExecutionContext, EventsStepContext } from "./context";
 import type {
-  EventingCleanupIdentity,
   EventingDomainPlan,
-  EventingOperationValue,
   EventingProviderSnapshot,
   EventingSnapshotData,
 } from "./types";
@@ -89,7 +86,7 @@ type LeafApplyOptions = {
 export function applyCommerceEvents(
   plan: EventingDomainPlan,
   context: ApplyContext<EventsStepContext>,
-): Promise<ApplyResult<EventingSnapshotData, EventingCleanupIdentity>> {
+): Promise<ApplyResult<EventingSnapshotData>> {
   return applyEventingLeaf(plan, context, {
     install: async (config, ctx) =>
       await commerceEventsStep.install(config as CommerceEventsConfig, ctx),
@@ -111,7 +108,7 @@ export function applyCommerceEvents(
 export function applyExternalEvents(
   plan: EventingDomainPlan,
   context: ApplyContext<EventsStepContext>,
-): Promise<ApplyResult<EventingSnapshotData, EventingCleanupIdentity>> {
+): Promise<ApplyResult<EventingSnapshotData>> {
   return applyEventingLeaf(plan, context, {
     install: async (config, ctx) =>
       await externalEventsStep.install(config as ExternalEventsConfig, ctx),
@@ -128,7 +125,7 @@ async function applyEventingLeaf(
   plan: EventingDomainPlan,
   context: ApplyContext<EventsStepContext>,
   options: LeafApplyOptions,
-): Promise<ApplyResult<EventingSnapshotData, EventingCleanupIdentity>> {
+): Promise<ApplyResult<EventingSnapshotData>> {
   const eventsContext: EventsExecutionContext = context;
 
   // 1. Offboard providers dropped from the target (whole-provider teardown, reusing uninstall).
@@ -161,7 +158,6 @@ async function applyEventingLeaf(
   }
 
   return {
-    resolvedCleanupResources: operationsToCleanup(plan),
     snapshotData: { providers: plan.targetProviders },
   };
 }
@@ -596,40 +592,4 @@ function findDeployedRegistration(
       getLegacyRegistrationName(providerData, runtimeAction),
     )
   );
-}
-
-/** Maps each plan operation to the cleanup identity it resolves. */
-function operationsToCleanup(
-  plan: EventingDomainPlan,
-): CleanupResource<EventingCleanupIdentity>[] {
-  return plan.operations.map((operation) => ({
-    identity: valueToCleanupIdentity(
-      operation.kind === "remove" ? operation.before : operation.after,
-    ),
-    path: plan.path,
-  }));
-}
-
-/** Derives a cleanup identity from an operation value. */
-function valueToCleanupIdentity(
-  value: EventingOperationValue,
-): EventingCleanupIdentity {
-  switch (value.resourceType) {
-    case "provider":
-      return { providerKey: value.providerKey, resourceType: "provider" };
-    case "metadata":
-      return {
-        eventCode: value.eventCode,
-        providerKey: value.providerKey,
-        resourceType: "metadata",
-      };
-    case "registration":
-      return {
-        providerKey: value.providerKey,
-        resourceType: "registration",
-        runtimeAction: value.runtimeAction,
-      };
-    default:
-      return { name: value.name, resourceType: "subscription" };
-  }
 }

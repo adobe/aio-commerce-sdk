@@ -62,21 +62,16 @@ function commerceInput(
   baseline: CommerceEventsConfig | null,
   target: CommerceEventsConfig | null,
   data?: EventingSnapshotData,
-): PlanningInput<CommerceEventsConfig, EventingSnapshotData, never> {
+): PlanningInput<CommerceEventsConfig, EventingSnapshotData> {
   return {
     baseline: baseline ? { config: baseline, data: data ?? null } : null,
     path: ["eventing", "commerce"],
     targetConfig: target,
-    unresolvedCleanupResources: [],
-  } as unknown as PlanningInput<
-    CommerceEventsConfig,
-    EventingSnapshotData,
-    never
-  >;
+  } as unknown as PlanningInput<CommerceEventsConfig, EventingSnapshotData>;
 }
 
 async function planCommerce(
-  input: PlanningInput<CommerceEventsConfig, EventingSnapshotData, never>,
+  input: PlanningInput<CommerceEventsConfig, EventingSnapshotData>,
 ): Promise<EventingDomainPlan> {
   const result = await planCommerceEvents(input, context);
   expect(result.kind).toBe("planned");
@@ -86,21 +81,16 @@ async function planCommerce(
 function externalInput(
   baseline: ExternalEventsConfig | null,
   target: ExternalEventsConfig | null,
-): PlanningInput<ExternalEventsConfig, EventingSnapshotData, never> {
+): PlanningInput<ExternalEventsConfig, EventingSnapshotData> {
   return {
     baseline: baseline ? { config: baseline, data: null } : null,
     path: ["eventing", "external"],
     targetConfig: target,
-    unresolvedCleanupResources: [],
-  } as unknown as PlanningInput<
-    ExternalEventsConfig,
-    EventingSnapshotData,
-    never
-  >;
+  } as unknown as PlanningInput<ExternalEventsConfig, EventingSnapshotData>;
 }
 
 async function planExternal(
-  input: PlanningInput<ExternalEventsConfig, EventingSnapshotData, never>,
+  input: PlanningInput<ExternalEventsConfig, EventingSnapshotData>,
 ): Promise<EventingDomainPlan> {
   const result = await planExternalEvents(input, context);
   expect(result.kind).toBe("planned");

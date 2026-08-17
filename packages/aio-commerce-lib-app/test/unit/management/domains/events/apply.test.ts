@@ -128,12 +128,7 @@ async function planCommerce(
     baseline: { config: baseline, data: null },
     path: ["eventing", "commerce"],
     targetConfig: target,
-    unresolvedCleanupResources: [],
-  } as unknown as PlanningInput<
-    CommerceEventsConfig,
-    EventingSnapshotData,
-    never
-  >;
+  } as unknown as PlanningInput<CommerceEventsConfig, EventingSnapshotData>;
 
   const result = await planCommerceEvents(input, {
     params: { AIO_COMMERCE_API_FLAVOR: "saas" },
@@ -156,12 +151,7 @@ async function planExternal(
     baseline: { config: baseline, data: null },
     path: ["eventing", "external"],
     targetConfig: target,
-    unresolvedCleanupResources: [],
-  } as unknown as PlanningInput<
-    ExternalEventsConfig,
-    EventingSnapshotData,
-    never
-  >;
+  } as unknown as PlanningInput<ExternalEventsConfig, EventingSnapshotData>;
 
   const result = await planExternalEvents(input, {
     params: { AIO_COMMERCE_API_FLAVOR: "saas" },
@@ -209,7 +199,6 @@ describe("applyCommerceEvents", () => {
       "P1",
       "P2",
     ]);
-    expect(result.resolvedCleanupResources.length).toBeGreaterThan(0);
   });
 
   test("offboards providers dropped from the target through uninstall", async () => {
@@ -820,12 +809,7 @@ describe("applyExternalEvents", () => {
         baseline: { config: baseline, data: null },
         path: ["eventing", "external"],
         targetConfig: target,
-        unresolvedCleanupResources: [],
-      } as unknown as PlanningInput<
-        ExternalEventsConfig,
-        EventingSnapshotData,
-        never
-      >,
+      } as unknown as PlanningInput<ExternalEventsConfig, EventingSnapshotData>,
       { params: { AIO_COMMERCE_API_FLAVOR: "saas" } } as never,
     );
     const { plan } = result as { kind: "planned"; plan: EventingDomainPlan };

@@ -33,7 +33,6 @@ import type {
 } from "#config/schema/eventing";
 import type { ApplicationMetadata } from "#config/schema/metadata";
 import type {
-  CleanupResource,
   PlanningInput,
   PlanningResult,
   ResourceOperation,
@@ -41,7 +40,6 @@ import type {
 import type { ValidationExecutionContext } from "#management/common/workflow/step";
 import type { EventsStepContext } from "./context";
 import type {
-  EventingCleanupIdentity,
   EventingDomainPlan,
   EventingOperationValue,
   EventingProviderSnapshot,
@@ -108,42 +106,23 @@ function operationId(
   }
 }
 
-/** Accumulates the operations, cleanup resources and removed providers for one leaf. */
+/** Accumulates the operations and removed providers for one leaf. */
 class LeafPlanBuilder {
   public readonly operations: ResourceOperation<EventingOperationValue>[] = [];
-  public readonly possibleCleanupResources: CleanupResource<EventingCleanupIdentity>[] =
-    [];
   public readonly removedProviders: EventingProviderSnapshot[] = [];
-  private readonly path: string[];
 
-  public constructor(path: string[]) {
-    this.path = path;
-  }
-
-  private add(
-    value: EventingOperationValue,
-    label: string,
-    cleanup?: EventingCleanupIdentity,
-  ): void {
+  private add(value: EventingOperationValue, label: string): void {
     this.operations.push({
       after: value,
-      category: "configuration",
       id: operationId("add", value),
       kind: "add",
       label,
     });
-    if (cleanup) {
-      this.possibleCleanupResources.push({
-        identity: cleanup,
-        path: this.path,
-      });
-    }
   }
 
   private remove(value: EventingOperationValue, label: string): void {
     this.operations.push({
       before: value,
-      category: "configuration",
       id: operationId("remove", value),
       kind: "remove",
       label,
@@ -158,7 +137,6 @@ class LeafPlanBuilder {
     this.operations.push({
       after,
       before,
-      category: "configuration",
       id: operationId("update", after),
       kind: "update",
       label,
@@ -182,7 +160,6 @@ class LeafPlanBuilder {
         type,
       },
       `Create event provider: ${provider.label}`,
-      { providerKey: key, resourceType: "provider" },
     );
 
     for (const event of events) {
@@ -197,7 +174,6 @@ class LeafPlanBuilder {
           type,
         },
         `Register event metadata: ${eventCode}`,
-        { eventCode, providerKey: key, resourceType: "metadata" },
       );
     }
 
@@ -215,7 +191,6 @@ class LeafPlanBuilder {
           type,
         },
         `Create registration: ${provider.label} → ${runtimeAction}`,
-        { providerKey: key, resourceType: "registration", runtimeAction },
       );
     }
 
@@ -225,7 +200,6 @@ class LeafPlanBuilder {
         this.add(
           { name, providerKey: key, resourceType: "subscription" },
           `Create Commerce subscription: ${name}`,
-          { name, resourceType: "subscription" },
         );
       }
     }
@@ -294,7 +268,6 @@ class LeafPlanBuilder {
           type,
         },
         `Register event metadata: ${eventCode}`,
-        { eventCode, providerKey: key, resourceType: "metadata" },
       );
     }
 
@@ -343,7 +316,6 @@ class LeafPlanBuilder {
         this.add(
           after,
           `Create registration: ${provider.label} → ${runtimeAction}`,
-          { providerKey: key, resourceType: "registration", runtimeAction },
         );
         continue;
       }
@@ -404,7 +376,6 @@ class LeafPlanBuilder {
       this.add(
         { name, providerKey: key, resourceType: "subscription" },
         `Create Commerce subscription: ${name}`,
-        { name, resourceType: "subscription" },
       );
     }
 
@@ -442,7 +413,7 @@ function planEventingLeaf(
   const targetByKey = new Map(targetProviders.map((p) => [p.key, p]));
   const baselineByKey = new Map(baselineProviders.map((p) => [p.key, p]));
 
-  const builder = new LeafPlanBuilder(path);
+  const builder = new LeafPlanBuilder();
 
   for (const snapshot of targetProviders) {
     if (baselineByKey.has(snapshot.key)) {
@@ -486,7 +457,6 @@ function planEventingLeaf(
       metadata: (targetMetadata ?? baselineMetadata) as ApplicationMetadata,
       operations: builder.operations,
       path,
-      possibleCleanupResources: builder.possibleCleanupResources,
       removedProviders: builder.removedProviders,
       targetProviders,
     },
@@ -503,11 +473,7 @@ function planEventingLeaf(
  * @param context - The side-effect-free execution context (used to resolve the install environment).
  */
 export function planCommerceEvents(
-  input: PlanningInput<
-    CommerceEventsConfig,
-    EventingSnapshotData,
-    EventingCleanupIdentity
-  >,
+  input: PlanningInput<CommerceEventsConfig, EventingSnapshotData>,
   context: ValidationExecutionContext<EventsStepContext>,
 ): Promise<PlanningResult<EventingDomainPlan>> {
   return Promise.resolve(
@@ -533,11 +499,7 @@ export function planCommerceEvents(
  * @param context - The side-effect-free execution context.
  */
 export function planExternalEvents(
-  input: PlanningInput<
-    ExternalEventsConfig,
-    EventingSnapshotData,
-    EventingCleanupIdentity
-  >,
+  input: PlanningInput<ExternalEventsConfig, EventingSnapshotData>,
   context: ValidationExecutionContext<EventsStepContext>,
 ): Promise<PlanningResult<EventingDomainPlan>> {
   return Promise.resolve(
