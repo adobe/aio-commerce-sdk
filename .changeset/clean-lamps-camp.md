@@ -1,6 +1,5 @@
 ---
 "@adobe/aio-commerce-lib-app": major
-"@adobe/aio-commerce-sdk": major
 ---
 
 Remove the deprecated `PUT /config` action endpoint. It overwrote every value for a scope and could not express partial updates or unset a key, which caused data loss when only a subset of keys was meant to change.
