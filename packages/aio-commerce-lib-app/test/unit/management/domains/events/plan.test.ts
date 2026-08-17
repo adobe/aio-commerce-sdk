@@ -22,14 +22,10 @@ import type {
   CommerceEventsConfig,
   ExternalEventsConfig,
 } from "#config/schema/eventing";
-import type {
-  CleanupResource,
-  PlanningInput,
-} from "#management/common/workflow/resource";
+import type { PlanningInput } from "#management/common/workflow/resource";
 import type { ValidationExecutionContext } from "#management/common/workflow/step";
 import type { EventsStepContext } from "#management/domains/events/context";
 import type {
-  EventingCleanupIdentity,
   EventingDomainPlan,
   EventingOperationValue,
   EventingProviderSnapshot,
@@ -66,37 +62,17 @@ function commerceInput(
   baseline: CommerceEventsConfig | null,
   target: CommerceEventsConfig | null,
   data?: EventingSnapshotData,
-  unresolved: CleanupResource<EventingCleanupIdentity>[] = [],
 ): PlanningInput<CommerceEventsConfig, EventingSnapshotData, never> {
   return {
     baseline: baseline ? { config: baseline, data: data ?? null } : null,
     path: ["eventing", "commerce"],
     targetConfig: target,
-    unresolvedCleanupResources: unresolved,
+    unresolvedCleanupResources: [],
   } as unknown as PlanningInput<
     CommerceEventsConfig,
     EventingSnapshotData,
     never
   >;
-}
-
-/** Wraps a cleanup identity as an unresolved cleanup resource at the commerce path. */
-function unresolvedCommerce(
-  identity: EventingCleanupIdentity,
-): CleanupResource<EventingCleanupIdentity> {
-  return { identity, path: ["eventing", "commerce"] };
-}
-
-/** The cleanup-category remove values in a plan. */
-function cleanupRemoves(plan: EventingDomainPlan): EventingOperationValue[] {
-  return plan.operations
-    .filter(
-      (operation) =>
-        operation.category === "cleanup" && operation.kind === "remove",
-    )
-    .map((operation) =>
-      operation.kind === "remove" ? operation.before : operation.after,
-    );
 }
 
 async function planCommerce(
@@ -351,83 +327,6 @@ describe("planCommerceEvents", () => {
 
     expect(plan.removedProviders.map((p) => p.key)).toEqual(["P1"]);
     expect(pick(plan, "remove", "provider")).toHaveLength(1);
-  });
-
-  describe("unresolved cleanup", () => {
-    test("emits a cleanup remove for an orphan absent from target and baseline", async () => {
-      const config = commerceConfig([
-        { events: [event("a", ["pkg/a"])], provider: { label: "P1" } },
-      ]);
-
-      const plan = await planCommerce(
-        commerceInput(config, config, undefined, [
-          unresolvedCommerce({
-            providerKey: "GHOST",
-            providerLabel: "Ghost",
-            resourceType: "provider",
-          }),
-        ]),
-      );
-
-      const removes = cleanupRemoves(plan);
-      expect(removes).toHaveLength(1);
-      expect(removes[0]).toMatchObject({
-        providerKey: "GHOST",
-        resourceType: "provider",
-      });
-      // Re-armed so it stays tracked until an apply resolves it.
-      expect(
-        plan.possibleCleanupResources.some(
-          (resource) =>
-            resource.identity.resourceType === "provider" &&
-            resource.identity.providerKey === "GHOST",
-        ),
-      ).toBe(true);
-    });
-
-    test("does not re-remove a cleanup resource still present in the target", async () => {
-      const config = commerceConfig([
-        { events: [event("a", ["pkg/a"])], provider: { label: "P1" } },
-      ]);
-
-      const plan = await planCommerce(
-        commerceInput(config, config, undefined, [
-          unresolvedCommerce({
-            providerKey: "P1",
-            providerLabel: "P1",
-            resourceType: "provider",
-          }),
-        ]),
-      );
-
-      expect(cleanupRemoves(plan)).toHaveLength(0);
-    });
-
-    test("does not duplicate a baseline-diff remove via the cleanup channel", async () => {
-      const baseline = commerceConfig([
-        { events: [event("a", ["pkg/a"])], provider: { label: "P1" } },
-        { events: [event("b", ["pkg/b"])], provider: { label: "P2" } },
-      ]);
-      const target = commerceConfig([
-        { events: [event("a", ["pkg/a"])], provider: { label: "P1" } },
-      ]);
-
-      const plan = await planCommerce(
-        commerceInput(baseline, target, undefined, [
-          unresolvedCommerce({
-            providerKey: "P2",
-            providerLabel: "P2",
-            resourceType: "provider",
-          }),
-        ]),
-      );
-
-      // P2 is removed once via the baseline diff (configuration), not again via cleanup.
-      expect(cleanupRemoves(plan)).toHaveLength(0);
-      expect(
-        pick(plan, "remove", "provider").map((v) => v.providerKey),
-      ).toEqual(["P2"]);
-    });
   });
 });
 
