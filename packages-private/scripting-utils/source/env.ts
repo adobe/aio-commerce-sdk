@@ -87,6 +87,19 @@ function resolveEnvPath() {
   return path.resolve(envPath);
 }
 
+/**
+ * Sets the `NODE_ENV` environment variable in the app `.env` file, so the web
+ * bundler (Parcel) ships the matching React build. Creates the `.env` if absent.
+ * @param mode - The environment mode to write into `NODE_ENV`.
+ */
+export function setNodeEnv(mode: "development" | "production") {
+  const envPath = resolveEnvPath();
+  if (!existsSync(envPath)) {
+    writeFileSync(envPath, "", "utf8");
+  }
+  replaceEnvVar(envPath, "NODE_ENV", mode);
+}
+
 /** Resolves the IMS server to server context from the project workspace credentials. */
 function resolveImsS2SContext(): Promise<ImsContext | null> {
   const credentials: WorkspaceCredentials[] =

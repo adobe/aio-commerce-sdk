@@ -11,7 +11,10 @@
  */
 
 import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
-import { syncImsCredentials } from "@aio-commerce-sdk/scripting-utils/env";
+import {
+  setNodeEnv,
+  syncImsCredentials,
+} from "@aio-commerce-sdk/scripting-utils/env";
 import consola from "consola";
 
 import {
@@ -104,6 +107,9 @@ export async function run(extension: Extension, templatesDir = TEMPLATES_DIR) {
           appManifest.metadata.displayName,
           templatesDir,
         );
+
+        // Ship React's production build for the deployed web bundle.
+        setNodeEnv("production");
       }
     }
     return;

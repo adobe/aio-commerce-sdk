@@ -55,6 +55,7 @@ vi.mock("node:child_process", () => ({ spawnSync: mockSpawnSync }));
 
 // syncImsCredentials is the external boundary — reads AIO CLI credentials
 vi.mock("@aio-commerce-sdk/scripting-utils/env", () => ({
+  setNodeEnv: vi.fn(),
   syncImsCredentials: vi.fn(),
 }));
 

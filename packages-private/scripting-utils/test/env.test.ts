@@ -15,7 +15,7 @@ import { join } from "node:path";
 
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
-import { syncImsCredentials } from "#env";
+import { setNodeEnv, syncImsCredentials } from "#env";
 import { withTempFiles } from "#filesystem/temp";
 
 // Mock the external dependencies
@@ -358,6 +358,57 @@ describe("syncImsCredentials", () => {
         expect(envContent).toContain(
           "AIO_COMMERCE_AUTH_IMS_CLIENT_ID=first-client-id",
         );
+      },
+    );
+  });
+});
+
+describe("setNodeEnv", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+
+    delete process.env.INIT_CWD;
+  });
+
+  test("should create the .env file when it does not exist", async () => {
+    await withTempFiles({}, (tempDir) => {
+      process.env.INIT_CWD = tempDir;
+      setNodeEnv("production");
+
+      const envPath = join(tempDir, ".env");
+      expect(existsSync(envPath)).toBe(true);
+      expect(readFileSync(envPath, "utf8")).toContain("NODE_ENV=production");
+    });
+  });
+
+  test("should add NODE_ENV when absent from an existing .env file", async () => {
+    await withTempFiles(
+      {
+        ".env": "EXISTING_VAR=existing\n",
+      },
+      (tempDir) => {
+        process.env.INIT_CWD = tempDir;
+        setNodeEnv("development");
+
+        const envContent = readFileSync(join(tempDir, ".env"), "utf8");
+        expect(envContent).toContain("EXISTING_VAR=existing");
+        expect(envContent).toContain("NODE_ENV=development");
+      },
+    );
+  });
+
+  test("should upsert NODE_ENV when already present", async () => {
+    await withTempFiles(
+      {
+        ".env": "NODE_ENV=development\n",
+      },
+      (tempDir) => {
+        process.env.INIT_CWD = tempDir;
+        setNodeEnv("production");
+
+        const envContent = readFileSync(join(tempDir, ".env"), "utf8");
+        expect(envContent).toContain("NODE_ENV=production");
+        expect(envContent).not.toContain("NODE_ENV=development");
       },
     );
   });
