@@ -38,7 +38,7 @@ async function invokeAction() {
   const { project, namespace } = getAioProjectContext();
   const token = await getUserToken();
 
-  const endpoint = `https://${namespace}.adobeioruntime.net/api/v1/web/app-management/installation/upgrade`;
+  const endpoint = `https://${namespace}.adobeioruntime.net/api/v1/web/app-management/installation`;
   consola.debug(`Upgrade endpoint: ${endpoint}`);
 
   const ioEventsEnv = getAioCliEnv();
