@@ -64,11 +64,21 @@ export async function startUpgrade({
 
   const association = await getAssociationData();
   if (!association) {
-    return ok({ body: { reason: "not-associated", skipped: true } });
+    return conflict({
+      body: {
+        message: "The app is not associated with a Commerce instance.",
+        reason: "not-associated",
+      },
+    });
   }
 
   if (baseline.config.metadata.version === appConfig.metadata.version) {
-    return ok({ body: { reason: "already-current", skipped: true } });
+    return conflict({
+      body: {
+        message: "The app is already on the target version.",
+        reason: "already-current",
+      },
+    });
   }
 
   const params = {

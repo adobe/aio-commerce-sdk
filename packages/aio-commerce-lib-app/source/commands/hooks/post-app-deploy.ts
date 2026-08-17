@@ -34,7 +34,7 @@ function isSkippedResult(result: UpgradeResult): result is SkippedResult {
 }
 
 /** Invokes the upgrade action. */
-async function invokeAction() {
+async function invokeAction(): Promise<UpgradeResult> {
   const { project, namespace } = getAioProjectContext();
   const token = await getUserToken();
 
@@ -47,9 +47,8 @@ async function invokeAction() {
       ? "https://events-stage.adobe.io"
       : "https://events.adobe.io";
 
-  let result: UpgradeResult;
   try {
-    result = await ky
+    return await ky
       .post(endpoint, {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -71,10 +70,17 @@ async function invokeAction() {
           ioEventsUrl,
         },
       })
-      .json<UpgradeResult>();
+      .json<UpgradePlanResult>();
   } catch (error) {
     if (error instanceof HTTPError) {
-      const details = await error.response.json();
+      const details = await error.response.json<{ reason?: string }>();
+
+      // A 409 carrying a `reason` is an expected no-op state (e.g. not-associated,
+      // already-current) — nothing to upgrade, not a failure.
+      if (error.response.status === 409 && details.reason) {
+        return { reason: details.reason, skipped: true };
+      }
+
       throw new Error(
         `Failed to trigger app upgrade (HTTP ${error.response.status}): ${JSON.stringify(details, null, 2)}`,
         { cause: error },
@@ -83,8 +89,6 @@ async function invokeAction() {
 
     throw error;
   }
-
-  return result;
 }
 
 /** Invokes the deployed app's upgrade endpoint. */
