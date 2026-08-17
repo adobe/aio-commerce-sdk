@@ -21,6 +21,7 @@ import {
   createOrchestrationStateStore,
 } from "#management/lifecycle/storage";
 
+import type { ActionResponse } from "@adobe/aio-commerce-lib-core/responses";
 import type { BaseContext } from "@aio-commerce-sdk/common-utils/actions";
 import type { KeyValueStore } from "@aio-commerce-sdk/common-utils/storage";
 import type {
@@ -158,7 +159,7 @@ export function buildLifecycleContext(
 export async function readStateFromStore(
   store: KeyValueStore<WorkflowRunState>,
   logFn: (msg: string) => void,
-) {
+): Promise<ActionResponse> {
   const state = await store.get(getStorageKey());
   if (state) {
     logFn(`Found state: ${state.status}`);
