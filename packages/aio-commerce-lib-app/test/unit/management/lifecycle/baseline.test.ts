@@ -22,6 +22,7 @@ import type { AppStateSnapshot } from "#management/common/orchestration";
 
 const compatibilityBaseline: AppStateSnapshot = {
   config: minimalValidConfig,
+  createdAt: "2026-08-12T08:00:00.000Z",
   data: null,
   id: "installation-snapshot",
 };
@@ -30,6 +31,7 @@ const lifecycleBaseline: AppStateSnapshot = {
     ...minimalValidConfig,
     metadata: { ...minimalValidConfig.metadata, version: "2.0.0" },
   },
+  createdAt: "2026-08-12T09:00:00.000Z",
   data: null,
   id: "lifecycle-snapshot",
 };
