@@ -28,12 +28,13 @@ import { createAdminUiStepContext } from "./utils";
 import type { AdminUiConfig, AdminUiExecutionContext } from "./utils";
 
 /**
- * Leaf step that enables the Admin UI SDK (PUT) on install. Runs before
- * {@link registerExtensionStep} so Commerce accepts the extension registration.
- * Install-only: enabling the SDK is not reverted on uninstall since other
- * extensions may still rely on it.
+ * Leaf step that enables the Admin UI SDK (PUT) on install, before
+ * {@link registerExtensionStep}. Install-only: it has no uninstall handler.
  */
 const enableAdminUiSdkStep = defineLeafStep({
+  // Must run before registerExtensionStep so Commerce accepts the extension
+  // registration. Not reverted on uninstall since other extensions may still
+  // rely on the SDK being enabled.
   install: (_: AdminUiConfig, context: AdminUiExecutionContext) =>
     enableAdminUiSdk(context),
   meta: {
@@ -75,14 +76,10 @@ const registerExtensionStep = defineLeafStep({
     unregisterExtension(context),
 });
 
-/**
- * The register step's output, also persisted as the domain's snapshot data.
- * Derived from the register call rather than the step definition: the step's own
- * `plan`/`apply` handlers consume this type, so deriving it from `typeof
- * registerExtensionStep` would reference itself. The refresh endpoint returns no
- * id and there is no read endpoint to fetch one, so a refresh with no id to
- * record persists a `null` snapshot rather than a null `extensionId`.
- */
+// Derived from the register call rather than `InferStepOutput<typeof
+// registerExtensionStep>`: the step's own `plan`/`apply` handlers consume this
+// type, so deriving it from the step itself would be self-referential.
+/** The register step's output (`{ extensionId }`), also persisted as the domain's snapshot data. */
 export type RegisterExtensionStepData = Awaited<
   ReturnType<typeof registerExtension>
 >;

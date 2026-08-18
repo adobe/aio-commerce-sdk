@@ -10,7 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
-import { tryResolveExtensionIdentity } from "./helpers";
+import { hasExtensionName } from "./helpers";
 
 import type {
   AdminUi,
@@ -160,22 +160,69 @@ function buildComponentOperation(
   };
 }
 
+/** Diffs the baseline and target component maps into add/remove operations. */
+function diffComponents(
+  baselineComponents: Map<string, AdminUiComponentDescriptor>,
+  targetComponents: Map<string, AdminUiComponentDescriptor>,
+): ResourceOperation<AdminUiOperationValue>[] {
+  const operations: ResourceOperation<AdminUiOperationValue>[] = [];
+
+  for (const [key, component] of targetComponents) {
+    if (!baselineComponents.has(key)) {
+      operations.push(buildComponentOperation("add", key, component));
+    }
+  }
+
+  // A component present on both sides with a changed config is a modification;
+  // this domain does not yet diff configs, so it is intentionally not emitted.
+  for (const [key, component] of baselineComponents) {
+    if (!targetComponents.has(key)) {
+      operations.push(buildComponentOperation("remove", key, component));
+    }
+  }
+
+  return operations;
+}
+
+/** Builds a block-level `add` or `remove` operation for the bare extension registration. */
+function buildExtensionOperation(
+  kind: "add" | "remove",
+): ResourceOperation<AdminUiOperationValue> {
+  const value: AdminUiOperationValue = { component: { kind: "extension" } };
+
+  if (kind === "add") {
+    return {
+      after: value,
+      id: "add:extension",
+      kind: "add",
+      label: "Register Admin UI extension",
+    };
+  }
+
+  return {
+    before: value,
+    id: "remove:extension",
+    kind: "remove",
+    label: "Unregister Admin UI extension",
+  };
+}
+
 /**
  * Plans the Admin UI extension transition by diffing the baseline and target
  * `adminUi` blocks component-by-component. Deterministic and free of network I/O
  * (it reads only the deployment namespace from the environment). Returns a
  * `blocked` result when work is planned but the extension identity cannot be
- * resolved (`__OW_NAMESPACE` unset), rather than throwing.
+ * resolved (`__OW_NAMESPACE` unset).
  *
- * It emits one operation per component added in the target or removed from it.
- * Config changes to a component present on both sides are intentionally left out:
- * modifying existing components is owned by CEXT-6510, and this ticket must not
- * touch them. The single {@link AdminUiExtensionAction} on the plan tells `apply`
- * how to converge those operations, since Commerce has no per-component API.
+ * It emits one operation per component added in the target or removed from it,
+ * or a single block-level operation when an empty `adminUi` block appears or
+ * disappears. Component config changes are not diffed here. The single
+ * {@link AdminUiExtensionAction} on the plan tells `apply` which whole-extension
+ * call converges all of those operations.
  */
 export function planAdminUi(
   input: PlanningInput<AdminUiConfig, RegisterExtensionStepData>,
-  context: ValidationExecutionContext<AdminUiStepContext>,
+  _context: ValidationExecutionContext<AdminUiStepContext>,
 ): Promise<PlanningResult<AdminUiDomainPlan>> {
   const { path, baseline, targetConfig } = input;
 
@@ -189,46 +236,43 @@ export function planAdminUi(
     ? enumerateComponents(targetAdminUi)
     : new Map<string, AdminUiComponentDescriptor>();
 
-  const operations: ResourceOperation<AdminUiOperationValue>[] = [];
+  const operations = diffComponents(baselineComponents, targetComponents);
 
-  for (const [key, component] of targetComponents) {
-    if (!baselineComponents.has(key)) {
-      operations.push(buildComponentOperation("add", key, component));
-    }
-  }
+  // The extension is registered in Commerce whenever the `adminUi` block is
+  // present (`registerExtensionStep.install` runs on `hasAdminUi`, even with zero
+  // components), so its lifecycle tracks block presence, not component count:
+  // an appearing block registers, a disappearing block unregisters, and a block
+  // present on both sides refreshes only when a component actually changed.
+  const baselineHasBlock = Boolean(baselineAdminUi);
+  const targetHasBlock = Boolean(targetAdminUi);
 
-  for (const [key, component] of baselineComponents) {
-    if (!targetComponents.has(key)) {
-      operations.push(buildComponentOperation("remove", key, component));
-    }
-    // A changed config for a component on both sides is a modification, which this
-    // step intentionally does not emit.
-  }
-
-  // The engine runs `apply` only for domains that report operations
-  // (execute.ts `hasPlannedOperations`), so gate on operations first.
-  //
-  // Key the register decision on baseline block presence, not its component
-  // count: `registerExtensionStep.install` runs whenever `adminUi` is defined,
-  // even with zero components, so an empty-but-present baseline block was
-  // already registered in Commerce — gaining a component there is a `refresh`,
-  // not a `register` against an extension that already exists.
   let extensionAction: AdminUiExtensionAction | null = null;
-  if (operations.length > 0) {
-    if (!baselineAdminUi) {
-      extensionAction = "register";
-    } else if (targetComponents.size === 0) {
-      extensionAction = "unregister";
-    } else {
-      extensionAction = "refresh";
-    }
+  if (!baselineHasBlock && targetHasBlock) {
+    extensionAction = "register";
+  } else if (baselineHasBlock && !targetHasBlock) {
+    extensionAction = "unregister";
+  } else if (baselineHasBlock && targetHasBlock && operations.length > 0) {
+    extensionAction = "refresh";
+  }
+
+  // The engine runs `apply` only for domains that report operations (execute.ts
+  // `hasPlannedOperations`). A register/unregister driven by an empty block has
+  // no component operation to carry it, so emit a block-level one.
+  if (
+    (extensionAction === "register" || extensionAction === "unregister") &&
+    operations.length === 0
+  ) {
+    operations.push(
+      buildExtensionOperation(
+        extensionAction === "register" ? "add" : "remove",
+      ),
+    );
   }
 
   // Any extension action needs the runtime identity at apply time, so if work is
   // planned but the namespace is unavailable, block with a machine-readable issue
   // rather than throwing and taking down the whole planning pass.
-  const identity = tryResolveExtensionIdentity(context);
-  if (extensionAction && !identity) {
+  if (extensionAction && !hasExtensionName()) {
     return Promise.resolve({
       issues: [
         {

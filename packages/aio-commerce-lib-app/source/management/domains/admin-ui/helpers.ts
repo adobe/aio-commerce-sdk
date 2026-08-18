@@ -18,10 +18,7 @@ import { HTTPError } from "ky";
 
 import { throwHttpError } from "#management/common/utils/http-error";
 
-import type { ApplyContext } from "#management/common/workflow/resource";
-import type { ValidationExecutionContext } from "#management/common/workflow/step";
-import type { AdminUiIdentity } from "./types";
-import type { AdminUiExecutionContext, AdminUiStepContext } from "./utils";
+import type { AdminUiExecutionContext } from "./utils";
 
 /** The Admin UI extension name (the deployment namespace), or `undefined` when unset. */
 function getExtensionName(): string | undefined {
@@ -225,19 +222,7 @@ export async function unregisterExtensionForUpgrade(
   }
 }
 
-/**
- * Resolves the identity of this app's Admin UI extension from context, or `null`
- * when the deployment namespace (`__OW_NAMESPACE`) is not available.
- */
-export function tryResolveExtensionIdentity(
-  context:
-    | ValidationExecutionContext<AdminUiStepContext>
-    | ApplyContext<AdminUiStepContext>,
-): AdminUiIdentity | null {
-  const extensionName = getExtensionName();
-  if (!extensionName) {
-    return null;
-  }
-
-  return { extensionName, workspaceName: context.appData.workspaceName };
+/** Whether the deployment namespace (`__OW_NAMESPACE`) needed to identify the extension is available. */
+export function hasExtensionName(): boolean {
+  return getExtensionName() !== undefined;
 }

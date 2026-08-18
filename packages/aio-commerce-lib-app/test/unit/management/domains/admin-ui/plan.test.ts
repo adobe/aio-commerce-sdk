@@ -153,21 +153,43 @@ describe("planAdminUi", () => {
     expect(plan.operations).toEqual([]);
   });
 
-  test("plans no action for an adminUi block with no enumerable components", async () => {
+  test("registers or unregisters an adminUi block with no enumerable components, via a block-level operation", async () => {
     // The schema allows an all-optional block, so `adminUi: {}` is valid yet
-    // enumerates to zero components.
+    // enumerates to zero components. The block's presence still (un)registers
+    // the extension in Commerce, so this must not silently no-op — a dropped
+    // empty block would otherwise leak the registration forever, since no
+    // later plan would ever see a component change to catch it.
     const emptyAdminUi = {
       ...configWithAdminUiSingleGrid,
       adminUi: {},
     } as AdminUiConfig;
 
     const added = await planned(null, emptyAdminUi);
-    expect(added.plan.extensionAction).toBeNull();
-    expect(added.plan.operations).toEqual([]);
+    expect(added.plan.extensionAction).toBe("register");
+    expect(added.plan.operations).toHaveLength(1);
+    expect(added.plan.operations[0]).toMatchObject({
+      id: "add:extension",
+      kind: "add",
+    });
 
     const dropped = await planned(emptyAdminUi, null);
-    expect(dropped.plan.extensionAction).toBeNull();
-    expect(dropped.plan.operations).toEqual([]);
+    expect(dropped.plan.extensionAction).toBe("unregister");
+    expect(dropped.plan.operations).toHaveLength(1);
+    expect(dropped.plan.operations[0]).toMatchObject({
+      id: "remove:extension",
+      kind: "remove",
+    });
+  });
+
+  test("plans nothing when the block is empty and unchanged on both sides", async () => {
+    const emptyAdminUi = {
+      ...configWithAdminUiSingleGrid,
+      adminUi: {},
+    } as AdminUiConfig;
+
+    const { plan } = await planned(emptyAdminUi, emptyAdminUi);
+    expect(plan.extensionAction).toBeNull();
+    expect(plan.operations).toEqual([]);
   });
 
   test("refreshes (does not re-register) when the baseline block was empty but present, and the target adds a component", async () => {

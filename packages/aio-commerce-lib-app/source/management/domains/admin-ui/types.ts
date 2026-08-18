@@ -13,22 +13,19 @@
 import type { AdminUi, AdminUiComponentConfig } from "#config/schema/admin-ui";
 import type { DomainPlan } from "#management/common/workflow/resource";
 
-/** Identity of the single Admin UI extension registered for this app. */
-export type AdminUiIdentity = {
-  extensionName: string;
-  workspaceName: string;
-};
-
 /** The Commerce entity an Admin UI component attaches to (absent for the menu). */
 export type AdminUiComponentEntity = Exclude<keyof AdminUi, "menu">;
 
+// Kebab-cased plan-side vocabulary rather than schema keys — it does not match
+// the config's `gridColumns`/`massActions`/`viewButtons` fields, so unlike
+// AdminUiComponentEntity, this cannot be derived from AdminUi.
 /**
  * The addressable kinds of Admin UI component an upgrade operation can target.
- * Plan-side vocabulary rather than schema keys: the kebab-cased labels do not
- * match the config's `gridColumns`/`massActions`/`viewButtons` fields, so this
- * cannot be derived from {@link AdminUi}.
+ * `extension` targets the bare registration itself (present whenever the
+ * `adminUi` block is), not a component.
  */
 export type AdminUiComponentKind =
+  | "extension"
   | "grid-columns"
   | "mass-action"
   | "menu"
@@ -45,10 +42,14 @@ export type AdminUiComponentRef = {
   id?: string;
 };
 
-/** The value an Admin UI operation carries: which component changed, and its config. */
+/**
+ * The value an Admin UI operation carries: which component changed, and its
+ * config. `config` is absent for the `extension` kind, which is the bare
+ * registration and has no component config of its own.
+ */
 export type AdminUiOperationValue = {
   component: AdminUiComponentRef;
-  config: AdminUiComponentConfig;
+  config?: AdminUiComponentConfig;
 };
 
 /**
