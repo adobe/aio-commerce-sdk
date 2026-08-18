@@ -10,7 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
-import type { AdminUi } from "#config/schema/admin-ui";
+import type { AdminUi, AdminUiComponentConfig } from "#config/schema/admin-ui";
 import type { DomainPlan } from "#management/common/workflow/resource";
 
 /** Identity of the single Admin UI extension registered for this app. */
@@ -20,9 +20,14 @@ export type AdminUiIdentity = {
 };
 
 /** The Commerce entity an Admin UI component attaches to (absent for the menu). */
-export type AdminUiComponentEntity = "customer" | "order" | "product";
+export type AdminUiComponentEntity = Exclude<keyof AdminUi, "menu">;
 
-/** The addressable kinds of Admin UI component an upgrade operation can target. */
+/**
+ * The addressable kinds of Admin UI component an upgrade operation can target.
+ * Plan-side vocabulary rather than schema keys: the kebab-cased labels do not
+ * match the config's `gridColumns`/`massActions`/`viewButtons` fields, so this
+ * cannot be derived from {@link AdminUi}.
+ */
 export type AdminUiComponentKind =
   | "grid-columns"
   | "mass-action"
@@ -39,16 +44,6 @@ export type AdminUiComponentRef = {
   /** Item id for array-based components (mass actions, view buttons). */
   id?: string;
 };
-
-/** The `adminUi.order` shape — the superset entity (grid columns, mass actions, view buttons). */
-type AdminUiOrderEntity = NonNullable<AdminUi["order"]>;
-
-/** The config of a single Admin UI component, carried on an operation for review and auditing. */
-export type AdminUiComponentConfig =
-  | NonNullable<AdminUi["menu"]>
-  | NonNullable<AdminUiOrderEntity["gridColumns"]>
-  | NonNullable<AdminUiOrderEntity["massActions"]>[number]
-  | NonNullable<AdminUiOrderEntity["viewButtons"]>[number];
 
 /** The value an Admin UI operation carries: which component changed, and its config. */
 export type AdminUiOperationValue = {

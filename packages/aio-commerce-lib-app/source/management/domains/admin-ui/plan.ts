@@ -12,7 +12,11 @@
 
 import { tryResolveExtensionIdentity } from "./helpers";
 
-import type { AdminUi, AdminUiConfig } from "#config/schema/admin-ui";
+import type {
+  AdminUi,
+  AdminUiComponentConfig,
+  AdminUiConfig,
+} from "#config/schema/admin-ui";
 import type {
   PlanningInput,
   PlanningResult,
@@ -21,7 +25,6 @@ import type {
 import type { ValidationExecutionContext } from "#management/common/workflow/step";
 import type { RegisterExtensionStepData } from "./branch";
 import type {
-  AdminUiComponentConfig,
   AdminUiComponentRef,
   AdminUiDomainPlan,
   AdminUiExtensionAction,
