@@ -271,9 +271,13 @@ export async function getProjectRootDirectory(cwd = process.cwd()) {
 /**
  * Create the output directory for the given file or folder (relative to the project root)
  * @param fileOrFolder - The file or folder to create
+ * @param projectRoot - Project root to resolve against. Defaults to the nearest package.json from the CWD.
  */
-export async function makeOutputDirFor(fileOrFolder: string) {
-  const rootDirectory = await getProjectRootDirectory();
+export async function makeOutputDirFor(
+  fileOrFolder: string,
+  projectRoot?: string,
+) {
+  const rootDirectory = projectRoot ?? (await getProjectRootDirectory());
   const outputDir = join(rootDirectory, fileOrFolder);
 
   if (!existsSync(outputDir)) {

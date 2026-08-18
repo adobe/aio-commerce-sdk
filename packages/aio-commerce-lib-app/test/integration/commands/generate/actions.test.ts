@@ -14,6 +14,9 @@ import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { basename, join } from "node:path";
 
+// Generate actions takes an explicit projectRoot, so these tests seed a temp
+// project and pass it in directly instead of mutating the process CWD.
+import { withTempFiles } from "@aio-commerce-sdk/scripting-utils/filesystem";
 import { consola } from "consola";
 import { afterEach, describe, expect, test, vi } from "vitest";
 
@@ -88,10 +91,13 @@ describe("commands/generate/actions", () => {
 
   describe("run", () => {
     test("generates app-config action for minimal config", async () => {
-      await withTempProject(
+      await withTempFiles(
         { ...EMPTY_PROJECT, ...makeTemplateFiles() },
         async (tempDir) => {
-          await run(minimalValidConfig, tempDir);
+          await run(minimalValidConfig, {
+            cwd: tempDir,
+            templatesDir: tempDir,
+          });
 
           const actionsDir = getActionsDir(
             tempDir,
@@ -104,10 +110,13 @@ describe("commands/generate/actions", () => {
     });
 
     test("generates ext.config.yaml for extensibility extension point", async () => {
-      await withTempProject(
+      await withTempFiles(
         { ...EMPTY_PROJECT, ...makeTemplateFiles() },
         async (tempDir) => {
-          await run(minimalValidConfig, tempDir);
+          await run(minimalValidConfig, {
+            cwd: tempDir,
+            templatesDir: tempDir,
+          });
 
           const extConfigPath = join(
             tempDir,
@@ -121,10 +130,13 @@ describe("commands/generate/actions", () => {
     });
 
     test("generates business configuration actions when business config schema is present", async () => {
-      await withTempProject(
+      await withTempFiles(
         { ...EMPTY_PROJECT, ...makeTemplateFiles() },
         async (tempDir) => {
-          await run(configWithBusinessConfig, tempDir);
+          await run(configWithBusinessConfig, {
+            cwd: tempDir,
+            templatesDir: tempDir,
+          });
 
           const businessActionsDir = getActionsDir(
             tempDir,
@@ -140,10 +152,13 @@ describe("commands/generate/actions", () => {
     });
 
     test("generates installation action with custom scripts loader", async () => {
-      await withTempProject(
+      await withTempFiles(
         { ...EMPTY_PROJECT, ...makeTemplateFiles() },
         async (tempDir) => {
-          await run(configWithOneScript, tempDir);
+          await run(configWithOneScript, {
+            cwd: tempDir,
+            templatesDir: tempDir,
+          });
 
           const actionsDir = getActionsDir(
             tempDir,
@@ -160,10 +175,13 @@ describe("commands/generate/actions", () => {
     });
 
     test("uses the app config alias when business config schema is static", async () => {
-      await withTempProject(
+      await withTempFiles(
         { ...EMPTY_PROJECT, ...makeTemplateFiles() },
         async (tempDir) => {
-          await run(configWithBusinessConfig, tempDir);
+          await run(configWithBusinessConfig, {
+            cwd: tempDir,
+            templatesDir: tempDir,
+          });
 
           const configPath = join(
             getActionsDir(tempDir, CONFIGURATION_EXTENSION_POINT_ID),
@@ -189,7 +207,7 @@ describe("commands/generate/actions", () => {
     });
 
     test("uses the app config alias when business config schema is dynamic", async () => {
-      await withTempProject(
+      await withTempFiles(
         {
           ...EMPTY_PROJECT,
           ...makeTemplateFiles(),
@@ -197,7 +215,10 @@ describe("commands/generate/actions", () => {
           "package.json": JSON.stringify({ type: "module" }),
         },
         async (tempDir) => {
-          await run(configWithDynamicListOptions, tempDir);
+          await run(configWithDynamicListOptions, {
+            cwd: tempDir,
+            templatesDir: tempDir,
+          });
 
           const configPath = join(
             getActionsDir(tempDir, CONFIGURATION_EXTENSION_POINT_ID),
@@ -227,14 +248,17 @@ describe("commands/generate/actions", () => {
     });
 
     test("generates a runtime app config module and #app.commerce.config alias for a JS config file", async () => {
-      await withTempProject(
+      await withTempFiles(
         {
           "app.commerce.config.js": dynamicOptionsConfigFile,
           "package.json": JSON.stringify({ type: "module" }),
           ...makeTemplateFiles(),
         },
         async (tempDir) => {
-          await run(configWithDynamicListOptions, tempDir);
+          await run(configWithDynamicListOptions, {
+            cwd: tempDir,
+            templatesDir: tempDir,
+          });
 
           const runtimeConfigPath = join(tempDir, getRuntimeAppConfigPath());
           expect(existsSync(runtimeConfigPath)).toBe(true);
@@ -262,13 +286,16 @@ describe("commands/generate/actions", () => {
     });
 
     test("generates a JavaScript config module when a static config has named exports", async () => {
-      await withTempProject(
+      await withTempFiles(
         {
           ...MINIMAL_PROJECT_WITH_NAMED_EXPORT,
           ...makeTemplateFiles(),
         },
         async (tempDir) => {
-          await run(minimalValidConfig, tempDir);
+          await run(minimalValidConfig, {
+            cwd: tempDir,
+            templatesDir: tempDir,
+          });
 
           const runtimeConfigPath = join(tempDir, getRuntimeAppConfigPath());
           expect(existsSync(runtimeConfigPath)).toBe(true);
@@ -282,14 +309,17 @@ describe("commands/generate/actions", () => {
     test(
       "bundles a TypeScript app config for JavaScript actions",
       async () => {
-        await withTempProject(
+        await withTempFiles(
           {
             "app.commerce.config.ts": dynamicOptionsConfigFileTs,
             "package.json": JSON.stringify({ type: "module" }),
             ...makeTemplateFiles(),
           },
           async (tempDir) => {
-            await run(configWithDynamicListOptions, tempDir);
+            await run(configWithDynamicListOptions, {
+              cwd: tempDir,
+              templatesDir: tempDir,
+            });
 
             const runtimeConfigPath = join(tempDir, getRuntimeAppConfigPath());
             expect(existsSync(runtimeConfigPath)).toBe(true);
@@ -324,8 +354,10 @@ describe("commands/generate/actions", () => {
             "package.json": JSON.stringify({ type: "module" }),
             ...makeTemplateFiles(),
           },
-          async () => {
-            await expect(run(configWithDynamicListOptions)).rejects.toThrow(
+          async (tempDir) => {
+            await expect(
+              run(configWithDynamicListOptions, { cwd: tempDir }),
+            ).rejects.toThrow(
               "Could not bundle the TypeScript app config with esbuild@",
             );
           },
@@ -337,14 +369,17 @@ describe("commands/generate/actions", () => {
     test.each(["ts", "mts", "cts"] as const)(
       "keeps JavaScript actions for a .%s config outside init",
       async (extension) => {
-        await withTempProject(
+        await withTempFiles(
           {
             [`app.commerce.config.${extension}`]: `export default ${JSON.stringify(minimalValidConfig)};`,
             "package.json": JSON.stringify({ type: "module" }),
             ...makeTemplateFiles(),
           },
           async (tempDir) => {
-            await run(minimalValidConfig, tempDir);
+            await run(minimalValidConfig, {
+              cwd: tempDir,
+              templatesDir: tempDir,
+            });
 
             const actionsDir = getActionsDir(
               tempDir,
@@ -365,7 +400,7 @@ describe("commands/generate/actions", () => {
     );
 
     test("writes a JSON passthrough module and #app.commerce.config alias for static config", async () => {
-      await withTempProject(
+      await withTempFiles(
         {
           ...EMPTY_PROJECT,
           ...makeTemplateFiles(),
@@ -375,7 +410,10 @@ describe("commands/generate/actions", () => {
           [getManifestPath()]: JSON.stringify({ metadata: { id: "static" } }),
         },
         async (tempDir) => {
-          await run(configWithBusinessConfig, tempDir);
+          await run(configWithBusinessConfig, {
+            cwd: tempDir,
+            templatesDir: tempDir,
+          });
 
           const runtimeConfigPath = join(tempDir, getRuntimeAppConfigPath());
           expect(existsSync(runtimeConfigPath)).toBe(true);
@@ -401,10 +439,13 @@ describe("commands/generate/actions", () => {
     });
 
     test("includes workerProcess for worker mass actions in backend-ui/2 ext.config.yaml", async () => {
-      await withTempProject(
+      await withTempFiles(
         { ...EMPTY_PROJECT, ...makeTemplateFiles() },
         async (tempDir) => {
-          await run(configWithFullAdminUiV2, tempDir);
+          await run(configWithFullAdminUiV2, {
+            cwd: tempDir,
+            templatesDir: tempDir,
+          });
 
           const extConfigPath = join(
             tempDir,
@@ -420,10 +461,13 @@ describe("commands/generate/actions", () => {
     });
 
     test("generates ext.config.yaml for backend-ui/2 with view and web but no workerProcess when only adminUi.menu is configured", async () => {
-      await withTempProject(
+      await withTempFiles(
         { ...EMPTY_PROJECT, ...makeTemplateFiles() },
         async (tempDir) => {
-          await run(configWithAdminUiMenu, tempDir);
+          await run(configWithAdminUiMenu, {
+            cwd: tempDir,
+            templatesDir: tempDir,
+          });
 
           const extConfigPath = join(
             tempDir,
@@ -443,10 +487,13 @@ describe("commands/generate/actions", () => {
     });
 
     test("scaffolds web-src for backend-ui/2 when a view operation is generated", async () => {
-      await withTempProject(
+      await withTempFiles(
         { ...EMPTY_PROJECT, ...makeTemplateFiles() },
         async (tempDir) => {
-          await run(configWithAdminUiMenu, tempDir);
+          await run(configWithAdminUiMenu, {
+            cwd: tempDir,
+            templatesDir: tempDir,
+          });
 
           const webSrcDir = join(
             tempDir,
@@ -545,14 +592,17 @@ describe("commands/generate/actions", () => {
     });
 
     test("scaffolds TSX web-src files when the app config is TypeScript", async () => {
-      await withTempProject(
+      await withTempFiles(
         {
           ...makeProjectFiles(configWithAdminUiMenu),
           ...makeTemplateFiles(),
           "package-lock.json": "{}",
         },
         async (tempDir) => {
-          await run(configWithAdminUiMenu, tempDir);
+          await run(configWithAdminUiMenu, {
+            cwd: tempDir,
+            templatesDir: tempDir,
+          });
 
           const webSrcDir = join(
             tempDir,
@@ -621,14 +671,17 @@ describe("commands/generate/actions", () => {
         "index.html",
       );
 
-      await withTempProject(
+      await withTempFiles(
         {
           ...EMPTY_PROJECT,
           ...makeTemplateFiles(),
           [entrypoint]: "<html>custom</html>",
         },
         async (tempDir) => {
-          await run(configWithAdminUiMenu, tempDir);
+          await run(configWithAdminUiMenu, {
+            cwd: tempDir,
+            templatesDir: tempDir,
+          });
 
           const entrypointPath = join(tempDir, entrypoint);
           expect(await readFile(entrypointPath, "utf-8")).toBe(
@@ -662,7 +715,7 @@ describe("commands/generate/actions", () => {
     });
 
     test("throws when an installed web-src dependency is incompatible", async () => {
-      await withTempProject(
+      await withTempFiles(
         {
           ...EMPTY_PROJECT,
           ...makeTemplateFiles(),
@@ -673,7 +726,9 @@ describe("commands/generate/actions", () => {
           }),
         },
         async (tempDir) => {
-          await expect(run(configWithAdminUiMenu, tempDir)).rejects.toThrow(
+          await expect(
+            run(configWithAdminUiMenu, { cwd: tempDir, templatesDir: tempDir }),
+          ).rejects.toThrow(
             "Cannot scaffold web-src because installed dependencies are incompatible",
           );
 
@@ -697,14 +752,17 @@ describe("commands/generate/actions", () => {
         ),
       );
 
-      await withTempProject(
+      await withTempFiles(
         {
           ...EMPTY_PROJECT,
           ...makeTemplateFiles(),
           ...installedDependencies,
         },
         async (tempDir) => {
-          await run(configWithAdminUiMenu, tempDir);
+          await run(configWithAdminUiMenu, {
+            cwd: tempDir,
+            templatesDir: tempDir,
+          });
 
           const webSrcDir = join(
             tempDir,
@@ -725,10 +783,13 @@ describe("commands/generate/actions", () => {
     });
 
     test("does not scaffold web-src or write the #web/* alias when adminUi has no view operation", async () => {
-      await withTempProject(
+      await withTempFiles(
         { ...EMPTY_PROJECT, ...makeTemplateFiles() },
         async (tempDir) => {
-          await run(configWithWorkerMassActions, tempDir);
+          await run(configWithWorkerMassActions, {
+            cwd: tempDir,
+            templatesDir: tempDir,
+          });
 
           const extensionDir = join(
             tempDir,
@@ -748,13 +809,16 @@ describe("commands/generate/actions", () => {
     });
 
     test("scaffolds JSX web-src files when a JavaScript app config file exists", async () => {
-      await withTempProject(
+      await withTempFiles(
         {
           ...makeProjectFiles(configWithAdminUiMenu, "cjs"),
           ...makeTemplateFiles(),
         },
         async (tempDir) => {
-          await run(configWithAdminUiMenu, tempDir);
+          await run(configWithAdminUiMenu, {
+            cwd: tempDir,
+            templatesDir: tempDir,
+          });
 
           const webSrcDir = join(
             tempDir,
@@ -778,21 +842,24 @@ describe("commands/generate/actions", () => {
     test("throws when installing web-src dependencies fails", async () => {
       mockSpawnSync.mockReturnValueOnce({ status: 1 });
 
-      await withTempProject(
+      await withTempFiles(
         { ...EMPTY_PROJECT, ...makeTemplateFiles() },
         async (tempDir) => {
-          await expect(run(configWithAdminUiMenu, tempDir)).rejects.toThrow(
-            "Failed to install dependencies automatically",
-          );
+          await expect(
+            run(configWithAdminUiMenu, { cwd: tempDir, templatesDir: tempDir }),
+          ).rejects.toThrow("Failed to install dependencies automatically");
         },
       );
     });
 
     test("generates ext.config.yaml for backend-ui/2 when adminUi is configured", async () => {
-      await withTempProject(
+      await withTempFiles(
         { ...EMPTY_PROJECT, ...makeTemplateFiles() },
         async (tempDir) => {
-          await run(configWithFullAdminUiV2, tempDir);
+          await run(configWithFullAdminUiV2, {
+            cwd: tempDir,
+            templatesDir: tempDir,
+          });
 
           const extConfigPath = join(
             tempDir,

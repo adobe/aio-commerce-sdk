@@ -11,6 +11,7 @@
  */
 
 import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
+import { getProjectRootDirectory } from "@aio-commerce-sdk/scripting-utils/project";
 import { consola } from "consola";
 
 import {
@@ -35,19 +36,30 @@ import {
 
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 
+/** Options for the generate actions command. */
+export type RunOptions = {
+  /** Working directory to resolve the project root from. Defaults to the CWD. */
+  cwd?: string;
+  /** The directory to load templates from, for testing purposes. Defaults to the generated actions template root. */
+  templatesDir?: string;
+};
+
 /**
  * Runs the generate actions command for the given extension point.
  * @param appManifest - The app manifest, used to determine which actions to generate and their content.
- * @param templatesDir - The directory to load templates from, for testing purposes. Defaults to the generated actions template root.
+ * @param options - Working directory and templates directory overrides.
  */
 export async function run(
   appManifest: CommerceAppConfigOutputModel,
-  templatesDir = TEMPLATES_DIR,
+  { cwd = process.cwd(), templatesDir = TEMPLATES_DIR }: RunOptions = {},
 ) {
-  await prepareRuntimeAppConfigModule(appManifest);
+  const projectRoot = await getProjectRootDirectory(cwd);
+
+  await prepareRuntimeAppConfigModule(appManifest, projectRoot);
   const appManagementExtConfig = await updateExtConfig(
     appManifest,
     EXTENSIBILITY_EXTENSION_POINT_ID,
+    projectRoot,
   );
 
   await generateActionFiles(
@@ -55,6 +67,7 @@ export async function run(
     getRuntimeActions(appManagementExtConfig, "app-management"),
     EXTENSIBILITY_EXTENSION_POINT_ID,
     templatesDir,
+    projectRoot,
   );
 
   // If the app has a business configuration schema, generate the business configuration actions and files
@@ -62,6 +75,7 @@ export async function run(
     const businessConfigExtConfig = await updateExtConfig(
       appManifest,
       CONFIGURATION_EXTENSION_POINT_ID,
+      projectRoot,
     );
 
     await generateActionFiles(
@@ -69,6 +83,7 @@ export async function run(
       getRuntimeActions(businessConfigExtConfig, "business-configuration"),
       CONFIGURATION_EXTENSION_POINT_ID,
       templatesDir,
+      projectRoot,
     );
   }
 
@@ -76,14 +91,16 @@ export async function run(
     const extConfig = await updateExtConfig(
       appManifest,
       BACKEND_UI_V2_EXTENSION_POINT_ID,
+      projectRoot,
     );
 
     if (extConfig.operations?.view) {
-      await prepareWebSourceImportAlias(extConfig);
+      await prepareWebSourceImportAlias(extConfig, projectRoot);
       await generateWebSrc(
         extConfig,
         appManifest.metadata.displayName,
         templatesDir,
+        projectRoot,
       );
     }
   }

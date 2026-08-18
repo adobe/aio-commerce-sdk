@@ -24,7 +24,7 @@ export async function run(
   appManifest: CommerceAppConfigOutputModel,
   templatesDir?: string,
 ) {
-  await generateActionsCommand(appManifest, templatesDir);
+  await generateActionsCommand(appManifest, { templatesDir });
   await generateManifestCommand(appManifest);
   await generateSchemaCommand(appManifest);
 }

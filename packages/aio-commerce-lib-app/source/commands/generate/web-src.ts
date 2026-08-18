@@ -219,14 +219,17 @@ async function prepareWebSourcePackage(
  * Add the package import alias for an existing or generated web-src.
  * @param extConfig - Extension config containing the view operation.
  */
-export async function prepareWebSourceImportAlias(extConfig: ExtConfig) {
+export async function prepareWebSourceImportAlias(
+  extConfig: ExtConfig,
+  projectRoot?: string,
+) {
   const entrypoint = getWebSourceEntrypoint(extConfig);
   if (entrypoint === null) {
     return;
   }
 
-  const projectRoot = await getProjectRootDirectory();
-  const pkg = await loadPackageJson(projectRoot);
+  const root = projectRoot ?? (await getProjectRootDirectory());
+  const pkg = await loadPackageJson(root);
   if (pkg === null) {
     throw new Error("Could not find package.json.");
   }
@@ -295,6 +298,7 @@ async function copyWebSourceTemplates(
   targetDir: string,
   extension: WebSourceExtension,
   appTitle: string,
+  projectRoot: string,
 ): Promise<string[]> {
   await mkdir(targetDir, { recursive: true });
 
@@ -313,6 +317,7 @@ async function copyWebSourceTemplates(
           targetPath,
           extension,
           appTitle,
+          projectRoot,
         );
       }
 
@@ -330,7 +335,7 @@ async function copyWebSourceTemplates(
       }
 
       await writeFile(targetPath, content, { encoding: "utf-8", flag: "wx" });
-      return ` ${relative(process.cwd(), targetPath)}`;
+      return ` ${relative(projectRoot, targetPath)}`;
     }),
   );
 
@@ -342,19 +347,20 @@ export async function generateWebSrc(
   extConfig: ExtConfig,
   appName: string,
   templatesDir = TEMPLATES_DIR,
+  projectRoot?: string,
 ) {
   const entrypoint = getWebSourceEntrypoint(extConfig);
   if (entrypoint === null) {
     return;
   }
 
-  const projectRoot = await getProjectRootDirectory();
-  const entrypointPath = join(projectRoot, entrypoint);
+  const root = projectRoot ?? (await getProjectRootDirectory());
+  const entrypointPath = join(root, entrypoint);
 
   if (existsSync(entrypointPath)) {
     consola.info(
       `web-src entrypoint already exists, skipping scaffold: ${relative(
-        process.cwd(),
+        root,
         entrypointPath,
       )}`,
     );
@@ -367,23 +373,24 @@ export async function generateWebSrc(
 
   const sourceDir = join(templatesDir, "admin-ui", "web-src");
   const targetDir = dirname(entrypointPath);
-  const extension = await resolveWebSourceExtension(projectRoot);
+  const extension = await resolveWebSourceExtension(root);
 
   const outputFiles = await copyWebSourceTemplates(
     sourceDir,
     targetDir,
     extension,
     appName,
+    root,
   );
 
   if (extension === "tsx") {
     const tsconfigPath = await writeWebSourceTypeScriptConfig(targetDir);
-    outputFiles.push(` ${relative(process.cwd(), tsconfigPath)}`);
-    await syncWebSourceTypecheckScript(projectRoot);
+    outputFiles.push(` ${relative(root, tsconfigPath)}`);
+    await syncWebSourceTypecheckScript(root);
   }
 
-  await prepareWebSourcePackage(projectRoot, extension);
+  await prepareWebSourcePackage(root, extension);
 
-  consola.success(`Scaffolded ${relative(process.cwd(), targetDir)}`);
+  consola.success(`Scaffolded ${relative(root, targetDir)}`);
   consola.log.raw(formatTree(outputFiles));
 }
