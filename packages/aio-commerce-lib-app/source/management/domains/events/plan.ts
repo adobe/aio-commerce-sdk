@@ -24,6 +24,7 @@ import {
   partitionByKey,
 } from "./utils";
 
+import type { CommerceEnv } from "@adobe/aio-commerce-lib-core/commerce";
 import type { EventProviderType } from "@adobe/aio-commerce-lib-events/io-events";
 import type {
   AppEvent,
@@ -59,14 +60,14 @@ type PlanLeafInput = {
   baselineSources: EventSource[];
   baselineSnapshot: EventingProviderSnapshot[] | null;
   baselineMetadata: ApplicationMetadata | null;
-  env: ReturnType<typeof getInstallCommerceEnv>;
+  env: CommerceEnv;
 };
 
 /** Reduces config event sources to env-scoped provider snapshots (skipping empty providers). */
 function sourcesToSnapshots(
   sources: EventSource[],
   type: EventProviderType,
-  env: ReturnType<typeof getInstallCommerceEnv>,
+  env: CommerceEnv,
 ): EventingProviderSnapshot[] {
   const snapshots: EventingProviderSnapshot[] = [];
 
@@ -228,8 +229,9 @@ class LeafPlanBuilder {
     baselineMetadata: ApplicationMetadata,
     isCommerce: boolean,
   ): void {
-    // Provider display (label/description) has no in-place update API; a cosmetic change is
-    // intentionally left as-is rather than blocking the whole upgrade. Only sub-resources diff.
+    // Provider label/description are real data, but our events client exposes no provider-update
+    // endpoint (only create/delete), so drift in them is left as-is rather than tearing down and
+    // recreating the whole provider for a display-only change. Only sub-resources diff.
     this.diffMetadata(target, baseline, targetMetadata, baselineMetadata);
     this.diffRegistrations(target, baseline, targetMetadata, baselineMetadata);
     if (isCommerce) {
