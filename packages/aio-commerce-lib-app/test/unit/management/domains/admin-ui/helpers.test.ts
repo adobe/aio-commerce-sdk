@@ -150,13 +150,11 @@ describe("refreshExtension", () => {
     expect(context.adminUiClient.refreshExtension).not.toHaveBeenCalled();
   });
 
-  test("calls the refresh endpoint and returns a null extensionId on success", async () => {
+  test("calls the refresh endpoint and returns undefined on success", async () => {
     const logger = createMockLogger();
     const context = { ...createMockAdminUiContext({}), logger };
 
-    await expect(refreshExtension(context)).resolves.toEqual({
-      extensionId: null,
-    });
+    await expect(refreshExtension(context)).resolves.toBeUndefined();
 
     expect(context.adminUiClient.refreshExtension).toHaveBeenCalledWith({
       extensionName: "test-ns",

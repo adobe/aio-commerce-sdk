@@ -10,7 +10,10 @@
  * governing permissions and limitations under the License.
  */
 
-import { unwrapHttpError } from "@adobe/aio-commerce-lib-api/utils";
+import {
+  HTTP_NOT_FOUND,
+  unwrapHttpError,
+} from "@adobe/aio-commerce-lib-api/utils";
 import { HTTPError } from "ky";
 
 import { throwHttpError } from "#management/common/utils/http-error";
@@ -19,9 +22,6 @@ import type { ApplyContext } from "#management/common/workflow/resource";
 import type { ValidationExecutionContext } from "#management/common/workflow/step";
 import type { AdminUiIdentity } from "./types";
 import type { AdminUiExecutionContext, AdminUiStepContext } from "./utils";
-
-/** HTTP status Commerce returns when the extension to delete no longer exists. */
-const HTTP_NOT_FOUND = 404;
 
 /** The Admin UI extension name (the deployment namespace), or `undefined` when unset. */
 function getExtensionName(): string | undefined {
@@ -89,7 +89,7 @@ export async function registerExtension(context: AdminUiExecutionContext) {
  * Refreshes an existing extension's registrations from the App Registry via the
  * dedicated `POST .../refresh` endpoint, which re-syncs registrations without
  * modifying the extension record. The endpoint returns no body, so on success
- * this returns `{ extensionId: null }`.
+ * this returns `undefined` — there is no id to report.
  *
  * Not every Commerce instance exposes the refresh route: on PaaS, merchants
  * control their own Admin UI SDK upgrade cadence, so the route may be absent
@@ -101,7 +101,7 @@ export async function registerExtension(context: AdminUiExecutionContext) {
  */
 export async function refreshExtension(
   context: AdminUiExecutionContext,
-): Promise<{ extensionId: string | null }> {
+): Promise<{ extensionId: string } | undefined> {
   const { adminUiClient, appData, logger } = context;
   const extensionName = requireExtensionName();
 
@@ -113,7 +113,6 @@ export async function refreshExtension(
     logger.info(
       `Admin UI extension "${extensionName}" refreshed successfully.`,
     );
-    return { extensionId: null };
   } catch (error: unknown) {
     if (
       error instanceof HTTPError &&
