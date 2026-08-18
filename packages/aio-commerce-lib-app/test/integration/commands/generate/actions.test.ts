@@ -361,6 +361,7 @@ describe("commands/generate/actions", () => {
           },
         );
       },
+      TS_BUNDLE_TIMEOUT_MS,
     );
 
     test("writes a JSON passthrough module and #app.commerce.config alias for static config", async () => {
