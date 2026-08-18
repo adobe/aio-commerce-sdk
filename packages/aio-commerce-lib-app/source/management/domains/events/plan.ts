@@ -455,11 +455,10 @@ function planEventingLeaf(
     plan: {
       baselineMetadata,
       baselineProviders,
-      // A plan always has at least one side, so at least one metadata is present.
-      metadata: (targetMetadata ?? baselineMetadata) as ApplicationMetadata,
       operations: builder.operations,
       path,
       removedProviders: builder.removedProviders,
+      targetMetadata,
       targetProviders,
     },
   };

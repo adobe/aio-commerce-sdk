@@ -103,7 +103,12 @@ export async function applyEventingLeaf(
   //    added metadata, and registrations for newly declared runtime actions.
   if (plan.targetProviders.length > 0) {
     await options.install(
-      buildLeafConfig(plan.targetProviders, plan.metadata, options),
+      // `targetMetadata` is non-null whenever there are target providers to onboard.
+      buildLeafConfig(
+        plan.targetProviders,
+        plan.targetMetadata as ApplicationMetadata,
+        options,
+      ),
       eventsContext,
     );
   }
@@ -165,8 +170,8 @@ async function reconcilePersistingProviders(
     await reconcileProviderSubResources(
       baseline,
       target,
-      plan.metadata,
-      // `baselineMetadata` is non-null here (guarded by the caller).
+      // A persisting provider exists on both sides, so both metadata values are non-null here.
+      plan.targetMetadata as ApplicationMetadata,
       plan.baselineMetadata as ApplicationMetadata,
       existingData,
       context,

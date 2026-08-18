@@ -202,8 +202,8 @@ export type EventingOperationValue =
  * offboard, and `baselineProviders` to compute sub-resource removals on providers present in both.
  */
 export type EventingDomainPlan = DomainPlan<EventingOperationValue> & {
-  /** The target app metadata, used to namespace event codes/names when onboarding. */
-  metadata: ApplicationMetadata;
+  /** The target app metadata, used to namespace event codes/names when onboarding. Null in a pure teardown (no target). */
+  targetMetadata: ApplicationMetadata | null;
 
   /** The baseline app metadata, used to resolve deployed resources during teardown. Null on first upgrade. */
   baselineMetadata: ApplicationMetadata | null;
