@@ -16,12 +16,12 @@ import { appliesToEnv, getInstallCommerceEnv } from "#config/lib/environment";
 
 import {
   COMMERCE_PROVIDER_TYPE,
+  diffByKey,
   EXTERNAL_PROVIDER_TYPE,
   eventCodeOf,
   getNamespacedEvent,
   getProviderKey,
   groupEventsByRuntimeActions,
-  partitionByKey,
 } from "./utils";
 
 import type { CommerceEnv } from "@adobe/aio-commerce-lib-core/commerce";
@@ -251,7 +251,7 @@ class LeafPlanBuilder {
     baselineMetadata: ApplicationMetadata,
   ): void {
     const { key, type } = target;
-    const { added, removed } = partitionByKey(
+    const { added, removed } = diffByKey(
       target.events,
       baseline.events,
       (event) => eventCodeOf(event, targetMetadata, type),
@@ -366,7 +366,7 @@ class LeafPlanBuilder {
     baselineMetadata: ApplicationMetadata,
   ): void {
     const { key } = target;
-    const { added, removed } = partitionByKey(
+    const { added, removed } = diffByKey(
       target.events,
       baseline.events,
       (event) => getNamespacedEvent(targetMetadata, event.name),

@@ -222,7 +222,7 @@ export function eventCodeOf(
 }
 
 /**
- * Partitions two keyed collections into the items unique to each side. `added` holds `target`
+ * Diffs two keyed collections into the items unique to each side. `added` holds `target`
  * items whose key is absent from `baseline`; `removed` holds `baseline` items whose key is absent
  * from `target`. The two sides may key differently (e.g. namespaced under different metadata).
  *
@@ -231,7 +231,7 @@ export function eventCodeOf(
  * @param targetKey - Derives the comparison key for a target item.
  * @param baselineKey - Derives the comparison key for a baseline item.
  */
-export function partitionByKey<T>(
+export function diffByKey<T>(
   target: T[],
   baseline: T[],
   targetKey: (item: T) => string,

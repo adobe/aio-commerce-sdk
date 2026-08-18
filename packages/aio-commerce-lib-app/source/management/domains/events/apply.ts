@@ -18,6 +18,7 @@ import {
 } from "#management/common/utils/http-error";
 
 import {
+  diffByKey,
   eventCodeOf,
   findExistingRegistrations,
   generateInstanceId,
@@ -28,7 +29,6 @@ import {
   getRegistrationDescription,
   getRegistrationName,
   groupEventsByRuntimeActions,
-  partitionByKey,
 } from "./utils";
 
 import type { EventProviderType } from "@adobe/aio-commerce-lib-events/io-events";
@@ -455,7 +455,7 @@ async function removeDroppedMetadata(
   context: EventsExecutionContext,
 ): Promise<void> {
   const { ioEventsClient, appData, logger } = context;
-  const { removed } = partitionByKey(
+  const { removed } = diffByKey(
     targetEvents,
     baselineEvents,
     (event) => eventCodeOf(event, targetMetadata, type),
@@ -505,7 +505,7 @@ async function removeDroppedSubscriptions(
   context: EventsExecutionContext,
 ): Promise<void> {
   const { commerceEventsClient, logger } = context;
-  const { removed } = partitionByKey(
+  const { removed } = diffByKey(
     targetEvents,
     baselineEvents,
     (event) => getNamespacedEvent(targetMetadata, event.name),
