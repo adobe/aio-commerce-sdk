@@ -21,11 +21,7 @@ import type {
   ApplyContext,
   ApplyResult,
 } from "#management/common/workflow/resource";
-import type {
-  AdminUiDomainPlan,
-  AdminUiIdentity,
-  AdminUiSnapshotData,
-} from "./types";
+import type { AdminUiDomainPlan, AdminUiSnapshotData } from "./types";
 import type { AdminUiStepContext } from "./utils";
 
 /**
@@ -45,17 +41,11 @@ import type { AdminUiStepContext } from "./utils";
 export async function applyAdminUi(
   plan: AdminUiDomainPlan,
   context: ApplyContext<AdminUiStepContext>,
-): Promise<ApplyResult<AdminUiSnapshotData, AdminUiIdentity>> {
+): Promise<ApplyResult<AdminUiSnapshotData>> {
   if (plan.extensionAction === "register") {
     await enableAdminUiSdk(context);
     const { extensionId } = await registerExtension(context);
-    // Reuse the plan's cleanup resource so its key matches the entry seeded into
-    // unresolvedCleanupResources; recomputing the identity risks a mismatch that
-    // would flag a successful upgrade as a cleanup failure.
-    return {
-      resolvedCleanupResources: plan.possibleCleanupResources,
-      snapshotData: { extensionId },
-    };
+    return { snapshotData: { extensionId } };
   }
 
   if (plan.extensionAction === "refresh") {
@@ -68,28 +58,14 @@ export async function applyAdminUi(
     // The dedicated refresh endpoint returns no id (and there is no read endpoint
     // to fetch one), so preserve the baseline's id in that case.
     return {
-      resolvedCleanupResources: [],
       snapshotData: { extensionId: extensionId ?? plan.baselineExtensionId },
     };
   }
 
   if (plan.extensionAction === "unregister") {
-    const { identity } = plan;
-    // Planning already blocks (rather than producing an "unregister" action)
-    // when identity can't be resolved, so a null identity here means the plan
-    // was tampered with or built incorrectly.
-    if (!identity) {
-      throw new Error(
-        "Cannot unregister the Admin UI extension: the plan has no resolved identity.",
-      );
-    }
-
     await unregisterExtensionForUpgrade(context);
-    return {
-      resolvedCleanupResources: [{ identity, path: plan.path }],
-      snapshotData: null,
-    };
+    return { snapshotData: null };
   }
 
-  return { resolvedCleanupResources: [], snapshotData: null };
+  return { snapshotData: null };
 }

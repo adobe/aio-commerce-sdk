@@ -42,7 +42,6 @@ describe("planAdminUi", () => {
         : null,
       path: OPERATION_PATH,
       targetConfig,
-      unresolvedCleanupResources: [],
     };
   }
 
@@ -62,7 +61,7 @@ describe("planAdminUi", () => {
   }
 
   test("registers with one add per component when the baseline had no Admin UI", async () => {
-    const { context, plan } = await planned(
+    const { plan } = await planned(
       null,
       configWithAdminUiSingleGrid as AdminUiConfig,
     );
@@ -71,15 +70,6 @@ describe("planAdminUi", () => {
     expect(plan.operations).toHaveLength(1);
     expect(plan.operations[0]?.kind).toBe("add");
     expect(plan.operations[0]?.id).toBe("add:order.grid-columns");
-    expect(plan.possibleCleanupResources).toEqual([
-      {
-        identity: {
-          extensionName: "test-ns",
-          workspaceName: context.appData.workspaceName,
-        },
-        path: OPERATION_PATH,
-      },
-    ]);
   });
 
   test("unregisters with one remove per component when the target dropped Admin UI", async () => {
@@ -92,7 +82,6 @@ describe("planAdminUi", () => {
     expect(plan.operations).toHaveLength(1);
     expect(plan.operations[0]?.kind).toBe("remove");
     expect(plan.operations[0]?.id).toBe("remove:order.grid-columns");
-    expect(plan.possibleCleanupResources).toEqual([]);
   });
 
   test("refreshes with an add per newly added component", async () => {
@@ -107,7 +96,6 @@ describe("planAdminUi", () => {
     expect(
       plan.operations.map((op) => op.id).sort((a, b) => a.localeCompare(b)),
     ).toEqual(["add:customer.grid-columns", "add:product.grid-columns"]);
-    expect(plan.possibleCleanupResources).toEqual([]);
   });
 
   test("refreshes with a remove per dropped component", async () => {
@@ -176,38 +164,29 @@ describe("planAdminUi", () => {
     const added = await planned(null, emptyAdminUi);
     expect(added.plan.extensionAction).toBeNull();
     expect(added.plan.operations).toEqual([]);
-    expect(added.plan.possibleCleanupResources).toEqual([]);
 
     const dropped = await planned(emptyAdminUi, null);
     expect(dropped.plan.extensionAction).toBeNull();
     expect(dropped.plan.operations).toEqual([]);
   });
 
-  test("registers (not refreshes) when the baseline block was empty and the target adds a component", async () => {
-    // An empty baseline block registered nothing, so gaining a component must be
-    // a first-time register, not a refresh.
+  test("refreshes (does not re-register) when the baseline block was empty but present, and the target adds a component", async () => {
+    // An empty-but-present baseline block was still registered in Commerce
+    // (registerExtensionStep.install runs whenever adminUi is defined), so
+    // gaining a component there is a refresh, not a first-time register.
     const emptyAdminUi = {
       ...configWithAdminUiSingleGrid,
       adminUi: {},
     } as AdminUiConfig;
 
-    const { context, plan } = await planned(
+    const { plan } = await planned(
       emptyAdminUi,
       configWithAdminUiSingleGrid as AdminUiConfig,
     );
 
-    expect(plan.extensionAction).toBe("register");
+    expect(plan.extensionAction).toBe("refresh");
     expect(plan.operations).toHaveLength(1);
     expect(plan.operations[0]?.kind).toBe("add");
-    expect(plan.possibleCleanupResources).toEqual([
-      {
-        identity: {
-          extensionName: "test-ns",
-          workspaceName: context.appData.workspaceName,
-        },
-        path: OPERATION_PATH,
-      },
-    ]);
   });
 
   test("detects a change in the count of duplicate-id components (does not collapse them)", async () => {
@@ -256,21 +235,6 @@ describe("planAdminUi", () => {
     const result = await planAdminUi(planInput(null, null), context);
 
     expect(result.kind).toBe("planned");
-    if (result.kind === "planned") {
-      expect(result.plan.identity).toBeNull();
-    }
-  });
-
-  test("resolves the identity on the plan when the namespace is available", async () => {
-    const { context, plan } = await planned(
-      null,
-      configWithAdminUiSingleGrid as AdminUiConfig,
-    );
-
-    expect(plan.identity).toEqual({
-      extensionName: "test-ns",
-      workspaceName: context.appData.workspaceName,
-    });
   });
 
   test("carries the baseline's extensionId forward on the plan, or null when there is no baseline", async () => {

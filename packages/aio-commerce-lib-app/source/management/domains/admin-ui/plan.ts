@@ -14,7 +14,6 @@ import { tryResolveExtensionIdentity } from "./helpers";
 
 import type { AdminUi, AdminUiConfig } from "#config/schema/admin-ui";
 import type {
-  CleanupResource,
   PlanningInput,
   PlanningResult,
   ResourceOperation,
@@ -25,7 +24,6 @@ import type {
   AdminUiComponentRef,
   AdminUiDomainPlan,
   AdminUiExtensionAction,
-  AdminUiIdentity,
   AdminUiOperationValue,
   AdminUiSnapshotData,
 } from "./types";
@@ -145,7 +143,6 @@ function buildComponentOperation(
   if (kind === "add") {
     return {
       after: value,
-      category: "configuration",
       id: `add:${key}`,
       kind: "add",
       label: `Add Admin UI ${component.label}`,
@@ -154,7 +151,6 @@ function buildComponentOperation(
 
   return {
     before: value,
-    category: "configuration",
     id: `remove:${key}`,
     kind: "remove",
     label: `Remove Admin UI ${component.label}`,
@@ -175,7 +171,7 @@ function buildComponentOperation(
  * how to converge those operations, since Commerce has no per-component API.
  */
 export function planAdminUi(
-  input: PlanningInput<AdminUiConfig, AdminUiSnapshotData, AdminUiIdentity>,
+  input: PlanningInput<AdminUiConfig, AdminUiSnapshotData>,
   context: ValidationExecutionContext<AdminUiStepContext>,
 ): Promise<PlanningResult<AdminUiDomainPlan>> {
   const { path, baseline, targetConfig } = input;
@@ -209,13 +205,14 @@ export function planAdminUi(
   // The engine runs `apply` only for domains that report operations
   // (execute.ts `hasPlannedOperations`), so gate on operations first.
   //
-  // Key the choice on component-set sizes, not block presence: an empty baseline
-  // block registered nothing, so gaining a component is a first-time `register`
-  // (which records the cleanup resource), not a `refresh` that would leave the
-  // new extension untracked.
+  // Key the register decision on baseline block presence, not its component
+  // count: `registerExtensionStep.install` runs whenever `adminUi` is defined,
+  // even with zero components, so an empty-but-present baseline block was
+  // already registered in Commerce — gaining a component there is a `refresh`,
+  // not a `register` against an extension that already exists.
   let extensionAction: AdminUiExtensionAction | null = null;
   if (operations.length > 0) {
-    if (baselineComponents.size === 0) {
+    if (!baselineAdminUi) {
       extensionAction = "register";
     } else if (targetComponents.size === 0) {
       extensionAction = "unregister";
@@ -242,18 +239,13 @@ export function planAdminUi(
     });
   }
 
-  const possibleCleanupResources: CleanupResource<AdminUiIdentity>[] =
-    extensionAction === "register" && identity ? [{ identity, path }] : [];
-
   return Promise.resolve({
     kind: "planned",
     plan: {
       baselineExtensionId: extractBaselineExtensionId(baseline),
       extensionAction,
-      identity,
       operations,
       path,
-      possibleCleanupResources,
     },
   });
 }

@@ -63,6 +63,11 @@ const registerExtensionStep = defineLeafStep({
       description: "Removes the Admin UI extension from Adobe Commerce",
       label: "Unregister Extension",
     },
+    upgrade: {
+      description:
+        "Registers, refreshes, or removes the Admin UI extension to match the updated configuration",
+      label: "Update Extension",
+    },
   },
   name: "register-extension",
   plan: planAdminUi,
@@ -89,6 +94,11 @@ export const adminUiStep = defineBranchStep({
     },
     uninstall: {
       description: "Removes the extension from Adobe Commerce Admin UI",
+      label: "Admin UI",
+    },
+    upgrade: {
+      description:
+        "Reconciles the extension's Admin UI components with Adobe Commerce",
       label: "Admin UI",
     },
   },

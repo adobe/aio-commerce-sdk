@@ -80,18 +80,9 @@ export type AdminUiExtensionAction = "refresh" | "register" | "unregister";
  * review and auditing) plus the single {@link AdminUiExtensionAction} that
  * converges them.
  */
-export type AdminUiDomainPlan = DomainPlan<
-  AdminUiOperationValue,
-  AdminUiIdentity
-> & {
+export type AdminUiDomainPlan = DomainPlan<AdminUiOperationValue> & {
   extensionAction: AdminUiExtensionAction | null;
 
   /** The `extensionId` from the baseline snapshot, or `null` when there is no baseline. */
   baselineExtensionId: string | null;
-
-  /**
-   * The extension identity, or `null` when the deployment namespace
-   * (`__OW_NAMESPACE`) was unavailable.
-   */
-  identity: AdminUiIdentity | null;
 };

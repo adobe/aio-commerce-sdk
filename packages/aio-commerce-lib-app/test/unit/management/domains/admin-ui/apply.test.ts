@@ -19,7 +19,6 @@ import { makeHttpError } from "#test/fixtures/http-error";
 import type {
   AdminUiDomainPlan,
   AdminUiExtensionAction,
-  AdminUiIdentity,
 } from "#management/domains/admin-ui/types";
 
 const UNREGISTER_FAILURE_PATTERN =
@@ -29,11 +28,6 @@ const REFRESH_FAILURE_PATTERN =
   /Failed to refresh Admin UI extension.*Service unavailable/;
 
 const OPERATION_PATH = ["admin-ui", "register-extension"];
-
-const TEST_IDENTITY: AdminUiIdentity = {
-  extensionName: "test-ns",
-  workspaceName: "test-workspace-name",
-};
 
 describe("applyAdminUi", () => {
   beforeEach(() => {
@@ -52,43 +46,33 @@ describe("applyAdminUi", () => {
 
   function makePlan(
     extensionAction: AdminUiExtensionAction | null,
-    possibleCleanupResources: AdminUiDomainPlan["possibleCleanupResources"] = [],
     baselineExtensionId: string | null = null,
-    identity: AdminUiIdentity | null = TEST_IDENTITY,
   ): AdminUiDomainPlan {
     return {
       baselineExtensionId,
       extensionAction,
-      identity,
       operations: [],
       path: OPERATION_PATH,
-      possibleCleanupResources,
     };
   }
 
-  test("register: enables the SDK, registers, and resolves the plan's cleanup resource", async () => {
+  test("register: enables the SDK and registers the extension", async () => {
     const context = applyContext();
-    const cleanup = [{ identity: TEST_IDENTITY, path: OPERATION_PATH }];
-    const result = await applyAdminUi(makePlan("register", cleanup), context);
+    const result = await applyAdminUi(makePlan("register"), context);
 
     expect(context.adminUiClient.enableAdminUiSdk).toHaveBeenCalledOnce();
     expect(context.adminUiClient.registerExtension).toHaveBeenCalledOnce();
     expect(result.snapshotData).toEqual({ extensionId: "ext-123" });
-    expect(result.resolvedCleanupResources).toEqual(cleanup);
   });
 
   test("refresh: enables the SDK (idempotent safeguard) and calls the refresh endpoint, carrying the baseline's extensionId forward", async () => {
     const context = applyContext();
-    const result = await applyAdminUi(
-      makePlan("refresh", [], "ext-123"),
-      context,
-    );
+    const result = await applyAdminUi(makePlan("refresh", "ext-123"), context);
 
     expect(context.adminUiClient.enableAdminUiSdk).toHaveBeenCalledOnce();
     expect(context.adminUiClient.refreshExtension).toHaveBeenCalledOnce();
     expect(context.adminUiClient.registerExtension).not.toHaveBeenCalled();
     expect(result.snapshotData).toEqual({ extensionId: "ext-123" });
-    expect(result.resolvedCleanupResources).toEqual([]);
   });
 
   test("refresh: falls back to registering when the refresh endpoint is not found (404)", async () => {
@@ -102,7 +86,7 @@ describe("applyAdminUi", () => {
     });
 
     const result = await applyAdminUi(
-      makePlan("refresh", [], "ext-stale"),
+      makePlan("refresh", "ext-stale"),
       context,
     );
 
@@ -134,18 +118,6 @@ describe("applyAdminUi", () => {
 
     expect(context.adminUiClient.unregisterExtension).toHaveBeenCalledOnce();
     expect(result.snapshotData).toBeNull();
-    expect(result.resolvedCleanupResources).toEqual([
-      { identity: TEST_IDENTITY, path: OPERATION_PATH },
-    ]);
-  });
-
-  test("unregister: throws when the plan has no resolved identity", async () => {
-    const context = applyContext();
-
-    await expect(
-      applyAdminUi(makePlan("unregister", [], null, null), context),
-    ).rejects.toThrow("the plan has no resolved identity");
-    expect(context.adminUiClient.unregisterExtension).not.toHaveBeenCalled();
   });
 
   test("no-op: does nothing when the extension action is null", async () => {
@@ -157,7 +129,6 @@ describe("applyAdminUi", () => {
     expect(context.adminUiClient.refreshExtension).not.toHaveBeenCalled();
     expect(context.adminUiClient.unregisterExtension).not.toHaveBeenCalled();
     expect(result.snapshotData).toBeNull();
-    expect(result.resolvedCleanupResources).toEqual([]);
   });
 
   test("register: aborts (throws) when registration fails", async () => {
@@ -202,8 +173,5 @@ describe("applyAdminUi", () => {
 
     expect(context.adminUiClient.unregisterExtension).toHaveBeenCalledOnce();
     expect(result.snapshotData).toBeNull();
-    expect(result.resolvedCleanupResources).toEqual([
-      { identity: TEST_IDENTITY, path: OPERATION_PATH },
-    ]);
   });
 });
