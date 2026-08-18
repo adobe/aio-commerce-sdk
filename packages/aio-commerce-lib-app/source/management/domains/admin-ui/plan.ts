@@ -19,13 +19,13 @@ import type {
   ResourceOperation,
 } from "#management/common/workflow/resource";
 import type { ValidationExecutionContext } from "#management/common/workflow/step";
+import type { RegisterExtensionStepData } from "./branch";
 import type {
   AdminUiComponentConfig,
   AdminUiComponentRef,
   AdminUiDomainPlan,
   AdminUiExtensionAction,
   AdminUiOperationValue,
-  AdminUiSnapshotData,
 } from "./types";
 import type { AdminUiStepContext } from "./utils";
 
@@ -124,9 +124,9 @@ function enumerateComponents(
 
 /** Reads the baseline's persisted `extensionId`, or `null` when there is no baseline. */
 function extractBaselineExtensionId(
-  baseline: { data: AdminUiSnapshotData } | null,
+  baseline: { data: RegisterExtensionStepData | null } | null,
 ): string | null {
-  return baseline?.data.extensionId ?? null;
+  return baseline?.data?.extensionId ?? null;
 }
 
 /** Builds an `add` or `remove` operation for a single enumerated component. */
@@ -171,7 +171,7 @@ function buildComponentOperation(
  * how to converge those operations, since Commerce has no per-component API.
  */
 export function planAdminUi(
-  input: PlanningInput<AdminUiConfig, AdminUiSnapshotData>,
+  input: PlanningInput<AdminUiConfig, RegisterExtensionStepData>,
   context: ValidationExecutionContext<AdminUiStepContext>,
 ): Promise<PlanningResult<AdminUiDomainPlan>> {
   const { path, baseline, targetConfig } = input;

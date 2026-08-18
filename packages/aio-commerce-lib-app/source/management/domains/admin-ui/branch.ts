@@ -25,7 +25,6 @@ import {
 import { planAdminUi } from "./plan";
 import { createAdminUiStepContext } from "./utils";
 
-import type { InferStepOutput } from "#management/common/workflow/step";
 import type { AdminUiConfig, AdminUiExecutionContext } from "./utils";
 
 /**
@@ -76,9 +75,16 @@ const registerExtensionStep = defineLeafStep({
     unregisterExtension(context),
 });
 
-/** The output data of the register extension step (auto-inferred). */
-export type RegisterExtensionStepData = InferStepOutput<
-  typeof registerExtensionStep
+/**
+ * The register step's output, also persisted as the domain's snapshot data.
+ * Derived from the register call rather than the step definition: the step's own
+ * `plan`/`apply` handlers consume this type, so deriving it from `typeof
+ * registerExtensionStep` would reference itself. The refresh endpoint returns no
+ * id and there is no read endpoint to fetch one, so a refresh with no id to
+ * record persists a `null` snapshot rather than a null `extensionId`.
+ */
+export type RegisterExtensionStepData = Awaited<
+  ReturnType<typeof registerExtension>
 >;
 
 /** Branch step for setting up the Admin UI extension registration. */

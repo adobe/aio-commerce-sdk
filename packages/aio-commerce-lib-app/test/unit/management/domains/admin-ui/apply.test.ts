@@ -75,6 +75,14 @@ describe("applyAdminUi", () => {
     expect(result.snapshotData).toEqual({ extensionId: "ext-123" });
   });
 
+  test("refresh: persists null snapshot data when there is no id to record", async () => {
+    const context = applyContext();
+    const result = await applyAdminUi(makePlan("refresh"), context);
+
+    expect(context.adminUiClient.refreshExtension).toHaveBeenCalledOnce();
+    expect(result.snapshotData).toBeNull();
+  });
+
   test("refresh: falls back to registering when the refresh endpoint is not found (404)", async () => {
     const httpError = makeHttpError(
       404,

@@ -21,7 +21,8 @@ import type {
   ApplyContext,
   ApplyResult,
 } from "#management/common/workflow/resource";
-import type { AdminUiDomainPlan, AdminUiSnapshotData } from "./types";
+import type { RegisterExtensionStepData } from "./branch";
+import type { AdminUiDomainPlan } from "./types";
 import type { AdminUiStepContext } from "./utils";
 
 /**
@@ -41,7 +42,7 @@ import type { AdminUiStepContext } from "./utils";
 export async function applyAdminUi(
   plan: AdminUiDomainPlan,
   context: ApplyContext<AdminUiStepContext>,
-): Promise<ApplyResult<AdminUiSnapshotData>> {
+): Promise<ApplyResult<RegisterExtensionStepData>> {
   if (plan.extensionAction === "register") {
     await enableAdminUiSdk(context);
     const { extensionId } = await registerExtension(context);
@@ -54,12 +55,12 @@ export async function applyAdminUi(
     // idempotent PUT, so it guards against the SDK being disabled out-of-band at
     // no meaningful cost.
     await enableAdminUiSdk(context);
-    const { extensionId } = await refreshExtension(context);
+    const refreshed = await refreshExtension(context);
     // The dedicated refresh endpoint returns no id (and there is no read endpoint
-    // to fetch one), so preserve the baseline's id in that case.
-    return {
-      snapshotData: { extensionId: extensionId ?? plan.baselineExtensionId },
-    };
+    // to fetch one), so carry the baseline's id forward, or persist nothing when
+    // there is none to record.
+    const extensionId = refreshed?.extensionId ?? plan.baselineExtensionId;
+    return { snapshotData: extensionId ? { extensionId } : null };
   }
 
   if (plan.extensionAction === "unregister") {
