@@ -35,9 +35,12 @@ import {
 } from "#management/domains/events/utils";
 import { configWithCommerceEventing } from "#test/fixtures/config";
 import {
+  createMockCommerceEventsConfig as commerceConfig,
   createMockEventingInstallationContext,
   createMockIoEventProvider,
   createMockIoEventRegistration,
+  createMockAppEvent as event,
+  createMockExternalEventsConfig as externalConfig,
 } from "#test/fixtures/eventing";
 
 import type {
@@ -56,12 +59,6 @@ import type {
 } from "#management/domains/events/types";
 
 const { metadata } = configWithCommerceEventing;
-
-type Source = { provider: { label: string; key?: string }; events: unknown[] };
-
-function event(name: string, runtimeActions: string[]) {
-  return { description: name, fields: [], label: name, name, runtimeActions };
-}
 
 /** Builds a ky `HTTPError` carrying the given status, for exercising HTTP failure paths. */
 function httpError(status: number) {
@@ -90,13 +87,6 @@ function liveProvider(prov: { label: string; key?: string }, id: string) {
     }),
     _embedded: { eventmetadata: [] },
   };
-}
-
-function commerceConfig(sources: Source[]): CommerceEventsConfig {
-  return {
-    eventing: { commerce: sources },
-    metadata,
-  } as unknown as CommerceEventsConfig;
 }
 
 /** A mock io-events client whose list endpoints return the given (defaulted-empty) HAL payloads. */
@@ -136,13 +126,6 @@ async function planCommerce(
     params: { AIO_COMMERCE_API_FLAVOR: "saas" },
   } as never);
   return (result as { kind: "planned"; plan: EventingDomainPlan }).plan;
-}
-
-function externalConfig(sources: Source[]): ExternalEventsConfig {
-  return {
-    eventing: { external: sources },
-    metadata,
-  } as unknown as ExternalEventsConfig;
 }
 
 async function planExternal(

@@ -16,7 +16,11 @@ import {
   planCommerceEvents,
   planExternalEvents,
 } from "#management/domains/events/plan";
-import { configWithCommerceEventing } from "#test/fixtures/config";
+import {
+  createMockCommerceEventsConfig as commerceConfig,
+  createMockAppEvent as event,
+  createMockExternalEventsConfig as externalConfig,
+} from "#test/fixtures/eventing";
 
 import type {
   CommerceEventsConfig,
@@ -32,31 +36,9 @@ import type {
   EventingSnapshotData,
 } from "#management/domains/events/types";
 
-const { metadata } = configWithCommerceEventing;
-
 const context = {
   params: { AIO_COMMERCE_API_FLAVOR: "paas" },
 } as unknown as ValidationExecutionContext<EventsStepContext>;
-
-type Source = { provider: { label: string; key?: string }; events: unknown[] };
-
-function event(name: string, runtimeActions: string[]) {
-  return { description: name, fields: [], label: name, name, runtimeActions };
-}
-
-function commerceConfig(sources: Source[]): CommerceEventsConfig {
-  return {
-    eventing: { commerce: sources },
-    metadata,
-  } as unknown as CommerceEventsConfig;
-}
-
-function externalConfig(sources: Source[]): ExternalEventsConfig {
-  return {
-    eventing: { external: sources },
-    metadata,
-  } as unknown as ExternalEventsConfig;
-}
 
 function commerceInput(
   baseline: CommerceEventsConfig | null,
