@@ -276,11 +276,13 @@ export function installDependencies(
 export async function runGeneration(
   appConfig: CommerceAppConfigOutputModel,
   execCommand: string,
+  cwd = process.cwd(),
 ) {
   try {
-    await generateActionsCommand(appConfig);
-    await generateManifestCommand(appConfig);
-    await generateSchemaCommand(appConfig);
+    const projectRoot = await getProjectRootDirectory(cwd);
+    await generateActionsCommand(appConfig, { cwd: projectRoot });
+    await generateManifestCommand(appConfig, projectRoot);
+    await generateSchemaCommand(appConfig, projectRoot);
   } catch (error) {
     throw new Error(
       `Failed to run generation command. Please run manually: ${execCommand} aio-commerce-lib-app generate all`,

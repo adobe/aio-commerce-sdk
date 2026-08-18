@@ -11,6 +11,7 @@
  */
 
 import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
+import { getProjectRootDirectory } from "@aio-commerce-sdk/scripting-utils/project";
 import consola from "consola";
 
 import { run as generateActionsCommand } from "#commands/generate/actions/main";
@@ -20,13 +21,22 @@ import { loadAppManifest } from "#commands/utils";
 
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 
+/** Options for the postinstall hook. */
+export type PostinstallOptions = {
+  /** Working directory to resolve the project root from. Defaults to the CWD. */
+  cwd?: string;
+  /** The directory to load templates from, for testing purposes. Defaults to the generated actions template root. */
+  templatesDir?: string;
+};
+
 export async function run(
   appManifest: CommerceAppConfigOutputModel,
-  templatesDir?: string,
+  { cwd = process.cwd(), templatesDir }: PostinstallOptions = {},
 ) {
-  await generateActionsCommand(appManifest, { templatesDir });
-  await generateManifestCommand(appManifest);
-  await generateSchemaCommand(appManifest);
+  const projectRoot = await getProjectRootDirectory(cwd);
+  await generateActionsCommand(appManifest, { cwd: projectRoot, templatesDir });
+  await generateManifestCommand(appManifest, projectRoot);
+  await generateSchemaCommand(appManifest, projectRoot);
 }
 
 /** Runs the postinstall hook */

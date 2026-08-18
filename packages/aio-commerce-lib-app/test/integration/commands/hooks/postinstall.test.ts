@@ -39,7 +39,7 @@ describe("commands/hooks/postinstall", () => {
       await withTempProject(
         { ...BUSINESS_CONFIG_PROJECT, ...makeTemplateFiles() },
         async (tempDir) => {
-          await run(configWithBusinessConfig, tempDir);
+          await run(configWithBusinessConfig, { templatesDir: tempDir });
 
           const extensibilityDir = join(
             tempDir,

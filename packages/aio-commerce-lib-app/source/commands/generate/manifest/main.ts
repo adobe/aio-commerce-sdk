@@ -34,10 +34,15 @@ import {
 
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 
-export async function run(appConfig: CommerceAppConfigOutputModel) {
+export async function run(
+  appConfig: CommerceAppConfigOutputModel,
+  projectRoot?: string,
+) {
+  const root = projectRoot ?? (await getProjectRootDirectory());
+
   // Remove stale JSON when generated actions need the source config module.
-  if (await requiresJavaScriptAppConfig(appConfig)) {
-    const stalePath = join(await getProjectRootDirectory(), getManifestPath());
+  if (await requiresJavaScriptAppConfig(appConfig, root)) {
+    const stalePath = join(root, getManifestPath());
     const staleExists = await access(stalePath).then(
       () => true,
       () => false,
@@ -56,6 +61,7 @@ export async function run(appConfig: CommerceAppConfigOutputModel) {
   const contents = stringify(appConfig, null, 2);
   const outputDir = await makeOutputDirFor(
     getGeneratedDir(EXTENSIBILITY_EXTENSION_POINT_ID),
+    root,
   );
 
   const manifestPath = join(outputDir, APP_MANIFEST_FILE);

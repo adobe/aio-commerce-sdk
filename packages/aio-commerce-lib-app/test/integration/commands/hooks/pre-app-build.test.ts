@@ -79,7 +79,7 @@ describe("commands/hooks/pre-app-build", () => {
       };
 
       await withTempProject(extensibilityProject, async (tempDir) => {
-        await run("extensibility/1", tempDir);
+        await run("extensibility/1", { templatesDir: tempDir });
 
         const manifestPath = join(tempDir, getManifestPath());
         const appConfigPath = extensibilityActionFile(tempDir, "app-config");
@@ -106,7 +106,7 @@ describe("commands/hooks/pre-app-build", () => {
       };
 
       await withTempProject(businessConfigProject, async (tempDir) => {
-        await run("configuration/1", tempDir);
+        await run("configuration/1", { templatesDir: tempDir });
 
         const schemaPath = join(tempDir, getSchemaPath());
         const configActionPath = businessConfigActionFile(tempDir, "config");

@@ -13,10 +13,7 @@
 import { join } from "node:path";
 import { inspect } from "node:util";
 
-import {
-  withChdir,
-  withTempFiles,
-} from "@aio-commerce-sdk/scripting-utils/filesystem";
+import { withTempFiles } from "@aio-commerce-sdk/scripting-utils/filesystem";
 import { stringify } from "yaml";
 
 import {
@@ -166,7 +163,18 @@ export async function withTempProject(
   callback: (tempDir: string) => void | Promise<void>,
 ) {
   await withTempFiles(files, async (tempDir) => {
-    await withChdir(tempDir, () => callback(tempDir));
+    // Point process.cwd() at the temp project instead of doing a real chdir.
+    // Commands resolve the project root from the CWD, but a real process.chdir
+    // can strand the process on a deleted directory when a test is interrupted
+    // mid-run, cascading ENOENT into unrelated tests. Overriding the getter
+    // avoids that race and nests correctly (each scope restores its parent's).
+    const originalCwd = process.cwd;
+    process.cwd = () => tempDir;
+    try {
+      await callback(tempDir);
+    } finally {
+      process.cwd = originalCwd;
+    }
   });
 }
 

@@ -49,17 +49,20 @@ export type InitFlags = {
 /** Extra options that can be given to the `init` handler that would not necessarily become CLI flags. */
 type InitExtraOptions = {
   formatConfig?: boolean;
+  /** Working directory to initialize in. Defaults to the CWD. */
+  cwd?: string;
 };
 
 /** Initialize the project */
 export async function run(flags?: InitFlags, extraOptions?: InitExtraOptions) {
   consola.start("Initializing app...");
 
-  const { execCommand, packageManager } = await ensurePackageJson();
-  runInstall(packageManager, REQUIRED_DEPENDENCIES);
+  const cwd = extraOptions?.cwd ?? process.cwd();
+  const { execCommand, packageManager } = await ensurePackageJson(cwd);
+  runInstall(packageManager, REQUIRED_DEPENDENCIES, cwd);
 
   const configResult = await ensureCommerceAppConfig(
-    process.cwd(),
+    cwd,
     extraOptions?.formatConfig ?? true,
     flags,
   );
@@ -67,13 +70,13 @@ export async function run(flags?: InitFlags, extraOptions?: InitExtraOptions) {
   const { config, domains, configFormat } = configResult;
   const isTypeScriptProject = configFormat === "ts";
 
-  installDependencies(packageManager, domains);
+  installDependencies(packageManager, domains, cwd);
   if (isTypeScriptProject) {
-    await scaffoldTypeScriptProject(packageManager);
+    await scaffoldTypeScriptProject(packageManager, cwd);
   }
 
   // Sync the package.json with the app config
-  const pkg = await loadPackageJson(process.cwd());
+  const pkg = await loadPackageJson(cwd);
   if (pkg === null) {
     throw new Error("Could not find package.json.");
   }
@@ -87,16 +90,16 @@ export async function run(flags?: InitFlags, extraOptions?: InitExtraOptions) {
   await pkg.save();
 
   if (isTypeScriptProject) {
-    await syncActionsTypecheckScript();
+    await syncActionsTypecheckScript(cwd);
   }
 
-  await runGeneration(config, execCommand);
-  await ensureAppConfig(domains);
-  await ensureInstallYaml(domains);
+  await runGeneration(config, execCommand, cwd);
+  await ensureAppConfig(domains, cwd);
+  await ensureInstallYaml(domains, cwd);
 
   // Register the postinstall hook last so future installs run after init has
   // created the files the hook depends on.
-  await writePostinstallHook(execCommand);
+  await writePostinstallHook(execCommand, cwd);
 
   consola.success("Initialization complete!");
   consola.box(

@@ -39,7 +39,10 @@ import { hasBusinessConfigSchema } from "#config/index";
 
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 
-export async function run(appConfig: CommerceAppConfigOutputModel) {
+export async function run(
+  appConfig: CommerceAppConfigOutputModel,
+  projectRoot?: string,
+) {
   if (!hasBusinessConfigSchema(appConfig)) {
     consola.debug(
       "Business configuration schema not found in application configuration. Nothing to do.",
@@ -48,7 +51,7 @@ export async function run(appConfig: CommerceAppConfigOutputModel) {
     return;
   }
 
-  const projectDir = await getProjectRootDirectory();
+  const projectDir = projectRoot ?? (await getProjectRootDirectory());
   const envPath = join(projectDir, ".env");
 
   // Ensure .env file exists to avoid failing when loading it.
@@ -93,6 +96,7 @@ export async function run(appConfig: CommerceAppConfigOutputModel) {
   consola.info("Generating configuration schema...");
   const outputDir = await makeOutputDirFor(
     getGeneratedDir(CONFIGURATION_EXTENSION_POINT_ID),
+    projectDir,
   );
 
   const contents = stringify(appConfig.businessConfig.schema, null, 2);
