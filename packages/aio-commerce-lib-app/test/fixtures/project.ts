@@ -163,11 +163,9 @@ export async function withTempProject(
   callback: (tempDir: string) => void | Promise<void>,
 ) {
   await withTempFiles(files, async (tempDir) => {
-    // Point process.cwd() at the temp project instead of doing a real chdir.
-    // Commands resolve the project root from the CWD, but a real process.chdir
-    // can strand the process on a deleted directory when a test is interrupted
-    // mid-run, cascading ENOENT into unrelated tests. Overriding the getter
-    // avoids that race and nests correctly (each scope restores its parent's).
+    // Point process.cwd() at the temp project instead of a real chdir: a real
+    // chdir can strand the process on a deleted directory if a test is
+    // interrupted mid-run, cascading ENOENT into unrelated tests.
     const originalCwd = process.cwd;
     process.cwd = () => tempDir;
     try {

@@ -52,8 +52,8 @@ export async function withTempFiles<T>(
   }
 }
 
-// Captured once at module load, before any caller mutates the process-global
-// CWD, so it's always a directory that still exists to fall back to.
+// Captured before any caller mutates the CWD, so restores have a directory
+// that still exists to fall back to.
 const stableRoot = process.cwd();
 
 /**

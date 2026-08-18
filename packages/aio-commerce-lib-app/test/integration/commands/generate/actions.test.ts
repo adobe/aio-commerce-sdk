@@ -15,7 +15,7 @@ import { readFile } from "node:fs/promises";
 import { basename, join } from "node:path";
 
 // Generate actions takes an explicit projectRoot, so these tests seed a temp
-// project and pass it in directly instead of mutating the process CWD.
+// project and pass it in directly.
 import { withTempFiles } from "@aio-commerce-sdk/scripting-utils/filesystem";
 import { consola } from "consola";
 import { afterEach, describe, expect, test, vi } from "vitest";
