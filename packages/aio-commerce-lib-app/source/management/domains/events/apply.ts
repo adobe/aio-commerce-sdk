@@ -272,7 +272,7 @@ function eventCodeSet(
 
 /** Whether two string sets contain exactly the same members. */
 function areSameSets(a: Set<string>, b: Set<string>): boolean {
-  return a.size === b.size && [...a].every((value) => b.has(value));
+  return a.size === b.size && a.isSubsetOf(b);
 }
 
 /** PUT-updates registrations whose event set changed; deletes registrations whose action was dropped. */
