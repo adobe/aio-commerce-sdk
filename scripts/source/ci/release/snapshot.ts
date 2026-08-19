@@ -166,11 +166,7 @@ async function getWorkspacePackages(
   );
 }
 
-// Changesets CLI v3 added `changeset publish-plan --output`, which computes
-// this same publish list directly against the npm registry instead of
-// inferring it from the pre-version changeset status. Revisit replacing
-// this function with that command once its `--output` flag is no longer
-// marked experimental.
+// TODO: Replace this with `changeset publish-plan --output` once the output flag is stable.
 /** Reads actual snapshot versions from package.json for packages the release plan says will change. */
 function getSnapshotVersions(
   releasePlan: ChangesetStatus,

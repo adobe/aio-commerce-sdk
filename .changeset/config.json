@@ -11,7 +11,10 @@
   "commit": false,
   "ignore": [],
   "linked": [],
-  "privatePackages": true,
+  "privatePackages": {
+    "version": true,
+    "tag": false
+  },
 
   "snapshot": {
     "useCalculatedVersion": true,
