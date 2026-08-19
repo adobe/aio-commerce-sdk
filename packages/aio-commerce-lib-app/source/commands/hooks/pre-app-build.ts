@@ -47,7 +47,7 @@ type Extension = "extensibility/1" | "configuration/1" | "backend-ui/2";
 /**
  * Runs the pre-app-build hook for the given extension.
  * @param extension - The extension to run the hook for.
- * @param projectRoot - Resolved project root.
+ * @param projectRoot - Resolved project root containing extension files.
  * @param templatesDir - Directory containing action templates.
  */
 export async function run(

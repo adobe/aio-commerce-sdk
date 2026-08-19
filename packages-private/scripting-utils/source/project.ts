@@ -254,8 +254,8 @@ export async function isESM(cwd = process.cwd()) {
 }
 
 /**
- * Get the root directory of the project
- * @param cwd The current working directory
+ * Finds the project root from the nearest ancestor package.json.
+ * @param cwd - Directory from which to search upward.
  */
 export async function getProjectRootDirectory(cwd = process.cwd()) {
   const packageJsonPath = await findNearestPackageJson(cwd);
@@ -269,8 +269,8 @@ export async function getProjectRootDirectory(cwd = process.cwd()) {
 }
 
 /**
- * Create the output directory for the given file or folder (relative to the project root)
- * @param fileOrFolder - The file or folder to create
+ * Creates an output directory relative to the project root.
+ * @param fileOrFolder - Project-relative directory to create.
  * @param projectRoot - Resolved project root.
  */
 export async function makeOutputDirFor(
@@ -331,7 +331,7 @@ function isValidPackageManager(
 
 /**
  * Detect the package manager for a project.
- * @param projectRoot - Resolved project root.
+ * @param projectRoot - Resolved project root containing package-manager metadata.
  */
 export async function detectPackageManager(
   projectRoot: string,

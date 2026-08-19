@@ -37,9 +37,10 @@ import {
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 
 /**
- * Runs the generate actions command for the given extension point.
- * @param appManifest - The app manifest, used to determine which actions to generate and their content.
- * @param options - Working directory and templates directory overrides.
+ * Generates extension configs, runtime actions, and Admin UI web source for the configured domains.
+ * @param appManifest - App configuration used to determine the generated content.
+ * @param projectRoot - Resolved project root where files are generated.
+ * @param templatesDir - Directory containing generation templates.
  */
 export async function run(
   appManifest: CommerceAppConfigOutputModel,

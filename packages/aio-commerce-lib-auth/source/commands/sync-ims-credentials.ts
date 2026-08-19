@@ -15,7 +15,9 @@ import { stringifyError } from "@aio-commerce-sdk/scripting-utils/error";
 import { getProjectRootDirectory } from "@aio-commerce-sdk/scripting-utils/project";
 import consola from "consola";
 
-/** Synchronizes the current context IMS credentials to their AIO_COMMERCE_IMS_AUTH counterparts. */
+/**
+ * Synchronizes current-context IMS credentials to the nearest project's `.env`.
+ */
 export async function run() {
   consola.start("Syncing IMS credentials...");
 

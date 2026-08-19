@@ -140,7 +140,12 @@ async function writeJavaScriptAppConfigModule(
   );
 }
 
-/** Bundle a TypeScript app config file into runtime-safe ESM. */
+/**
+ * Bundles a TypeScript app config file into runtime-safe ESM.
+ * @param configFilePath - Source TypeScript app config path.
+ * @param outputPath - Generated ESM module path.
+ * @param projectRoot - Resolved project root used to run the bundler.
+ */
 async function bundleTypeScriptAppConfigModule(
   configFilePath: string,
   outputPath: string,
@@ -184,6 +189,7 @@ async function bundleTypeScriptAppConfigModule(
 /**
  * Write an ESM module that re-exports the static app manifest JSON so generated
  * actions can import it via the alias without needing a JSON import attribute.
+ * @param projectRoot - Resolved project root where the module is generated.
  */
 async function prepareStaticAppConfigImportAlias(projectRoot: string) {
   const runtimeConfigPath = getRuntimeAppConfigPath();
@@ -203,6 +209,8 @@ async function prepareStaticAppConfigImportAlias(projectRoot: string) {
  * TypeScript configs are bundled into a generated runtime module. JavaScript
  * configs use a passthrough module, while serializable default-only configs use
  * a re-export of the validated JSON manifest.
+ * @param appManifest - App configuration used to select the module format.
+ * @param projectRoot - Resolved project root where the module is generated.
  */
 export async function prepareRuntimeAppConfigModule(
   appManifest: CommerceAppConfigOutputModel,
@@ -237,8 +245,9 @@ export async function prepareRuntimeAppConfigModule(
 }
 
 /**
- * Read an extension point's ext.config.yaml file and return it as a JS object.
+ * Reads an extension point's ext.config.yaml document and path.
  * @param extensionPointId - The extension point ID to read the config for.
+ * @param projectRoot - Resolved project root containing the extension config.
  */
 export async function readExtConfig(
   extensionPointId: ValidExtensionPointId,
@@ -268,7 +277,12 @@ export async function readExtConfig(
   }
 }
 
-/** Update the ext.config.yaml file */
+/**
+ * Updates an extension point's ext.config.yaml with generated configuration.
+ * @param appConfig - App configuration used to build the extension config.
+ * @param extensionPointId - Extension point whose config is updated.
+ * @param projectRoot - Resolved project root containing the extension config.
+ */
 export async function updateExtConfig(
   appConfig: CommerceAppConfigOutputModel,
   extensionPointId: ValidExtensionPointId,
@@ -312,7 +326,14 @@ export async function updateExtConfig(
   return extConfig;
 }
 
-/** Generate the action files */
+/**
+ * Generates runtime action files from templates.
+ * @param appManifest - App configuration used to populate action templates.
+ * @param actions - Runtime actions to generate.
+ * @param extensionPointId - Extension point receiving the generated actions.
+ * @param templatesDir - Directory containing action templates.
+ * @param projectRoot - Resolved project root where actions are generated.
+ */
 export async function generateActionFiles(
   appManifest: CommerceAppConfigOutputModel,
   actions: TemplateAction[],
@@ -390,7 +411,10 @@ export function applyCustomScripts(
 }
 
 /**
- * Generate the installation template with dynamic custom script imports
+ * Generates installation code that imports configured custom scripts.
+ * @param template - Custom scripts template content.
+ * @param appManifest - App configuration containing custom installation steps.
+ * @param projectRoot - Resolved project root used to resolve script paths.
  */
 export async function generateCustomScriptsTemplate(
   template: string,

@@ -46,14 +46,19 @@ export type InitFlags = {
   domains: CommerceAppConfigDomain[];
 };
 
-/** Extra options that can be given to the `init` handler that would not necessarily become CLI flags. */
+/** Internal execution options for the init handler. */
 type InitExtraOptions = {
+  /** Whether to format a newly created app configuration. */
   formatConfig?: boolean;
   /** Working directory to initialize in. Defaults to the CWD. */
   cwd?: string;
 };
 
-/** Initialize the project */
+/**
+ * Initializes a Commerce App project.
+ * @param flags - Non-interactive initialization answers.
+ * @param extraOptions - Internal formatting and working-directory overrides.
+ */
 export async function run(flags?: InitFlags, extraOptions?: InitExtraOptions) {
   consola.start("Initializing app...");
 

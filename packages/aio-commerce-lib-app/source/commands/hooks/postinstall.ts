@@ -21,6 +21,12 @@ import { loadAppManifest } from "#commands/utils";
 
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 
+/**
+ * Regenerates project artifacts after dependencies are installed.
+ * @param appManifest - Validated app configuration used for generation.
+ * @param projectRoot - Resolved project root where artifacts are generated.
+ * @param templatesDir - Optional directory containing generation templates.
+ */
 export async function run(
   appManifest: CommerceAppConfigOutputModel,
   projectRoot: string,

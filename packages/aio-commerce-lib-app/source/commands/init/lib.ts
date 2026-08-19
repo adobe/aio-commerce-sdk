@@ -57,7 +57,12 @@ import type { CommerceAppConfigDomain } from "#config/index";
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 import type { InitFlags } from "./main";
 
-/** Ensure app.commerce.config file exists, allow creating if it doesn't. When options are provided, prompts are skipped. */
+/**
+ * Ensures a valid app configuration exists, creating one when requested.
+ * @param projectRoot - Resolved project root containing the app configuration.
+ * @param formatConfig - Whether to format a newly created configuration.
+ * @param flags - Non-interactive answers; prompts are used when omitted.
+ */
 export async function ensureCommerceAppConfig(
   projectRoot: string,
   formatConfig = true,
@@ -138,8 +143,8 @@ export async function ensureCommerceAppConfig(
 }
 
 /**
- * Ensure a package.json exists and detect the package manager.
- * @param cwd - Directory to check; defaults to `process.cwd()`
+ * Ensures package.json exists, then resolves the project root and package manager.
+ * @param cwd - Directory in which to create or discover package.json.
  */
 export async function ensurePackageJson(cwd = process.cwd()) {
   const existing = await readPackageJson(cwd);
@@ -177,9 +182,9 @@ export async function ensurePackageJson(cwd = process.cwd()) {
 }
 
 /**
- * Register the `hooks postinstall` script in package.json.
- * @param execCommand - Prefix for running local binaries (e.g. `pnpm exec`, `npx`)
- * @param projectRoot - Resolved project root containing the package.json to update
+ * Registers the postinstall hook in package.json.
+ * @param execCommand - Prefix for running local binaries, such as `pnpm exec`.
+ * @param projectRoot - Resolved project root containing package.json.
  */
 export async function writePostinstallHook(
   execCommand: string,
@@ -219,7 +224,11 @@ export async function writePostinstallHook(
   consola.success(`Added postinstall script to ${PACKAGE_JSON_FILE}`);
 }
 
-/** Ensure app.config.yaml has the extension reference */
+/**
+ * Ensures app.config.yaml references the enabled domain extensions.
+ * @param domains - Domains enabled in the app configuration.
+ * @param projectRoot - Resolved project root containing app.config.yaml.
+ */
 export async function ensureAppConfig(
   domains: Set<CommerceAppConfigDomain>,
   projectRoot: string,
@@ -273,7 +282,12 @@ export function installDependencies(
   runInstall(packageManager, packages, projectRoot);
 }
 
-/** Run the generation command */
+/**
+ * Generates all project artifacts during initialization.
+ * @param appConfig - Validated app configuration used for generation.
+ * @param execCommand - Command prefix included in manual recovery guidance.
+ * @param projectRoot - Resolved project root where artifacts are generated.
+ */
 export async function runGeneration(
   appConfig: CommerceAppConfigOutputModel,
   execCommand: string,
@@ -293,7 +307,11 @@ export async function runGeneration(
   }
 }
 
-/** Ensure install.yaml has the extension reference */
+/**
+ * Ensures install.yaml references the enabled domain extensions.
+ * @param domains - Domains enabled in the app configuration.
+ * @param projectRoot - Resolved project root containing install.yaml.
+ */
 export async function ensureInstallYaml(
   domains: Set<CommerceAppConfigDomain>,
   projectRoot: string,

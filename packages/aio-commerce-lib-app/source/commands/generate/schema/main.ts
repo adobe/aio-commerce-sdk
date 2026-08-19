@@ -39,6 +39,11 @@ import { hasBusinessConfigSchema } from "#config/index";
 
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 
+/**
+ * Generates the business configuration schema and prepares encryption when needed.
+ * @param appConfig - Validated app configuration containing the schema.
+ * @param projectRoot - Resolved project root where schema files are managed.
+ */
 export async function run(
   appConfig: CommerceAppConfigOutputModel,
   projectRoot: string,

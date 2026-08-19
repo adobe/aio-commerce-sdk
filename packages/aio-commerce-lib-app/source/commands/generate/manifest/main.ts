@@ -34,6 +34,11 @@ import {
 
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 
+/**
+ * Generates or removes the static app manifest as required by the app config.
+ * @param appConfig - Validated app configuration to serialize.
+ * @param projectRoot - Resolved project root where the manifest is generated.
+ */
 export async function run(
   appConfig: CommerceAppConfigOutputModel,
   projectRoot: string,

@@ -117,7 +117,8 @@ function getWebSourceEntrypoint(extConfig: ExtConfig) {
 
 /**
  * Ensure package.json has the dependencies and Parcel config needed by web-src.
- * @param projectRoot - Project root containing the package.json to update.
+ * @param projectRoot - Resolved project root containing package.json.
+ * @param extension - Web source extension whose tooling is configured.
  */
 async function prepareWebSourcePackage(
   projectRoot: string,
@@ -217,6 +218,7 @@ async function prepareWebSourcePackage(
 /**
  * Add the package import alias for an existing or generated web-src.
  * @param extConfig - Extension config containing the view operation.
+ * @param projectRoot - Resolved project root containing package.json.
  */
 export async function prepareWebSourceImportAlias(
   extConfig: ExtConfig,
@@ -290,6 +292,7 @@ function getWebSourceTemplateTargetPath(
  * @param targetDir - Generated web-src directory.
  * @param extension - Web source extension to generate.
  * @param appTitle - Application title used by the entrypoint template.
+ * @param projectRoot - Resolved project root used to format output paths.
  */
 async function copyWebSourceTemplates(
   sourceDir: string,
@@ -340,7 +343,13 @@ async function copyWebSourceTemplates(
   return outputFilesByEntry.flat();
 }
 
-/** Generate the web source scaffold for iframe-based Admin UI extensions. */
+/**
+ * Generates the web source scaffold for an iframe-based Admin UI extension.
+ * @param extConfig - Extension config containing the web entrypoint.
+ * @param appName - Application name inserted into the generated entrypoint.
+ * @param projectRoot - Resolved project root where web source is generated.
+ * @param templatesDir - Directory containing web source templates.
+ */
 export async function generateWebSrc(
   extConfig: ExtConfig,
   appName: string,
