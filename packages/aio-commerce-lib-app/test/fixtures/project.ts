@@ -187,7 +187,7 @@ export async function withGeneratedProject(
   await withTempProject(
     { ...EMPTY_PROJECT, ...makeTemplateFiles() },
     async (tempDir) => {
-      await runGeneration(config, "npx");
+      await runGeneration(config, "npx", tempDir);
       await assertions(tempDir);
     },
   );

@@ -59,9 +59,9 @@ export function prettierFormat(content: string, filepath: string) {
 
 /**
  * Load the app commerce config.
- * @param projectRoot - Project root to resolve the config file from. Defaults to the CWD.
+ * @param projectRoot - Resolved project root.
  */
-export async function loadAppManifest(projectRoot = process.cwd()) {
+export async function loadAppManifest(projectRoot: string) {
   // If the config file is invalid or missing, we want to fail early before generating any files
   const appConfig = await parseCommerceAppConfig(projectRoot);
   consola.debug("Loaded app commerce config");
@@ -173,11 +173,11 @@ export function hasDynamicAppConfig(appConfig: CommerceAppConfigOutputModel) {
 /**
  * Whether preserving the app config requires generating a JavaScript module.
  * @param appConfig - The parsed app config.
- * @param projectRoot - Project root to resolve the config file from. Defaults to the CWD.
+ * @param projectRoot - Resolved project root.
  */
 export async function requiresJavaScriptAppConfig(
   appConfig: CommerceAppConfigOutputModel,
-  projectRoot = process.cwd(),
+  projectRoot: string,
 ) {
   return (
     hasDynamicAppConfig(appConfig) ||

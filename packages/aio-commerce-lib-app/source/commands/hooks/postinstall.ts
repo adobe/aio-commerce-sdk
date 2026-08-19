@@ -14,37 +14,30 @@ import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
 import { getProjectRootDirectory } from "@aio-commerce-sdk/scripting-utils/project";
 import consola from "consola";
 
-import { run as generateActionsCommand } from "#commands/generate/actions/main";
-import { run as generateManifestCommand } from "#commands/generate/manifest/main";
-import { run as generateSchemaCommand } from "#commands/generate/schema/main";
+import { run as generateActions } from "#commands/generate/actions/main";
+import { run as generateManifest } from "#commands/generate/manifest/main";
+import { run as generateSchema } from "#commands/generate/schema/main";
 import { loadAppManifest } from "#commands/utils";
 
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 
-/** Options for the postinstall hook. */
-export type PostinstallOptions = {
-  /** Working directory to resolve the project root from. Defaults to the CWD. */
-  cwd?: string;
-  /** The directory to load templates from, for testing purposes. Defaults to the generated actions template root. */
-  templatesDir?: string;
-};
-
 export async function run(
   appManifest: CommerceAppConfigOutputModel,
-  { cwd = process.cwd(), templatesDir }: PostinstallOptions = {},
+  projectRoot: string,
+  templatesDir?: string,
 ) {
-  const projectRoot = await getProjectRootDirectory(cwd);
-  await generateActionsCommand(appManifest, { cwd: projectRoot, templatesDir });
-  await generateManifestCommand(appManifest, projectRoot);
-  await generateSchemaCommand(appManifest, projectRoot);
+  await generateActions(appManifest, projectRoot, templatesDir);
+  await generateManifest(appManifest, projectRoot);
+  await generateSchema(appManifest, projectRoot);
 }
 
 /** Runs the postinstall hook */
 export async function exec() {
   consola.debug("Running lib-app postinstall hook");
   try {
-    const appManifest = await loadAppManifest();
-    await run(appManifest);
+    const projectRoot = await getProjectRootDirectory();
+    const appManifest = await loadAppManifest(projectRoot);
+    await run(appManifest, projectRoot);
   } catch (error) {
     if (error instanceof CommerceSdkValidationError) {
       consola.error(error.display());

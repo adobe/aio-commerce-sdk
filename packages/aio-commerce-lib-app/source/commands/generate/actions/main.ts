@@ -36,14 +36,6 @@ import {
 
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 
-/** Options for the generate actions command. */
-export type RunOptions = {
-  /** Working directory to resolve the project root from. Defaults to the CWD. */
-  cwd?: string;
-  /** The directory to load templates from, for testing purposes. Defaults to the generated actions template root. */
-  templatesDir?: string;
-};
-
 /**
  * Runs the generate actions command for the given extension point.
  * @param appManifest - The app manifest, used to determine which actions to generate and their content.
@@ -51,10 +43,9 @@ export type RunOptions = {
  */
 export async function run(
   appManifest: CommerceAppConfigOutputModel,
-  { cwd = process.cwd(), templatesDir = TEMPLATES_DIR }: RunOptions = {},
+  projectRoot: string,
+  templatesDir = TEMPLATES_DIR,
 ) {
-  const projectRoot = await getProjectRootDirectory(cwd);
-
   await prepareRuntimeAppConfigModule(appManifest, projectRoot);
   const appManagementExtConfig = await updateExtConfig(
     appManifest,
@@ -70,7 +61,6 @@ export async function run(
     projectRoot,
   );
 
-  // If the app has a business configuration schema, generate the business configuration actions and files
   if (hasBusinessConfigSchema(appManifest)) {
     const businessConfigExtConfig = await updateExtConfig(
       appManifest,
@@ -99,8 +89,8 @@ export async function run(
       await generateWebSrc(
         extConfig,
         appManifest.metadata.displayName,
-        templatesDir,
         projectRoot,
+        templatesDir,
       );
     }
   }
@@ -109,8 +99,9 @@ export async function run(
 /** Run the generate actions command */
 export async function exec() {
   try {
-    const appManifest = await loadAppManifest();
-    await run(appManifest);
+    const projectRoot = await getProjectRootDirectory();
+    const appManifest = await loadAppManifest(projectRoot);
+    await run(appManifest, projectRoot);
   } catch (error) {
     if (error instanceof CommerceSdkValidationError) {
       consola.error(error.display());

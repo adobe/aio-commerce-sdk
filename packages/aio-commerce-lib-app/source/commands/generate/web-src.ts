@@ -17,7 +17,6 @@ import { dirname, join, relative, sep } from "node:path";
 import {
   detectPackageManager,
   getPackageDependencyInstallPlan,
-  getProjectRootDirectory,
   loadPackageJson,
   mergePackageJsonDependencies,
 } from "@aio-commerce-sdk/scripting-utils/project";
@@ -221,15 +220,14 @@ async function prepareWebSourcePackage(
  */
 export async function prepareWebSourceImportAlias(
   extConfig: ExtConfig,
-  projectRoot?: string,
+  projectRoot: string,
 ) {
   const entrypoint = getWebSourceEntrypoint(extConfig);
   if (entrypoint === null) {
     return;
   }
 
-  const root = projectRoot ?? (await getProjectRootDirectory());
-  const pkg = await loadPackageJson(root);
+  const pkg = await loadPackageJson(projectRoot);
   if (pkg === null) {
     throw new Error("Could not find package.json.");
   }
@@ -346,21 +344,20 @@ async function copyWebSourceTemplates(
 export async function generateWebSrc(
   extConfig: ExtConfig,
   appName: string,
+  projectRoot: string,
   templatesDir = TEMPLATES_DIR,
-  projectRoot?: string,
 ) {
   const entrypoint = getWebSourceEntrypoint(extConfig);
   if (entrypoint === null) {
     return;
   }
 
-  const root = projectRoot ?? (await getProjectRootDirectory());
-  const entrypointPath = join(root, entrypoint);
+  const entrypointPath = join(projectRoot, entrypoint);
 
   if (existsSync(entrypointPath)) {
     consola.info(
       `web-src entrypoint already exists, skipping scaffold: ${relative(
-        root,
+        projectRoot,
         entrypointPath,
       )}`,
     );
@@ -373,24 +370,24 @@ export async function generateWebSrc(
 
   const sourceDir = join(templatesDir, "admin-ui", "web-src");
   const targetDir = dirname(entrypointPath);
-  const extension = await resolveWebSourceExtension(root);
+  const extension = await resolveWebSourceExtension(projectRoot);
 
   const outputFiles = await copyWebSourceTemplates(
     sourceDir,
     targetDir,
     extension,
     appName,
-    root,
+    projectRoot,
   );
 
   if (extension === "tsx") {
     const tsconfigPath = await writeWebSourceTypeScriptConfig(targetDir);
-    outputFiles.push(` ${relative(root, tsconfigPath)}`);
-    await syncWebSourceTypecheckScript(root);
+    outputFiles.push(` ${relative(projectRoot, tsconfigPath)}`);
+    await syncWebSourceTypecheckScript(projectRoot);
   }
 
-  await prepareWebSourcePackage(root, extension);
+  await prepareWebSourcePackage(projectRoot, extension);
 
-  consola.success(`Scaffolded ${relative(root, targetDir)}`);
+  consola.success(`Scaffolded ${relative(projectRoot, targetDir)}`);
   consola.log.raw(formatTree(outputFiles));
 }

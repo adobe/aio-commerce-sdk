@@ -271,14 +271,13 @@ export async function getProjectRootDirectory(cwd = process.cwd()) {
 /**
  * Create the output directory for the given file or folder (relative to the project root)
  * @param fileOrFolder - The file or folder to create
- * @param projectRoot - Project root to resolve against. Defaults to the nearest package.json from the CWD.
+ * @param projectRoot - Resolved project root.
  */
 export async function makeOutputDirFor(
   fileOrFolder: string,
-  projectRoot?: string,
+  projectRoot: string,
 ) {
-  const rootDirectory = projectRoot ?? (await getProjectRootDirectory());
-  const outputDir = join(rootDirectory, fileOrFolder);
+  const outputDir = join(projectRoot, fileOrFolder);
 
   if (!existsSync(outputDir)) {
     await mkdir(outputDir, { recursive: true });
@@ -332,13 +331,12 @@ function isValidPackageManager(
 
 /**
  * Detect the package manager for a project.
- * @param cwd - Directory to start detection from; defaults to `process.cwd()`
+ * @param projectRoot - Resolved project root.
  */
 export async function detectPackageManager(
-  cwd = process.cwd(),
+  projectRoot: string,
 ): Promise<PackageManager> {
-  const rootDirectory = await getProjectRootDirectory(cwd);
-  const result = await detect({ cwd: rootDirectory });
+  const result = await detect({ cwd: projectRoot });
 
   if (isValidPackageManager(result?.name)) {
     return result.name;

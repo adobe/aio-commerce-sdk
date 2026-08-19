@@ -36,13 +36,11 @@ import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 
 export async function run(
   appConfig: CommerceAppConfigOutputModel,
-  projectRoot?: string,
+  projectRoot: string,
 ) {
-  const root = projectRoot ?? (await getProjectRootDirectory());
-
   // Remove stale JSON when generated actions need the source config module.
-  if (await requiresJavaScriptAppConfig(appConfig, root)) {
-    const stalePath = join(root, getManifestPath());
+  if (await requiresJavaScriptAppConfig(appConfig, projectRoot)) {
+    const stalePath = join(projectRoot, getManifestPath());
     const staleExists = await access(stalePath).then(
       () => true,
       () => false,
@@ -61,7 +59,7 @@ export async function run(
   const contents = stringify(appConfig, null, 2);
   const outputDir = await makeOutputDirFor(
     getGeneratedDir(EXTENSIBILITY_EXTENSION_POINT_ID),
-    root,
+    projectRoot,
   );
 
   const manifestPath = join(outputDir, APP_MANIFEST_FILE);
@@ -73,8 +71,9 @@ export async function run(
 /** Run the generate manifest command */
 export async function exec() {
   try {
-    const config = await loadAppManifest();
-    await run(config);
+    const projectRoot = await getProjectRootDirectory();
+    const config = await loadAppManifest(projectRoot);
+    await run(config, projectRoot);
   } catch (error) {
     if (error instanceof CommerceSdkValidationError) {
       consola.error(error.display());

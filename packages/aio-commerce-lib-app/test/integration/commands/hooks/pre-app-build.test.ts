@@ -79,7 +79,7 @@ describe("commands/hooks/pre-app-build", () => {
       };
 
       await withTempProject(extensibilityProject, async (tempDir) => {
-        await run("extensibility/1", { templatesDir: tempDir });
+        await run("extensibility/1", tempDir, tempDir);
 
         const manifestPath = join(tempDir, getManifestPath());
         const appConfigPath = extensibilityActionFile(tempDir, "app-config");
@@ -106,7 +106,7 @@ describe("commands/hooks/pre-app-build", () => {
       };
 
       await withTempProject(businessConfigProject, async (tempDir) => {
-        await run("configuration/1", { templatesDir: tempDir });
+        await run("configuration/1", tempDir, tempDir);
 
         const schemaPath = join(tempDir, getSchemaPath());
         const configActionPath = businessConfigActionFile(tempDir, "config");
@@ -128,7 +128,7 @@ describe("commands/hooks/pre-app-build", () => {
       await withTempProject(
         makeProjectFiles(configWithAdminUiSingleGrid),
         async (tempDir) => {
-          await run("backend-ui/2");
+          await run("backend-ui/2", tempDir);
 
           const extConfigPath = join(
             tempDir,
@@ -151,7 +151,7 @@ describe("commands/hooks/pre-app-build", () => {
           ...makeTemplateFiles(),
         },
         async (tempDir) => {
-          await run("backend-ui/2");
+          await run("backend-ui/2", tempDir);
 
           const extConfigPath = join(
             tempDir,
@@ -209,7 +209,7 @@ describe("commands/hooks/pre-app-build", () => {
           ...makeTemplateFiles(),
         },
         async (tempDir) => {
-          await run("backend-ui/2");
+          await run("backend-ui/2", tempDir);
 
           const extConfigPath = join(
             tempDir,
@@ -242,7 +242,7 @@ describe("commands/hooks/pre-app-build", () => {
 
     test("does not write ext.config.yaml for backend-ui/2 when adminUi is absent", async () => {
       await withTempProject(MINIMAL_PROJECT, async (tempDir) => {
-        await run("backend-ui/2");
+        await run("backend-ui/2", tempDir);
 
         const extConfigPath = join(
           tempDir,
@@ -254,10 +254,10 @@ describe("commands/hooks/pre-app-build", () => {
     });
 
     test("throws for unsupported extension", async () => {
-      await withTempProject(MINIMAL_PROJECT, async () => {
+      await withTempProject(MINIMAL_PROJECT, async (tempDir) => {
         await expect(
           // @ts-expect-error Testing with invalid extension value
-          run("unknown/1"),
+          run("unknown/1", tempDir),
         ).rejects.toThrow("Unsupported extension");
       });
     });

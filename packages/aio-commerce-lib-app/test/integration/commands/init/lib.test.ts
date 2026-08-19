@@ -555,9 +555,9 @@ describe("commands/init/lib", () => {
 
       await withTempProject(
         { ...EMPTY_PROJECT, ...makeTemplateFiles() },
-        async () => {
+        async (tempDir) => {
           await expect(
-            runGeneration(configWithBusinessConfig, "npx"),
+            runGeneration(configWithBusinessConfig, "npx", tempDir),
           ).rejects.toThrow();
         },
       );

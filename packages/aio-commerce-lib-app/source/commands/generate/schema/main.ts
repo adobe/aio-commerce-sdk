@@ -41,7 +41,7 @@ import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 
 export async function run(
   appConfig: CommerceAppConfigOutputModel,
-  projectRoot?: string,
+  projectRoot: string,
 ) {
   if (!hasBusinessConfigSchema(appConfig)) {
     consola.debug(
@@ -51,8 +51,7 @@ export async function run(
     return;
   }
 
-  const projectDir = projectRoot ?? (await getProjectRootDirectory());
-  const envPath = join(projectDir, ".env");
+  const envPath = join(projectRoot, ".env");
 
   // Ensure .env file exists to avoid failing when loading it.
   await touch(envPath);
@@ -63,7 +62,7 @@ export async function run(
   );
 
   if (hasPasswordFields) {
-    const packageExec = getExecCommand(await detectPackageManager(projectDir));
+    const packageExec = getExecCommand(await detectPackageManager(projectRoot));
     const hasEncryptionKey =
       "AIO_COMMERCE_CONFIG_ENCRYPTION_KEY" in process.env &&
       String(process.env.AIO_COMMERCE_CONFIG_ENCRYPTION_KEY).trim().length > 0;
@@ -79,7 +78,7 @@ export async function run(
   // the app manifest module. Skip emitting a separate schema file and clean up
   // any stale JSON from a previous static run.
   if (hasDynamicAppConfig(appConfig)) {
-    const stalePath = join(projectDir, getSchemaPath());
+    const stalePath = join(projectRoot, getSchemaPath());
     const staleExists = await access(stalePath).then(
       () => true,
       () => false,
@@ -96,7 +95,7 @@ export async function run(
   consola.info("Generating configuration schema...");
   const outputDir = await makeOutputDirFor(
     getGeneratedDir(CONFIGURATION_EXTENSION_POINT_ID),
-    projectDir,
+    projectRoot,
   );
 
   const contents = stringify(appConfig.businessConfig.schema, null, 2);
@@ -109,8 +108,9 @@ export async function run(
 /** Run the generate schema command */
 export async function exec() {
   try {
-    const config = await loadAppManifest();
-    await run(config);
+    const projectRoot = await getProjectRootDirectory();
+    const config = await loadAppManifest(projectRoot);
+    await run(config, projectRoot);
   } catch (error) {
     if (error instanceof CommerceSdkValidationError) {
       consola.error(error.display());

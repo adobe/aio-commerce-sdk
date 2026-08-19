@@ -17,7 +17,6 @@ import { dirname, extname, join, relative, sep } from "node:path";
 import {
   detectPackageManager,
   getPackageExecutionCommand,
-  getProjectRootDirectory,
   loadPackageJson,
   makeOutputDirFor,
 } from "@aio-commerce-sdk/scripting-utils/project";
@@ -145,10 +144,9 @@ async function writeJavaScriptAppConfigModule(
 async function bundleTypeScriptAppConfigModule(
   configFilePath: string,
   outputPath: string,
-  projectRoot?: string,
+  projectRoot: string,
 ) {
-  const root = projectRoot ?? (await getProjectRootDirectory());
-  const packageManager = await detectPackageManager(root);
+  const packageManager = await detectPackageManager(projectRoot);
 
   const { command, args } = getPackageExecutionCommand(
     packageManager,
@@ -167,7 +165,7 @@ async function bundleTypeScriptAppConfigModule(
   );
 
   const result = spawnSync(command, args, {
-    cwd: root,
+    cwd: projectRoot,
     stdio: "inherit",
   });
 
@@ -187,14 +185,13 @@ async function bundleTypeScriptAppConfigModule(
  * Write an ESM module that re-exports the static app manifest JSON so generated
  * actions can import it via the alias without needing a JSON import attribute.
  */
-async function prepareStaticAppConfigImportAlias(projectRoot?: string) {
-  const root = projectRoot ?? (await getProjectRootDirectory());
+async function prepareStaticAppConfigImportAlias(projectRoot: string) {
   const runtimeConfigPath = getRuntimeAppConfigPath();
-  const outputPath = join(root, runtimeConfigPath);
+  const outputPath = join(projectRoot, runtimeConfigPath);
 
-  await makeOutputDirFor(dirname(runtimeConfigPath), root);
+  await makeOutputDirFor(dirname(runtimeConfigPath), projectRoot);
   await writeJavaScriptAppConfigModule(
-    join(root, getManifestPath()),
+    join(projectRoot, getManifestPath()),
     outputPath,
   );
 }
@@ -209,31 +206,34 @@ async function prepareStaticAppConfigImportAlias(projectRoot?: string) {
  */
 export async function prepareRuntimeAppConfigModule(
   appManifest: CommerceAppConfigOutputModel,
-  projectRoot?: string,
+  projectRoot: string,
 ) {
-  const root = projectRoot ?? (await getProjectRootDirectory());
-  const configFilePath = await resolveCommerceAppConfig(root);
+  const configFilePath = await resolveCommerceAppConfig(projectRoot);
 
-  if (await requiresJavaScriptAppConfig(appManifest, root)) {
+  if (await requiresJavaScriptAppConfig(appManifest, projectRoot)) {
     if (configFilePath === null) {
       throw new Error(
         "Generating a runtime config module requires an app.commerce.config.* file.",
       );
     }
 
-    await makeOutputDirFor(dirname(getRuntimeAppConfigPath()), root);
-    const outputPath = join(root, getRuntimeAppConfigPath());
+    await makeOutputDirFor(dirname(getRuntimeAppConfigPath()), projectRoot);
+    const outputPath = join(projectRoot, getRuntimeAppConfigPath());
 
     if (isTypeScriptConfig(configFilePath)) {
-      await bundleTypeScriptAppConfigModule(configFilePath, outputPath, root);
+      await bundleTypeScriptAppConfigModule(
+        configFilePath,
+        outputPath,
+        projectRoot,
+      );
     } else {
       await writeJavaScriptAppConfigModule(configFilePath, outputPath);
     }
   } else {
-    await prepareStaticAppConfigImportAlias(root);
+    await prepareStaticAppConfigImportAlias(projectRoot);
   }
 
-  await updateAppConfigImportAlias(root, getRuntimeAppConfigPath());
+  await updateAppConfigImportAlias(projectRoot, getRuntimeAppConfigPath());
 }
 
 /**
@@ -242,12 +242,9 @@ export async function prepareRuntimeAppConfigModule(
  */
 export async function readExtConfig(
   extensionPointId: ValidExtensionPointId,
-  projectRoot?: string,
+  projectRoot: string,
 ) {
-  const extConfigPath = join(
-    projectRoot ?? (await getProjectRootDirectory()),
-    getExtConfigPath(extensionPointId),
-  );
+  const extConfigPath = join(projectRoot, getExtConfigPath(extensionPointId));
 
   try {
     return {
@@ -275,15 +272,17 @@ export async function readExtConfig(
 export async function updateExtConfig(
   appConfig: CommerceAppConfigOutputModel,
   extensionPointId: ValidExtensionPointId,
-  projectRoot?: string,
+  projectRoot: string,
 ) {
   consola.info(`Updating ext.config.yaml for ${extensionPointId}...`);
 
-  const root = projectRoot ?? (await getProjectRootDirectory());
-  await makeOutputDirFor(getExtensionPointFolderPath(extensionPointId), root);
+  await makeOutputDirFor(
+    getExtensionPointFolderPath(extensionPointId),
+    projectRoot,
+  );
   const { path: extConfigPath, doc: extConfigDoc } = await readExtConfig(
     extensionPointId,
-    root,
+    projectRoot,
   );
 
   let extConfig: ExtConfig;
@@ -319,12 +318,11 @@ export async function generateActionFiles(
   actions: TemplateAction[],
   extensionPointId: ValidExtensionPointId,
   templatesDir: string,
-  projectRoot?: string,
+  projectRoot: string,
 ) {
   consola.start("Generating runtime actions...");
 
-  const root = projectRoot ?? (await getProjectRootDirectory());
-  await makeOutputDirFor(getActionsDir(extensionPointId), root);
+  await makeOutputDirFor(getActionsDir(extensionPointId), projectRoot);
 
   const outputFiles = await Promise.all(
     actions.map(async (action) => {
@@ -342,19 +340,19 @@ export async function generateActionFiles(
         const scriptsTemplate = await generateCustomScriptsTemplate(
           await readFile(customScriptsTemplatePath, "utf-8"),
           appManifest,
-          root,
+          projectRoot,
         );
 
         template = applyCustomScripts(template, scriptsTemplate);
       }
 
       const actionPath = join(
-        root,
+        projectRoot,
         getActionPath(extensionPointId, action.name),
       );
 
       await writeFile(actionPath, template, "utf-8");
-      return ` ${relative(root, actionPath)}`;
+      return ` ${relative(projectRoot, actionPath)}`;
     }),
   );
 
@@ -397,7 +395,7 @@ export function applyCustomScripts(
 export async function generateCustomScriptsTemplate(
   template: string,
   appManifest: CommerceAppConfigOutputModel,
-  projectRoot?: string,
+  projectRoot: string,
 ) {
   if (!hasCustomInstallationSteps(appManifest)) {
     return null;
@@ -405,9 +403,8 @@ export async function generateCustomScriptsTemplate(
 
   // We need to resolve paths from project root to relative imports from the
   // generated installation action's location.
-  const root = projectRoot ?? (await getProjectRootDirectory());
   const installationActionDir = join(
-    root,
+    projectRoot,
     getActionsDir(EXTENSIBILITY_EXTENSION_POINT_ID),
   );
 
@@ -416,7 +413,7 @@ export async function generateCustomScriptsTemplate(
   const importStatements = customSteps
     .map((step: CustomInstallationStep, index: number) => {
       // step.script is relative to project root (e.g., "./scripts/setup.js")
-      const absoluteScriptPath = join(root, step.script);
+      const absoluteScriptPath = join(projectRoot, step.script);
       let relativeImportPath = relative(
         installationActionDir,
         absoluteScriptPath,

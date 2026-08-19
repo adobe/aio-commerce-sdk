@@ -58,11 +58,13 @@ export async function run(flags?: InitFlags, extraOptions?: InitExtraOptions) {
   consola.start("Initializing app...");
 
   const cwd = extraOptions?.cwd ?? process.cwd();
-  const { execCommand, packageManager } = await ensurePackageJson(cwd);
-  runInstall(packageManager, REQUIRED_DEPENDENCIES, cwd);
+  const { execCommand, packageManager, projectRoot } =
+    await ensurePackageJson(cwd);
+
+  runInstall(packageManager, REQUIRED_DEPENDENCIES, projectRoot);
 
   const configResult = await ensureCommerceAppConfig(
-    cwd,
+    projectRoot,
     extraOptions?.formatConfig ?? true,
     flags,
   );
@@ -70,13 +72,13 @@ export async function run(flags?: InitFlags, extraOptions?: InitExtraOptions) {
   const { config, domains, configFormat } = configResult;
   const isTypeScriptProject = configFormat === "ts";
 
-  installDependencies(packageManager, domains, cwd);
+  installDependencies(packageManager, domains, projectRoot);
   if (isTypeScriptProject) {
-    await scaffoldTypeScriptProject(packageManager, cwd);
+    await scaffoldTypeScriptProject(packageManager, projectRoot);
   }
 
   // Sync the package.json with the app config
-  const pkg = await loadPackageJson(cwd);
+  const pkg = await loadPackageJson(projectRoot);
   if (pkg === null) {
     throw new Error("Could not find package.json.");
   }
@@ -90,16 +92,16 @@ export async function run(flags?: InitFlags, extraOptions?: InitExtraOptions) {
   await pkg.save();
 
   if (isTypeScriptProject) {
-    await syncActionsTypecheckScript(cwd);
+    await syncActionsTypecheckScript(projectRoot);
   }
 
-  await runGeneration(config, execCommand, cwd);
-  await ensureAppConfig(domains, cwd);
-  await ensureInstallYaml(domains, cwd);
+  await runGeneration(config, execCommand, projectRoot);
+  await ensureAppConfig(domains, projectRoot);
+  await ensureInstallYaml(domains, projectRoot);
 
   // Register the postinstall hook last so future installs run after init has
   // created the files the hook depends on.
-  await writePostinstallHook(execCommand, cwd);
+  await writePostinstallHook(execCommand, projectRoot);
 
   consola.success("Initialization complete!");
   consola.box(

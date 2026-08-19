@@ -31,8 +31,8 @@ import {
   readExtConfig,
   updateExtConfig,
 } from "#commands/generate/actions/lib";
-import { run as generateManifestCommand } from "#commands/generate/manifest/main";
-import { run as generateSchemaCommand } from "#commands/generate/schema/main";
+import { run as generateManifest } from "#commands/generate/manifest/main";
+import { run as generateSchema } from "#commands/generate/schema/main";
 import {
   generateWebSrc,
   prepareWebSourceImportAlias,
@@ -44,27 +44,17 @@ import type { ExtConfig } from "@aio-commerce-sdk/scripting-utils/yaml/types";
 
 type Extension = "extensibility/1" | "configuration/1" | "backend-ui/2";
 
-/** Options for the pre-app-build hook. */
-export type PreAppBuildOptions = {
-  /** Working directory to resolve the project root from. Defaults to the CWD. */
-  cwd?: string;
-  /** The directory to load templates from, for testing purposes. Defaults to the generated actions template root. */
-  templatesDir?: string;
-};
-
 /**
  * Runs the pre-app-build hook for the given extension.
  * @param extension - The extension to run the hook for.
- * @param options - Working directory and templates directory overrides.
+ * @param projectRoot - Resolved project root.
+ * @param templatesDir - Directory containing action templates.
  */
 export async function run(
   extension: Extension,
-  {
-    cwd = process.cwd(),
-    templatesDir = TEMPLATES_DIR,
-  }: PreAppBuildOptions = {},
+  projectRoot: string,
+  templatesDir = TEMPLATES_DIR,
 ) {
-  const projectRoot = await getProjectRootDirectory(cwd);
   const appManifest = await loadAppManifest(projectRoot);
   await prepareRuntimeAppConfigModule(appManifest, projectRoot);
 
@@ -74,7 +64,7 @@ export async function run(
       projectRoot,
     );
 
-    await generateManifestCommand(appManifest, projectRoot);
+    await generateManifest(appManifest, projectRoot);
     await generateActionFiles(
       appManifest,
       getRuntimeActions(
@@ -98,7 +88,7 @@ export async function run(
       projectRoot,
     );
 
-    await generateSchemaCommand(appManifest, projectRoot);
+    await generateSchema(appManifest, projectRoot);
     await generateActionFiles(
       appManifest,
       getRuntimeActions(
@@ -126,8 +116,8 @@ export async function run(
         await generateWebSrc(
           extConfig,
           appManifest.metadata.displayName,
-          templatesDir,
           projectRoot,
+          templatesDir,
         );
 
         // Ship React's production build for the deployed web bundle.
@@ -150,7 +140,8 @@ export async function exec() {
       throw new Error("EXTENSION environment variable is not set");
     }
 
-    await run(rawExtension as Extension);
+    const projectRoot = await getProjectRootDirectory();
+    await run(rawExtension as Extension, projectRoot);
   } catch (error) {
     if (error instanceof CommerceSdkValidationError) {
       consola.error(error.display());

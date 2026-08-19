@@ -818,9 +818,9 @@ describe("makeOutputDirFor", () => {
       {
         "package.json": JSON.stringify({ name: "test" }),
       },
-      async () => {
+      async (tempDir) => {
         // Create a new directory that doesn't exist
-        const outputPath = await makeOutputDirFor("newdir");
+        const outputPath = await makeOutputDirFor("newdir", tempDir);
 
         expect(outputPath).toContain("newdir");
         expect(existsSync(outputPath)).toBe(true);
@@ -837,9 +837,9 @@ describe("makeOutputDirFor", () => {
         "dist/file.txt": "test",
         "package.json": JSON.stringify({ name: "test" }),
       },
-      async () => {
+      async (tempDir) => {
         // Create dist directory first
-        const outputPath = await makeOutputDirFor("dist");
+        const outputPath = await makeOutputDirFor("dist", tempDir);
 
         expect(outputPath).toContain("dist");
         expect(existsSync(outputPath)).toBe(true);
