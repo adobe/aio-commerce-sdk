@@ -1,11 +1,6 @@
 {
   "name": "aio-commerce-sdk",
   "private": true,
-  "packageManager": "pnpm@11.21.0",
-  "engines": {
-    "node": "^22.11 || ^24",
-    "pnpm": ">=10"
-  },
   "scripts": {
     "assist": "turbo run assist",
     "assist:apply": "turbo run assist:apply",
@@ -67,5 +62,10 @@
     "ultracite": "7.10.4",
     "vitest": "^4.1.0",
     "vitest-browser-react": "^2.2.0"
+  },
+  "packageManager": "pnpm@11.21.0",
+  "engines": {
+    "node": "^22.11 || ^24",
+    "pnpm": ">=10"
   }
 }
