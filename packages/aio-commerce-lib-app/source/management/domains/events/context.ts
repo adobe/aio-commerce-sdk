@@ -34,6 +34,7 @@ import {
   deleteRegistration,
   getAllEventProviders,
   getAllRegistrations,
+  updateRegistration,
 } from "@adobe/aio-commerce-lib-events/io-events";
 
 import { LIFECYCLE_HTTP_CLIENT_TIMEOUT_MS } from "#management/common/constants";
@@ -90,6 +91,7 @@ function createIoEventsApiClient(params: RuntimeActionParams) {
     deleteRegistration,
     getAllEventProviders,
     getAllRegistrations,
+    updateRegistration,
   });
 }
 

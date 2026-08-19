@@ -62,10 +62,26 @@ describe("events installation module", () => {
       expect(eventingStep.isConfigured(minimalValidConfig)).toBe(false);
     });
 
-    test("should have commerce and external leaf steps", () => {
+    test("should have commerce and external leaf steps with upgrade plan/apply", () => {
       expect(eventingStep.children).toHaveLength(2);
-      expect(eventingStep.children[0]).toBe(commerceEventsStep);
-      expect(eventingStep.children[1]).toBe(externalEventsStep);
+
+      const [commerce, external] = eventingStep.children;
+
+      // The children are the base leaves composed with the upgrade plan/apply capability, so they
+      // share the base install/uninstall but additionally carry `plan`/`apply` + `meta.upgrade`.
+      expect(commerce.name).toBe("commerce");
+      expect(commerce.install).toBe(commerceEventsStep.install);
+      expect(commerce.uninstall).toBe(commerceEventsStep.uninstall);
+      expect(typeof commerce.plan).toBe("function");
+      expect(typeof commerce.apply).toBe("function");
+      expect(commerce.meta.upgrade).toBeDefined();
+
+      expect(external.name).toBe("external");
+      expect(external.install).toBe(externalEventsStep.install);
+      expect(external.uninstall).toBe(externalEventsStep.uninstall);
+      expect(typeof external.plan).toBe("function");
+      expect(typeof external.apply).toBe("function");
+      expect(external.meta.upgrade).toBeDefined();
     });
   });
 
@@ -81,6 +97,11 @@ describe("events installation module", () => {
         uninstall: {
           description: "Removes I/O Events for Adobe Commerce event sources",
           label: "Remove Commerce Events",
+        },
+        upgrade: {
+          description:
+            "Reconciles Commerce event providers, metadata, registrations and subscriptions",
+          label: "Update Commerce Events",
         },
       });
     });
@@ -218,6 +239,11 @@ describe("events installation module", () => {
         uninstall: {
           description: "Removes I/O Events for external event sources",
           label: "Remove External Events",
+        },
+        upgrade: {
+          description:
+            "Reconciles external event providers, metadata and registrations",
+          label: "Update External Events",
         },
       });
     });
