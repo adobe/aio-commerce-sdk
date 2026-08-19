@@ -396,21 +396,18 @@ class LeafPlanBuilder {
     const baselineByName = new Map(
       baseline.events.map((event) => [
         getNamespacedEvent(baselineMetadata, event.name),
-        event,
+        event as CommerceEvent,
       ]),
     );
 
-    for (const targetEvent of target.events) {
-      const name = getNamespacedEvent(targetMetadata, targetEvent.name);
+    for (const event of target.events as CommerceEvent[]) {
+      const name = getNamespacedEvent(targetMetadata, event.name);
       const baselineEvent = baselineByName.get(name);
       if (!baselineEvent) {
         continue;
       }
 
-      const changeMode = getSubscriptionChangeKind(
-        baselineEvent as CommerceEvent,
-        targetEvent as CommerceEvent,
-      );
+      const changeMode = getSubscriptionChangeKind(baselineEvent, event);
       if (changeMode === "none") {
         continue;
       }

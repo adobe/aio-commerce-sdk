@@ -569,27 +569,23 @@ async function reconcileChangedSubscriptions(
   const baselineByName = new Map(
     baselineEvents.map((event) => [
       getNamespacedEvent(baselineMetadata, event.name),
-      event,
+      event as CommerceEvent,
     ]),
   );
 
-  for (const targetEvent of targetEvents) {
-    const name = getNamespacedEvent(targetMetadata, targetEvent.name);
+  for (const event of targetEvents as CommerceEvent[]) {
+    const name = getNamespacedEvent(targetMetadata, event.name);
     const baselineEvent = baselineByName.get(name);
     if (!baselineEvent) {
       // Added event — created by the idempotent install pass.
       continue;
     }
 
-    const changeMode = getSubscriptionChangeKind(
-      baselineEvent as CommerceEvent,
-      targetEvent as CommerceEvent,
-    );
+    const changeMode = getSubscriptionChangeKind(baselineEvent, event);
     if (changeMode === "none") {
       continue;
     }
 
-    const event = targetEvent as CommerceEvent;
     try {
       if (changeMode === "in-place") {
         // biome-ignore lint/performance/noAwaitInLoops: subscriptions are updated sequentially to avoid a Commerce rate-limit burst

@@ -317,9 +317,10 @@ export function getSubscriptionChangeKind(
   const baselineKeys = subscriptionMergeKeys(baseline);
   const targetKeys = subscriptionMergeKeys(target);
 
-  const droppedKey =
-    [...baselineKeys.fields].some((key) => !targetKeys.fields.has(key)) ||
-    [...baselineKeys.rules].some((key) => !targetKeys.rules.has(key));
+  const droppedKey = !(
+    baselineKeys.fields.isSubsetOf(targetKeys.fields) &&
+    baselineKeys.rules.isSubsetOf(targetKeys.rules)
+  );
 
   return droppedKey ? "recreate" : "in-place";
 }
