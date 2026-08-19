@@ -14,7 +14,12 @@ import { writeFile } from "node:fs/promises";
 
 import { Document, isMap, YAMLMap, YAMLSeq } from "yaml";
 
-import { appendCommand, detectPackageManager, getExecCommand } from "#project";
+import {
+  appendCommand,
+  detectPackageManager,
+  getExecCommand,
+  getProjectRootDirectory,
+} from "#project";
 import {
   getExistingInputs,
   getExistingString,
@@ -266,7 +271,8 @@ async function buildHooks(extConfig: Document, hooks: Record<string, string>) {
     },
   });
 
-  const packageManager = await detectPackageManager();
+  const projectRoot = await getProjectRootDirectory();
+  const packageManager = await detectPackageManager(projectRoot);
   const execCommand = getExecCommand(packageManager);
 
   for (const [name, command] of Object.entries(hooks)) {

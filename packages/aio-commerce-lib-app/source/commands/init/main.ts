@@ -46,20 +46,30 @@ export type InitFlags = {
   domains: CommerceAppConfigDomain[];
 };
 
-/** Extra options that can be given to the `init` handler that would not necessarily become CLI flags. */
+/** Internal execution options for the init handler. */
 type InitExtraOptions = {
+  /** Whether to format a newly created app configuration. */
   formatConfig?: boolean;
+  /** Working directory to initialize in. Defaults to the CWD. */
+  cwd?: string;
 };
 
-/** Initialize the project */
+/**
+ * Initializes a Commerce App project.
+ * @param flags - Non-interactive initialization answers.
+ * @param extraOptions - Internal formatting and working-directory overrides.
+ */
 export async function run(flags?: InitFlags, extraOptions?: InitExtraOptions) {
   consola.start("Initializing app...");
 
-  const { execCommand, packageManager } = await ensurePackageJson();
-  runInstall(packageManager, REQUIRED_DEPENDENCIES);
+  const cwd = extraOptions?.cwd ?? process.cwd();
+  const { execCommand, packageManager, projectRoot } =
+    await ensurePackageJson(cwd);
+
+  runInstall(packageManager, REQUIRED_DEPENDENCIES, projectRoot);
 
   const configResult = await ensureCommerceAppConfig(
-    process.cwd(),
+    projectRoot,
     extraOptions?.formatConfig ?? true,
     flags,
   );
@@ -67,13 +77,13 @@ export async function run(flags?: InitFlags, extraOptions?: InitExtraOptions) {
   const { config, domains, configFormat } = configResult;
   const isTypeScriptProject = configFormat === "ts";
 
-  installDependencies(packageManager, domains);
+  installDependencies(packageManager, domains, projectRoot);
   if (isTypeScriptProject) {
-    await scaffoldTypeScriptProject(packageManager);
+    await scaffoldTypeScriptProject(packageManager, projectRoot);
   }
 
   // Sync the package.json with the app config
-  const pkg = await loadPackageJson(process.cwd());
+  const pkg = await loadPackageJson(projectRoot);
   if (pkg === null) {
     throw new Error("Could not find package.json.");
   }
@@ -87,16 +97,16 @@ export async function run(flags?: InitFlags, extraOptions?: InitExtraOptions) {
   await pkg.save();
 
   if (isTypeScriptProject) {
-    await syncActionsTypecheckScript();
+    await syncActionsTypecheckScript(projectRoot);
   }
 
-  await runGeneration(config, execCommand);
-  await ensureAppConfig(domains);
-  await ensureInstallYaml(domains);
+  await runGeneration(config, execCommand, projectRoot);
+  await ensureAppConfig(domains, projectRoot);
+  await ensureInstallYaml(domains, projectRoot);
 
   // Register the postinstall hook last so future installs run after init has
   // created the files the hook depends on.
-  await writePostinstallHook(execCommand);
+  await writePostinstallHook(execCommand, projectRoot);
 
   consola.success("Initialization complete!");
   consola.box(

@@ -34,10 +34,18 @@ import {
 
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 
-export async function run(appConfig: CommerceAppConfigOutputModel) {
+/**
+ * Generates or removes the static app manifest as required by the app config.
+ * @param appConfig - Validated app configuration to serialize.
+ * @param projectRoot - Resolved project root where the manifest is generated.
+ */
+export async function run(
+  appConfig: CommerceAppConfigOutputModel,
+  projectRoot: string,
+) {
   // Remove stale JSON when generated actions need the source config module.
-  if (await requiresJavaScriptAppConfig(appConfig)) {
-    const stalePath = join(await getProjectRootDirectory(), getManifestPath());
+  if (await requiresJavaScriptAppConfig(appConfig, projectRoot)) {
+    const stalePath = join(projectRoot, getManifestPath());
     const staleExists = await access(stalePath).then(
       () => true,
       () => false,
@@ -56,6 +64,7 @@ export async function run(appConfig: CommerceAppConfigOutputModel) {
   const contents = stringify(appConfig, null, 2);
   const outputDir = await makeOutputDirFor(
     getGeneratedDir(EXTENSIBILITY_EXTENSION_POINT_ID),
+    projectRoot,
   );
 
   const manifestPath = join(outputDir, APP_MANIFEST_FILE);
@@ -67,8 +76,9 @@ export async function run(appConfig: CommerceAppConfigOutputModel) {
 /** Run the generate manifest command */
 export async function exec() {
   try {
-    const config = await loadAppManifest();
-    await run(config);
+    const projectRoot = await getProjectRootDirectory();
+    const config = await loadAppManifest(projectRoot);
+    await run(config, projectRoot);
   } catch (error) {
     if (error instanceof CommerceSdkValidationError) {
       consola.error(error.display());

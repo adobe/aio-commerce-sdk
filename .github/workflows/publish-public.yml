@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       published: ${{ steps.changesets.outputs.published }}
-      publishedPackages: ${{ steps.changesets.outputs.publishedPackages }}
+      publishedPackages: ${{ steps.changesets.outputs.published-packages }}
       promotedSkills: ${{ steps.promote-skills.outputs.promotedSkills }}
     permissions:
       contents: write
@@ -36,13 +36,13 @@ jobs:
 
       - name: Create Release Pull Request or Publish
         id: changesets
-        uses: changesets/action@a45c4d594aa4e2c509dc14a9f2b3b67ba3780d0d # v1.9.0
+        uses: changesets/action@22ccf9aa43179fe9e27dc62e575971d28cce197c # v2.0.0
         with:
-          version: pnpm release:version
-          publish: pnpm release:publish
-          commit: "ci: release packages"
-          title: "[CI] Release Packages"
-          createGithubReleases: true
+          version-script: pnpm release:version
+          publish-script: pnpm release:publish
+          commit-message: "ci: release packages"
+          pr-title: "[CI] Release Packages"
+          create-github-releases: true
         env:
           GITHUB_TOKEN: ${{ github.token }}
 
@@ -50,7 +50,7 @@ jobs:
         if: steps.changesets.outputs.published == 'true'
         uses: ./.github/actions/notify-slack
         with:
-          published-packages: ${{ steps.changesets.outputs.publishedPackages }}
+          published-packages: ${{ steps.changesets.outputs.published-packages }}
           registry-package-base-url: "https://npmx.dev/package"
           slack-webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
 
@@ -61,7 +61,7 @@ jobs:
       # when a plugin version legitimately changed.
       - name: Detect changed Commerce plugin versions
         id: changed-plugins
-        if: steps.changesets.outputs.hasChangesets == 'false'
+        if: steps.changesets.outputs.has-changesets == 'false'
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
           SOURCE_REPOSITORY_PATH: ${{ github.workspace }}
