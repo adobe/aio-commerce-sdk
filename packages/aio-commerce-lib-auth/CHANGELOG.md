@@ -1,5 +1,11 @@
 # @adobe/aio-commerce-lib-auth
 
+## 1.1.3
+
+### Patch Changes
+
+- [#635](https://github.com/adobe/aio-commerce-sdk/pull/635) [`71bf666`](https://github.com/adobe/aio-commerce-sdk/commit/71bf66656ef1fc6dd272a0821e8b00aab5dc197e) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Resolve the project `.env` from the project root when syncing IMS credentials, so `sync-ims-credentials` works when run from a subdirectory.
+
 ## 1.1.2
 
 ### Patch Changes

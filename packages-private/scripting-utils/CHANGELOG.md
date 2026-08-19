@@ -1,5 +1,11 @@
 # @aio-commerce-sdk/scripting-utils
 
+## 0.3.5
+
+### Patch Changes
+
+- [#635](https://github.com/adobe/aio-commerce-sdk/pull/635) [`71bf666`](https://github.com/adobe/aio-commerce-sdk/commit/71bf66656ef1fc6dd272a0821e8b00aab5dc197e) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Resolve the project `.env` from the project root in the environment helpers (walking up from the given `cwd`), so they work regardless of which subdirectory a command runs from. Also adds `setNodeEnv` for writing `NODE_ENV` to the project `.env`.
+
 ## 0.3.4
 
 ### Patch Changes
