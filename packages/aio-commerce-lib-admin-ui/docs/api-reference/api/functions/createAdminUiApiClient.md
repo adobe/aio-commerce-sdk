@@ -13,7 +13,7 @@ function createAdminUiApiClient(
 >;
 ```
 
-Defined in: [aio-commerce-lib-admin-ui/source/api/lib/api-client.ts:28](https://github.com/adobe/aio-commerce-sdk/blob/aa606961236cac6f4a3cebc105d643da71d5ddb8/packages/aio-commerce-lib-admin-ui/source/api/lib/api-client.ts#L28)
+Defined in: [aio-commerce-lib-admin-ui/source/api/lib/api-client.ts:28](https://github.com/adobe/aio-commerce-sdk/blob/71bf66656ef1fc6dd272a0821e8b00aab5dc197e/packages/aio-commerce-lib-admin-ui/source/api/lib/api-client.ts#L28)
 
 Creates a new API client for the Admin UI API with all available operations.
 

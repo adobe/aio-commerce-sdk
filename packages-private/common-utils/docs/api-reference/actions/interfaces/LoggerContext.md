@@ -1,6 +1,6 @@
 # `LoggerContext`
 
-Defined in: [actions/http/middleware/logger.ts:24](https://github.com/adobe/aio-commerce-sdk/blob/aa606961236cac6f4a3cebc105d643da71d5ddb8/packages-private/common-utils/source/actions/http/middleware/logger.ts#L24)
+Defined in: [actions/http/middleware/logger.ts:24](https://github.com/adobe/aio-commerce-sdk/blob/71bf66656ef1fc6dd272a0821e8b00aab5dc197e/packages-private/common-utils/source/actions/http/middleware/logger.ts#L24)
 
 ## Extends
 
@@ -20,4 +20,4 @@ Defined in: [actions/http/middleware/logger.ts:24](https://github.com/adobe/aio-
 logger: AioLogger;
 ```
 
-Defined in: [actions/http/middleware/logger.ts:25](https://github.com/adobe/aio-commerce-sdk/blob/aa606961236cac6f4a3cebc105d643da71d5ddb8/packages-private/common-utils/source/actions/http/middleware/logger.ts#L25)
+Defined in: [actions/http/middleware/logger.ts:25](https://github.com/adobe/aio-commerce-sdk/blob/71bf66656ef1fc6dd272a0821e8b00aab5dc197e/packages-private/common-utils/source/actions/http/middleware/logger.ts#L25)

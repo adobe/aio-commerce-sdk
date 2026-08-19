@@ -1,5 +1,19 @@
 # @adobe/aio-commerce-lib-app
 
+## 1.10.1
+
+### Patch Changes
+
+- [#635](https://github.com/adobe/aio-commerce-sdk/pull/635) [`71bf666`](https://github.com/adobe/aio-commerce-sdk/commit/71bf66656ef1fc6dd272a0821e8b00aab5dc197e) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - The app build hooks now set `NODE_ENV` in the project `.env` so the web bundler builds for the correct environment (production on build, development on dev and run).
+
+- Updated dependencies [[`71bf666`](https://github.com/adobe/aio-commerce-sdk/commit/71bf66656ef1fc6dd272a0821e8b00aab5dc197e), [`71bf666`](https://github.com/adobe/aio-commerce-sdk/commit/71bf66656ef1fc6dd272a0821e8b00aab5dc197e)]:
+  - @adobe/aio-commerce-lib-admin-ui@1.0.1
+  - @adobe/aio-commerce-lib-auth@1.1.3
+  - @adobe/aio-commerce-lib-api@1.3.1
+  - @adobe/aio-commerce-lib-config@1.6.1
+  - @adobe/aio-commerce-lib-events@1.3.1
+  - @adobe/aio-commerce-lib-webhooks@1.2.1
+
 ## 1.10.0
 
 ### Minor Changes
