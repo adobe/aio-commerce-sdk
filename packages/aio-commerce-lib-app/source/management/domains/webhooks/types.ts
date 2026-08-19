@@ -52,10 +52,8 @@ export type ResolvedWebhookPayload = WebhookIdentity &
 export type WebhookOperationValue = WebhookIdentity &
   Partial<Omit<ResolvedWebhookPayload, keyof WebhookIdentity>>;
 
-/** The webhooks domain plan. `retainedWebhooks` lets `apply` rebuild the full resulting state without needing the baseline. */
-export type WebhookDomainPlan = DomainPlan<WebhookOperationValue> & {
-  retainedWebhooks: WebhookSubscribeParams[];
-};
+/** The webhooks domain plan. */
+export type WebhookDomainPlan = DomainPlan<WebhookOperationValue>;
 
 /** The snapshot data the webhooks domain persists after applying its plan. */
 export type WebhookSnapshotData = WebhookSubscriptionResult;

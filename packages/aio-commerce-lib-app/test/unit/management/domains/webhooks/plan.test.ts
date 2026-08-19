@@ -77,7 +77,6 @@ describe("planWebhookSubscriptions", () => {
       after: expect.objectContaining(DEFAULT_RESOLVED_IDENTITY),
       kind: "add",
     });
-    expect(result.plan.retainedWebhooks).toHaveLength(0);
   });
 
   test("blocks planning instead of guessing when a baseline's data didn't resolve", async () => {
@@ -159,7 +158,7 @@ describe("planWebhookSubscriptions", () => {
     expect.assert(result.kind === "planned");
     expect(result.plan.operations).toEqual([
       expect.objectContaining({
-        before: baselineWebhook,
+        before: expect.objectContaining(DEFAULT_RESOLVED_IDENTITY),
         kind: "remove",
       }),
     ]);
@@ -182,7 +181,6 @@ describe("planWebhookSubscriptions", () => {
 
     expect.assert(result.kind === "planned");
     expect(result.plan.operations).toHaveLength(0);
-    expect(result.plan.retainedWebhooks).toEqual([baselineWebhook]);
   });
 
   test("plans an add and a remove when the target and baseline differ", async () => {
@@ -219,7 +217,7 @@ describe("planWebhookSubscriptions", () => {
       expect.arrayContaining([
         expect.objectContaining({ kind: "add" }),
         expect.objectContaining({
-          before: baselineWebhook,
+          before: expect.objectContaining(DEFAULT_RESOLVED_IDENTITY),
           kind: "remove",
         }),
       ]),
@@ -291,7 +289,6 @@ describe("planWebhookSubscriptions", () => {
 
     expect.assert(result.kind === "planned");
     expect(result.plan.operations).toHaveLength(0);
-    expect(result.plan.retainedWebhooks).toHaveLength(1);
   });
 
   test("excludes webhooks scoped to a different environment from the desired set", async () => {
