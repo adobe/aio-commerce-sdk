@@ -79,10 +79,19 @@ const registerExtensionStep = defineLeafStep({
 // Derived from the register call rather than `InferStepOutput<typeof
 // registerExtensionStep>`: the step's own `plan`/`apply` handlers consume this
 // type, so deriving it from the step itself would be self-referential.
+//
+// `extensionId` is widened to allow `null` on top of what `registerExtension`
+// itself returns: a refresh can't recover an id once it's unknown (the refresh
+// endpoint returns none, and there is no read endpoint), but the extension is
+// still registered whenever this snapshot is persisted at all. Recording
+// `{ extensionId: null }` here (rather than persisting no snapshot at all)
+// keeps that distinct from "not registered".
 /** The register step's output (`{ extensionId }`), also persisted as the domain's snapshot data. */
-export type RegisterExtensionStepData = Awaited<
-  ReturnType<typeof registerExtension>
->;
+export type RegisterExtensionStepData = {
+  extensionId:
+    | Awaited<ReturnType<typeof registerExtension>>["extensionId"]
+    | null;
+};
 
 /** Branch step for setting up the Admin UI extension registration. */
 export const adminUiStep = defineBranchStep({

@@ -75,12 +75,15 @@ describe("applyAdminUi", () => {
     expect(result.snapshotData).toEqual({ extensionId: "ext-123" });
   });
 
-  test("refresh: persists null snapshot data when there is no id to record", async () => {
+  test("refresh: persists a null extensionId (not an absent snapshot) when there is no id to record", async () => {
+    // The extension is registered whenever `extensionAction` is "refresh" (the
+    // baseline block was present), so persisting no snapshot at all would read
+    // as "not registered" downstream — distinct from "registered, id unknown".
     const context = applyContext();
     const result = await applyAdminUi(makePlan("refresh"), context);
 
     expect(context.adminUiClient.refreshExtension).toHaveBeenCalledOnce();
-    expect(result.snapshotData).toBeNull();
+    expect(result.snapshotData).toEqual({ extensionId: null });
   });
 
   test("refresh: falls back to registering when the refresh endpoint is not found (404)", async () => {
