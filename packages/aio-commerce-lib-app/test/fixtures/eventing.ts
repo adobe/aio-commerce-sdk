@@ -1,5 +1,6 @@
 import { vi } from "vitest";
 
+import { configWithCommerceEventing } from "./config";
 import { createMockInstallationContext } from "./installation";
 
 import type {
@@ -15,7 +16,11 @@ import type {
   IoEventRegistration,
   IoEventRegistrationManyResponse,
 } from "@adobe/aio-commerce-lib-events/io-events";
-import type { EventProvider } from "#config/schema/eventing";
+import type {
+  CommerceEventsConfig,
+  EventProvider,
+  ExternalEventsConfig,
+} from "#config/schema/eventing";
 import type {
   CustomAdobeIoEventsApiClient,
   CustomCommerceEventsApiClient,
@@ -25,6 +30,37 @@ import type {
   ExistingCommerceEventingData,
   ExistingIoEventsData,
 } from "#management/domains/events/utils";
+
+/** A minimal event source shape (provider + events) for building eventing configs in tests. */
+export type MockEventSource = {
+  provider: { label: string; key?: string };
+  events: unknown[];
+};
+
+/** Builds a minimal app event with the given name and runtime actions. */
+export function createMockAppEvent(name: string, runtimeActions: string[]) {
+  return { description: name, fields: [], label: name, name, runtimeActions };
+}
+
+/** Builds a Commerce events config from the given sources, namespaced by the shared test metadata. */
+export function createMockCommerceEventsConfig(
+  sources: MockEventSource[],
+): CommerceEventsConfig {
+  return {
+    eventing: { commerce: sources },
+    metadata: configWithCommerceEventing.metadata,
+  } as unknown as CommerceEventsConfig;
+}
+
+/** Builds an external events config from the given sources, namespaced by the shared test metadata. */
+export function createMockExternalEventsConfig(
+  sources: MockEventSource[],
+): ExternalEventsConfig {
+  return {
+    eventing: { external: sources },
+    metadata: configWithCommerceEventing.metadata,
+  } as unknown as ExternalEventsConfig;
+}
 
 /** Creates a mock {@link EventProvider} with the given label and optional key. */
 export function createMockProvider(label: string, key?: string): EventProvider {
@@ -208,6 +244,11 @@ export function createMockIoEventsClient(
       ),
     getAllEventProviders: vi.fn(overrides?.getAllEventProviders),
     getAllRegistrations: vi.fn(overrides?.getAllRegistrations),
+    updateRegistration: vi
+      .fn()
+      .mockImplementation(
+        overrides?.updateRegistration ?? (() => Promise.resolve()),
+      ),
   };
 }
 

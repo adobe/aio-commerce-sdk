@@ -43,6 +43,11 @@ describe("commerceEventsStep leaf step", () => {
         description: "Removes I/O Events for Adobe Commerce event sources",
         label: "Remove Commerce Events",
       },
+      upgrade: {
+        description:
+          "Reconciles Commerce event providers, metadata, registrations and subscriptions",
+        label: "Update Commerce Events",
+      },
     });
   });
 
