@@ -270,6 +270,7 @@ function canonicalSubscriptionConfig(event: CommerceEvent) {
       `${a.field}:${a.operator}`.localeCompare(`${b.field}:${b.operator}`),
     );
 
+  // `destination` is omitted: it is internal routing, not developer-facing config.
   return {
     fields,
     hipaa_audit_required: event.hipaa_audit_required ?? false,
@@ -301,8 +302,6 @@ function subscriptionMergeKeys(event: CommerceEvent): {
  *   can express.
  * - `recreate` — a field or rule identity was dropped (removed field/rule, renamed field, changed
  *   rule operator/field). Merge cannot remove entries, so these require re-subscribing the event.
- *
- * `destination` is intentionally not compared: it is internal routing, not developer-facing config.
  */
 export function getSubscriptionChangeKind(
   baseline: CommerceEvent,

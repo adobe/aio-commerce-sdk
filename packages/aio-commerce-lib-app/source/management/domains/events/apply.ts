@@ -555,8 +555,7 @@ async function removeDroppedSubscriptions(
  * Reconciles configuration changes on Commerce subscriptions present on both the baseline and
  * target. Additive/same-key changes are applied in place via the Commerce merge-update endpoint;
  * orphaning changes (field/rule removal, rename, rule operator/field change) are applied by
- * unsubscribe + resubscribe. Unlike the best-effort removals above, a failure here fails the
- * upgrade step: a silently stale subscription diverges from the applied config.
+ * unsubscribe + resubscribe.
  */
 async function reconcileChangedSubscriptions(
   providerId: string,
@@ -624,6 +623,8 @@ async function reconcileChangedSubscriptions(
       }
     } catch (error) {
       const message = await unwrapHttpError(error);
+      // Unlike the best-effort removals, a failure here fails the upgrade step: a silently stale
+      // subscription would diverge from the applied config.
       throw new Error(
         `Failed to update Commerce event subscription "${name}": ${message}`,
         { cause: error },
