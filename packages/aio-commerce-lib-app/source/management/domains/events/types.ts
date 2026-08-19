@@ -178,23 +178,21 @@ export type EventingOperationValue =
   | {
       resourceType: "metadata";
       providerKey: string;
-      providerLabel: string;
       type: EventProviderType;
       eventCode: string;
-      label?: string;
+      label: string;
       description?: string;
     }
   | {
       resourceType: "registration";
       providerKey: string;
-      providerLabel: string;
       type: EventProviderType;
       runtimeAction: string;
-      eventCodes?: string[];
+      eventCodes: string[];
     }
   | {
       resourceType: "subscription";
-      providerKey?: string;
+      providerKey: string;
       name: string;
 
       /**
@@ -206,37 +204,13 @@ export type EventingOperationValue =
     };
 
 /**
- * A cleanup resource identity for one eventing resource, matched during apply/teardown. The
- * provider-scoped variants carry `providerLabel` so apply can resolve the deployed provider (by
- * its app-scoped instance id) to delete an orphan from a stored identity alone.
- */
-export type EventingCleanupIdentity =
-  | { resourceType: "provider"; providerKey: string; providerLabel: string }
-  | {
-      resourceType: "metadata";
-      providerKey: string;
-      providerLabel: string;
-      eventCode: string;
-    }
-  | {
-      resourceType: "registration";
-      providerKey: string;
-      providerLabel: string;
-      runtimeAction: string;
-    }
-  | { resourceType: "subscription"; name: string };
-
-/**
- * An eventing domain plan. Beyond the generic operations/cleanup, it carries the provider sets apply
- * needs to converge deployed state idempotently: `targetProviders` to onboard, `removedProviders` to
+ * An eventing domain plan. Beyond the generic operations, it carries the provider sets apply needs
+ * to converge deployed state idempotently: `targetProviders` to onboard, `removedProviders` to
  * offboard, and `baselineProviders` to compute sub-resource removals on providers present in both.
  */
-export type EventingDomainPlan = DomainPlan<
-  EventingOperationValue,
-  EventingCleanupIdentity
-> & {
-  /** The target app metadata, used to namespace event codes/names when onboarding. */
-  metadata: ApplicationMetadata;
+export type EventingDomainPlan = DomainPlan<EventingOperationValue> & {
+  /** The target app metadata, used to namespace event codes/names when onboarding. Null in a pure teardown (no target). */
+  targetMetadata: ApplicationMetadata | null;
 
   /** The baseline app metadata, used to resolve deployed resources during teardown. Null on first upgrade. */
   baselineMetadata: ApplicationMetadata | null;

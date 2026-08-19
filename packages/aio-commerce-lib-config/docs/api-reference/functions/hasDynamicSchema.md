@@ -101,7 +101,7 @@ function hasDynamicSchema(
 ): boolean;
 ```
 
-Defined in: [modules/schema/utils.ts:58](https://github.com/adobe/aio-commerce-sdk/blob/aa606961236cac6f4a3cebc105d643da71d5ddb8/packages/aio-commerce-lib-config/source/modules/schema/utils.ts#L58)
+Defined in: [modules/schema/utils.ts:58](https://github.com/adobe/aio-commerce-sdk/blob/71bf66656ef1fc6dd272a0821e8b00aab5dc197e/packages/aio-commerce-lib-config/source/modules/schema/utils.ts#L58)
 
 Whether a business configuration schema contains any `dynamicList` fields
 that need runtime resolution before use.

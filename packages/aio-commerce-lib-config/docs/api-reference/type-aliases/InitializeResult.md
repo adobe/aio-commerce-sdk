@@ -6,7 +6,7 @@ type InitializeResult = {
 };
 ```
 
-Defined in: [config-manager.ts:89](https://github.com/adobe/aio-commerce-sdk/blob/aa606961236cac6f4a3cebc105d643da71d5ddb8/packages/aio-commerce-lib-config/source/config-manager.ts#L89)
+Defined in: [config-manager.ts:89](https://github.com/adobe/aio-commerce-sdk/blob/71bf66656ef1fc6dd272a0821e8b00aab5dc197e/packages/aio-commerce-lib-config/source/config-manager.ts#L89)
 
 Result returned after initializing the configuration library with a schema.
 
@@ -18,6 +18,6 @@ Result returned after initializing the configuration library with a schema.
 configSchema: ResolvedBusinessConfigSchema;
 ```
 
-Defined in: [config-manager.ts:91](https://github.com/adobe/aio-commerce-sdk/blob/aa606961236cac6f4a3cebc105d643da71d5ddb8/packages/aio-commerce-lib-config/source/config-manager.ts#L91)
+Defined in: [config-manager.ts:91](https://github.com/adobe/aio-commerce-sdk/blob/71bf66656ef1fc6dd272a0821e8b00aab5dc197e/packages/aio-commerce-lib-config/source/config-manager.ts#L91)
 
 The concrete schema stored in global memory.

@@ -501,11 +501,11 @@ describe("commands/init/lib", () => {
       });
     });
 
-    test("does not generate installation or business config actions for a minimal config", async () => {
+    test("generates installation but not business config actions for a minimal config", async () => {
       await withGeneratedProject(minimalValidConfig, (tempDir) => {
         expect(
           existsSync(extensibilityActionFile(tempDir, "installation")),
-        ).toBe(false);
+        ).toBe(true);
         expect(existsSync(businessConfigActionFile(tempDir, "config"))).toBe(
           false,
         );

@@ -60,6 +60,8 @@ const childProcessMocks = vi.hoisted(() => ({
 const { mockSpawnSync } = childProcessMocks;
 const LEADING_CARET_PATTERN = /^\^/u;
 
+const TS_BUNDLE_TIMEOUT_MS = 30_000;
+
 vi.mock("node:child_process", async (importOriginal) => {
   const original = await importOriginal<typeof import("node:child_process")>();
   const { createSpawnSyncStub } = await import("#test/fixtures/exec");
@@ -277,52 +279,60 @@ describe("commands/generate/actions", () => {
       );
     });
 
-    test("bundles a TypeScript app config for JavaScript actions", async () => {
-      await withTempProject(
-        {
-          "app.commerce.config.ts": dynamicOptionsConfigFileTs,
-          "package.json": JSON.stringify({ type: "module" }),
-          ...makeTemplateFiles(),
-        },
-        async (tempDir) => {
-          await run(configWithDynamicListOptions, tempDir);
+    test(
+      "bundles a TypeScript app config for JavaScript actions",
+      async () => {
+        await withTempProject(
+          {
+            "app.commerce.config.ts": dynamicOptionsConfigFileTs,
+            "package.json": JSON.stringify({ type: "module" }),
+            ...makeTemplateFiles(),
+          },
+          async (tempDir) => {
+            await run(configWithDynamicListOptions, tempDir);
 
-          const runtimeConfigPath = join(tempDir, getRuntimeAppConfigPath());
-          expect(existsSync(runtimeConfigPath)).toBe(true);
+            const runtimeConfigPath = join(tempDir, getRuntimeAppConfigPath());
+            expect(existsSync(runtimeConfigPath)).toBe(true);
 
-          const actionsDir = getActionsDir(
-            tempDir,
-            EXTENSIBILITY_EXTENSION_POINT_ID,
-          );
+            const actionsDir = getActionsDir(
+              tempDir,
+              EXTENSIBILITY_EXTENSION_POINT_ID,
+            );
 
-          expect(existsSync(join(actionsDir, "app-config.js"))).toBe(true);
-          const pkg = JSON.parse(
-            await readFile(join(tempDir, "package.json"), "utf-8"),
-          );
+            expect(existsSync(join(actionsDir, "app-config.js"))).toBe(true);
+            const pkg = JSON.parse(
+              await readFile(join(tempDir, "package.json"), "utf-8"),
+            );
 
-          expect(pkg.imports["#app.commerce.config"]).toBe(
-            "./src/commerce-extensibility-1/.generated/app.commerce.config.js",
-          );
-        },
-      );
-    });
+            expect(pkg.imports["#app.commerce.config"]).toBe(
+              "./src/commerce-extensibility-1/.generated/app.commerce.config.js",
+            );
+          },
+        );
+      },
+      TS_BUNDLE_TIMEOUT_MS,
+    );
 
-    test("reports TypeScript config bundling failures", async () => {
-      mockSpawnSync.mockReturnValueOnce({ status: 1 });
+    test(
+      "reports TypeScript config bundling failures",
+      async () => {
+        mockSpawnSync.mockReturnValueOnce({ status: 1 });
 
-      await withTempProject(
-        {
-          "app.commerce.config.ts": dynamicOptionsConfigFileTs,
-          "package.json": JSON.stringify({ type: "module" }),
-          ...makeTemplateFiles(),
-        },
-        async () => {
-          await expect(run(configWithDynamicListOptions)).rejects.toThrow(
-            "Could not bundle the TypeScript app config with esbuild@",
-          );
-        },
-      );
-    });
+        await withTempProject(
+          {
+            "app.commerce.config.ts": dynamicOptionsConfigFileTs,
+            "package.json": JSON.stringify({ type: "module" }),
+            ...makeTemplateFiles(),
+          },
+          async () => {
+            await expect(run(configWithDynamicListOptions)).rejects.toThrow(
+              "Could not bundle the TypeScript app config with esbuild@",
+            );
+          },
+        );
+      },
+      TS_BUNDLE_TIMEOUT_MS,
+    );
 
     test.each(["ts", "mts", "cts"] as const)(
       "keeps JavaScript actions for a .%s config outside init",

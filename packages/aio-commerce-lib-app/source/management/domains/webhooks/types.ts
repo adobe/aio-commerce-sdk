@@ -47,16 +47,13 @@ export type ResolvedWebhookPayload = WebhookIdentity &
 
 /**
  * Value carried by an add/remove operation: {@link ResolvedWebhookPayload} with every
- * non-identity field optional, since a cleanup-driven remove may carry only the identity.
+ * non-identity field optional, since a remove may carry only the identity.
  */
 export type WebhookOperationValue = WebhookIdentity &
   Partial<Omit<ResolvedWebhookPayload, keyof WebhookIdentity>>;
 
 /** The webhooks domain plan. `retainedWebhooks` lets `apply` rebuild the full resulting state without needing the baseline. */
-export type WebhookDomainPlan = DomainPlan<
-  WebhookOperationValue,
-  WebhookIdentity
-> & {
+export type WebhookDomainPlan = DomainPlan<WebhookOperationValue> & {
   retainedWebhooks: WebhookSubscribeParams[];
 };
 

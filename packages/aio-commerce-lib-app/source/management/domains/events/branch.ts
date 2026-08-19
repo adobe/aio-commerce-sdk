@@ -13,49 +13,13 @@
 import { hasEventing } from "#config/schema/eventing";
 import { defineBranchStep } from "#management/common/workflow/index";
 
-import { applyCommerceEvents, applyExternalEvents } from "./apply";
 import { commerceEventsStep } from "./commerce";
 import { createEventsStepContext } from "./context";
 import { externalEventsStep } from "./external";
-import { planCommerceEvents, planExternalEvents } from "./plan";
-
-/**
- * Commerce eventing leaf extended with the upgrade `plan`/`apply` capability. Composed here (rather
- * than in `./commerce`) so `apply` can reuse `commerceEventsStep.install`/`uninstall` without an
- * import cycle.
- */
-const commerceEventsUpgradeStep = {
-  ...commerceEventsStep,
-  apply: applyCommerceEvents,
-  meta: {
-    ...commerceEventsStep.meta,
-    upgrade: {
-      description:
-        "Reconciles Commerce event providers, metadata, registrations and subscriptions",
-      label: "Update Commerce Events",
-    },
-  },
-  plan: planCommerceEvents,
-};
-
-/** External eventing leaf extended with the upgrade `plan`/`apply` capability. */
-const externalEventsUpgradeStep = {
-  ...externalEventsStep,
-  apply: applyExternalEvents,
-  meta: {
-    ...externalEventsStep.meta,
-    upgrade: {
-      description:
-        "Reconciles external event providers, metadata and registrations",
-      label: "Update External Events",
-    },
-  },
-  plan: planExternalEvents,
-};
 
 /** Root eventing step that contains commerce and external event sub-steps. */
 export const eventingStep = defineBranchStep({
-  children: [commerceEventsUpgradeStep, externalEventsUpgradeStep],
+  children: [commerceEventsStep, externalEventsStep],
   context: createEventsStepContext,
 
   isConfigured: hasEventing,

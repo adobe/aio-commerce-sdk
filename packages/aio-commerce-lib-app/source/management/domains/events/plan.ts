@@ -16,15 +16,16 @@ import { appliesToEnv, getInstallCommerceEnv } from "#config/lib/environment";
 
 import {
   COMMERCE_PROVIDER_TYPE,
+  diffByKey,
   EXTERNAL_PROVIDER_TYPE,
   eventCodeOf,
   getNamespacedEvent,
   getProviderKey,
   getSubscriptionChangeKind,
   groupEventsByRuntimeActions,
-  partitionByKey,
 } from "./utils";
 
+import type { CommerceEnv } from "@adobe/aio-commerce-lib-core/commerce";
 import type { EventProviderType } from "@adobe/aio-commerce-lib-events/io-events";
 import type {
   AppEvent,
@@ -35,7 +36,6 @@ import type {
 } from "#config/schema/eventing";
 import type { ApplicationMetadata } from "#config/schema/metadata";
 import type {
-  CleanupResource,
   PlanningInput,
   PlanningResult,
   ResourceOperation,
@@ -43,7 +43,6 @@ import type {
 import type { ValidationExecutionContext } from "#management/common/workflow/step";
 import type { EventsStepContext } from "./context";
 import type {
-  EventingCleanupIdentity,
   EventingDomainPlan,
   EventingOperationValue,
   EventingProviderSnapshot,
@@ -63,15 +62,14 @@ type PlanLeafInput = {
   baselineSources: EventSource[];
   baselineSnapshot: EventingProviderSnapshot[] | null;
   baselineMetadata: ApplicationMetadata | null;
-  unresolvedCleanupResources: CleanupResource<EventingCleanupIdentity>[];
-  env: ReturnType<typeof getInstallCommerceEnv>;
+  env: CommerceEnv;
 };
 
 /** Reduces config event sources to env-scoped provider snapshots (skipping empty providers). */
 function sourcesToSnapshots(
   sources: EventSource[],
   type: EventProviderType,
-  env: ReturnType<typeof getInstallCommerceEnv>,
+  env: CommerceEnv,
 ): EventingProviderSnapshot[] {
   const snapshots: EventingProviderSnapshot[] = [];
 
@@ -111,104 +109,27 @@ function operationId(
   }
 }
 
-/**
- * Reconstructs a minimal operation value from a stored cleanup identity, so a cleanup remove can be
- * emitted from the identity alone. Round-trips through {@link valueToCleanupIdentity}: the resulting
- * value maps back to the same identity that `operationsToCleanup` uses to mark it resolved.
- */
-function cleanupIdentityToValue(
-  identity: EventingCleanupIdentity,
-  type: EventProviderType,
-): EventingOperationValue {
-  switch (identity.resourceType) {
-    case "provider":
-      return {
-        label: identity.providerLabel,
-        providerKey: identity.providerKey,
-        resourceType: "provider",
-        type,
-      };
-    case "metadata":
-      return {
-        eventCode: identity.eventCode,
-        providerKey: identity.providerKey,
-        providerLabel: identity.providerLabel,
-        resourceType: "metadata",
-        type,
-      };
-    case "registration":
-      return {
-        providerKey: identity.providerKey,
-        providerLabel: identity.providerLabel,
-        resourceType: "registration",
-        runtimeAction: identity.runtimeAction,
-        type,
-      };
-    default:
-      return { name: identity.name, resourceType: "subscription" };
-  }
-}
-
-/** Accumulates the operations, cleanup resources and removed providers for one leaf. */
+/** Accumulates the operations and removed providers for one leaf. */
 class LeafPlanBuilder {
   public readonly operations: ResourceOperation<EventingOperationValue>[] = [];
-  public readonly possibleCleanupResources: CleanupResource<EventingCleanupIdentity>[] =
-    [];
   public readonly removedProviders: EventingProviderSnapshot[] = [];
-  private readonly path: string[];
 
-  public constructor(path: string[]) {
-    this.path = path;
-  }
-
-  private add(
-    value: EventingOperationValue,
-    label: string,
-    cleanup?: EventingCleanupIdentity,
-  ): void {
+  private add(value: EventingOperationValue, label: string): void {
     this.operations.push({
       after: value,
-      category: "configuration",
       id: operationId("add", value),
       kind: "add",
       label,
     });
-    if (cleanup) {
-      this.possibleCleanupResources.push({
-        identity: cleanup,
-        path: this.path,
-      });
-    }
   }
 
   private remove(value: EventingOperationValue, label: string): void {
     this.operations.push({
       before: value,
-      category: "configuration",
       id: operationId("remove", value),
       kind: "remove",
       label,
     });
-  }
-
-  /**
-   * Emits a cleanup-category remove for an orphaned resource carried over from a prior attempt's
-   * unresolved cleanup, reconstructing the operation value from the stored identity. Re-arms the
-   * identity so it stays tracked until an apply actually resolves it.
-   */
-  public removeFromCleanup(
-    identity: EventingCleanupIdentity,
-    type: EventProviderType,
-  ): void {
-    const value = cleanupIdentityToValue(identity, type);
-    this.operations.push({
-      before: value,
-      category: "cleanup",
-      id: operationId("remove", value),
-      kind: "remove",
-      label: `Remove orphaned ${identity.resourceType}`,
-    });
-    this.possibleCleanupResources.push({ identity, path: this.path });
   }
 
   private update(
@@ -219,7 +140,6 @@ class LeafPlanBuilder {
     this.operations.push({
       after,
       before,
-      category: "configuration",
       id: operationId("update", after),
       kind: "update",
       label,
@@ -243,11 +163,6 @@ class LeafPlanBuilder {
         type,
       },
       `Create event provider: ${provider.label}`,
-      {
-        providerKey: key,
-        providerLabel: provider.label,
-        resourceType: "provider",
-      },
     );
 
     for (const event of events) {
@@ -258,17 +173,10 @@ class LeafPlanBuilder {
           eventCode,
           label: event.label,
           providerKey: key,
-          providerLabel: provider.label,
           resourceType: "metadata",
           type,
         },
         `Register event metadata: ${eventCode}`,
-        {
-          eventCode,
-          providerKey: key,
-          providerLabel: provider.label,
-          resourceType: "metadata",
-        },
       );
     }
 
@@ -281,18 +189,11 @@ class LeafPlanBuilder {
             .map((event) => eventCodeOf(event, metadata, type))
             .sort((a, b) => a.localeCompare(b)),
           providerKey: key,
-          providerLabel: provider.label,
           resourceType: "registration",
           runtimeAction,
           type,
         },
         `Create registration: ${provider.label} → ${runtimeAction}`,
-        {
-          providerKey: key,
-          providerLabel: provider.label,
-          resourceType: "registration",
-          runtimeAction,
-        },
       );
     }
 
@@ -302,7 +203,6 @@ class LeafPlanBuilder {
         this.add(
           { name, providerKey: key, resourceType: "subscription" },
           `Create Commerce subscription: ${name}`,
-          { name, resourceType: "subscription" },
         );
       }
     }
@@ -331,8 +231,9 @@ class LeafPlanBuilder {
     baselineMetadata: ApplicationMetadata,
     isCommerce: boolean,
   ): void {
-    // Provider display (label/description) has no in-place update API; a cosmetic change is
-    // intentionally left as-is rather than blocking the whole upgrade. Only sub-resources diff.
+    // Provider label/description are real data, but our events client exposes no provider-update
+    // endpoint (only create/delete), so drift in them is left as-is rather than tearing down and
+    // recreating the whole provider for a display-only change. Only sub-resources diff.
     this.diffMetadata(target, baseline, targetMetadata, baselineMetadata);
     this.diffRegistrations(target, baseline, targetMetadata, baselineMetadata);
     if (isCommerce) {
@@ -351,8 +252,8 @@ class LeafPlanBuilder {
     targetMetadata: ApplicationMetadata,
     baselineMetadata: ApplicationMetadata,
   ): void {
-    const { key, provider, type } = target;
-    const { added, removed } = partitionByKey(
+    const { key, type } = target;
+    const { added, removed } = diffByKey(
       target.events,
       baseline.events,
       (event) => eventCodeOf(event, targetMetadata, type),
@@ -367,17 +268,10 @@ class LeafPlanBuilder {
           eventCode,
           label: event.label,
           providerKey: key,
-          providerLabel: provider.label,
           resourceType: "metadata",
           type,
         },
         `Register event metadata: ${eventCode}`,
-        {
-          eventCode,
-          providerKey: key,
-          providerLabel: provider.label,
-          resourceType: "metadata",
-        },
       );
     }
 
@@ -389,7 +283,6 @@ class LeafPlanBuilder {
           eventCode,
           label: event.label,
           providerKey: key,
-          providerLabel: provider.label,
           resourceType: "metadata",
           type,
         },
@@ -418,7 +311,6 @@ class LeafPlanBuilder {
       const after: EventingOperationValue = {
         eventCodes: codes(events, targetMetadata),
         providerKey: key,
-        providerLabel: provider.label,
         resourceType: "registration",
         runtimeAction,
         type,
@@ -428,12 +320,6 @@ class LeafPlanBuilder {
         this.add(
           after,
           `Create registration: ${provider.label} → ${runtimeAction}`,
-          {
-            providerKey: key,
-            providerLabel: provider.label,
-            resourceType: "registration",
-            runtimeAction,
-          },
         );
         continue;
       }
@@ -441,7 +327,6 @@ class LeafPlanBuilder {
       const before: EventingOperationValue = {
         eventCodes: codes(baselineForAction, baselineMetadata),
         providerKey: key,
-        providerLabel: provider.label,
         resourceType: "registration",
         runtimeAction,
         type,
@@ -467,7 +352,6 @@ class LeafPlanBuilder {
             baselineMetadata,
           ),
           providerKey: key,
-          providerLabel: provider.label,
           resourceType: "registration",
           runtimeAction,
           type,
@@ -484,7 +368,7 @@ class LeafPlanBuilder {
     baselineMetadata: ApplicationMetadata,
   ): void {
     const { key } = target;
-    const { added, removed } = partitionByKey(
+    const { added, removed } = diffByKey(
       target.events,
       baseline.events,
       (event) => getNamespacedEvent(targetMetadata, event.name),
@@ -496,7 +380,6 @@ class LeafPlanBuilder {
       this.add(
         { name, providerKey: key, resourceType: "subscription" },
         `Create Commerce subscription: ${name}`,
-        { name, resourceType: "subscription" },
       );
     }
 
@@ -543,48 +426,6 @@ class LeafPlanBuilder {
   }
 }
 
-/**
- * Whether a cleanup identity still corresponds to a resource in the given provider set — used to
- * decide whether an unresolved cleanup entry is an orphan (represented nowhere) or is already
- * handled by the normal target/baseline diff.
- */
-function isIdentityRepresented(
-  identity: EventingCleanupIdentity,
-  providers: EventingProviderSnapshot[],
-  metadata: ApplicationMetadata,
-  type: EventProviderType,
-): boolean {
-  switch (identity.resourceType) {
-    case "provider":
-      return providers.some(
-        (provider) => provider.key === identity.providerKey,
-      );
-    case "metadata":
-      return providers.some(
-        (provider) =>
-          provider.key === identity.providerKey &&
-          provider.events.some(
-            (event) =>
-              eventCodeOf(event, metadata, type) === identity.eventCode,
-          ),
-      );
-    case "registration":
-      return providers.some(
-        (provider) =>
-          provider.key === identity.providerKey &&
-          groupEventsByRuntimeActions(provider.events).has(
-            identity.runtimeAction,
-          ),
-      );
-    default:
-      return providers.some((provider) =>
-        provider.events.some(
-          (event) => getNamespacedEvent(metadata, event.name) === identity.name,
-        ),
-      );
-  }
-}
-
 /** Diffs one event kind (commerce or external) into an eventing domain plan. */
 function planEventingLeaf(
   params: PlanLeafInput,
@@ -609,7 +450,7 @@ function planEventingLeaf(
   const targetByKey = new Map(targetProviders.map((p) => [p.key, p]));
   const baselineByKey = new Map(baselineProviders.map((p) => [p.key, p]));
 
-  const builder = new LeafPlanBuilder(path);
+  const builder = new LeafPlanBuilder();
 
   for (const snapshot of targetProviders) {
     if (baselineByKey.has(snapshot.key)) {
@@ -644,38 +485,15 @@ function planEventingLeaf(
     );
   }
 
-  // Reconcile cleanup resources carried over from prior attempts: any that no longer correspond to
-  // a target or baseline resource are orphans to remove. Ones still in the target are reconverged by
-  // the idempotent install; ones in the baseline are already handled by the diff removes above.
-  for (const { identity } of params.unresolvedCleanupResources) {
-    const inTarget =
-      targetMetadata !== null &&
-      isIdentityRepresented(identity, targetProviders, targetMetadata, type);
-    const inBaseline =
-      baselineMetadata !== null &&
-      isIdentityRepresented(
-        identity,
-        baselineProviders,
-        baselineMetadata,
-        type,
-      );
-    if (inTarget || inBaseline) {
-      continue;
-    }
-    builder.removeFromCleanup(identity, type);
-  }
-
   return {
     kind: "planned",
     plan: {
       baselineMetadata,
       baselineProviders,
-      // A plan always has at least one side, so at least one metadata is present.
-      metadata: (targetMetadata ?? baselineMetadata) as ApplicationMetadata,
       operations: builder.operations,
       path,
-      possibleCleanupResources: builder.possibleCleanupResources,
       removedProviders: builder.removedProviders,
+      targetMetadata,
       targetProviders,
     },
   };
@@ -691,11 +509,7 @@ function planEventingLeaf(
  * @param context - The side-effect-free execution context (used to resolve the install environment).
  */
 export function planCommerceEvents(
-  input: PlanningInput<
-    CommerceEventsConfig,
-    EventingSnapshotData,
-    EventingCleanupIdentity
-  >,
+  input: PlanningInput<CommerceEventsConfig, EventingSnapshotData>,
   context: ValidationExecutionContext<EventsStepContext>,
 ): Promise<PlanningResult<EventingDomainPlan>> {
   return Promise.resolve(
@@ -709,7 +523,6 @@ export function planCommerceEvents(
       targetMetadata: input.targetConfig?.metadata ?? null,
       targetSources: input.targetConfig?.eventing.commerce ?? [],
       type: COMMERCE_PROVIDER_TYPE,
-      unresolvedCleanupResources: input.unresolvedCleanupResources,
     }),
   );
 }
@@ -722,11 +535,7 @@ export function planCommerceEvents(
  * @param context - The side-effect-free execution context.
  */
 export function planExternalEvents(
-  input: PlanningInput<
-    ExternalEventsConfig,
-    EventingSnapshotData,
-    EventingCleanupIdentity
-  >,
+  input: PlanningInput<ExternalEventsConfig, EventingSnapshotData>,
   context: ValidationExecutionContext<EventsStepContext>,
 ): Promise<PlanningResult<EventingDomainPlan>> {
   return Promise.resolve(
@@ -740,7 +549,6 @@ export function planExternalEvents(
       targetMetadata: input.targetConfig?.metadata ?? null,
       targetSources: input.targetConfig?.eventing.external ?? [],
       type: EXTERNAL_PROVIDER_TYPE,
-      unresolvedCleanupResources: input.unresolvedCleanupResources,
     }),
   );
 }

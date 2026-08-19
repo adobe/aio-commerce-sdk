@@ -46,6 +46,14 @@ export function setAtPath(
   current[lastKey] = value;
 }
 
+/** Compares two workflow paths by segment. */
+export function pathsEqual(left: string[], right: string[]): boolean {
+  return (
+    left.length === right.length &&
+    left.every((segment, index) => segment === right[index])
+  );
+}
+
 /** Returns whether a workflow step is present in an app configuration. */
 export function isStepConfigured(
   step: AnyStep,

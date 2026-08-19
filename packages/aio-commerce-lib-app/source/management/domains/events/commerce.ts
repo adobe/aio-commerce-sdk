@@ -19,6 +19,7 @@ import { appliesToEnv, getInstallCommerceEnv } from "#config/lib/environment";
 import { hasCommerceEvents } from "#config/schema/eventing";
 import { defineLeafStep } from "#management/common/workflow/step";
 
+import { applyEventingLeaf } from "./apply";
 import {
   configureCommerceEventing,
   offboardCommerceEventing,
@@ -26,6 +27,7 @@ import {
   onboardCommerceEventing,
   onboardIoEvents,
 } from "./helpers";
+import { planCommerceEvents } from "./plan";
 import {
   COMMERCE_PROVIDER_TYPE,
   EVENTS_STORAGE_KEY,
@@ -37,15 +39,24 @@ import {
 } from "./utils";
 
 import type { CommerceEventsConfig } from "#config/schema/eventing";
+import type {
+  ApplyContext,
+  ApplyResult,
+} from "#management/common/workflow/resource";
 import type { InferStepOutput } from "#management/common/workflow/step";
-import type { EventsExecutionContext } from "./context";
-import type { StoredEventsData } from "./types";
+import type { EventsExecutionContext, EventsStepContext } from "./context";
+import type {
+  EventingDomainPlan,
+  EventingSnapshotData,
+  StoredEventsData,
+} from "./types";
 
 /** The output data of the Commerce Eventing step (auto-inferred). */
 export type CommerceEventsStepData = InferStepOutput<typeof commerceEventsStep>;
 
-/** Leaf step for installing commerce event sources. */
+/** Leaf step for installing and upgrading commerce event sources. */
 export const commerceEventsStep = defineLeafStep({
+  apply: applyCommerceEvents,
   install: createCommerceEvents,
 
   isConfigured: hasCommerceEvents,
@@ -58,10 +69,39 @@ export const commerceEventsStep = defineLeafStep({
       description: "Removes I/O Events for Adobe Commerce event sources",
       label: "Remove Commerce Events",
     },
+    upgrade: {
+      description:
+        "Reconciles Commerce event providers, metadata, registrations and subscriptions",
+      label: "Update Commerce Events",
+    },
   },
   name: "commerce",
+  plan: planCommerceEvents,
   uninstall: removeCommerceEvents,
 });
+
+/**
+ * Applies a Commerce eventing domain plan by delegating to the shared leaf convergence, supplying this
+ * leaf's own `install`/`uninstall` handlers. Defined here (not in `./apply`) so that `applyEventingLeaf`
+ * stays free of any dependency on this step — attaching it there would form an import cycle.
+ *
+ * @param plan - The eventing domain plan produced by `planCommerceEvents`.
+ * @param context - The attempt-scoped execution context (carries the provisioned clients).
+ */
+export function applyCommerceEvents(
+  plan: EventingDomainPlan,
+  context: ApplyContext<EventsStepContext>,
+): Promise<ApplyResult<EventingSnapshotData>> {
+  return applyEventingLeaf(plan, context, {
+    install: async (config, ctx) =>
+      await commerceEventsStep.install(config as CommerceEventsConfig, ctx),
+    isCommerce: true,
+    type: COMMERCE_PROVIDER_TYPE,
+    uninstall: async (config, ctx) => {
+      await commerceEventsStep.uninstall?.(config as CommerceEventsConfig, ctx);
+    },
+  });
+}
 
 /**
  * Creates all needed entities for Eventing to work with Commerce and Adobe I/O Events.

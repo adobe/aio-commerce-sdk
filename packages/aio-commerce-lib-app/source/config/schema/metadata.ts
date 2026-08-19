@@ -58,6 +58,7 @@ export const MetadataSchema = v.object({
     ),
   ),
 
+  upgradeMode: v.optional(v.picklist(["auto", "manual"]), "auto"),
   version: v.pipe(
     nonEmptyString("version"),
     v.regex(
