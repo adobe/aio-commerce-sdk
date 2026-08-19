@@ -53,7 +53,7 @@ describe("syncImsCredentials", () => {
       name: "my-s2s-context",
     });
 
-    await withTempFiles({}, async (tempDir) => {
+    await withTempFiles({ "package.json": "{}" }, async (tempDir) => {
       const result = await syncImsCredentials(tempDir);
       expect(result).toEqual({ ok: false, reason: "missing-env" });
       expect(existsSync(join(tempDir, ".env"))).toBe(false);
@@ -65,6 +65,7 @@ describe("syncImsCredentials", () => {
     await withTempFiles(
       {
         ".env": "SOME_VAR=value\n",
+        "package.json": "{}",
       },
       async (tempDir) => {
         const result = await syncImsCredentials(tempDir);
@@ -84,6 +85,7 @@ describe("syncImsCredentials", () => {
     await withTempFiles(
       {
         ".env": "SOME_VAR=value\n",
+        "package.json": "{}",
       },
       async (tempDir) => {
         const result = await syncImsCredentials(tempDir);
@@ -112,6 +114,7 @@ describe("syncImsCredentials", () => {
     await withTempFiles(
       {
         ".env": "EXISTING_VAR=existing\n",
+        "package.json": "{}",
       },
       async (tempDir) => {
         await syncImsCredentials(tempDir);
@@ -146,6 +149,7 @@ describe("syncImsCredentials", () => {
     await withTempFiles(
       {
         ".env": "AIO_COMMERCE_AUTH_IMS_CLIENT_ID=old-client-id\n",
+        "package.json": "{}",
       },
       async (tempDir) => {
         await syncImsCredentials(tempDir);
@@ -175,6 +179,7 @@ describe("syncImsCredentials", () => {
     await withTempFiles(
       {
         ".env": originalEnv,
+        "package.json": "{}",
       },
       async (tempDir) => {
         await syncImsCredentials(tempDir);
@@ -203,6 +208,7 @@ describe("syncImsCredentials", () => {
     await withTempFiles(
       {
         ".env": "",
+        "package.json": "{}",
       },
       async (tempDir) => {
         await syncImsCredentials(tempDir);
@@ -233,6 +239,7 @@ describe("syncImsCredentials", () => {
     await withTempFiles(
       {
         ".env": "# This is a comment\nEXISTING=value\n",
+        "package.json": "{}",
       },
       async (tempDir) => {
         await syncImsCredentials(tempDir);
@@ -262,6 +269,7 @@ describe("syncImsCredentials", () => {
     await withTempFiles(
       {
         ".env": "",
+        "package.json": "{}",
       },
       async (tempDir) => {
         await syncImsCredentials(tempDir);
@@ -294,6 +302,7 @@ describe("syncImsCredentials", () => {
     await withTempFiles(
       {
         ".env": "",
+        "package.json": "{}",
       },
       async (tempDir) => {
         await syncImsCredentials(tempDir);
@@ -336,6 +345,7 @@ describe("syncImsCredentials", () => {
     await withTempFiles(
       {
         ".env": "",
+        "package.json": "{}",
       },
       async (tempDir) => {
         await syncImsCredentials(tempDir);
@@ -352,8 +362,8 @@ describe("syncImsCredentials", () => {
 
 describe("setNodeEnv", () => {
   test("should create the .env file when it does not exist", async () => {
-    await withTempFiles({}, (tempDir) => {
-      setNodeEnv("production", tempDir);
+    await withTempFiles({ "package.json": "{}" }, async (tempDir) => {
+      await setNodeEnv("production", tempDir);
 
       const envPath = join(tempDir, ".env");
       expect(existsSync(envPath)).toBe(true);
@@ -365,9 +375,10 @@ describe("setNodeEnv", () => {
     await withTempFiles(
       {
         ".env": "EXISTING_VAR=existing\n",
+        "package.json": "{}",
       },
-      (tempDir) => {
-        setNodeEnv("development", tempDir);
+      async (tempDir) => {
+        await setNodeEnv("development", tempDir);
 
         const envContent = readFileSync(join(tempDir, ".env"), "utf8");
         expect(envContent).toContain("EXISTING_VAR=existing");
@@ -380,9 +391,10 @@ describe("setNodeEnv", () => {
     await withTempFiles(
       {
         ".env": "NODE_ENV=development\n",
+        "package.json": "{}",
       },
-      (tempDir) => {
-        setNodeEnv("production", tempDir);
+      async (tempDir) => {
+        await setNodeEnv("production", tempDir);
 
         const envContent = readFileSync(join(tempDir, ".env"), "utf8");
         expect(envContent).toContain("NODE_ENV=production");

@@ -20,18 +20,21 @@ import { withTempProject } from "#test/fixtures/project";
 
 describe("commands/hooks/pre-app-run", () => {
   test("resets NODE_ENV to development in an existing .env", async () => {
-    await withTempProject({ ".env": "NODE_ENV=production\n" }, (tempDir) => {
-      run(tempDir);
+    await withTempProject(
+      { ".env": "NODE_ENV=production\n", "package.json": "{}" },
+      async (tempDir) => {
+        await run(tempDir);
 
-      const envContents = readFileSync(join(tempDir, ".env"), "utf8");
-      expect(envContents).toContain("NODE_ENV=development");
-      expect(envContents).not.toContain("NODE_ENV=production");
-    });
+        const envContents = readFileSync(join(tempDir, ".env"), "utf8");
+        expect(envContents).toContain("NODE_ENV=development");
+        expect(envContents).not.toContain("NODE_ENV=production");
+      },
+    );
   });
 
   test("creates the .env with NODE_ENV=development when none exists", async () => {
-    await withTempProject({}, (tempDir) => {
-      run(tempDir);
+    await withTempProject({ "package.json": "{}" }, async (tempDir) => {
+      await run(tempDir);
 
       const envPath = join(tempDir, ".env");
       expect(existsSync(envPath)).toBe(true);

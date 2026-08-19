@@ -23,6 +23,8 @@ import config from "@adobe/aio-lib-core-config";
 import aioIms from "@adobe/aio-lib-ims";
 import dotenv from "dotenv";
 
+import { getProjectRootDirectory } from "#project";
+
 const { context } = aioIms;
 const IMS_KEYS = {
   client_id: "AIO_COMMERCE_AUTH_IMS_CLIENT_ID",
@@ -79,24 +81,27 @@ export function replaceEnvVar(filePath: string, key: string, value: string) {
 }
 
 /**
- * Returns the path to the .env file.
- * @param cwd - The directory holding the `.env`. Defaults to the current working directory.
+ * Returns the path to the project's `.env` file, resolved from the project root
+ * (the nearest `package.json` walking up from `cwd`), so it is found regardless
+ * of which subdirectory a command is invoked from.
+ * @param cwd - A directory within the project. Defaults to the current working directory.
  */
-function resolveEnvPath(cwd = process.cwd()) {
-  return path.resolve(cwd, ".env");
+async function resolveEnvPath(cwd = process.cwd()) {
+  const projectRoot = await getProjectRootDirectory(cwd);
+  return path.join(projectRoot, ".env");
 }
 
 /**
  * Sets the `NODE_ENV` environment variable in the app `.env` file, so the web
  * bundler (Parcel) ships the matching React build. Creates the `.env` if absent.
  * @param mode - The environment mode to write into `NODE_ENV`.
- * @param cwd - The directory holding the `.env`. Defaults to the resolved project directory.
+ * @param cwd - A directory within the project. Defaults to the current working directory.
  */
-export function setNodeEnv(
+export async function setNodeEnv(
   mode: "development" | "production",
   cwd = process.cwd(),
 ) {
-  const envPath = resolveEnvPath(cwd);
+  const envPath = await resolveEnvPath(cwd);
   if (!existsSync(envPath)) {
     writeFileSync(envPath, "", "utf8");
   }
@@ -128,12 +133,12 @@ export type SyncImsCredentialsResult =
 /**
  * Syncs the IMS credentials environment variables from the configured IMS context in
  * the .env file, in a way that is compatible with `@adobe/aio-commerce-lib-auth`.
- * @param cwd - The directory holding the `.env`. Defaults to the current working directory.
+ * @param cwd - A directory within the project. Defaults to the current working directory.
  */
 export async function syncImsCredentials(
   cwd = process.cwd(),
 ): Promise<SyncImsCredentialsResult> {
-  const envPath = resolveEnvPath(cwd);
+  const envPath = await resolveEnvPath(cwd);
 
   if (!existsSync(envPath)) {
     return { ok: false, reason: "missing-env" };

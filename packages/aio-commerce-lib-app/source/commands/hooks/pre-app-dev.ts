@@ -18,8 +18,8 @@ import consola from "consola";
  * Resets the web build back to development by writing `NODE_ENV` to the project `.env`.
  * @param cwd - The project directory. Defaults to the current working directory.
  */
-export function run(cwd = process.cwd()) {
-  setNodeEnv("development", cwd);
+export async function run(cwd = process.cwd()) {
+  await setNodeEnv("development", cwd);
 }
 
 /** Runs the pre-app-dev hook. */
@@ -27,7 +27,7 @@ export async function exec() {
   consola.debug("Running lib-app pre-app-dev hook");
 
   try {
-    run();
+    await run();
   } catch (error) {
     if (error instanceof CommerceSdkValidationError) {
       consola.error(error.display());

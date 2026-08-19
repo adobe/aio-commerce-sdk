@@ -114,7 +114,7 @@ export async function run(
         );
 
         // Ship React's production build for the deployed web bundle.
-        setNodeEnv("production", cwd);
+        await setNodeEnv("production", cwd);
       }
     }
     return;
