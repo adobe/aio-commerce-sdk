@@ -11,7 +11,7 @@ type RouteRequest<TParams, TBody, TQuery> = {
 };
 ```
 
-Defined in: [actions/http/types.ts:96](https://github.com/adobe/aio-commerce-sdk/blob/aa606961236cac6f4a3cebc105d643da71d5ddb8/packages-private/common-utils/source/actions/http/types.ts#L96)
+Defined in: [actions/http/types.ts:96](https://github.com/adobe/aio-commerce-sdk/blob/71bf66656ef1fc6dd272a0821e8b00aab5dc197e/packages-private/common-utils/source/actions/http/types.ts#L96)
 
 Represents an incoming route request with typed parameters, body, and query.
 
@@ -31,7 +31,7 @@ Represents an incoming route request with typed parameters, body, and query.
 body: TBody;
 ```
 
-Defined in: [actions/http/types.ts:98](https://github.com/adobe/aio-commerce-sdk/blob/aa606961236cac6f4a3cebc105d643da71d5ddb8/packages-private/common-utils/source/actions/http/types.ts#L98)
+Defined in: [actions/http/types.ts:98](https://github.com/adobe/aio-commerce-sdk/blob/71bf66656ef1fc6dd272a0821e8b00aab5dc197e/packages-private/common-utils/source/actions/http/types.ts#L98)
 
 Parsed request body
 
@@ -43,7 +43,7 @@ Parsed request body
 headers: Record<string, string>;
 ```
 
-Defined in: [actions/http/types.ts:101](https://github.com/adobe/aio-commerce-sdk/blob/aa606961236cac6f4a3cebc105d643da71d5ddb8/packages-private/common-utils/source/actions/http/types.ts#L101)
+Defined in: [actions/http/types.ts:101](https://github.com/adobe/aio-commerce-sdk/blob/71bf66656ef1fc6dd272a0821e8b00aab5dc197e/packages-private/common-utils/source/actions/http/types.ts#L101)
 
 HTTP headers from the request
 
@@ -55,7 +55,7 @@ HTTP headers from the request
 method: HttpMethod;
 ```
 
-Defined in: [actions/http/types.ts:104](https://github.com/adobe/aio-commerce-sdk/blob/aa606961236cac6f4a3cebc105d643da71d5ddb8/packages-private/common-utils/source/actions/http/types.ts#L104)
+Defined in: [actions/http/types.ts:104](https://github.com/adobe/aio-commerce-sdk/blob/71bf66656ef1fc6dd272a0821e8b00aab5dc197e/packages-private/common-utils/source/actions/http/types.ts#L104)
 
 HTTP method used for the request
 
@@ -67,7 +67,7 @@ HTTP method used for the request
 params: TParams;
 ```
 
-Defined in: [actions/http/types.ts:106](https://github.com/adobe/aio-commerce-sdk/blob/aa606961236cac6f4a3cebc105d643da71d5ddb8/packages-private/common-utils/source/actions/http/types.ts#L106)
+Defined in: [actions/http/types.ts:106](https://github.com/adobe/aio-commerce-sdk/blob/71bf66656ef1fc6dd272a0821e8b00aab5dc197e/packages-private/common-utils/source/actions/http/types.ts#L106)
 
 Route parameters extracted from the URL path
 
@@ -79,7 +79,7 @@ Route parameters extracted from the URL path
 path: string;
 ```
 
-Defined in: [actions/http/types.ts:109](https://github.com/adobe/aio-commerce-sdk/blob/aa606961236cac6f4a3cebc105d643da71d5ddb8/packages-private/common-utils/source/actions/http/types.ts#L109)
+Defined in: [actions/http/types.ts:109](https://github.com/adobe/aio-commerce-sdk/blob/71bf66656ef1fc6dd272a0821e8b00aab5dc197e/packages-private/common-utils/source/actions/http/types.ts#L109)
 
 The matched path
 
@@ -91,6 +91,6 @@ The matched path
 query: TQuery;
 ```
 
-Defined in: [actions/http/types.ts:112](https://github.com/adobe/aio-commerce-sdk/blob/aa606961236cac6f4a3cebc105d643da71d5ddb8/packages-private/common-utils/source/actions/http/types.ts#L112)
+Defined in: [actions/http/types.ts:112](https://github.com/adobe/aio-commerce-sdk/blob/71bf66656ef1fc6dd272a0821e8b00aab5dc197e/packages-private/common-utils/source/actions/http/types.ts#L112)
 
 Query string parameters

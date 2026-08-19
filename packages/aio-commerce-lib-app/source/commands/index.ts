@@ -21,6 +21,8 @@ import { exec as generateSchemaCommand } from "#commands/generate/schema/main";
 import { exec as postAppDeployHookCommand } from "#commands/hooks/post-app-deploy";
 import { exec as postinstallHookCommand } from "#commands/hooks/postinstall";
 import { exec as preAppBuildHookCommand } from "#commands/hooks/pre-app-build";
+import { exec as preAppDevHookCommand } from "#commands/hooks/pre-app-dev";
+import { exec as preAppRunHookCommand } from "#commands/hooks/pre-app-run";
 import { exec as initCommand } from "#commands/init/main";
 
 const NAMESPACE = "@adobe/aio-commerce-lib-app";
@@ -72,6 +74,8 @@ const COMMANDS = {
     "post-app-deploy": postAppDeployHookCommand,
     postinstall: postinstallHookCommand,
     "pre-app-build": preAppBuildHookCommand,
+    "pre-app-dev": preAppDevHookCommand,
+    "pre-app-run": preAppRunHookCommand,
   },
   init: initCommand,
 } as const;
