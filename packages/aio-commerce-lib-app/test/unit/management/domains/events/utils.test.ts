@@ -746,6 +746,22 @@ describe("getSubscriptionChangeKind", () => {
     expect(getSubscriptionChangeKind(commerceEvent(), target)).toBe("in-place");
   });
 
+  // Disabling a scalar (true -> false) drops no field/rule key, so it classifies as `in-place`
+  // like the enabling direction above. This case is called out separately because the in-place
+  // path relies on the Commerce merge endpoint applying a `false` scalar; if it does not, a
+  // disable would not take effect (see reconcileChangedSubscriptions).
+  test("returns 'in-place' when priority is disabled (true -> false)", () => {
+    const baseline = commerceEvent({ priority: true });
+    const target = commerceEvent({ priority: false });
+    expect(getSubscriptionChangeKind(baseline, target)).toBe("in-place");
+  });
+
+  test("returns 'in-place' when hipaa_audit_required is disabled (true -> false)", () => {
+    const baseline = commerceEvent({ hipaa_audit_required: true });
+    const target = commerceEvent({ hipaa_audit_required: false });
+    expect(getSubscriptionChangeKind(baseline, target)).toBe("in-place");
+  });
+
   test("returns 'recreate' when a field is removed", () => {
     const baseline = commerceEvent({
       fields: [{ name: "field_a" }, { name: "field_b" }],

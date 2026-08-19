@@ -1,5 +1,10 @@
 import { vi } from "vitest";
 
+import {
+  COMMERCE_PROVIDER_TYPE,
+  generateInstanceId,
+} from "#management/domains/events/utils";
+
 import { configWithCommerceEventing } from "./config";
 import { createMockInstallationContext } from "./installation";
 
@@ -9,6 +14,7 @@ import type {
   UpdateEventingConfigurationParams,
 } from "@adobe/aio-commerce-lib-events/commerce";
 import type {
+  EventProviderType,
   IoEventMetadata,
   IoEventMetadataManyResponse,
   IoEventProvider,
@@ -254,6 +260,75 @@ export function createMockIoEventsClient(
       .mockImplementation(
         overrides?.updateRegistration ?? (() => Promise.resolve()),
       ),
+  };
+}
+
+/** Workspace id the mock installation context deploys under; deployed-provider instance ids must match it. */
+export const TEST_WORKSPACE_ID = "test-workspace-id";
+
+/** Client id the mock installation context runs as; deployed registrations must carry it to be found. */
+export const TEST_CLIENT_ID = "test-client-id";
+
+/**
+ * Builds a live I/O Events provider entry whose `instance_id` matches the given config provider under
+ * the shared test metadata, so `resolveDeployedProvider` finds it during an apply. Carries an empty
+ * `_embedded.eventmetadata` so it also parses as a provider HAL model in the list endpoints.
+ *
+ * @param options - The config provider to mirror, the deployed provider id, and its provider type.
+ */
+export function createMockDeployedIoProvider(options: {
+  provider: { label: string; key?: string };
+  id: string;
+  type?: EventProviderType;
+}) {
+  const { provider, id, type = COMMERCE_PROVIDER_TYPE } = options;
+  return {
+    ...createMockIoEventProvider({
+      id,
+      instance_id: generateInstanceId(
+        configWithCommerceEventing.metadata,
+        provider as EventProvider,
+        TEST_WORKSPACE_ID,
+      ),
+      label: provider.label,
+      provider_metadata: type,
+    }),
+    _embedded: { eventmetadata: [] },
+  };
+}
+
+/** Builds a deployed I/O Events registration carrying the mock context's client id. */
+export function createMockDeployedRegistration(
+  name: string,
+  registrationId: string,
+) {
+  return createMockIoEventRegistration({
+    client_id: TEST_CLIENT_ID,
+    name,
+    registration_id: registrationId,
+  });
+}
+
+/** A mock io-events client whose list endpoints return the given (defaulted-empty) HAL payloads. */
+export function createMockIoEventsListClient(options?: {
+  providers?: unknown[];
+  registrations?: unknown[];
+  updateRegistration?: (...args: unknown[]) => unknown;
+  createRegistration?: (...args: unknown[]) => unknown;
+  deleteRegistration?: (...args: unknown[]) => unknown;
+  deleteEventMetadataForProvider?: (...args: unknown[]) => unknown;
+}) {
+  return {
+    createRegistration: options?.createRegistration,
+    deleteEventMetadataForProvider: options?.deleteEventMetadataForProvider,
+    deleteRegistration: options?.deleteRegistration,
+    getAllEventProviders: () =>
+      Promise.resolve({ _embedded: { providers: options?.providers ?? [] } }),
+    getAllRegistrations: () =>
+      Promise.resolve({
+        _embedded: { registrations: options?.registrations ?? [] },
+      }),
+    updateRegistration: options?.updateRegistration ?? vi.fn(),
   };
 }
 
