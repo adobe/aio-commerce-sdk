@@ -2,8 +2,8 @@
   "openapi": "3.1.0",
   "info": {
     "title": "App Management API",
-    "description": "REST API for managing Adobe Commerce App Builder apps: resolving app configuration, managing configuration values, running the installation and uninstallation lifecycle, and managing the scope tree.",
-    "version": "3.0.0",
+    "description": "REST API for managing Adobe Commerce App Builder apps: resolving app configuration, managing configuration values, running the installation, upgrade, and uninstallation lifecycle, and managing the scope tree.",
+    "version": "3.1.0",
     "contact": {},
     "license": {
       "identifier": "Apache-2.0",
@@ -76,13 +76,19 @@
                           "type": "string",
                           "minLength": 1,
                           "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)$"
+                        },
+                        "upgradeMode": {
+                          "description": "Controls upgrade execution after a deploy: \"auto\" runs the planned upgrade immediately, while \"manual\" returns the plan without executing it. Defaults to \"auto\".",
+                          "type": "string",
+                          "enum": ["auto", "manual"]
                         }
                       },
                       "required": [
                         "id",
                         "displayName",
                         "description",
-                        "version"
+                        "version",
+                        "upgradeMode"
                       ]
                     },
                     "businessConfig": {
@@ -1442,9 +1448,9 @@
         "tags": ["Management"]
       },
       "post": {
-        "operationId": "startInstallation",
-        "summary": "Start Installation",
-        "description": "Starts the installation workflow and stores the initial execution state.",
+        "operationId": "reconcileInstallation",
+        "summary": "Reconcile Installation (Install or Upgrade)",
+        "description": "Desired-state endpoint. Reconciles the app toward the target configuration: when no installation baseline exists it installs the app; when a baseline exists it upgrades from the baseline to the version declared in `metadata.version`. The chosen branch is reported in the response `operation` field. The caller does not choose between install and upgrade.",
         "parameters": [
           {
             "name": "x-gw-ims-org-id",
@@ -1467,9 +1473,11 @@
                     "$ref": "#/components/schemas/AppData"
                   },
                   "commerceBaseUrl": {
+                    "description": "Commerce instance base URL. Required for a first-time installation; for an upgrade it is optional and derived from the existing Commerce association.",
                     "type": "string"
                   },
                   "commerceEnv": {
+                    "description": "Commerce deployment flavor. Required for a first-time installation; for an upgrade it is optional and derived from the existing Commerce association.",
                     "type": "string",
                     "enum": ["paas", "saas"]
                   },
@@ -1480,20 +1488,14 @@
                     "type": "string"
                   }
                 },
-                "required": [
-                  "appData",
-                  "commerceBaseUrl",
-                  "commerceEnv",
-                  "ioEventsUrl",
-                  "ioEventsEnv"
-                ]
+                "required": ["appData", "ioEventsUrl", "ioEventsEnv"]
               }
             }
           }
         },
         "responses": {
-          "202": {
-            "description": "The installation workflow was accepted and queued for asynchronous execution.",
+          "200": {
+            "description": "Manual-mode upgrade: the upgrade plan was created or reused and returned without starting execution (`metadata.upgradeMode` is `manual`).",
             "content": {
               "application/json": {
                 "schema": {
@@ -1502,57 +1504,108 @@
                     "message": {
                       "type": "string"
                     },
-                    "activationId": {
-                      "type": "string"
+                    "operation": {
+                      "const": "upgrade"
                     },
-                    "id": {
-                      "type": "string"
-                    },
-                    "status": {
-                      "const": "in-progress"
-                    },
-                    "startedAt": {
-                      "type": "string",
-                      "format": "date-time"
-                    },
-                    "step": {
-                      "$ref": "#/components/schemas/StepStatus"
-                    },
-                    "config": {
-                      "description": "The validated app configuration recorded at install time. Present so uninstallation can be sourced from what was actually installed rather than the current request config. Absent on states persisted before this field was introduced.",
+                    "plan": {
+                      "description": "The planned upgrade, spanning every participating domain.",
                       "type": "object",
                       "additionalProperties": true
-                    },
-                    "data": {
-                      "anyOf": [
-                        {
-                          "type": "object",
-                          "propertyNames": {
-                            "type": "string"
-                          },
-                          "additionalProperties": {}
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
                     }
                   },
-                  "required": [
-                    "message",
-                    "activationId",
-                    "id",
-                    "status",
-                    "startedAt",
-                    "step",
-                    "data"
+                  "required": ["message", "operation", "plan"]
+                }
+              }
+            }
+          },
+          "202": {
+            "description": "The operation was accepted for asynchronous execution: either a first-time installation or an automatic upgrade. The `operation` field indicates which branch ran.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "description": "A first-time installation was accepted and queued.",
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        },
+                        "operation": {
+                          "const": "install"
+                        },
+                        "activationId": {
+                          "type": "string"
+                        },
+                        "id": {
+                          "type": "string"
+                        },
+                        "status": {
+                          "const": "in-progress"
+                        },
+                        "startedAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "step": {
+                          "$ref": "#/components/schemas/StepStatus"
+                        },
+                        "config": {
+                          "description": "The validated app configuration recorded at install time. Present so uninstallation can be sourced from what was actually installed rather than the current request config. Absent on states persisted before this field was introduced.",
+                          "type": "object",
+                          "additionalProperties": true
+                        },
+                        "data": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "propertyNames": {
+                                "type": "string"
+                              },
+                              "additionalProperties": {}
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        }
+                      },
+                      "required": [
+                        "message",
+                        "operation",
+                        "activationId",
+                        "id",
+                        "status",
+                        "startedAt",
+                        "step",
+                        "data"
+                      ]
+                    },
+                    {
+                      "description": "An automatic upgrade was planned and its execution started asynchronously.",
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        },
+                        "operation": {
+                          "const": "upgrade"
+                        },
+                        "plan": {
+                          "description": "The planned upgrade, spanning every participating domain.",
+                          "type": "object",
+                          "additionalProperties": true
+                        }
+                      },
+                      "required": ["message", "operation", "plan"]
+                    }
                   ]
                 }
               }
             }
           },
           "400": {
-            "description": "The request is invalid or could not be parsed.",
+            "description": "The request is invalid or could not be parsed (for example, a first-time installation without a `commerceBaseUrl`).",
             "content": {
               "application/json": {
                 "schema": {
@@ -1568,7 +1621,7 @@
             "description": "The access token is valid, but it is not allowed to access the requested organization or operation."
           },
           "409": {
-            "description": "The installation workflow is already running or has already completed successfully.",
+            "description": "The request is not actionable. This covers both non-actionable no-op states and real failures. A `409` carrying a `reason` is a graceful no-op the caller can ignore: `not-associated` (the app is not associated with a Commerce instance) or `already-current` (the installed version already matches `metadata.version`). A `409` without a `reason` is a real failure — for example, an installation already running or completed, or upgrade planning blocked by configuration `issues`.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1576,6 +1629,19 @@
                   "properties": {
                     "message": {
                       "type": "string"
+                    },
+                    "reason": {
+                      "description": "Present only for non-actionable no-op states.",
+                      "type": "string",
+                      "enum": ["not-associated", "already-current"]
+                    },
+                    "issues": {
+                      "description": "Blocking issues reported when upgrade planning is blocked.",
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "additionalProperties": true
+                      }
                     }
                   },
                   "required": ["message"]

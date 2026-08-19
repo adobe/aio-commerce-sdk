@@ -53,9 +53,21 @@ export type DomainPlan<TBefore = unknown, TAfter = TBefore> = {
 /** The execution context passed to a step's `apply` handler. */
 export type ApplyContext<
   TStepCtx extends Record<string, unknown> = Record<string, unknown>,
+  TConfig extends CommerceAppConfigOutputModel = CommerceAppConfigOutputModel,
+  TSnapshotData = unknown,
 > = ExecutionContext<TStepCtx> & {
   /** Identifier of the lifecycle attempt currently executing. */
   attemptId: string;
+
+  /**
+   * The last successful state for this domain, or `null` when the domain was
+   * absent from the baseline. Mirrors {@link PlanningInput.baseline} so `apply`
+   * can converge deployed state without re-deriving it onto the plan.
+   */
+  baseline: { config: TConfig; data: TSnapshotData } | null;
+
+  /** The target configuration to converge to, or `null` when none is available. */
+  targetConfig: TConfig | null;
 };
 
 /** Inputs a domain needs to plan its changes: the prior baseline and the target. */
@@ -102,6 +114,6 @@ export type ResourceCapability<
 
   apply: (
     plan: TPlan,
-    context: ApplyContext<TStepCtx>,
+    context: ApplyContext<TStepCtx, TConfig, TSnapshotData>,
   ) => Promise<ApplyResult<TSnapshotData>>;
 };

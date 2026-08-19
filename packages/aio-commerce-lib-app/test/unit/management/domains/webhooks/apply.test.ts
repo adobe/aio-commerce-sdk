@@ -60,6 +60,8 @@ describe("applyWebhookSubscriptions", () => {
         unsubscribeWebhookFn,
       ),
       attemptId: "attempt-1",
+      baseline: null,
+      targetConfig: null,
     };
   }
 

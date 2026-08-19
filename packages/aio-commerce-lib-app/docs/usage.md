@@ -6,7 +6,7 @@ The `@adobe/aio-commerce-lib-app` library provides:
 
 - **App Configuration**: Define, validate and read/parse configurations for Adobe Commerce App Builder applications
 - **Business Configuration**: Generate and manage the runtime actions that power the `commerce/configuration/1` extension point.
-- **Installation Management**: Generate and manage the runtime action that powers the app installation flow.
+- **Installation Management**: Generate and manage the runtime action that powers the app installation and upgrade flow.
 - **Admin UI Configuration** (`commerce/backend-ui/2`): Generate and manage the runtime action and `workerProcess` declarations for Admin UI extensions on `commerce/backend-ui/2`. Currently supports grid column extensions, mass actions, order view buttons, and menu declarations.
 - **Association Helpers**: Retrieve the Commerce instance the app is associated with from any runtime action via `getCommerceClient` and `getCommerceInstance`.
 - **Event Emission**: Publish a configured I/O Event from any runtime action by provider key and event name via `publishEvent`.
@@ -176,6 +176,7 @@ Application metadata is required and identifies your application:
     version: "1.0.0",
 
     description: "A custom Adobe Commerce application for XYZ purpose",
+    upgradeMode: "auto", // optional; "auto" (default) or "manual"
   }
 }
 ```
@@ -186,6 +187,7 @@ Application metadata is required and identifies your application:
 - **displayName**: Maximum 50 characters
 - **description**: Maximum 255 characters
 - **version**: Must follow semantic versioning format (e.g., `1.0.0`, `2.1.3`)
+- **upgradeMode** (optional): `"auto"` (default) or `"manual"` — controls whether a planned upgrade runs automatically after a deploy or waits for manual review. See [Upgrading a Deployed App](#upgrading-a-deployed-app).
 
 #### Business Configuration Schema
 
@@ -929,6 +931,38 @@ This ensures your installation action includes the latest script imports and con
 Generated installation actions use `defineCustomScriptsLoader` from `@adobe/aio-commerce-lib-app/actions/installation` for contextual types without requiring a separate TypeScript template.
 
 The `#app.commerce.config` package import resolves to a generated JavaScript compatibility module. TypeScript configs are bundled into this module during generation, while JavaScript configs are re-exported. Generated Runtime actions therefore use the same stable import alias regardless of the source config format.
+
+### Upgrading a Deployed App
+
+After an app is installed, the installation endpoint is **desired-state**. It compares the recorded installation baseline against the app configuration and reconciles the app toward it:
+
+- **No baseline yet**: it installs the app.
+- **A baseline exists**: it upgrades the app from the baseline to the version declared in `metadata.version`.
+
+The endpoint derives the operation and returns it as `operation` (`"install"` or `"upgrade"`) in the response.
+
+#### Automatic vs. Manual Upgrades
+
+`metadata.upgradeMode` controls what happens once an upgrade has been planned:
+
+- **`auto`** (default): the plan is created and its execution starts immediately.
+- **`manual`**: the plan is created or reused and returned without starting execution.
+
+#### The `post-app-deploy` Hook
+
+The generated `commerce/extensibility/1` extension wires a `post-app-deploy` hook automatically (alongside `pre-app-build`). After every `aio app deploy`, the hook triggers the desired-state reconciliation, so a redeploy of an installed app runs an upgrade check without any manual step:
+
+- In `auto` mode it reports that execution has started and prints the plan.
+- In `manual` mode it reports that a plan was created but was not executed.
+
+#### No-op Upgrade States
+
+Some states are not actionable upgrades. In these cases the endpoint responds with `409 Conflict` carrying a `reason`, and the `post-app-deploy` hook treats them as a no-op rather than a failure:
+
+- **`not-associated`**: the app is not associated with a Commerce instance.
+- **`already-current`**: the installed version already matches `metadata.version`.
+
+A `409` **without** a `reason` (for example, when upgrade planning is blocked by configuration issues) is a real failure and surfaces as an error.
 
 ### Using the Configuration API
 

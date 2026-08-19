@@ -219,6 +219,8 @@ describe("webhooks upgrade planning integration", () => {
     const applyResult = await applyWebhookSubscriptions(planResult.plan, {
       ...context,
       attemptId: "attempt-1",
+      baseline: null,
+      targetConfig: configWithWebhooks,
     });
 
     expect(capture.subscribeBody).toMatchObject({
@@ -276,13 +278,14 @@ describe("webhooks upgrade planning integration", () => {
       ...lifecycleContext,
       ...createWebhooksStepContext(lifecycleContext),
     };
+    const baseline = {
+      config: configWithWebhooks,
+      data: { subscribedWebhooks: [baselineWebhook] },
+    };
 
     const planResult = await planWebhookSubscriptions(
       {
-        baseline: {
-          config: configWithWebhooks,
-          data: { subscribedWebhooks: [baselineWebhook] },
-        },
+        baseline,
         path: UPGRADE_PATH,
         targetConfig: null,
       },
@@ -297,6 +300,8 @@ describe("webhooks upgrade planning integration", () => {
     const applyResult = await applyWebhookSubscriptions(planResult.plan, {
       ...context,
       attemptId: "attempt-1",
+      baseline,
+      targetConfig: null,
     });
 
     expect(capture.unsubscribeBody).toEqual({

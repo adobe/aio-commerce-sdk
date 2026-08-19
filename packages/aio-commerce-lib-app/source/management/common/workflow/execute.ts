@@ -17,13 +17,17 @@ import {
   createSucceededState,
   createWorkflowError,
   getAtPath,
+  isStepConfigured,
   nowIsoString,
   pathsEqual,
   setAtPath,
 } from "./utils";
 
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
-import type { LifecyclePlan } from "#management/common/orchestration";
+import type {
+  AppStateSnapshot,
+  LifecyclePlan,
+} from "#management/common/orchestration";
 import type { WorkflowHooks } from "./hooks";
 import type { AnyStep, BranchStep, LifecycleContext } from "./step";
 import type {
@@ -31,6 +35,7 @@ import type {
   InProgressWorkflowState,
   StepStatus,
   SucceededWorkflowState,
+  WorkflowData,
   WorkflowError,
 } from "./types";
 
@@ -50,6 +55,9 @@ export type ExecutePlannedWorkflowOptions = {
   failureKey?: string;
   attemptId: string;
   plan: LifecyclePlan;
+
+  /** The baseline snapshot the plan transitions from. */
+  baseline: AppStateSnapshot;
 };
 
 /** Outcome of executing the `apply` methods selected by a persisted plan. */
@@ -61,6 +69,7 @@ export type PlannedWorkflowResult = {
 type PlannedStepExecutionContext = {
   lifecycleContext: LifecycleContext;
   config: CommerceAppConfigOutputModel;
+  baseline: AppStateSnapshot;
   id: string;
   startedAt: string;
   rootStep: StepStatus;
@@ -134,6 +143,7 @@ export async function executePlannedWorkflow(
   const step = structuredClone(initialState.step);
   const context: PlannedStepExecutionContext = {
     attemptId,
+    baseline: options.baseline,
     config: plan.target.config,
     data: initialState.data as Record<string, unknown> | null,
     error: null,
@@ -147,7 +157,25 @@ export async function executePlannedWorkflow(
 
   await callHook(hooks, "onStart", snapshot(context));
   try {
-    await executePlannedStep(rootStep, context.rootStep, {}, context);
+    const rootConfigurationFlags = {
+      configuredInBaseline: areStepAndParentConfigured(
+        rootStep,
+        context.baseline.config,
+        true,
+      ),
+      configuredInTarget: areStepAndParentConfigured(
+        rootStep,
+        context.config,
+        true,
+      ),
+    };
+    await executePlannedStep(
+      rootStep,
+      context.rootStep,
+      {},
+      context,
+      rootConfigurationFlags,
+    );
     const succeeded = createSucceededState({
       config: context.config,
       data: context.data,
@@ -211,12 +239,33 @@ function snapshot(
   };
 }
 
+/** Whether a step is configured in the baseline and/or target. */
+type StepConfigurationFlags = {
+  configuredInBaseline: boolean;
+  configuredInTarget: boolean;
+};
+
+/**
+ * Returns true when both the parent and this step are configured.
+ *
+ * Example: For `installation -> webhooks -> subscriptions`, `subscriptions` is not
+ * configured when its `webhooks` parent is absent from the app config.
+ */
+function areStepAndParentConfigured(
+  step: AnyStep,
+  config: CommerceAppConfigOutputModel,
+  isParentConfigured: boolean,
+): boolean {
+  return isParentConfigured && isStepConfigured(step, config);
+}
+
 /** Executes one planned step and updates its persisted progress snapshot. */
 async function executePlannedStep(
   step: AnyStep,
   currentStep: StepStatus,
   accumulatedContext: Record<string, unknown>,
   context: PlannedStepExecutionContext,
+  configurationFlags: StepConfigurationFlags,
 ): Promise<void> {
   if (currentStep.status === "succeeded") {
     return;
@@ -255,7 +304,18 @@ async function executePlannedStep(
         }
 
         // biome-ignore lint/performance/noAwaitInLoops: plan steps execute in declared order
-        await executePlannedStep(child, childStatus, childContext, context);
+        await executePlannedStep(child, childStatus, childContext, context, {
+          configuredInBaseline: areStepAndParentConfigured(
+            child,
+            context.baseline.config,
+            configurationFlags.configuredInBaseline,
+          ),
+          configuredInTarget: areStepAndParentConfigured(
+            child,
+            context.config,
+            configurationFlags.configuredInTarget,
+          ),
+        });
       }
     } else if (isLeafStep(step)) {
       const domainPlan = context.plan.domains.find((candidate) =>
@@ -266,14 +326,24 @@ async function executePlannedStep(
         throw new Error(`Step "${step.name}" cannot apply its lifecycle plan`);
       }
 
+      const baseline = configurationFlags.configuredInBaseline
+        ? {
+            config: context.baseline.config,
+            data: getAtPath(context.baseline.data ?? {}, path) as WorkflowData,
+          }
+        : null;
+
       const result = await step.apply(domainPlan, {
         ...context.lifecycleContext,
         ...accumulatedContext,
         attemptId: context.attemptId,
+        baseline,
+        targetConfig: configurationFlags.configuredInTarget
+          ? context.config
+          : null,
       });
 
       context.data ??= {};
-
       setAtPath(context.data, path, result.snapshotData);
     }
 

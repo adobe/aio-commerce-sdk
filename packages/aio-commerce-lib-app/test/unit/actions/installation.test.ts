@@ -18,6 +18,8 @@ const {
   createCombinedStoreMock,
   createInitialInstallationStateMock,
   createInitialUninstallationStateMock,
+  createRootInstallationStepMock,
+  getAssociationDataMock,
   runInstallationMock,
   runUninstallationMock,
   runValidationMock,
@@ -28,6 +30,8 @@ const {
     createCombinedStoreMock: vi.fn(),
     createInitialInstallationStateMock: vi.fn(),
     createInitialUninstallationStateMock: vi.fn(),
+    createRootInstallationStepMock: vi.fn(),
+    getAssociationDataMock: vi.fn(),
     invokeMock: actionInvokeMock,
     openwhiskMock: vi.fn(() => ({
       actions: {
@@ -46,6 +50,14 @@ vi.mock("@aio-commerce-sdk/common-utils/storage", () => ({
 
 vi.mock("openwhisk", () => ({
   default: openwhiskMock,
+}));
+
+vi.mock("#management/association/repository", () => ({
+  getAssociationData: getAssociationDataMock,
+}));
+
+vi.mock("#management/installation/root", () => ({
+  createRootInstallationStep: createRootInstallationStepMock,
 }));
 
 vi.mock("#management/index", async () => {
@@ -68,6 +80,7 @@ import { installationRuntimeAction } from "#actions/installation/index";
 import { createRuntimeActionParams } from "#test/fixtures/actions";
 import {
   configWithCommerceEventing,
+  createMockConfig,
   minimalValidConfig,
 } from "#test/fixtures/config";
 import {
@@ -76,11 +89,25 @@ import {
   createMockInProgressState,
   createMockInstallationContext,
   createMockInstallationStore,
+  createMockInstallationSucceededState,
   createMockSucceededState,
   createMockValidationResult,
   DEFAULT_INSTALLATION_PARAMS,
 } from "#test/fixtures/installation";
+import {
+  createMockLifecycleStore,
+  createMockOrchestrationState,
+} from "#test/fixtures/lifecycle";
+import {
+  createMockBranchStep,
+  createMockLifecycleLeaf,
+} from "#test/fixtures/workflow";
 
+import type {
+  AppStateSnapshot,
+  OrchestrationState,
+} from "#management/common/orchestration";
+import type { AnyStep, LeafStep } from "#management/common/workflow/step";
 import type { InProgressWorkflowState } from "#management/common/workflow/types";
 import type { InstallationHooks } from "#management/installation/runner";
 
@@ -99,18 +126,24 @@ const requestBody = {
 };
 
 describe("installationRuntimeAction", () => {
+  let appStateSnapshotStore = createMockLifecycleStore<AppStateSnapshot>();
   let installationStore = createMockInstallationStore();
+  let orchestrationStateStore = createMockLifecycleStore<OrchestrationState>();
   let uninstallationStore = createMockInstallationStore();
 
   beforeEach(() => {
     vi.clearAllMocks();
 
+    appStateSnapshotStore = createMockLifecycleStore<AppStateSnapshot>();
     installationStore = createMockInstallationStore();
+    orchestrationStateStore = createMockLifecycleStore<OrchestrationState>();
     uninstallationStore = createMockInstallationStore();
 
     createCombinedStoreMock.mockImplementation(
       createMockCombinedStoreImpl(() => ({
+        appStateSnapshot: appStateSnapshotStore,
         installation: installationStore,
+        orchestrationState: orchestrationStateStore,
         uninstallation: uninstallationStore,
       })),
     );
@@ -203,7 +236,416 @@ describe("installationRuntimeAction", () => {
         type: "success",
       });
     });
+  });
 
+  const upgradeRequestBody = {
+    appData,
+    ioEventsEnv: "prod" as const,
+    ioEventsUrl: "https://events.adobe.io",
+  };
+
+  const configWithAutoUpgrade = createMockConfig({
+    metadata: { upgradeMode: "auto" },
+  });
+
+  let desiredInstallationStore = createMockInstallationStore();
+  let desiredSnapshotStore = createMockLifecycleStore<AppStateSnapshot>();
+  let desiredStateStore = createMockLifecycleStore<OrchestrationState>();
+
+  function seedInstalledBaseline(version: string) {
+    desiredInstallationStore = createMockInstallationStore(
+      createMockInstallationSucceededState({
+        config: createMockConfig({
+          metadata: { upgradeMode: "auto", version },
+        }),
+        data: appData,
+      }),
+    );
+  }
+
+  function createUpgradeRoot(leaf?: AnyStep) {
+    return createMockBranchStep({
+      children: leaf ? [leaf] : [],
+      meta: {
+        install: { label: "Installation" },
+        upgrade: { label: "Upgrade" },
+      },
+    });
+  }
+
+  function createUpgradeLeaf(overrides?: Partial<LeafStep>) {
+    return createMockLifecycleLeaf({
+      apply: vi.fn().mockResolvedValue({ snapshotData: null }),
+      plan: vi.fn().mockResolvedValue({
+        kind: "planned",
+        plan: {
+          operations: [
+            {
+              after: {},
+              id: "operation-1",
+              kind: "add",
+              label: "Apply synthetic change",
+            },
+          ],
+          path: ["installation", "synthetic"],
+        },
+      }),
+      ...overrides,
+    });
+  }
+
+  describe("POST /installation desired-state routing", () => {
+    beforeEach(() => {
+      vi.clearAllMocks();
+      vi.stubEnv("__OW_ACTION_VERSION", "7");
+      vi.stubEnv("__OW_DEADLINE", "4070908800000");
+
+      desiredInstallationStore = createMockInstallationStore();
+      desiredSnapshotStore = createMockLifecycleStore<AppStateSnapshot>();
+      desiredStateStore = createMockLifecycleStore<OrchestrationState>();
+      createCombinedStoreMock.mockImplementation(
+        createMockCombinedStoreImpl(() => ({
+          appStateSnapshot: desiredSnapshotStore,
+          installation: desiredInstallationStore,
+          orchestrationState: desiredStateStore,
+          uninstallation: createMockInstallationStore(),
+        })),
+      );
+      seedInstalledBaseline("0.9.0");
+
+      createRootInstallationStepMock.mockReturnValue(createUpgradeRoot());
+      getAssociationDataMock.mockResolvedValue({
+        commerce: { baseUrl: "https://commerce.example.com", env: "paas" },
+      });
+      invokeMock.mockResolvedValue({ activationId: "activation-123" });
+    });
+
+    async function startAutomaticUpgrade() {
+      const action = installationRuntimeAction({
+        appConfig: configWithAutoUpgrade,
+      });
+      const result = await action(
+        createRuntimeActionParams({
+          body: upgradeRequestBody,
+          method: "post",
+          ...DEFAULT_INSTALLATION_PARAMS,
+        }),
+      );
+      const attempt = (await desiredStateStore.get("current"))?.latestAttempt;
+      expect.assert(attempt, "Expected a persisted upgrade attempt");
+
+      return { action, attemptId: attempt.id, result };
+    }
+
+    describe("install branch", () => {
+      test("dispatches to installation when no completed install exists", async () => {
+        desiredInstallationStore = createMockInstallationStore();
+        const action = installationRuntimeAction({
+          appConfig: configWithAutoUpgrade,
+        });
+        const result = await action(
+          createRuntimeActionParams({
+            body: requestBody,
+            method: "post",
+            ...DEFAULT_INSTALLATION_PARAMS,
+          }),
+        );
+
+        expect(invokeMock).toHaveBeenCalledWith(
+          expect.objectContaining({
+            name: "app-management/installation",
+            params: expect.objectContaining({
+              __ow_method: "post",
+              __ow_path: "/execution",
+            }),
+          }),
+        );
+        expect(result).toMatchObject({
+          body: { operation: "install" },
+          statusCode: 202,
+          type: "success",
+        });
+      });
+    });
+
+    describe("upgrade branch", () => {
+      test("returns 409 when the app is not associated", async () => {
+        getAssociationDataMock.mockResolvedValue(null);
+        const action = installationRuntimeAction({
+          appConfig: configWithAutoUpgrade,
+        });
+        const result = await action(
+          createRuntimeActionParams({
+            body: upgradeRequestBody,
+            method: "post",
+            ...DEFAULT_INSTALLATION_PARAMS,
+          }),
+        );
+
+        expect(invokeMock).not.toHaveBeenCalled();
+        expect(result).toMatchObject({
+          error: { body: { reason: "not-associated" }, statusCode: 409 },
+          type: "error",
+        });
+      });
+
+      test("returns 409 when the installed version is already current", async () => {
+        seedInstalledBaseline(configWithAutoUpgrade.metadata.version);
+        const action = installationRuntimeAction({
+          appConfig: configWithAutoUpgrade,
+        });
+        const result = await action(
+          createRuntimeActionParams({
+            body: upgradeRequestBody,
+            method: "post",
+            ...DEFAULT_INSTALLATION_PARAMS,
+          }),
+        );
+
+        expect(invokeMock).not.toHaveBeenCalled();
+        expect(result).toMatchObject({
+          error: { body: { reason: "already-current" }, statusCode: 409 },
+          type: "error",
+        });
+      });
+
+      test("returns 409 without a reason when upgrade planning is blocked", async () => {
+        createRootInstallationStepMock.mockReturnValue(
+          createUpgradeRoot(
+            createUpgradeLeaf({
+              plan: vi.fn().mockResolvedValue({
+                issues: [{ message: "incompatible" }],
+                kind: "blocked",
+              }),
+            }),
+          ),
+        );
+        const action = installationRuntimeAction({
+          appConfig: configWithAutoUpgrade,
+        });
+        const result = await action(
+          createRuntimeActionParams({
+            body: upgradeRequestBody,
+            method: "post",
+            ...DEFAULT_INSTALLATION_PARAMS,
+          }),
+        );
+
+        expect(invokeMock).not.toHaveBeenCalled();
+        expect(result).toMatchObject({
+          error: {
+            body: {
+              issues: [{ message: "incompatible" }],
+              message: "Upgrade planning is blocked",
+            },
+            statusCode: 409,
+          },
+          type: "error",
+        });
+        expect(result).not.toMatchObject({
+          error: { body: { reason: expect.anything() } },
+        });
+      });
+
+      test("reuses the plan without starting execution in manual mode", async () => {
+        const action = installationRuntimeAction({
+          appConfig: createMockConfig({
+            metadata: { upgradeMode: "manual" },
+          }),
+        });
+        await action(
+          createRuntimeActionParams({
+            body: upgradeRequestBody,
+            method: "post",
+            ...DEFAULT_INSTALLATION_PARAMS,
+          }),
+        );
+
+        const plan = (await desiredStateStore.get("current"))?.pendingPlan;
+        expect.assert(plan, "Expected a persisted manual upgrade plan");
+
+        const result = await action(
+          createRuntimeActionParams({
+            body: upgradeRequestBody,
+            method: "post",
+            ...DEFAULT_INSTALLATION_PARAMS,
+          }),
+        );
+
+        expect(invokeMock).not.toHaveBeenCalled();
+        expect(result).toMatchObject({
+          body: {
+            operation: "upgrade",
+            plan: { id: plan.id, operation: "upgrade" },
+          },
+          statusCode: 200,
+          type: "success",
+        });
+        expect(
+          (await desiredStateStore.get("current"))?.latestAttempt,
+        ).toBeNull();
+      });
+
+      test("starts the planned upgrade in auto mode", async () => {
+        const { attemptId, result } = await startAutomaticUpgrade();
+
+        expect(invokeMock).toHaveBeenCalledWith(
+          expect.objectContaining({
+            blocking: false,
+            name: "app-management/installation",
+            params: expect.objectContaining({
+              __ow_method: "post",
+              __ow_path: "/execution",
+              attemptId,
+            }),
+            result: false,
+          }),
+        );
+        expect(result).toMatchObject({
+          body: {
+            operation: "upgrade",
+            plan: {
+              actionVersion: "7",
+              operation: "upgrade",
+              target: {
+                appVersion: configWithAutoUpgrade.metadata.version,
+                config: configWithAutoUpgrade,
+              },
+            },
+          },
+          statusCode: 202,
+          type: "success",
+        });
+      });
+
+      test("allows retry when background dispatch fails", async () => {
+        invokeMock.mockRejectedValueOnce(new Error("OpenWhisk unavailable"));
+        const action = installationRuntimeAction({
+          appConfig: configWithAutoUpgrade,
+        });
+
+        const failed = await action(
+          createRuntimeActionParams({
+            body: upgradeRequestBody,
+            method: "post",
+            ...DEFAULT_INSTALLATION_PARAMS,
+          }),
+        );
+        expect(failed).toMatchObject({ type: "error" });
+
+        const retried = await action(
+          createRuntimeActionParams({
+            body: upgradeRequestBody,
+            method: "post",
+            ...DEFAULT_INSTALLATION_PARAMS,
+          }),
+        );
+        expect(retried).toMatchObject({
+          body: { operation: "upgrade" },
+          statusCode: 202,
+          type: "success",
+        });
+
+        expect(invokeMock).toHaveBeenCalledTimes(2);
+        const firstInvocation = invokeMock.mock.calls.at(0)?.at(0);
+        const retriedInvocation = invokeMock.mock.calls.at(1)?.at(0);
+
+        expect.assert(
+          firstInvocation && retriedInvocation,
+          "Expected two background dispatches",
+        );
+
+        const firstAttemptId = (
+          firstInvocation as { params?: { attemptId?: string } }
+        ).params?.attemptId;
+
+        const retriedAttemptId = (
+          retriedInvocation as { params?: { attemptId?: string } }
+        ).params?.attemptId;
+
+        expect(retriedAttemptId).toBe(firstAttemptId);
+      });
+    });
+
+    describe("upgrade execution", () => {
+      test("rejects an attempt created by an older action version", async () => {
+        const { action, attemptId } = await startAutomaticUpgrade();
+        vi.stubEnv("__OW_ACTION_VERSION", "8");
+
+        const result = await action(
+          createRuntimeActionParams({
+            appData,
+            attemptId,
+            method: "post",
+            path: "/execution",
+            ...DEFAULT_INSTALLATION_PARAMS,
+          }),
+        );
+
+        expect(result).toMatchObject({
+          error: { statusCode: 500 },
+          type: "error",
+        });
+        expect(
+          (await desiredStateStore.get("current"))?.latestAttempt,
+        ).toMatchObject({
+          id: attemptId,
+          status: "pending",
+        });
+      });
+
+      test("executes the persisted attempt", async () => {
+        const { action, attemptId } = await startAutomaticUpgrade();
+        const result = await action(
+          createRuntimeActionParams({
+            appData,
+            attemptId,
+            method: "post",
+            path: "/execution",
+            ...DEFAULT_INSTALLATION_PARAMS,
+          }),
+        );
+
+        expect(result).toMatchObject({
+          body: { id: attemptId, status: "succeeded" },
+          statusCode: 200,
+          type: "success",
+        });
+      });
+
+      test("returns 500 when the attempt fails", async () => {
+        createRootInstallationStepMock.mockReturnValue(
+          createUpgradeRoot(
+            createUpgradeLeaf({
+              apply: vi.fn().mockRejectedValue(new Error("boom")),
+            }),
+          ),
+        );
+        const { action, attemptId } = await startAutomaticUpgrade();
+        const result = await action(
+          createRuntimeActionParams({
+            appData,
+            attemptId,
+            method: "post",
+            path: "/execution",
+            ...DEFAULT_INSTALLATION_PARAMS,
+          }),
+        );
+
+        expect(result).toMatchObject({
+          error: {
+            body: {
+              attempt: { id: attemptId, status: "failed" },
+            },
+            statusCode: 500,
+          },
+          type: "error",
+        });
+      });
+    });
+  });
+
+  describe("GET / with state", () => {
     test("returns installation state when one exists", async () => {
       const existingState = createMockInProgressState({ id: "installation-1" });
       installationStore = createMockInstallationStore(existingState);
@@ -245,11 +687,10 @@ describe("installationRuntimeAction", () => {
       });
     });
 
-    test("returns 409 when installation already succeeded", async () => {
+    test("returns 409 when a completed installation has no saved config", async () => {
       installationStore = createMockInstallationStore(
-        createMockSucceededState(),
+        createMockInstallationSucceededState(),
       );
-
       const handler = installationRuntimeAction({
         appConfig: minimalValidConfig,
       });
@@ -262,8 +703,15 @@ describe("installationRuntimeAction", () => {
         }),
       );
 
+      expect(invokeMock).not.toHaveBeenCalled();
       expect(result).toMatchObject({
-        error: { statusCode: 409 },
+        error: {
+          body: {
+            message:
+              "The existing installation does not include its original config and cannot be upgraded safely. Uninstall and reinstall the app.",
+          },
+          statusCode: 409,
+        },
         type: "error",
       });
     });
@@ -276,6 +724,27 @@ describe("installationRuntimeAction", () => {
       const result = await handler(
         createRuntimeActionParams({
           body: { ...requestBody, commerceEnv: "production" },
+          method: "post",
+          ...DEFAULT_INSTALLATION_PARAMS,
+        }),
+      );
+
+      expect(result).toMatchObject({
+        error: { statusCode: 400 },
+        type: "error",
+      });
+    });
+
+    test("returns 400 when installing without a commerceBaseUrl", async () => {
+      const { commerceBaseUrl: _omitted, ...bodyWithoutCommerce } = requestBody;
+
+      const handler = installationRuntimeAction({
+        appConfig: minimalValidConfig,
+      });
+
+      const result = await handler(
+        createRuntimeActionParams({
+          body: bodyWithoutCommerce,
           method: "post",
           ...DEFAULT_INSTALLATION_PARAMS,
         }),
@@ -791,6 +1260,9 @@ describe("installationRuntimeAction", () => {
       installationStore = createMockInstallationStore(
         createMockSucceededState({ id: "installation-1" }),
       );
+      orchestrationStateStore = createMockLifecycleStore<OrchestrationState>({
+        initial: createMockOrchestrationState(),
+      });
 
       const handler = installationRuntimeAction({
         appConfig: minimalValidConfig,
@@ -806,14 +1278,28 @@ describe("installationRuntimeAction", () => {
         }),
       );
 
-      expect(installationStore.delete).toHaveBeenCalledWith("current");
+      const installation = await handler(
+        createRuntimeActionParams({ method: "get", path: "/" }),
+      );
+      expect(installation).toMatchObject({
+        statusCode: 204,
+        type: "success",
+      });
+      expect(await orchestrationStateStore.get("current")).toBeNull();
     });
 
-    test("returns 500 when the uninstallation workflow fails", async () => {
+    test("returns 500 and preserves existing state when uninstallation fails", async () => {
       const initialState = createMockInProgressState({
         id: "uninstallation-1",
       });
       const failedState = createMockFailedState({ id: "uninstallation-1" });
+      installationStore = createMockInstallationStore(
+        createMockSucceededState({ id: "installation-1" }),
+      );
+      const orchestrationState = createMockOrchestrationState();
+      orchestrationStateStore = createMockLifecycleStore<OrchestrationState>({
+        initial: orchestrationState,
+      });
 
       runUninstallationMock.mockImplementation(
         async ({
@@ -858,6 +1344,17 @@ describe("installationRuntimeAction", () => {
         error: { statusCode: 500 },
         type: "error",
       });
+      const installation = await handler(
+        createRuntimeActionParams({ method: "get", path: "/" }),
+      );
+      expect(installation).toMatchObject({
+        body: { id: "installation-1", status: "succeeded" },
+        statusCode: 200,
+        type: "success",
+      });
+      expect(await orchestrationStateStore.get("current")).toEqual(
+        orchestrationState,
+      );
     });
   });
 

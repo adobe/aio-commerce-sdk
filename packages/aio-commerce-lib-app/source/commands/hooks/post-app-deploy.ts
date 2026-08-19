@@ -24,9 +24,15 @@ import { parseCommerceAppConfig } from "#config/lib/parser";
 
 import type { DomainPlan } from "#management/common/workflow/resource";
 
-type SkippedResult = { skipped: true; reason: string };
+type SkippedReason = "already-current" | "not-associated";
+type SkippedResult = { skipped: true; reason: SkippedReason };
 type UpgradePlanResult = { plan: DomainPlan };
 type UpgradeResult = SkippedResult | UpgradePlanResult;
+
+/** Returns true for a no-op reason defined by the upgrade API contract. */
+function isSkippedReason(reason: unknown): reason is SkippedReason {
+  return reason === "already-current" || reason === "not-associated";
+}
 
 /** Returns true if the result indicates that the upgrade was skipped. */
 function isSkippedResult(result: UpgradeResult): result is SkippedResult {
@@ -75,9 +81,7 @@ async function invokeAction(): Promise<UpgradeResult> {
     if (error instanceof HTTPError) {
       const details = await error.response.json<{ reason?: string }>();
 
-      // A 409 carrying a `reason` is an expected no-op state (e.g. not-associated,
-      // already-current) — nothing to upgrade, not a failure.
-      if (error.response.status === 409 && details.reason) {
+      if (error.response.status === 409 && isSkippedReason(details.reason)) {
         return { reason: details.reason, skipped: true };
       }
 
@@ -106,7 +110,7 @@ export async function run() {
 
   if (upgradeMode === "manual") {
     consola.success(
-      `You have set ${colors.cyan("metadata.upgradeMode")} to ${colors.cyan("manual")}. The upgrade plan has been created. Apply it from the App Management UI`,
+      `You have set ${colors.cyan("metadata.upgradeMode")} to ${colors.cyan("manual")}. The upgrade plan has been created but will not be executed.`,
     );
   } else {
     consola.success(
