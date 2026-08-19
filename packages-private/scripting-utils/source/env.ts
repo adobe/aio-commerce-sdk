@@ -78,22 +78,25 @@ export function replaceEnvVar(filePath: string, key: string, value: string) {
   writeFileSync(envPath, updatedLines.join("\n"), "utf8");
 }
 
-/** Returns the path to the .env file. */
-function resolveEnvPath() {
-  const envPath = process.env.INIT_CWD
-    ? `${process.env.INIT_CWD}/.env`
-    : ".env";
-
-  return path.resolve(envPath);
+/**
+ * Returns the path to the .env file.
+ * @param cwd - The directory holding the `.env`. Defaults to the current working directory.
+ */
+function resolveEnvPath(cwd = process.cwd()) {
+  return path.resolve(cwd, ".env");
 }
 
 /**
  * Sets the `NODE_ENV` environment variable in the app `.env` file, so the web
  * bundler (Parcel) ships the matching React build. Creates the `.env` if absent.
  * @param mode - The environment mode to write into `NODE_ENV`.
+ * @param cwd - The directory holding the `.env`. Defaults to the resolved project directory.
  */
-export function setNodeEnv(mode: "development" | "production") {
-  const envPath = resolveEnvPath();
+export function setNodeEnv(
+  mode: "development" | "production",
+  cwd = process.cwd(),
+) {
+  const envPath = resolveEnvPath(cwd);
   if (!existsSync(envPath)) {
     writeFileSync(envPath, "", "utf8");
   }
@@ -125,9 +128,12 @@ export type SyncImsCredentialsResult =
 /**
  * Syncs the IMS credentials environment variables from the configured IMS context in
  * the .env file, in a way that is compatible with `@adobe/aio-commerce-lib-auth`.
+ * @param cwd - The directory holding the `.env`. Defaults to the current working directory.
  */
-export async function syncImsCredentials(): Promise<SyncImsCredentialsResult> {
-  const envPath = resolveEnvPath();
+export async function syncImsCredentials(
+  cwd = process.cwd(),
+): Promise<SyncImsCredentialsResult> {
+  const envPath = resolveEnvPath(cwd);
 
   if (!existsSync(envPath)) {
     return { ok: false, reason: "missing-env" };

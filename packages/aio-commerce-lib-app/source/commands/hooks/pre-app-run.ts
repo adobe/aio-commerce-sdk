@@ -10,11 +10,30 @@
  * governing permissions and limitations under the License.
  */
 
+import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
 import { setNodeEnv } from "@aio-commerce-sdk/scripting-utils/env";
 import consola from "consola";
 
-/** Runs the pre-app-run hook, resetting the web build back to development. */
+/**
+ * Resets the web build back to development by writing `NODE_ENV` to the project `.env`.
+ * @param cwd - The project directory. Defaults to the current working directory.
+ */
+export function run(cwd = process.cwd()) {
+  setNodeEnv("development", cwd);
+}
+
+/** Runs the pre-app-run hook. */
 export async function exec() {
   consola.debug("Running lib-app pre-app-run hook");
-  setNodeEnv("development");
+
+  try {
+    run();
+  } catch (error) {
+    if (error instanceof CommerceSdkValidationError) {
+      consola.error(error.display());
+    } else {
+      consola.error(error);
+    }
+    process.exit(1);
+  }
 }

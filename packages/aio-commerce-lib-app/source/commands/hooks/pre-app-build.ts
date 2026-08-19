@@ -46,9 +46,14 @@ type Extension = "extensibility/1" | "configuration/1" | "backend-ui/2";
 /**
  * Runs the pre-app-build hook for the given extension.
  * @param extension - The extension to run the hook for.
+ * @param cwd - The project directory. Defaults to the current working directory.
  * @param templatesDir - The directory to load templates from, for testing purposes. Defaults to the generated actions template root.
  */
-export async function run(extension: Extension, templatesDir = TEMPLATES_DIR) {
+export async function run(
+  extension: Extension,
+  cwd = process.cwd(),
+  templatesDir = TEMPLATES_DIR,
+) {
   const appManifest = await loadAppManifest();
   await prepareRuntimeAppConfigModule(appManifest);
 
@@ -69,7 +74,7 @@ export async function run(extension: Extension, templatesDir = TEMPLATES_DIR) {
     );
 
     consola.info("Syncing IMS credentials...");
-    await syncImsCredentials();
+    await syncImsCredentials(cwd);
 
     return;
   }
@@ -109,7 +114,7 @@ export async function run(extension: Extension, templatesDir = TEMPLATES_DIR) {
         );
 
         // Ship React's production build for the deployed web bundle.
-        setNodeEnv("production");
+        setNodeEnv("production", cwd);
       }
     }
     return;

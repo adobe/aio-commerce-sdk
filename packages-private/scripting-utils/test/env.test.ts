@@ -42,8 +42,6 @@ const { context } = aioIms;
 describe("syncImsCredentials", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-
-    delete process.env.INIT_CWD;
   });
 
   test("should do nothing when .env file does not exist", async () => {
@@ -56,8 +54,7 @@ describe("syncImsCredentials", () => {
     });
 
     await withTempFiles({}, async (tempDir) => {
-      process.env.INIT_CWD = tempDir;
-      const result = await syncImsCredentials();
+      const result = await syncImsCredentials(tempDir);
       expect(result).toEqual({ ok: false, reason: "missing-env" });
       expect(existsSync(join(tempDir, ".env"))).toBe(false);
     });
@@ -70,8 +67,7 @@ describe("syncImsCredentials", () => {
         ".env": "SOME_VAR=value\n",
       },
       async (tempDir) => {
-        process.env.INIT_CWD = tempDir;
-        const result = await syncImsCredentials();
+        const result = await syncImsCredentials(tempDir);
 
         expect(result).toEqual({ ok: false, reason: "no-ims-context" });
         const envContent = readFileSync(join(tempDir, ".env"), "utf8");
@@ -90,8 +86,7 @@ describe("syncImsCredentials", () => {
         ".env": "SOME_VAR=value\n",
       },
       async (tempDir) => {
-        process.env.INIT_CWD = tempDir;
-        const result = await syncImsCredentials();
+        const result = await syncImsCredentials(tempDir);
 
         expect(result).toEqual({ ok: false, reason: "no-ims-context" });
         const envContent = readFileSync(join(tempDir, ".env"), "utf8");
@@ -119,8 +114,7 @@ describe("syncImsCredentials", () => {
         ".env": "EXISTING_VAR=existing\n",
       },
       async (tempDir) => {
-        process.env.INIT_CWD = tempDir;
-        await syncImsCredentials();
+        await syncImsCredentials(tempDir);
 
         const envContent = readFileSync(join(tempDir, ".env"), "utf8");
         expect(envContent).toContain("EXISTING_VAR=existing");
@@ -154,8 +148,7 @@ describe("syncImsCredentials", () => {
         ".env": "AIO_COMMERCE_AUTH_IMS_CLIENT_ID=old-client-id\n",
       },
       async (tempDir) => {
-        process.env.INIT_CWD = tempDir;
-        await syncImsCredentials();
+        await syncImsCredentials(tempDir);
 
         const envContent = readFileSync(join(tempDir, ".env"), "utf8");
         expect(envContent).toContain(
@@ -184,8 +177,7 @@ describe("syncImsCredentials", () => {
         ".env": originalEnv,
       },
       async (tempDir) => {
-        process.env.INIT_CWD = tempDir;
-        await syncImsCredentials();
+        await syncImsCredentials(tempDir);
 
         const envContent = readFileSync(join(tempDir, ".env"), "utf8");
         // Content should be identical (no unnecessary writes)
@@ -213,8 +205,7 @@ describe("syncImsCredentials", () => {
         ".env": "",
       },
       async (tempDir) => {
-        process.env.INIT_CWD = tempDir;
-        await syncImsCredentials();
+        await syncImsCredentials(tempDir);
 
         const envContent = readFileSync(join(tempDir, ".env"), "utf8");
         expect(envContent).toContain(
@@ -244,8 +235,7 @@ describe("syncImsCredentials", () => {
         ".env": "# This is a comment\nEXISTING=value\n",
       },
       async (tempDir) => {
-        process.env.INIT_CWD = tempDir;
-        await syncImsCredentials();
+        await syncImsCredentials(tempDir);
 
         const envContent = readFileSync(join(tempDir, ".env"), "utf8");
         expect(envContent).toContain("# This is a comment");
@@ -274,8 +264,7 @@ describe("syncImsCredentials", () => {
         ".env": "",
       },
       async (tempDir) => {
-        process.env.INIT_CWD = tempDir;
-        await syncImsCredentials();
+        await syncImsCredentials(tempDir);
 
         const envContent = readFileSync(join(tempDir, ".env"), "utf8");
         expect(envContent).toContain(
@@ -307,8 +296,7 @@ describe("syncImsCredentials", () => {
         ".env": "",
       },
       async (tempDir) => {
-        process.env.INIT_CWD = tempDir;
-        await syncImsCredentials();
+        await syncImsCredentials(tempDir);
 
         const envContent = readFileSync(join(tempDir, ".env"), "utf8");
         expect(envContent).toContain(
@@ -350,8 +338,7 @@ describe("syncImsCredentials", () => {
         ".env": "",
       },
       async (tempDir) => {
-        process.env.INIT_CWD = tempDir;
-        await syncImsCredentials();
+        await syncImsCredentials(tempDir);
 
         expect(context.get).toHaveBeenCalledWith("first-s2s");
         const envContent = readFileSync(join(tempDir, ".env"), "utf8");
@@ -364,16 +351,9 @@ describe("syncImsCredentials", () => {
 });
 
 describe("setNodeEnv", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-
-    delete process.env.INIT_CWD;
-  });
-
   test("should create the .env file when it does not exist", async () => {
     await withTempFiles({}, (tempDir) => {
-      process.env.INIT_CWD = tempDir;
-      setNodeEnv("production");
+      setNodeEnv("production", tempDir);
 
       const envPath = join(tempDir, ".env");
       expect(existsSync(envPath)).toBe(true);
@@ -387,8 +367,7 @@ describe("setNodeEnv", () => {
         ".env": "EXISTING_VAR=existing\n",
       },
       (tempDir) => {
-        process.env.INIT_CWD = tempDir;
-        setNodeEnv("development");
+        setNodeEnv("development", tempDir);
 
         const envContent = readFileSync(join(tempDir, ".env"), "utf8");
         expect(envContent).toContain("EXISTING_VAR=existing");
@@ -403,8 +382,7 @@ describe("setNodeEnv", () => {
         ".env": "NODE_ENV=development\n",
       },
       (tempDir) => {
-        process.env.INIT_CWD = tempDir;
-        setNodeEnv("production");
+        setNodeEnv("production", tempDir);
 
         const envContent = readFileSync(join(tempDir, ".env"), "utf8");
         expect(envContent).toContain("NODE_ENV=production");

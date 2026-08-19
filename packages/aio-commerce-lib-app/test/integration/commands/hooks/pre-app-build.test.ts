@@ -14,7 +14,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 
-import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
 
 import {
   BACKEND_UI_V2_EXTENSION_POINT_ID,
@@ -63,12 +63,6 @@ vi.mock("@aio-commerce-sdk/scripting-utils/env", async (importOriginal) => ({
 }));
 
 describe("commands/hooks/pre-app-build", () => {
-  // setNodeEnv writes to INIT_CWD/.env; neutralize the ambient value so it
-  // targets each test's temp project (its cwd) rather than the real repo.
-  beforeEach(() => {
-    vi.stubEnv("INIT_CWD", "");
-  });
-
   afterEach(() => {
     mockSpawnSync.mockClear();
     vi.clearAllMocks();
@@ -179,7 +173,7 @@ describe("commands/hooks/pre-app-build", () => {
           ...makeTemplateFiles(),
         },
         async (tempDir) => {
-          await run("backend-ui/2");
+          await run("backend-ui/2", tempDir);
 
           const extConfigPath = join(
             tempDir,
