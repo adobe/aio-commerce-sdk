@@ -15,6 +15,7 @@ import {
   setNodeEnv,
   syncImsCredentials,
 } from "@aio-commerce-sdk/scripting-utils/env";
+import { getProjectRootDirectory } from "@aio-commerce-sdk/scripting-utils/project";
 import consola from "consola";
 
 import {
@@ -30,8 +31,8 @@ import {
   readExtConfig,
   updateExtConfig,
 } from "#commands/generate/actions/lib";
-import { run as generateManifestCommand } from "#commands/generate/manifest/main";
-import { run as generateSchemaCommand } from "#commands/generate/schema/main";
+import { run as generateManifest } from "#commands/generate/manifest/main";
+import { run as generateSchema } from "#commands/generate/schema/main";
 import {
   generateWebSrc,
   prepareWebSourceImportAlias,
@@ -46,23 +47,24 @@ type Extension = "extensibility/1" | "configuration/1" | "backend-ui/2";
 /**
  * Runs the pre-app-build hook for the given extension.
  * @param extension - The extension to run the hook for.
- * @param cwd - The project directory. Defaults to the current working directory.
- * @param templatesDir - The directory to load templates from, for testing purposes. Defaults to the generated actions template root.
+ * @param projectRoot - Resolved project root containing extension files.
+ * @param templatesDir - Directory containing action templates.
  */
 export async function run(
   extension: Extension,
-  cwd = process.cwd(),
+  projectRoot: string,
   templatesDir = TEMPLATES_DIR,
 ) {
-  const appManifest = await loadAppManifest();
-  await prepareRuntimeAppConfigModule(appManifest);
+  const appManifest = await loadAppManifest(projectRoot);
+  await prepareRuntimeAppConfigModule(appManifest, projectRoot);
 
   if (extension === "extensibility/1") {
     const { doc: extensibilityExtConfig } = await readExtConfig(
       EXTENSIBILITY_EXTENSION_POINT_ID,
+      projectRoot,
     );
 
-    await generateManifestCommand(appManifest);
+    await generateManifest(appManifest, projectRoot);
     await generateActionFiles(
       appManifest,
       getRuntimeActions(
@@ -71,10 +73,11 @@ export async function run(
       ),
       EXTENSIBILITY_EXTENSION_POINT_ID,
       templatesDir,
+      projectRoot,
     );
 
     consola.info("Syncing IMS credentials...");
-    await syncImsCredentials(cwd);
+    await syncImsCredentials(projectRoot);
 
     return;
   }
@@ -82,9 +85,10 @@ export async function run(
   if (extension === "configuration/1") {
     const { doc: businessConfigExtConfig } = await readExtConfig(
       CONFIGURATION_EXTENSION_POINT_ID,
+      projectRoot,
     );
 
-    await generateSchemaCommand(appManifest);
+    await generateSchema(appManifest, projectRoot);
     await generateActionFiles(
       appManifest,
       getRuntimeActions(
@@ -93,6 +97,7 @@ export async function run(
       ),
       CONFIGURATION_EXTENSION_POINT_ID,
       templatesDir,
+      projectRoot,
     );
 
     return;
@@ -103,18 +108,20 @@ export async function run(
       const extConfig = await updateExtConfig(
         appManifest,
         BACKEND_UI_V2_EXTENSION_POINT_ID,
+        projectRoot,
       );
 
       if (extConfig.operations?.view) {
-        await prepareWebSourceImportAlias(extConfig);
+        await prepareWebSourceImportAlias(extConfig, projectRoot);
         await generateWebSrc(
           extConfig,
           appManifest.metadata.displayName,
+          projectRoot,
           templatesDir,
         );
 
         // Ship React's production build for the deployed web bundle.
-        await setNodeEnv("production", cwd);
+        await setNodeEnv("production", projectRoot);
       }
     }
     return;
@@ -133,7 +140,8 @@ export async function exec() {
       throw new Error("EXTENSION environment variable is not set");
     }
 
-    await run(rawExtension as Extension);
+    const projectRoot = await getProjectRootDirectory();
+    await run(rawExtension as Extension, projectRoot);
   } catch (error) {
     if (error instanceof CommerceSdkValidationError) {
       consola.error(error.display());

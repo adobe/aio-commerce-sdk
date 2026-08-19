@@ -166,6 +166,7 @@ async function getWorkspacePackages(
   );
 }
 
+// TODO: Replace this with `changeset publish-plan --output` once the output flag is stable.
 /** Reads actual snapshot versions from package.json for packages the release plan says will change. */
 function getSnapshotVersions(
   releasePlan: ChangesetStatus,
