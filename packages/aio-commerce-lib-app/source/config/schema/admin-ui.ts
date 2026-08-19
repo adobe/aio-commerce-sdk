@@ -233,18 +233,15 @@ export type AdminUiConfiguration = v.InferInput<typeof AdminUiSchema>;
  */
 export type AdminUi = v.InferOutput<typeof AdminUiSchema>;
 
-/** The `adminUi.order` shape — the superset entity (grid columns, mass actions, view buttons). */
-type AdminUiOrderEntity = NonNullable<AdminUi["order"]>;
-
 /**
  * The validated config of a single Admin UI component: the menu, an entity's
  * grid columns, a single mass action, or a single view button.
  */
 export type AdminUiComponentConfig =
-  | NonNullable<AdminUi["menu"]>
-  | NonNullable<AdminUiOrderEntity["gridColumns"]>
-  | NonNullable<AdminUiOrderEntity["massActions"]>[number]
-  | NonNullable<AdminUiOrderEntity["viewButtons"]>[number];
+  | v.InferOutput<typeof MenuSchema>
+  | v.InferOutput<typeof GridColumnsSchema>
+  | v.InferOutput<typeof MassActionSchema>
+  | v.InferOutput<typeof OrderViewButtonSchema>;
 
 /**
  * Grid columns registration configuration.
