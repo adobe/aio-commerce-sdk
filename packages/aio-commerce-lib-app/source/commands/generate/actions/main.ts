@@ -11,6 +11,7 @@
  */
 
 import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
+import { getProjectRootDirectory } from "@aio-commerce-sdk/scripting-utils/project";
 import { consola } from "consola";
 
 import {
@@ -36,18 +37,21 @@ import {
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 
 /**
- * Runs the generate actions command for the given extension point.
- * @param appManifest - The app manifest, used to determine which actions to generate and their content.
- * @param templatesDir - The directory to load templates from, for testing purposes. Defaults to the generated actions template root.
+ * Generates extension configs, runtime actions, and Admin UI web source for the configured domains.
+ * @param appManifest - App configuration used to determine the generated content.
+ * @param projectRoot - Resolved project root where files are generated.
+ * @param templatesDir - Directory containing generation templates.
  */
 export async function run(
   appManifest: CommerceAppConfigOutputModel,
+  projectRoot: string,
   templatesDir = TEMPLATES_DIR,
 ) {
-  await prepareRuntimeAppConfigModule(appManifest);
+  await prepareRuntimeAppConfigModule(appManifest, projectRoot);
   const appManagementExtConfig = await updateExtConfig(
     appManifest,
     EXTENSIBILITY_EXTENSION_POINT_ID,
+    projectRoot,
   );
 
   await generateActionFiles(
@@ -55,13 +59,14 @@ export async function run(
     getRuntimeActions(appManagementExtConfig, "app-management"),
     EXTENSIBILITY_EXTENSION_POINT_ID,
     templatesDir,
+    projectRoot,
   );
 
-  // If the app has a business configuration schema, generate the business configuration actions and files
   if (hasBusinessConfigSchema(appManifest)) {
     const businessConfigExtConfig = await updateExtConfig(
       appManifest,
       CONFIGURATION_EXTENSION_POINT_ID,
+      projectRoot,
     );
 
     await generateActionFiles(
@@ -69,6 +74,7 @@ export async function run(
       getRuntimeActions(businessConfigExtConfig, "business-configuration"),
       CONFIGURATION_EXTENSION_POINT_ID,
       templatesDir,
+      projectRoot,
     );
   }
 
@@ -76,13 +82,15 @@ export async function run(
     const extConfig = await updateExtConfig(
       appManifest,
       BACKEND_UI_V2_EXTENSION_POINT_ID,
+      projectRoot,
     );
 
     if (extConfig.operations?.view) {
-      await prepareWebSourceImportAlias(extConfig);
+      await prepareWebSourceImportAlias(extConfig, projectRoot);
       await generateWebSrc(
         extConfig,
         appManifest.metadata.displayName,
+        projectRoot,
         templatesDir,
       );
     }
@@ -92,8 +100,9 @@ export async function run(
 /** Run the generate actions command */
 export async function exec() {
   try {
-    const appManifest = await loadAppManifest();
-    await run(appManifest);
+    const projectRoot = await getProjectRootDirectory();
+    const appManifest = await loadAppManifest(projectRoot);
+    await run(appManifest, projectRoot);
   } catch (error) {
     if (error instanceof CommerceSdkValidationError) {
       consola.error(error.display());

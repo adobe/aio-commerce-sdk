@@ -1,5 +1,12 @@
 # @adobe/aio-commerce-lib-webhooks
 
+## 1.2.1
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @adobe/aio-commerce-lib-api@1.3.1
+
 ## 1.2.0
 
 ### Minor Changes

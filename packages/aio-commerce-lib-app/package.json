@@ -1,6 +1,6 @@
 {
   "name": "@adobe/aio-commerce-lib-app",
-  "version": "1.10.0",
+  "version": "1.10.1",
   "private": false,
   "description": "App configuration management library for Adobe Commerce applications",
   "keywords": [

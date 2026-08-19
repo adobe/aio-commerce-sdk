@@ -17,7 +17,7 @@ function buildImsAuthBeforeRequestHook(
 ): (request: KyRequest) => Promise<void>;
 ```
 
-Defined in: [aio-commerce-lib-api/source/utils/auth/hooks.ts:69](https://github.com/adobe/aio-commerce-sdk/blob/aa606961236cac6f4a3cebc105d643da71d5ddb8/packages/aio-commerce-lib-api/source/utils/auth/hooks.ts#L69)
+Defined in: [aio-commerce-lib-api/source/utils/auth/hooks.ts:69](https://github.com/adobe/aio-commerce-sdk/blob/71bf66656ef1fc6dd272a0821e8b00aab5dc197e/packages/aio-commerce-lib-api/source/utils/auth/hooks.ts#L69)
 
 Builds a before request hook for IMS authentication.
 

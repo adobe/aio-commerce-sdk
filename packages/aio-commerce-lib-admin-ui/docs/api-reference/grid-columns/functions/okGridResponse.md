@@ -7,7 +7,7 @@ function okGridResponse(
 ): SuccessResponse<GridSuccessBody>;
 ```
 
-Defined in: [aio-commerce-lib-admin-ui/source/grid-columns/responses/presets.ts:41](https://github.com/adobe/aio-commerce-sdk/blob/aa606961236cac6f4a3cebc105d643da71d5ddb8/packages/aio-commerce-lib-admin-ui/source/grid-columns/responses/presets.ts#L41)
+Defined in: [aio-commerce-lib-admin-ui/source/grid-columns/responses/presets.ts:41](https://github.com/adobe/aio-commerce-sdk/blob/71bf66656ef1fc6dd272a0821e8b00aab5dc197e/packages/aio-commerce-lib-admin-ui/source/grid-columns/responses/presets.ts#L41)
 
 Builds an HTTP 200 success response carrying the grid column data envelope
 Commerce expects on the `commerce/backend-ui/2` wire contract.

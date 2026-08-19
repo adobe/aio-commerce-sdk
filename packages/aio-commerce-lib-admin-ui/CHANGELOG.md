@@ -1,5 +1,14 @@
 # @adobe/aio-commerce-lib-admin-ui
 
+## 1.0.1
+
+### Patch Changes
+
+- [#635](https://github.com/adobe/aio-commerce-sdk/pull/635) [`71bf666`](https://github.com/adobe/aio-commerce-sdk/commit/71bf66656ef1fc6dd272a0821e8b00aab5dc197e) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - StrictMode is now applied only in development builds.
+
+- Updated dependencies []:
+  - @adobe/aio-commerce-lib-api@1.3.1
+
 ## 1.0.0
 
 ### Major Changes

@@ -18,6 +18,8 @@ import {
   unsubscribeWebhook,
 } from "@adobe/aio-commerce-lib-webhooks/api";
 
+import { LIFECYCLE_HTTP_CLIENT_TIMEOUT_MS } from "#management/common/constants";
+
 import type { RuntimeActionParams } from "@adobe/aio-commerce-lib-core/params";
 import type {
   ExecutionContext,
@@ -34,7 +36,7 @@ function createCommerceWebhooksApiClient(params: RuntimeActionParams) {
   });
 
   commerceClientParams.fetchOptions ??= {};
-  commerceClientParams.fetchOptions.timeout = 1000 * 60 * 2; // 2 minutes
+  commerceClientParams.fetchOptions.timeout = LIFECYCLE_HTTP_CLIENT_TIMEOUT_MS;
 
   return createCustomCommerceWebhooksApiClient(commerceClientParams, {
     getWebhookList,

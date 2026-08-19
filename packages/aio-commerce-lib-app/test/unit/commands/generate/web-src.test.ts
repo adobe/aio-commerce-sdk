@@ -13,44 +13,28 @@
 import { readFile } from "node:fs/promises";
 
 import { withTempFiles } from "@aio-commerce-sdk/scripting-utils/filesystem";
-import { afterEach, describe, expect, test, vi } from "vitest";
+import { describe, expect, test } from "vitest";
 
 import { prepareWebSourceImportAlias } from "#commands/generate/web-src";
-
-const getProjectRootDirectory = vi.hoisted(() => vi.fn());
-
-vi.mock("@aio-commerce-sdk/scripting-utils/project", async (importOriginal) => {
-  const actual =
-    await importOriginal<
-      typeof import("@aio-commerce-sdk/scripting-utils/project")
-    >();
-  return {
-    ...actual,
-    getProjectRootDirectory,
-  };
-});
-
-afterEach(() => {
-  vi.clearAllMocks();
-});
 
 describe("prepareWebSourceImportAlias", () => {
   test("throws when package.json is missing", async () => {
     await withTempFiles({}, async (tempDir) => {
-      getProjectRootDirectory.mockReturnValue(tempDir);
-
       await expect(
-        prepareWebSourceImportAlias({
-          operations: {
-            view: [
-              {
-                impl: "index.html",
-                type: "web",
-              },
-            ],
+        prepareWebSourceImportAlias(
+          {
+            operations: {
+              view: [
+                {
+                  impl: "index.html",
+                  type: "web",
+                },
+              ],
+            },
+            web: "web-src",
           },
-          web: "web-src",
-        }),
+          tempDir,
+        ),
       ).rejects.toThrow("Could not find package.json.");
     });
   });
@@ -65,19 +49,20 @@ describe("prepareWebSourceImportAlias", () => {
         }),
       },
       async (tempDir) => {
-        getProjectRootDirectory.mockReturnValue(tempDir);
-
-        await prepareWebSourceImportAlias({
-          operations: {
-            view: [
-              {
-                impl: "index.html",
-                type: "web",
-              },
-            ],
+        await prepareWebSourceImportAlias(
+          {
+            operations: {
+              view: [
+                {
+                  impl: "index.html",
+                  type: "web",
+                },
+              ],
+            },
+            web: "web-src",
           },
-          web: "web-src",
-        });
+          tempDir,
+        );
 
         await expect(
           readFile(`${tempDir}/package.json`, "utf-8").then(JSON.parse),

@@ -4,7 +4,7 @@
 function generateEncryptionKey(): string;
 ```
 
-Defined in: [utils/encryption.ts:28](https://github.com/adobe/aio-commerce-sdk/blob/aa606961236cac6f4a3cebc105d643da71d5ddb8/packages/aio-commerce-lib-config/source/utils/encryption.ts#L28)
+Defined in: [utils/encryption.ts:28](https://github.com/adobe/aio-commerce-sdk/blob/71bf66656ef1fc6dd272a0821e8b00aab5dc197e/packages/aio-commerce-lib-config/source/utils/encryption.ts#L28)
 
 Generates a new encryption key suitable for AIO_COMMERCE_CONFIG_ENCRYPTION_KEY.
 

@@ -30,9 +30,9 @@ import {
   EXTENSIBILITY_EXTENSION_POINT_ID,
   PACKAGE_JSON_FILE,
 } from "#commands/constants";
-import { run as generateActionsCommand } from "#commands/generate/actions/main";
-import { run as generateManifestCommand } from "#commands/generate/manifest/main";
-import { run as generateSchemaCommand } from "#commands/generate/schema/main";
+import { run as generateActions } from "#commands/generate/actions/main";
+import { run as generateManifest } from "#commands/generate/manifest/main";
+import { run as generateSchema } from "#commands/generate/schema/main";
 import { prettierFormat, runInstall } from "#commands/utils";
 import {
   getConfigDomains,
@@ -57,17 +57,22 @@ import type { CommerceAppConfigDomain } from "#config/index";
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 import type { InitFlags } from "./main";
 
-/** Ensure app.commerce.config file exists, allow creating if it doesn't. When options are provided, prompts are skipped. */
+/**
+ * Ensures a valid app configuration exists, creating one when requested.
+ * @param projectRoot - Resolved project root containing the app configuration.
+ * @param formatConfig - Whether to format a newly created configuration.
+ * @param flags - Non-interactive answers; prompts are used when omitted.
+ */
 export async function ensureCommerceAppConfig(
-  cwd = process.cwd(),
+  projectRoot: string,
   formatConfig = true,
   flags?: InitFlags,
 ) {
-  const configFilePath = await resolveCommerceAppConfig(cwd);
+  const configFilePath = await resolveCommerceAppConfig(projectRoot);
 
   if (configFilePath !== null) {
     try {
-      const config = await readCommerceAppConfig(cwd);
+      const config = await readCommerceAppConfig(projectRoot);
       const validatedConfig = validateCommerceAppConfig(config);
       consola.success(
         `${COMMERCE_APP_CONFIG_FILE} found and is valid. Continuing...`,
@@ -108,8 +113,11 @@ export async function ensureCommerceAppConfig(
     : await promptForCommerceAppConfig();
 
   try {
-    const configContent = await getDefaultCommerceAppConfig(cwd, answers);
-    const path = join(await getProjectRootDirectory(cwd), answers.configFile);
+    const configContent = await getDefaultCommerceAppConfig(
+      projectRoot,
+      answers,
+    );
+    const path = join(projectRoot, answers.configFile);
     consola.info(`Creating ${answers.configFile}...`);
 
     if (formatConfig) {
@@ -119,7 +127,7 @@ export async function ensureCommerceAppConfig(
       await writeFile(path, configContent, "utf-8");
     }
 
-    const createdConfig = await parseCommerceAppConfig(cwd);
+    const createdConfig = await parseCommerceAppConfig(projectRoot);
     consola.success(`Created ${answers.configFile}`);
 
     return {
@@ -135,8 +143,8 @@ export async function ensureCommerceAppConfig(
 }
 
 /**
- * Ensure a package.json exists and detect the package manager.
- * @param cwd - Directory to check; defaults to `process.cwd()`
+ * Ensures package.json exists, then resolves the project root and package manager.
+ * @param cwd - Directory in which to create or discover package.json.
  */
 export async function ensurePackageJson(cwd = process.cwd()) {
   const existing = await readPackageJson(cwd);
@@ -161,29 +169,29 @@ export async function ensurePackageJson(cwd = process.cwd()) {
     consola.success("Wrote package.json");
   }
 
-  // Detect after writing the skeleton — `detectPackageManager` walks up for a
-  // `package.json`, and the fresh-scaffold path has none until we've written one.
-  const packageManager = await detectPackageManager(cwd);
+  const projectRoot = await getProjectRootDirectory(cwd);
+  const packageManager = await detectPackageManager(projectRoot);
   const execCommand = getExecCommand(packageManager);
 
   return {
     execCommand,
     packageJson,
     packageManager,
+    projectRoot,
   };
 }
 
 /**
- * Register the `hooks postinstall` script in package.json.
- * @param execCommand - Prefix for running local binaries (e.g. `pnpm exec`, `npx`)
- * @param cwd - Directory containing the package.json to update
+ * Registers the postinstall hook in package.json.
+ * @param execCommand - Prefix for running local binaries, such as `pnpm exec`.
+ * @param projectRoot - Resolved project root containing package.json.
  */
 export async function writePostinstallHook(
   execCommand: string,
-  cwd = process.cwd(),
+  projectRoot: string,
 ) {
   const postinstallScript = `${execCommand} aio-commerce-lib-app hooks postinstall`;
-  const pkg = await loadPackageJson(cwd);
+  const pkg = await loadPackageJson(projectRoot);
   if (pkg === null) {
     throw new Error("Could not find package.json.");
   }
@@ -216,17 +224,19 @@ export async function writePostinstallHook(
   consola.success(`Added postinstall script to ${PACKAGE_JSON_FILE}`);
 }
 
-/** Ensure app.config.yaml has the extension reference */
+/**
+ * Ensures app.config.yaml references the enabled domain extensions.
+ * @param domains - Domains enabled in the app configuration.
+ * @param projectRoot - Resolved project root containing app.config.yaml.
+ */
 export async function ensureAppConfig(
   domains: Set<CommerceAppConfigDomain>,
-  cwd = process.cwd(),
+  projectRoot: string,
 ) {
-  const rootDirectory = await getProjectRootDirectory(cwd);
-
   if (domains.has("businessConfig.schema")) {
     await addExtensionPointToAppConfig(
       CONFIGURATION_EXTENSION_POINT_ID,
-      rootDirectory,
+      projectRoot,
       " This extension is required for business configuration. Do not remove.",
     );
   }
@@ -234,7 +244,7 @@ export async function ensureAppConfig(
   if (domains.has("adminUi")) {
     await addExtensionPointToAppConfig(
       BACKEND_UI_V2_EXTENSION_POINT_ID,
-      rootDirectory,
+      projectRoot,
       " This extension is required for Admin UI. Do not remove.",
     );
   }
@@ -242,7 +252,7 @@ export async function ensureAppConfig(
   // This is always needed (to get the app config at least)
   await addExtensionPointToAppConfig(
     EXTENSIBILITY_EXTENSION_POINT_ID,
-    rootDirectory,
+    projectRoot,
     " This extension is required for app management. Do not remove.",
   );
 }
@@ -251,12 +261,12 @@ export async function ensureAppConfig(
  * Install the domain-specific dependencies derived from the selected domains.
  * @param packageManager - The detected package manager
  * @param domains - Domains enabled in the commerce app config
- * @param cwd - Working directory for the install command
+ * @param projectRoot - Resolved project root for the install command
  */
 export function installDependencies(
   packageManager: PackageManager,
   domains: Set<CommerceAppConfigDomain>,
-  cwd = process.cwd(),
+  projectRoot: string,
 ) {
   const packages: string[] = [];
 
@@ -269,18 +279,24 @@ export function installDependencies(
     return;
   }
 
-  runInstall(packageManager, packages, cwd);
+  runInstall(packageManager, packages, projectRoot);
 }
 
-/** Run the generation command */
+/**
+ * Generates all project artifacts during initialization.
+ * @param appConfig - Validated app configuration used for generation.
+ * @param execCommand - Command prefix included in manual recovery guidance.
+ * @param projectRoot - Resolved project root where artifacts are generated.
+ */
 export async function runGeneration(
   appConfig: CommerceAppConfigOutputModel,
   execCommand: string,
+  projectRoot: string,
 ) {
   try {
-    await generateActionsCommand(appConfig);
-    await generateManifestCommand(appConfig);
-    await generateSchemaCommand(appConfig);
+    await generateActions(appConfig, projectRoot);
+    await generateManifest(appConfig, projectRoot);
+    await generateSchema(appConfig, projectRoot);
   } catch (error) {
     throw new Error(
       `Failed to run generation command. Please run manually: ${execCommand} aio-commerce-lib-app generate all`,
@@ -291,17 +307,19 @@ export async function runGeneration(
   }
 }
 
-/** Ensure install.yaml has the extension reference */
+/**
+ * Ensures install.yaml references the enabled domain extensions.
+ * @param domains - Domains enabled in the app configuration.
+ * @param projectRoot - Resolved project root containing install.yaml.
+ */
 export async function ensureInstallYaml(
   domains: Set<CommerceAppConfigDomain>,
-  cwd = process.cwd(),
+  projectRoot: string,
 ) {
-  const rootDirectory = await getProjectRootDirectory(cwd);
-
   if (domains.has("businessConfig.schema")) {
     await addExtensionPointToInstallYaml(
       CONFIGURATION_EXTENSION_POINT_ID,
-      rootDirectory,
+      projectRoot,
       " This extension is required for business configuration. Do not remove.",
     );
   }
@@ -309,7 +327,7 @@ export async function ensureInstallYaml(
   if (domains.has("adminUi")) {
     await addExtensionPointToInstallYaml(
       BACKEND_UI_V2_EXTENSION_POINT_ID,
-      rootDirectory,
+      projectRoot,
       " This extension is required for Admin UI. Do not remove.",
     );
   }
@@ -317,7 +335,7 @@ export async function ensureInstallYaml(
   // This is always needed (to get the app config at least)
   await addExtensionPointToInstallYaml(
     EXTENSIBILITY_EXTENSION_POINT_ID,
-    rootDirectory,
+    projectRoot,
     " This extension is required for app management. Do not remove.",
   );
 }

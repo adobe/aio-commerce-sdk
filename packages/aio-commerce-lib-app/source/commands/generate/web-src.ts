@@ -17,7 +17,6 @@ import { dirname, join, relative, sep } from "node:path";
 import {
   detectPackageManager,
   getPackageDependencyInstallPlan,
-  getProjectRootDirectory,
   loadPackageJson,
   mergePackageJsonDependencies,
 } from "@aio-commerce-sdk/scripting-utils/project";
@@ -118,7 +117,8 @@ function getWebSourceEntrypoint(extConfig: ExtConfig) {
 
 /**
  * Ensure package.json has the dependencies and Parcel config needed by web-src.
- * @param projectRoot - Project root containing the package.json to update.
+ * @param projectRoot - Resolved project root containing package.json.
+ * @param extension - Web source extension whose tooling is configured.
  */
 async function prepareWebSourcePackage(
   projectRoot: string,
@@ -218,14 +218,17 @@ async function prepareWebSourcePackage(
 /**
  * Add the package import alias for an existing or generated web-src.
  * @param extConfig - Extension config containing the view operation.
+ * @param projectRoot - Resolved project root containing package.json.
  */
-export async function prepareWebSourceImportAlias(extConfig: ExtConfig) {
+export async function prepareWebSourceImportAlias(
+  extConfig: ExtConfig,
+  projectRoot: string,
+) {
   const entrypoint = getWebSourceEntrypoint(extConfig);
   if (entrypoint === null) {
     return;
   }
 
-  const projectRoot = await getProjectRootDirectory();
   const pkg = await loadPackageJson(projectRoot);
   if (pkg === null) {
     throw new Error("Could not find package.json.");
@@ -289,12 +292,14 @@ function getWebSourceTemplateTargetPath(
  * @param targetDir - Generated web-src directory.
  * @param extension - Web source extension to generate.
  * @param appTitle - Application title used by the entrypoint template.
+ * @param projectRoot - Resolved project root used to format output paths.
  */
 async function copyWebSourceTemplates(
   sourceDir: string,
   targetDir: string,
   extension: WebSourceExtension,
   appTitle: string,
+  projectRoot: string,
 ): Promise<string[]> {
   await mkdir(targetDir, { recursive: true });
 
@@ -313,6 +318,7 @@ async function copyWebSourceTemplates(
           targetPath,
           extension,
           appTitle,
+          projectRoot,
         );
       }
 
@@ -330,17 +336,24 @@ async function copyWebSourceTemplates(
       }
 
       await writeFile(targetPath, content, { encoding: "utf-8", flag: "wx" });
-      return ` ${relative(process.cwd(), targetPath)}`;
+      return ` ${relative(projectRoot, targetPath)}`;
     }),
   );
 
   return outputFilesByEntry.flat();
 }
 
-/** Generate the web source scaffold for iframe-based Admin UI extensions. */
+/**
+ * Generates the web source scaffold for an iframe-based Admin UI extension.
+ * @param extConfig - Extension config containing the web entrypoint.
+ * @param appName - Application name inserted into the generated entrypoint.
+ * @param projectRoot - Resolved project root where web source is generated.
+ * @param templatesDir - Directory containing web source templates.
+ */
 export async function generateWebSrc(
   extConfig: ExtConfig,
   appName: string,
+  projectRoot: string,
   templatesDir = TEMPLATES_DIR,
 ) {
   const entrypoint = getWebSourceEntrypoint(extConfig);
@@ -348,13 +361,12 @@ export async function generateWebSrc(
     return;
   }
 
-  const projectRoot = await getProjectRootDirectory();
   const entrypointPath = join(projectRoot, entrypoint);
 
   if (existsSync(entrypointPath)) {
     consola.info(
       `web-src entrypoint already exists, skipping scaffold: ${relative(
-        process.cwd(),
+        projectRoot,
         entrypointPath,
       )}`,
     );
@@ -374,16 +386,17 @@ export async function generateWebSrc(
     targetDir,
     extension,
     appName,
+    projectRoot,
   );
 
   if (extension === "tsx") {
     const tsconfigPath = await writeWebSourceTypeScriptConfig(targetDir);
-    outputFiles.push(` ${relative(process.cwd(), tsconfigPath)}`);
+    outputFiles.push(` ${relative(projectRoot, tsconfigPath)}`);
     await syncWebSourceTypecheckScript(projectRoot);
   }
 
   await prepareWebSourcePackage(projectRoot, extension);
 
-  consola.success(`Scaffolded ${relative(process.cwd(), targetDir)}`);
+  consola.success(`Scaffolded ${relative(projectRoot, targetDir)}`);
   consola.log.raw(formatTree(outputFiles));
 }

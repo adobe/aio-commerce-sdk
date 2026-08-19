@@ -252,6 +252,10 @@ export function buildAdminUiV2ExtConfig(
     hooks: {
       "pre-app-build":
         "EXTENSION=backend-ui/2 $packageExec aio-commerce-lib-app hooks pre-app-build",
+      "pre-app-dev":
+        "EXTENSION=backend-ui/2 $packageExec aio-commerce-lib-app hooks pre-app-dev",
+      "pre-app-run":
+        "EXTENSION=backend-ui/2 $packageExec aio-commerce-lib-app hooks pre-app-run",
     },
     operations: {
       ...(requiresWeb && {
