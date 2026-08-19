@@ -7,7 +7,7 @@ type CommerceWebhookField = {
 };
 ```
 
-Defined in: [api/webhooks/types.ts:14](https://github.com/adobe/aio-commerce-sdk/blob/aa606961236cac6f4a3cebc105d643da71d5ddb8/packages/aio-commerce-lib-webhooks/source/api/webhooks/types.ts#L14)
+Defined in: [api/webhooks/types.ts:14](https://github.com/adobe/aio-commerce-sdk/blob/71bf66656ef1fc6dd272a0821e8b00aab5dc197e/packages/aio-commerce-lib-webhooks/source/api/webhooks/types.ts#L14)
 
 A field mapping in a Commerce webhook subscription.
 
@@ -19,7 +19,7 @@ A field mapping in a Commerce webhook subscription.
 name: string;
 ```
 
-Defined in: [api/webhooks/types.ts:15](https://github.com/adobe/aio-commerce-sdk/blob/aa606961236cac6f4a3cebc105d643da71d5ddb8/packages/aio-commerce-lib-webhooks/source/api/webhooks/types.ts#L15)
+Defined in: [api/webhooks/types.ts:15](https://github.com/adobe/aio-commerce-sdk/blob/71bf66656ef1fc6dd272a0821e8b00aab5dc197e/packages/aio-commerce-lib-webhooks/source/api/webhooks/types.ts#L15)
 
 ---
 
@@ -29,4 +29,4 @@ Defined in: [api/webhooks/types.ts:15](https://github.com/adobe/aio-commerce-sdk
 optional source?: string;
 ```
 
-Defined in: [api/webhooks/types.ts:16](https://github.com/adobe/aio-commerce-sdk/blob/aa606961236cac6f4a3cebc105d643da71d5ddb8/packages/aio-commerce-lib-webhooks/source/api/webhooks/types.ts#L16)
+Defined in: [api/webhooks/types.ts:16](https://github.com/adobe/aio-commerce-sdk/blob/71bf66656ef1fc6dd272a0821e8b00aab5dc197e/packages/aio-commerce-lib-webhooks/source/api/webhooks/types.ts#L16)
