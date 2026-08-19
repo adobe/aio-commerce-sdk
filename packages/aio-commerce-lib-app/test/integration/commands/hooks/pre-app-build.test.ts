@@ -10,12 +10,11 @@
  * governing permissions and limitations under the License.
  */
 
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 
-import { setNodeEnv } from "@aio-commerce-sdk/scripting-utils/env";
-import { afterEach, describe, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 import {
   BACKEND_UI_V2_EXTENSION_POINT_ID,
@@ -54,13 +53,22 @@ const { mockSpawnSync } = vi.hoisted(() => ({
 
 vi.mock("node:child_process", () => ({ spawnSync: mockSpawnSync }));
 
-// syncImsCredentials is the external boundary — reads AIO CLI credentials
-vi.mock("@aio-commerce-sdk/scripting-utils/env", () => ({
-  setNodeEnv: vi.fn(),
+// syncImsCredentials is the external boundary (reads AIO CLI credentials); keep
+// it mocked. setNodeEnv stays real so the tests assert the actual .env it writes.
+vi.mock("@aio-commerce-sdk/scripting-utils/env", async (importOriginal) => ({
+  ...(await importOriginal<
+    typeof import("@aio-commerce-sdk/scripting-utils/env")
+  >()),
   syncImsCredentials: vi.fn(),
 }));
 
 describe("commands/hooks/pre-app-build", () => {
+  // setNodeEnv writes to INIT_CWD/.env; neutralize the ambient value so it
+  // targets each test's temp project (its cwd) rather than the real repo.
+  beforeEach(() => {
+    vi.stubEnv("INIT_CWD", "");
+  });
+
   afterEach(() => {
     mockSpawnSync.mockClear();
     vi.clearAllMocks();
@@ -193,7 +201,9 @@ describe("commands/hooks/pre-app-build", () => {
             "index.html",
           );
           expect(existsSync(webSrcEntrypoint)).toBe(true);
-          expect(setNodeEnv).toHaveBeenCalledWith("production");
+
+          const envContents = readFileSync(join(tempDir, ".env"), "utf8");
+          expect(envContents).toContain("NODE_ENV=production");
         },
       );
     });
@@ -225,7 +235,7 @@ describe("commands/hooks/pre-app-build", () => {
             "web-src",
           );
           expect(existsSync(webSrcDir)).toBe(false);
-          expect(setNodeEnv).not.toHaveBeenCalled();
+          expect(existsSync(join(tempDir, ".env"))).toBe(false);
 
           const pkg = JSON.parse(
             await readFile(join(tempDir, "package.json"), "utf-8"),
