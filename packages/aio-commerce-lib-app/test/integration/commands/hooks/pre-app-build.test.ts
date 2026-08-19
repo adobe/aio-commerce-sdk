@@ -14,6 +14,7 @@ import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 
+import { setNodeEnv } from "@aio-commerce-sdk/scripting-utils/env";
 import { afterEach, describe, expect, test, vi } from "vitest";
 
 import {
@@ -192,6 +193,7 @@ describe("commands/hooks/pre-app-build", () => {
             "index.html",
           );
           expect(existsSync(webSrcEntrypoint)).toBe(true);
+          expect(setNodeEnv).toHaveBeenCalledWith("production");
         },
       );
     });
@@ -223,6 +225,7 @@ describe("commands/hooks/pre-app-build", () => {
             "web-src",
           );
           expect(existsSync(webSrcDir)).toBe(false);
+          expect(setNodeEnv).not.toHaveBeenCalled();
 
           const pkg = JSON.parse(
             await readFile(join(tempDir, "package.json"), "utf-8"),
