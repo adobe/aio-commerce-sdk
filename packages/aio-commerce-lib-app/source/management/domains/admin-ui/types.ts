@@ -16,20 +16,15 @@ import type { DomainPlan } from "#management/common/workflow/resource";
 /** The Commerce entity an Admin UI component attaches to (absent for the menu). */
 export type AdminUiComponentEntity = Exclude<keyof AdminUi, "menu">;
 
-// Kebab-cased plan-side vocabulary rather than schema keys — it does not match
-// the config's `gridColumns`/`massActions`/`viewButtons` fields, so unlike
-// AdminUiComponentEntity, this cannot be derived from AdminUi.
 /**
- * The addressable kinds of Admin UI component an upgrade operation can target.
- * `extension` targets the bare registration itself (present whenever the
- * `adminUi` block is), not a component.
+ * The addressable kinds of Admin UI component an upgrade operation can target,
+ * derived from the schema's component field names. `extension` targets the bare
+ * registration itself (present whenever the `adminUi` block is), not a component.
  */
 export type AdminUiComponentKind =
   | "extension"
-  | "grid-columns"
-  | "mass-action"
   | "menu"
-  | "view-button";
+  | keyof NonNullable<AdminUi["order"]>;
 
 /** Locates a single Admin UI component within the `adminUi` block. */
 export type AdminUiComponentRef = {
@@ -56,7 +51,7 @@ export type AdminUiOperationValue = {
  * The single whole-extension action `apply` performs to converge a plan's
  * component operations. Commerce exposes no per-component API, so the granular
  * adds and removes collapse to one call: `register` (first-time), `refresh`
- * (re-sync an existing extension), or `unregister` (drop it). `null` is a no-op.
+ * (re-sync an existing extension), or `unregister` (drop it).
  */
 export type AdminUiExtensionAction = "refresh" | "register" | "unregister";
 

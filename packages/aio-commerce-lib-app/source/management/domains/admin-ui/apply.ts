@@ -50,18 +50,13 @@ export async function applyAdminUi(
   }
 
   if (plan.extensionAction === "refresh") {
-    // Enable defensively: refresh (and the re-register fallback) require the SDK
-    // to be enabled, and Commerce rejects them otherwise. Enabling is an
-    // idempotent PUT, so it guards against the SDK being disabled out-of-band at
-    // no meaningful cost.
+    // Refresh (and its re-register fallback) need the SDK enabled; the PUT is
+    // idempotent, so this is a cheap safeguard against an out-of-band disable.
     await enableAdminUiSdk(context);
     const refreshed = await refreshExtension(context);
-    // The dedicated refresh endpoint returns no id (and there is no read endpoint
-    // to fetch one), so carry the baseline's id forward when there is nothing
-    // fresher to record. Always persist a snapshot here, even with a null id:
-    // `extensionAction` is only "refresh" when the baseline block was present,
-    // so the extension is registered regardless of whether its id is known —
-    // persisting no snapshot at all would misrepresent that as unregistered.
+    // Refresh returns no id and there is no read endpoint, so carry the baseline's
+    // id forward. Persist a snapshot even with a null id: "refresh" means the block
+    // was present, so persisting nothing would misrepresent it as unregistered.
     const extensionId = refreshed?.extensionId ?? plan.baselineExtensionId;
     return { snapshotData: { extensionId } };
   }

@@ -32,9 +32,6 @@ import type { AdminUiConfig, AdminUiExecutionContext } from "./utils";
  * {@link registerExtensionStep}. Install-only: it has no uninstall handler.
  */
 const enableAdminUiSdkStep = defineLeafStep({
-  // Must run before registerExtensionStep so Commerce accepts the extension
-  // registration. Not reverted on uninstall since other extensions may still
-  // rely on the SDK being enabled.
   install: (_: AdminUiConfig, context: AdminUiExecutionContext) =>
     enableAdminUiSdk(context),
   meta: {
@@ -76,16 +73,11 @@ const registerExtensionStep = defineLeafStep({
     unregisterExtension(context),
 });
 
-// Derived from the register call rather than `InferStepOutput<typeof
-// registerExtensionStep>`: the step's own `plan`/`apply` handlers consume this
-// type, so deriving it from the step itself would be self-referential.
-//
-// `extensionId` is widened to allow `null` on top of what `registerExtension`
-// itself returns: a refresh can't recover an id once it's unknown (the refresh
-// endpoint returns none, and there is no read endpoint), but the extension is
-// still registered whenever this snapshot is persisted at all. Recording
-// `{ extensionId: null }` here (rather than persisting no snapshot at all)
-// keeps that distinct from "not registered".
+// Derived from `registerExtension` rather than `InferStepOutput<typeof
+// registerExtensionStep>`, which would be self-referential (the step's own
+// plan/apply handlers consume this type). `extensionId` is widened with `null`
+// because a refresh can't recover a lost id, yet the extension is still
+// registered — `{ extensionId: null }` keeps that distinct from "not registered".
 /** The register step's output (`{ extensionId }`), also persisted as the domain's snapshot data. */
 export type RegisterExtensionStepData = {
   extensionId:

@@ -91,7 +91,7 @@ function enumerateComponents(
         config: entityConfig.gridColumns,
         key,
         label: `${entity} grid columns`,
-        ref: { entity, kind: "grid-columns" },
+        ref: { entity, kind: "gridColumns" },
       });
     }
 
@@ -104,7 +104,7 @@ function enumerateComponents(
         config: massAction,
         key,
         label: `${entity} mass action "${massAction.id}"`,
-        ref: { entity, id: massAction.id, kind: "mass-action" },
+        ref: { entity, id: massAction.id, kind: "massActions" },
       });
     }
   }
@@ -118,7 +118,7 @@ function enumerateComponents(
       config: viewButton,
       key,
       label: `order view button "${viewButton.id}"`,
-      ref: { entity: "order", id: viewButton.id, kind: "view-button" },
+      ref: { entity: "order", id: viewButton.id, kind: "viewButtons" },
     });
   }
 
