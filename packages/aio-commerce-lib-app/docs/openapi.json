@@ -3689,7 +3689,7 @@
     },
     {
       "name": "Management",
-      "description": "Installation and uninstallation lifecycle.",
+      "description": "Installation, upgrade, and uninstallation lifecycle.",
       "externalDocs": {
         "description": "Documentation",
         "url": "https://developer.adobe.com/commerce/extensibility/app-management/installation/"
