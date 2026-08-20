@@ -44,7 +44,7 @@ describe("commands/typescript", () => {
         "package.json": JSON.stringify({ type: "module" }),
       },
       async (tempDir) => {
-        await scaffoldTypeScriptProject("npm");
+        await scaffoldTypeScriptProject("npm", tempDir);
 
         const webpackPath = join(tempDir, "webpack-config.cjs");
         const require = createRequire(import.meta.url);
@@ -105,7 +105,7 @@ describe("commands/typescript", () => {
         "webpack-config.js": webpackConfig,
       },
       async (tempDir) => {
-        await scaffoldTypeScriptProject("npm");
+        await scaffoldTypeScriptProject("npm", tempDir);
         await expect(
           readFile(join(tempDir, "webpack-config.js"), "utf-8"),
         ).resolves.toBe(webpackConfig);
@@ -128,7 +128,7 @@ describe("commands/typescript", () => {
         "package.json": JSON.stringify({ type: "module" }),
       },
       async (tempDir) => {
-        await scaffoldTypeScriptProject("npm");
+        await scaffoldTypeScriptProject("npm", tempDir);
         await expect(
           readFile(join(tempDir, "custom-webpack-config.cjs"), "utf-8"),
         ).resolves.toBe(webpackConfig);
@@ -149,8 +149,8 @@ describe("commands/typescript", () => {
           type: "module",
         }),
       },
-      async () => {
-        await expect(scaffoldTypeScriptProject("npm")).rejects.toThrow(
+      async (tempDir) => {
+        await expect(scaffoldTypeScriptProject("npm", tempDir)).rejects.toThrow(
           `typescript@4.9.5 does not satisfy ${__TYPESCRIPT_VERSION__}`,
         );
       },
@@ -175,9 +175,9 @@ describe("commands/typescript", () => {
           "src/commerce-backend-ui-2/web-src/tsconfig.json": "{}",
         },
         async (tempDir) => {
-          await syncActionsTypecheckScript();
-          await syncActionsTypecheckScript();
-          await syncWebSourceTypecheckScript();
+          await syncActionsTypecheckScript(tempDir);
+          await syncActionsTypecheckScript(tempDir);
+          await syncWebSourceTypecheckScript(tempDir);
 
           const pkg = JSON.parse(
             await readFile(join(tempDir, "package.json"), "utf-8"),

@@ -38,6 +38,11 @@ describe("externalEventsStep leaf step", () => {
         description: "Removes I/O Events for external event sources",
         label: "Remove External Events",
       },
+      upgrade: {
+        description:
+          "Reconciles external event providers, metadata and registrations",
+        label: "Update External Events",
+      },
     });
   });
 

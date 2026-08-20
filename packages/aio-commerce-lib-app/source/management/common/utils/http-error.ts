@@ -10,7 +10,11 @@
  * governing permissions and limitations under the License.
  */
 
-import { unwrapHttpError } from "@adobe/aio-commerce-lib-api/utils";
+import {
+  HTTP_NOT_FOUND,
+  unwrapHttpError,
+} from "@adobe/aio-commerce-lib-api/utils";
+import { HTTPError } from "ky";
 
 /**
  * Unwraps an error via `unwrapHttpError`, prefixes it, logs it at error level,
@@ -25,4 +29,9 @@ export async function throwHttpError(
   const message = `${prefix}: ${await unwrapHttpError(error)}`;
   logger.error(message);
   throw new Error(message);
+}
+
+/** Whether `error` is a ky HTTP error carrying a 404 Not Found response. */
+export function isHttpNotFoundError(error: unknown): boolean {
+  return error instanceof HTTPError && error.response.status === HTTP_NOT_FOUND;
 }

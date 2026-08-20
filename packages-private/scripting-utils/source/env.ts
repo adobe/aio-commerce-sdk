@@ -78,13 +78,21 @@ export function replaceEnvVar(filePath: string, key: string, value: string) {
   writeFileSync(envPath, updatedLines.join("\n"), "utf8");
 }
 
-/** Returns the path to the .env file. */
-function resolveEnvPath() {
-  const envPath = process.env.INIT_CWD
-    ? `${process.env.INIT_CWD}/.env`
-    : ".env";
-
-  return path.resolve(envPath);
+/**
+ * Sets the `NODE_ENV` environment variable in the app `.env` file, so the web
+ * bundler (Parcel) ships the matching React build. Creates the `.env` if absent.
+ * @param mode - The environment mode to write into `NODE_ENV`.
+ * @param projectRoot - Resolved project root containing the `.env` file.
+ */
+export function setNodeEnv(
+  mode: "development" | "production",
+  projectRoot: string,
+) {
+  const envPath = path.join(projectRoot, ".env");
+  if (!existsSync(envPath)) {
+    writeFileSync(envPath, "", "utf8");
+  }
+  replaceEnvVar(envPath, "NODE_ENV", mode);
 }
 
 /** Resolves the IMS server to server context from the project workspace credentials. */
@@ -112,9 +120,12 @@ export type SyncImsCredentialsResult =
 /**
  * Syncs the IMS credentials environment variables from the configured IMS context in
  * the .env file, in a way that is compatible with `@adobe/aio-commerce-lib-auth`.
+ * @param projectRoot - Resolved project root containing the `.env` file.
  */
-export async function syncImsCredentials(): Promise<SyncImsCredentialsResult> {
-  const envPath = resolveEnvPath();
+export async function syncImsCredentials(
+  projectRoot: string,
+): Promise<SyncImsCredentialsResult> {
+  const envPath = path.join(projectRoot, ".env");
 
   if (!existsSync(envPath)) {
     return { ok: false, reason: "missing-env" };

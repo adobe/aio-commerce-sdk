@@ -4,7 +4,7 @@
 function removeOperation(path: string): RemoveOperation;
 ```
 
-Defined in: [responses/operations/presets.ts:123](https://github.com/adobe/aio-commerce-sdk/blob/aa606961236cac6f4a3cebc105d643da71d5ddb8/packages/aio-commerce-lib-webhooks/source/responses/operations/presets.ts#L123)
+Defined in: [responses/operations/presets.ts:123](https://github.com/adobe/aio-commerce-sdk/blob/71bf66656ef1fc6dd272a0821e8b00aab5dc197e/packages/aio-commerce-lib-webhooks/source/responses/operations/presets.ts#L123)
 
 Creates a remove operation response
 Causes Commerce to remove a value or node in triggered event arguments by the provided path.

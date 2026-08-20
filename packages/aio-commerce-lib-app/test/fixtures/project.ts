@@ -13,10 +13,7 @@
 import { join } from "node:path";
 import { inspect } from "node:util";
 
-import {
-  withChdir,
-  withTempFiles,
-} from "@aio-commerce-sdk/scripting-utils/filesystem";
+import { withTempFiles } from "@aio-commerce-sdk/scripting-utils/filesystem";
 import { stringify } from "yaml";
 
 import {
@@ -166,7 +163,16 @@ export async function withTempProject(
   callback: (tempDir: string) => void | Promise<void>,
 ) {
   await withTempFiles(files, async (tempDir) => {
-    await withChdir(tempDir, () => callback(tempDir));
+    // Point process.cwd() at the temp project instead of a real chdir: a real
+    // chdir can strand the process on a deleted directory if a test is
+    // interrupted mid-run, cascading ENOENT into unrelated tests.
+    const originalCwd = process.cwd;
+    process.cwd = () => tempDir;
+    try {
+      await callback(tempDir);
+    } finally {
+      process.cwd = originalCwd;
+    }
   });
 }
 
@@ -181,7 +187,7 @@ export async function withGeneratedProject(
   await withTempProject(
     { ...EMPTY_PROJECT, ...makeTemplateFiles() },
     async (tempDir) => {
-      await runGeneration(config, "npx");
+      await runGeneration(config, "npx", tempDir);
       await assertions(tempDir);
     },
   );
