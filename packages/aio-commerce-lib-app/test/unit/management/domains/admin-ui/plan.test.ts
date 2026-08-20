@@ -123,7 +123,7 @@ describe("planAdminUi", () => {
     expect(plan.operations).toEqual([]);
   });
 
-  test("plans nothing for a modification to an existing component (owned by CEXT-6510)", async () => {
+  test("refreshes with an update for a modified existing component", async () => {
     const modifiedSingleGrid = {
       ...configWithAdminUiSingleGrid,
       adminUi: {
@@ -143,8 +143,71 @@ describe("planAdminUi", () => {
       modifiedSingleGrid,
     );
 
-    expect(plan.extensionAction).toBeNull();
-    expect(plan.operations).toEqual([]);
+    expect(plan.extensionAction).toBe("refresh");
+    expect(plan.operations).toHaveLength(1);
+    expect(plan.operations[0]?.kind).toBe("update");
+    expect(plan.operations[0]?.id).toBe("update:order.grid-columns");
+  });
+
+  test("detects a modification nested inside a grid-columns component (column-level change)", async () => {
+    const modifiedColumn = {
+      ...configWithAdminUiSingleGrid,
+      adminUi: {
+        ...configWithAdminUiSingleGrid.adminUi,
+        order: {
+          ...configWithAdminUiSingleGrid.adminUi.order,
+          gridColumns: {
+            ...configWithAdminUiSingleGrid.adminUi.order.gridColumns,
+            columns: [
+              {
+                align: "left" as const,
+                id: "fulfillment_status",
+                label: "Fulfillment Status",
+                type: "string" as const,
+              },
+            ],
+          },
+        },
+      },
+    } as AdminUiConfig;
+
+    const { plan } = await planned(
+      configWithAdminUiSingleGrid as AdminUiConfig,
+      modifiedColumn,
+    );
+
+    expect(plan.extensionAction).toBe("refresh");
+    expect(plan.operations).toHaveLength(1);
+    expect(plan.operations[0]?.kind).toBe("update");
+  });
+
+  test("emits both an add and an update when one component is added and another modified", async () => {
+    // Baseline: single order grid. Target: order grid with a changed label (update)
+    // plus a new customer grid (add).
+    const modifiedAndAdded = {
+      ...configWithAdminUiAllGrids,
+      adminUi: {
+        ...configWithAdminUiAllGrids.adminUi,
+        order: {
+          ...configWithAdminUiAllGrids.adminUi.order,
+          gridColumns: {
+            ...configWithAdminUiAllGrids.adminUi.order.gridColumns,
+            label: "Renamed order fulfillment data",
+          },
+        },
+        product: undefined,
+      },
+    } as AdminUiConfig;
+
+    const { plan } = await planned(
+      configWithAdminUiSingleGrid as AdminUiConfig,
+      modifiedAndAdded,
+    );
+
+    expect(plan.extensionAction).toBe("refresh");
+    expect(
+      plan.operations.map((op) => op.kind).sort((a, b) => a.localeCompare(b)),
+    ).toEqual(["add", "update"]);
   });
 
   test("plans nothing when Admin UI is absent on both sides", async () => {

@@ -10,6 +10,8 @@
  * governing permissions and limitations under the License.
  */
 
+import { stringify } from "safe-stable-stringify";
+
 import { hasExtensionName } from "./helpers";
 
 import type {
@@ -138,7 +140,26 @@ function buildComponentOperation(
   };
 }
 
-/** Diffs the baseline and target component maps into add/remove operations. */
+/** Builds an `update` operation for a component whose config changed between versions. */
+function buildUpdateOperation(
+  key: string,
+  before: AdminUiComponentDescriptor,
+  after: AdminUiComponentDescriptor,
+): ResourceOperation<AdminUiOperationValue> {
+  return {
+    after: { component: after.ref, config: after.config },
+    before: { component: before.ref, config: before.config },
+    id: `update:${key}`,
+    kind: "update",
+    label: `Update Admin UI ${after.label}`,
+  };
+}
+
+/**
+ * Diffs the baseline and target component maps into add/remove/update operations.
+ * A component present on both sides with a changed config is an `update`; the
+ * whole-config comparison covers ACL, labels, descriptions, and notifications.
+ */
 function diffComponents(
   baselineComponents: Map<string, AdminUiComponentDescriptor>,
   targetComponents: Map<string, AdminUiComponentDescriptor>,
@@ -151,11 +172,12 @@ function diffComponents(
     }
   }
 
-  // A component present on both sides with a changed config is a modification;
-  // this domain does not yet diff configs, so it is intentionally not emitted.
   for (const [key, component] of baselineComponents) {
-    if (!targetComponents.has(key)) {
+    const target = targetComponents.get(key);
+    if (!target) {
       operations.push(buildComponentOperation("remove", key, component));
+    } else if (stringify(component.config) !== stringify(target.config)) {
+      operations.push(buildUpdateOperation(key, component, target));
     }
   }
 
@@ -169,10 +191,10 @@ function diffComponents(
  * `blocked` result when work is planned but the extension identity cannot be
  * resolved (`__OW_NAMESPACE` unset).
  *
- * It emits one operation per component added in the target or removed from it;
- * a component-less `adminUi` block is a no-op. The single
- * {@link AdminUiExtensionAction} on the plan tells `apply` which whole-extension
- * call converges those operations.
+ * It emits one operation per component added in the target, removed from it, or
+ * whose config changed between versions (an `update`); a component-less
+ * `adminUi` block is a no-op. The single {@link AdminUiExtensionAction} on the
+ * plan tells `apply` which whole-extension call converges those operations.
  */
 export function planAdminUi(
   input: PlanningInput<AdminUiConfig, RegisterExtensionStepData>,
@@ -193,8 +215,8 @@ export function planAdminUi(
   const operations = diffComponents(baselineComponents, targetComponents);
 
   // Lifecycle tracks component presence: the first component registers, the last
-  // removal unregisters, and changes in between refresh. Each action carries its
-  // own component ops, so no synthetic block-level op is needed.
+  // removal unregisters, and changes in between (add/remove/update) refresh. Each
+  // action carries its own component ops, so no synthetic block-level op is needed.
   const baselineHasAdminUi = baselineComponents.size > 0;
   const targetHasAdminUi = targetComponents.size > 0;
 
