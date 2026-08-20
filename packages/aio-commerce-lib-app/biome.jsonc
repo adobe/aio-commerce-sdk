@@ -26,6 +26,7 @@
       "includes": ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx"],
       "javascript": {
         "globals": [
+          "__NODE_TYPES_VERSION__",
           "__REACT_VERSION__",
           "__REACT_DOM_VERSION__",
           "__REACT_DOM_TYPES_VERSION__",

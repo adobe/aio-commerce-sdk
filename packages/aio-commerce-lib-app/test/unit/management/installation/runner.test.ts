@@ -36,10 +36,10 @@ import {
 import {
   createMockFailedState,
   createMockInstallationContext,
-  createMockStepStatus,
   createMockSucceededState,
   FAKE_SYSTEM_TIME,
 } from "#test/fixtures/installation";
+import { createMockStepStatus } from "#test/fixtures/workflow";
 
 import type { InstallationHooks } from "#management/installation/runner";
 

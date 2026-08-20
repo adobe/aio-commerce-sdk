@@ -85,6 +85,7 @@ describe("commands/typescript", () => {
           "npm",
           expect.arrayContaining([
             `@tsconfig/bases@${__TSCONFIG_BASES_VERSION__}`,
+            `@types/node@${__NODE_TYPES_VERSION__}`,
             `ts-loader@${__TS_LOADER_VERSION__}`,
             `typescript@${__TYPESCRIPT_VERSION__}`,
           ]),

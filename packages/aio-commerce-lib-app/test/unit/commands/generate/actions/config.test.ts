@@ -136,12 +136,15 @@ describe("buildAppManagementExtConfig", () => {
     }
   });
 
-  test("pre-app-build hook uses extensibility/1", () => {
-    const result = buildAppManagementExtConfig(configWithCommerceEventing);
-    const preBuildHook = result.hooks?.["pre-app-build"] ?? "";
+  test.each(["pre-app-build", "post-app-deploy"] as const)(
+    "%s hook uses extensibility/1",
+    (hookName) => {
+      const result = buildAppManagementExtConfig(configWithCommerceEventing);
+      const hook = result.hooks?.[hookName] ?? "";
 
-    expect(preBuildHook).toMatch(EXTENSIBILITY_EXTENSION_MATCHER);
-  });
+      expect(hook).toMatch(EXTENSIBILITY_EXTENSION_MATCHER);
+    },
+  );
 
   test("declares workerProcess operations for each runtime action", () => {
     const result = buildAppManagementExtConfig(configWithCommerceEventing);

@@ -20,13 +20,29 @@ import { consola } from "consola";
 import { colors } from "consola/utils";
 import ky, { HTTPError } from "ky";
 
+import {
+  INSTALLATION_INVOCATION_SOURCE_HEADER,
+  POST_APP_DEPLOY_INVOCATION_SOURCE,
+} from "#actions/installation/common";
 import { parseCommerceAppConfig } from "#config/lib/parser";
 
-import type { DomainPlan } from "#management/common/workflow/resource";
+import { waitForAutomaticUpgrade } from "./polling";
 
-type SkippedResult = { skipped: true; reason: string };
-type UpgradePlanResult = { plan: DomainPlan };
+import type { LifecyclePlan } from "#management/common/orchestration";
+
+type SkippedReason = "already-current" | "not-associated" | "not-installed";
+type SkippedResult = { skipped: true; reason: SkippedReason };
+type UpgradePlanResult = { plan: LifecyclePlan };
 type UpgradeResult = SkippedResult | UpgradePlanResult;
+
+/** Returns true for a no-op reason defined by the upgrade API contract. */
+function isSkippedReason(reason: unknown): reason is SkippedReason {
+  return (
+    reason === "already-current" ||
+    reason === "not-associated" ||
+    reason === "not-installed"
+  );
+}
 
 /** Returns true if the result indicates that the upgrade was skipped. */
 function isSkippedResult(result: UpgradeResult): result is SkippedResult {
@@ -34,50 +50,60 @@ function isSkippedResult(result: UpgradeResult): result is SkippedResult {
 }
 
 /** Invokes the upgrade action. */
-async function invokeAction(): Promise<UpgradeResult> {
+async function createUpgradeRequest() {
   const { project, namespace } = getAioProjectContext();
   const token = await getUserToken();
 
   const endpoint = `https://${namespace}.adobeioruntime.net/api/v1/web/app-management/installation`;
-  consola.debug(`Upgrade endpoint: ${endpoint}`);
-
   const ioEventsEnv = getAioCliEnv();
   const ioEventsUrl =
     ioEventsEnv === "stage"
       ? "https://events-stage.adobe.io"
       : "https://events.adobe.io";
 
+  return {
+    body: {
+      appData: {
+        consumerOrgId: project.org.id,
+        orgName: project.org.name,
+        projectId: project.id,
+        projectName: project.name,
+        projectTitle: project.title,
+        workspaceId: project.workspace.id,
+        workspaceName: project.workspace.name,
+        workspaceTitle: project.workspace.title,
+      },
+      ioEventsEnv,
+      ioEventsUrl,
+    },
+    endpoint,
+    headers: {
+      Authorization: `Bearer ${token}`,
+      [INSTALLATION_INVOCATION_SOURCE_HEADER]:
+        POST_APP_DEPLOY_INVOCATION_SOURCE,
+      "x-gw-ims-org-id": project.org.ims_org_id,
+    },
+  };
+}
+
+/** Invokes the upgrade action. */
+async function invokeAction(
+  request: Awaited<ReturnType<typeof createUpgradeRequest>>,
+): Promise<UpgradeResult> {
+  consola.debug(`Upgrade endpoint: ${request.endpoint}`);
+
   try {
     return await ky
-      .post(endpoint, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "x-gw-ims-org-id": project.org.ims_org_id,
-        },
-        json: {
-          appData: {
-            consumerOrgId: project.org.id,
-            orgName: project.org.name,
-            projectId: project.id,
-            projectName: project.name,
-            projectTitle: project.title,
-            workspaceId: project.workspace.id,
-            workspaceName: project.workspace.name,
-            workspaceTitle: project.workspace.title,
-          },
-
-          ioEventsEnv,
-          ioEventsUrl,
-        },
+      .post(request.endpoint, {
+        headers: request.headers,
+        json: request.body,
       })
       .json<UpgradePlanResult>();
   } catch (error) {
     if (error instanceof HTTPError) {
       const details = await error.response.json<{ reason?: string }>();
 
-      // A 409 carrying a `reason` is an expected no-op state (e.g. not-associated,
-      // already-current) — nothing to upgrade, not a failure.
-      if (error.response.status === 409 && details.reason) {
+      if (error.response.status === 409 && isSkippedReason(details.reason)) {
         return { reason: details.reason, skipped: true };
       }
 
@@ -96,17 +122,19 @@ export async function run() {
   const appConfig = await parseCommerceAppConfig();
   const { upgradeMode } = appConfig.metadata;
 
+  consola.log(""); // Leave a bit of whitespace before the output to make it more readable.
   consola.start("Checking for app upgrades...");
-  const result = await invokeAction();
+  const request = await createUpgradeRequest();
+  const result = await invokeAction(request);
 
   if (isSkippedResult(result)) {
-    consola.info(`No upgrade was run: ${result.reason}.`);
+    consola.info(`No upgrade was run: ${result.reason}.\n`);
     return result;
   }
 
   if (upgradeMode === "manual") {
     consola.success(
-      `You have set ${colors.cyan("metadata.upgradeMode")} to ${colors.cyan("manual")}. The upgrade plan has been created. Apply it from the App Management UI`,
+      `You have set ${colors.cyan("metadata.upgradeMode")} to ${colors.cyan("manual")}. The upgrade plan has been created but will not be executed.`,
     );
   } else {
     consola.success(
@@ -117,6 +145,10 @@ export async function run() {
   consola.box(
     ["Upgrade plan", JSON.stringify(result.plan, null, 2)].join("\n\n"),
   );
+
+  if (upgradeMode === "auto") {
+    await waitForAutomaticUpgrade(request);
+  }
 
   return result;
 }

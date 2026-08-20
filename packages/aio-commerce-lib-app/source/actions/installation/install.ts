@@ -55,14 +55,6 @@ export async function startInstallation({
   rawParams,
 }: StartInstallationArgs) {
   const { appData, commerceBaseUrl } = body;
-  if (!commerceBaseUrl) {
-    return badRequest("commerceBaseUrl is required to install the app.");
-  }
-
-  logger.debug(
-    `Starting installation for app "${appData.projectName}" (workspace: "${appData.workspaceName}", commerce: "${commerceBaseUrl}")`,
-  );
-
   const store = await createInstallationStore();
   const existingState = await store.get(getStorageKey());
 
@@ -76,11 +68,24 @@ export async function startInstallation({
 
     if (isSucceededState(existingState)) {
       logger.debug("Installation already succeeded");
-      return conflict("Installation has already completed successfully.");
+      return conflict(
+        // Temporarily return 409 while we don't have a fallback storage to get the config from.
+        existingState.config
+          ? "Installation has already completed successfully."
+          : "The existing installation does not include its original config and cannot be upgraded safely. Uninstall and reinstall the app.",
+      );
     }
 
     logger.debug("Previous installation failed, allowing retry");
   }
+
+  if (!commerceBaseUrl) {
+    return badRequest("commerceBaseUrl is required to install the app.");
+  }
+
+  logger.debug(
+    `Starting installation for app "${appData.projectName}" (workspace: "${appData.workspaceName}", commerce: "${commerceBaseUrl}")`,
+  );
 
   const initialState = createInitialInstallationState({ config: appConfig });
   logger.debug(`Created initial state: ${initialState.id}`);

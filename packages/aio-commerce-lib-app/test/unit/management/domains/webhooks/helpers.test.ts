@@ -905,10 +905,10 @@ describe("deleteWebhookSubscriptions", () => {
           webhook: {
             batch_name: "default",
             hook_name: "order_created",
-            method: "POST",
+            method: "POST" as const,
             url: "https://example.com/first",
             webhook_method: "plugin.order.api.order_created",
-            webhook_type: "after",
+            webhook_type: "after" as const,
           },
         },
         {
@@ -919,10 +919,10 @@ describe("deleteWebhookSubscriptions", () => {
           webhook: {
             batch_name: "products",
             hook_name: "validate",
-            method: "POST",
+            method: "POST" as const,
             url: "https://example.com/second",
             webhook_method: "observer.catalog_product_save_after",
-            webhook_type: "after",
+            webhook_type: "after" as const,
           },
         },
       ],
@@ -976,10 +976,10 @@ describe("deleteWebhookSubscriptions", () => {
           webhook: {
             batch_name: "products",
             hook_name: "validate",
-            method: "POST",
+            method: "POST" as const,
             url: "https://example.com/hook",
             webhook_method: "observer.catalog_product_save_after",
-            webhook_type: "after",
+            webhook_type: "after" as const,
           },
         },
       ],
