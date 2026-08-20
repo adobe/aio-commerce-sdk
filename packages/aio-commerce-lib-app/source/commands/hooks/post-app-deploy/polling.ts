@@ -69,7 +69,7 @@ export async function waitForAutomaticUpgrade(
   }
 
   if (state.status === "succeeded") {
-    consola.success("App upgrade completed.");
+    consola.success("App upgrade completed.\n");
     return;
   }
 
