@@ -3008,7 +3008,7 @@
           },
           "webhook_type": {
             "type": "string",
-            "minLength": 1
+            "enum": ["before", "after"]
           },
           "batch_name": {
             "type": "string",
@@ -3041,7 +3041,7 @@
           },
           "method": {
             "type": "string",
-            "minLength": 1
+            "enum": ["POST", "PUT", "DELETE", "GET"]
           },
           "fallback_error_message": {
             "type": "string"
