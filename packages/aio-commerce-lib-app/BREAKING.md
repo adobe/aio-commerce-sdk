@@ -15,13 +15,13 @@
 
 - The step-authoring surface will converge every lifecycle onto the resource-reconciliation capability: the `install`/`uninstall`/`validate` handlers on `LeafStep` will be expressed through `plan`/`apply` (installation becomes a plan of `add` operations against an empty baseline; uninstallation a plan of `remove` operations), and `LifecyclePlan.source`/`target` will become nullable to model first-install (no source snapshot) and uninstall (no target). **Replacement:** author steps with `plan`/`apply` once the runtime lands; the current `install`/`uninstall`/`validate` handlers remain until the major.
 
+<!-- Internal tracking: https://jira.corp.adobe.com/browse/CEXT-6337 -->
+
+- The `PUT /config` action endpoint is removed. It overwrote all values for the scope and did not support partial updates or unset semantics, which could cause data loss when callers only intended to update a subset of config keys. **Replacement:** use `PATCH /config`, which updates only the provided fields and unsets a key when its value is `null`.
+
 ### Deprecated
 
 - `StepBase.when` is deprecated in favor of `StepBase.isConfigured`, which clarifies that the predicate identifies whether the step's domain is represented in a configuration.
-
-<!-- Internal tracking: https://jira.corp.adobe.com/browse/CEXT-6337 -->
-
-- `PUT /config` action endpoint will be removed in a future major — use `PATCH /config` instead. The PUT endpoint overwrites all values for the scope and does not support partial updates or unset semantics.
 
 <!-- Internal tracking: https://jira.corp.adobe.com/browse/CEXT-6527 -->
 

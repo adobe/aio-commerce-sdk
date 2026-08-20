@@ -41,6 +41,10 @@ const subscriptionsStep = defineLeafStep({
       description: "Deletes webhook subscriptions from Adobe Commerce",
       label: "Delete Subscriptions",
     },
+    upgrade: {
+      description: "Reconciles webhook subscriptions in Adobe Commerce",
+      label: "Upgrade Subscriptions",
+    },
   },
   name: "subscriptions",
   plan: planWebhookSubscriptions,
@@ -69,6 +73,10 @@ export const webhooksStep = defineBranchStep({
     },
     uninstall: {
       description: "Removes Commerce webhooks",
+      label: "Webhooks",
+    },
+    upgrade: {
+      description: "Reconciles Commerce webhooks",
       label: "Webhooks",
     },
   },

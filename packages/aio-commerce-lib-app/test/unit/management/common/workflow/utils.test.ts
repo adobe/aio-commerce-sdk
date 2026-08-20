@@ -23,9 +23,9 @@ import {
 import { makeHttpError } from "#test/fixtures/http-error";
 import {
   createMockInstallationError,
-  createMockStepStatus,
   FAKE_SYSTEM_TIME,
 } from "#test/fixtures/installation";
+import { createMockStepStatus } from "#test/fixtures/workflow";
 
 describe("nowIsoString", () => {
   test("should return a valid ISO date string", () => {

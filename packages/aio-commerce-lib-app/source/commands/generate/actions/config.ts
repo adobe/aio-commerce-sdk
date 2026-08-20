@@ -13,7 +13,6 @@
 import { join } from "node:path";
 
 import { GENERATED_ACTIONS_PATH, PACKAGE_NAME } from "#commands/constants";
-import { requiresInstallation } from "#config/schema/app";
 import { hasBusinessConfigSchema } from "#config/schema/business-configuration";
 
 import { COMMERCE_ACTION_INPUTS } from "./constants";
@@ -94,6 +93,8 @@ export function buildAppManagementExtConfig(
 ) {
   const extConfig = {
     hooks: {
+      "post-app-deploy":
+        "EXTENSION=extensibility/1 $packageExec aio-commerce-lib-app hooks post-app-deploy",
       "pre-app-build":
         "EXTENSION=extensibility/1 $packageExec aio-commerce-lib-app hooks pre-app-build",
     },
@@ -124,29 +125,26 @@ export function buildAppManagementExtConfig(
     },
   } satisfies ExtConfig;
 
-  const needsInstallAction = requiresInstallation(appConfig);
   const hasPasswordFieldsInSchema =
     hasBusinessConfigSchema(appConfig) &&
     appConfig.businessConfig.schema.some((field) => field.type === "password");
 
-  if (needsInstallAction) {
-    extConfig.operations.workerProcess.push({
-      impl: `${PACKAGE_NAME}/installation`,
-      type: "action",
-    });
+  extConfig.operations.workerProcess.push({
+    impl: `${PACKAGE_NAME}/installation`,
+    type: "action",
+  });
 
-    extConfig.runtimeManifest.packages[PACKAGE_NAME].actions.installation =
-      createActionDefinition(
-        "installation",
-        { requiresEncryptionKey: hasPasswordFieldsInSchema },
-        {
-          inputs: { ...COMMERCE_ACTION_INPUTS, LOG_LEVEL: "$LOG_LEVEL" },
-          limits: {
-            timeout: 600_000,
-          },
+  extConfig.runtimeManifest.packages[PACKAGE_NAME].actions.installation =
+    createActionDefinition(
+      "installation",
+      { requiresEncryptionKey: hasPasswordFieldsInSchema },
+      {
+        inputs: { ...COMMERCE_ACTION_INPUTS, LOG_LEVEL: "$LOG_LEVEL" },
+        limits: {
+          timeout: 600_000,
         },
-      );
-  }
+      },
+    );
 
   return extConfig;
 }
@@ -254,6 +252,10 @@ export function buildAdminUiV2ExtConfig(
     hooks: {
       "pre-app-build":
         "EXTENSION=backend-ui/2 $packageExec aio-commerce-lib-app hooks pre-app-build",
+      "pre-app-dev":
+        "EXTENSION=backend-ui/2 $packageExec aio-commerce-lib-app hooks pre-app-dev",
+      "pre-app-run":
+        "EXTENSION=backend-ui/2 $packageExec aio-commerce-lib-app hooks pre-app-run",
     },
     operations: {
       ...(requiresWeb && {
