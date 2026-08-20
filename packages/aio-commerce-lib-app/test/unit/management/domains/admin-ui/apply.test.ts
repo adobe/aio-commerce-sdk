@@ -41,7 +41,12 @@ describe("applyAdminUi", () => {
   function applyContext(
     overrides: Parameters<typeof createMockAdminUiContext>[0] = {},
   ) {
-    return { ...createMockAdminUiContext(overrides), attemptId: "attempt-1" };
+    return {
+      ...createMockAdminUiContext(overrides),
+      attemptId: "attempt-1",
+      baseline: null,
+      targetConfig: null,
+    };
   }
 
   function makePlan(
