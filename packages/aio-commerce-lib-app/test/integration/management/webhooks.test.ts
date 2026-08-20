@@ -241,7 +241,7 @@ describe("webhooks upgrade planning integration", () => {
     );
   });
 
-  test("plans and applies a removal for a webhook dropped from the target config", async () => {
+  test("prunes a live app webhook absent from the baseline and target", async () => {
     const [subscribedWebhook] = configWithWebhooks.webhooks;
     const baselineWebhook = {
       batch_name: "test_app_webhooks_default",
@@ -251,6 +251,11 @@ describe("webhooks upgrade planning integration", () => {
       webhook_method: subscribedWebhook.webhook.webhook_method,
       webhook_type: subscribedWebhook.webhook.webhook_type,
     };
+    const foreignWebhook = {
+      ...baselineWebhook,
+      batch_name: "other_app_default",
+      hook_name: "other_app_order_created",
+    };
 
     const capture = {
       unsubscribeBody: null as Record<string, unknown> | null,
@@ -258,7 +263,7 @@ describe("webhooks upgrade planning integration", () => {
 
     apiServer.use(
       http.get(`${COMMERCE_BASE_URL}/webhooks/list`, () =>
-        HttpResponse.json([baselineWebhook]),
+        HttpResponse.json([baselineWebhook, foreignWebhook]),
       ),
       http.post(
         `${COMMERCE_BASE_URL}/webhooks/unsubscribe`,
@@ -280,7 +285,7 @@ describe("webhooks upgrade planning integration", () => {
     };
     const baseline = {
       config: configWithWebhooks,
-      data: { subscribedWebhooks: [baselineWebhook] },
+      data: { subscribedWebhooks: [] },
     };
 
     const planResult = await planWebhookSubscriptions(
@@ -293,9 +298,7 @@ describe("webhooks upgrade planning integration", () => {
     );
 
     expect.assert(planResult.kind === "planned");
-    expect(planResult.plan.operations).toEqual([
-      expect.objectContaining({ kind: "remove" }),
-    ]);
+    expect(planResult.plan.operations).toEqual([]);
 
     const applyResult = await applyWebhookSubscriptions(planResult.plan, {
       ...context,

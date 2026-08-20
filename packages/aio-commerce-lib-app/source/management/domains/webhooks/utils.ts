@@ -13,11 +13,13 @@
 import { unwrapHttpError } from "@adobe/aio-commerce-lib-api/utils";
 import { resolveImsAuthParams } from "@adobe/aio-commerce-lib-auth";
 
+import { appliesToEnv } from "#config/lib/environment";
+
 import type {
-  CommerceWebhook,
   WebhookSubscribeParams,
   WebhookUnsubscribeParams,
 } from "@adobe/aio-commerce-lib-webhooks/api";
+import type { getInstallCommerceEnv } from "#config/lib/environment";
 import type { WebhookEntry } from "#config/schema/webhooks";
 import type { WebhooksExecutionContext } from "./context";
 import type { ResolvedWebhookPayload, WebhookIdentity } from "./types";
@@ -80,10 +82,18 @@ export function webhookIdentitiesMatch(
 
 /** True when a webhook with the given four-part identity exists in the list. */
 export function isWebhookInList(
-  existing: CommerceWebhook[],
+  existing: readonly WebhookIdentity[],
   candidate: WebhookIdentity,
 ): boolean {
   return existing.some((w) => webhookIdentitiesMatch(w, candidate));
+}
+
+/** Returns whether a webhook identity is present in the desired target set. */
+export function isDesiredWebhook(
+  webhook: WebhookIdentity,
+  desiredWebhooks: readonly WebhookIdentity[],
+): boolean {
+  return isWebhookInList(desiredWebhooks, webhook);
 }
 
 /** Strips the `.magento` segment Commerce drops when persisting plugin webhook methods. */
@@ -114,6 +124,29 @@ export function buildWebhookIdPrefix(appId: string): string {
     .replace(NON_IDENTIFIER_CHAR_REGEX, "_")
     .replace(MULTIPLE_UNDERSCORES_REGEX, "_");
   return prefix.endsWith("_") ? prefix : `${prefix}_`;
+}
+
+/** Returns whether a Commerce webhook belongs to the app with the given metadata ID. */
+export function isWebhookOwnedByApp(
+  webhook: Pick<WebhookIdentity, "batch_name" | "hook_name">,
+  appId: string,
+): boolean {
+  const idPrefix = buildWebhookIdPrefix(appId);
+  return (
+    webhook.batch_name.startsWith(idPrefix) &&
+    webhook.hook_name.startsWith(idPrefix)
+  );
+}
+
+/** Resolves every configured webhook that applies to the Commerce environment. */
+export function resolveDesiredWebhooks(
+  config: { metadata: { id: string }; webhooks: WebhookEntry[] },
+  env: ReturnType<typeof getInstallCommerceEnv>,
+): ResolvedWebhookPayload[] {
+  const idPrefix = buildWebhookIdPrefix(config.metadata.id);
+  return config.webhooks
+    .filter((entry) => appliesToEnv(entry, env))
+    .map((entry) => resolveWebhookPayload(entry, idPrefix));
 }
 
 /** Resolves a config webhook entry's identity/payload (idPrefix, URL) — no credentials. Pure. */

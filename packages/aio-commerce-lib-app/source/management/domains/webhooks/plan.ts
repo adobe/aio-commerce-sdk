@@ -10,18 +10,17 @@
  * governing permissions and limitations under the License.
  */
 
-import { appliesToEnv, getInstallCommerceEnv } from "#config/lib/environment";
+import { getInstallCommerceEnv } from "#config/lib/environment";
 
 import {
-  buildWebhookIdPrefix,
   getWebhookName,
-  resolveWebhookPayload,
+  isDesiredWebhook,
+  resolveDesiredWebhooks,
   toIdentity,
   webhookIdentitiesMatch,
   webhookOperationId,
 } from "./utils";
 
-import type { WebhookSubscribeParams } from "@adobe/aio-commerce-lib-webhooks/api";
 import type { WebhooksConfig } from "#config/schema/webhooks";
 import type {
   PlanningInput,
@@ -35,17 +34,6 @@ import type {
   WebhookOperationValue,
   WebhookSnapshotData,
 } from "./types";
-
-/** Resolves every config webhook entry that applies to `env` — no credentials, for planning only. */
-function resolveDesiredWebhooks(
-  config: WebhooksConfig,
-  env: ReturnType<typeof getInstallCommerceEnv>,
-): WebhookOperationValue[] {
-  const idPrefix = buildWebhookIdPrefix(config.metadata.id);
-  return config.webhooks
-    .filter((entry) => appliesToEnv(entry, env))
-    .map((entry) => resolveWebhookPayload(entry, idPrefix));
-}
 
 /**
  * Diffs the target config against the baseline into add/remove operations. Pure —
@@ -85,7 +73,6 @@ export function planWebhookSubscriptions(
   // Removes precede adds (see the concat below) so a rename never briefly double-registers a hook point.
   const addOperations: ResourceOperation<WebhookOperationValue>[] = [];
   const removeOperations: ResourceOperation<WebhookOperationValue>[] = [];
-  const retainedWebhooks: WebhookSubscribeParams[] = [];
 
   for (const webhook of desired) {
     const owned = ownedFromBaseline.find((candidate) =>
@@ -93,7 +80,6 @@ export function planWebhookSubscriptions(
     );
 
     if (owned) {
-      retainedWebhooks.push(owned);
       continue;
     }
 
@@ -107,14 +93,13 @@ export function planWebhookSubscriptions(
   }
 
   const staleFromBaseline = ownedFromBaseline.filter(
-    (owned) =>
-      !desired.some((webhook) => webhookIdentitiesMatch(webhook, owned)),
+    (owned) => !isDesiredWebhook(owned, desired),
   );
 
   for (const stale of staleFromBaseline) {
     const identity = toIdentity(stale);
     removeOperations.push({
-      before: stale,
+      before: identity,
       id: webhookOperationId("remove", identity),
       kind: "remove",
       label: `Unsubscribe webhook: ${getWebhookName(identity)}`,
@@ -126,7 +111,6 @@ export function planWebhookSubscriptions(
     plan: {
       operations: [...removeOperations, ...addOperations],
       path,
-      retainedWebhooks,
     },
   });
 }
