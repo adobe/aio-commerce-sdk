@@ -36,6 +36,7 @@ vi.mock("consola", () => ({
     debug: vi.fn(),
     error: vi.fn(),
     info: vi.fn(),
+    log: vi.fn(),
     start: vi.fn(),
     success: vi.fn(),
   },
