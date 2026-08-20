@@ -55,10 +55,9 @@ export async function applyAdminUi(
     await enableAdminUiSdk(context);
     const refreshed = await refreshExtension(context);
     // Refresh returns no id and there is no read endpoint, so carry the baseline's
-    // id forward. Persist a snapshot even with a null id: "refresh" means the block
-    // was present, so persisting nothing would misrepresent it as unregistered.
+    // id forward, persisting a snapshot only when there is an id to record.
     const extensionId = refreshed?.extensionId ?? plan.baselineExtensionId;
-    return { snapshotData: { extensionId } };
+    return { snapshotData: extensionId ? { extensionId } : null };
   }
 
   if (plan.extensionAction === "unregister") {
