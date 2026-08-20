@@ -211,29 +211,6 @@ describe("planAdminUi", () => {
     expect(plan.operations[0]?.kind).toBe("add");
   });
 
-  test("detects a change in the count of duplicate-id components (does not collapse them)", async () => {
-    const massAction = {
-      id: "export",
-      label: "Export",
-      runtimeAction: "orders/export",
-      type: "worker" as const,
-    };
-    const baselineDup = {
-      ...configWithAdminUiSingleGrid,
-      adminUi: { order: { massActions: [massAction, massAction] } },
-    } as AdminUiConfig;
-    const targetDup = {
-      ...configWithAdminUiSingleGrid,
-      adminUi: { order: { massActions: [massAction] } },
-    } as AdminUiConfig;
-
-    const { plan } = await planned(baselineDup, targetDup);
-
-    expect(plan.extensionAction).toBe("refresh");
-    expect(plan.operations).toHaveLength(1);
-    expect(plan.operations[0]?.kind).toBe("remove");
-  });
-
   test("blocks (does not throw) when work is planned but __OW_NAMESPACE is unavailable", async () => {
     vi.unstubAllEnvs();
     const context = createMockAdminUiContext({});

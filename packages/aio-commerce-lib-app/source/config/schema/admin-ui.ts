@@ -164,20 +164,36 @@ const OrderViewButtonSchema = v.variant("type", [
 
 // ─── Entity extension points ──────────────────────────────────────────────────
 
+const MassActionsSchema = v.pipe(
+  v.array(MassActionSchema),
+  v.check(
+    (items) => new Set(items.map((item) => item.id)).size === items.length,
+    "Mass action ids must be unique.",
+  ),
+);
+
 const AdminUiOrderSchema = v.object({
   gridColumns: v.optional(GridColumnsSchema),
-  massActions: v.optional(v.array(MassActionSchema)),
-  viewButtons: v.optional(v.array(OrderViewButtonSchema)),
+  massActions: v.optional(MassActionsSchema),
+  viewButtons: v.optional(
+    v.pipe(
+      v.array(OrderViewButtonSchema),
+      v.check(
+        (items) => new Set(items.map((item) => item.id)).size === items.length,
+        "Order view button ids must be unique.",
+      ),
+    ),
+  ),
 });
 
 const AdminUiProductSchema = v.object({
   gridColumns: v.optional(GridColumnsSchema),
-  massActions: v.optional(v.array(MassActionSchema)),
+  massActions: v.optional(MassActionsSchema),
 });
 
 const AdminUiCustomerSchema = v.object({
   gridColumns: v.optional(GridColumnsSchema),
-  massActions: v.optional(v.array(MassActionSchema)),
+  massActions: v.optional(MassActionsSchema),
 });
 
 const MenuIdSchema = v.pipe(

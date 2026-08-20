@@ -41,29 +41,10 @@ type AdminUiComponentDescriptor = {
 };
 
 /**
- * Returns `baseKey`, or `baseKey#N` (N starting at 2) when it is already taken.
- * The schema does not enforce unique mass-action/view-button ids, so array-based
- * components must not collapse onto a shared map key — otherwise a change in the
- * count of duplicate-id items would diff to a silent no-op.
- */
-function disambiguateKey(
-  components: Map<string, AdminUiComponentDescriptor>,
-  baseKey: string,
-): string {
-  if (!components.has(baseKey)) {
-    return baseKey;
-  }
-
-  let occurrence = 2;
-  while (components.has(`${baseKey}#${occurrence}`)) {
-    occurrence += 1;
-  }
-  return `${baseKey}#${occurrence}`;
-}
-
-/**
  * Enumerates the individual components declared in an `adminUi` block, keyed by a
  * stable identity so the baseline and target can be diffed component-by-component.
+ * Array-based components (mass actions, view buttons) key on their `id`, which the
+ * schema guarantees is unique within each array.
  */
 function enumerateComponents(
   adminUi: AdminUi,
@@ -96,10 +77,7 @@ function enumerateComponents(
     }
 
     for (const massAction of entityConfig.massActions ?? []) {
-      const key = disambiguateKey(
-        components,
-        `${entity}.mass-action.${massAction.id}`,
-      );
+      const key = `${entity}.mass-action.${massAction.id}`;
       components.set(key, {
         config: massAction,
         key,
@@ -110,10 +88,7 @@ function enumerateComponents(
   }
 
   for (const viewButton of adminUi.order?.viewButtons ?? []) {
-    const key = disambiguateKey(
-      components,
-      `order.view-button.${viewButton.id}`,
-    );
+    const key = `order.view-button.${viewButton.id}`;
     components.set(key, {
       config: viewButton,
       key,
@@ -238,11 +213,9 @@ export function planAdminUi(
 
   const operations = diffComponents(baselineComponents, targetComponents);
 
-  // The extension is registered in Commerce whenever the `adminUi` block is
-  // present (`registerExtensionStep.install` runs on `hasAdminUi`, even with zero
-  // components), so its lifecycle tracks block presence, not component count:
-  // an appearing block registers, a disappearing block unregisters, and a block
-  // present on both sides refreshes only when a component actually changed.
+  // The extension is registered whenever the `adminUi` block is present
+  // (`install` runs on `hasAdminUi`), so its lifecycle tracks block presence:
+  // appearing registers, disappearing unregisters, persisting refreshes on change.
   const baselineHasBlock = Boolean(baselineAdminUi);
   const targetHasBlock = Boolean(targetAdminUi);
 

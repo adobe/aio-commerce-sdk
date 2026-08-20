@@ -48,6 +48,45 @@ describe("hasAdminUi", () => {
   );
 });
 
+describe("AdminUiSchema unique ids", () => {
+  const massAction = {
+    id: "export",
+    label: "Export",
+    runtimeAction: "orders/export",
+    type: "worker" as const,
+  };
+  const viewButton = {
+    id: "reorder",
+    label: "Reorder",
+    runtimeAction: "orders/reorder",
+    type: "worker" as const,
+  };
+
+  test("rejects duplicate mass action ids on an entity", () => {
+    const result = v.safeParse(AdminUiSchema, {
+      order: { massActions: [massAction, massAction] },
+    });
+    expect(result.success).toBe(false);
+  });
+
+  test("rejects duplicate order view button ids", () => {
+    const result = v.safeParse(AdminUiSchema, {
+      order: { viewButtons: [viewButton, viewButton] },
+    });
+    expect(result.success).toBe(false);
+  });
+
+  test("accepts distinct ids within an array", () => {
+    const result = v.safeParse(AdminUiSchema, {
+      order: {
+        massActions: [massAction, { ...massAction, id: "import" }],
+        viewButtons: [viewButton, { ...viewButton, id: "cancel" }],
+      },
+    });
+    expect(result.success).toBe(true);
+  });
+});
+
 describe("AdminUiSchema", () => {
   describe("valid cases", () => {
     test("grid columns with all 6 column types", () => {
