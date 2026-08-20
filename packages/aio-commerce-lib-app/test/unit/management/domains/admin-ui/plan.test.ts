@@ -154,29 +154,18 @@ describe("planAdminUi", () => {
     expect(plan.operations).toEqual([]);
   });
 
-  test("registers or unregisters an adminUi block with no enumerable components, via a block-level operation", async () => {
-    // The schema allows an all-optional block, so `adminUi: {}` is valid yet
-    // enumerates to zero components. The block's presence still (un)registers
-    // the extension in Commerce, so this must not silently no-op — a dropped
-    // empty block would otherwise leak the registration forever, since no
-    // later plan would ever see a component change to catch it.
+  test("plans nothing for a component-less adminUi block (registers nothing)", async () => {
+    // A component-less `adminUi: {}` block registers nothing, so its
+    // appearance or removal is a no-op.
     const emptyAdminUi = configWithAdminUiEmptyBlock as AdminUiConfig;
 
     const added = await planned(null, emptyAdminUi);
-    expect(added.plan.extensionAction).toBe("register");
-    expect(added.plan.operations).toHaveLength(1);
-    expect(added.plan.operations[0]).toMatchObject({
-      id: "add:extension",
-      kind: "add",
-    });
+    expect(added.plan.extensionAction).toBeNull();
+    expect(added.plan.operations).toEqual([]);
 
     const dropped = await planned(emptyAdminUi, null);
-    expect(dropped.plan.extensionAction).toBe("unregister");
-    expect(dropped.plan.operations).toHaveLength(1);
-    expect(dropped.plan.operations[0]).toMatchObject({
-      id: "remove:extension",
-      kind: "remove",
-    });
+    expect(dropped.plan.extensionAction).toBeNull();
+    expect(dropped.plan.operations).toEqual([]);
   });
 
   test("plans nothing when the block is empty and unchanged on both sides", async () => {
@@ -187,10 +176,9 @@ describe("planAdminUi", () => {
     expect(plan.operations).toEqual([]);
   });
 
-  test("refreshes (does not re-register) when the baseline block was empty but present, and the target adds a component", async () => {
-    // An empty-but-present baseline block was still registered in Commerce
-    // (registerExtensionStep.install runs whenever adminUi is defined), so
-    // gaining a component there is a refresh, not a first-time register.
+  test("registers when a component-less baseline gains its first component", async () => {
+    // A component-less baseline registered nothing, so gaining a component is a
+    // first-time register, not a refresh.
     const emptyAdminUi = configWithAdminUiEmptyBlock as AdminUiConfig;
 
     const { plan } = await planned(
@@ -198,7 +186,7 @@ describe("planAdminUi", () => {
       configWithAdminUiSingleGrid as AdminUiConfig,
     );
 
-    expect(plan.extensionAction).toBe("refresh");
+    expect(plan.extensionAction).toBe("register");
     expect(plan.operations).toHaveLength(1);
     expect(plan.operations[0]?.kind).toBe("add");
   });

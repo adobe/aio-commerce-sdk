@@ -20,6 +20,7 @@ import {
 } from "#test/fixtures/admin-ui";
 import {
   configWithAdminUiAllGrids,
+  configWithAdminUiEmptyBlock,
   configWithAdminUiMenu,
   configWithFullAdminUiV2,
   configWithViewMassActions,
@@ -40,12 +41,15 @@ describe("hasAdminUi", () => {
     expect(hasAdminUi(config)).toBe(true);
   });
 
-  test.each([{ config: minimalValidConfig, label: "no adminUi property" }])(
-    "returns false when config has $label",
-    ({ config }) => {
-      expect(hasAdminUi(config)).toBe(false);
+  test.each([
+    { config: minimalValidConfig, label: "no adminUi property" },
+    {
+      config: configWithAdminUiEmptyBlock,
+      label: "a component-less adminUi block",
     },
-  );
+  ])("returns false when config has $label", ({ config }) => {
+    expect(hasAdminUi(config)).toBe(false);
+  });
 });
 
 describe("AdminUiSchema unique ids", () => {

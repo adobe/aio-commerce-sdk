@@ -309,10 +309,26 @@ export type AdminUiConfig<
 };
 
 /**
- * Check if config has Admin UI configuration.
+ * Check whether the config declares at least one Admin UI component (menu, grid
+ * columns, mass actions, or view buttons). A component-less `adminUi` block is
+ * treated as absent — it registers nothing.
  */
 export function hasAdminUi<T extends AnyCommerceAppConfig>(
   config: T,
 ): config is AdminUiConfig<T> {
-  return config.adminUi !== undefined;
+  const { adminUi } = config;
+  if (!adminUi) {
+    return false;
+  }
+
+  return Boolean(
+    adminUi.menu ||
+      adminUi.order?.gridColumns ||
+      adminUi.order?.massActions?.length ||
+      adminUi.order?.viewButtons?.length ||
+      adminUi.product?.gridColumns ||
+      adminUi.product?.massActions?.length ||
+      adminUi.customer?.gridColumns ||
+      adminUi.customer?.massActions?.length,
+  );
 }

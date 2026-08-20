@@ -162,29 +162,6 @@ function diffComponents(
   return operations;
 }
 
-/** Builds a block-level `add` or `remove` operation for the bare extension registration. */
-function buildExtensionOperation(
-  kind: "add" | "remove",
-): ResourceOperation<AdminUiOperationValue> {
-  const value: AdminUiOperationValue = { component: { kind: "extension" } };
-
-  if (kind === "add") {
-    return {
-      after: value,
-      id: "add:extension",
-      kind: "add",
-      label: "Register Admin UI extension",
-    };
-  }
-
-  return {
-    before: value,
-    id: "remove:extension",
-    kind: "remove",
-    label: "Unregister Admin UI extension",
-  };
-}
-
 /**
  * Plans the Admin UI extension transition by diffing the baseline and target
  * `adminUi` blocks component-by-component. Deterministic and free of network I/O
@@ -192,11 +169,10 @@ function buildExtensionOperation(
  * `blocked` result when work is planned but the extension identity cannot be
  * resolved (`__OW_NAMESPACE` unset).
  *
- * It emits one operation per component added in the target or removed from it,
- * or a single block-level operation when an empty `adminUi` block appears or
- * disappears. Component config changes are not diffed here. The single
+ * It emits one operation per component added in the target or removed from it;
+ * a component-less `adminUi` block is a no-op. The single
  * {@link AdminUiExtensionAction} on the plan tells `apply` which whole-extension
- * call converges all of those operations.
+ * call converges those operations.
  */
 export function planAdminUi(
   input: PlanningInput<AdminUiConfig, RegisterExtensionStepData>,
@@ -216,33 +192,19 @@ export function planAdminUi(
 
   const operations = diffComponents(baselineComponents, targetComponents);
 
-  // The extension is registered whenever the `adminUi` block is present
-  // (`install` runs on `hasAdminUi`), so its lifecycle tracks block presence:
-  // appearing registers, disappearing unregisters, persisting refreshes on change.
-  const baselineHasBlock = Boolean(baselineAdminUi);
-  const targetHasBlock = Boolean(targetAdminUi);
+  // Lifecycle tracks component presence: the first component registers, the last
+  // removal unregisters, and changes in between refresh. Each action carries its
+  // own component ops, so no synthetic block-level op is needed.
+  const hadComponents = baselineComponents.size > 0;
+  const hasComponents = targetComponents.size > 0;
 
   let extensionAction: AdminUiExtensionAction | null = null;
-  if (!baselineHasBlock && targetHasBlock) {
+  if (!hadComponents && hasComponents) {
     extensionAction = "register";
-  } else if (baselineHasBlock && !targetHasBlock) {
+  } else if (hadComponents && !hasComponents) {
     extensionAction = "unregister";
-  } else if (baselineHasBlock && targetHasBlock && operations.length > 0) {
+  } else if (hadComponents && hasComponents && operations.length > 0) {
     extensionAction = "refresh";
-  }
-
-  // The engine runs `apply` only for domains that report operations (execute.ts
-  // `hasPlannedOperations`). A register/unregister driven by an empty block has
-  // no component operation to carry it, so emit a block-level one.
-  if (
-    (extensionAction === "register" || extensionAction === "unregister") &&
-    operations.length === 0
-  ) {
-    operations.push(
-      buildExtensionOperation(
-        extensionAction === "register" ? "add" : "remove",
-      ),
-    );
   }
 
   // Any extension action needs the runtime identity at apply time, so if work is

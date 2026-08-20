@@ -18,13 +18,11 @@ export type AdminUiComponentEntity = Exclude<keyof AdminUi, "menu">;
 
 /**
  * The addressable kinds of Admin UI component an upgrade operation can target,
- * derived from the schema's component field names. `extension` targets the bare
- * registration itself (present whenever the `adminUi` block is), not a component.
+/**
+ * The addressable kinds of Admin UI component an upgrade operation can target,
+ * derived from the schema's component field names.
  */
-export type AdminUiComponentKind =
-  | "extension"
-  | "menu"
-  | keyof NonNullable<AdminUi["order"]>;
+export type AdminUiComponentKind = "menu" | keyof NonNullable<AdminUi["order"]>;
 
 /** Locates a single Admin UI component within the `adminUi` block. */
 export type AdminUiComponentRef = {
@@ -37,14 +35,10 @@ export type AdminUiComponentRef = {
   id?: string;
 };
 
-/**
- * The value an Admin UI operation carries: which component changed, and its
- * config. `config` is absent for the `extension` kind, which is the bare
- * registration and has no component config of its own.
- */
+/** The value an Admin UI operation carries: which component changed, and its config. */
 export type AdminUiOperationValue = {
   component: AdminUiComponentRef;
-  config?: AdminUiComponentConfig;
+  config: AdminUiComponentConfig;
 };
 
 /**
