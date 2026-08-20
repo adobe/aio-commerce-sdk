@@ -16,6 +16,7 @@ import { planAdminUi } from "#management/domains/admin-ui/plan";
 import { createMockAdminUiContext } from "#test/fixtures/admin-ui";
 import {
   configWithAdminUiAllGrids,
+  configWithAdminUiEmptyBlock,
   configWithAdminUiSingleGrid,
 } from "#test/fixtures/config";
 
@@ -159,10 +160,7 @@ describe("planAdminUi", () => {
     // the extension in Commerce, so this must not silently no-op — a dropped
     // empty block would otherwise leak the registration forever, since no
     // later plan would ever see a component change to catch it.
-    const emptyAdminUi = {
-      ...configWithAdminUiSingleGrid,
-      adminUi: {},
-    } as AdminUiConfig;
+    const emptyAdminUi = configWithAdminUiEmptyBlock as AdminUiConfig;
 
     const added = await planned(null, emptyAdminUi);
     expect(added.plan.extensionAction).toBe("register");
@@ -182,10 +180,7 @@ describe("planAdminUi", () => {
   });
 
   test("plans nothing when the block is empty and unchanged on both sides", async () => {
-    const emptyAdminUi = {
-      ...configWithAdminUiSingleGrid,
-      adminUi: {},
-    } as AdminUiConfig;
+    const emptyAdminUi = configWithAdminUiEmptyBlock as AdminUiConfig;
 
     const { plan } = await planned(emptyAdminUi, emptyAdminUi);
     expect(plan.extensionAction).toBeNull();
@@ -196,10 +191,7 @@ describe("planAdminUi", () => {
     // An empty-but-present baseline block was still registered in Commerce
     // (registerExtensionStep.install runs whenever adminUi is defined), so
     // gaining a component there is a refresh, not a first-time register.
-    const emptyAdminUi = {
-      ...configWithAdminUiSingleGrid,
-      adminUi: {},
-    } as AdminUiConfig;
+    const emptyAdminUi = configWithAdminUiEmptyBlock as AdminUiConfig;
 
     const { plan } = await planned(
       emptyAdminUi,
