@@ -110,21 +110,21 @@ export async function run() {
   const appConfig = await parseCommerceAppConfig();
   const { upgradeMode } = appConfig.metadata;
 
-  consola.start("Checking for app upgrades...");
+  consola.start("\nChecking for app upgrades...");
   const result = await invokeAction();
 
   if (isSkippedResult(result)) {
-    consola.info(`No upgrade was run: ${result.reason}.`);
+    consola.info(`No upgrade was run: ${result.reason}.\n`);
     return result;
   }
 
   if (upgradeMode === "manual") {
     consola.success(
-      `You have set ${colors.cyan("metadata.upgradeMode")} to ${colors.cyan("manual")}. The upgrade plan has been created but will not be executed.`,
+      `You have set ${colors.cyan("metadata.upgradeMode")} to ${colors.cyan("manual")}. The upgrade plan has been created but will not be executed.\n`,
     );
   } else {
     consola.success(
-      `You have set ${colors.cyan("metadata.upgradeMode")} to ${colors.cyan("auto")}. The upgrade plan has been created. Execution will begin shortly.`,
+      `You have set ${colors.cyan("metadata.upgradeMode")} to ${colors.cyan("auto")}. The upgrade plan has been created. Execution will begin shortly.\n`,
     );
   }
 
