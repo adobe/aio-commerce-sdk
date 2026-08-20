@@ -195,15 +195,15 @@ export function planAdminUi(
   // Lifecycle tracks component presence: the first component registers, the last
   // removal unregisters, and changes in between refresh. Each action carries its
   // own component ops, so no synthetic block-level op is needed.
-  const hadComponents = baselineComponents.size > 0;
-  const hasComponents = targetComponents.size > 0;
+  const baselineHasAdminUi = baselineComponents.size > 0;
+  const targetHasAdminUi = targetComponents.size > 0;
 
   let extensionAction: AdminUiExtensionAction | null = null;
-  if (!hadComponents && hasComponents) {
+  if (!baselineHasAdminUi && targetHasAdminUi) {
     extensionAction = "register";
-  } else if (hadComponents && !hasComponents) {
+  } else if (baselineHasAdminUi && !targetHasAdminUi) {
     extensionAction = "unregister";
-  } else if (hadComponents && hasComponents && operations.length > 0) {
+  } else if (baselineHasAdminUi && targetHasAdminUi && operations.length > 0) {
     extensionAction = "refresh";
   }
 
