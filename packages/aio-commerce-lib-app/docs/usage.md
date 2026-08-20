@@ -32,7 +32,7 @@ The `init` command will:
 
 - Create `app.commerce.config.*` with a template (prompts you to choose format and features if the file doesn't exist)
 - Install required dependencies (`@adobe/aio-commerce-lib-app`, `@adobe/aio-commerce-sdk`, and `@adobe/aio-commerce-lib-config` when business configuration is enabled)
-- For a TypeScript config, add missing `webpack-config.cjs` and root `tsconfig.json` files and install the required development dependencies
+- For a TypeScript config, add missing `webpack-config.cjs` and root `tsconfig.json` files and install `typescript`, `ts-loader`, `@tsconfig/bases`, and `@types/node` as development dependencies
 - For a TypeScript config, add or extend the `typecheck` package script to check generated actions and TypeScript Admin UI source
 - Add the `postinstall` hook to your `package.json`
 - Generate all required artifacts (`commerce/configuration/1` resources are only generated when `businessConfig` is defined in your config)

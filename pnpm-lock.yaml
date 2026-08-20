@@ -398,6 +398,9 @@ importers:
       '@tsconfig/bases':
         specifier: ^1.0.26
         version: 1.0.27
+      '@types/node':
+        specifier: ^24.12.0
+        version: 24.13.3
       camelcase:
         specifier: 'catalog:'
         version: 9.0.0
