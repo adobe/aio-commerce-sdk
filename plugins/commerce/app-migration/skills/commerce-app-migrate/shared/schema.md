@@ -21,9 +21,9 @@ interface AssembledMetadata {
 ```
 
 `"auto"` is the migration default. It lets the generated post-deploy hook call
-the desired-state `POST /installation` endpoint and execute a planned upgrade.
-Use `"manual"` only when the developer explicitly wants plans returned without
-starting execution.
+the desired-state `POST /installation` endpoint, execute a planned upgrade, and
+wait for its lifecycle result. Use `"manual"` only when the developer explicitly
+wants plans returned without starting execution.
 
 ---
 

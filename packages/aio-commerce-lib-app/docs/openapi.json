@@ -1224,7 +1224,7 @@
       "get": {
         "operationId": "getInstallationState",
         "summary": "Get Installation State",
-        "description": "Returns the current installation workflow state if an installation has been started.",
+        "description": "Returns the current installation workflow state. When `x-aio-commerce-installation-invocation-source` is `post-app-deploy`, returns the latest lifecycle attempt without its plan instead.",
         "parameters": [
           {
             "name": "x-gw-ims-org-id",
@@ -1234,11 +1234,21 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "x-aio-commerce-installation-invocation-source",
+            "in": "header",
+            "description": "Identifies the source of the request. When set to `post-app-deploy`, the latest lifecycle attempt is returned without its plan.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["post-app-deploy"]
+            }
           }
         ],
         "responses": {
           "200": {
-            "description": "The current installation workflow state.",
+            "description": "The current installation workflow state, or the latest lifecycle attempt without its plan for a post-deploy request.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1419,6 +1429,9 @@
                         "data",
                         "error"
                       ]
+                    },
+                    {
+                      "$ref": "#/components/schemas/LifecycleAttemptState"
                     }
                   ]
                 }
@@ -1426,7 +1439,7 @@
             }
           },
           "204": {
-            "description": "No installation workflow state has been stored yet."
+            "description": "No installation workflow state or lifecycle attempt has been stored yet."
           },
           "401": {
             "description": "You are not authorized to access this resource. Ensure the IMS token and the x-gw-ims-org-id header are correctly set and valid."
@@ -3125,6 +3138,139 @@
           }
         },
         "required": ["label", "description", "webhook"]
+      },
+      "LifecycleAttemptStateBase": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "operation": {
+            "type": "string",
+            "enum": ["install", "upgrade", "uninstall"]
+          },
+          "progress": {
+            "$ref": "#/components/schemas/StepStatus"
+          },
+          "startedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "executionDeadline": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "data": {
+            "anyOf": [
+              {
+                "type": "object",
+                "propertyNames": {
+                  "type": "string"
+                },
+                "additionalProperties": {}
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "operation",
+          "progress",
+          "startedAt",
+          "executionDeadline",
+          "data"
+        ]
+      },
+      "LifecycleAttemptState": {
+        "discriminator": {
+          "propertyName": "status"
+        },
+        "oneOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LifecycleAttemptStateBase"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "enum": ["pending", "in-progress"]
+                  }
+                },
+                "required": ["status"]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LifecycleAttemptStateBase"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "status": {
+                    "const": "succeeded"
+                  },
+                  "result": {
+                    "type": "object",
+                    "properties": {
+                      "snapshotId": {
+                        "type": "string"
+                      },
+                      "appVersion": {
+                        "type": "string"
+                      }
+                    },
+                    "required": ["snapshotId", "appVersion"]
+                  }
+                },
+                "required": ["status", "result"]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LifecycleAttemptStateBase"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "status": {
+                    "const": "failed"
+                  },
+                  "failure": {
+                    "type": "object",
+                    "properties": {
+                      "path": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "key": {
+                        "type": "string"
+                      },
+                      "message": {
+                        "type": "string"
+                      },
+                      "payload": {}
+                    },
+                    "required": ["path", "key"]
+                  }
+                },
+                "required": ["status", "failure"]
+              }
+            ]
+          }
+        ],
+        "title": "LifecycleAttemptState"
       },
       "StepStatus": {
         "type": "object",

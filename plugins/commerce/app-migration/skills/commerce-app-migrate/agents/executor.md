@@ -531,7 +531,8 @@ It also wires the `post-app-deploy` hook to the desired-state
 `POST /installation` endpoint. A first deployment installs when no baseline
 exists. Later deployments plan an upgrade from the stored baseline:
 
-- `metadata.upgradeMode: "auto"` starts the planned upgrade asynchronously.
+- `metadata.upgradeMode: "auto"` starts the planned upgrade and waits for its
+  lifecycle result.
 - `metadata.upgradeMode: "manual"` creates or reuses the plan and returns it
   without starting execution.
 

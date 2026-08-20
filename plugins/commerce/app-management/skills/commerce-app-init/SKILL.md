@@ -38,7 +38,7 @@ export default defineConfig({
     id: "my-commerce-app", // alphanumeric + hyphens only, max 100 chars
     displayName: "My Commerce App", // shown in App Management UI, max 50 chars
     description: "...", // max 255 chars
-    upgradeMode: "auto", // optional; "auto" (default) runs upgrades after deploy, "manual" returns plans without executing them
+    upgradeMode: "auto", // optional; "auto" (default) runs upgrades after deploy and waits for completion, "manual" returns plans without executing them
     version: "1.0.0", // Major.Minor.Patch only, no pre-release identifiers
   },
 });

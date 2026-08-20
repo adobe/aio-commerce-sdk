@@ -306,8 +306,8 @@ export default defineConfig({
 - `upgradeMode`: Use `"auto"` unless the developer explicitly asks to create
   upgrade plans without executing them. In `"auto"` mode, the generated post-deploy hook
   calls the desired-state `POST /installation` endpoint and starts a planned
-  upgrade. In `"manual"` mode, the same endpoint creates or reuses a plan and
-  returns it without starting execution.
+  upgrade, then waits for its lifecycle result. In `"manual"` mode, the same
+  endpoint creates or reuses a plan and returns it without starting execution.
 - `description`: Use `package.json` `description` if present.
   If the description exceeds 255 characters, do NOT truncate it mid-sentence.
   Instead, rewrite it: read the full description and compose a shorter one that

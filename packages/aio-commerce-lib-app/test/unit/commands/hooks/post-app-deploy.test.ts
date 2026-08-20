@@ -10,18 +10,25 @@
  * governing permissions and limitations under the License.
  */
 
+import { consola } from "consola";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
 const {
+  delayMock,
   fetchMock,
   getAioCliEnvMock,
   getAioProjectContextMock,
   getUserTokenMock,
 } = vi.hoisted(() => ({
+  delayMock: vi.fn(),
   fetchMock: vi.fn(),
   getAioCliEnvMock: vi.fn(),
   getAioProjectContextMock: vi.fn(),
   getUserTokenMock: vi.fn(),
+}));
+
+vi.mock("node:timers/promises", () => ({
+  setTimeout: delayMock,
 }));
 
 vi.mock("@aio-commerce-sdk/scripting-utils/aio", () => ({
@@ -46,8 +53,17 @@ vi.mock("consola/utils", () => ({
   colors: { cyan: (value: string) => value },
 }));
 
-import { exec, run } from "#commands/hooks/post-app-deploy";
-import { MINIMAL_PROJECT, withTempProject } from "#test/fixtures/project";
+import { exec, run } from "#commands/hooks/post-app-deploy/main";
+import { createMockConfig } from "#test/fixtures/config";
+import {
+  MINIMAL_PROJECT,
+  makeProjectFiles,
+  withTempProject,
+} from "#test/fixtures/project";
+
+const MANUAL_UPGRADE_PROJECT = makeProjectFiles(
+  createMockConfig({ metadata: { upgradeMode: "manual" } }),
+);
 
 const project = {
   id: "project-id",
@@ -75,16 +91,25 @@ describe("post-app-deploy hook", () => {
     });
     getAioCliEnvMock.mockReturnValue("prod");
     getUserTokenMock.mockResolvedValue("ims-token");
-    fetchMock.mockResolvedValue(
-      new Response(JSON.stringify({ plan: { id: "plan-1" } }), {
+    delayMock.mockResolvedValue(undefined);
+    fetchMock.mockImplementation(async (input: Request) => {
+      if (input.method === "GET") {
+        return new Response(null, { status: 204 });
+      }
+
+      return new Response(JSON.stringify({ plan: { id: "plan-1" } }), {
         status: 202,
-      }),
-    );
+      });
+    });
   });
 
   test("POSTs authenticated project context to the deployed upgrade endpoint", async () => {
     let capturedRequest: Request | undefined;
     fetchMock.mockImplementation(async (input: Request) => {
+      if (input.method === "GET") {
+        return new Response(null, { status: 204 });
+      }
+
       capturedRequest = input.clone();
       return new Response(JSON.stringify({ plan: { id: "plan-1" } }), {
         status: 202,
@@ -95,7 +120,7 @@ describe("post-app-deploy hook", () => {
       await expect(run()).resolves.toEqual({ plan: { id: "plan-1" } });
     });
 
-    expect(fetchMock).toHaveBeenCalledOnce();
+    expect(fetchMock).toHaveBeenCalledTimes(2);
     const request = capturedRequest as Request;
     expect(request.url).toBe(
       "https://runtime-namespace.adobeioruntime.net/api/v1/web/app-management/installation",
@@ -121,6 +146,116 @@ describe("post-app-deploy hook", () => {
       },
       ioEventsEnv: "prod",
       ioEventsUrl: "https://events.adobe.io",
+    });
+  });
+
+  test("polls an automatic upgrade until it succeeds", async () => {
+    fetchMock
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ plan: { id: "plan-1" } }), {
+          status: 202,
+        }),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            id: "attempt-1",
+            status: "pending",
+          }),
+          { status: 200 },
+        ),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            id: "attempt-1",
+            status: "in-progress",
+          }),
+          { status: 200 },
+        ),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            id: "attempt-1",
+            status: "succeeded",
+          }),
+          { status: 200 },
+        ),
+      );
+
+    await withTempProject(MINIMAL_PROJECT, async () => {
+      await expect(run()).resolves.toEqual({ plan: { id: "plan-1" } });
+    });
+
+    expect(fetchMock).toHaveBeenCalledTimes(4);
+    const statusRequest = fetchMock.mock.calls.at(1)?.at(0) as Request;
+    expect(statusRequest.method).toBe("GET");
+    expect(
+      statusRequest.headers.get(
+        "x-aio-commerce-installation-invocation-source",
+      ),
+    ).toBe("post-app-deploy");
+    expect(consola.start).toHaveBeenCalledTimes(3);
+    expect(consola.start).toHaveBeenNthCalledWith(
+      2,
+      "App upgrade is in progress...",
+    );
+    expect(consola.start).toHaveBeenNthCalledWith(
+      3,
+      "App upgrade is in progress...",
+    );
+    expect(delayMock).toHaveBeenCalledTimes(2);
+    expect(delayMock).toHaveBeenCalledWith(1000);
+  });
+
+  test("reports an automatic upgrade failure", async () => {
+    fetchMock
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ plan: { id: "plan-1" } }), {
+          status: 202,
+        }),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            failure: {
+              key: "WEBHOOK_RECONCILIATION_FAILED",
+              message: "Webhook reconciliation failed",
+            },
+            id: "attempt-1",
+            status: "failed",
+          }),
+          { status: 200 },
+        ),
+      );
+
+    await withTempProject(MINIMAL_PROJECT, async () => {
+      await expect(run()).rejects.toThrow(
+        "App upgrade failed: Webhook reconciliation failed",
+      );
+    });
+  });
+
+  test("does not poll a manual upgrade", async () => {
+    await withTempProject(MANUAL_UPGRADE_PROJECT, async () => {
+      await expect(run()).resolves.toEqual({ plan: { id: "plan-1" } });
+    });
+
+    expect(fetchMock).toHaveBeenCalledOnce();
+  });
+
+  test("ignores an unavailable upgrade status endpoint", async () => {
+    fetchMock
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ plan: { id: "plan-1" } }), {
+          status: 202,
+        }),
+      )
+      .mockRejectedValueOnce(new Error("Status endpoint is unavailable"));
+
+    await withTempProject(MINIMAL_PROJECT, async () => {
+      await expect(run()).resolves.toEqual({ plan: { id: "plan-1" } });
     });
   });
 

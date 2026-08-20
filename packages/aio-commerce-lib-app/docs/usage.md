@@ -952,7 +952,7 @@ The endpoint derives the operation and returns it as `operation` (`"install"` or
 
 The generated `commerce/extensibility/1` extension wires a `post-app-deploy` hook automatically (alongside `pre-app-build`). After every `aio app deploy`, the hook triggers the desired-state reconciliation, so a redeploy of an installed app runs an upgrade check without any manual step:
 
-- In `auto` mode it reports that execution has started and prints the plan.
+- In `auto` mode it prints the plan and waits for the execution result when progress is available.
 - In `manual` mode it reports that a plan was created but was not executed.
 
 #### No-op Upgrade States

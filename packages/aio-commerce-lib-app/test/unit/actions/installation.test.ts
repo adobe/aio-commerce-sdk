@@ -95,6 +95,7 @@ import {
   DEFAULT_INSTALLATION_PARAMS,
 } from "#test/fixtures/installation";
 import {
+  createMockLifecycleAttempt,
   createMockLifecycleStore,
   createMockOrchestrationState,
 } from "#test/fixtures/lifecycle";
@@ -237,6 +238,81 @@ describe("installationRuntimeAction", () => {
 
       expect(result).toMatchObject({
         statusCode: 204,
+        type: "success",
+      });
+    });
+
+    test("returns 204 when there is no upgrade state for post-app-deploy", async () => {
+      const handler = installationRuntimeAction({
+        appConfig: minimalValidConfig,
+      });
+
+      const result = await handler(
+        createRuntimeActionParams({ headers: POST_APP_DEPLOY_HEADERS }),
+      );
+
+      expect(result).toMatchObject({
+        statusCode: 204,
+        type: "success",
+      });
+    });
+
+    test("returns the latest upgrade attempt without its plan for post-app-deploy", async () => {
+      const attempt = createMockLifecycleAttempt({
+        id: "attempt-1",
+        status: "in-progress",
+      });
+      orchestrationStateStore = createMockLifecycleStore({
+        initial: createMockOrchestrationState({ latestAttempt: attempt }),
+      });
+      const handler = installationRuntimeAction({
+        appConfig: minimalValidConfig,
+      });
+
+      const result = await handler(
+        createRuntimeActionParams({ headers: POST_APP_DEPLOY_HEADERS }),
+      );
+      const { plan: _plan, ...expectedState } = attempt;
+
+      expect(result).toMatchObject({
+        body: expectedState,
+        statusCode: 200,
+        type: "success",
+      });
+      expect(result).not.toMatchObject({
+        body: { plan: expect.anything() },
+      });
+    });
+
+    test("returns an upgrade failure for post-app-deploy", async () => {
+      const attempt = createMockLifecycleAttempt({
+        failure: {
+          key: "WEBHOOK_RECONCILIATION_FAILED",
+          message: "Webhook reconciliation failed",
+          path: ["installation", "webhooks"],
+        },
+        status: "failed",
+      });
+      orchestrationStateStore = createMockLifecycleStore({
+        initial: createMockOrchestrationState({ latestAttempt: attempt }),
+      });
+      const handler = installationRuntimeAction({
+        appConfig: minimalValidConfig,
+      });
+
+      const result = await handler(
+        createRuntimeActionParams({ headers: POST_APP_DEPLOY_HEADERS }),
+      );
+
+      expect(result).toMatchObject({
+        body: {
+          failure: {
+            key: "WEBHOOK_RECONCILIATION_FAILED",
+            message: "Webhook reconciliation failed",
+          },
+          status: "failed",
+        },
+        statusCode: 200,
         type: "success",
       });
     });

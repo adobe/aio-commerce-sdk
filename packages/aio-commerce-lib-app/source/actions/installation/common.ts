@@ -55,6 +55,16 @@ export function getInstallationInvocationSource(
   return getHeader(headers, INSTALLATION_INVOCATION_SOURCE_HEADER);
 }
 
+/** Returns whether the request originated from the generated post-deploy hook. */
+export function isPostAppDeployInvocation(
+  headers: Record<string, string | undefined>,
+) {
+  return (
+    getInstallationInvocationSource(headers) ===
+    POST_APP_DEPLOY_INVOCATION_SOURCE
+  );
+}
+
 /** Loads generated custom installation script modules. */
 export type CustomScriptsLoader = (
   config: CommerceAppConfigOutputModel,
