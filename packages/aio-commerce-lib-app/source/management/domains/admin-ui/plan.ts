@@ -40,6 +40,9 @@ type AdminUiComponentDescriptor = {
   label: string;
 };
 
+/** Entities that can carry Admin UI components, in a stable diff order. */
+const ADMIN_UI_ENTITIES = ["order", "product", "customer"] as const;
+
 /**
  * Enumerates the individual components declared in an `adminUi` block, keyed by a
  * stable identity so the baseline and target can be diffed component-by-component.
@@ -60,7 +63,7 @@ function enumerateComponents(
     });
   }
 
-  for (const entity of ["order", "product", "customer"] as const) {
+  for (const entity of ADMIN_UI_ENTITIES) {
     const entityConfig = adminUi[entity];
     if (!entityConfig) {
       continue;
