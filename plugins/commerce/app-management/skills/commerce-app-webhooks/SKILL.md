@@ -50,7 +50,8 @@ Apply the following validation rules before writing. Surface any issues to the u
 | `webhook.url`              | Must be a valid absolute URL (`https://...`); mutually exclusive with `runtimeAction` |
 | `label`                    | Required, non-empty                                                                   |
 | `description`              | Required, non-empty                                                                   |
-| `method`                   | Required HTTP method (e.g., `POST`)                                                   |
+| `webhook_type`             | Required; must be `before` or `after`                                                 |
+| `method`                   | Required; must be `POST`, `PUT`, `DELETE`, or `GET`                                   |
 | `timeout` / `soft_timeout` | Optional; positive integer (milliseconds)                                             |
 | `priority` / `batch_order` | Optional; positive integer                                                            |
 

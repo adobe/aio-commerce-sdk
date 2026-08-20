@@ -396,6 +396,8 @@ webhooks: [
 ];
 ```
 
+`webhook_type` must be either `"before"` or `"after"`, and `method` must be `"POST"`, `"PUT"`, `"DELETE"`, or `"GET"`. Other values are rejected before any Commerce changes are applied.
+
 Each webhook entry supports:
 
 - **label**: Display name for the webhook.

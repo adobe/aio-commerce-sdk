@@ -50,7 +50,7 @@ const DEFAULT_RESOLVED_IDENTITY = {
   batch_name: "test_app_webhooks_default",
   hook_name: "test_app_webhooks_order_created",
   webhook_method: "plugin.order.api.order_created",
-  webhook_type: "after",
+  webhook_type: "after" as const,
 };
 
 /** Resolved URL of configWithWebhooks' default (runtimeAction-based) entry, given the stubbed namespace. */

@@ -50,6 +50,20 @@ const CategorySchema = v.picklist(
   `Webhook category must be one of: ${CATEGORIES.join(", ")}`,
 );
 
+/** Valid Commerce webhook execution phases. */
+const WEBHOOK_TYPES = ["before", "after"] as const;
+const WebhookTypeSchema = v.picklist(
+  WEBHOOK_TYPES,
+  `Webhook type must be one of: ${WEBHOOK_TYPES.join(", ")}`,
+);
+
+/** Supported HTTP methods for Commerce webhook requests. */
+const WEBHOOK_HTTP_METHODS = ["POST", "PUT", "DELETE", "GET"] as const;
+const WebhookHttpMethodSchema = v.picklist(
+  WEBHOOK_HTTP_METHODS,
+  `Webhook HTTP method must be one of: ${WEBHOOK_HTTP_METHODS.join(", ")}`,
+);
+
 /** Schema for the nested webhook payload without url — used when runtimeAction resolves the URL at runtime. */
 const WebhookDefinitionBaseSchema = v.object({
   batch_name: v.pipe(
@@ -76,7 +90,7 @@ const WebhookDefinitionBaseSchema = v.object({
       "hook_name must contain only letters, numbers, and underscores",
     ),
   ),
-  method: nonEmptyStringValueSchema("HTTP method"),
+  method: WebhookHttpMethodSchema,
   priority: v.optional(positiveNumberValueSchema("priority")),
   required: v.optional(booleanValueSchema("required")),
   rules: v.optional(
@@ -86,7 +100,7 @@ const WebhookDefinitionBaseSchema = v.object({
   timeout: v.optional(positiveNumberValueSchema("timeout")),
   ttl: v.optional(positiveNumberValueSchema("ttl")),
   webhook_method: nonEmptyStringValueSchema("webhook_method"),
-  webhook_type: nonEmptyStringValueSchema("webhook_type"),
+  webhook_type: WebhookTypeSchema,
 });
 
 /** Schema for the nested webhook payload with a required url. */

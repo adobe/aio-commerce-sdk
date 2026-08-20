@@ -46,7 +46,7 @@ const DEFAULT_RESOLVED_IDENTITY = {
   batch_name: "test_app_webhooks_default",
   hook_name: "test_app_webhooks_order_created",
   webhook_method: "plugin.order.api.order_created",
-  webhook_type: "after",
+  webhook_type: "after" as const,
 };
 describe("applyWebhookSubscriptions", () => {
   beforeEach(() => {
@@ -218,7 +218,7 @@ describe("applyWebhookSubscriptions", () => {
               batch_name: "products",
               hook_name: "validate",
               webhook_method: addWebhook.webhook_method,
-              webhook_type: addWebhook.webhook_type,
+              webhook_type: "after",
             },
           }),
         ],
