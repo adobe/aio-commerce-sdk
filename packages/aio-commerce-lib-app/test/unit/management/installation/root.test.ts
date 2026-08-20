@@ -12,6 +12,7 @@
 
 import { describe, expect, test } from "vitest";
 
+import { createInitialPlanExecutionState } from "#management/common/workflow/execute";
 import { isBranchStep } from "#management/common/workflow/step";
 import { adminUiStep } from "#management/domains/admin-ui/branch";
 import { eventingStep } from "#management/domains/events/branch";
@@ -22,8 +23,10 @@ import {
 } from "#management/installation/root";
 import {
   configWithCustomInstallationSteps,
+  configWithWebhooks,
   minimalValidConfig,
 } from "#test/fixtures/config";
+import { createMockLifecyclePlan } from "#test/fixtures/lifecycle";
 
 describe("createRootInstallationStep", () => {
   test("should create installation step with default children", () => {
@@ -57,6 +60,42 @@ describe("createRootInstallationStep", () => {
       "Demo Success",
     );
     expect(customInstallationStep.children[0].type).toBe("leaf");
+  });
+
+  test("creates upgrade progress for a planned webhook operation", () => {
+    const rootStep = createRootInstallationStep(configWithWebhooks);
+    const plan = createMockLifecyclePlan({
+      domains: [
+        {
+          operations: [
+            {
+              after: {},
+              id: "webhook-add",
+              kind: "add",
+              label: "Add webhook",
+            },
+          ],
+          path: ["installation", "webhooks", "subscriptions"],
+        },
+      ],
+      target: {
+        appVersion: configWithWebhooks.metadata.version,
+        config: configWithWebhooks,
+      },
+    });
+
+    const state = createInitialPlanExecutionState({
+      plan,
+      rootStep,
+      targetConfig: configWithWebhooks,
+    });
+
+    const [webhooksStatus] = state.step.children;
+    expect.assert(webhooksStatus, "Expected webhook upgrade progress");
+    expect(webhooksStatus.meta).toEqual(webhooksStep.meta.upgrade);
+    expect(webhooksStatus.children.at(0)?.meta).toEqual(
+      webhooksStep.children.at(0)?.meta.upgrade,
+    );
   });
 });
 
