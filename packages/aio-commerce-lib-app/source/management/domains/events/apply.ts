@@ -586,18 +586,20 @@ async function reconcileChangedSubscriptions(
       continue;
     }
 
+    const subscription = {
+      fields: event.fields,
+      hipaa_audit_required: event.hipaa_audit_required,
+      name,
+      parent: event.name,
+      priority: event.priority,
+      provider_id: providerId,
+      rules: event.rules,
+    };
+
     try {
       if (changeMode === "in-place") {
         // biome-ignore lint/performance/noAwaitInLoops: subscriptions are updated sequentially to avoid a Commerce rate-limit burst
-        await commerceEventsClient.updateEventSubscription({
-          fields: event.fields,
-          hipaa_audit_required: event.hipaa_audit_required,
-          name,
-          parent: event.name,
-          priority: event.priority,
-          provider_id: providerId,
-          rules: event.rules,
-        });
+        await commerceEventsClient.updateEventSubscription(subscription);
         logger.info(`Updated Commerce event subscription "${name}" in place.`);
       } else {
         // The merge-update endpoint cannot remove or re-key fields/rules, so re-subscribe. The
@@ -605,15 +607,9 @@ async function reconcileChangedSubscriptions(
         // re-links by event code and is left untouched.
         await commerceEventsClient.deleteEventSubscription({ name });
         await commerceEventsClient.createEventSubscription({
+          ...subscription,
           destination: event.destination,
-          fields: event.fields,
           force: event.force,
-          hipaa_audit_required: event.hipaa_audit_required,
-          name,
-          parent: event.name,
-          priority: event.priority,
-          provider_id: providerId,
-          rules: event.rules,
         });
         logger.info(`Recreated Commerce event subscription "${name}".`);
       }
