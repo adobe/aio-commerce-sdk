@@ -375,6 +375,12 @@ export const configWithAdminUiSingleGrid = {
   metadata: { ...mockMetadata, id: "test-app-admin-ui-single-grid" },
 } satisfies CommerceAppConfigOutputModel;
 
+/** Config fixture whose `adminUi` block is present but has no components (all fields optional). */
+export const configWithAdminUiEmptyBlock = {
+  ...configWithAdminUiSingleGrid,
+  adminUi: {},
+} satisfies CommerceAppConfigOutputModel;
+
 /** Config fixture with grid columns configured for all three entities (order, product, customer). */
 export const configWithAdminUiAllGrids = {
   adminUi: {
