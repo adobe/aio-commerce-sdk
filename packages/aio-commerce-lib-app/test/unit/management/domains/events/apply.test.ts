@@ -28,7 +28,6 @@ import {
 import {
   COMMERCE_PROVIDER_TYPE,
   EXTERNAL_PROVIDER_TYPE,
-  generateInstanceId,
   getIoEventCode,
   getNamespacedEvent,
   getRegistrationName,
@@ -36,11 +35,12 @@ import {
 import { configWithCommerceEventing } from "#test/fixtures/config";
 import {
   createMockCommerceEventsConfig as commerceConfig,
+  createMockDeployedIoProvider,
+  createMockDeployedRegistration,
   createMockEventingInstallationContext,
-  createMockIoEventProvider,
-  createMockIoEventRegistration,
   createMockAppEvent as event,
   createMockExternalEventsConfig as externalConfig,
+  createMockIoEventsListClient as ioEventsClient,
 } from "#test/fixtures/eventing";
 
 import type {
@@ -67,49 +67,6 @@ function httpError(status: number) {
     new Request("https://example.test"),
     {} as never,
   );
-}
-
-/**
- * Builds a live I/O Events provider entry whose `instance_id` matches the given config
- * provider, so `resolveDeployedProvider` can find it during reconciliation.
- */
-function liveProvider(prov: { label: string; key?: string }, id: string) {
-  return {
-    ...createMockIoEventProvider({
-      id,
-      instance_id: generateInstanceId(
-        metadata,
-        prov as EventProvider,
-        "test-workspace-id",
-      ),
-      label: prov.label,
-      provider_metadata: "dx_commerce_events",
-    }),
-    _embedded: { eventmetadata: [] },
-  };
-}
-
-/** A mock io-events client whose list endpoints return the given (defaulted-empty) HAL payloads. */
-function ioEventsClient(options?: {
-  providers?: unknown[];
-  registrations?: unknown[];
-  updateRegistration?: (...args: unknown[]) => unknown;
-  createRegistration?: (...args: unknown[]) => unknown;
-  deleteRegistration?: (...args: unknown[]) => unknown;
-  deleteEventMetadataForProvider?: (...args: unknown[]) => unknown;
-}) {
-  return {
-    createRegistration: options?.createRegistration,
-    deleteEventMetadataForProvider: options?.deleteEventMetadataForProvider,
-    deleteRegistration: options?.deleteRegistration,
-    getAllEventProviders: () =>
-      Promise.resolve({ _embedded: { providers: options?.providers ?? [] } }),
-    getAllRegistrations: () =>
-      Promise.resolve({
-        _embedded: { registrations: options?.registrations ?? [] },
-      }),
-    updateRegistration: options?.updateRegistration ?? vi.fn(),
-  };
 }
 
 async function planCommerce(
@@ -155,7 +112,12 @@ describe("applyCommerceEvents", () => {
       .mockResolvedValue([]);
     const context = createMockEventingInstallationContext({
       ioEventsClient: ioEventsClient({
-        providers: [liveProvider({ label: "P1" }, "prov-1")],
+        providers: [
+          createMockDeployedIoProvider({
+            id: "prov-1",
+            provider: { label: "P1" },
+          }),
+        ],
       }) as never,
     });
 
@@ -201,7 +163,12 @@ describe("applyCommerceEvents", () => {
       .mockResolvedValue(undefined);
     const context = createMockEventingInstallationContext({
       ioEventsClient: ioEventsClient({
-        providers: [liveProvider({ label: "P1" }, "prov-1")],
+        providers: [
+          createMockDeployedIoProvider({
+            id: "prov-1",
+            provider: { label: "P1" },
+          }),
+        ],
       }) as never,
     });
 
@@ -232,31 +199,18 @@ describe("applyCommerceEvents", () => {
       key: "k1",
       label: "P1",
     };
-    const instanceId = generateInstanceId(
-      metadata,
+    const providerData = createMockDeployedIoProvider({
+      id: "prov-1",
       provider,
-      "test-workspace-id",
-    );
-    const providerData = {
-      ...createMockIoEventProvider({
-        id: "prov-1",
-        instance_id: instanceId,
-        label: "P1",
-        provider_metadata: "dx_commerce_events",
-      }),
-    };
+    });
     const registrationName = getRegistrationName(providerData, "pkg/a");
     const updateRegistration = vi.fn().mockResolvedValue(undefined);
 
     const context = createMockEventingInstallationContext({
       ioEventsClient: ioEventsClient({
-        providers: [{ ...providerData, _embedded: { eventmetadata: [] } }],
+        providers: [providerData],
         registrations: [
-          createMockIoEventRegistration({
-            client_id: "test-client-id",
-            name: registrationName,
-            registration_id: "reg-1",
-          }),
+          createMockDeployedRegistration(registrationName, "reg-1"),
         ],
         updateRegistration,
       }) as never,
@@ -290,29 +244,18 @@ describe("applyCommerceEvents", () => {
       key: "k1",
       label: "P1",
     };
-    const instanceId = generateInstanceId(
-      metadata,
-      provider,
-      "test-workspace-id",
-    );
-    const providerData = createMockIoEventProvider({
+    const providerData = createMockDeployedIoProvider({
       id: "prov-1",
-      instance_id: instanceId,
-      label: "P1",
-      provider_metadata: "dx_commerce_events",
+      provider,
     });
     const registrationName = getRegistrationName(providerData, "pkg/a");
     const updateRegistration = vi.fn().mockResolvedValue(undefined);
 
     const context = createMockEventingInstallationContext({
       ioEventsClient: ioEventsClient({
-        providers: [{ ...providerData, _embedded: { eventmetadata: [] } }],
+        providers: [providerData],
         registrations: [
-          createMockIoEventRegistration({
-            client_id: "test-client-id",
-            name: registrationName,
-            registration_id: "reg-1",
-          }),
+          createMockDeployedRegistration(registrationName, "reg-1"),
         ],
         updateRegistration,
       }) as never,
@@ -368,28 +311,17 @@ describe("applyCommerceEvents", () => {
       key: "k1",
       label: "P1",
     };
-    const instanceId = generateInstanceId(
-      metadata,
-      provider,
-      "test-workspace-id",
-    );
-    const providerData = createMockIoEventProvider({
+    const providerData = createMockDeployedIoProvider({
       id: "prov-1",
-      instance_id: instanceId,
-      label: "P1",
-      provider_metadata: "dx_commerce_events",
+      provider,
     });
     const droppedRegistrationName = getRegistrationName(providerData, "pkg/b");
 
     const context = createMockEventingInstallationContext({
       ioEventsClient: ioEventsClient({
-        providers: [{ ...providerData, _embedded: { eventmetadata: [] } }],
+        providers: [providerData],
         registrations: [
-          createMockIoEventRegistration({
-            client_id: "test-client-id",
-            name: droppedRegistrationName,
-            registration_id: "reg-b",
-          }),
+          createMockDeployedRegistration(droppedRegistrationName, "reg-b"),
         ],
       }) as never,
       params: { AIO_COMMERCE_AUTH_IMS_CLIENT_ID: "test-client-id" },
@@ -433,25 +365,10 @@ describe("applyCommerceEvents", () => {
     };
 
     function providerData() {
-      return createMockIoEventProvider({
-        id: "prov-1",
-        instance_id: generateInstanceId(
-          metadata,
-          provider,
-          "test-workspace-id",
-        ),
-        label: "P1",
-        provider_metadata: "dx_commerce_events",
-      });
+      return createMockDeployedIoProvider({ id: "prov-1", provider });
     }
 
-    function registration(name: string, registrationId: string) {
-      return createMockIoEventRegistration({
-        client_id: "test-client-id",
-        name,
-        registration_id: registrationId,
-      });
-    }
+    const registration = createMockDeployedRegistration;
 
     test("fails the apply when updating a registration's event set errors", async () => {
       vi.spyOn(commerceEventsStep, "install").mockResolvedValue([]);
@@ -459,7 +376,7 @@ describe("applyCommerceEvents", () => {
 
       const context = createMockEventingInstallationContext({
         ioEventsClient: ioEventsClient({
-          providers: [{ ...data, _embedded: { eventmetadata: [] } }],
+          providers: [data],
           registrations: [
             registration(getRegistrationName(data, "pkg/a"), "reg-1"),
           ],
@@ -489,7 +406,7 @@ describe("applyCommerceEvents", () => {
       const context = createMockEventingInstallationContext({
         ioEventsClient: ioEventsClient({
           createRegistration,
-          providers: [{ ...data, _embedded: { eventmetadata: [] } }],
+          providers: [data],
           registrations: [],
         }) as never,
         params: { AIO_COMMERCE_AUTH_IMS_CLIENT_ID: "test-client-id" },
@@ -524,7 +441,7 @@ describe("applyCommerceEvents", () => {
       const context = createMockEventingInstallationContext({
         ioEventsClient: ioEventsClient({
           createRegistration: () => Promise.reject(httpError(500)),
-          providers: [{ ...data, _embedded: { eventmetadata: [] } }],
+          providers: [data],
           registrations: [],
         }) as never,
         params: { AIO_COMMERCE_AUTH_IMS_CLIENT_ID: "test-client-id" },
@@ -549,7 +466,7 @@ describe("applyCommerceEvents", () => {
       const context = createMockEventingInstallationContext({
         ioEventsClient: ioEventsClient({
           deleteRegistration: () => Promise.reject(httpError(500)),
-          providers: [{ ...data, _embedded: { eventmetadata: [] } }],
+          providers: [data],
           registrations: [
             registration(getRegistrationName(data, "pkg/b"), "reg-b"),
           ],
@@ -579,7 +496,7 @@ describe("applyCommerceEvents", () => {
           deleteEventSubscription: () => Promise.reject(httpError(500)),
         },
         ioEventsClient: ioEventsClient({
-          providers: [{ ...data, _embedded: { eventmetadata: [] } }],
+          providers: [data],
           registrations: [
             registration(getRegistrationName(data, "pkg/a"), "reg-1"),
           ],
@@ -609,7 +526,7 @@ describe("applyCommerceEvents", () => {
           deleteEventSubscription: () => Promise.reject(httpError(404)),
         },
         ioEventsClient: ioEventsClient({
-          providers: [{ ...data, _embedded: { eventmetadata: [] } }],
+          providers: [data],
           registrations: [
             registration(getRegistrationName(data, "pkg/a"), "reg-1"),
           ],
@@ -642,7 +559,7 @@ describe("applyCommerceEvents", () => {
       const context = createMockEventingInstallationContext({
         ioEventsClient: ioEventsClient({
           deleteEventMetadataForProvider: () => Promise.reject(httpError(404)),
-          providers: [{ ...data, _embedded: { eventmetadata: [] } }],
+          providers: [data],
           registrations: [
             registration(getRegistrationName(data, "pkg/a"), "reg-1"),
           ],
@@ -675,7 +592,7 @@ describe("applyCommerceEvents", () => {
       const context = createMockEventingInstallationContext({
         ioEventsClient: ioEventsClient({
           deleteEventMetadataForProvider: () => Promise.reject(httpError(500)),
-          providers: [{ ...data, _embedded: { eventmetadata: [] } }],
+          providers: [data],
           registrations: [
             registration(getRegistrationName(data, "pkg/a"), "reg-1"),
           ],
@@ -707,7 +624,7 @@ describe("applyCommerceEvents", () => {
 
       const context = createMockEventingInstallationContext({
         ioEventsClient: ioEventsClient({
-          providers: [{ ...data, _embedded: { eventmetadata: [] } }],
+          providers: [data],
           registrations: [
             registration(getRegistrationName(data, "pkg/a"), "reg-1"),
           ],
@@ -760,6 +677,242 @@ describe("applyCommerceEvents", () => {
         applyCommerceEvents(plan, context as ApplyContext<EventsStepContext>),
       ).rejects.toThrow("Could not resolve deployed provider");
     });
+  });
+
+  /** Builds a context whose deployed provider resolves to `prov-1` for a persisting provider. */
+  function persistingProviderContext(
+    provider: EventProvider,
+    overrides?: {
+      commerceEventsClient?: Record<string, unknown>;
+    },
+  ) {
+    const providerData = createMockDeployedIoProvider({
+      id: "prov-1",
+      provider,
+    });
+    const registrationName = getRegistrationName(providerData, "pkg/a");
+
+    return createMockEventingInstallationContext({
+      commerceEventsClient: overrides?.commerceEventsClient as never,
+      ioEventsClient: ioEventsClient({
+        providers: [providerData],
+        registrations: [
+          createMockDeployedRegistration(registrationName, "reg-1"),
+        ],
+      }) as never,
+      params: { AIO_COMMERCE_AUTH_IMS_CLIENT_ID: "test-client-id" },
+    });
+  }
+
+  test("updates a persisting subscription in place for an additive config change", async () => {
+    vi.spyOn(commerceEventsStep, "install").mockResolvedValue([]);
+    const provider: EventProvider = {
+      description: "P1",
+      key: "k1",
+      label: "P1",
+    };
+    const context = persistingProviderContext(provider);
+
+    const plan = await planCommerce(
+      commerceConfig([
+        {
+          events: [{ ...event("a", ["pkg/a"]), fields: [{ name: "field_a" }] }],
+          provider,
+        },
+      ]),
+      commerceConfig([
+        {
+          events: [
+            {
+              ...event("a", ["pkg/a"]),
+              fields: [{ name: "field_a" }, { name: "field_b" }],
+            },
+          ],
+          provider,
+        },
+      ]),
+    );
+
+    await applyCommerceEvents(plan, context as ApplyContext<EventsStepContext>);
+
+    const name = getNamespacedEvent(metadata, "a");
+    expect(
+      context.commerceEventsClient.updateEventSubscription,
+    ).toHaveBeenCalledTimes(1);
+    expect(
+      context.commerceEventsClient.updateEventSubscription,
+    ).toHaveBeenCalledWith(
+      expect.objectContaining({
+        fields: [{ name: "field_a" }, { name: "field_b" }],
+        name,
+        provider_id: "prov-1",
+      }),
+    );
+    expect(
+      context.commerceEventsClient.deleteEventSubscription,
+    ).not.toHaveBeenCalled();
+  });
+
+  test("updates a persisting subscription in place when a scalar is disabled (true -> false)", async () => {
+    vi.spyOn(commerceEventsStep, "install").mockResolvedValue([]);
+    const provider: EventProvider = {
+      description: "P1",
+      key: "k1",
+      label: "P1",
+    };
+    const context = persistingProviderContext(provider);
+
+    // Only the scalars change (fields/rules are identical), so the change is mergeable and must
+    // reach Commerce as an in-place update carrying the `false` values — never a recreate.
+    const plan = await planCommerce(
+      commerceConfig([
+        {
+          events: [
+            {
+              ...event("a", ["pkg/a"]),
+              fields: [{ name: "field_a" }],
+              hipaa_audit_required: true,
+              priority: true,
+            },
+          ],
+          provider,
+        },
+      ]),
+      commerceConfig([
+        {
+          events: [
+            {
+              ...event("a", ["pkg/a"]),
+              fields: [{ name: "field_a" }],
+              hipaa_audit_required: false,
+              priority: false,
+            },
+          ],
+          provider,
+        },
+      ]),
+    );
+
+    await applyCommerceEvents(plan, context as ApplyContext<EventsStepContext>);
+
+    const name = getNamespacedEvent(metadata, "a");
+    expect(
+      context.commerceEventsClient.updateEventSubscription,
+    ).toHaveBeenCalledTimes(1);
+    expect(
+      context.commerceEventsClient.updateEventSubscription,
+    ).toHaveBeenCalledWith(
+      expect.objectContaining({
+        hipaa_audit_required: false,
+        name,
+        priority: false,
+        provider_id: "prov-1",
+      }),
+    );
+    expect(
+      context.commerceEventsClient.deleteEventSubscription,
+    ).not.toHaveBeenCalled();
+    expect(
+      context.commerceEventsClient.createEventSubscription,
+    ).not.toHaveBeenCalled();
+  });
+
+  test("recreates a persisting subscription (unsubscribe then resubscribe) for an orphaning change", async () => {
+    vi.spyOn(commerceEventsStep, "install").mockResolvedValue([]);
+    const provider: EventProvider = {
+      description: "P1",
+      key: "k1",
+      label: "P1",
+    };
+    const context = persistingProviderContext(provider);
+
+    const plan = await planCommerce(
+      commerceConfig([
+        {
+          events: [
+            {
+              ...event("a", ["pkg/a"]),
+              fields: [{ name: "field_a" }, { name: "field_b" }],
+            },
+          ],
+          provider,
+        },
+      ]),
+      commerceConfig([
+        {
+          events: [{ ...event("a", ["pkg/a"]), fields: [{ name: "field_a" }] }],
+          provider,
+        },
+      ]),
+    );
+
+    await applyCommerceEvents(plan, context as ApplyContext<EventsStepContext>);
+
+    const name = getNamespacedEvent(metadata, "a");
+    expect(
+      context.commerceEventsClient.deleteEventSubscription,
+    ).toHaveBeenCalledWith({ name });
+    expect(
+      context.commerceEventsClient.createEventSubscription,
+    ).toHaveBeenCalledWith(
+      expect.objectContaining({
+        fields: [{ name: "field_a" }],
+        name,
+        provider_id: "prov-1",
+      }),
+    );
+    expect(
+      context.commerceEventsClient.updateEventSubscription,
+    ).not.toHaveBeenCalled();
+
+    const firstCallOrder = (fn: unknown) => {
+      const { mock } = fn as { mock: { invocationCallOrder: number[] } };
+      return mock.invocationCallOrder[0];
+    };
+    expect(
+      firstCallOrder(context.commerceEventsClient.deleteEventSubscription),
+    ).toBeLessThan(
+      firstCallOrder(context.commerceEventsClient.createEventSubscription),
+    );
+  });
+
+  test("fails the apply when a subscription config update cannot be applied", async () => {
+    vi.spyOn(commerceEventsStep, "install").mockResolvedValue([]);
+    const provider: EventProvider = {
+      description: "P1",
+      key: "k1",
+      label: "P1",
+    };
+    const context = persistingProviderContext(provider, {
+      commerceEventsClient: {
+        updateEventSubscription: () =>
+          Promise.reject(new Error("update failed")),
+      },
+    });
+
+    const plan = await planCommerce(
+      commerceConfig([
+        {
+          events: [{ ...event("a", ["pkg/a"]), fields: [{ name: "field_a" }] }],
+          provider,
+        },
+      ]),
+      commerceConfig([
+        {
+          events: [
+            {
+              ...event("a", ["pkg/a"]),
+              fields: [{ name: "field_a" }, { name: "field_b" }],
+            },
+          ],
+          provider,
+        },
+      ]),
+    );
+
+    await expect(
+      applyCommerceEvents(plan, context as ApplyContext<EventsStepContext>),
+    ).rejects.toThrow();
   });
 });
 
@@ -825,7 +978,12 @@ describe("applyExternalEvents", () => {
       .mockResolvedValue(undefined);
     const context = createMockEventingInstallationContext({
       ioEventsClient: ioEventsClient({
-        providers: [liveProvider({ label: "EP1" }, "prov-ext-1")],
+        providers: [
+          createMockDeployedIoProvider({
+            id: "prov-ext-1",
+            provider: { label: "EP1" },
+          }),
+        ],
       }) as never,
     });
 
@@ -856,28 +1014,18 @@ describe("applyExternalEvents", () => {
       key: "k1",
       label: "EP1",
     };
-    const instanceId = generateInstanceId(
-      metadata,
-      provider,
-      "test-workspace-id",
-    );
-    const providerData = createMockIoEventProvider({
+    const providerData = createMockDeployedIoProvider({
       id: "prov-ext",
-      instance_id: instanceId,
-      label: "EP1",
-      provider_metadata: EXTERNAL_PROVIDER_TYPE,
+      provider,
+      type: EXTERNAL_PROVIDER_TYPE,
     });
     const droppedRegistrationName = getRegistrationName(providerData, "pkg/b");
 
     const context = createMockEventingInstallationContext({
       ioEventsClient: ioEventsClient({
-        providers: [{ ...providerData, _embedded: { eventmetadata: [] } }],
+        providers: [providerData],
         registrations: [
-          createMockIoEventRegistration({
-            client_id: "test-client-id",
-            name: droppedRegistrationName,
-            registration_id: "reg-ext-b",
-          }),
+          createMockDeployedRegistration(droppedRegistrationName, "reg-ext-b"),
         ],
       }) as never,
       params: { AIO_COMMERCE_AUTH_IMS_CLIENT_ID: "test-client-id" },
@@ -921,29 +1069,19 @@ describe("applyExternalEvents", () => {
       key: "k1",
       label: "EP1",
     };
-    const instanceId = generateInstanceId(
-      metadata,
-      provider,
-      "test-workspace-id",
-    );
-    const providerData = createMockIoEventProvider({
+    const providerData = createMockDeployedIoProvider({
       id: "prov-ext",
-      instance_id: instanceId,
-      label: "EP1",
-      provider_metadata: EXTERNAL_PROVIDER_TYPE,
+      provider,
+      type: EXTERNAL_PROVIDER_TYPE,
     });
     const registrationName = getRegistrationName(providerData, "pkg/a");
     const updateRegistration = vi.fn().mockResolvedValue(undefined);
 
     const context = createMockEventingInstallationContext({
       ioEventsClient: ioEventsClient({
-        providers: [{ ...providerData, _embedded: { eventmetadata: [] } }],
+        providers: [providerData],
         registrations: [
-          createMockIoEventRegistration({
-            client_id: "test-client-id",
-            name: registrationName,
-            registration_id: "reg-ext-a",
-          }),
+          createMockDeployedRegistration(registrationName, "reg-ext-a"),
         ],
         updateRegistration,
       }) as never,

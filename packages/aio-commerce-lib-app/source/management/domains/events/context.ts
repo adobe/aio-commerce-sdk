@@ -23,6 +23,7 @@ import {
   getAllEventProviders as getAllEventProvidersCommerce,
   getAllEventSubscriptions,
   updateEventingConfiguration,
+  updateEventSubscription,
 } from "@adobe/aio-commerce-lib-events/commerce";
 import {
   createCustomAdobeIoEventsApiClient,
@@ -65,6 +66,7 @@ function createCommerceEventsApiClient(params: RuntimeActionParams) {
     getAllEventProviders: getAllEventProvidersCommerce,
     getAllEventSubscriptions,
     updateEventingConfiguration,
+    updateEventSubscription,
   });
 }
 
