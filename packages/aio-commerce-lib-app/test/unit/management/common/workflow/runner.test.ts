@@ -26,9 +26,9 @@ import { minimalValidConfig } from "#test/fixtures/config";
 import {
   createMockFailedState,
   createMockInstallationContext,
-  createMockStepStatus,
   FAKE_SYSTEM_TIME,
 } from "#test/fixtures/installation";
+import { createMockStepStatus } from "#test/fixtures/workflow";
 
 import type { WorkflowHooks } from "#management/common/workflow/hooks";
 

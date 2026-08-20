@@ -27,6 +27,7 @@ import {
   BACKEND_UI_V2_EXTENSION_POINT_ID,
   getExtensionPointFolderPath,
   SHARED_TYPESCRIPT_DEV_DEPENDENCIES,
+  TYPESCRIPT_NODE_DEV_DEPENDENCY,
   TYPESCRIPT_WEBPACK_DEV_DEPENDENCY,
 } from "#commands/constants";
 import { TEMPLATES_DIR } from "#commands/generate/actions/constants";
@@ -67,6 +68,7 @@ const ROOT_TYPESCRIPT_CONFIG = {
 
 const TYPESCRIPT_DEV_DEPENDENCIES = [
   ...SHARED_TYPESCRIPT_DEV_DEPENDENCIES,
+  TYPESCRIPT_NODE_DEV_DEPENDENCY,
   TYPESCRIPT_WEBPACK_DEV_DEPENDENCY,
 ] as const satisfies readonly PackageDependency[];
 

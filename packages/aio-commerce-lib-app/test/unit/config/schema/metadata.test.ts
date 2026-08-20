@@ -10,12 +10,41 @@
  * governing permissions and limitations under the License.
  */
 
+import * as v from "valibot";
 import { describe, expect, test } from "vitest";
 
-import { hasMetadata } from "#config/schema/metadata";
+import { hasMetadata, MetadataSchema } from "#config/schema/metadata";
 import { minimalValidConfig } from "#test/fixtures/config";
 
 describe("metadata schema helpers", () => {
+  test("defaults upgrade mode to auto", () => {
+    const { description, displayName, id, version } =
+      minimalValidConfig.metadata;
+
+    expect(
+      v.parse(MetadataSchema, { description, displayName, id, version })
+        .upgradeMode,
+    ).toBe("auto");
+  });
+
+  test("accepts manual upgrade mode", () => {
+    expect(
+      v.parse(MetadataSchema, {
+        ...minimalValidConfig.metadata,
+        upgradeMode: "manual",
+      }).upgradeMode,
+    ).toBe("manual");
+  });
+
+  test("rejects an invalid upgrade mode", () => {
+    expect(() =>
+      v.parse(MetadataSchema, {
+        ...minimalValidConfig.metadata,
+        upgradeMode: "invalid",
+      }),
+    ).toThrow();
+  });
+
   describe("hasMetadata", () => {
     test("should return true when metadata is defined", () => {
       expect(hasMetadata(minimalValidConfig)).toBe(true);

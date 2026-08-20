@@ -14,6 +14,7 @@ import { isBranchStep, isLeafStep } from "./step";
 import { getAtPath, isStepConfigured } from "./utils";
 
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
+import type { AppStateSnapshot } from "#management/common/orchestration";
 import type { DomainPlan, PlanningIssue } from "./resource";
 import type { AnyStep, BranchStep, LifecycleContext } from "./step";
 import type { WorkflowData } from "./types";
@@ -22,10 +23,7 @@ import type { WorkflowData } from "./types";
 export type PlanWorkflowOptions = {
   rootStep: BranchStep;
   lifecycleContext: LifecycleContext;
-  baseline: {
-    config: CommerceAppConfigOutputModel;
-    data: WorkflowData | null;
-  };
+  baseline: AppStateSnapshot;
   target: {
     config: CommerceAppConfigOutputModel;
   };

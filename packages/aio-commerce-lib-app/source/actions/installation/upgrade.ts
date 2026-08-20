@@ -24,11 +24,17 @@ import { getAssociationData } from "#management/association/repository";
 import { executeLifecycleAttempt } from "#management/lifecycle/execution";
 import { planLifecycle } from "#management/lifecycle/planning";
 import { startLifecycleAttempt } from "#management/lifecycle/start";
+import { CURRENT_STATE_KEY } from "#management/lifecycle/state";
 
 import { createLifecycleRuntime, DEFAULT_ACTION_NAME } from "./common";
 
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
-import type { AppStateSnapshot } from "#management/common/orchestration";
+import type {
+  AppStateSnapshot,
+  LifecycleAttempt,
+  OrchestrationState,
+} from "#management/common/orchestration";
+import type { LifecycleStore } from "#management/lifecycle/state";
 import type {
   ExecutionHandlerArgs,
   LifecycleExecutionRouteParams,
@@ -39,7 +45,7 @@ import type {
 /** Inputs for {@link startUpgrade}. */
 type StartUpgradeArgs = RequestHandlerArgs & {
   appConfig: CommerceAppConfigOutputModel;
-  baseline: AppStateSnapshot;
+  baseline: AppStateSnapshot | null;
 };
 
 /**
@@ -68,6 +74,23 @@ export async function startUpgrade({
       body: {
         message: "The app is not associated with a Commerce instance.",
         reason: "not-associated",
+      },
+    });
+  }
+
+  if (!baseline) {
+    return conflict({
+      body: {
+        message: "The app is not installed.",
+        reason: "not-installed",
+      },
+    });
+  }
+
+  if (baseline.config.metadata.id !== appConfig.metadata.id) {
+    return conflict({
+      body: {
+        message: `The application ID (metadata.id) cannot be changed during an upgrade. Expected "${baseline.config.metadata.id}", received "${appConfig.metadata.id}".`,
       },
     });
   }
@@ -131,19 +154,26 @@ export async function startUpgrade({
   });
 
   const ow = openwhisk();
-  const activation = await ow.actions.invoke({
-    blocking: false,
-    name: DEFAULT_ACTION_NAME,
-    params: {
-      ...params,
-      __ow_method: "post",
-      __ow_path: "/execution",
-      attemptId: attempt.id,
-    },
-    result: false,
-  });
+  let activationId: unknown;
+  try {
+    const activation = await ow.actions.invoke({
+      blocking: false,
+      name: DEFAULT_ACTION_NAME,
+      params: {
+        ...params,
+        __ow_method: "post",
+        __ow_path: "/execution",
+        attemptId: attempt.id,
+      },
+      result: false,
+    });
+    ({ activationId } = activation);
+  } catch (error) {
+    await persistDispatchFailure(runtime.stateStore, attempt, error);
+    throw error;
+  }
 
-  logger.debug(`Async upgrade execution started: ${activation.activationId}`);
+  logger.debug(`Async upgrade execution started: ${String(activationId)}`);
   return accepted({
     body: {
       message: "Upgrade started",
@@ -164,10 +194,31 @@ export async function executeUpgrade({
     return badRequest("appConfig is required for upgrade execution");
   }
 
+  const rawExecutionDeadline = process.env.__OW_DEADLINE;
+  if (!rawExecutionDeadline) {
+    return internalServerError(
+      "The OpenWhisk action deadline is required to execute an upgrade",
+    );
+  }
+  const executionDeadline = Number(rawExecutionDeadline);
+  if (!Number.isFinite(executionDeadline)) {
+    return internalServerError(
+      "The OpenWhisk action deadline must be a valid timestamp",
+    );
+  }
+  const actionVersion = process.env.__OW_ACTION_VERSION;
+  if (!actionVersion) {
+    return internalServerError(
+      "The OpenWhisk action version is required to execute an upgrade",
+    );
+  }
+
   const appConfig = validateCommerceAppConfig(rawAppConfig);
   const runtime = await createLifecycleRuntime(params, appConfig, logger);
   const result = await executeLifecycleAttempt({
+    actionVersion,
     attemptId,
+    executionDeadline: new Date(executionDeadline).toISOString(),
     lifecycleContext: runtime.lifecycleContext,
     rootStep: runtime.rootStep,
     snapshotStore: runtime.snapshotStore,
@@ -186,4 +237,36 @@ export async function executeUpgrade({
   }
 
   return ok({ body: result });
+}
+
+/** Marks an attempt retryable when its background invocation cannot be dispatched. */
+async function persistDispatchFailure(
+  stateStore: LifecycleStore<OrchestrationState>,
+  attempt: LifecycleAttempt,
+  error: unknown,
+) {
+  const state = await stateStore.get(CURRENT_STATE_KEY);
+  if (
+    !state ||
+    state.latestAttempt?.id !== attempt.id ||
+    state.latestAttempt.status !== "pending"
+  ) {
+    throw new Error("The dispatched lifecycle attempt is missing or stale");
+  }
+
+  await stateStore.put(CURRENT_STATE_KEY, {
+    ...state,
+    latestAttempt: {
+      ...attempt,
+      failure: {
+        key: "LIFECYCLE_DISPATCH_FAILED",
+        message:
+          error instanceof Error
+            ? error.message
+            : "Lifecycle execution dispatch failed",
+        path: [],
+      },
+      status: "failed",
+    },
+  });
 }
