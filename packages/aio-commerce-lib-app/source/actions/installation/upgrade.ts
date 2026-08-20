@@ -45,7 +45,7 @@ import type {
 /** Inputs for {@link startUpgrade}. */
 type StartUpgradeArgs = RequestHandlerArgs & {
   appConfig: CommerceAppConfigOutputModel;
-  baseline: AppStateSnapshot;
+  baseline: AppStateSnapshot | null;
 };
 
 /**
@@ -74,6 +74,15 @@ export async function startUpgrade({
       body: {
         message: "The app is not associated with a Commerce instance.",
         reason: "not-associated",
+      },
+    });
+  }
+
+  if (!baseline) {
+    return conflict({
+      body: {
+        message: "The app is not installed.",
+        reason: "not-installed",
       },
     });
   }

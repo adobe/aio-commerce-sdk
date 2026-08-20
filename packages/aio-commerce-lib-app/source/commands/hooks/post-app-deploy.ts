@@ -20,18 +20,26 @@ import { consola } from "consola";
 import { colors } from "consola/utils";
 import ky, { HTTPError } from "ky";
 
+import {
+  INSTALLATION_INVOCATION_SOURCE_HEADER,
+  POST_APP_DEPLOY_INVOCATION_SOURCE,
+} from "#actions/installation/common";
 import { parseCommerceAppConfig } from "#config/lib/parser";
 
 import type { DomainPlan } from "#management/common/workflow/resource";
 
-type SkippedReason = "already-current" | "not-associated";
+type SkippedReason = "already-current" | "not-associated" | "not-installed";
 type SkippedResult = { skipped: true; reason: SkippedReason };
 type UpgradePlanResult = { plan: DomainPlan };
 type UpgradeResult = SkippedResult | UpgradePlanResult;
 
 /** Returns true for a no-op reason defined by the upgrade API contract. */
 function isSkippedReason(reason: unknown): reason is SkippedReason {
-  return reason === "already-current" || reason === "not-associated";
+  return (
+    reason === "already-current" ||
+    reason === "not-associated" ||
+    reason === "not-installed"
+  );
 }
 
 /** Returns true if the result indicates that the upgrade was skipped. */
@@ -58,6 +66,8 @@ async function invokeAction(): Promise<UpgradeResult> {
       .post(endpoint, {
         headers: {
           Authorization: `Bearer ${token}`,
+          [INSTALLATION_INVOCATION_SOURCE_HEADER]:
+            POST_APP_DEPLOY_INVOCATION_SOURCE,
           "x-gw-ims-org-id": project.org.ims_org_id,
         },
         json: {

@@ -111,6 +111,10 @@ import type { AnyStep, LeafStep } from "#management/common/workflow/step";
 import type { InProgressWorkflowState } from "#management/common/workflow/types";
 import type { InstallationHooks } from "#management/installation/runner";
 
+const POST_APP_DEPLOY_HEADERS = {
+  "x-aio-commerce-installation-invocation-source": "post-app-deploy",
+};
+
 type WorkflowRunnerArgs = {
   initialState: InProgressWorkflowState;
   hooks: InstallationHooks;
@@ -338,6 +342,34 @@ describe("installationRuntimeAction", () => {
     }
 
     describe("install branch", () => {
+      test("returns 409 when post-app-deploy runs before installation", async () => {
+        desiredInstallationStore = createMockInstallationStore();
+        const action = installationRuntimeAction({
+          appConfig: configWithAutoUpgrade,
+        });
+        const result = await action(
+          createRuntimeActionParams({
+            body: upgradeRequestBody,
+            headers: POST_APP_DEPLOY_HEADERS,
+            method: "post",
+            ...DEFAULT_INSTALLATION_PARAMS,
+          }),
+        );
+
+        expect(invokeMock).not.toHaveBeenCalled();
+        expect(getAssociationDataMock).toHaveBeenCalledOnce();
+        expect(result).toMatchObject({
+          error: {
+            body: {
+              message: "The app is not installed.",
+              reason: "not-installed",
+            },
+            statusCode: 409,
+          },
+          type: "error",
+        });
+      });
+
       test("dispatches to installation when no completed install exists", async () => {
         desiredInstallationStore = createMockInstallationStore();
         const action = installationRuntimeAction({
@@ -369,6 +401,27 @@ describe("installationRuntimeAction", () => {
     });
 
     describe("upgrade branch", () => {
+      test("starts an upgrade for post-app-deploy when the app is installed", async () => {
+        const action = installationRuntimeAction({
+          appConfig: configWithAutoUpgrade,
+        });
+        const result = await action(
+          createRuntimeActionParams({
+            body: upgradeRequestBody,
+            headers: POST_APP_DEPLOY_HEADERS,
+            method: "post",
+            ...DEFAULT_INSTALLATION_PARAMS,
+          }),
+        );
+
+        expect(invokeMock).toHaveBeenCalledOnce();
+        expect(result).toMatchObject({
+          body: { operation: "upgrade" },
+          statusCode: 202,
+          type: "success",
+        });
+      });
+
       test("returns 409 when the app is not associated", async () => {
         getAssociationDataMock.mockResolvedValue(null);
         const action = installationRuntimeAction({

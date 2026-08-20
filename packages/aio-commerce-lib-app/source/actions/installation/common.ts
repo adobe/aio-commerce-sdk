@@ -10,6 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
+import { getHeader } from "@adobe/aio-commerce-lib-core/headers";
 import { noContent, ok } from "@adobe/aio-commerce-lib-core/responses";
 import { createCombinedStore } from "@aio-commerce-sdk/common-utils/storage";
 
@@ -39,6 +40,20 @@ import type { LifecycleContext } from "#management/index";
 
 /** Action name for async invocation. */
 export const DEFAULT_ACTION_NAME = "app-management/installation";
+
+/** Header used to identify the source of an installation action request. */
+export const INSTALLATION_INVOCATION_SOURCE_HEADER =
+  "x-aio-commerce-installation-invocation-source";
+
+/** Invocation source used by the generated post-deploy hook. */
+export const POST_APP_DEPLOY_INVOCATION_SOURCE = "post-app-deploy";
+
+/** Returns the declared installation action invocation source, if present. */
+export function getInstallationInvocationSource(
+  headers: Record<string, string | undefined>,
+) {
+  return getHeader(headers, INSTALLATION_INVOCATION_SOURCE_HEADER);
+}
 
 /** Loads generated custom installation script modules. */
 export type CustomScriptsLoader = (

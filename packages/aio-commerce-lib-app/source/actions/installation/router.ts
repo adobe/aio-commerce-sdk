@@ -27,7 +27,9 @@ import {
   createInstallationStore,
   createLifecyclePersistence,
   createUninstallationStore,
+  getInstallationInvocationSource,
   getStorageKey,
+  POST_APP_DEPLOY_INVOCATION_SOURCE,
   readStateFromStore,
 } from "./common";
 import {
@@ -82,7 +84,6 @@ router.get("/", {
  */
 router.post("/", {
   body: LifecycleRequestContextSchema,
-
   handler: async (req, { logger, rawParams }) => {
     const rawAppConfig = rawParams.appConfig;
     if (!rawAppConfig) {
@@ -98,9 +99,27 @@ router.post("/", {
       baselineProvider,
     );
 
-    return baseline
-      ? startUpgrade({ appConfig, baseline, body: req.body, logger, rawParams })
-      : startInstallation({ appConfig, body: req.body, logger, rawParams });
+    const hasNoBaseline = baseline === null;
+    const isPostAppDeploy =
+      getInstallationInvocationSource(req.headers) ===
+      POST_APP_DEPLOY_INVOCATION_SOURCE;
+
+    if (hasNoBaseline && !isPostAppDeploy) {
+      return startInstallation({
+        appConfig,
+        body: req.body,
+        logger,
+        rawParams,
+      });
+    }
+
+    return startUpgrade({
+      appConfig,
+      baseline,
+      body: req.body,
+      logger,
+      rawParams,
+    });
   },
 });
 

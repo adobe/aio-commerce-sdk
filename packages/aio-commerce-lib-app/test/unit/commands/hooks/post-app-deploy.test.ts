@@ -101,6 +101,9 @@ describe("post-app-deploy hook", () => {
     );
     expect(request.method).toBe("POST");
     expect(request.headers.get("authorization")).toBe("Bearer ims-token");
+    expect(
+      request.headers.get("x-aio-commerce-installation-invocation-source"),
+    ).toBe("post-app-deploy");
     expect(request.headers.get("x-gw-ims-org-id")).toBe("ims-org-id");
     expect(request.headers.get("content-type")).toBe("application/json");
 
@@ -120,24 +123,27 @@ describe("post-app-deploy hook", () => {
     });
   });
 
-  test("treats a supported 409 reason as a no-op", async () => {
-    fetchMock.mockResolvedValue(
-      new Response(
-        JSON.stringify({
-          message: "The app is already on the target version.",
-          reason: "already-current",
-        }),
-        { status: 409 },
-      ),
-    );
+  test.each(["already-current", "not-associated", "not-installed"] as const)(
+    "treats %s as a no-op",
+    async (reason) => {
+      fetchMock.mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            message: "The upgrade is not actionable.",
+            reason,
+          }),
+          { status: 409 },
+        ),
+      );
 
-    await withTempProject(MINIMAL_PROJECT, async () => {
-      await expect(run()).resolves.toEqual({
-        reason: "already-current",
-        skipped: true,
+      await withTempProject(MINIMAL_PROJECT, async () => {
+        await expect(run()).resolves.toEqual({
+          reason,
+          skipped: true,
+        });
       });
-    });
-  });
+    },
+  );
 
   test("rejects unrecognized 409 reasons", async () => {
     fetchMock.mockResolvedValue(
