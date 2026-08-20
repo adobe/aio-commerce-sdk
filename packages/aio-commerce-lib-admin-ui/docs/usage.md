@@ -509,7 +509,7 @@ createExtensionApp({
 
 When you provide `menu`, it owns the root route. Don't also add a root-equivalent path such as `"/"` or `"#/"` to `routes`; `createExtensionApp` reports that duplicate declaration as an error. When your app doesn't have a menu, omit `menu` and declare the root page in `routes` instead.
 
-The whole app is wrapped in React's [`<StrictMode>`](https://react.dev/reference/react/StrictMode). When running locally with `aio app dev` or `aio app run` (which serve React's development build), StrictMode runs its extra development-only checks: components render twice, and effects run an extra setup + cleanup cycle on mount. Duplicated renders, effect runs, or requests fired from effects during development are therefore expected — not a bug — and surface unsafe side effects early. These checks do not run in production builds, where StrictMode has no effect.
+In development builds (`process.env.NODE_ENV !== "production"`), the app is wrapped in React's [`<StrictMode>`](https://react.dev/reference/react/StrictMode), which runs its extra development-only checks: components render twice, and effects run an extra setup + cleanup cycle on mount. Duplicated renders, effect runs, or requests fired from effects during development are therefore expected — not a bug — and surface unsafe side effects early. Production builds (`process.env.NODE_ENV === "production"`) render without `<StrictMode>`, so it is stripped from the production bundle.
 
 #### Handling hook errors
 

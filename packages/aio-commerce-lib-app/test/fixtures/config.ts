@@ -106,6 +106,27 @@ export const minimalValidConfig = {
   metadata: mockMetadata,
 } satisfies CommerceAppConfigOutputModel;
 
+type MockConfigOverrides = Omit<
+  Partial<CommerceAppConfigOutputModel>,
+  "metadata"
+> & {
+  metadata?: Partial<ApplicationMetadata>;
+};
+
+/** Creates a minimal config with top-level and metadata overrides. */
+export function createMockConfig(
+  overrides: MockConfigOverrides = {},
+): CommerceAppConfigOutputModel {
+  return {
+    ...minimalValidConfig,
+    ...overrides,
+    metadata: {
+      ...minimalValidConfig.metadata,
+      ...overrides.metadata,
+    },
+  };
+}
+
 /** Config fixture with business configuration. */
 export const configWithBusinessConfig = {
   businessConfig: businessConfigPart,

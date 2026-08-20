@@ -10,12 +10,14 @@
  * governing permissions and limitations under the License.
  */
 
-import { describe, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 import { applyWebhookSubscriptions } from "#management/domains/webhooks/apply";
 import { DEFAULT_INSTALLATION_PARAMS } from "#test/fixtures/installation";
 import {
   createMockResolvedWebhook,
+  createMockRuntimeWebhookEntry,
+  createMockWebhooksConfig,
   createMockWebhooksContext,
 } from "#test/fixtures/webhooks";
 
@@ -44,9 +46,17 @@ const DEFAULT_RESOLVED_IDENTITY = {
   batch_name: "test_app_webhooks_default",
   hook_name: "test_app_webhooks_order_created",
   webhook_method: "plugin.order.api.order_created",
-  webhook_type: "after",
+  webhook_type: "after" as const,
 };
 describe("applyWebhookSubscriptions", () => {
+  beforeEach(() => {
+    vi.stubEnv("__OW_NAMESPACE", "test-namespace");
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
   function makeApplyContext(
     subscribeWebhookFn = vi.fn().mockResolvedValue(null),
     getWebhookListFn = vi.fn().mockResolvedValue([]),
@@ -60,6 +70,21 @@ describe("applyWebhookSubscriptions", () => {
         unsubscribeWebhookFn,
       ),
       attemptId: "attempt-1",
+      baseline: null,
+      targetConfig: createMockWebhooksConfig(),
+    };
+  }
+
+  function withBaseline(
+    context: ReturnType<typeof makeApplyContext>,
+    subscribedWebhooks: ReturnType<typeof createMockResolvedWebhook>[],
+  ) {
+    return {
+      ...context,
+      baseline: {
+        config: createMockWebhooksConfig(),
+        data: { subscribedWebhooks },
+      },
     };
   }
 
@@ -86,16 +111,72 @@ describe("applyWebhookSubscriptions", () => {
         },
       ],
       path: UPGRADE_PATH,
-      retainedWebhooks: [retainedWebhook],
     };
 
     const result = await applyWebhookSubscriptions(plan, context);
 
     expect(subscribeWebhook).toHaveBeenCalledWith(addWebhook);
-    expect(result.snapshotData?.subscribedWebhooks).toEqual([
-      retainedWebhook,
-      addWebhook,
-    ]);
+    expect(result.snapshotData?.subscribedWebhooks).toEqual([addWebhook]);
+  });
+
+  test("preserves baseline webhooks in the resulting snapshot", async () => {
+    const context = withBaseline(makeApplyContext(), [retainedWebhook]);
+    const result = await applyWebhookSubscriptions(
+      { operations: [], path: UPGRADE_PATH },
+      context,
+    );
+
+    expect(result.snapshotData?.subscribedWebhooks).toEqual([retainedWebhook]);
+  });
+
+  test("prunes live app-owned webhooks absent from the target", async () => {
+    const targetConfig = createMockWebhooksConfig();
+    const baseline = {
+      config: targetConfig,
+      data: { subscribedWebhooks: [retainedWebhook] },
+    };
+
+    const staleAppWebhook = createMockResolvedWebhook({
+      batch_name: "test_app_webhooks_stale",
+      hook_name: "test_app_webhooks_stale",
+    });
+
+    const foreignWebhook = createMockResolvedWebhook({
+      batch_name: "other_app_default",
+      hook_name: "other_app_stale",
+    });
+
+    const getWebhookList = vi
+      .fn()
+      .mockResolvedValue([retainedWebhook, staleAppWebhook, foreignWebhook]);
+
+    const unsubscribeWebhook = vi.fn().mockResolvedValue(null);
+    const context = {
+      ...makeContext(
+        vi.fn(),
+        getWebhookList,
+        DEFAULT_PARAMS,
+        unsubscribeWebhook,
+      ),
+      attemptId: "attempt-1",
+      baseline,
+      targetConfig,
+    };
+
+    const result = await applyWebhookSubscriptions(
+      { operations: [], path: UPGRADE_PATH },
+      context,
+    );
+
+    expect(unsubscribeWebhook).toHaveBeenCalledOnce();
+    expect(unsubscribeWebhook).toHaveBeenCalledWith(
+      expect.objectContaining({
+        batch_name: staleAppWebhook.batch_name,
+        hook_name: staleAppWebhook.hook_name,
+      }),
+    );
+
+    expect(result.snapshotData?.subscribedWebhooks).toEqual([retainedWebhook]);
   });
 
   test("attaches credentials to the subscribe call but keeps the snapshot secret-free", async () => {
@@ -112,7 +193,6 @@ describe("applyWebhookSubscriptions", () => {
         },
       ],
       path: UPGRADE_PATH,
-      retainedWebhooks: [],
     };
 
     const result = await applyWebhookSubscriptions(plan, context);
@@ -129,7 +209,21 @@ describe("applyWebhookSubscriptions", () => {
   test("skips subscribing an add that is already live", async () => {
     const subscribeWebhook = vi.fn();
     const getWebhookList = vi.fn().mockResolvedValue([addWebhook]);
-    const context = makeApplyContext(subscribeWebhook, getWebhookList);
+    const context = {
+      ...makeApplyContext(subscribeWebhook, getWebhookList),
+      targetConfig: createMockWebhooksConfig({
+        webhooks: [
+          createMockRuntimeWebhookEntry({
+            webhook: {
+              batch_name: "products",
+              hook_name: "validate",
+              webhook_method: addWebhook.webhook_method,
+              webhook_type: "after",
+            },
+          }),
+        ],
+      }),
+    };
 
     const plan = {
       operations: [
@@ -141,7 +235,6 @@ describe("applyWebhookSubscriptions", () => {
         },
       ],
       path: UPGRADE_PATH,
-      retainedWebhooks: [],
     };
 
     const result = await applyWebhookSubscriptions(plan, context);
@@ -153,10 +246,9 @@ describe("applyWebhookSubscriptions", () => {
   test("unsubscribes a planned remove that is live", async () => {
     const unsubscribeWebhook = vi.fn().mockResolvedValue(null);
     const getWebhookList = vi.fn().mockResolvedValue([retainedWebhook]);
-    const context = makeApplyContext(
-      vi.fn(),
-      getWebhookList,
-      unsubscribeWebhook,
+    const context = withBaseline(
+      makeApplyContext(vi.fn(), getWebhookList, unsubscribeWebhook),
+      [retainedWebhook],
     );
 
     const plan = {
@@ -169,7 +261,6 @@ describe("applyWebhookSubscriptions", () => {
         },
       ],
       path: UPGRADE_PATH,
-      retainedWebhooks: [],
     };
 
     const result = await applyWebhookSubscriptions(plan, context);
@@ -198,7 +289,6 @@ describe("applyWebhookSubscriptions", () => {
         },
       ],
       path: UPGRADE_PATH,
-      retainedWebhooks: [],
     };
 
     await applyWebhookSubscriptions(plan, context);
@@ -235,7 +325,6 @@ describe("applyWebhookSubscriptions", () => {
         },
       ],
       path: UPGRADE_PATH,
-      retainedWebhooks: [],
     };
 
     await expect(applyWebhookSubscriptions(plan, context)).rejects.toThrow();
@@ -271,7 +360,6 @@ describe("applyWebhookSubscriptions", () => {
         },
       ],
       path: UPGRADE_PATH,
-      retainedWebhooks: [],
     };
 
     await expect(applyWebhookSubscriptions(plan, context)).rejects.toThrow();
@@ -287,10 +375,9 @@ describe("applyWebhookSubscriptions", () => {
       callOrder.push("unsubscribe");
     });
     const getWebhookList = vi.fn().mockResolvedValue([retainedWebhook]);
-    const context = makeApplyContext(
-      subscribeWebhook,
-      getWebhookList,
-      unsubscribeWebhook,
+    const context = withBaseline(
+      makeApplyContext(subscribeWebhook, getWebhookList, unsubscribeWebhook),
+      [retainedWebhook],
     );
 
     const renamedWebhook = createMockResolvedWebhook({
@@ -314,11 +401,124 @@ describe("applyWebhookSubscriptions", () => {
         },
       ],
       path: UPGRADE_PATH,
-      retainedWebhooks: [],
     };
 
     await applyWebhookSubscriptions(plan, context);
 
     expect(callOrder).toEqual(["unsubscribe", "subscribe"]);
+  });
+
+  const updatedWebhook = createMockResolvedWebhook({
+    ...DEFAULT_RESOLVED_IDENTITY,
+    fields: [{ name: "sku" }],
+  });
+
+  test("applies an update by unsubscribing the live identity then subscribing the new payload", async () => {
+    const callOrder: string[] = [];
+    const subscribeWebhook = vi.fn().mockImplementation(async () => {
+      callOrder.push("subscribe");
+    });
+    const unsubscribeWebhook = vi.fn().mockImplementation(async () => {
+      callOrder.push("unsubscribe");
+    });
+    const getWebhookList = vi.fn().mockResolvedValue([retainedWebhook]);
+    const context = makeApplyContext(
+      subscribeWebhook,
+      getWebhookList,
+      unsubscribeWebhook,
+    );
+
+    const plan = {
+      operations: [
+        {
+          after: updatedWebhook,
+          before: retainedWebhook,
+          id: "op-1",
+          kind: "update" as const,
+          label: "Update",
+        },
+      ],
+      path: UPGRADE_PATH,
+    };
+
+    const result = await applyWebhookSubscriptions(plan, context);
+
+    expect(callOrder).toEqual(["unsubscribe", "subscribe"]);
+    expect(unsubscribeWebhook).toHaveBeenCalledWith(
+      expect.objectContaining({ batch_name: retainedWebhook.batch_name }),
+    );
+    expect(subscribeWebhook).toHaveBeenCalledWith(updatedWebhook);
+    expect(result.snapshotData?.subscribedWebhooks).toEqual([updatedWebhook]);
+  });
+
+  test("applies an update by subscribing directly when the identity isn't currently live", async () => {
+    const subscribeWebhook = vi.fn().mockResolvedValue(null);
+    const unsubscribeWebhook = vi.fn();
+    const getWebhookList = vi.fn().mockResolvedValue([]);
+    const context = withBaseline(
+      makeApplyContext(subscribeWebhook, getWebhookList, unsubscribeWebhook),
+      [retainedWebhook],
+    );
+
+    const plan = {
+      operations: [
+        {
+          after: updatedWebhook,
+          before: retainedWebhook,
+          id: "op-1",
+          kind: "update" as const,
+          label: "Update",
+        },
+      ],
+      path: UPGRADE_PATH,
+    };
+
+    await applyWebhookSubscriptions(plan, context);
+
+    expect(unsubscribeWebhook).not.toHaveBeenCalled();
+    expect(subscribeWebhook).toHaveBeenCalledWith(updatedWebhook);
+  });
+
+  test("aborts on the first update failure without processing remaining operations", async () => {
+    const unsubscribeWebhook = vi
+      .fn()
+      .mockRejectedValue(new Error("Commerce API error"));
+    const subscribeWebhook = vi.fn();
+    const getWebhookList = vi.fn().mockResolvedValue([retainedWebhook]);
+    const context = withBaseline(
+      makeApplyContext(subscribeWebhook, getWebhookList, unsubscribeWebhook),
+      [retainedWebhook],
+    );
+
+    const secondUpdate = createMockResolvedWebhook({
+      batch_name: "test_app_webhooks_second",
+      hook_name: "test_app_webhooks_second",
+      webhook_method: "observer.catalog_product_save_before",
+      webhook_type: "before",
+    });
+
+    const plan = {
+      operations: [
+        {
+          after: updatedWebhook,
+          before: retainedWebhook,
+          id: "op-1",
+          kind: "update" as const,
+          label: "Update",
+        },
+        {
+          after: secondUpdate,
+          before: secondUpdate,
+          id: "op-2",
+          kind: "update" as const,
+          label: "Update",
+        },
+      ],
+      path: UPGRADE_PATH,
+    };
+
+    await expect(applyWebhookSubscriptions(plan, context)).rejects.toThrow();
+    expect(subscribeWebhook).not.toHaveBeenCalled();
+    expect(unsubscribeWebhook).toHaveBeenCalledTimes(1);
   });
 });

@@ -50,8 +50,13 @@ const DEFAULT_RESOLVED_IDENTITY = {
   batch_name: "test_app_webhooks_default",
   hook_name: "test_app_webhooks_order_created",
   webhook_method: "plugin.order.api.order_created",
-  webhook_type: "after",
+  webhook_type: "after" as const,
 };
+
+/** Resolved URL of configWithWebhooks' default (runtimeAction-based) entry, given the stubbed namespace. */
+const DEFAULT_RESOLVED_URL =
+  "https://test-namespace.adobeioruntime.net/api/v1/web/my-package/handle-webhook";
+
 describe("planWebhookSubscriptions", () => {
   beforeEach(() => {
     vi.stubEnv("__OW_NAMESPACE", "test-namespace");
@@ -77,7 +82,6 @@ describe("planWebhookSubscriptions", () => {
       after: expect.objectContaining(DEFAULT_RESOLVED_IDENTITY),
       kind: "add",
     });
-    expect(result.plan.retainedWebhooks).toHaveLength(0);
   });
 
   test("blocks planning instead of guessing when a baseline's data didn't resolve", async () => {
@@ -159,7 +163,7 @@ describe("planWebhookSubscriptions", () => {
     expect.assert(result.kind === "planned");
     expect(result.plan.operations).toEqual([
       expect.objectContaining({
-        before: baselineWebhook,
+        before: expect.objectContaining(DEFAULT_RESOLVED_IDENTITY),
         kind: "remove",
       }),
     ]);
@@ -167,9 +171,10 @@ describe("planWebhookSubscriptions", () => {
 
   test("retains desired webhooks already present in the baseline and proposes no operations", async () => {
     const config = createDefaultWebhooksConfig();
-    const baselineWebhook = createMockResolvedWebhook(
-      DEFAULT_RESOLVED_IDENTITY,
-    );
+    const baselineWebhook = createMockResolvedWebhook({
+      ...DEFAULT_RESOLVED_IDENTITY,
+      url: DEFAULT_RESOLVED_URL,
+    });
 
     const result = await planWebhookSubscriptions(
       {
@@ -182,7 +187,6 @@ describe("planWebhookSubscriptions", () => {
 
     expect.assert(result.kind === "planned");
     expect(result.plan.operations).toHaveLength(0);
-    expect(result.plan.retainedWebhooks).toEqual([baselineWebhook]);
   });
 
   test("plans an add and a remove when the target and baseline differ", async () => {
@@ -219,7 +223,7 @@ describe("planWebhookSubscriptions", () => {
       expect.arrayContaining([
         expect.objectContaining({ kind: "add" }),
         expect.objectContaining({
-          before: baselineWebhook,
+          before: expect.objectContaining(DEFAULT_RESOLVED_IDENTITY),
           kind: "remove",
         }),
       ]),
@@ -273,9 +277,10 @@ describe("planWebhookSubscriptions", () => {
         }),
       ],
     });
-    const baselineWebhook = createMockResolvedWebhook(
-      DEFAULT_RESOLVED_IDENTITY,
-    );
+    const baselineWebhook = createMockResolvedWebhook({
+      ...DEFAULT_RESOLVED_IDENTITY,
+      url: DEFAULT_RESOLVED_URL,
+    });
 
     const result = await planWebhookSubscriptions(
       {
@@ -291,7 +296,6 @@ describe("planWebhookSubscriptions", () => {
 
     expect.assert(result.kind === "planned");
     expect(result.plan.operations).toHaveLength(0);
-    expect(result.plan.retainedWebhooks).toHaveLength(1);
   });
 
   test("excludes webhooks scoped to a different environment from the desired set", async () => {
@@ -345,5 +349,147 @@ describe("planWebhookSubscriptions", () => {
     expect(getWebhookList).not.toHaveBeenCalled();
     expect(subscribeWebhook).not.toHaveBeenCalled();
     expect(unsubscribeWebhook).not.toHaveBeenCalled();
+  });
+
+  test("plans an update when a matched webhook's config differs from the target", async () => {
+    const targetConfig = createMockWebhooksConfig({
+      webhooks: [
+        createMockRuntimeWebhookEntry({
+          webhook: { fields: [{ name: "sku" }] },
+        }),
+      ],
+    });
+    const baselineWebhook = createMockResolvedWebhook({
+      ...DEFAULT_RESOLVED_IDENTITY,
+      url: DEFAULT_RESOLVED_URL,
+    });
+
+    const result = await planWebhookSubscriptions(
+      {
+        baseline: {
+          config: createDefaultWebhooksConfig(),
+          data: { subscribedWebhooks: [baselineWebhook] },
+        },
+        path: UPGRADE_PATH,
+        targetConfig,
+      },
+      makeContext(),
+    );
+
+    expect.assert(result.kind === "planned");
+    expect(result.plan.operations).toHaveLength(1);
+    expect(result.plan.operations[0]).toMatchObject({
+      after: expect.objectContaining({ fields: [{ name: "sku" }] }),
+      before: expect.objectContaining(DEFAULT_RESOLVED_IDENTITY),
+      kind: "update",
+    });
+  });
+
+  test("does not plan an update when a mutable array is only equivalently empty (undefined vs. [])", async () => {
+    const targetConfig = createMockWebhooksConfig({
+      webhooks: [createMockRuntimeWebhookEntry({ webhook: { fields: [] } })],
+    });
+    const baselineWebhook = createMockResolvedWebhook({
+      ...DEFAULT_RESOLVED_IDENTITY,
+      url: DEFAULT_RESOLVED_URL,
+    });
+
+    const result = await planWebhookSubscriptions(
+      {
+        baseline: {
+          config: createDefaultWebhooksConfig(),
+          data: { subscribedWebhooks: [baselineWebhook] },
+        },
+        path: UPGRADE_PATH,
+        targetConfig,
+      },
+      makeContext(),
+    );
+
+    expect.assert(result.kind === "planned");
+    expect(result.plan.operations).toHaveLength(0);
+  });
+
+  test("does not plan an update when a mutable array only differs in element order", async () => {
+    const rules = [
+      { field: "status", operator: "eq", value: "processing" },
+      { field: "total", operator: "gt", value: "100" },
+    ];
+    const targetConfig = createMockWebhooksConfig({
+      webhooks: [
+        createMockRuntimeWebhookEntry({
+          webhook: { rules: [rules[1], rules[0]] },
+        }),
+      ],
+    });
+    const baselineWebhook = createMockResolvedWebhook({
+      ...DEFAULT_RESOLVED_IDENTITY,
+      rules: [rules[0], rules[1]],
+      url: DEFAULT_RESOLVED_URL,
+    });
+
+    const result = await planWebhookSubscriptions(
+      {
+        baseline: {
+          config: createDefaultWebhooksConfig(),
+          data: { subscribedWebhooks: [baselineWebhook] },
+        },
+        path: UPGRADE_PATH,
+        targetConfig,
+      },
+      makeContext(),
+    );
+
+    expect.assert(result.kind === "planned");
+    expect(result.plan.operations).toHaveLength(0);
+  });
+
+  test("orders update operations between removes and adds", async () => {
+    const updatedBaselineWebhook = createMockResolvedWebhook({
+      ...DEFAULT_RESOLVED_IDENTITY,
+      url: DEFAULT_RESOLVED_URL,
+    });
+    const staleBaselineWebhook = createMockResolvedWebhook({
+      batch_name: "test_app_webhooks_stale",
+      hook_name: "test_app_webhooks_stale",
+      webhook_method: "observer.catalog_product_save_before",
+      webhook_type: "before",
+    });
+
+    const targetConfig = createMockWebhooksConfig({
+      webhooks: [
+        createMockRuntimeWebhookEntry({
+          webhook: { fields: [{ name: "sku" }] },
+        }),
+        createMockRuntimeWebhookEntry({
+          webhook: {
+            batch_name: "new",
+            hook_name: "new_hook",
+            webhook_method: "observer.catalog_product_save_after",
+          },
+        }),
+      ],
+    });
+
+    const result = await planWebhookSubscriptions(
+      {
+        baseline: {
+          config: createDefaultWebhooksConfig(),
+          data: {
+            subscribedWebhooks: [updatedBaselineWebhook, staleBaselineWebhook],
+          },
+        },
+        path: UPGRADE_PATH,
+        targetConfig,
+      },
+      makeContext(),
+    );
+
+    expect.assert(result.kind === "planned");
+    expect(result.plan.operations.map((op) => op.kind)).toEqual([
+      "remove",
+      "update",
+      "add",
+    ]);
   });
 });

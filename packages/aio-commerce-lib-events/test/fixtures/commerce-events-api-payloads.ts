@@ -91,6 +91,23 @@ export const COMMERCE_EVENTS_API_PAYLOADS = [
     hasInputValidation: true,
 
     invoke(client: CommerceEventsApiClient, fetchOptions?: Options) {
+      return client.updateEventSubscription(
+        {
+          fields: [{ name: "field-1" }],
+          name: "subscription-1",
+          provider_id: "provider-1",
+        },
+        fetchOptions,
+      );
+    },
+    method: "PUT",
+    name: "updateEventSubscription",
+    pathname: "eventing/eventSubscribe/subscription-1",
+  },
+  {
+    hasInputValidation: true,
+
+    invoke(client: CommerceEventsApiClient, fetchOptions?: Options) {
       return client.updateEventingConfiguration(
         {
           enabled: true,

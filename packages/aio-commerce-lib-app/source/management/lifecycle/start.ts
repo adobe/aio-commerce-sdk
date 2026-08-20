@@ -121,7 +121,8 @@ async function resumeFailedAttempt(
 
 /** Rejects an execution deadline that has already elapsed. */
 function assertFutureExecutionDeadline(executionDeadline: string): void {
-  if (Date.parse(executionDeadline) <= Date.now()) {
-    throw new Error("Execution deadline is in the past or has already elapsed");
+  const deadline = Date.parse(executionDeadline);
+  if (!Number.isFinite(deadline) || deadline <= Date.now()) {
+    throw new Error("Execution deadline is invalid or has already elapsed");
   }
 }

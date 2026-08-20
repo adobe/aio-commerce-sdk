@@ -11,7 +11,7 @@ function getInstallCommand(
 };
 ```
 
-Defined in: [project.ts:411](https://github.com/adobe/aio-commerce-sdk/blob/aa606961236cac6f4a3cebc105d643da71d5ddb8/packages-private/scripting-utils/source/project.ts#L411)
+Defined in: [project.ts:411](https://github.com/adobe/aio-commerce-sdk/blob/71bf66656ef1fc6dd272a0821e8b00aab5dc197e/packages-private/scripting-utils/source/project.ts#L411)
 
 Get the command to install the given dependencies with the given package
 manager (e.g. `pnpm add foo bar`, `npm i foo bar`).

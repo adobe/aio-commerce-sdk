@@ -1,5 +1,12 @@
 # @adobe/aio-commerce-lib-config
 
+## 1.6.1
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @adobe/aio-commerce-lib-api@1.3.1
+
 ## 1.6.0
 
 ### Minor Changes

@@ -1,6 +1,6 @@
 {
   "name": "@aio-commerce-sdk/scripting-utils",
-  "version": "0.3.4",
+  "version": "0.3.5",
   "private": true,
   "description": "Utility functions for Adobe Commerce SDK scripts and build tools",
   "license": "Apache-2.0",

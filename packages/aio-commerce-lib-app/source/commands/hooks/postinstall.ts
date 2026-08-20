@@ -11,30 +11,39 @@
  */
 
 import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
+import { getProjectRootDirectory } from "@aio-commerce-sdk/scripting-utils/project";
 import consola from "consola";
 
-import { run as generateActionsCommand } from "#commands/generate/actions/main";
-import { run as generateManifestCommand } from "#commands/generate/manifest/main";
-import { run as generateSchemaCommand } from "#commands/generate/schema/main";
+import { run as generateActions } from "#commands/generate/actions/main";
+import { run as generateManifest } from "#commands/generate/manifest/main";
+import { run as generateSchema } from "#commands/generate/schema/main";
 import { loadAppManifest } from "#commands/utils";
 
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 
+/**
+ * Regenerates project artifacts after dependencies are installed.
+ * @param appManifest - Validated app configuration used for generation.
+ * @param projectRoot - Resolved project root where artifacts are generated.
+ * @param templatesDir - Optional directory containing generation templates.
+ */
 export async function run(
   appManifest: CommerceAppConfigOutputModel,
+  projectRoot: string,
   templatesDir?: string,
 ) {
-  await generateActionsCommand(appManifest, templatesDir);
-  await generateManifestCommand(appManifest);
-  await generateSchemaCommand(appManifest);
+  await generateActions(appManifest, projectRoot, templatesDir);
+  await generateManifest(appManifest, projectRoot);
+  await generateSchema(appManifest, projectRoot);
 }
 
 /** Runs the postinstall hook */
 export async function exec() {
   consola.debug("Running lib-app postinstall hook");
   try {
-    const appManifest = await loadAppManifest();
-    await run(appManifest);
+    const projectRoot = await getProjectRootDirectory();
+    const appManifest = await loadAppManifest(projectRoot);
+    await run(appManifest, projectRoot);
   } catch (error) {
     if (error instanceof CommerceSdkValidationError) {
       consola.error(error.display());

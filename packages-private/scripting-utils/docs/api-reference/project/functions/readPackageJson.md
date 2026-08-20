@@ -4,7 +4,7 @@
 function readPackageJson(cwd?: string): Promise<PackageJson | null>;
 ```
 
-Defined in: [project.ts:107](https://github.com/adobe/aio-commerce-sdk/blob/aa606961236cac6f4a3cebc105d643da71d5ddb8/packages-private/scripting-utils/source/project.ts#L107)
+Defined in: [project.ts:107](https://github.com/adobe/aio-commerce-sdk/blob/71bf66656ef1fc6dd272a0821e8b00aab5dc197e/packages-private/scripting-utils/source/project.ts#L107)
 
 Read the package.json file
 

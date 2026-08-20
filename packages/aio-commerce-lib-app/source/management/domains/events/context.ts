@@ -23,6 +23,7 @@ import {
   getAllEventProviders as getAllEventProvidersCommerce,
   getAllEventSubscriptions,
   updateEventingConfiguration,
+  updateEventSubscription,
 } from "@adobe/aio-commerce-lib-events/commerce";
 import {
   createCustomAdobeIoEventsApiClient,
@@ -34,6 +35,7 @@ import {
   deleteRegistration,
   getAllEventProviders,
   getAllRegistrations,
+  updateRegistration,
 } from "@adobe/aio-commerce-lib-events/io-events";
 
 import { LIFECYCLE_HTTP_CLIENT_TIMEOUT_MS } from "#management/common/constants";
@@ -64,6 +66,7 @@ function createCommerceEventsApiClient(params: RuntimeActionParams) {
     getAllEventProviders: getAllEventProvidersCommerce,
     getAllEventSubscriptions,
     updateEventingConfiguration,
+    updateEventSubscription,
   });
 }
 
@@ -90,6 +93,7 @@ function createIoEventsApiClient(params: RuntimeActionParams) {
     deleteRegistration,
     getAllEventProviders,
     getAllRegistrations,
+    updateRegistration,
   });
 }
 

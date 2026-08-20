@@ -101,7 +101,7 @@ describe("lifecycle type surface", () => {
     expectTypeOf(invalid).toBeObject();
   });
 
-  test("LeafStep threads the domain generics through the optional capability", () => {
+  test("LeafStep threads the domain generics through the resource capability", () => {
     expectTypeOf<WebhookLeafStep>().toMatchTypeOf<{ type: "leaf" }>();
 
     // The resource-capability handlers are optional members of a leaf step.
@@ -134,7 +134,13 @@ describe("lifecycle type surface", () => {
     expectTypeOf<Apply>().parameter(0).toEqualTypeOf<WebhookPlan>();
     expectTypeOf<Apply>()
       .parameter(1)
-      .toEqualTypeOf<ApplyContext<{ webhookClient: { apply: () => void } }>>();
+      .toEqualTypeOf<
+        ApplyContext<
+          { webhookClient: { apply: () => void } },
+          CommerceAppConfigOutputModel,
+          { webhooks: WebhookEntry[] }
+        >
+      >();
     expectTypeOf<Apply>().returns.resolves.toEqualTypeOf<
       ApplyResult<{ webhooks: WebhookEntry[] }>
     >();
