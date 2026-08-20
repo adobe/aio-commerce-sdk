@@ -79,7 +79,7 @@ If the config is invalid, the build fails with a detailed validation error point
 
 ## Common Issues
 
-- **`id` validation error**: `metadata.id` accepts alphanumeric characters and hyphens only — no dots, underscores, or spaces.
+- **`id` validation error**: `metadata.id` accepts alphanumeric characters and hyphens only — no dots, underscores, or spaces. It cannot change during an upgrade; uninstall and reinstall the app to use a different ID.
 - **`version` validation error**: Only numeric semver is accepted (`1.0.0`). Pre-release identifiers (`1.0.0-beta`) are not supported.
 - **`defineConfig` not found**: Ensure `@adobe/aio-commerce-lib-app` is installed and imported from `@adobe/aio-commerce-lib-app/config`.
 

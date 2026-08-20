@@ -939,6 +939,9 @@ After an app is installed, the installation endpoint is **desired-state**. It co
 - **No baseline yet**: it installs the app.
 - **A baseline exists**: it upgrades the app from the baseline to the version declared in `metadata.version`.
 
+> [!IMPORTANT]
+> `metadata.id` identifies the installed application and cannot change during an upgrade. The endpoint rejects a different ID before planning starts. To use a different ID, uninstall the existing app and install it again.
+
 The endpoint derives the operation and returns it as `operation` (`"install"` or `"upgrade"`) in the response.
 
 #### Automatic vs. Manual Upgrades

@@ -87,6 +87,14 @@ export async function startUpgrade({
     });
   }
 
+  if (baseline.config.metadata.id !== appConfig.metadata.id) {
+    return conflict({
+      body: {
+        message: `The application ID (metadata.id) cannot be changed during an upgrade. Expected "${baseline.config.metadata.id}", received "${appConfig.metadata.id}".`,
+      },
+    });
+  }
+
   if (baseline.config.metadata.version === appConfig.metadata.version) {
     return conflict({
       body: {

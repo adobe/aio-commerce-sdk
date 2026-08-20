@@ -1463,7 +1463,7 @@
       "post": {
         "operationId": "reconcileInstallation",
         "summary": "Reconcile Installation (Install or Upgrade)",
-        "description": "Desired-state endpoint. Reconciles the app toward the target configuration: when no installation baseline exists it installs the app, except for `post-app-deploy` invocations, which return `409 not-installed`; when a baseline exists it upgrades from the baseline to the version declared in `metadata.version`. The chosen branch is reported in the response `operation` field. The caller does not choose between install and upgrade.",
+        "description": "Desired-state endpoint. Reconciles the app toward the target configuration: when no installation baseline exists it installs the app, except for `post-app-deploy` invocations, which return `409 not-installed`; when a baseline exists it upgrades from the baseline to the version declared in `metadata.version`. An upgrade must keep the installed `metadata.id`; a different application ID is rejected before planning. The chosen branch is reported in the response `operation` field.",
         "parameters": [
           {
             "name": "x-gw-ims-org-id",
@@ -1644,7 +1644,7 @@
             "description": "The access token is valid, but it is not allowed to access the requested organization or operation."
           },
           "409": {
-            "description": "The request is not actionable. This covers both non-actionable no-op states and real failures. A `409` carrying a `reason` is a graceful no-op the caller can ignore: `not-installed` (a post-deploy invocation cannot install the app), `not-associated` (the app is not associated with a Commerce instance), or `already-current` (the installed version already matches `metadata.version`). A `409` without a `reason` is a real failure — for example, an installation already running or completed, or upgrade planning blocked by configuration `issues`.",
+            "description": "The request is not actionable. This covers both non-actionable no-op states and real failures. A `409` carrying a `reason` is a graceful no-op the caller can ignore: `not-installed` (a post-deploy invocation cannot install the app), `not-associated` (the app is not associated with a Commerce instance), or `already-current` (the installed version already matches `metadata.version`). A `409` without a `reason` is a real failure — for example, an installation already running or completed, an attempted change to the installed `metadata.id`, or upgrade planning blocked by configuration `issues`.",
             "content": {
               "application/json": {
                 "schema": {

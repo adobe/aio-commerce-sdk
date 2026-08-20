@@ -332,11 +332,14 @@ describe("installationRuntimeAction", () => {
   let desiredSnapshotStore = createMockLifecycleStore<AppStateSnapshot>();
   let desiredStateStore = createMockLifecycleStore<OrchestrationState>();
 
-  function seedInstalledBaseline(version: string) {
+  function seedInstalledBaseline(
+    version: string,
+    id = minimalValidConfig.metadata.id,
+  ) {
     desiredInstallationStore = createMockInstallationStore(
       createMockInstallationSucceededState({
         config: createMockConfig({
-          metadata: { upgradeMode: "auto", version },
+          metadata: { id, upgradeMode: "auto", version },
         }),
         data: appData,
       }),
@@ -515,6 +518,39 @@ describe("installationRuntimeAction", () => {
         expect(result).toMatchObject({
           error: { body: { reason: "not-associated" }, statusCode: 409 },
           type: "error",
+        });
+      });
+
+      test("returns 409 when the application ID changed", async () => {
+        const targetConfig = createMockConfig({
+          metadata: { id: "renamed-app", upgradeMode: "auto" },
+        });
+        seedInstalledBaseline(targetConfig.metadata.version, "installed-app");
+        const action = installationRuntimeAction({
+          appConfig: targetConfig,
+        });
+        const result = await action(
+          createRuntimeActionParams({
+            body: upgradeRequestBody,
+            method: "post",
+            ...DEFAULT_INSTALLATION_PARAMS,
+          }),
+        );
+
+        expect(createRootInstallationStepMock).not.toHaveBeenCalled();
+        expect(invokeMock).not.toHaveBeenCalled();
+        expect(result).toMatchObject({
+          error: {
+            body: {
+              message:
+                'The application ID (metadata.id) cannot be changed during an upgrade. Expected "installed-app", received "renamed-app".',
+            },
+            statusCode: 409,
+          },
+          type: "error",
+        });
+        expect(result).not.toMatchObject({
+          error: { body: { reason: expect.anything() } },
         });
       });
 
