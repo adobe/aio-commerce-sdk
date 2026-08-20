@@ -84,15 +84,11 @@ export async function registerExtension(context: AdminUiExecutionContext) {
 
 /**
  * Refreshes an existing extension's registrations from the App Registry via the
- * dedicated `POST .../refresh` endpoint, which re-syncs registrations without
- * modifying the extension record. The endpoint returns no body, so on success
- * this returns `undefined` — there is no id to report.
+ * dedicated `POST .../refresh` endpoint, re-syncing without modifying the
+ * extension record. Returns `undefined` on success (the endpoint has no body).
  *
- * Not every Commerce instance exposes the refresh route: on PaaS, merchants
- * control their own Admin UI SDK upgrade cadence, so the route may be absent
- * (unlike ACCS, which Adobe upgrades centrally). A 404 (route absent, or the
- * extension not registered) therefore re-registers instead, which re-syncs the
- * registrations idempotently.
+ * A 404 (route absent on older Admin UI SDK modules, or the extension not
+ * registered) falls back to re-registering, which re-syncs idempotently.
  *
  * @param context - The execution context providing the Admin UI client and logger.
  */
