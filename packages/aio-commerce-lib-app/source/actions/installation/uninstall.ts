@@ -19,7 +19,7 @@ import {
 } from "@adobe/aio-commerce-lib-core/responses";
 import openwhisk from "openwhisk";
 
-import { validateCommerceAppConfig } from "#config/lib/validate";
+import { validateRecordedCommerceAppConfig } from "#config/lib/validate";
 import {
   createInitialUninstallationState,
   isFailedState,
@@ -90,7 +90,7 @@ export async function startUninstallation({
   );
 
   const initialState = createInitialUninstallationState({
-    config: validateCommerceAppConfig(uninstallConfig),
+    config: validateRecordedCommerceAppConfig(uninstallConfig),
   });
   logger.debug(`Created initial uninstall state: ${initialState.id}`);
   await store.put(getStorageKey(), initialState);
@@ -141,7 +141,7 @@ export async function executeUninstallation({
     return badRequest("appConfig is required for execution");
   }
 
-  const appConfig = validateCommerceAppConfig(rawAppConfig);
+  const appConfig = validateRecordedCommerceAppConfig(rawAppConfig);
   const store = await createUninstallationStore();
   const hooks = createInstallationHooks(store, (msg) => logger.debug(msg));
   const installationContext = buildLifecycleContext(params, appConfig, logger);

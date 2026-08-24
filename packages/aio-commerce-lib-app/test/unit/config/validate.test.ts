@@ -15,9 +15,11 @@ import { describe, expect, test } from "vitest";
 import {
   validateCommerceAppConfig,
   validateCommerceAppConfigDomain,
+  validateRecordedCommerceAppConfig,
 } from "#config/lib/validate";
 import {
   configWithCustomInstallationSteps,
+  configWithDynamicListOptions,
   createCommerceEventConfig,
 } from "#test/fixtures/config";
 
@@ -1640,5 +1642,51 @@ describe("validateConfigDomain", () => {
     });
 
     expect(() => validateCommerceAppConfig(config)).toThrow();
+  });
+});
+
+describe("validateRecordedCommerceAppConfig", () => {
+  test("accepts a config whose dynamicList business config field still has functions", () => {
+    expect(() =>
+      validateRecordedCommerceAppConfig(configWithDynamicListOptions),
+    ).not.toThrow();
+  });
+
+  test("CEXT-6661: accepts a dynamicList field that lost its options/default to a JSON round trip", () => {
+    const recorded = JSON.parse(JSON.stringify(configWithDynamicListOptions));
+
+    const validated = validateRecordedCommerceAppConfig(recorded);
+    expect(validated.businessConfig?.schema).toEqual([
+      expect.objectContaining({
+        name: "paymentMethod",
+        type: "dynamicList",
+      }),
+    ]);
+  });
+
+  test("still rejects a config missing required metadata", () => {
+    const recorded = JSON.parse(
+      JSON.stringify({ ...configWithDynamicListOptions, metadata: undefined }),
+    );
+
+    expect(() => validateRecordedCommerceAppConfig(recorded)).toThrow();
+  });
+
+  test("still rejects a dynamicList field with a non-function options property", () => {
+    const config = {
+      ...configWithDynamicListOptions,
+      businessConfig: {
+        schema: [
+          {
+            name: "paymentMethod",
+            options: "not-a-function",
+            selectionMode: "single",
+            type: "dynamicList",
+          },
+        ],
+      },
+    };
+
+    expect(() => validateRecordedCommerceAppConfig(config)).toThrow();
   });
 });

@@ -265,3 +265,74 @@ export const SchemaBusinessConfigSchema = v.pipe(
   v.array(FieldSchema, "Expected an array of configuration fields"),
   v.minLength(1, "At least one configuration parameter is required"),
 );
+
+// A JSON round trip through storage (e.g. a persisted lifecycle snapshot)
+// cannot preserve function values, so `options`/`default` are structurally
+// guaranteed to be missing on a recorded `dynamicList` field, not just on a
+// malformed one. The schemas below accept that absence instead of rejecting it.
+
+/** Entries shared between the recorded single- and multiple-selection dynamic list field schemas. */
+const RecordedDynamicListEntriesCommon = {
+  ...BaseOptionSchema.entries,
+  options: v.optional(
+    v.custom<OptionsFactory>(
+      (input) => typeof input === "function",
+      'Expected a function for "options"',
+    ),
+  ),
+  type: v.literal("dynamicList", "Expected the type to be 'dynamicList'"),
+};
+
+/** Schema for a recorded dynamic list field that allows single selection. */
+const RecordedSingleDynamicListSchema = v.object({
+  ...RecordedDynamicListEntriesCommon,
+  default: v.optional(
+    v.custom<SingleDefaultFactory>(
+      (input) => typeof input === "function",
+      'Expected a function for "default"',
+    ),
+  ),
+  selectionMode: v.literal(
+    "single",
+    "Expected the selectionMode to be 'single'",
+  ),
+});
+
+/** Schema for a recorded dynamic list field that allows multiple selections. */
+const RecordedMultipleDynamicListSchema = v.object({
+  ...RecordedDynamicListEntriesCommon,
+  default: v.optional(
+    v.custom<MultipleDefaultFactory>(
+      (input) => typeof input === "function",
+      'Expected a function for "default"',
+    ),
+  ),
+  selectionMode: v.literal(
+    "multiple",
+    "Expected the selectionMode to be 'multiple'",
+  ),
+});
+
+/** Schema for recorded dynamic list fields supporting either single or multiple selection modes. */
+export const RecordedDynamicListSchema = v.variant("selectionMode", [
+  RecordedSingleDynamicListSchema,
+  RecordedMultipleDynamicListSchema,
+]);
+
+/** Schema for a single configuration field as recovered from a persisted lifecycle snapshot. */
+export const RecordedFieldSchema = v.variant("type", [
+  ListSchema,
+  RecordedDynamicListSchema,
+  TextSchema,
+  PasswordSchema,
+  EmailSchema,
+  UrlSchema,
+  PhoneSchema,
+  BooleanSchema,
+]);
+
+/** Schema for the business configuration schema as recovered from a persisted lifecycle snapshot. */
+export const RecordedSchemaBusinessConfigSchema = v.pipe(
+  v.array(RecordedFieldSchema, "Expected an array of configuration fields"),
+  v.minLength(1, "At least one configuration parameter is required"),
+);

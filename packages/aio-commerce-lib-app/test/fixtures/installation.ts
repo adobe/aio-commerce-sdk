@@ -284,9 +284,21 @@ export function createMockValidationResult(
   };
 }
 
+/** Options for {@link createMockInstallationStore}. */
+export type MockInstallationStoreOptions = {
+  /**
+   * When true, `put` round-trips the value through `JSON.stringify`/`parse`,
+   * matching the real state/files stores. Function-valued properties (e.g. a
+   * `dynamicList` field's `options`/`default`) do not survive this and are
+   * dropped, same as in production.
+   */
+  serialize?: boolean;
+};
+
 /** Creates an in-memory mock of a key/value store for installation state. */
 export function createMockInstallationStore(
   initialValue: WorkflowRunState | null = null,
+  { serialize = false }: MockInstallationStoreOptions = {},
 ) {
   let value = initialValue;
 
@@ -298,7 +310,7 @@ export function createMockInstallationStore(
     }),
     get: vi.fn(async (_key: string) => value),
     put: vi.fn(async (_key: string, nextValue: WorkflowRunState) => {
-      value = nextValue;
+      value = serialize ? JSON.parse(JSON.stringify(nextValue)) : nextValue;
     }),
   };
 }

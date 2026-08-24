@@ -15,7 +15,10 @@
 import * as v from "valibot";
 
 import { AdminUiSchema } from "./admin-ui";
-import { SchemaBusinessConfig } from "./business-configuration";
+import {
+  RecordedSchemaBusinessConfig,
+  SchemaBusinessConfig,
+} from "./business-configuration";
 import { getConfigDomains } from "./domains";
 import { EventingSchema } from "./eventing";
 import { InstallationSchema } from "./installation";
@@ -41,6 +44,22 @@ export type CommerceAppConfig = v.InferInput<typeof CommerceAppConfigSchema>;
 /** The output shape of the commerce app config schema. */
 export type CommerceAppConfigOutputModel = v.InferOutput<
   typeof CommerceAppConfigSchema
+>;
+
+/**
+ * The schema used to validate a commerce app config recovered from a
+ * persisted lifecycle snapshot (installation/upgrade baseline), where
+ * `businessConfig.schema` `dynamicList` fields may have lost their
+ * `options`/`default` functions to a JSON round trip through storage.
+ */
+export const RecordedCommerceAppConfigSchema = v.looseObject({
+  ...CommerceAppConfigSchema.entries,
+  businessConfig: v.optional(RecordedSchemaBusinessConfig),
+});
+
+/** The output shape of the recorded commerce app config schema. */
+export type RecordedCommerceAppConfigOutputModel = v.InferOutput<
+  typeof RecordedCommerceAppConfigSchema
 >;
 
 /** @internal Any commerce app config, input contract or validated output. */
