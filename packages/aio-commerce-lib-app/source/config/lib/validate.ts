@@ -13,7 +13,10 @@
 import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
 import * as v from "valibot";
 
-import { CommerceAppConfigSchema } from "#config/schema/app";
+import {
+  CommerceAppConfigSchema,
+  RecordedCommerceAppConfigSchema,
+} from "#config/schema/app";
 import { CommerceAppConfigSchemas } from "#config/schema/domains";
 
 import type { Get } from "type-fest";
@@ -63,6 +66,33 @@ export function validateCommerceAppConfig(
   }
 
   return validatedConfig.output;
+}
+
+/**
+ * Validates a commerce app config recovered from a persisted lifecycle
+ * snapshot (installation/upgrade baseline) against the schema.
+ *
+ * @param config - The configuration object to validate.
+ * @returns The validated and typed configuration output model.
+ *
+ * @throws {CommerceSdkValidationError} If the configuration is invalid, with
+ * detailed validation issues included.
+ */
+export function validateRecordedCommerceAppConfig(
+  config: unknown,
+): CommerceAppConfigOutputModel {
+  const validatedConfig = v.safeParse(RecordedCommerceAppConfigSchema, config);
+
+  if (!validatedConfig.success) {
+    throw new CommerceSdkValidationError("Invalid commerce app config", {
+      issues: validatedConfig.issues,
+    });
+  }
+
+  // Nothing in the installation/uninstallation workflow reads
+  // `businessConfig.schema` `options`/`default`, so a recorded config missing
+  // those functions is safe to thread through as the regular output model.
+  return validatedConfig.output as CommerceAppConfigOutputModel;
 }
 
 /**
