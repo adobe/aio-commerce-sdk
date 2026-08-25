@@ -19,7 +19,9 @@ import { appliesToEnv, getInstallCommerceEnv } from "#config/lib/environment";
 import { hasExternalEvents } from "#config/schema/eventing";
 import { defineLeafStep } from "#management/common/workflow/step";
 
+import { applyEventingLeaf } from "./apply";
 import { offboardIoEvents, onboardIoEvents } from "./helpers";
+import { planExternalEvents } from "./plan";
 import {
   EVENTS_STORAGE_KEY,
   EXTERNAL_PROVIDER_TYPE,
@@ -28,15 +30,24 @@ import {
 } from "./utils";
 
 import type { ExternalEventsConfig } from "#config/schema/eventing";
+import type {
+  ApplyContext,
+  ApplyResult,
+} from "#management/common/workflow/resource";
 import type { InferStepOutput } from "#management/common/workflow/step";
-import type { EventsExecutionContext } from "./context";
-import type { StoredEventsData } from "./types";
+import type { EventsExecutionContext, EventsStepContext } from "./context";
+import type {
+  EventingDomainPlan,
+  EventingSnapshotData,
+  StoredEventsData,
+} from "./types";
 
 /** The output data of the External Eventing step (auto-inferred). */
 export type ExternalEventsStepData = InferStepOutput<typeof externalEventsStep>;
 
-/** Leaf step for installing external event sources. */
+/** Leaf step for installing and upgrading external event sources. */
 export const externalEventsStep = defineLeafStep({
+  apply: applyExternalEvents,
   install: createExternalEvents,
 
   isConfigured: hasExternalEvents,
@@ -49,10 +60,39 @@ export const externalEventsStep = defineLeafStep({
       description: "Removes I/O Events for external event sources",
       label: "Remove External Events",
     },
+    upgrade: {
+      description:
+        "Reconciles external event providers, metadata and registrations",
+      label: "Update External Events",
+    },
   },
   name: "external",
+  plan: planExternalEvents,
   uninstall: removeExternalEvents,
 });
+
+/**
+ * Applies an external eventing domain plan by delegating to the shared leaf convergence, supplying this
+ * leaf's own `install`/`uninstall` handlers. Defined here (not in `./apply`) so that `applyEventingLeaf`
+ * stays free of any dependency on this step — attaching it there would form an import cycle.
+ *
+ * @param plan - The eventing domain plan produced by `planExternalEvents`.
+ * @param context - The attempt-scoped execution context.
+ */
+export function applyExternalEvents(
+  plan: EventingDomainPlan,
+  context: ApplyContext<EventsStepContext>,
+): Promise<ApplyResult<EventingSnapshotData>> {
+  return applyEventingLeaf(plan, context, {
+    install: async (config, ctx) =>
+      await externalEventsStep.install(config as ExternalEventsConfig, ctx),
+    isCommerce: false,
+    type: EXTERNAL_PROVIDER_TYPE,
+    uninstall: async (config, ctx) => {
+      await externalEventsStep.uninstall?.(config as ExternalEventsConfig, ctx);
+    },
+  });
+}
 
 /**
  * Creates all needed entities for External Events to work with Adobe I/O Events.

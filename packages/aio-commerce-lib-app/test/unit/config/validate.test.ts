@@ -15,9 +15,11 @@ import { describe, expect, test } from "vitest";
 import {
   validateCommerceAppConfig,
   validateCommerceAppConfigDomain,
+  validateRecordedCommerceAppConfig,
 } from "#config/lib/validate";
 import {
   configWithCustomInstallationSteps,
+  configWithDynamicListOptions,
   createCommerceEventConfig,
 } from "#test/fixtures/config";
 
@@ -1321,6 +1323,27 @@ describe("validateConfigDomain", () => {
       label: "Test Webhook",
     };
 
+    const createRuntimeWebhookConfig = (
+      webhook: Partial<typeof baseWebhookDefinition> = {},
+    ) => ({
+      metadata: {
+        description: "Test",
+        displayName: "Test",
+        id: "test-app",
+        version: "1.0.0",
+      },
+      webhooks: [
+        {
+          ...baseWebhookEntry,
+          runtimeAction: "my-package/handle-webhook",
+          webhook: {
+            ...baseWebhookDefinition,
+            ...webhook,
+          },
+        },
+      ],
+    });
+
     test("should accept entry with runtimeAction and no url", () => {
       const config = {
         metadata: {
@@ -1361,6 +1384,33 @@ describe("validateConfigDomain", () => {
       };
 
       expect(() => validateCommerceAppConfig(config)).not.toThrow();
+    });
+
+    test("should accept a before webhook type", () => {
+      const config = createRuntimeWebhookConfig({ webhook_type: "before" });
+
+      expect(() => validateCommerceAppConfig(config)).not.toThrow();
+    });
+
+    test("should reject an unsupported webhook type", () => {
+      const config = createRuntimeWebhookConfig({ webhook_type: "blabla" });
+
+      expect(() => validateCommerceAppConfig(config)).toThrow();
+    });
+
+    test.each(["POST", "PUT", "DELETE", "GET"])(
+      "should accept the %s webhook HTTP method",
+      (method) => {
+        const config = createRuntimeWebhookConfig({ method });
+
+        expect(() => validateCommerceAppConfig(config)).not.toThrow();
+      },
+    );
+
+    test("should reject an unsupported webhook HTTP method", () => {
+      const config = createRuntimeWebhookConfig({ method: "PATCH" });
+
+      expect(() => validateCommerceAppConfig(config)).toThrow();
     });
 
     test("should reject entry with neither runtimeAction nor url", () => {
@@ -1592,5 +1642,51 @@ describe("validateConfigDomain", () => {
     });
 
     expect(() => validateCommerceAppConfig(config)).toThrow();
+  });
+});
+
+describe("validateRecordedCommerceAppConfig", () => {
+  test("accepts a config whose dynamicList business config field still has functions", () => {
+    expect(() =>
+      validateRecordedCommerceAppConfig(configWithDynamicListOptions),
+    ).not.toThrow();
+  });
+
+  test("CEXT-6661: accepts a dynamicList field that lost its options/default to a JSON round trip", () => {
+    const recorded = JSON.parse(JSON.stringify(configWithDynamicListOptions));
+
+    const validated = validateRecordedCommerceAppConfig(recorded);
+    expect(validated.businessConfig?.schema).toEqual([
+      expect.objectContaining({
+        name: "paymentMethod",
+        type: "dynamicList",
+      }),
+    ]);
+  });
+
+  test("still rejects a config missing required metadata", () => {
+    const recorded = JSON.parse(
+      JSON.stringify({ ...configWithDynamicListOptions, metadata: undefined }),
+    );
+
+    expect(() => validateRecordedCommerceAppConfig(recorded)).toThrow();
+  });
+
+  test("still rejects a dynamicList field with a non-function options property", () => {
+    const config = {
+      ...configWithDynamicListOptions,
+      businessConfig: {
+        schema: [
+          {
+            name: "paymentMethod",
+            options: "not-a-function",
+            selectionMode: "single",
+            type: "dynamicList",
+          },
+        ],
+      },
+    };
+
+    expect(() => validateRecordedCommerceAppConfig(config)).toThrow();
   });
 });

@@ -13,6 +13,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import {
+  refreshExtension,
   registerExtension,
   unregisterExtension,
 } from "#api/extensions/endpoints";
@@ -20,6 +21,7 @@ import { BASE_URL, makeHttpClient } from "#test/fixtures/http-client";
 
 const REGISTER_URL = `${BASE_URL}/rest/all/V1/adminuisdk/extension`;
 const UNREGISTER_URL = `${BASE_URL}/rest/all/V1/adminuisdk/extension/prod-workspace/my-namespace`;
+const REFRESH_URL = `${BASE_URL}/rest/all/V1/adminuisdk/extension/prod-workspace/my-namespace/refresh`;
 
 const PARAMS = {
   extensionName: "my-namespace",
@@ -86,6 +88,40 @@ describe("unregisterExtension", () => {
 
     await expect(
       unregisterExtension(makeHttpClient(fetchMock as typeof fetch), {
+        extensionName: "my-namespace",
+        workspaceName: "prod-workspace",
+      }),
+    ).rejects.toThrow();
+  });
+});
+
+describe("refreshExtension", () => {
+  it("POSTs to /V1/adminuisdk/extension/{workspaceName}/{extensionName}/refresh", async () => {
+    let capturedUrl = "";
+    let capturedMethod = "";
+
+    const fetchMock = vi.fn((input: Request) => {
+      capturedUrl = input.url;
+      capturedMethod = input.method;
+      return Promise.resolve(new Response(null, { status: 200 }));
+    });
+
+    await refreshExtension(makeHttpClient(fetchMock as typeof fetch), {
+      extensionName: "my-namespace",
+      workspaceName: "prod-workspace",
+    });
+
+    expect(capturedMethod).toBe("POST");
+    expect(capturedUrl).toBe(REFRESH_URL);
+  });
+
+  it("throws on non-2xx response", async () => {
+    const fetchMock = vi.fn(async () =>
+      Response.json({ message: "Not Found" }, { status: 404 }),
+    );
+
+    await expect(
+      refreshExtension(makeHttpClient(fetchMock as typeof fetch), {
         extensionName: "my-namespace",
         workspaceName: "prod-workspace",
       }),

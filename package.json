@@ -1,26 +1,21 @@
 {
   "name": "aio-commerce-sdk",
   "private": true,
-  "packageManager": "pnpm@11.20.0",
-  "engines": {
-    "node": ">=22 <=24",
-    "pnpm": ">=10"
-  },
   "scripts": {
+    "assist": "turbo run assist",
+    "assist:apply": "turbo run assist:apply",
+    "build": "turbo run build",
+    "check:ci": "turbo run check:ci",
     "clean:all": "pnpm clean:dist && pnpm clean:modules && pnpm clean:tgz pnpm clean:turbo",
     "clean:dist": "pnpx rimraf './**/dist' './**/.build' --glob",
     "clean:modules": "pnpx rimraf './**/node_modules' --glob",
     "clean:tgz": "pnpx rimraf './**/*.tgz' --glob",
     "clean:turbo": "pnpx rimraf './**/.turbo' --glob",
-    "assist": "turbo run assist",
-    "assist:apply": "turbo run assist:apply",
-    "build": "turbo run build",
-    "check:ci": "turbo run check:ci",
     "code:fix": "turbo run code:fix",
     "docs": "turbo run docs",
     "format": "turbo run format",
-    "format:markdown": "turbo run format:markdown && prettier --no-error-on-unmatched-pattern --write 'specs/**/*.md'",
     "format:check": "turbo run format:check",
+    "format:markdown": "turbo run format:markdown && prettier --no-error-on-unmatched-pattern --write 'specs/**/*.md'",
     "lint": "turbo run lint",
     "lint:fix": "turbo run lint:fix",
     "pack": "turbo run pack",
@@ -32,10 +27,21 @@
     "turbo": "turbo",
     "typecheck": "turbo typecheck"
   },
+  "lint-staged": {
+    "*.{js,ts,cjs,mjs,d.cts,d.mts,jsx,tsx,json,jsonc}": [
+      "biome check --write --no-errors-on-unmatched --files-ignore-unknown=true"
+    ],
+    "*.md": [
+      "prettier --no-error-on-unmatched-pattern --write '**/*.md' \"!**/{CODE_OF_CONDUCT.md,COPYRIGHT,LICENSE,SECURITY.md,CONTRIBUTING.md}\""
+    ],
+    "*": [
+      "biome check --no-errors-on-unmatched --files-ignore-unknown=true"
+    ]
+  },
   "devDependencies": {
-    "@biomejs/biome": "2.5.7",
-    "@changesets/changelog-github": "^0.7.0",
-    "@changesets/cli": "^2.30.0",
+    "@biomejs/biome": "2.5.9",
+    "@changesets/changelog-github": "^1.0.0",
+    "@changesets/cli": "^3.0.0",
     "@redocly/cli": "^2.31.4",
     "@turbo/gen": "^2.8.17",
     "@types/node": "^24.12.0",
@@ -53,19 +59,13 @@
     "typedoc": "^0.28.17",
     "typedoc-plugin-markdown": "^4.10.0",
     "typescript": "catalog:",
-    "ultracite": "7.10.1",
+    "ultracite": "7.10.6",
     "vitest": "^4.1.0",
     "vitest-browser-react": "^2.2.0"
   },
-  "lint-staged": {
-    "*.{js,ts,cjs,mjs,d.cts,d.mts,jsx,tsx,json,jsonc}": [
-      "biome check --write --no-errors-on-unmatched --files-ignore-unknown=true"
-    ],
-    "*.md": [
-      "prettier --no-error-on-unmatched-pattern --write '**/*.md' \"!**/{CODE_OF_CONDUCT.md,COPYRIGHT,LICENSE,SECURITY.md,CONTRIBUTING.md}\""
-    ],
-    "*": [
-      "biome check --no-errors-on-unmatched --files-ignore-unknown=true"
-    ]
+  "packageManager": "pnpm@11.22.0",
+  "engines": {
+    "node": "^22.11 || ^24",
+    "pnpm": ">=10"
   }
 }

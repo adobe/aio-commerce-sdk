@@ -13,6 +13,8 @@
 import { createAdminUiApiClient } from "@adobe/aio-commerce-lib-admin-ui/api";
 import { resolveCommerceHttpClientParams } from "@adobe/aio-commerce-lib-api";
 
+import { LIFECYCLE_HTTP_CLIENT_TIMEOUT_MS } from "#management/common/constants";
+
 import type { RuntimeActionParams } from "@adobe/aio-commerce-lib-core/params";
 import type {
   ExecutionContext,
@@ -26,6 +28,9 @@ function createAdminUiClient(params: RuntimeActionParams) {
   const commerceClientParams = resolveCommerceHttpClientParams(params, {
     tryForwardAuthProvider: true,
   });
+
+  commerceClientParams.fetchOptions ??= {};
+  commerceClientParams.fetchOptions.timeout = LIFECYCLE_HTTP_CLIENT_TIMEOUT_MS;
 
   return createAdminUiApiClient(commerceClientParams);
 }

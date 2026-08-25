@@ -1,5 +1,11 @@
 import { vi } from "vitest";
 
+import {
+  COMMERCE_PROVIDER_TYPE,
+  generateInstanceId,
+} from "#management/domains/events/utils";
+
+import { configWithCommerceEventing } from "./config";
 import { createMockInstallationContext } from "./installation";
 
 import type {
@@ -8,6 +14,7 @@ import type {
   UpdateEventingConfigurationParams,
 } from "@adobe/aio-commerce-lib-events/commerce";
 import type {
+  EventProviderType,
   IoEventMetadata,
   IoEventMetadataManyResponse,
   IoEventProvider,
@@ -15,7 +22,11 @@ import type {
   IoEventRegistration,
   IoEventRegistrationManyResponse,
 } from "@adobe/aio-commerce-lib-events/io-events";
-import type { EventProvider } from "#config/schema/eventing";
+import type {
+  CommerceEventsConfig,
+  EventProvider,
+  ExternalEventsConfig,
+} from "#config/schema/eventing";
 import type {
   CustomAdobeIoEventsApiClient,
   CustomCommerceEventsApiClient,
@@ -25,6 +36,37 @@ import type {
   ExistingCommerceEventingData,
   ExistingIoEventsData,
 } from "#management/domains/events/utils";
+
+/** A minimal event source shape (provider + events) for building eventing configs in tests. */
+export type MockEventSource = {
+  provider: { label: string; key?: string };
+  events: unknown[];
+};
+
+/** Builds a minimal app event with the given name and runtime actions. */
+export function createMockAppEvent(name: string, runtimeActions: string[]) {
+  return { description: name, fields: [], label: name, name, runtimeActions };
+}
+
+/** Builds a Commerce events config from the given sources, namespaced by the shared test metadata. */
+export function createMockCommerceEventsConfig(
+  sources: MockEventSource[],
+): CommerceEventsConfig {
+  return {
+    eventing: { commerce: sources },
+    metadata: configWithCommerceEventing.metadata,
+  } as unknown as CommerceEventsConfig;
+}
+
+/** Builds an external events config from the given sources, namespaced by the shared test metadata. */
+export function createMockExternalEventsConfig(
+  sources: MockEventSource[],
+): ExternalEventsConfig {
+  return {
+    eventing: { external: sources },
+    metadata: configWithCommerceEventing.metadata,
+  } as unknown as ExternalEventsConfig;
+}
 
 /** Creates a mock {@link EventProvider} with the given label and optional key. */
 export function createMockProvider(label: string, key?: string): EventProvider {
@@ -179,6 +221,11 @@ export function createMockCommerceEventsClient(
     getAllEventProviders: vi.fn(overrides?.getAllEventProviders),
     getAllEventSubscriptions: vi.fn(overrides?.getAllEventSubscriptions),
     updateEventingConfiguration: vi.fn(overrides?.updateEventingConfiguration),
+    updateEventSubscription: vi
+      .fn()
+      .mockImplementation(
+        overrides?.updateEventSubscription ?? (() => Promise.resolve()),
+      ),
   };
 }
 
@@ -208,6 +255,80 @@ export function createMockIoEventsClient(
       ),
     getAllEventProviders: vi.fn(overrides?.getAllEventProviders),
     getAllRegistrations: vi.fn(overrides?.getAllRegistrations),
+    updateRegistration: vi
+      .fn()
+      .mockImplementation(
+        overrides?.updateRegistration ?? (() => Promise.resolve()),
+      ),
+  };
+}
+
+/** Workspace id the mock installation context deploys under; deployed-provider instance ids must match it. */
+export const TEST_WORKSPACE_ID = "test-workspace-id";
+
+/** Client id the mock installation context runs as; deployed registrations must carry it to be found. */
+export const TEST_CLIENT_ID = "test-client-id";
+
+/**
+ * Builds a live I/O Events provider entry whose `instance_id` matches the given config provider under
+ * the shared test metadata, so `resolveDeployedProvider` finds it during an apply. Carries an empty
+ * `_embedded.eventmetadata` so it also parses as a provider HAL model in the list endpoints.
+ *
+ * @param options - The config provider to mirror, the deployed provider id, and its provider type.
+ */
+export function createMockDeployedIoProvider(options: {
+  provider: { label: string; key?: string };
+  id: string;
+  type?: EventProviderType;
+}) {
+  const { provider, id, type = COMMERCE_PROVIDER_TYPE } = options;
+  return {
+    ...createMockIoEventProvider({
+      id,
+      instance_id: generateInstanceId(
+        configWithCommerceEventing.metadata,
+        provider as EventProvider,
+        TEST_WORKSPACE_ID,
+      ),
+      label: provider.label,
+      provider_metadata: type,
+    }),
+    _embedded: { eventmetadata: [] },
+  };
+}
+
+/** Builds a deployed I/O Events registration carrying the mock context's client id. */
+export function createMockDeployedRegistration(
+  name: string,
+  registrationId: string,
+) {
+  return createMockIoEventRegistration({
+    client_id: TEST_CLIENT_ID,
+    name,
+    registration_id: registrationId,
+  });
+}
+
+/** A mock io-events client whose list endpoints return the given (defaulted-empty) HAL payloads. */
+export function createMockIoEventsListClient(options?: {
+  providers?: unknown[];
+  registrations?: unknown[];
+  updateRegistration?: (...args: unknown[]) => unknown;
+  createRegistration?: (...args: unknown[]) => unknown;
+  deleteRegistration?: (...args: unknown[]) => unknown;
+  deleteEventMetadataForProvider?: (...args: unknown[]) => unknown;
+}) {
+  return {
+    createRegistration: options?.createRegistration,
+    deleteEventMetadataForProvider: options?.deleteEventMetadataForProvider,
+    deleteRegistration: options?.deleteRegistration,
+    getAllEventProviders: () =>
+      Promise.resolve({ _embedded: { providers: options?.providers ?? [] } }),
+    getAllRegistrations: () =>
+      Promise.resolve({
+        _embedded: { registrations: options?.registrations ?? [] },
+      }),
+    updateRegistration: options?.updateRegistration ?? vi.fn(),
   };
 }
 

@@ -242,7 +242,7 @@ function defineLeafStep<TName, TConfig, TStepCtx, TOutput>(options: LeafStepOpti
 };
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/workflow/step.ts:244](https://github.com/adobe/aio-commerce-sdk/blob/aa606961236cac6f4a3cebc105d643da71d5ddb8/packages/aio-commerce-lib-app/source/management/installation/workflow/step.ts#L244)
+Defined in: [aio-commerce-lib-app/source/management/installation/workflow/step.ts:244](https://github.com/adobe/aio-commerce-sdk/blob/71bf66656ef1fc6dd272a0821e8b00aab5dc197e/packages/aio-commerce-lib-app/source/management/installation/workflow/step.ts#L244)
 
 Define a leaf step (executable, no children).
 

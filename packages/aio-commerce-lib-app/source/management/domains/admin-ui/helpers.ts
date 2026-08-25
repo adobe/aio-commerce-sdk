@@ -10,11 +10,32 @@
  * governing permissions and limitations under the License.
  */
 
-import { unwrapHttpError } from "@adobe/aio-commerce-lib-api/utils";
+import {
+  HTTP_NOT_FOUND,
+  unwrapHttpError,
+} from "@adobe/aio-commerce-lib-api/utils";
+import { HTTPError } from "ky";
 
 import { throwHttpError } from "#management/common/utils/http-error";
 
 import type { AdminUiExecutionContext } from "./utils";
+
+/** The Admin UI extension name (the deployment namespace), or `undefined` when unset. */
+function getExtensionName(): string | undefined {
+  return process.env.__OW_NAMESPACE;
+}
+
+/**
+ * The Admin UI extension name, throwing when the deployment namespace
+ * (`__OW_NAMESPACE`) is unavailable.
+ */
+function requireExtensionName(): string {
+  const extensionName = getExtensionName();
+  if (!extensionName) {
+    throw new Error("__OW_NAMESPACE environment variable is not set");
+  }
+  return extensionName;
+}
 
 /**
  * Enables the Admin UI SDK in Commerce via PUT /V1/adminuisdk/config.
@@ -43,11 +64,7 @@ export async function enableAdminUiSdk(context: AdminUiExecutionContext) {
  */
 export async function registerExtension(context: AdminUiExecutionContext) {
   const { adminUiClient, appData, logger } = context;
-  const extensionName = process.env.__OW_NAMESPACE;
-
-  if (!extensionName) {
-    throw new Error("__OW_NAMESPACE environment variable is not set");
-  }
+  const extensionName = requireExtensionName();
 
   logger.info(`Registering Admin UI extension: ${appData.projectName}`);
 
@@ -62,6 +79,79 @@ export async function registerExtension(context: AdminUiExecutionContext) {
     );
 
   logger.info(`Admin UI extension registered successfully: ${extensionId}`);
+  return { extensionId };
+}
+
+/**
+ * Refreshes an existing extension's registrations from the App Registry via the
+ * dedicated `POST .../refresh` endpoint, re-syncing without modifying the
+ * extension record. Returns `undefined` on success (the endpoint has no body).
+ *
+ * A 404 (route absent on older Admin UI SDK modules, or the extension not
+ * registered) falls back to re-registering, which re-syncs idempotently.
+ *
+ * @param context - The execution context providing the Admin UI client and logger.
+ */
+export async function refreshExtension(
+  context: AdminUiExecutionContext,
+): Promise<{ extensionId: string } | undefined> {
+  const { adminUiClient, appData, logger } = context;
+  const extensionName = requireExtensionName();
+
+  try {
+    await adminUiClient.refreshExtension({
+      extensionName,
+      workspaceName: appData.workspaceName,
+    });
+    logger.info(
+      `Admin UI extension "${extensionName}" refreshed successfully.`,
+    );
+  } catch (error: unknown) {
+    if (
+      error instanceof HTTPError &&
+      error.response.status === HTTP_NOT_FOUND
+    ) {
+      logger.info(
+        `Refresh unavailable for Admin UI extension "${extensionName}" (endpoint missing or extension not registered); falling back to re-registering.`,
+      );
+      return registerExtension(context);
+    }
+
+    return throwHttpError(
+      logger,
+      error,
+      "Failed to refresh Admin UI extension",
+    );
+  }
+}
+
+/**
+ * Performs the DELETE against Commerce for the given extension, logging the start
+ * and success. Throws the raw client error on failure without classifying it — the
+ * two unregister paths differ in how they treat failures (best-effort warn vs.
+ * strict 404-tolerant throw).
+ *
+ * @param context - The execution context providing the Admin UI client and logger.
+ * @param extensionName - The resolved extension name (the deployment namespace).
+ */
+async function deleteExtensionRegistration(
+  context: AdminUiExecutionContext,
+  extensionName: string,
+): Promise<void> {
+  const { adminUiClient, appData, logger } = context;
+
+  logger.info(
+    `Unregistering Admin UI extension "${extensionName}" from workspace "${appData.workspaceName}"...`,
+  );
+
+  await adminUiClient.unregisterExtension({
+    extensionName,
+    workspaceName: appData.workspaceName,
+  });
+
+  logger.info(
+    `Admin UI extension "${extensionName}" unregistered successfully.`,
+  );
 }
 
 /**
@@ -73,8 +163,8 @@ export async function registerExtension(context: AdminUiExecutionContext) {
 export async function unregisterExtension(
   context: AdminUiExecutionContext,
 ): Promise<void> {
-  const { adminUiClient, appData, logger } = context;
-  const extensionName = process.env.__OW_NAMESPACE;
+  const { logger } = context;
+  const extensionName = getExtensionName();
 
   if (!extensionName) {
     logger.warn(
@@ -83,22 +173,52 @@ export async function unregisterExtension(
     return;
   }
 
-  logger.info(
-    `Unregistering Admin UI extension "${extensionName}" from workspace "${appData.workspaceName}"...`,
-  );
-
   try {
-    await adminUiClient.unregisterExtension({
-      extensionName,
-      workspaceName: appData.workspaceName,
-    });
-    logger.info(
-      `Admin UI extension "${extensionName}" unregistered successfully.`,
-    );
+    await deleteExtensionRegistration(context, extensionName);
   } catch (error: unknown) {
     const msg = await unwrapHttpError(error);
     logger.warn(
       `Failed to unregister Admin UI extension "${extensionName}": ${msg}. Continuing uninstall.`,
     );
   }
+}
+
+/**
+ * Unregisters the extension during an upgrade removal. Unlike the best-effort
+ * {@link unregisterExtension} used on uninstall, this validates the removal: a
+ * missing extension (404) is treated as already removed, but any other failure
+ * is enriched and thrown so the upgrade attempt reports it.
+ *
+ * @param context - The execution context providing the Admin UI client and logger.
+ */
+export async function unregisterExtensionForUpgrade(
+  context: AdminUiExecutionContext,
+): Promise<void> {
+  const { logger } = context;
+  const extensionName = requireExtensionName();
+
+  try {
+    await deleteExtensionRegistration(context, extensionName);
+  } catch (error: unknown) {
+    if (
+      error instanceof HTTPError &&
+      error.response.status === HTTP_NOT_FOUND
+    ) {
+      logger.info(
+        `Admin UI extension "${extensionName}" was already absent; treating removal as complete.`,
+      );
+      return;
+    }
+
+    await throwHttpError(
+      logger,
+      error,
+      "Failed to unregister Admin UI extension",
+    );
+  }
+}
+
+/** Whether the deployment namespace (`__OW_NAMESPACE`) needed to identify the extension is available. */
+export function hasExtensionName(): boolean {
+  return getExtensionName() !== undefined;
 }

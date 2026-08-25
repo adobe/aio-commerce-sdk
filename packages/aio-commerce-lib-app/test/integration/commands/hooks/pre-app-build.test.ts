@@ -10,7 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 
@@ -53,8 +53,12 @@ const { mockSpawnSync } = vi.hoisted(() => ({
 
 vi.mock("node:child_process", () => ({ spawnSync: mockSpawnSync }));
 
-// syncImsCredentials is the external boundary — reads AIO CLI credentials
-vi.mock("@aio-commerce-sdk/scripting-utils/env", () => ({
+// syncImsCredentials is the external boundary (reads AIO CLI credentials); keep
+// it mocked. setNodeEnv stays real so the tests assert the actual .env it writes.
+vi.mock("@aio-commerce-sdk/scripting-utils/env", async (importOriginal) => ({
+  ...(await importOriginal<
+    typeof import("@aio-commerce-sdk/scripting-utils/env")
+  >()),
   syncImsCredentials: vi.fn(),
 }));
 
@@ -75,7 +79,7 @@ describe("commands/hooks/pre-app-build", () => {
       };
 
       await withTempProject(extensibilityProject, async (tempDir) => {
-        await run("extensibility/1", tempDir);
+        await run("extensibility/1", tempDir, tempDir);
 
         const manifestPath = join(tempDir, getManifestPath());
         const appConfigPath = extensibilityActionFile(tempDir, "app-config");
@@ -102,7 +106,7 @@ describe("commands/hooks/pre-app-build", () => {
       };
 
       await withTempProject(businessConfigProject, async (tempDir) => {
-        await run("configuration/1", tempDir);
+        await run("configuration/1", tempDir, tempDir);
 
         const schemaPath = join(tempDir, getSchemaPath());
         const configActionPath = businessConfigActionFile(tempDir, "config");
@@ -124,7 +128,7 @@ describe("commands/hooks/pre-app-build", () => {
       await withTempProject(
         makeProjectFiles(configWithAdminUiSingleGrid),
         async (tempDir) => {
-          await run("backend-ui/2");
+          await run("backend-ui/2", tempDir);
 
           const extConfigPath = join(
             tempDir,
@@ -147,7 +151,7 @@ describe("commands/hooks/pre-app-build", () => {
           ...makeTemplateFiles(),
         },
         async (tempDir) => {
-          await run("backend-ui/2");
+          await run("backend-ui/2", tempDir);
 
           const extConfigPath = join(
             tempDir,
@@ -169,7 +173,7 @@ describe("commands/hooks/pre-app-build", () => {
           ...makeTemplateFiles(),
         },
         async (tempDir) => {
-          await run("backend-ui/2");
+          await run("backend-ui/2", tempDir);
 
           const extConfigPath = join(
             tempDir,
@@ -191,6 +195,9 @@ describe("commands/hooks/pre-app-build", () => {
             "index.html",
           );
           expect(existsSync(webSrcEntrypoint)).toBe(true);
+
+          const envContents = readFileSync(join(tempDir, ".env"), "utf8");
+          expect(envContents).toContain("NODE_ENV=production");
         },
       );
     });
@@ -202,7 +209,7 @@ describe("commands/hooks/pre-app-build", () => {
           ...makeTemplateFiles(),
         },
         async (tempDir) => {
-          await run("backend-ui/2");
+          await run("backend-ui/2", tempDir);
 
           const extConfigPath = join(
             tempDir,
@@ -222,6 +229,7 @@ describe("commands/hooks/pre-app-build", () => {
             "web-src",
           );
           expect(existsSync(webSrcDir)).toBe(false);
+          expect(existsSync(join(tempDir, ".env"))).toBe(false);
 
           const pkg = JSON.parse(
             await readFile(join(tempDir, "package.json"), "utf-8"),
@@ -234,7 +242,7 @@ describe("commands/hooks/pre-app-build", () => {
 
     test("does not write ext.config.yaml for backend-ui/2 when adminUi is absent", async () => {
       await withTempProject(MINIMAL_PROJECT, async (tempDir) => {
-        await run("backend-ui/2");
+        await run("backend-ui/2", tempDir);
 
         const extConfigPath = join(
           tempDir,
@@ -246,10 +254,10 @@ describe("commands/hooks/pre-app-build", () => {
     });
 
     test("throws for unsupported extension", async () => {
-      await withTempProject(MINIMAL_PROJECT, async () => {
+      await withTempProject(MINIMAL_PROJECT, async (tempDir) => {
         await expect(
           // @ts-expect-error Testing with invalid extension value
-          run("unknown/1"),
+          run("unknown/1", tempDir),
         ).rejects.toThrow("Unsupported extension");
       });
     });

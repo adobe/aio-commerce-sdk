@@ -50,9 +50,11 @@ export type CreateExtensionAppOptions = {
  * Mounts a Commerce Admin UI iframe app and handles Experience Cloud Shell, UIX
  * registration, shared-context attachment, routing, and Spectrum setup.
  *
- * The app is wrapped in React's `<StrictMode>`, so in development builds (e.g. when
- * served via `aio app dev` or `aio app run`) components render twice and effects run
- * an extra setup + cleanup cycle on mount. Production builds are unaffected.
+ * The app is wrapped in React's `<StrictMode>` only in development builds
+ * (`process.env.NODE_ENV !== "production"`), so components render twice and effects
+ * run an extra setup + cleanup cycle on mount. Production builds
+ * (`process.env.NODE_ENV === "production"`) render without `<StrictMode>`, so it is
+ * stripped from the production bundle.
  *
  * @param options - App bootstrap options.
  *
@@ -104,10 +106,13 @@ export function createExtensionApp({
       menu === undefined ? routes : [{ element: menu, path: "/" }, ...routes],
     );
 
+    const tree = <RouterProvider router={router} />;
     root.render(
-      <StrictMode>
-        <RouterProvider router={router} />
-      </StrictMode>,
+      process.env.NODE_ENV === "production" ? (
+        tree
+      ) : (
+        <StrictMode>{tree}</StrictMode>
+      ),
     );
   };
 

@@ -13,6 +13,11 @@
 /** biome-ignore-all lint/performance/noBarrelFile: Convenience entrypoint for the workflow module */
 
 export {
+  createInitialPlanExecutionState,
+  executePlannedWorkflow,
+} from "./execute";
+export { planWorkflow } from "./plan";
+export {
   createInitialState,
   createRetryState,
   executeUninstallWorkflow,

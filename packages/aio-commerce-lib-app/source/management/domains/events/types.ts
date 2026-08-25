@@ -22,6 +22,7 @@ import type {
   EventProvider,
 } from "#config/schema/eventing";
 import type { ApplicationMetadata } from "#config/schema/metadata";
+import type { DomainPlan } from "#management/common/workflow/resource";
 import type { onboardIoEvents } from "#management/domains/events/helpers";
 import type { EventsExecutionContext } from "./context";
 
@@ -140,4 +141,81 @@ export type StoredProviderEntry = {
  */
 export type StoredEventsData = {
   providers: Record<string, StoredProviderEntry>;
+};
+
+/**
+ * One deployed event source recorded after an install/apply, used as the baseline for the next
+ * upgrade diff and to reconstruct idempotent onboard/offboard input. `events` is already scoped to
+ * the environment the source was deployed under.
+ */
+export type EventingProviderSnapshot = {
+  key: string;
+  type: EventProviderType;
+  provider: EventProvider;
+  events: AppEvent[];
+};
+
+/**
+ * The snapshot data an eventing leaf persists after applying its plan: the set of providers (with
+ * their deployed events) it currently owns. Serves as `baseline.data` for the next plan.
+ */
+export type EventingSnapshotData = {
+  providers: EventingProviderSnapshot[];
+};
+
+/**
+ * The value carried by a plan operation, discriminated by `resourceType`. Secret-free: creds are
+ * resolved fresh at apply from the context, never persisted in a plan.
+ */
+export type EventingOperationValue =
+  | {
+      resourceType: "provider";
+      providerKey: string;
+      type: EventProviderType;
+      label: string;
+      description?: string;
+    }
+  | {
+      resourceType: "metadata";
+      providerKey: string;
+      type: EventProviderType;
+      eventCode: string;
+      label: string;
+      description?: string;
+    }
+  | {
+      resourceType: "registration";
+      providerKey: string;
+      type: EventProviderType;
+      runtimeAction: string;
+      eventCodes: string[];
+    }
+  | {
+      resourceType: "subscription";
+      providerKey: string;
+      name: string;
+
+      /**
+       * How a subscription config change is applied, present only on `update` operations:
+       * `in-place` via the Commerce merge-update endpoint, or `recreate` (unsubscribe +
+       * resubscribe) when the change drops or re-keys a field/rule.
+       */
+      changeMode?: "in-place" | "recreate";
+    };
+
+/**
+ * An eventing domain plan. Beyond the generic operations, it carries the provider sets apply needs
+ * to converge deployed state idempotently: `targetProviders` to onboard, `removedProviders` to
+ * offboard, and `baselineProviders` to compute sub-resource removals on providers present in both.
+ */
+export type EventingDomainPlan = DomainPlan<EventingOperationValue> & {
+  /** The target app metadata, used to namespace event codes/names when onboarding. Null in a pure teardown (no target). */
+  targetMetadata: ApplicationMetadata | null;
+
+  /** The baseline app metadata, used to resolve deployed resources during teardown. Null on first upgrade. */
+  baselineMetadata: ApplicationMetadata | null;
+
+  targetProviders: EventingProviderSnapshot[];
+  removedProviders: EventingProviderSnapshot[];
+  baselineProviders: EventingProviderSnapshot[];
 };

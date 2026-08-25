@@ -4,14 +4,16 @@
 function createExtensionApp(options: CreateExtensionAppOptions): void;
 ```
 
-Defined in: [aio-commerce-lib-admin-ui/source/web/react/extension/create-app.tsx:70](https://github.com/adobe/aio-commerce-sdk/blob/aa606961236cac6f4a3cebc105d643da71d5ddb8/packages/aio-commerce-lib-admin-ui/source/web/react/extension/create-app.tsx#L70)
+Defined in: [aio-commerce-lib-admin-ui/source/web/react/extension/create-app.tsx:72](https://github.com/adobe/aio-commerce-sdk/blob/71bf66656ef1fc6dd272a0821e8b00aab5dc197e/packages/aio-commerce-lib-admin-ui/source/web/react/extension/create-app.tsx#L72)
 
 Mounts a Commerce Admin UI iframe app and handles Experience Cloud Shell, UIX
 registration, shared-context attachment, routing, and Spectrum setup.
 
-The app is wrapped in React's `<StrictMode>`, so in development builds (e.g. when
-served via `aio app dev` or `aio app run`) components render twice and effects run
-an extra setup + cleanup cycle on mount. Production builds are unaffected.
+The app is wrapped in React's `<StrictMode>` only in development builds
+(`process.env.NODE_ENV !== "production"`), so components render twice and effects
+run an extra setup + cleanup cycle on mount. Production builds
+(`process.env.NODE_ENV === "production"`) render without `<StrictMode>`, so it is
+stripped from the production bundle.
 
 ## Parameters
 

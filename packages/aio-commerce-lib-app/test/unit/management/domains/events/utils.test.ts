@@ -21,6 +21,7 @@ import {
   getIoEventCode,
   getIoEventsExistingData,
   getNamespacedEvent,
+  getSubscriptionChangeKind,
   makeWorkspaceConfig,
   sanitizeEventingIdentifier,
 } from "#management/domains/events/utils";
@@ -43,6 +44,7 @@ import type {
   IoEventProviderManyResponse,
   IoEventRegistrationManyResponse,
 } from "@adobe/aio-commerce-lib-events/io-events";
+import type { CommerceEvent } from "#config/schema/eventing";
 
 const TEST_WORKSPACE_ID = "4567890123456789";
 const TEST_NAMESPACE = "test-namespace";
@@ -647,5 +649,153 @@ describe("removeStoredEventProviders", () => {
       "events",
       null,
     );
+  });
+});
+
+describe("getSubscriptionChangeKind", () => {
+  function commerceEvent(
+    overrides: Partial<CommerceEvent> = {},
+  ): CommerceEvent {
+    return {
+      description: "An event",
+      fields: [{ name: "field_a" }],
+      label: "Event",
+      name: "observer.order_placed",
+      runtimeActions: ["my-package/my-action"],
+      ...overrides,
+    } as CommerceEvent;
+  }
+
+  test("returns 'none' for identical config", () => {
+    expect(getSubscriptionChangeKind(commerceEvent(), commerceEvent())).toBe(
+      "none",
+    );
+  });
+
+  test("returns 'none' when fields are only reordered", () => {
+    const baseline = commerceEvent({
+      fields: [{ name: "field_a" }, { name: "field_b" }],
+    });
+    const target = commerceEvent({
+      fields: [{ name: "field_b" }, { name: "field_a" }],
+    });
+    expect(getSubscriptionChangeKind(baseline, target)).toBe("none");
+  });
+
+  test("returns 'none' when rules are only reordered", () => {
+    const baseline = commerceEvent({
+      rules: [
+        { field: "a", operator: "equal", value: "1" },
+        { field: "b", operator: "equal", value: "2" },
+      ],
+    });
+    const target = commerceEvent({
+      rules: [
+        { field: "b", operator: "equal", value: "2" },
+        { field: "a", operator: "equal", value: "1" },
+      ],
+    });
+    expect(getSubscriptionChangeKind(baseline, target)).toBe("none");
+  });
+
+  test("treats an omitted optional flag as its default (no change)", () => {
+    const baseline = commerceEvent();
+    const target = commerceEvent({ priority: false });
+    expect(getSubscriptionChangeKind(baseline, target)).toBe("none");
+  });
+
+  test("returns 'in-place' when a field is added", () => {
+    const target = commerceEvent({
+      fields: [{ name: "field_a" }, { name: "field_b" }],
+    });
+    expect(getSubscriptionChangeKind(commerceEvent(), target)).toBe("in-place");
+  });
+
+  test("returns 'in-place' when a field's source changes (same name)", () => {
+    const baseline = commerceEvent({ fields: [{ name: "field_a" }] });
+    const target = commerceEvent({
+      fields: [{ name: "field_a", source: "extension_attributes.foo" }],
+    });
+    expect(getSubscriptionChangeKind(baseline, target)).toBe("in-place");
+  });
+
+  test("returns 'in-place' when a rule is added", () => {
+    const target = commerceEvent({
+      rules: [{ field: "state", operator: "equal", value: "new" }],
+    });
+    expect(getSubscriptionChangeKind(commerceEvent(), target)).toBe("in-place");
+  });
+
+  test("returns 'in-place' when a rule value changes (same field:operator)", () => {
+    const baseline = commerceEvent({
+      rules: [{ field: "state", operator: "equal", value: "old" }],
+    });
+    const target = commerceEvent({
+      rules: [{ field: "state", operator: "equal", value: "new" }],
+    });
+    expect(getSubscriptionChangeKind(baseline, target)).toBe("in-place");
+  });
+
+  test("returns 'in-place' when priority is toggled", () => {
+    const target = commerceEvent({ priority: true });
+    expect(getSubscriptionChangeKind(commerceEvent(), target)).toBe("in-place");
+  });
+
+  test("returns 'in-place' when hipaa_audit_required is toggled", () => {
+    const target = commerceEvent({ hipaa_audit_required: true });
+    expect(getSubscriptionChangeKind(commerceEvent(), target)).toBe("in-place");
+  });
+
+  // Disabling a scalar (true -> false) drops no field/rule key, so it classifies as `in-place`
+  // like the enabling direction above. This case is called out separately because the in-place
+  // path relies on the Commerce merge endpoint applying a `false` scalar; if it does not, a
+  // disable would not take effect (see reconcileChangedSubscriptions).
+  test("returns 'in-place' when priority is disabled (true -> false)", () => {
+    const baseline = commerceEvent({ priority: true });
+    const target = commerceEvent({ priority: false });
+    expect(getSubscriptionChangeKind(baseline, target)).toBe("in-place");
+  });
+
+  test("returns 'in-place' when hipaa_audit_required is disabled (true -> false)", () => {
+    const baseline = commerceEvent({ hipaa_audit_required: true });
+    const target = commerceEvent({ hipaa_audit_required: false });
+    expect(getSubscriptionChangeKind(baseline, target)).toBe("in-place");
+  });
+
+  test("returns 'recreate' when a field is removed", () => {
+    const baseline = commerceEvent({
+      fields: [{ name: "field_a" }, { name: "field_b" }],
+    });
+    const target = commerceEvent({ fields: [{ name: "field_a" }] });
+    expect(getSubscriptionChangeKind(baseline, target)).toBe("recreate");
+  });
+
+  test("returns 'recreate' when a field is renamed", () => {
+    const baseline = commerceEvent({ fields: [{ name: "field_a" }] });
+    const target = commerceEvent({ fields: [{ name: "field_b" }] });
+    expect(getSubscriptionChangeKind(baseline, target)).toBe("recreate");
+  });
+
+  test("returns 'recreate' when a rule is removed", () => {
+    const baseline = commerceEvent({
+      rules: [
+        { field: "a", operator: "equal", value: "1" },
+        { field: "b", operator: "equal", value: "2" },
+      ],
+    });
+    const target = commerceEvent({
+      rules: [{ field: "a", operator: "equal", value: "1" }],
+    });
+    expect(getSubscriptionChangeKind(baseline, target)).toBe("recreate");
+  });
+
+  test("returns 'recreate' when a rule operator changes for the same field", () => {
+    const baseline = commerceEvent({
+      rules: [{ field: "state", operator: "equal", value: "1" }],
+    });
+    const target = commerceEvent({
+      rules: [{ field: "state", operator: "greaterThan", value: "1" }],
+    });
+    expect(getSubscriptionChangeKind(baseline, target)).toBe("recreate");
   });
 });

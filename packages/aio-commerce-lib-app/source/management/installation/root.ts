@@ -46,6 +46,14 @@ export function createRootInstallationStep(
         description: "App installation workflow",
         label: "Installation",
       },
+      uninstall: {
+        description: "App uninstallation workflow",
+        label: "Uninstallation",
+      },
+      upgrade: {
+        description: "App upgrade workflow",
+        label: "Upgrade",
+      },
     },
     name: "installation",
   });

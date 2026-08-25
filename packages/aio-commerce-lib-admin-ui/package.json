@@ -1,6 +1,6 @@
 {
   "name": "@adobe/aio-commerce-lib-admin-ui",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": false,
   "description": "A library to interact with the Adobe Commerce Admin UI SDK API",
   "keywords": [

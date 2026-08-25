@@ -20,6 +20,7 @@ import {
 } from "#test/fixtures/admin-ui";
 import {
   configWithAdminUiAllGrids,
+  configWithAdminUiEmptyBlock,
   configWithAdminUiMenu,
   configWithFullAdminUiV2,
   configWithViewMassActions,
@@ -40,12 +41,54 @@ describe("hasAdminUi", () => {
     expect(hasAdminUi(config)).toBe(true);
   });
 
-  test.each([{ config: minimalValidConfig, label: "no adminUi property" }])(
-    "returns false when config has $label",
-    ({ config }) => {
-      expect(hasAdminUi(config)).toBe(false);
+  test.each([
+    { config: minimalValidConfig, label: "no adminUi property" },
+    {
+      config: configWithAdminUiEmptyBlock,
+      label: "a component-less adminUi block",
     },
-  );
+  ])("returns false when config has $label", ({ config }) => {
+    expect(hasAdminUi(config)).toBe(false);
+  });
+});
+
+describe("AdminUiSchema unique ids", () => {
+  const massAction = {
+    id: "export",
+    label: "Export",
+    runtimeAction: "orders/export",
+    type: "worker" as const,
+  };
+  const viewButton = {
+    id: "reorder",
+    label: "Reorder",
+    runtimeAction: "orders/reorder",
+    type: "worker" as const,
+  };
+
+  test("rejects duplicate mass action ids on an entity", () => {
+    const result = v.safeParse(AdminUiSchema, {
+      order: { massActions: [massAction, massAction] },
+    });
+    expect(result.success).toBe(false);
+  });
+
+  test("rejects duplicate order view button ids", () => {
+    const result = v.safeParse(AdminUiSchema, {
+      order: { viewButtons: [viewButton, viewButton] },
+    });
+    expect(result.success).toBe(false);
+  });
+
+  test("accepts distinct ids within an array", () => {
+    const result = v.safeParse(AdminUiSchema, {
+      order: {
+        massActions: [massAction, { ...massAction, id: "import" }],
+        viewButtons: [viewButton, { ...viewButton, id: "cancel" }],
+      },
+    });
+    expect(result.success).toBe(true);
+  });
 });
 
 describe("AdminUiSchema", () => {
