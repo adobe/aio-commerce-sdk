@@ -184,11 +184,13 @@ whether and when a step re-runs.
 - Cleanup for a removed step is deferred until unassociate, not immediate. Could surprise a
   developer expecting it to clean up right away.
 
-## Unresolved questions
+## Edge cases
 
-- Should the SDK detect and warn when a step's `script` path changes while its `name` stays the
-  same (the rename case above), even if it can't prevent it?
+- If a step's `script` path changes while its `name` stays the same (the rename case above), the
+  SDK detects it and warns, since it already persists the `script` path per step. It's a hint only:
+  it doesn't prevent or change the append-only behavior.
 - Unassociate has to resolve and call `uninstall` for every step that ever ran, including ones
-  removed from the config a long time ago. If the step's `script` file is gone too by then, is that
-  an error, or do we just skip it? Throwing doesn't seem right. The script's gone for good, there's
-  nothing to recover, and failing unassociate over it just blocks the developer with no way out.
+  removed from the config a long time ago. If the step's `script` file is gone too by then, the SDK
+  logs a warning and skips that step's `uninstall` rather than failing the whole unassociate. The
+  script's gone for good, there's nothing to recover, and failing unassociate over it would just
+  block the developer with no way out.
