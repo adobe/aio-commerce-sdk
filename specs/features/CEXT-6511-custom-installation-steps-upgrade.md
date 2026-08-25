@@ -10,7 +10,7 @@ Custom installation steps (`installation.customInstallationSteps`) let a develop
 scripts during install and uninstall, each with an `install` handler and an optional `uninstall`
 handler. That part already works today. This spec is about the lifecycle operation the SDK is
 adding next: upgrade. It lays out three candidate models for what should happen to custom
-installation steps when an app upgrades from one version to another.
+installation steps when an app upgrades from one version to another. **Option C was chosen.**
 
 ## Motivation
 
@@ -87,7 +87,7 @@ part of the design itself:
 
 ## Design
 
-### Option A: Idempotent scripts, re-run everything
+### Option A: Idempotent scripts, re-run everything (not chosen)
 
 Every step's `install` runs on every upgrade, unconditionally, the same set that would run on a
 fresh install, every time. No config changes needed. The only real requirement is that `install`
@@ -95,7 +95,7 @@ has to be safe to call more than once (create-if-not-exists, not create-uncondit
 step isn't touched by this: nothing runs its `uninstall` outside of a full app uninstall today, and
 this model doesn't change that. No new persisted state either.
 
-### Option B: Per-step version field
+### Option B: Per-step version field (not chosen)
 
 Each step gets a `version` field, and the SDK keeps track, per step name, of the version it last ran
 successfully. On upgrade, a step's `install` only runs if its declared version is newer than what's
@@ -123,7 +123,7 @@ changes in a way that needs to re-run. The SDK can't verify that, it only compar
 the last persisted value. Removed steps behave the same as in Option A. The extra state needed is
 the last-run version per step name.
 
-### Option C: Migration-style steps (append-only)
+### Option C: Migration-style steps (append-only) — chosen
 
 Steps behave like database migrations: identified by `name`, run once, and never edited in place. A
 step's `install` runs the first time its name shows up in an installed app's history. If a step
@@ -142,6 +142,12 @@ steps against a persisted "already executed" set, by name) and confirmed it's im
 of the SDK's existing upgrade orchestration. The prototype didn't implement the unassociate-only
 `uninstall` timing described above; that refinement came out of this discussion, so it's worth
 flagging as a difference from what was actually tested.
+
+To detect edits to a step that already ran (rather than only detecting it by name), the SDK will
+hash the `install`/`uninstall` bodies at run time and persist the hash alongside the step. If a
+step's name is seen again with a different hash, its `install` still does not re-run (append-only),
+but the SDK warns that the script changed and won't be re-executed, so the developer knows to add a
+new step instead of editing the existing one.
 
 ## Drawbacks
 
@@ -167,7 +173,7 @@ whether and when a step re-runs.
   means the same idempotency discipline as Option A, just scoped to "since the last version bump"
   instead of "always."
 
-**Option C:**
+**Option C (chosen):**
 
 - Renaming a step (same script, new name) looks identical to removing one and adding another: the
   old one's `uninstall` waits for unassociate, the new one runs from scratch. Probably not what
@@ -180,15 +186,9 @@ whether and when a step re-runs.
 
 ## Unresolved questions
 
-- Which of the three options should the SDK implement? This is a product call (Dani), not just a
-  technical one: A/B/C each put a different burden on third-party developers, so it's as much a
-  developer-experience and support-cost question as an engineering one.
-- If we go with B: should `version` be a free-form string (semver-ish, as shown above), or something
-  more constrained, like an integer sequence?
-- If we go with C: should the SDK detect and warn when a step's `script` path changes while its
-  `name` stays the same (the rename case above), even if it can't prevent it?
-- If we go with C: unassociate has to resolve and call `uninstall` for every step that ever ran,
-  including ones removed from the config a long time ago. If the step's `script` file is gone too by
-  then, is that an error, or do we just skip it? Throwing doesn't seem right. The script's gone for
-  good, there's nothing to recover, and failing unassociate over it just blocks the developer with
-  no way out.
+- Should the SDK detect and warn when a step's `script` path changes while its `name` stays the
+  same (the rename case above), even if it can't prevent it?
+- Unassociate has to resolve and call `uninstall` for every step that ever ran, including ones
+  removed from the config a long time ago. If the step's `script` file is gone too by then, is that
+  an error, or do we just skip it? Throwing doesn't seem right. The script's gone for good, there's
+  nothing to recover, and failing unassociate over it just blocks the developer with no way out.
