@@ -130,16 +130,17 @@ The `<package>/<action>` format in `runtimeActions` maps directly: `my-app/handl
 
 ### Handler skeleton
 
-Event handlers receive a CloudEvents-shaped payload. The event data lives in `params.data`.
+Event handlers receive a CloudEvents-shaped payload. `params.data` bundles the event payload together with metadata, so don't read fields directly off `params.data`: `params.data.value` is the event payload — the fields declared in the event's `fields` array (or the full payload if `fields` is empty); `params.data._metadata` is Commerce instance metadata; `params.data.source` is the merchant/environment ID pair configured in the Commerce eventing configuration.
 
 ```typescript
 // src/commerce-extensibility-1/actions/handle-order-placed/index.ts
 export async function main(params: Record<string, unknown>) {
   const data = params.data as Record<string, unknown>;
-  // data contains the fields declared in the event's `fields` array
+  const value = data.value as Record<string, unknown>;
+  // value contains the fields declared in the event's `fields` array
   // (or the full payload if fields is empty)
 
-  const orderId = data["order_id"];
+  const orderId = value["order_id"];
 
   // process the event ...
 

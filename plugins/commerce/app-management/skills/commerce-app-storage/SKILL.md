@@ -153,12 +153,16 @@ export async function main(params: Record<string, unknown>) {
 }
 ```
 
-For an **event/webhook action** the only differences are `web: "no"` in registration and that the payload arrives in `params.data`:
+Event and webhook actions both register with `web: "no"`, but their payloads have different shapes — do not treat them as the same:
+
+- **Event handler** (wired via `commerce-app-eventing`): the extracted fields arrive in `params.data.value`. `params.data` also carries `_metadata` (Commerce instance metadata) and `source` (the merchant/environment ID pair from the Commerce eventing configuration) — neither is handler input.
+- **Webhook handler** (wired via `commerce-app-webhooks`): there is no `data` wrapper — the Commerce operation payload arrives directly on `params` (e.g. `params.order`), and the response must use the operation helpers from `@adobe/aio-commerce-lib-webhooks/responses` (see `commerce-app-webhooks`), not the plain `ok`/`buildErrorResponse` shape used above.
 
 ```ts
-// Event/webhook handler — same init/connect/close lifecycle
+// Event handler — src/commerce-extensibility-1/actions/store-order/index.ts
 export async function main(params: Record<string, unknown>) {
   const data = params.data as Record<string, unknown>;
+  const value = data.value as Record<string, unknown>;
   let client;
   try {
     const authProvider = getImsAuthProvider(resolveImsAuthParams(params));
@@ -167,8 +171,33 @@ export async function main(params: Record<string, unknown>) {
     client = await db.connect();
     await client
       .collection("orders")
-      .insertOne({ orderId: data.order_id, receivedAt: new Date() });
+      .insertOne({ orderId: value.order_id, receivedAt: new Date() });
     return ok({ body: { processed: true } });
+  } finally {
+    if (client) await client.close();
+  }
+}
+```
+
+```ts
+// Webhook handler — src/commerce-extensibility-1/actions/log-order/index.ts
+import {
+  ok,
+  successOperation,
+} from "@adobe/aio-commerce-lib-webhooks/responses";
+
+export async function main(params: Record<string, unknown>) {
+  const order = params.order as Record<string, unknown>; // Commerce operation payload, directly on params
+  let client;
+  try {
+    const authProvider = getImsAuthProvider(resolveImsAuthParams(params));
+    const token = await authProvider.getAccessToken();
+    const db = await initDb({ token, region: "emea" });
+    client = await db.connect();
+    await client
+      .collection("orders")
+      .insertOne({ orderId: order.entity_id, receivedAt: new Date() });
+    return ok(successOperation());
   } finally {
     if (client) await client.close();
   }
