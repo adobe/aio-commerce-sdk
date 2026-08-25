@@ -25,7 +25,10 @@ import {
 import { createCombinedStore } from "@aio-commerce-sdk/common-utils/storage";
 import openwhisk from "openwhisk";
 
-import { validateCommerceAppConfig } from "#config/lib/validate";
+import {
+  validateCommerceAppConfig,
+  validateRecordedCommerceAppConfig,
+} from "#config/lib/validate";
 import {
   createInitialInstallationState,
   createInitialUninstallationState,
@@ -496,7 +499,7 @@ router.post("/uninstallation", {
     );
 
     const initialState = createInitialUninstallationState({
-      config: validateCommerceAppConfig(uninstallConfig),
+      config: validateRecordedCommerceAppConfig(uninstallConfig),
     });
     logger.debug(`Created initial uninstall state: ${initialState.id}`);
     await store.put(getStorageKey(), initialState);
@@ -557,7 +560,7 @@ router.post("/uninstallation/execution", {
       return badRequest("appConfig is required for execution");
     }
 
-    const appConfig = validateCommerceAppConfig(rawAppConfig);
+    const appConfig = validateRecordedCommerceAppConfig(rawAppConfig);
     const store = await createUninstallationStore();
     const hooks = createInstallationHooks(store, (msg) => logger.debug(msg));
     const installationContext = buildInstallationContext(

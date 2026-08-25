@@ -35,6 +35,7 @@ export {
 } from "./modules/configuration/system-config";
 export {
   hasDynamicSchema,
+  RecordedSchemaBusinessConfig,
   resolveBusinessConfigSchema,
   SchemaBusinessConfig,
 } from "./modules/schema";
@@ -51,6 +52,7 @@ export type {
   BusinessConfigSchemaField,
   BusinessConfigSchemaListOption,
   BusinessConfigSchemaValue,
+  RecordedBusinessConfig,
   ResolvedBusinessConfigSchema,
 } from "./modules/schema";
 export type { ScopeNode, ScopeTree } from "./modules/scope-tree";

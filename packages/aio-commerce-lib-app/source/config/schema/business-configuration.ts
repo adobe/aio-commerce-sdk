@@ -13,7 +13,10 @@
 import type { AnyCommerceAppConfig } from "./app";
 
 // biome-ignore lint/performance/noBarrelFile: The business config schema lives in a separate package.
-export { SchemaBusinessConfig } from "@adobe/aio-commerce-lib-config";
+export {
+  RecordedSchemaBusinessConfig,
+  SchemaBusinessConfig,
+} from "@adobe/aio-commerce-lib-config";
 
 /** Config type when business config is present. */
 export type AppConfigWithBusinessConfig<T extends AnyCommerceAppConfig> = T & {

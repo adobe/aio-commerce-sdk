@@ -68,6 +68,7 @@ import { installationRuntimeAction } from "#actions/installation/index";
 import { createRuntimeActionParams } from "#test/fixtures/actions";
 import {
   configWithCommerceEventing,
+  configWithDynamicListOptions,
   minimalValidConfig,
 } from "#test/fixtures/config";
 import {
@@ -755,6 +756,50 @@ describe("installationRuntimeAction", () => {
 
       expect(createInitialUninstallationStateMock).toHaveBeenCalledWith({
         config: minimalValidConfig,
+      });
+    });
+
+    test("CEXT-6661: uninstalls when the recorded snapshot lost its dynamicList functions to storage", async () => {
+      // The mock's `put` round-trips through JSON, exactly like the real
+      // state/files stores, so the persisted snapshot loses the `options`/
+      // `default` functions from `configWithDynamicListOptions` — the same
+      // way a real installation record does once it is written to storage.
+      installationStore = createMockInstallationStore(null, {
+        serialize: true,
+      });
+      await installationStore.put(
+        "current",
+        createMockSucceededState({
+          config: configWithDynamicListOptions,
+          id: "installation-1",
+        }),
+      );
+
+      const handler = installationRuntimeAction({
+        appConfig: minimalValidConfig,
+      });
+
+      const result = await handler(
+        createRuntimeActionParams({
+          body: requestBody,
+          method: "post",
+          path: "/uninstallation",
+          ...DEFAULT_INSTALLATION_PARAMS,
+        }),
+      );
+
+      expect(result).not.toMatchObject({ statusCode: 500 });
+      expect(createInitialUninstallationStateMock).toHaveBeenCalledWith({
+        config: expect.objectContaining({
+          businessConfig: expect.objectContaining({
+            schema: [
+              expect.objectContaining({
+                name: "paymentMethod",
+                type: "dynamicList",
+              }),
+            ],
+          }),
+        }),
       });
     });
   });
