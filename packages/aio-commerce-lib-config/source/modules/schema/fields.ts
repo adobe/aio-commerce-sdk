@@ -271,47 +271,16 @@ export const SchemaBusinessConfigSchema = v.pipe(
 // guaranteed to be missing on a recorded `dynamicList` field, not just on a
 // malformed one. The schemas below accept that absence instead of rejecting it.
 
-/** Entries shared between the recorded single- and multiple-selection dynamic list field schemas. */
-const RecordedDynamicListEntriesCommon = {
-  ...BaseOptionSchema.entries,
-  options: v.optional(
-    v.custom<OptionsFactory>(
-      (input) => typeof input === "function",
-      'Expected a function for "options"',
-    ),
-  ),
-  type: v.literal("dynamicList", "Expected the type to be 'dynamicList'"),
-};
-
 /** Schema for a recorded dynamic list field that allows single selection. */
-const RecordedSingleDynamicListSchema = v.object({
-  ...RecordedDynamicListEntriesCommon,
-  default: v.optional(
-    v.custom<SingleDefaultFactory>(
-      (input) => typeof input === "function",
-      'Expected a function for "default"',
-    ),
-  ),
-  selectionMode: v.literal(
-    "single",
-    "Expected the selectionMode to be 'single'",
-  ),
-});
+const RecordedSingleDynamicListSchema = v.partial(SingleDynamicListSchema, [
+  "options",
+  "default",
+]);
 
 /** Schema for a recorded dynamic list field that allows multiple selections. */
-const RecordedMultipleDynamicListSchema = v.object({
-  ...RecordedDynamicListEntriesCommon,
-  default: v.optional(
-    v.custom<MultipleDefaultFactory>(
-      (input) => typeof input === "function",
-      'Expected a function for "default"',
-    ),
-  ),
-  selectionMode: v.literal(
-    "multiple",
-    "Expected the selectionMode to be 'multiple'",
-  ),
-});
+const RecordedMultipleDynamicListSchema = v.partial(MultipleDynamicListSchema, [
+  "options",
+]);
 
 /** Schema for recorded dynamic list fields supporting either single or multiple selection modes. */
 export const RecordedDynamicListSchema = v.variant("selectionMode", [

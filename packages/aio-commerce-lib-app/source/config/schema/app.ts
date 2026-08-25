@@ -57,11 +57,6 @@ export const RecordedCommerceAppConfigSchema = v.looseObject({
   businessConfig: v.optional(RecordedSchemaBusinessConfig),
 });
 
-/** The output shape of the recorded commerce app config schema. */
-export type RecordedCommerceAppConfigOutputModel = v.InferOutput<
-  typeof RecordedCommerceAppConfigSchema
->;
-
 /** @internal Any commerce app config, input contract or validated output. */
 export type AnyCommerceAppConfig =
   | CommerceAppConfig
