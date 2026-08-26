@@ -7,7 +7,7 @@ type HostConnection = {
 };
 ```
 
-Defined in: [aio-commerce-lib-admin-ui/source/web/react/commerce/types.ts:47](https://github.com/adobe/aio-commerce-sdk/blob/71bf66656ef1fc6dd272a0821e8b00aab5dc197e/packages/aio-commerce-lib-admin-ui/source/web/react/commerce/types.ts#L47)
+Defined in: [aio-commerce-lib-admin-ui/source/web/react/commerce/types.ts:47](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-admin-ui/source/web/react/commerce/types.ts#L47)
 
 Actions for closing the extension iframe and returning control to the Commerce Admin.
 
@@ -19,7 +19,7 @@ Actions for closing the extension iframe and returning control to the Commerce A
 close: () => Promise<void>;
 ```
 
-Defined in: [aio-commerce-lib-admin-ui/source/web/react/commerce/types.ts:49](https://github.com/adobe/aio-commerce-sdk/blob/71bf66656ef1fc6dd272a0821e8b00aab5dc197e/packages/aio-commerce-lib-admin-ui/source/web/react/commerce/types.ts#L49)
+Defined in: [aio-commerce-lib-admin-ui/source/web/react/commerce/types.ts:49](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-admin-ui/source/web/react/commerce/types.ts#L49)
 
 Closes the iframe and navigates back to the originating grid or order.
 
@@ -35,7 +35,7 @@ Closes the iframe and navigates back to the originating grid or order.
 closeWithError: () => Promise<void>;
 ```
 
-Defined in: [aio-commerce-lib-admin-ui/source/web/react/commerce/types.ts:52](https://github.com/adobe/aio-commerce-sdk/blob/71bf66656ef1fc6dd272a0821e8b00aab5dc197e/packages/aio-commerce-lib-admin-ui/source/web/react/commerce/types.ts#L52)
+Defined in: [aio-commerce-lib-admin-ui/source/web/react/commerce/types.ts:52](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-admin-ui/source/web/react/commerce/types.ts#L52)
 
 Closes the iframe and navigates back, flagging the originating page that an error occurred.
 
