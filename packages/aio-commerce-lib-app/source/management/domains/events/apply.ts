@@ -28,12 +28,14 @@ import {
   getNamespacedEvent,
   getRegistrationDescription,
   getRegistrationName,
+  getSubscriptionChangeKind,
   groupEventsByRuntimeActions,
 } from "./utils";
 
 import type { EventProviderType } from "@adobe/aio-commerce-lib-events/io-events";
 import type {
   AppEvent,
+  CommerceEvent,
   CommerceEventsConfig,
   ExternalEventsConfig,
 } from "#config/schema/eventing";
@@ -220,6 +222,15 @@ async function reconcileProviderSubResources(
   // gone by the time removeDroppedMetadata runs.
   if (options.isCommerce) {
     await removeDroppedSubscriptions(
+      target.events,
+      baseline.events,
+      targetMetadata,
+      baselineMetadata,
+      context,
+    );
+
+    await reconcileChangedSubscriptions(
+      providerData.id,
       target.events,
       baseline.events,
       targetMetadata,
@@ -535,6 +546,80 @@ async function removeDroppedSubscriptions(
         logger,
         error,
         `Failed to delete Commerce event subscription "${name}"`,
+      );
+    }
+  }
+}
+
+/**
+ * Reconciles configuration changes on Commerce subscriptions present on both the baseline and
+ * target. Additive/same-key changes are applied in place via the Commerce merge-update endpoint;
+ * orphaning changes (field/rule removal, rename, rule operator/field change) are applied by
+ * unsubscribe + resubscribe.
+ */
+async function reconcileChangedSubscriptions(
+  providerId: string,
+  targetEvents: AppEvent[],
+  baselineEvents: AppEvent[],
+  targetMetadata: ApplicationMetadata,
+  baselineMetadata: ApplicationMetadata,
+  context: EventsExecutionContext,
+): Promise<void> {
+  const { commerceEventsClient, logger } = context;
+  const baselineByName = new Map(
+    baselineEvents.map((event) => [
+      getNamespacedEvent(baselineMetadata, event.name),
+      event as CommerceEvent,
+    ]),
+  );
+
+  for (const event of targetEvents as CommerceEvent[]) {
+    const name = getNamespacedEvent(targetMetadata, event.name);
+    const baselineEvent = baselineByName.get(name);
+    if (!baselineEvent) {
+      // Added event — created by the idempotent install pass.
+      continue;
+    }
+
+    const changeMode = getSubscriptionChangeKind(baselineEvent, event);
+    if (changeMode === "none") {
+      continue;
+    }
+
+    const subscription = {
+      fields: event.fields,
+      hipaa_audit_required: event.hipaa_audit_required,
+      name,
+      parent: event.name,
+      priority: event.priority,
+      provider_id: providerId,
+      rules: event.rules,
+    };
+
+    try {
+      if (changeMode === "in-place") {
+        // biome-ignore lint/performance/noAwaitInLoops: subscriptions are updated sequentially to avoid a Commerce rate-limit burst
+        await commerceEventsClient.updateEventSubscription(subscription);
+        logger.info(`Updated Commerce event subscription "${name}" in place.`);
+      } else {
+        // The merge-update endpoint cannot remove or re-key fields/rules, so re-subscribe. The
+        // Commerce unsubscribe/subscribe cascade churns the event's I/O metadata; the registration
+        // re-links by event code and is left untouched.
+        await commerceEventsClient.deleteEventSubscription({ name });
+        await commerceEventsClient.createEventSubscription({
+          ...subscription,
+          destination: event.destination,
+          force: event.force,
+        });
+        logger.info(`Recreated Commerce event subscription "${name}".`);
+      }
+    } catch (error) {
+      const message = await unwrapHttpError(error);
+      // Unlike the best-effort removals, a failure here fails the upgrade step: a silently stale
+      // subscription would diverge from the applied config.
+      throw new Error(
+        `Failed to update Commerce event subscription "${name}": ${message}`,
+        { cause: error },
       );
     }
   }

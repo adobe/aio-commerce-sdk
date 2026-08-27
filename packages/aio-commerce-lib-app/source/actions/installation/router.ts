@@ -13,6 +13,7 @@
 import {
   internalServerError,
   noContent,
+  ok,
 } from "@adobe/aio-commerce-lib-core/responses";
 import {
   HttpActionRouter,
@@ -22,12 +23,17 @@ import {
 import { validateCommerceAppConfig } from "#config/lib/validate";
 import { LifecycleRequestContextSchema } from "#management/common/schema";
 import { getCurrentLifecycleBaseline } from "#management/lifecycle/baseline";
+import {
+  CURRENT_STATE_KEY,
+  normalizeExpiredAttempt,
+} from "#management/lifecycle/state";
 
 import {
   createInstallationStore,
   createLifecyclePersistence,
   createUninstallationStore,
   getStorageKey,
+  isPostAppDeployInvocation,
   readStateFromStore,
 } from "./common";
 import {
@@ -51,7 +57,7 @@ export type { CustomScriptsLoader, RuntimeActionFactoryArgs } from "./common";
  * Installation action router.
  *
  * Routes:
- * - GET /                            Get current installation status
+ * - GET /                            Get current installation or upgrade status
  * - POST /                           Reconcile to the target config: install when no baseline exists, otherwise upgrade
  * - POST /execution                  Execute an installation or upgrade (internal, called async)
  * - POST /validation                 Pre-installation validation
@@ -64,9 +70,32 @@ export const router = new HttpActionRouter<InstallationActionContext>().use(
   withLogger({ name: () => "installation" }),
 );
 
-/** GET / - Get current installation status. */
+/** GET / - Get current installation or upgrade status. */
 router.get("/", {
-  handler: async (_req, { logger }) => {
+  handler: async (req, { logger }) => {
+    const isPostAppDeploy = isPostAppDeployInvocation(req.headers);
+
+    // TODO(CEXT-6556): Unify the GET branches behind one lifecycle flow.
+    if (isPostAppDeploy) {
+      logger.debug("Getting upgrade execution status...");
+      const { stateStore } = await createLifecyclePersistence();
+      const state = await stateStore.get(CURRENT_STATE_KEY);
+      if (!state?.latestAttempt) {
+        logger.debug("No upgrade state found");
+        return noContent();
+      }
+
+      const normalized = await normalizeExpiredAttempt(stateStore, state);
+      const attempt = normalized.latestAttempt;
+      if (!attempt) {
+        return noContent();
+      }
+
+      const { plan: _plan, ...attemptState } = attempt;
+      logger.debug(`Found upgrade state: ${attemptState.status}`);
+      return ok({ body: attemptState });
+    }
+
     logger.debug("Getting installation execution status...");
     const store = await createInstallationStore();
     return readStateFromStore(store, (msg) => logger.debug(msg));
@@ -82,7 +111,6 @@ router.get("/", {
  */
 router.post("/", {
   body: LifecycleRequestContextSchema,
-
   handler: async (req, { logger, rawParams }) => {
     const rawAppConfig = rawParams.appConfig;
     if (!rawAppConfig) {
@@ -98,9 +126,26 @@ router.post("/", {
       baselineProvider,
     );
 
-    return baseline
-      ? startUpgrade({ appConfig, baseline, body: req.body, logger, rawParams })
-      : startInstallation({ appConfig, body: req.body, logger, rawParams });
+    const hasNoBaseline = baseline === null;
+    const isPostAppDeploy = isPostAppDeployInvocation(req.headers);
+
+    // TODO(CEXT-6556): Unify the POST branches behind one lifecycle flow.
+    if (hasNoBaseline && !isPostAppDeploy) {
+      return startInstallation({
+        appConfig,
+        body: req.body,
+        logger,
+        rawParams,
+      });
+    }
+
+    return startUpgrade({
+      appConfig,
+      baseline,
+      body: req.body,
+      logger,
+      rawParams,
+    });
   },
 });
 

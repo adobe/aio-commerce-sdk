@@ -36,6 +36,11 @@ describe("admin-ui installation module", () => {
           description: "Removes the extension from Adobe Commerce Admin UI",
           label: "Admin UI",
         },
+        upgrade: {
+          description:
+            "Reconciles the extension's Admin UI components with Adobe Commerce",
+          label: "Admin UI",
+        },
       });
     });
 

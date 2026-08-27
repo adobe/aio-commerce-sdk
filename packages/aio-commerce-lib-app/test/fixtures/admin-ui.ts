@@ -38,6 +38,7 @@ export function createMockAdminUiContext(
     enableAdminUiSdkImpl?: () => Promise<boolean>;
     registerExtensionImpl?: () => Promise<{ extensionId: string }>;
     unregisterExtensionImpl?: () => Promise<unknown>;
+    refreshExtensionImpl?: () => Promise<void>;
   },
 ): AdminUiExecutionContext {
   const mockInstallation = createMockInstallationContext(overrides);
@@ -49,6 +50,11 @@ export function createMockAdminUiContext(
         .fn()
         .mockImplementation(
           overrides?.enableAdminUiSdkImpl ?? (() => Promise.resolve(true)),
+        ),
+      refreshExtension: vi
+        .fn()
+        .mockImplementation(
+          overrides?.refreshExtensionImpl ?? (() => Promise.resolve()),
         ),
       registerExtension: vi
         .fn()

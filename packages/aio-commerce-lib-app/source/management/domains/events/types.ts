@@ -194,6 +194,13 @@ export type EventingOperationValue =
       resourceType: "subscription";
       providerKey: string;
       name: string;
+
+      /**
+       * How a subscription config change is applied, present only on `update` operations:
+       * `in-place` via the Commerce merge-update endpoint, or `recreate` (unsubscribe +
+       * resubscribe) when the change drops or re-keys a field/rule.
+       */
+      changeMode?: "in-place" | "recreate";
     };
 
 /**

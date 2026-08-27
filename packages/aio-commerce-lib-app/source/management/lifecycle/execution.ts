@@ -19,6 +19,7 @@ import {
   persistSuccess,
 } from "./persistence";
 import {
+  CURRENT_STATE_KEY,
   normalizeExpiredAttempt,
   requireCurrentAttempt,
   requireState,
@@ -43,7 +44,9 @@ export type ExecuteLifecycleAttemptOptions = Omit<
   LifecycleRuntime,
   "baselineProvider"
 > & {
+  actionVersion: string;
   attemptId: string;
+  executionDeadline: string;
 };
 
 /**
@@ -54,17 +57,55 @@ export async function executeLifecycleAttempt(
   options: ExecuteLifecycleAttemptOptions,
 ): Promise<LifecycleAttempt> {
   let state = await requireState(options.stateStore);
-  state = await normalizeExpiredAttempt(options.stateStore, state);
-  const attempt = state.latestAttempt;
-  if (!attempt || attempt.id !== options.attemptId) {
+  const currentAttempt = state.latestAttempt;
+  if (!currentAttempt || currentAttempt.id !== options.attemptId) {
     throw new Error("The lifecycle attempt is missing or stale");
   }
-  if (attempt.status === "succeeded" || attempt.status === "failed") {
-    return attempt;
+  if (
+    currentAttempt.status === "succeeded" ||
+    currentAttempt.status === "failed"
+  ) {
+    return currentAttempt;
+  }
+  if (currentAttempt.plan.actionVersion !== options.actionVersion) {
+    throw new Error(
+      "The lifecycle attempt was created by another action version",
+    );
+  }
+  if (currentAttempt.status === "in-progress") {
+    throw new Error("The lifecycle attempt is already in progress");
   }
 
+  const executionDeadline = Date.parse(options.executionDeadline);
+  if (!Number.isFinite(executionDeadline) || executionDeadline <= Date.now()) {
+    throw new Error("The lifecycle execution deadline is invalid or elapsed");
+  }
+
+  const baseline = await options.snapshotStore.get(
+    currentAttempt.plan.source.snapshotId,
+  );
+  if (!baseline) {
+    throw new Error("The lifecycle baseline snapshot is missing");
+  }
+
+  const attempt: LifecycleAttempt = {
+    ...currentAttempt,
+    executionDeadline: options.executionDeadline,
+    status: "in-progress",
+  };
+
+  state = { ...state, latestAttempt: attempt };
+
+  await options.stateStore.put(CURRENT_STATE_KEY, state);
+  state = await normalizeExpiredAttempt(options.stateStore, state);
+
   const hooks = createProgressHooks(options.stateStore, attempt.id);
-  const workflow = await executePlanWithRetry(options, attempt, hooks);
+  const workflow = await executePlanWithRetry(
+    options,
+    attempt,
+    baseline,
+    hooks,
+  );
 
   state = await requireCurrentAttempt(options.stateStore, attempt.id);
   if (workflow.status === "failed") {
@@ -95,10 +136,12 @@ function createProgressHooks(
 async function executePlanWithRetry(
   options: ExecuteLifecycleAttemptOptions,
   attempt: LifecycleAttempt,
+  baseline: AppStateSnapshot,
   hooks: WorkflowHooks,
 ): Promise<SucceededWorkflowState | FailedWorkflowState> {
   const executionOptions = {
     attemptId: attempt.id,
+    baseline,
     failureKey: "LIFECYCLE_APPLY_FAILED",
     hooks,
     lifecycleContext: options.lifecycleContext,

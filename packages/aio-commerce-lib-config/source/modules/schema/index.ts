@@ -12,7 +12,10 @@
 
 import * as v from "valibot";
 
-import { SchemaBusinessConfigSchema } from "./fields";
+import {
+  RecordedSchemaBusinessConfigSchema,
+  SchemaBusinessConfigSchema,
+} from "./fields";
 
 /** The schema used to validate the business configuration settings. */
 export const SchemaBusinessConfig = v.object({
@@ -21,6 +24,20 @@ export const SchemaBusinessConfig = v.object({
 
 /** Defines the shape of the business configuration settings. */
 export type BusinessConfig = v.InferInput<typeof SchemaBusinessConfig>;
+
+/**
+ * The schema used to validate business configuration settings recovered from
+ * a persisted lifecycle snapshot, where `dynamicList` fields may be missing
+ * their `options`/`default` functions.
+ */
+export const RecordedSchemaBusinessConfig = v.object({
+  schema: v.optional(RecordedSchemaBusinessConfigSchema, []),
+});
+
+/** Defines the shape of a recorded business configuration settings object. */
+export type RecordedBusinessConfig = v.InferInput<
+  typeof RecordedSchemaBusinessConfig
+>;
 
 export {
   hasDynamicSchema,

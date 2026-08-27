@@ -16,6 +16,8 @@ import {
   planCommerceEvents,
   planExternalEvents,
 } from "#management/domains/events/plan";
+import { getNamespacedEvent } from "#management/domains/events/utils";
+import { configWithCommerceEventing } from "#test/fixtures/config";
 import {
   createMockCommerceEventsConfig as commerceConfig,
   createMockAppEvent as event,
@@ -35,6 +37,8 @@ import type {
   EventingProviderSnapshot,
   EventingSnapshotData,
 } from "#management/domains/events/types";
+
+const { metadata } = configWithCommerceEventing;
 
 const context = {
   params: { AIO_COMMERCE_API_FLAVOR: "paas" },
@@ -113,6 +117,83 @@ describe("planCommerceEvents", () => {
     expect(plan.operations).toHaveLength(0);
     expect(plan.removedProviders).toHaveLength(0);
     expect(plan.targetProviders.map((p) => p.key)).toEqual(["P1"]);
+  });
+
+  test("an additive subscription config change emits an in-place subscription update", async () => {
+    const baseline = commerceConfig([
+      {
+        events: [{ ...event("a", ["pkg/a"]), fields: [{ name: "field_a" }] }],
+        provider: { label: "P1" },
+      },
+    ]);
+    const target = commerceConfig([
+      {
+        events: [
+          {
+            ...event("a", ["pkg/a"]),
+            fields: [{ name: "field_a" }, { name: "field_b" }],
+          },
+        ],
+        provider: { label: "P1" },
+      },
+    ]);
+
+    const plan = await planCommerce(commerceInput(baseline, target));
+
+    expect(pick(plan, "update", "subscription")).toEqual([
+      {
+        changeMode: "in-place",
+        name: getNamespacedEvent(metadata, "a"),
+        providerKey: "P1",
+        resourceType: "subscription",
+      },
+    ]);
+    expect(pick(plan, "add", "subscription")).toHaveLength(0);
+    expect(pick(plan, "remove", "subscription")).toHaveLength(0);
+  });
+
+  test("an orphaning subscription config change emits a recreate subscription update", async () => {
+    const baseline = commerceConfig([
+      {
+        events: [
+          {
+            ...event("a", ["pkg/a"]),
+            fields: [{ name: "field_a" }, { name: "field_b" }],
+          },
+        ],
+        provider: { label: "P1" },
+      },
+    ]);
+    const target = commerceConfig([
+      {
+        events: [{ ...event("a", ["pkg/a"]), fields: [{ name: "field_a" }] }],
+        provider: { label: "P1" },
+      },
+    ]);
+
+    const plan = await planCommerce(commerceInput(baseline, target));
+
+    expect(pick(plan, "update", "subscription")).toEqual([
+      {
+        changeMode: "recreate",
+        name: getNamespacedEvent(metadata, "a"),
+        providerKey: "P1",
+        resourceType: "subscription",
+      },
+    ]);
+  });
+
+  test("an unchanged subscription emits no subscription update", async () => {
+    const config = commerceConfig([
+      {
+        events: [{ ...event("a", ["pkg/a"]), fields: [{ name: "field_a" }] }],
+        provider: { label: "P1" },
+      },
+    ]);
+
+    const plan = await planCommerce(commerceInput(config, config));
+
+    expect(pick(plan, "update", "subscription")).toHaveLength(0);
   });
 
   test("added provider emits provider + metadata + registration + subscription adds", async () => {

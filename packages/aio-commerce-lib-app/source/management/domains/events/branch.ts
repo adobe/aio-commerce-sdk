@@ -34,6 +34,11 @@ export const eventingStep = defineBranchStep({
         "Removes the I/O Events and Commerce events configured by the application",
       label: "Eventing",
     },
+    upgrade: {
+      description:
+        "Reconciles the I/O Events and Commerce events configured by the application",
+      label: "Eventing",
+    },
   },
   name: "eventing",
 });

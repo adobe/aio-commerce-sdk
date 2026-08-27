@@ -10,18 +10,18 @@
  * governing permissions and limitations under the License.
  */
 
-import { appliesToEnv, getInstallCommerceEnv } from "#config/lib/environment";
+import { getInstallCommerceEnv } from "#config/lib/environment";
 
 import {
-  buildWebhookIdPrefix,
   getWebhookName,
-  resolveWebhookPayload,
+  hasWebhookConfigChanged,
+  isDesiredWebhook,
+  resolveDesiredWebhooks,
   toIdentity,
   webhookIdentitiesMatch,
   webhookOperationId,
 } from "./utils";
 
-import type { WebhookSubscribeParams } from "@adobe/aio-commerce-lib-webhooks/api";
 import type { WebhooksConfig } from "#config/schema/webhooks";
 import type {
   PlanningInput,
@@ -36,22 +36,11 @@ import type {
   WebhookSnapshotData,
 } from "./types";
 
-/** Resolves every config webhook entry that applies to `env` — no credentials, for planning only. */
-function resolveDesiredWebhooks(
-  config: WebhooksConfig,
-  env: ReturnType<typeof getInstallCommerceEnv>,
-): WebhookOperationValue[] {
-  const idPrefix = buildWebhookIdPrefix(config.metadata.id);
-  return config.webhooks
-    .filter((entry) => appliesToEnv(entry, env))
-    .map((entry) => resolveWebhookPayload(entry, idPrefix));
-}
-
 /**
- * Diffs the target config against the baseline into add/remove operations. Pure —
- * no external reads or writes, since an observation made here could be stale by
- * execution time. Blocks with `WEBHOOK_BASELINE_UNRESOLVED` if a baseline exists
- * but its data couldn't be resolved, rather than guessing.
+ * Diffs the target config against the baseline into add, update, and remove
+ * operations. Pure — no external reads or writes, since an observation made
+ * here could be stale by execution time. Blocks with
+ * `WEBHOOK_BASELINE_UNRESOLVED` if the baseline data cannot be resolved.
  */
 export function planWebhookSubscriptions(
   input: PlanningInput<WebhooksConfig, WebhookSnapshotData>,
@@ -84,8 +73,8 @@ export function planWebhookSubscriptions(
 
   // Removes precede adds (see the concat below) so a rename never briefly double-registers a hook point.
   const addOperations: ResourceOperation<WebhookOperationValue>[] = [];
+  const updateOperations: ResourceOperation<WebhookOperationValue>[] = [];
   const removeOperations: ResourceOperation<WebhookOperationValue>[] = [];
-  const retainedWebhooks: WebhookSubscribeParams[] = [];
 
   for (const webhook of desired) {
     const owned = ownedFromBaseline.find((candidate) =>
@@ -93,7 +82,16 @@ export function planWebhookSubscriptions(
     );
 
     if (owned) {
-      retainedWebhooks.push(owned);
+      if (hasWebhookConfigChanged(owned, webhook)) {
+        const identity = toIdentity(webhook);
+        updateOperations.push({
+          after: webhook,
+          before: identity,
+          id: webhookOperationId("update", identity),
+          kind: "update",
+          label: `Update webhook: ${getWebhookName(identity)}`,
+        });
+      }
       continue;
     }
 
@@ -107,14 +105,13 @@ export function planWebhookSubscriptions(
   }
 
   const staleFromBaseline = ownedFromBaseline.filter(
-    (owned) =>
-      !desired.some((webhook) => webhookIdentitiesMatch(webhook, owned)),
+    (owned) => !isDesiredWebhook(owned, desired),
   );
 
   for (const stale of staleFromBaseline) {
     const identity = toIdentity(stale);
     removeOperations.push({
-      before: stale,
+      before: identity,
       id: webhookOperationId("remove", identity),
       kind: "remove",
       label: `Unsubscribe webhook: ${getWebhookName(identity)}`,
@@ -124,9 +121,8 @@ export function planWebhookSubscriptions(
   return Promise.resolve({
     kind: "planned",
     plan: {
-      operations: [...removeOperations, ...addOperations],
+      operations: [...removeOperations, ...updateOperations, ...addOperations],
       path,
-      retainedWebhooks,
     },
   });
 }

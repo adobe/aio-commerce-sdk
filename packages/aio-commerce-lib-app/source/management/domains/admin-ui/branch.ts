@@ -16,21 +16,20 @@ import {
   defineLeafStep,
 } from "#management/common/workflow/step";
 
+import { applyAdminUi } from "./apply";
 import {
   enableAdminUiSdk,
   registerExtension,
   unregisterExtension,
 } from "./helpers";
+import { planAdminUi } from "./plan";
 import { createAdminUiStepContext } from "./utils";
 
-import type { InferStepOutput } from "#management/common/workflow/step";
 import type { AdminUiConfig, AdminUiExecutionContext } from "./utils";
 
 /**
- * Leaf step that enables the Admin UI SDK (PUT) on install. Runs before
- * {@link registerExtensionStep} so Commerce accepts the extension registration.
- * Install-only: enabling the SDK is not reverted on uninstall since other
- * extensions may still rely on it.
+ * Leaf step that enables the Admin UI SDK (PUT) on install, before
+ * {@link registerExtensionStep}. Install-only: it has no uninstall handler.
  */
 const enableAdminUiSdkStep = defineLeafStep({
   install: (_: AdminUiConfig, context: AdminUiExecutionContext) =>
@@ -44,8 +43,12 @@ const enableAdminUiSdkStep = defineLeafStep({
   name: "enable-admin-ui-sdk",
 });
 
-/** Leaf step that registers the extension (POST) on install and unregisters it (DELETE) on uninstall. */
+/**
+ * Leaf step that registers the extension (POST) on install and unregisters it
+ * (DELETE) on uninstall, and reconciles it during upgrade via `plan`/`apply`.
+ */
 const registerExtensionStep = defineLeafStep({
+  apply: applyAdminUi,
   install: (_: AdminUiConfig, context: AdminUiExecutionContext) =>
     registerExtension(context),
   meta: {
@@ -57,16 +60,25 @@ const registerExtensionStep = defineLeafStep({
       description: "Removes the Admin UI extension from Adobe Commerce",
       label: "Unregister Extension",
     },
+    upgrade: {
+      description:
+        "Registers, refreshes, or removes the Admin UI extension to match the updated configuration",
+      label: "Update Extension",
+    },
   },
   name: "register-extension",
+  plan: planAdminUi,
 
   uninstall: (_: AdminUiConfig, context: AdminUiExecutionContext) =>
     unregisterExtension(context),
 });
 
-/** The output data of the register extension step (auto-inferred). */
-export type RegisterExtensionStepData = InferStepOutput<
-  typeof registerExtensionStep
+// Derived from `registerExtension` rather than `InferStepOutput<typeof
+// registerExtensionStep>`, which would be self-referential (the step's own
+// plan/apply handlers consume this type).
+/** The register step's output (`{ extensionId }`), also persisted as the domain's snapshot data. */
+export type RegisterExtensionStepData = Awaited<
+  ReturnType<typeof registerExtension>
 >;
 
 /** Branch step for setting up the Admin UI extension registration. */
@@ -82,6 +94,11 @@ export const adminUiStep = defineBranchStep({
     },
     uninstall: {
       description: "Removes the extension from Adobe Commerce Admin UI",
+      label: "Admin UI",
+    },
+    upgrade: {
+      description:
+        "Reconciles the extension's Admin UI components with Adobe Commerce",
       label: "Admin UI",
     },
   },

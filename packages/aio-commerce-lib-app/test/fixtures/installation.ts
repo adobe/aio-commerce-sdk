@@ -13,12 +13,14 @@
 import AioLogger from "@adobe/aio-lib-core-logging";
 import { vi } from "vitest";
 
+import { createMockStepStatus } from "./workflow";
+
 import type {
-  BranchStep,
-  LifecycleContext,
-} from "#management/common/workflow/step";
+  AppStateSnapshot,
+  OrchestrationState,
+} from "#management/common/orchestration";
+import type { LifecycleContext } from "#management/common/workflow/step";
 import type {
-  ExecutionStatus,
   FailedWorkflowState,
   InProgressWorkflowState,
   StepStatus,
@@ -31,6 +33,7 @@ import type {
   ValidationResult,
   ValidationSummary,
 } from "#management/common/workflow/validation";
+import type { LifecycleStore } from "#management/lifecycle/state";
 
 export const FAKE_SYSTEM_TIME = "2026-01-30T10:00:00.000Z";
 export const FAKE_COMPLETED_TIME = "2026-01-30T10:05:00.000Z";
@@ -61,8 +64,7 @@ export function createMockLogger(): ReturnType<typeof AioLogger> {
 export function createMockInstallationContextWithScripts(
   customScripts: Record<string, unknown> = {},
 ): LifecycleContext {
-  // createMockInstallationContext does not forward customScripts, so spread it in.
-  return { ...createMockInstallationContext(), customScripts };
+  return createMockInstallationContext({ customScripts });
 }
 
 type InstallationContextOverrides = Omit<
@@ -117,6 +119,12 @@ export function createMockInstallationParams(
 export function createMockInstallationContext(
   overrides?: InstallationContextOverrides,
 ): LifecycleContext {
+  const {
+    appData: appDataOverrides,
+    params: paramOverrides,
+    ...contextOverrides
+  } = overrides ?? {};
+
   return {
     appData: {
       consumerOrgId: "test-consumer-org-id",
@@ -127,39 +135,12 @@ export function createMockInstallationContext(
       workspaceId: "test-workspace-id",
       workspaceName: "test-workspace-name",
       workspaceTitle: "Test Workspace Title",
-      ...(overrides?.appData ?? {}),
+      ...appDataOverrides,
     },
 
-    logger: overrides?.logger ?? createMockLogger(),
-    params: createMockInstallationParams(overrides?.params),
-  };
-}
-
-/** Creates a mock StepStatus for testing. */
-export function createMockStepStatus(
-  overrides?: Partial<StepStatus>,
-): StepStatus {
-  return {
-    children: [],
-    id: "root-id",
-    meta: { description: "Root step for testing", label: "Root Step" },
-    name: "root",
-    path: ["root"],
-    status: "pending" as ExecutionStatus,
-    ...overrides,
-  };
-}
-
-/** Creates a mock BranchStep for orchestration tests. */
-export function createMockBranchStep(
-  overrides?: Partial<BranchStep>,
-): BranchStep {
-  return {
-    children: [],
-    meta: { install: { label: "Installation" } },
-    name: "installation",
-    type: "branch",
-    ...overrides,
+    ...contextOverrides,
+    logger: contextOverrides.logger ?? createMockLogger(),
+    params: createMockInstallationParams(paramOverrides),
   };
 }
 
@@ -245,7 +226,7 @@ export function createMockInstallationSucceededState(
     data: null,
     id: "installation-id",
     startedAt: FAKE_SYSTEM_TIME,
-    step: createMockInstallationStepStatus({ status: "pending" }),
+    step: createMockInstallationStepStatus({ status: "succeeded" }),
     ...overrides,
   });
 }
@@ -303,9 +284,21 @@ export function createMockValidationResult(
   };
 }
 
+/** Options for {@link createMockInstallationStore}. */
+export type MockInstallationStoreOptions = {
+  /**
+   * When true, `put` round-trips the value through `JSON.stringify`/`parse`,
+   * matching the real state/files stores. Function-valued properties (e.g. a
+   * `dynamicList` field's `options`/`default`) do not survive this and are
+   * dropped, same as in production.
+   */
+  serialize?: boolean;
+};
+
 /** Creates an in-memory mock of a key/value store for installation state. */
 export function createMockInstallationStore(
   initialValue: WorkflowRunState | null = null,
+  { serialize = false }: MockInstallationStoreOptions = {},
 ) {
   let value = initialValue;
 
@@ -317,7 +310,7 @@ export function createMockInstallationStore(
     }),
     get: vi.fn(async (_key: string) => value),
     put: vi.fn(async (_key: string, nextValue: WorkflowRunState) => {
-      value = nextValue;
+      value = serialize ? JSON.parse(JSON.stringify(nextValue)) : nextValue;
     }),
   };
 }
@@ -332,8 +325,9 @@ export type MockInstallationStore = ReturnType<
  */
 export function createMockCombinedStoreImpl(
   getStores: () => {
+    appStateSnapshot?: LifecycleStore<AppStateSnapshot>;
     installation: MockInstallationStore;
-    orchestrationState?: MockInstallationStore;
+    orchestrationState?: LifecycleStore<OrchestrationState>;
     uninstallation: MockInstallationStore;
   },
 ) {
@@ -348,10 +342,16 @@ export function createMockCombinedStoreImpl(
       return stores.uninstallation;
     }
     if (prefix === "lifecycle-orchestration-state") {
-      return stores.orchestrationState ?? createMockInstallationStore();
+      if (!stores.orchestrationState) {
+        throw new Error("Missing lifecycle orchestration state store");
+      }
+      return stores.orchestrationState;
     }
     if (prefix === "lifecycle-app-state-snapshot") {
-      return createMockInstallationStore();
+      if (!stores.appStateSnapshot) {
+        throw new Error("Missing lifecycle app-state snapshot store");
+      }
+      return stores.appStateSnapshot;
     }
 
     throw new Error(`Unexpected store prefix: ${String(prefix)}`);

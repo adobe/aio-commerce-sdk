@@ -164,20 +164,36 @@ const OrderViewButtonSchema = v.variant("type", [
 
 // ─── Entity extension points ──────────────────────────────────────────────────
 
+const MassActionsSchema = v.pipe(
+  v.array(MassActionSchema),
+  v.check(
+    (items) => new Set(items.map((item) => item.id)).size === items.length,
+    "Mass action ids must be unique.",
+  ),
+);
+
 const AdminUiOrderSchema = v.object({
   gridColumns: v.optional(GridColumnsSchema),
-  massActions: v.optional(v.array(MassActionSchema)),
-  viewButtons: v.optional(v.array(OrderViewButtonSchema)),
+  massActions: v.optional(MassActionsSchema),
+  viewButtons: v.optional(
+    v.pipe(
+      v.array(OrderViewButtonSchema),
+      v.check(
+        (items) => new Set(items.map((item) => item.id)).size === items.length,
+        "Order view button ids must be unique.",
+      ),
+    ),
+  ),
 });
 
 const AdminUiProductSchema = v.object({
   gridColumns: v.optional(GridColumnsSchema),
-  massActions: v.optional(v.array(MassActionSchema)),
+  massActions: v.optional(MassActionsSchema),
 });
 
 const AdminUiCustomerSchema = v.object({
   gridColumns: v.optional(GridColumnsSchema),
-  massActions: v.optional(v.array(MassActionSchema)),
+  massActions: v.optional(MassActionsSchema),
 });
 
 const MenuIdSchema = v.pipe(
@@ -234,6 +250,16 @@ export type AdminUiConfiguration = v.InferInput<typeof AdminUiSchema>;
 export type AdminUi = v.InferOutput<typeof AdminUiSchema>;
 
 /**
+ * The validated config of a single Admin UI component: the menu, an entity's
+ * grid columns, a single mass action, or a single view button.
+ */
+export type AdminUiComponentConfig =
+  | v.InferOutput<typeof MenuSchema>
+  | v.InferOutput<typeof GridColumnsSchema>
+  | v.InferOutput<typeof MassActionSchema>
+  | v.InferOutput<typeof OrderViewButtonSchema>;
+
+/**
  * Grid columns registration configuration.
  */
 export type GridColumns = v.InferInput<typeof GridColumnsSchema>;
@@ -283,10 +309,26 @@ export type AdminUiConfig<
 };
 
 /**
- * Check if config has Admin UI configuration.
+ * Check whether the config declares at least one Admin UI component (menu, grid
+ * columns, mass actions, or view buttons). A component-less `adminUi` block is
+ * treated as absent — it registers nothing.
  */
 export function hasAdminUi<T extends AnyCommerceAppConfig>(
   config: T,
 ): config is AdminUiConfig<T> {
-  return config.adminUi !== undefined;
+  const { adminUi } = config;
+  if (!adminUi) {
+    return false;
+  }
+
+  return Boolean(
+    adminUi.menu ||
+      adminUi.order?.gridColumns ||
+      adminUi.order?.massActions?.length ||
+      adminUi.order?.viewButtons?.length ||
+      adminUi.product?.gridColumns ||
+      adminUi.product?.massActions?.length ||
+      adminUi.customer?.gridColumns ||
+      adminUi.customer?.massActions?.length,
+  );
 }

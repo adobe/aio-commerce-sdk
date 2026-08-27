@@ -51,6 +51,11 @@ describe("events installation module", () => {
             "Removes the I/O Events and Commerce events configured by the application",
           label: "Eventing",
         },
+        upgrade: {
+          description:
+            "Reconciles the I/O Events and Commerce events configured by the application",
+          label: "Eventing",
+        },
       });
     });
 

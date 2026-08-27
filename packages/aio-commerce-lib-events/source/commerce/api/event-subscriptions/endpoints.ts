@@ -15,6 +15,7 @@ import { parseOrThrow } from "@aio-commerce-sdk/common-utils/valibot";
 import {
   EventSubscriptionCreateParamsSchema,
   EventSubscriptionDeleteParamsSchema,
+  EventSubscriptionUpdateParamsSchema,
 } from "./schema";
 
 import type { AdobeCommerceHttpClient } from "@adobe/aio-commerce-lib-api";
@@ -23,6 +24,7 @@ import type { HTTPError, Options } from "ky";
 import type {
   EventSubscriptionCreateParams,
   EventSubscriptionDeleteParams,
+  EventSubscriptionUpdateParams,
 } from "./schema";
 import type { CommerceEventSubscriptionManyResponse } from "./types";
 
@@ -76,6 +78,45 @@ export async function createEventSubscription(
     .then((_res) => {
       // The response is always `[]` which is basically `void`
       // We set this `then` to make the response type `void`
+    });
+}
+
+/**
+ * Updates an existing event subscription in the Commerce instance bound to the given {@link AdobeCommerceHttpClient}.
+ *
+ * The Commerce update endpoint merges the provided `fields` and `rules` into the
+ * existing subscription (keyed by field name and `field:operator` respectively);
+ * it cannot remove entries. Callers reconciling toward a desired end state must
+ * account for that (removals require re-subscribing the event).
+ *
+ * @see https://developer.adobe.com/commerce/extensibility/events/api/#update-an-event-subscription
+ *
+ * @param httpClient - The {@link AdobeCommerceHttpClient} to use to make the request.
+ * @param params - The parameters to update the event subscription with.
+ * @param fetchOptions - The {@link Options} to use to make the request.
+ *
+ * @throws A {@link CommerceSdkValidationError} If the parameters are in the wrong format.
+ * @throws An {@link HTTPError} If the status code is not 2XX.
+ */
+export async function updateEventSubscription(
+  httpClient: AdobeCommerceHttpClient,
+  params: EventSubscriptionUpdateParams,
+  fetchOptions?: Options,
+): Promise<void> {
+  const validatedParams = parseOrThrow(
+    EventSubscriptionUpdateParamsSchema,
+    params,
+  );
+
+  const { name, ...event } = validatedParams;
+  return httpClient
+    .put(`eventing/eventSubscribe/${name}`, {
+      ...fetchOptions,
+      json: { event },
+    })
+    .json()
+    .then((_res) => {
+      // The response mirrors the subscribe endpoint (`[]`); coerce to `void`.
     });
 }
 
