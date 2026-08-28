@@ -481,6 +481,32 @@ The same shape applies to the other components — swap in the matching trio of 
 
 For grid columns, gate the work per the request's `gridType`; for order view buttons, the entity is always `order`, so only the `appId` and `buttonId` segments vary.
 
+#### Custom ACL Resources
+
+Apps can declare standalone ACL permissions under `adminUi.acl` in their `app.commerce.config.*` (see the `@adobe/aio-commerce-lib-app` documentation). These resources are not bound to any UI element; instead, Commerce renders them in the Admin User Roles tree so merchants can grant or deny them per role. Your app checks them at runtime to gate its own logic.
+
+Use `getCustomAclResourceId` to derive the Commerce ACL resource id for a custom ACL resource:
+
+```typescript
+import {
+  getCustomAclResourceId,
+  getAdminUiPermissionClient,
+} from "@adobe/aio-commerce-lib-admin-ui";
+
+const client = getAdminUiPermissionClient({ httpClient, appId: "my-app" });
+const canExport = await client.check(
+  getCustomAclResourceId("my-app", "reports", "export"),
+);
+```
+
+`getCustomAclResourceId(appId, resourceId, childId?)` takes three parameters:
+
+- **appId** — the `metadata.id` from your app configuration
+- **resourceId** — the `id` of the top-level or group-level resource defined in `adminUi.acl`
+- **childId** (optional) — the `id` of a child resource within a group (when the resource is a leaf node, omit this)
+
+Each segment is sanitized independently (trimmed, lowercased, non-`[a-z0-9_]` characters replaced with `_`), matching the Commerce module's generator exactly. The function returns an empty string when `appId` is blank.
+
 ### Web Extension App
 
 The `./web` entrypoint provides the browser side of a `commerce/backend-ui/2` app: `createExtensionApp` mounts the iframe app (Experience Cloud Shell wiring, UIX registration, shared-context attachment, routing, and Spectrum setup included), and a set of React hooks expose the context the host shares with the frame.

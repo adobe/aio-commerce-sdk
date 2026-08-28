@@ -903,6 +903,24 @@ adminUi: {
   const allowed = await client.check(); // uses appId to resolve the resource id
   ```
 
+#### Custom ACL Resources
+
+Declare standalone permissions under `adminUi.acl` that are not tied to any Admin UI element. Commerce
+renders them in the Admin User Roles tree so a merchant can grant or deny them; your app checks them at
+runtime (see `getCustomAclResourceId` in `@adobe/aio-commerce-lib-admin-ui`) to gate its own logic.
+Resources are flat leaves or one-level groups.
+
+```ts
+adminUi: {
+  acl: [
+    { id: "reports", label: "Reports", children: [
+      { id: "export", label: "Export", description: "Export report data." },
+    ]},
+    { id: "approve_refunds", label: "Approve Refunds", description: "Approve customer refunds." },
+  ],
+}
+```
+
 ### CLI Commands
 
 The library provides the following CLI commands:
