@@ -52,14 +52,15 @@ describe("createRootInstallationStep", () => {
     expect(customInstallationStep.name).toBe("customInstallationSteps");
     expect(customInstallationStep.type).toBe("branch");
 
-    // The custom installation step should have children (script steps directly)
+    // The custom installation step should have children (script steps, then the reconciliation step)
     expect.assert(isBranchStep(customInstallationStep));
-    expect(customInstallationStep.children.length).toBe(2);
+    expect(customInstallationStep.children.length).toBe(3);
     expect(customInstallationStep.children[0].name).toBe("demoSuccess");
     expect(customInstallationStep.children[0].meta.install.label).toBe(
       "Demo Success",
     );
     expect(customInstallationStep.children[0].type).toBe("leaf");
+    expect(customInstallationStep.children[2].name).toBe("reconciliation");
   });
 
   test("creates upgrade progress for a planned webhook operation", () => {
@@ -134,13 +135,25 @@ describe("createRootUninstallationStep", () => {
     expect(customInstallationStep.name).toBe("customInstallationSteps");
     expect(customInstallationStep.type).toBe("branch");
 
-    // The custom installation step should have children (script steps directly)
+    // The custom installation step should have children (script steps, then the reconciliation step)
     expect.assert(isBranchStep(customInstallationStep));
-    expect(customInstallationStep.children.length).toBe(2);
+    expect(customInstallationStep.children.length).toBe(3);
     expect(customInstallationStep.children[0].name).toBe("demoSuccess");
     expect(customInstallationStep.children[0].meta.install.label).toBe(
       "Demo Success",
     );
     expect(customInstallationStep.children[0].type).toBe("leaf");
+    expect(customInstallationStep.children[2].name).toBe("reconciliation");
+  });
+
+  test("includes an uninstall-only leaf for a custom installation step no longer in the config", () => {
+    const result = createRootUninstallationStep(minimalValidConfig, [
+      { name: "Old Step", script: "./old-step.js" },
+    ]);
+
+    const [, , , customInstallationStep] = result.children;
+    expect.assert(isBranchStep(customInstallationStep));
+    expect(customInstallationStep.children.length).toBe(1);
+    expect(customInstallationStep.children[0].name).toBe("oldStep");
   });
 });

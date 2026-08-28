@@ -18,18 +18,22 @@ import { webhooksStep } from "#management/domains/webhooks/index";
 
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 import type { AnyStep, BranchStep } from "#management/common/workflow/index";
+import type { CustomInstallationStepIdentity } from "#management/domains/custom-installation/index";
 
 /**
- * Creates the default child steps built-in in the library with dynamic children based on the config.
+ * Creates the default child steps built-in in the library with dynamic children based on the
+ * config. `executedCustomInstallationSteps` is only meaningful for a full uninstall (see
+ * {@link createRootUninstallationStep}).
  */
 function createDefaultChildSteps(
   config: CommerceAppConfigOutputModel,
+  executedCustomInstallationSteps: readonly CustomInstallationStepIdentity[] = [],
 ): AnyStep[] {
   return [
     eventingStep,
     webhooksStep,
     adminUiStep,
-    createCustomInstallationStep(config),
+    createCustomInstallationStep(config, executedCustomInstallationSteps),
   ];
 }
 
@@ -61,12 +65,17 @@ export function createRootInstallationStep(
 
 /**
  * Creates a root uninstallation step with dynamic children based on the config.
+ *
+ * `executedCustomInstallationSteps` is the persisted history of every custom installation step
+ * that ever ran (from the lifecycle baseline snapshot). Passing it lets a full unassociate reach
+ * steps that ran in a previous version but were since removed from the config.
  */
 export function createRootUninstallationStep(
   config: CommerceAppConfigOutputModel,
+  executedCustomInstallationSteps: readonly CustomInstallationStepIdentity[] = [],
 ): BranchStep {
   return defineBranchStep({
-    children: createDefaultChildSteps(config),
+    children: createDefaultChildSteps(config, executedCustomInstallationSteps),
     meta: {
       install: {
         description: "App uninstallation workflow",

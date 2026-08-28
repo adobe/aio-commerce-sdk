@@ -74,7 +74,7 @@ function assertScriptModule(module: unknown): asserts module is ScriptModule {
  * @param script - The script path to resolve the module for
  * @returns The resolved script module, or `undefined` if the script is not present in the context.
  */
-function getScriptModule(
+export function getScriptModule(
   customScripts: Record<string, unknown>,
   script: string,
 ): ScriptModule | undefined {
@@ -101,18 +101,18 @@ function getScriptModule(
  */
 
 // Overload for `install` (should always return something).
-function resolveCustomScriptHandler(
+export function resolveCustomScriptHandler(
   scriptModule: ScriptModule,
   handler: "install",
 ): CustomInstallationStepHandler;
 
 // Overload for `uninstall` (may return null if uninstall is not defined).
-function resolveCustomScriptHandler(
+export function resolveCustomScriptHandler(
   scriptModule: ScriptModule,
   handler: "uninstall",
 ): CustomInstallationStepHandler | null;
 
-function resolveCustomScriptHandler(
+export function resolveCustomScriptHandler(
   scriptModule: ScriptModule,
   handler: "install" | "uninstall",
 ) {
@@ -139,9 +139,32 @@ type ScriptExecutionResult = {
 };
 
 /**
+ * Resolves a script module from the customScripts context, throwing when it's absent.
+ *
+ * @param customScripts - The customScripts context containing the loaded modules.
+ * @param script - The script path to resolve the module for.
+ * @throws If the script is not present in the context.
+ */
+export function getScriptModuleOrThrow(
+  customScripts: Record<string, unknown>,
+  script: string,
+): ScriptModule {
+  const scriptModule = getScriptModule(customScripts, script);
+  if (!scriptModule) {
+    throw new Error(
+      `Script ${script} not found in customScripts context. Make sure the script is defined in the configuration and the action was generated with custom scripts support.`,
+    );
+  }
+
+  return scriptModule;
+}
+
+/**
  * Creates a leaf step for executing a single custom installation script.
  */
-function createCustomScriptStep(scriptConfig: CustomInstallationStep): AnyStep {
+export function createCustomScriptStep(
+  scriptConfig: CustomInstallationStep,
+): AnyStep {
   const { script, name, description } = scriptConfig;
   return defineLeafStep({
     install: async (
@@ -154,13 +177,7 @@ function createCustomScriptStep(scriptConfig: CustomInstallationStep): AnyStep {
       logger.info(`Executing custom installation script: ${name}`);
       logger.debug(`Script path: ${script}`);
 
-      const scriptModule = getScriptModule(customScripts, script);
-      if (!scriptModule) {
-        throw new Error(
-          `Script ${script} not found in customScripts context. Make sure the script is defined in the configuration and the action was generated with custom scripts support.`,
-        );
-      }
-
+      const scriptModule = getScriptModuleOrThrow(customScripts, script);
       const install = resolveCustomScriptHandler(scriptModule, "install");
 
       const scriptResult = await install(config, context);
