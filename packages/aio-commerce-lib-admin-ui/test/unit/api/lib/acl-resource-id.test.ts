@@ -12,7 +12,10 @@
 
 import { describe, expect, it } from "vitest";
 
-import { getAclResourceId } from "#api/lib/acl-resource-id";
+import {
+  getAclResourceId,
+  getCustomAclResourceId,
+} from "#api/lib/acl-resource-id";
 
 describe("getAclResourceId", () => {
   it("converts hyphens to underscores and lowercases (cross-repo contract fixture)", () => {
@@ -36,5 +39,29 @@ describe("getAclResourceId", () => {
   it("returns empty string for blank input", () => {
     expect(getAclResourceId("")).toBe("");
     expect(getAclResourceId("   ")).toBe("");
+  });
+});
+
+describe("getCustomAclResourceId", () => {
+  it("builds a top-level / group node id", () => {
+    expect(getCustomAclResourceId("my-app", "approve_refunds")).toBe(
+      "Magento_CommerceBackendUix::adminuisdk_app_my_app_acl_approve_refunds",
+    );
+  });
+
+  it("builds a child leaf id when childId is given", () => {
+    expect(getCustomAclResourceId("my-app", "reports", "export")).toBe(
+      "Magento_CommerceBackendUix::adminuisdk_app_my_app_acl_reports_export",
+    );
+  });
+
+  it("sanitizes each segment independently", () => {
+    expect(getCustomAclResourceId("My-App", "Reports", "Export-CSV")).toBe(
+      "Magento_CommerceBackendUix::adminuisdk_app_my_app_acl_reports_export_csv",
+    );
+  });
+
+  it("returns empty string for a blank app id", () => {
+    expect(getCustomAclResourceId("", "x")).toBe("");
   });
 });
