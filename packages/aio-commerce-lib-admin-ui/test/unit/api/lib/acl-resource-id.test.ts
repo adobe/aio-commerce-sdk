@@ -65,3 +65,28 @@ describe("getCustomAclResourceId", () => {
     expect(getCustomAclResourceId("", "x")).toBe("");
   });
 });
+
+describe("getCustomAclResourceId cross-repo parity", () => {
+  it.each([
+    [
+      "my-app",
+      "approve_refunds",
+      undefined,
+      "Magento_CommerceBackendUix::adminuisdk_app_my_app_acl_approve_refunds",
+    ],
+    [
+      "my-app",
+      "reports",
+      "export",
+      "Magento_CommerceBackendUix::adminuisdk_app_my_app_acl_reports_export",
+    ],
+    [
+      "My-App",
+      "Reports",
+      "Export-CSV",
+      "Magento_CommerceBackendUix::adminuisdk_app_my_app_acl_reports_export_csv",
+    ],
+  ] as const)("%s / %s / %s", (appId, resourceId, childId, expected) => {
+    expect(getCustomAclResourceId(appId, resourceId, childId)).toBe(expected);
+  });
+});
