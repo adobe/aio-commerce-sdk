@@ -65,6 +65,16 @@ function enumerateComponents(
     });
   }
 
+  for (const aclEntry of adminUi.acl ?? []) {
+    const key = `acl.${aclEntry.id}`;
+    components.set(key, {
+      config: aclEntry,
+      key,
+      label: `acl resource "${aclEntry.id}"`,
+      ref: { id: aclEntry.id, kind: "acl" },
+    });
+  }
+
   for (const entity of ADMIN_UI_ENTITIES) {
     const entityConfig = adminUi[entity];
     if (!entityConfig) {

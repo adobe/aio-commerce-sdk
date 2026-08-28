@@ -13,16 +13,17 @@
 import type { AdminUi, AdminUiComponentConfig } from "#config/schema/admin-ui";
 import type { DomainPlan } from "#management/common/workflow/resource";
 
-/** The Commerce entity an Admin UI component attaches to (absent for the menu). */
-export type AdminUiComponentEntity = Exclude<keyof AdminUi, "menu">;
+/** The Commerce entity an Admin UI component attaches to (absent for the menu and acl). */
+export type AdminUiComponentEntity = Exclude<keyof AdminUi, "menu" | "acl">;
 
-/**
- * The addressable kinds of Admin UI component an upgrade operation can target,
 /**
  * The addressable kinds of Admin UI component an upgrade operation can target,
  * derived from the schema's component field names.
  */
-export type AdminUiComponentKind = "menu" | keyof NonNullable<AdminUi["order"]>;
+export type AdminUiComponentKind =
+  | "acl"
+  | "menu"
+  | keyof NonNullable<AdminUi["order"]>;
 
 /** Locates a single Admin UI component within the `adminUi` block. */
 export type AdminUiComponentRef = {

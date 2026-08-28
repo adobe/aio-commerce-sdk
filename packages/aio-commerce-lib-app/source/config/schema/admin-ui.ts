@@ -311,7 +311,8 @@ export type AdminUiComponentConfig =
   | v.InferOutput<typeof MenuSchema>
   | v.InferOutput<typeof GridColumnsSchema>
   | v.InferOutput<typeof MassActionSchema>
-  | v.InferOutput<typeof OrderViewButtonSchema>;
+  | v.InferOutput<typeof OrderViewButtonSchema>
+  | AclResourceEntry;
 
 /**
  * Grid columns registration configuration.
