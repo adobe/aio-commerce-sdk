@@ -668,9 +668,29 @@ describe("adminUi.acl", () => {
   test("rejects a description field on an acl resource", () => {
     expect(() =>
       v.parse(AdminUiSchema, {
-        acl: [{ description: "x", id: "a", label: "A" }],
+        acl: [{ description: "x", id: "a", label: "Alpha" }],
       }),
     ).toThrow();
+  });
+
+  test("rejects a label shorter than 3 characters", () => {
+    expect(() =>
+      v.parse(AdminUiSchema, { acl: [{ id: "a", label: "Ab" }] }),
+    ).toThrow();
+  });
+
+  test("rejects a label longer than 50 characters", () => {
+    expect(() =>
+      v.parse(AdminUiSchema, {
+        acl: [{ id: "a", label: "x".repeat(51) }],
+      }),
+    ).toThrow();
+  });
+
+  test("accepts a label of exactly 3 characters", () => {
+    expect(() =>
+      v.parse(AdminUiSchema, { acl: [{ id: "a", label: "Abc" }] }),
+    ).not.toThrow();
   });
 
   test("accepts a one-level group with leaf children", () => {
@@ -715,8 +735,8 @@ describe("adminUi.acl", () => {
   test("rejects duplicate top-level resource ids", () => {
     const config = {
       acl: [
-        { id: "a", label: "A" },
-        { id: "a", label: "A2" },
+        { id: "a", label: "Alpha" },
+        { id: "a", label: "Alpha Two" },
       ],
     };
     expect(() => v.parse(AdminUiSchema, config)).toThrow();
@@ -727,11 +747,11 @@ describe("adminUi.acl", () => {
       acl: [
         {
           children: [
-            { id: "x", label: "X" },
-            { id: "x", label: "X2" },
+            { id: "x", label: "Xray" },
+            { id: "x", label: "Xray Two" },
           ],
           id: "g",
-          label: "G",
+          label: "Group",
         },
       ],
     };

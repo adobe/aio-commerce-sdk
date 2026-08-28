@@ -25,7 +25,7 @@ adminUi: {
 | Field         | Constraint                                                                                                 |
 | ------------- | ---------------------------------------------------------------------------------------------------------- |
 | `id`          | Required; matches `^[A-Za-z0-9_-]+$`. Must be unique among entries at the same level.                      |
-| `label`       | Required, non-empty. This is the only text shown in the User Roles tree.                                   |
+| `label`       | Required; 3–50 characters. This is the only text shown in the User Roles tree.                             |
 | `children`    | Optional array of leaf resources (`{ id, label }`). When present it must have at least one entry.          |
 | nesting       | Exactly one level: a child is a leaf and cannot have its own `children` (grandchildren are rejected).      |
 | `description` | Not supported. The User Roles tree renders only a node's title, so there is nowhere to show a description. |

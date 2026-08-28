@@ -234,10 +234,27 @@ const AclResourceIdSchema = v.pipe(
   ),
 );
 
+// The label is rendered as the resource title in the Commerce Admin User Roles tree, which
+// constrains titles to between 3 and 50 characters.
+const ACL_LABEL_MIN_LENGTH = 3;
+const ACL_LABEL_MAX_LENGTH = 50;
+
+const AclResourceLabelSchema = v.pipe(
+  nonEmptyStringValueSchema("acl resource label"),
+  v.minLength(
+    ACL_LABEL_MIN_LENGTH,
+    `acl resource label must be at least ${ACL_LABEL_MIN_LENGTH} characters`,
+  ),
+  v.maxLength(
+    ACL_LABEL_MAX_LENGTH,
+    `acl resource label must be at most ${ACL_LABEL_MAX_LENGTH} characters`,
+  ),
+);
+
 /** A single custom ACL resource leaf. Leaves never nest — this is what keeps grouping one level deep. */
 const AclResourceLeafSchema = v.strictObject({
   id: AclResourceIdSchema,
-  label: nonEmptyStringValueSchema("acl resource label"),
+  label: AclResourceLabelSchema,
 });
 
 /** A top-level acl entry: a leaf, or a group carrying leaf children (exactly one level of nesting). */
@@ -253,7 +270,7 @@ const AclResourceEntrySchema = v.strictObject({
     ),
   ),
   id: AclResourceIdSchema,
-  label: nonEmptyStringValueSchema("acl resource label"),
+  label: AclResourceLabelSchema,
 });
 
 const AdminUiAclSchema = v.pipe(
