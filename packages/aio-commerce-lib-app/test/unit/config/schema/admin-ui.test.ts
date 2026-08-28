@@ -657,13 +657,20 @@ describe("adminUi.acl", () => {
     const config = {
       acl: [
         {
-          description: "d",
           id: "approve_refunds",
           label: "Approve Refunds",
         },
       ],
     };
     expect(() => v.parse(AdminUiSchema, config)).not.toThrow();
+  });
+
+  test("rejects a description field on an acl resource", () => {
+    expect(() =>
+      v.parse(AdminUiSchema, {
+        acl: [{ description: "x", id: "a", label: "A" }],
+      }),
+    ).toThrow();
   });
 
   test("accepts a one-level group with leaf children", () => {

@@ -914,9 +914,9 @@ Resources are flat leaves or one-level groups.
 adminUi: {
   acl: [
     { id: "reports", label: "Reports", children: [
-      { id: "export", label: "Export", description: "Export report data." },
+      { id: "export", label: "Export" },
     ]},
-    { id: "approve_refunds", label: "Approve Refunds", description: "Approve customer refunds." },
+    { id: "approve_refunds", label: "Approve Refunds" },
   ],
 }
 ```

@@ -236,9 +236,6 @@ const AclResourceIdSchema = v.pipe(
 
 /** A single custom ACL resource leaf. Leaves never nest — this is what keeps grouping one level deep. */
 const AclResourceLeafSchema = v.strictObject({
-  description: v.optional(
-    nonEmptyStringValueSchema("acl resource description"),
-  ),
   id: AclResourceIdSchema,
   label: nonEmptyStringValueSchema("acl resource label"),
 });
@@ -254,9 +251,6 @@ const AclResourceEntrySchema = v.strictObject({
         "Child ACL resource ids must be unique within a group.",
       ),
     ),
-  ),
-  description: v.optional(
-    nonEmptyStringValueSchema("acl resource description"),
   ),
   id: AclResourceIdSchema,
   label: nonEmptyStringValueSchema("acl resource label"),
@@ -275,7 +269,7 @@ const AdminUiAclSchema = v.pipe(
 
 /**
  * Schema for the `adminUi` config section.
- * Supports grid column extensions, mass actions, order view buttons, and menu on `commerce/backend-ui/2`.
+ * Supports grid column extensions, mass actions, order view buttons, menu, and custom ACL resources on `commerce/backend-ui/2`.
  */
 export const AdminUiSchema = v.object({
   acl: v.optional(AdminUiAclSchema),
@@ -305,7 +299,7 @@ export type AclResourceEntry = v.InferInput<typeof AclResourceEntrySchema>;
 
 /**
  * The validated config of a single Admin UI component: the menu, an entity's
- * grid columns, a single mass action, or a single view button.
+ * grid columns, a single mass action, a single view button, or a custom ACL resource entry.
  */
 export type AdminUiComponentConfig =
   | v.InferOutput<typeof MenuSchema>
@@ -365,7 +359,7 @@ export type AdminUiConfig<
 
 /**
  * Check whether the config declares at least one Admin UI component (menu, grid
- * columns, mass actions, or view buttons). A component-less `adminUi` block is
+ * columns, mass actions, view buttons, or custom ACL resources). A component-less `adminUi` block is
  * treated as absent — it registers nothing.
  */
 export function hasAdminUi<T extends AnyCommerceAppConfig>(
