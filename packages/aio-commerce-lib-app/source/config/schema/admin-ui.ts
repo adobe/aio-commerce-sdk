@@ -224,6 +224,53 @@ const MenuSchema = v.object({
   sandboxPermissions: v.optional(SandboxPermissionsSchema),
 });
 
+// ─── Custom ACL resources ──────────────────────────────────────────────────────
+
+const AclResourceIdSchema = v.pipe(
+  nonEmptyStringValueSchema("acl resource ID"),
+  v.regex(
+    /^[A-Za-z0-9_-]+$/,
+    'ACL resource ID may contain only letters, digits, "-", and "_"',
+  ),
+);
+
+/** A single custom ACL resource leaf. Leaves never nest — this is what keeps grouping one level deep. */
+const AclResourceLeafSchema = v.strictObject({
+  description: v.optional(
+    nonEmptyStringValueSchema("acl resource description"),
+  ),
+  id: AclResourceIdSchema,
+  label: nonEmptyStringValueSchema("acl resource label"),
+});
+
+/** A top-level acl entry: a leaf, or a group carrying leaf children (exactly one level of nesting). */
+const AclResourceEntrySchema = v.strictObject({
+  children: v.optional(
+    v.pipe(
+      v.array(AclResourceLeafSchema),
+      v.minLength(1, "An ACL resource group must contain at least one child"),
+      v.check(
+        (items) => new Set(items.map((i) => i.id)).size === items.length,
+        "Child ACL resource ids must be unique within a group.",
+      ),
+    ),
+  ),
+  description: v.optional(
+    nonEmptyStringValueSchema("acl resource description"),
+  ),
+  id: AclResourceIdSchema,
+  label: nonEmptyStringValueSchema("acl resource label"),
+});
+
+const AdminUiAclSchema = v.pipe(
+  v.array(AclResourceEntrySchema),
+  v.minLength(1, "At least one ACL resource is required when acl is defined"),
+  v.check(
+    (items) => new Set(items.map((i) => i.id)).size === items.length,
+    "Top-level ACL resource ids must be unique.",
+  ),
+);
+
 // ─── Top-level schema ─────────────────────────────────────────────────────────
 
 /**
@@ -231,6 +278,7 @@ const MenuSchema = v.object({
  * Supports grid column extensions, mass actions, order view buttons, and menu on `commerce/backend-ui/2`.
  */
 export const AdminUiSchema = v.object({
+  acl: v.optional(AdminUiAclSchema),
   customer: v.optional(AdminUiCustomerSchema),
   menu: v.optional(MenuSchema),
   order: v.optional(AdminUiOrderSchema),
@@ -248,6 +296,12 @@ export type AdminUiConfiguration = v.InferInput<typeof AdminUiSchema>;
  * The validated Admin UI configuration for an Adobe Commerce application.
  */
 export type AdminUi = v.InferOutput<typeof AdminUiSchema>;
+
+/** A single custom ACL resource leaf. */
+export type AclResource = v.InferInput<typeof AclResourceLeafSchema>;
+
+/** A custom ACL resource entry: a leaf or a one-level group of leaves. */
+export type AclResourceEntry = v.InferInput<typeof AclResourceEntrySchema>;
 
 /**
  * The validated config of a single Admin UI component: the menu, an entity's
@@ -322,7 +376,8 @@ export function hasAdminUi<T extends AnyCommerceAppConfig>(
   }
 
   return Boolean(
-    adminUi.menu ||
+    adminUi.acl?.length ||
+      adminUi.menu ||
       adminUi.order?.gridColumns ||
       adminUi.order?.massActions?.length ||
       adminUi.order?.viewButtons?.length ||

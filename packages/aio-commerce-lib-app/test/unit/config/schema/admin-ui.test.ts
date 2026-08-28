@@ -652,6 +652,98 @@ describe("AdminUiSchema", () => {
   });
 });
 
+describe("adminUi.acl", () => {
+  test("accepts a flat leaf resource", () => {
+    const config = {
+      acl: [
+        {
+          description: "d",
+          id: "approve_refunds",
+          label: "Approve Refunds",
+        },
+      ],
+    };
+    expect(() => v.parse(AdminUiSchema, config)).not.toThrow();
+  });
+
+  test("accepts a one-level group with leaf children", () => {
+    const config = {
+      acl: [
+        {
+          children: [{ id: "export", label: "Export" }],
+          id: "reports",
+          label: "Reports",
+        },
+      ],
+    };
+    expect(() => v.parse(AdminUiSchema, config)).not.toThrow();
+  });
+
+  test("rejects a grandchild (children may not nest)", () => {
+    const config = {
+      acl: [
+        {
+          children: [
+            {
+              children: [{ id: "csv", label: "CSV" }],
+              id: "export",
+              label: "Export",
+            },
+          ],
+          id: "reports",
+          label: "Reports",
+        },
+      ],
+    };
+    expect(() => v.parse(AdminUiSchema, config)).toThrow();
+  });
+
+  test("rejects a group with an empty children array", () => {
+    const config = {
+      acl: [{ children: [], id: "reports", label: "Reports" }],
+    };
+    expect(() => v.parse(AdminUiSchema, config)).toThrow();
+  });
+
+  test("rejects duplicate top-level resource ids", () => {
+    const config = {
+      acl: [
+        { id: "a", label: "A" },
+        { id: "a", label: "A2" },
+      ],
+    };
+    expect(() => v.parse(AdminUiSchema, config)).toThrow();
+  });
+
+  test("rejects duplicate child ids within one group", () => {
+    const config = {
+      acl: [
+        {
+          children: [
+            { id: "x", label: "X" },
+            { id: "x", label: "X2" },
+          ],
+          id: "g",
+          label: "G",
+        },
+      ],
+    };
+    expect(() => v.parse(AdminUiSchema, config)).toThrow();
+  });
+
+  test("hasAdminUi is true when only acl is present", () => {
+    expect(
+      hasAdminUi({
+        adminUi: { acl: [{ id: "a", label: "A" }] },
+      } as never),
+    ).toBe(true);
+  });
+
+  test("hasAdminUi is false when acl is an empty array", () => {
+    expect(hasAdminUi({ adminUi: { acl: [] } } as never)).toBe(false);
+  });
+});
+
 describe("AdminUiSchema — mass actions", () => {
   describe("valid cases", () => {
     test("view mass action with path and sandboxPermissions parses successfully", () => {
