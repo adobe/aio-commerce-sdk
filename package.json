@@ -39,7 +39,7 @@
     ]
   },
   "devDependencies": {
-    "@biomejs/biome": "2.5.9",
+    "@biomejs/biome": "2.5.11",
     "@changesets/changelog-github": "^1.0.0",
     "@changesets/cli": "^3.0.0",
     "@redocly/cli": "^2.31.4",
@@ -59,11 +59,11 @@
     "typedoc": "^0.28.17",
     "typedoc-plugin-markdown": "^4.10.0",
     "typescript": "catalog:",
-    "ultracite": "7.10.6",
+    "ultracite": "7.10.7",
     "vitest": "^4.1.0",
     "vitest-browser-react": "^2.2.0"
   },
-  "packageManager": "pnpm@11.22.0",
+  "packageManager": "pnpm@11.24.0",
   "engines": {
     "node": "^22.11 || ^24",
     "pnpm": ">=10"
