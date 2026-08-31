@@ -1,5 +1,16 @@
 # @adobe/aio-commerce-lib-app
 
+## 1.11.0
+
+### Minor Changes
+
+- [#650](https://github.com/adobe/aio-commerce-sdk/pull/650) [`f3ea3a6`](https://github.com/adobe/aio-commerce-sdk/commit/f3ea3a64ac59c978f28865274fa282ec991ea529) Thanks [@jcuerdo](https://github.com/jcuerdo)! - Fix uninstallation failing for apps with a `dynamicList` Business Configuration field, caused by revalidating the recorded installation snapshot against a schema that required functions a JSON-serialized snapshot can never have. Uninstallation now validates the recorded config with `validateRecordedCommerceAppConfig`, which accepts a `dynamicList` field without `options`/`default`.
+
+### Patch Changes
+
+- Updated dependencies [[`f3ea3a6`](https://github.com/adobe/aio-commerce-sdk/commit/f3ea3a64ac59c978f28865274fa282ec991ea529)]:
+  - @adobe/aio-commerce-lib-config@1.7.0
+
 ## 1.10.1
 
 ### Patch Changes
