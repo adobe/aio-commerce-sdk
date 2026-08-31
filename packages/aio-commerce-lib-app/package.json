@@ -113,7 +113,7 @@
     "@react-spectrum/s2": "catalog:react",
     "@types/react": "catalog:react",
     "msw": "catalog:",
-    "openapi-format": "1.33.6",
+    "openapi-format": "1.33.7",
     "react": "catalog:react",
     "typescript": "catalog:"
   },
