@@ -908,8 +908,8 @@ adminUi: {
 Declare standalone permissions under `adminUi.acl` that are not tied to any Admin UI element. Commerce
 renders them in the Admin User Roles tree so a merchant can grant or deny them; your app checks them at
 runtime (see `getCustomAclResourceId` in `@adobe/aio-commerce-lib-admin-ui`) to gate its own logic.
-Resources are flat leaves or one-level groups. Each resource has an `id` (letters, digits, `-`, `_`;
-unique per level) and a `label` (3–50 characters — the text shown in the User Roles tree).
+Resources are flat leaves or one-level groups. Each resource has an `id` (lowercase letters, digits,
+`_`; unique per level) and a `label` (3–50 characters — the text shown in the User Roles tree).
 
 ```ts
 adminUi: {

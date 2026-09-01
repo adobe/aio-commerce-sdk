@@ -790,6 +790,36 @@ describe("adminUi.acl", () => {
     expect(() => v.parse(AdminUiSchema, config)).toThrow();
   });
 
+  test("rejects an id with uppercase letters", () => {
+    // Commerce lowercases ids when deriving the ACL resource id, so "Reports"
+    // and "reports" would collide into one resource. Reject non-canonical ids.
+    expect(() =>
+      v.parse(AdminUiSchema, { acl: [{ id: "Reports", label: "Reports" }] }),
+    ).toThrow();
+  });
+
+  test("rejects an id containing a dash", () => {
+    // Commerce maps every character outside [a-z0-9_] to "_", so "a-b" and
+    // "a_b" would collide into one resource.
+    expect(() =>
+      v.parse(AdminUiSchema, { acl: [{ id: "a-b", label: "A dash B" }] }),
+    ).toThrow();
+  });
+
+  test("rejects a child id with uppercase letters", () => {
+    expect(() =>
+      v.parse(AdminUiSchema, {
+        acl: [
+          {
+            children: [{ id: "Export", label: "Export" }],
+            id: "reports",
+            label: "Reports",
+          },
+        ],
+      }),
+    ).toThrow();
+  });
+
   test("hasAdminUi is true when only acl is present", () => {
     expect(
       hasAdminUi({

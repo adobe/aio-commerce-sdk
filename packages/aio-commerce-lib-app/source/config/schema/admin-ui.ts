@@ -226,11 +226,15 @@ const MenuSchema = v.object({
 
 // ─── Custom ACL resources ──────────────────────────────────────────────────────
 
+// Restricted to the characters Commerce leaves untouched when deriving the ACL resource id
+// (it lowercases and maps every other character to "_"). Requiring the id to already be in that
+// canonical form means two distinct ids can never collapse to the same Commerce resource id — so
+// the uniqueness checks below, which compare raw ids, are sufficient.
 const AclResourceIdSchema = v.pipe(
   nonEmptyStringValueSchema("acl resource ID"),
   v.regex(
-    /^[A-Za-z0-9_-]+$/,
-    'ACL resource ID may contain only letters, digits, "-", and "_"',
+    /^[a-z0-9_]+$/,
+    'ACL resource ID may contain only lowercase letters, digits, and "_"',
   ),
 );
 
