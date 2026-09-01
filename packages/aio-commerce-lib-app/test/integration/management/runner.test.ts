@@ -86,7 +86,6 @@ describe("createInitialInstallationState", () => {
     expect(customBranch.children.map((child) => child.name)).toEqual([
       "demoSuccess",
       "demoError",
-      "reconciliation",
     ]);
   });
 });

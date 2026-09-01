@@ -30,15 +30,14 @@ import type {
 } from "./types";
 
 /**
- * Leaf step that reconciles the custom installation steps domain as a whole: `plan`/`apply` on an
- * upgrade, and on a fresh install recording which steps ran so the first upgrade has a baseline to
- * diff against.
+ * Leaf step that reconciles the custom installation steps domain as a whole via `plan`/`apply`.
+ * It participates only in the upgrade tree; the per-script leaves handle install and uninstall.
  */
 const reconciliationStep = defineLeafStep({
   apply: applyCustomInstallationSteps,
 
-  // Each per-script leaf already ran its own `install` earlier in this same fresh install; this
-  // just records their identity (name/script) for future upgrades to diff against.
+  // Unused in practice: this leaf only runs on upgrade (via `apply`), but `LeafStep` requires an
+  // `install`.
   install: (
     config: CommerceAppConfigOutputModel,
   ): CustomInstallationSnapshotData => {
@@ -98,12 +97,14 @@ const customInstallationStepBase = defineBranchStep({
 
 /**
  * Creates the custom installation step with dynamic children based on config. `executedSteps` is
- * the recorded run history and is only passed when building the full-uninstall tree; when empty,
- * the tree is built from the config's current steps plus the reconciliation leaf.
+ * the recorded run history, only passed when building the full-uninstall tree.
+ * `includeReconciliation` adds the reconciliation leaf, which only runs on upgrade; install and
+ * uninstall leave it out.
  */
 export function createCustomInstallationStep(
   config: CommerceAppConfigOutputModel,
   executedSteps: readonly CustomInstallationStepIdentity[] = [],
+  includeReconciliation = false,
 ) {
   const children =
     executedSteps.length > 0
@@ -125,7 +126,10 @@ export function createCustomInstallationStep(
             },
           );
         })
-      : [...createCustomScriptSteps(config), reconciliationStep];
+      : [
+          ...createCustomScriptSteps(config),
+          ...(includeReconciliation ? [reconciliationStep] : []),
+        ];
 
   return {
     ...customInstallationStepBase,

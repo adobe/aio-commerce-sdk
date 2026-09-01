@@ -311,6 +311,6 @@ export async function createLifecycleRuntime(
   return {
     ...(await createLifecyclePersistence()),
     lifecycleContext: buildLifecycleContext(params, appConfig, logger),
-    rootStep: createRootInstallationStep(appConfig),
+    rootStep: createRootInstallationStep(appConfig, { forUpgrade: true }),
   };
 }

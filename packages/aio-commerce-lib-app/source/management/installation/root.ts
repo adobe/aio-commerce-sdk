@@ -23,28 +23,36 @@ import type { CustomInstallationStepIdentity } from "#management/domains/custom-
 /**
  * Creates the default child steps built-in in the library with dynamic children based on the
  * config. `executedCustomInstallationSteps` is only meaningful for a full uninstall (see
- * {@link createRootUninstallationStep}).
+ * {@link createRootUninstallationStep}). `includeReconciliation` adds the reconciliation leaf,
+ * which only runs on upgrade.
  */
 function createDefaultChildSteps(
   config: CommerceAppConfigOutputModel,
   executedCustomInstallationSteps: readonly CustomInstallationStepIdentity[] = [],
+  includeReconciliation = false,
 ): AnyStep[] {
   return [
     eventingStep,
     webhooksStep,
     adminUiStep,
-    createCustomInstallationStep(config, executedCustomInstallationSteps),
+    createCustomInstallationStep(
+      config,
+      executedCustomInstallationSteps,
+      includeReconciliation,
+    ),
   ];
 }
 
 /**
- * Creates a root installation step with dynamic children based on the config.
+ * Creates a root installation step with dynamic children based on the config. `forUpgrade` adds the
+ * reconciliation leaf, which only runs on upgrade.
  */
 export function createRootInstallationStep(
   config: CommerceAppConfigOutputModel,
+  { forUpgrade = false }: { forUpgrade?: boolean } = {},
 ): BranchStep {
   return defineBranchStep({
-    children: createDefaultChildSteps(config),
+    children: createDefaultChildSteps(config, [], forUpgrade),
     meta: {
       install: {
         description: "App installation workflow",
