@@ -372,7 +372,7 @@ getMenuAclResourceId("approval-dashboard-app", "approval_dashboard");
 // → "Magento_CommerceBackendUix::adminuisdk_app_approval_dashboard_app_menu_approval_dashboard"
 ```
 
-Each segment is sanitized independently (trimmed, lowercased, non-`[a-z0-9_]` characters replaced with `_`), mirroring the Commerce module's id generator exactly. `getMenuAclResourceId` returns an empty string when `metadataId` is blank. Pass either id to `check()` or `require()`:
+Each segment is sanitized independently (trimmed, lowercased, non-`[a-z0-9_]` characters replaced with `_`), mirroring the Commerce module's id generator exactly. The `sanitizeSegment` helper that performs this per-segment normalization is also exported from `@adobe/aio-commerce-lib-admin-ui/api`, so you can reproduce how Commerce normalizes a single id segment. `getMenuAclResourceId` returns an empty string when `metadataId` is blank. Pass either id to `check()` or `require()`:
 
 ```typescript
 const allowed = await permissionClient.check(

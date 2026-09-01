@@ -10,6 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
+import { sanitizeSegment } from "@adobe/aio-commerce-lib-admin-ui/api";
 import { COMMERCE_MENUS } from "@adobe/aio-commerce-lib-admin-ui/menu";
 import {
   nonEmptyStringValueSchema,
@@ -20,6 +21,16 @@ import * as v from "valibot";
 import type { AnyCommerceAppConfig, CommerceAppConfigOutputModel } from "./app";
 
 // ─── Shared ───────────────────────────────────────────────────────────────────
+
+/**
+ * Whether the given items have distinct ids once Commerce sanitizes them into resource ids.
+ * Catches ids that differ only by case or by a character that sanitizes to `_`. Used by the
+ * component fields whose ids are otherwise unconstrained (grid columns, mass actions, view buttons).
+ */
+function hasUniqueSanitizedIds(items: readonly { id: string }[]): boolean {
+  const ids = items.map((item) => sanitizeSegment(item.id));
+  return new Set(ids).size === ids.length;
+}
 
 const SANDBOX_PERMISSION_VALUES = [
   "allow-downloads",
@@ -79,6 +90,10 @@ const GridColumnsSchema = v.object({
   columns: v.pipe(
     v.array(GridColumnSchema),
     v.minLength(1, "At least one grid column is required"),
+    v.check(
+      (items) => hasUniqueSanitizedIds(items),
+      "Grid column ids must be unique after Commerce id sanitization.",
+    ),
   ),
   description: nonEmptyStringValueSchema("grid columns description"),
   label: nonEmptyStringValueSchema("grid columns label"),
@@ -167,8 +182,8 @@ const OrderViewButtonSchema = v.variant("type", [
 const MassActionsSchema = v.pipe(
   v.array(MassActionSchema),
   v.check(
-    (items) => new Set(items.map((item) => item.id)).size === items.length,
-    "Mass action ids must be unique.",
+    (items) => hasUniqueSanitizedIds(items),
+    "Mass action ids must be unique after Commerce id sanitization.",
   ),
 );
 
@@ -179,8 +194,8 @@ const AdminUiOrderSchema = v.object({
     v.pipe(
       v.array(OrderViewButtonSchema),
       v.check(
-        (items) => new Set(items.map((item) => item.id)).size === items.length,
-        "Order view button ids must be unique.",
+        (items) => hasUniqueSanitizedIds(items),
+        "Order view button ids must be unique after Commerce id sanitization.",
       ),
     ),
   ),
@@ -277,6 +292,26 @@ const AclResourceEntrySchema = v.strictObject({
   label: AclResourceLabelSchema,
 });
 
+/**
+ * The Commerce ACL resource ids an `acl` config resolves to, relative to the app root: every
+ * top-level entry and group node contributes its own id, and every group child contributes the
+ * `<group>_<child>` id Commerce builds by joining segments with "_". Comparing these catches ids
+ * that look distinct but collapse to the same Commerce resource (e.g. a leaf `reports_export` vs a
+ * group `reports` with a child `export`). Ids are already canonical (see {@link AclResourceIdSchema}).
+ */
+function aclResourceIdentities(
+  entries: readonly { id: string; children?: readonly { id: string }[] }[],
+): string[] {
+  const ids: string[] = [];
+  for (const entry of entries) {
+    ids.push(entry.id);
+    for (const child of entry.children ?? []) {
+      ids.push(`${entry.id}_${child.id}`);
+    }
+  }
+  return ids;
+}
+
 const AdminUiAclSchema = v.pipe(
   v.array(AclResourceEntrySchema),
   v.minLength(1, "At least one ACL resource is required when acl is defined"),
@@ -284,6 +319,10 @@ const AdminUiAclSchema = v.pipe(
     (items) => new Set(items.map((i) => i.id)).size === items.length,
     "Top-level ACL resource ids must be unique.",
   ),
+  v.check((items) => {
+    const ids = aclResourceIdentities(items);
+    return new Set(ids).size === ids.length;
+  }, 'Custom ACL resource ids must stay unique after Commerce derivation: a top-level resource id must not equal a group\'s "<group>_<child>" combination.'),
 );
 
 // ─── Top-level schema ─────────────────────────────────────────────────────────

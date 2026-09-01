@@ -121,6 +121,50 @@ describe("AdminUiSchema unique ids", () => {
     });
     expect(result.success).toBe(true);
   });
+
+  test("rejects mass action ids that collide after Commerce id sanitization", () => {
+    // "Export" and "export" both sanitize to the same Commerce ACL resource id.
+    const result = v.safeParse(AdminUiSchema, {
+      order: { massActions: [massAction, { ...massAction, id: "Export" }] },
+    });
+    expect(result.success).toBe(false);
+  });
+
+  test("rejects order view button ids that collide after Commerce id sanitization", () => {
+    const result = v.safeParse(AdminUiSchema, {
+      order: { viewButtons: [viewButton, { ...viewButton, id: "Reorder" }] },
+    });
+    expect(result.success).toBe(false);
+  });
+
+  const gridColumnsWith = (ids: string[]) => ({
+    order: {
+      gridColumns: {
+        columns: ids.map((id) => ({
+          align: "left" as const,
+          id,
+          label: `Column ${id}`,
+          type: "string" as const,
+        })),
+        description: "Order grid columns",
+        label: "Order grid",
+        runtimeAction: "orders/fetch",
+      },
+    },
+  });
+
+  test.each([
+    { ids: ["status", "status"], label: "exact duplicates", success: false },
+    {
+      ids: ["Status", "status"],
+      label: "colliding after sanitization",
+      success: false,
+    },
+    { ids: ["status", "priority"], label: "distinct values", success: true },
+  ])("grid column ids ($label)", ({ ids, success }) => {
+    const result = v.safeParse(AdminUiSchema, gridColumnsWith(ids));
+    expect(result.success).toBe(success);
+  });
 });
 
 describe("AdminUiSchema", () => {
@@ -788,6 +832,58 @@ describe("adminUi.acl", () => {
       ],
     };
     expect(() => v.parse(AdminUiSchema, config)).toThrow();
+  });
+
+  test("rejects a top-level leaf id that collides with a group child path", () => {
+    // A leaf "reports_export" and group "reports" + child "export" both derive
+    // ..._acl_reports_export in Commerce.
+    expect(() =>
+      v.parse(AdminUiSchema, {
+        acl: [
+          { id: "reports_export", label: "Reports Export" },
+          {
+            children: [{ id: "export", label: "Export" }],
+            id: "reports",
+            label: "Reports",
+          },
+        ],
+      }),
+    ).toThrow();
+  });
+
+  test("rejects a group node id that collides with another group's child path", () => {
+    // Group node "a_b" and group "a" + child "b" both derive ..._acl_a_b.
+    expect(() =>
+      v.parse(AdminUiSchema, {
+        acl: [
+          {
+            children: [{ id: "c", label: "Cee" }],
+            id: "a_b",
+            label: "Group A B",
+          },
+          {
+            children: [{ id: "b", label: "Bee" }],
+            id: "a",
+            label: "Group A",
+          },
+        ],
+      }),
+    ).toThrow();
+  });
+
+  test("accepts a leaf whose id resembles but does not equal a group child path", () => {
+    expect(() =>
+      v.parse(AdminUiSchema, {
+        acl: [
+          { id: "reports_summary", label: "Reports Summary" },
+          {
+            children: [{ id: "export", label: "Export" }],
+            id: "reports",
+            label: "Reports",
+          },
+        ],
+      }),
+    ).not.toThrow();
   });
 
   test("rejects an id with uppercase letters", () => {

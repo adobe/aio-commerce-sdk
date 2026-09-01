@@ -23,9 +23,9 @@ export const PREFIX = "Magento_CommerceBackendUix::adminuisdk_app_";
 
 /**
  * Sanitizes a single ACL id segment: trims whitespace, lowercases, and replaces every
- * character outside [a-z0-9_] with an underscore.
- *
- * @internal Exported for use by domain ACL helpers only — not part of the public API.
+ * character outside [a-z0-9_] with an underscore. This mirrors the Commerce module's own
+ * per-segment normalization — the same step applied when building any ACL resource id from a
+ * config id.
  */
 export function sanitizeSegment(segment: string): string {
   return segment
