@@ -91,33 +91,33 @@ describe("lib/commerce/search-criteria/serialize", () => {
     // The SQL for a nullness condition ignores the value, but Commerce only
     // switches a non-static EAV attribute join to LEFT when one is present, so
     // it must be forwarded rather than dropped.
-    test.each([
-      "null",
-      "notnull",
-    ] as const)("should forward a value supplied with the %s condition", (conditionType) => {
-      const result = serialize({
-        filterGroups: [
-          [{ conditionType, field: "custom_attribute", value: 1 }],
-        ],
-      });
+    test.each(["null", "notnull"] as const)(
+      "should forward a value supplied with the %s condition",
+      (conditionType) => {
+        const result = serialize({
+          filterGroups: [
+            [{ conditionType, field: "custom_attribute", value: 1 }],
+          ],
+        });
 
-      expect(result).toBe(
-        "searchCriteria[filterGroups][0][filters][0][field]=custom_attribute&" +
-          "searchCriteria[filterGroups][0][filters][0][value]=1&" +
-          `searchCriteria[filterGroups][0][filters][0][conditionType]=${conditionType}`,
-      );
-    });
+        expect(result).toBe(
+          "searchCriteria[filterGroups][0][filters][0][field]=custom_attribute&" +
+            "searchCriteria[filterGroups][0][filters][0][value]=1&" +
+            `searchCriteria[filterGroups][0][filters][0][conditionType]=${conditionType}`,
+        );
+      },
+    );
 
-    test.each([
-      "null",
-      "notnull",
-    ] as const)("should emit no value for the %s condition when none is supplied", (conditionType) => {
-      const result = serialize({
-        filterGroups: [[{ conditionType, field: "custom_attribute" }]],
-      });
+    test.each(["null", "notnull"] as const)(
+      "should emit no value for the %s condition when none is supplied",
+      (conditionType) => {
+        const result = serialize({
+          filterGroups: [[{ conditionType, field: "custom_attribute" }]],
+        });
 
-      expect(result).not.toContain("[value]");
-    });
+        expect(result).not.toContain("[value]");
+      },
+    );
 
     // Commerce rewrites `seq`/`sneq` to a null check when the value is empty,
     // so an empty string has to survive serialization rather than be dropped.
