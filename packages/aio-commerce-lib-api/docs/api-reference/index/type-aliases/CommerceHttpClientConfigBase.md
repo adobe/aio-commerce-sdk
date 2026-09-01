@@ -8,7 +8,7 @@ type CommerceHttpClientConfigBase = {
 };
 ```
 
-Defined in: [aio-commerce-lib-api/source/lib/commerce/types.ts:23](https://github.com/adobe/aio-commerce-sdk/blob/71bf66656ef1fc6dd272a0821e8b00aab5dc197e/packages/aio-commerce-lib-api/source/lib/commerce/types.ts#L23)
+Defined in: [aio-commerce-lib-api/source/lib/commerce/types.ts:23](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-api/source/lib/commerce/types.ts#L23)
 
 Defines the base configuration required to build an Adobe Commerce HTTP client.
 
@@ -20,7 +20,7 @@ Defines the base configuration required to build an Adobe Commerce HTTP client.
 baseUrl: string;
 ```
 
-Defined in: [aio-commerce-lib-api/source/lib/commerce/types.ts:25](https://github.com/adobe/aio-commerce-sdk/blob/71bf66656ef1fc6dd272a0821e8b00aab5dc197e/packages/aio-commerce-lib-api/source/lib/commerce/types.ts#L25)
+Defined in: [aio-commerce-lib-api/source/lib/commerce/types.ts:25](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-api/source/lib/commerce/types.ts#L25)
 
 The base URL of the Commerce API.
 
@@ -32,7 +32,7 @@ The base URL of the Commerce API.
 optional storeViewCode?: string;
 ```
 
-Defined in: [aio-commerce-lib-api/source/lib/commerce/types.ts:31](https://github.com/adobe/aio-commerce-sdk/blob/71bf66656ef1fc6dd272a0821e8b00aab5dc197e/packages/aio-commerce-lib-api/source/lib/commerce/types.ts#L31)
+Defined in: [aio-commerce-lib-api/source/lib/commerce/types.ts:31](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-api/source/lib/commerce/types.ts#L31)
 
 The store view code use to make requests to the Commerce API.
 
@@ -50,7 +50,7 @@ The store view code use to make requests to the Commerce API.
 optional version?: "V1";
 ```
 
-Defined in: [aio-commerce-lib-api/source/lib/commerce/types.ts:37](https://github.com/adobe/aio-commerce-sdk/blob/71bf66656ef1fc6dd272a0821e8b00aab5dc197e/packages/aio-commerce-lib-api/source/lib/commerce/types.ts#L37)
+Defined in: [aio-commerce-lib-api/source/lib/commerce/types.ts:37](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-api/source/lib/commerce/types.ts#L37)
 
 The version of the Commerce API to use. Currently only `v1` is supported.
 
