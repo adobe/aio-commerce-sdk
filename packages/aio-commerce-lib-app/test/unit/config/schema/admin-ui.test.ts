@@ -13,12 +13,17 @@
 import * as v from "valibot";
 import { describe, expect, test } from "vitest";
 
-import { AdminUiSchema, hasAdminUi } from "#config/schema/admin-ui";
+import {
+  AdminUiSchema,
+  hasAdminUi,
+  hasBackendUiV2Components,
+} from "#config/schema/admin-ui";
 import {
   viewButtonViewBase,
   viewButtonWorkerBase,
 } from "#test/fixtures/admin-ui";
 import {
+  configWithAdminUiAclOnly,
   configWithAdminUiAllGrids,
   configWithAdminUiEmptyBlock,
   configWithAdminUiMenu,
@@ -28,18 +33,22 @@ import {
   minimalValidConfig,
 } from "#test/fixtures/config";
 
+// Configs carrying a backend-ui/2 component (menu, grid columns, or mass
+// actions) — both predicates report these as present.
+const backendUiV2ComponentCases = [
+  { config: configWithAdminUiAllGrids, label: "grid columns for all entities" },
+  { config: configWithAdminUiMenu, label: "menu only" },
+  { config: configWithViewMassActions, label: "view mass actions" },
+  { config: configWithWorkerMassActions, label: "worker mass actions" },
+];
+
 describe("hasAdminUi", () => {
-  test.each([
-    {
-      config: configWithAdminUiAllGrids,
-      label: "grid columns for all entities",
+  test.each(backendUiV2ComponentCases)(
+    "returns true when adminUi has $label",
+    ({ config }) => {
+      expect(hasAdminUi(config)).toBe(true);
     },
-    { config: configWithAdminUiMenu, label: "menu only" },
-    { config: configWithViewMassActions, label: "view mass actions" },
-    { config: configWithWorkerMassActions, label: "worker mass actions" },
-  ])("returns true when adminUi has $label", ({ config }) => {
-    expect(hasAdminUi(config)).toBe(true);
-  });
+  );
 
   test.each([
     { config: minimalValidConfig, label: "no adminUi property" },
@@ -49,6 +58,29 @@ describe("hasAdminUi", () => {
     },
   ])("returns false when config has $label", ({ config }) => {
     expect(hasAdminUi(config)).toBe(false);
+  });
+});
+
+describe("hasBackendUiV2Components", () => {
+  test.each(backendUiV2ComponentCases)(
+    "returns true when adminUi has $label",
+    ({ config }) => {
+      expect(hasBackendUiV2Components(config)).toBe(true);
+    },
+  );
+
+  test.each([
+    { config: minimalValidConfig, label: "no adminUi property" },
+    {
+      config: configWithAdminUiEmptyBlock,
+      label: "a component-less adminUi block",
+    },
+    {
+      config: configWithAdminUiAclOnly,
+      label: "only custom ACL resources",
+    },
+  ])("returns false when config has $label", ({ config }) => {
+    expect(hasBackendUiV2Components(config)).toBe(false);
   });
 });
 

@@ -28,7 +28,7 @@ export {
   validateCommerceAppConfig,
   validateCommerceAppConfigDomain,
 } from "./lib/validate";
-export { hasAdminUi } from "./schema/admin-ui";
+export { hasAdminUi, hasBackendUiV2Components } from "./schema/admin-ui";
 export {
   hasBusinessConfig,
   hasBusinessConfigSchema,

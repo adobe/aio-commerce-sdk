@@ -375,11 +375,13 @@ export type AdminUiConfig<
 };
 
 /**
- * Check whether the config declares at least one Admin UI component (menu, grid
- * columns, mass actions, view buttons, or custom ACL resources). A component-less `adminUi` block is
- * treated as absent — it registers nothing.
+ * Check whether the config declares an Admin UI component that requires the
+ * `commerce/backend-ui/2` extension point — a menu, grid columns, mass actions,
+ * or view buttons. Custom ACL resources are deliberately excluded: they reach
+ * Commerce through the `extensibility/1` app-config payload, not backend-ui/2,
+ * so an acl-only config needs no backend-ui/2 registration.
  */
-export function hasAdminUi<T extends AnyCommerceAppConfig>(
+export function hasBackendUiV2Components<T extends AnyCommerceAppConfig>(
   config: T,
 ): config is AdminUiConfig<T> {
   const { adminUi } = config;
@@ -388,8 +390,7 @@ export function hasAdminUi<T extends AnyCommerceAppConfig>(
   }
 
   return Boolean(
-    adminUi.acl?.length ||
-      adminUi.menu ||
+    adminUi.menu ||
       adminUi.order?.gridColumns ||
       adminUi.order?.massActions?.length ||
       adminUi.order?.viewButtons?.length ||
@@ -397,5 +398,18 @@ export function hasAdminUi<T extends AnyCommerceAppConfig>(
       adminUi.product?.massActions?.length ||
       adminUi.customer?.gridColumns ||
       adminUi.customer?.massActions?.length,
+  );
+}
+
+/**
+ * Check whether the config declares at least one Admin UI component (menu, grid
+ * columns, mass actions, view buttons, or custom ACL resources). A component-less `adminUi` block is
+ * treated as absent — it registers nothing.
+ */
+export function hasAdminUi<T extends AnyCommerceAppConfig>(
+  config: T,
+): config is AdminUiConfig<T> {
+  return (
+    hasBackendUiV2Components(config) || Boolean(config.adminUi?.acl?.length)
   );
 }

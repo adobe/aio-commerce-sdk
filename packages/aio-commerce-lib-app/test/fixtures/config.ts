@@ -455,6 +455,14 @@ export const configWithAdminUiMenu = {
   metadata: { ...mockMetadata, id: "test-app-admin-ui-menu" },
 } satisfies CommerceAppConfigOutputModel;
 
+/** Config fixture with only custom ACL resources (no menu, grids, mass actions, or view buttons). */
+export const configWithAdminUiAclOnly = {
+  adminUi: {
+    acl: [{ id: "approvals", label: "Approvals" }],
+  },
+  metadata: { ...mockMetadata, id: "test-app-admin-ui-acl-only" },
+} satisfies CommerceAppConfigOutputModel;
+
 /** Config fixture with only worker mass actions configured (no view mass actions, no grids). */
 export const configWithWorkerMassActions = {
   adminUi: {
