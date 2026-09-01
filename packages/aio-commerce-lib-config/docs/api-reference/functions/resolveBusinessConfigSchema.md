@@ -102,7 +102,7 @@ function resolveBusinessConfigSchema(
 ): Promise<ResolvedBusinessConfigSchema>;
 ```
 
-Defined in: [modules/schema/utils.ts:121](https://github.com/adobe/aio-commerce-sdk/blob/71bf66656ef1fc6dd272a0821e8b00aab5dc197e/packages/aio-commerce-lib-config/source/modules/schema/utils.ts#L121)
+Defined in: [modules/schema/utils.ts:121](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-config/source/modules/schema/utils.ts#L121)
 
 Resolves any dynamic parts of a business configuration schema into a static
 one suitable for validation, storage, and rendering.

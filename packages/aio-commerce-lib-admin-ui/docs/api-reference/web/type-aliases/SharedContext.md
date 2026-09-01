@@ -8,7 +8,7 @@ type SharedContext = {
 };
 ```
 
-Defined in: [aio-commerce-lib-admin-ui/source/web/react/commerce/types.ts:35](https://github.com/adobe/aio-commerce-sdk/blob/71bf66656ef1fc6dd272a0821e8b00aab5dc197e/packages/aio-commerce-lib-admin-ui/source/web/react/commerce/types.ts#L35)
+Defined in: [aio-commerce-lib-admin-ui/source/web/react/commerce/types.ts:35](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-admin-ui/source/web/react/commerce/types.ts#L35)
 
 The Commerce shared context for a mounted Admin UI iframe app.
 
@@ -24,7 +24,7 @@ which are also available in the Experience Cloud shell.
 extensionId: string;
 ```
 
-Defined in: [aio-commerce-lib-admin-ui/source/web/react/commerce/types.ts:37](https://github.com/adobe/aio-commerce-sdk/blob/71bf66656ef1fc6dd272a0821e8b00aab5dc197e/packages/aio-commerce-lib-admin-ui/source/web/react/commerce/types.ts#L37)
+Defined in: [aio-commerce-lib-admin-ui/source/web/react/commerce/types.ts:37](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-admin-ui/source/web/react/commerce/types.ts#L37)
 
 The extension ID of the app.
 
@@ -36,7 +36,7 @@ The extension ID of the app.
 host: NonNullable<GuestConnection["host"]>;
 ```
 
-Defined in: [aio-commerce-lib-admin-ui/source/web/react/commerce/types.ts:43](https://github.com/adobe/aio-commerce-sdk/blob/71bf66656ef1fc6dd272a0821e8b00aab5dc197e/packages/aio-commerce-lib-admin-ui/source/web/react/commerce/types.ts#L43)
+Defined in: [aio-commerce-lib-admin-ui/source/web/react/commerce/types.ts:43](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-admin-ui/source/web/react/commerce/types.ts#L43)
 
 The host proxy, used by `useHostConnection` to invoke host-frame actions (close/onError).
 
@@ -48,6 +48,6 @@ The host proxy, used by `useHostConnection` to invoke host-frame actions (close/
 sharedContext: NonNullable<GuestConnection["sharedContext"]>;
 ```
 
-Defined in: [aio-commerce-lib-admin-ui/source/web/react/commerce/types.ts:40](https://github.com/adobe/aio-commerce-sdk/blob/71bf66656ef1fc6dd272a0821e8b00aab5dc197e/packages/aio-commerce-lib-admin-ui/source/web/react/commerce/types.ts#L40)
+Defined in: [aio-commerce-lib-admin-ui/source/web/react/commerce/types.ts:40](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-admin-ui/source/web/react/commerce/types.ts#L40)
 
 The live `sharedContext` object provided by the host.

@@ -7,7 +7,7 @@ type StepMetaInfo = {
 };
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/workflow/step.ts:83](https://github.com/adobe/aio-commerce-sdk/blob/71bf66656ef1fc6dd272a0821e8b00aab5dc197e/packages/aio-commerce-lib-app/source/management/installation/workflow/step.ts#L83)
+Defined in: [aio-commerce-lib-app/source/management/installation/workflow/step.ts:83](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-app/source/management/installation/workflow/step.ts#L83)
 
 Metadata info for a step (used for UI display).
 
@@ -19,7 +19,7 @@ Metadata info for a step (used for UI display).
 optional description?: string;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/workflow/step.ts:85](https://github.com/adobe/aio-commerce-sdk/blob/71bf66656ef1fc6dd272a0821e8b00aab5dc197e/packages/aio-commerce-lib-app/source/management/installation/workflow/step.ts#L85)
+Defined in: [aio-commerce-lib-app/source/management/installation/workflow/step.ts:85](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-app/source/management/installation/workflow/step.ts#L85)
 
 ---
 
@@ -29,4 +29,4 @@ Defined in: [aio-commerce-lib-app/source/management/installation/workflow/step.t
 label: string;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/workflow/step.ts:84](https://github.com/adobe/aio-commerce-sdk/blob/71bf66656ef1fc6dd272a0821e8b00aab5dc197e/packages/aio-commerce-lib-app/source/management/installation/workflow/step.ts#L84)
+Defined in: [aio-commerce-lib-app/source/management/installation/workflow/step.ts:84](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-app/source/management/installation/workflow/step.ts#L84)

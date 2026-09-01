@@ -254,7 +254,7 @@ function validateCommerceAppConfigDomain<T>(config: unknown, domain: T): NonNull
 }, T>>;
 ```
 
-Defined in: [aio-commerce-lib-app/source/config/lib/validate.ts:110](https://github.com/adobe/aio-commerce-sdk/blob/71bf66656ef1fc6dd272a0821e8b00aab5dc197e/packages/aio-commerce-lib-app/source/config/lib/validate.ts#L110)
+Defined in: [aio-commerce-lib-app/source/config/lib/validate.ts:140](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-app/source/config/lib/validate.ts#L140)
 
 Validates a specific domain configuration within the commerce app config.
 
