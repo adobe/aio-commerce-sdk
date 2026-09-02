@@ -6,7 +6,7 @@ type DeleteEventMetadataForProviderParams = v.InferInput<
 >;
 ```
 
-Defined in: [io-events/api/event-metadata/schema.ts:133](https://github.com/adobe/aio-commerce-sdk/blob/71bf66656ef1fc6dd272a0821e8b00aab5dc197e/packages/aio-commerce-lib-events/source/io-events/api/event-metadata/schema.ts#L133)
+Defined in: [io-events/api/event-metadata/schema.ts:133](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-events/source/io-events/api/event-metadata/schema.ts#L133)
 
 The schema of the parameters received by the DELETE `providers/:id/eventmetadata/:code` Adobe I/O Events API endpoint.
 
