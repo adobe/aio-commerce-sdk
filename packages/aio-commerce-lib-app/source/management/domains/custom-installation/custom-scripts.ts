@@ -74,7 +74,7 @@ function assertScriptModule(module: unknown): asserts module is ScriptModule {
  * @param script - The script path to resolve the module for
  * @returns The resolved script module, or `undefined` if the script is not present in the context.
  */
-export function getScriptModule(
+function getScriptModule(
   customScripts: Record<string, unknown>,
   script: string,
 ): ScriptModule | undefined {
