@@ -16,6 +16,7 @@ export * from "../errors";
 export {
   getAclResourceId,
   getCustomAclResourceId,
+  sanitizeSegment,
 } from "./lib/acl-resource-id";
 export * from "./lib/api-client";
 export * from "./lib/permission-client";
