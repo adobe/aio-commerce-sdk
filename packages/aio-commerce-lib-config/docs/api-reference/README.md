@@ -1,4 +1,4 @@
-# `@adobe/aio-commerce-lib-config`: `v1.6.1`
+# `@adobe/aio-commerce-lib-config`: `v1.7.0`
 
 This module exports configuration management utilities for the AIO Commerce SDK.
 
@@ -27,6 +27,7 @@ This module exports configuration management utilities for the AIO Commerce SDK.
 | [InitializeOptions](type-aliases/InitializeOptions.md)                           | Options for initializing the configuration library with a static schema.                              |
 | [InitializeResult](type-aliases/InitializeResult.md)                             | Result returned after initializing the configuration library with a schema.                           |
 | [OperationOptions](type-aliases/OperationOptions.md)                             | Options for controlling operations of the configuration library.                                      |
+| [RecordedBusinessConfig](type-aliases/RecordedBusinessConfig.md)                 | Defines the shape of a recorded business configuration settings object.                               |
 | [ResolvedBusinessConfigSchema](type-aliases/ResolvedBusinessConfigSchema.md)     | Business configuration schema after dynamic resolution — only static field types.                     |
 | [ScopeNode](type-aliases/ScopeNode.md)                                           | Represents a single node in the scope tree hierarchy.                                                 |
 | [ScopeTree](type-aliases/ScopeTree.md)                                           | Represents the complete scope tree as an array of root scope nodes.                                   |
@@ -45,9 +46,10 @@ This module exports configuration management utilities for the AIO Commerce SDK.
 
 ## Variables
 
-| Variable                                                  | Description                                                      |
-| --------------------------------------------------------- | ---------------------------------------------------------------- |
-| [SchemaBusinessConfig](variables/SchemaBusinessConfig.md) | The schema used to validate the business configuration settings. |
+| Variable                                                                  | Description                                                                                                                                                                               |
+| ------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [RecordedSchemaBusinessConfig](variables/RecordedSchemaBusinessConfig.md) | The schema used to validate business configuration settings recovered from a persisted lifecycle snapshot, where `dynamicList` fields may be missing their `options`/`default` functions. |
+| [SchemaBusinessConfig](variables/SchemaBusinessConfig.md)                 | The schema used to validate the business configuration settings.                                                                                                                          |
 
 ## Functions
 
