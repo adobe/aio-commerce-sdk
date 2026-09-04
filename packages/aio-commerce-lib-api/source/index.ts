@@ -15,9 +15,16 @@
 export { ApiClient } from "./lib/api-client";
 export { resolveCommerceHttpClientParams } from "./lib/commerce/helpers";
 export { AdobeCommerceHttpClient } from "./lib/commerce/http-client";
+export { searchCriteria } from "./lib/commerce/search-criteria/builder";
+export {
+  buildSearchCriteria,
+  buildSearchCriteriaRecord,
+} from "./lib/commerce/search-criteria/serialize";
 export { resolveIoEventsHttpClientParams } from "./lib/io-events/helpers";
 export { AdobeIoEventsHttpClient } from "./lib/io-events/http-client";
 
 export type { ApiClientRecord, ApiFunction } from "./lib/api-client";
+export type { SearchCriteriaBuilder } from "./lib/commerce/search-criteria/builder";
+export type * from "./lib/commerce/search-criteria/types";
 export type * from "./lib/commerce/types";
 export type * from "./lib/io-events/types";
