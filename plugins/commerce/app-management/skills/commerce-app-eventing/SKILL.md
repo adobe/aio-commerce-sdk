@@ -173,6 +173,8 @@ export async function main(params: Record<string, unknown>) {
 }
 ```
 
+The client's base URL already includes the REST prefix and API version (`rest/<store>/V1` for PaaS, `V1` for SaaS) — pass only the resource path (`orders/${orderId}`, not `V1/orders/${orderId}` or `rest/all/V1/orders/${orderId}`).
+
 See [Accessing the Associated Commerce Instance from Runtime Actions](https://github.com/adobe/aio-commerce-sdk/blob/main/packages/aio-commerce-lib-app/docs/usage.md#accessing-the-associated-commerce-instance-from-runtime-actions) for the full pattern, including handling the unassociated state (`AssociationRecordNotFoundError`).
 
 ## Step 4 — Validate
