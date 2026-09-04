@@ -132,6 +132,8 @@ The `<package>/<action>` format in `runtimeActions` maps directly: `my-app/handl
 
 Event handlers receive a CloudEvents-shaped payload. `params.data` bundles the event payload together with metadata, so don't read fields directly off `params.data`: `params.data.value` is the event payload — the fields declared in the event's `fields` array (or the full payload if `fields` is empty); `params.data._metadata` is Commerce instance metadata; `params.data.source` is the merchant/environment ID pair configured in the Commerce eventing configuration.
 
+Not every event shares the same payload shape: some (e.g. `order.*`) wrap the payload in an object, while others are flat. Check the [Adobe Commerce events reference](https://developer.adobe.com/commerce/extensibility/events/events-reference) for the given event before deciding on a `fields` path or reading a field off `value`.
+
 ```typescript
 // src/commerce-extensibility-1/actions/handle-order-placed/index.ts
 export async function main(params: Record<string, unknown>) {
@@ -147,6 +149,31 @@ export async function main(params: Record<string, unknown>) {
   return { statusCode: 200, body: { processed: true } };
 }
 ```
+
+### Calling the Commerce REST API from a handler
+
+If the handler needs to call the Commerce REST API (e.g. to fetch additional order data), use `getCommerceClient` from `@adobe/aio-commerce-lib-app` instead of reinventing config or env-based access to the Commerce instance (e.g. a custom `.env` variable such as `AIO_COMMERCE_API_BASE_URL`, or a business config field for the base URL). The SDK already stores the Commerce base URL and deployment type from the app's association, so `getCommerceClient` resolves them for you:
+
+```typescript
+// src/commerce-extensibility-1/actions/handle-order-placed/index.ts
+import { getCommerceClient } from "@adobe/aio-commerce-lib-app";
+import { resolveImsAuthParams } from "@adobe/aio-commerce-lib-auth";
+
+export async function main(params: Record<string, unknown>) {
+  const data = params.data as Record<string, unknown>;
+  const value = data.value as Record<string, unknown>;
+  const orderId = value["order_id"];
+
+  const client = await getCommerceClient(resolveImsAuthParams(params));
+  const order = await client.get(`orders/${orderId}`).json();
+
+  // process the event using order details ...
+
+  return { statusCode: 200, body: { processed: true } };
+}
+```
+
+See [Accessing the Associated Commerce Instance from Runtime Actions](https://github.com/adobe/aio-commerce-sdk/blob/main/packages/aio-commerce-lib-app/docs/usage.md#accessing-the-associated-commerce-instance-from-runtime-actions) for the full pattern, including handling the unassociated state (`AssociationRecordNotFoundError`).
 
 ## Step 4 — Validate
 
@@ -166,6 +193,7 @@ A build failure with a validation error points directly to the offending config 
 - **Function path is relative to `src/commerce-extensibility-1/`**: Do not use `src/...` or project-root-relative paths. `actions/handle-order-placed/index.js` resolves correctly; `src/commerce-extensibility-1/actions/handle-order-placed/index.js` does not.
 - **`defineConfig` not found**: Ensure `@adobe/aio-commerce-lib-app` is installed and `defineConfig` is imported from `@adobe/aio-commerce-lib-app/config`.
 - **Build fails on missing action**: A runtime action referenced in `runtimeActions` must exist in the project. Check the action files under `src/commerce-extensibility-1/actions/` and create any missing stubs.
+- **Handler needs the Commerce base URL**: Use `getCommerceClient` (`@adobe/aio-commerce-lib-app`), not a custom `.env` variable or business config field. See [Calling the Commerce REST API from a handler](#calling-the-commerce-rest-api-from-a-handler).
 
 ## Quality Bar
 
@@ -183,3 +211,5 @@ After `aio app build` passes:
 ## References
 
 - [assets/eventing-config.ts](assets/eventing-config.ts) — Reference config showing both Commerce and external event source shapes
+- [Accessing the Associated Commerce Instance from Runtime Actions](https://github.com/adobe/aio-commerce-sdk/blob/main/packages/aio-commerce-lib-app/docs/usage.md#accessing-the-associated-commerce-instance-from-runtime-actions) — how `getCommerceClient` resolves the Commerce base URL and auth for REST calls made from a handler
+- [Adobe Commerce events reference](https://developer.adobe.com/commerce/extensibility/events/events-reference) — payload shapes per event, needed to determine the correct field path when extracting fields
