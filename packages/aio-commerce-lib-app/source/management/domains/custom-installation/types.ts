@@ -35,19 +35,13 @@ export type CustomInstallationSnapshotData = {
   executedSteps: CustomInstallationStepIdentity[];
 };
 
-/** The value a custom installation step operation carries: its identity in this plan. */
-export type CustomInstallationOperationValue = {
-  name: string;
-  script: string;
-};
-
 /**
  * The plan the custom installation steps domain proposes: `add` for first-time steps, `remove`
  * (informational) for steps no longer in the target config. Also carries what `apply` needs to
  * converge: the full baseline history and the target config to run new steps against.
  */
 export type CustomInstallationDomainPlan =
-  DomainPlan<CustomInstallationOperationValue> & {
+  DomainPlan<CustomInstallationStepIdentity> & {
     /** Every step that ever ran, from the baseline snapshot (`[]` when there is no baseline). */
     baselineExecutedSteps: CustomInstallationStepIdentity[];
 

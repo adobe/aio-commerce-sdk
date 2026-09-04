@@ -24,7 +24,6 @@ export type {
 } from "./define";
 export type {
   CustomInstallationDomainPlan,
-  CustomInstallationOperationValue,
   CustomInstallationSnapshotData,
   CustomInstallationStepIdentity,
 } from "./types";

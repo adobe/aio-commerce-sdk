@@ -22,7 +22,6 @@ import type {
 import type { ValidationExecutionContext } from "#management/common/workflow/step";
 import type {
   CustomInstallationDomainPlan,
-  CustomInstallationOperationValue,
   CustomInstallationSnapshotData,
   CustomInstallationStepIdentity,
 } from "./types";
@@ -30,7 +29,7 @@ import type {
 /** Builds an `add` operation for a step run for the first time. */
 function buildAddOperation(
   step: CustomInstallationStep,
-): ResourceOperation<CustomInstallationOperationValue> {
+): ResourceOperation<CustomInstallationStepIdentity> {
   return {
     after: { name: step.name, script: step.script },
     id: `add:${step.name}`,
@@ -45,7 +44,7 @@ function buildAddOperation(
  */
 function buildRemoveOperation(
   step: CustomInstallationStepIdentity,
-): ResourceOperation<CustomInstallationOperationValue> {
+): ResourceOperation<CustomInstallationStepIdentity> {
   return {
     before: { name: step.name, script: step.script },
     id: `remove:${step.name}`,
@@ -105,7 +104,7 @@ export function planCustomInstallationSteps(
   const baselineNames = new Set(baselineExecutedSteps.map((s) => s.name));
   const targetNames = new Set(targetSteps.map((s) => s.name));
 
-  const operations: ResourceOperation<CustomInstallationOperationValue>[] = [
+  const operations: ResourceOperation<CustomInstallationStepIdentity>[] = [
     ...targetSteps
       .filter((step) => !baselineNames.has(step.name))
       .map((step) => buildAddOperation(step)),
