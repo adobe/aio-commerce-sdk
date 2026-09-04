@@ -282,6 +282,35 @@ createExtensionApp({
 
 For an order view button, swap the hook for `useOrderViewButtonContext()` and read `data.orderId` after handling `error` — see [order-view-buttons](references/order-view-buttons.md).
 
+### Calling your own action from a menu/view page
+
+A menu or view page sometimes needs to fetch its own data — a custom menu page rendering a table, for example — instead of receiving it from Commerce. For that, it calls one of the app's own actions directly from `web-src`.
+
+Whenever an extension declares both `actions` and `web-src`, `aio app build`/`aio app dev` auto-generate `web-src/src/config.json` (`config.web.injectedConfig`) with every action's live URL — gitignored, regenerated on every build, nothing to scaffold by hand:
+
+```jsx
+// src/commerce-backend-ui-2/web-src/src/hooks/use-config.js
+import { useCallback } from "react";
+import actionUrls from "../config.json";
+
+export function useConfig() {
+  return { getActionUrl: useCallback((action) => actionUrls[action], []) };
+}
+
+// Usage — combine with useIms() for the auth headers:
+import { useIms } from "@adobe/aio-commerce-lib-admin-ui/web";
+
+const { data, error } = useIms();
+if (error) throw error;
+
+const response = await fetch(getActionUrl("my-app/order-grid"), {
+  headers: {
+    authorization: `Bearer ${data.imsToken}`,
+    "x-gw-ims-org-id": data.imsOrgId, // required for require-adobe-auth: true actions, or the request fails
+  },
+});
+```
+
 ## Step 5 — Validate
 
 Build the project to confirm the updated config is valid:
