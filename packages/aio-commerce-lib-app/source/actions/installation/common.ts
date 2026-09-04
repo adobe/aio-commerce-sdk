@@ -34,8 +34,13 @@ import type { LifecycleRequestContext } from "#management/common/schema";
 import type { StepFailedEvent } from "#management/common/workflow/hooks";
 import type {
   InProgressWorkflowState,
+  WorkflowData,
   WorkflowRunState,
 } from "#management/common/workflow/types";
+import type {
+  CustomInstallationSnapshotData,
+  CustomInstallationStepIdentity,
+} from "#management/domains/custom-installation/index";
 import type { LifecycleContext } from "#management/index";
 
 /** Action name for async invocation. */
@@ -94,6 +99,9 @@ export type WorkflowRouteParams = RuntimeActionArgs & {
 /** Params for the installation/uninstallation execution routes. */
 export type ExecutionRouteParams = WorkflowRouteParams & {
   initialState: InProgressWorkflowState;
+
+  /** Same as {@link getExecutedCustomInstallationSteps}'s return value, passed through from `startUninstallation`. */
+  executedCustomInstallationSteps?: CustomInstallationStepIdentity[];
 };
 
 /** Params for the upgrade execution route. */
@@ -254,6 +262,29 @@ export async function getInstallationSnapshot(): Promise<AppStateSnapshot | null
   };
 }
 
+/**
+ * Reads the persisted custom installation step history from a lifecycle snapshot's data. Returns
+ * `[]` when there's no snapshot or none was recorded (e.g. an install from before this feature).
+ */
+export function getExecutedCustomInstallationSteps(
+  data: WorkflowData | null | undefined,
+): CustomInstallationStepIdentity[] {
+  const snapshot = (
+    data as
+      | {
+          installation?: {
+            customInstallationSteps?: {
+              reconciliation?: CustomInstallationSnapshotData;
+            };
+          };
+        }
+      | null
+      | undefined
+  )?.installation?.customInstallationSteps?.reconciliation;
+
+  return snapshot?.executedSteps ?? [];
+}
+
 /** Creates the shared storage read/write dependencies used by lifecycle orchestration. */
 export async function createLifecyclePersistence() {
   const [stateStore, snapshotStore] = await Promise.all([
@@ -280,6 +311,6 @@ export async function createLifecycleRuntime(
   return {
     ...(await createLifecyclePersistence()),
     lifecycleContext: buildLifecycleContext(params, appConfig, logger),
-    rootStep: createRootInstallationStep(appConfig),
+    rootStep: createRootInstallationStep(appConfig, { forUpgrade: true }),
   };
 }
