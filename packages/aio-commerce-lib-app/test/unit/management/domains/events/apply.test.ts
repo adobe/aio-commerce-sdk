@@ -14,6 +14,10 @@ import { HTTPError } from "ky";
 import { afterEach, describe, expect, test, vi } from "vitest";
 
 import {
+  UPGRADE_RECOVERY_FAILED,
+  WorkflowStepError,
+} from "#management/common/workflow/recovery";
+import {
   applyCommerceEvents,
   commerceEventsStep,
 } from "#management/domains/events/commerce";
@@ -42,6 +46,7 @@ import {
   createMockExternalEventsConfig as externalConfig,
   createMockIoEventsListClient as ioEventsClient,
 } from "#test/fixtures/eventing";
+import { makeHttpError } from "#test/fixtures/http-error";
 
 import type {
   CommerceEventsConfig,
@@ -883,8 +888,12 @@ describe("applyCommerceEvents", () => {
       key: "k1",
       label: "P1",
     };
+    const deleteEventSubscription = vi.fn().mockResolvedValue(undefined);
+    const createEventSubscription = vi.fn().mockResolvedValue(undefined);
     const context = persistingProviderContext(provider, {
       commerceEventsClient: {
+        createEventSubscription,
+        deleteEventSubscription,
         updateEventSubscription: () =>
           Promise.reject(new Error("update failed")),
       },
@@ -912,7 +921,305 @@ describe("applyCommerceEvents", () => {
 
     await expect(
       applyCommerceEvents(plan, context as ApplyContext<EventsStepContext>),
-    ).rejects.toThrow();
+    ).rejects.toThrow("update failed");
+
+    // The in-place update never applied, so the baseline subscription is untouched — recovery
+    // must not delete-then-recreate a subscription it never actually changed.
+    expect(deleteEventSubscription).not.toHaveBeenCalled();
+    expect(createEventSubscription).not.toHaveBeenCalled();
+  });
+
+  test("restores a subscription's baseline version when Commerce rejects its recreate", async () => {
+    vi.spyOn(commerceEventsStep, "install").mockResolvedValue([]);
+    const provider: EventProvider = {
+      description: "P1",
+      key: "k1",
+      label: "P1",
+    };
+    // Reject the target recreate (one field) but let the baseline restore (two fields) succeed.
+    const createEventSubscription = vi.fn((sub: { fields?: unknown[] }) =>
+      sub.fields?.length === 1
+        ? Promise.reject(new Error("Commerce rejected the subscription"))
+        : Promise.resolve(null),
+    );
+    const context = persistingProviderContext(provider, {
+      commerceEventsClient: { createEventSubscription },
+    });
+
+    const plan = await planCommerce(
+      commerceConfig([
+        {
+          events: [
+            {
+              ...event("a", ["pkg/a"]),
+              fields: [{ name: "field_a" }, { name: "field_b" }],
+            },
+          ],
+          provider,
+        },
+      ]),
+      commerceConfig([
+        {
+          events: [{ ...event("a", ["pkg/a"]), fields: [{ name: "field_a" }] }],
+          provider,
+        },
+      ]),
+    );
+
+    await expect(
+      applyCommerceEvents(plan, context as ApplyContext<EventsStepContext>),
+    ).rejects.toThrow("Failed to update Commerce event subscription");
+
+    const name = getNamespacedEvent(metadata, "a");
+    // The baseline version (both fields) was re-created during recovery.
+    expect(createEventSubscription).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        fields: [{ name: "field_a" }, { name: "field_b" }],
+        name,
+      }),
+    );
+  });
+
+  test("reports both errors and flags baseline drift when the recovery re-subscribe also fails", async () => {
+    vi.spyOn(commerceEventsStep, "install").mockResolvedValue([]);
+    const provider: EventProvider = {
+      description: "P1",
+      key: "k1",
+      label: "P1",
+    };
+    const context = persistingProviderContext(provider, {
+      commerceEventsClient: {
+        createEventSubscription: () =>
+          Promise.reject(new Error("create failed")),
+      },
+    });
+
+    const plan = await planCommerce(
+      commerceConfig([
+        {
+          events: [
+            {
+              ...event("a", ["pkg/a"]),
+              fields: [{ name: "field_a" }, { name: "field_b" }],
+            },
+          ],
+          provider,
+        },
+      ]),
+      commerceConfig([
+        {
+          events: [{ ...event("a", ["pkg/a"]), fields: [{ name: "field_a" }] }],
+          provider,
+        },
+      ]),
+    );
+
+    const error = await applyCommerceEvents(
+      plan,
+      context as ApplyContext<EventsStepContext>,
+    ).catch((thrown: unknown) => thrown);
+
+    expect(error).toBeInstanceOf(WorkflowStepError);
+    const workflowError = error as WorkflowStepError<{
+      targetMayDivergeFromBaseline: boolean;
+    }>;
+    expect(workflowError.key).toBe(UPGRADE_RECOVERY_FAILED);
+    expect(workflowError.payload?.targetMayDivergeFromBaseline).toBe(true);
+  });
+
+  test("rolls back this upgrade's added subscriptions when onboarding a new event is rejected", async () => {
+    // The create-or-get onboarding pass subscribes the added events; reject it as Commerce would
+    // for an unsupported event, after its accepted siblings were already created.
+    const install = vi
+      .spyOn(commerceEventsStep, "install")
+      .mockRejectedValue(
+        new Error(
+          'Event "observer.invalid" is not in the list of supported events',
+        ),
+      );
+    const deleteEventSubscription = vi.fn().mockResolvedValue(undefined);
+    const provider: EventProvider = {
+      description: "P1",
+      key: "k1",
+      label: "P1",
+    };
+    const context = persistingProviderContext(provider, {
+      commerceEventsClient: { deleteEventSubscription },
+    });
+
+    // Baseline has "a"; this upgrade adds "b" and "c". Both adds must roll back, "a" must not.
+    const plan = await planCommerce(
+      commerceConfig([{ events: [event("a", ["pkg/a"])], provider }]),
+      commerceConfig([
+        {
+          events: [
+            event("a", ["pkg/a"]),
+            event("b", ["pkg/a"]),
+            event("c", ["pkg/a"]),
+          ],
+          provider,
+        },
+      ]),
+    );
+
+    await expect(
+      applyCommerceEvents(plan, context as ApplyContext<EventsStepContext>),
+    ).rejects.toThrow("is not in the list of supported events");
+
+    expect(install).toHaveBeenCalledTimes(1);
+    const deletedNames = deleteEventSubscription.mock.calls.map(
+      (call) => (call[0] as { name: string }).name,
+    );
+    expect(deletedNames).toEqual(
+      expect.arrayContaining([
+        getNamespacedEvent(metadata, "b"),
+        getNamespacedEvent(metadata, "c"),
+      ]),
+    );
+    expect(deletedNames).not.toContain(getNamespacedEvent(metadata, "a"));
+  });
+
+  test("tolerates Commerce's 400 for unsubscribing the rejected event's own never-created subscription", async () => {
+    // The compensation set is built from the plan's added events before any create runs, so it
+    // includes the rejected event itself. Commerce rejects unsubscribing an event it never
+    // registered with 400 (not 404) — reproduces the exact response seen in manual E2E testing.
+    const rejectedName = getNamespacedEvent(metadata, "b");
+    vi.spyOn(commerceEventsStep, "install").mockRejectedValue(
+      new Error('Event "observer.b" is not in the list of supported events'),
+    );
+    const deleteEventSubscription = vi.fn((params: { name: string }) =>
+      params.name === rejectedName
+        ? Promise.reject(
+            makeHttpError(
+              400,
+              "Bad Request",
+              JSON.stringify({
+                message: `The "${rejectedName}" event is not registered. You cannot unsubscribe from it.`,
+              }),
+            ),
+          )
+        : Promise.resolve(undefined),
+    );
+    const provider: EventProvider = {
+      description: "P1",
+      key: "k1",
+      label: "P1",
+    };
+    const context = persistingProviderContext(provider, {
+      commerceEventsClient: { deleteEventSubscription },
+    });
+
+    // Baseline has "a"; this upgrade adds "b" (rejected) and "c" (accepted).
+    const plan = await planCommerce(
+      commerceConfig([{ events: [event("a", ["pkg/a"])], provider }]),
+      commerceConfig([
+        {
+          events: [
+            event("a", ["pkg/a"]),
+            event("b", ["pkg/a"]),
+            event("c", ["pkg/a"]),
+          ],
+          provider,
+        },
+      ]),
+    );
+
+    const error = await applyCommerceEvents(
+      plan,
+      context as ApplyContext<EventsStepContext>,
+    ).catch((thrown: unknown) => thrown);
+
+    // The 400 for "b" (never created) is tolerated, "c" (created) rolls back cleanly, so the
+    // original onboarding rejection surfaces rather than an UPGRADE_RECOVERY_FAILED.
+    expect((error as Error).message).toContain(
+      "is not in the list of supported events",
+    );
+    expect(deleteEventSubscription).toHaveBeenCalledWith(
+      expect.objectContaining({ name: getNamespacedEvent(metadata, "c") }),
+    );
+  });
+
+  test("tolerates an already-absent subscription during rollback and surfaces the original error", async () => {
+    vi.spyOn(commerceEventsStep, "install").mockRejectedValue(
+      new Error("onboarding rejected"),
+    );
+    // The rejected event was never created, so its rollback delete comes back not-found.
+    const deleteEventSubscription = vi.fn().mockRejectedValue(httpError(404));
+    const provider: EventProvider = {
+      description: "P1",
+      key: "k1",
+      label: "P1",
+    };
+    const context = persistingProviderContext(provider, {
+      commerceEventsClient: { deleteEventSubscription },
+    });
+
+    const plan = await planCommerce(
+      commerceConfig([{ events: [event("a", ["pkg/a"])], provider }]),
+      commerceConfig([
+        { events: [event("a", ["pkg/a"]), event("b", ["pkg/a"])], provider },
+      ]),
+    );
+
+    const error = await applyCommerceEvents(
+      plan,
+      context as ApplyContext<EventsStepContext>,
+    ).catch((thrown: unknown) => thrown);
+
+    // A not-found rollback delete is treated as already-gone, so recovery succeeds and the
+    // original onboarding error surfaces rather than an UPGRADE_RECOVERY_FAILED.
+    expect((error as Error).message).toContain("onboarding rejected");
+  });
+
+  test("rolls back a newly added provider's subscriptions when its onboarding is rejected", async () => {
+    const install = vi
+      .spyOn(commerceEventsStep, "install")
+      .mockRejectedValue(new Error("new provider onboarding rejected"));
+    const deleteEventSubscription = vi.fn().mockResolvedValue(undefined);
+    const existingProvider: EventProvider = {
+      description: "P1",
+      key: "k1",
+      label: "P1",
+    };
+    const addedProvider: EventProvider = {
+      description: "P2",
+      key: "k2",
+      label: "P2",
+    };
+    const context = persistingProviderContext(existingProvider, {
+      commerceEventsClient: { deleteEventSubscription },
+    });
+
+    // Baseline has provider P1 (event "a"); the upgrade adds a wholly new provider P2 with "b"/"c".
+    const plan = await planCommerce(
+      commerceConfig([
+        { events: [event("a", ["pkg/a"])], provider: existingProvider },
+      ]),
+      commerceConfig([
+        { events: [event("a", ["pkg/a"])], provider: existingProvider },
+        {
+          events: [event("b", ["pkg/b"]), event("c", ["pkg/b"])],
+          provider: addedProvider,
+        },
+      ]),
+    );
+
+    await expect(
+      applyCommerceEvents(plan, context as ApplyContext<EventsStepContext>),
+    ).rejects.toThrow("new provider onboarding rejected");
+
+    expect(install).toHaveBeenCalledTimes(1);
+    const deletedNames = deleteEventSubscription.mock.calls.map(
+      (call) => (call[0] as { name: string }).name,
+    );
+    // Both of the new provider's subscriptions roll back; the existing provider's event does not.
+    expect(deletedNames).toEqual(
+      expect.arrayContaining([
+        getNamespacedEvent(metadata, "b"),
+        getNamespacedEvent(metadata, "c"),
+      ]),
+    );
+    expect(deletedNames).not.toContain(getNamespacedEvent(metadata, "a"));
   });
 });
 

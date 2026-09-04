@@ -11,11 +11,13 @@
  */
 
 import { unwrapHttpError } from "@adobe/aio-commerce-lib-api/utils";
+import { HTTPError } from "ky";
 
 import {
   isHttpNotFoundError,
   throwHttpError,
 } from "#management/common/utils/http-error";
+import { RecoveryScope } from "#management/common/workflow/recovery";
 
 import {
   diffByKey,
@@ -53,6 +55,7 @@ import type {
 import type {
   ExistingIoEventsData,
   IoEventProviderWithMetadata,
+  SubscriptionChangeKind,
 } from "./utils";
 
 /** The synthetic config shape apply rebuilds from provider snapshots to reuse install/uninstall. */
@@ -101,35 +104,120 @@ export async function applyEventingLeaf(
     );
   }
 
-  // 2. Converge every target provider. `install` is create-or-get, so it handles added providers,
-  //    added metadata, and registrations for newly declared runtime actions.
-  if (plan.targetProviders.length > 0) {
-    await options.install(
-      // `targetMetadata` is non-null whenever there are target providers to onboard.
-      buildLeafConfig(
-        plan.targetProviders,
-        plan.targetMetadata as ApplicationMetadata,
-        options,
-      ),
-      eventsContext,
-    );
+  // Onboarding subscribes added events non-atomically, so roll back this upgrade's added
+  // subscriptions on failure — otherwise a rejected add leaves its accepted siblings behind.
+  const recovery = new RecoveryScope(eventsContext.logger);
+  if (options.isCommerce && plan.baselineMetadata) {
+    registerAddedSubscriptionCompensations(plan, eventsContext, recovery);
   }
 
-  // 3. Reconcile sub-resources of providers present on both sides: registration event-set changes
-  //    (PUT) and per-event metadata/subscription/registration removals — none of which `install` does.
-  if (plan.baselineMetadata) {
-    const existingData = await getIoEventsExistingData(eventsContext);
-    await reconcilePersistingProviders(
-      plan,
-      existingData,
-      eventsContext,
-      options,
-    );
+  try {
+    // 2. Converge every target provider. `install` is create-or-get, so it handles added providers,
+    //    added metadata, and registrations for newly declared runtime actions.
+    if (plan.targetProviders.length > 0) {
+      await options.install(
+        // `targetMetadata` is non-null whenever there are target providers to onboard.
+        buildLeafConfig(
+          plan.targetProviders,
+          plan.targetMetadata as ApplicationMetadata,
+          options,
+        ),
+        eventsContext,
+      );
+    }
+
+    // 3. Reconcile sub-resources of providers present on both sides: registration event-set changes
+    //    (PUT) and per-event metadata/subscription/registration removals — none of which `install` does.
+    if (plan.baselineMetadata) {
+      const existingData = await getIoEventsExistingData(eventsContext);
+      await reconcilePersistingProviders(
+        plan,
+        existingData,
+        eventsContext,
+        options,
+      );
+    }
+  } catch (error) {
+    // Deletes this upgrade's added subscriptions before surfacing the error. Persisting-provider
+    // reconciliation (registrations, dropped/changed subscriptions) has its own, narrower recovery.
+    return recovery.recover(error);
   }
 
   return {
     snapshotData: { providers: plan.targetProviders },
   };
+}
+
+/**
+ * Registers rollback for the Commerce subscriptions this upgrade adds: one compensation per event
+ * absent from the provider's baseline, so pre-existing subscriptions are never touched.
+ *
+ * Scoped to subscriptions only — a wholly new provider's empty shell is left in place on rollback
+ * rather than torn down, which is harmless drift a later converge reuses.
+ */
+function registerAddedSubscriptionCompensations(
+  plan: EventingDomainPlan,
+  context: EventsExecutionContext,
+  recovery: RecoveryScope,
+): void {
+  const baselineByKey = new Map(
+    plan.baselineProviders.map((provider) => [provider.key, provider]),
+  );
+  const targetMetadata = plan.targetMetadata as ApplicationMetadata;
+  const baselineMetadata = plan.baselineMetadata as ApplicationMetadata;
+
+  for (const target of plan.targetProviders) {
+    const baseline = baselineByKey.get(target.key);
+    const { added } = diffByKey(
+      target.events,
+      baseline?.events ?? [],
+      (event) => getNamespacedEvent(targetMetadata, event.name),
+      (event) => getNamespacedEvent(baselineMetadata, event.name),
+    );
+
+    for (const event of added) {
+      const name = getNamespacedEvent(targetMetadata, event.name);
+      recovery.onFailure(() => deleteAddedSubscription(name, context));
+    }
+  }
+}
+
+/** Matches Commerce's 400 response to unsubscribing an event it never registered. */
+const NOT_REGISTERED_PATTERN = /is not registered/i;
+
+/**
+ * Whether the error means there was nothing to roll back — the target was already gone (404), or,
+ * for the rejected event itself, never existed in the first place (Commerce's 400 for unsubscribing
+ * an unregistered event).
+ */
+async function isNothingToRollBack(error: unknown): Promise<boolean> {
+  if (isHttpNotFoundError(error)) {
+    return true;
+  }
+  if (!(error instanceof HTTPError) || error.response.status !== 400) {
+    return false;
+  }
+
+  const message = await unwrapHttpError(error);
+  return NOT_REGISTERED_PATTERN.test(message);
+}
+
+/** Deletes a Commerce subscription added during a failed upgrade; treats one that's already gone as done. */
+async function deleteAddedSubscription(
+  name: string,
+  context: EventsExecutionContext,
+): Promise<void> {
+  const { commerceEventsClient, logger } = context;
+
+  try {
+    await commerceEventsClient.deleteEventSubscription({ name });
+    logger.info(`Rolled back added Commerce event subscription "${name}".`);
+  } catch (error) {
+    if (await isNothingToRollBack(error)) {
+      return;
+    }
+    throw error;
+  }
 }
 
 /** Builds a synthetic leaf config from provider snapshots for reuse of install/uninstall. */
@@ -565,7 +653,7 @@ async function reconcileChangedSubscriptions(
   baselineMetadata: ApplicationMetadata,
   context: EventsExecutionContext,
 ): Promise<void> {
-  const { commerceEventsClient, logger } = context;
+  const { logger } = context;
   const baselineByName = new Map(
     baselineEvents.map((event) => [
       getNamespacedEvent(baselineMetadata, event.name),
@@ -573,56 +661,132 @@ async function reconcileChangedSubscriptions(
     ]),
   );
 
-  for (const event of targetEvents as CommerceEvent[]) {
-    const name = getNamespacedEvent(targetMetadata, event.name);
-    const baselineEvent = baselineByName.get(name);
-    if (!baselineEvent) {
-      // Added event — created by the idempotent install pass.
-      continue;
-    }
+  // Restore this provider's changed subscriptions to their baseline if any change fails: a
+  // `recreate` deletes before it creates, so a rejected create would otherwise lose the old
+  // subscription. Recovery is scoped to the subscription entity — the surrounding metadata and
+  // registration reconciliation keep their existing best-effort semantics.
+  const recovery = new RecoveryScope(logger);
 
-    const changeMode = getSubscriptionChangeKind(baselineEvent, event);
-    if (changeMode === "none") {
-      continue;
-    }
-
-    const subscription = {
-      fields: event.fields,
-      hipaa_audit_required: event.hipaa_audit_required,
-      name,
-      parent: event.name,
-      priority: event.priority,
-      provider_id: providerId,
-      rules: event.rules,
-    };
-
-    try {
-      if (changeMode === "in-place") {
-        // biome-ignore lint/performance/noAwaitInLoops: subscriptions are updated sequentially to avoid a Commerce rate-limit burst
-        await commerceEventsClient.updateEventSubscription(subscription);
-        logger.info(`Updated Commerce event subscription "${name}" in place.`);
-      } else {
-        // The merge-update endpoint cannot remove or re-key fields/rules, so re-subscribe. The
-        // Commerce unsubscribe/subscribe cascade churns the event's I/O metadata; the registration
-        // re-links by event code and is left untouched.
-        await commerceEventsClient.deleteEventSubscription({ name });
-        await commerceEventsClient.createEventSubscription({
-          ...subscription,
-          destination: event.destination,
-          force: event.force,
-        });
-        logger.info(`Recreated Commerce event subscription "${name}".`);
+  try {
+    for (const event of targetEvents as CommerceEvent[]) {
+      const name = getNamespacedEvent(targetMetadata, event.name);
+      const baselineEvent = baselineByName.get(name);
+      if (!baselineEvent) {
+        // Added event — created by the idempotent install pass.
+        continue;
       }
-    } catch (error) {
-      const message = await unwrapHttpError(error);
-      // Unlike the best-effort removals, a failure here fails the upgrade step: a silently stale
-      // subscription would diverge from the applied config.
-      throw new Error(
-        `Failed to update Commerce event subscription "${name}": ${message}`,
-        { cause: error },
+
+      const changeMode = getSubscriptionChangeKind(baselineEvent, event);
+      if (changeMode === "none") {
+        continue;
+      }
+
+      const registerRestore = () =>
+        recovery.onFailure(() =>
+          restoreBaselineSubscription(baselineEvent, name, providerId, context),
+        );
+
+      // A recreate deletes before it creates, so register its restore up front — even a failed
+      // create must roll back. An in-place update is non-destructive, so register its restore only
+      // after it applies; a failed update leaves the baseline subscription intact and recovery must
+      // not delete it.
+      if (changeMode === "recreate") {
+        registerRestore();
+      }
+
+      // biome-ignore lint/performance/noAwaitInLoops: subscriptions are reconciled sequentially to avoid a Commerce rate-limit burst
+      await applySubscriptionChange(
+        changeMode,
+        event,
+        name,
+        providerId,
+        context,
       );
+
+      if (changeMode === "in-place") {
+        registerRestore();
+      }
     }
+  } catch (error) {
+    // Roll this provider's subscriptions back to baseline before surfacing the error.
+    return recovery.recover(error);
   }
+}
+
+/** Applies one subscription's change to Commerce; a `recreate` re-subscribes (delete then create). */
+async function applySubscriptionChange(
+  changeMode: Exclude<SubscriptionChangeKind, "none">,
+  event: CommerceEvent,
+  name: string,
+  providerId: string,
+  context: EventsExecutionContext,
+): Promise<void> {
+  const { commerceEventsClient, logger } = context;
+  const subscription = {
+    fields: event.fields,
+    hipaa_audit_required: event.hipaa_audit_required,
+    name,
+    parent: event.name,
+    priority: event.priority,
+    provider_id: providerId,
+    rules: event.rules,
+  };
+
+  try {
+    if (changeMode === "in-place") {
+      await commerceEventsClient.updateEventSubscription(subscription);
+      logger.info(`Updated Commerce event subscription "${name}" in place.`);
+    } else {
+      // The merge-update endpoint cannot remove or re-key fields/rules, so re-subscribe. The
+      // Commerce unsubscribe/subscribe cascade churns the event's I/O metadata; the registration
+      // re-links by event code and is left untouched.
+      await commerceEventsClient.deleteEventSubscription({ name });
+      await commerceEventsClient.createEventSubscription({
+        ...subscription,
+        destination: event.destination,
+        force: event.force,
+      });
+      logger.info(`Recreated Commerce event subscription "${name}".`);
+    }
+  } catch (error) {
+    const message = await unwrapHttpError(error);
+    // Unlike the best-effort removals, a failure here fails the upgrade step: a silently stale
+    // subscription would diverge from the applied config.
+    throw new Error(
+      `Failed to update Commerce event subscription "${name}": ${message}`,
+      { cause: error },
+    );
+  }
+}
+
+/** Re-subscribes a subscription's baseline version, deleting any current one first. */
+async function restoreBaselineSubscription(
+  baselineEvent: CommerceEvent,
+  name: string,
+  providerId: string,
+  context: EventsExecutionContext,
+): Promise<void> {
+  const { commerceEventsClient, logger } = context;
+
+  try {
+    await commerceEventsClient.deleteEventSubscription({ name });
+  } catch (error) {
+    logger.debug(
+      `Subscription "${name}" already absent during recovery: ${await unwrapHttpError(error)}`,
+    );
+  }
+
+  await commerceEventsClient.createEventSubscription({
+    destination: baselineEvent.destination,
+    fields: baselineEvent.fields,
+    force: baselineEvent.force,
+    hipaa_audit_required: baselineEvent.hipaa_audit_required,
+    name,
+    parent: baselineEvent.name,
+    priority: baselineEvent.priority,
+    provider_id: providerId,
+    rules: baselineEvent.rules,
+  });
 }
 
 /** Finds a deployed registration by its current or legacy name. */

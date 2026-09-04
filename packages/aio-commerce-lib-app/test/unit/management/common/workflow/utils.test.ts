@@ -12,6 +12,7 @@
 
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
+import { WorkflowStepError } from "#management/common/workflow/recovery";
 import {
   createFailedState,
   createSucceededState,
@@ -143,6 +144,21 @@ describe("createWorkflowError", () => {
       key: "STEP_EXECUTION_FAILED",
       message: "HTTP 400 Bad Request — API error detail",
       path: ["step"],
+    });
+  });
+
+  test("should lift the key and payload from a WorkflowStepError", async () => {
+    const err = new WorkflowStepError("recovery failed", {
+      key: "UPGRADE_RECOVERY_FAILED",
+      payload: { targetMayDivergeFromBaseline: true },
+    });
+
+    const result = await createWorkflowError(err, ["step"], "IGNORED_KEY");
+    expect(result).toEqual({
+      key: "UPGRADE_RECOVERY_FAILED",
+      message: "recovery failed",
+      path: ["step"],
+      payload: { targetMayDivergeFromBaseline: true },
     });
   });
 });
