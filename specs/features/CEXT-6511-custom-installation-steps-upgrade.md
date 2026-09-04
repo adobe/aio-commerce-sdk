@@ -143,11 +143,11 @@ of the SDK's existing upgrade orchestration. The prototype didn't implement the 
 `uninstall` timing described above; that refinement came out of this discussion, so it's worth
 flagging as a difference from what was actually tested.
 
-To detect edits to a step that already ran (rather than only detecting it by name), the SDK will
-hash the `install`/`uninstall` bodies at run time and persist the hash alongside the step. If a
-step's name is seen again with a different hash, its `install` still does not re-run (append-only),
-but the SDK warns that the script changed and won't be re-executed, so the developer knows to add a
-new step instead of editing the existing one.
+To detect edits to a step that already ran (rather than only detecting it by name), the SDK
+persists the `script` path alongside the step's `name`. If a step's name is seen again with a
+different `script` path, its `install` still does not re-run (append-only), but the SDK warns that
+the script changed and won't be re-executed, so the developer knows to add a new step instead of
+editing the existing one.
 
 ## Drawbacks
 
