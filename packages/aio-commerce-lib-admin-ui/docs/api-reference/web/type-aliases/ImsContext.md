@@ -7,7 +7,7 @@ type ImsContext = {
 };
 ```
 
-Defined in: [aio-commerce-lib-admin-ui/source/web/react/auth/types.ts:14](https://github.com/adobe/aio-commerce-sdk/blob/71bf66656ef1fc6dd272a0821e8b00aab5dc197e/packages/aio-commerce-lib-admin-ui/source/web/react/auth/types.ts#L14)
+Defined in: [aio-commerce-lib-admin-ui/source/web/react/auth/types.ts:14](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-admin-ui/source/web/react/auth/types.ts#L14)
 
 The IMS credentials provided by the host (Commerce Admin or Experience Cloud shell).
 
@@ -19,7 +19,7 @@ The IMS credentials provided by the host (Commerce Admin or Experience Cloud she
 imsOrgId: string;
 ```
 
-Defined in: [aio-commerce-lib-admin-ui/source/web/react/auth/types.ts:16](https://github.com/adobe/aio-commerce-sdk/blob/71bf66656ef1fc6dd272a0821e8b00aab5dc197e/packages/aio-commerce-lib-admin-ui/source/web/react/auth/types.ts#L16)
+Defined in: [aio-commerce-lib-admin-ui/source/web/react/auth/types.ts:16](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-admin-ui/source/web/react/auth/types.ts#L16)
 
 ---
 
@@ -29,4 +29,4 @@ Defined in: [aio-commerce-lib-admin-ui/source/web/react/auth/types.ts:16](https:
 imsToken: string;
 ```
 
-Defined in: [aio-commerce-lib-admin-ui/source/web/react/auth/types.ts:15](https://github.com/adobe/aio-commerce-sdk/blob/71bf66656ef1fc6dd272a0821e8b00aab5dc197e/packages/aio-commerce-lib-admin-ui/source/web/react/auth/types.ts#L15)
+Defined in: [aio-commerce-lib-admin-ui/source/web/react/auth/types.ts:15](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-admin-ui/source/web/react/auth/types.ts#L15)

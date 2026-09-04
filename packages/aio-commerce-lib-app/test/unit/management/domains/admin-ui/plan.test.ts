@@ -254,6 +254,28 @@ describe("planAdminUi", () => {
     expect(plan.operations[0]?.kind).toBe("add");
   });
 
+  test("registers with one add per top-level acl entry when the baseline had no Admin UI", async () => {
+    const aclConfig = {
+      adminUi: {
+        acl: [
+          { id: "a", label: "A" },
+          { children: [{ id: "c", label: "C" }], id: "b", label: "B" },
+        ],
+      },
+    } as AdminUiConfig;
+
+    const { plan } = await planned(null, aclConfig);
+
+    expect(plan.extensionAction).toBe("register");
+    expect(plan.operations).toHaveLength(2);
+    expect(plan.operations.every((op) => op.kind === "add")).toBe(true);
+    expect(
+      plan.operations
+        .filter((op) => op.kind === "add")
+        .map((op) => op.after.component.kind),
+    ).toEqual(["acl", "acl"]);
+  });
+
   test("blocks (does not throw) when work is planned but __OW_NAMESPACE is unavailable", async () => {
     vi.unstubAllEnvs();
     const context = createMockAdminUiContext({});

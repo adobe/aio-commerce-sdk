@@ -36,6 +36,7 @@ import { run as generateSchema } from "#commands/generate/schema/main";
 import { prettierFormat, runInstall } from "#commands/utils";
 import {
   getConfigDomains,
+  hasBackendUiV2Components,
   isTypeScriptConfig,
   parseCommerceAppConfig,
   readCommerceAppConfig,
@@ -227,10 +228,12 @@ export async function writePostinstallHook(
 /**
  * Ensures app.config.yaml references the enabled domain extensions.
  * @param domains - Domains enabled in the app configuration.
+ * @param config - The validated app configuration.
  * @param projectRoot - Resolved project root containing app.config.yaml.
  */
 export async function ensureAppConfig(
   domains: Set<CommerceAppConfigDomain>,
+  config: CommerceAppConfigOutputModel,
   projectRoot: string,
 ) {
   if (domains.has("businessConfig.schema")) {
@@ -241,7 +244,7 @@ export async function ensureAppConfig(
     );
   }
 
-  if (domains.has("adminUi")) {
+  if (hasBackendUiV2Components(config)) {
     await addExtensionPointToAppConfig(
       BACKEND_UI_V2_EXTENSION_POINT_ID,
       projectRoot,
@@ -310,10 +313,12 @@ export async function runGeneration(
 /**
  * Ensures install.yaml references the enabled domain extensions.
  * @param domains - Domains enabled in the app configuration.
+ * @param config - The validated app configuration.
  * @param projectRoot - Resolved project root containing install.yaml.
  */
 export async function ensureInstallYaml(
   domains: Set<CommerceAppConfigDomain>,
+  config: CommerceAppConfigOutputModel,
   projectRoot: string,
 ) {
   if (domains.has("businessConfig.schema")) {
@@ -324,7 +329,7 @@ export async function ensureInstallYaml(
     );
   }
 
-  if (domains.has("adminUi")) {
+  if (hasBackendUiV2Components(config)) {
     await addExtensionPointToInstallYaml(
       BACKEND_UI_V2_EXTENSION_POINT_ID,
       projectRoot,

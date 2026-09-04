@@ -4,7 +4,7 @@
 function useSharedContext(): Result<SharedContext>;
 ```
 
-Defined in: [aio-commerce-lib-admin-ui/source/web/react/commerce/context/shared-context.tsx:67](https://github.com/adobe/aio-commerce-sdk/blob/71bf66656ef1fc6dd272a0821e8b00aab5dc197e/packages/aio-commerce-lib-admin-ui/source/web/react/commerce/context/shared-context.tsx#L67)
+Defined in: [aio-commerce-lib-admin-ui/source/web/react/commerce/context/shared-context.tsx:67](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-admin-ui/source/web/react/commerce/context/shared-context.tsx#L67)
 
 Returns the current Commerce shared context. The guest connection is already established by
 the time this can be called (see SharedContextProvider).
