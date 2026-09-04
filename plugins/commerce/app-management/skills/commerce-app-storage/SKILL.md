@@ -297,7 +297,26 @@ A build failure points directly to the offending config field. To exercise the a
 - **Connection fails after a region change**: the library region doesn't match the manifest `database.region`. Moving regions is destructive — `aio app db delete`, update `database.region` in the manifest, then re-provision (`aio app deploy`, or the CLI fallback for local dev).
 - **Querying by `_id` from a string returns nothing**: convert it first — `new ObjectId(idString)` from `bson`. A raw string never matches the stored `ObjectId`.
 - **`DbError` vs unexpected error**: errors thrown by the service have `name === "DbError"`; branch on it to separate database failures from application bugs.
-- **`findOne` throws instead of returning `null` on no match**: unlike MongoDB, a miss is not a successful `null` result — it throws a `DbError` with a message containing `"Document not found"`. `name === "DbError"` alone isn't enough to detect this, since every `DbError` (including a genuine connection failure) has that name; check `error.message` too. See [assets/db-action.ts](assets/db-action.ts) for the existence-check pattern.
+- **`findOne` throws instead of returning `null` on no match**: unlike MongoDB, a miss is not a successful `null` result — it throws a `DbError` with a message containing `"Document not found"`. `name === "DbError"` alone isn't enough to detect this, since every `DbError` (including a genuine connection failure) has that name; check `error.message` too:
+
+  ```ts
+  function isDocumentNotFoundError(error: unknown) {
+    const e = error as { name?: string; message?: string };
+    return e.name === "DbError" && e.message?.includes("Document not found");
+  }
+
+  let existing;
+  try {
+    existing = await records.findOne({ order_id: orderId });
+  } catch (error) {
+    if (!isDocumentNotFoundError(error)) {
+      throw error;
+    }
+  }
+  ```
+
+  See [assets/db-action.ts](assets/db-action.ts) for the full reference.
+
 - **Auth fails inside an installation step**: resolve the IMS auth params from `context.params` (`resolveImsAuthParams(context.params)`) — which carries the injected `AIO_COMMERCE_AUTH_IMS_*` credentials — not from `config`, which holds no credentials. Use `@adobe/aio-commerce-lib-auth`, not `@adobe/aio-lib-core-auth`: the latter's `generateAccessToken` expects `clientId`/`clientSecret` directly and cannot consume the injected params.
 - **Installation step fails to load (`must export a default function or object`)**: the script was authored as CommonJS. Author it as an ES module with `export default`; `module.exports` (or `module.exports.default`) surfaces through the framework's `import * as` loader as `.default.default` and fails validation.
 - **`createIndex` errors or has no effect**: it must be called on a collection object (`client.collection("name").createIndex({ field: 1 })`), not with a collection-name string. Get the collection first, then call `createIndex` on it.
