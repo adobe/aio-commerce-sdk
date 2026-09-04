@@ -29,18 +29,6 @@ type DbClient = Awaited<
   ReturnType<Awaited<ReturnType<typeof initDb>>["connect"]>
 >;
 
-// findOne throws a DbError instead of resolving to null when nothing matches.
-// name === "DbError" alone doesn't distinguish that from a genuine failure
-// (e.g. a dropped connection) since every DbError shares that name — check
-// the message too.
-function isDocumentNotFoundError(error: unknown) {
-  const dbError = error as { name?: string; message?: string };
-  return (
-    dbError.name === "DbError" &&
-    Boolean(dbError.message?.includes("Document not found"))
-  );
-}
-
 export async function main(params: Record<string, unknown>) {
   const logger = AioLogger("commerce-app-storage", {
     level: (params.LOG_LEVEL as string) || "info",
@@ -78,15 +66,8 @@ export async function main(params: Record<string, unknown>) {
     // Insert many
     await records.insertMany([{ name: "Alice" }, { name: "Bob" }]);
 
-    // Find one — unlike MongoDB, a miss throws rather than resolving to null.
-    let one: Record<string, unknown> | null = null;
-    try {
-      one = await records.findOne({ name: "Jane Smith" });
-    } catch (error) {
-      if (!isDocumentNotFoundError(error)) {
-        throw error;
-      }
-    }
+    // Find one
+    const one = await records.findOne({ name: "Jane Smith" });
 
     // Find many — returns a cursor. Iterate to bound memory.
     for await (const doc of records
