@@ -282,6 +282,46 @@ createExtensionApp({
 
 For an order view button, swap the hook for `useOrderViewButtonContext()` and read `data.orderId` after handling `error` — see [order-view-buttons](references/order-view-buttons.md).
 
+### Calling your own action from a menu/view page
+
+A menu or view page often needs data that isn't handed to it via context — for example, a custom menu page rendering a table it must fetch itself. For that, the page calls one of the app's own worker actions directly from `web-src`, instead of Commerce invoking it on the page's behalf.
+
+Whenever an extension declares both `actions` and `web-src` (true for any extension with a worker `runtimeAction` plus a menu or view entry), `aio app build`/`aio app dev` write every action's live URL to `web-src/src/config.json` (`config.web.injectedConfig`) automatically. That file is gitignored and regenerated on every build — there is nothing to scaffold or configure by hand.
+
+Wrap it in a small hook so pages don't import `config.json` directly:
+
+```jsx
+// src/commerce-backend-ui-2/web-src/src/hooks/use-config.js
+import { useCallback } from "react";
+import actionUrls from "../config.json";
+
+export function useConfig() {
+  const getActionUrl = useCallback((action) => actionUrls[action], []);
+  return { getActionUrl };
+}
+```
+
+Call the action with `useIms()` for the token and org id, and `useConfig()` for the URL:
+
+```jsx
+import { useIms } from "@adobe/aio-commerce-lib-admin-ui/web";
+import { useConfig } from "#web/hooks/use-config.js";
+
+const { data, error } = useIms();
+if (error) throw error;
+const { imsToken, imsOrgId } = data;
+const { getActionUrl } = useConfig();
+
+const response = await fetch(getActionUrl("my-app/order-grid"), {
+  headers: {
+    authorization: `Bearer ${imsToken}`,
+    "x-gw-ims-org-id": imsOrgId,
+  },
+});
+```
+
+An action with `require-adobe-auth: true` rejects the request unless both headers are present — `authorization: Bearer <imsToken>` alone is not enough. Without `x-gw-ims-org-id`, the action fails with "cannot authorize request, reason: missing x-gw-ims-org-id header".
+
 ## Step 5 — Validate
 
 Build the project to confirm the updated config is valid:
