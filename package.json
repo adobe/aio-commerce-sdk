@@ -63,7 +63,7 @@
     "vitest": "^4.1.0",
     "vitest-browser-react": "^2.2.0"
   },
-  "packageManager": "pnpm@11.24.0",
+  "packageManager": "pnpm@12.3.0",
   "engines": {
     "node": "^22.11 || ^24",
     "pnpm": ">=10"
