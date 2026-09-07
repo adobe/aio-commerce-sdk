@@ -39,6 +39,8 @@ import {
 } from "#commands/init/lib";
 import { makeTemplateFiles } from "#test/fixtures/commands";
 import {
+  configWithAdminUiAclOnly,
+  configWithAdminUiMenu,
   configWithAdminUiSingleGrid,
   configWithBusinessConfig,
   configWithCommerceEventing,
@@ -200,7 +202,7 @@ describe("commands/init/lib", () => {
       await withTempFiles(
         { ...EMPTY_PROJECT, [APP_CONFIG_FILE]: "" },
         async (tempDir) => {
-          await ensureAppConfig(new Set(), tempDir);
+          await ensureAppConfig(new Set(), minimalValidConfig, tempDir);
 
           const content = await readFile(
             join(tempDir, APP_CONFIG_FILE),
@@ -215,7 +217,11 @@ describe("commands/init/lib", () => {
       await withTempFiles(
         { ...EMPTY_PROJECT, [APP_CONFIG_FILE]: "" },
         async (tempDir) => {
-          await ensureAppConfig(new Set(["businessConfig.schema"]), tempDir);
+          await ensureAppConfig(
+            new Set(["businessConfig.schema"]),
+            configWithBusinessConfig,
+            tempDir,
+          );
 
           const content = await readFile(
             join(tempDir, APP_CONFIG_FILE),
@@ -227,11 +233,11 @@ describe("commands/init/lib", () => {
       );
     });
 
-    test("adds backend-ui extension point when adminUi is in domains", async () => {
+    test("adds backend-ui extension point when config has backend-ui components", async () => {
       await withTempFiles(
         { ...EMPTY_PROJECT, [APP_CONFIG_FILE]: "" },
         async (tempDir) => {
-          await ensureAppConfig(new Set(["adminUi"]), tempDir);
+          await ensureAppConfig(new Set(), configWithAdminUiMenu, tempDir);
 
           const content = await readFile(
             join(tempDir, APP_CONFIG_FILE),
@@ -243,13 +249,28 @@ describe("commands/init/lib", () => {
       );
     });
 
+    test("does not add backend-ui extension point for an acl-only config", async () => {
+      await withTempFiles(
+        { ...EMPTY_PROJECT, [APP_CONFIG_FILE]: "" },
+        async (tempDir) => {
+          await ensureAppConfig(new Set(), configWithAdminUiAclOnly, tempDir);
+
+          const content = await readFile(
+            join(tempDir, APP_CONFIG_FILE),
+            "utf-8",
+          );
+          expect(content).not.toContain(BACKEND_UI_V2_EXTENSION_POINT_ID);
+          expect(content).toContain(EXTENSIBILITY_EXTENSION_POINT_ID);
+        },
+      );
+    });
+
     test("does not duplicate extension points on repeated calls", async () => {
       await withTempFiles(
         { ...EMPTY_PROJECT, [APP_CONFIG_FILE]: "" },
         async (tempDir) => {
-          const domains = new Set<never>();
-          await ensureAppConfig(domains, tempDir);
-          await ensureAppConfig(domains, tempDir);
+          await ensureAppConfig(new Set(), minimalValidConfig, tempDir);
+          await ensureAppConfig(new Set(), minimalValidConfig, tempDir);
 
           const content = await readFile(
             join(tempDir, APP_CONFIG_FILE),
@@ -269,9 +290,9 @@ describe("commands/init/lib", () => {
       await withTempFiles(
         { ...EMPTY_PROJECT, [`${APP_CONFIG_FILE}/.keep`]: "" },
         async (tempDir) => {
-          await expect(ensureAppConfig(new Set(), tempDir)).rejects.toThrow(
-            new RegExp(`Failed to parse ${APP_CONFIG_FILE}`),
-          );
+          await expect(
+            ensureAppConfig(new Set(), minimalValidConfig, tempDir),
+          ).rejects.toThrow(new RegExp(`Failed to parse ${APP_CONFIG_FILE}`));
         },
       );
     });
@@ -282,7 +303,7 @@ describe("commands/init/lib", () => {
       await withTempFiles(
         { ...EMPTY_PROJECT, [INSTALL_YAML_FILE]: "" },
         async (tempDir) => {
-          await ensureInstallYaml(new Set(), tempDir);
+          await ensureInstallYaml(new Set(), minimalValidConfig, tempDir);
           const content = await readFile(
             join(tempDir, INSTALL_YAML_FILE),
             "utf-8",
@@ -297,7 +318,11 @@ describe("commands/init/lib", () => {
       await withTempFiles(
         { ...EMPTY_PROJECT, [INSTALL_YAML_FILE]: "" },
         async (tempDir) => {
-          await ensureInstallYaml(new Set(["businessConfig.schema"]), tempDir);
+          await ensureInstallYaml(
+            new Set(["businessConfig.schema"]),
+            configWithBusinessConfig,
+            tempDir,
+          );
           const content = await readFile(
             join(tempDir, INSTALL_YAML_FILE),
             "utf-8",
@@ -309,11 +334,11 @@ describe("commands/init/lib", () => {
       );
     });
 
-    test("adds backend-ui extension point when adminUi is in domains", async () => {
+    test("adds backend-ui extension point when config has backend-ui components", async () => {
       await withTempFiles(
         { ...EMPTY_PROJECT, [INSTALL_YAML_FILE]: "" },
         async (tempDir) => {
-          await ensureInstallYaml(new Set(["adminUi"]), tempDir);
+          await ensureInstallYaml(new Set(), configWithAdminUiMenu, tempDir);
           const content = await readFile(
             join(tempDir, INSTALL_YAML_FILE),
             "utf-8",
@@ -325,13 +350,28 @@ describe("commands/init/lib", () => {
       );
     });
 
+    test("does not add backend-ui extension point for an acl-only config", async () => {
+      await withTempFiles(
+        { ...EMPTY_PROJECT, [INSTALL_YAML_FILE]: "" },
+        async (tempDir) => {
+          await ensureInstallYaml(new Set(), configWithAdminUiAclOnly, tempDir);
+          const content = await readFile(
+            join(tempDir, INSTALL_YAML_FILE),
+            "utf-8",
+          );
+
+          expect(content).not.toContain(BACKEND_UI_V2_EXTENSION_POINT_ID);
+          expect(content).toContain(EXTENSIBILITY_EXTENSION_POINT_ID);
+        },
+      );
+    });
+
     test("does not duplicate extension points on repeated calls", async () => {
       await withTempFiles(
         { ...EMPTY_PROJECT, [INSTALL_YAML_FILE]: "" },
         async (tempDir) => {
-          const domains = new Set<never>();
-          await ensureInstallYaml(domains, tempDir);
-          await ensureInstallYaml(domains, tempDir);
+          await ensureInstallYaml(new Set(), minimalValidConfig, tempDir);
+          await ensureInstallYaml(new Set(), minimalValidConfig, tempDir);
 
           const content = await readFile(
             join(tempDir, INSTALL_YAML_FILE),
@@ -352,9 +392,9 @@ describe("commands/init/lib", () => {
       await withTempFiles(
         { ...EMPTY_PROJECT, [`${INSTALL_YAML_FILE}/.keep`]: "" },
         async (tempDir) => {
-          await expect(ensureInstallYaml(new Set(), tempDir)).rejects.toThrow(
-            new RegExp(`Failed to parse ${INSTALL_YAML_FILE}`),
-          );
+          await expect(
+            ensureInstallYaml(new Set(), minimalValidConfig, tempDir),
+          ).rejects.toThrow(new RegExp(`Failed to parse ${INSTALL_YAML_FILE}`));
         },
       );
     });

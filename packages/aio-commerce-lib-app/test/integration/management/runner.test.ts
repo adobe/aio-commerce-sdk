@@ -18,7 +18,9 @@ import {
 } from "#management/common/workflow/types";
 import {
   createInitialInstallationState,
+  createInitialUninstallationState,
   runInstallation,
+  runUninstallation,
   runValidation,
 } from "#management/installation/runner";
 import {
@@ -239,6 +241,124 @@ describe("runInstallation - custom installation scripts", () => {
 
     expect.assert(isFailedState(result));
     expect(result.error.message).toContain("Invalid script module format");
+  });
+});
+
+describe("runUninstallation - historical custom installation steps", () => {
+  test("calls uninstall for a step no longer in the config, using its recorded history", async () => {
+    // The current config only has "Demo Success"; "Demo Error" ran in a previous
+    // version and was since removed, but its `uninstall` must still run at
+    // unassociate (see the CEXT-6511 spec's append-only design).
+    const config = {
+      ...configWithCustomInstallationSteps,
+      installation: {
+        customInstallationSteps: [
+          configWithCustomInstallationSteps.installation
+            .customInstallationSteps[0],
+        ],
+      },
+    };
+
+    const install = vi.fn().mockResolvedValue({ status: "success" });
+    const remainingUninstall = vi.fn().mockResolvedValue(undefined);
+    const removedUninstall = vi.fn().mockResolvedValue(undefined);
+    const installationContext = createMockInstallationContextWithScripts({
+      "./demo-error.js": { install, uninstall: removedUninstall },
+      "./demo-success.js": { install, uninstall: remainingUninstall },
+    });
+
+    const executedCustomInstallationSteps = [
+      { name: "Demo Success", script: "./demo-success.js" },
+      { name: "Demo Error", script: "./demo-error.js" },
+    ];
+
+    const initialState = createInitialUninstallationState({
+      config,
+      executedCustomInstallationSteps,
+    });
+
+    const result = await runUninstallation({
+      config,
+      executedCustomInstallationSteps,
+      initialState,
+      installationContext,
+    });
+
+    expect(isSucceededState(result)).toBe(true);
+    expect(remainingUninstall).toHaveBeenCalledWith(config, expect.anything());
+    expect(removedUninstall).toHaveBeenCalledWith(config, expect.anything());
+  });
+
+  test("uninstalls every step newest-first, mirroring migration rollback order", async () => {
+    // "A" and "Demo Success" ran at install; "Demo Error" was added in a later upgrade.
+    // "A" was since removed from the config. A full uninstall must run in the reverse of
+    // that run order: Demo Error, Demo Success, A.
+    const config = configWithCustomInstallationSteps;
+    const callOrder: string[] = [];
+    const installationContext = createMockInstallationContextWithScripts({
+      "./a.js": {
+        install: vi.fn(),
+        uninstall: vi.fn().mockImplementation(() => {
+          callOrder.push("A");
+        }),
+      },
+      "./demo-error.js": {
+        install: vi.fn(),
+        uninstall: vi.fn().mockImplementation(() => {
+          callOrder.push("Demo Error");
+        }),
+      },
+      "./demo-success.js": {
+        install: vi.fn(),
+        uninstall: vi.fn().mockImplementation(() => {
+          callOrder.push("Demo Success");
+        }),
+      },
+    });
+
+    const executedCustomInstallationSteps = [
+      { name: "A", script: "./a.js" },
+      { name: "Demo Success", script: "./demo-success.js" },
+      { name: "Demo Error", script: "./demo-error.js" },
+    ];
+
+    const initialState = createInitialUninstallationState({
+      config,
+      executedCustomInstallationSteps,
+    });
+
+    const result = await runUninstallation({
+      config,
+      executedCustomInstallationSteps,
+      initialState,
+      installationContext,
+    });
+
+    expect(isSucceededState(result)).toBe(true);
+    expect(callOrder).toEqual(["Demo Error", "Demo Success", "A"]);
+  });
+
+  test("skips (without failing) a historical step whose script no longer exists", async () => {
+    const config = minimalValidConfig;
+    const installationContext = createMockInstallationContext();
+
+    const executedCustomInstallationSteps = [
+      { name: "Old Step", script: "./old-step.js" },
+    ];
+
+    const initialState = createInitialUninstallationState({
+      config,
+      executedCustomInstallationSteps,
+    });
+
+    const result = await runUninstallation({
+      config,
+      executedCustomInstallationSteps,
+      initialState,
+      installationContext,
+    });
+
+    expect(isSucceededState(result)).toBe(true);
   });
 });
 

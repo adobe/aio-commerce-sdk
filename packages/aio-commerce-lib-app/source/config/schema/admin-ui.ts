@@ -10,6 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
+import { sanitizeSegment } from "@adobe/aio-commerce-lib-admin-ui/api";
 import { COMMERCE_MENUS } from "@adobe/aio-commerce-lib-admin-ui/menu";
 import {
   nonEmptyStringValueSchema,
@@ -20,6 +21,16 @@ import * as v from "valibot";
 import type { AnyCommerceAppConfig, CommerceAppConfigOutputModel } from "./app";
 
 // ─── Shared ───────────────────────────────────────────────────────────────────
+
+/**
+ * Whether the given items have distinct ids once Commerce sanitizes them into resource ids.
+ * Catches ids that differ only by case or by a character that sanitizes to `_`. Used by the
+ * component fields whose ids are otherwise unconstrained (grid columns, mass actions, view buttons).
+ */
+function hasUniqueSanitizedIds(items: readonly { id: string }[]): boolean {
+  const ids = items.map((item) => sanitizeSegment(item.id));
+  return new Set(ids).size === ids.length;
+}
 
 const SANDBOX_PERMISSION_VALUES = [
   "allow-downloads",
@@ -79,6 +90,10 @@ const GridColumnsSchema = v.object({
   columns: v.pipe(
     v.array(GridColumnSchema),
     v.minLength(1, "At least one grid column is required"),
+    v.check(
+      (items) => hasUniqueSanitizedIds(items),
+      "Grid column ids must be unique after Commerce id sanitization.",
+    ),
   ),
   description: nonEmptyStringValueSchema("grid columns description"),
   label: nonEmptyStringValueSchema("grid columns label"),
@@ -167,8 +182,8 @@ const OrderViewButtonSchema = v.variant("type", [
 const MassActionsSchema = v.pipe(
   v.array(MassActionSchema),
   v.check(
-    (items) => new Set(items.map((item) => item.id)).size === items.length,
-    "Mass action ids must be unique.",
+    (items) => hasUniqueSanitizedIds(items),
+    "Mass action ids must be unique after Commerce id sanitization.",
   ),
 );
 
@@ -179,8 +194,8 @@ const AdminUiOrderSchema = v.object({
     v.pipe(
       v.array(OrderViewButtonSchema),
       v.check(
-        (items) => new Set(items.map((item) => item.id)).size === items.length,
-        "Order view button ids must be unique.",
+        (items) => hasUniqueSanitizedIds(items),
+        "Order view button ids must be unique after Commerce id sanitization.",
       ),
     ),
   ),
@@ -224,13 +239,100 @@ const MenuSchema = v.object({
   sandboxPermissions: v.optional(SandboxPermissionsSchema),
 });
 
+// ─── Custom ACL resources ──────────────────────────────────────────────────────
+
+// Restricted to the characters Commerce leaves untouched when deriving the ACL resource id
+// (it lowercases and maps every other character to "_"). Requiring the id to already be in that
+// canonical form means two distinct ids can never collapse to the same Commerce resource id — so
+// the uniqueness checks below, which compare raw ids, are sufficient.
+const AclResourceIdSchema = v.pipe(
+  nonEmptyStringValueSchema("acl resource ID"),
+  v.regex(
+    /^[a-z0-9_]+$/,
+    'ACL resource ID may contain only lowercase letters, digits, and "_"',
+  ),
+);
+
+// The label is rendered as the resource title in the Commerce Admin User Roles tree, which
+// constrains titles to between 3 and 50 characters.
+const ACL_LABEL_MIN_LENGTH = 3;
+const ACL_LABEL_MAX_LENGTH = 50;
+
+const AclResourceLabelSchema = v.pipe(
+  nonEmptyStringValueSchema("acl resource label"),
+  v.minLength(
+    ACL_LABEL_MIN_LENGTH,
+    `acl resource label must be at least ${ACL_LABEL_MIN_LENGTH} characters`,
+  ),
+  v.maxLength(
+    ACL_LABEL_MAX_LENGTH,
+    `acl resource label must be at most ${ACL_LABEL_MAX_LENGTH} characters`,
+  ),
+);
+
+/** A single custom ACL resource leaf. Leaves never nest — this is what keeps grouping one level deep. */
+const AclResourceLeafSchema = v.strictObject({
+  id: AclResourceIdSchema,
+  label: AclResourceLabelSchema,
+});
+
+/** A top-level acl entry: a leaf, or a group carrying leaf children (exactly one level of nesting). */
+const AclResourceEntrySchema = v.strictObject({
+  children: v.optional(
+    v.pipe(
+      v.array(AclResourceLeafSchema),
+      v.minLength(1, "An ACL resource group must contain at least one child"),
+      v.check(
+        (items) => new Set(items.map((i) => i.id)).size === items.length,
+        "Child ACL resource ids must be unique within a group.",
+      ),
+    ),
+  ),
+  id: AclResourceIdSchema,
+  label: AclResourceLabelSchema,
+});
+
+/**
+ * The Commerce ACL resource ids an `acl` config resolves to, relative to the app root: every
+ * top-level entry and group node contributes its own id, and every group child contributes the
+ * `<group>_<child>` id Commerce builds by joining segments with "_". Comparing these catches ids
+ * that look distinct but collapse to the same Commerce resource (e.g. a leaf `reports_export` vs a
+ * group `reports` with a child `export`). Ids are already canonical (see {@link AclResourceIdSchema}).
+ */
+function aclResourceIdentities(
+  entries: readonly { id: string; children?: readonly { id: string }[] }[],
+): string[] {
+  const ids: string[] = [];
+  for (const entry of entries) {
+    ids.push(entry.id);
+    for (const child of entry.children ?? []) {
+      ids.push(`${entry.id}_${child.id}`);
+    }
+  }
+  return ids;
+}
+
+const AdminUiAclSchema = v.pipe(
+  v.array(AclResourceEntrySchema),
+  v.minLength(1, "At least one ACL resource is required when acl is defined"),
+  v.check(
+    (items) => new Set(items.map((i) => i.id)).size === items.length,
+    "Top-level ACL resource ids must be unique.",
+  ),
+  v.check((items) => {
+    const ids = aclResourceIdentities(items);
+    return new Set(ids).size === ids.length;
+  }, 'Custom ACL resource ids must stay unique after Commerce derivation: a top-level resource id must not equal a group\'s "<group>_<child>" combination.'),
+);
+
 // ─── Top-level schema ─────────────────────────────────────────────────────────
 
 /**
  * Schema for the `adminUi` config section.
- * Supports grid column extensions, mass actions, order view buttons, and menu on `commerce/backend-ui/2`.
+ * Supports grid column extensions, mass actions, order view buttons, menu, and custom ACL resources on `commerce/backend-ui/2`.
  */
 export const AdminUiSchema = v.object({
+  acl: v.optional(AdminUiAclSchema),
   customer: v.optional(AdminUiCustomerSchema),
   menu: v.optional(MenuSchema),
   order: v.optional(AdminUiOrderSchema),
@@ -249,15 +351,22 @@ export type AdminUiConfiguration = v.InferInput<typeof AdminUiSchema>;
  */
 export type AdminUi = v.InferOutput<typeof AdminUiSchema>;
 
+/** A single custom ACL resource leaf. */
+export type AclResource = v.InferInput<typeof AclResourceLeafSchema>;
+
+/** A custom ACL resource entry: a leaf or a one-level group of leaves. */
+export type AclResourceEntry = v.InferInput<typeof AclResourceEntrySchema>;
+
 /**
  * The validated config of a single Admin UI component: the menu, an entity's
- * grid columns, a single mass action, or a single view button.
+ * grid columns, a single mass action, a single view button, or a custom ACL resource entry.
  */
 export type AdminUiComponentConfig =
   | v.InferOutput<typeof MenuSchema>
   | v.InferOutput<typeof GridColumnsSchema>
   | v.InferOutput<typeof MassActionSchema>
-  | v.InferOutput<typeof OrderViewButtonSchema>;
+  | v.InferOutput<typeof OrderViewButtonSchema>
+  | AclResourceEntry;
 
 /**
  * Grid columns registration configuration.
@@ -309,11 +418,13 @@ export type AdminUiConfig<
 };
 
 /**
- * Check whether the config declares at least one Admin UI component (menu, grid
- * columns, mass actions, or view buttons). A component-less `adminUi` block is
- * treated as absent — it registers nothing.
+ * Check whether the config declares an Admin UI component that requires the
+ * `commerce/backend-ui/2` extension point — a menu, grid columns, mass actions,
+ * or view buttons. Custom ACL resources are deliberately excluded: they reach
+ * Commerce through the `extensibility/1` app-config payload, not backend-ui/2,
+ * so an acl-only config needs no backend-ui/2 registration.
  */
-export function hasAdminUi<T extends AnyCommerceAppConfig>(
+export function hasBackendUiV2Components<T extends AnyCommerceAppConfig>(
   config: T,
 ): config is AdminUiConfig<T> {
   const { adminUi } = config;
@@ -330,5 +441,18 @@ export function hasAdminUi<T extends AnyCommerceAppConfig>(
       adminUi.product?.massActions?.length ||
       adminUi.customer?.gridColumns ||
       adminUi.customer?.massActions?.length,
+  );
+}
+
+/**
+ * Check whether the config declares at least one Admin UI component (menu, grid
+ * columns, mass actions, view buttons, or custom ACL resources). A component-less `adminUi` block is
+ * treated as absent — it registers nothing.
+ */
+export function hasAdminUi<T extends AnyCommerceAppConfig>(
+  config: T,
+): config is AdminUiConfig<T> {
+  return (
+    hasBackendUiV2Components(config) || Boolean(config.adminUi?.acl?.length)
   );
 }

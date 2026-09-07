@@ -13,12 +13,17 @@
 import * as v from "valibot";
 import { describe, expect, test } from "vitest";
 
-import { AdminUiSchema, hasAdminUi } from "#config/schema/admin-ui";
+import {
+  AdminUiSchema,
+  hasAdminUi,
+  hasBackendUiV2Components,
+} from "#config/schema/admin-ui";
 import {
   viewButtonViewBase,
   viewButtonWorkerBase,
 } from "#test/fixtures/admin-ui";
 import {
+  configWithAdminUiAclOnly,
   configWithAdminUiAllGrids,
   configWithAdminUiEmptyBlock,
   configWithAdminUiMenu,
@@ -28,18 +33,22 @@ import {
   minimalValidConfig,
 } from "#test/fixtures/config";
 
+// Configs carrying a backend-ui/2 component (menu, grid columns, or mass
+// actions) — both predicates report these as present.
+const backendUiV2ComponentCases = [
+  { config: configWithAdminUiAllGrids, label: "grid columns for all entities" },
+  { config: configWithAdminUiMenu, label: "menu only" },
+  { config: configWithViewMassActions, label: "view mass actions" },
+  { config: configWithWorkerMassActions, label: "worker mass actions" },
+];
+
 describe("hasAdminUi", () => {
-  test.each([
-    {
-      config: configWithAdminUiAllGrids,
-      label: "grid columns for all entities",
+  test.each(backendUiV2ComponentCases)(
+    "returns true when adminUi has $label",
+    ({ config }) => {
+      expect(hasAdminUi(config)).toBe(true);
     },
-    { config: configWithAdminUiMenu, label: "menu only" },
-    { config: configWithViewMassActions, label: "view mass actions" },
-    { config: configWithWorkerMassActions, label: "worker mass actions" },
-  ])("returns true when adminUi has $label", ({ config }) => {
-    expect(hasAdminUi(config)).toBe(true);
-  });
+  );
 
   test.each([
     { config: minimalValidConfig, label: "no adminUi property" },
@@ -49,6 +58,29 @@ describe("hasAdminUi", () => {
     },
   ])("returns false when config has $label", ({ config }) => {
     expect(hasAdminUi(config)).toBe(false);
+  });
+});
+
+describe("hasBackendUiV2Components", () => {
+  test.each(backendUiV2ComponentCases)(
+    "returns true when adminUi has $label",
+    ({ config }) => {
+      expect(hasBackendUiV2Components(config)).toBe(true);
+    },
+  );
+
+  test.each([
+    { config: minimalValidConfig, label: "no adminUi property" },
+    {
+      config: configWithAdminUiEmptyBlock,
+      label: "a component-less adminUi block",
+    },
+    {
+      config: configWithAdminUiAclOnly,
+      label: "only custom ACL resources",
+    },
+  ])("returns false when config has $label", ({ config }) => {
+    expect(hasBackendUiV2Components(config)).toBe(false);
   });
 });
 
@@ -88,6 +120,50 @@ describe("AdminUiSchema unique ids", () => {
       },
     });
     expect(result.success).toBe(true);
+  });
+
+  test("rejects mass action ids that collide after Commerce id sanitization", () => {
+    // "Export" and "export" both sanitize to the same Commerce ACL resource id.
+    const result = v.safeParse(AdminUiSchema, {
+      order: { massActions: [massAction, { ...massAction, id: "Export" }] },
+    });
+    expect(result.success).toBe(false);
+  });
+
+  test("rejects order view button ids that collide after Commerce id sanitization", () => {
+    const result = v.safeParse(AdminUiSchema, {
+      order: { viewButtons: [viewButton, { ...viewButton, id: "Reorder" }] },
+    });
+    expect(result.success).toBe(false);
+  });
+
+  const gridColumnsWith = (ids: string[]) => ({
+    order: {
+      gridColumns: {
+        columns: ids.map((id) => ({
+          align: "left" as const,
+          id,
+          label: `Column ${id}`,
+          type: "string" as const,
+        })),
+        description: "Order grid columns",
+        label: "Order grid",
+        runtimeAction: "orders/fetch",
+      },
+    },
+  });
+
+  test.each([
+    { ids: ["status", "status"], label: "exact duplicates", success: false },
+    {
+      ids: ["Status", "status"],
+      label: "colliding after sanitization",
+      success: false,
+    },
+    { ids: ["status", "priority"], label: "distinct values", success: true },
+  ])("grid column ids ($label)", ({ ids, success }) => {
+    const result = v.safeParse(AdminUiSchema, gridColumnsWith(ids));
+    expect(result.success).toBe(success);
   });
 });
 
@@ -649,6 +725,207 @@ describe("AdminUiSchema", () => {
       });
       expect(result.success).toBe(false);
     });
+  });
+});
+
+describe("adminUi.acl", () => {
+  test("accepts a flat leaf resource", () => {
+    const config = {
+      acl: [
+        {
+          id: "approve_refunds",
+          label: "Approve Refunds",
+        },
+      ],
+    };
+    expect(() => v.parse(AdminUiSchema, config)).not.toThrow();
+  });
+
+  test("rejects a description field on an acl resource", () => {
+    expect(() =>
+      v.parse(AdminUiSchema, {
+        acl: [{ description: "x", id: "a", label: "Alpha" }],
+      }),
+    ).toThrow();
+  });
+
+  test("rejects a label shorter than 3 characters", () => {
+    expect(() =>
+      v.parse(AdminUiSchema, { acl: [{ id: "a", label: "Ab" }] }),
+    ).toThrow();
+  });
+
+  test("rejects a label longer than 50 characters", () => {
+    expect(() =>
+      v.parse(AdminUiSchema, {
+        acl: [{ id: "a", label: "x".repeat(51) }],
+      }),
+    ).toThrow();
+  });
+
+  test("accepts a label of exactly 3 characters", () => {
+    expect(() =>
+      v.parse(AdminUiSchema, { acl: [{ id: "a", label: "Abc" }] }),
+    ).not.toThrow();
+  });
+
+  test("accepts a one-level group with leaf children", () => {
+    const config = {
+      acl: [
+        {
+          children: [{ id: "export", label: "Export" }],
+          id: "reports",
+          label: "Reports",
+        },
+      ],
+    };
+    expect(() => v.parse(AdminUiSchema, config)).not.toThrow();
+  });
+
+  test("rejects a grandchild (children may not nest)", () => {
+    const config = {
+      acl: [
+        {
+          children: [
+            {
+              children: [{ id: "csv", label: "CSV" }],
+              id: "export",
+              label: "Export",
+            },
+          ],
+          id: "reports",
+          label: "Reports",
+        },
+      ],
+    };
+    expect(() => v.parse(AdminUiSchema, config)).toThrow();
+  });
+
+  test("rejects a group with an empty children array", () => {
+    const config = {
+      acl: [{ children: [], id: "reports", label: "Reports" }],
+    };
+    expect(() => v.parse(AdminUiSchema, config)).toThrow();
+  });
+
+  test("rejects duplicate top-level resource ids", () => {
+    const config = {
+      acl: [
+        { id: "a", label: "Alpha" },
+        { id: "a", label: "Alpha Two" },
+      ],
+    };
+    expect(() => v.parse(AdminUiSchema, config)).toThrow();
+  });
+
+  test("rejects duplicate child ids within one group", () => {
+    const config = {
+      acl: [
+        {
+          children: [
+            { id: "x", label: "Xray" },
+            { id: "x", label: "Xray Two" },
+          ],
+          id: "g",
+          label: "Group",
+        },
+      ],
+    };
+    expect(() => v.parse(AdminUiSchema, config)).toThrow();
+  });
+
+  test("rejects a top-level leaf id that collides with a group child path", () => {
+    // A leaf "reports_export" and group "reports" + child "export" both derive
+    // ..._acl_reports_export in Commerce.
+    expect(() =>
+      v.parse(AdminUiSchema, {
+        acl: [
+          { id: "reports_export", label: "Reports Export" },
+          {
+            children: [{ id: "export", label: "Export" }],
+            id: "reports",
+            label: "Reports",
+          },
+        ],
+      }),
+    ).toThrow();
+  });
+
+  test("rejects a group node id that collides with another group's child path", () => {
+    // Group node "a_b" and group "a" + child "b" both derive ..._acl_a_b.
+    expect(() =>
+      v.parse(AdminUiSchema, {
+        acl: [
+          {
+            children: [{ id: "c", label: "Cee" }],
+            id: "a_b",
+            label: "Group A B",
+          },
+          {
+            children: [{ id: "b", label: "Bee" }],
+            id: "a",
+            label: "Group A",
+          },
+        ],
+      }),
+    ).toThrow();
+  });
+
+  test("accepts a leaf whose id resembles but does not equal a group child path", () => {
+    expect(() =>
+      v.parse(AdminUiSchema, {
+        acl: [
+          { id: "reports_summary", label: "Reports Summary" },
+          {
+            children: [{ id: "export", label: "Export" }],
+            id: "reports",
+            label: "Reports",
+          },
+        ],
+      }),
+    ).not.toThrow();
+  });
+
+  test("rejects an id with uppercase letters", () => {
+    // Commerce lowercases ids when deriving the ACL resource id, so "Reports"
+    // and "reports" would collide into one resource. Reject non-canonical ids.
+    expect(() =>
+      v.parse(AdminUiSchema, { acl: [{ id: "Reports", label: "Reports" }] }),
+    ).toThrow();
+  });
+
+  test("rejects an id containing a dash", () => {
+    // Commerce maps every character outside [a-z0-9_] to "_", so "a-b" and
+    // "a_b" would collide into one resource.
+    expect(() =>
+      v.parse(AdminUiSchema, { acl: [{ id: "a-b", label: "A dash B" }] }),
+    ).toThrow();
+  });
+
+  test("rejects a child id with uppercase letters", () => {
+    expect(() =>
+      v.parse(AdminUiSchema, {
+        acl: [
+          {
+            children: [{ id: "Export", label: "Export" }],
+            id: "reports",
+            label: "Reports",
+          },
+        ],
+      }),
+    ).toThrow();
+  });
+
+  test("hasAdminUi is true when only acl is present", () => {
+    expect(
+      hasAdminUi({
+        adminUi: { acl: [{ id: "a", label: "A" }] },
+      } as never),
+    ).toBe(true);
+  });
+
+  test("hasAdminUi is false when acl is an empty array", () => {
+    expect(hasAdminUi({ adminUi: { acl: [] } } as never)).toBe(false);
   });
 });
 

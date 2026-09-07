@@ -38,7 +38,7 @@ import {
   prepareWebSourceImportAlias,
 } from "#commands/generate/web-src";
 import { loadAppManifest } from "#commands/utils";
-import { hasAdminUi } from "#config/index";
+import { hasBackendUiV2Components } from "#config/index";
 
 import type { ExtConfig } from "@aio-commerce-sdk/scripting-utils/yaml/types";
 
@@ -104,7 +104,7 @@ export async function run(
   }
 
   if (extension === "backend-ui/2") {
-    if (hasAdminUi(appManifest)) {
+    if (hasBackendUiV2Components(appManifest)) {
       const extConfig = await updateExtConfig(
         appManifest,
         BACKEND_UI_V2_EXTENSION_POINT_ID,
