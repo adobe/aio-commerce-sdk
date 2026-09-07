@@ -12,8 +12,10 @@
 
 import { describe, expect, test, vi } from "vitest";
 
-import { searchCriteria } from "#lib/commerce/search-criteria/builder";
-import { buildSearchCriteria } from "#lib/commerce/search-criteria/serialize";
+import {
+  buildSearchCriteria,
+  buildSearchCriteriaRecord,
+} from "#lib/commerce/search-criteria/serialize";
 import {
   TEST_ADOBE_COMMERCE_HTTP_CLIENT_PARAMS_PAAS,
   TestAdobeCommerceHttpClient,
@@ -58,10 +60,10 @@ const SKU_FIELD = "searchCriteria[filterGroups][0][filters][0][field]";
 describe("lib/commerce/search-criteria request integration", () => {
   test("should send serialized search criteria as query parameters", async () => {
     const sent = await sentSearchParams({
-      searchParams: searchCriteria()
-        .filter({ field: "sku", value: "24-MB01" })
-        .paginate({ pageSize: 10 })
-        .toSearchParams(),
+      searchParams: buildSearchCriteria({
+        filterGroups: [[{ field: "sku", value: "24-MB01" }]],
+        pageSize: 10,
+      }),
     });
 
     expect(sent.get(SKU_FIELD)).toBe("sku");
@@ -74,9 +76,9 @@ describe("lib/commerce/search-criteria request integration", () => {
     test("should merge via a spread of the record form", async () => {
       const sent = await sentSearchParams({
         searchParams: {
-          ...searchCriteria()
-            .filter({ field: "sku", value: "24-MB01" })
-            .toRecord(),
+          ...buildSearchCriteriaRecord({
+            filterGroups: [[{ field: "sku", value: "24-MB01" }]],
+          }),
           currencyCode: "USD",
           storeId: 1,
         },

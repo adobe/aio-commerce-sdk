@@ -105,8 +105,7 @@ export type Pagination = {
 /**
  * A declarative description of an Adobe Commerce REST search query.
  *
- * Serialize it with {@link buildSearchCriteria}, or build it up fluently with
- * {@link searchCriteria}.
+ * Serialize it with {@link buildSearchCriteria}.
  */
 export type SearchCriteria = Pagination & {
   /**

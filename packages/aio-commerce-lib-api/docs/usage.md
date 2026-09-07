@@ -6,7 +6,7 @@ The `@adobe/aio-commerce-lib-api` package provides:
 
 - **HTTP Clients**: Pre-configured Ky-based HTTP clients for Adobe Commerce and Adobe I/O Events
 - **API Client Builder**: A flexible system for binding API functions to HTTP clients
-- **Search Criteria**: A builder for the `searchCriteria` query parameters used by Commerce REST list endpoints
+- **Search Criteria**: A serializer for the `searchCriteria` query parameters used by Commerce REST list endpoints
 - **Authentication Support**: Built-in integration with `@adobe/aio-commerce-lib-auth` for both IMS and OAuth authentication
 - **Transformation Utilities**: Response transformation hooks for data normalization
 - **Type Safety**: Full TypeScript support with comprehensive type definitions
@@ -225,26 +225,32 @@ const updated = await commerceApiClient.updateProduct("test-sku", {
 
 Commerce REST list endpoints (`products`, `orders`, `customers/search`, and so on) are queried with the `searchCriteria[...]` query parameters. Rather than assembling those by hand, describe the query and let the SDK serialize it.
 
-There are two interchangeable forms. Use `searchCriteria()` for a fluent chain:
+Pass the query to `buildSearchCriteria()` and hand the result to `searchParams`:
 
 ```typescript
-import { searchCriteria } from "@adobe/aio-commerce-lib-api";
+import { buildSearchCriteria } from "@adobe/aio-commerce-lib-api";
 
-const searchParams = searchCriteria()
-  // status is 1 OR status is 2...
-  .filterGroup({ field: "status", value: 1 }, { field: "status", value: 2 })
-  // ...AND created on or after 2026-01-01
-  .filter({ field: "created_at", value: "2026-01-01", conditionType: "gteq" })
-  .sort("created_at", "DESC")
-  .paginate({ pageSize: 50, currentPage: 1 })
-  .toSearchParams();
+const searchParams = buildSearchCriteria({
+  filterGroups: [
+    // status is 1 OR status is 2...
+    [
+      { field: "status", value: 1 },
+      { field: "status", value: 2 },
+    ],
+    // ...AND created on or after 2026-01-01
+    [{ field: "created_at", value: "2026-01-01", conditionType: "gteq" }],
+  ],
+  sortOrders: [{ field: "created_at", direction: "DESC" }],
+  pageSize: 50,
+  currentPage: 1,
+});
 
 const { items, total_count } = await commerceClient
   .get("products", { searchParams })
   .json();
 ```
 
-Or `buildSearchCriteria()` with a plain object, which suits conditionally-built queries:
+Because the query is plain data, it can also be assembled conditionally:
 
 ```typescript
 import {
@@ -268,14 +274,15 @@ await commerceClient.get("products", { searchParams }).json();
 
 #### Filter groups: AND vs OR
 
-This is the part of the Commerce convention that is easiest to get wrong. Filters **within** a group are OR-ed; **separate** groups are AND-ed. The builder makes the distinction explicit:
+This is the part of the Commerce convention that is easiest to get wrong, and the nesting of `filterGroups` is what encodes it. Filters **within** a group are OR-ed; **separate** groups are AND-ed:
 
-| Method                | Semantics                                                      |
-| --------------------- | -------------------------------------------------------------- |
-| `.filter(f)`          | Adds `f` as its own group — AND-ed with everything before it   |
-| `.filterGroup(...fs)` | Adds one group of OR-ed filters — AND-ed with the other groups |
+| `filterGroups`  | Semantics        |
+| --------------- | ---------------- |
+| `[[a], [b]]`    | `a AND b`        |
+| `[[a, b]]`      | `a OR b`         |
+| `[[a, b], [c]]` | `(a OR b) AND c` |
 
-In the declarative form, the outer array of `filterGroups` is AND-ed and each inner array is OR-ed:
+So a filter that must hold goes in a group of its own, while alternatives share one group:
 
 ```typescript
 // (status = 1 OR status = 2) AND created_at >= 2026-01-01
@@ -289,6 +296,8 @@ In the declarative form, the outer array of `filterGroups` is AND-ed and each in
   ];
 }
 ```
+
+Empty groups are dropped, so a conditionally-built `filterGroups` cannot produce a group Commerce would reject.
 
 #### Condition types
 
@@ -307,31 +316,23 @@ A few behaviours worth knowing:
 - **`in` / `nin`** accept an array, which is comma-joined for you. Commerce has no way to escape a comma inside such a list, so values containing commas cannot be expressed.
 
   ```typescript
-  searchCriteria().filter({
-    field: "entity_id",
-    value: [1, 2, 3],
-    conditionType: "in",
-  });
+  { field: "entity_id", value: [1, 2, 3], conditionType: "in" }
   ```
 
 - **`null` / `notnull`** ignore the value at the SQL level, so it is optional — but any value you do supply is forwarded, and on a **non-static EAV attribute** that matters. Commerce only switches the attribute join to `LEFT` when a `null` filter arrives carrying a value; without one the `INNER` join cannot match entities that have no value row, which is usually what is wanted. When filtering an EAV attribute for nullness, pass a value:
 
   ```typescript
-  searchCriteria().filter({
+  {
     field: "my_custom_attribute",
     value: 1, // ignored by the SQL, but forces the LEFT join
     conditionType: "null",
-  });
+  }
   ```
 
 - **`like` / `nlike`** require you to supply the SQL wildcards yourself — they are not added automatically, so that exact matches stay expressible.
 
   ```typescript
-  searchCriteria().filter({
-    field: "name",
-    value: "%shirt%",
-    conditionType: "like",
-  });
+  { field: "name", value: "%shirt%", conditionType: "like" }
   ```
 
 - **`seq` / `sneq`** compare strings, but Commerce rewrites them to a null check when the value is an empty string: `seq` becomes `IS NULL` and `sneq` becomes `IS NOT NULL`. With a non-empty value they behave as `eq` and `neq`. This makes them useful for a value that may legitimately be blank.
@@ -340,33 +341,39 @@ A few behaviours worth knowing:
 
 #### Reusing a base query
 
-Builders are immutable. Every method returns a new builder, so a partially-applied query can be shared safely:
+A `SearchCriteria` is inert until it is serialized, so a base query can be declared once and specialized per call with a spread:
 
 ```typescript
-const recent = searchCriteria()
-  .filter({ field: "created_at", value: since, conditionType: "gteq" })
-  .sort("created_at", "DESC");
+import {
+  buildSearchCriteria,
+  type SearchCriteria,
+} from "@adobe/aio-commerce-lib-api";
 
-const page1 = recent
-  .paginate({ pageSize: 50, currentPage: 1 })
-  .toSearchParams();
-const page2 = recent
-  .paginate({ pageSize: 50, currentPage: 2 })
-  .toSearchParams();
+const recent = {
+  filterGroups: [
+    [{ field: "created_at", value: since, conditionType: "gteq" }],
+  ],
+  sortOrders: [{ field: "created_at", direction: "DESC" }],
+} satisfies SearchCriteria;
+
+const page1 = buildSearchCriteria({ ...recent, pageSize: 50, currentPage: 1 });
+const page2 = buildSearchCriteria({ ...recent, pageSize: 50, currentPage: 2 });
 ```
 
-`.toJSON()` returns the underlying `SearchCriteria`, so a fluent chain can be handed to code that expects the plain object, and `searchCriteria(initial)` accepts one to start from.
+To extend the base rather than override it, spread the arrays too — `filterGroups: [...recent.filterGroups, [{ field: "sku", value: sku }]]`.
 
 #### Combining with other query parameters
 
 Endpoints can take search criteria alongside unrelated query parameters. For example, the universal [`fields`](https://developer.adobe.com/commerce/webapi/rest/use-rest/retrieve-filtered-responses/) parameter can be used on any endpoint to trim the response.
 
-Use `.toRecord()` (or `buildSearchCriteriaRecord()`) and spread it:
+Use `buildSearchCriteriaRecord()` and spread it:
 
 ```typescript
 await commerceClient.get("products", {
   searchParams: {
-    ...searchCriteria().filter({ field: "sku", value: "24-MB01" }).toRecord(),
+    ...buildSearchCriteriaRecord({
+      filterGroups: [[{ field: "sku", value: "24-MB01" }]],
+    }),
     fields: "items[sku,name]",
   },
 });
@@ -375,9 +382,9 @@ await commerceClient.get("products", {
 Or set additional parameters on the `URLSearchParams`, which is mutable:
 
 ```typescript
-const searchParams = searchCriteria()
-  .filter({ field: "sku", value: "24-MB01" })
-  .toSearchParams();
+const searchParams = buildSearchCriteria({
+  filterGroups: [[{ field: "sku", value: "24-MB01" }]],
+});
 
 searchParams.set("fields", "items[sku,name]");
 
@@ -385,7 +392,7 @@ await commerceClient.get("products", { searchParams });
 ```
 
 > [!NOTE]
-> The builder serializes whatever you describe; it does not check that a field exists or that the endpoint you are calling supports search criteria. Invalid criteria surface as a Commerce `400`, which [`unwrapHttpError`](#unwrapping-http-errors) will make readable.
+> Serialization is faithful to whatever you describe; it does not check that a field exists or that the endpoint you are calling supports search criteria. Invalid criteria surface as a Commerce `400`, which [`unwrapHttpError`](#unwrapping-http-errors) will make readable.
 
 ### Forwarding IMS Authentication
 
