@@ -132,7 +132,7 @@ The `<package>/<action>` format in `runtimeActions` maps directly: `my-app/handl
 
 Event handlers receive a CloudEvents-shaped payload. `params.data` bundles the event payload together with metadata, so don't read fields directly off `params.data`: `params.data.value` is the event payload — the fields declared in the event's `fields` array (or the full payload if `fields` is empty); `params.data._metadata` is Commerce instance metadata; `params.data.source` is the merchant/environment ID pair configured in the Commerce eventing configuration.
 
-Not every event shares the same payload shape: some (e.g. `order.*`) wrap the payload in an object, while others are flat. Check the [Adobe Commerce events reference](https://developer.adobe.com/commerce/extensibility/events/events-reference) for the given event before deciding on a `fields` path or reading a field off `value`.
+Payload shape varies by event — check the [Adobe Commerce events reference](https://developer.adobe.com/commerce/extensibility/events/events-reference) for the specific event name before deciding on a `fields` path. Some events nest the payload in a sub-object (e.g. `value.order.entity_id`); others put the fields flat on `value` (e.g. `value.order_id`), as in the example below.
 
 ```typescript
 // src/commerce-extensibility-1/actions/handle-order-placed/index.ts
@@ -142,7 +142,7 @@ export async function main(params: Record<string, unknown>) {
   // value contains the fields declared in the event's `fields` array
   // (or the full payload if fields is empty)
 
-  const orderId = value["order_id"];
+  const orderId = value.order_id;
 
   // process the event ...
 
@@ -162,7 +162,7 @@ import { resolveImsAuthParams } from "@adobe/aio-commerce-lib-auth";
 export async function main(params: Record<string, unknown>) {
   const data = params.data as Record<string, unknown>;
   const value = data.value as Record<string, unknown>;
-  const orderId = value["order_id"];
+  const orderId = value.order_id;
 
   const client = await getCommerceClient(resolveImsAuthParams(params));
   const order = await client.get(`orders/${orderId}`).json();
