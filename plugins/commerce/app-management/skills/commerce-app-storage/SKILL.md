@@ -19,7 +19,7 @@ metadata:
 
 # Add Database Storage to a Commerce App
 
-Integrates App Builder Database Storage into an existing Commerce app and scaffolds a runtime action that uses `@adobe/aio-lib-db` to read and write documents. The library is MongoDB-like for data modeling and querying — data lives in collections of documents, queried with familiar filters — but `findOne` diverges from MongoDB semantics on a miss: instead of resolving to `null`, it throws a `DbError` (see the "Common Issues" section below).
+Integrates App Builder Database Storage into an existing Commerce app and scaffolds a runtime action that uses `@adobe/aio-lib-db` to read and write documents. The library is MongoDB-like: data lives in collections of documents, queried with familiar filters.
 
 The db-access code is identical regardless of action type — what differs is how the action is registered and what its handler returns:
 
