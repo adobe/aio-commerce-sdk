@@ -6,7 +6,7 @@ type FilesStoreOptions = {
 };
 ```
 
-Defined in: [storage/types.ts:67](https://github.com/adobe/aio-commerce-sdk/blob/71bf66656ef1fc6dd272a0821e8b00aab5dc197e/packages-private/common-utils/source/storage/types.ts#L67)
+Defined in: [storage/types.ts:67](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages-private/common-utils/source/storage/types.ts#L67)
 
 Options for creating a lib-files based store.
 
@@ -18,6 +18,6 @@ Options for creating a lib-files based store.
 optional dirPrefix?: string;
 ```
 
-Defined in: [storage/types.ts:69](https://github.com/adobe/aio-commerce-sdk/blob/71bf66656ef1fc6dd272a0821e8b00aab5dc197e/packages-private/common-utils/source/storage/types.ts#L69)
+Defined in: [storage/types.ts:69](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages-private/common-utils/source/storage/types.ts#L69)
 
 Directory prefix for all files.

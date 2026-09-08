@@ -16,7 +16,7 @@ type IoEventRegistrationPaginatedResponse = {
 };
 ```
 
-Defined in: [io-events/api/event-registrations/types.ts:93](https://github.com/adobe/aio-commerce-sdk/blob/71bf66656ef1fc6dd272a0821e8b00aab5dc197e/packages/aio-commerce-lib-events/source/io-events/api/event-registrations/types.ts#L93)
+Defined in: [io-events/api/event-registrations/types.ts:93](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-events/source/io-events/api/event-registrations/types.ts#L93)
 
 Defines the fields of paginated I/O event registration entities returned by the Adobe I/O Events API (consumer org-level).
 
@@ -30,7 +30,7 @@ _embedded: {
 };
 ```
 
-Defined in: [io-events/api/event-registrations/types.ts:95](https://github.com/adobe/aio-commerce-sdk/blob/71bf66656ef1fc6dd272a0821e8b00aab5dc197e/packages/aio-commerce-lib-events/source/io-events/api/event-registrations/types.ts#L95)
+Defined in: [io-events/api/event-registrations/types.ts:95](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-events/source/io-events/api/event-registrations/types.ts#L95)
 
 #### registrations
 
@@ -52,7 +52,7 @@ _links: {
 };
 ```
 
-Defined in: [io-events/api/event-registrations/types.ts:98](https://github.com/adobe/aio-commerce-sdk/blob/71bf66656ef1fc6dd272a0821e8b00aab5dc197e/packages/aio-commerce-lib-events/source/io-events/api/event-registrations/types.ts#L98)
+Defined in: [io-events/api/event-registrations/types.ts:98](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-events/source/io-events/api/event-registrations/types.ts#L98)
 
 #### first?
 
@@ -92,4 +92,4 @@ self: HALLink;
 page: PageMetadata;
 ```
 
-Defined in: [io-events/api/event-registrations/types.ts:94](https://github.com/adobe/aio-commerce-sdk/blob/71bf66656ef1fc6dd272a0821e8b00aab5dc197e/packages/aio-commerce-lib-events/source/io-events/api/event-registrations/types.ts#L94)
+Defined in: [io-events/api/event-registrations/types.ts:94](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-events/source/io-events/api/event-registrations/types.ts#L94)

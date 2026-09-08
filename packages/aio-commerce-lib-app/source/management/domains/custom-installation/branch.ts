@@ -11,11 +11,64 @@
  */
 
 import { hasCustomInstallationSteps } from "#config/schema/installation";
-import { defineBranchStep } from "#management/common/workflow/index";
+import {
+  defineBranchStep,
+  defineLeafStep,
+} from "#management/common/workflow/index";
 
-import { createCustomScriptSteps } from "./custom-scripts";
+import { applyCustomInstallationSteps } from "./apply";
+import {
+  createCustomScriptStep,
+  createCustomScriptSteps,
+} from "./custom-scripts";
+import { planCustomInstallationSteps } from "./plan";
 
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
+import type {
+  CustomInstallationSnapshotData,
+  CustomInstallationStepIdentity,
+} from "./types";
+
+/**
+ * Leaf step that reconciles the custom installation steps domain as a whole via `plan`/`apply`.
+ * It participates only in the upgrade tree; the per-script leaves handle install and uninstall.
+ */
+const reconciliationStep = defineLeafStep({
+  apply: applyCustomInstallationSteps,
+
+  // Unused in practice: this leaf only runs on upgrade (via `apply`), but `LeafStep` requires an
+  // `install`.
+  install: (
+    config: CommerceAppConfigOutputModel,
+  ): CustomInstallationSnapshotData => {
+    if (!hasCustomInstallationSteps(config)) {
+      return { executedSteps: [] };
+    }
+
+    const executedSteps: CustomInstallationStepIdentity[] =
+      config.installation.customInstallationSteps.map((step) => ({
+        name: step.name,
+        script: step.script,
+      }));
+
+    return { executedSteps };
+  },
+
+  meta: {
+    install: {
+      description:
+        "Records which custom installation steps ran, so future upgrades can detect additions and removals",
+      label: "Reconcile Custom Installation Steps",
+    },
+    upgrade: {
+      description:
+        "Runs custom installation steps added since the last version",
+      label: "Reconcile Custom Installation Steps",
+    },
+  },
+  name: "reconciliation",
+  plan: planCustomInstallationSteps,
+});
 
 /** Root custom installation step that executes custom installation scripts. */
 const customInstallationStepBase = defineBranchStep({
@@ -33,19 +86,58 @@ const customInstallationStepBase = defineBranchStep({
         "Executes custom uninstallation scripts defined in the application configuration",
       label: "Custom Uninstallation Steps",
     },
+    upgrade: {
+      description:
+        "Reconciles custom installation steps added or removed between versions",
+      label: "Custom Installation Steps",
+    },
   },
   name: "customInstallationSteps",
 });
 
 /**
- * Creates the custom installation step with dynamic children based on config.
- * Each custom script becomes a direct child step.
+ * Creates the custom installation step with dynamic children based on config. `executedSteps` is
+ * the recorded run history, only passed when building the full-uninstall tree.
+ * `includeReconciliation` adds the reconciliation leaf, which only runs on upgrade; install and
+ * uninstall leave it out.
  */
 export function createCustomInstallationStep(
   config: CommerceAppConfigOutputModel,
+  executedSteps: readonly CustomInstallationStepIdentity[] = [],
+  includeReconciliation = false,
 ) {
+  const children =
+    executedSteps.length > 0
+      ? // The history is append-only, so its order is the real install order; reverse it to
+        // uninstall the newest step first.
+        [...executedSteps].reverse().map((identity) => {
+          const currentStep = hasCustomInstallationSteps(config)
+            ? config.installation.customInstallationSteps.find(
+                (step) => step.name === identity.name,
+              )
+            : undefined;
+
+          return createCustomScriptStep(
+            currentStep ?? {
+              description:
+                "Previously executed custom installation step, no longer present in the configuration.",
+              name: identity.name,
+              script: identity.script,
+            },
+          );
+        })
+      : [
+          ...createCustomScriptSteps(config),
+          ...(includeReconciliation ? [reconciliationStep] : []),
+        ];
+
   return {
     ...customInstallationStepBase,
-    children: createCustomScriptSteps(config),
+    children,
+
+    // Keep the branch "configured" when there's step history to uninstall, even if the current
+    // config has no custom steps; otherwise a full uninstall would never visit these leaves.
+    isConfigured: (candidateConfig: CommerceAppConfigOutputModel) =>
+      hasCustomInstallationSteps(candidateConfig) || executedSteps.length > 0,
   };
 }

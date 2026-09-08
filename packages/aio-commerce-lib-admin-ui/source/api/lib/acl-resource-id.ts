@@ -23,9 +23,9 @@ export const PREFIX = "Magento_CommerceBackendUix::adminuisdk_app_";
 
 /**
  * Sanitizes a single ACL id segment: trims whitespace, lowercases, and replaces every
- * character outside [a-z0-9_] with an underscore.
- *
- * @internal Exported for use by domain ACL helpers only — not part of the public API.
+ * character outside [a-z0-9_] with an underscore. This mirrors the Commerce module's own
+ * per-segment normalization — the same step applied when building any ACL resource id from a
+ * config id.
  */
 export function sanitizeSegment(segment: string): string {
   return segment
@@ -58,6 +58,40 @@ export function getAclResourceId(metadataId: string): string {
     return "";
   }
   return `${PREFIX}${sanitizeSegment(metadataId)}`;
+}
+
+/**
+ * Derives the deterministic Commerce ACL resource id for a custom (standalone) ACL resource
+ * declared under `adminUi.acl`. Mirrors the Commerce `AclResourceIdGenerator` `acl` token exactly.
+ *
+ * With only `resourceId`, returns the id of a top-level resource or a group node; with `childId`,
+ * returns the id of a leaf inside that group. Each segment is sanitized independently (trim,
+ * lowercase, non-`[a-z0-9_]` → `_`).
+ *
+ * @example
+ * ```
+ * getCustomAclResourceId("my-app", "approve_refunds")
+ * // → "Magento_CommerceBackendUix::adminuisdk_app_my_app_acl_approve_refunds"
+ * getCustomAclResourceId("my-app", "reports", "export")
+ * // → "Magento_CommerceBackendUix::adminuisdk_app_my_app_acl_reports_export"
+ * ```
+ *
+ * @param metadataId - The application's `metadata.id` value.
+ * @param resourceId - The top-level resource or group `id` from `adminUi.acl`.
+ * @param childId - Optional child leaf `id` when addressing a resource inside a group.
+ * @returns The full Commerce ACL resource id, or an empty string when `metadataId` is blank.
+ */
+export function getCustomAclResourceId(
+  metadataId: string,
+  resourceId: string,
+  childId?: string,
+): string {
+  const appRoot = getAclResourceId(metadataId);
+  if (appRoot === "") {
+    return "";
+  }
+  const base = `${appRoot}_acl_${sanitizeSegment(resourceId)}`;
+  return childId === undefined ? base : `${base}_${sanitizeSegment(childId)}`;
 }
 
 /** Commerce entity an Admin UI component is attached to. */

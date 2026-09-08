@@ -616,6 +616,19 @@ export default defineCustomInstallationStep(async (config, context) => {
 - If any script throws an error, the entire installation fails and subsequent scripts are not executed
 - Scripts have access to the complete app configuration and can use it to make decisions
 
+##### Custom Installation Steps During an Upgrade
+
+Custom installation steps behave like database migrations across an upgrade: each step's `install` runs once, the first time its `name` shows up, and is never re-run afterward.
+
+- **Adding a step**: give it a new `name` and its `install` runs on the next upgrade, same as a fresh install.
+- **Editing a step that already ran**: don't. Changing a step's script after it has run does **not** re-run it on upgrade, so the change silently has no effect. To change behavior, add a new step with a different `name` instead. (If you point an existing `name` at a different `script` path, the upgrade logs a warning, but still does not re-run it.)
+- **Removing a step**: taking a step out of `customInstallationSteps` doesn't run its `uninstall` during that upgrade. `uninstall` only runs for every step that ever ran (whether or not it's still configured) when the app is fully uninstalled.
+
+Two things follow from this:
+
+- Prefer the object form (`{ install, uninstall }`) over the plain function form for any step you may need to clean up later — a step with no `uninstall` can't be cleaned up when the app is uninstalled.
+- Don't delete a step's script file from your project while the step (or an app that ran it) might still need its `uninstall` called at uninstall time.
+
 #### Admin UI Configuration
 
 The `adminUi` field declares Admin UI registrations for the `commerce/backend-ui/2` extension point. Unlike `commerce/backend-ui/1`, which required a dedicated registration action, V2 reads the registration directly from the `app-config` endpoint — no separate registration action is generated. Every field of `adminUi` is optional — configure only the extension points your application needs. When defined, `init` and `generate all` automatically wire up the extension, including the `pre-app-build` hook and the `workerProcess` declarations in `ext.config.yaml`.
@@ -902,6 +915,25 @@ adminUi: {
   });
   const allowed = await client.check(); // uses appId to resolve the resource id
   ```
+
+#### Custom ACL Resources
+
+Declare standalone permissions under `adminUi.acl` that are not tied to any Admin UI element. Commerce
+renders them in the Admin User Roles tree so a merchant can grant or deny them; your app checks them at
+runtime (see `getCustomAclResourceId` in `@adobe/aio-commerce-lib-admin-ui`) to gate its own logic.
+Resources are flat leaves or one-level groups. Each resource has an `id` (lowercase letters, digits,
+`_`; unique per level) and a `label` (3–50 characters — the text shown in the User Roles tree).
+
+```ts
+adminUi: {
+  acl: [
+    { id: "reports", label: "Reports", children: [
+      { id: "export", label: "Export" },
+    ]},
+    { id: "approve_refunds", label: "Approve Refunds" },
+  ],
+}
+```
 
 ### CLI Commands
 

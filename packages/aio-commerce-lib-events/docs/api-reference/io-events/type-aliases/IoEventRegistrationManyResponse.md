@@ -11,7 +11,7 @@ type IoEventRegistrationManyResponse = {
 };
 ```
 
-Defined in: [io-events/api/event-registrations/types.ts:83](https://github.com/adobe/aio-commerce-sdk/blob/71bf66656ef1fc6dd272a0821e8b00aab5dc197e/packages/aio-commerce-lib-events/source/io-events/api/event-registrations/types.ts#L83)
+Defined in: [io-events/api/event-registrations/types.ts:83](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-events/source/io-events/api/event-registrations/types.ts#L83)
 
 Defines the fields of many I/O event registration entities returned by the Adobe I/O Events API (workspace-specific).
 
@@ -25,7 +25,7 @@ _embedded: {
 };
 ```
 
-Defined in: [io-events/api/event-registrations/types.ts:84](https://github.com/adobe/aio-commerce-sdk/blob/71bf66656ef1fc6dd272a0821e8b00aab5dc197e/packages/aio-commerce-lib-events/source/io-events/api/event-registrations/types.ts#L84)
+Defined in: [io-events/api/event-registrations/types.ts:84](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-events/source/io-events/api/event-registrations/types.ts#L84)
 
 #### registrations
 
@@ -43,7 +43,7 @@ _links: {
 }
 ```
 
-Defined in: [io-events/api/event-registrations/types.ts:87](https://github.com/adobe/aio-commerce-sdk/blob/71bf66656ef1fc6dd272a0821e8b00aab5dc197e/packages/aio-commerce-lib-events/source/io-events/api/event-registrations/types.ts#L87)
+Defined in: [io-events/api/event-registrations/types.ts:87](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-events/source/io-events/api/event-registrations/types.ts#L87)
 
 #### self
 

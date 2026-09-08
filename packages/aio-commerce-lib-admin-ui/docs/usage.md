@@ -372,7 +372,7 @@ getMenuAclResourceId("approval-dashboard-app", "approval_dashboard");
 // → "Magento_CommerceBackendUix::adminuisdk_app_approval_dashboard_app_menu_approval_dashboard"
 ```
 
-Each segment is sanitized independently (trimmed, lowercased, non-`[a-z0-9_]` characters replaced with `_`), mirroring the Commerce module's id generator exactly. `getMenuAclResourceId` returns an empty string when `metadataId` is blank. Pass either id to `check()` or `require()`:
+Each segment is sanitized independently (trimmed, lowercased, non-`[a-z0-9_]` characters replaced with `_`), mirroring the Commerce module's id generator exactly. The `sanitizeSegment` helper that performs this per-segment normalization is also exported from `@adobe/aio-commerce-lib-admin-ui/api`, so you can reproduce how Commerce normalizes a single id segment. `getMenuAclResourceId` returns an empty string when `metadataId` is blank. Pass either id to `check()` or `require()`:
 
 ```typescript
 const allowed = await permissionClient.check(
@@ -480,6 +480,32 @@ The same shape applies to the other components — swap in the matching trio of 
 - **Order view buttons**: `parseOrderViewButtonRequest` → `getOrderViewButtonAclResourceId(appId, buttonId)` → `okOrderViewButtonResponse` / `orderViewButtonErrorResponse`.
 
 For grid columns, gate the work per the request's `gridType`; for order view buttons, the entity is always `order`, so only the `appId` and `buttonId` segments vary.
+
+#### Custom ACL Resources
+
+Apps can declare standalone ACL permissions under `adminUi.acl` in their `app.commerce.config.*` (see the `@adobe/aio-commerce-lib-app` documentation). These resources are not bound to any UI element; instead, Commerce renders them in the Admin User Roles tree so merchants can grant or deny them per role. Your app checks them at runtime to gate its own logic.
+
+Use `getCustomAclResourceId` to derive the Commerce ACL resource id for a custom ACL resource:
+
+```typescript
+import {
+  getCustomAclResourceId,
+  getAdminUiPermissionClient,
+} from "@adobe/aio-commerce-lib-admin-ui";
+
+const client = getAdminUiPermissionClient({ httpClient, appId: "my-app" });
+const canExport = await client.check(
+  getCustomAclResourceId("my-app", "reports", "export"),
+);
+```
+
+`getCustomAclResourceId(appId, resourceId, childId?)` takes three parameters:
+
+- **appId** — the `metadata.id` from your app configuration
+- **resourceId** — the `id` of the top-level or group-level resource defined in `adminUi.acl`
+- **childId** (optional) — the `id` of a child resource within a group (when the resource is a leaf node, omit this)
+
+Each segment is sanitized independently (trimmed, lowercased, non-`[a-z0-9_]` characters replaced with `_`), matching the Commerce module's generator exactly. The function returns an empty string when `appId` is blank.
 
 ### Web Extension App
 

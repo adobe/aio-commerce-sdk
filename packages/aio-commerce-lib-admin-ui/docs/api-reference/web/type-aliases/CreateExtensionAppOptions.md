@@ -11,7 +11,7 @@ type CreateExtensionAppOptions = {
 };
 ```
 
-Defined in: [aio-commerce-lib-admin-ui/source/web/react/extension/create-app.tsx:32](https://github.com/adobe/aio-commerce-sdk/blob/71bf66656ef1fc6dd272a0821e8b00aab5dc197e/packages/aio-commerce-lib-admin-ui/source/web/react/extension/create-app.tsx#L32)
+Defined in: [aio-commerce-lib-admin-ui/source/web/react/extension/create-app.tsx:32](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-admin-ui/source/web/react/extension/create-app.tsx#L32)
 
 Configuration options when instantiating an extension app.
 
@@ -23,7 +23,7 @@ Configuration options when instantiating an extension app.
 optional menu?: ReactNode;
 ```
 
-Defined in: [aio-commerce-lib-admin-ui/source/web/react/extension/create-app.tsx:40](https://github.com/adobe/aio-commerce-sdk/blob/71bf66656ef1fc6dd272a0821e8b00aab5dc197e/packages/aio-commerce-lib-admin-ui/source/web/react/extension/create-app.tsx#L40)
+Defined in: [aio-commerce-lib-admin-ui/source/web/react/extension/create-app.tsx:40](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-admin-ui/source/web/react/extension/create-app.tsx#L40)
 
 The optional app page opened from the Commerce Admin menu and by default in Experience Cloud Shell.
 
@@ -37,7 +37,7 @@ metadata: {
 }
 ```
 
-Defined in: [aio-commerce-lib-admin-ui/source/web/react/extension/create-app.tsx:34](https://github.com/adobe/aio-commerce-sdk/blob/71bf66656ef1fc6dd272a0821e8b00aab5dc197e/packages/aio-commerce-lib-admin-ui/source/web/react/extension/create-app.tsx#L34)
+Defined in: [aio-commerce-lib-admin-ui/source/web/react/extension/create-app.tsx:34](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-admin-ui/source/web/react/extension/create-app.tsx#L34)
 
 General metadata about the extension app.
 
@@ -57,7 +57,7 @@ The unique identifier for the extension app.
 optional root?: HTMLElement;
 ```
 
-Defined in: [aio-commerce-lib-admin-ui/source/web/react/extension/create-app.tsx:43](https://github.com/adobe/aio-commerce-sdk/blob/71bf66656ef1fc6dd272a0821e8b00aab5dc197e/packages/aio-commerce-lib-admin-ui/source/web/react/extension/create-app.tsx#L43)
+Defined in: [aio-commerce-lib-admin-ui/source/web/react/extension/create-app.tsx:43](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-admin-ui/source/web/react/extension/create-app.tsx#L43)
 
 Optional root element where the app will be mounted.
 
@@ -69,6 +69,6 @@ Optional root element where the app will be mounted.
 optional routes?: ExtensionRoute[];
 ```
 
-Defined in: [aio-commerce-lib-admin-ui/source/web/react/extension/create-app.tsx:46](https://github.com/adobe/aio-commerce-sdk/blob/71bf66656ef1fc6dd272a0821e8b00aab5dc197e/packages/aio-commerce-lib-admin-ui/source/web/react/extension/create-app.tsx#L46)
+Defined in: [aio-commerce-lib-admin-ui/source/web/react/extension/create-app.tsx:46](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-admin-ui/source/web/react/extension/create-app.tsx#L46)
 
 Additional path-based routes for the extension app.

@@ -11,6 +11,6 @@ const GetAllRegistrationsParamsSchema: ObjectSchema<
 > = WorkspacePathParamsSchema;
 ```
 
-Defined in: [io-events/api/event-registrations/schema.ts:154](https://github.com/adobe/aio-commerce-sdk/blob/71bf66656ef1fc6dd272a0821e8b00aab5dc197e/packages/aio-commerce-lib-events/source/io-events/api/event-registrations/schema.ts#L154)
+Defined in: [io-events/api/event-registrations/schema.ts:154](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-events/source/io-events/api/event-registrations/schema.ts#L154)
 
 Schema for getting all registrations for a workspace.

@@ -1,6 +1,6 @@
 {
   "name": "@adobe/aio-commerce-lib-app",
-  "version": "1.10.1",
+  "version": "1.11.0",
   "private": false,
   "description": "App configuration management library for Adobe Commerce applications",
   "keywords": [
@@ -113,7 +113,7 @@
     "@react-spectrum/s2": "catalog:react",
     "@types/react": "catalog:react",
     "msw": "catalog:",
-    "openapi-format": "1.33.6",
+    "openapi-format": "1.33.7",
     "react": "catalog:react",
     "typescript": "catalog:"
   },

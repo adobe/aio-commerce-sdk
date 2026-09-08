@@ -4,7 +4,7 @@
 function syncImsCredentials(cwd?: string): Promise<SyncImsCredentialsResult>;
 ```
 
-Defined in: [env.ts:138](https://github.com/adobe/aio-commerce-sdk/blob/71bf66656ef1fc6dd272a0821e8b00aab5dc197e/packages-private/scripting-utils/source/env.ts#L138)
+Defined in: [env.ts:138](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages-private/scripting-utils/source/env.ts#L138)
 
 Syncs the IMS credentials environment variables from the configured IMS context in
 the .env file, in a way that is compatible with `@adobe/aio-commerce-lib-auth`.

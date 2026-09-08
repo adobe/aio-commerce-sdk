@@ -1,5 +1,11 @@
 # @adobe/aio-commerce-lib-config
 
+## 1.7.0
+
+### Minor Changes
+
+- [#650](https://github.com/adobe/aio-commerce-sdk/pull/650) [`f3ea3a6`](https://github.com/adobe/aio-commerce-sdk/commit/f3ea3a64ac59c978f28865274fa282ec991ea529) Thanks [@jcuerdo](https://github.com/jcuerdo)! - Add a `RecordedSchemaBusinessConfig` schema (and matching `RecordedBusinessConfig` type) that accepts `dynamicList` fields recovered from storage without their `options`/`default` functions, since those cannot survive a JSON round trip.
+
 ## 1.6.1
 
 ### Patch Changes

@@ -7,7 +7,7 @@ type StateStoreOptions = {
 };
 ```
 
-Defined in: [storage/types.ts:57](https://github.com/adobe/aio-commerce-sdk/blob/71bf66656ef1fc6dd272a0821e8b00aab5dc197e/packages-private/common-utils/source/storage/types.ts#L57)
+Defined in: [storage/types.ts:57](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages-private/common-utils/source/storage/types.ts#L57)
 
 Options for creating a lib-state based store.
 
@@ -19,7 +19,7 @@ Options for creating a lib-state based store.
 optional keyPrefix?: string;
 ```
 
-Defined in: [storage/types.ts:59](https://github.com/adobe/aio-commerce-sdk/blob/71bf66656ef1fc6dd272a0821e8b00aab5dc197e/packages-private/common-utils/source/storage/types.ts#L59)
+Defined in: [storage/types.ts:59](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages-private/common-utils/source/storage/types.ts#L59)
 
 Key prefix for all entries.
 
@@ -31,6 +31,6 @@ Key prefix for all entries.
 optional ttlSeconds?: number;
 ```
 
-Defined in: [storage/types.ts:61](https://github.com/adobe/aio-commerce-sdk/blob/71bf66656ef1fc6dd272a0821e8b00aab5dc197e/packages-private/common-utils/source/storage/types.ts#L61)
+Defined in: [storage/types.ts:61](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages-private/common-utils/source/storage/types.ts#L61)
 
 TTL in seconds for cached entries.

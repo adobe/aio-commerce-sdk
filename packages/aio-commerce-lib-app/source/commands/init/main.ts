@@ -101,8 +101,8 @@ export async function run(flags?: InitFlags, extraOptions?: InitExtraOptions) {
   }
 
   await runGeneration(config, execCommand, projectRoot);
-  await ensureAppConfig(domains, projectRoot);
-  await ensureInstallYaml(domains, projectRoot);
+  await ensureAppConfig(domains, config, projectRoot);
+  await ensureInstallYaml(domains, config, projectRoot);
 
   // Register the postinstall hook last so future installs run after init has
   // created the files the hook depends on.

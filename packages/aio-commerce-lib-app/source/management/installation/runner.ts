@@ -37,6 +37,7 @@ import type {
   WorkflowRunState,
 } from "#management/common/workflow/index";
 import type { ValidationResult } from "#management/common/workflow/validation";
+import type { CustomInstallationStepIdentity } from "#management/domains/custom-installation/index";
 
 /** Lifecycle hooks for an installation or uninstallation run. */
 export type InstallationHooks = {
@@ -172,6 +173,13 @@ export async function runInstallation(
 export type CreateInitialUninstallationStateOptions = {
   /** The app configuration used to determine applicable steps. */
   config: CommerceAppConfigOutputModel;
+
+  /**
+   * Persisted history of every custom installation step that ever ran, from the lifecycle
+   * baseline snapshot. Lets a full unassociate reach steps removed from `config` in a previous
+   * upgrade. Defaults to `[]` when there is no recorded history (e.g. legacy installs).
+   */
+  executedCustomInstallationSteps?: readonly CustomInstallationStepIdentity[];
 };
 
 /** Options for running an uninstallation. */
@@ -184,6 +192,9 @@ export type RunUninstallationOptions = {
   initialState: InProgressWorkflowState;
   /** Lifecycle hooks for status change notifications. */
   hooks?: InstallationHooks;
+
+  /** Same as {@link CreateInitialUninstallationStateOptions.executedCustomInstallationSteps}. */
+  executedCustomInstallationSteps?: readonly CustomInstallationStepIdentity[];
 };
 
 /**
@@ -192,8 +203,11 @@ export type RunUninstallationOptions = {
 export function createInitialUninstallationState(
   options: CreateInitialUninstallationStateOptions,
 ): InProgressWorkflowState {
-  const { config } = options;
-  const rootStep = createRootUninstallationStep(config);
+  const { config, executedCustomInstallationSteps = [] } = options;
+  const rootStep = createRootUninstallationStep(
+    config,
+    executedCustomInstallationSteps,
+  );
   return createInitialState({ config, mode: "uninstall", rootStep });
 }
 
@@ -203,8 +217,17 @@ export function createInitialUninstallationState(
 export function runUninstallation(
   options: RunUninstallationOptions,
 ): Promise<SucceededWorkflowState | FailedWorkflowState> {
-  const { installationContext, config, initialState, hooks } = options;
-  const rootStep = createRootUninstallationStep(config);
+  const {
+    installationContext,
+    config,
+    initialState,
+    hooks,
+    executedCustomInstallationSteps = [],
+  } = options;
+  const rootStep = createRootUninstallationStep(
+    config,
+    executedCustomInstallationSteps,
+  );
   return executeUninstallWorkflow({
     config,
     failureKey: "INSTALLATION_FAILED",

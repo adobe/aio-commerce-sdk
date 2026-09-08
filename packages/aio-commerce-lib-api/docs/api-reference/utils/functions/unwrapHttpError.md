@@ -4,7 +4,7 @@
 function unwrapHttpError(error: unknown): Promise<string>;
 ```
 
-Defined in: [aio-commerce-lib-api/source/utils/http/error.ts:34](https://github.com/adobe/aio-commerce-sdk/blob/71bf66656ef1fc6dd272a0821e8b00aab5dc197e/packages/aio-commerce-lib-api/source/utils/http/error.ts#L34)
+Defined in: [aio-commerce-lib-api/source/utils/http/error.ts:34](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-api/source/utils/http/error.ts#L34)
 
 Unwraps a ky `HTTPError` to produce a human-readable string that includes the
 HTTP status and the message extracted from the response body.

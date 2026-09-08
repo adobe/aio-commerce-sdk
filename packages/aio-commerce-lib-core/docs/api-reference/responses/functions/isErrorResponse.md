@@ -6,7 +6,7 @@ function isErrorResponse(
 ): response is ErrorResponse<BodyRecordWithMessage, HeadersRecord>;
 ```
 
-Defined in: [responses/helpers.ts:132](https://github.com/adobe/aio-commerce-sdk/blob/71bf66656ef1fc6dd272a0821e8b00aab5dc197e/packages/aio-commerce-lib-core/source/responses/helpers.ts#L132)
+Defined in: [responses/helpers.ts:132](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-core/source/responses/helpers.ts#L132)
 
 Determines whether a value is a standardized SDK error response.
 

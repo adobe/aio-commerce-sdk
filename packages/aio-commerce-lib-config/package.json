@@ -1,6 +1,6 @@
 {
   "name": "@adobe/aio-commerce-lib-config",
-  "version": "1.6.1",
+  "version": "1.7.0",
   "private": false,
   "description": "Configuration management utilities for Adobe Commerce apps deployed in Adobe App Builder",
   "keywords": [

@@ -39,6 +39,7 @@ import {
   createLifecyclePersistence,
   createUninstallationStore,
   DEFAULT_ACTION_NAME,
+  getExecutedCustomInstallationSteps,
   getStorageKey,
 } from "./common";
 
@@ -89,8 +90,13 @@ export async function startUninstallation({
       : "No recorded lifecycle baseline found; falling back to request config",
   );
 
+  const executedCustomInstallationSteps = getExecutedCustomInstallationSteps(
+    installationSnapshot?.data,
+  );
+
   const initialState = createInitialUninstallationState({
     config: validateRecordedCommerceAppConfig(uninstallConfig),
+    executedCustomInstallationSteps,
   });
   logger.debug(`Created initial uninstall state: ${initialState.id}`);
   await store.put(getStorageKey(), initialState);
@@ -104,6 +110,7 @@ export async function startUninstallation({
       __ow_method: "post",
       __ow_path: "/uninstallation/execution",
       appConfig: uninstallConfig,
+      executedCustomInstallationSteps,
       initialState,
     },
     result: false,
@@ -129,6 +136,7 @@ export async function executeUninstallation({
     appConfig: rawAppConfig,
     appData,
     AIO_COMMERCE_API_BASE_URL,
+    executedCustomInstallationSteps = [],
   } = params;
 
   // params is an unchecked cast over raw runtime action params, so initialState
@@ -152,6 +160,7 @@ export async function executeUninstallation({
 
   const result = await runUninstallation({
     config: appConfig,
+    executedCustomInstallationSteps,
     hooks,
     initialState,
     installationContext,

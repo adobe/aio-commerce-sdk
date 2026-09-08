@@ -1330,6 +1330,7 @@ describe("installationRuntimeAction", () => {
       // Uninstall must be built from the recorded snapshot config.
       expect(createInitialUninstallationStateMock).toHaveBeenCalledWith({
         config: configWithCommerceEventing,
+        executedCustomInstallationSteps: [],
       });
 
       // ...and the recorded config must flow to the async execution action.
@@ -1362,6 +1363,7 @@ describe("installationRuntimeAction", () => {
 
       expect(createInitialUninstallationStateMock).toHaveBeenCalledWith({
         config: minimalValidConfig,
+        executedCustomInstallationSteps: [],
       });
     });
 
@@ -1390,6 +1392,7 @@ describe("installationRuntimeAction", () => {
 
       expect(createInitialUninstallationStateMock).toHaveBeenCalledWith({
         config: minimalValidConfig,
+        executedCustomInstallationSteps: [],
       });
     });
 
@@ -1434,6 +1437,7 @@ describe("installationRuntimeAction", () => {
             ],
           }),
         }),
+        executedCustomInstallationSteps: [],
       });
     });
   });

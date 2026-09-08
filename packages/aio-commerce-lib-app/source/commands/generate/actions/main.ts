@@ -24,7 +24,10 @@ import {
   prepareWebSourceImportAlias,
 } from "#commands/generate/web-src";
 import { loadAppManifest } from "#commands/utils";
-import { hasAdminUi, hasBusinessConfigSchema } from "#config/index";
+import {
+  hasBackendUiV2Components,
+  hasBusinessConfigSchema,
+} from "#config/index";
 
 import { getRuntimeActions } from "./config";
 import { TEMPLATES_DIR } from "./constants";
@@ -78,7 +81,7 @@ export async function run(
     );
   }
 
-  if (hasAdminUi(appManifest)) {
+  if (hasBackendUiV2Components(appManifest)) {
     const extConfig = await updateExtConfig(
       appManifest,
       BACKEND_UI_V2_EXTENSION_POINT_ID,

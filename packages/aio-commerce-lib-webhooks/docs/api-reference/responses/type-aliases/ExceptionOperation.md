@@ -8,7 +8,7 @@ type ExceptionOperation = {
 };
 ```
 
-Defined in: [responses/operations/types.ts:25](https://github.com/adobe/aio-commerce-sdk/blob/71bf66656ef1fc6dd272a0821e8b00aab5dc197e/packages/aio-commerce-lib-webhooks/source/responses/operations/types.ts#L25)
+Defined in: [responses/operations/types.ts:25](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-webhooks/source/responses/operations/types.ts#L25)
 
 Exception operation response
 Causes Commerce to terminate the process that triggered the original event.
@@ -21,7 +21,7 @@ Causes Commerce to terminate the process that triggered the original event.
 optional message?: string;
 ```
 
-Defined in: [responses/operations/types.ts:30](https://github.com/adobe/aio-commerce-sdk/blob/71bf66656ef1fc6dd272a0821e8b00aab5dc197e/packages/aio-commerce-lib-webhooks/source/responses/operations/types.ts#L30)
+Defined in: [responses/operations/types.ts:30](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-webhooks/source/responses/operations/types.ts#L30)
 
 Specifies the exception message. If not set, fallbackErrorMessage or system default will be used.
 
@@ -33,7 +33,7 @@ Specifies the exception message. If not set, fallbackErrorMessage or system defa
 op: "exception";
 ```
 
-Defined in: [responses/operations/types.ts:26](https://github.com/adobe/aio-commerce-sdk/blob/71bf66656ef1fc6dd272a0821e8b00aab5dc197e/packages/aio-commerce-lib-webhooks/source/responses/operations/types.ts#L26)
+Defined in: [responses/operations/types.ts:26](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-webhooks/source/responses/operations/types.ts#L26)
 
 ---
 
@@ -43,6 +43,6 @@ Defined in: [responses/operations/types.ts:26](https://github.com/adobe/aio-comm
 optional type?: string;
 ```
 
-Defined in: [responses/operations/types.ts:28](https://github.com/adobe/aio-commerce-sdk/blob/71bf66656ef1fc6dd272a0821e8b00aab5dc197e/packages/aio-commerce-lib-webhooks/source/responses/operations/types.ts#L28)
+Defined in: [responses/operations/types.ts:28](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-webhooks/source/responses/operations/types.ts#L28)
 
 Specifies the exception class. If not set, \Magento\Framework\Exception\LocalizedException will be thrown.
