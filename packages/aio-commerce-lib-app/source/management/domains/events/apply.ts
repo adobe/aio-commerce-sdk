@@ -250,7 +250,11 @@ async function reconcileProviderSubResources(
   );
 }
 
-/** Finds the deployed I/O Events provider by its current or legacy instance id. */
+/**
+ * Finds the deployed I/O Events provider for a target, preferring the current workspace-scoped
+ * instance id over the legacy (workspace-less) one, and a metadata-bearing provider over an empty
+ * duplicate that shares its instance id.
+ */
 function resolveDeployedProvider(
   target: EventingProviderSnapshot,
   targetMetadata: ApplicationMetadata,
@@ -258,18 +262,29 @@ function resolveDeployedProvider(
   workspaceId: string,
   existingData: ExistingIoEventsData,
 ): IoEventProviderWithMetadata | null {
-  const candidates = new Set([
+  // The legacy id is not unique within an org, so a current-scheme match must always win over it.
+  const orderedCandidates = [
     generateInstanceId(targetMetadata, target.provider, workspaceId),
-    generateInstanceIdDeprecated(targetMetadata, target.provider),
     generateInstanceId(baselineMetadata, target.provider, workspaceId),
+    generateInstanceIdDeprecated(targetMetadata, target.provider),
     generateInstanceIdDeprecated(baselineMetadata, target.provider),
-  ]);
+  ];
 
-  return (
-    existingData.providersWithMetadata.find((candidate) =>
-      candidates.has(candidate.instance_id),
-    ) ?? null
-  );
+  for (const candidate of orderedCandidates) {
+    const matches = existingData.providersWithMetadata.filter(
+      (provider) => provider.instance_id === candidate,
+    );
+    if (matches.length === 0) {
+      continue;
+    }
+
+    // A stale duplicate can share the instance id but carry no metadata; prefer the populated one.
+    return (
+      matches.find((provider) => provider.metadata.length > 0) ?? matches[0]
+    );
+  }
+
+  return null;
 }
 
 /** The fully-qualified I/O Events code set for a group of events under a provider type. */
