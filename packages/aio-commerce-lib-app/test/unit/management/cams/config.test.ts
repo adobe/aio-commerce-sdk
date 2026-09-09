@@ -41,4 +41,26 @@ describe("resolveCamsBaseUrl", () => {
       DEFAULT_CAMS_BASE_URL,
     );
   });
+
+  test("prepends https:// to a scheme-less override", () => {
+    expect(
+      resolveCamsBaseUrl({ [CAMS_BASE_URL_INPUT]: "cams.example.com" }),
+    ).toBe("https://cams.example.com");
+  });
+
+  test("trims surrounding whitespace before adding the scheme", () => {
+    expect(
+      resolveCamsBaseUrl({ [CAMS_BASE_URL_INPUT]: "  cams.example.com  " }),
+    ).toBe("https://cams.example.com");
+  });
+
+  test("preserves an explicit http:// override", () => {
+    expect(
+      resolveCamsBaseUrl({ [CAMS_BASE_URL_INPUT]: "http://localhost:8080" }),
+    ).toBe("http://localhost:8080");
+  });
+
+  test("the default is returned with a scheme", () => {
+    expect(resolveCamsBaseUrl({}).startsWith("https://")).toBe(true);
+  });
 });
