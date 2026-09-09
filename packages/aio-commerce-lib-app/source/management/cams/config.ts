@@ -23,8 +23,7 @@ export const CAMS_BASE_URL_INPUT = "AIO_COMMERCE_APP_MANAGEMENT_SERVICE_URL";
 // (mirrors the same placeholder in the Commerce App Management frontend's
 // `useCommerceAppManagementApi`).
 /** Default Commerce App Management Service base URL used when no override is set. */
-export const DEFAULT_CAMS_BASE_URL =
-  "https://commerce-app-management.corp.ethos506-stage-va6.ethos.adobe.net";
+export const DEFAULT_CAMS_BASE_URL = "commerce-app-management-dev.adobe.io";
 
 /**
  * Resolves the Commerce App Management Service base URL the app should talk to.
