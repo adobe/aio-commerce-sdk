@@ -9,6 +9,7 @@
     "skills/commerce-app-webhooks",
     "skills/commerce-app-business-config",
     "skills/commerce-app-storage",
-    "skills/commerce-app-admin-ui"
+    "skills/commerce-app-admin-ui",
+    "skills/commerce-app-api-mesh"
   ]
 }
