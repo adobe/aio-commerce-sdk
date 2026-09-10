@@ -20,6 +20,8 @@ metadata:
 
 Composes Commerce's own GraphQL API and this app's runtime actions into a single mesh schema. Two moves this skill covers: exposing a runtime action as a mesh source, and extending an existing Commerce type with a field resolved by delegating to that source.
 
+This skill assumes general API Mesh knowledge (`mesh.json` anatomy, handler types, transforms, hooks, secrets, CORS, generic declarative/programmatic resolvers). If any of that is unfamiliar, load it from Adobe's own material first — see [References](#references) — rather than guessing at syntax. None of that material covers extending an existing Commerce type via `additionalResolvers` (`targetTypeName`/`sourceTypeName`/`requiredSelectionSet`/`sourceSelectionSet`) or wrapping an aio-commerce-sdk runtime action as a mesh source — that's what follows.
+
 ## Prerequisites
 
 - `aio plugins install @adobe/aio-cli-plugin-api-mesh` is installed.
@@ -110,3 +112,8 @@ Verify in two tiers: first the source's root field directly, then the field in i
 ## Chaining
 
 - **The source doesn't exist yet as a runtime action** — invoke `commerce-app-storage`, `commerce-app-webhooks`, or `commerce-app-eventing` to scaffold and deploy it first.
+
+## References
+
+- [API Mesh prompting guide](https://developer.adobe.com/graphql-mesh-gateway/mesh/basic/prompting) — Adobe's own guidance for prompting an agent to write mesh configs; general workflow and expectations
+- [api-mesh-starter-kit llm.txt](https://raw.githubusercontent.com/adobe-commerce/api-mesh-starter-kit/refs/heads/main/llm.txt) — reference knowledge base covering `mesh.json` anatomy, all three handler types, transforms, hooks, secrets, context state, CORS, and the CLI command set
