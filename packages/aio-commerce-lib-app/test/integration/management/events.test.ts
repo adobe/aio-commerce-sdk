@@ -14,11 +14,22 @@ import { HttpResponse, http } from "msw";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 import { isSucceededState } from "#management/common/workflow/types";
+import { applyCommerceEvents } from "#management/domains/events/commerce";
+import { createEventsStepContext } from "#management/domains/events/context";
+import { planCommerceEvents } from "#management/domains/events/plan";
+import {
+  COMMERCE_PROVIDER_TYPE,
+  getNamespacedEvent,
+  getProviderKey,
+} from "#management/domains/events/utils";
 import {
   createInitialInstallationState,
   runInstallation,
 } from "#management/installation/runner";
-import { configWithFullEventing } from "#test/fixtures/config";
+import {
+  configWithCommerceEventing,
+  configWithFullEventing,
+} from "#test/fixtures/config";
 import {
   createMockCommerceEventProvider,
   createMockIoEventMetadata,
@@ -36,6 +47,7 @@ import type {
   EventProviderCreateParams as CommerceEventProviderCreateParams,
   UpdateEventingConfigurationParams,
 } from "@adobe/aio-commerce-lib-events/commerce";
+import type { EventingSnapshotData } from "#management/domains/events/types";
 
 type IoEventProviderRequestBody = {
   label: string;
@@ -368,5 +380,217 @@ describe("eventing installation", () => {
         },
       },
     });
+  });
+});
+
+describe("eventing upgrade recovery integration", () => {
+  const UPGRADE_PATH = ["upgrade", "eventing", "commerce"];
+
+  test("rolls back an added subscription when Commerce rejects a sibling during an upgrade", async () => {
+    vi.stubEnv("__OW_NAMESPACE", "test-namespace");
+
+    const {
+      consumerOrgId: orgId,
+      projectId,
+      workspaceId,
+    } = installationContext.appData;
+
+    const baselineConfig = configWithCommerceEventing;
+    const [baselineProvider] = baselineConfig.eventing.commerce;
+    // The upgrade adds two events; Commerce accepts one and rejects the other.
+    const addedValidEvent = {
+      description: "Triggered when an order is accepted",
+      fields: [{ name: "order_id" }],
+      label: "Order Accepted",
+      name: "plugin.order_accepted",
+      runtimeActions: ["my-package/handle-order"],
+    };
+    const addedRejectedEvent = {
+      description: "An event Commerce does not support",
+      fields: [{ name: "order_id" }],
+      label: "Invented",
+      name: "plugin.invented_event",
+      runtimeActions: ["my-package/handle-order"],
+    };
+    const targetConfig = {
+      ...baselineConfig,
+      eventing: {
+        commerce: [
+          {
+            ...baselineProvider,
+            events: [
+              ...baselineProvider.events,
+              addedValidEvent,
+              addedRejectedEvent,
+            ],
+          },
+        ],
+      },
+    };
+
+    // Maps each event's parent (raw) name to the namespaced subscription name Commerce received.
+    const subscribedByParent: Record<string, string> = {};
+    const unsubscribed: string[] = [];
+
+    apiServer.use(
+      http.get(`${IO_EVENTS_BASE_URL}/${orgId}/providers`, () =>
+        HttpResponse.json({
+          _embedded: { providers: [] },
+          _links: { self: { href: "/providers" } },
+        }),
+      ),
+      http.get(
+        `${IO_EVENTS_BASE_URL}/${orgId}/${projectId}/${workspaceId}/registrations`,
+        () =>
+          HttpResponse.json({
+            _embedded: { registrations: [] },
+            _links: { self: { href: "/registrations" } },
+          }),
+      ),
+      http.post(
+        `${IO_EVENTS_BASE_URL}/${orgId}/${projectId}/${workspaceId}/providers`,
+        async ({ request }) => {
+          const body = (await request.json()) as IoEventProviderRequestBody;
+          return HttpResponse.json(
+            createMockIoEventProviderHalModel(
+              createMockIoEventProvider({
+                description: body.description,
+                id: "io-provider-commerce",
+                instance_id: body.instance_id,
+                label: body.label,
+                provider_metadata: body.provider_metadata,
+              }),
+            ),
+          );
+        },
+      ),
+      http.post(
+        `${IO_EVENTS_BASE_URL}/${orgId}/${projectId}/${workspaceId}/providers/:providerId/eventmetadata`,
+        async ({ request }) => {
+          const body = (await request.json()) as IoEventMetadataRequestBody;
+          return HttpResponse.json(
+            createMockIoEventMetadataHalModel(
+              createMockIoEventMetadata({
+                description: body.description,
+                event_code: body.event_code,
+                label: body.label,
+              }),
+            ),
+          );
+        },
+      ),
+      http.post(
+        `${IO_EVENTS_BASE_URL}/${orgId}/${projectId}/${workspaceId}/registrations`,
+        async ({ request }) => {
+          const body = (await request.json()) as IoEventRegistrationRequestBody;
+          return HttpResponse.json(
+            createMockIoEventRegistrationHalModel(
+              createMockIoEventRegistration({
+                client_id: body.client_id,
+                description: body.description,
+                id: "registration-1",
+                name: body.name,
+              }),
+            ),
+          );
+        },
+      ),
+      http.get(`${COMMERCE_BASE_URL}/eventing/eventProvider`, () =>
+        HttpResponse.json([{ workspace_configuration: "" }]),
+      ),
+      http.get(`${COMMERCE_BASE_URL}/eventing/getEventSubscriptions`, () =>
+        HttpResponse.json([]),
+      ),
+      http.put(`${COMMERCE_BASE_URL}/eventing/updateConfiguration`, () =>
+        HttpResponse.json(true),
+      ),
+      http.post(
+        `${COMMERCE_BASE_URL}/eventing/eventProvider`,
+        async ({ request }) => {
+          const { eventProvider } = (await request.json()) as {
+            eventProvider: CommerceEventProviderCreateParams;
+          };
+          return HttpResponse.json(
+            createMockCommerceEventProvider({
+              description: eventProvider.description,
+              id: "commerce-provider-1",
+              instance_id: eventProvider.instance_id,
+              label: eventProvider.label,
+              provider_id: eventProvider.provider_id,
+              workspace_configuration: "",
+            }),
+          );
+        },
+      ),
+      http.post(
+        `${COMMERCE_BASE_URL}/eventing/eventSubscribe`,
+        async ({ request }) => {
+          const body = (await request.json()) as {
+            event: { name: string; parent: string };
+          };
+          subscribedByParent[body.event.parent] = body.event.name;
+
+          if (body.event.parent === addedRejectedEvent.name) {
+            // Commerce rejects an event it does not support.
+            return HttpResponse.json(
+              { message: "Event is not in the list of supported events" },
+              { status: 400 },
+            );
+          }
+          return HttpResponse.json([]);
+        },
+      ),
+      http.post(
+        `${COMMERCE_BASE_URL}/eventing/eventUnsubscribe/:name`,
+        ({ params }) => {
+          unsubscribed.push(decodeURIComponent(params.name as string));
+          return HttpResponse.json([]);
+        },
+      ),
+    );
+
+    const lifecycleContext = createMockInstallationContext();
+    const context = {
+      ...lifecycleContext,
+      ...createEventsStepContext(lifecycleContext),
+    };
+    const baselineData: EventingSnapshotData = {
+      providers: [
+        {
+          events: baselineProvider.events,
+          key: getProviderKey(baselineProvider.provider),
+          provider: baselineProvider.provider,
+          type: COMMERCE_PROVIDER_TYPE,
+        },
+      ],
+    };
+    const baseline = { config: baselineConfig, data: baselineData };
+
+    const planResult = await planCommerceEvents(
+      { baseline, path: UPGRADE_PATH, targetConfig },
+      context,
+    );
+    expect.assert(planResult.kind === "planned");
+
+    // The apply fails (no snapshot advances the baseline) reporting the original rejection.
+    const applyResult = await applyCommerceEvents(planResult.plan, {
+      ...context,
+      attemptId: "attempt-1",
+      baseline,
+      targetConfig,
+    }).catch((error: unknown) => error);
+    expect(applyResult).toBeInstanceOf(Error);
+
+    // The accepted added event was subscribed, then rolled back on recovery, while the baseline
+    // event is never unsubscribed.
+    const acceptedName = subscribedByParent[addedValidEvent.name];
+    expect(acceptedName).toBeDefined();
+    expect(unsubscribed).toContain(acceptedName);
+    expect(unsubscribed).not.toContain(
+      getNamespacedEvent(
+        baselineConfig.metadata,
+        baselineProvider.events[0].name,
+      ),
+    );
   });
 });

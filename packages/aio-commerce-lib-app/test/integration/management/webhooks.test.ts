@@ -423,4 +423,102 @@ describe("webhooks upgrade planning integration", () => {
       expect.objectContaining({ fields: [{ name: "sku" }] }),
     ]);
   });
+
+  test("restores the removed webhook when Commerce rejects a plugin.my_invented_webhook replacement", async () => {
+    vi.stubEnv("__OW_NAMESPACE", "test-namespace");
+
+    const [subscribedWebhook] = configWithWebhooks.webhooks;
+    const baselineWebhook = {
+      batch_name: "test_app_webhooks_default",
+      hook_name: "test_app_webhooks_order_created",
+      method: subscribedWebhook.webhook.method,
+      url: "https://test-namespace.adobeioruntime.net/api/v1/web/my-package/handle-webhook",
+      webhook_method: subscribedWebhook.webhook.webhook_method,
+      webhook_type: subscribedWebhook.webhook.webhook_type,
+    };
+
+    // webhook_method is an identity field, so changing it plans a remove-then-add.
+    const targetConfig = {
+      ...configWithWebhooks,
+      webhooks: [
+        {
+          ...configWithWebhooks.webhooks[0],
+          webhook: {
+            ...configWithWebhooks.webhooks[0].webhook,
+            webhook_method: "plugin.my_invented_webhook",
+          },
+        },
+      ],
+    };
+
+    const subscribedMethods: string[] = [];
+    let unsubscribed = false;
+
+    apiServer.use(
+      http.get(`${COMMERCE_BASE_URL}/webhooks/list`, () =>
+        HttpResponse.json([baselineWebhook]),
+      ),
+      http.post(`${COMMERCE_BASE_URL}/webhooks/unsubscribe`, () => {
+        unsubscribed = true;
+        return HttpResponse.json({});
+      }),
+      http.post(
+        `${COMMERCE_BASE_URL}/webhooks/subscribe`,
+        async ({ request }) => {
+          const body = (await request.json()) as {
+            webhook: { webhook_method: string };
+          };
+          subscribedMethods.push(body.webhook.webhook_method);
+
+          if (body.webhook.webhook_method === "plugin.my_invented_webhook") {
+            // Commerce rejects a webhook_method it does not support.
+            return HttpResponse.json(
+              { message: "Invalid webhook_method" },
+              { status: 400 },
+            );
+          }
+          return HttpResponse.json({});
+        },
+      ),
+    );
+
+    const lifecycleContext = createMockInstallationContext();
+    const context = {
+      ...lifecycleContext,
+      ...createWebhooksStepContext(lifecycleContext),
+    };
+    const baseline = {
+      config: configWithWebhooks,
+      data: { subscribedWebhooks: [baselineWebhook] },
+    };
+
+    const planResult = await planWebhookSubscriptions(
+      { baseline, path: UPGRADE_PATH, targetConfig },
+      context,
+    );
+    expect.assert(planResult.kind === "planned");
+    expect(planResult.plan.operations).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ kind: "add" }),
+        expect.objectContaining({ kind: "remove" }),
+      ]),
+    );
+
+    // The apply fails (no snapshot returned, so the baseline is never advanced).
+    const applyResult = await applyWebhookSubscriptions(planResult.plan, {
+      ...context,
+      attemptId: "attempt-1",
+      baseline,
+      targetConfig,
+    }).catch((error: unknown) => error);
+    expect(applyResult).toBeInstanceOf(Error);
+
+    // The old webhook was removed, the replacement rejected, and the old one re-subscribed on
+    // recovery — so Commerce is back at the baseline.
+    expect(unsubscribed).toBe(true);
+    expect(subscribedMethods).toContain("plugin.my_invented_webhook");
+    expect(subscribedMethods).toContain(
+      subscribedWebhook.webhook.webhook_method,
+    );
+  });
 });

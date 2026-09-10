@@ -12,6 +12,10 @@
 
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
+import {
+  UPGRADE_RECOVERY_FAILED,
+  WorkflowStepError,
+} from "#management/common/workflow/recovery";
 import { applyWebhookSubscriptions } from "#management/domains/webhooks/apply";
 import { DEFAULT_INSTALLATION_PARAMS } from "#test/fixtures/installation";
 import {
@@ -21,6 +25,7 @@ import {
   createMockWebhooksContext,
 } from "#test/fixtures/webhooks";
 
+import type { UpgradeRecoveryFailedPayload } from "#management/common/workflow/recovery";
 import type { WebhooksExecutionContext } from "#management/domains/webhooks/context";
 
 const DEFAULT_PARAMS = DEFAULT_INSTALLATION_PARAMS;
@@ -520,5 +525,170 @@ describe("applyWebhookSubscriptions", () => {
     await expect(applyWebhookSubscriptions(plan, context)).rejects.toThrow();
     expect(subscribeWebhook).not.toHaveBeenCalled();
     expect(unsubscribeWebhook).toHaveBeenCalledTimes(1);
+  });
+
+  const INVENTED_METHOD = "plugin.my_invented_webhook";
+
+  /** A webhook-identity change: the old identity is removed, the new one (rejected below) is added. */
+  const identityChangePlan = {
+    operations: [
+      {
+        before: retainedWebhook,
+        id: "op-remove",
+        kind: "remove" as const,
+        label: "Unsubscribe old",
+      },
+      {
+        after: createMockResolvedWebhook({
+          batch_name: "test_app_webhooks_invented",
+          hook_name: "test_app_webhooks_invented",
+          webhook_method: INVENTED_METHOD,
+          webhook_type: "after",
+        }),
+        id: "op-add",
+        kind: "add" as const,
+        label: "Subscribe new",
+      },
+    ],
+    path: UPGRADE_PATH,
+  };
+
+  test("restores the removed webhook when Commerce rejects its replacement, surfacing the original error", async () => {
+    // The removed webhook's replacement is rejected by Commerce (a webhook_method it does not
+    // support), so recovery must re-subscribe the removed baseline webhook.
+    const subscribeWebhook = vi.fn((payload: { webhook_method: string }) => {
+      if (payload.webhook_method === INVENTED_METHOD) {
+        return Promise.reject(
+          new Error("Commerce rejected the webhook_method"),
+        );
+      }
+      return Promise.resolve(null);
+    });
+    const unsubscribeWebhook = vi.fn().mockResolvedValue(null);
+    const getWebhookList = vi.fn().mockResolvedValue([retainedWebhook]);
+
+    const context = {
+      ...makeContext(
+        subscribeWebhook,
+        getWebhookList,
+        DEFAULT_PARAMS,
+        unsubscribeWebhook,
+      ),
+      attemptId: "attempt-1",
+      baseline: {
+        config: createMockWebhooksConfig(),
+        data: { subscribedWebhooks: [retainedWebhook] },
+      },
+      targetConfig: createMockWebhooksConfig(),
+    };
+
+    await expect(
+      applyWebhookSubscriptions(identityChangePlan, context),
+    ).rejects.toThrow("Commerce rejected the webhook_method");
+
+    // The old webhook was unsubscribed, then re-subscribed on recovery.
+    expect(unsubscribeWebhook).toHaveBeenCalledWith(
+      expect.objectContaining({
+        webhook_method: DEFAULT_RESOLVED_IDENTITY.webhook_method,
+      }),
+    );
+    expect(subscribeWebhook).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        webhook_method: DEFAULT_RESOLVED_IDENTITY.webhook_method,
+      }),
+    );
+  });
+
+  test("reports both errors and flags baseline drift when recovery itself fails", async () => {
+    // Commerce rejects the replacement, and then also rejects the re-subscribe of the old webhook,
+    // so recovery cannot restore the baseline.
+    const subscribeWebhook = vi.fn((payload: { webhook_method: string }) => {
+      if (payload.webhook_method === INVENTED_METHOD) {
+        return Promise.reject(new Error("original rejection"));
+      }
+      return Promise.reject(new Error("recovery rejection"));
+    });
+    const unsubscribeWebhook = vi.fn().mockResolvedValue(null);
+    const getWebhookList = vi.fn().mockResolvedValue([retainedWebhook]);
+
+    const context = {
+      ...makeContext(
+        subscribeWebhook,
+        getWebhookList,
+        DEFAULT_PARAMS,
+        unsubscribeWebhook,
+      ),
+      attemptId: "attempt-1",
+      baseline: {
+        config: createMockWebhooksConfig(),
+        data: { subscribedWebhooks: [retainedWebhook] },
+      },
+      targetConfig: createMockWebhooksConfig(),
+    };
+
+    const error = await applyWebhookSubscriptions(
+      identityChangePlan,
+      context,
+    ).catch((thrown: unknown) => thrown);
+
+    expect(error).toBeInstanceOf(WorkflowStepError);
+    const workflowError =
+      error as WorkflowStepError<UpgradeRecoveryFailedPayload>;
+    expect(workflowError.key).toBe(UPGRADE_RECOVERY_FAILED);
+    expect(workflowError.payload).toMatchObject({
+      originalError: expect.stringContaining("original rejection"),
+      recovery: "failed",
+      recoveryError: expect.stringContaining("recovery rejection"),
+      targetMayDivergeFromBaseline: true,
+    });
+  });
+
+  test("unsubscribes an already-added webhook when a later add fails, returning to the baseline", async () => {
+    // Two adds, the second rejected: recovery must undo the first (already-subscribed) add so the
+    // target matches the baseline, not "baseline + the surviving add".
+    const firstAdd = createMockResolvedWebhook({
+      batch_name: "test_app_webhooks_first",
+      hook_name: "test_app_webhooks_first",
+      webhook_method: "observer.first_added",
+      webhook_type: "after",
+    });
+    const secondAdd = createMockResolvedWebhook({
+      batch_name: "test_app_webhooks_second",
+      hook_name: "test_app_webhooks_second",
+      webhook_method: INVENTED_METHOD,
+      webhook_type: "after",
+    });
+
+    const subscribeWebhook = vi.fn((payload: { webhook_method: string }) => {
+      if (payload.webhook_method === INVENTED_METHOD) {
+        return Promise.reject(
+          new Error("Commerce rejected the webhook_method"),
+        );
+      }
+      return Promise.resolve(null);
+    });
+    const unsubscribeWebhook = vi.fn().mockResolvedValue(null);
+    const context = makeApplyContext(
+      subscribeWebhook,
+      vi.fn().mockResolvedValue([]),
+      unsubscribeWebhook,
+    );
+
+    const plan = {
+      operations: [
+        { after: firstAdd, id: "op-1", kind: "add" as const, label: "Add 1" },
+        { after: secondAdd, id: "op-2", kind: "add" as const, label: "Add 2" },
+      ],
+      path: UPGRADE_PATH,
+    };
+
+    await expect(applyWebhookSubscriptions(plan, context)).rejects.toThrow(
+      "Commerce rejected the webhook_method",
+    );
+
+    // The first add was rolled back.
+    expect(unsubscribeWebhook).toHaveBeenCalledWith(
+      expect.objectContaining({ webhook_method: "observer.first_added" }),
+    );
   });
 });

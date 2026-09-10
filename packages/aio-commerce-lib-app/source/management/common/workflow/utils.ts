@@ -12,6 +12,8 @@
 
 import { unwrapHttpError } from "@adobe/aio-commerce-lib-api/utils";
 
+import { WorkflowStepError } from "./recovery";
+
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 import type { AnyStep } from "./step";
 import type {
@@ -88,6 +90,17 @@ export async function createWorkflowError(
   path: string[],
   key = "STEP_EXECUTION_FAILED",
 ): Promise<WorkflowError> {
+  // A domain can throw a WorkflowStepError to carry a machine-readable key and structured payload
+  // (e.g. recovery detail) through to the persisted failure, instead of just a message.
+  if (err instanceof WorkflowStepError) {
+    return {
+      key: err.key,
+      message: err.message,
+      path,
+      payload: err.payload,
+    };
+  }
+
   return {
     key,
     message: await unwrapHttpError(err),
