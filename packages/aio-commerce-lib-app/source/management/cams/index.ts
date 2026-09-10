@@ -28,5 +28,6 @@ export type {
   CamsClient,
   CamsClientOptions,
   CamsExtensionIdentity,
+  CamsExtensionRecord,
   CamsStatusUpdate,
 } from "./client";

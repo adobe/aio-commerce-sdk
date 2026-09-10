@@ -40,6 +40,18 @@ export type CamsStatusUpdate = {
   error?: { message: string; code?: string };
 };
 
+/**
+ * A record as returned by the service's extension list, narrowed to the fields
+ * the app needs to locate its own record.
+ */
+export type CamsExtensionRecord = {
+  /** The record's id (its table id) — the address for status writes. */
+  id: string;
+  commerceId: string;
+  workspaceId: string;
+  workspaceName: string;
+};
+
 /** Options for {@link createCamsClient}. */
 export type CamsClientOptions = {
   /** Commerce App Management Service base URL. */
@@ -48,8 +60,12 @@ export type CamsClientOptions = {
   /** The app's own S2S IMS auth provider — its `client_id` becomes the owner. */
   authProvider: ImsAuthProvider;
 
-  /** Identifiers for the record this client operates on. */
-  identity: CamsExtensionIdentity;
+  /**
+   * Identifiers for the record this client adopts. Optional: the status-by-id
+   * and workspace-lookup methods address a record directly and do not need it;
+   * only {@link CamsClient.ensureAdopted} (and the adopt-first writes) require it.
+   */
+  identity?: CamsExtensionIdentity;
 
   logger: ReturnType<typeof AioLogger>;
 
@@ -84,6 +100,25 @@ export type CamsClient = {
 
   /** Patches the stored app config (`PATCH /v1/extensions/{id}`); adopts first. */
   patchConfig: (appConfig: unknown) => Promise<void>;
+
+  /**
+   * Lists the caller-owned records for a workspace
+   * (`GET /v1/extensions?workspaceId=&workspaceName=`). A service caller only
+   * sees records it owns, so this locates the app's own record — and its id —
+   * without adopting. Used to recover the id for apps that adopted before the id
+   * was persisted.
+   */
+  findOwnedByWorkspace: (
+    workspaceId: string,
+    workspaceName: string,
+  ) => Promise<CamsExtensionRecord[]>;
+
+  /**
+   * Appends a status entry to a record addressed directly by its id
+   * (`POST /v1/extensions/{id}/status`), without adopting. The caller must
+   * already own the record (ownership binds at adopt time).
+   */
+  postStatusToId: (id: string, update: CamsStatusUpdate) => Promise<void>;
 };
 
 /** Default backoff schedule (ms) for retrying a transient adopt failure. */
@@ -179,7 +214,7 @@ export function createCamsClient(options: CamsClientOptions): CamsClient {
   async function adoptOnce(): Promise<string> {
     try {
       const response = await http.post("v1/extensions:adopt", {
-        json: identity,
+        json: identity as CamsExtensionIdentity,
       });
       const body = (await response.json()) as { id: string };
       return body.id;
@@ -223,6 +258,13 @@ export function createCamsClient(options: CamsClientOptions): CamsClient {
   let adoptedId: Promise<string> | undefined;
 
   function ensureAdopted(): Promise<string> {
+    if (!identity) {
+      return Promise.reject(
+        new Error(
+          "Cannot adopt a Commerce App Management Service record without an identity.",
+        ),
+      );
+    }
     if (!adoptedId) {
       adoptedId = adoptWithRetry().catch((error: unknown) => {
         // Drop the memoized rejection so a later call can try again.
@@ -243,5 +285,41 @@ export function createCamsClient(options: CamsClientOptions): CamsClient {
     await http.patch(`v1/extensions/${id}`, { json: { appConfig } });
   }
 
-  return { ensureAdopted, patchConfig, postStatus };
+  async function findOwnedByWorkspace(
+    workspaceId: string,
+    workspaceName: string,
+  ): Promise<CamsExtensionRecord[]> {
+    const response = await http.get("v1/extensions", {
+      searchParams: { workspaceId, workspaceName },
+    });
+    const body = (await response.json()) as {
+      id: string;
+      scope?: {
+        commerceId?: string;
+        workspaceId?: string;
+        workspaceName?: string;
+      };
+    }[];
+    return body.map((record) => ({
+      commerceId: record.scope?.commerceId ?? "",
+      id: record.id,
+      workspaceId: record.scope?.workspaceId ?? "",
+      workspaceName: record.scope?.workspaceName ?? "",
+    }));
+  }
+
+  async function postStatusToId(
+    id: string,
+    update: CamsStatusUpdate,
+  ): Promise<void> {
+    await http.post(`v1/extensions/${id}/status`, { json: update });
+  }
+
+  return {
+    ensureAdopted,
+    findOwnedByWorkspace,
+    patchConfig,
+    postStatus,
+    postStatusToId,
+  };
 }

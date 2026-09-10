@@ -24,4 +24,29 @@ export type AssociatedCommerceData = {
 /** The data of an app that we store during association. */
 export type AssociationData = {
   commerce: AssociatedCommerceData;
+
+  /**
+   * Canonical Commerce instance id in the Commerce App Management Service.
+   * Persisted so no-user-in-the-loop flows (e.g. auto-upgrade status writes)
+   * can locate the app's record without prompting for it again. Optional
+   * because apps associated before this field existed never stored it.
+   */
+  commerceId?: string;
+
+  /**
+   * App Builder application id in the Commerce App Management Service.
+   * Persisted so no-user-in-the-loop flows (e.g. auto-upgrade status writes)
+   * can locate the app's record without prompting for it again. Optional
+   * because apps associated before this field existed never stored it.
+   */
+  extId?: string;
+
+  /**
+   * The app's record id (its table id) in the Commerce App Management Service,
+   * captured when ownership is adopted. Persisted so no-user-in-the-loop flows
+   * (e.g. auto-upgrade status writes) address the record directly by id, without
+   * re-adopting. Optional because apps adopted before this field existed never
+   * stored it; those recover it lazily by looking up their owned record.
+   */
+  camsExtensionId?: string;
 };

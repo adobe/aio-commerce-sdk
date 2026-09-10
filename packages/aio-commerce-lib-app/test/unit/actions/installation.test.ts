@@ -44,6 +44,24 @@ const {
   };
 });
 
+const {
+  createUpgradeStatusReporterMock,
+  upgradeStatusReporterMock,
+  UPGRADE_STATUS,
+} = vi.hoisted(() => ({
+  createUpgradeStatusReporterMock: vi.fn(),
+  UPGRADE_STATUS: {
+    installed: "INSTALLED",
+    updateFailed: "UPDATE_FAILED",
+    updating: "UPDATING",
+  } as const,
+  upgradeStatusReporterMock: {
+    installed: vi.fn(),
+    updateFailed: vi.fn(),
+    updating: vi.fn(),
+  },
+}));
+
 vi.mock("@aio-commerce-sdk/common-utils/storage", () => ({
   createCombinedStore: createCombinedStoreMock,
 }));
@@ -54,6 +72,11 @@ vi.mock("openwhisk", () => ({
 
 vi.mock("#management/association/repository", () => ({
   getAssociationData: getAssociationDataMock,
+}));
+
+vi.mock("#actions/installation/cams-status", () => ({
+  createUpgradeStatusReporter: createUpgradeStatusReporterMock,
+  UPGRADE_STATUS,
 }));
 
 vi.mock("#management/installation/root", () => ({
@@ -400,8 +423,13 @@ describe("installationRuntimeAction", () => {
       createRootInstallationStepMock.mockReturnValue(createUpgradeRoot());
       getAssociationDataMock.mockResolvedValue({
         commerce: { baseUrl: "https://commerce.example.com", env: "paas" },
+        commerceId: "commerce-1",
+        extId: "ext-1",
       });
       invokeMock.mockResolvedValue({ activationId: "activation-123" });
+      createUpgradeStatusReporterMock.mockResolvedValue(
+        upgradeStatusReporterMock,
+      );
     });
 
     async function startAutomaticUpgrade() {
@@ -731,6 +759,26 @@ describe("installationRuntimeAction", () => {
 
         expect(retriedAttemptId).toBe(firstAttemptId);
       });
+
+      test("reports updateFailed when the background dispatch fails", async () => {
+        invokeMock.mockRejectedValueOnce(new Error("OpenWhisk unavailable"));
+        const action = installationRuntimeAction({
+          appConfig: configWithAutoUpgrade,
+        });
+
+        await action(
+          createRuntimeActionParams({
+            body: upgradeRequestBody,
+            method: "post",
+            ...DEFAULT_INSTALLATION_PARAMS,
+          }),
+        );
+
+        expect(upgradeStatusReporterMock.updateFailed).toHaveBeenCalledWith(
+          configWithAutoUpgrade.metadata.version,
+          expect.objectContaining({ code: "LIFECYCLE_DISPATCH_FAILED" }),
+        );
+      });
     });
 
     describe("upgrade execution", () => {
@@ -777,6 +825,13 @@ describe("installationRuntimeAction", () => {
           statusCode: 200,
           type: "success",
         });
+        expect(upgradeStatusReporterMock.updating).toHaveBeenCalledWith(
+          configWithAutoUpgrade.metadata.version,
+        );
+        expect(upgradeStatusReporterMock.installed).toHaveBeenCalledWith(
+          configWithAutoUpgrade.metadata.version,
+        );
+        expect(upgradeStatusReporterMock.updateFailed).not.toHaveBeenCalled();
       });
 
       test("returns 500 when the attempt fails", async () => {
@@ -807,6 +862,14 @@ describe("installationRuntimeAction", () => {
           },
           type: "error",
         });
+        expect(upgradeStatusReporterMock.updating).toHaveBeenCalledWith(
+          configWithAutoUpgrade.metadata.version,
+        );
+        expect(upgradeStatusReporterMock.updateFailed).toHaveBeenCalledWith(
+          configWithAutoUpgrade.metadata.version,
+          expect.objectContaining({ code: expect.any(String) }),
+        );
+        expect(upgradeStatusReporterMock.installed).not.toHaveBeenCalled();
       });
     });
   });
