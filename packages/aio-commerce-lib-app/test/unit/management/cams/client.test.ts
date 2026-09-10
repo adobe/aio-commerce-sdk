@@ -234,4 +234,84 @@ describe("createCamsClient", () => {
       expect(patchBody).toEqual({ appConfig: { foo: "bar" } });
     });
   });
+
+  describe("id-addressed operations", () => {
+    function createClientWithoutIdentity() {
+      return createCamsClient({
+        authProvider: mockAuthProvider,
+        baseUrl: BASE_URL,
+        logger: createMockLogger(),
+      });
+    }
+
+    test("postStatusToId posts directly to the status endpoint without adopting", async () => {
+      let adoptCalled = false;
+      let statusBody: unknown;
+      apiServer.use(
+        http.post(ADOPT_URL, () => {
+          adoptCalled = true;
+          return HttpResponse.json({ id: "should-not-be-used" });
+        }),
+        http.post(
+          `${BASE_URL}/v1/extensions/record-99/status`,
+          async ({ request }) => {
+            statusBody = await request.json();
+            return HttpResponse.json({}, { status: 201 });
+          },
+        ),
+      );
+
+      const client = createClientWithoutIdentity();
+      await client.postStatusToId("record-99", {
+        status: "UPDATING",
+        version: "2.0.0",
+      });
+
+      expect(adoptCalled).toBe(false);
+      expect(statusBody).toEqual({ status: "UPDATING", version: "2.0.0" });
+    });
+
+    test("findOwnedByWorkspace queries by workspace and maps the scope fields", async () => {
+      let capturedUrl: URL | undefined;
+      apiServer.use(
+        http.get(`${BASE_URL}/v1/extensions`, ({ request }) => {
+          capturedUrl = new URL(request.url);
+          return HttpResponse.json([
+            {
+              id: "record-1",
+              scope: {
+                commerceId: "commerce-1",
+                workspaceId: "workspace-1",
+                workspaceName: "workspace-name",
+              },
+            },
+          ]);
+        }),
+      );
+
+      const client = createClientWithoutIdentity();
+      const records = await client.findOwnedByWorkspace(
+        "workspace-1",
+        "workspace-name",
+      );
+
+      expect(capturedUrl?.searchParams.get("workspaceId")).toBe("workspace-1");
+      expect(capturedUrl?.searchParams.get("workspaceName")).toBe(
+        "workspace-name",
+      );
+      expect(records).toEqual([
+        {
+          commerceId: "commerce-1",
+          id: "record-1",
+          workspaceId: "workspace-1",
+          workspaceName: "workspace-name",
+        },
+      ]);
+    });
+
+    test("ensureAdopted rejects when the client has no identity", async () => {
+      const client = createClientWithoutIdentity();
+      await expect(client.ensureAdopted()).rejects.toThrow("identity");
+    });
+  });
 });

@@ -104,7 +104,10 @@ describe("associationRuntimeAction", () => {
       );
       expect(mockEnsureAdopted).toHaveBeenCalledOnce();
       expect(mockSetAssociationData).toHaveBeenCalledWith({
+        camsExtensionId: "record-1",
         commerce: { baseUrl: "https://example.com", env: "paas" },
+        commerceId: "commerce-1",
+        extId: "ext-1",
       });
       expect(result).toMatchObject({ statusCode: 204, type: "success" });
     });
@@ -124,7 +127,10 @@ describe("associationRuntimeAction", () => {
       const result = await action(params);
 
       expect(mockSetAssociationData).toHaveBeenCalledWith({
+        camsExtensionId: "record-1",
         commerce: { baseUrl: "https://saas.example.com", env: "saas" },
+        commerceId: "commerce-1",
+        extId: "ext-1",
       });
       expect(result).toMatchObject({ statusCode: 204, type: "success" });
     });

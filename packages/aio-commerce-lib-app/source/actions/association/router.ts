@@ -69,6 +69,7 @@ router.post("/", {
     const { commerceBaseUrl, commerceEnv, commerceId, workspaceId, extId } =
       req.body;
 
+    let camsExtensionId: string | undefined;
     try {
       const camsClient = createCamsClient({
         authProvider: getImsAuthProvider(resolveImsAuthParams(rawParams)),
@@ -77,11 +78,11 @@ router.post("/", {
         logger,
       });
 
-      const recordId = await camsClient.ensureAdopted();
+      camsExtensionId = await camsClient.ensureAdopted();
       // Ownership binding is a notable lifecycle event, so surface it at info
       // level (the deferral/rejection paths below are already warn/error).
       logger.info(
-        `Adopted Commerce App Management Service record "${recordId}"`,
+        `Adopted Commerce App Management Service record "${camsExtensionId}"`,
       );
     } catch (error) {
       if (error instanceof CamsAdoptConflictError) {
@@ -101,10 +102,13 @@ router.post("/", {
     );
 
     await setAssociationData({
+      camsExtensionId,
       commerce: {
         baseUrl: commerceBaseUrl,
         env: commerceEnv,
       },
+      commerceId,
+      extId,
     });
 
     return noContent();

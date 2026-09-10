@@ -26,6 +26,7 @@ import { planLifecycle } from "#management/lifecycle/planning";
 import { startLifecycleAttempt } from "#management/lifecycle/start";
 import { CURRENT_STATE_KEY } from "#management/lifecycle/state";
 
+import { createUpgradeStatusReporter } from "./cams-status";
 import { createLifecycleRuntime, DEFAULT_ACTION_NAME } from "./common";
 
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
@@ -34,6 +35,7 @@ import type {
   LifecycleAttempt,
   OrchestrationState,
 } from "#management/common/orchestration";
+import type { WorkflowError } from "#management/common/workflow/types";
 import type { LifecycleStore } from "#management/lifecycle/state";
 import type {
   ExecutionHandlerArgs,
@@ -41,6 +43,14 @@ import type {
   RequestHandlerArgs,
   WorkflowRouteParams,
 } from "./common";
+
+/** Maps a terminal workflow failure to the status error shape the Commerce App Management Service accepts. */
+function toStatusError(failure: WorkflowError): {
+  message: string;
+  code?: string;
+} {
+  return { code: failure.key, message: failure.message ?? failure.key };
+}
 
 /** Inputs for {@link startUpgrade}. */
 type StartUpgradeArgs = RequestHandlerArgs & {
@@ -170,6 +180,19 @@ export async function startUpgrade({
     ({ activationId } = activation);
   } catch (error) {
     await persistDispatchFailure(runtime.stateStore, attempt, error);
+
+    const reporter = await createUpgradeStatusReporter({
+      logger,
+      params: { ...params, attemptId: attempt.id },
+    });
+    await reporter?.updateFailed(appConfig.metadata.version, {
+      code: "LIFECYCLE_DISPATCH_FAILED",
+      message:
+        error instanceof Error
+          ? error.message
+          : "Lifecycle execution dispatch failed",
+    });
+
     throw error;
   }
 
@@ -214,6 +237,12 @@ export async function executeUpgrade({
   }
 
   const appConfig = validateCommerceAppConfig(rawAppConfig);
+  const {
+    metadata: { version },
+  } = appConfig;
+  const statusReporter = await createUpgradeStatusReporter({ logger, params });
+  await statusReporter?.updating(version);
+
   const runtime = await createLifecycleRuntime(params, appConfig, logger);
   const result = await executeLifecycleAttempt({
     actionVersion,
@@ -227,6 +256,7 @@ export async function executeUpgrade({
 
   logger.debug(`Upgrade completed: ${result.status}`);
   if (result.status === "failed") {
+    await statusReporter?.updateFailed(version, toStatusError(result.failure));
     return internalServerError({
       body: {
         attempt: result,
@@ -236,6 +266,7 @@ export async function executeUpgrade({
     });
   }
 
+  await statusReporter?.installed(version);
   return ok({ body: result });
 }
 
