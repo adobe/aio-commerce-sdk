@@ -87,10 +87,14 @@ Always pair `sourceSelectionSet` with `result` when extracting a scalar from an 
 
 ## Step 4 — Deploy and verify
 
+The first `aio api-mesh:*` call in a session opens an interactive browser login (`Waiting for browser login...`). An agent without browser access can't complete this itself — hand the printed login URI to the human and wait.
+
 ```sh
 aio api-mesh:create mesh.json -c   # first time
 aio api-mesh:update mesh.json -c   # subsequent edits
 ```
+
+`-c`/`--autoConfirmAction` skips the interactive `Are you sure you want to update the mesh: <id>?` prompt. That prompt is the only checkpoint before mutating a mesh other people or systems may already depend on — reserve `-c` for a workspace-scoped mesh you just created yourself (e.g. in CI, or a throwaway dev workspace). When updating an existing, shared, or already-deployed mesh, omit `-c` and have a human confirm the prompt, or at minimum get explicit human sign-off on the diff before running the command — treat this like any other live-infrastructure change, not a routine CLI call.
 
 Provisioning is asynchronous — poll rather than assume completion:
 
