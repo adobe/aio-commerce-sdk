@@ -62,6 +62,45 @@ To wrap a runtime action, write a small static OpenAPI document describing just 
 }
 ```
 
+The OpenAPI document itself needs enough shape for the mesh to generate a Query field from it — not just the pointer above. Minimal example for a single-endpoint runtime action:
+
+```json
+{
+  "openapi": "3.0.0",
+  "info": { "title": "<SourceName>", "version": "1.0.0" },
+  "servers": [{ "url": "<runtime-action-base-url>" }],
+  "paths": {
+    "/<action-path>": {
+      "get": {
+        "operationId": "<sourceField>",
+        "parameters": [
+          {
+            "name": "<arg>",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": { "<resultField>": { "type": "string" } }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+`operationId` becomes the Query field name — it must match `sourceFieldName` in Step 3's resolver exactly, or the resolver builds successfully but never fires.
+
 The declared response schema must match what the action actually returns — the mesh parses according to what you declare, it doesn't reshape data.
 
 ## Step 3 — Extend a type and wire the resolver
@@ -87,6 +126,8 @@ Always pair `sourceSelectionSet` with `result` when extracting a scalar from an 
 
 ## Step 4 — Deploy and verify
 
+If you already know a browser-based app will call this mesh, decide `responseConfig.CORS` now, before your first deploy — the browser-verification tier below exists to catch a missed CORS config, but deciding upfront avoids a second deploy cycle.
+
 The first `aio api-mesh:*` call in a session opens an interactive browser login (`Waiting for browser login...`). An agent without browser access can't complete this itself — hand the printed login URI to the human and wait.
 
 ```sh
@@ -104,6 +145,8 @@ until aio api-mesh:status 2>&1 | grep -qi success; do sleep 20; done
 
 Verify in two tiers: first the source's root field directly, then the field in its real nested/authenticated shape (a list-nested query with a real caller credential, not a flat root-field call). Tier 1 passing does not prove tier 2 works — the bug above is invisible in tier 1.
 
+If the consuming app will call this mesh directly from a browser (not just server-to-server), add a third tier: a real request from that app's actual origin. The two tiers above only prove server-side reachability — a mesh with no `responseConfig.CORS` entry for that origin passes both while still failing every browser call through it, not just the new field (see the CORS section of the api-mesh-starter-kit reference below).
+
 ## Common Issues
 
 - **`"not authorized"` on an authenticated query, even with a valid token** — the source's `graphql` handler is missing `operationHeaders`. Check `mesh.json`, not the token.
@@ -112,6 +155,7 @@ Verify in two tiers: first the source's root field directly, then the field in i
 ## Quality Bar
 
 - `aio api-mesh:status` reports success, and the new field resolves correctly in its real nested/authenticated shape, not just at the source's root field.
+- If a browser-based app will call this mesh, that app can complete a real request against it — not just `aio api-mesh:status` and `curl`.
 
 ## Chaining
 
