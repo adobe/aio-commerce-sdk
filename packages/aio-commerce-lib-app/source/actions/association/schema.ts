@@ -11,9 +11,12 @@
  */
 
 import { CommerceEnvSchema } from "@adobe/aio-commerce-lib-core/commerce";
+import { nonEmptyStringValueSchema } from "@aio-commerce-sdk/common-utils/valibot";
 import * as v from "valibot";
 
-/** Request body for POST / — store association data. */
+// A plain `v.object` (not `strictObject`) so apps on an older SDK — which never
+// receive the identifiers below — still validate, and unknown keys stay ignored.
+/** Request body for POST / — store association data and adopt the record. */
 export const AssociationRequestBodySchema = v.object({
   commerceBaseUrl: v.pipe(
     v.string(),
@@ -22,4 +25,10 @@ export const AssociationRequestBodySchema = v.object({
     ),
   ),
   commerceEnv: CommerceEnvSchema,
+
+  // Identifiers for the `:adopt` handshake with the Commerce App Management
+  // Service. Supplied by the Commerce App Management frontend on association.
+  commerceId: nonEmptyStringValueSchema("commerceId"),
+  extId: nonEmptyStringValueSchema("extId"),
+  workspaceId: nonEmptyStringValueSchema("workspaceId"),
 });

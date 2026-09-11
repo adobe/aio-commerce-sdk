@@ -93,6 +93,22 @@ describe("buildAppManagementExtConfig", () => {
     },
   );
 
+  test("association action carries the S2S auth + service URL inputs", () => {
+    const result = buildAppManagementExtConfig(minimalValidConfig);
+    const associationAction =
+      result.runtimeManifest?.packages?.[PACKAGE_NAME]?.actions?.association;
+
+    expect(associationAction?.inputs?.AIO_COMMERCE_AUTH_IMS_CLIENT_ID).toBe(
+      "$AIO_COMMERCE_AUTH_IMS_CLIENT_ID",
+    );
+    expect(
+      associationAction?.inputs?.AIO_COMMERCE_APP_MANAGEMENT_SERVICE_URL,
+    ).toBe("$AIO_COMMERCE_APP_MANAGEMENT_SERVICE_URL");
+    expect(associationAction?.inputs?.AIO_COMMERCE_AUTH_IMS_ENVIRONMENT).toBe(
+      "$AIO_COMMERCE_AUTH_IMS_ENVIRONMENT",
+    );
+  });
+
   test("installation action includes encryption key input when schema has password fields", () => {
     const configWithPassword = {
       ...configWithCommerceEventing,

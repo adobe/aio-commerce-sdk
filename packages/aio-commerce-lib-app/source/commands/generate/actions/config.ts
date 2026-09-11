@@ -117,7 +117,16 @@ export function buildAppManagementExtConfig(
         [PACKAGE_NAME]: {
           actions: {
             "app-config": createActionDefinition("app-config"),
-            association: createActionDefinition("association"),
+            // The association action adopts the app's Commerce App Management
+            // Service record with the app's own S2S credentials, so it needs the
+            // Commerce auth inputs (and the optional service URL override).
+            association: createActionDefinition(
+              "association",
+              {},
+              {
+                inputs: { ...COMMERCE_ACTION_INPUTS, LOG_LEVEL: "$LOG_LEVEL" },
+              },
+            ),
           } as Record<string, ActionDefinition>,
           license: "Apache-2.0",
         },
