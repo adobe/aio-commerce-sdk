@@ -555,7 +555,7 @@ importers:
         version: 5.4.0(supports-color@8.1.1)
       '@tsconfig/bases':
         specifier: ^1.0.26
-        version: 1.0.27
+        version: 1.0.28
       '@types/node':
         specifier: ^24.12.0
         version: 24.13.4
@@ -2052,8 +2052,8 @@ packages:
   '@tanstack/store@0.11.1':
     resolution: {integrity: sha512-mzTOBhypOuDJAy/D8n2MfUZ1HFkXnmSETviRyhqEC8LUE7/IZQExOTxMANj3KjTofYTkFNpBY67qaVrT41YccA==}
 
-  '@tsconfig/bases@1.0.27':
-    resolution: {integrity: sha512-uqv77XW72Hxm75D4IHoChy0jKMkRJYy87L7L9a2YIMBvY68Jh51G/x4i5ZxKmIv3IM4Fvp/673mIcqZXVO5AYA==}
+  '@tsconfig/bases@1.0.28':
+    resolution: {integrity: sha512-l326opM2+2gDiv3fYIzy12IeUJkHwNbt9pI+Ww2Byk4D1AfJt+CJmbiIxXtWaxY06514pAO5YXBneufph9WKFQ==}
 
   '@tsconfig/node-lts@24.0.1':
     resolution: {integrity: sha512-xo+1KtV5zVb90fyyeglG1n5cqg3cQXLlCkEpLptYlZUNk28xmwhuD5GmxoXwmrVtUTvaMyclun9kAd0TK7H+Pg==}
@@ -5764,7 +5764,7 @@ snapshots:
 
   '@tanstack/store@0.11.1': {}
 
-  '@tsconfig/bases@1.0.27': {}
+  '@tsconfig/bases@1.0.28': {}
 
   '@tsconfig/node-lts@24.0.1': {}
 
