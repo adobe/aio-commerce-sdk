@@ -389,7 +389,9 @@ describe("commands/generate/actions", () => {
           expect(moduleContents).toContain(
             'import appConfig from "./app.commerce.manifest.json" with { type: "json" }',
           );
-          expect(moduleContents).toContain("export default appConfig");
+          expect(moduleContents).toContain(
+            'export default /** @type {import("@adobe/aio-commerce-lib-app/config").CommerceAppConfig} */ (appConfig)',
+          );
 
           const pkg = JSON.parse(
             await readFile(join(tempDir, "package.json"), "utf-8"),
