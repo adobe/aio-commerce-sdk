@@ -304,11 +304,11 @@ export default defineConfig({
   Max 50 chars.
 - `version`: Use `package.json` `version`. Default: `"1.0.0"`.
 - `upgradeMode`: Use `"manual"` (currently the default while upgrade execution
-  stabilizes) unless the developer explicitly asks for automatic execution. In `"auto"`
-  mode, the generated post-deploy hook calls the desired-state `POST /installation`
-  endpoint and starts a planned upgrade, then waits for its lifecycle result. In
-  `"manual"` mode, the same endpoint creates or reuses a plan and returns it without
-  starting execution.
+  stabilizes) unless the developer explicitly asks for automatic execution. `"auto"` is
+  experimental: the generated post-deploy hook calls the desired-state
+  `POST /installation` endpoint and starts a planned upgrade, then waits for its
+  lifecycle result. In `"manual"` mode, the same endpoint creates or reuses a plan and
+  returns it without starting execution.
 - `description`: Use `package.json` `description` if present.
   If the description exceeds 255 characters, do NOT truncate it mid-sentence.
   Instead, rewrite it: read the full description and compose a shorter one that
