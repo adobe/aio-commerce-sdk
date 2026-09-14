@@ -163,5 +163,5 @@ If the consuming app will call this mesh directly from a browser (not just serve
 
 ## References
 
-- [API Mesh prompting guide](https://developer.adobe.com/graphql-mesh-gateway/mesh/basic/prompting) — Adobe's own guidance for prompting an agent to write mesh configs; general workflow and expectations
+- [API Mesh prompting guide](https://developer.adobe.com/graphql-mesh-gateway/mesh/basic/prompting.md) — Adobe's own guidance for prompting an agent to write mesh configs; general workflow and expectations
 - [api-mesh-starter-kit llm.txt](https://raw.githubusercontent.com/adobe-commerce/api-mesh-starter-kit/refs/heads/main/llm.txt) — reference knowledge base covering `mesh.json` anatomy, all three handler types, transforms, hooks, secrets, context state, CORS, and the CLI command set
