@@ -217,7 +217,7 @@ export function createMockMetadata(
     id,
     ...overrides,
     // `upgradeMode` is optional on the input model but required on the output
-    // model (it defaults to "auto"); keep it present so fixtures are output-shaped.
+    // model; keep it present so fixtures are output-shaped.
     upgradeMode: overrides.upgradeMode ?? mockMetadata.upgradeMode,
   };
 }
