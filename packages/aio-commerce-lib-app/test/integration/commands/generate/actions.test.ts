@@ -180,7 +180,10 @@ describe("commands/generate/actions", () => {
           const configContent = await readFile(configPath, "utf-8");
           expect(configContent).toContain('"#app.commerce.config"');
           expect(configContent).toContain(
-            "configSchema: config.businessConfig.schema",
+            "const businessConfig = /** @type {NonNullable<typeof config.businessConfig>} */",
+          );
+          expect(configContent).toContain(
+            "const configSchema = /** @type {NonNullable<typeof businessConfig.schema>} */",
           );
           expect(configContent).not.toContain("configuration-schema.json");
 
@@ -214,7 +217,10 @@ describe("commands/generate/actions", () => {
           const configContent = await readFile(configPath, "utf-8");
           expect(configContent).toContain('"#app.commerce.config"');
           expect(configContent).toContain(
-            "configSchema: config.businessConfig.schema",
+            "const businessConfig = /** @type {NonNullable<typeof config.businessConfig>} */",
+          );
+          expect(configContent).toContain(
+            "const configSchema = /** @type {NonNullable<typeof businessConfig.schema>} */",
           );
           expect(configContent).not.toContain("configuration-schema.json");
           expect(configContent).not.toContain("configuration-schema.js");
