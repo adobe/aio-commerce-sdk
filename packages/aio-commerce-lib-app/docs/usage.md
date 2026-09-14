@@ -1025,7 +1025,10 @@ const usesTypeScript = configPath !== null && isTypeScriptConfig(configPath);
 Use `parseCommerceAppConfig` to read and validate the configuration file in your build scripts or CLI tools:
 
 ```javascript
-import { parseCommerceAppConfig } from "@adobe/aio-commerce-lib-app/config";
+import {
+  hasBusinessConfigSchema,
+  parseCommerceAppConfig,
+} from "@adobe/aio-commerce-lib-app/config";
 
 try {
   const config = await parseCommerceAppConfig();
@@ -1033,9 +1036,11 @@ try {
   console.log(`App: ${config.metadata.displayName}`);
   console.log(`Version: ${config.metadata.version}`);
 
-  // Access business config schema
-  const schema = config.businessConfig.schema;
-  console.log(`Configuration fields: ${schema.length}`);
+  // businessConfig is optional, so narrow with hasBusinessConfigSchema before
+  // accessing its schema.
+  if (hasBusinessConfigSchema(config)) {
+    console.log(`Configuration fields: ${config.businessConfig.schema.length}`);
+  }
 } catch (error) {
   console.error("Configuration error:", error);
   process.exit(1);
