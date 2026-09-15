@@ -177,7 +177,17 @@ The client's base URL already includes the REST prefix and API version (`rest/<s
 
 See [Accessing the Associated Commerce Instance from Runtime Actions](https://github.com/adobe/aio-commerce-sdk/blob/main/packages/aio-commerce-lib-app/docs/usage.md#accessing-the-associated-commerce-instance-from-runtime-actions) for the full pattern, including handling the unassociated state (`AssociationRecordNotFoundError`).
 
-## Step 4 — Validate
+## Step 4 — Regenerate the `installation` action
+
+If eventing is the first install-requiring domain in the config (the others are `webhooks`, `adminUi`, `installation.customInstallationSteps`), re-run:
+
+```sh
+npx @adobe/aio-commerce-lib-app init
+```
+
+This is what adds the `installation` action to `ext.config.yaml`'s `app-management` package — `aio app build`/`aio app deploy` only read the existing file, they never regenerate it. Skip this and Commerce has no endpoint to call, so the event source builds and deploys fine but never actually gets subscribed. Safe to re-run even when the action already exists.
+
+## Step 5 — Validate
 
 Build the project to confirm the updated config is valid:
 
@@ -185,7 +195,7 @@ Build the project to confirm the updated config is valid:
 aio app build
 ```
 
-A build failure with a validation error points directly to the offending config field.
+A build failure with a validation error points directly to the offending config field. If this event source needed Step 4, also check that `ext.config.yaml` now has `actions.installation` under `app-management`.
 
 ## Common Issues
 
@@ -196,10 +206,12 @@ A build failure with a validation error points directly to the offending config 
 - **`defineConfig` not found**: Ensure `@adobe/aio-commerce-lib-app` is installed and `defineConfig` is imported from `@adobe/aio-commerce-lib-app/config`.
 - **Build fails on missing action**: A runtime action referenced in `runtimeActions` must exist in the project. Check the action files under `src/commerce-extensibility-1/actions/` and create any missing stubs.
 - **Handler needs the Commerce base URL**: Use `getCommerceClient` (`@adobe/aio-commerce-lib-app`), not a custom `.env` variable or business config field. See [Calling the Commerce REST API from a handler](#calling-the-commerce-rest-api-from-a-handler).
+- **Event deployed but Commerce never subscribes it**: `init` wasn't re-run after adding the first install-requiring domain (Step 4) — no `installation` action, no install endpoint.
 
 ## Quality Bar
 
 - `aio app build` completes without errors
+- `installation` action present in `ext.config.yaml` when this event source requires it
 
 ## Chaining
 

@@ -272,13 +272,23 @@ installation: {
 
 See [assets/setup-database.ts](assets/setup-database.ts) for the full annotated install/uninstall reference.
 
-## Step 7 — Validate
+## Step 7 — Regenerate the `installation` action
+
+If this custom installation step is the first install-requiring domain in the config (the others are `webhooks`, `eventing.commerce`, `eventing.external`, `adminUi`), re-run:
+
+```sh
+npx @adobe/aio-commerce-lib-app init
+```
+
+This is what adds the `installation` action to `ext.config.yaml`'s `app-management` package — `aio app build`/`aio app deploy` only read the existing file, they never regenerate it. Skip this and the script never runs, even though it's registered in code and the DB action is deployed. Safe to re-run even when the action already exists.
+
+## Step 8 — Validate
 
 ```sh
 aio app build
 ```
 
-A build failure points directly to the offending config field. To exercise the action against the real database, deploy and invoke it (`aio app deploy`).
+A build failure points directly to the offending config field. To exercise the action against the real database, deploy and invoke it (`aio app deploy`). If this step needed Step 7, also check that `ext.config.yaml` now has `actions.installation` under `app-management`.
 
 ## Best practices
 
@@ -320,12 +330,14 @@ A build failure points directly to the offending config field. To exercise the a
 - **Auth fails inside an installation step**: resolve the IMS auth params from `context.params` (`resolveImsAuthParams(context.params)`) — which carries the injected `AIO_COMMERCE_AUTH_IMS_*` credentials — not from `config`, which holds no credentials. Use `@adobe/aio-commerce-lib-auth`, not `@adobe/aio-lib-core-auth`: the latter's `generateAccessToken` expects `clientId`/`clientSecret` directly and cannot consume the injected params.
 - **Installation step fails to load (`must export a default function or object`)**: the script was authored as CommonJS. Author it as an ES module with `export default`; `module.exports` (or `module.exports.default`) surfaces through the framework's `import * as` loader as `.default.default` and fails validation.
 - **`createIndex` errors or has no effect**: it must be called on a collection object (`client.collection("name").createIndex({ field: 1 })`), not with a collection-name string. Get the collection first, then call `createIndex` on it.
+- **Custom installation step registered and deployed but never runs**: `init` wasn't re-run after registering the first install-requiring domain (Step 7) — no `installation` action, no install endpoint.
 
 ## Quality Bar
 
 - `aio app build` completes without errors
 - Every user-authored DB action declares `include-ims-credentials: true` in its annotations
 - The action closes the client in a `finally` block and initializes the library in the region declared in the manifest `database` block
+- `installation` action present in `ext.config.yaml` when this custom installation step requires it
 
 ## Chaining
 
