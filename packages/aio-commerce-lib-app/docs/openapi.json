@@ -1252,183 +1252,15 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "discriminator": {
-                    "propertyName": "status"
-                  },
                   "oneOf": [
                     {
-                      "type": "object",
-                      "properties": {
-                        "id": {
-                          "type": "string"
-                        },
-                        "status": {
-                          "const": "in-progress"
-                        },
-                        "startedAt": {
-                          "type": "string",
-                          "format": "date-time"
-                        },
-                        "step": {
-                          "$ref": "#/components/schemas/StepStatus"
-                        },
-                        "config": {
-                          "description": "The validated app configuration recorded at install time. Present so uninstallation can be sourced from what was actually installed rather than the current request config. Absent on states persisted before this field was introduced.",
-                          "type": "object",
-                          "additionalProperties": true
-                        },
-                        "data": {
-                          "anyOf": [
-                            {
-                              "type": "object",
-                              "propertyNames": {
-                                "type": "string"
-                              },
-                              "additionalProperties": {}
-                            },
-                            {
-                              "type": "null"
-                            }
-                          ]
-                        }
-                      },
-                      "required": ["id", "status", "startedAt", "step", "data"]
+                      "$ref": "#/components/schemas/InProgressWorkflowState"
                     },
                     {
-                      "type": "object",
-                      "properties": {
-                        "id": {
-                          "type": "string"
-                        },
-                        "status": {
-                          "const": "succeeded"
-                        },
-                        "startedAt": {
-                          "type": "string",
-                          "format": "date-time"
-                        },
-                        "completedAt": {
-                          "type": "string",
-                          "format": "date-time"
-                        },
-                        "step": {
-                          "$ref": "#/components/schemas/StepStatus"
-                        },
-                        "config": {
-                          "description": "The validated app configuration recorded at install time. Present so uninstallation can be sourced from what was actually installed rather than the current request config. Absent on states persisted before this field was introduced.",
-                          "type": "object",
-                          "additionalProperties": true
-                        },
-                        "data": {
-                          "anyOf": [
-                            {
-                              "type": "object",
-                              "propertyNames": {
-                                "type": "string"
-                              },
-                              "additionalProperties": {}
-                            },
-                            {
-                              "type": "null"
-                            }
-                          ]
-                        },
-                        "metadata": {
-                          "type": "object",
-                          "properties": {
-                            "isRetry": {
-                              "type": "boolean"
-                            }
-                          },
-                          "required": ["isRetry"]
-                        }
-                      },
-                      "required": [
-                        "id",
-                        "status",
-                        "startedAt",
-                        "completedAt",
-                        "step",
-                        "data"
-                      ]
+                      "$ref": "#/components/schemas/SucceededWorkflowState"
                     },
                     {
-                      "type": "object",
-                      "properties": {
-                        "id": {
-                          "type": "string"
-                        },
-                        "status": {
-                          "const": "failed"
-                        },
-                        "startedAt": {
-                          "type": "string",
-                          "format": "date-time"
-                        },
-                        "completedAt": {
-                          "type": "string",
-                          "format": "date-time"
-                        },
-                        "step": {
-                          "$ref": "#/components/schemas/StepStatus"
-                        },
-                        "config": {
-                          "description": "The validated app configuration recorded at install time. Present so uninstallation can be sourced from what was actually installed rather than the current request config. Absent on states persisted before this field was introduced.",
-                          "type": "object",
-                          "additionalProperties": true
-                        },
-                        "data": {
-                          "anyOf": [
-                            {
-                              "type": "object",
-                              "propertyNames": {
-                                "type": "string"
-                              },
-                              "additionalProperties": {}
-                            },
-                            {
-                              "type": "null"
-                            }
-                          ]
-                        },
-                        "error": {
-                          "type": "object",
-                          "properties": {
-                            "path": {
-                              "type": "array",
-                              "items": {
-                                "type": "string"
-                              }
-                            },
-                            "key": {
-                              "type": "string"
-                            },
-                            "message": {
-                              "type": "string"
-                            },
-                            "payload": {}
-                          },
-                          "required": ["path", "key"]
-                        },
-                        "metadata": {
-                          "type": "object",
-                          "properties": {
-                            "isRetry": {
-                              "type": "boolean"
-                            }
-                          },
-                          "required": ["isRetry"]
-                        }
-                      },
-                      "required": [
-                        "id",
-                        "status",
-                        "startedAt",
-                        "completedAt",
-                        "step",
-                        "data",
-                        "error"
-                      ]
+                      "$ref": "#/components/schemas/FailedWorkflowState"
                     },
                     {
                       "$ref": "#/components/schemas/LifecycleAttemptState"
@@ -1829,182 +1661,22 @@
               "application/json": {
                 "schema": {
                   "discriminator": {
-                    "propertyName": "status"
+                    "propertyName": "status",
+                    "mapping": {
+                      "in-progress": "#/components/schemas/InProgressWorkflowState",
+                      "succeeded": "#/components/schemas/SucceededWorkflowState",
+                      "failed": "#/components/schemas/FailedWorkflowState"
+                    }
                   },
                   "oneOf": [
                     {
-                      "type": "object",
-                      "properties": {
-                        "id": {
-                          "type": "string"
-                        },
-                        "status": {
-                          "const": "in-progress"
-                        },
-                        "startedAt": {
-                          "type": "string",
-                          "format": "date-time"
-                        },
-                        "step": {
-                          "$ref": "#/components/schemas/StepStatus"
-                        },
-                        "config": {
-                          "description": "The validated app configuration recorded at install time. Present so uninstallation can be sourced from what was actually installed rather than the current request config. Absent on states persisted before this field was introduced.",
-                          "type": "object",
-                          "additionalProperties": true
-                        },
-                        "data": {
-                          "anyOf": [
-                            {
-                              "type": "object",
-                              "propertyNames": {
-                                "type": "string"
-                              },
-                              "additionalProperties": {}
-                            },
-                            {
-                              "type": "null"
-                            }
-                          ]
-                        }
-                      },
-                      "required": ["id", "status", "startedAt", "step", "data"]
+                      "$ref": "#/components/schemas/InProgressWorkflowState"
                     },
                     {
-                      "type": "object",
-                      "properties": {
-                        "id": {
-                          "type": "string"
-                        },
-                        "status": {
-                          "const": "succeeded"
-                        },
-                        "startedAt": {
-                          "type": "string",
-                          "format": "date-time"
-                        },
-                        "completedAt": {
-                          "type": "string",
-                          "format": "date-time"
-                        },
-                        "step": {
-                          "$ref": "#/components/schemas/StepStatus"
-                        },
-                        "config": {
-                          "description": "The validated app configuration recorded at install time. Present so uninstallation can be sourced from what was actually installed rather than the current request config. Absent on states persisted before this field was introduced.",
-                          "type": "object",
-                          "additionalProperties": true
-                        },
-                        "data": {
-                          "anyOf": [
-                            {
-                              "type": "object",
-                              "propertyNames": {
-                                "type": "string"
-                              },
-                              "additionalProperties": {}
-                            },
-                            {
-                              "type": "null"
-                            }
-                          ]
-                        },
-                        "metadata": {
-                          "type": "object",
-                          "properties": {
-                            "isRetry": {
-                              "type": "boolean"
-                            }
-                          },
-                          "required": ["isRetry"]
-                        }
-                      },
-                      "required": [
-                        "id",
-                        "status",
-                        "startedAt",
-                        "completedAt",
-                        "step",
-                        "data"
-                      ]
+                      "$ref": "#/components/schemas/SucceededWorkflowState"
                     },
                     {
-                      "type": "object",
-                      "properties": {
-                        "id": {
-                          "type": "string"
-                        },
-                        "status": {
-                          "const": "failed"
-                        },
-                        "startedAt": {
-                          "type": "string",
-                          "format": "date-time"
-                        },
-                        "completedAt": {
-                          "type": "string",
-                          "format": "date-time"
-                        },
-                        "step": {
-                          "$ref": "#/components/schemas/StepStatus"
-                        },
-                        "config": {
-                          "description": "The validated app configuration recorded at install time. Present so uninstallation can be sourced from what was actually installed rather than the current request config. Absent on states persisted before this field was introduced.",
-                          "type": "object",
-                          "additionalProperties": true
-                        },
-                        "data": {
-                          "anyOf": [
-                            {
-                              "type": "object",
-                              "propertyNames": {
-                                "type": "string"
-                              },
-                              "additionalProperties": {}
-                            },
-                            {
-                              "type": "null"
-                            }
-                          ]
-                        },
-                        "error": {
-                          "type": "object",
-                          "properties": {
-                            "path": {
-                              "type": "array",
-                              "items": {
-                                "type": "string"
-                              }
-                            },
-                            "key": {
-                              "type": "string"
-                            },
-                            "message": {
-                              "type": "string"
-                            },
-                            "payload": {}
-                          },
-                          "required": ["path", "key"]
-                        },
-                        "metadata": {
-                          "type": "object",
-                          "properties": {
-                            "isRetry": {
-                              "type": "boolean"
-                            }
-                          },
-                          "required": ["isRetry"]
-                        }
-                      },
-                      "required": [
-                        "id",
-                        "status",
-                        "startedAt",
-                        "completedAt",
-                        "step",
-                        "data",
-                        "error"
-                      ]
+                      "$ref": "#/components/schemas/FailedWorkflowState"
                     }
                   ]
                 }
@@ -3100,7 +2772,19 @@
             "type": "boolean"
           },
           "webhook": {
-            "$ref": "#/components/schemas/WebhookDefinition"
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/WebhookDefinition"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "url": {}
+                  },
+                  "required": ["url"]
+                }
+              }
+            ]
           }
         },
         "required": ["label", "description", "runtimeAction", "webhook"]
@@ -3136,6 +2820,12 @@
               }
             ]
           }
+        },
+        "not": {
+          "properties": {
+            "runtimeAction": {}
+          },
+          "required": ["runtimeAction"]
         },
         "required": ["label", "description", "webhook"]
       },
@@ -3186,88 +2876,23 @@
       },
       "LifecycleAttemptState": {
         "discriminator": {
-          "propertyName": "status"
+          "propertyName": "status",
+          "mapping": {
+            "pending": "#/components/schemas/ActiveLifecycleAttemptState",
+            "in-progress": "#/components/schemas/ActiveLifecycleAttemptState",
+            "succeeded": "#/components/schemas/SucceededLifecycleAttemptState",
+            "failed": "#/components/schemas/FailedLifecycleAttemptState"
+          }
         },
         "oneOf": [
           {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/LifecycleAttemptStateBase"
-              },
-              {
-                "type": "object",
-                "properties": {
-                  "status": {
-                    "type": "string",
-                    "enum": ["pending", "in-progress"]
-                  }
-                },
-                "required": ["status"]
-              }
-            ]
+            "$ref": "#/components/schemas/ActiveLifecycleAttemptState"
           },
           {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/LifecycleAttemptStateBase"
-              },
-              {
-                "type": "object",
-                "properties": {
-                  "status": {
-                    "const": "succeeded"
-                  },
-                  "result": {
-                    "type": "object",
-                    "properties": {
-                      "snapshotId": {
-                        "type": "string"
-                      },
-                      "appVersion": {
-                        "type": "string"
-                      }
-                    },
-                    "required": ["snapshotId", "appVersion"]
-                  }
-                },
-                "required": ["status", "result"]
-              }
-            ]
+            "$ref": "#/components/schemas/SucceededLifecycleAttemptState"
           },
           {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/LifecycleAttemptStateBase"
-              },
-              {
-                "type": "object",
-                "properties": {
-                  "status": {
-                    "const": "failed"
-                  },
-                  "failure": {
-                    "type": "object",
-                    "properties": {
-                      "path": {
-                        "type": "array",
-                        "items": {
-                          "type": "string"
-                        }
-                      },
-                      "key": {
-                        "type": "string"
-                      },
-                      "message": {
-                        "type": "string"
-                      },
-                      "payload": {}
-                    },
-                    "required": ["path", "key"]
-                  }
-                },
-                "required": ["status", "failure"]
-              }
-            ]
+            "$ref": "#/components/schemas/FailedLifecycleAttemptState"
           }
         ],
         "title": "LifecycleAttemptState"
@@ -3651,95 +3276,18 @@
       },
       "AdminUiOrderViewButton": {
         "discriminator": {
-          "propertyName": "type"
+          "propertyName": "type",
+          "mapping": {
+            "view": "#/components/schemas/AdminUiOrderViewNavigationButton",
+            "worker": "#/components/schemas/AdminUiOrderViewWorkerButton"
+          }
         },
         "oneOf": [
           {
-            "type": "object",
-            "properties": {
-              "type": {
-                "type": "string",
-                "const": "view"
-              },
-              "id": {
-                "type": "string",
-                "minLength": 1
-              },
-              "label": {
-                "type": "string",
-                "minLength": 1
-              },
-              "description": {
-                "type": "string",
-                "minLength": 1
-              },
-              "path": {
-                "type": "string",
-                "minLength": 1
-              },
-              "level": {
-                "type": "number",
-                "enum": [-1, 0, 1]
-              },
-              "sortOrder": {
-                "type": "number",
-                "minimum": 1
-              },
-              "confirm": {
-                "$ref": "#/components/schemas/AdminUiConfirm"
-              },
-              "sandboxPermissions": {
-                "$ref": "#/components/schemas/AdminUiSandboxPermissions"
-              },
-              "notifications": {
-                "$ref": "#/components/schemas/AdminUiNotifications"
-              }
-            },
-            "required": ["type", "id", "label", "path"]
+            "$ref": "#/components/schemas/AdminUiOrderViewNavigationButton"
           },
           {
-            "type": "object",
-            "properties": {
-              "type": {
-                "type": "string",
-                "const": "worker"
-              },
-              "id": {
-                "type": "string",
-                "minLength": 1
-              },
-              "label": {
-                "type": "string",
-                "minLength": 1
-              },
-              "description": {
-                "type": "string",
-                "minLength": 1
-              },
-              "runtimeAction": {
-                "type": "string",
-                "minLength": 1
-              },
-              "level": {
-                "type": "number",
-                "enum": [-1, 0, 1]
-              },
-              "sortOrder": {
-                "type": "number",
-                "minimum": 1
-              },
-              "confirm": {
-                "$ref": "#/components/schemas/AdminUiConfirm"
-              },
-              "timeout": {
-                "type": "number",
-                "minimum": 1
-              },
-              "notifications": {
-                "$ref": "#/components/schemas/AdminUiNotifications"
-              }
-            },
-            "required": ["type", "id", "label", "runtimeAction"]
+            "$ref": "#/components/schemas/AdminUiOrderViewWorkerButton"
           }
         ]
       },
@@ -3812,6 +3360,358 @@
         },
         "required": ["code", "label", "is_editable", "is_final"],
         "title": "CustomScopeInput"
+      },
+      "InProgressWorkflowState": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "status": {
+            "const": "in-progress"
+          },
+          "startedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "step": {
+            "$ref": "#/components/schemas/StepStatus"
+          },
+          "config": {
+            "description": "The validated app configuration recorded at install time. Present so uninstallation can be sourced from what was actually installed rather than the current request config. Absent on states persisted before this field was introduced.",
+            "type": "object",
+            "additionalProperties": true
+          },
+          "data": {
+            "anyOf": [
+              {
+                "type": "object",
+                "propertyNames": {
+                  "type": "string"
+                },
+                "additionalProperties": {}
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "not": {
+          "properties": {
+            "operation": {}
+          },
+          "required": ["operation"]
+        },
+        "required": ["id", "status", "startedAt", "step", "data"]
+      },
+      "SucceededWorkflowState": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "status": {
+            "const": "succeeded"
+          },
+          "startedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "completedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "step": {
+            "$ref": "#/components/schemas/StepStatus"
+          },
+          "config": {
+            "description": "The validated app configuration recorded at install time. Present so uninstallation can be sourced from what was actually installed rather than the current request config. Absent on states persisted before this field was introduced.",
+            "type": "object",
+            "additionalProperties": true
+          },
+          "data": {
+            "anyOf": [
+              {
+                "type": "object",
+                "propertyNames": {
+                  "type": "string"
+                },
+                "additionalProperties": {}
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "isRetry": {
+                "type": "boolean"
+              }
+            },
+            "required": ["isRetry"]
+          }
+        },
+        "not": {
+          "properties": {
+            "operation": {}
+          },
+          "required": ["operation"]
+        },
+        "required": ["id", "status", "startedAt", "completedAt", "step", "data"]
+      },
+      "FailedWorkflowState": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "status": {
+            "const": "failed"
+          },
+          "startedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "completedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "step": {
+            "$ref": "#/components/schemas/StepStatus"
+          },
+          "config": {
+            "description": "The validated app configuration recorded at install time. Present so uninstallation can be sourced from what was actually installed rather than the current request config. Absent on states persisted before this field was introduced.",
+            "type": "object",
+            "additionalProperties": true
+          },
+          "data": {
+            "anyOf": [
+              {
+                "type": "object",
+                "propertyNames": {
+                  "type": "string"
+                },
+                "additionalProperties": {}
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "error": {
+            "type": "object",
+            "properties": {
+              "path": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "key": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              },
+              "payload": {}
+            },
+            "required": ["path", "key"]
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "isRetry": {
+                "type": "boolean"
+              }
+            },
+            "required": ["isRetry"]
+          }
+        },
+        "not": {
+          "properties": {
+            "operation": {}
+          },
+          "required": ["operation"]
+        },
+        "required": [
+          "id",
+          "status",
+          "startedAt",
+          "completedAt",
+          "step",
+          "data",
+          "error"
+        ]
+      },
+      "ActiveLifecycleAttemptState": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/LifecycleAttemptStateBase"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "status": {
+                "type": "string",
+                "enum": ["pending", "in-progress"]
+              }
+            },
+            "required": ["status"]
+          }
+        ]
+      },
+      "SucceededLifecycleAttemptState": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/LifecycleAttemptStateBase"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "status": {
+                "const": "succeeded"
+              },
+              "result": {
+                "type": "object",
+                "properties": {
+                  "snapshotId": {
+                    "type": "string"
+                  },
+                  "appVersion": {
+                    "type": "string"
+                  }
+                },
+                "required": ["snapshotId", "appVersion"]
+              }
+            },
+            "required": ["status", "result"]
+          }
+        ]
+      },
+      "FailedLifecycleAttemptState": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/LifecycleAttemptStateBase"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "status": {
+                "const": "failed"
+              },
+              "failure": {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "key": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "payload": {}
+                },
+                "required": ["path", "key"]
+              }
+            },
+            "required": ["status", "failure"]
+          }
+        ]
+      },
+      "AdminUiOrderViewNavigationButton": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "view"
+          },
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "label": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1
+          },
+          "path": {
+            "type": "string",
+            "minLength": 1
+          },
+          "level": {
+            "type": "number",
+            "enum": [-1, 0, 1]
+          },
+          "sortOrder": {
+            "type": "number",
+            "minimum": 1
+          },
+          "confirm": {
+            "$ref": "#/components/schemas/AdminUiConfirm"
+          },
+          "sandboxPermissions": {
+            "$ref": "#/components/schemas/AdminUiSandboxPermissions"
+          },
+          "notifications": {
+            "$ref": "#/components/schemas/AdminUiNotifications"
+          }
+        },
+        "required": ["type", "id", "label", "path"]
+      },
+      "AdminUiOrderViewWorkerButton": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "worker"
+          },
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "label": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1
+          },
+          "runtimeAction": {
+            "type": "string",
+            "minLength": 1
+          },
+          "level": {
+            "type": "number",
+            "enum": [-1, 0, 1]
+          },
+          "sortOrder": {
+            "type": "number",
+            "minimum": 1
+          },
+          "confirm": {
+            "$ref": "#/components/schemas/AdminUiConfirm"
+          },
+          "timeout": {
+            "type": "number",
+            "minimum": 1
+          },
+          "notifications": {
+            "$ref": "#/components/schemas/AdminUiNotifications"
+          }
+        },
+        "required": ["type", "id", "label", "runtimeAction"]
       }
     },
     "securitySchemes": {
