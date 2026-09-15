@@ -1,28 +1,11 @@
-# `InProgressInstallationState`
+# ~~`InProgressInstallationState`~~
 
 ```ts
-type InProgressInstallationState = InstallationStateBase & {
-  startedAt: string;
-  status: "in-progress";
-};
+type InProgressInstallationState = InProgressWorkflowState;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/workflow/types.ts:90](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-app/source/management/installation/workflow/types.ts#L90)
+Defined in: [aio-commerce-lib-app/source/management/installation/compat.ts:48](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/management/installation/compat.ts#L48)
 
-Installation state when in progress.
+## Deprecated
 
-## Type Declaration
-
-### startedAt
-
-```ts
-startedAt: string;
-```
-
-ISO timestamp when installation started.
-
-### status
-
-```ts
-status: "in-progress";
-```
+Use `InProgressWorkflowState` from `@adobe/aio-commerce-lib-app/management`.

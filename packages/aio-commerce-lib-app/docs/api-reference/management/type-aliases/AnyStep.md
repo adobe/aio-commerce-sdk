@@ -2,11 +2,14 @@
 
 ```ts
 type AnyStep = {
+  apply?: (plan: any, context: any) => unknown | Promise<unknown>;
   children?: AnyStep[];
-  context?: (context: InstallationContext) => any;
+  context?: (context: LifecycleContext) => any;
   install?: (config: any, context: any) => unknown | Promise<unknown>;
+  isConfigured?: (config: CommerceAppConfigOutputModel) => boolean;
   meta: StepMeta;
   name: string;
+  plan?: (input: any, context: any) => unknown | Promise<unknown>;
   type: "leaf" | "branch";
   uninstall?: (config: any, context: any) => void | Promise<void>;
   validate?: (
@@ -17,11 +20,32 @@ type AnyStep = {
 };
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/workflow/step.ts:182](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-app/source/management/installation/workflow/step.ts#L182)
+Defined in: [aio-commerce-lib-app/source/management/common/workflow/step.ts:198](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/management/common/workflow/step.ts#L198)
 
 Loosely-typed step for use in non type-safe contexts.
 
 ## Properties
+
+### apply?
+
+```ts
+optional apply?: (plan: any, context: any) => unknown | Promise<unknown>;
+```
+
+Defined in: [aio-commerce-lib-app/source/management/common/workflow/step.ts:202](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/management/common/workflow/step.ts#L202)
+
+#### Parameters
+
+| Parameter | Type  |
+| --------- | ----- |
+| `plan`    | `any` |
+| `context` | `any` |
+
+#### Returns
+
+`unknown` \| `Promise`\<`unknown`\>
+
+---
 
 ### children?
 
@@ -29,23 +53,23 @@ Loosely-typed step for use in non type-safe contexts.
 optional children?: AnyStep[];
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/workflow/step.ts:183](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-app/source/management/installation/workflow/step.ts#L183)
+Defined in: [aio-commerce-lib-app/source/management/common/workflow/step.ts:199](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/management/common/workflow/step.ts#L199)
 
 ---
 
 ### context?
 
 ```ts
-optional context?: (context: InstallationContext) => any;
+optional context?: (context: LifecycleContext) => any;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/workflow/step.ts:186](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-app/source/management/installation/workflow/step.ts#L186)
+Defined in: [aio-commerce-lib-app/source/management/common/workflow/step.ts:203](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/management/common/workflow/step.ts#L203)
 
 #### Parameters
 
-| Parameter | Type                                            |
-| --------- | ----------------------------------------------- |
-| `context` | [`InstallationContext`](InstallationContext.md) |
+| Parameter | Type                                      |
+| --------- | ----------------------------------------- |
+| `context` | [`LifecycleContext`](LifecycleContext.md) |
 
 #### Returns
 
@@ -59,7 +83,7 @@ Defined in: [aio-commerce-lib-app/source/management/installation/workflow/step.t
 optional install?: (config: any, context: any) => unknown | Promise<unknown>;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/workflow/step.ts:187](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-app/source/management/installation/workflow/step.ts#L187)
+Defined in: [aio-commerce-lib-app/source/management/common/workflow/step.ts:204](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/management/common/workflow/step.ts#L204)
 
 #### Parameters
 
@@ -74,13 +98,33 @@ Defined in: [aio-commerce-lib-app/source/management/installation/workflow/step.t
 
 ---
 
+### isConfigured?
+
+```ts
+optional isConfigured?: (config: CommerceAppConfigOutputModel) => boolean;
+```
+
+Defined in: [aio-commerce-lib-app/source/management/common/workflow/step.ts:217](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/management/common/workflow/step.ts#L217)
+
+#### Parameters
+
+| Parameter | Type                           |
+| --------- | ------------------------------ |
+| `config`  | `CommerceAppConfigOutputModel` |
+
+#### Returns
+
+`boolean`
+
+---
+
 ### meta
 
 ```ts
 meta: StepMeta;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/workflow/step.ts:188](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-app/source/management/installation/workflow/step.ts#L188)
+Defined in: [aio-commerce-lib-app/source/management/common/workflow/step.ts:205](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/management/common/workflow/step.ts#L205)
 
 ---
 
@@ -90,7 +134,28 @@ Defined in: [aio-commerce-lib-app/source/management/installation/workflow/step.t
 name: string;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/workflow/step.ts:189](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-app/source/management/installation/workflow/step.ts#L189)
+Defined in: [aio-commerce-lib-app/source/management/common/workflow/step.ts:206](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/management/common/workflow/step.ts#L206)
+
+---
+
+### plan?
+
+```ts
+optional plan?: (input: any, context: any) => unknown | Promise<unknown>;
+```
+
+Defined in: [aio-commerce-lib-app/source/management/common/workflow/step.ts:207](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/management/common/workflow/step.ts#L207)
+
+#### Parameters
+
+| Parameter | Type  |
+| --------- | ----- |
+| `input`   | `any` |
+| `context` | `any` |
+
+#### Returns
+
+`unknown` \| `Promise`\<`unknown`\>
 
 ---
 
@@ -100,7 +165,7 @@ Defined in: [aio-commerce-lib-app/source/management/installation/workflow/step.t
 type: "leaf" | "branch";
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/workflow/step.ts:190](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-app/source/management/installation/workflow/step.ts#L190)
+Defined in: [aio-commerce-lib-app/source/management/common/workflow/step.ts:208](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/management/common/workflow/step.ts#L208)
 
 ---
 
@@ -110,7 +175,7 @@ Defined in: [aio-commerce-lib-app/source/management/installation/workflow/step.t
 optional uninstall?: (config: any, context: any) => void | Promise<void>;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/workflow/step.ts:192](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-app/source/management/installation/workflow/step.ts#L192)
+Defined in: [aio-commerce-lib-app/source/management/common/workflow/step.ts:210](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/management/common/workflow/step.ts#L210)
 
 #### Parameters
 
@@ -133,7 +198,7 @@ optional validate?: (config: any, context: any) =>
 | Promise<ValidationIssue[]>;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/workflow/step.ts:194](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-app/source/management/installation/workflow/step.ts#L194)
+Defined in: [aio-commerce-lib-app/source/management/common/workflow/step.ts:212](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/management/common/workflow/step.ts#L212)
 
 #### Parameters
 
@@ -155,7 +220,7 @@ Defined in: [aio-commerce-lib-app/source/management/installation/workflow/step.t
 optional when?: (config: CommerceAppConfigOutputModel) => boolean;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/workflow/step.ts:199](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-app/source/management/installation/workflow/step.ts#L199)
+Defined in: [aio-commerce-lib-app/source/management/common/workflow/step.ts:218](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/management/common/workflow/step.ts#L218)
 
 #### Parameters
 

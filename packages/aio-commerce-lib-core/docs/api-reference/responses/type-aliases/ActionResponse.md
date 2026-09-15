@@ -1,11 +1,15 @@
-# `ActionResponse\<TSuccessBody, TErrorBody, THeaders\>`
+# `ActionResponse\<TSuccessBody *extends* `BodyRecord`=`BodyRecord`, TErrorBody *extends* `BodyRecordWithMessage`=`BodyRecordWithMessage`, THeaders *extends* `HeadersRecord`=`HeadersRecord`\>`
 
 ```ts
-type ActionResponse<TSuccessBody, TErrorBody, THeaders> =
+type ActionResponse<
+  TSuccessBody extends BodyRecord = BodyRecord,
+  TErrorBody extends BodyRecordWithMessage = BodyRecordWithMessage,
+  THeaders extends HeadersRecord = HeadersRecord,
+> =
   SuccessResponse<TSuccessBody, THeaders> | ErrorResponse<TErrorBody, THeaders>;
 ```
 
-Defined in: [responses/helpers.ts:61](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-core/source/responses/helpers.ts#L61)
+Defined in: [responses/helpers.ts:61](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-core/source/responses/helpers.ts#L61)
 
 Union type representing either a successful or error response from a runtime action
 

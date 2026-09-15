@@ -1,12 +1,15 @@
-# `SuccessResponse\<TBody, THeaders\>`
+# `SuccessResponse\<TBody *extends* `BodyRecord`=`BodyRecord`, THeaders *extends* `HeadersRecord`=`HeadersRecord`\>`
 
 ```ts
-type SuccessResponse<TBody, THeaders> = ResponsePayload<TBody, THeaders> & {
+type SuccessResponse<
+  TBody extends BodyRecord = BodyRecord,
+  THeaders extends HeadersRecord = HeadersRecord,
+> = ResponsePayload<TBody, THeaders> & {
   type: "success";
 };
 ```
 
-Defined in: [responses/helpers.ts:49](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-core/source/responses/helpers.ts#L49)
+Defined in: [responses/helpers.ts:49](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-core/source/responses/helpers.ts#L49)
 
 Represents a successful response from a runtime action
 

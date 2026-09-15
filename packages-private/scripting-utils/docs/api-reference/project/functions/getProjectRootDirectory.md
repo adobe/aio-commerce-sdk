@@ -4,15 +4,15 @@
 function getProjectRootDirectory(cwd?: string): Promise<string>;
 ```
 
-Defined in: [project.ts:260](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages-private/scripting-utils/source/project.ts#L260)
+Defined in: [project.ts:260](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages-private/scripting-utils/source/project.ts#L260)
 
-Get the root directory of the project
+Finds the project root from the nearest ancestor package.json.
 
 ## Parameters
 
-| Parameter | Type     | Description                   |
-| --------- | -------- | ----------------------------- |
-| `cwd`     | `string` | The current working directory |
+| Parameter | Type     | Description                            |
+| --------- | -------- | -------------------------------------- |
+| `cwd`     | `string` | Directory from which to search upward. |
 
 ## Returns
 

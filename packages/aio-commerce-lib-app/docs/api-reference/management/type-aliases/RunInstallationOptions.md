@@ -4,12 +4,12 @@
 type RunInstallationOptions = {
   config: CommerceAppConfigOutputModel;
   hooks?: InstallationHooks;
-  initialState: InProgressInstallationState;
-  installationContext: InstallationContext;
+  initialState: InProgressWorkflowState;
+  installationContext: LifecycleContext;
 };
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/runner.ts:44](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-app/source/management/installation/runner.ts#L44)
+Defined in: [aio-commerce-lib-app/source/management/installation/runner.ts:85](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/management/installation/runner.ts#L85)
 
 Options for running an installation.
 
@@ -21,7 +21,7 @@ Options for running an installation.
 config: CommerceAppConfigOutputModel;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/runner.ts:49](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-app/source/management/installation/runner.ts#L49)
+Defined in: [aio-commerce-lib-app/source/management/installation/runner.ts:90](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/management/installation/runner.ts#L90)
 
 The app configuration.
 
@@ -33,7 +33,7 @@ The app configuration.
 optional hooks?: InstallationHooks;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/runner.ts:55](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-app/source/management/installation/runner.ts#L55)
+Defined in: [aio-commerce-lib-app/source/management/installation/runner.ts:96](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/management/installation/runner.ts#L96)
 
 Lifecycle hooks for status change notifications.
 
@@ -42,10 +42,10 @@ Lifecycle hooks for status change notifications.
 ### initialState
 
 ```ts
-initialState: InProgressInstallationState;
+initialState: InProgressWorkflowState;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/runner.ts:52](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-app/source/management/installation/runner.ts#L52)
+Defined in: [aio-commerce-lib-app/source/management/installation/runner.ts:93](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/management/installation/runner.ts#L93)
 
 The initial installation state (with all steps pending).
 
@@ -54,9 +54,9 @@ The initial installation state (with all steps pending).
 ### installationContext
 
 ```ts
-installationContext: InstallationContext;
+installationContext: LifecycleContext;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/runner.ts:46](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-app/source/management/installation/runner.ts#L46)
+Defined in: [aio-commerce-lib-app/source/management/installation/runner.ts:87](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/management/installation/runner.ts#L87)
 
 Shared installation context (params, logger, etc.).

@@ -11,9 +11,9 @@ type StepStatus = {
 };
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/workflow/types.ts:46](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-app/source/management/installation/workflow/types.ts#L46)
+Defined in: [aio-commerce-lib-app/source/management/common/workflow/types.ts:39](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/management/common/workflow/types.ts#L39)
 
-Status of a step in the installation tree.
+Status of a step in the workflow tree.
 
 ## Properties
 
@@ -23,7 +23,7 @@ Status of a step in the installation tree.
 children: StepStatus[];
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/workflow/types.ts:63](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-app/source/management/installation/workflow/types.ts#L63)
+Defined in: [aio-commerce-lib-app/source/management/common/workflow/types.ts:56](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/management/common/workflow/types.ts#L56)
 
 Child step statuses (empty for leaf steps).
 
@@ -35,7 +35,7 @@ Child step statuses (empty for leaf steps).
 id: string;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/workflow/types.ts:51](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-app/source/management/installation/workflow/types.ts#L51)
+Defined in: [aio-commerce-lib-app/source/management/common/workflow/types.ts:44](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/management/common/workflow/types.ts#L44)
 
 Unique step identifier (e.g., UUID).
 
@@ -47,7 +47,7 @@ Unique step identifier (e.g., UUID).
 meta: StepMetaInfo;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/workflow/types.ts:57](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-app/source/management/installation/workflow/types.ts#L57)
+Defined in: [aio-commerce-lib-app/source/management/common/workflow/types.ts:50](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/management/common/workflow/types.ts#L50)
 
 Step metadata (for display purposes).
 
@@ -59,7 +59,7 @@ Step metadata (for display purposes).
 name: string;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/workflow/types.ts:48](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-app/source/management/installation/workflow/types.ts#L48)
+Defined in: [aio-commerce-lib-app/source/management/common/workflow/types.ts:41](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/management/common/workflow/types.ts#L41)
 
 Step name (unique among siblings).
 
@@ -71,7 +71,7 @@ Step name (unique among siblings).
 path: string[];
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/workflow/types.ts:54](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-app/source/management/installation/workflow/types.ts#L54)
+Defined in: [aio-commerce-lib-app/source/management/common/workflow/types.ts:47](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/management/common/workflow/types.ts#L47)
 
 Full path from root to this step.
 
@@ -83,6 +83,6 @@ Full path from root to this step.
 status: ExecutionStatus;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/workflow/types.ts:60](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-app/source/management/installation/workflow/types.ts#L60)
+Defined in: [aio-commerce-lib-app/source/management/common/workflow/types.ts:53](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/management/common/workflow/types.ts#L53)
 
 Current execution status.

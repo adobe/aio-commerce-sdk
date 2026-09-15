@@ -10,7 +10,7 @@ function findUp(
 ): Promise<string | undefined>;
 ```
 
-Defined in: [project.ts:55](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages-private/scripting-utils/source/project.ts#L55)
+Defined in: [project.ts:55](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages-private/scripting-utils/source/project.ts#L55)
 
 Find a file by walking up parent directories
 

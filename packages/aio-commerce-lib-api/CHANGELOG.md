@@ -1,5 +1,11 @@
 # @adobe/aio-commerce-lib-api
 
+## 1.4.0
+
+### Minor Changes
+
+- [#645](https://github.com/adobe/aio-commerce-sdk/pull/645) [`1837df1`](https://github.com/adobe/aio-commerce-sdk/commit/1837df107bd2b8d2211f77438a07b6e7ee0af03e) Thanks [@aligent-lturner](https://github.com/aligent-lturner)! - Add `buildSearchCriteria` and `buildSearchCriteriaRecord` for Commerce REST list endpoints. Describe filters, sorting and pagination as a `SearchCriteria` object and pass the result straight to `searchParams`, instead of assembling the bracketed `searchCriteria[...]` parameters by hand.
+
 ## 1.3.1
 
 ### Patch Changes

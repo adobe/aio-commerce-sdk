@@ -1,12 +1,14 @@
-# `WebhooksConfig\<T\>`
+# `WebhooksConfig\<T *extends* `AnyCommerceAppConfig`=`CommerceAppConfigOutputModel`\>`
 
 ```ts
-type WebhooksConfig<T> = T & {
+type WebhooksConfig<
+  T extends AnyCommerceAppConfig = CommerceAppConfigOutputModel,
+> = T & {
   webhooks: NonNullable<T["webhooks"]>;
 };
 ```
 
-Defined in: [aio-commerce-lib-app/source/config/schema/webhooks.ts:163](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-app/source/config/schema/webhooks.ts#L163)
+Defined in: [aio-commerce-lib-app/source/config/schema/webhooks.ts:177](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/config/schema/webhooks.ts#L177)
 
 Config type when webhooks are present (non-empty array).
 

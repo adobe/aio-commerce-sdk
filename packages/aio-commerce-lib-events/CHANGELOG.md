@@ -1,5 +1,16 @@
 # @adobe/aio-commerce-lib-events
 
+## 1.4.0
+
+### Minor Changes
+
+- [#625](https://github.com/adobe/aio-commerce-sdk/pull/625) [`e0852d1`](https://github.com/adobe/aio-commerce-sdk/commit/e0852d11e1b4f7c23a0c0dfd1d41acf984aeba7a) Thanks [@oshmyheliuk](https://github.com/oshmyheliuk)! - Add `updateEventSubscription` to the Commerce Events API client, wrapping the `PUT eventing/eventSubscribe/:name` endpoint to update an existing subscription's fields and rules in place.
+
+### Patch Changes
+
+- Updated dependencies [[`1837df1`](https://github.com/adobe/aio-commerce-sdk/commit/1837df107bd2b8d2211f77438a07b6e7ee0af03e)]:
+  - @adobe/aio-commerce-lib-api@1.4.0
+
 ## 1.3.1
 
 ### Patch Changes

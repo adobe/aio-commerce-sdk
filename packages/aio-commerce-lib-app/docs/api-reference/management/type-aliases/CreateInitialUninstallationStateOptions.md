@@ -3,10 +3,11 @@
 ```ts
 type CreateInitialUninstallationStateOptions = {
   config: CommerceAppConfigOutputModel;
+  executedCustomInstallationSteps?: readonly CustomInstallationStepIdentity[];
 };
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/runner.ts:129](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-app/source/management/installation/runner.ts#L129)
+Defined in: [aio-commerce-lib-app/source/management/installation/runner.ts:173](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/management/installation/runner.ts#L173)
 
 Options for creating an initial uninstallation state.
 
@@ -18,6 +19,20 @@ Options for creating an initial uninstallation state.
 config: CommerceAppConfigOutputModel;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/runner.ts:131](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-app/source/management/installation/runner.ts#L131)
+Defined in: [aio-commerce-lib-app/source/management/installation/runner.ts:175](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/management/installation/runner.ts#L175)
 
 The app configuration used to determine applicable steps.
+
+---
+
+### executedCustomInstallationSteps?
+
+```ts
+optional executedCustomInstallationSteps?: readonly CustomInstallationStepIdentity[];
+```
+
+Defined in: [aio-commerce-lib-app/source/management/installation/runner.ts:182](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/management/installation/runner.ts#L182)
+
+Persisted history of every custom installation step that ever ran, from the lifecycle
+baseline snapshot. Lets a full unassociate reach steps removed from `config` in a previous
+upgrade. Defaults to `[]` when there is no recorded history (e.g. legacy installs).

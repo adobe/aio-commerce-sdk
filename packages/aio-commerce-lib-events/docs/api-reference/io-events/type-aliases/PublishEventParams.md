@@ -1,7 +1,9 @@
-# `PublishEventParams\<TPayload\>`
+# `PublishEventParams\<TPayload *extends* `Record`\<`string`, `unknown`\> = `Record`\<`string`, `unknown`\>\>`
 
 ```ts
-type PublishEventParams<TPayload> = {
+type PublishEventParams<
+  TPayload extends Record<string, unknown> = Record<string, unknown>,
+> = {
   eventCode: string;
   isPhiData?: boolean;
   payload: TPayload;
@@ -9,7 +11,7 @@ type PublishEventParams<TPayload> = {
 };
 ```
 
-Defined in: [io-events/api/event-ingress/endpoints.ts:16](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-events/source/io-events/api/event-ingress/endpoints.ts#L16)
+Defined in: [io-events/api/event-ingress/endpoints.ts:16](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-events/source/io-events/api/event-ingress/endpoints.ts#L16)
 
 Parameters required to publish an event to the I/O Events ingress.
 
@@ -27,7 +29,7 @@ Parameters required to publish an event to the I/O Events ingress.
 eventCode: string;
 ```
 
-Defined in: [io-events/api/event-ingress/endpoints.ts:22](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-events/source/io-events/api/event-ingress/endpoints.ts#L22)
+Defined in: [io-events/api/event-ingress/endpoints.ts:22](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-events/source/io-events/api/event-ingress/endpoints.ts#L22)
 
 The fully-qualified event code.
 
@@ -39,7 +41,7 @@ The fully-qualified event code.
 optional isPhiData?: boolean;
 ```
 
-Defined in: [io-events/api/event-ingress/endpoints.ts:30](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-events/source/io-events/api/event-ingress/endpoints.ts#L30)
+Defined in: [io-events/api/event-ingress/endpoints.ts:30](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-events/source/io-events/api/event-ingress/endpoints.ts#L30)
 
 When `true`, marks the event as containing Protected Health Information (PHI)
 by sending `x-event-phidata: true` to the ingress. Required for HIPAA compliance.
@@ -53,7 +55,7 @@ Defaults to `false` when omitted.
 payload: TPayload;
 ```
 
-Defined in: [io-events/api/event-ingress/endpoints.ts:24](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-events/source/io-events/api/event-ingress/endpoints.ts#L24)
+Defined in: [io-events/api/event-ingress/endpoints.ts:24](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-events/source/io-events/api/event-ingress/endpoints.ts#L24)
 
 The event payload. Must be a JSON object.
 
@@ -65,6 +67,6 @@ The event payload. Must be a JSON object.
 providerId: string;
 ```
 
-Defined in: [io-events/api/event-ingress/endpoints.ts:20](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-events/source/io-events/api/event-ingress/endpoints.ts#L20)
+Defined in: [io-events/api/event-ingress/endpoints.ts:20](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-events/source/io-events/api/event-ingress/endpoints.ts#L20)
 
 The I/O Events provider UUID.

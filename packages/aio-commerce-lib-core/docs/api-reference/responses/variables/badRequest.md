@@ -11,7 +11,7 @@ const badRequest: <TBody>(
 ) => ErrorResponse<TBody>;
 ```
 
-Defined in: [responses/presets.ts:96](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-core/source/responses/presets.ts#L96)
+Defined in: [responses/presets.ts:96](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-core/source/responses/presets.ts#L96)
 
 Creates an error response with the HTTP status code 400.
 See [buildErrorResponse](../functions/buildErrorResponse.md) for details on the response payload.

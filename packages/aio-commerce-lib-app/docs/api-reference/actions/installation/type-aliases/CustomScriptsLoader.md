@@ -3,20 +3,20 @@
 ```ts
 type CustomScriptsLoader = (
   config: CommerceAppConfigOutputModel,
-  logger: InstallationContext["logger"],
+  logger: LifecycleContext["logger"],
 ) => Record<string, unknown>;
 ```
 
-Defined in: [aio-commerce-lib-app/source/actions/installation/router.ts:63](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-app/source/actions/installation/router.ts#L63)
+Defined in: [aio-commerce-lib-app/source/actions/installation/common.ts:74](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/actions/installation/common.ts#L74)
 
 Loads generated custom installation script modules.
 
 ## Parameters
 
-| Parameter | Type                                                                                           |
-| --------- | ---------------------------------------------------------------------------------------------- |
-| `config`  | `CommerceAppConfigOutputModel`                                                                 |
-| `logger`  | [`InstallationContext`](../../../management/type-aliases/InstallationContext.md)\[`"logger"`\] |
+| Parameter | Type                                                                                     |
+| --------- | ---------------------------------------------------------------------------------------- |
+| `config`  | `CommerceAppConfigOutputModel`                                                           |
+| `logger`  | [`LifecycleContext`](../../../management/type-aliases/LifecycleContext.md)\[`"logger"`\] |
 
 ## Returns
 

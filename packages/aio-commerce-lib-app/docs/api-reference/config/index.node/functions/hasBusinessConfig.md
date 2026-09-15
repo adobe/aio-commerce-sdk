@@ -1,12 +1,12 @@
 # `hasBusinessConfig()`
 
 ```ts
-function hasBusinessConfig<T>(
+function hasBusinessConfig<T extends AnyCommerceAppConfig>(
   config: T,
 ): config is T & { businessConfig: NonNullable<T["businessConfig"]> };
 ```
 
-Defined in: [aio-commerce-lib-app/source/config/schema/business-configuration.ts:38](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-app/source/config/schema/business-configuration.ts#L38)
+Defined in: [aio-commerce-lib-app/source/config/schema/business-configuration.ts:38](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/config/schema/business-configuration.ts#L38)
 
 Check if config has business config.
 

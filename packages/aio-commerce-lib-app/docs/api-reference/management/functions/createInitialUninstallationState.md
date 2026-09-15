@@ -3,10 +3,10 @@
 ```ts
 function createInitialUninstallationState(
   options: CreateInitialUninstallationStateOptions,
-): InProgressInstallationState;
+): InProgressWorkflowState;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/runner.ts:149](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-app/source/management/installation/runner.ts#L149)
+Defined in: [aio-commerce-lib-app/source/management/installation/runner.ts:203](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/management/installation/runner.ts#L203)
 
 Creates an initial uninstallation state from the config and step definitions.
 
@@ -18,4 +18,4 @@ Creates an initial uninstallation state from the config and step definitions.
 
 ## Returns
 
-[`InProgressInstallationState`](../type-aliases/InProgressInstallationState.md)
+[`InProgressWorkflowState`](../type-aliases/InProgressWorkflowState.md)

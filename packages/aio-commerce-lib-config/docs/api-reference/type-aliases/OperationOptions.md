@@ -6,7 +6,7 @@ type OperationOptions = {
 };
 ```
 
-Defined in: [types/index.ts:17](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-config/source/types/index.ts#L17)
+Defined in: [types/index.ts:17](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-config/source/types/index.ts#L17)
 
 Options for controlling operations of the configuration library.
 
@@ -18,6 +18,6 @@ Options for controlling operations of the configuration library.
 optional cacheTimeout?: number;
 ```
 
-Defined in: [types/index.ts:19](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-config/source/types/index.ts#L19)
+Defined in: [types/index.ts:19](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-config/source/types/index.ts#L19)
 
 Optional cache timeout in seconds.
