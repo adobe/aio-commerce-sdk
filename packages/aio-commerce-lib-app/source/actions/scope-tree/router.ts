@@ -29,6 +29,8 @@ import {
 } from "@aio-commerce-sdk/common-utils/actions";
 import { inspect } from "@aio-commerce-sdk/common-utils/logging";
 
+import { LIFECYCLE_HTTP_CLIENT_TIMEOUT_MS } from "#management/common/constants";
+
 import {
   SetCustomScopeTreeBodySchema,
   SyncCommerceScopesBodySchema,
@@ -132,6 +134,9 @@ router.post("/commerce", {
       paramsWithCommerceConfig,
       { tryForwardAuthProvider: true },
     );
+
+    commerceConfig.fetchOptions ??= {};
+    commerceConfig.fetchOptions.timeout = LIFECYCLE_HTTP_CLIENT_TIMEOUT_MS;
 
     const result = await syncCommerceScopes(commerceConfig);
 

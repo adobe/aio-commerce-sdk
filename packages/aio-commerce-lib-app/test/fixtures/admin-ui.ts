@@ -28,7 +28,7 @@ export const viewButtonWorkerBase = {
   type: "worker" as const,
 };
 
-import type { AdminUiExecutionContext } from "#management/installation/admin-ui/utils";
+import type { AdminUiExecutionContext } from "#management/domains/admin-ui/utils";
 
 /** Creates a mock AdminUiExecutionContext with Admin UI client methods. */
 export function createMockAdminUiContext(
@@ -38,6 +38,7 @@ export function createMockAdminUiContext(
     enableAdminUiSdkImpl?: () => Promise<boolean>;
     registerExtensionImpl?: () => Promise<{ extensionId: string }>;
     unregisterExtensionImpl?: () => Promise<unknown>;
+    refreshExtensionImpl?: () => Promise<void>;
   },
 ): AdminUiExecutionContext {
   const mockInstallation = createMockInstallationContext(overrides);
@@ -49,6 +50,11 @@ export function createMockAdminUiContext(
         .fn()
         .mockImplementation(
           overrides?.enableAdminUiSdkImpl ?? (() => Promise.resolve(true)),
+        ),
+      refreshExtension: vi
+        .fn()
+        .mockImplementation(
+          overrides?.refreshExtensionImpl ?? (() => Promise.resolve()),
         ),
       registerExtension: vi
         .fn()

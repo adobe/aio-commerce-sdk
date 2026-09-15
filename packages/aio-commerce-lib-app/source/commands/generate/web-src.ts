@@ -10,14 +10,19 @@
  * governing permissions and limitations under the License.
  */
 
-import { existsSync } from "node:fs";
-import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
+import { constants, existsSync } from "node:fs";
+import {
+  copyFile,
+  mkdir,
+  readdir,
+  readFile,
+  writeFile,
+} from "node:fs/promises";
 import { dirname, join, relative, sep } from "node:path";
 
 import {
   detectPackageManager,
   getPackageDependencyInstallPlan,
-  getProjectRootDirectory,
   loadPackageJson,
   mergePackageJsonDependencies,
 } from "@aio-commerce-sdk/scripting-utils/project";
@@ -43,6 +48,7 @@ const TSX_FILE_EXTENSION = ".tsx";
 const APP_TITLE_PLACEHOLDER = "APP_TITLE";
 const WEB_SOURCE_ENTRYPOINT_FILE = "index.html";
 const WEB_SOURCE_IMPORT_ALIAS = "#web/*";
+const WEB_SOURCE_REQUIRED_FILES = [".babelrc"] as const;
 const WEB_SOURCE_TSCONFIG_FILE = "tsconfig.json";
 const LEADING_DOT_SLASH_PATTERN = /^\.\//u;
 
@@ -57,11 +63,25 @@ export const WEB_SOURCE_DEPENDENCIES = [
   { name: "@react-spectrum/s2", version: __SPECTRUM_S2_VERSION__ },
 ] as const;
 
+const WEB_SOURCE_BABEL_DEV_DEPENDENCIES = [
+  {
+    name: "@babel/core",
+    version: "^7.29.7",
+  },
+  {
+    name: "@babel/preset-react",
+    version: "^7.29.7",
+  },
+] as const;
+
 /** Development dependencies required by the generated web-src app. */
 export const WEB_SOURCE_DEV_DEPENDENCIES = [
+  ...WEB_SOURCE_BABEL_DEV_DEPENDENCIES,
   { name: "@types/react", version: __REACT_TYPES_VERSION__ },
   { name: "@types/react-dom", version: __REACT_DOM_TYPES_VERSION__ },
 ] as const;
+
+const WEB_SOURCE_REQUIRED_DEV_DEPENDENCIES = WEB_SOURCE_BABEL_DEV_DEPENDENCIES;
 
 const WEB_SOURCE_SHARED_BUNDLES = [
   {
@@ -118,24 +138,29 @@ function getWebSourceEntrypoint(extConfig: ExtConfig) {
 
 /**
  * Ensure package.json has the dependencies and Parcel config needed by web-src.
- * @param projectRoot - Project root containing the package.json to update.
+ * @param projectRoot - Resolved project root containing package.json.
+ * @param extension - Web source extension whose tooling is configured.
  */
 async function prepareWebSourcePackage(
   projectRoot: string,
   extension: WebSourceExtension,
+  scaffoldRequired: boolean,
 ) {
   const pkg = await loadPackageJson(projectRoot);
   if (pkg === null) {
     throw new Error("Could not find package.json.");
   }
 
-  const requiredDevDependencies = [
-    ...WEB_SOURCE_DEV_DEPENDENCIES,
-    ...(extension === "tsx" ? SHARED_TYPESCRIPT_DEV_DEPENDENCIES : []),
-  ];
+  const dependencies = scaffoldRequired ? WEB_SOURCE_DEPENDENCIES : [];
+  const requiredDevDependencies = scaffoldRequired
+    ? [
+        ...WEB_SOURCE_DEV_DEPENDENCIES,
+        ...(extension === "tsx" ? SHARED_TYPESCRIPT_DEV_DEPENDENCIES : []),
+      ]
+    : WEB_SOURCE_REQUIRED_DEV_DEPENDENCIES;
 
   const installPlan = await getPackageDependencyInstallPlan(
-    [...WEB_SOURCE_DEPENDENCIES, ...requiredDevDependencies],
+    [...dependencies, ...requiredDevDependencies],
     projectRoot,
   );
 
@@ -152,15 +177,15 @@ async function prepareWebSourcePackage(
     );
   }
 
-  const dependencies = pkg.content.dependencies ?? {};
+  const existingDependencies = pkg.content.dependencies ?? {};
   const devDependencies = pkg.content.devDependencies ?? {};
-  const dependencyMaps = [dependencies, devDependencies];
+  const dependencyMaps = [existingDependencies, devDependencies];
   const declaredDependencyNames = new Set(
     dependencyMaps.flatMap((depMap) => Object.keys(depMap)),
   );
 
   const dependenciesToDeclare = [
-    ...WEB_SOURCE_DEPENDENCIES,
+    ...dependencies,
     ...requiredDevDependencies,
   ].filter(({ name }) => !declaredDependencyNames.has(name));
 
@@ -176,21 +201,23 @@ async function prepareWebSourcePackage(
   }
 
   pkg.update({
-    // Required as per Spectrum S2 documentation: https://react-spectrum.adobe.com/getting-started#framework-setup
-    "@parcel/bundler-default": {
-      ...(pkg.content["@parcel/bundler-default"] as Record<string, unknown>),
-      manualSharedBundles: WEB_SOURCE_SHARED_BUNDLES,
-    },
-    // Required otherwise Parcel will fail when using our deps which export ESM.
-    "@parcel/resolver-default": {
-      ...(pkg.content["@parcel/resolver-default"] as Record<string, unknown>),
-      packageExports: true,
-    },
-    dependencies: mergePackageJsonDependencies(
-      dependencies,
-      WEB_SOURCE_DEPENDENCIES,
-      dependencyMaps,
-    ),
+    ...(scaffoldRequired && {
+      // Required as per Spectrum S2 documentation: https://react-spectrum.adobe.com/getting-started#framework-setup
+      "@parcel/bundler-default": {
+        ...(pkg.content["@parcel/bundler-default"] as Record<string, unknown>),
+        manualSharedBundles: WEB_SOURCE_SHARED_BUNDLES,
+      },
+      // Required otherwise Parcel will fail when using our deps which export ESM.
+      "@parcel/resolver-default": {
+        ...(pkg.content["@parcel/resolver-default"] as Record<string, unknown>),
+        packageExports: true,
+      },
+      dependencies: mergePackageJsonDependencies(
+        existingDependencies,
+        WEB_SOURCE_DEPENDENCIES,
+        dependencyMaps,
+      ),
+    }),
     devDependencies: mergePackageJsonDependencies(
       devDependencies,
       requiredDevDependencies,
@@ -216,16 +243,49 @@ async function prepareWebSourcePackage(
 }
 
 /**
+ * Copies required web-src support files that are not already present.
+ * @param sourceDir - Directory containing required web source files.
+ * @param targetDir - Generated or existing web source directory.
+ * @param projectRoot - Resolved project root used to format output paths.
+ */
+async function copyMissingWebSourceFiles(
+  sourceDir: string,
+  targetDir: string,
+  projectRoot: string,
+) {
+  const outputFiles = await Promise.all(
+    WEB_SOURCE_REQUIRED_FILES.map(async (file) => {
+      const targetPath = join(targetDir, file);
+      if (existsSync(targetPath)) {
+        return null;
+      }
+
+      await copyFile(
+        join(sourceDir, file),
+        targetPath,
+        constants.COPYFILE_EXCL,
+      );
+      return ` ${relative(projectRoot, targetPath)}`;
+    }),
+  );
+
+  return outputFiles.filter((path): path is string => path !== null);
+}
+
+/**
  * Add the package import alias for an existing or generated web-src.
  * @param extConfig - Extension config containing the view operation.
+ * @param projectRoot - Resolved project root containing package.json.
  */
-export async function prepareWebSourceImportAlias(extConfig: ExtConfig) {
+export async function prepareWebSourceImportAlias(
+  extConfig: ExtConfig,
+  projectRoot: string,
+) {
   const entrypoint = getWebSourceEntrypoint(extConfig);
   if (entrypoint === null) {
     return;
   }
 
-  const projectRoot = await getProjectRootDirectory();
   const pkg = await loadPackageJson(projectRoot);
   if (pkg === null) {
     throw new Error("Could not find package.json.");
@@ -289,12 +349,14 @@ function getWebSourceTemplateTargetPath(
  * @param targetDir - Generated web-src directory.
  * @param extension - Web source extension to generate.
  * @param appTitle - Application title used by the entrypoint template.
+ * @param projectRoot - Resolved project root used to format output paths.
  */
 async function copyWebSourceTemplates(
   sourceDir: string,
   targetDir: string,
   extension: WebSourceExtension,
   appTitle: string,
+  projectRoot: string,
 ): Promise<string[]> {
   await mkdir(targetDir, { recursive: true });
 
@@ -313,6 +375,7 @@ async function copyWebSourceTemplates(
           targetPath,
           extension,
           appTitle,
+          projectRoot,
         );
       }
 
@@ -330,17 +393,24 @@ async function copyWebSourceTemplates(
       }
 
       await writeFile(targetPath, content, { encoding: "utf-8", flag: "wx" });
-      return ` ${relative(process.cwd(), targetPath)}`;
+      return ` ${relative(projectRoot, targetPath)}`;
     }),
   );
 
   return outputFilesByEntry.flat();
 }
 
-/** Generate the web source scaffold for iframe-based Admin UI extensions. */
+/**
+ * Generates the web source scaffold for an iframe-based Admin UI extension.
+ * @param extConfig - Extension config containing the web entrypoint.
+ * @param appName - Application name inserted into the generated entrypoint.
+ * @param projectRoot - Resolved project root where web source is generated.
+ * @param templatesDir - Directory containing web source templates.
+ */
 export async function generateWebSrc(
   extConfig: ExtConfig,
   appName: string,
+  projectRoot: string,
   templatesDir = TEMPLATES_DIR,
 ) {
   const entrypoint = getWebSourceEntrypoint(extConfig);
@@ -348,42 +418,58 @@ export async function generateWebSrc(
     return;
   }
 
-  const projectRoot = await getProjectRootDirectory();
   const entrypointPath = join(projectRoot, entrypoint);
+  const scaffoldRequired = !existsSync(entrypointPath);
+  const targetDir = dirname(entrypointPath);
+  const extension = await resolveWebSourceExtension(projectRoot);
+  const sourceDir = join(templatesDir, "admin-ui", "web-src");
+  let outputFiles: string[] = [];
 
-  if (existsSync(entrypointPath)) {
+  if (scaffoldRequired) {
+    consola.start(
+      `Scaffolding web-src for ${BACKEND_UI_V2_EXTENSION_POINT_ID}...`,
+    );
+
+    outputFiles = await copyWebSourceTemplates(
+      sourceDir,
+      targetDir,
+      extension,
+      appName,
+      projectRoot,
+    );
+
+    if (extension === "tsx") {
+      const tsconfigPath = await writeWebSourceTypeScriptConfig(targetDir);
+      outputFiles.push(` ${relative(projectRoot, tsconfigPath)}`);
+      await syncWebSourceTypecheckScript(projectRoot);
+    }
+  } else {
     consola.info(
       `web-src entrypoint already exists, skipping scaffold: ${relative(
-        process.cwd(),
+        projectRoot,
         entrypointPath,
       )}`,
     );
-    return;
   }
 
-  consola.start(
-    `Scaffolding web-src for ${BACKEND_UI_V2_EXTENSION_POINT_ID}...`,
-  );
-
-  const sourceDir = join(templatesDir, "admin-ui", "web-src");
-  const targetDir = dirname(entrypointPath);
-  const extension = await resolveWebSourceExtension(projectRoot);
-
-  const outputFiles = await copyWebSourceTemplates(
+  const requiredFiles = await copyMissingWebSourceFiles(
     sourceDir,
     targetDir,
-    extension,
-    appName,
+    projectRoot,
   );
 
-  if (extension === "tsx") {
-    const tsconfigPath = await writeWebSourceTypeScriptConfig(targetDir);
-    outputFiles.push(` ${relative(process.cwd(), tsconfigPath)}`);
-    await syncWebSourceTypecheckScript(projectRoot);
+  if (scaffoldRequired || requiredFiles.length > 0) {
+    await prepareWebSourcePackage(projectRoot, extension, scaffoldRequired);
   }
 
-  await prepareWebSourcePackage(projectRoot, extension);
+  if (scaffoldRequired) {
+    consola.success(`Scaffolded ${relative(projectRoot, targetDir)}`);
+    consola.log.raw(formatTree([...outputFiles, ...requiredFiles]));
+  } else if (requiredFiles.length > 0) {
+    consola.success(
+      `Added required files to ${relative(projectRoot, targetDir)}`,
+    );
 
-  consola.success(`Scaffolded ${relative(process.cwd(), targetDir)}`);
-  consola.log.raw(formatTree(outputFiles));
+    consola.log.raw(formatTree(requiredFiles));
+  }
 }

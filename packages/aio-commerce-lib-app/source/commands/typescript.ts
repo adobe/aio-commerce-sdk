@@ -18,7 +18,6 @@ import {
   appendCommand,
   detectPackageManager,
   getPackageDependencyInstallPlan,
-  getProjectRootDirectory,
   getRunScriptCommand,
   loadPackageJson,
 } from "@aio-commerce-sdk/scripting-utils/project";
@@ -28,6 +27,7 @@ import {
   BACKEND_UI_V2_EXTENSION_POINT_ID,
   getExtensionPointFolderPath,
   SHARED_TYPESCRIPT_DEV_DEPENDENCIES,
+  TYPESCRIPT_NODE_DEV_DEPENDENCY,
   TYPESCRIPT_WEBPACK_DEV_DEPENDENCY,
 } from "#commands/constants";
 import { TEMPLATES_DIR } from "#commands/generate/actions/constants";
@@ -68,6 +68,7 @@ const ROOT_TYPESCRIPT_CONFIG = {
 
 const TYPESCRIPT_DEV_DEPENDENCIES = [
   ...SHARED_TYPESCRIPT_DEV_DEPENDENCIES,
+  TYPESCRIPT_NODE_DEV_DEPENDENCY,
   TYPESCRIPT_WEBPACK_DEV_DEPENDENCY,
 ] as const satisfies readonly PackageDependency[];
 
@@ -155,13 +156,12 @@ async function installTypeScriptDependencies(
 /**
  * Scaffold the files and dependencies for a new TypeScript Commerce project.
  * @param packageManager Package manager used by the initialized project.
- * @param cwd Directory within the App Builder project.
+ * @param projectRoot Resolved project root.
  */
 export async function scaffoldTypeScriptProject(
   packageManager: PackageManager,
-  cwd = process.cwd(),
+  projectRoot: string,
 ) {
-  const projectRoot = await getProjectRootDirectory(cwd);
   await scaffoldWebpackConfig(projectRoot);
   await scaffoldTypeScriptConfig(projectRoot);
   await installTypeScriptDependencies(packageManager, projectRoot);
@@ -171,16 +171,15 @@ export async function scaffoldTypeScriptProject(
  * Add a generated typecheck script and compose it into the root typecheck script.
  * @param scriptName Generated package script name.
  * @param command TypeScript command run by the generated script.
- * @param cwd Directory within the App Builder project.
+ * @param projectRoot Resolved project root.
  */
 async function syncTypecheckScript(
   scriptName:
     | typeof ACTIONS_TYPECHECK_SCRIPT
     | typeof WEB_SOURCE_TYPECHECK_SCRIPT,
   command: string,
-  cwd: string,
+  projectRoot: string,
 ) {
-  const projectRoot = await getProjectRootDirectory(cwd);
   const pkg = await loadPackageJson(projectRoot);
   if (pkg === null) {
     throw new Error("Could not find package.json.");
@@ -208,24 +207,24 @@ async function syncTypecheckScript(
 
 /**
  * Add the Runtime actions typecheck script to a project.
- * @param cwd Directory within the App Builder project.
+ * @param projectRoot Resolved project root.
  */
-export async function syncActionsTypecheckScript(cwd = process.cwd()) {
+export async function syncActionsTypecheckScript(projectRoot: string) {
   await syncTypecheckScript(
     ACTIONS_TYPECHECK_SCRIPT,
     ACTIONS_TYPECHECK_COMMAND,
-    cwd,
+    projectRoot,
   );
 }
 
 /**
  * Add the web-src typecheck script to a project.
- * @param cwd Directory within the App Builder project.
+ * @param projectRoot Resolved project root.
  */
-export async function syncWebSourceTypecheckScript(cwd = process.cwd()) {
+export async function syncWebSourceTypecheckScript(projectRoot: string) {
   await syncTypecheckScript(
     WEB_SOURCE_TYPECHECK_SCRIPT,
     WEB_SOURCE_TYPECHECK_COMMAND,
-    cwd,
+    projectRoot,
   );
 }

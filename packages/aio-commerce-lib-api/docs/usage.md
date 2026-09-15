@@ -6,6 +6,7 @@ The `@adobe/aio-commerce-lib-api` package provides:
 
 - **HTTP Clients**: Pre-configured Ky-based HTTP clients for Adobe Commerce and Adobe I/O Events
 - **API Client Builder**: A flexible system for binding API functions to HTTP clients
+- **Search Criteria**: A serializer for the `searchCriteria` query parameters used by Commerce REST list endpoints
 - **Authentication Support**: Built-in integration with `@adobe/aio-commerce-lib-auth` for both IMS and OAuth authentication
 - **Transformation Utilities**: Response transformation hooks for data normalization
 - **Type Safety**: Full TypeScript support with comprehensive type definitions
@@ -219,6 +220,179 @@ const updated = await commerceApiClient.updateProduct("test-sku", {
   name: "Updated Product",
 });
 ```
+
+### Building Search Criteria
+
+Commerce REST list endpoints (`products`, `orders`, `customers/search`, and so on) are queried with the `searchCriteria[...]` query parameters. Rather than assembling those by hand, describe the query and let the SDK serialize it.
+
+Pass the query to `buildSearchCriteria()` and hand the result to `searchParams`:
+
+```typescript
+import { buildSearchCriteria } from "@adobe/aio-commerce-lib-api";
+
+const searchParams = buildSearchCriteria({
+  filterGroups: [
+    // status is 1 OR status is 2...
+    [
+      { field: "status", value: 1 },
+      { field: "status", value: 2 },
+    ],
+    // ...AND created on or after 2026-01-01
+    [{ field: "created_at", value: "2026-01-01", conditionType: "gteq" }],
+  ],
+  sortOrders: [{ field: "created_at", direction: "DESC" }],
+  pageSize: 50,
+  currentPage: 1,
+});
+
+const { items, total_count } = await commerceClient
+  .get("products", { searchParams })
+  .json();
+```
+
+Because the query is plain data, it can also be assembled conditionally:
+
+```typescript
+import {
+  buildSearchCriteria,
+  type SearchFilter,
+} from "@adobe/aio-commerce-lib-api";
+
+const filterGroups: SearchFilter[][] = [];
+if (sku) {
+  filterGroups.push([{ field: "sku", value: sku }]);
+}
+if (since) {
+  filterGroups.push([
+    { field: "created_at", value: since, conditionType: "gteq" },
+  ]);
+}
+
+const searchParams = buildSearchCriteria({ filterGroups, pageSize: 100 });
+await commerceClient.get("products", { searchParams }).json();
+```
+
+#### Filter groups: AND vs OR
+
+This is the part of the Commerce convention that is easiest to get wrong, and the nesting of `filterGroups` is what encodes it. Filters **within** a group are OR-ed; **separate** groups are AND-ed:
+
+| `filterGroups`  | Semantics        |
+| --------------- | ---------------- |
+| `[[a], [b]]`    | `a AND b`        |
+| `[[a, b]]`      | `a OR b`         |
+| `[[a, b], [c]]` | `(a OR b) AND c` |
+
+So a filter that must hold goes in a group of its own, while alternatives share one group:
+
+```typescript
+// (status = 1 OR status = 2) AND created_at >= 2026-01-01
+{
+  filterGroups: [
+    [
+      { field: "status", value: 1 },
+      { field: "status", value: 2 },
+    ],
+    [{ field: "created_at", value: "2026-01-01", conditionType: "gteq" }],
+  ];
+}
+```
+
+Empty groups are dropped, so a conditionally-built `filterGroups` cannot produce a group Commerce would reject.
+
+#### Condition types
+
+`conditionType` defaults to `eq`. The supported conditions are `eq`, `neq`, `like`, `nlike`, `in`, `nin`, `gt`, `gteq`, `lt`, `lteq`, `from`, `to`, `finset`, `nfinset`, `regexp`, `seq`, `sneq`, `null` and `notnull`.
+
+Three conditions Commerce will accept are deliberately excluded, because each one silently misbehaves over REST rather than returning an error:
+
+| Excluded   | Why                                                                                                                                                                                      | Use instead                     |
+| ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------- |
+| `moreq`    | Listed in Adobe's condition type table, but no Commerce condition map implements it. It falls through to `eq` and returns wrong rows.                                                    | `gteq`                          |
+| `fulltext` | An admin grid condition type. A REST request only reaches it via a fallback that rewrites it to `like` with the value wrapped in wildcards, despite the name implying relevance ranking. | `like` with explicit `%`        |
+| `ntoa`     | Matches `INET_NTOA(field)`, needing an IPv4 address stored as an integer. No core table does that, and on a varchar column such as `sales_order.remote_ip` it matches nothing at all.    | `like` or `eq` on the raw value |
+
+A few behaviours worth knowing:
+
+- **`in` / `nin`** accept an array, which is comma-joined for you. Commerce has no way to escape a comma inside such a list, so values containing commas cannot be expressed.
+
+  ```typescript
+  { field: "entity_id", value: [1, 2, 3], conditionType: "in" }
+  ```
+
+- **`null` / `notnull`** ignore the value at the SQL level, so it is optional — but any value you do supply is forwarded, and on a **non-static EAV attribute** that matters. Commerce only switches the attribute join to `LEFT` when a `null` filter arrives carrying a value; without one the `INNER` join cannot match entities that have no value row, which is usually what is wanted. When filtering an EAV attribute for nullness, pass a value:
+
+  ```typescript
+  {
+    field: "my_custom_attribute",
+    value: 1, // ignored by the SQL, but forces the LEFT join
+    conditionType: "null",
+  }
+  ```
+
+- **`like` / `nlike`** require you to supply the SQL wildcards yourself — they are not added automatically, so that exact matches stay expressible.
+
+  ```typescript
+  { field: "name", value: "%shirt%", conditionType: "like" }
+  ```
+
+- **`seq` / `sneq`** compare strings, but Commerce rewrites them to a null check when the value is an empty string: `seq` becomes `IS NULL` and `sneq` becomes `IS NOT NULL`. With a non-empty value they behave as `eq` and `neq`. This makes them useful for a value that may legitimately be blank.
+
+- **Booleans** serialize to `1` / `0`, matching how Commerce stores boolean attributes.
+
+#### Reusing a base query
+
+A `SearchCriteria` is inert until it is serialized, so a base query can be declared once and specialized per call with a spread:
+
+```typescript
+import {
+  buildSearchCriteria,
+  type SearchCriteria,
+} from "@adobe/aio-commerce-lib-api";
+
+const recent = {
+  filterGroups: [
+    [{ field: "created_at", value: since, conditionType: "gteq" }],
+  ],
+  sortOrders: [{ field: "created_at", direction: "DESC" }],
+} satisfies SearchCriteria;
+
+const page1 = buildSearchCriteria({ ...recent, pageSize: 50, currentPage: 1 });
+const page2 = buildSearchCriteria({ ...recent, pageSize: 50, currentPage: 2 });
+```
+
+To extend the base rather than override it, spread the arrays too — `filterGroups: [...recent.filterGroups, [{ field: "sku", value: sku }]]`.
+
+#### Combining with other query parameters
+
+Endpoints can take search criteria alongside unrelated query parameters. For example, the universal [`fields`](https://developer.adobe.com/commerce/webapi/rest/use-rest/retrieve-filtered-responses/) parameter can be used on any endpoint to trim the response.
+
+Use `buildSearchCriteriaRecord()` and spread it:
+
+```typescript
+await commerceClient.get("products", {
+  searchParams: {
+    ...buildSearchCriteriaRecord({
+      filterGroups: [[{ field: "sku", value: "24-MB01" }]],
+    }),
+    fields: "items[sku,name]",
+  },
+});
+```
+
+Or set additional parameters on the `URLSearchParams`, which is mutable:
+
+```typescript
+const searchParams = buildSearchCriteria({
+  filterGroups: [[{ field: "sku", value: "24-MB01" }]],
+});
+
+searchParams.set("fields", "items[sku,name]");
+
+await commerceClient.get("products", { searchParams });
+```
+
+> [!NOTE]
+> Serialization is faithful to whatever you describe; it does not check that a field exists or that the endpoint you are calling supports search criteria. Invalid criteria surface as a Commerce `400`, which [`unwrapHttpError`](#unwrapping-http-errors) will make readable.
 
 ### Forwarding IMS Authentication
 

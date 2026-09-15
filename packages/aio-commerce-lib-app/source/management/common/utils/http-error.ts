@@ -1,0 +1,37 @@
+/*
+ * Copyright 2026 Adobe. All rights reserved.
+ * This file is licensed to you under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License. You may obtain a copy
+ * of the License at http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under
+ * the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR REPRESENTATIONS
+ * OF ANY KIND, either express or implied. See the License for the specific language
+ * governing permissions and limitations under the License.
+ */
+
+import {
+  HTTP_NOT_FOUND,
+  unwrapHttpError,
+} from "@adobe/aio-commerce-lib-api/utils";
+import { HTTPError } from "ky";
+
+/**
+ * Unwraps an error via `unwrapHttpError`, prefixes it, logs it at error level,
+ * and throws a new `Error` with the enriched message. Returns `Promise<never>`
+ * so it composes cleanly inside `.catch()` without widening the surrounding type.
+ */
+export async function throwHttpError(
+  logger: { error: (msg: string) => void },
+  error: unknown,
+  prefix: string,
+): Promise<never> {
+  const message = `${prefix}: ${await unwrapHttpError(error)}`;
+  logger.error(message);
+  throw new Error(message);
+}
+
+/** Whether `error` is a ky HTTP error carrying a 404 Not Found response. */
+export function isHttpNotFoundError(error: unknown): boolean {
+  return error instanceof HTTPError && error.response.status === HTTP_NOT_FOUND;
+}

@@ -60,7 +60,7 @@ describe("commands/generate/manifest", () => {
   describe("run", () => {
     test("writes manifest JSON to the extensibility extension point directory", async () => {
       await withTempProject(EMPTY_PROJECT, async (tempDir) => {
-        await run(minimalValidConfig);
+        await run(minimalValidConfig, tempDir);
 
         const contents = await readFile(getManifestPath(tempDir), "utf-8");
         expect(JSON.parse(contents)).toEqual(minimalValidConfig);
@@ -82,13 +82,13 @@ describe("commands/generate/manifest", () => {
       };
 
       await withTempProject(EMPTY_PROJECT, async (tempDirA) => {
-        await run(configA);
+        await run(configA, tempDirA);
         const hashA = sha256(
           await readFile(getManifestPath(tempDirA), "utf-8"),
         );
 
         await withTempProject(EMPTY_PROJECT, async (tempDirB) => {
-          await run(configB);
+          await run(configB, tempDirB);
           const hashB = sha256(
             await readFile(getManifestPath(tempDirB), "utf-8"),
           );
@@ -100,30 +100,33 @@ describe("commands/generate/manifest", () => {
 
     test("does not emit a JSON manifest when schema is dynamic", async () => {
       await withTempProject(EMPTY_PROJECT, async (tempDir) => {
-        await run(configWithDynamicListOptions);
+        await run(configWithDynamicListOptions, tempDir);
         await expectFileToNotExist(getManifestPath(tempDir));
       });
     });
 
     test("does not emit a JSON manifest when the config has named exports", async () => {
-      await withTempProject(MINIMAL_PROJECT_WITH_NAMED_EXPORT, async () => {
-        await run(minimalValidConfig);
-        await expectFileToNotExist(getManifestPath(process.cwd()));
-      });
+      await withTempProject(
+        MINIMAL_PROJECT_WITH_NAMED_EXPORT,
+        async (tempDir) => {
+          await run(minimalValidConfig, tempDir);
+          await expectFileToNotExist(getManifestPath(tempDir));
+        },
+      );
     });
 
     test("removes a stale JSON manifest when regenerating as dynamic", async () => {
       await withTempProject(EMPTY_PROJECT, async (tempDir) => {
-        await run(configWithBusinessConfig);
+        await run(configWithBusinessConfig, tempDir);
         await expectFileToExist(getManifestPath(tempDir));
-        await run(configWithDynamicListOptions);
+        await run(configWithDynamicListOptions, tempDir);
         await expectFileToNotExist(getManifestPath(tempDir));
       });
     });
 
     test("serializes all config fields", async () => {
       await withTempProject(EMPTY_PROJECT, async (tempDir) => {
-        await run(fullConfig);
+        await run(fullConfig, tempDir);
 
         const outputPath = join(
           tempDir,

@@ -13,24 +13,27 @@
 import AioLogger from "@adobe/aio-lib-core-logging";
 import { vi } from "vitest";
 
+import { createMockStepStatus } from "./workflow";
+
 import type {
-  BranchStep,
-  InstallationContext,
-} from "#management/installation/workflow/step";
+  AppStateSnapshot,
+  OrchestrationState,
+} from "#management/common/orchestration";
+import type { LifecycleContext } from "#management/common/workflow/step";
 import type {
-  ExecutionStatus,
-  FailedInstallationState,
-  InProgressInstallationState,
-  InstallationError,
-  InstallationState,
+  FailedWorkflowState,
+  InProgressWorkflowState,
   StepStatus,
-  SucceededInstallationState,
-} from "#management/installation/workflow/types";
+  SucceededWorkflowState,
+  WorkflowError,
+  WorkflowRunState,
+} from "#management/common/workflow/types";
 import type {
   StepValidationResult,
   ValidationResult,
   ValidationSummary,
-} from "#management/installation/workflow/validation";
+} from "#management/common/workflow/validation";
+import type { LifecycleStore } from "#management/lifecycle/state";
 
 export const FAKE_SYSTEM_TIME = "2026-01-30T10:00:00.000Z";
 export const FAKE_COMPLETED_TIME = "2026-01-30T10:05:00.000Z";
@@ -55,25 +58,24 @@ export function createMockLogger(): ReturnType<typeof AioLogger> {
 }
 
 /**
- * Builds an InstallationContext with a pre-populated customScripts map.
+ * Builds a LifecycleContext with a pre-populated customScripts map.
  * Use this when testing steps that load and execute custom installation scripts.
  */
 export function createMockInstallationContextWithScripts(
   customScripts: Record<string, unknown> = {},
-): InstallationContext {
-  // createMockInstallationContext does not forward customScripts, so spread it in.
-  return { ...createMockInstallationContext(), customScripts };
+): LifecycleContext {
+  return createMockInstallationContext({ customScripts });
 }
 
 type InstallationContextOverrides = Omit<
-  Partial<InstallationContext>,
+  Partial<LifecycleContext>,
   "appData" | "params"
 > & {
-  appData?: Partial<InstallationContext["appData"]>;
-  params?: Partial<InstallationContext["params"]>;
+  appData?: Partial<LifecycleContext["appData"]>;
+  params?: Partial<LifecycleContext["params"]>;
 };
 
-type InstallationParams = InstallationContext["params"];
+type InstallationParams = LifecycleContext["params"];
 
 type InstallationImsParams = Pick<
   InstallationParams,
@@ -113,10 +115,16 @@ export function createMockInstallationParams(
   };
 }
 
-/** Creates a mock InstallationContext with params and logger. */
+/** Creates a mock LifecycleContext with params and logger. */
 export function createMockInstallationContext(
   overrides?: InstallationContextOverrides,
-): InstallationContext {
+): LifecycleContext {
+  const {
+    appData: appDataOverrides,
+    params: paramOverrides,
+    ...contextOverrides
+  } = overrides ?? {};
+
   return {
     appData: {
       consumerOrgId: "test-consumer-org-id",
@@ -127,39 +135,12 @@ export function createMockInstallationContext(
       workspaceId: "test-workspace-id",
       workspaceName: "test-workspace-name",
       workspaceTitle: "Test Workspace Title",
-      ...(overrides?.appData ?? {}),
+      ...appDataOverrides,
     },
 
-    logger: overrides?.logger ?? createMockLogger(),
-    params: createMockInstallationParams(overrides?.params),
-  };
-}
-
-/** Creates a mock StepStatus for testing. */
-export function createMockStepStatus(
-  overrides?: Partial<StepStatus>,
-): StepStatus {
-  return {
-    children: [],
-    id: "root-id",
-    meta: { description: "Root step for testing", label: "Root Step" },
-    name: "root",
-    path: ["root"],
-    status: "pending" as ExecutionStatus,
-    ...overrides,
-  };
-}
-
-/** Creates a mock BranchStep for orchestration tests. */
-export function createMockBranchStep(
-  overrides?: Partial<BranchStep>,
-): BranchStep {
-  return {
-    children: [],
-    meta: { install: { label: "Installation" } },
-    name: "installation",
-    type: "branch",
-    ...overrides,
+    ...contextOverrides,
+    logger: contextOverrides.logger ?? createMockLogger(),
+    params: createMockInstallationParams(paramOverrides),
   };
 }
 
@@ -177,10 +158,10 @@ export function createMockInstallationStepStatus(
   });
 }
 
-/** Creates a mock InstallationError for testing. */
+/** Creates a mock WorkflowError for testing. */
 export function createMockInstallationError(
-  overrides?: Partial<InstallationError>,
-): InstallationError {
+  overrides?: Partial<WorkflowError>,
+): WorkflowError {
   return {
     key: "STEP_EXECUTION_FAILED",
     message: "Step execution failed",
@@ -196,10 +177,10 @@ const baseStateProps = {
   step: createMockStepStatus(),
 };
 
-/** Creates a mock InProgressInstallationState. */
+/** Creates a mock InProgressWorkflowState. */
 export function createMockInProgressState(
-  overrides?: Partial<InProgressInstallationState>,
-): InProgressInstallationState {
+  overrides?: Partial<InProgressWorkflowState>,
+): InProgressWorkflowState {
   return {
     ...baseStateProps,
     startedAt: FAKE_SYSTEM_TIME,
@@ -211,8 +192,8 @@ export function createMockInProgressState(
 
 /** Creates a default installation in-progress state for runner tests. */
 export function createMockInstallationInProgressState(
-  overrides?: Partial<InProgressInstallationState>,
-): InProgressInstallationState {
+  overrides?: Partial<InProgressWorkflowState>,
+): InProgressWorkflowState {
   return createMockInProgressState({
     data: null,
     id: "installation-id",
@@ -222,10 +203,10 @@ export function createMockInstallationInProgressState(
   });
 }
 
-/** Creates a mock SucceededInstallationState. */
+/** Creates a mock SucceededWorkflowState. */
 export function createMockSucceededState(
-  overrides?: Partial<SucceededInstallationState>,
-): SucceededInstallationState {
+  overrides?: Partial<SucceededWorkflowState>,
+): SucceededWorkflowState {
   return {
     ...baseStateProps,
     completedAt: FAKE_COMPLETED_TIME,
@@ -238,22 +219,22 @@ export function createMockSucceededState(
 
 /** Creates a default successful installation state for runner tests. */
 export function createMockInstallationSucceededState(
-  overrides?: Partial<SucceededInstallationState>,
-): SucceededInstallationState {
+  overrides?: Partial<SucceededWorkflowState>,
+): SucceededWorkflowState {
   return createMockSucceededState({
     completedAt: FAKE_COMPLETED_TIME,
     data: null,
     id: "installation-id",
     startedAt: FAKE_SYSTEM_TIME,
-    step: createMockInstallationStepStatus({ status: "pending" }),
+    step: createMockInstallationStepStatus({ status: "succeeded" }),
     ...overrides,
   });
 }
 
-/** Creates a mock FailedInstallationState. */
+/** Creates a mock FailedWorkflowState. */
 export function createMockFailedState(
-  overrides?: Partial<FailedInstallationState>,
-): FailedInstallationState {
+  overrides?: Partial<FailedWorkflowState>,
+): FailedWorkflowState {
   return {
     ...baseStateProps,
     completedAt: FAKE_COMPLETED_TIME,
@@ -316,7 +297,7 @@ export type MockInstallationStoreOptions = {
 
 /** Creates an in-memory mock of a key/value store for installation state. */
 export function createMockInstallationStore(
-  initialValue: InstallationState | null = null,
+  initialValue: WorkflowRunState | null = null,
   { serialize = false }: MockInstallationStoreOptions = {},
 ) {
   let value = initialValue;
@@ -328,7 +309,7 @@ export function createMockInstallationStore(
       return hasValue;
     }),
     get: vi.fn(async (_key: string) => value),
-    put: vi.fn(async (_key: string, nextValue: InstallationState) => {
+    put: vi.fn(async (_key: string, nextValue: WorkflowRunState) => {
       value = serialize ? JSON.parse(JSON.stringify(nextValue)) : nextValue;
     }),
   };
@@ -344,7 +325,9 @@ export type MockInstallationStore = ReturnType<
  */
 export function createMockCombinedStoreImpl(
   getStores: () => {
+    appStateSnapshot?: LifecycleStore<AppStateSnapshot>;
     installation: MockInstallationStore;
+    orchestrationState?: LifecycleStore<OrchestrationState>;
     uninstallation: MockInstallationStore;
   },
 ) {
@@ -357,6 +340,18 @@ export function createMockCombinedStoreImpl(
     }
     if (prefix === "uninstallation") {
       return stores.uninstallation;
+    }
+    if (prefix === "lifecycle-orchestration-state") {
+      if (!stores.orchestrationState) {
+        throw new Error("Missing lifecycle orchestration state store");
+      }
+      return stores.orchestrationState;
+    }
+    if (prefix === "lifecycle-app-state-snapshot") {
+      if (!stores.appStateSnapshot) {
+        throw new Error("Missing lifecycle app-state snapshot store");
+      }
+      return stores.appStateSnapshot;
     }
 
     throw new Error(`Unexpected store prefix: ${String(prefix)}`);

@@ -31,10 +31,6 @@ import {
 
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 
-const getProjectRootDirectory = vi.hoisted(() =>
-  vi.fn(() => "/fake/project/root"),
-);
-
 vi.mock("@aio-commerce-sdk/scripting-utils/project", async (importOriginal) => {
   const actual =
     await importOriginal<
@@ -42,7 +38,6 @@ vi.mock("@aio-commerce-sdk/scripting-utils/project", async (importOriginal) => {
     >();
   return {
     ...actual,
-    getProjectRootDirectory,
     makeOutputDirFor: vi.fn(() => Promise.resolve("/fake/output/dir")),
   };
 });
@@ -64,7 +59,7 @@ describe("readExtConfig", () => {
     vi.mocked(readYamlFile).mockRejectedValue(new Error("ENOENT"));
 
     await expect(
-      readExtConfig(EXTENSIBILITY_EXTENSION_POINT_ID),
+      readExtConfig(EXTENSIBILITY_EXTENSION_POINT_ID, "/fake/project/root"),
     ).rejects.toThrow(
       "Could not read ext.config.yaml for commerce/extensibility/1",
     );
@@ -77,6 +72,7 @@ describe("applyCustomScripts", () => {
       const scriptsTemplate = await generateCustomScriptsTemplate(
         templates.customScripts,
         minimalValidConfig,
+        "/fake/project/root",
       );
 
       const result = applyCustomScripts(
@@ -96,6 +92,7 @@ describe("applyCustomScripts", () => {
       const scriptsTemplate = await generateCustomScriptsTemplate(
         templates.customScripts,
         configWithCustomInstallationSteps,
+        "/fake/project/root",
       );
 
       const result = applyCustomScripts(
@@ -121,6 +118,7 @@ describe("applyCustomScripts", () => {
       const scriptsTemplate = await generateCustomScriptsTemplate(
         templates.customScripts,
         appManifest as CommerceAppConfigOutputModel,
+        "/fake/project/root",
       );
 
       const result = applyCustomScripts(
@@ -141,6 +139,7 @@ describe("generateCustomScriptsTemplate", () => {
       const result = await generateCustomScriptsTemplate(
         templates.customScripts,
         minimalValidConfig,
+        "/fake/project/root",
       );
 
       expect(result).toBeNull();
@@ -152,6 +151,7 @@ describe("generateCustomScriptsTemplate", () => {
       const result = await generateCustomScriptsTemplate(
         templates.customScripts,
         configWithCustomInstallationSteps,
+        "/fake/project/root",
       );
 
       const expectedImports = [
@@ -186,6 +186,7 @@ describe("generateCustomScriptsTemplate", () => {
       const result = await generateCustomScriptsTemplate(
         templates.customScripts,
         appManifest as CommerceAppConfigOutputModel,
+        "/fake/project/root",
       );
 
       expect(result).toBeNull();
@@ -208,6 +209,7 @@ describe("generateCustomScriptsTemplate", () => {
       const result = await generateCustomScriptsTemplate(
         templates.customScripts,
         appManifest as CommerceAppConfigOutputModel,
+        "/fake/project/root",
       );
 
       expect(result).toContain('import * as customScript0 from "./nested.js"');

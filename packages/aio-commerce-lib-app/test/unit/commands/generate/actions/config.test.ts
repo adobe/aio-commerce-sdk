@@ -50,11 +50,11 @@ describe("buildAppManagementExtConfig", () => {
     expect(actions?.["app-config"]).toBeDefined();
   });
 
-  test("does not include installation action for minimal config", () => {
+  test("includes installation action for minimal config", () => {
     const result = buildAppManagementExtConfig(minimalValidConfig);
 
     const actions = result.runtimeManifest?.packages?.[PACKAGE_NAME]?.actions;
-    expect(actions?.installation).toBeUndefined();
+    expect(actions?.installation).toBeDefined();
   });
 
   test.concurrent.each([
@@ -136,12 +136,15 @@ describe("buildAppManagementExtConfig", () => {
     }
   });
 
-  test("pre-app-build hook uses extensibility/1", () => {
-    const result = buildAppManagementExtConfig(configWithCommerceEventing);
-    const preBuildHook = result.hooks?.["pre-app-build"] ?? "";
+  test.each(["pre-app-build", "post-app-deploy"] as const)(
+    "%s hook uses extensibility/1",
+    (hookName) => {
+      const result = buildAppManagementExtConfig(configWithCommerceEventing);
+      const hook = result.hooks?.[hookName] ?? "";
 
-    expect(preBuildHook).toMatch(EXTENSIBILITY_EXTENSION_MATCHER);
-  });
+      expect(hook).toMatch(EXTENSIBILITY_EXTENSION_MATCHER);
+    },
+  );
 
   test("declares workerProcess operations for each runtime action", () => {
     const result = buildAppManagementExtConfig(configWithCommerceEventing);

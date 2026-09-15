@@ -9,6 +9,7 @@ export const mockMetadata = {
   description: "A test application",
   displayName: "Test App",
   id: "test-app",
+  upgradeMode: "auto",
   version: "1.0.0",
 } satisfies ApplicationMetadata;
 
@@ -105,6 +106,27 @@ export const minimalValidConfig = {
   metadata: mockMetadata,
 } satisfies CommerceAppConfigOutputModel;
 
+type MockConfigOverrides = Omit<
+  Partial<CommerceAppConfigOutputModel>,
+  "metadata"
+> & {
+  metadata?: Partial<ApplicationMetadata>;
+};
+
+/** Creates a minimal config with top-level and metadata overrides. */
+export function createMockConfig(
+  overrides: MockConfigOverrides = {},
+): CommerceAppConfigOutputModel {
+  return {
+    ...minimalValidConfig,
+    ...overrides,
+    metadata: {
+      ...minimalValidConfig.metadata,
+      ...overrides.metadata,
+    },
+  };
+}
+
 /** Config fixture with business configuration. */
 export const configWithBusinessConfig = {
   businessConfig: businessConfigPart,
@@ -189,11 +211,14 @@ export const fullConfig = {
 export function createMockMetadata(
   id: string,
   overrides: Partial<ApplicationMetadata> = {},
-): ApplicationMetadata {
+): CommerceAppConfigOutputModel["metadata"] {
   return {
     ...mockMetadata,
     id,
     ...overrides,
+    // `upgradeMode` is optional on the input model but required on the output
+    // model; keep it present so fixtures are output-shaped.
+    upgradeMode: overrides.upgradeMode ?? mockMetadata.upgradeMode,
   };
 }
 
@@ -350,6 +375,12 @@ export const configWithAdminUiSingleGrid = {
   metadata: { ...mockMetadata, id: "test-app-admin-ui-single-grid" },
 } satisfies CommerceAppConfigOutputModel;
 
+/** Config fixture whose `adminUi` block is present but has no components (all fields optional). */
+export const configWithAdminUiEmptyBlock = {
+  ...configWithAdminUiSingleGrid,
+  adminUi: {},
+} satisfies CommerceAppConfigOutputModel;
+
 /** Config fixture with grid columns configured for all three entities (order, product, customer). */
 export const configWithAdminUiAllGrids = {
   adminUi: {
@@ -422,6 +453,14 @@ export const configWithAdminUiMenu = {
     menu: adminUiMenuPart,
   },
   metadata: { ...mockMetadata, id: "test-app-admin-ui-menu" },
+} satisfies CommerceAppConfigOutputModel;
+
+/** Config fixture with only custom ACL resources (no menu, grids, mass actions, or view buttons). */
+export const configWithAdminUiAclOnly = {
+  adminUi: {
+    acl: [{ id: "approvals", label: "Approvals" }],
+  },
+  metadata: { ...mockMetadata, id: "test-app-admin-ui-acl-only" },
 } satisfies CommerceAppConfigOutputModel;
 
 /** Config fixture with only worker mass actions configured (no view mass actions, no grids). */

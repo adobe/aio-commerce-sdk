@@ -6,7 +6,7 @@ The `@adobe/aio-commerce-lib-app` library provides:
 
 - **App Configuration**: Define, validate and read/parse configurations for Adobe Commerce App Builder applications
 - **Business Configuration**: Generate and manage the runtime actions that power the `commerce/configuration/1` extension point.
-- **Installation Management**: Generate and manage the runtime action that powers the app installation flow.
+- **Installation Management**: Generate and manage the runtime action that powers the app installation and upgrade flow.
 - **Admin UI Configuration** (`commerce/backend-ui/2`): Generate and manage the runtime action and `workerProcess` declarations for Admin UI extensions on `commerce/backend-ui/2`. Currently supports grid column extensions, mass actions, order view buttons, and menu declarations.
 - **Association Helpers**: Retrieve the Commerce instance the app is associated with from any runtime action via `getCommerceClient` and `getCommerceInstance`.
 - **Event Emission**: Publish a configured I/O Event from any runtime action by provider key and event name via `publishEvent`.
@@ -32,7 +32,7 @@ The `init` command will:
 
 - Create `app.commerce.config.*` with a template (prompts you to choose format and features if the file doesn't exist)
 - Install required dependencies (`@adobe/aio-commerce-lib-app`, `@adobe/aio-commerce-sdk`, and `@adobe/aio-commerce-lib-config` when business configuration is enabled)
-- For a TypeScript config, add missing `webpack-config.cjs` and root `tsconfig.json` files and install the required development dependencies
+- For a TypeScript config, add missing `webpack-config.cjs` and root `tsconfig.json` files and install `typescript`, `ts-loader`, `@tsconfig/bases`, and `@types/node` as development dependencies
 - For a TypeScript config, add or extend the `typecheck` package script to check generated actions and TypeScript Admin UI source
 - Add the `postinstall` hook to your `package.json`
 - Generate all required artifacts (`commerce/configuration/1` resources are only generated when `businessConfig` is defined in your config)
@@ -124,7 +124,7 @@ Generated Runtime actions always use `.js`.
 **`commerce/backend-ui/2`**: Admin UI registration (generated when `adminUi` is defined):
 
 - `src/commerce-backend-ui-2/ext.config.yaml`: extension manifest with the `pre-app-build` hook and `workerProcess` declarations derived from `runtimeAction` values
-- `src/commerce-backend-ui-2/web-src/`: browser scaffold generated when iframe-based Admin UI features require a `view` operation. Existing `web-src/index.html` files are never overwritten.
+- `src/commerce-backend-ui-2/web-src/`: browser scaffold generated when iframe-based Admin UI features require a `view` operation. Existing `web-src/index.html` files are never overwritten. A separate required-file phase runs on every generation to ensure support files are present without replacing existing versions (e.g. a `.babelrc` file).
 
 > [!NOTE]
 > Generated actions default to the `nodejs:24` runtime. To pin a different runtime, set the `runtime` field on the action in the generated `ext.config.yaml`. Codegen preserves a `runtime` you set there, so it survives regeneration.
@@ -176,6 +176,7 @@ Application metadata is required and identifies your application:
     version: "1.0.0",
 
     description: "A custom Adobe Commerce application for XYZ purpose",
+    upgradeMode: "auto", // optional; "auto" (default) or "manual"
   }
 }
 ```
@@ -186,6 +187,7 @@ Application metadata is required and identifies your application:
 - **displayName**: Maximum 50 characters
 - **description**: Maximum 255 characters
 - **version**: Must follow semantic versioning format (e.g., `1.0.0`, `2.1.3`)
+- **upgradeMode** (optional): `"auto"` (default) or `"manual"` — controls whether a planned upgrade runs automatically after a deploy or waits for manual review. See [Upgrading a Deployed App](#upgrading-a-deployed-app).
 
 #### Business Configuration Schema
 
@@ -393,6 +395,8 @@ webhooks: [
   },
 ];
 ```
+
+`webhook_type` must be either `"before"` or `"after"`, and `method` must be `"POST"`, `"PUT"`, `"DELETE"`, or `"GET"`. Other values are rejected before any Commerce changes are applied.
 
 Each webhook entry supports:
 
@@ -612,11 +616,24 @@ export default defineCustomInstallationStep(async (config, context) => {
 - If any script throws an error, the entire installation fails and subsequent scripts are not executed
 - Scripts have access to the complete app configuration and can use it to make decisions
 
+##### Custom Installation Steps During an Upgrade
+
+Custom installation steps behave like database migrations across an upgrade: each step's `install` runs once, the first time its `name` shows up, and is never re-run afterward.
+
+- **Adding a step**: give it a new `name` and its `install` runs on the next upgrade, same as a fresh install.
+- **Editing a step that already ran**: don't. Changing a step's script after it has run does **not** re-run it on upgrade, so the change silently has no effect. To change behavior, add a new step with a different `name` instead. (If you point an existing `name` at a different `script` path, the upgrade logs a warning, but still does not re-run it.)
+- **Removing a step**: taking a step out of `customInstallationSteps` doesn't run its `uninstall` during that upgrade. `uninstall` only runs for every step that ever ran (whether or not it's still configured) when the app is fully uninstalled.
+
+Two things follow from this:
+
+- Prefer the object form (`{ install, uninstall }`) over the plain function form for any step you may need to clean up later — a step with no `uninstall` can't be cleaned up when the app is uninstalled.
+- Don't delete a step's script file from your project while the step (or an app that ran it) might still need its `uninstall` called at uninstall time.
+
 #### Admin UI Configuration
 
 The `adminUi` field declares Admin UI registrations for the `commerce/backend-ui/2` extension point. Unlike `commerce/backend-ui/1`, which required a dedicated registration action, V2 reads the registration directly from the `app-config` endpoint — no separate registration action is generated. Every field of `adminUi` is optional — configure only the extension points your application needs. When defined, `init` and `generate all` automatically wire up the extension, including the `pre-app-build` hook and the `workerProcess` declarations in `ext.config.yaml`.
 
-View-based features also get a minimal `web-src/` scaffold when the resolved `view` entrypoint does not exist yet. The scaffold uses `.tsx` files when the Commerce config uses a TypeScript extension and `.jsx` files otherwise, independently of Runtime action TypeScript enablement. A TypeScript `web-src/tsconfig.json` checks only the Admin UI source and remains independent from the root config. The scaffold imports app metadata from `#app.commerce.config`, so custom Admin UI code should use the same alias instead of importing generated files by path. Currently supported: grid column extensions, mass actions, order view buttons, and menu declarations. For details on each extension point, see the [Admin UI SDK Extension Points documentation](https://developer.adobe.com/commerce/extensibility/admin-ui-sdk/extension-points/).
+View-based features also get a minimal `web-src/` scaffold when the resolved `view` entrypoint does not exist yet. The scaffold uses `.tsx` files when the Commerce config uses a TypeScript extension and `.jsx` files otherwise, independently of Runtime action TypeScript enablement. A TypeScript `web-src/tsconfig.json` checks only the Admin UI source and remains independent from the root config. Generation also runs a required-file phase that ensures a set of web source support files is present even when the source scaffold already exists, without replacing existing versions. The current set includes `web-src/.babelrc`, which selects React's automatic JSX transform for each environment so development builds retain JSX diagnostics while production builds do not emit `jsxDEV` calls. If `BABEL_ENV` is set, keep it synchronized with `NODE_ENV`, because Babel gives `BABEL_ENV` precedence when selecting the configuration environment. The scaffold imports app metadata from `#app.commerce.config`, so custom Admin UI code should use the same alias instead of importing generated files by path. Currently supported: grid column extensions, mass actions, order view buttons, and menu declarations. For details on each extension point, see the [Admin UI SDK Extension Points documentation](https://developer.adobe.com/commerce/extensibility/admin-ui-sdk/extension-points/).
 
 ##### Grid Columns
 
@@ -899,6 +916,25 @@ adminUi: {
   const allowed = await client.check(); // uses appId to resolve the resource id
   ```
 
+#### Custom ACL Resources
+
+Declare standalone permissions under `adminUi.acl` that are not tied to any Admin UI element. Commerce
+renders them in the Admin User Roles tree so a merchant can grant or deny them; your app checks them at
+runtime (see `getCustomAclResourceId` in `@adobe/aio-commerce-lib-admin-ui`) to gate its own logic.
+Resources are flat leaves or one-level groups. Each resource has an `id` (lowercase letters, digits,
+`_`; unique per level) and a `label` (3–50 characters — the text shown in the User Roles tree).
+
+```ts
+adminUi: {
+  acl: [
+    { id: "reports", label: "Reports", children: [
+      { id: "export", label: "Export" },
+    ]},
+    { id: "approve_refunds", label: "Approve Refunds" },
+  ],
+}
+```
+
 ### CLI Commands
 
 The library provides the following CLI commands:
@@ -930,6 +966,44 @@ Generated installation actions use `defineCustomScriptsLoader` from `@adobe/aio-
 
 The `#app.commerce.config` package import resolves to a generated JavaScript compatibility module. TypeScript configs are bundled into this module during generation, while JavaScript configs are re-exported. Generated Runtime actions therefore use the same stable import alias regardless of the source config format.
 
+### Upgrading a Deployed App
+
+After an app is installed, the installation endpoint is **desired-state**. It compares the recorded installation baseline against the app configuration and reconciles the app toward it:
+
+- **No baseline yet**: it installs the app.
+- **A baseline exists**: it upgrades the app from the baseline to the version declared in `metadata.version`.
+
+> [!IMPORTANT]
+> `metadata.id` identifies the installed application and cannot change during an upgrade. The endpoint rejects a different ID before planning starts. To use a different ID, uninstall the existing app and install it again.
+
+The endpoint derives the operation and returns it as `operation` (`"install"` or `"upgrade"`) in the response.
+
+#### Automatic vs. Manual Upgrades
+
+`metadata.upgradeMode` controls what happens once an upgrade has been planned:
+
+- **`auto`** (experimental): the plan is created and its execution starts immediately.
+- **`manual`** (default): the plan is created or reused and returned without starting execution.
+
+> [!NOTE]
+> `auto` is experimental and `upgradeMode` currently defaults to `manual` while automatic upgrade execution is stabilizing. This will change back to `auto` in a future release — if you want manual behavior permanently, set `upgradeMode: "manual"` explicitly now.
+
+#### The `post-app-deploy` Hook
+
+The generated `commerce/extensibility/1` extension wires a `post-app-deploy` hook automatically (alongside `pre-app-build`). After every `aio app deploy`, the hook triggers the desired-state reconciliation, so a redeploy of an installed app runs an upgrade check without any manual step:
+
+- In `auto` mode it prints the plan and waits for the execution result when progress is available.
+- In `manual` mode it reports that a plan was created but was not executed.
+
+#### No-op Upgrade States
+
+Some states are not actionable upgrades. In these cases the endpoint responds with `409 Conflict` carrying a `reason`, and the `post-app-deploy` hook treats them as a no-op rather than a failure:
+
+- **`not-associated`**: the app is not associated with a Commerce instance.
+- **`already-current`**: the installed version already matches `metadata.version`.
+
+A `409` **without** a `reason` (for example, when upgrade planning is blocked by configuration issues) is a real failure and surfaces as an error.
+
 ### Using the Configuration API
 
 The library provides functions for reading, parsing, and validating app configurations. These are primarily used in build scripts and CLI tools.
@@ -951,7 +1025,10 @@ const usesTypeScript = configPath !== null && isTypeScriptConfig(configPath);
 Use `parseCommerceAppConfig` to read and validate the configuration file in your build scripts or CLI tools:
 
 ```javascript
-import { parseCommerceAppConfig } from "@adobe/aio-commerce-lib-app/config";
+import {
+  hasBusinessConfigSchema,
+  parseCommerceAppConfig,
+} from "@adobe/aio-commerce-lib-app/config";
 
 try {
   const config = await parseCommerceAppConfig();
@@ -959,9 +1036,11 @@ try {
   console.log(`App: ${config.metadata.displayName}`);
   console.log(`Version: ${config.metadata.version}`);
 
-  // Access business config schema
-  const schema = config.businessConfig.schema;
-  console.log(`Configuration fields: ${schema.length}`);
+  // businessConfig is optional, so narrow with hasBusinessConfigSchema before
+  // accessing its schema.
+  if (hasBusinessConfigSchema(config)) {
+    console.log(`Configuration fields: ${config.businessConfig.schema.length}`);
+  }
 } catch (error) {
   console.error("Configuration error:", error);
   process.exit(1);

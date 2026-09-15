@@ -24,11 +24,7 @@ import {
 
 import { filterSchemaByEnv } from "#config/lib/environment";
 
-import {
-  GetConfigurationQuerySchema,
-  PatchConfigBodySchema,
-  PutConfigBodySchema,
-} from "./schema";
+import { GetConfigurationQuerySchema, PatchConfigBodySchema } from "./schema";
 
 import type {
   BusinessConfigSchema,
@@ -82,7 +78,6 @@ function filterPasswordFields<T extends Omit<ConfigValue, "origin">>(
  *
  * Routes:
  * - GET /     Get current configuration values for a given scope
- * - POST /    Set configuration (overrides all values for the scope) (deprecated)
  * - PATCH /   Partially update configuration (only updates provided fields, allows unsetting)
  */
 export const router = new HttpActionRouter<ConfigActionContext>().use(
@@ -125,49 +120,6 @@ router.get("/", {
     });
   },
   query: GetConfigurationQuerySchema,
-});
-
-/**
- * PUT / - Set configuration (deprecated)
- *
- * @deprecated Use PATCH instead. This endpoint overwrites all values for the scope
- * and does not support partial updates or unset semantics.
- */
-router.put("/", {
-  body: PutConfigBodySchema,
-  handler: async (req, ctx) => {
-    const { logger, rawParams } = ctx;
-
-    logger.debug(`Setting configuration with scope id: ${req.body.scopeId}`);
-    const { scopeId, config } = req.body;
-
-    const { configSchema } = await initialize({
-      params: rawParams,
-      schema: rawParams.configSchema,
-    });
-
-    // The UI sent it to us as a masked value, which means the user didn't update it.
-    const updatedFields = config.filter(
-      (item) => item.value !== MASKED_PASSWORD_VALUE,
-    );
-
-    const result = await setConfiguration(
-      { config: updatedFields },
-      byScopeId(scopeId),
-      {
-        encryptionKey: rawParams.AIO_COMMERCE_CONFIG_ENCRYPTION_KEY,
-      },
-    );
-
-    result.config = filterPasswordFields(configSchema, result.config);
-    return ok({
-      body: result,
-      headers: {
-        "Cache-Control": "no-store",
-        Deprecation: "Wed, 15 Apr 2026 00:00:00 GMT",
-      },
-    });
-  },
 });
 
 /** PATCH / - Partially update configuration */

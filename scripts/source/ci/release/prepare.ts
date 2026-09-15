@@ -10,6 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
+import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
 import { runGitHubScript } from "./utils.ts";
@@ -18,6 +19,11 @@ import type { AsyncFunctionArguments } from "./types.ts";
 
 const DEFAULT_SNAPSHOT_TAG = "beta";
 const STATUS_OUTPUT_FILE = "changeset-status.json";
+
+/** Minimal shape of `changeset status --output`, just enough to detect pending changesets. */
+type ChangesetStatus = {
+  changesets: unknown[];
+};
 
 export default async function main(
   core: AsyncFunctionArguments["core"],
@@ -57,6 +63,30 @@ async function prepareSnapshot(
   await exec.exec("pnpm", ["changeset", "status", "--output", statusFile]);
   core.info(`Changeset status written to ${statusFile}`);
 
-  await exec.exec("pnpm", ["changeset", "version", "--snapshot", snapshotTag]);
+  const status = JSON.parse(
+    readFileSync(statusFile, "utf-8"),
+  ) as ChangesetStatus;
+  const hasChangesets = status.changesets.length > 0;
+
+  // `changeset version` exits 1 (instead of no-op'ing with 0) when there are no
+  // unreleased changesets, which would otherwise fail this step on every
+  // no-op snapshot run.
+  const versionExitCode = await exec.exec(
+    "pnpm",
+    ["changeset", "version", "--snapshot", snapshotTag],
+    { ignoreReturnCode: true },
+  );
+
+  if (versionExitCode !== 0) {
+    if (hasChangesets || versionExitCode !== 1) {
+      throw new Error(
+        `"changeset version --snapshot ${snapshotTag}" failed with exit code ${versionExitCode}.`,
+      );
+    }
+
+    core.info("No pending changesets. Skipping snapshot version bump.");
+    return;
+  }
+
   core.info(`Snapshot versions applied with tag "${snapshotTag}".`);
 }

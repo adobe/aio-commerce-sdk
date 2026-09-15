@@ -92,6 +92,15 @@ const subscription = await commerceEventsClient.createEventSubscription({
   providerId: "my-provider-id",
   fields: [{ name: "order_id" }, { name: "customer_email" }],
 });
+
+// Update an existing subscription. The Commerce endpoint merges the provided
+// fields and rules into the existing ones (keyed by field name and
+// `field:operator`); it cannot remove entries, so removals require re-subscribing.
+await commerceEventsClient.updateEventSubscription({
+  name: "my-subscription",
+  provider_id: "my-provider-id",
+  fields: [{ name: "order_id" }, { name: "grand_total" }],
+});
 ```
 
 #### Updating Eventing Configuration

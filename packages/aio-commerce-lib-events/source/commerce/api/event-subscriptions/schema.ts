@@ -90,6 +90,19 @@ export const EventSubscriptionCreateParamsSchema = v.object({
   rules: v.optional(rulesSchema("rules")),
 });
 
+export const EventSubscriptionUpdateParamsSchema = v.object({
+  destination: v.optional(stringValueSchema("destination")),
+  fields: fieldsSchema("fields"),
+
+  hipaa_audit_required: v.optional(booleanValueSchema("hipaa_audit_required")),
+  name: stringValueSchema("name"),
+  parent: v.optional(stringValueSchema("parent")),
+  priority: v.optional(booleanValueSchema("priority")),
+
+  provider_id: v.optional(stringValueSchema("provider_id")),
+  rules: v.optional(rulesSchema("rules")),
+});
+
 export const EventSubscriptionDeleteParamsSchema = v.object({
   name: stringValueSchema("name"),
 });
@@ -100,6 +113,14 @@ export const EventSubscriptionDeleteParamsSchema = v.object({
  */
 export type EventSubscriptionCreateParams = v.InferInput<
   typeof EventSubscriptionCreateParamsSchema
+>;
+
+/**
+ * The schema of the parameters received by the PUT `eventing/eventSubscribe/:name` Commerce API endpoint.
+ * @see https://developer.adobe.com/commerce/extensibility/events/api/#update-an-event-subscription
+ */
+export type EventSubscriptionUpdateParams = v.InferInput<
+  typeof EventSubscriptionUpdateParamsSchema
 >;
 
 /**

@@ -25,6 +25,12 @@ export const UnregisterExtensionParamsSchema = v.object({
   workspaceName: v.pipe(v.string(), v.minLength(1)),
 });
 
+/** Parameters for POST /V1/adminuisdk/extension/{workspaceName}/{extensionName}/refresh. */
+export const RefreshExtensionParamsSchema = v.object({
+  extensionName: v.pipe(v.string(), v.minLength(1)),
+  workspaceName: v.pipe(v.string(), v.minLength(1)),
+});
+
 /** The parameters accepted by POST /V1/adminuisdk/extension. */
 export type ExtensionRegistrationParams = v.InferInput<
   typeof ExtensionRegistrationParamsSchema
@@ -33,6 +39,11 @@ export type ExtensionRegistrationParams = v.InferInput<
 /** The parameters accepted by DELETE /V1/adminuisdk/extension/{workspaceName}/{extensionName}. */
 export type UnregisterExtensionParams = v.InferInput<
   typeof UnregisterExtensionParamsSchema
+>;
+
+/** The parameters accepted by POST /V1/adminuisdk/extension/{workspaceName}/{extensionName}/refresh. */
+export type RefreshExtensionParams = v.InferInput<
+  typeof RefreshExtensionParamsSchema
 >;
 
 /** The response returned by POST /V1/adminuisdk/extension. */

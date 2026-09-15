@@ -248,6 +248,7 @@ describe("commands/init/main", () => {
               installCalls.some(
                 (call) =>
                   call.includes(`typescript@${__TYPESCRIPT_VERSION__}`) &&
+                  call.includes(`@types/node@${__NODE_TYPES_VERSION__}`) &&
                   call.includes(
                     `@tsconfig/bases@${__TSCONFIG_BASES_VERSION__}`,
                   ),

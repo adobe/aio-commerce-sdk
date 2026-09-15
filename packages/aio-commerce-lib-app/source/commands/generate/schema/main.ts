@@ -39,7 +39,15 @@ import { hasBusinessConfigSchema } from "#config/index";
 
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 
-export async function run(appConfig: CommerceAppConfigOutputModel) {
+/**
+ * Generates the business configuration schema and prepares encryption when needed.
+ * @param appConfig - Validated app configuration containing the schema.
+ * @param projectRoot - Resolved project root where schema files are managed.
+ */
+export async function run(
+  appConfig: CommerceAppConfigOutputModel,
+  projectRoot: string,
+) {
   if (!hasBusinessConfigSchema(appConfig)) {
     consola.debug(
       "Business configuration schema not found in application configuration. Nothing to do.",
@@ -48,8 +56,7 @@ export async function run(appConfig: CommerceAppConfigOutputModel) {
     return;
   }
 
-  const projectDir = await getProjectRootDirectory();
-  const envPath = join(projectDir, ".env");
+  const envPath = join(projectRoot, ".env");
 
   // Ensure .env file exists to avoid failing when loading it.
   await touch(envPath);
@@ -60,7 +67,7 @@ export async function run(appConfig: CommerceAppConfigOutputModel) {
   );
 
   if (hasPasswordFields) {
-    const packageExec = getExecCommand(await detectPackageManager(projectDir));
+    const packageExec = getExecCommand(await detectPackageManager(projectRoot));
     const hasEncryptionKey =
       "AIO_COMMERCE_CONFIG_ENCRYPTION_KEY" in process.env &&
       String(process.env.AIO_COMMERCE_CONFIG_ENCRYPTION_KEY).trim().length > 0;
@@ -76,7 +83,7 @@ export async function run(appConfig: CommerceAppConfigOutputModel) {
   // the app manifest module. Skip emitting a separate schema file and clean up
   // any stale JSON from a previous static run.
   if (hasDynamicAppConfig(appConfig)) {
-    const stalePath = join(projectDir, getSchemaPath());
+    const stalePath = join(projectRoot, getSchemaPath());
     const staleExists = await access(stalePath).then(
       () => true,
       () => false,
@@ -93,6 +100,7 @@ export async function run(appConfig: CommerceAppConfigOutputModel) {
   consola.info("Generating configuration schema...");
   const outputDir = await makeOutputDirFor(
     getGeneratedDir(CONFIGURATION_EXTENSION_POINT_ID),
+    projectRoot,
   );
 
   const contents = stringify(appConfig.businessConfig.schema, null, 2);
@@ -105,8 +113,9 @@ export async function run(appConfig: CommerceAppConfigOutputModel) {
 /** Run the generate schema command */
 export async function exec() {
   try {
-    const config = await loadAppManifest();
-    await run(config);
+    const projectRoot = await getProjectRootDirectory();
+    const config = await loadAppManifest(projectRoot);
+    await run(config, projectRoot);
   } catch (error) {
     if (error instanceof CommerceSdkValidationError) {
       consola.error(error.display());

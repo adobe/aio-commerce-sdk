@@ -28,78 +28,133 @@ afterEach(() => {
   vi.clearAllMocks();
 });
 
+const STATUS_WITH_CHANGESETS = JSON.stringify({
+  changesets: [{ id: "some-changeset", releases: [], summary: "A change." }],
+});
+const STATUS_WITHOUT_CHANGESETS = JSON.stringify({ changesets: [] });
+
 describe("release/prepare.ts", () => {
   test("prepares snapshot for an internal release", async () => {
-    await withTempFiles({}, async (tempDir) => {
-      vi.stubEnv("GITHUB_WORKSPACE", tempDir);
+    await withTempFiles(
+      { "changeset-status.json": STATUS_WITH_CHANGESETS },
+      async (tempDir) => {
+        vi.stubEnv("GITHUB_WORKSPACE", tempDir);
 
-      const core = createCoreMock();
-      const exec = createExecMock();
-      exec.exec.mockResolvedValue(0);
+        const core = createCoreMock();
+        const exec = createExecMock();
+        exec.exec.mockResolvedValue(0);
 
-      await prepare(asCore(core), asExec(exec));
+        await prepare(asCore(core), asExec(exec));
 
-      expect(core.setFailed).not.toHaveBeenCalled();
+        expect(core.setFailed).not.toHaveBeenCalled();
 
-      expect(exec.exec).toHaveBeenCalledWith("git", ["fetch", "--unshallow"]);
-      expect(exec.exec).toHaveBeenCalledWith("git", [
-        "fetch",
-        "origin",
-        "release:release",
-      ]);
-      expect(exec.exec).toHaveBeenCalledWith("pnpm", [
-        "changeset",
-        "status",
-        "--output",
-        join(tempDir, "changeset-status.json"),
-      ]);
-      expect(exec.exec).toHaveBeenCalledWith("pnpm", [
-        "changeset",
-        "version",
-        "--snapshot",
-        "beta",
-      ]);
-    });
+        expect(exec.exec).toHaveBeenCalledWith("git", ["fetch", "--unshallow"]);
+        expect(exec.exec).toHaveBeenCalledWith("git", [
+          "fetch",
+          "origin",
+          "release:release",
+        ]);
+        expect(exec.exec).toHaveBeenCalledWith("pnpm", [
+          "changeset",
+          "status",
+          "--output",
+          join(tempDir, "changeset-status.json"),
+        ]);
+        expect(exec.exec).toHaveBeenCalledWith(
+          "pnpm",
+          ["changeset", "version", "--snapshot", "beta"],
+          { ignoreReturnCode: true },
+        );
+      },
+    );
   });
 
   test("warns but continues when release branch fetch fails", async () => {
-    await withTempFiles({}, async (tempDir) => {
-      vi.stubEnv("GITHUB_WORKSPACE", tempDir);
+    await withTempFiles(
+      { "changeset-status.json": STATUS_WITH_CHANGESETS },
+      async (tempDir) => {
+        vi.stubEnv("GITHUB_WORKSPACE", tempDir);
 
-      const core = createCoreMock();
-      const exec = createExecMock();
-      exec.exec
-        .mockRejectedValueOnce(
-          new Error("fatal: --unshallow on a complete repository"),
-        ) // git fetch --unshallow fails
-        .mockResolvedValueOnce(0) // changeset status (still attempted)
-        .mockResolvedValueOnce(0); // changeset version
+        const core = createCoreMock();
+        const exec = createExecMock();
+        exec.exec
+          .mockRejectedValueOnce(
+            new Error("fatal: --unshallow on a complete repository"),
+          ) // git fetch --unshallow fails
+          .mockResolvedValueOnce(0) // changeset status (still attempted)
+          .mockResolvedValueOnce(0); // changeset version
 
-      await prepare(asCore(core), asExec(exec));
+        await prepare(asCore(core), asExec(exec));
 
-      expect(core.warning).toHaveBeenCalledWith(
-        expect.stringContaining("Could not fetch release branch"),
-      );
-    });
+        expect(core.warning).toHaveBeenCalledWith(
+          expect.stringContaining("Could not fetch release branch"),
+        );
+      },
+    );
   });
 
   test("uses custom snapshot tag from SNAPSHOT_TAG env var", async () => {
-    await withTempFiles({}, async (tempDir) => {
-      vi.stubEnv("GITHUB_WORKSPACE", tempDir);
-      vi.stubEnv("SNAPSHOT_TAG", "alpha");
+    await withTempFiles(
+      { "changeset-status.json": STATUS_WITH_CHANGESETS },
+      async (tempDir) => {
+        vi.stubEnv("GITHUB_WORKSPACE", tempDir);
+        vi.stubEnv("SNAPSHOT_TAG", "alpha");
 
-      const core = createCoreMock();
-      const exec = createExecMock();
-      exec.exec.mockResolvedValue(0);
+        const core = createCoreMock();
+        const exec = createExecMock();
+        exec.exec.mockResolvedValue(0);
 
-      await prepare(asCore(core), asExec(exec));
+        await prepare(asCore(core), asExec(exec));
 
-      expect(exec.exec).toHaveBeenCalledWith("pnpm", [
-        "changeset",
-        "version",
-        "--snapshot",
-        "alpha",
-      ]);
-    });
+        expect(exec.exec).toHaveBeenCalledWith(
+          "pnpm",
+          ["changeset", "version", "--snapshot", "alpha"],
+          { ignoreReturnCode: true },
+        );
+      },
+    );
+  });
+
+  test("treats a version exit code of 1 as a no-op when there are no pending changesets", async () => {
+    await withTempFiles(
+      { "changeset-status.json": STATUS_WITHOUT_CHANGESETS },
+      async (tempDir) => {
+        vi.stubEnv("GITHUB_WORKSPACE", tempDir);
+
+        const core = createCoreMock();
+        const exec = createExecMock();
+        exec.exec
+          .mockResolvedValueOnce(0) // git fetch --unshallow
+          .mockResolvedValueOnce(0) // git fetch origin release:release
+          .mockResolvedValueOnce(0) // changeset status
+          .mockResolvedValueOnce(1); // changeset version: nothing to version
+
+        await prepare(asCore(core), asExec(exec));
+
+        expect(core.setFailed).not.toHaveBeenCalled();
+        expect(core.info).toHaveBeenCalledWith(
+          expect.stringContaining("No pending changesets"),
+        );
+      },
+    );
+  });
+
+  test("fails when changeset version exits non-zero despite pending changesets", async () => {
+    await withTempFiles(
+      { "changeset-status.json": STATUS_WITH_CHANGESETS },
+      async (tempDir) => {
+        vi.stubEnv("GITHUB_WORKSPACE", tempDir);
+
+        const core = createCoreMock();
+        const exec = createExecMock();
+        exec.exec
+          .mockResolvedValueOnce(0) // git fetch --unshallow
+          .mockResolvedValueOnce(0) // git fetch origin release:release
+          .mockResolvedValueOnce(0) // changeset status
+          .mockResolvedValueOnce(1); // changeset version: unexpected failure
+
+        await expect(prepare(asCore(core), asExec(exec))).rejects.toThrow();
+      },
+    );
   });
 });

@@ -52,6 +52,38 @@ export async function withTempFiles<T>(
   }
 }
 
+// Captured before any caller mutates the CWD, so restores have a directory
+// that still exists to fall back to.
+const stableRoot = process.cwd();
+
+/**
+ * Reads the current working directory, falling back to a stable root when the
+ * live CWD has been removed (which makes `process.cwd()` itself throw ENOENT).
+ */
+function currentCwd(): string {
+  try {
+    return process.cwd();
+  } catch {
+    return stableRoot;
+  }
+}
+
+/**
+ * Restores the working directory, tolerating a target that no longer exists so
+ * a removed directory can't cascade a failure into unrelated callers.
+ */
+function restoreCwd(target: string) {
+  try {
+    process.chdir(target);
+  } catch {
+    try {
+      process.chdir(stableRoot);
+    } catch {
+      // The stable root is gone too; nothing left to restore to.
+    }
+  }
+}
+
 /**
  * Change the current working directory and execute a callback with the temporary directory path
  * @param tempDir - Temporary directory path
@@ -61,11 +93,11 @@ export async function withChdir<T>(
   tempDir: string,
   callback: () => Promise<T> | T,
 ) {
-  const originalCwd = process.cwd();
+  const originalCwd = currentCwd();
   try {
     process.chdir(tempDir);
     return await callback();
   } finally {
-    process.chdir(originalCwd);
+    restoreCwd(originalCwd);
   }
 }

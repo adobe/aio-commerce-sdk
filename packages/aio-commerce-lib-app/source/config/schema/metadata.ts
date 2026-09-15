@@ -58,6 +58,9 @@ export const MetadataSchema = v.object({
     ),
   ),
 
+  // "auto" is experimental and temporarily defaults to "manual" while automatic
+  // upgrade execution is stabilizing; will be changed to "auto" once ready.
+  upgradeMode: v.optional(v.picklist(["auto", "manual"]), "manual"),
   version: v.pipe(
     nonEmptyString("version"),
     v.regex(

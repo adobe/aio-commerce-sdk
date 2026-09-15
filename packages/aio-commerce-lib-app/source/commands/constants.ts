@@ -51,6 +51,12 @@ export const SHARED_TYPESCRIPT_DEV_DEPENDENCIES = [
   { name: "typescript", version: __TYPESCRIPT_VERSION__ },
 ] as const satisfies readonly PackageDependency[];
 
+/** Node.js type definitions required only by root Runtime action scaffolding. */
+export const TYPESCRIPT_NODE_DEV_DEPENDENCY = {
+  name: "@types/node",
+  version: __NODE_TYPES_VERSION__,
+} as const satisfies PackageDependency;
+
 /** TypeScript loader required only by root Runtime action scaffolding. */
 export const TYPESCRIPT_WEBPACK_DEV_DEPENDENCY = {
   name: "ts-loader",

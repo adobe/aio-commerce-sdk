@@ -15,18 +15,18 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import {
   createInitialState,
   executeWorkflow,
-} from "#management/installation/workflow/runner";
+} from "#management/common/workflow/runner";
 import {
   defineBranchStep,
   defineLeafStep,
-} from "#management/installation/workflow/step";
+} from "#management/common/workflow/step";
 import { minimalValidConfig } from "#test/fixtures/config";
 import {
   createMockInstallationContext,
   FAKE_SYSTEM_TIME,
 } from "#test/fixtures/installation";
 
-import type { InstallationHooks } from "#management/installation/workflow/hooks";
+import type { WorkflowHooks } from "#management/common/workflow/hooks";
 
 describe("executeWorkflow — multi-level interactions", () => {
   beforeEach(() => {
@@ -69,7 +69,7 @@ describe("executeWorkflow — multi-level interactions", () => {
     await executeWorkflow({
       config: minimalValidConfig,
       initialState,
-      installationContext,
+      lifecycleContext: installationContext,
       rootStep,
     });
 
@@ -96,7 +96,7 @@ describe("executeWorkflow — multi-level interactions", () => {
       name: "root",
     });
 
-    const hooks: InstallationHooks = {
+    const hooks: WorkflowHooks = {
       onStepStart: (info, state) => {
         if (info.stepName === "step1") {
           const [step1Status] = state.step.children;
@@ -119,7 +119,7 @@ describe("executeWorkflow — multi-level interactions", () => {
       config: minimalValidConfig,
       hooks,
       initialState,
-      installationContext: createMockInstallationContext(),
+      lifecycleContext: createMockInstallationContext(),
       rootStep,
     });
 
@@ -146,7 +146,7 @@ describe("executeWorkflow — multi-level interactions", () => {
       name: "root",
     });
 
-    const hooks: InstallationHooks = {
+    const hooks: WorkflowHooks = {
       onStepFailure: (info, state) => {
         if (info.stepName === "failing") {
           const [stepStatus] = state.step.children;
@@ -169,7 +169,7 @@ describe("executeWorkflow — multi-level interactions", () => {
       config: minimalValidConfig,
       hooks,
       initialState,
-      installationContext: createMockInstallationContext(),
+      lifecycleContext: createMockInstallationContext(),
       rootStep,
     });
 
@@ -226,7 +226,7 @@ describe("executeWorkflow — multi-level interactions", () => {
     await executeWorkflow({
       config: minimalValidConfig,
       initialState,
-      installationContext,
+      lifecycleContext: installationContext,
       rootStep,
     });
 
@@ -272,7 +272,7 @@ describe("executeWorkflow — multi-level interactions", () => {
     const result = await executeWorkflow({
       config: minimalValidConfig,
       initialState,
-      installationContext: createMockInstallationContext(),
+      lifecycleContext: createMockInstallationContext(),
       rootStep,
     });
 
@@ -330,7 +330,7 @@ describe("executeWorkflow — multi-level interactions", () => {
     const result = await executeWorkflow({
       config: minimalValidConfig,
       initialState,
-      installationContext: createMockInstallationContext(),
+      lifecycleContext: createMockInstallationContext(),
       rootStep,
     });
 

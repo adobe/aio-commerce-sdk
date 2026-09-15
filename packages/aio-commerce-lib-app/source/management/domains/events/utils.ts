@@ -1,0 +1,671 @@
+/*
+ * Copyright 2026 Adobe. All rights reserved.
+ * This file is licensed to you under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License. You may obtain a copy
+ * of the License at http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under
+ * the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR REPRESENTATIONS
+ * OF ANY KIND, either express or implied. See the License for the specific language
+ * governing permissions and limitations under the License.
+ */
+
+import { resolveAuthParams } from "@adobe/aio-commerce-lib-auth";
+import {
+  getSystemConfigByKey,
+  setSystemConfigByKey,
+} from "@adobe/aio-commerce-lib-config";
+import stringify from "safe-stable-stringify";
+
+import type {
+  CommerceEventProvider,
+  CommerceEventSubscription,
+  UpdateEventingConfigurationParams,
+} from "@adobe/aio-commerce-lib-events/commerce";
+import type {
+  EventProviderType,
+  IoEventMetadata,
+  IoEventProvider,
+  IoEventRegistration,
+} from "@adobe/aio-commerce-lib-events/io-events";
+import type { ApplicationMetadata } from "#config/index";
+import type {
+  AppEvent,
+  CommerceEvent,
+  EventProvider,
+} from "#config/schema/eventing";
+import type { EventsExecutionContext } from "./context";
+import type { AppEventWithoutRuntimeActions, StoredEventsData } from "./types";
+
+// The two different provider types we support.
+export const COMMERCE_PROVIDER_TYPE = "dx_commerce_events";
+export const EXTERNAL_PROVIDER_TYPE = "3rd_party_custom_events";
+
+// Map each provider type to a human-readable label.
+const PROVIDER_TYPE_TO_LABEL = {
+  [COMMERCE_PROVIDER_TYPE]: "Commerce",
+  [EXTERNAL_PROVIDER_TYPE]: "External",
+} as const;
+
+/** Max characters taken from `metadata.id` in the I/O Events provider `instance_id`. */
+const METADATA_ID_MAX_LENGTH_FOR_INSTANCE_ID = 100;
+
+/** Storage key used for the events installation data in system config. */
+export const EVENTS_STORAGE_KEY = "events";
+
+/**
+ * Removes event providers from installation storage.
+ *
+ * @param providerKeys - The provider keys to remove.
+ */
+export async function removeStoredEventProviders(
+  providerKeys: string[],
+): Promise<void> {
+  if (providerKeys.length === 0) {
+    return;
+  }
+
+  const existing =
+    await getSystemConfigByKey<StoredEventsData>(EVENTS_STORAGE_KEY);
+  if (!existing) {
+    return;
+  }
+
+  const providerKeysToRemove = new Set(providerKeys);
+  const hasStoredProvider = providerKeys.some((key) =>
+    Object.hasOwn(existing.providers, key),
+  );
+
+  if (!hasStoredProvider) {
+    return;
+  }
+
+  const providers = Object.fromEntries(
+    Object.entries(existing.providers).filter(
+      ([key]) => !providerKeysToRemove.has(key),
+    ),
+  );
+
+  if (Object.keys(providers).length === 0) {
+    await setSystemConfigByKey(EVENTS_STORAGE_KEY, null);
+    return;
+  }
+
+  await setSystemConfigByKey(EVENTS_STORAGE_KEY, { providers });
+}
+
+/**
+ * Generates a unique instance ID for I/O Events for this app deployment.
+ * Uses `{metadata.id (first 100 chars)}-{providerKeyOrSlug}-{workspaceId}` (lowercased).
+ *
+ * @param metadata - The metadata of the application
+ * @param provider - The event provider (optional `key`, else label is slugified)
+ * @param workspaceId - Adobe I/O Developer Console workspace ID for this deployment
+ */
+export function generateInstanceId(
+  metadata: ApplicationMetadata,
+  provider: EventProvider,
+  workspaceId: string,
+) {
+  const appId = metadata.id.slice(0, METADATA_ID_MAX_LENGTH_FOR_INSTANCE_ID);
+  const providerKey =
+    provider.key ?? provider.label.toLowerCase().replace(/\s+/g, "-");
+  return `${appId}-${providerKey}-${workspaceId}`.toLowerCase();
+}
+
+/**
+ * Old version of instanceId generator which can be not unique within the same ORG.
+ *
+ * @param metadata - The metadata of the application
+ * @param provider - The event provider for which to generate the instance ID
+ * @deprecated use {@link generateInstanceId} instead
+ */
+export function generateInstanceIdDeprecated(
+  metadata: ApplicationMetadata,
+  provider: EventProvider,
+) {
+  const slugLabel = provider.label.toLowerCase().replace(/\s+/g, "-");
+  return `${metadata.id}-${provider.key ?? slugLabel}`.toLowerCase();
+}
+
+/**
+ * Returns a provider's version-stable identity, used to match a provider across config
+ * versions during an upgrade diff. Prefers the explicit `key`; falls back to the `label`,
+ * which the eventing schema requires to be unique across event sources.
+ *
+ * @param provider - The event provider to identify.
+ */
+export function getProviderKey(provider: EventProvider) {
+  return provider.key ?? provider.label;
+}
+
+/**
+ * Find an existing event provider by its instance ID.
+ * @param allProviders - The list of all existing event providers.
+ * @param instanceId - The instance ID to search for.
+ */
+export function findExistingProvider<
+  TProvider extends IoEventProvider | CommerceEventProvider,
+>(allProviders: TProvider[], instanceId: string) {
+  return (
+    allProviders.find((provider) => provider.instance_id === instanceId) ?? null
+  );
+}
+
+/**
+ * Find existing event metadata by its event name.
+ * @param allMetadata - The list of all existing event metadata.
+ * @param eventName - The event name to search for.
+ */
+export function findExistingProviderMetadata(
+  allMetadata: IoEventMetadata[],
+  eventName: string,
+) {
+  return allMetadata.find((meta) => meta.event_code === eventName) ?? null;
+}
+
+/**
+ * Find existing event registrations by client ID and name.
+ * @param allRegistrations - The list of all existing event registrations.
+ * @param clientId - The client ID of the workspace where the registration was created.
+ * @param name - The name of the registration to search for.
+ */
+export function findExistingRegistrations(
+  allRegistrations: IoEventRegistration[],
+  clientId: string,
+  name: string,
+) {
+  // We don't have an ID to search for, but names are deterministic and calculated by us so it should be fine.
+  // To be safe, the `allRegistrations` should come from the current installation data.
+  return allRegistrations.find(
+    (reg) => reg.client_id === clientId && reg.name === name,
+  );
+}
+
+/**
+ * Generates a namespaced event name by combining the application ID with the event name.
+ *
+ * The application ID is sanitized to comply with the Commerce Eventing API's event code
+ * format requirement (`[a-zA-Z0-9_.]`): any character outside that set is replaced with `_`.
+ *
+ * @param metadata
+ * @param name
+ */
+export function getNamespacedEvent(
+  metadata: Pick<ApplicationMetadata, "id">,
+  name: string,
+) {
+  const sanitizedId = metadata.id.toLowerCase().replace(/[^a-z0-9_]/g, "_");
+  return `${sanitizedId}.${name}`.toLowerCase();
+}
+
+/**
+ * Get the fully qualified name of an event for I/O Events based on the provider type.
+ * @param name - The name of the event.
+ * @param providerType - The type of the event provider.
+ */
+export function getIoEventCode(name: string, providerType: EventProviderType) {
+  return providerType === COMMERCE_PROVIDER_TYPE
+    ? `com.adobe.commerce.${name}`
+    : name;
+}
+
+/**
+ * The fully-qualified I/O Events code for an event under a provider type: the event name is
+ * namespaced with the application id and then qualified by {@link getIoEventCode}.
+ *
+ * @param event - The event to compute the code for.
+ * @param metadata - The application metadata used to namespace the event name.
+ * @param providerType - The type of the event provider.
+ */
+export function eventCodeOf(
+  event: AppEvent,
+  metadata: ApplicationMetadata,
+  providerType: EventProviderType,
+) {
+  return getIoEventCode(getNamespacedEvent(metadata, event.name), providerType);
+}
+
+/**
+ * Diffs two keyed collections into the items unique to each side. `added` holds `target`
+ * items whose key is absent from `baseline`; `removed` holds `baseline` items whose key is absent
+ * from `target`. The two sides may key differently (e.g. namespaced under different metadata).
+ *
+ * @param target - The target-side items.
+ * @param baseline - The baseline-side items.
+ * @param targetKey - Derives the comparison key for a target item.
+ * @param baselineKey - Derives the comparison key for a baseline item.
+ */
+export function diffByKey<T>(
+  target: T[],
+  baseline: T[],
+  targetKey: (item: T) => string,
+  baselineKey: (item: T) => string,
+): { added: T[]; removed: T[] } {
+  const targetKeys = new Set(target.map(targetKey));
+  const baselineKeys = new Set(baseline.map(baselineKey));
+
+  return {
+    added: target.filter((item) => !baselineKeys.has(targetKey(item))),
+    removed: baseline.filter((item) => !targetKeys.has(baselineKey(item))),
+  };
+}
+
+/** How a persisting Commerce subscription's configuration changed between baseline and target. */
+export type SubscriptionChangeKind = "none" | "in-place" | "recreate";
+
+/** Order-independent, default-normalized view of the subscription attributes we reconcile. */
+function canonicalSubscriptionConfig(event: CommerceEvent) {
+  const fields = event.fields
+    .map((field) => ({ name: field.name, source: field.source ?? null }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+
+  const rules = (event.rules ?? [])
+    .map((rule) => ({
+      field: rule.field,
+      operator: rule.operator,
+      value: rule.value,
+    }))
+    .sort((a, b) =>
+      `${a.field}:${a.operator}`.localeCompare(`${b.field}:${b.operator}`),
+    );
+
+  // `destination` is omitted: it is internal routing, not developer-facing config.
+  return {
+    fields,
+    hipaa_audit_required: event.hipaa_audit_required ?? false,
+    priority: event.priority ?? false,
+    rules,
+  };
+}
+
+/** The Commerce merge-update keys for an event's fields (by name) and rules (by `field:operator`). */
+function subscriptionMergeKeys(event: CommerceEvent): {
+  fields: Set<string>;
+  rules: Set<string>;
+} {
+  return {
+    fields: new Set(event.fields.map((field) => field.name)),
+    rules: new Set(
+      (event.rules ?? []).map((rule) => `${rule.field}:${rule.operator}`),
+    ),
+  };
+}
+
+/**
+ * Classifies how a persisting Commerce event subscription's configuration changed:
+ *
+ * - `none` — identical after normalization (field/rule reordering and omitted-optional defaults
+ *   do not count as a change).
+ * - `in-place` — only additive or same-key changes (new field/rule, changed field source, changed
+ *   rule value, toggled `priority`/`hipaa_audit_required`), which the Commerce merge-update endpoint
+ *   can express.
+ * - `recreate` — a field or rule identity was dropped (removed field/rule, renamed field, changed
+ *   rule operator/field). Merge cannot remove entries, so these require re-subscribing the event.
+ */
+export function getSubscriptionChangeKind(
+  baseline: CommerceEvent,
+  target: CommerceEvent,
+): SubscriptionChangeKind {
+  if (
+    stringify(canonicalSubscriptionConfig(baseline)) ===
+    stringify(canonicalSubscriptionConfig(target))
+  ) {
+    return "none";
+  }
+
+  const baselineKeys = subscriptionMergeKeys(baseline);
+  const targetKeys = subscriptionMergeKeys(target);
+
+  const droppedKey = !(
+    baselineKeys.fields.isSubsetOf(targetKeys.fields) &&
+    baselineKeys.rules.isSubsetOf(targetKeys.rules)
+  );
+
+  return droppedKey ? "recreate" : "in-place";
+}
+
+/** Maps a provider's metadata type to its human-readable label ("Commerce" or "External"). */
+function getProviderTypeLabel(provider: IoEventProvider) {
+  return PROVIDER_TYPE_TO_LABEL[
+    provider.provider_metadata as EventProviderType
+  ];
+}
+
+/**
+ * Generates a registration name based on the provider type, provider label, and runtime action.
+ *
+ * Prefixes with the provider type label ("Commerce" or "External") for readability, then the
+ * provider's own label to ensure uniqueness when multiple providers of the same type route
+ * events to the same runtime action.
+ *
+ * @param provider - The provider this registration is associated to.
+ * @param runtimeAction - The runtime action this registration points to.
+ */
+export function getRegistrationName(
+  provider: IoEventProvider,
+  runtimeAction: string,
+) {
+  const [packageName, actionName] = runtimeAction
+    .split("/")
+    .map(kebabToTitleCase);
+
+  return `${getProviderTypeLabel(provider)} Event Registration: ${provider.label} - ${actionName} (${packageName})`;
+}
+
+/**
+ * Returns the registration name in the legacy format used by SDK versions that built
+ * the name from the generic provider type label ("Commerce" / "External") rather than
+ * the provider's own label. Used during uninstall to match registrations that were
+ * created before the naming change.
+ *
+ * @param provider - The provider this registration is associated to.
+ * @param runtimeAction - The runtime action this registration points to.
+ * @deprecated Use {@link getRegistrationName} for all new registrations.
+ */
+export function getLegacyRegistrationName(
+  provider: IoEventProvider,
+  runtimeAction: string,
+) {
+  const [packageName, actionName] = runtimeAction
+    .split("/")
+    .map(kebabToTitleCase);
+
+  return `${getProviderTypeLabel(provider)} Event Registration: ${actionName} (${packageName})`;
+}
+
+/**
+ * Generates a registration name and description based on the provider, events, and runtime action.
+ * @param provider - The provider this registration is associated to.
+ * @param events - The events routed by this registration.
+ * @param runtimeAction - The runtime action this registration points to.
+ */
+export function getRegistrationDescription(
+  provider: IoEventProvider,
+  events: AppEventWithoutRuntimeActions[],
+  runtimeAction: string,
+) {
+  return [
+    "This registration was automatically created by @adobe/aio-commerce-lib-app. ",
+    `It belongs to the provider "${provider.label}" (instance ID: ${provider.instance_id}). `,
+    `It routes ${events.length} event(s) to the runtime action "${runtimeAction}".`,
+  ].join("\n");
+}
+
+/**
+ * Converts a kebab-case string to Title Case.
+ * @param str - The kebab-case string to convert.
+ */
+export function kebabToTitleCase(str: string) {
+  return str
+    .split("-")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+}
+
+/**
+ * Groups events by their runtime actions. Since each event can have multiple
+ * runtime actions, this function creates a mapping where each unique runtime
+ * action points to all events that target it.
+ *
+ * @param events - The events to group by runtime actions.
+ */
+export function groupEventsByRuntimeActions(
+  events: AppEvent[],
+): Map<string, AppEvent[]> {
+  const actionEventsMap = new Map<string, AppEvent[]>();
+
+  for (const event of events) {
+    for (const runtimeAction of event.runtimeActions) {
+      const existingEvents = actionEventsMap.get(runtimeAction) ?? [];
+      actionEventsMap.set(runtimeAction, [...existingEvents, event]);
+    }
+  }
+
+  return actionEventsMap;
+}
+
+/*
+ * Find an existing Commerce event subscription by its event name.
+ * @param allSubscriptions - Map of all existing event subscriptions keyed by event name.
+ * @param eventName - The namespaced event name to search for.
+ */
+export function findExistingSubscription(
+  allSubscriptions: Map<string, CommerceEventSubscription>,
+  eventName: string,
+) {
+  return allSubscriptions.get(eventName) ?? null;
+}
+
+/**
+ * Builds the payload to send to Commerce when configuring Eventing.
+ * Returns `null` when no update call is needed.
+ *
+ * @param initialParams - Initial Commerce Eventing configuration parameters.
+ * @param existingData - Existing Commerce Eventing state from the API.
+ */
+export function getCommerceEventingConfigurationUpdateParams(
+  initialParams: UpdateEventingConfigurationParams,
+  existingData: Pick<
+    ExistingCommerceEventingData,
+    "isDefaultProviderConfigured" | "isDefaultWorkspaceConfigurationEmpty"
+  >,
+) {
+  const { isDefaultProviderConfigured, isDefaultWorkspaceConfigurationEmpty } =
+    existingData;
+
+  if (isDefaultProviderConfigured && !isDefaultWorkspaceConfigurationEmpty) {
+    return null;
+  }
+
+  const { workspace_configuration, ...configWithoutWorkspace } = initialParams;
+  let updateParams: UpdateEventingConfigurationParams = { enabled: true };
+
+  if (isDefaultWorkspaceConfigurationEmpty) {
+    if (!workspace_configuration) {
+      const message =
+        "Workspace configuration is required to enable Commerce Eventing when there is not an existing one.";
+
+      throw new Error(message);
+    }
+
+    updateParams.workspace_configuration = workspace_configuration;
+  }
+
+  if (!isDefaultProviderConfigured) {
+    updateParams = {
+      ...updateParams,
+      ...configWithoutWorkspace,
+    };
+  }
+
+  return updateParams;
+}
+
+/**
+ * Sanitizes a Commerce Eventing identifier.
+ * Preserves underscores, converts spaces to underscores, lowercases, and strips the rest.
+ *
+ * @param value - The raw identifier value to normalize.
+ */
+export function sanitizeEventingIdentifier(value: string) {
+  return value
+    .toLowerCase()
+    .replace(/\s+/g, "_")
+    .replace(/[^a-z0-9_]/g, "");
+}
+
+/**
+ * Creates a partially filled workspace configuration object based on the app credentials and parameters.
+ * This configuration is used when creating an event provider in Commerce.
+ *
+ * @param context - The execution context containing app credentials and parameters.
+ */
+export function makeWorkspaceConfig(context: EventsExecutionContext) {
+  const { appData, params } = context;
+  const {
+    consumerOrgId,
+    orgName,
+    projectId,
+    projectName,
+    projectTitle,
+    workspaceId,
+    workspaceName,
+    workspaceTitle,
+  } = appData;
+
+  const authParams = resolveAuthParams(params);
+  if (authParams.strategy !== "ims") {
+    throw new Error(
+      "Failed to resolve IMS authentication parameters from the runtime action inputs.",
+    );
+  }
+
+  const {
+    clientId,
+    clientSecrets,
+    technicalAccountEmail,
+    technicalAccountId,
+    imsOrgId,
+    scopes,
+  } = authParams;
+
+  return {
+    project: {
+      id: projectId,
+      name: projectName,
+
+      org: {
+        id: consumerOrgId,
+        ims_org_id: imsOrgId,
+        name: orgName,
+      },
+      title: projectTitle,
+
+      workspace: {
+        action_url: `https://${process.env.__OW_NAMESPACE}.adobeioruntime.net`,
+        app_url: `https://${process.env.__OW_NAMESPACE}.adobeio-static.net`,
+        details: {
+          credentials: [
+            {
+              id: "000000",
+              integration_type: "oauth_server_to_server",
+              name: `aio-${workspaceId}`,
+              oauth_server_to_server: {
+                client_id: clientId,
+                client_secrets: clientSecrets,
+                scopes: scopes.map((scope) => scope.trim()),
+                technical_account_email: technicalAccountEmail,
+                technical_account_id: technicalAccountId,
+              },
+            },
+          ],
+        },
+        id: workspaceId,
+        name: workspaceName,
+        title: workspaceTitle,
+      },
+    },
+  };
+}
+
+/**
+ * Retrieves the current existing data and returns it in a normalized way.
+ * @param context The execution context.
+ */
+export async function getIoEventsExistingData(context: EventsExecutionContext) {
+  // Ask for all the providers, and we'll create only those that are missing.
+  const { ioEventsClient, appData } = context;
+  const appCredentials = {
+    consumerOrgId: appData.consumerOrgId,
+    projectId: appData.projectId,
+    workspaceId: appData.workspaceId,
+  };
+
+  const {
+    _embedded: { providers: existingProviders },
+  } = await ioEventsClient.getAllEventProviders({
+    consumerOrgId: appData.consumerOrgId,
+    withEventMetadata: true,
+  });
+
+  // Collect all the metadata from the providers HAL model for easier data access.
+  const providersWithMetadata = existingProviders.map((providerHal) => {
+    const { _embedded, _links, ...providerData } = providerHal;
+
+    const metadataHal = _embedded?.eventmetadata ?? [];
+    const actualMetadata = metadataHal.map(
+      ({ _embedded: metadataEmbedded, _links: _metadataLinks, ...meta }) => ({
+        ...meta,
+        sample: metadataEmbedded?.sample_event ?? null,
+      }),
+    );
+
+    return {
+      ...providerData,
+      metadata: actualMetadata,
+    };
+  });
+
+  const {
+    _embedded: { registrations: registrationsHal },
+  } = await ioEventsClient.getAllRegistrations(appCredentials);
+
+  const registrations = registrationsHal.map(({ _links, ...reg }) => reg);
+  return {
+    providersWithMetadata,
+    registrations,
+  };
+}
+
+/** The I/O Events data that we may already have. */
+export type ExistingIoEventsData = Awaited<
+  ReturnType<typeof getIoEventsExistingData>
+>;
+
+/** A single I/O Events provider with its event metadata, as returned by {@link getIoEventsExistingData}. */
+export type IoEventProviderWithMetadata =
+  ExistingIoEventsData["providersWithMetadata"][number];
+
+/**
+ * Retrieves the current existing Commerce eventing data and returns it in a normalized way.
+ * @param context - The execution context.
+ */
+export async function getCommerceEventingExistingData(
+  context: EventsExecutionContext,
+) {
+  const { commerceEventsClient } = context;
+
+  const existingProviders = await commerceEventsClient.getAllEventProviders();
+  const existingSubscriptions =
+    await commerceEventsClient.getAllEventSubscriptions();
+
+  const defaultProvider =
+    existingProviders.find((provider) => !("id" in provider)) ?? null;
+
+  // The eventing module workspace configuration is empty if the default provider
+  // (the one without an ID), has a falsy or whitespace-only workspace_configuration.
+  const isDefaultProviderConfigured = defaultProvider !== null;
+  const isDefaultWorkspaceConfigurationEmpty = isDefaultProviderConfigured
+    ? !defaultProvider.workspace_configuration?.trim()
+    : true;
+
+  const subscriptions = new Map(
+    existingSubscriptions.map((subscription) => [
+      subscription.name,
+      subscription,
+    ]),
+  );
+
+  return {
+    isDefaultProviderConfigured,
+    isDefaultWorkspaceConfigurationEmpty,
+    providers: existingProviders,
+    subscriptions,
+  };
+}
+
+/** The Commerce Eventing data that we may already have. */
+export type ExistingCommerceEventingData = Awaited<
+  ReturnType<typeof getCommerceEventingExistingData>
+>;

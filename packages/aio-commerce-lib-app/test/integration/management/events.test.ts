@@ -13,11 +13,11 @@
 import { HttpResponse, http } from "msw";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
+import { isSucceededState } from "#management/common/workflow/types";
 import {
   createInitialInstallationState,
   runInstallation,
 } from "#management/installation/runner";
-import { isSucceededState } from "#management/installation/workflow/types";
 import { configWithFullEventing } from "#test/fixtures/config";
 import {
   createMockCommerceEventProvider,

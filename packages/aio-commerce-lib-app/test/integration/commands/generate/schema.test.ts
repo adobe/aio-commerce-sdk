@@ -70,7 +70,7 @@ describe("commands/generate/schema", () => {
   describe("run", () => {
     test("skips generation when config has no business config schema", async () => {
       await withTempProject(EMPTY_PROJECT, async (tempDir) => {
-        await run(minimalValidConfig);
+        await run(minimalValidConfig, tempDir);
         const outputDir = join(
           tempDir,
           getExtensionPointFolderPath(CONFIGURATION_EXTENSION_POINT_ID),
@@ -85,7 +85,7 @@ describe("commands/generate/schema", () => {
 
     test("writes schema JSON when business config schema is present", async () => {
       await withTempProject(EMPTY_PROJECT, async (tempDir) => {
-        await run(configWithBusinessConfig);
+        await run(configWithBusinessConfig, tempDir);
         const parsed = JSON.parse(
           await readFile(getSchemaPath(tempDir), "utf-8"),
         );
@@ -115,11 +115,11 @@ describe("commands/generate/schema", () => {
       };
 
       await withTempProject(EMPTY_PROJECT, async (tempDirA) => {
-        await run(schemaA);
+        await run(schemaA, tempDirA);
         const hashA = sha256(await readFile(getSchemaPath(tempDirA), "utf-8"));
 
         await withTempProject(EMPTY_PROJECT, async (tempDirB) => {
-          await run(schemaB);
+          await run(schemaB, tempDirB);
           const hashB = sha256(
             await readFile(getSchemaPath(tempDirB), "utf-8"),
           );
@@ -150,8 +150,8 @@ describe("commands/generate/schema", () => {
             AIO_COMMERCE_CONFIG_ENCRYPTION_KEY: "some-valid-key",
           }),
         }),
-        async () => {
-          await run(configWithPassword);
+        async (tempDir) => {
+          await run(configWithPassword, tempDir);
           expect(mockExecSync).toHaveBeenCalledWith(
             expect.stringContaining("encryption validate"),
           );
@@ -166,7 +166,7 @@ describe("commands/generate/schema", () => {
       };
 
       await withTempProject(projectFiles, async (tempDir) => {
-        await run(configWithDynamicListOptions);
+        await run(configWithDynamicListOptions, tempDir);
 
         const jsonPath = getSchemaPath(tempDir);
         await expectFileToNotExist(jsonPath);
@@ -188,8 +188,8 @@ describe("commands/generate/schema", () => {
         },
       };
 
-      await withTempProject(EMPTY_PROJECT, async () => {
-        await run(configWithPassword);
+      await withTempProject(EMPTY_PROJECT, async (tempDir) => {
+        await run(configWithPassword, tempDir);
         expect(mockExecSync).toHaveBeenCalledWith(
           expect.stringContaining("encryption setup"),
         );

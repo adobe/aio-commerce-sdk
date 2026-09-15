@@ -27,17 +27,6 @@ export const GetConfigurationQuerySchema = v.object({
   scopeId: nonEmptyStringValueSchema("scopeId"),
 });
 
-/** Request body for PUT / */
-export const PutConfigBodySchema = v.object({
-  config: v.array(
-    v.object({
-      name: nonEmptyStringValueSchema("config[i].name"),
-      value: v.union([v.string(), v.array(v.string())]),
-    }),
-  ),
-  scopeId: nonEmptyStringValueSchema("scopeId"),
-});
-
 /** Request body for PATCH / */
 export const PatchConfigBodySchema = v.object({
   config: v.array(
