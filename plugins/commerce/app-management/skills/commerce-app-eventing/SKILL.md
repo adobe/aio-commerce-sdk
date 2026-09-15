@@ -177,7 +177,19 @@ The client's base URL already includes the REST prefix and API version (`rest/<s
 
 See [Accessing the Associated Commerce Instance from Runtime Actions](https://github.com/adobe/aio-commerce-sdk/blob/main/packages/aio-commerce-lib-app/docs/usage.md#accessing-the-associated-commerce-instance-from-runtime-actions) for the full pattern, including handling the unassociated state (`AssociationRecordNotFoundError`).
 
-## Step 4 — Validate
+## Step 4 — Regenerate the `installation` action
+
+Adding the first `eventing.commerce` or `eventing.external` entry to `app.commerce.config.ts` changes whether the app **requires an install step**. `@adobe/aio-commerce-lib-app` only decides this — and only adds the `installation` action (plus its `operations.workerProcess` entry) to the auto-generated `app-management` package in `ext.config.yaml` — while running:
+
+```sh
+npx @adobe/aio-commerce-lib-app init
+```
+
+This regeneration does **not** happen on `aio app build` or `aio app deploy`: the `pre-app-build` hook those commands run only _reads_ the existing `ext.config.yaml` to rebuild action `.js` files — it never re-evaluates whether the config now needs an install step. If you edit `app.commerce.config.ts` to add an eventing entry (first one in the file, or after having only non-install-requiring domains) without re-running `init` afterward, `ext.config.yaml`'s `app-management` package silently stays stale: no `installation` action is generated, no install endpoint is deployed, and Commerce has nothing to call to actually register the event subscription — even though it's declared in code and deployed.
+
+Always re-run `init` after Step 3 whenever this is the **first** domain in the file that requires installation (`eventing.commerce`, `eventing.external`, `webhooks`, `adminUi`, or `installation.customInstallationSteps`) — i.e., whenever `ext.config.yaml`'s `app-management` package doesn't already contain an `installation` action from a prior domain. Re-running `init` is idempotent and safe even when the action already exists.
+
+## Step 5 — Validate
 
 Build the project to confirm the updated config is valid:
 
@@ -186,6 +198,8 @@ aio app build
 ```
 
 A build failure with a validation error points directly to the offending config field.
+
+Also confirm the install endpoint exists when this event source is the first domain requiring installation: `runtimeManifest.packages.app-management.actions.installation` should be present in `src/commerce-extensibility-1/ext.config.yaml`. If it's missing, Step 4 was skipped — go back and re-run `init`.
 
 ## Common Issues
 
@@ -196,10 +210,12 @@ A build failure with a validation error points directly to the offending config 
 - **`defineConfig` not found**: Ensure `@adobe/aio-commerce-lib-app` is installed and `defineConfig` is imported from `@adobe/aio-commerce-lib-app/config`.
 - **Build fails on missing action**: A runtime action referenced in `runtimeActions` must exist in the project. Check the action files under `src/commerce-extensibility-1/actions/` and create any missing stubs.
 - **Handler needs the Commerce base URL**: Use `getCommerceClient` (`@adobe/aio-commerce-lib-app`), not a custom `.env` variable or business config field. See [Calling the Commerce REST API from a handler](#calling-the-commerce-rest-api-from-a-handler).
+- **Event declared and deployed but Commerce never subscribes it**: The `app-management/installation` action is missing because `init` wasn't re-run after adding the first eventing entry (see Step 4). Check `ext.config.yaml` for `actions.installation`; if absent, run `npx @adobe/aio-commerce-lib-app init`, then rebuild and redeploy. After that, the actual event registration still requires Commerce to run the install step (e.g., the merchant clicking "Install" in Commerce Admin's App Management UI, which calls this action) — deploying the code alone does not register the subscription.
 
 ## Quality Bar
 
 - `aio app build` completes without errors
+- If this event source is the first domain in the config requiring installation, `ext.config.yaml`'s `app-management` package includes an `installation` action
 
 ## Chaining
 

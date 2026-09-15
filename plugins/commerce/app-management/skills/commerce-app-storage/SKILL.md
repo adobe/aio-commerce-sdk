@@ -272,13 +272,27 @@ installation: {
 
 See [assets/setup-database.ts](assets/setup-database.ts) for the full annotated install/uninstall reference.
 
-## Step 7 — Validate
+## Step 7 — Regenerate the `installation` action
+
+Adding the first `installation.customInstallationSteps` entry to `app.commerce.config.ts` changes whether the app **requires an install step**. `@adobe/aio-commerce-lib-app` only decides this — and only adds the `installation` action (plus its `operations.workerProcess` entry) to the auto-generated `app-management` package in `ext.config.yaml` — while running:
+
+```sh
+npx @adobe/aio-commerce-lib-app init
+```
+
+This regeneration does **not** happen on `aio app build` or `aio app deploy`: the `pre-app-build` hook those commands run only _reads_ the existing `ext.config.yaml` to rebuild action `.js` files — it never re-evaluates whether the config now needs an install step. If you register the custom installation step from Step 6 (first one in the file, or after having only non-install-requiring domains) without re-running `init` afterward, `ext.config.yaml`'s `app-management` package silently stays stale: no `installation` action is generated, no install endpoint is deployed, and the script never runs — even though it's registered in code and the DB action is deployed.
+
+Always re-run `init` after Step 6 whenever this is the **first** domain in the file that requires installation (`installation.customInstallationSteps`, `webhooks`, `eventing.commerce`, `eventing.external`, or `adminUi`) — i.e., whenever `ext.config.yaml`'s `app-management` package doesn't already contain an `installation` action from a prior domain. Re-running `init` is idempotent and safe even when the action already exists.
+
+## Step 8 — Validate
 
 ```sh
 aio app build
 ```
 
 A build failure points directly to the offending config field. To exercise the action against the real database, deploy and invoke it (`aio app deploy`).
+
+Also confirm the install endpoint exists when this custom installation step is the first domain requiring installation: `runtimeManifest.packages.app-management.actions.installation` should be present in `src/commerce-extensibility-1/ext.config.yaml`. If it's missing, Step 7 was skipped — go back and re-run `init`.
 
 ## Best practices
 
@@ -320,12 +334,14 @@ A build failure points directly to the offending config field. To exercise the a
 - **Auth fails inside an installation step**: resolve the IMS auth params from `context.params` (`resolveImsAuthParams(context.params)`) — which carries the injected `AIO_COMMERCE_AUTH_IMS_*` credentials — not from `config`, which holds no credentials. Use `@adobe/aio-commerce-lib-auth`, not `@adobe/aio-lib-core-auth`: the latter's `generateAccessToken` expects `clientId`/`clientSecret` directly and cannot consume the injected params.
 - **Installation step fails to load (`must export a default function or object`)**: the script was authored as CommonJS. Author it as an ES module with `export default`; `module.exports` (or `module.exports.default`) surfaces through the framework's `import * as` loader as `.default.default` and fails validation.
 - **`createIndex` errors or has no effect**: it must be called on a collection object (`client.collection("name").createIndex({ field: 1 })`), not with a collection-name string. Get the collection first, then call `createIndex` on it.
+- **Custom installation step registered and deployed but never runs on install**: The `app-management/installation` action is missing because `init` wasn't re-run after registering the first `installation.customInstallationSteps` entry (see Step 7). Check `ext.config.yaml` for `actions.installation`; if absent, run `npx @adobe/aio-commerce-lib-app init`, then rebuild and redeploy. After that, the step still only runs when Commerce actually executes the install (e.g., the merchant clicking "Install" in Commerce Admin's App Management UI) — deploying the code alone does not run it.
 
 ## Quality Bar
 
 - `aio app build` completes without errors
 - Every user-authored DB action declares `include-ims-credentials: true` in its annotations
 - The action closes the client in a `finally` block and initializes the library in the region declared in the manifest `database` block
+- If this custom installation step is the first domain in the config requiring installation, `ext.config.yaml`'s `app-management` package includes an `installation` action
 
 ## Chaining
 
