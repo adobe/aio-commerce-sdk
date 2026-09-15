@@ -150,6 +150,25 @@ export async function main(params: Record<string, unknown>) {
 }
 ```
 
+Numeric-looking fields aren't guaranteed to be numbers — Commerce serializes some as strings inconsistently, even within the same event (e.g. an id field delivered as `"3"` while a total on that same payload stays a number). Validate and coerce before comparing or forwarding a field, and skip (don't throw) when it doesn't coerce cleanly:
+
+```typescript
+function toFiniteNumber(value: unknown): number {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return value;
+  }
+
+  if (typeof value === "string" && value.trim() !== "") {
+    const parsed = Number(value);
+    if (Number.isFinite(parsed)) {
+      return parsed;
+    }
+  }
+
+  throw new Error(`Could not convert "${value}" to a finite number`);
+}
+```
+
 ### Calling the Commerce REST API from a handler
 
 If the handler needs to call the Commerce REST API (e.g. to fetch additional order data), use `getCommerceClient` from `@adobe/aio-commerce-lib-app` instead of reinventing config or env-based access to the Commerce instance (e.g. a custom `.env` variable such as `AIO_COMMERCE_API_BASE_URL`, or a business config field for the base URL). The SDK already stores the Commerce base URL and deployment type from the app's association, so `getCommerceClient` resolves them for you:
@@ -207,11 +226,13 @@ A build failure with a validation error points directly to the offending config 
 - **Build fails on missing action**: A runtime action referenced in `runtimeActions` must exist in the project. Check the action files under `src/commerce-extensibility-1/actions/` and create any missing stubs.
 - **Handler needs the Commerce base URL**: Use `getCommerceClient` (`@adobe/aio-commerce-lib-app`), not a custom `.env` variable or business config field. See [Calling the Commerce REST API from a handler](#calling-the-commerce-rest-api-from-a-handler).
 - **Event deployed but Commerce never subscribes it**: `init` wasn't re-run after adding the first install-requiring domain (Step 4) — no `installation` action, no install endpoint.
+- **Numeric field arrives as a string**: don't assume `typeof value.field === "number"` — an id/qty/total field can be serialized as a string even when other fields on the same event stay numeric. Coerce with `Number(...)` and check `Number.isFinite` before using it.
 
 ## Quality Bar
 
 - `aio app build` completes without errors
 - `installation` action present in `ext.config.yaml` when this event source requires it
+- Numeric fields extracted from the event payload are coerced/validated before use, not assumed to already be numbers
 
 ## Chaining
 
