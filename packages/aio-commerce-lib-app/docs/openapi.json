@@ -616,7 +616,7 @@
                     "webhooks": {
                       "type": "array",
                       "items": {
-                        "oneOf": [
+                        "anyOf": [
                           {
                             "$ref": "#/components/schemas/RuntimeActionWebhookConfig"
                           },
@@ -1252,10 +1252,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "discriminator": {
-                    "propertyName": "status"
-                  },
-                  "oneOf": [
+                  "anyOf": [
                     {
                       "type": "object",
                       "properties": {
@@ -1828,9 +1825,6 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "discriminator": {
-                    "propertyName": "status"
-                  },
                   "oneOf": [
                     {
                       "type": "object",
@@ -3185,9 +3179,6 @@
         ]
       },
       "LifecycleAttemptState": {
-        "discriminator": {
-          "propertyName": "status"
-        },
         "oneOf": [
           {
             "allOf": [
@@ -3650,9 +3641,6 @@
         "required": ["label", "description", "runtimeAction", "columns"]
       },
       "AdminUiOrderViewButton": {
-        "discriminator": {
-          "propertyName": "type"
-        },
         "oneOf": [
           {
             "type": "object",
