@@ -57,9 +57,8 @@ type WebhookApplyDeps = {
 
 /**
  * Applies add, update, and remove operations while pruning live app-owned webhooks absent from the
- * target. On the first failure it rolls every change already committed to Commerce back to the
- * stored baseline (re-subscribing removed webhooks, unsubscribing added ones) before surfacing the
- * error, so a rejected replacement never leaves Commerce out of sync with the baseline.
+ * target. On failure, rolls every committed change back to the stored baseline (re-subscribing
+ * removed webhooks, unsubscribing added ones) before surfacing the error.
  */
 export async function applyWebhookSubscriptions(
   plan: WebhookDomainPlan,
@@ -118,8 +117,7 @@ export async function applyWebhookSubscriptions(
           webhookIdentitiesMatch(webhook, identity),
         );
         if (!baselineEntry) {
-          // Not part of the baseline (e.g. a webhook subscribed out-of-band) — restoring it is
-          // neither possible nor required to match the stored baseline.
+          // Not part of the baseline (e.g. subscribed out-of-band) — nothing to restore.
           return;
         }
 
@@ -145,8 +143,8 @@ export async function applyWebhookSubscriptions(
       await applyWebhookOperation(operation, state, deps);
     }
   } catch (error) {
-    // Roll Commerce back to the baseline before surfacing the error; the failed upgrade does not
-    // advance the baseline, so a clean recovery leaves the two back in sync.
+    // Roll Commerce back to baseline before surfacing the error — a failed upgrade never advances
+    // the baseline.
     return recovery.recover(error);
   }
 
@@ -277,7 +275,7 @@ async function applyRemoveOperation(
 
 /**
  * Removes live webhooks owned by this app that are absent from the target, recording a restore for
- * each successful removal so a later failure can put it back. Mutates `state.liveIdentities`.
+ * each removal. Mutates `state.liveIdentities`.
  */
 async function pruneStaleWebhooks(
   state: WebhookApplyState,

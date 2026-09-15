@@ -90,8 +90,7 @@ export async function createWorkflowError(
   path: string[],
   key = "STEP_EXECUTION_FAILED",
 ): Promise<WorkflowError> {
-  // A domain can throw a WorkflowStepError to carry a machine-readable key and structured payload
-  // (e.g. recovery detail) through to the persisted failure, instead of just a message.
+  // Preserve a domain-thrown key/payload instead of collapsing to a generic message.
   if (err instanceof WorkflowStepError) {
     return {
       key: err.key,

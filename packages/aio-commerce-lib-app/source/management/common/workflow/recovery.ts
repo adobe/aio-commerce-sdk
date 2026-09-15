@@ -53,14 +53,10 @@ type RecoveryLogger = {
 };
 
 /**
- * Tracks compensating actions for changes already applied to a target system, and replays them in
- * reverse (last-applied first), best-effort, to roll the target back to baseline when a later
- * change fails:
- *
- * - if every compensation succeeds, the original error is rethrown as-is;
- * - if any compensation fails, throws a {@link WorkflowStepError} keyed {@link UPGRADE_RECOVERY_FAILED},
- *   carrying both the original and recovery errors and a flag that the target may no longer match
- *   the baseline.
+ * Tracks compensating actions applied to a target system, and replays them in reverse (best-effort)
+ * to roll back to baseline when a later change fails. Rethrows the original error if every
+ * compensation succeeds; otherwise throws a {@link WorkflowStepError} keyed
+ * {@link UPGRADE_RECOVERY_FAILED} carrying both the original and recovery errors.
  */
 export class RecoveryScope {
   private readonly compensations: Compensation[] = [];
@@ -95,10 +91,8 @@ export class RecoveryScope {
       throw originalError;
     }
 
-    // A nested scope already reported an unrecoverable failure (its own compensations failed and it
-    // threw a keyed WorkflowStepError). Its payload already flags the baseline divergence, so pass
-    // it through unchanged rather than flatten it into this scope's message — this scope's own
-    // recovery errors are surfaced through the logger above.
+    // A nested scope's own failure already flagged baseline divergence in its WorkflowStepError, so
+    // pass it through unchanged instead of flattening it into this scope's message.
     if (originalError instanceof WorkflowStepError) {
       throw originalError;
     }

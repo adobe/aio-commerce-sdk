@@ -92,9 +92,8 @@ export async function applyEventingLeaf(
 ): Promise<ApplyResult<EventingSnapshotData>> {
   const eventsContext: EventsExecutionContext = context;
 
-  // Register rollback before any mutation runs. Onboarding subscribes added events
-  // non-atomically, so a rejected add must roll back its accepted siblings; added providers are
-  // rolled back the same way, so a failure never leaves an empty shell behind.
+  // Register rollback before any mutation runs: onboarding subscribes events non-atomically, so a
+  // rejected add must roll back its accepted siblings (same for added providers).
   const recovery = new RecoveryScope(eventsContext.logger);
   if (options.isCommerce && plan.baselineMetadata) {
     registerAddedSubscriptionCompensations(plan, eventsContext, recovery);
@@ -128,17 +127,15 @@ export async function applyEventingLeaf(
       );
     }
   } catch (error) {
-    // Nothing destructive has run yet — providers dropped from the target are still intact, so
-    // rolling back this upgrade's adds is enough to return to exactly baseline.
+    // Nothing destructive has run yet, so rolling back this upgrade's adds returns exactly to
+    // baseline.
     return recovery.recover(error);
   }
 
-  // 3. Commit phase: only now offboard providers dropped from the target. Deferred until every
-  // risky step above has succeeded, so a rejected add never causes a provider to be torn down for
-  // nothing. Safe to defer: removedProviders and targetProviders are disjoint by key, so nothing
-  // above depends on this having already run. If this itself fails, the adds already reflect the
-  // target state, so they are deliberately not rolled back — the failure surfaces as-is, and a
-  // retry finishes the (intended) removal.
+  // 3. Commit phase: offboard dropped providers only after every step above succeeds, so a
+  // rejected add never tears one down for nothing (safe since removed/target providers are
+  // disjoint). A failure here isn't rolled back — the adds already match the target, so a retry
+  // just finishes the removal.
   if (plan.removedProviders.length > 0 && plan.baselineMetadata) {
     await options.uninstall(
       buildLeafConfig(plan.removedProviders, plan.baselineMetadata, options),
@@ -152,10 +149,9 @@ export async function applyEventingLeaf(
 }
 
 /**
- * Registers rollback for the Commerce subscriptions this upgrade adds to a *persisting* provider:
- * one compensation per event absent from that provider's baseline, so pre-existing subscriptions
- * are never touched. A wholly new provider's subscriptions are instead covered by
- * {@link registerAddedProviderCompensations}, which tears the provider down entirely.
+ * Registers rollback for Commerce subscriptions added to a persisting provider — one compensation
+ * per newly added event, leaving pre-existing subscriptions untouched. A wholly new provider is
+ * instead rolled back by {@link registerAddedProviderCompensations}.
  */
 function registerAddedSubscriptionCompensations(
   plan: EventingDomainPlan,
@@ -171,8 +167,7 @@ function registerAddedSubscriptionCompensations(
   for (const target of plan.targetProviders) {
     const baseline = baselineByKey.get(target.key);
     if (!baseline) {
-      // Wholly new provider — its subscriptions are rolled back by tearing down the whole
-      // provider, not per-event.
+      // Wholly new provider — rolled back by tearing down the whole provider, not per-event.
       continue;
     }
 
@@ -208,9 +203,8 @@ function registerAddedProviderCompensations(
   );
 
   for (const provider of added) {
-    // Safe even for a provider `install` never got to — offboarding one that doesn't exist is a
-    // no-op (see `isNothingToRollBack`'s Commerce case and the equivalent not-found handling for
-    // external providers).
+    // Safe even if install never got to this provider — offboarding one that doesn't exist is a
+    // no-op (see isNothingToRollBack).
     recovery.onFailure(() =>
       options.uninstall(
         buildLeafConfig(
@@ -228,9 +222,8 @@ function registerAddedProviderCompensations(
 const NOT_REGISTERED_PATTERN = /is not registered/i;
 
 /**
- * Whether the error means there was nothing to roll back — the target was already gone (404), or,
- * for the rejected event itself, never existed in the first place (Commerce's 400 for unsubscribing
- * an unregistered event).
+ * Whether there was nothing to roll back: the target is already gone (404), or the event was never
+ * registered in the first place (Commerce's 400 for unsubscribing an unregistered event).
  */
 async function isNothingToRollBack(error: unknown): Promise<boolean> {
   if (isHttpNotFoundError(error)) {
@@ -703,10 +696,9 @@ async function reconcileChangedSubscriptions(
     ]),
   );
 
-  // Restore this provider's changed subscriptions to their baseline if any change fails: a
-  // `recreate` deletes before it creates, so a rejected create would otherwise lose the old
-  // subscription. Recovery is scoped to the subscription entity — the surrounding metadata and
-  // registration reconciliation keep their existing best-effort semantics.
+  // Restores this provider's subscriptions to baseline if a change fails: a `recreate` deletes
+  // before creating, so a rejected create would otherwise lose the old subscription. Scoped to the
+  // subscription entity; metadata/registration reconciliation keep their own best-effort semantics.
   const recovery = new RecoveryScope(logger);
 
   try {
@@ -728,10 +720,9 @@ async function reconcileChangedSubscriptions(
           restoreBaselineSubscription(baselineEvent, name, providerId, context),
         );
 
-      // A recreate deletes before it creates, so register its restore up front — even a failed
-      // create must roll back. An in-place update is non-destructive, so register its restore only
-      // after it applies; a failed update leaves the baseline subscription intact and recovery must
-      // not delete it.
+      // `recreate` deletes before creating, so register the restore before it runs — even a failed
+      // create must roll back. An in-place update is non-destructive, so register the restore only
+      // after it succeeds, or recovery would delete a baseline subscription that's still there.
       if (changeMode === "recreate") {
         registerRestore();
       }
