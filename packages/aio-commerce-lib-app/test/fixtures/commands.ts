@@ -1,4 +1,6 @@
 // @ts-expect-error - Importing the template as a raw string for testing purposes.
+import webSrcBabelConfig from "#templates/admin-ui/web-src/.babelrc?raw";
+// @ts-expect-error - Importing the template as a raw string for testing purposes.
 import webSrcIndexCss from "#templates/admin-ui/web-src/index.css?raw";
 // @ts-expect-error - Importing the template as a raw string for testing purposes.
 import webSrcIndexHtml from "#templates/admin-ui/web-src/index.html?raw";
@@ -29,6 +31,7 @@ export const templates = {
   installation: installationTemplate as string,
   scopeTree: scopeTreeTemplate as string,
   webSrcApp: webSrcApp as string,
+  webSrcBabelConfig: webSrcBabelConfig as string,
   webSrcIndexCss: webSrcIndexCss as string,
   webSrcIndexHtml: webSrcIndexHtml as string,
   webSrcMainPage: webSrcMainPage as string,
@@ -41,6 +44,7 @@ export const templates = {
  */
 export function makeTemplateFiles(): Record<string, string> {
   return {
+    "admin-ui/web-src/.babelrc": templates.webSrcBabelConfig,
     "admin-ui/web-src/index.css": templates.webSrcIndexCss,
     "admin-ui/web-src/index.html": templates.webSrcIndexHtml,
     "admin-ui/web-src/src/app.jsx": templates.webSrcApp,
