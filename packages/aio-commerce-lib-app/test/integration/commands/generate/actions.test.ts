@@ -180,7 +180,10 @@ describe("commands/generate/actions", () => {
           const configContent = await readFile(configPath, "utf-8");
           expect(configContent).toContain('"#app.commerce.config"');
           expect(configContent).toContain(
-            "configSchema: config.businessConfig.schema",
+            "const businessConfig = /** @type {NonNullable<typeof config.businessConfig>} */",
+          );
+          expect(configContent).toContain(
+            "const configSchema = /** @type {NonNullable<typeof businessConfig.schema>} */",
           );
           expect(configContent).not.toContain("configuration-schema.json");
 
@@ -214,7 +217,10 @@ describe("commands/generate/actions", () => {
           const configContent = await readFile(configPath, "utf-8");
           expect(configContent).toContain('"#app.commerce.config"');
           expect(configContent).toContain(
-            "configSchema: config.businessConfig.schema",
+            "const businessConfig = /** @type {NonNullable<typeof config.businessConfig>} */",
+          );
+          expect(configContent).toContain(
+            "const configSchema = /** @type {NonNullable<typeof businessConfig.schema>} */",
           );
           expect(configContent).not.toContain("configuration-schema.json");
           expect(configContent).not.toContain("configuration-schema.js");
@@ -389,7 +395,9 @@ describe("commands/generate/actions", () => {
           expect(moduleContents).toContain(
             'import appConfig from "./app.commerce.manifest.json" with { type: "json" }',
           );
-          expect(moduleContents).toContain("export default appConfig");
+          expect(moduleContents).toContain(
+            'export default /** @type {import("@adobe/aio-commerce-lib-app/config").CommerceAppConfig} */ (appConfig)',
+          );
 
           const pkg = JSON.parse(
             await readFile(join(tempDir, "package.json"), "utf-8"),

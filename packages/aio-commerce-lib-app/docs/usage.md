@@ -982,8 +982,11 @@ The endpoint derives the operation and returns it as `operation` (`"install"` or
 
 `metadata.upgradeMode` controls what happens once an upgrade has been planned:
 
-- **`auto`** (default): the plan is created and its execution starts immediately.
-- **`manual`**: the plan is created or reused and returned without starting execution.
+- **`auto`** (experimental): the plan is created and its execution starts immediately.
+- **`manual`** (default): the plan is created or reused and returned without starting execution.
+
+> [!NOTE]
+> `auto` is experimental and `upgradeMode` currently defaults to `manual` while automatic upgrade execution is stabilizing. This will change back to `auto` in a future release — if you want manual behavior permanently, set `upgradeMode: "manual"` explicitly now.
 
 #### The `post-app-deploy` Hook
 
@@ -1022,7 +1025,10 @@ const usesTypeScript = configPath !== null && isTypeScriptConfig(configPath);
 Use `parseCommerceAppConfig` to read and validate the configuration file in your build scripts or CLI tools:
 
 ```javascript
-import { parseCommerceAppConfig } from "@adobe/aio-commerce-lib-app/config";
+import {
+  hasBusinessConfigSchema,
+  parseCommerceAppConfig,
+} from "@adobe/aio-commerce-lib-app/config";
 
 try {
   const config = await parseCommerceAppConfig();
@@ -1030,9 +1036,11 @@ try {
   console.log(`App: ${config.metadata.displayName}`);
   console.log(`Version: ${config.metadata.version}`);
 
-  // Access business config schema
-  const schema = config.businessConfig.schema;
-  console.log(`Configuration fields: ${schema.length}`);
+  // businessConfig is optional, so narrow with hasBusinessConfigSchema before
+  // accessing its schema.
+  if (hasBusinessConfigSchema(config)) {
+    console.log(`Configuration fields: ${config.businessConfig.schema.length}`);
+  }
 } catch (error) {
   console.error("Configuration error:", error);
   process.exit(1);

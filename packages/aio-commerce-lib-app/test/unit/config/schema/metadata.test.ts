@@ -17,14 +17,14 @@ import { hasMetadata, MetadataSchema } from "#config/schema/metadata";
 import { minimalValidConfig } from "#test/fixtures/config";
 
 describe("metadata schema helpers", () => {
-  test("defaults upgrade mode to auto", () => {
+  test("defaults upgrade mode to manual", () => {
     const { description, displayName, id, version } =
       minimalValidConfig.metadata;
 
     expect(
       v.parse(MetadataSchema, { description, displayName, id, version })
         .upgradeMode,
-    ).toBe("auto");
+    ).toBe("manual");
   });
 
   test("accepts manual upgrade mode", () => {
