@@ -3,6 +3,14 @@
 ```ts
 function validateCommerceAppConfig(config: unknown): {
   adminUi?: {
+     acl?: {
+        children?: {
+           id: string;
+           label: string;
+        }[];
+        id: string;
+        label: string;
+     }[];
      customer?: {
         gridColumns?: {
            columns: {
@@ -322,6 +330,7 @@ function validateCommerceAppConfig(config: unknown): {
      description: string;
      displayName: string;
      id: string;
+     upgradeMode: "auto" | "manual";
      version: string;
   };
   webhooks?: (
@@ -345,7 +354,7 @@ function validateCommerceAppConfig(config: unknown): {
            value: string;
         }[];
         hook_name: string;
-        method: string;
+        method: "POST" | "PUT" | "DELETE" | "GET";
         priority?: number;
         required?: boolean;
         rules?: {
@@ -357,7 +366,7 @@ function validateCommerceAppConfig(config: unknown): {
         timeout?: number;
         ttl?: number;
         webhook_method: string;
-        webhook_type: string;
+        webhook_type: "before" | "after";
      };
    }
      | {
@@ -378,7 +387,7 @@ function validateCommerceAppConfig(config: unknown): {
            value: string;
         }[];
         hook_name: string;
-        method: string;
+        method: "POST" | "PUT" | "DELETE" | "GET";
         priority?: number;
         required?: boolean;
         rules?: {
@@ -391,7 +400,7 @@ function validateCommerceAppConfig(config: unknown): {
         ttl?: number;
         url: string;
         webhook_method: string;
-        webhook_type: string;
+        webhook_type: "before" | "after";
      };
   })[];
 } & {
@@ -399,7 +408,7 @@ function validateCommerceAppConfig(config: unknown): {
 };
 ```
 
-Defined in: [aio-commerce-lib-app/source/config/lib/validate.ts:57](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-app/source/config/lib/validate.ts#L57)
+Defined in: [aio-commerce-lib-app/source/config/lib/validate.ts:57](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/config/lib/validate.ts#L57)
 
 Validates a complete commerce app configuration object against the schema.
 
@@ -413,6 +422,14 @@ Validates a complete commerce app configuration object against the schema.
 
 \{
 `adminUi?`: \{
+`acl?`: \{
+`children?`: \{
+`id`: `string`;
+`label`: `string`;
+\}[];
+`id`: `string`;
+`label`: `string`;
+\}[];
 `customer?`: \{
 `gridColumns?`: \{
 `columns`: \{
@@ -732,6 +749,7 @@ Validates a complete commerce app configuration object against the schema.
 `description`: `string`;
 `displayName`: `string`;
 `id`: `string`;
+`upgradeMode`: `"auto"` \| `"manual"`;
 `version`: `string`;
 \};
 `webhooks?`: (
@@ -755,7 +773,7 @@ Validates a complete commerce app configuration object against the schema.
 `value`: `string`;
 \}[];
 `hook_name`: `string`;
-`method`: `string`;
+`method`: `"POST"` \| `"PUT"` \| `"DELETE"` \| `"GET"`;
 `priority?`: `number`;
 `required?`: `boolean`;
 `rules?`: \{
@@ -767,7 +785,7 @@ Validates a complete commerce app configuration object against the schema.
 `timeout?`: `number`;
 `ttl?`: `number`;
 `webhook_method`: `string`;
-`webhook_type`: `string`;
+`webhook_type`: `"before"` \| `"after"`;
 \};
 \}
 \| \{
@@ -788,7 +806,7 @@ Validates a complete commerce app configuration object against the schema.
 `value`: `string`;
 \}[];
 `hook_name`: `string`;
-`method`: `string`;
+`method`: `"POST"` \| `"PUT"` \| `"DELETE"` \| `"GET"`;
 `priority?`: `number`;
 `required?`: `boolean`;
 `rules?`: \{
@@ -801,7 +819,7 @@ Validates a complete commerce app configuration object against the schema.
 `ttl?`: `number`;
 `url`: `string`;
 `webhook_method`: `string`;
-`webhook_type`: `string`;
+`webhook_type`: `"before"` \| `"after"`;
 \};
 \})[];
 \} & \{

@@ -18,6 +18,7 @@
 | [EventProviderGetByIdParams](type-aliases/EventProviderGetByIdParams.md)                       | The schema of the parameters received by the GET `eventing/eventProvider/:id` Commerce API endpoint.             |
 | [EventSubscriptionCreateParams](type-aliases/EventSubscriptionCreateParams.md)                 | The schema of the parameters received by the POST `eventing/eventSubscribe` Commerce API endpoint.               |
 | [EventSubscriptionDeleteParams](type-aliases/EventSubscriptionDeleteParams.md)                 | The schema of the parameters received by the POST `eventing/eventUnsubscribe/:name` Commerce API endpoint.       |
+| [EventSubscriptionUpdateParams](type-aliases/EventSubscriptionUpdateParams.md)                 | The schema of the parameters received by the PUT `eventing/eventSubscribe/:name` Commerce API endpoint.          |
 | [UpdateEventingConfigurationParams](type-aliases/UpdateEventingConfigurationParams.md)         | Defines the parameters received by the `updateConfiguration` Commerce Eventing API endpoint.                     |
 
 ## Variables
@@ -29,6 +30,7 @@
 | [EventProviderGetByIdParamsSchema](variables/EventProviderGetByIdParamsSchema.md)               | -                                                                                                  |
 | [EventSubscriptionCreateParamsSchema](variables/EventSubscriptionCreateParamsSchema.md)         | -                                                                                                  |
 | [EventSubscriptionDeleteParamsSchema](variables/EventSubscriptionDeleteParamsSchema.md)         | -                                                                                                  |
+| [EventSubscriptionUpdateParamsSchema](variables/EventSubscriptionUpdateParamsSchema.md)         | -                                                                                                  |
 | [UpdateEventingConfigurationParamsSchema](variables/UpdateEventingConfigurationParamsSchema.md) | The schema of the parameters received by the `updateConfiguration` Commerce Eventing API endpoint. |
 
 ## Functions
@@ -45,3 +47,4 @@
 | [getAllEventSubscriptions](functions/getAllEventSubscriptions.md)                       | Gets all event subscriptions in the Commerce instance bound to the given [AdobeCommerceHttpClient](https://github.com/adobe/aio-commerce-sdk/blob/main/packages/aio-commerce-lib-api/docs/api-reference/classes/AdobeCommerceHttpClient.md).                          |
 | [getEventProviderById](functions/getEventProviderById.md)                               | Gets the info of the event provider with the given ID of the Commerce instance bound to the given [AdobeCommerceHttpClient](https://github.com/adobe/aio-commerce-sdk/blob/main/packages/aio-commerce-lib-api/docs/api-reference/classes/AdobeCommerceHttpClient.md). |
 | [updateEventingConfiguration](functions/updateEventingConfiguration.md)                 | Updates the configuration of the Commerce Eventing API.                                                                                                                                                                                                               |
+| [updateEventSubscription](functions/updateEventSubscription.md)                         | Updates an existing event subscription in the Commerce instance bound to the given [AdobeCommerceHttpClient](https://github.com/adobe/aio-commerce-sdk/blob/main/packages/aio-commerce-lib-api/docs/api-reference/classes/AdobeCommerceHttpClient.md).                |

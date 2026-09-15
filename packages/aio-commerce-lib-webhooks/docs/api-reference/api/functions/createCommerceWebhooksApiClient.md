@@ -66,7 +66,7 @@ function createCommerceWebhooksApiClient(
 >;
 ```
 
-Defined in: [lib/api-client.ts:34](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-webhooks/source/lib/api-client.ts#L34)
+Defined in: [lib/api-client.ts:34](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-webhooks/source/lib/api-client.ts#L34)
 
 Creates a new API client for the Commerce Webhooks API.
 

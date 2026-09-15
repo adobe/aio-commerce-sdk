@@ -3,6 +3,14 @@
 ```ts
 function parseCommerceAppConfig(cwd?: string): Promise<{
   adminUi?: {
+     acl?: {
+        children?: {
+           id: ...;
+           label: ...;
+        }[];
+        id: string;
+        label: string;
+     }[];
      customer?: {
         gridColumns?: {
            columns: {
@@ -319,6 +327,7 @@ function parseCommerceAppConfig(cwd?: string): Promise<{
      description: string;
      displayName: string;
      id: string;
+     upgradeMode: "auto" | "manual";
      version: string;
   };
   webhooks?: (
@@ -342,7 +351,7 @@ function parseCommerceAppConfig(cwd?: string): Promise<{
            value: ...;
         }[];
         hook_name: string;
-        method: string;
+        method: "POST" | "PUT" | "DELETE" | "GET";
         priority?: number;
         required?: boolean;
         rules?: {
@@ -354,7 +363,7 @@ function parseCommerceAppConfig(cwd?: string): Promise<{
         timeout?: number;
         ttl?: number;
         webhook_method: string;
-        webhook_type: string;
+        webhook_type: "before" | "after";
      };
    }
      | {
@@ -375,7 +384,7 @@ function parseCommerceAppConfig(cwd?: string): Promise<{
            value: ...;
         }[];
         hook_name: string;
-        method: string;
+        method: "POST" | "PUT" | "DELETE" | "GET";
         priority?: number;
         required?: boolean;
         rules?: {
@@ -388,7 +397,7 @@ function parseCommerceAppConfig(cwd?: string): Promise<{
         ttl?: number;
         url: string;
         webhook_method: string;
-        webhook_type: string;
+        webhook_type: "before" | "after";
      };
   })[];
 } & {
@@ -396,7 +405,7 @@ function parseCommerceAppConfig(cwd?: string): Promise<{
 }>;
 ```
 
-Defined in: [aio-commerce-lib-app/source/config/lib/parser.ts:168](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-app/source/config/lib/parser.ts#L168)
+Defined in: [aio-commerce-lib-app/source/config/lib/parser.ts:168](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/config/lib/parser.ts#L168)
 
 Read the commerce app config file and parse its contents into its schema.
 
@@ -413,6 +422,14 @@ The config file must export a default export with the configuration object.
 
 `Promise`\<\{
 `adminUi?`: \{
+`acl?`: \{
+`children?`: \{
+`id`: ...;
+`label`: ...;
+\}[];
+`id`: `string`;
+`label`: `string`;
+\}[];
 `customer?`: \{
 `gridColumns?`: \{
 `columns`: \{
@@ -729,6 +746,7 @@ The config file must export a default export with the configuration object.
 `description`: `string`;
 `displayName`: `string`;
 `id`: `string`;
+`upgradeMode`: `"auto"` \| `"manual"`;
 `version`: `string`;
 \};
 `webhooks?`: (
@@ -752,7 +770,7 @@ The config file must export a default export with the configuration object.
 `value`: ...;
 \}[];
 `hook_name`: `string`;
-`method`: `string`;
+`method`: `"POST"` \| `"PUT"` \| `"DELETE"` \| `"GET"`;
 `priority?`: `number`;
 `required?`: `boolean`;
 `rules?`: \{
@@ -764,7 +782,7 @@ The config file must export a default export with the configuration object.
 `timeout?`: `number`;
 `ttl?`: `number`;
 `webhook_method`: `string`;
-`webhook_type`: `string`;
+`webhook_type`: `"before"` \| `"after"`;
 \};
 \}
 \| \{
@@ -785,7 +803,7 @@ The config file must export a default export with the configuration object.
 `value`: ...;
 \}[];
 `hook_name`: `string`;
-`method`: `string`;
+`method`: `"POST"` \| `"PUT"` \| `"DELETE"` \| `"GET"`;
 `priority?`: `number`;
 `required?`: `boolean`;
 `rules?`: \{
@@ -798,7 +816,7 @@ The config file must export a default export with the configuration object.
 `ttl?`: `number`;
 `url`: `string`;
 `webhook_method`: `string`;
-`webhook_type`: `string`;
+`webhook_type`: `"before"` \| `"after"`;
 \};
 \})[];
 \} & \{

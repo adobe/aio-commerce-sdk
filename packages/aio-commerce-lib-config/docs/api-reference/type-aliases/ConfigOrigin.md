@@ -7,7 +7,7 @@ type ConfigOrigin = {
 };
 ```
 
-Defined in: [modules/configuration/types.ts:19](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-config/source/modules/configuration/types.ts#L19)
+Defined in: [modules/configuration/types.ts:19](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-config/source/modules/configuration/types.ts#L19)
 
 Represents the origin of a configuration value, indicating which scope it came from.
 
@@ -19,7 +19,7 @@ Represents the origin of a configuration value, indicating which scope it came f
 code: string;
 ```
 
-Defined in: [modules/configuration/types.ts:21](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-config/source/modules/configuration/types.ts#L21)
+Defined in: [modules/configuration/types.ts:21](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-config/source/modules/configuration/types.ts#L21)
 
 The scope code where the configuration value originates.
 
@@ -31,6 +31,6 @@ The scope code where the configuration value originates.
 level: string;
 ```
 
-Defined in: [modules/configuration/types.ts:23](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-config/source/modules/configuration/types.ts#L23)
+Defined in: [modules/configuration/types.ts:23](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-config/source/modules/configuration/types.ts#L23)
 
 The scope level where the configuration value originates.

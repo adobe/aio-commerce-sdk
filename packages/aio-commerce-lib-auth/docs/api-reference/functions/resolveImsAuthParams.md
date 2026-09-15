@@ -13,7 +13,7 @@ function resolveImsAuthParams(params: Record<string, unknown>): {
 };
 ```
 
-Defined in: [ims-auth/utils.ts:131](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-auth/source/lib/ims-auth/utils.ts#L131)
+Defined in: [ims-auth/utils.ts:131](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-auth/source/lib/ims-auth/utils.ts#L131)
 
 Resolves an [ImsAuthParams](../type-aliases/ImsAuthParams.md) from the given App Builder action inputs.
 

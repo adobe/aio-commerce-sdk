@@ -16,7 +16,7 @@ function getImsAuthProvider(authParams: {
 };
 ```
 
-Defined in: [ims-auth/provider.ts:119](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-auth/source/lib/ims-auth/provider.ts#L119)
+Defined in: [ims-auth/provider.ts:119](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-auth/source/lib/ims-auth/provider.ts#L119)
 
 Creates an [ImsAuthProvider](../type-aliases/ImsAuthProvider.md) based on the provided configuration.
 

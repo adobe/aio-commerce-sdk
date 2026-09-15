@@ -1,14 +1,16 @@
-# `ExternalEventsConfig\<T\>`
+# `ExternalEventsConfig\<T *extends* `AnyCommerceAppConfig`=`CommerceAppConfigOutputModel`\>`
 
 ```ts
-type ExternalEventsConfig<T> = EventsConfig<T> & {
+type ExternalEventsConfig<
+  T extends AnyCommerceAppConfig = CommerceAppConfigOutputModel,
+> = EventsConfig<T> & {
   eventing: EventsConfig<T>["eventing"] & {
     external: NonNullable<EventsConfig<T>["eventing"]["external"]>;
   };
 };
 ```
 
-Defined in: [aio-commerce-lib-app/source/config/schema/eventing.ts:357](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-app/source/config/schema/eventing.ts#L357)
+Defined in: [aio-commerce-lib-app/source/config/schema/eventing.ts:357](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/config/schema/eventing.ts#L357)
 
 Config type when external event sources are present.
 

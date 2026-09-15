@@ -1,5 +1,63 @@
 # @adobe/aio-commerce-lib-app
 
+## 2.0.0
+
+### Major Changes
+
+- [#637](https://github.com/adobe/aio-commerce-sdk/pull/637) [`9d9888f`](https://github.com/adobe/aio-commerce-sdk/commit/9d9888f95b2cf54d76e33ab75a4599d906f438c4) Thanks [@mariam21arauj](https://github.com/mariam21arauj)! - Remove the deprecated `PUT /config` action endpoint. It overwrote every value for a scope and could not express partial updates or unset a key, which caused data loss when only a subset of keys was meant to change.
+
+  **Migration:** Switch calls from `PUT /config` to `PATCH /config`. The request shape is unchanged (`{ scopeId, config: [{ name, value }] }`), but send only the entries you want to change; `PATCH` leaves unmentioned keys untouched and unsets a key when its value is `null`.
+
+### Minor Changes
+
+- [#626](https://github.com/adobe/aio-commerce-sdk/pull/626) [`f012ae0`](https://github.com/adobe/aio-commerce-sdk/commit/f012ae0d8eaac5cac314a62de3902fca842bd936) Thanks [@vinayrao2000](https://github.com/vinayrao2000)! - Add Admin UI upgrade reconciliation. The Admin UI step now diffs the installed baseline against the target configuration component-by-component, registering newly added components, removing dropped ones, and unregistering the extension when Admin UI is removed entirely. Registration requires at least one declared component, and ids within `massActions`/`viewButtons` arrays must be unique.
+
+- [#627](https://github.com/adobe/aio-commerce-sdk/pull/627) [`e5cbdf1`](https://github.com/adobe/aio-commerce-sdk/commit/e5cbdf14f5bda56430eeeaf495889b8a1a514fe3) Thanks [@obarcelonap](https://github.com/obarcelonap)! - Apply webhook configuration changes during upgrades when fields, conditions, headers, or other mutable settings change without changing webhook identity.
+
+- [#659](https://github.com/adobe/aio-commerce-sdk/pull/659) [`a1a7ee2`](https://github.com/adobe/aio-commerce-sdk/commit/a1a7ee273a4a0d81e3ed18e3855f1395f7b69e66) Thanks [@jcuerdo](https://github.com/jcuerdo)! - Reconcile custom installation steps during app upgrades, so previously installed steps are not re-run and removed steps are not uninstalled until the app itself is fully uninstalled.
+
+- [#634](https://github.com/adobe/aio-commerce-sdk/pull/634) [`f8f13c1`](https://github.com/adobe/aio-commerce-sdk/commit/f8f13c139d449e7fd96afceddeed33ad103cae89) Thanks [@vinayrao2000](https://github.com/vinayrao2000)! - Reconcile configuration changes to existing Admin UI components during an upgrade. The Admin UI step now detects when a component present in both the installed and target versions has a changed configuration (ACL, labels, descriptions, notifications) and refreshes the extension to apply it, instead of leaving the change unapplied.
+
+- [#625](https://github.com/adobe/aio-commerce-sdk/pull/625) [`e0852d1`](https://github.com/adobe/aio-commerce-sdk/commit/e0852d11e1b4f7c23a0c0dfd1d41acf984aeba7a) Thanks [@oshmyheliuk](https://github.com/oshmyheliuk)! - Reconcile Commerce event subscription configuration changes during an app upgrade. When an event that exists in both the installed baseline and the target config changes its fields, rules, priority or HIPAA flag, the upgrade now updates the live subscription instead of leaving it stale.
+
+- [#624](https://github.com/adobe/aio-commerce-sdk/pull/624) [`4b42092`](https://github.com/adobe/aio-commerce-sdk/commit/4b420929c221a850a4416507bd9bebb8cb6010ec) Thanks [@oshmyheliuk](https://github.com/oshmyheliuk)! - Add upgrade `plan`/`apply` support to the eventing domain. During an app upgrade the Commerce and external event leaves now diff the installed baseline against the target config and converge Adobe I/O Events and Commerce state: adding and removing providers, event metadata, registrations and Commerce subscriptions, and updating registrations whose event set changed.
+
+- [#613](https://github.com/adobe/aio-commerce-sdk/pull/613) [`f688120`](https://github.com/adobe/aio-commerce-sdk/commit/f68812028514db4afb81b3b016dc5af1d1d57e62) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Generalize the workflow engine to lifecycle-neutral names (`LifecycleContext`, `WorkflowData`, `WorkflowError`, `WorkflowRunState` and its variants, `WorkflowStateMetadata`, `WorkflowHooks`) so it can be reused across lifecycle modules. The previous installation-branded type names remain exported as `@deprecated` aliases.
+
+- [#623](https://github.com/adobe/aio-commerce-sdk/pull/623) [`93730eb`](https://github.com/adobe/aio-commerce-sdk/commit/93730ebbe6fe1e031b449f79eff7d009162d1010) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Add post-deployment upgrade planning with automatic execution that waits for the result and a manual plan-only mode. `POST /installation` is now a desired-state endpoint: with no baseline it installs, otherwise it upgrades toward `metadata.version` and reports the chosen `operation` in the response.
+
+- [#621](https://github.com/adobe/aio-commerce-sdk/pull/621) [`03c4cc3`](https://github.com/adobe/aio-commerce-sdk/commit/03c4cc3958ccd9425f55c891b352d9804a466269) Thanks [@obarcelonap](https://github.com/obarcelonap)! - Add upgrade planning support for webhook additions and removals: the webhooks step now diffs the baseline snapshot against the target configuration to add newly configured webhooks and remove ones dropped from it.
+
+- [#650](https://github.com/adobe/aio-commerce-sdk/pull/650) [`f3ea3a6`](https://github.com/adobe/aio-commerce-sdk/commit/f3ea3a64ac59c978f28865274fa282ec991ea529) Thanks [@jcuerdo](https://github.com/jcuerdo)! - Fix uninstallation failing for apps with a `dynamicList` Business Configuration field, caused by revalidating the recorded installation snapshot against a schema that required functions a JSON-serialized snapshot can never have. Uninstallation now validates the recorded config with `validateRecordedCommerceAppConfig`, which accepts a `dynamicList` field without `options`/`default`.
+
+- [#614](https://github.com/adobe/aio-commerce-sdk/pull/614) [`01d5013`](https://github.com/adobe/aio-commerce-sdk/commit/01d5013015cac472220b6c69dcb25f101a682c33) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Use `isConfigured` when defining lifecycle steps to identify whether their domain is present in app configuration. The deprecated `when` predicate remains supported for compatibility.
+
+- [#653](https://github.com/adobe/aio-commerce-sdk/pull/653) [`c04983d`](https://github.com/adobe/aio-commerce-sdk/commit/c04983dfe04926094ab810c070598d5609004a61) Thanks [@oshmyheliuk](https://github.com/oshmyheliuk)! - Add support for declaring custom ACL resources under `adminUi.acl` (flat leaves or one-level groups) that are injected into the Commerce User Roles tree for app-checked permissions. An app declaring only ACL resources does not register a `commerce/backend-ui/2` extension point (in `app.config.yaml`, `install.yaml`, or generated ext.config), since ACL resources reach Commerce through the app-config payload.
+
+### Patch Changes
+
+- [#653](https://github.com/adobe/aio-commerce-sdk/pull/653) [`c04983d`](https://github.com/adobe/aio-commerce-sdk/commit/c04983dfe04926094ab810c070598d5609004a61) Thanks [@oshmyheliuk](https://github.com/oshmyheliuk)! - Reject Admin UI ids that would map to the same Commerce permission. Conflicting grid column, mass action, order view button, or custom ACL resource ids now fail config validation instead of silently overwriting one another.
+
+- [#636](https://github.com/adobe/aio-commerce-sdk/pull/636) [`186d245`](https://github.com/adobe/aio-commerce-sdk/commit/186d245015bd405ce5f1ea45d796069ab2f03fac) Thanks [@oshmyheliuk](https://github.com/oshmyheliuk)! - Fix the Admin UI SDK installation step timing out by raising the Commerce HTTP client timeout to 2 minutes, matching the events and webhooks installation steps. Apply the same timeout to the Commerce scope sync endpoint.
+
+- [#680](https://github.com/adobe/aio-commerce-sdk/pull/680) [`1612b38`](https://github.com/adobe/aio-commerce-sdk/commit/1612b38516e734155c50f545b8f41120f55d5351) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Ensure required Admin UI web source support files are present, including an environment-aware Babel configuration that produces compatible production JSX.
+
+- [#639](https://github.com/adobe/aio-commerce-sdk/pull/639) [`74b9a3b`](https://github.com/adobe/aio-commerce-sdk/commit/74b9a3b6274215ba2e97fa56a94e737c62e2b8bb) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Ensure CLI commands find the project root before generating files or updating project configuration.
+
+- [#642](https://github.com/adobe/aio-commerce-sdk/pull/642) [`79dcda0`](https://github.com/adobe/aio-commerce-sdk/commit/79dcda035d322d47d2e19566ae4a20fd6124682b) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Install Node.js type definitions when initializing TypeScript projects.
+
+- [#627](https://github.com/adobe/aio-commerce-sdk/pull/627) [`e5cbdf1`](https://github.com/adobe/aio-commerce-sdk/commit/e5cbdf14f5bda56430eeeaf495889b8a1a514fe3) Thanks [@obarcelonap](https://github.com/obarcelonap)! - Reject webhook configurations with unsupported webhook types or HTTP methods.
+
+- [#643](https://github.com/adobe/aio-commerce-sdk/pull/643) [`d13ca97`](https://github.com/adobe/aio-commerce-sdk/commit/d13ca977cbe5c683e0515c24350863a46dc52792) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Prune app-owned Commerce webhooks that are absent from the target configuration during upgrades.
+
+- [#672](https://github.com/adobe/aio-commerce-sdk/pull/672) [`4bed4e3`](https://github.com/adobe/aio-commerce-sdk/commit/4bed4e306f3a889fd1ea81d3f8d3f11609fd2a58) Thanks [@vinayrao2000](https://github.com/vinayrao2000)! - Fix upgrades failing with a 404 "no such event metadata" error when a duplicate event provider exists in the org.
+- Updated dependencies [[`f012ae0`](https://github.com/adobe/aio-commerce-sdk/commit/f012ae0d8eaac5cac314a62de3902fca842bd936), [`c04983d`](https://github.com/adobe/aio-commerce-sdk/commit/c04983dfe04926094ab810c070598d5609004a61), [`e0852d1`](https://github.com/adobe/aio-commerce-sdk/commit/e0852d11e1b4f7c23a0c0dfd1d41acf984aeba7a), [`c04983d`](https://github.com/adobe/aio-commerce-sdk/commit/c04983dfe04926094ab810c070598d5609004a61), [`1837df1`](https://github.com/adobe/aio-commerce-sdk/commit/1837df107bd2b8d2211f77438a07b6e7ee0af03e), [`f3ea3a6`](https://github.com/adobe/aio-commerce-sdk/commit/f3ea3a64ac59c978f28865274fa282ec991ea529)]:
+  - @adobe/aio-commerce-lib-admin-ui@1.1.0
+  - @adobe/aio-commerce-lib-events@1.4.0
+  - @adobe/aio-commerce-lib-api@1.4.0
+  - @adobe/aio-commerce-lib-config@1.8.0
+  - @adobe/aio-commerce-lib-webhooks@1.2.2
+
 ## 1.11.0
 
 ### Minor Changes

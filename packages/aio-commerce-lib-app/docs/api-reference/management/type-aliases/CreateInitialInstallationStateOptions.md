@@ -6,7 +6,7 @@ type CreateInitialInstallationStateOptions = {
 };
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/runner.ts:38](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-app/source/management/installation/runner.ts#L38)
+Defined in: [aio-commerce-lib-app/source/management/installation/runner.ts:79](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/management/installation/runner.ts#L79)
 
 Options for creating an initial installation state.
 
@@ -18,6 +18,6 @@ Options for creating an initial installation state.
 config: CommerceAppConfigOutputModel;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/runner.ts:40](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-app/source/management/installation/runner.ts#L40)
+Defined in: [aio-commerce-lib-app/source/management/installation/runner.ts:81](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/management/installation/runner.ts#L81)
 
 The app configuration used to determine applicable steps.

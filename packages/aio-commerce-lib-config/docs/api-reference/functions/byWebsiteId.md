@@ -4,7 +4,7 @@
 function byWebsiteId(commerceScopeId: number): SelectorByCommerceScopeId;
 ```
 
-Defined in: [config-utils.ts:768](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-config/source/config-utils.ts#L768)
+Defined in: [config-utils.ts:768](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-config/source/config-utils.ts#L768)
 
 Creates a scope selector that identifies a website by its Commerce API ID.
 

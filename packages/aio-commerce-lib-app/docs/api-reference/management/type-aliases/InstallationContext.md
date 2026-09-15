@@ -1,114 +1,11 @@
-# `InstallationContext`
+# ~~`InstallationContext`~~
 
 ```ts
-type InstallationContext = {
-  appData: AppData;
-  customScripts?: Record<string, unknown>;
-  logger: ReturnType<typeof AioLogger>;
-  params: RuntimeActionParams & {
-    AIO_COMMERCE_AUTH_IMS_CLIENT_ID: string;
-    AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS: string | string[];
-    AIO_COMMERCE_AUTH_IMS_ORG_ID: string;
-    AIO_COMMERCE_AUTH_IMS_SCOPES: string | string[];
-    AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL: string;
-    AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID: string;
-  };
-};
+type InstallationContext = LifecycleContext;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/workflow/step.ts:40](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-app/source/management/installation/workflow/step.ts#L40)
+Defined in: [aio-commerce-lib-app/source/management/installation/compat.ts:33](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/management/installation/compat.ts#L33)
 
-Shared context available to all steps during installation.
+## Deprecated
 
-## Properties
-
-### appData
-
-```ts
-appData: AppData;
-```
-
-Defined in: [aio-commerce-lib-app/source/management/installation/workflow/step.ts:42](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-app/source/management/installation/workflow/step.ts#L42)
-
-The credentials of the app being installed
-
----
-
-### customScripts?
-
-```ts
-optional customScripts?: Record<string, unknown>;
-```
-
-Defined in: [aio-commerce-lib-app/source/management/installation/workflow/step.ts:58](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-app/source/management/installation/workflow/step.ts#L58)
-
-Custom scripts defined in the configuration (if any).
-
----
-
-### logger
-
-```ts
-logger: ReturnType<typeof AioLogger>;
-```
-
-Defined in: [aio-commerce-lib-app/source/management/installation/workflow/step.ts:55](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-app/source/management/installation/workflow/step.ts#L55)
-
-Logger instance for installation logging.
-
----
-
-### params
-
-```ts
-params: RuntimeActionParams & {
-  AIO_COMMERCE_AUTH_IMS_CLIENT_ID: string;
-  AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS: string | string[];
-  AIO_COMMERCE_AUTH_IMS_ORG_ID: string;
-  AIO_COMMERCE_AUTH_IMS_SCOPES: string | string[];
-  AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL: string;
-  AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID: string;
-};
-```
-
-Defined in: [aio-commerce-lib-app/source/management/installation/workflow/step.ts:45](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-app/source/management/installation/workflow/step.ts#L45)
-
-The raw action parameters from the App Builder runtime action.
-
-#### Type Declaration
-
-##### AIO\_COMMERCE\_AUTH\_IMS\_CLIENT\_ID
-
-```ts
-AIO_COMMERCE_AUTH_IMS_CLIENT_ID: string;
-```
-
-##### AIO\_COMMERCE\_AUTH\_IMS\_CLIENT\_SECRETS
-
-```ts
-AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS: string | string[];
-```
-
-##### AIO\_COMMERCE\_AUTH\_IMS\_ORG\_ID
-
-```ts
-AIO_COMMERCE_AUTH_IMS_ORG_ID: string;
-```
-
-##### AIO\_COMMERCE\_AUTH\_IMS\_SCOPES
-
-```ts
-AIO_COMMERCE_AUTH_IMS_SCOPES: string | string[];
-```
-
-##### AIO\_COMMERCE\_AUTH\_IMS\_TECHNICAL\_ACCOUNT\_EMAIL
-
-```ts
-AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL: string;
-```
-
-##### AIO\_COMMERCE\_AUTH\_IMS\_TECHNICAL\_ACCOUNT\_ID
-
-```ts
-AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID: string;
-```
+Use `LifecycleContext` from `@adobe/aio-commerce-lib-app/management`.

@@ -7,7 +7,7 @@ function getOrderViewButtonAclResourceId(
 ): string;
 ```
 
-Defined in: [aio-commerce-lib-admin-ui/source/order-view-buttons/acl-resource-id.ts:37](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-admin-ui/source/order-view-buttons/acl-resource-id.ts#L37)
+Defined in: [aio-commerce-lib-admin-ui/source/order-view-buttons/acl-resource-id.ts:37](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-admin-ui/source/order-view-buttons/acl-resource-id.ts#L37)
 
 Derives the deterministic Commerce ACL resource id for an order view button.
 

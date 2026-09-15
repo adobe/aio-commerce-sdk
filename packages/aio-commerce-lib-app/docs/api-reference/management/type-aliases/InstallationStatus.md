@@ -1,9 +1,11 @@
-# `InstallationStatus`
+# ~~`InstallationStatus`~~
 
 ```ts
-type InstallationStatus = "pending" | "in-progress" | "succeeded" | "failed";
+type InstallationStatus = ExecutionStatus;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/workflow/types.ts:24](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-app/source/management/installation/workflow/types.ts#L24)
+Defined in: [aio-commerce-lib-app/source/management/installation/compat.ts:42](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/management/installation/compat.ts#L42)
 
-Overall installation status.
+## Deprecated
+
+Use `ExecutionStatus` from `@adobe/aio-commerce-lib-app/management`.

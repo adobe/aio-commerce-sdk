@@ -7,7 +7,7 @@ type CommerceWebhookHeader = {
 };
 ```
 
-Defined in: [api/webhooks/types.ts:27](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-webhooks/source/api/webhooks/types.ts#L27)
+Defined in: [api/webhooks/types.ts:27](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-webhooks/source/api/webhooks/types.ts#L27)
 
 A custom HTTP header in a Commerce webhook subscription.
 
@@ -19,7 +19,7 @@ A custom HTTP header in a Commerce webhook subscription.
 name: string;
 ```
 
-Defined in: [api/webhooks/types.ts:28](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-webhooks/source/api/webhooks/types.ts#L28)
+Defined in: [api/webhooks/types.ts:28](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-webhooks/source/api/webhooks/types.ts#L28)
 
 ---
 
@@ -29,4 +29,4 @@ Defined in: [api/webhooks/types.ts:28](https://github.com/adobe/aio-commerce-sdk
 value: string;
 ```
 
-Defined in: [api/webhooks/types.ts:29](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-webhooks/source/api/webhooks/types.ts#L29)
+Defined in: [api/webhooks/types.ts:29](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-webhooks/source/api/webhooks/types.ts#L29)

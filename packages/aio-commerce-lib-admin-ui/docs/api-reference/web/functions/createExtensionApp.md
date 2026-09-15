@@ -4,7 +4,7 @@
 function createExtensionApp(options: CreateExtensionAppOptions): void;
 ```
 
-Defined in: [aio-commerce-lib-admin-ui/source/web/react/extension/create-app.tsx:72](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-admin-ui/source/web/react/extension/create-app.tsx#L72)
+Defined in: [aio-commerce-lib-admin-ui/source/web/react/extension/create-app.tsx:72](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-admin-ui/source/web/react/extension/create-app.tsx#L72)
 
 Mounts a Commerce Admin UI iframe app and handles Experience Cloud Shell, UIX
 registration, shared-context attachment, routing, and Spectrum setup.

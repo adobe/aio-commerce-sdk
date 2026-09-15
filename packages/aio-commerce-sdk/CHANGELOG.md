@@ -1,5 +1,19 @@
 # @adobe/aio-commerce-sdk
 
+## 2.0.0
+
+### Major Changes
+
+- [#637](https://github.com/adobe/aio-commerce-sdk/pull/637) [`9d9888f`](https://github.com/adobe/aio-commerce-sdk/commit/9d9888f95b2cf54d76e33ab75a4599d906f438c4) Thanks [@mariam21arauj](https://github.com/mariam21arauj)! - Picks up the removal of the deprecated `PUT /config` action endpoint from `@adobe/aio-commerce-lib-app`. Use `PATCH /config` instead, which supports partial updates and unset semantics.
+
+### Patch Changes
+
+- Updated dependencies [[`f012ae0`](https://github.com/adobe/aio-commerce-sdk/commit/f012ae0d8eaac5cac314a62de3902fca842bd936), [`c04983d`](https://github.com/adobe/aio-commerce-sdk/commit/c04983dfe04926094ab810c070598d5609004a61), [`e0852d1`](https://github.com/adobe/aio-commerce-sdk/commit/e0852d11e1b4f7c23a0c0dfd1d41acf984aeba7a), [`c04983d`](https://github.com/adobe/aio-commerce-sdk/commit/c04983dfe04926094ab810c070598d5609004a61), [`1837df1`](https://github.com/adobe/aio-commerce-sdk/commit/1837df107bd2b8d2211f77438a07b6e7ee0af03e)]:
+  - @adobe/aio-commerce-lib-admin-ui@1.1.0
+  - @adobe/aio-commerce-lib-events@1.4.0
+  - @adobe/aio-commerce-lib-api@1.4.0
+  - @adobe/aio-commerce-lib-webhooks@1.2.2
+
 ## 1.4.2
 
 ### Patch Changes

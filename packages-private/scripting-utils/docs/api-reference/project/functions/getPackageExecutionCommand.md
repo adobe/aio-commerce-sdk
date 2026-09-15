@@ -13,7 +13,7 @@ function getPackageExecutionCommand(
 };
 ```
 
-Defined in: [project.ts:385](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages-private/scripting-utils/source/project.ts#L385)
+Defined in: [project.ts:387](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages-private/scripting-utils/source/project.ts#L387)
 
 Get the command that executes a package without adding it to the project.
 

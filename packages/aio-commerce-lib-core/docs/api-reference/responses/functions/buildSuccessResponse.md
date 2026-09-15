@@ -1,7 +1,10 @@
 # `buildSuccessResponse()`
 
 ```ts
-function buildSuccessResponse<TBody, THeaders>(
+function buildSuccessResponse<
+  TBody extends BodyRecord = BodyRecord,
+  THeaders extends HeadersRecord = HeadersRecord,
+>(
   statusCode: number,
   payload?: {
     body?: TBody;
@@ -10,7 +13,7 @@ function buildSuccessResponse<TBody, THeaders>(
 ): SuccessResponse<TBody, THeaders>;
 ```
 
-Defined in: [responses/helpers.ts:243](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-core/source/responses/helpers.ts#L243)
+Defined in: [responses/helpers.ts:243](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-core/source/responses/helpers.ts#L243)
 
 Creates a standardized success response for runtime actions
 

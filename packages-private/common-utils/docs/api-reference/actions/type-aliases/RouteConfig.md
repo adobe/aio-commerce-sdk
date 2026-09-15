@@ -1,31 +1,36 @@
-# `RouteConfig\<TPattern, TParamsSchema, TBodySchema, TQuerySchema, TContext\>`
+# `RouteConfig\<TPattern *extends* `string`=`string`, TParamsSchema *extends* `StandardSchemaV1`\|`undefined`=`undefined`, TBodySchema *extends* `StandardSchemaV1`\|`undefined`=`undefined`, TQuerySchema *extends* `StandardSchemaV1`\|`undefined`=`undefined`, TContext *extends* [`BaseContext`](BaseContext.md) = [`BaseContext`](BaseContext.md)\>`
 
 ```ts
-type RouteConfig<TPattern, TParamsSchema, TBodySchema, TQuerySchema, TContext> =
-  {
-    body?: TBodySchema;
-    handler: (
-      req: RouteRequest<
-        TParamsSchema extends StandardSchemaV1
-          ? StandardSchemaV1.InferOutput<TParamsSchema>
-          : Simplify<ExtractParams<TPattern>>,
-        TBodySchema extends StandardSchemaV1
-          ? StandardSchemaV1.InferOutput<TBodySchema>
-          : unknown,
-        TQuerySchema extends StandardSchemaV1
-          ? StandardSchemaV1.InferOutput<TQuerySchema>
-          : Record<string, string>
-      >,
-      ctx: TContext,
-    ) => Promisable<ActionResponse>;
-    params?: TParamsSchema extends StandardSchemaV1
-      ? ValidParamsSchema<TPattern, TParamsSchema>
-      : undefined;
-    query?: TQuerySchema;
-  };
+type RouteConfig<
+  TPattern extends string = string,
+  TParamsSchema extends StandardSchemaV1 | undefined = undefined,
+  TBodySchema extends StandardSchemaV1 | undefined = undefined,
+  TQuerySchema extends StandardSchemaV1 | undefined = undefined,
+  TContext extends BaseContext = BaseContext,
+> = {
+  body?: TBodySchema;
+  handler: (
+    req: RouteRequest<
+      TParamsSchema extends StandardSchemaV1
+        ? StandardSchemaV1.InferOutput<TParamsSchema>
+        : Simplify<ExtractParams<TPattern>>,
+      TBodySchema extends StandardSchemaV1
+        ? StandardSchemaV1.InferOutput<TBodySchema>
+        : unknown,
+      TQuerySchema extends StandardSchemaV1
+        ? StandardSchemaV1.InferOutput<TQuerySchema>
+        : Record<string, string>
+    >,
+    ctx: TContext,
+  ) => Promisable<ActionResponse>;
+  params?: TParamsSchema extends StandardSchemaV1
+    ? ValidParamsSchema<TPattern, TParamsSchema>
+    : undefined;
+  query?: TQuerySchema;
+};
 ```
 
-Defined in: [actions/http/types.ts:185](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages-private/common-utils/source/actions/http/types.ts#L185)
+Defined in: [actions/http/types.ts:185](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages-private/common-utils/source/actions/http/types.ts#L185)
 
 Route configuration with type inference from schemas and context.
 If schemas are provided, they're used for both validation AND type inference.
@@ -49,7 +54,7 @@ Otherwise, types are inferred from the path pattern.
 optional body?: TBodySchema;
 ```
 
-Defined in: [actions/http/types.ts:201](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages-private/common-utils/source/actions/http/types.ts#L201)
+Defined in: [actions/http/types.ts:201](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages-private/common-utils/source/actions/http/types.ts#L201)
 
 Optional schema for validating and typing request body
 
@@ -74,7 +79,7 @@ handler: (
 ) => Promisable<ActionResponse>;
 ```
 
-Defined in: [actions/http/types.ts:207](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages-private/common-utils/source/actions/http/types.ts#L207)
+Defined in: [actions/http/types.ts:207](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages-private/common-utils/source/actions/http/types.ts#L207)
 
 Route handler with properly typed request and context
 
@@ -97,7 +102,7 @@ Route handler with properly typed request and context
 optional params?: TParamsSchema extends StandardSchemaV1 ? ValidParamsSchema<TPattern, TParamsSchema> : undefined;
 ```
 
-Defined in: [actions/http/types.ts:196](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages-private/common-utils/source/actions/http/types.ts#L196)
+Defined in: [actions/http/types.ts:196](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages-private/common-utils/source/actions/http/types.ts#L196)
 
 Optional schema for validating and typing route parameters.
 If provided, must include all parameters from the path pattern.
@@ -110,6 +115,6 @@ If provided, must include all parameters from the path pattern.
 optional query?: TQuerySchema;
 ```
 
-Defined in: [actions/http/types.ts:204](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages-private/common-utils/source/actions/http/types.ts#L204)
+Defined in: [actions/http/types.ts:204](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages-private/common-utils/source/actions/http/types.ts#L204)
 
 Optional schema for validating and typing query parameters

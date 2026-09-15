@@ -2,11 +2,11 @@
 
 ```ts
 type StepFailedEvent = StepEvent & {
-  error: InstallationError;
+  error: WorkflowError;
 };
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/workflow/hooks.ts:46](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-app/source/management/installation/workflow/hooks.ts#L46)
+Defined in: [aio-commerce-lib-app/source/management/common/workflow/hooks.ts:46](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/management/common/workflow/hooks.ts#L46)
 
 Event payload when a step fails.
 
@@ -15,7 +15,7 @@ Event payload when a step fails.
 ### error
 
 ```ts
-error: InstallationError;
+error: WorkflowError;
 ```
 
 Error information.

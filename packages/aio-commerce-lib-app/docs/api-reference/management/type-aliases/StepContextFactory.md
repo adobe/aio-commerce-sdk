@@ -1,12 +1,12 @@
-# `StepContextFactory\<TStepCtx\>`
+# `StepContextFactory\<TStepCtx *extends* `Record`\<`string`, `unknown`\> = `Record`\<`string`, `unknown`\>\>`
 
 ```ts
-type StepContextFactory<TStepCtx> = (
-  context: InstallationContext,
-) => TStepCtx | Promise<TStepCtx>;
+type StepContextFactory<
+  TStepCtx extends Record<string, unknown> = Record<string, unknown>,
+> = (context: LifecycleContext) => TStepCtx | Promise<TStepCtx>;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/workflow/step.ts:62](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-app/source/management/installation/workflow/step.ts#L62)
+Defined in: [aio-commerce-lib-app/source/management/common/workflow/step.ts:64](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/management/common/workflow/step.ts#L64)
 
 Factory function type for creating step-specific context.
 
@@ -18,9 +18,9 @@ Factory function type for creating step-specific context.
 
 ## Parameters
 
-| Parameter | Type                                            |
-| --------- | ----------------------------------------------- |
-| `context` | [`InstallationContext`](InstallationContext.md) |
+| Parameter | Type                                      |
+| --------- | ----------------------------------------- |
+| `context` | [`LifecycleContext`](LifecycleContext.md) |
 
 ## Returns
 

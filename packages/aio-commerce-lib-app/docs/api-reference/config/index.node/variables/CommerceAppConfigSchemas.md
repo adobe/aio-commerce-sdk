@@ -3,14 +3,31 @@
 ```ts
 const CommerceAppConfigSchemas: {
   adminUi: ObjectSchema<{
+     acl: OptionalSchema<SchemaWithPipe<readonly [ArraySchema<StrictObjectSchema<{
+        children: OptionalSchema<SchemaWithPipe<...>, undefined>;
+        id: SchemaWithPipe<readonly [..., ...]>;
+        label: SchemaWithPipe<readonly [..., ..., ...]>;
+      }, undefined>, undefined>, MinLengthAction<{
+        children?: ...[];
+        id: string;
+        label: string;
+      }[], 1, "At least one ACL resource is required when acl is defined">, CheckAction<{
+        children?: ...[];
+        id: string;
+        label: string;
+      }[], "Top-level ACL resource ids must be unique.">, CheckAction<{
+        children?: ...[];
+        id: string;
+        label: string;
+     }[], "Custom ACL resource ids must stay unique after Commerce derivation: a top-level resource id must not equal a group's \"<group>_<child>\" combination.">]>, undefined>;
      customer: OptionalSchema<ObjectSchema<{
         gridColumns: OptionalSchema<ObjectSchema<{
-           columns: SchemaWithPipe<readonly [..., ...]>;
+           columns: SchemaWithPipe<readonly [..., ..., ...]>;
            description: SchemaWithPipe<readonly [..., ...]>;
            label: SchemaWithPipe<readonly [..., ...]>;
            runtimeAction: SchemaWithPipe<readonly [..., ...]>;
         }, undefined>, undefined>;
-        massActions: OptionalSchema<ArraySchema<VariantSchema<"type", [StrictObjectSchema<..., ...>, StrictObjectSchema<..., ...>], "mass action \"type\" must be either \"view\" or \"worker\"">, undefined>, undefined>;
+        massActions: OptionalSchema<SchemaWithPipe<readonly [ArraySchema<VariantSchema<..., ..., ...>, undefined>, CheckAction<...[], "Mass action ids must be unique after Commerce id sanitization.">]>, undefined>;
      }, undefined>, undefined>;
      menu: OptionalSchema<ObjectSchema<{
         aclProtected: OptionalSchema<BooleanSchema<undefined>, undefined>;
@@ -23,22 +40,22 @@ const CommerceAppConfigSchemas: {
      }, undefined>, undefined>;
      order: OptionalSchema<ObjectSchema<{
         gridColumns: OptionalSchema<ObjectSchema<{
-           columns: SchemaWithPipe<readonly [..., ...]>;
+           columns: SchemaWithPipe<readonly [..., ..., ...]>;
            description: SchemaWithPipe<readonly [..., ...]>;
            label: SchemaWithPipe<readonly [..., ...]>;
            runtimeAction: SchemaWithPipe<readonly [..., ...]>;
         }, undefined>, undefined>;
-        massActions: OptionalSchema<ArraySchema<VariantSchema<"type", [StrictObjectSchema<..., ...>, StrictObjectSchema<..., ...>], "mass action \"type\" must be either \"view\" or \"worker\"">, undefined>, undefined>;
-        viewButtons: OptionalSchema<ArraySchema<VariantSchema<"type", [StrictObjectSchema<..., ...>, StrictObjectSchema<..., ...>], undefined>, undefined>, undefined>;
+        massActions: OptionalSchema<SchemaWithPipe<readonly [ArraySchema<VariantSchema<..., ..., ...>, undefined>, CheckAction<...[], "Mass action ids must be unique after Commerce id sanitization.">]>, undefined>;
+        viewButtons: OptionalSchema<SchemaWithPipe<readonly [ArraySchema<VariantSchema<..., ..., ...>, undefined>, CheckAction<...[], "Order view button ids must be unique after Commerce id sanitization.">]>, undefined>;
      }, undefined>, undefined>;
      product: OptionalSchema<ObjectSchema<{
         gridColumns: OptionalSchema<ObjectSchema<{
-           columns: SchemaWithPipe<readonly [..., ...]>;
+           columns: SchemaWithPipe<readonly [..., ..., ...]>;
            description: SchemaWithPipe<readonly [..., ...]>;
            label: SchemaWithPipe<readonly [..., ...]>;
            runtimeAction: SchemaWithPipe<readonly [..., ...]>;
         }, undefined>, undefined>;
-        massActions: OptionalSchema<ArraySchema<VariantSchema<"type", [StrictObjectSchema<..., ...>, StrictObjectSchema<..., ...>], "mass action \"type\" must be either \"view\" or \"worker\"">, undefined>, undefined>;
+        massActions: OptionalSchema<SchemaWithPipe<readonly [ArraySchema<VariantSchema<..., ..., ...>, undefined>, CheckAction<...[], "Mass action ids must be unique after Commerce id sanitization.">]>, undefined>;
      }, undefined>, undefined>;
   }, undefined>;
   businessConfig: ObjectSchema<{
@@ -467,6 +484,7 @@ const CommerceAppConfigSchemas: {
      description: SchemaWithPipe<readonly [SchemaWithPipe<readonly [StringSchema<`Expected a string for the ${string}`>, NonEmptyAction<string, `The ${string} must not be empty`>]>, MaxLengthAction<string, 255, "The metadata description must not be longer than 255 characters">]>;
      displayName: SchemaWithPipe<readonly [SchemaWithPipe<readonly [StringSchema<`Expected a string for the ${string}`>, NonEmptyAction<string, `The ${string} must not be empty`>]>, MaxLengthAction<string, 50, "The application display name must not be longer than 50 characters">]>;
      id: SchemaWithPipe<readonly [SchemaWithPipe<readonly [StringSchema<`Expected a string value for '${string}'`>, RegexAction<string, `Only alphanumeric characters and hyphens are allowed in string value of "${string}"${string}`>]>, MaxLengthAction<string, 100, "The application id must not be longer than 100 characters">]>;
+     upgradeMode: OptionalSchema<PicklistSchema<["auto", "manual"], undefined>, "manual">;
      version: SchemaWithPipe<readonly [SchemaWithPipe<readonly [StringSchema<`Expected a string for the ${string}`>, NonEmptyAction<string, `The ${string} must not be empty`>]>, RegexAction<string, "The version must follow semantic versioning (semver) format: Major.Minor.Patch (e.g., '1.0.0', '2.3.1')">]>;
   }, undefined>;
   webhooks: OptionalSchema<SchemaWithPipe<readonly [ArraySchema<UnionSchema<[ObjectSchema<{
@@ -531,7 +549,7 @@ const CommerceAppConfigSchemas: {
         fields?: ...[];
         headers?: ...[];
         hook_name: string;
-        method: string;
+        method: "POST" | "PUT" | "DELETE" | "GET";
         priority?: number;
         required?: boolean;
         rules?: ...[];
@@ -539,7 +557,7 @@ const CommerceAppConfigSchemas: {
         timeout?: number;
         ttl?: number;
         webhook_method: string;
-        webhook_type: string;
+        webhook_type: "before" | "after";
      };
    }
      | {
@@ -554,7 +572,7 @@ const CommerceAppConfigSchemas: {
         fields?: ...[];
         headers?: ...[];
         hook_name: string;
-        method: string;
+        method: "POST" | "PUT" | "DELETE" | "GET";
         priority?: number;
         required?: boolean;
         rules?: ...[];
@@ -563,13 +581,13 @@ const CommerceAppConfigSchemas: {
         ttl?: number;
         url: string;
         webhook_method: string;
-        webhook_type: string;
+        webhook_type: "before" | "after";
      };
   })[], 1, "webhooks array must contain at least one webhook when present">]>, undefined>;
 };
 ```
 
-Defined in: [aio-commerce-lib-app/source/config/schema/domains.ts:37](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-app/source/config/schema/domains.ts#L37)
+Defined in: [aio-commerce-lib-app/source/config/schema/domains.ts:37](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/config/schema/domains.ts#L37)
 
 The individual validatable domains of the app config.
 
@@ -579,14 +597,31 @@ The individual validatable domains of the app config.
 
 ```ts
 readonly adminUi: ObjectSchema<{
+  acl: OptionalSchema<SchemaWithPipe<readonly [ArraySchema<StrictObjectSchema<{
+     children: OptionalSchema<SchemaWithPipe<...>, undefined>;
+     id: SchemaWithPipe<readonly [..., ...]>;
+     label: SchemaWithPipe<readonly [..., ..., ...]>;
+   }, undefined>, undefined>, MinLengthAction<{
+     children?: ...[];
+     id: string;
+     label: string;
+   }[], 1, "At least one ACL resource is required when acl is defined">, CheckAction<{
+     children?: ...[];
+     id: string;
+     label: string;
+   }[], "Top-level ACL resource ids must be unique.">, CheckAction<{
+     children?: ...[];
+     id: string;
+     label: string;
+  }[], "Custom ACL resource ids must stay unique after Commerce derivation: a top-level resource id must not equal a group's \"<group>_<child>\" combination.">]>, undefined>;
   customer: OptionalSchema<ObjectSchema<{
      gridColumns: OptionalSchema<ObjectSchema<{
-        columns: SchemaWithPipe<readonly [..., ...]>;
+        columns: SchemaWithPipe<readonly [..., ..., ...]>;
         description: SchemaWithPipe<readonly [..., ...]>;
         label: SchemaWithPipe<readonly [..., ...]>;
         runtimeAction: SchemaWithPipe<readonly [..., ...]>;
      }, undefined>, undefined>;
-     massActions: OptionalSchema<ArraySchema<VariantSchema<"type", [StrictObjectSchema<..., ...>, StrictObjectSchema<..., ...>], "mass action \"type\" must be either \"view\" or \"worker\"">, undefined>, undefined>;
+     massActions: OptionalSchema<SchemaWithPipe<readonly [ArraySchema<VariantSchema<..., ..., ...>, undefined>, CheckAction<...[], "Mass action ids must be unique after Commerce id sanitization.">]>, undefined>;
   }, undefined>, undefined>;
   menu: OptionalSchema<ObjectSchema<{
      aclProtected: OptionalSchema<BooleanSchema<undefined>, undefined>;
@@ -599,22 +634,22 @@ readonly adminUi: ObjectSchema<{
   }, undefined>, undefined>;
   order: OptionalSchema<ObjectSchema<{
      gridColumns: OptionalSchema<ObjectSchema<{
-        columns: SchemaWithPipe<readonly [..., ...]>;
+        columns: SchemaWithPipe<readonly [..., ..., ...]>;
         description: SchemaWithPipe<readonly [..., ...]>;
         label: SchemaWithPipe<readonly [..., ...]>;
         runtimeAction: SchemaWithPipe<readonly [..., ...]>;
      }, undefined>, undefined>;
-     massActions: OptionalSchema<ArraySchema<VariantSchema<"type", [StrictObjectSchema<..., ...>, StrictObjectSchema<..., ...>], "mass action \"type\" must be either \"view\" or \"worker\"">, undefined>, undefined>;
-     viewButtons: OptionalSchema<ArraySchema<VariantSchema<"type", [StrictObjectSchema<..., ...>, StrictObjectSchema<..., ...>], undefined>, undefined>, undefined>;
+     massActions: OptionalSchema<SchemaWithPipe<readonly [ArraySchema<VariantSchema<..., ..., ...>, undefined>, CheckAction<...[], "Mass action ids must be unique after Commerce id sanitization.">]>, undefined>;
+     viewButtons: OptionalSchema<SchemaWithPipe<readonly [ArraySchema<VariantSchema<..., ..., ...>, undefined>, CheckAction<...[], "Order view button ids must be unique after Commerce id sanitization.">]>, undefined>;
   }, undefined>, undefined>;
   product: OptionalSchema<ObjectSchema<{
      gridColumns: OptionalSchema<ObjectSchema<{
-        columns: SchemaWithPipe<readonly [..., ...]>;
+        columns: SchemaWithPipe<readonly [..., ..., ...]>;
         description: SchemaWithPipe<readonly [..., ...]>;
         label: SchemaWithPipe<readonly [..., ...]>;
         runtimeAction: SchemaWithPipe<readonly [..., ...]>;
      }, undefined>, undefined>;
-     massActions: OptionalSchema<ArraySchema<VariantSchema<"type", [StrictObjectSchema<..., ...>, StrictObjectSchema<..., ...>], "mass action \"type\" must be either \"view\" or \"worker\"">, undefined>, undefined>;
+     massActions: OptionalSchema<SchemaWithPipe<readonly [ArraySchema<VariantSchema<..., ..., ...>, undefined>, CheckAction<...[], "Mass action ids must be unique after Commerce id sanitization.">]>, undefined>;
   }, undefined>, undefined>;
 }, undefined> = AdminUiSchema;
 ```
@@ -1083,6 +1118,7 @@ readonly metadata: ObjectSchema<{
   description: SchemaWithPipe<readonly [SchemaWithPipe<readonly [StringSchema<`Expected a string for the ${string}`>, NonEmptyAction<string, `The ${string} must not be empty`>]>, MaxLengthAction<string, 255, "The metadata description must not be longer than 255 characters">]>;
   displayName: SchemaWithPipe<readonly [SchemaWithPipe<readonly [StringSchema<`Expected a string for the ${string}`>, NonEmptyAction<string, `The ${string} must not be empty`>]>, MaxLengthAction<string, 50, "The application display name must not be longer than 50 characters">]>;
   id: SchemaWithPipe<readonly [SchemaWithPipe<readonly [StringSchema<`Expected a string value for '${string}'`>, RegexAction<string, `Only alphanumeric characters and hyphens are allowed in string value of "${string}"${string}`>]>, MaxLengthAction<string, 100, "The application id must not be longer than 100 characters">]>;
+  upgradeMode: OptionalSchema<PicklistSchema<["auto", "manual"], undefined>, "manual">;
   version: SchemaWithPipe<readonly [SchemaWithPipe<readonly [StringSchema<`Expected a string for the ${string}`>, NonEmptyAction<string, `The ${string} must not be empty`>]>, RegexAction<string, "The version must follow semantic versioning (semver) format: Major.Minor.Patch (e.g., '1.0.0', '2.3.1')">]>;
 }, undefined> = MetadataSchema;
 ```
@@ -1152,7 +1188,7 @@ readonly webhooks: OptionalSchema<SchemaWithPipe<readonly [ArraySchema<UnionSche
      fields?: ...[];
      headers?: ...[];
      hook_name: string;
-     method: string;
+     method: "POST" | "PUT" | "DELETE" | "GET";
      priority?: number;
      required?: boolean;
      rules?: ...[];
@@ -1160,7 +1196,7 @@ readonly webhooks: OptionalSchema<SchemaWithPipe<readonly [ArraySchema<UnionSche
      timeout?: number;
      ttl?: number;
      webhook_method: string;
-     webhook_type: string;
+     webhook_type: "before" | "after";
   };
 }
   | {
@@ -1175,7 +1211,7 @@ readonly webhooks: OptionalSchema<SchemaWithPipe<readonly [ArraySchema<UnionSche
      fields?: ...[];
      headers?: ...[];
      hook_name: string;
-     method: string;
+     method: "POST" | "PUT" | "DELETE" | "GET";
      priority?: number;
      required?: boolean;
      rules?: ...[];
@@ -1184,7 +1220,7 @@ readonly webhooks: OptionalSchema<SchemaWithPipe<readonly [ArraySchema<UnionSche
      ttl?: number;
      url: string;
      webhook_method: string;
-     webhook_type: string;
+     webhook_type: "before" | "after";
   };
 })[], 1, "webhooks array must contain at least one webhook when present">]>, undefined> = WebhooksSchema;
 ```

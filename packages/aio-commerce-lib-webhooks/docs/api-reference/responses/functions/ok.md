@@ -1,12 +1,12 @@
 # `ok()`
 
 ```ts
-function ok<TValue>(
+function ok<TValue = unknown>(
   operations: WebhookOperationResponse[] | WebhookOperationResponse<TValue>,
 ): SuccessResponse;
 ```
 
-Defined in: [responses/presets.ts:43](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-webhooks/source/responses/presets.ts#L43)
+Defined in: [responses/presets.ts:43](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-webhooks/source/responses/presets.ts#L43)
 
 Creates an HTTP 200 OK response with webhook operation(s)
 Webhook-optimized version of ok() that automatically wraps operations in the response body.
