@@ -77,7 +77,7 @@
     "test:watch": "vitest --coverage",
     "typecheck": "tsc --noEmit && pnpm run typecheck:templates && echo '✅ No type errors found.'",
     "typecheck:templates": "tsc -p source/commands/generate/actions/templates/admin-ui/tsconfig.json",
-    "version": "pnpx tsx scripts/sync-openapi-version.ts"
+    "version": "pnpm exec tsx scripts/sync-openapi-version.ts"
   },
   "dependencies": {
     "@adobe/aio-commerce-lib-admin-ui": "workspace:*",
