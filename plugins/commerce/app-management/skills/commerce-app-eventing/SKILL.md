@@ -153,13 +153,19 @@ export async function main(params: Record<string, unknown>) {
 Numeric-looking fields aren't guaranteed to be numbers — Commerce serializes some as strings inconsistently, even within the same event (e.g. an id field delivered as `"3"` while a total on that same payload stays a number). Validate and coerce before comparing or forwarding a field, and skip (don't throw) when it doesn't coerce cleanly:
 
 ```typescript
-function toFiniteNumber(value: unknown): number | null {
-  if (typeof value === "number") return Number.isFinite(value) ? value : null;
+function toFiniteNumber(value: unknown): number {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return value;
+  }
+
   if (typeof value === "string" && value.trim() !== "") {
     const parsed = Number(value);
-    return Number.isFinite(parsed) ? parsed : null;
+    if (Number.isFinite(parsed)) {
+      return parsed;
+    }
   }
-  return null;
+
+  throw new Error(`Could not convert "${value}" to a finite number`);
 }
 ```
 
