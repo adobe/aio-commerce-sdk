@@ -15,7 +15,7 @@ const WebhooksSchema: OptionalSchema<SchemaWithPipe<readonly [ArraySchema<UnionS
      fields: OptionalSchema<..., ...>;
      headers: OptionalSchema<..., ...>;
      hook_name: SchemaWithPipe<...>;
-     method: SchemaWithPipe<...>;
+     method: PicklistSchema<..., ...>;
      priority: OptionalSchema<..., ...>;
      required: OptionalSchema<..., ...>;
      rules: OptionalSchema<..., ...>;
@@ -23,7 +23,7 @@ const WebhooksSchema: OptionalSchema<SchemaWithPipe<readonly [ArraySchema<UnionS
      timeout: OptionalSchema<..., ...>;
      ttl: OptionalSchema<..., ...>;
      webhook_method: SchemaWithPipe<...>;
-     webhook_type: SchemaWithPipe<...>;
+     webhook_type: PicklistSchema<..., ...>;
   }, undefined>;
 }, undefined>, ObjectSchema<{
   category: OptionalSchema<PicklistSchema<readonly [..., ..., ...], `Webhook category must be one of: ${(...)}`>, undefined>;
@@ -37,7 +37,7 @@ const WebhooksSchema: OptionalSchema<SchemaWithPipe<readonly [ArraySchema<UnionS
      fields: OptionalSchema<..., ...>;
      headers: OptionalSchema<..., ...>;
      hook_name: SchemaWithPipe<...>;
-     method: SchemaWithPipe<...>;
+     method: PicklistSchema<..., ...>;
      priority: OptionalSchema<..., ...>;
      required: OptionalSchema<..., ...>;
      rules: OptionalSchema<..., ...>;
@@ -46,7 +46,7 @@ const WebhooksSchema: OptionalSchema<SchemaWithPipe<readonly [ArraySchema<UnionS
      ttl: OptionalSchema<..., ...>;
      url: SchemaWithPipe<...>;
      webhook_method: SchemaWithPipe<...>;
-     webhook_type: SchemaWithPipe<...>;
+     webhook_type: PicklistSchema<..., ...>;
   }, undefined>;
 }, undefined>], "Each webhook entry must define either a 'runtimeAction' (to resolve the URL from a runtime action) or an explicit 'url' inside the 'webhook' object, but not both">, "Expected an array of webhook entries">, MinLengthAction<(
   | {
@@ -69,7 +69,7 @@ const WebhooksSchema: OptionalSchema<SchemaWithPipe<readonly [ArraySchema<UnionS
         value: ...;
      }[];
      hook_name: string;
-     method: string;
+     method: "POST" | "PUT" | "DELETE" | "GET";
      priority?: number;
      required?: boolean;
      rules?: {
@@ -81,7 +81,7 @@ const WebhooksSchema: OptionalSchema<SchemaWithPipe<readonly [ArraySchema<UnionS
      timeout?: number;
      ttl?: number;
      webhook_method: string;
-     webhook_type: string;
+     webhook_type: "before" | "after";
   };
 }
   | {
@@ -102,7 +102,7 @@ const WebhooksSchema: OptionalSchema<SchemaWithPipe<readonly [ArraySchema<UnionS
         value: ...;
      }[];
      hook_name: string;
-     method: string;
+     method: "POST" | "PUT" | "DELETE" | "GET";
      priority?: number;
      required?: boolean;
      rules?: {
@@ -115,11 +115,11 @@ const WebhooksSchema: OptionalSchema<SchemaWithPipe<readonly [ArraySchema<UnionS
      ttl?: number;
      url: string;
      webhook_method: string;
-     webhook_type: string;
+     webhook_type: "before" | "after";
   };
 })[], 1, "webhooks array must contain at least one webhook when present">]>, undefined>;
 ```
 
-Defined in: [aio-commerce-lib-app/source/config/schema/webhooks.ts:132](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-app/source/config/schema/webhooks.ts#L132)
+Defined in: [aio-commerce-lib-app/source/config/schema/webhooks.ts:146](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/config/schema/webhooks.ts#L146)
 
 Schema for the optional webhooks array (when present, must have at least one item).

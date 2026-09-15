@@ -1,14 +1,16 @@
 # `hasBusinessConfigSchema()`
 
 ```ts
-function hasBusinessConfigSchema<T>(config: T): config is T & {
+function hasBusinessConfigSchema<T extends AnyCommerceAppConfig>(
+  config: T,
+): config is T & {
   businessConfig: T["businessConfig"] & {
     schema: NonNullable<NonNullable<T["businessConfig"]>["schema"]>;
   };
 };
 ```
 
-Defined in: [aio-commerce-lib-app/source/config/schema/business-configuration.ts:48](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-app/source/config/schema/business-configuration.ts#L48)
+Defined in: [aio-commerce-lib-app/source/config/schema/business-configuration.ts:48](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/config/schema/business-configuration.ts#L48)
 
 Check if config has business config schema.
 

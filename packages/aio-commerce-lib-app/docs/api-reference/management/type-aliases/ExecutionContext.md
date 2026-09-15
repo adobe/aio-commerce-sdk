@@ -1,10 +1,12 @@
-# `ExecutionContext\<TStepCtx\>`
+# `ExecutionContext\<TStepCtx *extends* `Record`\<`string`, `unknown`\> = `Record`\<`string`, `unknown`\>\>`
 
 ```ts
-type ExecutionContext<TStepCtx> = InstallationContext & TStepCtx;
+type ExecutionContext<
+  TStepCtx extends Record<string, unknown> = Record<string, unknown>,
+> = LifecycleContext & TStepCtx;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/workflow/step.ts:67](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-app/source/management/installation/workflow/step.ts#L67)
+Defined in: [aio-commerce-lib-app/source/management/common/workflow/step.ts:69](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/management/common/workflow/step.ts#L69)
 
 The execution context passed to leaf step run handlers.
 

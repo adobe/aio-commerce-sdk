@@ -4,7 +4,7 @@
 function stringifyError(error: unknown): string;
 ```
 
-Defined in: [error.ts:24](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages-private/scripting-utils/source/error.ts#L24)
+Defined in: [error.ts:24](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages-private/scripting-utils/source/error.ts#L24)
 
 Stringify an error to a human-friendly string.
 

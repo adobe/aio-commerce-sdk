@@ -1,7 +1,14 @@
-# `LeafStep\<TName, TConfig, TStepCtx, TOutput\>`
+# `LeafStep\<TName *extends* `string`=`string`, TConfig *extends* `CommerceAppConfigOutputModel`=`CommerceAppConfigOutputModel`, TStepCtx *extends* `Record`\<`string`, `unknown`\> = `Record`\<`string`, `unknown`\>, TOutput = `unknown`, TPlan *extends* `DomainPlan`=`DomainPlan`, TSnapshotData *extends* [`WorkflowData`](WorkflowData.md) = [`WorkflowData`](WorkflowData.md)\>`
 
 ```ts
-type LeafStep<TName, TConfig, TStepCtx, TOutput> = StepBase<TName, TConfig> & {
+type LeafStep<
+  TName extends string = string,
+  TConfig extends CommerceAppConfigOutputModel = CommerceAppConfigOutputModel,
+  TStepCtx extends Record<string, unknown> = Record<string, unknown>,
+  TOutput = unknown,
+  TPlan extends DomainPlan = DomainPlan,
+  TSnapshotData extends WorkflowData = WorkflowData,
+> = StepBase<TName, TConfig> & {
   install: (
     config: TConfig,
     context: ExecutionContext<TStepCtx>,
@@ -15,12 +22,15 @@ type LeafStep<TName, TConfig, TStepCtx, TOutput> = StepBase<TName, TConfig> & {
     config: TConfig,
     context: ValidationExecutionContext<TStepCtx>,
   ) => ValidationIssue[] | Promise<ValidationIssue[]>;
-};
+} & Partial<ResourceCapability<TConfig, TStepCtx, TPlan, TSnapshotData>>;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/workflow/step.ts:110](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-app/source/management/installation/workflow/step.ts#L110)
+Defined in: [aio-commerce-lib-app/source/management/common/workflow/step.ts:124](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/management/common/workflow/step.ts#L124)
 
 A leaf step that executes work (no children).
+
+May optionally contribute the resource-reconciliation capability; `plan` and
+`apply` are meant to be provided together (plan the changes, then apply them).
 
 ## Type Declaration
 
@@ -79,8 +89,8 @@ optional validate?: (config: TConfig, context: ValidationExecutionContext<TStepC
 | Promise<ValidationIssue[]>;
 ```
 
-Optional pre-installation validation handler.
-Called before installation begins to surface issues (errors or warnings).
+Optional pre-execution validation handler.
+Called before the workflow begins to surface issues (errors or warnings).
 Returning an empty array means the step has no issues.
 
 #### Parameters
@@ -97,9 +107,11 @@ Returning an empty array means the step has no issues.
 
 ## Type Parameters
 
-| Type Parameter                                       | Default type                    |
-| ---------------------------------------------------- | ------------------------------- |
-| `TName` _extends_ `string`                           | `string`                        |
-| `TConfig` _extends_ `CommerceAppConfigOutputModel`   | `CommerceAppConfigOutputModel`  |
-| `TStepCtx` _extends_ `Record`\<`string`, `unknown`\> | `Record`\<`string`, `unknown`\> |
-| `TOutput`                                            | `unknown`                       |
+| Type Parameter                                              | Default type                      |
+| ----------------------------------------------------------- | --------------------------------- |
+| `TName` _extends_ `string`                                  | `string`                          |
+| `TConfig` _extends_ `CommerceAppConfigOutputModel`          | `CommerceAppConfigOutputModel`    |
+| `TStepCtx` _extends_ `Record`\<`string`, `unknown`\>        | `Record`\<`string`, `unknown`\>   |
+| `TOutput`                                                   | `unknown`                         |
+| `TPlan` _extends_ `DomainPlan`                              | `DomainPlan`                      |
+| `TSnapshotData` _extends_ [`WorkflowData`](WorkflowData.md) | [`WorkflowData`](WorkflowData.md) |

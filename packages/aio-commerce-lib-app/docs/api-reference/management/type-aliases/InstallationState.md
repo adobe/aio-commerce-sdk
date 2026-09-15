@@ -1,13 +1,11 @@
-# `InstallationState`
+# ~~`InstallationState`~~
 
 ```ts
-type InstallationState =
-  | InProgressInstallationState
-  | SucceededInstallationState
-  | FailedInstallationState;
+type InstallationState = WorkflowRunState;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/workflow/types.ts:138](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-app/source/management/installation/workflow/types.ts#L138)
+Defined in: [aio-commerce-lib-app/source/management/installation/compat.ts:45](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/management/installation/compat.ts#L45)
 
-The full installation state (persisted and returned by status endpoints).
-Discriminated union by `status` field.
+## Deprecated
+
+Use `WorkflowRunState` from `@adobe/aio-commerce-lib-app/management`.

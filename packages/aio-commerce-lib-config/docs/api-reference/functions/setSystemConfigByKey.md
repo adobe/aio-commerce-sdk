@@ -8,7 +8,7 @@ function setSystemConfigByKey(
 ): Promise<void>;
 ```
 
-Defined in: [modules/configuration/system-config.ts:49](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-config/source/modules/configuration/system-config.ts#L49)
+Defined in: [modules/configuration/system-config.ts:49](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-config/source/modules/configuration/system-config.ts#L49)
 
 Stores or clears a system configuration value by key.
 

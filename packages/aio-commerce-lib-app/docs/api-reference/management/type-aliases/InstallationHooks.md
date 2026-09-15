@@ -2,75 +2,147 @@
 
 ```ts
 type InstallationHooks = {
-  onInstallationFailure?: InstallationHook;
-  onInstallationStart?: InstallationHook;
-  onInstallationSuccess?: InstallationHook;
-  onStepFailure?: HookFunction<StepFailedEvent>;
-  onStepStart?: HookFunction<StepStartedEvent>;
-  onStepSuccess?: HookFunction<StepSucceededEvent>;
+  onInstallationFailure?: (state: WorkflowRunState) => void | Promise<void>;
+  onInstallationStart?: (state: WorkflowRunState) => void | Promise<void>;
+  onInstallationSuccess?: (state: WorkflowRunState) => void | Promise<void>;
+  onStepFailure?: (
+    event: StepFailedEvent,
+    state: WorkflowRunState,
+  ) => void | Promise<void>;
+  onStepStart?: (
+    event: StepStartedEvent,
+    state: WorkflowRunState,
+  ) => void | Promise<void>;
+  onStepSuccess?: (
+    event: StepSucceededEvent,
+    state: WorkflowRunState,
+  ) => void | Promise<void>;
 };
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/workflow/hooks.ts:52](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-app/source/management/installation/workflow/hooks.ts#L52)
+Defined in: [aio-commerce-lib-app/source/management/installation/runner.ts:43](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/management/installation/runner.ts#L43)
 
-Lifecycle hooks for installation execution.
+Lifecycle hooks for an installation or uninstallation run.
 
 ## Properties
 
 ### onInstallationFailure?
 
 ```ts
-optional onInstallationFailure?: InstallationHook;
+optional onInstallationFailure?: (state: WorkflowRunState) => void | Promise<void>;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/workflow/hooks.ts:55](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-app/source/management/installation/workflow/hooks.ts#L55)
+Defined in: [aio-commerce-lib-app/source/management/installation/runner.ts:46](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/management/installation/runner.ts#L46)
+
+#### Parameters
+
+| Parameter | Type                                      |
+| --------- | ----------------------------------------- |
+| `state`   | [`WorkflowRunState`](WorkflowRunState.md) |
+
+#### Returns
+
+`void` \| `Promise`\<`void`\>
 
 ---
 
 ### onInstallationStart?
 
 ```ts
-optional onInstallationStart?: InstallationHook;
+optional onInstallationStart?: (state: WorkflowRunState) => void | Promise<void>;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/workflow/hooks.ts:53](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-app/source/management/installation/workflow/hooks.ts#L53)
+Defined in: [aio-commerce-lib-app/source/management/installation/runner.ts:44](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/management/installation/runner.ts#L44)
+
+#### Parameters
+
+| Parameter | Type                                      |
+| --------- | ----------------------------------------- |
+| `state`   | [`WorkflowRunState`](WorkflowRunState.md) |
+
+#### Returns
+
+`void` \| `Promise`\<`void`\>
 
 ---
 
 ### onInstallationSuccess?
 
 ```ts
-optional onInstallationSuccess?: InstallationHook;
+optional onInstallationSuccess?: (state: WorkflowRunState) => void | Promise<void>;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/workflow/hooks.ts:54](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-app/source/management/installation/workflow/hooks.ts#L54)
+Defined in: [aio-commerce-lib-app/source/management/installation/runner.ts:45](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/management/installation/runner.ts#L45)
+
+#### Parameters
+
+| Parameter | Type                                      |
+| --------- | ----------------------------------------- |
+| `state`   | [`WorkflowRunState`](WorkflowRunState.md) |
+
+#### Returns
+
+`void` \| `Promise`\<`void`\>
 
 ---
 
 ### onStepFailure?
 
 ```ts
-optional onStepFailure?: HookFunction<StepFailedEvent>;
+optional onStepFailure?: (event: StepFailedEvent, state: WorkflowRunState) => void | Promise<void>;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/workflow/hooks.ts:59](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-app/source/management/installation/workflow/hooks.ts#L59)
+Defined in: [aio-commerce-lib-app/source/management/installation/runner.ts:56](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/management/installation/runner.ts#L56)
+
+#### Parameters
+
+| Parameter | Type                                      |
+| --------- | ----------------------------------------- |
+| `event`   | [`StepFailedEvent`](StepFailedEvent.md)   |
+| `state`   | [`WorkflowRunState`](WorkflowRunState.md) |
+
+#### Returns
+
+`void` \| `Promise`\<`void`\>
 
 ---
 
 ### onStepStart?
 
 ```ts
-optional onStepStart?: HookFunction<StepStartedEvent>;
+optional onStepStart?: (event: StepStartedEvent, state: WorkflowRunState) => void | Promise<void>;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/workflow/hooks.ts:57](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-app/source/management/installation/workflow/hooks.ts#L57)
+Defined in: [aio-commerce-lib-app/source/management/installation/runner.ts:48](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/management/installation/runner.ts#L48)
+
+#### Parameters
+
+| Parameter | Type                                      |
+| --------- | ----------------------------------------- |
+| `event`   | [`StepStartedEvent`](StepStartedEvent.md) |
+| `state`   | [`WorkflowRunState`](WorkflowRunState.md) |
+
+#### Returns
+
+`void` \| `Promise`\<`void`\>
 
 ---
 
 ### onStepSuccess?
 
 ```ts
-optional onStepSuccess?: HookFunction<StepSucceededEvent>;
+optional onStepSuccess?: (event: StepSucceededEvent, state: WorkflowRunState) => void | Promise<void>;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/workflow/hooks.ts:58](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-app/source/management/installation/workflow/hooks.ts#L58)
+Defined in: [aio-commerce-lib-app/source/management/installation/runner.ts:52](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/management/installation/runner.ts#L52)
+
+#### Parameters
+
+| Parameter | Type                                          |
+| --------- | --------------------------------------------- |
+| `event`   | [`StepSucceededEvent`](StepSucceededEvent.md) |
+| `state`   | [`WorkflowRunState`](WorkflowRunState.md)     |
+
+#### Returns
+
+`void` \| `Promise`\<`void`\>

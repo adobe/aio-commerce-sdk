@@ -1,6 +1,6 @@
 {
   "name": "@adobe/aio-commerce-plugin-app-management",
-  "version": "1.3.2",
+  "version": "1.4.0",
   "private": true,
   "scripts": {
     "version": "sdk-sync-plugin-version"

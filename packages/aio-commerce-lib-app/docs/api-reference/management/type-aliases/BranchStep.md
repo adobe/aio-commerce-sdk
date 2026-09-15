@@ -1,10 +1,12 @@
-# `BranchStep\<TName, TConfig, TStepCtx, TChildren\>`
+# `BranchStep\<TName *extends* `string`=`string`, TConfig *extends* `CommerceAppConfigOutputModel`=`CommerceAppConfigOutputModel`, TStepCtx *extends* `Record`\<`string`, `unknown`\> = `Record`\<`string`, `unknown`\>, TChildren *extends* [`AnyStep`](AnyStep.md)[] = [`AnyStep`](AnyStep.md)[]\>`
 
 ```ts
-type BranchStep<TName, TConfig, TStepCtx, TChildren> = StepBase<
-  TName,
-  TConfig
-> & {
+type BranchStep<
+  TName extends string = string,
+  TConfig extends CommerceAppConfigOutputModel = CommerceAppConfigOutputModel,
+  TStepCtx extends Record<string, unknown> = Record<string, unknown>,
+  TChildren extends AnyStep[] = AnyStep[],
+> = StepBase<TName, TConfig> & {
   children: TChildren;
   context?: StepContextFactory<TStepCtx>;
   type: "branch";
@@ -15,7 +17,7 @@ type BranchStep<TName, TConfig, TStepCtx, TChildren> = StepBase<
 };
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/workflow/step.ts:146](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-app/source/management/installation/workflow/step.ts#L146)
+Defined in: [aio-commerce-lib-app/source/management/common/workflow/step.ts:162](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/management/common/workflow/step.ts#L162)
 
 A branch step that contains children (no execution).
 
@@ -51,7 +53,7 @@ optional validate?: (config: TConfig, context: ValidationExecutionContext<TStepC
 | Promise<ValidationIssue[]>;
 ```
 
-Optional pre-installation validation handler for the branch itself.
+Optional pre-execution validation handler for the branch itself.
 Called before children are validated. Returning an empty array means
 the branch has no issues at this level.
 

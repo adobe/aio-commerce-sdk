@@ -2,20 +2,20 @@
 
 ```ts
 function isCompletedState(
-  state: InstallationState,
-): state is SucceededInstallationState | FailedInstallationState;
+  state: WorkflowRunState,
+): state is SucceededWorkflowState | FailedWorkflowState;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/workflow/types.ts:167](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-app/source/management/installation/workflow/types.ts#L167)
+Defined in: [aio-commerce-lib-app/source/management/common/workflow/types.ts:158](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/management/common/workflow/types.ts#L158)
 
-Type guard for completed installation state (succeeded or failed).
+Type guard for completed workflow run state (succeeded or failed).
 
 ## Parameters
 
-| Parameter | Type                                                        |
-| --------- | ----------------------------------------------------------- |
-| `state`   | [`InstallationState`](../type-aliases/InstallationState.md) |
+| Parameter | Type                                                      |
+| --------- | --------------------------------------------------------- |
+| `state`   | [`WorkflowRunState`](../type-aliases/WorkflowRunState.md) |
 
 ## Returns
 
-state is SucceededInstallationState \| FailedInstallationState
+state is SucceededWorkflowState \| FailedWorkflowState

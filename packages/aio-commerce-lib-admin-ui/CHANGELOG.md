@@ -1,5 +1,20 @@
 # @adobe/aio-commerce-lib-admin-ui
 
+## 1.1.0
+
+### Minor Changes
+
+- [#626](https://github.com/adobe/aio-commerce-sdk/pull/626) [`f012ae0`](https://github.com/adobe/aio-commerce-sdk/commit/f012ae0d8eaac5cac314a62de3902fca842bd936) Thanks [@vinayrao2000](https://github.com/vinayrao2000)! - Add a `refreshExtension` client operation that re-syncs an Admin UI extension's registrations via the dedicated refresh endpoint, with its `RefreshExtensionParams` type and schema.
+
+- [#653](https://github.com/adobe/aio-commerce-sdk/pull/653) [`c04983d`](https://github.com/adobe/aio-commerce-sdk/commit/c04983dfe04926094ab810c070598d5609004a61) Thanks [@oshmyheliuk](https://github.com/oshmyheliuk)! - Export `sanitizeSegment`, which normalizes an id the same way Commerce does when generating ACL resource ids.
+
+- [#653](https://github.com/adobe/aio-commerce-sdk/pull/653) [`c04983d`](https://github.com/adobe/aio-commerce-sdk/commit/c04983dfe04926094ab810c070598d5609004a61) Thanks [@oshmyheliuk](https://github.com/oshmyheliuk)! - Add `getCustomAclResourceId` to derive the deterministic Commerce ACL resource id for a custom `adminUi.acl` resource, checkable at runtime with the permission client.
+
+### Patch Changes
+
+- Updated dependencies [[`1837df1`](https://github.com/adobe/aio-commerce-sdk/commit/1837df107bd2b8d2211f77438a07b6e7ee0af03e)]:
+  - @adobe/aio-commerce-lib-api@1.4.0
+
 ## 1.0.1
 
 ### Patch Changes

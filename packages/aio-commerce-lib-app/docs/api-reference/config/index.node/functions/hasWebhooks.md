@@ -1,12 +1,12 @@
 # `hasWebhooks()`
 
 ```ts
-function hasWebhooks<T>(
+function hasWebhooks<T extends AnyCommerceAppConfig>(
   config: T,
 ): config is T & { webhooks: NonNullable<T["webhooks"]> };
 ```
 
-Defined in: [aio-commerce-lib-app/source/config/schema/webhooks.ts:173](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-app/source/config/schema/webhooks.ts#L173)
+Defined in: [aio-commerce-lib-app/source/config/schema/webhooks.ts:187](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/config/schema/webhooks.ts#L187)
 
 Check if config has webhooks (non-empty array).
 

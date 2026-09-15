@@ -4,6 +4,6 @@
 type WebhookHeader = v.InferInput<typeof WebhookHeaderSchema>;
 ```
 
-Defined in: [aio-commerce-lib-app/source/config/schema/webhooks.ts:149](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-app/source/config/schema/webhooks.ts#L149)
+Defined in: [aio-commerce-lib-app/source/config/schema/webhooks.ts:163](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/config/schema/webhooks.ts#L163)
 
 Webhook header configuration

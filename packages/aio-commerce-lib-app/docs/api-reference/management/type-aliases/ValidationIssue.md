@@ -9,7 +9,7 @@ type ValidationIssue = {
 };
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/workflow/step.ts:25](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-app/source/management/installation/workflow/step.ts#L25)
+Defined in: [aio-commerce-lib-app/source/management/common/workflow/step.ts:27](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/management/common/workflow/step.ts#L27)
 
 A single validation issue reported by a step's validate handler.
 
@@ -21,7 +21,7 @@ A single validation issue reported by a step's validate handler.
 code: string;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/workflow/step.ts:27](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-app/source/management/installation/workflow/step.ts#L27)
+Defined in: [aio-commerce-lib-app/source/management/common/workflow/step.ts:29](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/management/common/workflow/step.ts#L29)
 
 Machine-readable code identifying the issue type.
 
@@ -33,7 +33,7 @@ Machine-readable code identifying the issue type.
 optional details?: Record<string, unknown>;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/workflow/step.ts:36](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-app/source/management/installation/workflow/step.ts#L36)
+Defined in: [aio-commerce-lib-app/source/management/common/workflow/step.ts:38](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/management/common/workflow/step.ts#L38)
 
 Optional additional context about the issue.
 
@@ -45,7 +45,7 @@ Optional additional context about the issue.
 message: string;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/workflow/step.ts:30](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-app/source/management/installation/workflow/step.ts#L30)
+Defined in: [aio-commerce-lib-app/source/management/common/workflow/step.ts:32](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/management/common/workflow/step.ts#L32)
 
 Human-readable description of the issue.
 
@@ -57,6 +57,6 @@ Human-readable description of the issue.
 severity: ValidationIssueSeverity;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/workflow/step.ts:33](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-app/source/management/installation/workflow/step.ts#L33)
+Defined in: [aio-commerce-lib-app/source/management/common/workflow/step.ts:35](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/management/common/workflow/step.ts#L35)
 
-Severity of the issue. Only "error" severity blocks installation.
+Severity of the issue. Only "error" severity blocks the workflow.

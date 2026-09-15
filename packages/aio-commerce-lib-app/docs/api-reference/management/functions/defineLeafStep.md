@@ -1,19 +1,421 @@
 # `defineLeafStep()`
 
 ```ts
-function defineLeafStep<TName, TConfig, TStepCtx, TOutput>(options: LeafStepOptions<TName, TConfig, TStepCtx, TOutput>): {
+function defineLeafStep<TName extends string, TConfig extends {
+  adminUi?: {
+     acl?: {
+        children?: {
+           id: string;
+           label: string;
+        }[];
+        id: string;
+        label: string;
+     }[];
+     customer?: {
+        gridColumns?: {
+           columns: {
+              aclProtected?: ... | ... | ...;
+              align: ... | ... | ...;
+              id: string;
+              label: string;
+              type: ... | ... | ... | ... | ... | ...;
+           }[];
+           description: string;
+           label: string;
+           runtimeAction: string;
+        };
+        massActions?: (
+           | {
+           aclProtected?: ... | ... | ...;
+           confirm?: ... | ...;
+           description?: ... | ...;
+           id: string;
+           label: string;
+           notifications?: ... | ...;
+           path: string;
+           sandboxPermissions?: ... | ...;
+           selectionLimit?: ... | ...;
+           title?: ... | ...;
+           type: "view";
+         }
+           | {
+           aclProtected?: ... | ... | ...;
+           confirm?: ... | ...;
+           description?: ... | ...;
+           id: string;
+           label: string;
+           notifications?: ... | ...;
+           runtimeAction: string;
+           selectionLimit?: ... | ...;
+           timeout?: ... | ...;
+           title?: ... | ...;
+           type: "worker";
+        })[];
+     };
+     menu?: {
+        aclProtected?: boolean;
+        description: string;
+        id: string;
+        label: string;
+        pageTitle?: string;
+        parentMenu?:   | "sales"
+           | "catalog"
+           | "customers"
+           | "marketing"
+           | "content"
+           | "reports"
+           | "stores"
+           | "system";
+        sandboxPermissions?: ("allow-downloads" | "allow-modals" | "allow-popups")[];
+     };
+     order?: {
+        gridColumns?: {
+           columns: {
+              aclProtected?: ... | ... | ...;
+              align: ... | ... | ...;
+              id: string;
+              label: string;
+              type: ... | ... | ... | ... | ... | ...;
+           }[];
+           description: string;
+           label: string;
+           runtimeAction: string;
+        };
+        massActions?: (
+           | {
+           aclProtected?: ... | ... | ...;
+           confirm?: ... | ...;
+           description?: ... | ...;
+           id: string;
+           label: string;
+           notifications?: ... | ...;
+           path: string;
+           sandboxPermissions?: ... | ...;
+           selectionLimit?: ... | ...;
+           title?: ... | ...;
+           type: "view";
+         }
+           | {
+           aclProtected?: ... | ... | ...;
+           confirm?: ... | ...;
+           description?: ... | ...;
+           id: string;
+           label: string;
+           notifications?: ... | ...;
+           runtimeAction: string;
+           selectionLimit?: ... | ...;
+           timeout?: ... | ...;
+           title?: ... | ...;
+           type: "worker";
+        })[];
+        viewButtons?: (
+           | {
+           aclProtected?: ... | ... | ...;
+           confirm?: ... | ...;
+           description?: ... | ...;
+           id: string;
+           label: string;
+           level?: ... | ... | ... | ...;
+           notifications?: ... | ...;
+           path: string;
+           sandboxPermissions?: ... | ...;
+           sortOrder?: ... | ...;
+           type: "view";
+         }
+           | {
+           aclProtected?: ... | ... | ...;
+           confirm?: ... | ...;
+           description?: ... | ...;
+           id: string;
+           label: string;
+           level?: ... | ... | ... | ...;
+           notifications?: ... | ...;
+           runtimeAction: string;
+           sortOrder?: ... | ...;
+           timeout?: ... | ...;
+           type: "worker";
+        })[];
+     };
+     product?: {
+        gridColumns?: {
+           columns: {
+              aclProtected?: ... | ... | ...;
+              align: ... | ... | ...;
+              id: string;
+              label: string;
+              type: ... | ... | ... | ... | ... | ...;
+           }[];
+           description: string;
+           label: string;
+           runtimeAction: string;
+        };
+        massActions?: (
+           | {
+           aclProtected?: ... | ... | ...;
+           confirm?: ... | ...;
+           description?: ... | ...;
+           id: string;
+           label: string;
+           notifications?: ... | ...;
+           path: string;
+           sandboxPermissions?: ... | ...;
+           selectionLimit?: ... | ...;
+           title?: ... | ...;
+           type: "view";
+         }
+           | {
+           aclProtected?: ... | ... | ...;
+           confirm?: ... | ...;
+           description?: ... | ...;
+           id: string;
+           label: string;
+           notifications?: ... | ...;
+           runtimeAction: string;
+           selectionLimit?: ... | ...;
+           timeout?: ... | ...;
+           title?: ... | ...;
+           type: "worker";
+        })[];
+     };
+  };
+  businessConfig?: {
+     schema: (
+        | {
+        default: string;
+        description?: string;
+        env?: ("paas" | "saas")[];
+        label?: string;
+        name: string;
+        options: {
+           label: string;
+           value: string;
+        }[];
+        selectionMode: "single";
+        type: "list";
+      }
+        | {
+        default: string[];
+        description?: string;
+        env?: ("paas" | "saas")[];
+        label?: string;
+        name: string;
+        options: {
+           label: string;
+           value: string;
+        }[];
+        selectionMode: "multiple";
+        type: "list";
+      }
+        | {
+        default: SingleDefaultFactory;
+        description?: string;
+        env?: ("paas" | "saas")[];
+        label?: string;
+        name: string;
+        options: OptionsFactory;
+        selectionMode: "single";
+        type: "dynamicList";
+      }
+        | {
+        default?: MultipleDefaultFactory;
+        description?: string;
+        env?: ("paas" | "saas")[];
+        label?: string;
+        name: string;
+        options: OptionsFactory;
+        selectionMode: "multiple";
+        type: "dynamicList";
+      }
+        | {
+        default: string;
+        description?: string;
+        env?: ("paas" | "saas")[];
+        label?: string;
+        name: string;
+        type: "text";
+      }
+        | {
+        default: "";
+        description?: string;
+        env?: ("paas" | "saas")[];
+        label?: string;
+        name: string;
+        type: "password";
+      }
+        | {
+        default: string;
+        description?: string;
+        env?: ("paas" | "saas")[];
+        label?: string;
+        name: string;
+        type: "email";
+      }
+        | {
+        default: string;
+        description?: string;
+        env?: ("paas" | "saas")[];
+        label?: string;
+        name: string;
+        type: "url";
+      }
+        | {
+        default: string;
+        description?: string;
+        env?: ("paas" | "saas")[];
+        label?: string;
+        name: string;
+        type: "tel";
+      }
+        | {
+        default: boolean;
+        description?: string;
+        env?: ("paas" | "saas")[];
+        label?: string;
+        name: string;
+        type: "boolean";
+     })[];
+  };
+  eventing?: {
+     commerce?: {
+        events: {
+           description: string;
+           destination?: string;
+           env?: ...[];
+           fields: {
+              name: ...;
+              source?: ...;
+           }[];
+           force?: boolean;
+           hipaa_audit_required?: boolean;
+           label: string;
+           name: string;
+           priority?: boolean;
+           rules?: ...[];
+           runtimeActions: string[];
+        }[];
+        provider: {
+           description: string;
+           key?: string;
+           label: string;
+        };
+     }[];
+     external?: {
+        events: {
+           description: string;
+           env?: ...[];
+           hipaa_audit_required?: boolean;
+           label: string;
+           name: string;
+           runtimeActions: string[];
+        }[];
+        provider: {
+           description: string;
+           key?: string;
+           label: string;
+        };
+     }[];
+  };
+  installation?: {
+     customInstallationSteps?: {
+        description: string;
+        name: string;
+        script: string;
+     }[];
+     messages?: {
+        postInstallation?: string;
+        preInstallation?: string;
+     };
+  };
+  metadata: {
+     description: string;
+     displayName: string;
+     id: string;
+     upgradeMode: "auto" | "manual";
+     version: string;
+  };
+  webhooks?: (
+     | {
+     category?: "validation" | "append" | "modification";
+     description: string;
+     env?: ("paas" | "saas")[];
+     label: string;
+     requireAdobeAuth?: boolean;
+     runtimeAction: string;
+     webhook: {
+        batch_name: string;
+        batch_order?: number;
+        fallback_error_message?: string;
+        fields?: {
+           name: string;
+           source?: ... | ...;
+        }[];
+        headers?: {
+           name: string;
+           value: string;
+        }[];
+        hook_name: string;
+        method: "POST" | "PUT" | "DELETE" | "GET";
+        priority?: number;
+        required?: boolean;
+        rules?: {
+           field: string;
+           operator: string;
+           value: string;
+        }[];
+        soft_timeout?: number;
+        timeout?: number;
+        ttl?: number;
+        webhook_method: string;
+        webhook_type: "before" | "after";
+     };
+   }
+     | {
+     category?: "validation" | "append" | "modification";
+     description: string;
+     env?: ("paas" | "saas")[];
+     label: string;
+     webhook: {
+        batch_name: string;
+        batch_order?: number;
+        fallback_error_message?: string;
+        fields?: {
+           name: string;
+           source?: ... | ...;
+        }[];
+        headers?: {
+           name: string;
+           value: string;
+        }[];
+        hook_name: string;
+        method: "POST" | "PUT" | "DELETE" | "GET";
+        priority?: number;
+        required?: boolean;
+        rules?: {
+           field: string;
+           operator: string;
+           value: string;
+        }[];
+        soft_timeout?: number;
+        timeout?: number;
+        ttl?: number;
+        url: string;
+        webhook_method: string;
+        webhook_type: "before" | "after";
+     };
+  })[];
+} & {
+[key: string]: unknown;
+}, TStepCtx extends Record<string, unknown> = Record<string, unknown>, TOutput = unknown, TPlan extends DomainPlan = DomainPlan, TSnapshotData extends WorkflowData = WorkflowData>(options: LeafStepOptions<TName, TConfig, TStepCtx, TOutput, TPlan, TSnapshotData>): {
+  apply:   | ((plan: TPlan, context: ApplyContext<TStepCtx, TConfig, TSnapshotData>) => Promise<ApplyResult<TSnapshotData>>)
+     | undefined;
   install: (config: TConfig, context: ExecutionContext<TStepCtx>) => TOutput | Promise<TOutput>;
-  meta: StepMeta;
-  name: TName;
-  type: "leaf";
-  uninstall:   | ((config: TConfig, context: ExecutionContext<TStepCtx>) => void | Promise<void>)
-     | undefined;
-  validate:   | ((config: TConfig, context: ValidationExecutionContext<TStepCtx>) =>
-     | ValidationIssue[]
-     | Promise<ValidationIssue[]>)
-     | undefined;
-  when:   | ((config: {
+  isConfigured:   | ((config: {
      adminUi?: {
+        acl?: {
+           children?: ... | ...;
+           id: string;
+           label: string;
+        }[];
         customer?: {
            gridColumns?: {
               columns: ...;
@@ -183,6 +585,7 @@ function defineLeafStep<TName, TConfig, TStepCtx, TOutput>(options: LeafStepOpti
         description: string;
         displayName: string;
         id: string;
+        upgradeMode: "auto" | "manual";
         version: string;
      };
      webhooks?: (
@@ -200,7 +603,7 @@ function defineLeafStep<TName, TConfig, TStepCtx, TOutput>(options: LeafStepOpti
            fields?: ... | ...;
            headers?: ... | ...;
            hook_name: string;
-           method: string;
+           method: ... | ... | ... | ...;
            priority?: ... | ...;
            required?: ... | ... | ...;
            rules?: ... | ...;
@@ -208,7 +611,7 @@ function defineLeafStep<TName, TConfig, TStepCtx, TOutput>(options: LeafStepOpti
            timeout?: ... | ...;
            ttl?: ... | ...;
            webhook_method: string;
-           webhook_type: string;
+           webhook_type: ... | ...;
         };
       }
         | {
@@ -223,7 +626,7 @@ function defineLeafStep<TName, TConfig, TStepCtx, TOutput>(options: LeafStepOpti
            fields?: ... | ...;
            headers?: ... | ...;
            hook_name: string;
-           method: string;
+           method: ... | ... | ... | ...;
            priority?: ... | ...;
            required?: ... | ... | ...;
            rules?: ... | ...;
@@ -232,7 +635,251 @@ function defineLeafStep<TName, TConfig, TStepCtx, TOutput>(options: LeafStepOpti
            ttl?: ... | ...;
            url: string;
            webhook_method: string;
-           webhook_type: string;
+           webhook_type: ... | ...;
+        };
+     })[];
+   } & {
+   [key: string]: unknown;
+   }) => config is TConfig)
+     | undefined;
+  meta: StepMeta;
+  name: TName;
+  plan:   | ((input: PlanningInput<TConfig, TSnapshotData>, context: ValidationExecutionContext<TStepCtx>) => Promise<PlanningResult<TPlan>>)
+     | undefined;
+  type: "leaf";
+  uninstall:   | ((config: TConfig, context: ExecutionContext<TStepCtx>) => void | Promise<void>)
+     | undefined;
+  validate:   | ((config: TConfig, context: ValidationExecutionContext<TStepCtx>) =>
+     | ValidationIssue[]
+     | Promise<ValidationIssue[]>)
+     | undefined;
+  when:   | ((config: {
+     adminUi?: {
+        acl?: {
+           children?: ... | ...;
+           id: string;
+           label: string;
+        }[];
+        customer?: {
+           gridColumns?: {
+              columns: ...;
+              description: ...;
+              label: ...;
+              runtimeAction: ...;
+           };
+           massActions?: ...[];
+        };
+        menu?: {
+           aclProtected?: boolean;
+           description: string;
+           id: string;
+           label: string;
+           pageTitle?: string;
+           parentMenu?:   | "sales"
+              | "catalog"
+              | "customers"
+              | "marketing"
+              | "content"
+              | "reports"
+              | "stores"
+              | "system";
+           sandboxPermissions?: ...[];
+        };
+        order?: {
+           gridColumns?: {
+              columns: ...;
+              description: ...;
+              label: ...;
+              runtimeAction: ...;
+           };
+           massActions?: ...[];
+           viewButtons?: ...[];
+        };
+        product?: {
+           gridColumns?: {
+              columns: ...;
+              description: ...;
+              label: ...;
+              runtimeAction: ...;
+           };
+           massActions?: ...[];
+        };
+     };
+     businessConfig?: {
+        schema: (
+           | {
+           default: string;
+           description?: ... | ...;
+           env?: ... | ...;
+           label?: ... | ...;
+           name: string;
+           options: ...[];
+           selectionMode: "single";
+           type: "list";
+         }
+           | {
+           default: ...[];
+           description?: ... | ...;
+           env?: ... | ...;
+           label?: ... | ...;
+           name: string;
+           options: ...[];
+           selectionMode: "multiple";
+           type: "list";
+         }
+           | {
+           default: SingleDefaultFactory;
+           description?: ... | ...;
+           env?: ... | ...;
+           label?: ... | ...;
+           name: string;
+           options: OptionsFactory;
+           selectionMode: "single";
+           type: "dynamicList";
+         }
+           | {
+           default?: ... | ...;
+           description?: ... | ...;
+           env?: ... | ...;
+           label?: ... | ...;
+           name: string;
+           options: OptionsFactory;
+           selectionMode: "multiple";
+           type: "dynamicList";
+         }
+           | {
+           default: string;
+           description?: ... | ...;
+           env?: ... | ...;
+           label?: ... | ...;
+           name: string;
+           type: "text";
+         }
+           | {
+           default: "";
+           description?: ... | ...;
+           env?: ... | ...;
+           label?: ... | ...;
+           name: string;
+           type: "password";
+         }
+           | {
+           default: string;
+           description?: ... | ...;
+           env?: ... | ...;
+           label?: ... | ...;
+           name: string;
+           type: "email";
+         }
+           | {
+           default: string;
+           description?: ... | ...;
+           env?: ... | ...;
+           label?: ... | ...;
+           name: string;
+           type: "url";
+         }
+           | {
+           default: string;
+           description?: ... | ...;
+           env?: ... | ...;
+           label?: ... | ...;
+           name: string;
+           type: "tel";
+         }
+           | {
+           default: boolean;
+           description?: ... | ...;
+           env?: ... | ...;
+           label?: ... | ...;
+           name: string;
+           type: "boolean";
+        })[];
+     };
+     eventing?: {
+        commerce?: {
+           events: ...[];
+           provider: {
+              description: ...;
+              key?: ...;
+              label: ...;
+           };
+        }[];
+        external?: {
+           events: ...[];
+           provider: {
+              description: ...;
+              key?: ...;
+              label: ...;
+           };
+        }[];
+     };
+     installation?: {
+        customInstallationSteps?: {
+           description: string;
+           name: string;
+           script: string;
+        }[];
+        messages?: {
+           postInstallation?: string;
+           preInstallation?: string;
+        };
+     };
+     metadata: {
+        description: string;
+        displayName: string;
+        id: string;
+        upgradeMode: "auto" | "manual";
+        version: string;
+     };
+     webhooks?: (
+        | {
+        category?: "validation" | "append" | "modification";
+        description: string;
+        env?: ...[];
+        label: string;
+        requireAdobeAuth?: boolean;
+        runtimeAction: string;
+        webhook: {
+           batch_name: string;
+           batch_order?: ... | ...;
+           fallback_error_message?: ... | ...;
+           fields?: ... | ...;
+           headers?: ... | ...;
+           hook_name: string;
+           method: ... | ... | ... | ...;
+           priority?: ... | ...;
+           required?: ... | ... | ...;
+           rules?: ... | ...;
+           soft_timeout?: ... | ...;
+           timeout?: ... | ...;
+           ttl?: ... | ...;
+           webhook_method: string;
+           webhook_type: ... | ...;
+        };
+      }
+        | {
+        category?: "validation" | "append" | "modification";
+        description: string;
+        env?: ...[];
+        label: string;
+        webhook: {
+           batch_name: string;
+           batch_order?: ... | ...;
+           fallback_error_message?: ... | ...;
+           fields?: ... | ...;
+           headers?: ... | ...;
+           hook_name: string;
+           method: ... | ... | ... | ...;
+           priority?: ... | ...;
+           required?: ... | ... | ...;
+           rules?: ... | ...;
+           soft_timeout?: ... | ...;
+           timeout?: ... | ...;
+           ttl?: ... | ...;
+           url: string;
+           webhook_method: string;
+           webhook_type: ... | ...;
         };
      })[];
    } & {
@@ -242,41 +889,41 @@ function defineLeafStep<TName, TConfig, TStepCtx, TOutput>(options: LeafStepOpti
 };
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/workflow/step.ts:244](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-app/source/management/installation/workflow/step.ts#L244)
+Defined in: [aio-commerce-lib-app/source/management/common/workflow/step.ts:268](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/management/common/workflow/step.ts#L268)
 
 Define a leaf step (executable, no children).
 
 ## Type Parameters
 
-| Type Parameter                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  | Default type                    |
-| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------- |
-| `TName` _extends_ `string`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      | -                               |
-| `TConfig` _extends_ \{ `adminUi?`: \{ `customer?`: \{ `gridColumns?`: \{ `columns`: \{ `aclProtected?`: ... \| ... \| ...; `align`: ... \| ... \| ...; `id`: `string`; `label`: `string`; `type`: ... \| ... \| ... \| ... \| ... \| ...; \}[]; `description`: `string`; `label`: `string`; `runtimeAction`: `string`; \}; `massActions?`: ( \| \{ `aclProtected?`: ... \| ... \| ...; `confirm?`: ... \| ...; `description?`: ... \| ...; `id`: `string`; `label`: `string`; `notifications?`: ... \| ...; `path`: `string`; `sandboxPermissions?`: ... \| ...; `selectionLimit?`: ... \| ...; `title?`: ... \| ...; `type`: `"view"`; \} \| \{ `aclProtected?`: ... \| ... \| ...; `confirm?`: ... \| ...; `description?`: ... \| ...; `id`: `string`; `label`: `string`; `notifications?`: ... \| ...; `runtimeAction`: `string`; `selectionLimit?`: ... \| ...; `timeout?`: ... \| ...; `title?`: ... \| ...; `type`: `"worker"`; \})[]; \}; `menu?`: \{ `aclProtected?`: `boolean`; `description`: `string`; `id`: `string`; `label`: `string`; `pageTitle?`: `string`; `parentMenu?`: \| `"sales"` \| `"catalog"` \| `"customers"` \| `"marketing"` \| `"content"` \| `"reports"` \| `"stores"` \| `"system"`; `sandboxPermissions?`: (`"allow-downloads"` \| `"allow-modals"` \| `"allow-popups"`)[]; \}; `order?`: \{ `gridColumns?`: \{ `columns`: \{ `aclProtected?`: ... \| ... \| ...; `align`: ... \| ... \| ...; `id`: `string`; `label`: `string`; `type`: ... \| ... \| ... \| ... \| ... \| ...; \}[]; `description`: `string`; `label`: `string`; `runtimeAction`: `string`; \}; `massActions?`: ( \| \{ `aclProtected?`: ... \| ... \| ...; `confirm?`: ... \| ...; `description?`: ... \| ...; `id`: `string`; `label`: `string`; `notifications?`: ... \| ...; `path`: `string`; `sandboxPermissions?`: ... \| ...; `selectionLimit?`: ... \| ...; `title?`: ... \| ...; `type`: `"view"`; \} \| \{ `aclProtected?`: ... \| ... \| ...; `confirm?`: ... \| ...; `description?`: ... \| ...; `id`: `string`; `label`: `string`; `notifications?`: ... \| ...; `runtimeAction`: `string`; `selectionLimit?`: ... \| ...; `timeout?`: ... \| ...; `title?`: ... \| ...; `type`: `"worker"`; \})[]; `viewButtons?`: ( \| \{ `aclProtected?`: ... \| ... \| ...; `confirm?`: ... \| ...; `description?`: ... \| ...; `id`: `string`; `label`: `string`; `level?`: ... \| ... \| ... \| ...; `notifications?`: ... \| ...; `path`: `string`; `sandboxPermissions?`: ... \| ...; `sortOrder?`: ... \| ...; `type`: `"view"`; \} \| \{ `aclProtected?`: ... \| ... \| ...; `confirm?`: ... \| ...; `description?`: ... \| ...; `id`: `string`; `label`: `string`; `level?`: ... \| ... \| ... \| ...; `notifications?`: ... \| ...; `runtimeAction`: `string`; `sortOrder?`: ... \| ...; `timeout?`: ... \| ...; `type`: `"worker"`; \})[]; \}; `product?`: \{ `gridColumns?`: \{ `columns`: \{ `aclProtected?`: ... \| ... \| ...; `align`: ... \| ... \| ...; `id`: `string`; `label`: `string`; `type`: ... \| ... \| ... \| ... \| ... \| ...; \}[]; `description`: `string`; `label`: `string`; `runtimeAction`: `string`; \}; `massActions?`: ( \| \{ `aclProtected?`: ... \| ... \| ...; `confirm?`: ... \| ...; `description?`: ... \| ...; `id`: `string`; `label`: `string`; `notifications?`: ... \| ...; `path`: `string`; `sandboxPermissions?`: ... \| ...; `selectionLimit?`: ... \| ...; `title?`: ... \| ...; `type`: `"view"`; \} \| \{ `aclProtected?`: ... \| ... \| ...; `confirm?`: ... \| ...; `description?`: ... \| ...; `id`: `string`; `label`: `string`; `notifications?`: ... \| ...; `runtimeAction`: `string`; `selectionLimit?`: ... \| ...; `timeout?`: ... \| ...; `title?`: ... \| ...; `type`: `"worker"`; \})[]; \}; \}; `businessConfig?`: \{ `schema`: ( \| \{ `default`: `string`; `description?`: `string`; `env?`: (`"paas"` \| `"saas"`)[]; `label?`: `string`; `name`: `string`; `options`: \{ `label`: `string`; `value`: `string`; \}[]; `selectionMode`: `"single"`; `type`: `"list"`; \} \| \{ `default`: `string`[]; `description?`: `string`; `env?`: (`"paas"` \| `"saas"`)[]; `label?`: `string`; `name`: `string`; `options`: \{ `label`: `string`; `value`: `string`; \}[]; `selectionMode`: `"multiple"`; `type`: `"list"`; \} \| \{ `default`: `SingleDefaultFactory`; `description?`: `string`; `env?`: (`"paas"` \| `"saas"`)[]; `label?`: `string`; `name`: `string`; `options`: `OptionsFactory`; `selectionMode`: `"single"`; `type`: `"dynamicList"`; \} \| \{ `default?`: `MultipleDefaultFactory`; `description?`: `string`; `env?`: (`"paas"` \| `"saas"`)[]; `label?`: `string`; `name`: `string`; `options`: `OptionsFactory`; `selectionMode`: `"multiple"`; `type`: `"dynamicList"`; \} \| \{ `default`: `string`; `description?`: `string`; `env?`: (`"paas"` \| `"saas"`)[]; `label?`: `string`; `name`: `string`; `type`: `"text"`; \} \| \{ `default`: `""`; `description?`: `string`; `env?`: (`"paas"` \| `"saas"`)[]; `label?`: `string`; `name`: `string`; `type`: `"password"`; \} \| \{ `default`: `string`; `description?`: `string`; `env?`: (`"paas"` \| `"saas"`)[]; `label?`: `string`; `name`: `string`; `type`: `"email"`; \} \| \{ `default`: `string`; `description?`: `string`; `env?`: (`"paas"` \| `"saas"`)[]; `label?`: `string`; `name`: `string`; `type`: `"url"`; \} \| \{ `default`: `string`; `description?`: `string`; `env?`: (`"paas"` \| `"saas"`)[]; `label?`: `string`; `name`: `string`; `type`: `"tel"`; \} \| \{ `default`: `boolean`; `description?`: `string`; `env?`: (`"paas"` \| `"saas"`)[]; `label?`: `string`; `name`: `string`; `type`: `"boolean"`; \})[]; \}; `eventing?`: \{ `commerce?`: \{ `events`: \{ `description`: `string`; `destination?`: `string`; `env?`: ...[]; `fields`: \{ `name`: ...; `source?`: ...; \}[]; `force?`: `boolean`; `hipaa_audit_required?`: `boolean`; `label`: `string`; `name`: `string`; `priority?`: `boolean`; `rules?`: ...[]; `runtimeActions`: `string`[]; \}[]; `provider`: \{ `description`: `string`; `key?`: `string`; `label`: `string`; \}; \}[]; `external?`: \{ `events`: \{ `description`: `string`; `env?`: ...[]; `hipaa_audit_required?`: `boolean`; `label`: `string`; `name`: `string`; `runtimeActions`: `string`[]; \}[]; `provider`: \{ `description`: `string`; `key?`: `string`; `label`: `string`; \}; \}[]; \}; `installation?`: \{ `customInstallationSteps?`: \{ `description`: `string`; `name`: `string`; `script`: `string`; \}[]; `messages?`: \{ `postInstallation?`: `string`; `preInstallation?`: `string`; \}; \}; `metadata`: \{ `description`: `string`; `displayName`: `string`; `id`: `string`; `version`: `string`; \}; `webhooks?`: ( \| \{ `category?`: `"validation"` \| `"append"` \| `"modification"`; `description`: `string`; `env?`: (`"paas"` \| `"saas"`)[]; `label`: `string`; `requireAdobeAuth?`: `boolean`; `runtimeAction`: `string`; `webhook`: \{ `batch_name`: `string`; `batch_order?`: `number`; `fallback_error_message?`: `string`; `fields?`: \{ `name`: `string`; `source?`: ... \| ...; \}[]; `headers?`: \{ `name`: `string`; `value`: `string`; \}[]; `hook_name`: `string`; `method`: `string`; `priority?`: `number`; `required?`: `boolean`; `rules?`: \{ `field`: `string`; `operator`: `string`; `value`: `string`; \}[]; `soft_timeout?`: `number`; `timeout?`: `number`; `ttl?`: `number`; `webhook_method`: `string`; `webhook_type`: `string`; \}; \} \| \{ `category?`: `"validation"` \| `"append"` \| `"modification"`; `description`: `string`; `env?`: (`"paas"` \| `"saas"`)[]; `label`: `string`; `webhook`: \{ `batch_name`: `string`; `batch_order?`: `number`; `fallback_error_message?`: `string`; `fields?`: \{ `name`: `string`; `source?`: ... \| ...; \}[]; `headers?`: \{ `name`: `string`; `value`: `string`; \}[]; `hook_name`: `string`; `method`: `string`; `priority?`: `number`; `required?`: `boolean`; `rules?`: \{ `field`: `string`; `operator`: `string`; `value`: `string`; \}[]; `soft_timeout?`: `number`; `timeout?`: `number`; `ttl?`: `number`; `url`: `string`; `webhook_method`: `string`; `webhook_type`: `string`; \}; \})[]; \} & \{ \[`key`: `string`\]: `unknown`; \} | -                               |
-| `TStepCtx` _extends_ `Record`\<`string`, `unknown`\>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            | `Record`\<`string`, `unknown`\> |
-| `TOutput`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       | `unknown`                       |
+| Type Parameter                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            | Default type                                      |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------- |
+| `TName` _extends_ `string`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                | -                                                 |
+| `TConfig` _extends_ \{ `adminUi?`: \{ `acl?`: \{ `children?`: \{ `id`: `string`; `label`: `string`; \}[]; `id`: `string`; `label`: `string`; \}[]; `customer?`: \{ `gridColumns?`: \{ `columns`: \{ `aclProtected?`: ... \| ... \| ...; `align`: ... \| ... \| ...; `id`: `string`; `label`: `string`; `type`: ... \| ... \| ... \| ... \| ... \| ...; \}[]; `description`: `string`; `label`: `string`; `runtimeAction`: `string`; \}; `massActions?`: ( \| \{ `aclProtected?`: ... \| ... \| ...; `confirm?`: ... \| ...; `description?`: ... \| ...; `id`: `string`; `label`: `string`; `notifications?`: ... \| ...; `path`: `string`; `sandboxPermissions?`: ... \| ...; `selectionLimit?`: ... \| ...; `title?`: ... \| ...; `type`: `"view"`; \} \| \{ `aclProtected?`: ... \| ... \| ...; `confirm?`: ... \| ...; `description?`: ... \| ...; `id`: `string`; `label`: `string`; `notifications?`: ... \| ...; `runtimeAction`: `string`; `selectionLimit?`: ... \| ...; `timeout?`: ... \| ...; `title?`: ... \| ...; `type`: `"worker"`; \})[]; \}; `menu?`: \{ `aclProtected?`: `boolean`; `description`: `string`; `id`: `string`; `label`: `string`; `pageTitle?`: `string`; `parentMenu?`: \| `"sales"` \| `"catalog"` \| `"customers"` \| `"marketing"` \| `"content"` \| `"reports"` \| `"stores"` \| `"system"`; `sandboxPermissions?`: (`"allow-downloads"` \| `"allow-modals"` \| `"allow-popups"`)[]; \}; `order?`: \{ `gridColumns?`: \{ `columns`: \{ `aclProtected?`: ... \| ... \| ...; `align`: ... \| ... \| ...; `id`: `string`; `label`: `string`; `type`: ... \| ... \| ... \| ... \| ... \| ...; \}[]; `description`: `string`; `label`: `string`; `runtimeAction`: `string`; \}; `massActions?`: ( \| \{ `aclProtected?`: ... \| ... \| ...; `confirm?`: ... \| ...; `description?`: ... \| ...; `id`: `string`; `label`: `string`; `notifications?`: ... \| ...; `path`: `string`; `sandboxPermissions?`: ... \| ...; `selectionLimit?`: ... \| ...; `title?`: ... \| ...; `type`: `"view"`; \} \| \{ `aclProtected?`: ... \| ... \| ...; `confirm?`: ... \| ...; `description?`: ... \| ...; `id`: `string`; `label`: `string`; `notifications?`: ... \| ...; `runtimeAction`: `string`; `selectionLimit?`: ... \| ...; `timeout?`: ... \| ...; `title?`: ... \| ...; `type`: `"worker"`; \})[]; `viewButtons?`: ( \| \{ `aclProtected?`: ... \| ... \| ...; `confirm?`: ... \| ...; `description?`: ... \| ...; `id`: `string`; `label`: `string`; `level?`: ... \| ... \| ... \| ...; `notifications?`: ... \| ...; `path`: `string`; `sandboxPermissions?`: ... \| ...; `sortOrder?`: ... \| ...; `type`: `"view"`; \} \| \{ `aclProtected?`: ... \| ... \| ...; `confirm?`: ... \| ...; `description?`: ... \| ...; `id`: `string`; `label`: `string`; `level?`: ... \| ... \| ... \| ...; `notifications?`: ... \| ...; `runtimeAction`: `string`; `sortOrder?`: ... \| ...; `timeout?`: ... \| ...; `type`: `"worker"`; \})[]; \}; `product?`: \{ `gridColumns?`: \{ `columns`: \{ `aclProtected?`: ... \| ... \| ...; `align`: ... \| ... \| ...; `id`: `string`; `label`: `string`; `type`: ... \| ... \| ... \| ... \| ... \| ...; \}[]; `description`: `string`; `label`: `string`; `runtimeAction`: `string`; \}; `massActions?`: ( \| \{ `aclProtected?`: ... \| ... \| ...; `confirm?`: ... \| ...; `description?`: ... \| ...; `id`: `string`; `label`: `string`; `notifications?`: ... \| ...; `path`: `string`; `sandboxPermissions?`: ... \| ...; `selectionLimit?`: ... \| ...; `title?`: ... \| ...; `type`: `"view"`; \} \| \{ `aclProtected?`: ... \| ... \| ...; `confirm?`: ... \| ...; `description?`: ... \| ...; `id`: `string`; `label`: `string`; `notifications?`: ... \| ...; `runtimeAction`: `string`; `selectionLimit?`: ... \| ...; `timeout?`: ... \| ...; `title?`: ... \| ...; `type`: `"worker"`; \})[]; \}; \}; `businessConfig?`: \{ `schema`: ( \| \{ `default`: `string`; `description?`: `string`; `env?`: (`"paas"` \| `"saas"`)[]; `label?`: `string`; `name`: `string`; `options`: \{ `label`: `string`; `value`: `string`; \}[]; `selectionMode`: `"single"`; `type`: `"list"`; \} \| \{ `default`: `string`[]; `description?`: `string`; `env?`: (`"paas"` \| `"saas"`)[]; `label?`: `string`; `name`: `string`; `options`: \{ `label`: `string`; `value`: `string`; \}[]; `selectionMode`: `"multiple"`; `type`: `"list"`; \} \| \{ `default`: `SingleDefaultFactory`; `description?`: `string`; `env?`: (`"paas"` \| `"saas"`)[]; `label?`: `string`; `name`: `string`; `options`: `OptionsFactory`; `selectionMode`: `"single"`; `type`: `"dynamicList"`; \} \| \{ `default?`: `MultipleDefaultFactory`; `description?`: `string`; `env?`: (`"paas"` \| `"saas"`)[]; `label?`: `string`; `name`: `string`; `options`: `OptionsFactory`; `selectionMode`: `"multiple"`; `type`: `"dynamicList"`; \} \| \{ `default`: `string`; `description?`: `string`; `env?`: (`"paas"` \| `"saas"`)[]; `label?`: `string`; `name`: `string`; `type`: `"text"`; \} \| \{ `default`: `""`; `description?`: `string`; `env?`: (`"paas"` \| `"saas"`)[]; `label?`: `string`; `name`: `string`; `type`: `"password"`; \} \| \{ `default`: `string`; `description?`: `string`; `env?`: (`"paas"` \| `"saas"`)[]; `label?`: `string`; `name`: `string`; `type`: `"email"`; \} \| \{ `default`: `string`; `description?`: `string`; `env?`: (`"paas"` \| `"saas"`)[]; `label?`: `string`; `name`: `string`; `type`: `"url"`; \} \| \{ `default`: `string`; `description?`: `string`; `env?`: (`"paas"` \| `"saas"`)[]; `label?`: `string`; `name`: `string`; `type`: `"tel"`; \} \| \{ `default`: `boolean`; `description?`: `string`; `env?`: (`"paas"` \| `"saas"`)[]; `label?`: `string`; `name`: `string`; `type`: `"boolean"`; \})[]; \}; `eventing?`: \{ `commerce?`: \{ `events`: \{ `description`: `string`; `destination?`: `string`; `env?`: ...[]; `fields`: \{ `name`: ...; `source?`: ...; \}[]; `force?`: `boolean`; `hipaa_audit_required?`: `boolean`; `label`: `string`; `name`: `string`; `priority?`: `boolean`; `rules?`: ...[]; `runtimeActions`: `string`[]; \}[]; `provider`: \{ `description`: `string`; `key?`: `string`; `label`: `string`; \}; \}[]; `external?`: \{ `events`: \{ `description`: `string`; `env?`: ...[]; `hipaa_audit_required?`: `boolean`; `label`: `string`; `name`: `string`; `runtimeActions`: `string`[]; \}[]; `provider`: \{ `description`: `string`; `key?`: `string`; `label`: `string`; \}; \}[]; \}; `installation?`: \{ `customInstallationSteps?`: \{ `description`: `string`; `name`: `string`; `script`: `string`; \}[]; `messages?`: \{ `postInstallation?`: `string`; `preInstallation?`: `string`; \}; \}; `metadata`: \{ `description`: `string`; `displayName`: `string`; `id`: `string`; `upgradeMode`: `"auto"` \| `"manual"`; `version`: `string`; \}; `webhooks?`: ( \| \{ `category?`: `"validation"` \| `"append"` \| `"modification"`; `description`: `string`; `env?`: (`"paas"` \| `"saas"`)[]; `label`: `string`; `requireAdobeAuth?`: `boolean`; `runtimeAction`: `string`; `webhook`: \{ `batch_name`: `string`; `batch_order?`: `number`; `fallback_error_message?`: `string`; `fields?`: \{ `name`: `string`; `source?`: ... \| ...; \}[]; `headers?`: \{ `name`: `string`; `value`: `string`; \}[]; `hook_name`: `string`; `method`: `"POST"` \| `"PUT"` \| `"DELETE"` \| `"GET"`; `priority?`: `number`; `required?`: `boolean`; `rules?`: \{ `field`: `string`; `operator`: `string`; `value`: `string`; \}[]; `soft_timeout?`: `number`; `timeout?`: `number`; `ttl?`: `number`; `webhook_method`: `string`; `webhook_type`: `"before"` \| `"after"`; \}; \} \| \{ `category?`: `"validation"` \| `"append"` \| `"modification"`; `description`: `string`; `env?`: (`"paas"` \| `"saas"`)[]; `label`: `string`; `webhook`: \{ `batch_name`: `string`; `batch_order?`: `number`; `fallback_error_message?`: `string`; `fields?`: \{ `name`: `string`; `source?`: ... \| ...; \}[]; `headers?`: \{ `name`: `string`; `value`: `string`; \}[]; `hook_name`: `string`; `method`: `"POST"` \| `"PUT"` \| `"DELETE"` \| `"GET"`; `priority?`: `number`; `required?`: `boolean`; `rules?`: \{ `field`: `string`; `operator`: `string`; `value`: `string`; \}[]; `soft_timeout?`: `number`; `timeout?`: `number`; `ttl?`: `number`; `url`: `string`; `webhook_method`: `string`; `webhook_type`: `"before"` \| `"after"`; \}; \})[]; \} & \{ \[`key`: `string`\]: `unknown`; \} | -                                                 |
+| `TStepCtx` _extends_ `Record`\<`string`, `unknown`\>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      | `Record`\<`string`, `unknown`\>                   |
+| `TOutput`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 | `unknown`                                         |
+| `TPlan` _extends_ `DomainPlan`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            | `DomainPlan`                                      |
+| `TSnapshotData` _extends_ [`WorkflowData`](../type-aliases/WorkflowData.md)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               | [`WorkflowData`](../type-aliases/WorkflowData.md) |
 
 ## Parameters
 
-| Parameter | Type                                                                                                 |
-| --------- | ---------------------------------------------------------------------------------------------------- |
-| `options` | [`LeafStepOptions`](../type-aliases/LeafStepOptions.md)\<`TName`, `TConfig`, `TStepCtx`, `TOutput`\> |
+| Parameter | Type                                                                                                                           |
+| --------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| `options` | [`LeafStepOptions`](../type-aliases/LeafStepOptions.md)\<`TName`, `TConfig`, `TStepCtx`, `TOutput`, `TPlan`, `TSnapshotData`\> |
 
 ## Returns
 
 ```ts
 {
+  apply:   | ((plan: TPlan, context: ApplyContext<TStepCtx, TConfig, TSnapshotData>) => Promise<ApplyResult<TSnapshotData>>)
+     | undefined;
   install: (config: TConfig, context: ExecutionContext<TStepCtx>) => TOutput | Promise<TOutput>;
-  meta: StepMeta;
-  name: TName;
-  type: "leaf";
-  uninstall:   | ((config: TConfig, context: ExecutionContext<TStepCtx>) => void | Promise<void>)
-     | undefined;
-  validate:   | ((config: TConfig, context: ValidationExecutionContext<TStepCtx>) =>
-     | ValidationIssue[]
-     | Promise<ValidationIssue[]>)
-     | undefined;
-  when:   | ((config: {
+  isConfigured:   | ((config: {
      adminUi?: {
+        acl?: {
+           children?: ... | ...;
+           id: string;
+           label: string;
+        }[];
         customer?: {
            gridColumns?: {
               columns: ...;
@@ -446,6 +1093,7 @@ Define a leaf step (executable, no children).
         description: string;
         displayName: string;
         id: string;
+        upgradeMode: "auto" | "manual";
         version: string;
      };
      webhooks?: (
@@ -463,7 +1111,7 @@ Define a leaf step (executable, no children).
            fields?: ... | ...;
            headers?: ... | ...;
            hook_name: string;
-           method: string;
+           method: ... | ... | ... | ...;
            priority?: ... | ...;
            required?: ... | ... | ...;
            rules?: ... | ...;
@@ -471,7 +1119,7 @@ Define a leaf step (executable, no children).
            timeout?: ... | ...;
            ttl?: ... | ...;
            webhook_method: string;
-           webhook_type: string;
+           webhook_type: ... | ...;
         };
       }
         | {
@@ -486,7 +1134,7 @@ Define a leaf step (executable, no children).
            fields?: ... | ...;
            headers?: ... | ...;
            hook_name: string;
-           method: string;
+           method: ... | ... | ... | ...;
            priority?: ... | ...;
            required?: ... | ... | ...;
            rules?: ... | ...;
@@ -495,7 +1143,251 @@ Define a leaf step (executable, no children).
            ttl?: ... | ...;
            url: string;
            webhook_method: string;
-           webhook_type: string;
+           webhook_type: ... | ...;
+        };
+     })[];
+   } & {
+   [key: string]: unknown;
+   }) => config is TConfig)
+     | undefined;
+  meta: StepMeta;
+  name: TName;
+  plan:   | ((input: PlanningInput<TConfig, TSnapshotData>, context: ValidationExecutionContext<TStepCtx>) => Promise<PlanningResult<TPlan>>)
+     | undefined;
+  type: "leaf";
+  uninstall:   | ((config: TConfig, context: ExecutionContext<TStepCtx>) => void | Promise<void>)
+     | undefined;
+  validate:   | ((config: TConfig, context: ValidationExecutionContext<TStepCtx>) =>
+     | ValidationIssue[]
+     | Promise<ValidationIssue[]>)
+     | undefined;
+  when:   | ((config: {
+     adminUi?: {
+        acl?: {
+           children?: ... | ...;
+           id: string;
+           label: string;
+        }[];
+        customer?: {
+           gridColumns?: {
+              columns: ...;
+              description: ...;
+              label: ...;
+              runtimeAction: ...;
+           };
+           massActions?: ...[];
+        };
+        menu?: {
+           aclProtected?: boolean;
+           description: string;
+           id: string;
+           label: string;
+           pageTitle?: string;
+           parentMenu?:   | "sales"
+              | "catalog"
+              | "customers"
+              | "marketing"
+              | "content"
+              | "reports"
+              | "stores"
+              | "system";
+           sandboxPermissions?: ...[];
+        };
+        order?: {
+           gridColumns?: {
+              columns: ...;
+              description: ...;
+              label: ...;
+              runtimeAction: ...;
+           };
+           massActions?: ...[];
+           viewButtons?: ...[];
+        };
+        product?: {
+           gridColumns?: {
+              columns: ...;
+              description: ...;
+              label: ...;
+              runtimeAction: ...;
+           };
+           massActions?: ...[];
+        };
+     };
+     businessConfig?: {
+        schema: (
+           | {
+           default: string;
+           description?: ... | ...;
+           env?: ... | ...;
+           label?: ... | ...;
+           name: string;
+           options: ...[];
+           selectionMode: "single";
+           type: "list";
+         }
+           | {
+           default: ...[];
+           description?: ... | ...;
+           env?: ... | ...;
+           label?: ... | ...;
+           name: string;
+           options: ...[];
+           selectionMode: "multiple";
+           type: "list";
+         }
+           | {
+           default: SingleDefaultFactory;
+           description?: ... | ...;
+           env?: ... | ...;
+           label?: ... | ...;
+           name: string;
+           options: OptionsFactory;
+           selectionMode: "single";
+           type: "dynamicList";
+         }
+           | {
+           default?: ... | ...;
+           description?: ... | ...;
+           env?: ... | ...;
+           label?: ... | ...;
+           name: string;
+           options: OptionsFactory;
+           selectionMode: "multiple";
+           type: "dynamicList";
+         }
+           | {
+           default: string;
+           description?: ... | ...;
+           env?: ... | ...;
+           label?: ... | ...;
+           name: string;
+           type: "text";
+         }
+           | {
+           default: "";
+           description?: ... | ...;
+           env?: ... | ...;
+           label?: ... | ...;
+           name: string;
+           type: "password";
+         }
+           | {
+           default: string;
+           description?: ... | ...;
+           env?: ... | ...;
+           label?: ... | ...;
+           name: string;
+           type: "email";
+         }
+           | {
+           default: string;
+           description?: ... | ...;
+           env?: ... | ...;
+           label?: ... | ...;
+           name: string;
+           type: "url";
+         }
+           | {
+           default: string;
+           description?: ... | ...;
+           env?: ... | ...;
+           label?: ... | ...;
+           name: string;
+           type: "tel";
+         }
+           | {
+           default: boolean;
+           description?: ... | ...;
+           env?: ... | ...;
+           label?: ... | ...;
+           name: string;
+           type: "boolean";
+        })[];
+     };
+     eventing?: {
+        commerce?: {
+           events: ...[];
+           provider: {
+              description: ...;
+              key?: ...;
+              label: ...;
+           };
+        }[];
+        external?: {
+           events: ...[];
+           provider: {
+              description: ...;
+              key?: ...;
+              label: ...;
+           };
+        }[];
+     };
+     installation?: {
+        customInstallationSteps?: {
+           description: string;
+           name: string;
+           script: string;
+        }[];
+        messages?: {
+           postInstallation?: string;
+           preInstallation?: string;
+        };
+     };
+     metadata: {
+        description: string;
+        displayName: string;
+        id: string;
+        upgradeMode: "auto" | "manual";
+        version: string;
+     };
+     webhooks?: (
+        | {
+        category?: "validation" | "append" | "modification";
+        description: string;
+        env?: ...[];
+        label: string;
+        requireAdobeAuth?: boolean;
+        runtimeAction: string;
+        webhook: {
+           batch_name: string;
+           batch_order?: ... | ...;
+           fallback_error_message?: ... | ...;
+           fields?: ... | ...;
+           headers?: ... | ...;
+           hook_name: string;
+           method: ... | ... | ... | ...;
+           priority?: ... | ...;
+           required?: ... | ... | ...;
+           rules?: ... | ...;
+           soft_timeout?: ... | ...;
+           timeout?: ... | ...;
+           ttl?: ... | ...;
+           webhook_method: string;
+           webhook_type: ... | ...;
+        };
+      }
+        | {
+        category?: "validation" | "append" | "modification";
+        description: string;
+        env?: ...[];
+        label: string;
+        webhook: {
+           batch_name: string;
+           batch_order?: ... | ...;
+           fallback_error_message?: ... | ...;
+           fields?: ... | ...;
+           headers?: ... | ...;
+           hook_name: string;
+           method: ... | ... | ... | ...;
+           priority?: ... | ...;
+           required?: ... | ... | ...;
+           rules?: ... | ...;
+           soft_timeout?: ... | ...;
+           timeout?: ... | ...;
+           ttl?: ... | ...;
+           url: string;
+           webhook_method: string;
+           webhook_type: ... | ...;
         };
      })[];
    } & {
@@ -503,6 +1395,14 @@ Define a leaf step (executable, no children).
    }) => config is TConfig)
      | undefined;
 }
+```
+
+### apply
+
+```ts
+apply:
+  | ((plan: TPlan, context: ApplyContext<TStepCtx, TConfig, TSnapshotData>) => Promise<ApplyResult<TSnapshotData>>)
+  | undefined = options.apply;
 ```
 
 ### install
@@ -522,48 +1422,17 @@ install: (config: TConfig, context: ExecutionContext<TStepCtx>) => TOutput | Pro
 
 `TOutput` \| `Promise`\<`TOutput`\>
 
-### meta
+### isConfigured
 
 ```ts
-meta: StepMeta = options.meta;
-```
-
-### name
-
-```ts
-name: TName = options.name;
-```
-
-### type
-
-```ts
-type: "leaf" = "leaf";
-```
-
-### uninstall
-
-```ts
-uninstall:
-  | ((config: TConfig, context: ExecutionContext<TStepCtx>) => void | Promise<void>)
-  | undefined = options.uninstall;
-```
-
-### validate
-
-```ts
-validate:
-  | ((config: TConfig, context: ValidationExecutionContext<TStepCtx>) =>
-  | ValidationIssue[]
-  | Promise<ValidationIssue[]>)
-  | undefined = options.validate;
-```
-
-### when
-
-```ts
-when:
+isConfigured:
   | ((config: {
   adminUi?: {
+     acl?: {
+        children?: ... | ...;
+        id: string;
+        label: string;
+     }[];
      customer?: {
         gridColumns?: {
            columns: ...;
@@ -733,6 +1602,7 @@ when:
      description: string;
      displayName: string;
      id: string;
+     upgradeMode: "auto" | "manual";
      version: string;
   };
   webhooks?: (
@@ -750,7 +1620,7 @@ when:
         fields?: ... | ...;
         headers?: ... | ...;
         hook_name: string;
-        method: string;
+        method: ... | ... | ... | ...;
         priority?: ... | ...;
         required?: ... | ... | ...;
         rules?: ... | ...;
@@ -758,7 +1628,7 @@ when:
         timeout?: ... | ...;
         ttl?: ... | ...;
         webhook_method: string;
-        webhook_type: string;
+        webhook_type: ... | ...;
      };
    }
      | {
@@ -773,7 +1643,7 @@ when:
         fields?: ... | ...;
         headers?: ... | ...;
         hook_name: string;
-        method: string;
+        method: ... | ... | ... | ...;
         priority?: ... | ...;
         required?: ... | ... | ...;
         rules?: ... | ...;
@@ -782,7 +1652,290 @@ when:
         ttl?: ... | ...;
         url: string;
         webhook_method: string;
-        webhook_type: string;
+        webhook_type: ... | ...;
+     };
+  })[];
+} & {
+[key: string]: unknown;
+}) => config is TConfig)
+  | undefined = options.isConfigured;
+```
+
+### meta
+
+```ts
+meta: StepMeta = options.meta;
+```
+
+### name
+
+```ts
+name: TName = options.name;
+```
+
+### plan
+
+```ts
+plan:
+  | ((input: PlanningInput<TConfig, TSnapshotData>, context: ValidationExecutionContext<TStepCtx>) => Promise<PlanningResult<TPlan>>)
+  | undefined = options.plan;
+```
+
+### type
+
+```ts
+type: "leaf" = "leaf";
+```
+
+### uninstall
+
+```ts
+uninstall:
+  | ((config: TConfig, context: ExecutionContext<TStepCtx>) => void | Promise<void>)
+  | undefined = options.uninstall;
+```
+
+### validate
+
+```ts
+validate:
+  | ((config: TConfig, context: ValidationExecutionContext<TStepCtx>) =>
+  | ValidationIssue[]
+  | Promise<ValidationIssue[]>)
+  | undefined = options.validate;
+```
+
+### when
+
+```ts
+when:
+  | ((config: {
+  adminUi?: {
+     acl?: {
+        children?: ... | ...;
+        id: string;
+        label: string;
+     }[];
+     customer?: {
+        gridColumns?: {
+           columns: ...;
+           description: ...;
+           label: ...;
+           runtimeAction: ...;
+        };
+        massActions?: ...[];
+     };
+     menu?: {
+        aclProtected?: boolean;
+        description: string;
+        id: string;
+        label: string;
+        pageTitle?: string;
+        parentMenu?:   | "sales"
+           | "catalog"
+           | "customers"
+           | "marketing"
+           | "content"
+           | "reports"
+           | "stores"
+           | "system";
+        sandboxPermissions?: ...[];
+     };
+     order?: {
+        gridColumns?: {
+           columns: ...;
+           description: ...;
+           label: ...;
+           runtimeAction: ...;
+        };
+        massActions?: ...[];
+        viewButtons?: ...[];
+     };
+     product?: {
+        gridColumns?: {
+           columns: ...;
+           description: ...;
+           label: ...;
+           runtimeAction: ...;
+        };
+        massActions?: ...[];
+     };
+  };
+  businessConfig?: {
+     schema: (
+        | {
+        default: string;
+        description?: ... | ...;
+        env?: ... | ...;
+        label?: ... | ...;
+        name: string;
+        options: ...[];
+        selectionMode: "single";
+        type: "list";
+      }
+        | {
+        default: ...[];
+        description?: ... | ...;
+        env?: ... | ...;
+        label?: ... | ...;
+        name: string;
+        options: ...[];
+        selectionMode: "multiple";
+        type: "list";
+      }
+        | {
+        default: SingleDefaultFactory;
+        description?: ... | ...;
+        env?: ... | ...;
+        label?: ... | ...;
+        name: string;
+        options: OptionsFactory;
+        selectionMode: "single";
+        type: "dynamicList";
+      }
+        | {
+        default?: ... | ...;
+        description?: ... | ...;
+        env?: ... | ...;
+        label?: ... | ...;
+        name: string;
+        options: OptionsFactory;
+        selectionMode: "multiple";
+        type: "dynamicList";
+      }
+        | {
+        default: string;
+        description?: ... | ...;
+        env?: ... | ...;
+        label?: ... | ...;
+        name: string;
+        type: "text";
+      }
+        | {
+        default: "";
+        description?: ... | ...;
+        env?: ... | ...;
+        label?: ... | ...;
+        name: string;
+        type: "password";
+      }
+        | {
+        default: string;
+        description?: ... | ...;
+        env?: ... | ...;
+        label?: ... | ...;
+        name: string;
+        type: "email";
+      }
+        | {
+        default: string;
+        description?: ... | ...;
+        env?: ... | ...;
+        label?: ... | ...;
+        name: string;
+        type: "url";
+      }
+        | {
+        default: string;
+        description?: ... | ...;
+        env?: ... | ...;
+        label?: ... | ...;
+        name: string;
+        type: "tel";
+      }
+        | {
+        default: boolean;
+        description?: ... | ...;
+        env?: ... | ...;
+        label?: ... | ...;
+        name: string;
+        type: "boolean";
+     })[];
+  };
+  eventing?: {
+     commerce?: {
+        events: ...[];
+        provider: {
+           description: ...;
+           key?: ...;
+           label: ...;
+        };
+     }[];
+     external?: {
+        events: ...[];
+        provider: {
+           description: ...;
+           key?: ...;
+           label: ...;
+        };
+     }[];
+  };
+  installation?: {
+     customInstallationSteps?: {
+        description: string;
+        name: string;
+        script: string;
+     }[];
+     messages?: {
+        postInstallation?: string;
+        preInstallation?: string;
+     };
+  };
+  metadata: {
+     description: string;
+     displayName: string;
+     id: string;
+     upgradeMode: "auto" | "manual";
+     version: string;
+  };
+  webhooks?: (
+     | {
+     category?: "validation" | "append" | "modification";
+     description: string;
+     env?: ...[];
+     label: string;
+     requireAdobeAuth?: boolean;
+     runtimeAction: string;
+     webhook: {
+        batch_name: string;
+        batch_order?: ... | ...;
+        fallback_error_message?: ... | ...;
+        fields?: ... | ...;
+        headers?: ... | ...;
+        hook_name: string;
+        method: ... | ... | ... | ...;
+        priority?: ... | ...;
+        required?: ... | ... | ...;
+        rules?: ... | ...;
+        soft_timeout?: ... | ...;
+        timeout?: ... | ...;
+        ttl?: ... | ...;
+        webhook_method: string;
+        webhook_type: ... | ...;
+     };
+   }
+     | {
+     category?: "validation" | "append" | "modification";
+     description: string;
+     env?: ...[];
+     label: string;
+     webhook: {
+        batch_name: string;
+        batch_order?: ... | ...;
+        fallback_error_message?: ... | ...;
+        fields?: ... | ...;
+        headers?: ... | ...;
+        hook_name: string;
+        method: ... | ... | ... | ...;
+        priority?: ... | ...;
+        required?: ... | ... | ...;
+        rules?: ... | ...;
+        soft_timeout?: ... | ...;
+        timeout?: ... | ...;
+        ttl?: ... | ...;
+        url: string;
+        webhook_method: string;
+        webhook_type: ... | ...;
      };
   })[];
 } & {
