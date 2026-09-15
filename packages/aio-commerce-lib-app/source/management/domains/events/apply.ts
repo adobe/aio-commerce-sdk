@@ -77,13 +77,9 @@ export type LeafApplyOptions = {
 
 /**
  * Applies an eventing domain plan against live Adobe I/O Events + Commerce state. Idempotent:
- * offboards providers dropped from the target, re-runs the (create-or-get) install to converge added
- * providers/events/registrations, then issues the targeted registration PUTs and metadata/subscription
- * deletes the install cannot express. Reuses the same helpers as install/uninstall.
- *
- * The per-leaf `install`/`uninstall` hooks are supplied by the calling leaf (see
- * `commerce.ts`/`external.ts`), which keeps this module free of any dependency on the step
- * definitions that in turn depend on it.
+ * re-runs the (create-or-get) install to converge added providers/events/registrations, issues the
+ * targeted registration PUTs and metadata/subscription deletes the install cannot express, then
+ * offboards providers dropped from the target. Reuses the same helpers as install/uninstall.
  *
  * @param plan - The eventing domain plan produced by the leaf's `plan` function.
  * @param context - The attempt-scoped execution context (carries the provisioned clients).
@@ -96,23 +92,17 @@ export async function applyEventingLeaf(
 ): Promise<ApplyResult<EventingSnapshotData>> {
   const eventsContext: EventsExecutionContext = context;
 
-  // 1. Offboard providers dropped from the target (whole-provider teardown, reusing uninstall).
-  if (plan.removedProviders.length > 0 && plan.baselineMetadata) {
-    await options.uninstall(
-      buildLeafConfig(plan.removedProviders, plan.baselineMetadata, options),
-      eventsContext,
-    );
-  }
-
-  // Onboarding subscribes added events non-atomically, so roll back this upgrade's added
-  // subscriptions on failure — otherwise a rejected add leaves its accepted siblings behind.
+  // Register rollback before any mutation runs. Onboarding subscribes added events
+  // non-atomically, so a rejected add must roll back its accepted siblings; added providers are
+  // rolled back the same way, so a failure never leaves an empty shell behind.
   const recovery = new RecoveryScope(eventsContext.logger);
   if (options.isCommerce && plan.baselineMetadata) {
     registerAddedSubscriptionCompensations(plan, eventsContext, recovery);
   }
+  registerAddedProviderCompensations(plan, eventsContext, recovery, options);
 
   try {
-    // 2. Converge every target provider. `install` is create-or-get, so it handles added providers,
+    // 1. Converge every target provider. `install` is create-or-get, so it handles added providers,
     //    added metadata, and registrations for newly declared runtime actions.
     if (plan.targetProviders.length > 0) {
       await options.install(
@@ -126,7 +116,7 @@ export async function applyEventingLeaf(
       );
     }
 
-    // 3. Reconcile sub-resources of providers present on both sides: registration event-set changes
+    // 2. Reconcile sub-resources of providers present on both sides: registration event-set changes
     //    (PUT) and per-event metadata/subscription/registration removals — none of which `install` does.
     if (plan.baselineMetadata) {
       const existingData = await getIoEventsExistingData(eventsContext);
@@ -138,9 +128,22 @@ export async function applyEventingLeaf(
       );
     }
   } catch (error) {
-    // Deletes this upgrade's added subscriptions before surfacing the error. Persisting-provider
-    // reconciliation (registrations, dropped/changed subscriptions) has its own, narrower recovery.
+    // Nothing destructive has run yet — providers dropped from the target are still intact, so
+    // rolling back this upgrade's adds is enough to return to exactly baseline.
     return recovery.recover(error);
+  }
+
+  // 3. Commit phase: only now offboard providers dropped from the target. Deferred until every
+  // risky step above has succeeded, so a rejected add never causes a provider to be torn down for
+  // nothing. Safe to defer: removedProviders and targetProviders are disjoint by key, so nothing
+  // above depends on this having already run. If this itself fails, the adds already reflect the
+  // target state, so they are deliberately not rolled back — the failure surfaces as-is, and a
+  // retry finishes the (intended) removal.
+  if (plan.removedProviders.length > 0 && plan.baselineMetadata) {
+    await options.uninstall(
+      buildLeafConfig(plan.removedProviders, plan.baselineMetadata, options),
+      eventsContext,
+    );
   }
 
   return {
@@ -149,11 +152,10 @@ export async function applyEventingLeaf(
 }
 
 /**
- * Registers rollback for the Commerce subscriptions this upgrade adds: one compensation per event
- * absent from the provider's baseline, so pre-existing subscriptions are never touched.
- *
- * Scoped to subscriptions only — a wholly new provider's empty shell is left in place on rollback
- * rather than torn down, which is harmless drift a later converge reuses.
+ * Registers rollback for the Commerce subscriptions this upgrade adds to a *persisting* provider:
+ * one compensation per event absent from that provider's baseline, so pre-existing subscriptions
+ * are never touched. A wholly new provider's subscriptions are instead covered by
+ * {@link registerAddedProviderCompensations}, which tears the provider down entirely.
  */
 function registerAddedSubscriptionCompensations(
   plan: EventingDomainPlan,
@@ -168,9 +170,15 @@ function registerAddedSubscriptionCompensations(
 
   for (const target of plan.targetProviders) {
     const baseline = baselineByKey.get(target.key);
+    if (!baseline) {
+      // Wholly new provider — its subscriptions are rolled back by tearing down the whole
+      // provider, not per-event.
+      continue;
+    }
+
     const { added } = diffByKey(
       target.events,
-      baseline?.events ?? [],
+      baseline.events,
       (event) => getNamespacedEvent(targetMetadata, event.name),
       (event) => getNamespacedEvent(baselineMetadata, event.name),
     );
@@ -179,6 +187,40 @@ function registerAddedSubscriptionCompensations(
       const name = getNamespacedEvent(targetMetadata, event.name);
       recovery.onFailure(() => deleteAddedSubscription(name, context));
     }
+  }
+}
+
+/**
+ * Registers rollback for providers this upgrade adds: on failure, offboards each one entirely, so
+ * a rejected sibling never leaves an empty provider shell behind.
+ */
+function registerAddedProviderCompensations(
+  plan: EventingDomainPlan,
+  context: EventsExecutionContext,
+  recovery: RecoveryScope,
+  options: LeafApplyOptions,
+): void {
+  const baselineKeys = new Set(
+    plan.baselineProviders.map((provider) => provider.key),
+  );
+  const added = plan.targetProviders.filter(
+    (provider) => !baselineKeys.has(provider.key),
+  );
+
+  for (const provider of added) {
+    // Safe even for a provider `install` never got to — offboarding one that doesn't exist is a
+    // no-op (see `isNothingToRollBack`'s Commerce case and the equivalent not-found handling for
+    // external providers).
+    recovery.onFailure(() =>
+      options.uninstall(
+        buildLeafConfig(
+          [provider],
+          plan.targetMetadata as ApplicationMetadata,
+          options,
+        ),
+        context,
+      ),
+    );
   }
 }
 

@@ -1171,10 +1171,18 @@ describe("applyCommerceEvents", () => {
     expect((error as Error).message).toContain("onboarding rejected");
   });
 
-  test("rolls back a newly added provider's subscriptions when its onboarding is rejected", async () => {
+  test("tears down a newly added provider entirely when its onboarding is rejected", async () => {
     const install = vi
       .spyOn(commerceEventsStep, "install")
       .mockRejectedValue(new Error("new provider onboarding rejected"));
+    const uninstall = vi
+      .spyOn(
+        commerceEventsStep as unknown as {
+          uninstall: (config: unknown, context: unknown) => Promise<void>;
+        },
+        "uninstall",
+      )
+      .mockResolvedValue(undefined);
     const deleteEventSubscription = vi.fn().mockResolvedValue(undefined);
     const existingProvider: EventProvider = {
       description: "P1",
@@ -1209,17 +1217,14 @@ describe("applyCommerceEvents", () => {
     ).rejects.toThrow("new provider onboarding rejected");
 
     expect(install).toHaveBeenCalledTimes(1);
-    const deletedNames = deleteEventSubscription.mock.calls.map(
-      (call) => (call[0] as { name: string }).name,
-    );
-    // Both of the new provider's subscriptions roll back; the existing provider's event does not.
-    expect(deletedNames).toEqual(
-      expect.arrayContaining([
-        getNamespacedEvent(metadata, "b"),
-        getNamespacedEvent(metadata, "c"),
-      ]),
-    );
-    expect(deletedNames).not.toContain(getNamespacedEvent(metadata, "a"));
+    // Rollback tears down the whole new provider (not just its subscriptions), so a rejected
+    // sibling never leaves an empty shell behind; the existing provider is left untouched.
+    expect(uninstall).toHaveBeenCalledTimes(1);
+    const rolledBackConfig = uninstall.mock.calls[0]?.[0] as
+      | CommerceEventsConfig
+      | undefined;
+    expect(rolledBackConfig?.eventing.commerce).toHaveLength(1);
+    expect(rolledBackConfig?.eventing.commerce[0]?.provider.key).toBe("k2");
   });
 });
 
