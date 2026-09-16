@@ -634,14 +634,19 @@ export async function onboardCommerceEventing(
   const { workspace_configuration: _, ...commerceProviderData } =
     commerceProvider;
 
-  const subscriptions = await Promise.all(
-    events.map((event) =>
-      createOrGetCommerceEventSubscription(
+  const subscriptions: Awaited<
+    ReturnType<typeof createOrGetCommerceEventSubscription>
+  >[] = [];
+
+  for (const event of events) {
+    subscriptions.push(
+      // biome-ignore lint/performance/noAwaitInLoops: Commerce writes shared eventing configuration, so subscriptions must be created sequentially
+      await createOrGetCommerceEventSubscription(
         { context, event, metadata, provider },
         existingData.subscriptions,
       ),
-    ),
-  );
+    );
+  }
 
   return {
     commerceProvider: commerceProviderData,

@@ -647,6 +647,58 @@ describe("onboardCommerceEventing", () => {
     expect(commerceEventsClient.createEventSubscription).toHaveBeenCalledOnce();
   });
 
+  test("creates Commerce event subscriptions sequentially", async () => {
+    const { context, metadata, provider, ioProvider, ioData } =
+      createCommerceOnboardingScenario();
+    const secondConfig = createCommerceEventConfig("observer.order_updated");
+    const [commerceConfig] = secondConfig.eventing.commerce;
+    const [secondEvent] = commerceConfig.events;
+    const events = [...ioData.events, createIoEventResult(secondEvent)];
+    const { promise: firstSubscription, resolve: resolveFirstSubscription } =
+      Promise.withResolvers<void>();
+
+    vi.mocked(context.commerceEventsClient.createEventSubscription)
+      .mockImplementationOnce(() => firstSubscription)
+      .mockResolvedValueOnce(undefined);
+
+    const resultPromise = onboardCommerceEventing(
+      {
+        context,
+        ioData: { ...ioData, events },
+        metadata,
+        provider,
+      },
+      createMockExistingCommerceEventingData({
+        isDefaultWorkspaceConfigurationEmpty: false,
+        providers: [
+          createMockCommerceEventProvider({
+            instance_id: ioProvider.instance_id,
+            provider_id: ioProvider.id,
+          }),
+        ],
+      }),
+    );
+
+    await vi.waitFor(() => {
+      expect(
+        context.commerceEventsClient.createEventSubscription,
+      ).toHaveBeenCalledOnce();
+    });
+
+    resolveFirstSubscription();
+
+    const result = await resultPromise;
+
+    expect(
+      context.commerceEventsClient.createEventSubscription,
+    ).toHaveBeenCalledTimes(2);
+    expect(
+      result.subscriptions.map((subscription) => subscription.name),
+    ).toEqual(
+      events.map((event) => getNamespacedEvent(metadata, event.config.name)),
+    );
+  });
+
   test("rethrows and logs when creating a Commerce provider fails", async () => {
     const { context, metadata, provider, ioData } =
       createCommerceOnboardingScenario();
