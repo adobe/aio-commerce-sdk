@@ -530,6 +530,12 @@ export function makeWorkspaceConfig(context: EventsExecutionContext) {
     scopes,
   } = authParams;
 
+  // Commerce's OAuth config factory reads technical_account_email/id unconditionally and
+  // fails hard if they're absent, even though this credential type doesn't otherwise need them
+  // (e.g. when resolved via the include-ims-credentials annotation, which has no technical
+  // account). Default to a synthetic one tied to this app's runtime namespace.
+  const defaultTechnicalAccount = `${process.env.__OW_NAMESPACE}@techacct.adobe.com`;
+
   return {
     project: {
       id: projectId,
@@ -555,12 +561,10 @@ export function makeWorkspaceConfig(context: EventsExecutionContext) {
                 client_id: clientId,
                 client_secrets: clientSecrets,
                 scopes: scopes.map((scope) => scope.trim()),
-                ...(technicalAccountEmail && {
-                  technical_account_email: technicalAccountEmail,
-                }),
-                ...(technicalAccountId && {
-                  technical_account_id: technicalAccountId,
-                }),
+                technical_account_email:
+                  technicalAccountEmail ?? defaultTechnicalAccount,
+                technical_account_id:
+                  technicalAccountId ?? defaultTechnicalAccount,
               },
             },
           ],

@@ -225,7 +225,7 @@ describe("workspace configuration", () => {
     });
   });
 
-  test("makeWorkspaceConfig omits technical_account_email/technical_account_id when no technical account is resolved", () => {
+  test("makeWorkspaceConfig defaults technical_account_email/technical_account_id to a namespace-derived value when no technical account is resolved", () => {
     vi.stubEnv("__OW_NAMESPACE", TEST_NAMESPACE);
 
     const context = createMockEventingInstallationContext({
@@ -241,12 +241,12 @@ describe("workspace configuration", () => {
     const oauthServerToServer =
       config.project.workspace.details.credentials[0].oauth_server_to_server;
 
-    expect(oauthServerToServer).not.toHaveProperty("technical_account_email");
-    expect(oauthServerToServer).not.toHaveProperty("technical_account_id");
     expect(oauthServerToServer).toEqual({
       client_id: expect.any(String),
       client_secrets: ["secret-1", "secret-2"],
       scopes: ["scope-a", "scope-b"],
+      technical_account_email: `${TEST_NAMESPACE}@techacct.adobe.com`,
+      technical_account_id: `${TEST_NAMESPACE}@techacct.adobe.com`,
     });
   });
 
