@@ -117,7 +117,6 @@ export function assertImsAuthParams(
  * `include-ims-credentials: true` action annotation is tried first, and the manually-wired
  * `AIO_COMMERCE_AUTH_IMS_*` params are used as a fallback if the annotation isn't present.
  *
-
  * @param params The App Builder action inputs to resolve the IMS authentication parameters from.
  * @throws {CommerceSdkValidationError} If the parameters are invalid and cannot be resolved.
  *
@@ -151,7 +150,7 @@ export function resolveImsAuthParams(
       scopes: credentials.scopes,
     });
   } catch {
-    // No minimal OAuth Server-to-Server credentials/annotation present — fall back below.
+    // No minimal OAuth Server-to-Server credentials/annotation present, fall back below.
   }
 
   const resolvedParams = {

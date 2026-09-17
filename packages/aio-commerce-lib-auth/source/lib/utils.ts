@@ -37,7 +37,7 @@ const INTEGRATION_AUTH_PARAMS = [
  *
  * IMS authentication is tried whether the OAuth Server-to-Server credentials came from the
  * `include-ims-credentials` action annotation or from manually-wired `AIO_COMMERCE_AUTH_IMS_*`
- * params — {@link resolveImsAuthParams} handles both.
+ * params; {@link resolveImsAuthParams} handles both.
  *
  * @param params The App Builder action inputs containing authentication parameters.
  * @throws {CommerceSdkValidationError} If the parameters are invalid.
@@ -56,7 +56,7 @@ export function resolveAuthParams(params: Record<string, unknown>) {
     const provider = resolveImsAuthParams(params);
     return { ...provider, strategy: "ims" as const };
   } catch {
-    // No IMS credentials (OAuth Server-to-Server or legacy) could be resolved — try Integration auth below.
+    // No IMS credentials (OAuth Server-to-Server or legacy) could be resolved, try Integration auth below.
   }
 
   if (allNonEmpty(params, INTEGRATION_AUTH_PARAMS)) {

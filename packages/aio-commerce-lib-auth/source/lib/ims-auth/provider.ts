@@ -83,12 +83,6 @@ export function isImsAuthProvider(
 /**
  * Creates an {@link ImsAuthProvider} based on the provided configuration.
  *
- * Both flavors of {@link ImsAuthParams} are supported transparently: when a technical account
- * (`technicalAccountId`/`technicalAccountEmail`) is present, tokens are minted via
- * `@adobe/aio-lib-ims`'s full OAuth Server-to-Server flow; when absent (the minimal shape
- * resolved from the `include-ims-credentials` annotation), tokens are minted via
- * `@adobe/aio-lib-core-auth`'s `generateAccessToken` instead.
- *
  * @param authParams An {@link ImsAuthParams} parameter that contains the configuration for the {@link ImsAuthProvider}.
  * @returns An {@link ImsAuthProvider} instance that can be used to get access token and auth headers.
  * @example

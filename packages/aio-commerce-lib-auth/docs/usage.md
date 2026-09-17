@@ -75,12 +75,11 @@ export const main = async function (params: Record<string, unknown>) {
 Annotating an action with `include-ims-credentials: true` in `app.config.yaml` is a leaner
 alternative to manually wiring `AIO_COMMERCE_AUTH_IMS_*` inputs (see [Automatic Auth
 Resolution](#automatic-auth-resolution)): App Builder's runtime injects the workspace's OAuth
-Server-to-Server credentials directly into the action's `params`, with no `sync-ims-credentials`
-step and no explicit `inputs:` entries.
+Server-to-Server credentials directly into the action's `params`.
 
 `resolveImsAuthParams` resolves this shape transparently, falling back to the manually-wired
 `AIO_COMMERCE_AUTH_IMS_*` params when the annotation isn't present. `getImsAuthProvider` then picks
-the matching token flow automatically — you don't need to branch on which shape you got:
+the matching token flow automatically, so you don't need to branch on which shape you got:
 
 ```typescript
 import {
@@ -245,7 +244,7 @@ try {
 
 ### Automatic Auth Resolution
 
-The `resolveAuthParams` function automatically detects and resolves authentication parameters from your runtime action inputs. It tries IMS authentication first — which covers both the `include-ims-credentials` annotation and manually-wired params (see [OAuth Server-to-Server via the `include-ims-credentials` annotation](#oauth-server-to-server-via-the-include-ims-credentials-annotation)) — then falls back to Integration authentication if no IMS credentials can be resolved.
+The `resolveAuthParams` function automatically detects and resolves authentication parameters from your runtime action inputs. It tries IMS authentication first, which covers both the `include-ims-credentials` annotation and manually-wired params (see [OAuth Server-to-Server via the `include-ims-credentials` annotation](#oauth-server-to-server-via-the-include-ims-credentials-annotation)), then falls back to Integration authentication if no IMS credentials can be resolved.
 
 #### Required Parameters
 
