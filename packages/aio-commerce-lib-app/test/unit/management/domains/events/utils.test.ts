@@ -225,6 +225,31 @@ describe("workspace configuration", () => {
     });
   });
 
+  test("makeWorkspaceConfig omits technical_account_email/technical_account_id when no technical account is resolved", () => {
+    vi.stubEnv("__OW_NAMESPACE", TEST_NAMESPACE);
+
+    const context = createMockEventingInstallationContext({
+      params: {
+        AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS: ["secret-1", "secret-2"],
+        AIO_COMMERCE_AUTH_IMS_SCOPES: [" scope-a ", "scope-b "],
+        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL: undefined,
+        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID: undefined,
+      },
+    });
+
+    const config = makeWorkspaceConfig(context);
+    const oauthServerToServer =
+      config.project.workspace.details.credentials[0].oauth_server_to_server;
+
+    expect(oauthServerToServer).not.toHaveProperty("technical_account_email");
+    expect(oauthServerToServer).not.toHaveProperty("technical_account_id");
+    expect(oauthServerToServer).toEqual({
+      client_id: expect.any(String),
+      client_secrets: ["secret-1", "secret-2"],
+      scopes: ["scope-a", "scope-b"],
+    });
+  });
+
   test("makeWorkspaceConfig throws when runtime action inputs resolve to Integration auth instead of IMS auth", () => {
     const baseContext = createMockEventingInstallationContext();
     const context: typeof baseContext = {

@@ -555,8 +555,12 @@ export function makeWorkspaceConfig(context: EventsExecutionContext) {
                 client_id: clientId,
                 client_secrets: clientSecrets,
                 scopes: scopes.map((scope) => scope.trim()),
-                technical_account_email: technicalAccountEmail,
-                technical_account_id: technicalAccountId,
+                ...(technicalAccountEmail && {
+                  technical_account_email: technicalAccountEmail,
+                }),
+                ...(technicalAccountId && {
+                  technical_account_id: technicalAccountId,
+                }),
               },
             },
           ],
