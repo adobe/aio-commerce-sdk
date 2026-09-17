@@ -16,9 +16,19 @@ import * as v from "valibot";
 /**
  * Grid identifier sent by Commerce on the `commerce/backend-ui/2` wire contract.
  *
+ * Credit memo grids send `"creditmemo"` — not `"creditMemo"` — even though the corresponding
+ * config key (`adminUi.creditMemo`) is camelCase; see the Commerce module's `CustomColumn::GRID_MAP`.
+ *
  * @see {@link https://github.com/magento-commerce/adobe-commerce-backend-uix Magento module reference}
  */
-export const GridTypeSchema = v.picklist(["order", "product", "customer"]);
+export const GridTypeSchema = v.picklist([
+  "order",
+  "product",
+  "customer",
+  "invoice",
+  "creditmemo",
+  "shipment",
+]);
 
 /**
  * Schema for the JSON body Commerce POSTs to a grid column handler.

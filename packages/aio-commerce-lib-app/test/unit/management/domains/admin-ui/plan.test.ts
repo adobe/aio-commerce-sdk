@@ -17,6 +17,7 @@ import { createMockAdminUiContext } from "#test/fixtures/admin-ui";
 import {
   configWithAdminUiAllGrids,
   configWithAdminUiEmptyBlock,
+  configWithAdminUiInvoiceCreditMemoShipmentGrids,
   configWithAdminUiSingleGrid,
 } from "#test/fixtures/config";
 
@@ -325,5 +326,21 @@ describe("planAdminUi", () => {
     expect(context.adminUiClient.registerExtension).not.toHaveBeenCalled();
     expect(context.adminUiClient.refreshExtension).not.toHaveBeenCalled();
     expect(context.adminUiClient.unregisterExtension).not.toHaveBeenCalled();
+  });
+
+  test("registers grid columns declared on invoice, creditMemo, and shipment", async () => {
+    const { plan } = await planned(
+      null,
+      configWithAdminUiInvoiceCreditMemoShipmentGrids as AdminUiConfig,
+    );
+
+    expect(plan.extensionAction).toBe("register");
+    expect(
+      plan.operations.map((op) => op.id).sort((a, b) => a.localeCompare(b)),
+    ).toEqual([
+      "add:creditMemo.grid-columns",
+      "add:invoice.grid-columns",
+      "add:shipment.grid-columns",
+    ]);
   });
 });
