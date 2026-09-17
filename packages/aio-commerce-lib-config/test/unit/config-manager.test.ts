@@ -56,6 +56,7 @@ let mockFilesInstance = new MockFiles();
 vi.mock("#utils/repository", () => ({
   getSharedFiles: vi.fn(async () => mockFilesInstance),
   getSharedState: vi.fn(async () => mockStateInstance),
+  getSharedStatesForAllRegions: vi.fn(async () => [mockStateInstance]),
   setGlobalStateOptions: vi.fn(),
 }));
 

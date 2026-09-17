@@ -13,7 +13,11 @@
 import stringify from "safe-stable-stringify";
 
 import { getLogger } from "#utils/logger";
-import { getSharedFiles, getSharedState } from "#utils/repository";
+import {
+  getSharedFiles,
+  getSharedState,
+  getSharedStatesForAllRegions,
+} from "#utils/repository";
 
 /**
  * Describes where a record lives in the two-layer store: how an id maps to its
@@ -97,8 +101,12 @@ export async function setCachedConfig(
 }
 
 /**
- * Removes a configuration entry from the state cache. Failures are swallowed
- * (logged at debug) since `aio-lib-files` remains the source of truth.
+ * Removes a configuration entry from the state cache in every `aio-lib-state` region.
+ * Regions are independent stores with no cross-region replication, so a stale entry
+ * left behind in a region other than the one that made this change would keep being
+ * served to action instances routed there until its TTL expires. Failures are
+ * swallowed per-region (logged at debug) since `aio-lib-files` remains the source
+ * of truth.
  *
  * @param scopeCode - Scope code identifier.
  * @param namespace - Storage namespace to delete from.
@@ -110,9 +118,24 @@ async function deleteCachedConfig(
   const logger = getLogger(
     "@adobe/aio-commerce-lib-config:configuration-repository",
   );
+  const key = namespace.stateKey(scopeCode);
+
   try {
-    const state = await getSharedState();
-    await state.delete(namespace.stateKey(scopeCode));
+    const states = await getSharedStatesForAllRegions();
+    const results = await Promise.allSettled(
+      states.map((state) => state.delete(key)),
+    );
+
+    for (const result of results) {
+      if (result.status === "rejected") {
+        logger.debug(
+          "Failed to clear cached configuration in a region:",
+          result.reason instanceof Error
+            ? result.reason.message
+            : String(result.reason),
+        );
+      }
+    }
   } catch (error) {
     logger.debug(
       "Failed to clear cached configuration:",
@@ -196,6 +219,10 @@ export async function persistConfig(
 
   // Always save to files (primary persistence)
   await saveConfig(scopeCode, payloadString, namespace);
+
+  // Invalidate every region's cache entry first so no region can keep serving a
+  // stale hit before the fresh value below is written to the current region.
+  await deleteCachedConfig(scopeCode, namespace);
 
   // Try to cache in state for faster reads
   try {

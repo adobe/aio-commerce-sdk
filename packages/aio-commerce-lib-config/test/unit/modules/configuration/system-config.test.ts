@@ -24,6 +24,7 @@ let mockFiles = new MockFiles();
 vi.mock("#utils/repository", () => ({
   getSharedFiles: vi.fn(async () => mockFiles),
   getSharedState: vi.fn(async () => mockState),
+  getSharedStatesForAllRegions: vi.fn(async () => [mockState]),
 }));
 
 const KEY = "system.association";
