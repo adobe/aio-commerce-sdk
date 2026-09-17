@@ -92,11 +92,31 @@ describe("configuration-repository", () => {
         );
       }
 
-      // ...then only the current region receives the fresh cached value.
+      // ...then only the current region receives the fresh cached value, with
+      // the requested TTL forwarded through to the state client.
       expect(mockStatesByRegion[0].put).toHaveBeenCalledTimes(1);
+      expect(mockStatesByRegion[0].put).toHaveBeenCalledWith(
+        `configuration.${SCOPE_CODE}`,
+        expect.any(String),
+        { ttl: 3600 },
+      );
       for (const state of mockStatesByRegion.slice(1)) {
         expect(state.put).not.toHaveBeenCalled();
       }
+    });
+
+    test("forwards a custom TTL to the current region's cache write", async () => {
+      const { persistConfig } = await import(
+        "#modules/configuration/configuration-repository"
+      );
+
+      await persistConfig(SCOPE_CODE, { name: "value" }, 31_536_000);
+
+      expect(mockStatesByRegion[0].put).toHaveBeenCalledWith(
+        `configuration.${SCOPE_CODE}`,
+        expect.any(String),
+        { ttl: 31_536_000 },
+      );
     });
   });
 });
