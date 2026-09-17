@@ -22,9 +22,9 @@ let mockFiles = new MockFiles();
 let mockStatesByRegion: InstanceType<typeof MockState>[] = [];
 
 vi.mock("#utils/repository", () => ({
+  getAllSharedStates: vi.fn(async () => mockStatesByRegion),
   getSharedFiles: vi.fn(async () => mockFiles),
   getSharedState: vi.fn(async () => mockStatesByRegion[0]),
-  getSharedStatesForAllRegions: vi.fn(async () => mockStatesByRegion),
 }));
 
 const SCOPE_CODE = "website_1";

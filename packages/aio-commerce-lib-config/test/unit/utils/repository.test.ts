@@ -85,7 +85,7 @@ describe("getSharedState", () => {
   });
 });
 
-describe("getSharedStatesForAllRegions", () => {
+describe("getAllSharedStates", () => {
   beforeEach(() => {
     vi.resetModules();
 
@@ -96,10 +96,10 @@ describe("getSharedStatesForAllRegions", () => {
   });
 
   test("initializes a client for every region", async () => {
-    const { getSharedStatesForAllRegions, ALL_REGIONS } = await import(
+    const { getAllSharedStates, ALL_REGIONS } = await import(
       "#utils/repository"
     );
-    const states = await getSharedStatesForAllRegions();
+    const states = await getAllSharedStates();
 
     expect(mockInitState).toHaveBeenCalledTimes(ALL_REGIONS.length);
     for (const region of ALL_REGIONS) {
@@ -109,10 +109,10 @@ describe("getSharedStatesForAllRegions", () => {
   });
 
   test("memoizes each region's client independently across calls", async () => {
-    const { getSharedStatesForAllRegions } = await import("#utils/repository");
+    const { getAllSharedStates } = await import("#utils/repository");
 
-    const first = await getSharedStatesForAllRegions();
-    const second = await getSharedStatesForAllRegions();
+    const first = await getAllSharedStates();
+    const second = await getAllSharedStates();
 
     expect(second).toEqual(first);
     expect(mockInitState).toHaveBeenCalledTimes(4);

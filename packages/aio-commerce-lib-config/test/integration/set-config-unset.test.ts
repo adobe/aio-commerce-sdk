@@ -29,9 +29,9 @@ let mockStateInstance = new MockState();
 let mockFilesInstance = new MockFiles();
 
 vi.mock("#utils/repository", () => ({
+  getAllSharedStates: vi.fn(async () => [mockStateInstance]),
   getSharedFiles: vi.fn(async () => mockFilesInstance),
   getSharedState: vi.fn(async () => mockStateInstance),
-  getSharedStatesForAllRegions: vi.fn(async () => [mockStateInstance]),
 }));
 
 vi.mock("#modules/scope-tree/scope-tree-repository", () => ({

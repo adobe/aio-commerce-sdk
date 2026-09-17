@@ -14,9 +14,9 @@ import stringify from "safe-stable-stringify";
 
 import { getLogger } from "#utils/logger";
 import {
+  getAllSharedStates,
   getSharedFiles,
   getSharedState,
-  getSharedStatesForAllRegions,
 } from "#utils/repository";
 
 /**
@@ -121,7 +121,7 @@ async function deleteCachedConfig(
   const key = namespace.stateKey(scopeCode);
 
   try {
-    const states = await getSharedStatesForAllRegions();
+    const states = await getAllSharedStates();
     const results = await Promise.allSettled(
       states.map((state) => state.delete(key)),
     );
