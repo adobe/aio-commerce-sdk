@@ -70,6 +70,44 @@ export const main = async function (params: Record<string, unknown>) {
 };
 ```
 
+### OAuth Server-to-Server via the `include-ims-credentials` annotation
+
+Annotating an action with `include-ims-credentials: true` in `app.config.yaml` is a leaner
+alternative to manually wiring `AIO_COMMERCE_AUTH_IMS_*` inputs (see [Automatic Auth
+Resolution](#automatic-auth-resolution)): App Builder's runtime injects the workspace's OAuth
+Server-to-Server credentials directly into the action's `params`, with no `sync-ims-credentials`
+step and no explicit `inputs:` entries.
+
+`resolveImsAuthParams` resolves this shape transparently, falling back to the manually-wired
+`AIO_COMMERCE_AUTH_IMS_*` params when the annotation isn't present. `getImsAuthProvider` then picks
+the matching token flow automatically — you don't need to branch on which shape you got:
+
+```typescript
+import {
+  getImsAuthProvider,
+  resolveImsAuthParams,
+} from "@adobe/aio-commerce-lib-auth";
+
+export const main = async function (params: Record<string, unknown>) {
+  const authParams = resolveImsAuthParams(params);
+  const authProvider = getImsAuthProvider(authParams);
+
+  const headers = await authProvider.getHeaders();
+
+  // Use headers in your API calls
+  return { statusCode: 200 };
+};
+```
+
+```yaml
+# app.config.yaml
+actions:
+  my-action:
+    function: src/actions/my-action/index.js
+    annotations:
+      include-ims-credentials: true
+```
+
 ### Forwarding IMS Authentication
 
 When building actions that receive authenticated requests and need to forward those credentials to downstream services, use the forwarding utilities. This is useful for proxy patterns or when chaining multiple services.
@@ -207,22 +245,23 @@ try {
 
 ### Automatic Auth Resolution
 
-The `resolveAuthParams` function automatically detects and resolves authentication parameters from your runtime action inputs. It inspects the provided parameters and determines whether to use IMS or Integration authentication based on which required keys are present.
+The `resolveAuthParams` function automatically detects and resolves authentication parameters from your runtime action inputs. It tries IMS authentication first — which covers both the `include-ims-credentials` annotation and manually-wired params (see [OAuth Server-to-Server via the `include-ims-credentials` annotation](#oauth-server-to-server-via-the-include-ims-credentials-annotation)) — then falls back to Integration authentication if no IMS credentials can be resolved.
 
 #### Required Parameters
 
-The resolver checks for the following parameter keys:
+**IMS Authentication** is resolved via `resolveImsAuthParams`, so either of these is enough:
 
-**IMS Authentication** (requires all of these):
+- The `include-ims-credentials: true` action annotation (no params wiring needed), or
+- All of the following manually-wired params:
 
-| Parameter Key                                   | Description                          |
-| ----------------------------------------------- | ------------------------------------ |
-| `AIO_COMMERCE_AUTH_IMS_CLIENT_ID`               | IMS OAuth client ID                  |
-| `AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS`          | IMS client secrets (comma-separated) |
-| `AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID`    | Technical account ID                 |
-| `AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL` | Technical account email              |
-| `AIO_COMMERCE_AUTH_IMS_ORG_ID`                  | IMS organization ID                  |
-| `AIO_COMMERCE_AUTH_IMS_SCOPES`                  | OAuth scopes (comma-separated)       |
+  | Parameter Key                                   | Description                          |
+  | ----------------------------------------------- | ------------------------------------ |
+  | `AIO_COMMERCE_AUTH_IMS_CLIENT_ID`               | IMS OAuth client ID                  |
+  | `AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS`          | IMS client secrets (comma-separated) |
+  | `AIO_COMMERCE_AUTH_IMS_ORG_ID`                  | IMS organization ID                  |
+  | `AIO_COMMERCE_AUTH_IMS_SCOPES`                  | OAuth scopes (comma-separated)       |
+  | `AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID`    | Technical account ID (optional)      |
+  | `AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL` | Technical account email (optional)   |
 
 **Integration Authentication** (requires all of these):
 
@@ -271,12 +310,12 @@ export const main = async function (params: Record<string, unknown>) {
 
 #### How Detection Works
 
-The resolver checks parameters in the following order:
+The resolver tries strategies in the following order:
 
-1. **Full IMS parameters** - If all IMS parameters are present, returns IMS auth with `strategy: "ims"`
+1. **IMS auth** - If IMS credentials can be resolved (via the `include-ims-credentials` annotation or manually-wired params), returns IMS auth with `strategy: "ims"`
 2. **Integration parameters** - If all Integration parameters are present, returns Integration auth with `strategy: "integration"`
 
-If neither set is complete, it throws an error.
+If neither resolves, it throws an error.
 
 > [!TIP]
 > If you need to work with a specific authentication type, use the provider-specific methods (`getImsAuthProvider` or `getIntegrationAuthProvider`) along with their assertion functions (`assertImsAuthParams` or `assertIntegrationAuthParams`) as shown in the sections above.
