@@ -327,7 +327,7 @@ A build failure points directly to the offending config field. To exercise the a
 
   See [assets/db-action.ts](assets/db-action.ts) for the full reference.
 
-- **Auth fails inside an installation step**: resolve the IMS auth params from `context.params` (`resolveImsAuthParams(context.params)`) — which carries the injected `AIO_COMMERCE_AUTH_IMS_*` credentials — not from `config`, which holds no credentials. Use `@adobe/aio-commerce-lib-auth`, not `@adobe/aio-lib-core-auth`: the latter's `generateAccessToken` expects `clientId`/`clientSecret` directly and cannot consume the injected params.
+- **Auth fails inside an installation step**: resolve the IMS auth params from `context.params` (`resolveImsAuthParams(context.params)`) — which carries the OAuth Server-to-Server credentials, whether from `include-ims-credentials` or manually-wired `AIO_COMMERCE_AUTH_IMS_*` inputs — not from `config`, which holds no credentials.
 - **Installation step fails to load (`must export a default function or object`)**: the script was authored as CommonJS. Author it as an ES module with `export default`; `module.exports` (or `module.exports.default`) surfaces through the framework's `import * as` loader as `.default.default` and fails validation.
 - **`createIndex` errors or has no effect**: it must be called on a collection object (`client.collection("name").createIndex({ field: 1 })`), not with a collection-name string. Get the collection first, then call `createIndex` on it.
 - **Custom installation step registered and deployed but never runs**: `init` wasn't re-run after registering the first install-requiring domain (Step 7) — no `installation` action, no install endpoint.
