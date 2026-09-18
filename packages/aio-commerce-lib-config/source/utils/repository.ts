@@ -16,6 +16,11 @@ import { init as initState } from "@adobe/aio-lib-state";
 import type { Files } from "@adobe/aio-lib-files";
 import type { AdobeState } from "@adobe/aio-lib-state";
 
+export const ALL_REGIONS = ["amer", "emea", "apac", "aus"] as const;
+
+/** A supported `aio-lib-state` region. */
+export type Region = (typeof ALL_REGIONS)[number];
+
 /** Defines the options for initializing the Adobe State library. */
 export type LibStateOptions = {
   /**
@@ -24,18 +29,18 @@ export type LibStateOptions = {
    *
    * @see https://developer.adobe.com/app-builder/docs/guides/app_builder_guides/storage/application-state#state
    */
-  region?: "amer" | "emea" | "apac" | "aus";
+  region?: Region;
 };
 
 // Shared instances - single source of truth for all repositories
-let __sharedState: AdobeState | null = null;
+const __sharedStates = new Map<Region, Promise<AdobeState>>();
 let __sharedFiles: Files | null = null;
 
 let __globalStateOptions: LibStateOptions | null = null;
 
-function getOptimalRegion(owRegion: string | undefined) {
+function getOptimalRegion(owRegion: string | undefined): Region {
   // See: https://developer.adobe.com/app-builder/docs/guides/runtime_guides/reference_docs/multiple-regions
-  const regionMapping: Record<string, string> = {
+  const regionMapping: Record<string, Region> = {
     "ap-northeast-1": "apac",
     "ap-southeast-2": "aus",
     "eu-west-1": "emea",
@@ -57,21 +62,39 @@ export function setGlobalStateOptions(options: LibStateOptions) {
 }
 
 /**
- * Get the shared state instance (lazy initialization)
- * @returns Promise resolving to the shared AdobeState instance
+ * Get (or lazily initialize) the shared state instance for a region. Each region is
+ * memoized independently so it is only ever initialized once per process.
+ * @param region - The `aio-lib-state` region to get a client for. Defaults to the
+ *   current (optimal or globally-configured) region.
+ * @returns Promise resolving to the shared AdobeState instance for that region.
  */
-export async function getSharedState(): Promise<AdobeState> {
-  if (!__sharedState) {
-    const initRegion = __globalStateOptions?.region ?? "auto";
-    const region =
-      initRegion === "auto"
-        ? getOptimalRegion(process.env.__OW_REGION)
-        : initRegion;
+export function getSharedState(region?: Region): Promise<AdobeState> {
+  const resolvedRegion = region ?? resolveCurrentRegion();
 
-    __sharedState = await initState({ region });
+  let statePromise = __sharedStates.get(resolvedRegion);
+  if (!statePromise) {
+    statePromise = initState({ region: resolvedRegion });
+    __sharedStates.set(resolvedRegion, statePromise);
   }
 
-  return __sharedState;
+  return statePromise;
+}
+
+function resolveCurrentRegion(): Region {
+  const initRegion = __globalStateOptions?.region ?? "auto";
+  return initRegion === "auto"
+    ? getOptimalRegion(process.env.__OW_REGION)
+    : initRegion;
+}
+
+/**
+ * Get the shared state instances for every supported region. Used to fan out cache
+ * invalidation on config writes/deletes, since `aio-lib-state` regions are independent
+ * stores with no cross-region replication.
+ * @returns Promise resolving to an array of shared AdobeState instances, one per region.
+ */
+export function getAllSharedStates(): Promise<AdobeState[]> {
+  return Promise.all(ALL_REGIONS.map((region) => getSharedState(region)));
 }
 
 /**
