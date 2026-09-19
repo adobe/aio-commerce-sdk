@@ -8,7 +8,8 @@
 //   resolveImsAuthParams -> getAccessToken -> init -> connect -> use collection -> ALWAYS close.
 //
 // Registration requirements (in src/commerce-extensibility-1/ext.config.yaml):
-//   - include-ims-credentials: true   (REQUIRED — provides the IMS token below)
+//   - include-ims-credentials: true   (REQUIRED — makes the OAuth Server-to-Server
+//     credentials resolveImsAuthParams needs below available on params)
 //   - web: "yes" for an HTTP-invokable web action; "no" for an event or webhook handler
 //   - the "App Builder Data Services" API must be added to the project in the
 //     Adobe Developer Console (every workspace that uses the database)
@@ -37,8 +38,8 @@ export async function main(params: Record<string, unknown>) {
   let client: DbClient | undefined;
 
   try {
-    // 1. Resolve the AIO_COMMERCE_AUTH_IMS_* params injected because
-    //    include-ims-credentials is true, then mint a raw access token string.
+    // 1. Resolve the OAuth Server-to-Server credentials made available on params
+    //    because include-ims-credentials is true, then mint a raw access token string.
     const authProvider = getImsAuthProvider(resolveImsAuthParams(params));
     const token = await authProvider.getAccessToken();
 

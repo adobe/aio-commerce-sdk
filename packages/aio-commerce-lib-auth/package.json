@@ -71,6 +71,7 @@
   },
   "dependencies": {
     "@adobe/aio-commerce-lib-core": "workspace:*",
+    "@adobe/aio-lib-core-auth": "^1.2.0",
     "@adobe/aio-lib-ims": "catalog:",
     "ansis": "catalog:",
     "consola": "catalog:",
