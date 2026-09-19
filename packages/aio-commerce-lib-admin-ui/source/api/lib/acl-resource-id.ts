@@ -94,5 +94,16 @@ export function getCustomAclResourceId(
   return childId === undefined ? base : `${base}_${sanitizeSegment(childId)}`;
 }
 
-/** Commerce entity an Admin UI component is attached to. */
-export type AdminUiEntity = "order" | "product" | "customer";
+/**
+ * Commerce entity an Admin UI component is attached to, using the same spelling Commerce
+ * sends in the wire-contract `gridType` field (see `GridTypeSchema`). Credit memo grids send
+ * `"creditmemo"` on the wire — not `"creditMemo"` — even though the corresponding config key
+ * (`adminUi.creditMemo`) is camelCase.
+ */
+export type AdminUiEntity =
+  | "order"
+  | "product"
+  | "customer"
+  | "invoice"
+  | "creditmemo"
+  | "shipment";

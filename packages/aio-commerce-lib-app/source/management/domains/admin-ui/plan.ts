@@ -42,8 +42,18 @@ type AdminUiComponentDescriptor = {
   label: string;
 };
 
-/** Entities that can carry Admin UI components, in a stable diff order. */
-const ADMIN_UI_ENTITIES = ["order", "product", "customer"] as const;
+/** Entities that can carry grid columns, in a stable diff order. */
+const GRID_COLUMN_ENTITIES = [
+  "order",
+  "product",
+  "customer",
+  "invoice",
+  "creditMemo",
+  "shipment",
+] as const;
+
+/** Entities that can additionally carry mass actions. */
+const MASS_ACTION_ENTITIES = ["order", "product", "customer"] as const;
 
 /**
  * Enumerates the individual components declared in an `adminUi` block, keyed by a
@@ -75,13 +85,9 @@ function enumerateComponents(
     });
   }
 
-  for (const entity of ADMIN_UI_ENTITIES) {
+  for (const entity of GRID_COLUMN_ENTITIES) {
     const entityConfig = adminUi[entity];
-    if (!entityConfig) {
-      continue;
-    }
-
-    if (entityConfig.gridColumns) {
+    if (entityConfig?.gridColumns) {
       const key = `${entity}.grid-columns`;
       components.set(key, {
         config: entityConfig.gridColumns,
@@ -90,8 +96,11 @@ function enumerateComponents(
         ref: { entity, kind: "gridColumns" },
       });
     }
+  }
 
-    for (const massAction of entityConfig.massActions ?? []) {
+  for (const entity of MASS_ACTION_ENTITIES) {
+    const entityConfig = adminUi[entity];
+    for (const massAction of entityConfig?.massActions ?? []) {
       const key = `${entity}.mass-action.${massAction.id}`;
       components.set(key, {
         config: massAction,

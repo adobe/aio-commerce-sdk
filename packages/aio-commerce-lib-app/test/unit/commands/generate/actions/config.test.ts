@@ -23,6 +23,7 @@ import {
 } from "#commands/generate/actions/config";
 import {
   configWithAdminUiAllGrids,
+  configWithAdminUiInvoiceCreditMemoShipmentGrids,
   configWithAdminUiMenu,
   configWithAdminUiSingleGrid,
   configWithCommerceEventing,
@@ -457,6 +458,15 @@ describe("collectUniqueRuntimeActions", () => {
     );
     expect(result).toEqual([]);
   });
+
+  test("collects runtimeActions from invoice, creditMemo, and shipment grid columns", () => {
+    const result = collectUniqueRuntimeActions(
+      configWithAdminUiInvoiceCreditMemoShipmentGrids.adminUi,
+    );
+    expect(result).toContain("invoices/fetch-invoice-grid-data");
+    expect(result).toContain("credit-memos/fetch-credit-memo-grid-data");
+    expect(result).toContain("shipments/fetch-shipment-grid-data");
+  });
 });
 
 describe("requiresWebSource", () => {
@@ -482,6 +492,14 @@ describe("requiresWebSource", () => {
 
   test("returns false for a grid-only adminUi config", () => {
     expect(requiresWebSource(configWithAdminUiAllGrids.adminUi)).toBe(false);
+  });
+
+  test("returns false for a grid-only config on invoice, creditMemo, and shipment", () => {
+    expect(
+      requiresWebSource(
+        configWithAdminUiInvoiceCreditMemoShipmentGrids.adminUi,
+      ),
+    ).toBe(false);
   });
 });
 

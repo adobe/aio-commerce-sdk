@@ -211,6 +211,18 @@ const AdminUiCustomerSchema = v.object({
   massActions: v.optional(MassActionsSchema),
 });
 
+const AdminUiInvoiceSchema = v.object({
+  gridColumns: v.optional(GridColumnsSchema),
+});
+
+const AdminUiCreditMemoSchema = v.object({
+  gridColumns: v.optional(GridColumnsSchema),
+});
+
+const AdminUiShipmentSchema = v.object({
+  gridColumns: v.optional(GridColumnsSchema),
+});
+
 const MenuIdSchema = v.pipe(
   nonEmptyStringValueSchema("menu ID"),
   v.regex(
@@ -333,10 +345,13 @@ const AdminUiAclSchema = v.pipe(
  */
 export const AdminUiSchema = v.object({
   acl: v.optional(AdminUiAclSchema),
+  creditMemo: v.optional(AdminUiCreditMemoSchema),
   customer: v.optional(AdminUiCustomerSchema),
+  invoice: v.optional(AdminUiInvoiceSchema),
   menu: v.optional(MenuSchema),
   order: v.optional(AdminUiOrderSchema),
   product: v.optional(AdminUiProductSchema),
+  shipment: v.optional(AdminUiShipmentSchema),
 });
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -440,7 +455,10 @@ export function hasBackendUiV2Components<T extends AnyCommerceAppConfig>(
       adminUi.product?.gridColumns ||
       adminUi.product?.massActions?.length ||
       adminUi.customer?.gridColumns ||
-      adminUi.customer?.massActions?.length,
+      adminUi.customer?.massActions?.length ||
+      adminUi.invoice?.gridColumns ||
+      adminUi.creditMemo?.gridColumns ||
+      adminUi.shipment?.gridColumns,
   );
 }
 

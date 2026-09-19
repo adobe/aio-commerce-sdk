@@ -192,17 +192,22 @@ export function buildBusinessConfigurationExtConfig() {
   } satisfies ExtConfig;
 }
 
+/** Entities that can carry `massActions` (and, for `order`, `viewButtons`). */
+const MASS_ACTION_ENTITIES = ["order", "product", "customer"] as const;
+
+/** Entities that support `gridColumns` only, with no `massActions`/`viewButtons`. */
+const GRID_ONLY_ENTITIES = ["invoice", "creditMemo", "shipment"] as const;
+
 /** Collects unique `runtimeAction` strings from all worker entries in an `adminUi` config. */
 export function collectUniqueRuntimeActions(
   adminUi: AdminUi | undefined,
 ): string[] {
-  const entities = (["order", "product", "customer"] as const).map(
-    (key) => adminUi?.[key],
-  );
-  const gridRuntimeActions = entities
+  const massActionEntities = MASS_ACTION_ENTITIES.map((key) => adminUi?.[key]);
+  const gridOnlyEntities = GRID_ONLY_ENTITIES.map((key) => adminUi?.[key]);
+  const gridRuntimeActions = [...massActionEntities, ...gridOnlyEntities]
     .map((entity) => entity?.gridColumns?.runtimeAction)
     .filter((action): action is string => action !== undefined);
-  const massActionRuntimeActions = entities
+  const massActionRuntimeActions = massActionEntities
     .flatMap((entity) => entity?.massActions ?? [])
     .filter((action) => action.type === "worker")
     .map((action) => action.runtimeAction);
@@ -228,9 +233,7 @@ export function requiresWebSource(adminUi: AdminUi | undefined): boolean {
   ) {
     return true;
   }
-  const entities = (["order", "product", "customer"] as const).map(
-    (key) => adminUi?.[key],
-  );
+  const entities = MASS_ACTION_ENTITIES.map((key) => adminUi?.[key]);
   return entities
     .flatMap((entity) => entity?.massActions ?? [])
     .some((action) => action.type === "view");
