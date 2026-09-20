@@ -1,14 +1,14 @@
 # `replaceOperation()`
 
 ```ts
-function replaceOperation<TValue>(
+function replaceOperation<TValue = unknown>(
   path: string,
   value: TValue,
   instance?: string,
 ): ReplaceOperation<TValue>;
 ```
 
-Defined in: [responses/operations/presets.ts:101](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-webhooks/source/responses/operations/presets.ts#L101)
+Defined in: [responses/operations/presets.ts:101](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-webhooks/source/responses/operations/presets.ts#L101)
 
 Creates a replace operation response
 Causes Commerce to replace a value in triggered event arguments for the provided path.

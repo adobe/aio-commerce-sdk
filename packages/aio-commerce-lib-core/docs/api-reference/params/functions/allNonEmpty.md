@@ -1,13 +1,13 @@
 # `allNonEmpty()`
 
 ```ts
-function allNonEmpty<T>(
+function allNonEmpty<T extends string[]>(
   params: Record<string, unknown>,
   required: T,
 ): params is Record<string, unknown> & Record<T[number], unknown>;
 ```
 
-Defined in: [params/helpers.ts:34](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-core/source/params/helpers.ts#L34)
+Defined in: [params/helpers.ts:34](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-core/source/params/helpers.ts#L34)
 
 Checks if all required parameters are non-empty.
 

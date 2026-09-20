@@ -1,55 +1,11 @@
-# `FailedInstallationState`
+# ~~`FailedInstallationState`~~
 
 ```ts
-type FailedInstallationState = InstallationStateBase & {
-  completedAt: string;
-  error: InstallationError;
-  metadata?: InstallationRetryMetadata;
-  startedAt: string;
-  status: "failed";
-};
+type FailedInstallationState = FailedWorkflowState;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/workflow/types.ts:118](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-app/source/management/installation/workflow/types.ts#L118)
+Defined in: [aio-commerce-lib-app/source/management/installation/compat.ts:54](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/management/installation/compat.ts#L54)
 
-Installation state when failed.
+## Deprecated
 
-## Type Declaration
-
-### completedAt
-
-```ts
-completedAt: string;
-```
-
-ISO timestamp when installation failed.
-
-### error
-
-```ts
-error: InstallationError;
-```
-
-Error information about the failure.
-
-### metadata?
-
-```ts
-optional metadata?: InstallationRetryMetadata;
-```
-
-Retry metadata, present when a retry was attempted.
-
-### startedAt
-
-```ts
-startedAt: string;
-```
-
-ISO timestamp when installation started.
-
-### status
-
-```ts
-status: "failed";
-```
+Use `FailedWorkflowState` from `@adobe/aio-commerce-lib-app/management`.

@@ -10,26 +10,35 @@
 
 ## Type Aliases
 
-| Type Alias                                                                                       | Description                                                                                     |
-| ------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------- |
-| [ApiClientRecord](type-aliases/ApiClientRecord.md)                                               | A client that bounds a set of [ApiFunction](type-aliases/ApiFunction.md) to their HTTP clients. |
-| [ApiFunction](type-aliases/ApiFunction.md)                                                       | A generic function that takes an HTTP client and some other arguments and returns a result.     |
-| [CommerceFlavor](type-aliases/CommerceFlavor.md)                                                 | Defines the flavor of a Commerce instance.                                                      |
-| [CommerceHttpClientConfig](type-aliases/CommerceHttpClientConfig.md)                             | Defines the configuration required to build an Adobe Commerce HTTP client.                      |
-| [CommerceHttpClientConfigBase](type-aliases/CommerceHttpClientConfigBase.md)                     | Defines the base configuration required to build an Adobe Commerce HTTP client.                 |
-| [CommerceHttpClientConfigPaaS](type-aliases/CommerceHttpClientConfigPaaS.md)                     | Defines the configuration required to build an Adobe Commerce HTTP client for PaaS.             |
-| [CommerceHttpClientConfigSaaS](type-aliases/CommerceHttpClientConfigSaaS.md)                     | Defines the configuration required to build an Adobe Commerce HTTP client for SaaS.             |
-| [CommerceHttpClientParams](type-aliases/CommerceHttpClientParams.md)                             | Defines the parameters required to build an Adobe Commerce HTTP client (either SaaS or PaaS).   |
-| [IoEventsHttpClientConfig](type-aliases/IoEventsHttpClientConfig.md)                             | Defines the configuration required to build an Adobe I/O HTTP client.                           |
-| [IoEventsHttpClientParams](type-aliases/IoEventsHttpClientParams.md)                             | Defines the parameters required to build an HTTP client for the Adobe I/O Events API.           |
-| [PaaSClientParams](type-aliases/PaaSClientParams.md)                                             | Defines the configuration required to build an Adobe Commerce HTTP client for PaaS.             |
-| [ResolveCommerceHttpClientParamsOptions](type-aliases/ResolveCommerceHttpClientParamsOptions.md) | Custom options to be taken into account when resolving Commerce HTTP client parameters.         |
-| [ResolveIoEventsHttpClientParamsOptions](type-aliases/ResolveIoEventsHttpClientParamsOptions.md) | Custom options to be taken into account when resolving I/O Events HTTP client parameters.       |
-| [SaaSClientParams](type-aliases/SaaSClientParams.md)                                             | Defines the configuration required to build an Adobe Commerce HTTP client for SaaS.             |
+| Type Alias                                                                                       | Description                                                                                             |
+| ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------- |
+| [ApiClientRecord](type-aliases/ApiClientRecord.md)                                               | A client that bounds a set of [ApiFunction](type-aliases/ApiFunction.md) to their HTTP clients.         |
+| [ApiFunction](type-aliases/ApiFunction.md)                                                       | A generic function that takes an HTTP client and some other arguments and returns a result.             |
+| [CommerceFlavor](type-aliases/CommerceFlavor.md)                                                 | Defines the flavor of a Commerce instance.                                                              |
+| [CommerceHttpClientConfig](type-aliases/CommerceHttpClientConfig.md)                             | Defines the configuration required to build an Adobe Commerce HTTP client.                              |
+| [CommerceHttpClientConfigBase](type-aliases/CommerceHttpClientConfigBase.md)                     | Defines the base configuration required to build an Adobe Commerce HTTP client.                         |
+| [CommerceHttpClientConfigPaaS](type-aliases/CommerceHttpClientConfigPaaS.md)                     | Defines the configuration required to build an Adobe Commerce HTTP client for PaaS.                     |
+| [CommerceHttpClientConfigSaaS](type-aliases/CommerceHttpClientConfigSaaS.md)                     | Defines the configuration required to build an Adobe Commerce HTTP client for SaaS.                     |
+| [CommerceHttpClientParams](type-aliases/CommerceHttpClientParams.md)                             | Defines the parameters required to build an Adobe Commerce HTTP client (either SaaS or PaaS).           |
+| [ConditionType](type-aliases/ConditionType.md)                                                   | The condition applied by a [SearchFilter](type-aliases/SearchFilter.md). Defaults to `eq` when omitted. |
+| [IoEventsHttpClientConfig](type-aliases/IoEventsHttpClientConfig.md)                             | Defines the configuration required to build an Adobe I/O HTTP client.                                   |
+| [IoEventsHttpClientParams](type-aliases/IoEventsHttpClientParams.md)                             | Defines the parameters required to build an HTTP client for the Adobe I/O Events API.                   |
+| [PaaSClientParams](type-aliases/PaaSClientParams.md)                                             | Defines the configuration required to build an Adobe Commerce HTTP client for PaaS.                     |
+| [Pagination](type-aliases/Pagination.md)                                                         | The pagination applied to the search results.                                                           |
+| [ResolveCommerceHttpClientParamsOptions](type-aliases/ResolveCommerceHttpClientParamsOptions.md) | Custom options to be taken into account when resolving Commerce HTTP client parameters.                 |
+| [ResolveIoEventsHttpClientParamsOptions](type-aliases/ResolveIoEventsHttpClientParamsOptions.md) | Custom options to be taken into account when resolving I/O Events HTTP client parameters.               |
+| [SaaSClientParams](type-aliases/SaaSClientParams.md)                                             | Defines the configuration required to build an Adobe Commerce HTTP client for SaaS.                     |
+| [SearchCriteria](type-aliases/SearchCriteria.md)                                                 | A declarative description of an Adobe Commerce REST search query.                                       |
+| [SearchFilter](type-aliases/SearchFilter.md)                                                     | A single condition applied to a field of the searched entity.                                           |
+| [SearchFilterValue](type-aliases/SearchFilterValue.md)                                           | A scalar value a [SearchFilter](type-aliases/SearchFilter.md) can compare against.                      |
+| [SortDirection](type-aliases/SortDirection.md)                                                   | The direction a [SortOrder](type-aliases/SortOrder.md) sorts in.                                        |
+| [SortOrder](type-aliases/SortOrder.md)                                                           | A sort applied to the search results.                                                                   |
 
 ## Functions
 
-| Function                                                                        | Description                                                                                                                 |
-| ------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| [resolveCommerceHttpClientParams](functions/resolveCommerceHttpClientParams.md) | Resolves the [CommerceHttpClientParams](type-aliases/CommerceHttpClientParams.md) from the given App Builder action inputs. |
-| [resolveIoEventsHttpClientParams](functions/resolveIoEventsHttpClientParams.md) | Resolves the [IoEventsHttpClientParams](type-aliases/IoEventsHttpClientParams.md) from the given App Builder action inputs. |
+| Function                                                                        | Description                                                                                                                                                   |
+| ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [buildSearchCriteria](functions/buildSearchCriteria.md)                         | Serializes [SearchCriteria](type-aliases/SearchCriteria.md) into the `searchCriteria[...]` query parameters that Adobe Commerce REST search endpoints expect. |
+| [buildSearchCriteriaRecord](functions/buildSearchCriteriaRecord.md)             | Serializes [SearchCriteria](type-aliases/SearchCriteria.md) into a plain record of query parameters.                                                          |
+| [resolveCommerceHttpClientParams](functions/resolveCommerceHttpClientParams.md) | Resolves the [CommerceHttpClientParams](type-aliases/CommerceHttpClientParams.md) from the given App Builder action inputs.                                   |
+| [resolveIoEventsHttpClientParams](functions/resolveIoEventsHttpClientParams.md) | Resolves the [IoEventsHttpClientParams](type-aliases/IoEventsHttpClientParams.md) from the given App Builder action inputs.                                   |

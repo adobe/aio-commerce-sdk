@@ -1,6 +1,6 @@
 {
   "name": "@adobe/aio-commerce-lib-app",
-  "version": "1.11.0",
+  "version": "2.0.0",
   "private": false,
   "description": "App configuration management library for Adobe Commerce applications",
   "keywords": [
@@ -77,7 +77,7 @@
     "test:watch": "vitest --coverage",
     "typecheck": "tsc --noEmit && pnpm run typecheck:templates && echo '✅ No type errors found.'",
     "typecheck:templates": "tsc -p source/commands/generate/actions/templates/admin-ui/tsconfig.json",
-    "version": "pnpx tsx scripts/sync-openapi-version.ts"
+    "version": "pnpm exec tsx scripts/sync-openapi-version.ts && pnpm run format:openapi"
   },
   "dependencies": {
     "@adobe/aio-commerce-lib-admin-ui": "workspace:*",

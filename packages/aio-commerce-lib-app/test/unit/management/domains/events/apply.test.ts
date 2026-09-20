@@ -28,6 +28,7 @@ import {
 import {
   COMMERCE_PROVIDER_TYPE,
   EXTERNAL_PROVIDER_TYPE,
+  generateInstanceIdDeprecated,
   getIoEventCode,
   getNamespacedEvent,
   getRegistrationName,
@@ -38,6 +39,7 @@ import {
   createMockDeployedIoProvider,
   createMockDeployedRegistration,
   createMockEventingInstallationContext,
+  createMockIoEventProvider,
   createMockAppEvent as event,
   createMockExternalEventsConfig as externalConfig,
   createMockIoEventsListClient as ioEventsClient,
@@ -234,6 +236,70 @@ describe("applyCommerceEvents", () => {
     };
     expect(putParams.registrationId).toBe("reg-1");
     expect(putParams.eventsOfInterest).toHaveLength(2);
+  });
+
+  test("resolves the current-scheme provider over a stale deprecated-scheme duplicate", async () => {
+    vi.spyOn(commerceEventsStep, "install").mockResolvedValue([]);
+    const provider: EventProvider = {
+      description: "P1",
+      key: "k1",
+      label: "P1",
+    };
+
+    // Correct provider: current workspace-scoped instance id.
+    const correctProvider = createMockDeployedIoProvider({
+      id: "correct-provider",
+      provider,
+    });
+    // Stale duplicate: deprecated (workspace-less) instance id, which is not unique within an org
+    // and can be returned first by the org-wide provider list. It must not win.
+    const staleProvider = {
+      ...createMockIoEventProvider({
+        id: "stale-provider",
+        instance_id: generateInstanceIdDeprecated(
+          metadata,
+          provider as unknown as Parameters<
+            typeof generateInstanceIdDeprecated
+          >[1],
+        ),
+        label: provider.label,
+        provider_metadata: COMMERCE_PROVIDER_TYPE,
+      }),
+      _embedded: { eventmetadata: [] },
+    };
+
+    const registrationName = getRegistrationName(correctProvider, "pkg/a");
+    const updateRegistration = vi.fn().mockResolvedValue(undefined);
+
+    const context = createMockEventingInstallationContext({
+      ioEventsClient: ioEventsClient({
+        // Stale one listed first — an unordered first-match lookup would have picked it.
+        providers: [staleProvider, correctProvider],
+        registrations: [
+          createMockDeployedRegistration(registrationName, "reg-1"),
+        ],
+        updateRegistration,
+      }) as never,
+      params: { AIO_COMMERCE_AUTH_IMS_CLIENT_ID: "test-client-id" },
+    });
+
+    // Adding "b" changes the registration's event set → PUT, whose payload reveals the resolved provider.
+    const plan = await planCommerce(
+      commerceConfig([{ events: [event("a", ["pkg/a"])], provider }]),
+      commerceConfig([
+        { events: [event("a", ["pkg/a"]), event("b", ["pkg/a"])], provider },
+      ]),
+    );
+
+    await applyCommerceEvents(plan, context as ApplyContext<EventsStepContext>);
+
+    expect(updateRegistration).toHaveBeenCalledTimes(1);
+    const putParams = updateRegistration.mock.calls[0][0] as {
+      eventsOfInterest: { providerId: string }[];
+    };
+    for (const eventOfInterest of putParams.eventsOfInterest) {
+      expect(eventOfInterest.providerId).toBe("correct-provider");
+    }
   });
 
   test("deletes metadata and subscription for an event dropped from a persisting provider", async () => {

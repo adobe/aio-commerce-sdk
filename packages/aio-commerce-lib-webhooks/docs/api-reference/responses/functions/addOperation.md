@@ -1,14 +1,14 @@
 # `addOperation()`
 
 ```ts
-function addOperation<TValue>(
+function addOperation<TValue = unknown>(
   path: string,
   value: TValue,
   instance?: string,
 ): AddOperation<TValue>;
 ```
 
-Defined in: [responses/operations/presets.ts:76](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-webhooks/source/responses/operations/presets.ts#L76)
+Defined in: [responses/operations/presets.ts:76](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-webhooks/source/responses/operations/presets.ts#L76)
 
 Creates an add operation response
 Causes Commerce to add the provided value to the provided path in the triggered event arguments.

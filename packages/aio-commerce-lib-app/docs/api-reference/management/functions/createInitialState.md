@@ -3,22 +3,22 @@
 ```ts
 function createInitialState(
   options: CreateInitialStateOptions,
-): InProgressInstallationState;
+): InProgressWorkflowState;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/workflow/runner.ts:92](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-app/source/management/installation/workflow/runner.ts#L92)
+Defined in: [aio-commerce-lib-app/source/management/common/workflow/runner.ts:91](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/management/common/workflow/runner.ts#L91)
 
-Creates an initial installation state from a root step and config.
+Creates an initial workflow run state from a root step and config.
 
-Filters steps based on their `when` conditions and builds a
+Filters steps based on whether their domains are configured and builds a
 tree structure with all steps set to "pending".
 
 ## Parameters
 
-| Parameter | Type                                                                        |
-| --------- | --------------------------------------------------------------------------- |
-| `options` | [`CreateInitialStateOptions`](../type-aliases/CreateInitialStateOptions.md) |
+| Parameter | Type                        |
+| --------- | --------------------------- |
+| `options` | `CreateInitialStateOptions` |
 
 ## Returns
 
-[`InProgressInstallationState`](../type-aliases/InProgressInstallationState.md)
+[`InProgressWorkflowState`](../type-aliases/InProgressWorkflowState.md)

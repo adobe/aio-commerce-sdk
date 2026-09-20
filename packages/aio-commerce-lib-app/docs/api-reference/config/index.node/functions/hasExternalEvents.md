@@ -1,16 +1,16 @@
 # `hasExternalEvents()`
 
 ```ts
-function hasExternalEvents<T>(config: T): config is T & {
-  eventing: NonNullable<T["eventing"]>;
-} & {
+function hasExternalEvents<T extends AnyCommerceAppConfig>(
+  config: T,
+): config is T & { eventing: NonNullable<T["eventing"]> } & {
   eventing: EventsConfig<T>["eventing"] & {
     external: NonNullable<EventsConfig<T>["eventing"]["external"]>;
   };
 };
 ```
 
-Defined in: [aio-commerce-lib-app/source/config/schema/eventing.ts:382](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-app/source/config/schema/eventing.ts#L382)
+Defined in: [aio-commerce-lib-app/source/config/schema/eventing.ts:382](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/config/schema/eventing.ts#L382)
 
 Check if config has external event sources.
 

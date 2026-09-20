@@ -15,10 +15,10 @@ const EventSubscriptionCreateParamsSchema: ObjectSchema<{
   provider_id: OptionalSchema<StringSchema<`Expected a string value for '${string}'`>, undefined>;
   rules: OptionalSchema<ArraySchema<ObjectSchema<{
      field: SchemaWithPipe<readonly [SchemaWithPipe<readonly [StringSchema<...>, NonEmptyAction<..., ...>]>, RegexAction<string, "Field name must contain only letters (a-z, A-Z), numbers (0-9), underscores (_), dashes (-), dots (.), and square brackets ([, ]), or be exactly \"*\"">]>;
-     operator: UnionSchema<LiteralSchema<"regex" | "greaterThan" | "lessThan" | "equal" | "in" | "onChange", undefined>[], `Operator must be one of: ${string}`>;
+     operator: UnionSchema<LiteralSchema<"regex" | "in" | "greaterThan" | "lessThan" | "equal" | "onChange", undefined>[], `Operator must be one of: ${string}`>;
      value: StringSchema<`Expected a string value for '${string}'`>;
   }, undefined>, `Expected an array of objects with 'field', 'operator', and 'value' properties for the property "${string}"`>, undefined>;
 }, undefined>;
 ```
 
-Defined in: [commerce/api/event-subscriptions/schema.ts:79](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-events/source/commerce/api/event-subscriptions/schema.ts#L79)
+Defined in: [commerce/api/event-subscriptions/schema.ts:79](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-events/source/commerce/api/event-subscriptions/schema.ts#L79)

@@ -121,6 +121,14 @@ async function writeJavaScriptAppConfigModule(
   const isJson = extname(configFilePath) === ".json";
   const importAttributes = isJson ? ' with { type: "json" }' : "";
 
+  // `checkJs` widens `type: "json"` imports to plain `string` fields, which then
+  // fail to satisfy the literal-typed CommerceAppConfig the generated actions pass
+  // it to. Cast it back with a JSDoc type assertion rather than a `@type` tag, since
+  // a `@type` tag would still check (and reject) the widened initializer.
+  const defaultExport = isJson
+    ? `export default /** @type {import("@adobe/aio-commerce-lib-app/config").CommerceAppConfig} */ (appConfig);`
+    : "export default appConfig;";
+
   await writeFile(
     outputPath,
     [
@@ -131,7 +139,7 @@ async function writeJavaScriptAppConfigModule(
       "",
       // JSON can't have any exports other than the default one.
       isJson ? null : `export * from "${configImportPath}";`,
-      "export default appConfig;",
+      defaultExport,
       "",
     ]
       .filter((item) => item !== null)

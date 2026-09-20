@@ -4,7 +4,7 @@
 function findNearestPackageJson(cwd?: string): Promise<string | null>;
 ```
 
-Defined in: [project.ts:93](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages-private/scripting-utils/source/project.ts#L93)
+Defined in: [project.ts:93](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages-private/scripting-utils/source/project.ts#L93)
 
 Find the nearest package.json file in the current working directory or its parents
 

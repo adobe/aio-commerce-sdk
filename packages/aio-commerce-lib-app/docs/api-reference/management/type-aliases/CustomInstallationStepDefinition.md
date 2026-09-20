@@ -1,13 +1,13 @@
-# `CustomInstallationStepDefinition\<TResult\>`
+# `CustomInstallationStepDefinition\<TResult = `unknown`\>`
 
 ```ts
-type CustomInstallationStepDefinition<TResult> = {
+type CustomInstallationStepDefinition<TResult = unknown> = {
   install: CustomInstallationStepHandler<TResult>;
   uninstall?: CustomInstallationStepHandler<void>;
 };
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/custom-installation/define.ts:33](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-app/source/management/installation/custom-installation/define.ts#L33)
+Defined in: [aio-commerce-lib-app/source/management/domains/custom-installation/define.ts:33](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/management/domains/custom-installation/define.ts#L33)
 
 Object form for defining a custom installation step with both install and uninstall handlers.
 
@@ -25,7 +25,7 @@ Object form for defining a custom installation step with both install and uninst
 install: CustomInstallationStepHandler<TResult>;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/custom-installation/define.ts:35](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-app/source/management/installation/custom-installation/define.ts#L35)
+Defined in: [aio-commerce-lib-app/source/management/domains/custom-installation/define.ts:35](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/management/domains/custom-installation/define.ts#L35)
 
 The installation handler, called when the app is installed.
 
@@ -37,6 +37,6 @@ The installation handler, called when the app is installed.
 optional uninstall?: CustomInstallationStepHandler<void>;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/custom-installation/define.ts:38](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-app/source/management/installation/custom-installation/define.ts#L38)
+Defined in: [aio-commerce-lib-app/source/management/domains/custom-installation/define.ts:38](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/management/domains/custom-installation/define.ts#L38)
 
 The optional uninstall handler, called when the app is uninstalled.

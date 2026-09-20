@@ -4,12 +4,13 @@
 type StepMeta = {
   install: StepMetaInfo;
   uninstall?: StepMetaInfo;
+  upgrade?: StepMetaInfo;
 };
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/workflow/step.ts:89](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-app/source/management/installation/workflow/step.ts#L89)
+Defined in: [aio-commerce-lib-app/source/management/common/workflow/step.ts:91](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/management/common/workflow/step.ts#L91)
 
-Step metadata keyed by execution mode.
+Step metadata keyed by lifecycle mode.
 
 ## Properties
 
@@ -19,7 +20,7 @@ Step metadata keyed by execution mode.
 install: StepMetaInfo;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/workflow/step.ts:90](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-app/source/management/installation/workflow/step.ts#L90)
+Defined in: [aio-commerce-lib-app/source/management/common/workflow/step.ts:92](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/management/common/workflow/step.ts#L92)
 
 ---
 
@@ -29,4 +30,14 @@ Defined in: [aio-commerce-lib-app/source/management/installation/workflow/step.t
 optional uninstall?: StepMetaInfo;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/workflow/step.ts:91](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-app/source/management/installation/workflow/step.ts#L91)
+Defined in: [aio-commerce-lib-app/source/management/common/workflow/step.ts:93](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/management/common/workflow/step.ts#L93)
+
+---
+
+### upgrade?
+
+```ts
+optional upgrade?: StepMetaInfo;
+```
+
+Defined in: [aio-commerce-lib-app/source/management/common/workflow/step.ts:94](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/management/common/workflow/step.ts#L94)

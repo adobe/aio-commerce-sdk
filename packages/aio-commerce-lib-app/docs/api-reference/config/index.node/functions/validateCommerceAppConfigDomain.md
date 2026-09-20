@@ -1,8 +1,23 @@
 # `validateCommerceAppConfigDomain()`
 
 ```ts
-function validateCommerceAppConfigDomain<T>(config: unknown, domain: T): NonNullable<Get<{
+function validateCommerceAppConfigDomain<T extends
+  | "metadata"
+  | "adminUi"
+  | "businessConfig"
+  | "eventing"
+  | "installation"
+  | "webhooks"
+  | "businessConfig.schema"
+  | "eventing.commerce"
+  | "eventing.external"
+  | "installation.customInstallationSteps">(config: unknown, domain: T): NonNullable<Get<{
   adminUi?: {
+     acl?: {
+        children?: ...[];
+        id: string;
+        label: string;
+     }[];
      customer?: {
         gridColumns?: {
            columns: ...[];
@@ -197,6 +212,7 @@ function validateCommerceAppConfigDomain<T>(config: unknown, domain: T): NonNull
      description: string;
      displayName: string;
      id: string;
+     upgradeMode: "auto" | "manual";
      version: string;
   };
   webhooks?: (
@@ -214,7 +230,7 @@ function validateCommerceAppConfigDomain<T>(config: unknown, domain: T): NonNull
         fields?: ...[];
         headers?: ...[];
         hook_name: string;
-        method: string;
+        method: "POST" | "PUT" | "DELETE" | "GET";
         priority?: number;
         required?: boolean;
         rules?: ...[];
@@ -222,7 +238,7 @@ function validateCommerceAppConfigDomain<T>(config: unknown, domain: T): NonNull
         timeout?: number;
         ttl?: number;
         webhook_method: string;
-        webhook_type: string;
+        webhook_type: "before" | "after";
      };
    }
      | {
@@ -237,7 +253,7 @@ function validateCommerceAppConfigDomain<T>(config: unknown, domain: T): NonNull
         fields?: ...[];
         headers?: ...[];
         hook_name: string;
-        method: string;
+        method: "POST" | "PUT" | "DELETE" | "GET";
         priority?: number;
         required?: boolean;
         rules?: ...[];
@@ -246,7 +262,7 @@ function validateCommerceAppConfigDomain<T>(config: unknown, domain: T): NonNull
         ttl?: number;
         url: string;
         webhook_method: string;
-        webhook_type: string;
+        webhook_type: "before" | "after";
      };
   })[];
 } & {
@@ -254,7 +270,7 @@ function validateCommerceAppConfigDomain<T>(config: unknown, domain: T): NonNull
 }, T>>;
 ```
 
-Defined in: [aio-commerce-lib-app/source/config/lib/validate.ts:140](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-app/source/config/lib/validate.ts#L140)
+Defined in: [aio-commerce-lib-app/source/config/lib/validate.ts:140](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/config/lib/validate.ts#L140)
 
 Validates a specific domain configuration within the commerce app config.
 
@@ -280,6 +296,11 @@ schema for that specific domain.
 
 `NonNullable`\<`Get`\<\{
 `adminUi?`: \{
+`acl?`: \{
+`children?`: ...[];
+`id`: `string`;
+`label`: `string`;
+\}[];
 `customer?`: \{
 `gridColumns?`: \{
 `columns`: ...[];
@@ -474,6 +495,7 @@ schema for that specific domain.
 `description`: `string`;
 `displayName`: `string`;
 `id`: `string`;
+`upgradeMode`: `"auto"` \| `"manual"`;
 `version`: `string`;
 \};
 `webhooks?`: (
@@ -491,7 +513,7 @@ schema for that specific domain.
 `fields?`: ...[];
 `headers?`: ...[];
 `hook_name`: `string`;
-`method`: `string`;
+`method`: `"POST"` \| `"PUT"` \| `"DELETE"` \| `"GET"`;
 `priority?`: `number`;
 `required?`: `boolean`;
 `rules?`: ...[];
@@ -499,7 +521,7 @@ schema for that specific domain.
 `timeout?`: `number`;
 `ttl?`: `number`;
 `webhook_method`: `string`;
-`webhook_type`: `string`;
+`webhook_type`: `"before"` \| `"after"`;
 \};
 \}
 \| \{
@@ -514,7 +536,7 @@ schema for that specific domain.
 `fields?`: ...[];
 `headers?`: ...[];
 `hook_name`: `string`;
-`method`: `string`;
+`method`: `"POST"` \| `"PUT"` \| `"DELETE"` \| `"GET"`;
 `priority?`: `number`;
 `required?`: `boolean`;
 `rules?`: ...[];
@@ -523,7 +545,7 @@ schema for that specific domain.
 `ttl?`: `number`;
 `url`: `string`;
 `webhook_method`: `string`;
-`webhook_type`: `string`;
+`webhook_type`: `"before"` \| `"after"`;
 \};
 \})[];
 \} & \{

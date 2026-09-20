@@ -1,12 +1,13 @@
-# `ContextBuilder\<TExisting, TNew\>`
+# `ContextBuilder\<TExisting *extends* [`BaseContext`](BaseContext.md) = [`BaseContext`](BaseContext.md), TNew *extends* `Record`\<`string`, `unknown`\> = `Record`\<`string`, `unknown`\>\>`
 
 ```ts
-type ContextBuilder<TExisting, TNew> = (
-  ctx: TExisting,
-) => Promisable<TNew | undefined>;
+type ContextBuilder<
+  TExisting extends BaseContext = BaseContext,
+  TNew extends Record<string, unknown> = Record<string, unknown>,
+> = (ctx: TExisting) => Promisable<TNew | undefined>;
 ```
 
-Defined in: [actions/http/types.ts:55](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages-private/common-utils/source/actions/http/types.ts#L55)
+Defined in: [actions/http/types.ts:55](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages-private/common-utils/source/actions/http/types.ts#L55)
 
 Context builder function type.
 Receives current context and returns additional context properties (sync or async).

@@ -180,7 +180,10 @@ describe("commands/generate/actions", () => {
           const configContent = await readFile(configPath, "utf-8");
           expect(configContent).toContain('"#app.commerce.config"');
           expect(configContent).toContain(
-            "configSchema: config.businessConfig.schema",
+            "const businessConfig = /** @type {NonNullable<typeof config.businessConfig>} */",
+          );
+          expect(configContent).toContain(
+            "const configSchema = /** @type {NonNullable<typeof businessConfig.schema>} */",
           );
           expect(configContent).not.toContain("configuration-schema.json");
 
@@ -214,7 +217,10 @@ describe("commands/generate/actions", () => {
           const configContent = await readFile(configPath, "utf-8");
           expect(configContent).toContain('"#app.commerce.config"');
           expect(configContent).toContain(
-            "configSchema: config.businessConfig.schema",
+            "const businessConfig = /** @type {NonNullable<typeof config.businessConfig>} */",
+          );
+          expect(configContent).toContain(
+            "const configSchema = /** @type {NonNullable<typeof businessConfig.schema>} */",
           );
           expect(configContent).not.toContain("configuration-schema.json");
           expect(configContent).not.toContain("configuration-schema.js");
@@ -389,7 +395,9 @@ describe("commands/generate/actions", () => {
           expect(moduleContents).toContain(
             'import appConfig from "./app.commerce.manifest.json" with { type: "json" }',
           );
-          expect(moduleContents).toContain("export default appConfig");
+          expect(moduleContents).toContain(
+            'export default /** @type {import("@adobe/aio-commerce-lib-app/config").CommerceAppConfig} */ (appConfig)',
+          );
 
           const pkg = JSON.parse(
             await readFile(join(tempDir, "package.json"), "utf-8"),
@@ -469,6 +477,30 @@ describe("commands/generate/actions", () => {
             existsSync(join(webSrcDir, "src", "components", "welcome.jsx")),
           ).toBe(true);
 
+          const babelConfig = JSON.parse(
+            await readFile(join(webSrcDir, ".babelrc"), "utf-8"),
+          );
+          expect(babelConfig).toEqual({
+            env: {
+              development: {
+                presets: [
+                  [
+                    "@babel/preset-react",
+                    { development: true, runtime: "automatic" },
+                  ],
+                ],
+              },
+              production: {
+                presets: [
+                  [
+                    "@babel/preset-react",
+                    { development: false, runtime: "automatic" },
+                  ],
+                ],
+              },
+            },
+          });
+
           const indexContent = await readFile(
             join(webSrcDir, "index.html"),
             "utf-8",
@@ -534,7 +566,12 @@ describe("commands/generate/actions", () => {
             ]),
           );
           expect(Object.keys(pkg.devDependencies)).toEqual(
-            expect.arrayContaining(["@types/react", "@types/react-dom"]),
+            expect.arrayContaining([
+              "@babel/core",
+              "@babel/preset-react",
+              "@types/react",
+              "@types/react-dom",
+            ]),
           );
 
           expect(mockSpawnSync).toHaveBeenCalledTimes(1);
@@ -619,7 +656,7 @@ describe("commands/generate/actions", () => {
       );
     });
 
-    test("does not overwrite an existing web-src entrypoint", async () => {
+    test("adds required files without overwriting an existing web-src entrypoint", async () => {
       const entrypoint = join(
         getExtensionPointFolderPath(BACKEND_UI_V2_EXTENSION_POINT_ID),
         "web-src",
@@ -650,17 +687,77 @@ describe("commands/generate/actions", () => {
               ),
             ),
           ).toBe(false);
+          const babelConfig = JSON.parse(
+            await readFile(
+              join(
+                tempDir,
+                getExtensionPointFolderPath(BACKEND_UI_V2_EXTENSION_POINT_ID),
+                "web-src",
+                ".babelrc",
+              ),
+              "utf-8",
+            ),
+          );
+          expect(babelConfig.env).toEqual({
+            development: {
+              presets: [
+                [
+                  "@babel/preset-react",
+                  { development: true, runtime: "automatic" },
+                ],
+              ],
+            },
+            production: {
+              presets: [
+                [
+                  "@babel/preset-react",
+                  { development: false, runtime: "automatic" },
+                ],
+              ],
+            },
+          });
           const pkg = JSON.parse(
             await readFile(join(tempDir, "package.json"), "utf-8"),
           );
           expect(pkg.imports["#web/*"]).toBe(
             "./src/commerce-backend-ui-2/web-src/src/*",
           );
+          expect(pkg.devDependencies["@babel/core"]).toBe("^7.29.7");
+          expect(pkg.devDependencies["@babel/preset-react"]).toBe("^7.29.7");
           expect(consola.info).toHaveBeenCalledWith(
             expect.stringContaining(
               "web-src entrypoint already exists, skipping scaffold:",
             ),
           );
+          expect(mockSpawnSync).toHaveBeenCalledTimes(1);
+        },
+      );
+    });
+
+    test("does not overwrite an existing required web-src file", async () => {
+      const webSrcDir = join(
+        getExtensionPointFolderPath(BACKEND_UI_V2_EXTENSION_POINT_ID),
+        "web-src",
+      );
+
+      await withTempFiles(
+        {
+          ...EMPTY_PROJECT,
+          ...makeTemplateFiles(),
+          [join(webSrcDir, "index.html")]: "<html>custom</html>",
+          [join(webSrcDir, ".babelrc")]: '{"plugins":["custom"]}',
+        },
+        async (tempDir) => {
+          await run(configWithAdminUiMenu, tempDir, tempDir);
+
+          expect(
+            await readFile(join(tempDir, webSrcDir, ".babelrc"), "utf-8"),
+          ).toBe('{"plugins":["custom"]}');
+
+          const pkg = JSON.parse(
+            await readFile(join(tempDir, "package.json"), "utf-8"),
+          );
+          expect(pkg.devDependencies).toBeUndefined();
           expect(mockSpawnSync).not.toHaveBeenCalled();
         },
       );

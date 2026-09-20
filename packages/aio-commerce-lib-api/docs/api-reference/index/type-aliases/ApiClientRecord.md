@@ -1,7 +1,10 @@
-# `ApiClientRecord\<TClient, TFunctions\>`
+# `ApiClientRecord\<TClient *extends* `HttpClientBase`\<`unknown`\>, TFunctions *extends* `Record`\<`string`, [`ApiFunction`](ApiFunction.md)\<`TClient`, `unknown`[], `unknown`\>\>\>`
 
 ```ts
-type ApiClientRecord<TClient, TFunctions> = {
+type ApiClientRecord<
+  TClient extends HttpClientBase<unknown>,
+  TFunctions extends Record<string, ApiFunction<TClient, unknown[], unknown>>,
+> = {
   [K in keyof TFunctions]: TFunctions[K] extends ApiFunction<
     TClient,
     infer Args,
@@ -12,7 +15,7 @@ type ApiClientRecord<TClient, TFunctions> = {
 };
 ```
 
-Defined in: [aio-commerce-lib-api/source/lib/api-client.ts:23](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-api/source/lib/api-client.ts#L23)
+Defined in: [aio-commerce-lib-api/source/lib/api-client.ts:23](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-api/source/lib/api-client.ts#L23)
 
 A client that bounds a set of [ApiFunction](ApiFunction.md) to their HTTP clients.
 

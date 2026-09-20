@@ -11,7 +11,7 @@ type GetConfigurationResponse = {
 };
 ```
 
-Defined in: [types/api.ts:32](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-config/source/types/api.ts#L32)
+Defined in: [types/api.ts:32](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-config/source/types/api.ts#L32)
 
 Response type for getting configuration for a scope.
 
@@ -23,7 +23,7 @@ Response type for getting configuration for a scope.
 config: ConfigValue[];
 ```
 
-Defined in: [types/api.ts:40](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-config/source/types/api.ts#L40)
+Defined in: [types/api.ts:40](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-config/source/types/api.ts#L40)
 
 Array of configuration values with their origins.
 
@@ -39,7 +39,7 @@ scope: {
 }
 ```
 
-Defined in: [types/api.ts:34](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-config/source/types/api.ts#L34)
+Defined in: [types/api.ts:34](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-config/source/types/api.ts#L34)
 
 Scope information including id, code, and level.
 

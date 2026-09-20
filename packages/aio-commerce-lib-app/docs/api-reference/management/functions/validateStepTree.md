@@ -6,11 +6,11 @@ function validateStepTree(
 ): Promise<ValidationResult>;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/workflow/validation.ts:91](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-app/source/management/installation/workflow/validation.ts#L91)
+Defined in: [aio-commerce-lib-app/source/management/common/workflow/validation.ts:91](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/management/common/workflow/validation.ts#L91)
 
 Runs validation over the full step tree, returning a structured result.
 
-- Respects `when` conditions (skips steps that don't apply to the config)
+- Skips steps whose domains are not represented in the configuration
 - Calls each step's optional `validate` handler
 - Sets up branch context factories before validating children
 - Never throws; all errors from validate handlers are caught and reported as issues

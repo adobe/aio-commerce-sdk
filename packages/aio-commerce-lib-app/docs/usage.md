@@ -124,7 +124,7 @@ Generated Runtime actions always use `.js`.
 **`commerce/backend-ui/2`**: Admin UI registration (generated when `adminUi` is defined):
 
 - `src/commerce-backend-ui-2/ext.config.yaml`: extension manifest with the `pre-app-build` hook and `workerProcess` declarations derived from `runtimeAction` values
-- `src/commerce-backend-ui-2/web-src/`: browser scaffold generated when iframe-based Admin UI features require a `view` operation. Existing `web-src/index.html` files are never overwritten.
+- `src/commerce-backend-ui-2/web-src/`: browser scaffold generated when iframe-based Admin UI features require a `view` operation. Existing `web-src/index.html` files are never overwritten. A separate required-file phase runs on every generation to ensure support files are present without replacing existing versions (e.g. a `.babelrc` file).
 
 > [!NOTE]
 > Generated actions default to the `nodejs:24` runtime. To pin a different runtime, set the `runtime` field on the action in the generated `ext.config.yaml`. Codegen preserves a `runtime` you set there, so it survives regeneration.
@@ -633,7 +633,7 @@ Two things follow from this:
 
 The `adminUi` field declares Admin UI registrations for the `commerce/backend-ui/2` extension point. Unlike `commerce/backend-ui/1`, which required a dedicated registration action, V2 reads the registration directly from the `app-config` endpoint — no separate registration action is generated. Every field of `adminUi` is optional — configure only the extension points your application needs. When defined, `init` and `generate all` automatically wire up the extension, including the `pre-app-build` hook and the `workerProcess` declarations in `ext.config.yaml`.
 
-View-based features also get a minimal `web-src/` scaffold when the resolved `view` entrypoint does not exist yet. The scaffold uses `.tsx` files when the Commerce config uses a TypeScript extension and `.jsx` files otherwise, independently of Runtime action TypeScript enablement. A TypeScript `web-src/tsconfig.json` checks only the Admin UI source and remains independent from the root config. The scaffold imports app metadata from `#app.commerce.config`, so custom Admin UI code should use the same alias instead of importing generated files by path. Currently supported: grid column extensions, mass actions, order view buttons, and menu declarations. For details on each extension point, see the [Admin UI SDK Extension Points documentation](https://developer.adobe.com/commerce/extensibility/admin-ui-sdk/extension-points/).
+View-based features also get a minimal `web-src/` scaffold when the resolved `view` entrypoint does not exist yet. The scaffold uses `.tsx` files when the Commerce config uses a TypeScript extension and `.jsx` files otherwise, independently of Runtime action TypeScript enablement. A TypeScript `web-src/tsconfig.json` checks only the Admin UI source and remains independent from the root config. Generation also runs a required-file phase that ensures a set of web source support files is present even when the source scaffold already exists, without replacing existing versions. The current set includes `web-src/.babelrc`, which selects React's automatic JSX transform for each environment so development builds retain JSX diagnostics while production builds do not emit `jsxDEV` calls. If `BABEL_ENV` is set, keep it synchronized with `NODE_ENV`, because Babel gives `BABEL_ENV` precedence when selecting the configuration environment. The scaffold imports app metadata from `#app.commerce.config`, so custom Admin UI code should use the same alias instead of importing generated files by path. Currently supported: grid column extensions, mass actions, order view buttons, and menu declarations. For details on each extension point, see the [Admin UI SDK Extension Points documentation](https://developer.adobe.com/commerce/extensibility/admin-ui-sdk/extension-points/).
 
 ##### Grid Columns
 
@@ -982,8 +982,11 @@ The endpoint derives the operation and returns it as `operation` (`"install"` or
 
 `metadata.upgradeMode` controls what happens once an upgrade has been planned:
 
-- **`auto`** (default): the plan is created and its execution starts immediately.
-- **`manual`**: the plan is created or reused and returned without starting execution.
+- **`auto`** (experimental): the plan is created and its execution starts immediately.
+- **`manual`** (default): the plan is created or reused and returned without starting execution.
+
+> [!NOTE]
+> `auto` is experimental and `upgradeMode` currently defaults to `manual` while automatic upgrade execution is stabilizing. This will change back to `auto` in a future release — if you want manual behavior permanently, set `upgradeMode: "manual"` explicitly now.
 
 #### The `post-app-deploy` Hook
 
@@ -1022,7 +1025,10 @@ const usesTypeScript = configPath !== null && isTypeScriptConfig(configPath);
 Use `parseCommerceAppConfig` to read and validate the configuration file in your build scripts or CLI tools:
 
 ```javascript
-import { parseCommerceAppConfig } from "@adobe/aio-commerce-lib-app/config";
+import {
+  hasBusinessConfigSchema,
+  parseCommerceAppConfig,
+} from "@adobe/aio-commerce-lib-app/config";
 
 try {
   const config = await parseCommerceAppConfig();
@@ -1030,9 +1036,11 @@ try {
   console.log(`App: ${config.metadata.displayName}`);
   console.log(`Version: ${config.metadata.version}`);
 
-  // Access business config schema
-  const schema = config.businessConfig.schema;
-  console.log(`Configuration fields: ${schema.length}`);
+  // businessConfig is optional, so narrow with hasBusinessConfigSchema before
+  // accessing its schema.
+  if (hasBusinessConfigSchema(config)) {
+    console.log(`Configuration fields: ${config.businessConfig.schema.length}`);
+  }
 } catch (error) {
   console.error("Configuration error:", error);
   process.exit(1);

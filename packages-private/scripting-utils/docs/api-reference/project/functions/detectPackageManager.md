@@ -2,19 +2,19 @@
 
 ```ts
 function detectPackageManager(
-  cwd?: string,
+  projectRoot: string,
 ): Promise<"npm" | "pnpm" | "yarn" | "bun">;
 ```
 
-Defined in: [project.ts:333](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages-private/scripting-utils/source/project.ts#L333)
+Defined in: [project.ts:336](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages-private/scripting-utils/source/project.ts#L336)
 
 Detect the package manager for a project.
 
 ## Parameters
 
-| Parameter | Type     | Description                                                    |
-| --------- | -------- | -------------------------------------------------------------- |
-| `cwd`     | `string` | Directory to start detection from; defaults to `process.cwd()` |
+| Parameter     | Type     | Description                                                |
+| ------------- | -------- | ---------------------------------------------------------- |
+| `projectRoot` | `string` | Resolved project root containing package-manager metadata. |
 
 ## Returns
 

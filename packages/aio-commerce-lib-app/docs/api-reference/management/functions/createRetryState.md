@@ -2,11 +2,11 @@
 
 ```ts
 function createRetryState(
-  failedState: FailedInstallationState,
-): InProgressInstallationState;
+  failedState: FailedWorkflowState,
+): InProgressWorkflowState;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/workflow/runner.ts:111](https://github.com/adobe/aio-commerce-sdk/blob/f3ea3a64ac59c978f28865274fa282ec991ea529/packages/aio-commerce-lib-app/source/management/installation/workflow/runner.ts#L111)
+Defined in: [aio-commerce-lib-app/source/management/common/workflow/runner.ts:110](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/management/common/workflow/runner.ts#L110)
 
 Creates a retry state from a failed state.
 Preserves succeeded steps and their data so the workflow resumes from
@@ -14,10 +14,10 @@ the failed step rather than restarting from scratch.
 
 ## Parameters
 
-| Parameter     | Type                                                                    |
-| ------------- | ----------------------------------------------------------------------- |
-| `failedState` | [`FailedInstallationState`](../type-aliases/FailedInstallationState.md) |
+| Parameter     | Type                                                            |
+| ------------- | --------------------------------------------------------------- |
+| `failedState` | [`FailedWorkflowState`](../type-aliases/FailedWorkflowState.md) |
 
 ## Returns
 
-[`InProgressInstallationState`](../type-aliases/InProgressInstallationState.md)
+[`InProgressWorkflowState`](../type-aliases/InProgressWorkflowState.md)
