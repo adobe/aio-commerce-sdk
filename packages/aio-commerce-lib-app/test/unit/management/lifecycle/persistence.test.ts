@@ -30,14 +30,25 @@ import {
   createMockOrchestrationState,
 } from "#test/fixtures/lifecycle";
 
-import type { AppStateSnapshot } from "#management/common/orchestration";
+import type {
+  AppStateSnapshot,
+  LifecycleAttempt,
+} from "#management/common/orchestration";
 
 const plan = createMockLifecyclePlan();
 
+/** Seeds an attempt store with the given attempt addressed by its id. */
+async function seedAttemptStore(attempt: LifecycleAttempt) {
+  const attemptStore = createMockLifecycleStore<LifecycleAttempt>();
+  await attemptStore.put(attempt.id, attempt);
+  return attemptStore;
+}
+
 describe("persistProgress", () => {
-  test("records in-progress data and step tree for the current attempt", async () => {
+  test("records in-progress data and step tree for the attempt", async () => {
     const attempt = createMockLifecycleAttempt({ plan });
-    const store = createMockLifecycleStore({
+    const attemptStore = await seedAttemptStore(attempt);
+    const stateStore = createMockLifecycleStore({
       initial: createMockOrchestrationState({ latestAttempt: attempt }),
     });
     const progressState = createMockInProgressState({
@@ -45,27 +56,39 @@ describe("persistProgress", () => {
       id: "installation-1",
     });
 
-    await persistProgress(store, "attempt-1", progressState);
+    await persistProgress(
+      { attemptStore, stateStore },
+      "attempt-1",
+      progressState,
+    );
 
-    expect(await store.get(CURRENT_STATE_KEY)).toMatchObject({
+    expect(await attemptStore.get("attempt-1")).toMatchObject({
+      data: { foo: "bar" },
+      progress: progressState.step,
+      status: "in-progress",
+    });
+    expect(await stateStore.get(CURRENT_STATE_KEY)).toMatchObject({
       latestAttempt: {
         data: { foo: "bar" },
-        progress: progressState.step,
         status: "in-progress",
       },
     });
   });
 
-  test("throws when the attempt is no longer current", async () => {
-    const store = createMockLifecycleStore({
-      initial: createMockOrchestrationState({
-        latestAttempt: createMockLifecycleAttempt({ plan }),
-      }),
+  test("throws when the attempt is not found", async () => {
+    const attempt = createMockLifecycleAttempt({ plan });
+    const attemptStore = await seedAttemptStore(attempt);
+    const stateStore = createMockLifecycleStore({
+      initial: createMockOrchestrationState({ latestAttempt: attempt }),
     });
     const progressState = createMockInProgressState({ id: "installation-1" });
 
     await expect(
-      persistProgress(store, "other-attempt", progressState),
+      persistProgress(
+        { attemptStore, stateStore },
+        "other-attempt",
+        progressState,
+      ),
     ).rejects.toThrow("stale");
   });
 });
@@ -73,11 +96,17 @@ describe("persistProgress", () => {
 describe("persistApplyFailure", () => {
   test("maps the workflow error onto a failed attempt and persists it", async () => {
     const attempt = createMockLifecycleAttempt({ plan });
-    const state = createMockOrchestrationState({ latestAttempt: attempt });
-    const store = createMockLifecycleStore({ initial: state });
+    const attemptStore = await seedAttemptStore(attempt);
+    const stateStore = createMockLifecycleStore({
+      initial: createMockOrchestrationState({ latestAttempt: attempt }),
+    });
     const workflow = createMockFailedState({ id: "installation-1" });
 
-    const failed = await persistApplyFailure(store, state, attempt, workflow);
+    const failed = await persistApplyFailure(
+      { attemptStore, stateStore },
+      attempt,
+      workflow,
+    );
 
     expect(failed).toMatchObject({
       failure: {
@@ -88,15 +117,18 @@ describe("persistApplyFailure", () => {
       status: "failed",
     });
 
-    expect(await store.get(CURRENT_STATE_KEY)).toMatchObject({
+    expect(await attemptStore.get("attempt-1")).toMatchObject(failed);
+    expect(await stateStore.get(CURRENT_STATE_KEY)).toMatchObject({
       latestAttempt: failed,
     });
   });
 
   test("preserves the failure payload in the returned and persisted attempt", async () => {
     const attempt = createMockLifecycleAttempt({ plan });
-    const state = createMockOrchestrationState({ latestAttempt: attempt });
-    const store = createMockLifecycleStore({ initial: state });
+    const attemptStore = await seedAttemptStore(attempt);
+    const stateStore = createMockLifecycleStore({
+      initial: createMockOrchestrationState({ latestAttempt: attempt }),
+    });
     const workflow = createMockFailedState({
       error: {
         key: "STEP_EXECUTION_FAILED",
@@ -106,15 +138,17 @@ describe("persistApplyFailure", () => {
       },
     });
 
-    const failed = await persistApplyFailure(store, state, attempt, workflow);
+    const failed = await persistApplyFailure(
+      { attemptStore, stateStore },
+      attempt,
+      workflow,
+    );
     expect(failed).toMatchObject({
       failure: { payload: { operationId: "operation-1" } },
     });
 
-    expect(await store.get(CURRENT_STATE_KEY)).toMatchObject({
-      latestAttempt: {
-        failure: { payload: { operationId: "operation-1" } },
-      },
+    expect(await attemptStore.get("attempt-1")).toMatchObject({
+      failure: { payload: { operationId: "operation-1" } },
     });
   });
 });
@@ -122,8 +156,10 @@ describe("persistApplyFailure", () => {
 describe("persistSuccess", () => {
   test("captures a new snapshot and points the baseline at it", async () => {
     const attempt = createMockLifecycleAttempt({ plan });
-    const state = createMockOrchestrationState({ latestAttempt: attempt });
-    const stateStore = createMockLifecycleStore({ initial: state });
+    const attemptStore = await seedAttemptStore(attempt);
+    const stateStore = createMockLifecycleStore({
+      initial: createMockOrchestrationState({ latestAttempt: attempt }),
+    });
     const snapshotStore = createMockLifecycleStore<AppStateSnapshot>();
     const workflow = createMockSucceededState({
       data: { remoteId: "resource-1" },
@@ -131,8 +167,7 @@ describe("persistSuccess", () => {
     });
 
     const succeeded = await persistSuccess(
-      { snapshotStore, stateStore },
-      state,
+      { attemptStore, snapshotStore, stateStore },
       attempt,
       workflow,
     );
@@ -154,6 +189,7 @@ describe("persistSuccess", () => {
       snapshotId,
     });
 
+    expect(await attemptStore.get("attempt-1")).toMatchObject(succeeded);
     expect(await stateStore.get(CURRENT_STATE_KEY)).toMatchObject({
       baselineSnapshotId: snapshotId,
       latestAttempt: succeeded,

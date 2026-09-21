@@ -14,143 +14,103 @@ import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
 import {
   getAioCliEnv,
   getAioProjectContext,
-  getUserToken,
+  getServiceToken,
 } from "@aio-commerce-sdk/scripting-utils/aio";
 import { consola } from "consola";
 import { colors } from "consola/utils";
-import ky, { HTTPError } from "ky";
 
-import {
-  INSTALLATION_INVOCATION_SOURCE_HEADER,
-  POST_APP_DEPLOY_INVOCATION_SOURCE,
-} from "#actions/installation/common";
 import { parseCommerceAppConfig } from "#config/lib/parser";
+import { resolveCamsBaseUrl } from "#management/cams/config";
+import {
+  CamsRecordNotFoundError,
+  CamsUnavailableError,
+} from "#management/cams/errors";
+import { createUpgradeNotifyClient } from "#management/cams/upgrade-notify";
 
-import { waitForAutomaticUpgrade } from "./polling";
+import type { NotifyUpgradeRequest } from "#management/cams/upgrade-notify";
 
-import type { LifecyclePlan } from "#management/common/orchestration";
+/** The result of the post-deploy upgrade notification. */
+export type NotifyResult =
+  | { notified: true; extensionId: string }
+  | { notified: false; reason: "not-associated" | "service-unavailable" };
 
-type SkippedReason = "already-current" | "not-associated" | "not-installed";
-type SkippedResult = { skipped: true; reason: SkippedReason };
-type UpgradePlanResult = { plan: LifecyclePlan };
-type UpgradeResult = SkippedResult | UpgradePlanResult;
+/**
+ * Notifies the Commerce App Management Service that an upgrade is available.
+ *
+ * The service is the orchestrator: it decides whether to start the upgrade
+ * immediately (auto) or wait for the merchant (manual), then executes and polls
+ * the app itself. This hook only announces availability and exits — it no longer
+ * invokes the app, prints a plan, or waits for the upgrade to run.
+ */
+export async function run(): Promise<NotifyResult> {
+  const appConfig = await parseCommerceAppConfig();
+  const { id: metadataId, upgradeMode, version } = appConfig.metadata;
 
-/** Returns true for a no-op reason defined by the upgrade API contract. */
-function isSkippedReason(reason: unknown): reason is SkippedReason {
-  return (
-    reason === "already-current" ||
-    reason === "not-associated" ||
-    reason === "not-installed"
-  );
-}
-
-/** Returns true if the result indicates that the upgrade was skipped. */
-function isSkippedResult(result: UpgradeResult): result is SkippedResult {
-  return "skipped" in result;
-}
-
-/** Invokes the upgrade action. */
-async function createUpgradeRequest() {
   const { project, namespace } = getAioProjectContext();
-  const token = await getUserToken();
 
-  const endpoint = `https://${namespace}.adobeioruntime.net/api/v1/web/app-management/installation`;
-  const ioEventsEnv = getAioCliEnv();
-  const ioEventsUrl =
-    ioEventsEnv === "stage"
-      ? "https://events-stage.adobe.io"
-      : "https://events.adobe.io";
+  // Forward a SERVICE (technical-account) token, not the developer's user token,
+  // so the Commerce App Management Service can reuse it to execute and poll the
+  // app for an automatic upgrade with no user in the loop.
+  const token = await getServiceToken();
+  // Target the service host for the app's environment: stage apps talk to the stage
+  // host, everything else to production (an explicit override still wins).
+  const baseUrl = resolveCamsBaseUrl(process.env, getAioCliEnv());
 
-  return {
-    body: {
-      appData: {
-        consumerOrgId: project.org.id,
-        orgName: project.org.name,
-        projectId: project.id,
-        projectName: project.name,
-        projectTitle: project.title,
-        workspaceId: project.workspace.id,
-        workspaceName: project.workspace.name,
-        workspaceTitle: project.workspace.title,
-      },
-      ioEventsEnv,
-      ioEventsUrl,
-    },
-    endpoint,
-    headers: {
-      Authorization: `Bearer ${token}`,
-      [INSTALLATION_INVOCATION_SOURCE_HEADER]:
-        POST_APP_DEPLOY_INVOCATION_SOURCE,
-      "x-gw-ims-org-id": project.org.ims_org_id,
-    },
+  const request: NotifyUpgradeRequest = {
+    metadataId,
+    mode: upgradeMode,
+    namespace,
+    org: { id: project.org.id, imsOrgId: project.org.ims_org_id },
+    plan: { to: version },
+    workspace: { id: project.workspace.id, name: project.workspace.name },
   };
-}
 
-/** Invokes the upgrade action. */
-async function invokeAction(
-  request: Awaited<ReturnType<typeof createUpgradeRequest>>,
-): Promise<UpgradeResult> {
-  consola.debug(`Upgrade endpoint: ${request.endpoint}`);
+  consola.log(""); // Whitespace before the output to make it more readable.
+  consola.start(
+    "Notifying the Commerce App Management Service of the upgrade...",
+  );
 
+  const client = createUpgradeNotifyClient({
+    baseUrl,
+    identity: {
+      extId: metadataId,
+      workspaceId: project.workspace.id,
+      workspaceName: project.workspace.name,
+    },
+    token,
+  });
+
+  // A deploy must not fail because the upgrade could not be announced. An app that
+  // has not been associated yet (no service record) and a temporarily unreachable
+  // service are both soft-skips — the next deploy re-announces.
   try {
-    return await ky
-      .post(request.endpoint, {
-        headers: request.headers,
-        json: request.body,
-      })
-      .json<UpgradePlanResult>();
+    const { extensionId } = await client.notify(request);
+
+    const modeLabel =
+      upgradeMode === "manual"
+        ? "The merchant can start it from the Commerce App Management UI."
+        : "It will be started automatically by the service.";
+
+    consola.success(
+      `Upgrade notification sent (${colors.cyan(`metadata.upgradeMode: ${upgradeMode}`)}). ${modeLabel}\n`,
+    );
+
+    return { extensionId, notified: true };
   } catch (error) {
-    if (error instanceof HTTPError) {
-      const details = await error.response.json<{ reason?: string }>();
-
-      if (error.response.status === 409 && isSkippedReason(details.reason)) {
-        return { reason: details.reason, skipped: true };
-      }
-
-      throw new Error(
-        `Failed to trigger app upgrade (HTTP ${error.response.status}): ${JSON.stringify(details, null, 2)}`,
-        { cause: error },
+    if (error instanceof CamsRecordNotFoundError) {
+      consola.info(
+        "No Commerce App Management record exists for this workspace yet; skipping the upgrade notification. Associate the app first.\n",
       );
+      return { notified: false, reason: "not-associated" };
     }
-
+    if (error instanceof CamsUnavailableError) {
+      consola.warn(
+        "The Commerce App Management Service could not be reached; skipping the upgrade notification. It will be retried on the next deploy.\n",
+      );
+      return { notified: false, reason: "service-unavailable" };
+    }
     throw error;
   }
-}
-
-/** Invokes the deployed app's upgrade endpoint. */
-export async function run() {
-  const appConfig = await parseCommerceAppConfig();
-  const { upgradeMode } = appConfig.metadata;
-
-  consola.log(""); // Leave a bit of whitespace before the output to make it more readable.
-  consola.start("Checking for app upgrades...");
-  const request = await createUpgradeRequest();
-  const result = await invokeAction(request);
-
-  if (isSkippedResult(result)) {
-    consola.info(`No upgrade was run: ${result.reason}.\n`);
-    return result;
-  }
-
-  if (upgradeMode === "manual") {
-    consola.success(
-      `You have set ${colors.cyan("metadata.upgradeMode")} to ${colors.cyan("manual")}. The upgrade plan has been created but will not be executed.`,
-    );
-  } else {
-    consola.success(
-      `You have set ${colors.cyan("metadata.upgradeMode")} to ${colors.cyan("auto")}. The upgrade plan has been created. Execution will begin shortly.`,
-    );
-  }
-
-  consola.box(
-    ["Upgrade plan", JSON.stringify(result.plan, null, 2)].join("\n\n"),
-  );
-
-  if (upgradeMode === "auto") {
-    await waitForAutomaticUpgrade(request);
-  }
-
-  return result;
 }
 
 /** Runs the post-app-deploy hook. */

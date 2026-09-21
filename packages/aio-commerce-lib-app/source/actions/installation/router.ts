@@ -13,6 +13,7 @@
 import {
   internalServerError,
   noContent,
+  notFound,
   ok,
 } from "@adobe/aio-commerce-lib-core/responses";
 import {
@@ -26,6 +27,7 @@ import { getCurrentLifecycleBaseline } from "#management/lifecycle/baseline";
 import {
   CURRENT_STATE_KEY,
   normalizeExpiredAttempt,
+  readNormalizedAttempt,
 } from "#management/lifecycle/state";
 
 import {
@@ -44,6 +46,7 @@ import {
 import { executeUninstallation, startUninstallation } from "./uninstall";
 import { executeUpgrade, startUpgrade } from "./upgrade";
 
+import type { LifecycleAttempt } from "#management/common/orchestration";
 import type {
   ExecutionRouteParams,
   InstallationActionContext,
@@ -53,11 +56,51 @@ import type {
 // Re-exported for the runtime action factory (see ./index.ts).
 export type { CustomScriptsLoader, RuntimeActionFactoryArgs } from "./common";
 
+/** The pollable status view of an attempt returned by `GET /execution/{attemptId}`. */
+type AttemptStatusView = {
+  id: string;
+  status: LifecycleAttempt["status"];
+  startedAt: string;
+  executionDeadline: string;
+  result?: { appVersion: string; snapshotId: string };
+  failure?: { key: string; message?: string; path: (string | number)[] };
+};
+
+/**
+ * Projects an attempt to its pollable status view, stripping the plan, merchant
+ * `data`, and step `progress` — the Commerce App Management Service needs only
+ * the terminal `result`/`failure`.
+ */
+function toAttemptStatusView(attempt: LifecycleAttempt): AttemptStatusView {
+  const view: AttemptStatusView = {
+    executionDeadline: attempt.executionDeadline,
+    id: attempt.id,
+    startedAt: attempt.startedAt,
+    status: attempt.status,
+  };
+
+  if (attempt.status === "succeeded") {
+    view.result = {
+      appVersion: attempt.result.appVersion,
+      snapshotId: attempt.result.snapshotId,
+    };
+  } else if (attempt.status === "failed") {
+    view.failure = {
+      key: attempt.failure.key,
+      message: attempt.failure.message,
+      path: attempt.failure.path,
+    };
+  }
+
+  return view;
+}
+
 /**
  * Installation action router.
  *
  * Routes:
  * - GET /                            Get current installation or upgrade status
+ * - GET /execution/:attemptId        Get a single upgrade attempt's pollable status (externally callable)
  * - POST /                           Reconcile to the target config: install when no baseline exists, otherwise upgrade
  * - POST /execution                  Execute an installation or upgrade (internal, called async)
  * - POST /validation                 Pre-installation validation
@@ -99,6 +142,33 @@ router.get("/", {
     logger.debug("Getting installation execution status...");
     const store = await createInstallationStore();
     return readStateFromStore(store, (msg) => logger.debug(msg));
+  },
+});
+
+/**
+ * GET /execution/:attemptId - Get a single upgrade attempt's pollable status.
+ *
+ * Externally callable: the Commerce App Management Service polls this while it
+ * orchestrates an upgrade. Returns the attempt's `id`, `status`, terminal
+ * `result`/`failure`, `startedAt`, and `executionDeadline` — the plan, merchant
+ * `data`, and step `progress` are stripped. Responds 404 for an unknown id.
+ * An attempt past its deadline is normalized to `failed` (keyed
+ * `LIFECYCLE_ATTEMPT_EXPIRED`) so callers key a timeout off `failure.key`.
+ */
+router.get("/execution/:attemptId", {
+  handler: async (req, { logger }) => {
+    const { attemptId } = req.params;
+    logger.debug(`Getting upgrade attempt status: ${attemptId}`);
+
+    const { attemptStore } = await createLifecyclePersistence();
+    const attempt = await readNormalizedAttempt(attemptStore, attemptId);
+    if (!attempt) {
+      logger.debug(`No upgrade attempt found for id: ${attemptId}`);
+      return notFound(`No upgrade attempt was found for id "${attemptId}".`);
+    }
+
+    logger.debug(`Found upgrade attempt ${attemptId}: ${attempt.status}`);
+    return ok({ body: toAttemptStatusView(attempt) });
   },
 });
 

@@ -10,31 +10,24 @@
  * governing permissions and limitations under the License.
  */
 
-import { consola } from "consola";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
 const {
-  delayMock,
   fetchMock,
-  getAioCliEnvMock,
   getAioProjectContextMock,
-  getUserTokenMock,
+  getServiceTokenMock,
+  getAioCliEnvMock,
 } = vi.hoisted(() => ({
-  delayMock: vi.fn(),
   fetchMock: vi.fn(),
   getAioCliEnvMock: vi.fn(),
   getAioProjectContextMock: vi.fn(),
-  getUserTokenMock: vi.fn(),
-}));
-
-vi.mock("node:timers/promises", () => ({
-  setTimeout: delayMock,
+  getServiceTokenMock: vi.fn(),
 }));
 
 vi.mock("@aio-commerce-sdk/scripting-utils/aio", () => ({
   getAioCliEnv: getAioCliEnvMock,
   getAioProjectContext: getAioProjectContextMock,
-  getUserToken: getUserTokenMock,
+  getServiceToken: getServiceTokenMock,
 }));
 
 vi.mock("consola", () => ({
@@ -61,6 +54,10 @@ import {
   withTempProject,
 } from "#test/fixtures/project";
 
+const AUTO_UPGRADE_PROJECT = makeProjectFiles(
+  createMockConfig({ metadata: { upgradeMode: "auto" } }),
+);
+
 const MANUAL_UPGRADE_PROJECT = makeProjectFiles(
   createMockConfig({ metadata: { upgradeMode: "manual" } }),
 );
@@ -77,6 +74,11 @@ const project = {
   },
 };
 
+const EXTENSION_RECORDS = [
+  { extId: "other-app", id: "extension-other" },
+  { extId: "test-app", id: "extension-1" },
+];
+
 describe("post-app-deploy hook", () => {
   const processExitMock = vi
     .spyOn(process, "exit")
@@ -89,220 +91,100 @@ describe("post-app-deploy hook", () => {
       namespace: "runtime-namespace",
       project,
     });
+    getServiceTokenMock.mockResolvedValue("service-token");
     getAioCliEnvMock.mockReturnValue("prod");
-    getUserTokenMock.mockResolvedValue("ims-token");
-    delayMock.mockResolvedValue(undefined);
     fetchMock.mockImplementation(async (input: Request) => {
       if (input.method === "GET") {
-        return new Response(null, { status: 204 });
+        return new Response(JSON.stringify(EXTENSION_RECORDS), { status: 200 });
       }
 
-      return new Response(JSON.stringify({ plan: { id: "plan-1" } }), {
-        status: 202,
-      });
+      return new Response(null, { status: 202 });
     });
   });
 
-  test("POSTs authenticated project context to the deployed upgrade endpoint", async () => {
-    let capturedRequest: Request | undefined;
+  test("notifies the service with a service token and resolved record id", async () => {
+    const captured: Request[] = [];
+    fetchMock.mockImplementation(async (input: Request) => {
+      captured.push(input.clone());
+      if (input.method === "GET") {
+        return new Response(JSON.stringify(EXTENSION_RECORDS), { status: 200 });
+      }
+
+      return new Response(null, { status: 202 });
+    });
+
+    await withTempProject(AUTO_UPGRADE_PROJECT, async () => {
+      await expect(run()).resolves.toEqual({
+        extensionId: "extension-1",
+        notified: true,
+      });
+    });
+
+    expect(getServiceTokenMock).toHaveBeenCalledOnce();
+
+    const lookup = captured.find((request) => request.method === "GET");
+    expect.assert(lookup, "Expected a record lookup request");
+    expect(lookup.headers.get("authorization")).toBe("Bearer service-token");
+    const lookupUrl = new URL(lookup.url);
+    expect(lookupUrl.searchParams.get("workspaceId")).toBe("workspace-id");
+    expect(lookupUrl.searchParams.get("workspaceName")).toBe("workspace-name");
+
+    const notify = captured.find((request) => request.method === "POST");
+    expect.assert(notify, "Expected a notify request");
+    expect(notify.url).toContain("/v1/extensions/extension-1/upgrades:notify");
+    expect(notify.headers.get("authorization")).toBe("Bearer service-token");
+    expect(await notify.json()).toEqual({
+      metadataId: "test-app",
+      mode: "auto",
+      namespace: "runtime-namespace",
+      org: { id: "org-id", imsOrgId: "ims-org-id" },
+      plan: { to: "1.0.0" },
+      workspace: { id: "workspace-id", name: "workspace-name" },
+    });
+  });
+
+  test("sends the manual mode from the app config", async () => {
+    let notifyBody: unknown;
     fetchMock.mockImplementation(async (input: Request) => {
       if (input.method === "GET") {
-        return new Response(null, { status: 204 });
+        return new Response(JSON.stringify(EXTENSION_RECORDS), { status: 200 });
       }
 
-      capturedRequest = input.clone();
-      return new Response(JSON.stringify({ plan: { id: "plan-1" } }), {
-        status: 202,
-      });
+      notifyBody = await input.clone().json();
+      return new Response(null, { status: 202 });
     });
 
-    await withTempProject(MINIMAL_PROJECT, async () => {
-      await expect(run()).resolves.toEqual({ plan: { id: "plan-1" } });
-    });
-
-    expect(fetchMock).toHaveBeenCalledTimes(2);
-    const request = capturedRequest as Request;
-    expect(request.url).toBe(
-      "https://runtime-namespace.adobeioruntime.net/api/v1/web/app-management/installation",
-    );
-    expect(request.method).toBe("POST");
-    expect(request.headers.get("authorization")).toBe("Bearer ims-token");
-    expect(
-      request.headers.get("x-aio-commerce-installation-invocation-source"),
-    ).toBe("post-app-deploy");
-    expect(request.headers.get("x-gw-ims-org-id")).toBe("ims-org-id");
-    expect(request.headers.get("content-type")).toBe("application/json");
-
-    expect(await request.json()).toEqual({
-      appData: {
-        consumerOrgId: "org-id",
-        orgName: "org-name",
-        projectId: "project-id",
-        projectName: "project-name",
-        projectTitle: "Project Title",
-        workspaceId: "workspace-id",
-        workspaceName: "workspace-name",
-        workspaceTitle: "Workspace Title",
-      },
-      ioEventsEnv: "prod",
-      ioEventsUrl: "https://events.adobe.io",
-    });
-  });
-
-  test("polls an automatic upgrade until it succeeds", async () => {
-    fetchMock
-      .mockResolvedValueOnce(
-        new Response(JSON.stringify({ plan: { id: "plan-1" } }), {
-          status: 202,
-        }),
-      )
-      .mockResolvedValueOnce(
-        new Response(
-          JSON.stringify({
-            id: "attempt-1",
-            status: "pending",
-          }),
-          { status: 200 },
-        ),
-      )
-      .mockResolvedValueOnce(
-        new Response(
-          JSON.stringify({
-            id: "attempt-1",
-            status: "in-progress",
-          }),
-          { status: 200 },
-        ),
-      )
-      .mockResolvedValueOnce(
-        new Response(
-          JSON.stringify({
-            id: "attempt-1",
-            status: "succeeded",
-          }),
-          { status: 200 },
-        ),
-      );
-
-    await withTempProject(MINIMAL_PROJECT, async () => {
-      await expect(run()).resolves.toEqual({ plan: { id: "plan-1" } });
-    });
-
-    expect(fetchMock).toHaveBeenCalledTimes(4);
-    const statusRequest = fetchMock.mock.calls.at(1)?.at(0) as Request;
-    expect(statusRequest.method).toBe("GET");
-    expect(
-      statusRequest.headers.get(
-        "x-aio-commerce-installation-invocation-source",
-      ),
-    ).toBe("post-app-deploy");
-    expect(consola.start).toHaveBeenCalledTimes(3);
-    expect(consola.start).toHaveBeenNthCalledWith(
-      2,
-      "App upgrade is in progress...",
-    );
-    expect(consola.start).toHaveBeenNthCalledWith(
-      3,
-      "App upgrade is in progress...",
-    );
-    expect(delayMock).toHaveBeenCalledTimes(2);
-    expect(delayMock).toHaveBeenCalledWith(1000);
-  });
-
-  test("reports an automatic upgrade failure", async () => {
-    fetchMock
-      .mockResolvedValueOnce(
-        new Response(JSON.stringify({ plan: { id: "plan-1" } }), {
-          status: 202,
-        }),
-      )
-      .mockResolvedValueOnce(
-        new Response(
-          JSON.stringify({
-            failure: {
-              key: "WEBHOOK_RECONCILIATION_FAILED",
-              message: "Webhook reconciliation failed",
-            },
-            id: "attempt-1",
-            status: "failed",
-          }),
-          { status: 200 },
-        ),
-      );
-
-    await withTempProject(MINIMAL_PROJECT, async () => {
-      await expect(run()).rejects.toThrow(
-        "App upgrade failed: Webhook reconciliation failed",
-      );
-    });
-  });
-
-  test("does not poll a manual upgrade", async () => {
     await withTempProject(MANUAL_UPGRADE_PROJECT, async () => {
-      await expect(run()).resolves.toEqual({ plan: { id: "plan-1" } });
-    });
-
-    expect(fetchMock).toHaveBeenCalledOnce();
-  });
-
-  test("ignores an unavailable upgrade status endpoint", async () => {
-    fetchMock
-      .mockResolvedValueOnce(
-        new Response(JSON.stringify({ plan: { id: "plan-1" } }), {
-          status: 202,
-        }),
-      )
-      .mockRejectedValueOnce(new Error("Status endpoint is unavailable"));
-
-    await withTempProject(MINIMAL_PROJECT, async () => {
-      await expect(run()).resolves.toEqual({ plan: { id: "plan-1" } });
-    });
-  });
-
-  test.each(["already-current", "not-associated", "not-installed"] as const)(
-    "treats %s as a no-op",
-    async (reason) => {
-      fetchMock.mockResolvedValue(
-        new Response(
-          JSON.stringify({
-            message: "The upgrade is not actionable.",
-            reason,
-          }),
-          { status: 409 },
-        ),
-      );
-
-      await withTempProject(MINIMAL_PROJECT, async () => {
-        await expect(run()).resolves.toEqual({
-          reason,
-          skipped: true,
-        });
+      await expect(run()).resolves.toEqual({
+        extensionId: "extension-1",
+        notified: true,
       });
-    },
-  );
+    });
 
-  test("rejects unrecognized 409 reasons", async () => {
-    fetchMock.mockResolvedValue(
-      new Response(
-        JSON.stringify({
-          message: "The upgrade requires another action.",
-          reason: "manual-review-required",
-        }),
-        { status: 409 },
-      ),
-    );
+    expect(notifyBody).toMatchObject({ mode: "manual" });
+  });
+
+  test("soft-skips (does not fail the deploy) when no record matches the deployed app", async () => {
+    fetchMock.mockImplementation(async (input: Request) => {
+      if (input.method === "GET") {
+        return new Response(JSON.stringify([{ extId: "other-app", id: "x" }]), {
+          status: 200,
+        });
+      }
+
+      return new Response(null, { status: 202 });
+    });
 
     await withTempProject(MINIMAL_PROJECT, async () => {
-      await expect(run()).rejects.toThrow();
+      await expect(run()).resolves.toEqual({
+        notified: false,
+        reason: "not-associated",
+      });
     });
   });
 
-  test("exits when the upgrade endpoint fails", async () => {
-    fetchMock.mockResolvedValue(
-      new Response(JSON.stringify({ message: "Upgrade planning is blocked" }), {
-        status: 409,
-      }),
-    );
+  test("exits when the notification fails", async () => {
+    getServiceTokenMock.mockRejectedValue(new Error("no service credential"));
 
     await withTempProject(MINIMAL_PROJECT, exec);
     expect(processExitMock).toHaveBeenCalledWith(1);

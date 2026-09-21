@@ -107,6 +107,7 @@ import {
 
 import type {
   AppStateSnapshot,
+  LifecycleAttempt,
   OrchestrationState,
 } from "#management/common/orchestration";
 import type { AnyStep, LeafStep } from "#management/common/workflow/step";
@@ -133,6 +134,7 @@ const requestBody = {
 
 describe("installationRuntimeAction", () => {
   let appStateSnapshotStore = createMockLifecycleStore<AppStateSnapshot>();
+  let attemptStore = createMockLifecycleStore<LifecycleAttempt>();
   let installationStore = createMockInstallationStore();
   let orchestrationStateStore = createMockLifecycleStore<OrchestrationState>();
   let uninstallationStore = createMockInstallationStore();
@@ -141,6 +143,7 @@ describe("installationRuntimeAction", () => {
     vi.clearAllMocks();
 
     appStateSnapshotStore = createMockLifecycleStore<AppStateSnapshot>();
+    attemptStore = createMockLifecycleStore<LifecycleAttempt>();
     installationStore = createMockInstallationStore();
     orchestrationStateStore = createMockLifecycleStore<OrchestrationState>();
     uninstallationStore = createMockInstallationStore();
@@ -148,6 +151,7 @@ describe("installationRuntimeAction", () => {
     createCombinedStoreMock.mockImplementation(
       createMockCombinedStoreImpl(() => ({
         appStateSnapshot: appStateSnapshotStore,
+        attempt: attemptStore,
         installation: installationStore,
         orchestrationState: orchestrationStateStore,
         uninstallation: uninstallationStore,
@@ -319,6 +323,84 @@ describe("installationRuntimeAction", () => {
     });
   });
 
+  describe("GET /execution/:attemptId", () => {
+    test("returns 404 when no attempt exists for the id", async () => {
+      const handler = installationRuntimeAction({
+        appConfig: minimalValidConfig,
+      });
+
+      const result = await handler(
+        createRuntimeActionParams({ path: "/execution/missing-attempt" }),
+      );
+
+      expect(result).toMatchObject({
+        error: { statusCode: 404 },
+        type: "error",
+      });
+    });
+
+    test("returns the attempt status without plan, data, or progress", async () => {
+      const attempt = createMockLifecycleAttempt({
+        id: "attempt-1",
+        status: "succeeded",
+      });
+      await attemptStore.put("attempt-1", attempt);
+
+      const handler = installationRuntimeAction({
+        appConfig: minimalValidConfig,
+      });
+      const result = await handler(
+        createRuntimeActionParams({ path: "/execution/attempt-1" }),
+      );
+
+      expect(result).toMatchObject({
+        body: {
+          executionDeadline: attempt.executionDeadline,
+          id: "attempt-1",
+          result: { appVersion: "2.0.0", snapshotId: "snapshot-2" },
+          startedAt: attempt.startedAt,
+          status: "succeeded",
+        },
+        statusCode: 200,
+        type: "success",
+      });
+      expect(result).not.toMatchObject({
+        body: { data: expect.anything() },
+      });
+      expect(result).not.toMatchObject({
+        body: { plan: expect.anything() },
+      });
+      expect(result).not.toMatchObject({
+        body: { progress: expect.anything() },
+      });
+    });
+
+    test("normalizes an expired attempt to a failed timeout", async () => {
+      const attempt = createMockLifecycleAttempt({
+        executionDeadline: "2000-01-01T00:00:00.000Z",
+        id: "attempt-expired",
+        status: "in-progress",
+      });
+      await attemptStore.put("attempt-expired", attempt);
+
+      const handler = installationRuntimeAction({
+        appConfig: minimalValidConfig,
+      });
+      const result = await handler(
+        createRuntimeActionParams({ path: "/execution/attempt-expired" }),
+      );
+
+      expect(result).toMatchObject({
+        body: {
+          failure: { key: "LIFECYCLE_ATTEMPT_EXPIRED" },
+          status: "failed",
+        },
+        statusCode: 200,
+        type: "success",
+      });
+    });
+  });
+
   const upgradeRequestBody = {
     appData,
     ioEventsEnv: "prod" as const,
@@ -332,6 +414,7 @@ describe("installationRuntimeAction", () => {
   let desiredInstallationStore = createMockInstallationStore();
   let desiredSnapshotStore = createMockLifecycleStore<AppStateSnapshot>();
   let desiredStateStore = createMockLifecycleStore<OrchestrationState>();
+  let desiredAttemptStore = createMockLifecycleStore<LifecycleAttempt>();
 
   function seedInstalledBaseline(
     version: string,
@@ -387,9 +470,11 @@ describe("installationRuntimeAction", () => {
       desiredInstallationStore = createMockInstallationStore();
       desiredSnapshotStore = createMockLifecycleStore<AppStateSnapshot>();
       desiredStateStore = createMockLifecycleStore<OrchestrationState>();
+      desiredAttemptStore = createMockLifecycleStore<LifecycleAttempt>();
       createCombinedStoreMock.mockImplementation(
         createMockCombinedStoreImpl(() => ({
           appStateSnapshot: desiredSnapshotStore,
+          attempt: desiredAttemptStore,
           installation: desiredInstallationStore,
           orchestrationState: desiredStateStore,
           uninstallation: createMockInstallationStore(),
@@ -496,7 +581,15 @@ describe("installationRuntimeAction", () => {
 
         expect(invokeMock).toHaveBeenCalledOnce();
         expect(result).toMatchObject({
-          body: { operation: "upgrade" },
+          body: {
+            attemptId: expect.any(String),
+            plan: {
+              source: expect.any(Object),
+              target: {
+                appVersion: configWithAutoUpgrade.metadata.version,
+              },
+            },
+          },
           statusCode: 202,
           type: "success",
         });
@@ -613,22 +706,15 @@ describe("installationRuntimeAction", () => {
         });
       });
 
-      test("reuses the plan without starting execution in manual mode", async () => {
+      test("persists an attempt and dispatches execution in manual mode", async () => {
+        // The service — not the app — decides auto vs manual; the app always
+        // executes when called, so a manual upgrade now mints an attempt and
+        // dispatches the work just like an automatic one.
         const action = installationRuntimeAction({
           appConfig: createMockConfig({
             metadata: { upgradeMode: "manual" },
           }),
         });
-        await action(
-          createRuntimeActionParams({
-            body: upgradeRequestBody,
-            method: "post",
-            ...DEFAULT_INSTALLATION_PARAMS,
-          }),
-        );
-
-        const plan = (await desiredStateStore.get("current"))?.pendingPlan;
-        expect.assert(plan, "Expected a persisted manual upgrade plan");
 
         const result = await action(
           createRuntimeActionParams({
@@ -638,18 +724,22 @@ describe("installationRuntimeAction", () => {
           }),
         );
 
-        expect(invokeMock).not.toHaveBeenCalled();
+        const attempt = (await desiredStateStore.get("current"))?.latestAttempt;
+        expect.assert(attempt, "Expected a persisted manual upgrade attempt");
+
+        expect(invokeMock).toHaveBeenCalledOnce();
         expect(result).toMatchObject({
           body: {
-            operation: "upgrade",
-            plan: { id: plan.id, operation: "upgrade" },
+            attemptId: attempt.id,
+            plan: { source: expect.any(Object), target: expect.any(Object) },
           },
-          statusCode: 200,
+          statusCode: 202,
           type: "success",
         });
-        expect(
-          (await desiredStateStore.get("current"))?.latestAttempt,
-        ).toBeNull();
+        expect(await desiredAttemptStore.get(attempt.id)).toMatchObject({
+          id: attempt.id,
+          status: "pending",
+        });
       });
 
       test("starts the planned upgrade in auto mode", async () => {
@@ -669,19 +759,22 @@ describe("installationRuntimeAction", () => {
         );
         expect(result).toMatchObject({
           body: {
-            operation: "upgrade",
+            attemptId,
             plan: {
-              actionVersion: "7",
-              operation: "upgrade",
+              source: expect.any(Object),
               target: {
                 appVersion: configWithAutoUpgrade.metadata.version,
-                config: configWithAutoUpgrade,
               },
             },
           },
           statusCode: 202,
           type: "success",
         });
+        // The response must not leak the full target config — only the version.
+        expect(
+          (result as unknown as { body: { plan: { target: unknown } } }).body
+            .plan.target,
+        ).toEqual({ appVersion: configWithAutoUpgrade.metadata.version });
       });
 
       test("allows retry when background dispatch fails", async () => {
@@ -707,7 +800,7 @@ describe("installationRuntimeAction", () => {
           }),
         );
         expect(retried).toMatchObject({
-          body: { operation: "upgrade" },
+          body: { attemptId: expect.any(String), plan: expect.any(Object) },
           statusCode: 202,
           type: "success",
         });

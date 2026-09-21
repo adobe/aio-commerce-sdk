@@ -176,7 +176,7 @@ Application metadata is required and identifies your application:
     version: "1.0.0",
 
     description: "A custom Adobe Commerce application for XYZ purpose",
-    upgradeMode: "auto", // optional; "auto" (default) or "manual"
+    upgradeMode: "manual", // optional; "auto" or "manual" (current default)
   }
 }
 ```
@@ -187,7 +187,7 @@ Application metadata is required and identifies your application:
 - **displayName**: Maximum 50 characters
 - **description**: Maximum 255 characters
 - **version**: Must follow semantic versioning format (e.g., `1.0.0`, `2.1.3`)
-- **upgradeMode** (optional): `"auto"` (default) or `"manual"` — controls whether a planned upgrade runs automatically after a deploy or waits for manual review. See [Upgrading a Deployed App](#upgrading-a-deployed-app).
+- **upgradeMode** (optional): `"auto"` or `"manual"` (current default) — tells the Commerce App Management Service whether to start an upgrade automatically after a deploy or wait for the merchant to start it. See [Upgrading a Deployed App](#upgrading-a-deployed-app).
 
 #### Business Configuration Schema
 
@@ -1021,33 +1021,35 @@ After an app is installed, the installation endpoint is **desired-state**. It co
 > [!IMPORTANT]
 > `metadata.id` identifies the installed application and cannot change during an upgrade. The endpoint rejects a different ID before planning starts. To use a different ID, uninstall the existing app and install it again.
 
-The endpoint derives the operation and returns it as `operation` (`"install"` or `"upgrade"`) in the response.
+For an install the endpoint returns the reconciliation state. For an upgrade it plans the run, mints a persisted attempt, dispatches the work asynchronously, and returns `{ attemptId, plan: { source, target } }`. The attempt's progress is then pollable at `GET /execution/{attemptId}`.
 
-#### Automatic vs. Manual Upgrades
+#### Service-orchestrated Upgrades
 
-`metadata.upgradeMode` controls what happens once an upgrade has been planned:
+The Commerce App Management Service is the orchestrator and single source of truth for upgrades. The app no longer starts or polls its own upgrades — it exposes an execute endpoint the service calls to run the upgrade, and a status endpoint the service polls until the run reaches a terminal state.
 
-- **`auto`** (experimental): the plan is created and its execution starts immediately.
-- **`manual`** (default): the plan is created or reused and returned without starting execution.
+`metadata.upgradeMode` tells the service _who triggers the start_; everything after the start is identical:
+
+- **`auto`** (experimental): the service starts the upgrade as soon as it is notified.
+- **`manual`** (default): the service records that an upgrade is available and waits for the merchant to start it from the Commerce App Management UI.
 
 > [!NOTE]
 > `auto` is experimental and `upgradeMode` currently defaults to `manual` while automatic upgrade execution is stabilizing. This will change back to `auto` in a future release — if you want manual behavior permanently, set `upgradeMode: "manual"` explicitly now.
 
 #### The `post-app-deploy` Hook
 
-The generated `commerce/extensibility/1` extension wires a `post-app-deploy` hook automatically (alongside `pre-app-build`). After every `aio app deploy`, the hook triggers the desired-state reconciliation, so a redeploy of an installed app runs an upgrade check without any manual step:
+The generated `commerce/extensibility/1` extension wires a `post-app-deploy` hook automatically (alongside `pre-app-build`). After every `aio app deploy`, the hook **notifies the Commerce App Management Service that an upgrade is available** and exits — it does not invoke the app, print a plan, or wait for the upgrade to run. The notification carries the target version, the app namespace, `metadata.id`, and the org/workspace context, and forwards the workspace's **service (technical-account) token** so the service can execute and poll the app for an automatic upgrade with no user in the loop.
 
-- In `auto` mode it prints the plan and waits for the execution result when progress is available.
-- In `manual` mode it reports that a plan was created but was not executed.
+The service then either starts the upgrade immediately (`auto`) or waits for the merchant to start it from the Commerce App Management UI (`manual`).
 
 #### No-op Upgrade States
 
-Some states are not actionable upgrades. In these cases the endpoint responds with `409 Conflict` carrying a `reason`, and the `post-app-deploy` hook treats them as a no-op rather than a failure:
+Some states are not actionable upgrades. When the service calls the app's execute endpoint, it responds with `409 Conflict` carrying a `reason`:
 
 - **`not-associated`**: the app is not associated with a Commerce instance.
+- **`not-installed`**: no installation baseline exists yet.
 - **`already-current`**: the installed version already matches `metadata.version`.
 
-A `409` **without** a `reason` (for example, when upgrade planning is blocked by configuration issues) is a real failure and surfaces as an error.
+A `409` **without** a `reason` (for example, when upgrade planning is blocked by configuration issues) is a real failure.
 
 ### Using the Configuration API
 
