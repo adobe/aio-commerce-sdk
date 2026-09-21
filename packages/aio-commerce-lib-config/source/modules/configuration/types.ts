@@ -71,7 +71,7 @@ export type ConfigContext = {
   /** The namespace for isolating configuration data. */
   namespace: string;
 
-  /** Cache timeout in milliseconds. */
+  /** Cache timeout in seconds. */
   cacheTimeout: number;
 
   /** Optional encryption key for encrypting/decrypting password fields. */

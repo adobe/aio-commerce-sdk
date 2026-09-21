@@ -190,7 +190,7 @@ export type GetCachedScopeTreeParams = {
  *
  * const result = await getScopeTree(
  *   { refreshData: true, commerceConfig },
- *   { cacheTimeout: 600000 }
+ *   { cacheTimeout: 600 } // 10 minutes
  * );
  * console.log(result.scopeTree); // Fresh data from Commerce API
  * console.log(result.isCachedData); // false
@@ -204,7 +204,7 @@ export type GetCachedScopeTreeParams = {
  * import { getScopeTree } from "@adobe/aio-commerce-lib-config";
  *
  * // Get scope tree with custom cache timeout
- * const result = await getScopeTree(undefined, { cacheTimeout: 600000 });
+ * const result = await getScopeTree(undefined, { cacheTimeout: 600 }); // 10 minutes
  * ```
  */
 
