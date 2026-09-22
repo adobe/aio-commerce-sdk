@@ -13,6 +13,10 @@
 import { join } from "node:path";
 
 import { GENERATED_ACTIONS_PATH, PACKAGE_NAME } from "#commands/constants";
+import {
+  ADMIN_UI_GRID_COLUMN_ENTITIES,
+  ADMIN_UI_MASS_ACTION_ENTITIES,
+} from "#config/schema/admin-ui";
 import { hasBusinessConfigSchema } from "#config/schema/business-configuration";
 
 import { COMMERCE_ACTION_INPUTS } from "./constants";
@@ -192,23 +196,16 @@ export function buildBusinessConfigurationExtConfig() {
   } satisfies ExtConfig;
 }
 
-/** Entities that can carry `massActions` (and, for `order`, `viewButtons`). */
-const MASS_ACTION_ENTITIES = ["order", "product", "customer"] as const;
-
-/** Entities that support `gridColumns` only, with no `massActions`/`viewButtons`. */
-const GRID_ONLY_ENTITIES = ["invoice", "creditMemo", "shipment"] as const;
-
 /** Collects unique `runtimeAction` strings from all worker entries in an `adminUi` config. */
 export function collectUniqueRuntimeActions(
   adminUi: AdminUi | undefined,
 ): string[] {
-  const massActionEntities = MASS_ACTION_ENTITIES.map((key) => adminUi?.[key]);
-  const gridOnlyEntities = GRID_ONLY_ENTITIES.map((key) => adminUi?.[key]);
-  const gridRuntimeActions = [...massActionEntities, ...gridOnlyEntities]
-    .map((entity) => entity?.gridColumns?.runtimeAction)
-    .filter((action): action is string => action !== undefined);
-  const massActionRuntimeActions = massActionEntities
-    .flatMap((entity) => entity?.massActions ?? [])
+  const gridRuntimeActions = ADMIN_UI_GRID_COLUMN_ENTITIES.map(
+    (key) => adminUi?.[key]?.gridColumns?.runtimeAction,
+  ).filter((action): action is string => action !== undefined);
+  const massActionRuntimeActions = ADMIN_UI_MASS_ACTION_ENTITIES.flatMap(
+    (key) => adminUi?.[key]?.massActions ?? [],
+  )
     .filter((action) => action.type === "worker")
     .map((action) => action.runtimeAction);
   const viewButtonRuntimeActions = (adminUi?.order?.viewButtons ?? [])
@@ -233,10 +230,9 @@ export function requiresWebSource(adminUi: AdminUi | undefined): boolean {
   ) {
     return true;
   }
-  const entities = MASS_ACTION_ENTITIES.map((key) => adminUi?.[key]);
-  return entities
-    .flatMap((entity) => entity?.massActions ?? [])
-    .some((action) => action.type === "view");
+  return ADMIN_UI_MASS_ACTION_ENTITIES.flatMap(
+    (key) => adminUi?.[key]?.massActions ?? [],
+  ).some((action) => action.type === "view");
 }
 
 /**

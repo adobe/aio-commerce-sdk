@@ -12,6 +12,11 @@
 
 import { stringify } from "safe-stable-stringify";
 
+import {
+  ADMIN_UI_GRID_COLUMN_ENTITIES,
+  ADMIN_UI_MASS_ACTION_ENTITIES,
+} from "#config/schema/admin-ui";
+
 import { hasExtensionName } from "./helpers";
 
 import type {
@@ -41,19 +46,6 @@ type AdminUiComponentDescriptor = {
   config: AdminUiComponentConfig;
   label: string;
 };
-
-/** Entities that can carry grid columns, in a stable diff order. */
-const GRID_COLUMN_ENTITIES = [
-  "order",
-  "product",
-  "customer",
-  "invoice",
-  "creditMemo",
-  "shipment",
-] as const;
-
-/** Entities that can additionally carry mass actions. */
-const MASS_ACTION_ENTITIES = ["order", "product", "customer"] as const;
 
 /**
  * Enumerates the individual components declared in an `adminUi` block, keyed by a
@@ -85,7 +77,7 @@ function enumerateComponents(
     });
   }
 
-  for (const entity of GRID_COLUMN_ENTITIES) {
+  for (const entity of ADMIN_UI_GRID_COLUMN_ENTITIES) {
     const entityConfig = adminUi[entity];
     if (entityConfig?.gridColumns) {
       const key = `${entity}.grid-columns`;
@@ -98,7 +90,7 @@ function enumerateComponents(
     }
   }
 
-  for (const entity of MASS_ACTION_ENTITIES) {
+  for (const entity of ADMIN_UI_MASS_ACTION_ENTITIES) {
     const entityConfig = adminUi[entity];
     for (const massAction of entityConfig?.massActions ?? []) {
       const key = `${entity}.mass-action.${massAction.id}`;

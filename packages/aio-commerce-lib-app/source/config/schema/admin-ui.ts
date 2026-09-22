@@ -366,6 +366,26 @@ export type AdminUiConfiguration = v.InferInput<typeof AdminUiSchema>;
  */
 export type AdminUi = v.InferOutput<typeof AdminUiSchema>;
 
+/**
+ * Entities that support grid column extensions, in a stable order. Shared so the
+ * runtime-action collection and the upgrade planner enumerate the same entities.
+ */
+export const ADMIN_UI_GRID_COLUMN_ENTITIES = [
+  "order",
+  "product",
+  "customer",
+  "invoice",
+  "creditMemo",
+  "shipment",
+] as const satisfies readonly Exclude<keyof AdminUi, "acl" | "menu">[];
+
+/** Entities that additionally support mass actions, in a stable order. */
+export const ADMIN_UI_MASS_ACTION_ENTITIES = [
+  "order",
+  "product",
+  "customer",
+] as const satisfies readonly Exclude<keyof AdminUi, "acl" | "menu">[];
+
 /** A single custom ACL resource leaf. */
 export type AclResource = v.InferInput<typeof AclResourceLeafSchema>;
 
