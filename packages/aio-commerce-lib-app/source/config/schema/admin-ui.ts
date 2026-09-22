@@ -211,15 +211,9 @@ const AdminUiCustomerSchema = v.object({
   massActions: v.optional(MassActionsSchema),
 });
 
-const AdminUiInvoiceSchema = v.object({
-  gridColumns: v.optional(GridColumnsSchema),
-});
-
-const AdminUiCreditMemoSchema = v.object({
-  gridColumns: v.optional(GridColumnsSchema),
-});
-
-const AdminUiShipmentSchema = v.object({
+// Shared by invoice, credit memo, and shipment: unlike order/product/customer,
+// these expose grid columns only — no mass actions or view buttons.
+const AdminUiGridOnlyEntitySchema = v.object({
   gridColumns: v.optional(GridColumnsSchema),
 });
 
@@ -345,13 +339,13 @@ const AdminUiAclSchema = v.pipe(
  */
 export const AdminUiSchema = v.object({
   acl: v.optional(AdminUiAclSchema),
-  creditMemo: v.optional(AdminUiCreditMemoSchema),
+  creditMemo: v.optional(AdminUiGridOnlyEntitySchema),
   customer: v.optional(AdminUiCustomerSchema),
-  invoice: v.optional(AdminUiInvoiceSchema),
+  invoice: v.optional(AdminUiGridOnlyEntitySchema),
   menu: v.optional(MenuSchema),
   order: v.optional(AdminUiOrderSchema),
   product: v.optional(AdminUiProductSchema),
-  shipment: v.optional(AdminUiShipmentSchema),
+  shipment: v.optional(AdminUiGridOnlyEntitySchema),
 });
 
 // ─── Types ────────────────────────────────────────────────────────────────────

@@ -95,15 +95,21 @@ export function getCustomAclResourceId(
 }
 
 /**
- * Commerce entity an Admin UI component is attached to, using the same spelling Commerce
- * sends in the wire-contract `gridType` field (see `GridTypeSchema`). Credit memo grids send
- * `"creditmemo"` on the wire — not `"creditMemo"` — even though the corresponding config key
- * (`adminUi.creditMemo`) is camelCase.
+ * Commerce entities an Admin UI component can attach to, using the same spelling Commerce
+ * sends in the wire-contract `gridType` field. Credit memo grids send `"creditmemo"` on the
+ * wire — not `"creditMemo"` — even though the corresponding config key (`adminUi.creditMemo`)
+ * is camelCase.
+ *
+ * Single source of truth for the entity vocabulary: `GridTypeSchema` derives its picklist from it.
  */
-export type AdminUiEntity =
-  | "order"
-  | "product"
-  | "customer"
-  | "invoice"
-  | "creditmemo"
-  | "shipment";
+export const ADMIN_UI_ENTITIES = [
+  "order",
+  "product",
+  "customer",
+  "invoice",
+  "creditmemo",
+  "shipment",
+] as const;
+
+/** Commerce entity an Admin UI component is attached to. */
+export type AdminUiEntity = (typeof ADMIN_UI_ENTITIES)[number];
