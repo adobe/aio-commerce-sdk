@@ -433,6 +433,7 @@ export class HttpActionRouter<TContext extends BaseContext = BaseContext> {
 
       for (const route of this.routes) {
         const match = route.pattern.exec(path);
+        // biome-ignore lint/suspicious/noUnnecessaryConditions: Biome 2.5.14 infers RegExp.exec() as non-nullable, but it can return null (biomejs/biome#11278).
         if (!match) {
           continue;
         }
