@@ -113,3 +113,17 @@ export const ADMIN_UI_ENTITIES = [
 
 /** Commerce entity an Admin UI component is attached to. */
 export type AdminUiEntity = (typeof ADMIN_UI_ENTITIES)[number];
+
+/**
+ * Entities that support mass actions — a subset of `ADMIN_UI_ENTITIES`. Mass actions, unlike
+ * grid columns, are not available on the invoice, credit memo, or shipment grids.
+ * `MassActionGridTypeSchema` derives its picklist from it.
+ */
+export const MASS_ACTION_ENTITIES = [
+  "order",
+  "product",
+  "customer",
+] as const satisfies readonly AdminUiEntity[];
+
+/** Commerce entity a mass action is attached to. */
+export type MassActionEntity = (typeof MASS_ACTION_ENTITIES)[number];
