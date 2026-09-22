@@ -121,11 +121,9 @@ export function createUpgradeNotifyClient(
   async function notify(
     request: NotifyUpgradeRequest,
   ): Promise<{ extensionId: string }> {
-    consola.info(
-      `[upgrade-notify] POST ${baseUrl}/v1/extensions:notify-upgrade body=${JSON.stringify(
-        request,
-      )}`,
-    );
+    // Debug only: the endpoint and request body (service URL, org/workspace ids)
+    // must not appear in the default user-facing output.
+    consola.debug("[upgrade-notify] POST v1/extensions:notify-upgrade");
 
     let response: NotifyUpgradeResponse;
     try {
@@ -162,7 +160,8 @@ export function createUpgradeNotifyClient(
       );
     }
 
-    consola.success(
+    // Internal confirmation; the user-facing success is printed by the caller.
+    consola.debug(
       `[upgrade-notify] notify accepted for extensionId=${response.extensionId}`,
     );
 

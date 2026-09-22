@@ -57,10 +57,12 @@ export async function run(): Promise<NotifyResult> {
   const cliEnv = getAioCliEnv();
   const baseUrl = resolveCamsBaseUrl(process.env, cliEnv);
 
-  consola.info(
+  // Diagnostics only: kept at debug level so the default (user-facing) output
+  // stays clean and never prints the service URL or internal lookup keys.
+  consola.debug(
     `[upgrade-notify] target resolved: cliEnv=${cliEnv}, baseUrl=${baseUrl}`,
   );
-  consola.info(
+  consola.debug(
     `[upgrade-notify] record lookup key: workspaceId=${project.workspace.id}, workspaceName=${project.workspace.name}`,
   );
 
@@ -74,8 +76,10 @@ export async function run(): Promise<NotifyResult> {
   };
 
   consola.log(""); // Whitespace before the output to make it more readable.
+  // Call out the stage environment so a stage deploy is not mistaken for prod.
+  const envLabel = cliEnv === "stage" ? " (stage)" : "";
   consola.start(
-    "Notifying the Commerce App Management Service of the upgrade...",
+    `Notifying the Commerce App Management Service${envLabel} of the upgrade...`,
   );
 
   const client = createUpgradeNotifyClient({ baseUrl, token });
