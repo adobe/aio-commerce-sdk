@@ -54,7 +54,15 @@ export async function run(): Promise<NotifyResult> {
   const token = await getServiceToken();
   // Target the service host for the app's environment: stage apps talk to the stage
   // host, everything else to production (an explicit override still wins).
-  const baseUrl = resolveCamsBaseUrl(process.env, getAioCliEnv());
+  const cliEnv = getAioCliEnv();
+  const baseUrl = resolveCamsBaseUrl(process.env, cliEnv);
+
+  consola.info(
+    `[upgrade-notify] target resolved: cliEnv=${cliEnv}, baseUrl=${baseUrl}`,
+  );
+  consola.info(
+    `[upgrade-notify] record lookup key: workspaceId=${project.workspace.id}, workspaceName=${project.workspace.name}`,
+  );
 
   const request: NotifyUpgradeRequest = {
     metadataId,
@@ -70,15 +78,7 @@ export async function run(): Promise<NotifyResult> {
     "Notifying the Commerce App Management Service of the upgrade...",
   );
 
-  const client = createUpgradeNotifyClient({
-    baseUrl,
-    identity: {
-      extId: metadataId,
-      workspaceId: project.workspace.id,
-      workspaceName: project.workspace.name,
-    },
-    token,
-  });
+  const client = createUpgradeNotifyClient({ baseUrl, token });
 
   // A deploy must not fail because the upgrade could not be announced. An app that
   // has not been associated yet (no service record) and a temporarily unreachable

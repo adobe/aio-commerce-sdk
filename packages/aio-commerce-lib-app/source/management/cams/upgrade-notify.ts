@@ -10,7 +10,8 @@
  * governing permissions and limitations under the License.
  */
 
-import ky from "ky";
+import { consola } from "consola";
+import ky, { HTTPError } from "ky";
 
 import { CamsRecordNotFoundError, CamsUnavailableError } from "./errors";
 
@@ -68,18 +69,6 @@ export type NotifyUpgradeRequest = {
   };
 };
 
-/** Identifiers that locate the app's record in the service. */
-export type UpgradeNotifyIdentity = {
-  /** Adobe I/O Developer Console workspace id (the record's natural-key part). */
-  workspaceId: string;
-
-  /** Adobe I/O Developer Console workspace name (the record's natural-key part). */
-  workspaceName: string;
-
-  /** App Builder application id (`metadata.id`), matched against the stored record. */
-  extId: string;
-};
-
 /** Options for {@link createUpgradeNotifyClient}. */
 export type UpgradeNotifyClientOptions = {
   /** Commerce App Management Service base URL. */
@@ -91,41 +80,37 @@ export type UpgradeNotifyClientOptions = {
    * be a user token.
    */
   token: string;
-
-  /** Identifiers for the record this client notifies. */
-  identity: UpgradeNotifyIdentity;
 };
 
 /** Client that announces an available upgrade to the Commerce App Management Service. */
 export type UpgradeNotifyClient = {
   /**
-   * Resolves the record id from the workspace natural key, then posts the
-   * notification to `POST /v1/extensions/{extensionId}/upgrades:notify`.
-   * @returns The resolved record id the notification was sent to.
-   * @throws {CamsRecordNotFoundError} No matching record exists for the workspace.
+   * Posts the notification to `POST /v1/extensions:notify-upgrade`. The service
+   * resolves the record from the request's `workspace` natural key (scoped to the
+   * caller's org) — the deploying CLI never holds the record id.
+   * @returns The id of the record the notification was applied to.
+   * @throws {CamsRecordNotFoundError} No record exists for the workspace (not associated).
    * @throws {CamsUnavailableError} The service was unreachable or errored.
    */
   notify: (request: NotifyUpgradeRequest) => Promise<{ extensionId: string }>;
 };
 
-/** Minimal shape of the record fields this client reads back from the service. */
-type ExtensionRecord = {
-  id: string;
-  extId: string;
+/** Minimal shape of the upgrade-run response this client reads back. */
+type NotifyUpgradeResponse = {
+  extensionId: string;
 };
 
 /**
  * Creates an {@link UpgradeNotifyClient} backed by `ky`, authenticated with the
  * provided service token on every request.
  *
- * The service addresses records by their internal id, which the deploying CLI
- * does not hold, so the client first looks the record up by the workspace
- * natural key before sending the notification.
+ * The service resolves the record server-side from the request's `workspace`
+ * natural key, so this is a single call — the client does not look the record up.
  */
 export function createUpgradeNotifyClient(
   options: UpgradeNotifyClientOptions,
 ): UpgradeNotifyClient {
-  const { baseUrl, identity, token } = options;
+  const { baseUrl, token } = options;
 
   const http = ky.create({
     headers: { Authorization: `Bearer ${token}` },
@@ -133,46 +118,42 @@ export function createUpgradeNotifyClient(
     retry: 0,
   });
 
-  async function resolveExtensionId(): Promise<string> {
-    let records: ExtensionRecord[];
-    try {
-      records = await http
-        .get("v1/extensions", {
-          searchParams: {
-            workspaceId: identity.workspaceId,
-            workspaceName: identity.workspaceName,
-          },
-        })
-        .json<ExtensionRecord[]>();
-    } catch (error) {
-      throw new CamsUnavailableError(
-        `Failed to reach the Commerce App Management Service: ${
-          error instanceof Error ? error.message : String(error)
-        }`,
-        { cause: error, retryable: true },
-      );
-    }
-
-    const record = records.find((entry) => entry.extId === identity.extId);
-    if (!record) {
-      throw new CamsRecordNotFoundError(
-        `No Commerce App Management Service record was found for application "${identity.extId}" in workspace "${identity.workspaceName}".`,
-      );
-    }
-
-    return record.id;
-  }
-
   async function notify(
     request: NotifyUpgradeRequest,
   ): Promise<{ extensionId: string }> {
-    const extensionId = await resolveExtensionId();
+    consola.info(
+      `[upgrade-notify] POST ${baseUrl}/v1/extensions:notify-upgrade body=${JSON.stringify(
+        request,
+      )}`,
+    );
 
+    let response: NotifyUpgradeResponse;
     try {
-      await http.post(`v1/extensions/${extensionId}/upgrades:notify`, {
-        json: request,
-      });
+      response = await http
+        .post("v1/extensions:notify-upgrade", { json: request })
+        .json<NotifyUpgradeResponse>();
     } catch (error) {
+      if (error instanceof HTTPError) {
+        const { response: errorResponse } = error;
+        // A 404 means the app has no record for this workspace yet (not associated, or not installed
+        // for this Commerce instance). Announcing an upgrade only makes sense for an installed app, so
+        // this is an expected soft-skip on a fresh/not-yet-installed deploy — not a failure, and not
+        // logged as an error.
+        if (errorResponse.status === 404) {
+          throw new CamsRecordNotFoundError(
+            "No Commerce App Management Service record exists for this workspace.",
+            { cause: error },
+          );
+        }
+        const body = await errorResponse
+          .text()
+          .catch(() => "<unreadable body>");
+        consola.error(
+          `[upgrade-notify] notify failed: HTTP ${errorResponse.status} ${errorResponse.url} -> ${body}`,
+        );
+      } else {
+        consola.error("[upgrade-notify] notify failed (non-HTTP):", error);
+      }
       throw new CamsUnavailableError(
         `The Commerce App Management Service rejected the upgrade notification: ${
           error instanceof Error ? error.message : String(error)
@@ -181,7 +162,11 @@ export function createUpgradeNotifyClient(
       );
     }
 
-    return { extensionId };
+    consola.success(
+      `[upgrade-notify] notify accepted for extensionId=${response.extensionId}`,
+    );
+
+    return { extensionId: response.extensionId };
   }
 
   return { notify };

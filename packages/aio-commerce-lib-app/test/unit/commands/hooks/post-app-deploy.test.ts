@@ -39,6 +39,7 @@ vi.mock("consola", () => ({
     log: vi.fn(),
     start: vi.fn(),
     success: vi.fn(),
+    warn: vi.fn(),
   },
 }));
 
@@ -74,10 +75,8 @@ const project = {
   },
 };
 
-const EXTENSION_RECORDS = [
-  { extId: "other-app", id: "extension-other" },
-  { extId: "test-app", id: "extension-1" },
-];
+// The service resolves the record server-side and echoes its id in the response.
+const NOTIFY_RESPONSE = { extensionId: "extension-1", id: "run-1" };
 
 describe("post-app-deploy hook", () => {
   const processExitMock = vi
@@ -93,24 +92,17 @@ describe("post-app-deploy hook", () => {
     });
     getServiceTokenMock.mockResolvedValue("service-token");
     getAioCliEnvMock.mockReturnValue("prod");
-    fetchMock.mockImplementation(async (input: Request) => {
-      if (input.method === "GET") {
-        return new Response(JSON.stringify(EXTENSION_RECORDS), { status: 200 });
-      }
-
-      return new Response(null, { status: 202 });
-    });
+    fetchMock.mockImplementation(
+      async () =>
+        new Response(JSON.stringify(NOTIFY_RESPONSE), { status: 202 }),
+    );
   });
 
-  test("notifies the service with a service token and resolved record id", async () => {
+  test("notifies the service with a service token in a single call", async () => {
     const captured: Request[] = [];
     fetchMock.mockImplementation(async (input: Request) => {
       captured.push(input.clone());
-      if (input.method === "GET") {
-        return new Response(JSON.stringify(EXTENSION_RECORDS), { status: 200 });
-      }
-
-      return new Response(null, { status: 202 });
+      return new Response(JSON.stringify(NOTIFY_RESPONSE), { status: 202 });
     });
 
     await withTempProject(AUTO_UPGRADE_PROJECT, async () => {
@@ -122,16 +114,14 @@ describe("post-app-deploy hook", () => {
 
     expect(getServiceTokenMock).toHaveBeenCalledOnce();
 
-    const lookup = captured.find((request) => request.method === "GET");
-    expect.assert(lookup, "Expected a record lookup request");
-    expect(lookup.headers.get("authorization")).toBe("Bearer service-token");
-    const lookupUrl = new URL(lookup.url);
-    expect(lookupUrl.searchParams.get("workspaceId")).toBe("workspace-id");
-    expect(lookupUrl.searchParams.get("workspaceName")).toBe("workspace-name");
+    // No record lookup: a single POST that carries the workspace natural key.
+    expect(captured.filter((request) => request.method === "GET")).toHaveLength(
+      0,
+    );
 
     const notify = captured.find((request) => request.method === "POST");
     expect.assert(notify, "Expected a notify request");
-    expect(notify.url).toContain("/v1/extensions/extension-1/upgrades:notify");
+    expect(notify.url).toContain("/v1/extensions:notify-upgrade");
     expect(notify.headers.get("authorization")).toBe("Bearer service-token");
     expect(await notify.json()).toEqual({
       metadataId: "test-app",
@@ -146,12 +136,8 @@ describe("post-app-deploy hook", () => {
   test("sends the manual mode from the app config", async () => {
     let notifyBody: unknown;
     fetchMock.mockImplementation(async (input: Request) => {
-      if (input.method === "GET") {
-        return new Response(JSON.stringify(EXTENSION_RECORDS), { status: 200 });
-      }
-
       notifyBody = await input.clone().json();
-      return new Response(null, { status: 202 });
+      return new Response(JSON.stringify(NOTIFY_RESPONSE), { status: 202 });
     });
 
     await withTempProject(MANUAL_UPGRADE_PROJECT, async () => {
@@ -164,16 +150,11 @@ describe("post-app-deploy hook", () => {
     expect(notifyBody).toMatchObject({ mode: "manual" });
   });
 
-  test("soft-skips (does not fail the deploy) when no record matches the deployed app", async () => {
-    fetchMock.mockImplementation(async (input: Request) => {
-      if (input.method === "GET") {
-        return new Response(JSON.stringify([{ extId: "other-app", id: "x" }]), {
-          status: 200,
-        });
-      }
-
-      return new Response(null, { status: 202 });
-    });
+  test("soft-skips (does not fail the deploy) when the workspace has no record", async () => {
+    // The service returns 404 when no record exists for the workspace.
+    fetchMock.mockImplementation(
+      async () => new Response(null, { status: 404 }),
+    );
 
     await withTempProject(MINIMAL_PROJECT, async () => {
       await expect(run()).resolves.toEqual({

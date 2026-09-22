@@ -23,13 +23,7 @@ import { apiServer, setupApiTestLifecycle } from "#test/setup/api";
 import type { NotifyUpgradeRequest } from "#management/cams/upgrade-notify";
 
 const BASE_URL = "https://cams.test";
-const LIST_URL = `${BASE_URL}/v1/extensions`;
-
-const IDENTITY = {
-  extId: "ext-1",
-  workspaceId: "workspace-1",
-  workspaceName: "workspace-name",
-};
+const NOTIFY_URL = `${BASE_URL}/v1/extensions:notify-upgrade`;
 
 const REQUEST: NotifyUpgradeRequest = {
   metadataId: "ext-1",
@@ -45,49 +39,36 @@ setupApiTestLifecycle();
 function createClient() {
   return createUpgradeNotifyClient({
     baseUrl: BASE_URL,
-    identity: IDENTITY,
     token: "service-token",
   });
 }
 
 describe("createUpgradeNotifyClient", () => {
-  test("resolves the record id and posts the notification with the service token", async () => {
+  test("posts the notification with the service token and returns the record id", async () => {
     let capturedAuth: string | null = null;
     let capturedBody: unknown;
-    let capturedListAuth: string | null = null;
 
     apiServer.use(
-      http.get(LIST_URL, ({ request }) => {
-        capturedListAuth = request.headers.get("Authorization");
-        return HttpResponse.json([
-          { extId: "other-app", id: "record-other" },
-          { extId: "ext-1", id: "record-1" },
-        ]);
+      http.post(NOTIFY_URL, async ({ request }) => {
+        capturedAuth = request.headers.get("Authorization");
+        capturedBody = await request.json();
+        return HttpResponse.json(
+          { extensionId: "record-1", id: "run-1" },
+          { status: 202 },
+        );
       }),
-      http.post(
-        `${BASE_URL}/v1/extensions/record-1/upgrades:notify`,
-        async ({ request }) => {
-          capturedAuth = request.headers.get("Authorization");
-          capturedBody = await request.json();
-          return new HttpResponse(null, { status: 202 });
-        },
-      ),
     );
 
-    const client = createClient();
-    const result = await client.notify(REQUEST);
+    const result = await createClient().notify(REQUEST);
 
     expect(result).toEqual({ extensionId: "record-1" });
-    expect(capturedListAuth).toBe("Bearer service-token");
     expect(capturedAuth).toBe("Bearer service-token");
     expect(capturedBody).toEqual(REQUEST);
   });
 
-  test("throws CamsRecordNotFoundError when no record matches the app", async () => {
+  test("throws CamsRecordNotFoundError when the workspace has no record (404)", async () => {
     apiServer.use(
-      http.get(LIST_URL, () =>
-        HttpResponse.json([{ extId: "other-app", id: "record-other" }]),
-      ),
+      http.post(NOTIFY_URL, () => new HttpResponse(null, { status: 404 })),
     );
 
     await expect(createClient().notify(REQUEST)).rejects.toBeInstanceOf(
@@ -95,9 +76,9 @@ describe("createUpgradeNotifyClient", () => {
     );
   });
 
-  test("throws CamsUnavailableError when the lookup fails", async () => {
+  test("throws CamsUnavailableError when the service errors (5xx)", async () => {
     apiServer.use(
-      http.get(LIST_URL, () => new HttpResponse(null, { status: 500 })),
+      http.post(NOTIFY_URL, () => new HttpResponse(null, { status: 500 })),
     );
 
     await expect(createClient().notify(REQUEST)).rejects.toBeInstanceOf(
@@ -105,15 +86,9 @@ describe("createUpgradeNotifyClient", () => {
     );
   });
 
-  test("throws CamsUnavailableError when the notification is rejected", async () => {
+  test("throws CamsUnavailableError when the notification is rejected (409)", async () => {
     apiServer.use(
-      http.get(LIST_URL, () =>
-        HttpResponse.json([{ extId: "ext-1", id: "record-1" }]),
-      ),
-      http.post(
-        `${BASE_URL}/v1/extensions/record-1/upgrades:notify`,
-        () => new HttpResponse(null, { status: 409 }),
-      ),
+      http.post(NOTIFY_URL, () => new HttpResponse(null, { status: 409 })),
     );
 
     await expect(createClient().notify(REQUEST)).rejects.toBeInstanceOf(
