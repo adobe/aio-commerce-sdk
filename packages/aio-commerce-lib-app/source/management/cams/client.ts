@@ -20,6 +20,7 @@ import {
 
 import type { ImsAuthProvider } from "@adobe/aio-commerce-lib-auth";
 import type AioLogger from "@adobe/aio-lib-core-logging";
+import type { Options } from "ky";
 
 /** Identifiers that locate and guard the app's record in the service. */
 export type CamsExtensionIdentity = {
@@ -65,10 +66,11 @@ export type CamsClientOptions = {
   logger: ReturnType<typeof AioLogger>;
 
   /**
-   * Backoff schedule (ms) for retrying a transient adopt failure; its length is
-   * the retry count. Defaults to {@link DEFAULT_ADOPT_RETRY_DELAYS_MS}.
+   * `ky` options merged onto the client's defaults (via `ky.extend`), so callers
+   * can tune retry, timeout, or add hooks. The built-in auth `beforeRequest` hook
+   * is always preserved.
    */
-  retryDelaysMs?: readonly number[];
+  fetchOptions?: Options;
 };
 
 /**
@@ -97,15 +99,31 @@ export type CamsClient = {
   patchConfig: (appConfig: unknown) => Promise<void>;
 };
 
-/** Default backoff schedule (ms) for retrying a transient adopt failure. */
-export const DEFAULT_ADOPT_RETRY_DELAYS_MS = [250, 500, 1000] as const;
+/** Backoff schedule (ms) applied to each successive retry, in order. */
+export const DEFAULT_RETRY_DELAYS_MS = [250, 500, 1000] as const;
+
+/** Methods eligible for retry — includes the non-idempotent POST/PATCH this client uses. */
+const RETRYABLE_METHODS = [
+  "get",
+  "post",
+  "patch",
+  "put",
+  "head",
+  "delete",
+] as const;
+
+/** Transient response codes retried on every call. */
+const TRANSIENT_STATUS_CODES = [408, 429, 500, 502, 503, 504] as const;
 
 const HTTP_NOT_FOUND = 404;
 const HTTP_CONFLICT = 409;
 const HTTP_SERVER_ERROR_MIN = 500;
 
-const sleep = (ms: number) =>
-  new Promise<void>((resolve) => setTimeout(resolve, ms));
+/** Backoff delay for the n-th retry (`attemptCount` is 1-based). */
+const retryDelay = (attemptCount: number) =>
+  DEFAULT_RETRY_DELAYS_MS.at(attemptCount - 1) ??
+  DEFAULT_RETRY_DELAYS_MS.at(-1) ??
+  0;
 
 /** Reads a JSON body defensively, returning `undefined` on any failure. */
 async function readJsonBody(
@@ -160,15 +178,9 @@ async function mapAdoptError(error: unknown): Promise<Error> {
  * S2S auth attached on every request.
  */
 export function createCamsClient(options: CamsClientOptions): CamsClient {
-  const {
-    authProvider,
-    baseUrl,
-    identity,
-    logger,
-    retryDelaysMs = DEFAULT_ADOPT_RETRY_DELAYS_MS,
-  } = options;
+  const { authProvider, baseUrl, identity, logger, fetchOptions } = options;
 
-  const http = ky.create({
+  const baseHttp = ky.create({
     hooks: {
       beforeRequest: [
         async (request) => {
@@ -180,17 +192,36 @@ export function createCamsClient(options: CamsClientOptions): CamsClient {
           }
         },
       ],
+      beforeRetry: [
+        ({ retryCount }) => {
+          logger.debug(
+            `Retrying Commerce App Management Service request (attempt ${retryCount})`,
+          );
+        },
+      ],
     },
     prefixUrl: baseUrl,
-    // Own the retry loop so we can distinguish retryable (404/5xx) from terminal
-    // (409) responses; ky's built-in retry cannot inspect the problem+json body.
-    retry: 0,
+    retry: {
+      delay: retryDelay,
+      limit: DEFAULT_RETRY_DELAYS_MS.length,
+      methods: [...RETRYABLE_METHODS],
+      statusCodes: [...TRANSIENT_STATUS_CODES],
+    },
   });
+
+  // `ky.extend` merges the caller's options onto the defaults; hook arrays are
+  // concatenated, so the auth `beforeRequest` hook above is always preserved.
+  const http = fetchOptions ? baseHttp.extend(fetchOptions) : baseHttp;
 
   async function adoptOnce(): Promise<string> {
     try {
       const response = await http.post("v1/extensions:adopt", {
         json: identity,
+        // Adopt also retries 404 while the just-created record becomes visible.
+        // ky deep-merges this onto the base retry (concatenating statusCodes), so
+        // it keeps the shared limit/delay and only adds 404 for this call. A 404
+        // on the owner-gated status/config calls stays terminal.
+        retry: { statusCodes: [HTTP_NOT_FOUND] },
       });
       const body = (await response.json()) as { id: string };
       return body.id;
@@ -199,43 +230,11 @@ export function createCamsClient(options: CamsClientOptions): CamsClient {
     }
   }
 
-  async function adoptWithRetry(): Promise<string> {
-    let lastError: unknown;
-
-    for (let attempt = 0; attempt <= retryDelaysMs.length; attempt += 1) {
-      try {
-        // Retries are a sequential backoff by design — each attempt waits on the
-        // previous one's outcome, so awaiting in the loop is intentional here.
-        // biome-ignore lint/performance/noAwaitInLoops: sequential retry/backoff
-        return await adoptOnce();
-      } catch (error) {
-        lastError = error;
-
-        const isRetryable =
-          error instanceof CamsUnavailableError
-            ? error.retryable
-            : error instanceof CamsRecordNotFoundError;
-
-        if (isRetryable && attempt < retryDelaysMs.length) {
-          logger.debug(
-            `Adopt attempt ${attempt + 1} failed (retryable); retrying`,
-          );
-          await sleep(retryDelaysMs[attempt]);
-          continue;
-        }
-
-        throw error;
-      }
-    }
-
-    throw lastError;
-  }
-
   let adoptedId: Promise<string> | undefined;
 
   function ensureAdopted(): Promise<string> {
     if (!adoptedId) {
-      adoptedId = adoptWithRetry().catch((error: unknown) => {
+      adoptedId = adoptOnce().catch((error: unknown) => {
         // Drop the memoized rejection so a later call can try again.
         adoptedId = undefined;
         throw error;

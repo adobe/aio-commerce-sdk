@@ -52,13 +52,14 @@ const mockAuthProvider: ImsAuthProvider = {
   }),
 };
 
-function createClient(retryDelaysMs: number[] = [0, 0, 0]) {
+function createClient() {
   return createCamsClient({
     authProvider: mockAuthProvider,
     baseUrl: BASE_URL,
+    // Zero the backoff so retry-exhausting tests run instantly.
+    fetchOptions: { retry: { delay: () => 0 } },
     identity: IDENTITY,
     logger: createMockLogger(),
-    retryDelaysMs,
   });
 }
 
@@ -135,7 +136,7 @@ describe("createCamsClient", () => {
         }),
       );
 
-      const client = createClient([0, 0, 0]);
+      const client = createClient();
       await expect(client.ensureAdopted()).rejects.toBeInstanceOf(
         CamsRecordNotFoundError,
       );
@@ -168,7 +169,7 @@ describe("createCamsClient", () => {
         ),
       );
 
-      const client = createClient([0, 0, 0]);
+      const client = createClient();
       await expect(client.ensureAdopted()).rejects.toBeInstanceOf(
         CamsUnavailableError,
       );
@@ -187,7 +188,7 @@ describe("createCamsClient", () => {
         }),
       );
 
-      const client = createClient([0, 0, 0]);
+      const client = createClient();
       await expect(client.ensureAdopted()).rejects.toBeInstanceOf(
         CamsUnavailableError,
       );
