@@ -13,7 +13,7 @@
 import { nonEmptyStringValueSchema } from "@aio-commerce-sdk/common-utils/valibot";
 import * as v from "valibot";
 
-import { ADMIN_UI_ENTITIES } from "#api/lib/acl-resource-id";
+import { ADMIN_UI_GRID_ENTITIES } from "#api/lib/acl-resource-id";
 
 /**
  * Grid identifier sent by Commerce on the `commerce/backend-ui/2` wire contract.
@@ -23,7 +23,7 @@ import { ADMIN_UI_ENTITIES } from "#api/lib/acl-resource-id";
  *
  * @see {@link https://github.com/magento-commerce/adobe-commerce-backend-uix Magento module reference}
  */
-export const GridTypeSchema = v.picklist(ADMIN_UI_ENTITIES);
+export const GridTypeSchema = v.picklist(ADMIN_UI_GRID_ENTITIES);
 
 /**
  * Schema for the JSON body Commerce POSTs to a grid column handler.

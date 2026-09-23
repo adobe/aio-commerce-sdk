@@ -102,7 +102,7 @@ export function getCustomAclResourceId(
  *
  * Single source of truth for the entity vocabulary: `GridTypeSchema` derives its picklist from it.
  */
-export const ADMIN_UI_ENTITIES = [
+export const ADMIN_UI_GRID_ENTITIES = [
   "order",
   "product",
   "customer",
@@ -112,10 +112,10 @@ export const ADMIN_UI_ENTITIES = [
 ] as const;
 
 /** Commerce entity an Admin UI component is attached to. */
-export type AdminUiEntity = (typeof ADMIN_UI_ENTITIES)[number];
+export type AdminUiEntity = (typeof ADMIN_UI_GRID_ENTITIES)[number];
 
 /**
- * Entities that support mass actions — a subset of `ADMIN_UI_ENTITIES`. Mass actions, unlike
+ * Entities that support mass actions — a subset of `ADMIN_UI_GRID_ENTITIES`. Mass actions, unlike
  * grid columns, are not available on the invoice, credit memo, or shipment grids.
  * `MassActionGridTypeSchema` derives its picklist from it.
  */
