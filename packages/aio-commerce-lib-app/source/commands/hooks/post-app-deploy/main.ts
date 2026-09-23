@@ -10,7 +10,6 @@
  * governing permissions and limitations under the License.
  */
 
-import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
 import {
   getAioCliEnv,
   getAioProjectContext,
@@ -151,19 +150,4 @@ export async function run() {
   }
 
   return result;
-}
-
-/** Runs the post-app-deploy hook. */
-export async function exec() {
-  try {
-    await run();
-  } catch (error) {
-    if (error instanceof CommerceSdkValidationError) {
-      consola.error(error.display());
-    } else {
-      consola.error(error);
-    }
-
-    process.exit(1);
-  }
 }

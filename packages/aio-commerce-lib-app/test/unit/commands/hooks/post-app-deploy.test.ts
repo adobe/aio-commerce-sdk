@@ -53,7 +53,7 @@ vi.mock("consola/utils", () => ({
   colors: { cyan: (value: string) => value },
 }));
 
-import { exec, run } from "#commands/hooks/post-app-deploy/main";
+import { run } from "#commands/hooks/post-app-deploy/main";
 import { createMockConfig } from "#test/fixtures/config";
 import {
   MINIMAL_PROJECT,
@@ -78,10 +78,6 @@ const project = {
 };
 
 describe("post-app-deploy hook", () => {
-  const processExitMock = vi
-    .spyOn(process, "exit")
-    .mockImplementation(() => undefined as never);
-
   beforeEach(() => {
     vi.clearAllMocks();
     vi.stubGlobal("fetch", fetchMock);
@@ -297,14 +293,15 @@ describe("post-app-deploy hook", () => {
     });
   });
 
-  test("exits when the upgrade endpoint fails", async () => {
+  test("rejects when the upgrade endpoint fails", async () => {
     fetchMock.mockResolvedValue(
       new Response(JSON.stringify({ message: "Upgrade planning is blocked" }), {
         status: 409,
       }),
     );
 
-    await withTempProject(MINIMAL_PROJECT, exec);
-    expect(processExitMock).toHaveBeenCalledWith(1);
+    await withTempProject(MINIMAL_PROJECT, async () => {
+      await expect(run()).rejects.toThrow("HTTP 409");
+    });
   });
 });

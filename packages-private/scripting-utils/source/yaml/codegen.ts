@@ -15,12 +15,6 @@ import { writeFile } from "node:fs/promises";
 import { Document, isMap, YAMLMap, YAMLSeq } from "yaml";
 
 import {
-  appendCommand,
-  detectPackageManager,
-  getExecCommand,
-  getProjectRootDirectory,
-} from "#project";
-import {
   getExistingInputs,
   getExistingString,
   getOrCreateMap,
@@ -54,7 +48,7 @@ export async function createOrUpdateExtConfig(
 
   config.hooks ??= {};
 
-  await buildHooks(extConfigDoc, config.hooks);
+  buildHooks(extConfigDoc, config.hooks);
   if (config.operations !== undefined) {
     buildOperations(extConfigDoc, config.operations);
   }
@@ -258,11 +252,12 @@ function buildRuntimeManifest(extConfig: Document, manifest: RuntimeManifest) {
 }
 
 /**
- * Build the `hooks` section of the `ext.config.yaml` file
+ * Build the `hooks` section of the `ext.config.yaml` file. Each given hook
+ * replaces any previous value, while other hooks are left untouched.
  * @param extConfig - The ext.config.yaml file
- * @param hooks - The hooks to build
+ * @param hooks - The hooks to build, mapping hook names to JavaScript file paths
  */
-async function buildHooks(extConfig: Document, hooks: Record<string, string>) {
+function buildHooks(extConfig: Document, hooks: Record<string, string>) {
   const generatedHooks = `[${Object.keys(hooks).join(", ")}]`;
   const hooksMap = getOrCreateMap(extConfig, ["hooks"], {
     onBeforeCreate: (pair) => {
@@ -271,21 +266,10 @@ async function buildHooks(extConfig: Document, hooks: Record<string, string>) {
     },
   });
 
-  const projectRoot = await getProjectRootDirectory();
-  const packageManager = await detectPackageManager(projectRoot);
-  const execCommand = getExecCommand(packageManager);
-
-  for (const [name, command] of Object.entries(hooks)) {
-    const fullCommand = `${command.replaceAll("$packageExec", execCommand)}`;
-    const prevValue = ((hooksMap.get(name) as string | undefined) ?? "").trim();
-
-    if (prevValue.endsWith("js") || prevValue.endsWith("ts")) {
-      throw new Error(
-        `Conflicting hook definition found. The "${name}" hook needs to be a command, not a script.`,
-      );
-    }
-
-    hooksMap.set(name, appendCommand(prevValue || undefined, fullCommand));
+  // JavaScript file hooks can't be chained, and this also replaces the command
+  // hooks registered by earlier versions.
+  for (const [name, path] of Object.entries(hooks)) {
+    hooksMap.set(name, path);
   }
 }
 

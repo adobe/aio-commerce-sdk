@@ -24,6 +24,9 @@ export const ACTIONS_FOLDER = `actions/${PACKAGE_NAME}`;
 /** The path to the directory containing the generated actions */
 export const GENERATED_ACTIONS_PATH = `${GENERATED_PATH}/${ACTIONS_FOLDER}`;
 
+/** The path to the directory containing the generated App Builder hook files */
+export const GENERATED_HOOKS_PATH = `${GENERATED_PATH}/hooks`;
+
 /** The name of the extension point for extensibility. */
 export const EXTENSIBILITY_EXTENSION_POINT_ID = "commerce/extensibility/1";
 

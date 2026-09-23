@@ -24,6 +24,7 @@ import {
   getExtensionPointFolderPath,
 } from "#commands/constants";
 import { exec, run } from "#commands/hooks/postinstall";
+import { getHookPath } from "#commands/utils";
 import { makeTemplateFiles } from "#test/fixtures/commands";
 import { configWithBusinessConfig } from "#test/fixtures/config";
 import {
@@ -69,6 +70,14 @@ describe("commands/hooks/postinstall", () => {
           );
 
           expect(existsSync(configSchemaPath)).toBe(true);
+
+          for (const hookPath of [
+            getHookPath(EXTENSIBILITY_EXTENSION_POINT_ID, "pre-app-build"),
+            getHookPath(EXTENSIBILITY_EXTENSION_POINT_ID, "post-app-deploy"),
+            getHookPath(CONFIGURATION_EXTENSION_POINT_ID, "pre-app-build"),
+          ]) {
+            expect(existsSync(join(tempDir, hookPath))).toBe(true);
+          }
         },
       );
     });

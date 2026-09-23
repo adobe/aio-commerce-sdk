@@ -25,7 +25,7 @@ describe("createOrUpdateExtConfig", () => {
       const configPath = join(tempDir, "ext.config.yaml");
       const config = {
         hooks: {
-          "pre-app-build": "$packageExec generate-manifest",
+          "pre-app-build": "hooks/pre-app-build.cjs",
         },
         operations: {
           workerProcess: [
@@ -375,10 +375,11 @@ operations:
     );
   });
 
-  test("should throw error when hook value ends with .js", async () => {
+  test("should replace previous hook values", async () => {
     const existingConfig = `
 hooks:
-  pre-app-build: scripts/build.js
+  pre-app-build: npx my-package hooks pre-app-build
+  post-app-build: echo 'existing'
 `;
 
     await withTempFiles(
@@ -391,65 +392,7 @@ hooks:
 
         const config = {
           hooks: {
-            "pre-app-build": "echo 'test'",
-          },
-        };
-
-        await expect(
-          createOrUpdateExtConfig(configPath, config, existingDoc),
-        ).rejects.toThrow(
-          'Conflicting hook definition found. The "pre-app-build" hook needs to be a command, not a script.',
-        );
-      },
-    );
-  });
-
-  test("should throw error when hook value ends with .ts", async () => {
-    const existingConfig = `
-hooks:
-  pre-app-build: scripts/build.ts
-`;
-
-    await withTempFiles(
-      {
-        "ext.config.yaml": existingConfig,
-      },
-      async (tempDir) => {
-        const configPath = join(tempDir, "ext.config.yaml");
-        const existingDoc = parseDocument(existingConfig);
-
-        const config = {
-          hooks: {
-            "pre-app-build": "echo 'test'",
-          },
-        };
-
-        await expect(
-          createOrUpdateExtConfig(configPath, config, existingDoc),
-        ).rejects.toThrow(
-          'Conflicting hook definition found. The "pre-app-build" hook needs to be a command, not a script.',
-        );
-      },
-    );
-  });
-
-  test("should chain hooks when previous value exists", async () => {
-    const existingConfig = `
-hooks:
-  pre-app-build: echo 'existing'
-`;
-
-    await withTempFiles(
-      {
-        "ext.config.yaml": existingConfig,
-      },
-      async (tempDir) => {
-        const configPath = join(tempDir, "ext.config.yaml");
-        const existingDoc = parseDocument(existingConfig);
-
-        const config = {
-          hooks: {
-            "pre-app-build": "echo 'new'",
+            "pre-app-build": "src/.generated/hooks/pre-app-build.cjs",
           },
         };
 
@@ -458,11 +401,10 @@ hooks:
         const fileContent = await readFile(configPath, "utf-8");
         const doc = parseDocument(fileContent);
 
-        const hookValue = doc.getIn(["hooks", "pre-app-build"]);
-        // Should chain the commands with &&
-        expect(hookValue).toContain("echo 'existing'");
-        expect(hookValue).toContain("echo 'new'");
-        expect(hookValue).toContain("&&");
+        expect(doc.getIn(["hooks", "pre-app-build"])).toBe(
+          "src/.generated/hooks/pre-app-build.cjs",
+        );
+        expect(doc.getIn(["hooks", "post-app-build"])).toBe("echo 'existing'");
       },
     );
   });

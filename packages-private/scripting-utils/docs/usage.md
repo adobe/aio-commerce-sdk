@@ -171,7 +171,7 @@ settings.set("enabled", true);
 // Create or update an ext.config.yaml file
 await createOrUpdateExtConfig("ext.config.yaml", {
   hooks: {
-    "post-app-build": "$packageExec my-build-script",
+    "post-app-build": "scripts/post-app-build.js",
   },
   operations: {
     workerProcess: [{ type: "action", impl: "my-package/my-action" }],

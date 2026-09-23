@@ -21,6 +21,7 @@ import {
   getActionsDir,
   getExtConfigPath,
   getGeneratedDir,
+  getHookPath,
   getManifestPath,
   getSchemaPath,
 } from "#commands/utils";
@@ -35,6 +36,14 @@ describe("getGeneratedDir", () => {
   test("returns the .generated directory for the configuration extension", () => {
     expect(getGeneratedDir(CONFIGURATION_EXTENSION_POINT_ID)).toBe(
       "src/commerce-configuration-1/.generated",
+    );
+  });
+});
+
+describe("getHookPath", () => {
+  test("returns the generated hook file path relative to the project root", () => {
+    expect(getHookPath(CONFIGURATION_EXTENSION_POINT_ID, "pre-app-build")).toBe(
+      "src/commerce-configuration-1/.generated/hooks/pre-app-build.cjs",
     );
   });
 });

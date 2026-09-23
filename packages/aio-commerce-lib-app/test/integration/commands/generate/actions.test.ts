@@ -10,7 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { basename, join } from "node:path";
 
@@ -19,6 +19,7 @@ import { basename, join } from "node:path";
 import { withTempFiles } from "@aio-commerce-sdk/scripting-utils/filesystem";
 import { consola } from "consola";
 import { afterEach, describe, expect, test, vi } from "vitest";
+import { parse, stringify } from "yaml";
 
 import {
   BACKEND_UI_V2_EXTENSION_POINT_ID,
@@ -32,7 +33,12 @@ import {
   WEB_SOURCE_DEPENDENCIES,
   WEB_SOURCE_DEV_DEPENDENCIES,
 } from "#commands/generate/web-src";
-import { getManifestPath, getRuntimeAppConfigPath } from "#commands/utils";
+import {
+  getExtConfigPath,
+  getHookPath,
+  getManifestPath,
+  getRuntimeAppConfigPath,
+} from "#commands/utils";
 import {
   dynamicOptionsConfigFile,
   dynamicOptionsConfigFileTs,
@@ -447,7 +453,9 @@ describe("commands/generate/actions", () => {
           expect(existsSync(extConfigPath)).toBe(true);
 
           const content = await readFile(extConfigPath, "utf-8");
-          expect(content).toContain("backend-ui/2");
+          expect(content).toContain(
+            getHookPath(BACKEND_UI_V2_EXTENSION_POINT_ID, "pre-app-build"),
+          );
           expect(content).toContain("index.html");
           expect(content).toContain("web-src");
           expect(content).not.toContain("workerProcess");
@@ -892,6 +900,85 @@ describe("commands/generate/actions", () => {
       );
     });
 
+    test("writes a CommonJS file for every registered hook and points ext.config.yaml at it", async () => {
+      await withTempFiles(
+        { ...EMPTY_PROJECT, ...makeTemplateFiles() },
+        async (tempDir) => {
+          await run(configWithFullAdminUiV2, tempDir, tempDir);
+
+          const expected = {
+            [BACKEND_UI_V2_EXTENSION_POINT_ID]: {
+              "pre-app-build": 'preAppBuild("backend-ui/2")',
+              "pre-app-dev": "preAppDev()",
+              "pre-app-run": "preAppRun()",
+            },
+            [EXTENSIBILITY_EXTENSION_POINT_ID]: {
+              "post-app-deploy": "postAppDeploy()",
+              "pre-app-build": 'preAppBuild("extensibility/1")',
+            },
+          };
+
+          for (const [extensionPointId, hooks] of Object.entries(expected)) {
+            const extConfig = parse(
+              readFileSync(
+                join(tempDir, getExtConfigPath(extensionPointId)),
+                "utf-8",
+              ),
+            );
+
+            for (const [hookName, handlerCall] of Object.entries(hooks)) {
+              const hookPath = getHookPath(extensionPointId, hookName);
+              expect(extConfig.hooks[hookName]).toBe(hookPath);
+
+              const content = readFileSync(join(tempDir, hookPath), "utf-8");
+              expect(content).toContain(
+                `module.exports = require("@adobe/aio-commerce-lib-app/cli").${handlerCall};`,
+              );
+            }
+          }
+        },
+      );
+    });
+
+    test("replaces command hooks registered by earlier versions", async () => {
+      const extConfigPath = getExtConfigPath(EXTENSIBILITY_EXTENSION_POINT_ID);
+
+      await withTempFiles(
+        {
+          ...EMPTY_PROJECT,
+          ...makeTemplateFiles(),
+          [extConfigPath]: stringify({
+            hooks: {
+              "post-app-build": "echo custom",
+              "post-app-deploy":
+                "EXTENSION=extensibility/1 npx aio-commerce-lib-app hooks post-app-deploy",
+              "pre-app-build":
+                "EXTENSION=extensibility/1 npx aio-commerce-lib-app hooks pre-app-build",
+            },
+          }),
+        },
+        async (tempDir) => {
+          await run(minimalValidConfig, tempDir, tempDir);
+
+          const { hooks } = parse(
+            await readFile(join(tempDir, extConfigPath), "utf-8"),
+          );
+
+          expect(hooks).toEqual({
+            "post-app-build": "echo custom",
+            "post-app-deploy": getHookPath(
+              EXTENSIBILITY_EXTENSION_POINT_ID,
+              "post-app-deploy",
+            ),
+            "pre-app-build": getHookPath(
+              EXTENSIBILITY_EXTENSION_POINT_ID,
+              "pre-app-build",
+            ),
+          });
+        },
+      );
+    });
+
     test("generates ext.config.yaml for backend-ui/2 when adminUi is configured", async () => {
       await withTempFiles(
         { ...EMPTY_PROJECT, ...makeTemplateFiles() },
@@ -915,7 +1002,9 @@ describe("commands/generate/actions", () => {
           expect(existsSync(legacyRegistrationPath)).toBe(false);
 
           const content = await readFile(extConfigPath, "utf-8");
-          expect(content).toContain("backend-ui/2");
+          expect(content).toContain(
+            getHookPath(BACKEND_UI_V2_EXTENSION_POINT_ID, "pre-app-build"),
+          );
           expect(content).toContain("index.html");
           expect(content).not.toContain("registration");
         },

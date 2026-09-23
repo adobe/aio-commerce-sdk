@@ -13,7 +13,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
-import { beforeEach, describe, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 import { setNodeEnv, syncImsCredentials } from "#env";
 import { withTempFiles } from "#filesystem/temp";
@@ -361,6 +361,21 @@ describe("syncImsCredentials", () => {
 });
 
 describe("setNodeEnv", () => {
+  beforeEach(() => {
+    vi.stubEnv("NODE_ENV", "test");
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  test("should set NODE_ENV in the current process", async () => {
+    await withTempFiles({ "package.json": "{}" }, async (tempDir) => {
+      await setNodeEnv("production", tempDir);
+      expect(process.env.NODE_ENV).toBe("production");
+    });
+  });
+
   test("should create the .env file when it does not exist", async () => {
     await withTempFiles({ "package.json": "{}" }, async (tempDir) => {
       await setNodeEnv("production", tempDir);

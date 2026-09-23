@@ -37,6 +37,7 @@
   "exports": {
     ".": "./source/index.ts",
     "./actions/*": "./source/actions/*/index.ts",
+    "./cli": "./source/cli/index.ts",
     "./config": {
       "browser": "./source/config/index.browser.ts",
       "default": "./source/config/index.node.ts"
@@ -161,6 +162,16 @@
         "require": {
           "types": "./dist/cjs/actions/*/index.d.cts",
           "default": "./dist/cjs/actions/*/index.cjs"
+        }
+      },
+      "./cli": {
+        "import": {
+          "types": "./dist/es/cli/index.d.mts",
+          "default": "./dist/es/cli/index.mjs"
+        },
+        "require": {
+          "types": "./dist/cjs/cli/index.d.cts",
+          "default": "./dist/cjs/cli/index.cjs"
         }
       },
       "./config": {

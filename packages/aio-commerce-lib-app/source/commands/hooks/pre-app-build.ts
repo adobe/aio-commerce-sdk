@@ -10,12 +10,10 @@
  * governing permissions and limitations under the License.
  */
 
-import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
 import {
   setNodeEnv,
   syncImsCredentials,
 } from "@aio-commerce-sdk/scripting-utils/env";
-import { getProjectRootDirectory } from "@aio-commerce-sdk/scripting-utils/project";
 import consola from "consola";
 
 import {
@@ -42,18 +40,22 @@ import { hasBackendUiV2Components } from "#config/index";
 
 import type { ExtConfig } from "@aio-commerce-sdk/scripting-utils/yaml/types";
 
-type Extension = "extensibility/1" | "configuration/1" | "backend-ui/2";
+/** The extensions that register a `pre-app-build` hook. */
+export type Extension = "extensibility/1" | "configuration/1" | "backend-ui/2";
 
 /**
  * Runs the pre-app-build hook for the given extension.
  * @param extension - The extension to run the hook for.
  * @param projectRoot - Resolved project root containing extension files.
  * @param templatesDir - Directory containing action templates.
+ * @param options - Hook options.
+ * @param options.isDevSession - Whether the build runs within `aio app run` or `aio app dev`, which keeps `NODE_ENV` untouched.
  */
 export async function run(
   extension: Extension,
   projectRoot: string,
   templatesDir = TEMPLATES_DIR,
+  { isDevSession = false } = {},
 ) {
   const appManifest = await loadAppManifest(projectRoot);
   await prepareRuntimeAppConfigModule(appManifest, projectRoot);
@@ -120,34 +122,14 @@ export async function run(
           templatesDir,
         );
 
-        // Ship React's production build for the deployed web bundle.
-        await setNodeEnv("production", projectRoot);
+        if (!isDevSession) {
+          // Ship React's production build for the deployed web bundle.
+          await setNodeEnv("production", projectRoot);
+        }
       }
     }
     return;
   }
 
   throw new Error(`Unsupported extension: ${extension}`);
-}
-
-/** Runs the pre-app-build hook */
-export async function exec() {
-  consola.debug("Running lib-app pre-app-build hook");
-  const rawExtension = process.env.EXTENSION;
-
-  try {
-    if (!rawExtension) {
-      throw new Error("EXTENSION environment variable is not set");
-    }
-
-    const projectRoot = await getProjectRootDirectory();
-    await run(rawExtension as Extension, projectRoot);
-  } catch (error) {
-    if (error instanceof CommerceSdkValidationError) {
-      consola.error(error.display());
-    } else {
-      consola.error(error);
-    }
-    process.exit(1);
-  }
 }
