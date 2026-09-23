@@ -1138,7 +1138,7 @@ export async function main(params) {
 
 The data is managed automatically by the SDK during the app association lifecycle: a standalone `association` runtime action (always deployed alongside `app-config`) stores it on association and clears it on unassociation. Apps scaffolded with a version of the SDK that includes this feature have the `association` action wired in from the start — no extra setup beyond your normal deploy.
 
-#### Adopting association in an existing app
+#### Enabling association in an existing app
 
 Apps scaffolded before this feature was introduced do not have the `association` action yet. After upgrading `@adobe/aio-commerce-lib-app`, regenerate the runtime actions and redeploy so the `/association` endpoint exists:
 
