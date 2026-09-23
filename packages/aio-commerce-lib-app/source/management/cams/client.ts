@@ -33,9 +33,19 @@ export type CamsExtensionIdentity = {
   extId: string;
 };
 
+/** Status vocabulary accepted by the Commerce App Management Service. */
+export type CamsAppStatus =
+  | "ASSOCIATED"
+  | "PARTIALLY_INSTALLED"
+  | "INSTALLED"
+  | "UNASSOCIATED"
+  | "UPGRADE_AVAILABLE"
+  | "UPDATING"
+  | "UPDATE_FAILED";
+
 /** A status entry appended to the record's status history. */
 export type CamsStatusUpdate = {
-  status: string;
+  status: CamsAppStatus;
   version?: string;
   error?: { message: string; code?: string };
 };
@@ -51,6 +61,7 @@ export type CamsClientOptions = {
   /** Identifiers for the record this client operates on. */
   identity: CamsExtensionIdentity;
 
+  /** Logger used to trace adopt/status/config calls. */
   logger: ReturnType<typeof AioLogger>;
 
   /**
