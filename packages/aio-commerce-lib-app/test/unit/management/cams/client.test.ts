@@ -19,7 +19,6 @@ import {
   CamsRecordNotFoundError,
   CamsUnavailableError,
 } from "#management/cams/errors";
-import { minimalValidConfig } from "#test/fixtures/config";
 import { apiServer, setupApiTestLifecycle } from "#test/setup/api";
 
 import type { ImsAuthProvider } from "@adobe/aio-commerce-lib-auth";
@@ -212,46 +211,6 @@ describe("createCamsClient", () => {
         CamsUnavailableError,
       );
       await expect(client.ensureAdopted()).resolves.toBe("record-42");
-    });
-  });
-
-  describe("owner-gated writes", () => {
-    test("postStatus adopts first, then posts to the record's status endpoint", async () => {
-      let statusBody: unknown;
-      apiServer.use(
-        http.post(ADOPT_URL, () => HttpResponse.json({ id: "record-42" })),
-        http.post(
-          `${BASE_URL}/v1/extensions/record-42/status`,
-          async ({ request }) => {
-            statusBody = await request.json();
-            return HttpResponse.json({}, { status: 201 });
-          },
-        ),
-      );
-
-      const client = createClient();
-      await client.postStatus({ status: "INSTALLED", version: "1.0.0" });
-
-      expect(statusBody).toEqual({ status: "INSTALLED", version: "1.0.0" });
-    });
-
-    test("patchConfig adopts first, then patches the record", async () => {
-      let patchBody: unknown;
-      apiServer.use(
-        http.post(ADOPT_URL, () => HttpResponse.json({ id: "record-42" })),
-        http.patch(
-          `${BASE_URL}/v1/extensions/record-42`,
-          async ({ request }) => {
-            patchBody = await request.json();
-            return HttpResponse.json({});
-          },
-        ),
-      );
-
-      const client = createClient();
-      await client.patchConfig(minimalValidConfig);
-
-      expect(patchBody).toEqual({ appConfig: minimalValidConfig });
     });
   });
 });

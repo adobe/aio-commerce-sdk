@@ -27,7 +27,6 @@ import {
 import type { ImsAuthProvider } from "@adobe/aio-commerce-lib-auth";
 import type AioLogger from "@adobe/aio-lib-core-logging";
 import type { Options } from "ky";
-import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 
 /** Identifiers that locate and guard the app's record in the service. */
 export type CamsExtensionIdentity = {
@@ -45,23 +44,6 @@ export type CamsExtensionIdentity = {
   extId: string;
 };
 
-/** Status vocabulary accepted by the Commerce App Management Service. */
-export type CamsAppStatus =
-  | "ASSOCIATED"
-  | "PARTIALLY_INSTALLED"
-  | "INSTALLED"
-  | "UNASSOCIATED"
-  | "UPGRADE_AVAILABLE"
-  | "UPDATING"
-  | "UPDATE_FAILED";
-
-/** A status entry appended to the record's status history. */
-export type CamsStatusUpdate = {
-  status: CamsAppStatus;
-  version?: string;
-  error?: { message: string; code?: string };
-};
-
 /** Options for {@link createCamsClient}. */
 export type CamsClientOptions = {
   /** Commerce App Management Service base URL. */
@@ -73,7 +55,7 @@ export type CamsClientOptions = {
   /** Identifiers for the record this client operates on. */
   identity: CamsExtensionIdentity;
 
-  /** Logger used to trace adopt/status/config calls. */
+  /** Logger used to trace adopt calls. */
   logger: ReturnType<typeof AioLogger>;
 
   /**
@@ -84,17 +66,12 @@ export type CamsClientOptions = {
   fetchOptions?: Options;
 };
 
-/**
- * A client for the app's own record in the Commerce App Management Service.
- *
- * Every owner-gated write first ensures the record is adopted (ownership bound to
- * the app's S2S `client_id`), so callers never have to sequence the adopt
- * themselves.
- */
+/** A client for the app's own record in the Commerce App Management Service. */
 export type CamsClient = {
   /**
-   * Idempotently adopts the record (`POST /v1/extensions:adopt`) and returns its
-   * id. Memoized: the adopt runs at most once per client instance.
+   * Idempotently adopts the record (`POST /v1/extensions:adopt`), binding
+   * ownership to the app's S2S `client_id`, and returns its id. Memoized: the
+   * adopt runs at most once per client instance.
    *
    * @throws {CamsAdoptConflictError} The record is owned by another client or the
    *   `extId` does not match — terminal.
@@ -102,12 +79,6 @@ export type CamsClient = {
    * @throws {CamsUnavailableError} The service was unreachable or errored.
    */
   ensureAdopted: () => Promise<string>;
-
-  /** Appends a status entry (`POST /v1/extensions/{id}/status`); adopts first. */
-  postStatus: (update: CamsStatusUpdate) => Promise<void>;
-
-  /** Patches the stored app config (`PATCH /v1/extensions/{id}`); adopts first. */
-  patchConfig: (appConfig: CommerceAppConfigOutputModel) => Promise<void>;
 };
 
 /** Backoff schedule (ms) applied to each successive retry, in order. */
@@ -237,8 +208,7 @@ export function createCamsClient(options: CamsClientOptions): CamsClient {
         json: identity,
         // Adopt also retries 404 while the just-created record becomes visible.
         // ky deep-merges this onto the base retry (concatenating statusCodes), so
-        // it keeps the shared limit/delay and only adds 404 for this call. A 404
-        // on the owner-gated status/config calls stays terminal.
+        // it keeps the shared limit/delay and only adds 404 for this call.
         retry: { statusCodes: [HTTP_NOT_FOUND] },
       });
       return v.parse(AdoptResponseSchema, await response.json()).id;
@@ -260,17 +230,5 @@ export function createCamsClient(options: CamsClientOptions): CamsClient {
     return adoptedId;
   }
 
-  async function postStatus(update: CamsStatusUpdate): Promise<void> {
-    const id = await ensureAdopted();
-    await http.post(`v1/extensions/${id}/status`, { json: update });
-  }
-
-  async function patchConfig(
-    appConfig: CommerceAppConfigOutputModel,
-  ): Promise<void> {
-    const id = await ensureAdopted();
-    await http.patch(`v1/extensions/${id}`, { json: { appConfig } });
-  }
-
-  return { ensureAdopted, patchConfig, postStatus };
+  return { ensureAdopted };
 }

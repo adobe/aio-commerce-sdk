@@ -17,7 +17,8 @@ import * as v from "valibot";
 // A plain `v.object` (not `strictObject`) so unknown keys stay ignored. The
 // `:adopt` identifiers below are optional: an older Commerce App Management
 // frontend won't send them, in which case the action skips adoption and
-// ownership binds later on the first owner-gated write.
+// ownership binds later on a subsequent redeploy's adopt or when the service
+// self-heals ownership on the next upgrade notification.
 /**
  * Request body for POST / — store association data and, when the `:adopt`
  * identifiers are present, adopt the Commerce App Management Service record.

@@ -20,11 +20,7 @@ const { mockSetAssociationData, mockClearAssociationData } = vi.hoisted(() => ({
 const { mockEnsureAdopted, mockCreateCamsClient } = vi.hoisted(() => {
   const ensureAdopted = vi.fn();
   return {
-    mockCreateCamsClient: vi.fn(() => ({
-      ensureAdopted,
-      patchConfig: vi.fn(),
-      postStatus: vi.fn(),
-    })),
+    mockCreateCamsClient: vi.fn(() => ({ ensureAdopted })),
     mockEnsureAdopted: ensureAdopted,
   };
 });

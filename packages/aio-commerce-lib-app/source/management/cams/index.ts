@@ -25,9 +25,7 @@ export {
 } from "./errors";
 
 export type {
-  CamsAppStatus,
   CamsClient,
   CamsClientOptions,
   CamsExtensionIdentity,
-  CamsStatusUpdate,
 } from "./client";

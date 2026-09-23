@@ -18,13 +18,8 @@
  */
 export const CAMS_BASE_URL_INPUT = "AIO_COMMERCE_APP_MANAGEMENT_SERVICE_URL";
 
-// TODO: replace with the public production URL once the Commerce App Management
-// Service is provisioned in production. Until then this points at the stage host
-// (mirrors the same placeholder in the Commerce App Management frontend's
-// `useCommerceAppManagementApi`).
 /** Default Commerce App Management Service base URL used when no override is set. */
-export const DEFAULT_CAMS_BASE_URL =
-  "https://commerce-app-management-dev.adobe.io";
+export const DEFAULT_CAMS_BASE_URL = "https://commerce-app-management.adobe.io";
 
 /** Matches a URL that already carries an `http(s)://` scheme. */
 const URL_SCHEME_PATTERN = /^https?:\/\//i;

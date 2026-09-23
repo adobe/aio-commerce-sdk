@@ -60,9 +60,10 @@ export const router = new HttpActionRouter<AssociationActionContext>().use(
  * Adoption is best-effort: it fails the request only on a terminal ownership
  * conflict. Missing identifiers (e.g. an older Commerce App Management frontend),
  * a missing record, an unreachable service, or missing S2S credentials are
- * logged and swallowed — association still succeeds and ownership binds later on
- * the first owner-gated write. This keeps apps on an older SDK (which never
- * adopt) and mid-migration records working.
+ * logged and swallowed — association still succeeds and ownership binds later,
+ * either on a subsequent redeploy's adopt or when the service self-heals
+ * ownership on the next upgrade notification. This keeps apps on an older SDK
+ * (which never adopt) and mid-migration records working.
  */
 router.post("/", {
   body: AssociationRequestBodySchema,
@@ -73,7 +74,8 @@ router.post("/", {
 
     // The identifiers are optional: an older Commerce App Management frontend
     // won't send them. Only adopt when all three are present; otherwise skip it
-    // and let ownership bind on the first owner-gated write.
+    // and let ownership bind on a later redeploy's adopt or when the service
+    // self-heals ownership on the next upgrade notification.
     if (commerceId && workspaceId && extId) {
       try {
         const camsClient = createCamsClient({
@@ -95,15 +97,19 @@ router.post("/", {
           return conflict(error.message);
         }
 
+        // Ownership isn't bound now, but it isn't lost: the record stays unowned
+        // until the app next reaches the service under its own S2S credentials —
+        // a later redeploy's adopt, or the service self-healing ownership when the
+        // next upgrade notification arrives.
         logger.warn(
-          `Adoption deferred; ownership will bind on the next write: ${
+          `Adoption deferred; ownership will bind on a later redeploy's adopt or on the next upgrade notification: ${
             error instanceof Error ? error.message : String(error)
           }`,
         );
       }
     } else {
       logger.debug(
-        "Adopt identifiers absent; skipping adoption — ownership binds on the first owner-gated write",
+        "Adopt identifiers absent; skipping adoption — ownership binds on a later redeploy's adopt or the next upgrade notification",
       );
     }
 
