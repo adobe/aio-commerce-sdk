@@ -30,6 +30,7 @@ import {
   CONFIGURATION_EXTENSION_POINT_ID,
   EXTENSIBILITY_EXTENSION_POINT_ID,
   GENERATED_ACTIONS_PATH,
+  GENERATED_HOOKS_PATH,
   GENERATED_PATH,
   getExtensionPointFolderPath,
   RUNTIME_APP_CONFIG_FILE,
@@ -211,6 +212,18 @@ export function getActionsDir(extensionPointId: string) {
  */
 export function getActionPath(extensionPointId: string, actionName: string) {
   return join(getActionsDir(extensionPointId), `${actionName}.js`);
+}
+
+/**
+ * Path to the generated file of an App Builder hook, relative to the project root.
+ * @param extensionPointId - The extension point ID, e.g. "commerce/extensibility/1"
+ * @param hookName - The name of the hook, e.g. "pre-app-build"
+ */
+export function getHookPath(extensionPointId: string, hookName: string) {
+  // The aio CLI resolves hook paths from an `$include`d ext.config.yaml relative to the
+  // project root, not to the ext.config.yaml itself. See:
+  // https://developer.adobe.com/app-builder/docs/guides/app_builder_guides/architecture_overview/app-hooks#using-javascript-files
+  return `${getExtensionPointFolderPath(extensionPointId)}/${GENERATED_HOOKS_PATH}/${hookName}.cjs`;
 }
 
 /**

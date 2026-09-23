@@ -12,7 +12,14 @@
 
 import { join } from "node:path";
 
-import { GENERATED_ACTIONS_PATH, PACKAGE_NAME } from "#commands/constants";
+import {
+  BACKEND_UI_V2_EXTENSION_POINT_ID,
+  CONFIGURATION_EXTENSION_POINT_ID,
+  EXTENSIBILITY_EXTENSION_POINT_ID,
+  GENERATED_ACTIONS_PATH,
+  PACKAGE_NAME,
+} from "#commands/constants";
+import { getHookPath } from "#commands/utils";
 import { hasBusinessConfigSchema } from "#config/schema/business-configuration";
 
 import { COMMERCE_ACTION_INPUTS } from "./constants";
@@ -93,10 +100,14 @@ export function buildAppManagementExtConfig(
 ) {
   const extConfig = {
     hooks: {
-      "post-app-deploy":
-        "EXTENSION=extensibility/1 $packageExec aio-commerce-lib-app hooks post-app-deploy",
-      "pre-app-build":
-        "EXTENSION=extensibility/1 $packageExec aio-commerce-lib-app hooks pre-app-build",
+      "post-app-deploy": getHookPath(
+        EXTENSIBILITY_EXTENSION_POINT_ID,
+        "post-app-deploy",
+      ),
+      "pre-app-build": getHookPath(
+        EXTENSIBILITY_EXTENSION_POINT_ID,
+        "pre-app-build",
+      ),
     },
 
     operations: {
@@ -165,8 +176,10 @@ export function buildBusinessConfigurationExtConfig() {
 
   return {
     hooks: {
-      "pre-app-build":
-        "EXTENSION=configuration/1 $packageExec aio-commerce-lib-app hooks pre-app-build",
+      "pre-app-build": getHookPath(
+        CONFIGURATION_EXTENSION_POINT_ID,
+        "pre-app-build",
+      ),
     },
 
     operations: {
@@ -250,12 +263,18 @@ export function buildAdminUiV2ExtConfig(
   const requiresWeb = requiresWebSource(adminUi);
   return {
     hooks: {
-      "pre-app-build":
-        "EXTENSION=backend-ui/2 $packageExec aio-commerce-lib-app hooks pre-app-build",
-      "pre-app-dev":
-        "EXTENSION=backend-ui/2 $packageExec aio-commerce-lib-app hooks pre-app-dev",
-      "pre-app-run":
-        "EXTENSION=backend-ui/2 $packageExec aio-commerce-lib-app hooks pre-app-run",
+      "pre-app-build": getHookPath(
+        BACKEND_UI_V2_EXTENSION_POINT_ID,
+        "pre-app-build",
+      ),
+      "pre-app-dev": getHookPath(
+        BACKEND_UI_V2_EXTENSION_POINT_ID,
+        "pre-app-dev",
+      ),
+      "pre-app-run": getHookPath(
+        BACKEND_UI_V2_EXTENSION_POINT_ID,
+        "pre-app-run",
+      ),
     },
     operations: {
       ...(requiresWeb && {

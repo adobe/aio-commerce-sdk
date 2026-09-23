@@ -105,7 +105,8 @@ This produces the following files, organized by extension point:
 - `src/commerce-extensibility-1/.generated/app.commerce.manifest.json`: a validated JSON representation of your app config
 - `src/commerce-extensibility-1/.generated/actions/app-management/app-config.js`: serves the app configuration to the App Management UI
 - `src/commerce-extensibility-1/.generated/actions/app-management/installation.js`: drives the installation flow, including any custom scripts you define
-- `src/commerce-extensibility-1/ext.config.yaml`: extension manifest with the `pre-app-build` hook
+- `src/commerce-extensibility-1/.generated/hooks/`: the `pre-app-build` and `post-app-deploy` hook files
+- `src/commerce-extensibility-1/ext.config.yaml`: extension manifest with the `pre-app-build` and `post-app-deploy` hooks
 
 Generated application code should import app metadata from `#app.commerce.config`. The alias points to a generated JavaScript compatibility module for every source config format.
 
@@ -114,6 +115,7 @@ Generated application code should import app metadata from `#app.commerce.config
 - `src/commerce-configuration-1/.generated/configuration-schema.json`: a validated JSON representation of your schema, generated for static schemas
 - `src/commerce-configuration-1/.generated/actions/business-configuration/config.js`: handles retrieving and updating configuration values across scopes
 - `src/commerce-configuration-1/.generated/actions/business-configuration/scope-tree.js`: handles scope hierarchy management for both Adobe Commerce and custom external scopes
+- `src/commerce-configuration-1/.generated/hooks/`: the `pre-app-build` hook file
 - `src/commerce-configuration-1/ext.config.yaml`: extension manifest with the `pre-app-build` hook
 
 > [!NOTE]
@@ -123,8 +125,35 @@ Generated Runtime actions always use `.js`.
 
 **`commerce/backend-ui/2`**: Admin UI registration (generated when `adminUi` is defined):
 
-- `src/commerce-backend-ui-2/ext.config.yaml`: extension manifest with the `pre-app-build` hook and `workerProcess` declarations derived from `runtimeAction` values
+- `src/commerce-backend-ui-2/.generated/hooks/`: the `pre-app-build`, `pre-app-run` and `pre-app-dev` hook files
+- `src/commerce-backend-ui-2/ext.config.yaml`: extension manifest with the `pre-app-build`, `pre-app-run` and `pre-app-dev` hooks and `workerProcess` declarations derived from `runtimeAction` values
 - `src/commerce-backend-ui-2/web-src/`: browser scaffold generated when iframe-based Admin UI features require a `view` operation. Existing `web-src/index.html` files are never overwritten. A separate required-file phase runs on every generation to ensure support files are present without replacing existing versions (e.g. a `.babelrc` file).
+
+> [!NOTE]
+> Each hook in a generated `ext.config.yaml` points to its JavaScript file under `.generated/hooks/`, relative to the project root (for example, `pre-app-build: src/commerce-backend-ui-2/.generated/hooks/pre-app-build.cjs`). The aio CLI runs these hooks in its own process, so a failing hook stops the command. Generation replaces the hook values on every run, including hook commands registered by earlier versions, so don't edit them by hand. To run your own code in these hooks, add a hook file as described in [Custom hook code](#custom-hook-code).
+
+##### Custom hook code
+
+Generation owns the `pre-app-build`, `pre-app-run`, `pre-app-dev` and `post-app-deploy` hooks of each generated `ext.config.yaml`. To run your own code in one of them, add a hook file named after the hook. The generated hook runs your file after its own work.
+
+- `hooks/<hook>.<ext>` at the project root runs for every extension point that registers that hook.
+- `src/<extension-point>/hooks/<hook>.<ext>` (for example `src/commerce-backend-ui-2/hooks/pre-app-build.ts`) runs only for that extension point. When it exists, the project root file doesn't run for that extension point.
+
+Hook files can be `.js` or `.ts`, and must export a function as their default export. The function receives the argument the aio CLI passes to the hook, and an object with the ID of the extension point that runs it:
+
+```ts
+// hooks/pre-app-build.ts
+export default async function (
+  config: unknown,
+  { extensionPoint }: { extensionPoint: string },
+) {
+  if (extensionPoint === "commerce/backend-ui/2") {
+    // ...
+  }
+}
+```
+
+If a hook file throws, or a folder has more than one file for the same hook, the command stops with an error. To run code in a hook that generation doesn't register, such as `post-app-build`, set it in `ext.config.yaml` directly. Generation keeps hooks it doesn't own.
 
 > [!NOTE]
 > Generated actions default to the `nodejs:24` runtime. To pin a different runtime, set the `runtime` field on the action in the generated `ext.config.yaml`. Codegen preserves a `runtime` you set there, so it survives regeneration.

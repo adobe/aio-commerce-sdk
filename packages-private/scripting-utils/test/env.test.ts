@@ -13,7 +13,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
-import { beforeEach, describe, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 import { setNodeEnv, syncImsCredentials } from "#env";
 import { withTempFiles } from "#filesystem/temp";
@@ -132,6 +132,29 @@ describe("syncImsCredentials", () => {
         );
       },
     );
+  });
+
+  test("should set synced IMS credentials in the current process", async () => {
+    vi.stubEnv("AIO_COMMERCE_AUTH_IMS_CLIENT_ID", "stale-client-id");
+    vi.mocked(config.get).mockReturnValue([
+      { integration_type: "oauth_server_to_server", name: "my-s2s-context" },
+    ]);
+    vi.mocked(context.get).mockResolvedValue({
+      data: { client_id: "fresh-client-id" },
+      name: "my-s2s-context",
+    });
+
+    await withTempFiles(
+      { ".env": "", "package.json": "{}" },
+      async (tempDir) => {
+        await syncImsCredentials(tempDir);
+        expect(process.env.AIO_COMMERCE_AUTH_IMS_CLIENT_ID).toBe(
+          "fresh-client-id",
+        );
+      },
+    );
+
+    vi.unstubAllEnvs();
   });
 
   test("should update existing IMS credentials when values differ", async () => {
@@ -361,6 +384,21 @@ describe("syncImsCredentials", () => {
 });
 
 describe("setNodeEnv", () => {
+  beforeEach(() => {
+    vi.stubEnv("NODE_ENV", "test");
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  test("should set NODE_ENV in the current process", async () => {
+    await withTempFiles({ "package.json": "{}" }, async (tempDir) => {
+      await setNodeEnv("production", tempDir);
+      expect(process.env.NODE_ENV).toBe("production");
+    });
+  });
+
   test("should create the .env file when it does not exist", async () => {
     await withTempFiles({ "package.json": "{}" }, async (tempDir) => {
       await setNodeEnv("production", tempDir);

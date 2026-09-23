@@ -38,10 +38,6 @@ import {
   minimalValidConfig,
 } from "#test/fixtures/config";
 
-const EXTENSIBILITY_EXTENSION_MATCHER = /EXTENSION=extensibility\/1/;
-const CONFIGURATION_EXTENSION_MATCHER = /EXTENSION=configuration\/1/;
-const BACKEND_UI_V2_EXTENSION_MATCHER = /EXTENSION=backend-ui\/2/;
-
 describe("buildAppManagementExtConfig", () => {
   test("app-config action is included with minimal config", () => {
     const result = buildAppManagementExtConfig(minimalValidConfig);
@@ -137,12 +133,13 @@ describe("buildAppManagementExtConfig", () => {
   });
 
   test.each(["pre-app-build", "post-app-deploy"] as const)(
-    "%s hook uses extensibility/1",
+    "%s hook points to its generated file relative to the project root",
     (hookName) => {
       const result = buildAppManagementExtConfig(configWithCommerceEventing);
-      const hook = result.hooks?.[hookName] ?? "";
 
-      expect(hook).toMatch(EXTENSIBILITY_EXTENSION_MATCHER);
+      expect(result.hooks[hookName]).toBe(
+        `src/commerce-extensibility-1/.generated/hooks/${hookName}.cjs`,
+      );
     },
   );
 
@@ -160,10 +157,17 @@ describe("buildAppManagementExtConfig", () => {
 });
 
 describe("buildAdminUiV2ExtConfig", () => {
-  test("pre-app-build hook uses backend-ui/2", () => {
+  test("hooks point to their generated files relative to the project root", () => {
     const config = buildAdminUiV2ExtConfig(configWithFullAdminUiV2);
-    const preBuildHook = config.hooks?.["pre-app-build"] ?? "";
-    expect(preBuildHook).toMatch(BACKEND_UI_V2_EXTENSION_MATCHER);
+
+    expect(config.hooks).toEqual({
+      "pre-app-build":
+        "src/commerce-backend-ui-2/.generated/hooks/pre-app-build.cjs",
+      "pre-app-dev":
+        "src/commerce-backend-ui-2/.generated/hooks/pre-app-dev.cjs",
+      "pre-app-run":
+        "src/commerce-backend-ui-2/.generated/hooks/pre-app-run.cjs",
+    });
   });
 
   test("declares one workerProcess entry per unique runtimeAction (3 grids)", () => {
@@ -500,11 +504,12 @@ describe("buildBusinessConfigurationExtConfig", () => {
     expect(actions?.["scope-tree"]).toBeDefined();
   });
 
-  test("pre-app-build hook uses configuration/1", () => {
+  test("pre-app-build hook points to its generated file relative to the project root", () => {
     const result = buildBusinessConfigurationExtConfig();
-    const preBuildHook = result.hooks?.["pre-app-build"] ?? "";
 
-    expect(preBuildHook).toMatch(CONFIGURATION_EXTENSION_MATCHER);
+    expect(result.hooks["pre-app-build"]).toBe(
+      "src/commerce-configuration-1/.generated/hooks/pre-app-build.cjs",
+    );
   });
 
   test("all actions are web:yes", () => {

@@ -18,14 +18,16 @@ import { getVariables } from "./build.variables.ts";
 const buildVariables = await getVariables();
 
 export default mergeConfig(baseConfig, {
+  // `TEMPLATES_DIR` resolves next to the chunk that defines it. Both the
+  // `commands` and `cli` entries use it, so it lands in a chunk at the root.
   copy: [
     {
       from: "./source/commands/generate/actions/templates",
-      to: "./dist/cjs/commands",
+      to: "./dist/cjs",
     },
     {
       from: "./source/commands/generate/actions/templates",
-      to: "./dist/es/commands",
+      to: "./dist/es",
     },
   ],
 
@@ -36,6 +38,7 @@ export default mergeConfig(baseConfig, {
   entry: [
     "./source/index.ts",
     "./source/actions/*/index.ts",
+    "./source/cli/index.ts",
     "./source/config/index.browser.ts",
     "./source/config/index.node.ts",
     "./source/commands/index.ts",

@@ -13,13 +13,21 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
-import { describe, expect, test } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 import { run } from "#commands/hooks/pre-app-run";
 import { withTempProject } from "#test/fixtures/project";
 
 describe("commands/hooks/pre-app-run", () => {
-  test("resets NODE_ENV to development in an existing .env", async () => {
+  beforeEach(() => {
+    vi.stubEnv("NODE_ENV", "production");
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  test("resets NODE_ENV to development in the process and an existing .env", async () => {
     await withTempProject(
       { ".env": "NODE_ENV=production\n", "package.json": "{}" },
       async (tempDir) => {
@@ -28,6 +36,7 @@ describe("commands/hooks/pre-app-run", () => {
         const envContents = readFileSync(join(tempDir, ".env"), "utf8");
         expect(envContents).toContain("NODE_ENV=development");
         expect(envContents).not.toContain("NODE_ENV=production");
+        expect(process.env.NODE_ENV).toBe("development");
       },
     );
   });

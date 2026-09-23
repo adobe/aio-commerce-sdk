@@ -45,7 +45,8 @@ type ImsContext = {
 };
 
 /**
- * Replaces or creates an environment variable in a .env file
+ * Replaces or creates an environment variable in a .env file and sets it in the
+ * current process.
  * @param filePath - The path to the .env file
  * @param key - The environment variable key to replace or create
  * @param value - The new value for the environment variable
@@ -76,12 +77,17 @@ export function replaceEnvVar(filePath: string, key: string, value: string) {
   }
 
   writeFileSync(envPath, updatedLines.join("\n"), "utf8");
+
+  // Hooks run inside the aio CLI process, which loaded `.env` at startup and
+  // reloads it later, so both need to agree.
+  process.env[key] = value;
 }
 
 /**
- * Sets the `NODE_ENV` environment variable in the app `.env` file, so the web
- * bundler (Parcel) ships the matching React build. Creates the `.env` if absent.
- * @param mode - The environment mode to write into `NODE_ENV`.
+ * Sets the `NODE_ENV` environment variable in the current process and in the app
+ * `.env` file, so the web bundler (Parcel) ships the matching React build.
+ * Creates the `.env` if absent.
+ * @param mode - The environment mode to set in `NODE_ENV`.
  * @param projectRoot - Resolved project root containing the `.env` file.
  */
 export function setNodeEnv(

@@ -14,14 +14,14 @@ import { existsSync, readFileSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 
-import { afterEach, describe, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 import {
   BACKEND_UI_V2_EXTENSION_POINT_ID,
   CONFIGURATION_EXTENSION_POINT_ID,
   EXTENSIBILITY_EXTENSION_POINT_ID,
 } from "#commands/constants";
-import { exec, run } from "#commands/hooks/pre-app-build";
+import { run } from "#commands/hooks/pre-app-build";
 import {
   getExtConfigPath,
   getManifestPath,
@@ -38,9 +38,7 @@ import {
 } from "#test/fixtures/config";
 import {
   businessConfigActionFile,
-  EMPTY_PROJECT,
   extensibilityActionFile,
-  INVALID_PROJECT,
   MINIMAL_PROJECT,
   makeExtConfigFile,
   makeProjectFiles,
@@ -63,6 +61,10 @@ vi.mock("@aio-commerce-sdk/scripting-utils/env", async (importOriginal) => ({
 }));
 
 describe("commands/hooks/pre-app-build", () => {
+  beforeEach(() => {
+    vi.stubEnv("NODE_ENV", "test");
+  });
+
   afterEach(() => {
     mockSpawnSync.mockClear();
     vi.clearAllMocks();
@@ -198,6 +200,22 @@ describe("commands/hooks/pre-app-build", () => {
 
           const envContents = readFileSync(join(tempDir, ".env"), "utf8");
           expect(envContents).toContain("NODE_ENV=production");
+          expect(process.env.NODE_ENV).toBe("production");
+        },
+      );
+    });
+
+    test("keeps NODE_ENV untouched for backend-ui/2 during a dev session", async () => {
+      await withTempProject(
+        {
+          ...makeProjectFiles(configWithAdminUiMenu),
+          ...makeTemplateFiles(),
+        },
+        async (tempDir) => {
+          await run("backend-ui/2", tempDir, undefined, { isDevSession: true });
+
+          expect(existsSync(join(tempDir, ".env"))).toBe(false);
+          expect(process.env.NODE_ENV).toBe("test");
         },
       );
     });
@@ -259,83 +277,6 @@ describe("commands/hooks/pre-app-build", () => {
           // @ts-expect-error Testing with invalid extension value
           run("unknown/1", tempDir),
         ).rejects.toThrow("Unsupported extension");
-      });
-    });
-  });
-
-  describe("exec", () => {
-    const exitSpy = vi
-      .spyOn(process, "exit")
-      .mockImplementation(() => undefined as never);
-
-    afterEach(() => {
-      exitSpy.mockClear();
-    });
-
-    test("exits with 1 when EXTENSION env var is not set", async () => {
-      await withTempProject(EMPTY_PROJECT, async () => {
-        await exec();
-        expect(exitSpy).toHaveBeenCalledWith(1);
-      });
-    });
-
-    test("runs successfully for extensibility/1", async () => {
-      vi.stubEnv("EXTENSION", "extensibility/1");
-      await withTempProject(
-        {
-          ...MINIMAL_PROJECT,
-          ...makeTemplateFiles(),
-          ...makeExtConfigFile(EXTENSIBILITY_EXTENSION_POINT_ID, [
-            "app-config",
-          ]),
-        },
-        async () => {
-          await exec();
-          expect(exitSpy).not.toHaveBeenCalled();
-        },
-      );
-    });
-
-    test("runs successfully for configuration/1", async () => {
-      vi.stubEnv("EXTENSION", "configuration/1");
-
-      await withTempProject(
-        {
-          ...makeProjectFiles(configWithBusinessConfig),
-          ...makeTemplateFiles(),
-          ...makeExtConfigFile(CONFIGURATION_EXTENSION_POINT_ID, [
-            "config",
-            "scope-tree",
-          ]),
-        },
-        async () => {
-          await exec();
-          expect(exitSpy).not.toHaveBeenCalled();
-        },
-      );
-    });
-
-    test("runs successfully for backend-ui/2", async () => {
-      vi.stubEnv("EXTENSION", "backend-ui/2");
-
-      await withTempProject(
-        {
-          ...makeProjectFiles(configWithAdminUiSingleGrid),
-          ...makeTemplateFiles(),
-        },
-        async () => {
-          await exec();
-          expect(exitSpy).not.toHaveBeenCalled();
-        },
-      );
-    });
-
-    test("exits with 1 when config file is invalid", async () => {
-      vi.stubEnv("EXTENSION", "extensibility/1");
-
-      await withTempProject(INVALID_PROJECT, async () => {
-        await exec();
-        expect(exitSpy).toHaveBeenCalledWith(1);
       });
     });
   });
