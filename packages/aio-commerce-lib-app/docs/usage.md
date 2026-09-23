@@ -688,6 +688,22 @@ export default defineConfig({
         ],
       },
     },
+    newsletter: {
+      gridColumns: {
+        label: "Newsletter engagement data",
+        description:
+          "Adds subscription source to the newsletter subscriber grid",
+        runtimeAction: "newsletter/fetch-subscriber-grid-data",
+        columns: [
+          {
+            id: "subscription_source",
+            label: "Source",
+            type: "string",
+            align: "left",
+          },
+        ],
+      },
+    },
   },
 });
 ```
@@ -704,7 +720,7 @@ export default defineConfig({
   - **align**: one of `"left"`, `"center"`, `"right"`
   - **aclProtected** (optional): boolean — when `true`, Commerce generates a per-app nested ACL resource for this column in the Adobe Commerce User Roles tree, so admins can grant or deny it per role; roles without the resource don't see the column. Derive the id with `getGridColumnAclResourceId` from `@adobe/aio-commerce-lib-admin-ui/api`. See the [`@adobe/aio-commerce-lib-admin-ui` Permission Client documentation](../../aio-commerce-lib-admin-ui/docs/usage.md#permission-client).
 
-Each of `order`, `product`, and `customer` is optional — configure only the grids your application extends.
+Each of `order`, `product`, `customer`, and `newsletter` is optional — configure only the grids your application extends.
 
 ##### Order View Buttons
 

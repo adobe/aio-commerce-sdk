@@ -43,7 +43,12 @@ type AdminUiComponentDescriptor = {
 };
 
 /** Entities that can carry Admin UI components, in a stable diff order. */
-const ADMIN_UI_ENTITIES = ["order", "product", "customer"] as const;
+const ADMIN_UI_ENTITIES = [
+  "order",
+  "product",
+  "customer",
+  "newsletter",
+] as const;
 
 /**
  * Enumerates the individual components declared in an `adminUi` block, keyed by a

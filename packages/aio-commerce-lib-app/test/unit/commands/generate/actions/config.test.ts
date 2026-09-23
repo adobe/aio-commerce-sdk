@@ -24,6 +24,7 @@ import {
 import {
   configWithAdminUiAllGrids,
   configWithAdminUiMenu,
+  configWithAdminUiNewsletterMassActions,
   configWithAdminUiSingleGrid,
   configWithCommerceEventing,
   configWithCustomInstallationSteps,
@@ -166,15 +167,16 @@ describe("buildAdminUiV2ExtConfig", () => {
     expect(preBuildHook).toMatch(BACKEND_UI_V2_EXTENSION_MATCHER);
   });
 
-  test("declares one workerProcess entry per unique runtimeAction (3 grids)", () => {
+  test("declares one workerProcess entry per unique runtimeAction (4 grids)", () => {
     const config = buildAdminUiV2ExtConfig(configWithAdminUiAllGrids);
     const workerImpls =
       config.operations?.workerProcess?.map((op) => op.impl) ?? [];
 
-    expect(workerImpls).toHaveLength(3);
+    expect(workerImpls).toHaveLength(4);
     expect(workerImpls).toContain("orders/fetch-order-grid-data");
     expect(workerImpls).toContain("products/fetch-product-grid-data");
     expect(workerImpls).toContain("customers/fetch-customer-grid-data");
+    expect(workerImpls).toContain("newsletter/fetch-subscriber-grid-data");
   });
 
   test("declares one workerProcess entry for single-grid config", () => {
@@ -442,6 +444,14 @@ describe("collectUniqueRuntimeActions", () => {
     expect(result).toContain("orders/fetch-order-grid-data");
     expect(result).toContain("products/fetch-product-grid-data");
     expect(result).toContain("customers/fetch-customer-grid-data");
+    expect(result).toContain("newsletter/fetch-subscriber-grid-data");
+  });
+
+  test("collects runtimeAction from a worker newsletter mass action", () => {
+    const result = collectUniqueRuntimeActions(
+      configWithAdminUiNewsletterMassActions.adminUi,
+    );
+    expect(result).toContain("newsletter/unsubscribe-subscribers");
   });
 
   test("collects runtimeAction from worker view buttons", () => {
@@ -482,6 +492,29 @@ describe("requiresWebSource", () => {
 
   test("returns false for a grid-only adminUi config", () => {
     expect(requiresWebSource(configWithAdminUiAllGrids.adminUi)).toBe(false);
+  });
+
+  test("returns true for a newsletter view mass action", () => {
+    expect(
+      requiresWebSource({
+        newsletter: {
+          massActions: [
+            {
+              id: "review-subscribers",
+              label: "Review",
+              path: "#/review-subscribers",
+              type: "view",
+            },
+          ],
+        },
+      }),
+    ).toBe(true);
+  });
+
+  test("returns false for a worker-only newsletter mass action", () => {
+    expect(
+      requiresWebSource(configWithAdminUiNewsletterMassActions.adminUi),
+    ).toBe(false);
   });
 });
 

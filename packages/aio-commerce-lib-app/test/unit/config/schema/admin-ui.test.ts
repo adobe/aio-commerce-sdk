@@ -27,6 +27,8 @@ import {
   configWithAdminUiAllGrids,
   configWithAdminUiEmptyBlock,
   configWithAdminUiMenu,
+  configWithAdminUiNewsletterGrid,
+  configWithAdminUiNewsletterMassActions,
   configWithFullAdminUiV2,
   configWithViewMassActions,
   configWithWorkerMassActions,
@@ -37,6 +39,14 @@ import {
 // actions) — both predicates report these as present.
 const backendUiV2ComponentCases = [
   { config: configWithAdminUiAllGrids, label: "grid columns for all entities" },
+  {
+    config: configWithAdminUiNewsletterGrid,
+    label: "newsletter grid columns only",
+  },
+  {
+    config: configWithAdminUiNewsletterMassActions,
+    label: "newsletter mass actions only",
+  },
   { config: configWithAdminUiMenu, label: "menu only" },
   { config: configWithViewMassActions, label: "view mass actions" },
   { config: configWithWorkerMassActions, label: "worker mass actions" },
@@ -192,11 +202,52 @@ describe("AdminUiSchema", () => {
       }
     });
 
-    test("all three grids configured", () => {
+    test("grids configured for all entities", () => {
       const result = v.safeParse(
         AdminUiSchema,
         configWithAdminUiAllGrids.adminUi,
       );
+      expect(result.success).toBe(true);
+    });
+
+    test("newsletter grid configured (grid columns only)", () => {
+      const result = v.safeParse(AdminUiSchema, {
+        newsletter: {
+          gridColumns: {
+            columns: [
+              { align: "left", id: "col", label: "Col", type: "string" },
+            ],
+            description: "Adds a column",
+            label: "Newsletter grid",
+            runtimeAction: "newsletter/fetch",
+          },
+        },
+      });
+      expect(result.success).toBe(true);
+    });
+
+    test("newsletter grid columns and mass actions configured together", () => {
+      const result = v.safeParse(AdminUiSchema, {
+        newsletter: {
+          gridColumns: {
+            columns: [
+              { align: "left", id: "col", label: "Col", type: "string" },
+            ],
+            description: "Adds a column",
+            label: "Newsletter grid",
+            runtimeAction: "newsletter/fetch",
+          },
+          massActions: [
+            {
+              id: "unsubscribe",
+              label: "Unsubscribe",
+              runtimeAction: "newsletter/unsubscribe",
+              type: "worker",
+            },
+            { id: "review", label: "Review", path: "#/review", type: "view" },
+          ],
+        },
+      });
       expect(result.success).toBe(true);
     });
 

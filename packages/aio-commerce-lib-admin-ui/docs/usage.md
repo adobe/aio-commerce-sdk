@@ -72,7 +72,7 @@ import { parseGridRequest } from "@adobe/aio-commerce-lib-admin-ui/grid-columns"
 
 export async function main(params: unknown) {
   const { requestId, gridType, ids } = parseGridRequest(params);
-  // gridType is typed as "order" | "product" | "customer"
+  // gridType is typed as "order" | "product" | "customer" | "newsletter"
   // ids is string[]
   // ...
 }
@@ -185,7 +185,7 @@ import { parseMassActionRequest } from "@adobe/aio-commerce-lib-admin-ui/mass-ac
 
 export async function main(params: unknown) {
   const { requestId, gridType, selectedIds } = parseMassActionRequest(params);
-  // gridType is "order" | "product" | "customer"
+  // gridType is "order" | "product" | "customer" | "newsletter"
   // selectedIds is string[] with at least one entry
 }
 ```
@@ -382,7 +382,7 @@ const allowed = await permissionClient.check(
 
 #### Resource ids for grid columns, view buttons, and mass actions
 
-The same hierarchical scheme extends to the other Admin UI components. Each helper returns the **leaf** id for a single protected item, nested under its entity (`order` / `product` / `customer`) and item-type group in the Commerce ACL tree:
+The same hierarchical scheme extends to the other Admin UI components. Each helper returns the **leaf** id for a single protected item, nested under its entity (`order` / `product` / `customer` / `newsletter`) and item-type group in the Commerce ACL tree:
 
 - `getGridColumnAclResourceId(metadataId, entity, columnId)` — a grid column, where `columnId` is its `adminUi.<entity>.gridColumns.columns[].id`.
 - `getMassActionAclResourceId(metadataId, entity, actionId)` — a mass action, where `actionId` is its `adminUi.<entity>.massActions[].id`.
@@ -409,7 +409,7 @@ Like the menu helper, each segment is sanitized independently and a blank `metad
 
 The resource-id helpers are designed to be used together with the request/response builders and the permission client inside a single runtime action. A typical handler parses the incoming request, derives the leaf resource id for the item that was invoked, gates the work behind `require()`, and then returns the matching response envelope.
 
-The example below is a mass action worker. Note how `gridType` from the parsed request flows directly into `getMassActionAclResourceId` as the `entity` segment — the builders and the id helpers share the same `order` / `product` / `customer` vocabulary, so they compose without extra mapping:
+The example below is a mass action worker. Note how `gridType` from the parsed request flows directly into `getMassActionAclResourceId` as the `entity` segment — the builders and the id helpers share the same `order` / `product` / `customer` / `newsletter` vocabulary, so they compose without extra mapping:
 
 ```typescript
 import {
@@ -450,7 +450,7 @@ export async function main(params: RuntimeActionParams) {
   const permissionClient = getAdminUiPermissionClient({ httpClient });
 
   // 3. Derive the leaf resource id for THIS action and require it.
-  //    `gridType` ("order" | "product" | "customer") is the entity segment.
+  //    `gridType` ("order" | "product" | "customer" | "newsletter") is the entity segment.
   const resource = getMassActionAclResourceId(APP_ID, gridType, ACTION_ID);
   try {
     await permissionClient.require(resource);

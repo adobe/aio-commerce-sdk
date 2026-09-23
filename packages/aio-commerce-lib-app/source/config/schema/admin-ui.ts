@@ -187,9 +187,18 @@ const MassActionsSchema = v.pipe(
   ),
 );
 
-const AdminUiOrderSchema = v.object({
+/**
+ * Grid columns and mass actions — the components every Commerce entity supports.
+ * `product`, `customer`, and `newsletter` use this shape as-is; `order` extends it
+ * with view buttons.
+ */
+const AdminUiEntitySchema = v.object({
   gridColumns: v.optional(GridColumnsSchema),
   massActions: v.optional(MassActionsSchema),
+});
+
+const AdminUiOrderSchema = v.object({
+  ...AdminUiEntitySchema.entries,
   viewButtons: v.optional(
     v.pipe(
       v.array(OrderViewButtonSchema),
@@ -199,16 +208,6 @@ const AdminUiOrderSchema = v.object({
       ),
     ),
   ),
-});
-
-const AdminUiProductSchema = v.object({
-  gridColumns: v.optional(GridColumnsSchema),
-  massActions: v.optional(MassActionsSchema),
-});
-
-const AdminUiCustomerSchema = v.object({
-  gridColumns: v.optional(GridColumnsSchema),
-  massActions: v.optional(MassActionsSchema),
 });
 
 const MenuIdSchema = v.pipe(
@@ -333,10 +332,11 @@ const AdminUiAclSchema = v.pipe(
  */
 export const AdminUiSchema = v.object({
   acl: v.optional(AdminUiAclSchema),
-  customer: v.optional(AdminUiCustomerSchema),
+  customer: v.optional(AdminUiEntitySchema),
   menu: v.optional(MenuSchema),
+  newsletter: v.optional(AdminUiEntitySchema),
   order: v.optional(AdminUiOrderSchema),
-  product: v.optional(AdminUiProductSchema),
+  product: v.optional(AdminUiEntitySchema),
 });
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -440,7 +440,9 @@ export function hasBackendUiV2Components<T extends AnyCommerceAppConfig>(
       adminUi.product?.gridColumns ||
       adminUi.product?.massActions?.length ||
       adminUi.customer?.gridColumns ||
-      adminUi.customer?.massActions?.length,
+      adminUi.customer?.massActions?.length ||
+      adminUi.newsletter?.gridColumns ||
+      adminUi.newsletter?.massActions?.length,
   );
 }
 

@@ -18,7 +18,12 @@ import * as v from "valibot";
  *
  * @see {@link https://github.com/magento-commerce/adobe-commerce-backend-uix Magento module reference}
  */
-export const GridTypeSchema = v.picklist(["order", "product", "customer"]);
+export const GridTypeSchema = v.picklist([
+  "order",
+  "product",
+  "customer",
+  "newsletter",
+]);
 
 /**
  * Schema for the JSON body Commerce POSTs to a grid column handler.

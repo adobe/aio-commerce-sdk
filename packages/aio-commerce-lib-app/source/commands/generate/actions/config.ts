@@ -196,9 +196,9 @@ export function buildBusinessConfigurationExtConfig() {
 export function collectUniqueRuntimeActions(
   adminUi: AdminUi | undefined,
 ): string[] {
-  const entities = (["order", "product", "customer"] as const).map(
-    (key) => adminUi?.[key],
-  );
+  const entities = (
+    ["order", "product", "customer", "newsletter"] as const
+  ).map((key) => adminUi?.[key]);
   const gridRuntimeActions = entities
     .map((entity) => entity?.gridColumns?.runtimeAction)
     .filter((action): action is string => action !== undefined);
@@ -228,9 +228,9 @@ export function requiresWebSource(adminUi: AdminUi | undefined): boolean {
   ) {
     return true;
   }
-  const entities = (["order", "product", "customer"] as const).map(
-    (key) => adminUi?.[key],
-  );
+  const entities = (
+    ["order", "product", "customer", "newsletter"] as const
+  ).map((key) => adminUi?.[key]);
   return entities
     .flatMap((entity) => entity?.massActions ?? [])
     .some((action) => action.type === "view");

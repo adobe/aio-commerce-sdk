@@ -95,4 +95,4 @@ export function getCustomAclResourceId(
 }
 
 /** Commerce entity an Admin UI component is attached to. */
-export type AdminUiEntity = "order" | "product" | "customer";
+export type AdminUiEntity = "order" | "product" | "customer" | "newsletter";

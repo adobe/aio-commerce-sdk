@@ -21,6 +21,7 @@ export const MassActionGridTypeSchema = v.picklist([
   "order",
   "product",
   "customer",
+  "newsletter",
 ]);
 
 /**

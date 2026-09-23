@@ -27,7 +27,7 @@ describe("getMassActionAclResourceId", () => {
     );
   });
 
-  it("supports product and customer entities", () => {
+  it("supports product, customer, and newsletter entities", () => {
     expect(
       getMassActionAclResourceId("acme-promotions", "product", "flag-review"),
     ).toBe(
@@ -37,6 +37,15 @@ describe("getMassActionAclResourceId", () => {
       getMassActionAclResourceId("acme-promotions", "customer", "assign-tier"),
     ).toBe(
       "Magento_CommerceBackendUix::adminuisdk_app_acme_promotions_customer_massactions_assign_tier",
+    );
+    expect(
+      getMassActionAclResourceId(
+        "acme-promotions",
+        "newsletter",
+        "unsubscribe",
+      ),
+    ).toBe(
+      "Magento_CommerceBackendUix::adminuisdk_app_acme_promotions_newsletter_massactions_unsubscribe",
     );
   });
 

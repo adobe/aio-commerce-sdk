@@ -27,7 +27,7 @@ describe("getGridColumnAclResourceId", () => {
     );
   });
 
-  it("supports product and customer entities", () => {
+  it("supports product, customer, and newsletter entities", () => {
     expect(
       getGridColumnAclResourceId("acme-promotions", "product", "approval-req"),
     ).toBe(
@@ -37,6 +37,11 @@ describe("getGridColumnAclResourceId", () => {
       getGridColumnAclResourceId("acme-promotions", "customer", "Tier"),
     ).toBe(
       "Magento_CommerceBackendUix::adminuisdk_app_acme_promotions_customer_gridcolumns_tier",
+    );
+    expect(
+      getGridColumnAclResourceId("acme-promotions", "newsletter", "source"),
+    ).toBe(
+      "Magento_CommerceBackendUix::adminuisdk_app_acme_promotions_newsletter_gridcolumns_source",
     );
   });
 

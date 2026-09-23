@@ -24,7 +24,7 @@ const VALID_REQUEST = {
 };
 
 describe("parseGridRequest", () => {
-  it.each(["order", "product", "customer"] satisfies GridType[])(
+  it.each(["order", "product", "customer", "newsletter"] satisfies GridType[])(
     "accepts gridType %s",
     (gridType) => {
       const result = parseGridRequest({ ...VALID_REQUEST, gridType });
