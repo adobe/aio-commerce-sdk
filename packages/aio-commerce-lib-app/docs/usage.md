@@ -139,7 +139,7 @@ Generation owns the `pre-app-build`, `pre-app-run`, `pre-app-dev` and `post-app-
 - `hooks/<hook>.<ext>` at the project root runs for every extension point that registers that hook.
 - `src/<extension-point>/hooks/<hook>.<ext>` (for example `src/commerce-backend-ui-2/hooks/pre-app-build.ts`) runs only for that extension point. When it exists, the project root file doesn't run for that extension point.
 
-Hook files can be `.js`, `.mjs`, `.cjs`, `.ts`, `.mts` or `.cts`, and must export a function as their default export. The function receives the argument the aio CLI passes to the hook, and an object with the ID of the extension point that runs it:
+Hook files can be `.js`, `.mjs`, `.cjs`, `.ts`, `.mts` or `.cts`, and must export a function as their default export. TypeScript files can use `export default` or `module.exports`. JavaScript files follow Node.js rules: `.js` files are ES modules when your `package.json` sets `"type": "module"`, so use `.cjs` for `module.exports` in that case. The function receives the argument the aio CLI passes to the hook, and an object with the ID of the extension point that runs it:
 
 ```ts
 // hooks/pre-app-build.ts
