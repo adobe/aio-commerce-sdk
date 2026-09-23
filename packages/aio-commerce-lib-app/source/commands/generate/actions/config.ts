@@ -68,6 +68,15 @@ function createActionDefinition(
 }
 
 /**
+ * Inputs shared by the runtime actions that talk to the Commerce App Management
+ * Service: the Commerce auth inputs plus the action log level.
+ */
+const RUNTIME_ACTION_INPUTS = {
+  ...COMMERCE_ACTION_INPUTS,
+  LOG_LEVEL: "$LOG_LEVEL",
+};
+
+/**
  * Gets the runtime actions to be generated from the ext.config.yaml configuration.
  * @param extConfig - The ext.config.yaml configuration.
  * @param dir - Directory containing the runtime action templates.
@@ -123,9 +132,7 @@ export function buildAppManagementExtConfig(
             association: createActionDefinition(
               "association",
               {},
-              {
-                inputs: { ...COMMERCE_ACTION_INPUTS, LOG_LEVEL: "$LOG_LEVEL" },
-              },
+              { inputs: RUNTIME_ACTION_INPUTS },
             ),
           } as Record<string, ActionDefinition>,
           license: "Apache-2.0",
@@ -148,7 +155,7 @@ export function buildAppManagementExtConfig(
       "installation",
       { requiresEncryptionKey: hasPasswordFieldsInSchema },
       {
-        inputs: { ...COMMERCE_ACTION_INPUTS, LOG_LEVEL: "$LOG_LEVEL" },
+        inputs: RUNTIME_ACTION_INPUTS,
         limits: {
           timeout: 600_000,
         },
