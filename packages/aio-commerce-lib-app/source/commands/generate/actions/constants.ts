@@ -19,22 +19,7 @@ const __dirname = dirname(__filename);
 /** The path to the action templates directory, sibling to this file. */
 export const TEMPLATES_DIR = join(__dirname, "templates");
 
-/**
- * Optional override for the Commerce App Management Service base URL. Unset in a
- * customer (production) deployment — the SDK falls back to its production
- * default; set on internal/stage deployments to point at the stage host.
- */
-const CAMS_BASE_URL_VARIABLE = "AIO_COMMERCE_APP_MANAGEMENT_SERVICE_URL";
-
-/**
- * The IMS environment (`prod` / `stage`) the app's S2S credentials belong to.
- * Needed as a standing input so actions that mint their own S2S token outside a
- * lifecycle request (e.g. the association action's `:adopt` call) target the
- * right IMS; lifecycle actions still receive it at runtime from the request.
- */
-const IMS_ENVIRONMENT_VARIABLE = "AIO_COMMERCE_AUTH_IMS_ENVIRONMENT";
-
-/** The Commerce variables declared as inputs for the generated runtime actions. */
+/** The list of Commerce variables that are required for the runtime actions. */
 export const COMMERCE_VARIABLES = [
   "AIO_COMMERCE_AUTH_IMS_CLIENT_ID",
   "AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS",
@@ -42,8 +27,6 @@ export const COMMERCE_VARIABLES = [
   "AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL",
   "AIO_COMMERCE_AUTH_IMS_ORG_ID",
   "AIO_COMMERCE_AUTH_IMS_SCOPES",
-  CAMS_BASE_URL_VARIABLE,
-  IMS_ENVIRONMENT_VARIABLE,
 ] as const satisfies string[];
 
 /** The inputs for the generated runtime actions. */
