@@ -16,6 +16,7 @@ import {
   HTTP_NOT_FOUND,
 } from "@adobe/aio-commerce-lib-core/responses";
 import ky, { HTTPError } from "ky";
+import * as v from "valibot";
 
 import {
   CamsAdoptConflictError,
@@ -36,7 +37,11 @@ export type CamsExtensionIdentity = {
   /** Adobe I/O Developer Console workspace id (the record's natural-key part). */
   workspaceId: string;
 
-  /** App Builder application id — asserted against the stored record. */
+  /**
+   * The App Builder application id. Not a lookup key — the service asserts it
+   * matches the stored record's `extId` and rejects the adopt on a mismatch, so
+   * a different app cannot claim ownership of this record.
+   */
   extId: string;
 };
 
@@ -121,6 +126,9 @@ const RETRYABLE_METHODS = [
 /** Transient response codes retried on every call. */
 const TRANSIENT_STATUS_CODES = [408, 429, 500, 502, 503, 504] as const;
 
+/** Shape of the `:adopt` response — only the record id is consumed. */
+const AdoptResponseSchema = v.object({ id: v.string() });
+
 /** Backoff delay for the n-th retry (`attemptCount` is 1-based). */
 const retryDelay = (attemptCount: number) =>
   DEFAULT_RETRY_DELAYS_MS.at(attemptCount - 1) ??
@@ -133,6 +141,14 @@ const retryDelay = (attemptCount: number) =>
  * (retryable only for network and `5xx`).
  */
 async function mapAdoptError(error: unknown): Promise<Error> {
+  if (error instanceof v.ValiError) {
+    // A 2xx with a payload that doesn't match the contract — not transient.
+    return new CamsUnavailableError(
+      "The Commerce App Management Service returned a malformed adopt response.",
+      { cause: error, retryable: false },
+    );
+  }
+
   if (!(error instanceof HTTPError)) {
     // No HTTP response — a transport failure OR a failure minting the S2S token
     // in the auth hook (e.g. IMS `invalid_client`). Both surface here; keep the
@@ -225,8 +241,7 @@ export function createCamsClient(options: CamsClientOptions): CamsClient {
         // on the owner-gated status/config calls stays terminal.
         retry: { statusCodes: [HTTP_NOT_FOUND] },
       });
-      const body = (await response.json()) as { id: string };
-      return body.id;
+      return v.parse(AdoptResponseSchema, await response.json()).id;
     } catch (error) {
       throw await mapAdoptError(error);
     }

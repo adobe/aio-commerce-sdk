@@ -51,15 +51,17 @@ export const router = new HttpActionRouter<AssociationActionContext>().use(
 /**
  * POST / - Adopt the record, then store association data.
  *
- * First claims ownership of the app's Commerce App Management Service record via
- * the `:adopt` handshake (binding it to the app's own S2S `client_id`), then
- * persists the Commerce instance the app is associated with so runtime actions
- * can later retrieve it via `getCommerceInstance` / `getCommerceClient`.
+ * When the request carries the `:adopt` identifiers, first claims ownership of
+ * the app's Commerce App Management Service record via the `:adopt` handshake
+ * (binding it to the app's own S2S `client_id`); then persists the Commerce
+ * instance the app is associated with so runtime actions can later retrieve it
+ * via `getCommerceInstance` / `getCommerceClient`.
  *
  * Adoption is best-effort: it fails the request only on a terminal ownership
- * conflict. A missing record, an unreachable service, or missing S2S credentials
- * are logged and swallowed — association still succeeds and ownership binds later
- * on the first owner-gated write. This keeps apps on an older SDK (which never
+ * conflict. Missing identifiers (e.g. an older Commerce App Management frontend),
+ * a missing record, an unreachable service, or missing S2S credentials are
+ * logged and swallowed — association still succeeds and ownership binds later on
+ * the first owner-gated write. This keeps apps on an older SDK (which never
  * adopt) and mid-migration records working.
  */
 router.post("/", {
@@ -69,30 +71,39 @@ router.post("/", {
     const { commerceBaseUrl, commerceEnv, commerceId, workspaceId, extId } =
       req.body;
 
-    try {
-      const camsClient = createCamsClient({
-        authProvider: getImsAuthProvider(resolveImsAuthParams(rawParams)),
-        baseUrl: resolveCamsBaseUrl(rawParams),
-        identity: { commerceId, extId, workspaceId },
-        logger,
-      });
+    // The identifiers are optional: an older Commerce App Management frontend
+    // won't send them. Only adopt when all three are present; otherwise skip it
+    // and let ownership bind on the first owner-gated write.
+    if (commerceId && workspaceId && extId) {
+      try {
+        const camsClient = createCamsClient({
+          authProvider: getImsAuthProvider(resolveImsAuthParams(rawParams)),
+          baseUrl: resolveCamsBaseUrl(rawParams),
+          identity: { commerceId, extId, workspaceId },
+          logger,
+        });
 
-      const recordId = await camsClient.ensureAdopted();
-      // Ownership binding is a notable lifecycle event, so surface it at info
-      // level (the deferral/rejection paths below are already warn/error).
-      logger.info(
-        `Adopted Commerce App Management Service record "${recordId}"`,
-      );
-    } catch (error) {
-      if (error instanceof CamsAdoptConflictError) {
-        logger.error(`Adoption rejected: ${error.message}`);
-        return conflict(error.message);
+        const recordId = await camsClient.ensureAdopted();
+        // Ownership binding is a notable lifecycle event, so surface it at info
+        // level (the deferral/rejection paths below are already warn/error).
+        logger.info(
+          `Adopted Commerce App Management Service record "${recordId}"`,
+        );
+      } catch (error) {
+        if (error instanceof CamsAdoptConflictError) {
+          logger.error(`Adoption rejected: ${error.message}`);
+          return conflict(error.message);
+        }
+
+        logger.warn(
+          `Adoption deferred; ownership will bind on the next write: ${
+            error instanceof Error ? error.message : String(error)
+          }`,
+        );
       }
-
-      logger.warn(
-        `Adoption deferred; ownership will bind on the next write: ${
-          error instanceof Error ? error.message : String(error)
-        }`,
+    } else {
+      logger.debug(
+        "Adopt identifiers absent; skipping adoption — ownership binds on the first owner-gated write",
       );
     }
 

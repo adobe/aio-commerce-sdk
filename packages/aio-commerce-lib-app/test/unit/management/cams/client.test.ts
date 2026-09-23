@@ -163,6 +163,24 @@ describe("createCamsClient", () => {
       expect(calls).toBe(1);
     });
 
+    test("throws CamsUnavailableError on a 2xx with a malformed payload", async () => {
+      let calls = 0;
+      apiServer.use(
+        http.post(ADOPT_URL, () => {
+          calls += 1;
+          // Missing the required `id` — the contract is violated on an otherwise-OK response.
+          return HttpResponse.json({ notId: "oops" });
+        }),
+      );
+
+      const client = createClient();
+      await expect(client.ensureAdopted()).rejects.toBeInstanceOf(
+        CamsUnavailableError,
+      );
+      // A contract violation is not retried.
+      expect(calls).toBe(1);
+    });
+
     test("throws CamsUnavailableError when 5xx persists after retries", async () => {
       apiServer.use(
         http.post(ADOPT_URL, () =>

@@ -232,7 +232,7 @@ describe("associationRuntimeAction", () => {
       expect(mockSetAssociationData).not.toHaveBeenCalled();
     });
 
-    test("returns 400 when the adopt identifiers are missing", async () => {
+    test("skips adoption but still associates (204) when the adopt identifiers are missing", async () => {
       const action = associationRuntimeAction();
       const params = createRuntimeActionParams({
         body: { commerceBaseUrl: "https://example.com", commerceEnv: "paas" },
@@ -242,11 +242,31 @@ describe("associationRuntimeAction", () => {
 
       const result = await action(params);
 
-      expect(result).toMatchObject({
-        error: { statusCode: 400 },
-        type: "error",
+      expect(mockCreateCamsClient).not.toHaveBeenCalled();
+      expect(mockEnsureAdopted).not.toHaveBeenCalled();
+      expect(mockSetAssociationData).toHaveBeenCalledWith({
+        commerce: { baseUrl: "https://example.com", env: "paas" },
       });
-      expect(mockSetAssociationData).not.toHaveBeenCalled();
+      expect(result).toMatchObject({ statusCode: 204, type: "success" });
+    });
+
+    test("skips adoption when only some identifiers are present", async () => {
+      const action = associationRuntimeAction();
+      const params = createRuntimeActionParams({
+        body: {
+          commerceBaseUrl: "https://example.com",
+          commerceEnv: "paas",
+          commerceId: "commerce-1",
+        },
+        method: "post",
+        path: "/",
+      });
+
+      const result = await action(params);
+
+      expect(mockCreateCamsClient).not.toHaveBeenCalled();
+      expect(mockSetAssociationData).toHaveBeenCalledOnce();
+      expect(result).toMatchObject({ statusCode: 204, type: "success" });
     });
 
     test("returns 500 when the storage write fails", async () => {
