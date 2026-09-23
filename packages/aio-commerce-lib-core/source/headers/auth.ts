@@ -151,6 +151,7 @@ function parseKeyValueParameters(
   const paramPattern = /(\w+)=(?:"([^"]*)"|([^,\s]+))/g;
   let match = paramPattern.exec(parametersString);
 
+  // biome-ignore lint/suspicious/noUnnecessaryConditions: Biome 2.5.14 infers RegExp.exec() as non-nullable, but it can return null (biomejs/biome#11278).
   while (match !== null) {
     const [, key, quotedValue, unquotedValue] = match;
 
