@@ -40,6 +40,28 @@ describe("getGridColumnAclResourceId", () => {
     );
   });
 
+  it("supports invoice, creditmemo, and shipment entities", () => {
+    expect(
+      getGridColumnAclResourceId("acme-promotions", "invoice", "paid_status"),
+    ).toBe(
+      "Magento_CommerceBackendUix::adminuisdk_app_acme_promotions_invoice_gridcolumns_paid_status",
+    );
+    expect(
+      getGridColumnAclResourceId(
+        "acme-promotions",
+        "creditmemo",
+        "refund_status",
+      ),
+    ).toBe(
+      "Magento_CommerceBackendUix::adminuisdk_app_acme_promotions_creditmemo_gridcolumns_refund_status",
+    );
+    expect(
+      getGridColumnAclResourceId("acme-promotions", "shipment", "carrier"),
+    ).toBe(
+      "Magento_CommerceBackendUix::adminuisdk_app_acme_promotions_shipment_gridcolumns_carrier",
+    );
+  });
+
   it("trims and sanitizes both metadataId and columnId", () => {
     expect(
       getGridColumnAclResourceId("  My-App  ", "order", "  My-Col  "),
