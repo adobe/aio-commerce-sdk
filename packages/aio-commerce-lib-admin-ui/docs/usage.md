@@ -72,7 +72,7 @@ import { parseGridRequest } from "@adobe/aio-commerce-lib-admin-ui/grid-columns"
 
 export async function main(params: unknown) {
   const { requestId, gridType, ids } = parseGridRequest(params);
-  // gridType is typed as "order" | "product" | "customer"
+  // gridType is typed as "order" | "product" | "customer" | "invoice" | "creditmemo" | "shipment"
   // ids is string[]
   // ...
 }
@@ -382,10 +382,10 @@ const allowed = await permissionClient.check(
 
 #### Resource ids for grid columns, view buttons, and mass actions
 
-The same hierarchical scheme extends to the other Admin UI components. Each helper returns the **leaf** id for a single protected item, nested under its entity (`order` / `product` / `customer`) and item-type group in the Commerce ACL tree:
+The same hierarchical scheme extends to the other Admin UI components. Each helper returns the **leaf** id for a single protected item, nested under its entity and item-type group in the Commerce ACL tree:
 
-- `getGridColumnAclResourceId(metadataId, entity, columnId)` — a grid column, where `columnId` is its `adminUi.<entity>.gridColumns.columns[].id`.
-- `getMassActionAclResourceId(metadataId, entity, actionId)` — a mass action, where `actionId` is its `adminUi.<entity>.massActions[].id`.
+- `getGridColumnAclResourceId(metadataId, entity, columnId)` — a grid column, where `entity` is `order`, `product`, `customer`, `invoice`, `creditmemo`, or `shipment`, and `columnId` is its `adminUi.<entity>.gridColumns.columns[].id`.
+- `getMassActionAclResourceId(metadataId, entity, actionId)` — a mass action, where `entity` is `order`, `product`, or `customer` (mass actions are not supported on `invoice`, `creditMemo`, or `shipment`), and `actionId` is its `adminUi.<entity>.massActions[].id`.
 - `getOrderViewButtonAclResourceId(metadataId, buttonId)` — an order view button (view buttons exist only on the order entity), where `buttonId` is its `adminUi.order.viewButtons[].id`.
 
 ```typescript
