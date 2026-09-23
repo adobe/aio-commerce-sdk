@@ -688,6 +688,51 @@ export default defineConfig({
         ],
       },
     },
+    invoice: {
+      gridColumns: {
+        label: "Invoice payment data",
+        description: "Adds payment status to the invoice grid",
+        runtimeAction: "invoices/fetch-invoice-grid-data",
+        columns: [
+          {
+            id: "payment_status",
+            label: "Payment Status",
+            type: "string",
+            align: "left",
+          },
+        ],
+      },
+    },
+    creditMemo: {
+      gridColumns: {
+        label: "Credit memo refund data",
+        description: "Adds refund status to the credit memo grid",
+        runtimeAction: "credit-memos/fetch-credit-memo-grid-data",
+        columns: [
+          {
+            id: "refund_status",
+            label: "Refund Status",
+            type: "string",
+            align: "left",
+          },
+        ],
+      },
+    },
+    shipment: {
+      gridColumns: {
+        label: "Shipment carrier data",
+        description: "Adds carrier to the shipment grid",
+        runtimeAction: "shipments/fetch-shipment-grid-data",
+        columns: [
+          {
+            id: "carrier",
+            label: "Carrier",
+            type: "string",
+            align: "left",
+          },
+        ],
+      },
+    },
   },
 });
 ```
@@ -704,7 +749,7 @@ export default defineConfig({
   - **align**: one of `"left"`, `"center"`, `"right"`
   - **aclProtected** (optional): boolean — when `true`, Commerce generates a per-app nested ACL resource for this column in the Adobe Commerce User Roles tree, so admins can grant or deny it per role; roles without the resource don't see the column. Derive the id with `getGridColumnAclResourceId` from `@adobe/aio-commerce-lib-admin-ui/api`. See the [`@adobe/aio-commerce-lib-admin-ui` Permission Client documentation](../../aio-commerce-lib-admin-ui/docs/usage.md#permission-client).
 
-Each of `order`, `product`, and `customer` is optional — configure only the grids your application extends.
+Each of `order`, `product`, `customer`, `invoice`, `creditMemo`, and `shipment` is optional — configure only the grids your application extends. Only `order`, `product`, and `customer` also support `massActions`; `invoice`, `creditMemo`, and `shipment` support `gridColumns` only.
 
 ##### Order View Buttons
 
