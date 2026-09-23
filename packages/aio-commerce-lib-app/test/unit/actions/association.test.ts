@@ -17,24 +17,12 @@ const { mockSetAssociationData, mockClearAssociationData } = vi.hoisted(() => ({
   mockSetAssociationData: vi.fn(),
 }));
 
-const { mockEnsureAdopted, mockCreateCamsClient } = vi.hoisted(() => {
-  const ensureAdopted = vi.fn();
-  return {
-    mockCreateCamsClient: vi.fn(() => ({ ensureAdopted })),
-    mockEnsureAdopted: ensureAdopted,
-  };
-});
-
 vi.mock("#management/association/repository", () => ({
   clearAssociationData: mockClearAssociationData,
   setAssociationData: mockSetAssociationData,
 }));
 
 vi.mock("@adobe/aio-commerce-lib-auth", () => ({
-  getImsAuthProvider: vi.fn(() => ({
-    getAccessToken: vi.fn(),
-    getHeaders: vi.fn(),
-  })),
   resolveImsAuthParams: vi.fn(() => ({
     clientId: "client-1",
     clientSecrets: ["secret"],
@@ -45,40 +33,21 @@ vi.mock("@adobe/aio-commerce-lib-auth", () => ({
   })),
 }));
 
-vi.mock("#management/cams/index", async (importOriginal) => {
-  const actual =
-    await importOriginal<typeof import("#management/cams/index")>();
-  return {
-    ...actual,
-    createCamsClient: mockCreateCamsClient,
-    resolveCamsBaseUrl: vi.fn(() => "https://cams.test"),
-  };
-});
-
 import { associationRuntimeAction } from "#actions/association/index";
-import {
-  CamsAdoptConflictError,
-  CamsRecordNotFoundError,
-  CamsUnavailableError,
-} from "#management/cams/errors";
 import { createRuntimeActionParams } from "#test/fixtures/actions";
 
 const VALID_BODY = {
   commerceBaseUrl: "https://example.com",
   commerceEnv: "paas",
-  commerceId: "commerce-1",
-  extId: "ext-1",
-  workspaceId: "workspace-1",
 };
 
 describe("associationRuntimeAction", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockEnsureAdopted.mockResolvedValue("record-1");
   });
 
   describe("POST /", () => {
-    test("adopts, stores valid association data and returns 204", async () => {
+    test("stores valid association data and returns the app's client id", async () => {
       const action = associationRuntimeAction();
       const params = createRuntimeActionParams({
         body: VALID_BODY,
@@ -88,28 +57,20 @@ describe("associationRuntimeAction", () => {
 
       const result = await action(params);
 
-      expect(mockCreateCamsClient).toHaveBeenCalledWith(
-        expect.objectContaining({
-          baseUrl: "https://cams.test",
-          identity: {
-            commerceId: "commerce-1",
-            extId: "ext-1",
-            workspaceId: "workspace-1",
-          },
-        }),
-      );
-      expect(mockEnsureAdopted).toHaveBeenCalledOnce();
       expect(mockSetAssociationData).toHaveBeenCalledWith({
         commerce: { baseUrl: "https://example.com", env: "paas" },
       });
-      expect(result).toMatchObject({ statusCode: 204, type: "success" });
+      expect(result).toMatchObject({
+        body: { clientId: "client-1" },
+        statusCode: 200,
+        type: "success",
+      });
     });
 
     test("accepts saas as a valid env", async () => {
       const action = associationRuntimeAction();
       const params = createRuntimeActionParams({
         body: {
-          ...VALID_BODY,
           commerceBaseUrl: "https://saas.example.com",
           commerceEnv: "saas",
         },
@@ -122,76 +83,7 @@ describe("associationRuntimeAction", () => {
       expect(mockSetAssociationData).toHaveBeenCalledWith({
         commerce: { baseUrl: "https://saas.example.com", env: "saas" },
       });
-      expect(result).toMatchObject({ statusCode: 204, type: "success" });
-    });
-
-    test("still associates (204) when the record is not found yet", async () => {
-      mockEnsureAdopted.mockRejectedValueOnce(new CamsRecordNotFoundError());
-
-      const action = associationRuntimeAction();
-      const params = createRuntimeActionParams({
-        body: VALID_BODY,
-        method: "post",
-        path: "/",
-      });
-
-      const result = await action(params);
-
-      expect(mockSetAssociationData).toHaveBeenCalledOnce();
-      expect(result).toMatchObject({ statusCode: 204, type: "success" });
-    });
-
-    test("still associates (204) when the service is unavailable", async () => {
-      mockEnsureAdopted.mockRejectedValueOnce(new CamsUnavailableError());
-
-      const action = associationRuntimeAction();
-      const params = createRuntimeActionParams({
-        body: VALID_BODY,
-        method: "post",
-        path: "/",
-      });
-
-      const result = await action(params);
-
-      expect(mockSetAssociationData).toHaveBeenCalledOnce();
-      expect(result).toMatchObject({ statusCode: 204, type: "success" });
-    });
-
-    test("still associates (204) when S2S auth cannot be resolved", async () => {
-      mockCreateCamsClient.mockImplementationOnce(() => {
-        throw new Error("missing credentials");
-      });
-
-      const action = associationRuntimeAction();
-      const params = createRuntimeActionParams({
-        body: VALID_BODY,
-        method: "post",
-        path: "/",
-      });
-
-      const result = await action(params);
-
-      expect(mockSetAssociationData).toHaveBeenCalledOnce();
-      expect(result).toMatchObject({ statusCode: 204, type: "success" });
-    });
-
-    test("returns 409 and does not store on a terminal ownership conflict", async () => {
-      mockEnsureAdopted.mockRejectedValueOnce(new CamsAdoptConflictError());
-
-      const action = associationRuntimeAction();
-      const params = createRuntimeActionParams({
-        body: VALID_BODY,
-        method: "post",
-        path: "/",
-      });
-
-      const result = await action(params);
-
-      expect(mockSetAssociationData).not.toHaveBeenCalled();
-      expect(result).toMatchObject({
-        error: { statusCode: 409 },
-        type: "error",
-      });
+      expect(result).toMatchObject({ statusCode: 200, type: "success" });
     });
 
     test("returns 400 for invalid env values", async () => {
@@ -226,43 +118,6 @@ describe("associationRuntimeAction", () => {
         type: "error",
       });
       expect(mockSetAssociationData).not.toHaveBeenCalled();
-    });
-
-    test("skips adoption but still associates (204) when the adopt identifiers are missing", async () => {
-      const action = associationRuntimeAction();
-      const params = createRuntimeActionParams({
-        body: { commerceBaseUrl: "https://example.com", commerceEnv: "paas" },
-        method: "post",
-        path: "/",
-      });
-
-      const result = await action(params);
-
-      expect(mockCreateCamsClient).not.toHaveBeenCalled();
-      expect(mockEnsureAdopted).not.toHaveBeenCalled();
-      expect(mockSetAssociationData).toHaveBeenCalledWith({
-        commerce: { baseUrl: "https://example.com", env: "paas" },
-      });
-      expect(result).toMatchObject({ statusCode: 204, type: "success" });
-    });
-
-    test("skips adoption when only some identifiers are present", async () => {
-      const action = associationRuntimeAction();
-      const params = createRuntimeActionParams({
-        body: {
-          commerceBaseUrl: "https://example.com",
-          commerceEnv: "paas",
-          commerceId: "commerce-1",
-        },
-        method: "post",
-        path: "/",
-      });
-
-      const result = await action(params);
-
-      expect(mockCreateCamsClient).not.toHaveBeenCalled();
-      expect(mockSetAssociationData).toHaveBeenCalledOnce();
-      expect(result).toMatchObject({ statusCode: 204, type: "success" });
     });
 
     test("returns 500 when the storage write fails", async () => {

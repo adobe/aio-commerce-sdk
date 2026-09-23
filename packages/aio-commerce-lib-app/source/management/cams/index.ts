@@ -11,21 +11,8 @@
  */
 
 // biome-ignore lint/performance/noBarrelFile: internal module entrypoint
-export { createCamsClient } from "./client";
 export {
   CAMS_BASE_URL_INPUT,
   DEFAULT_CAMS_BASE_URL,
   resolveCamsBaseUrl,
 } from "./config";
-export {
-  CamsAdoptConflictError,
-  CamsError,
-  CamsRecordNotFoundError,
-  CamsUnavailableError,
-} from "./errors";
-
-export type {
-  CamsClient,
-  CamsClientOptions,
-  CamsExtensionIdentity,
-} from "./client";

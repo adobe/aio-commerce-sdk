@@ -10,11 +10,8 @@
  * governing permissions and limitations under the License.
  */
 
-import {
-  getImsAuthProvider,
-  resolveImsAuthParams,
-} from "@adobe/aio-commerce-lib-auth";
-import { conflict, noContent } from "@adobe/aio-commerce-lib-core/responses";
+import { resolveImsAuthParams } from "@adobe/aio-commerce-lib-auth";
+import { noContent, ok } from "@adobe/aio-commerce-lib-core/responses";
 import {
   HttpActionRouter,
   logger as withLogger,
@@ -24,11 +21,6 @@ import {
   clearAssociationData,
   setAssociationData,
 } from "#management/association/repository";
-import {
-  CamsAdoptConflictError,
-  createCamsClient,
-  resolveCamsBaseUrl,
-} from "#management/cams/index";
 
 import { AssociationRequestBodySchema } from "./schema";
 
@@ -49,69 +41,20 @@ export const router = new HttpActionRouter<AssociationActionContext>().use(
 );
 
 /**
- * POST / - Adopt the record, then store association data.
+ * POST / - Store association data and return the app's own `client_id`.
  *
- * When the request carries the `:adopt` identifiers, first claims ownership of
- * the app's Commerce App Management Service record via the `:adopt` handshake
- * (binding it to the app's own S2S `client_id`); then persists the Commerce
- * instance the app is associated with so runtime actions can later retrieve it
- * via `getCommerceInstance` / `getCommerceClient`.
- *
- * Adoption is best-effort: it fails the request only on a terminal ownership
- * conflict. Missing identifiers (e.g. an older Commerce App Management frontend),
- * a missing record, an unreachable service, or missing S2S credentials are
- * logged and swallowed — association still succeeds and ownership binds later,
- * either on a subsequent redeploy's adopt or when the service self-heals
- * ownership on the next upgrade notification. This keeps apps on an older SDK
- * (which never adopt) and mid-migration records working.
+ * The Commerce App Management Service orchestrates association: it calls this
+ * action while creating the record and reads the returned `client_id` to bind
+ * ownership of the record (replacing the former app-initiated `:adopt`
+ * handshake). Here the app persists the Commerce instance it is associated with
+ * — so runtime actions can later retrieve it via `getCommerceInstance` /
+ * `getCommerceClient` — and returns its S2S `client_id`.
  */
 router.post("/", {
   body: AssociationRequestBodySchema,
 
   handler: async (req, { logger, rawParams }) => {
-    const { commerceBaseUrl, commerceEnv, commerceId, workspaceId, extId } =
-      req.body;
-
-    // The identifiers are optional: an older Commerce App Management frontend
-    // won't send them. Only adopt when all three are present; otherwise skip it
-    // and let ownership bind on a later redeploy's adopt or when the service
-    // self-heals ownership on the next upgrade notification.
-    if (commerceId && workspaceId && extId) {
-      try {
-        const camsClient = createCamsClient({
-          authProvider: getImsAuthProvider(resolveImsAuthParams(rawParams)),
-          baseUrl: resolveCamsBaseUrl(rawParams),
-          identity: { commerceId, extId, workspaceId },
-          logger,
-        });
-
-        const recordId = await camsClient.ensureAdopted();
-        // Ownership binding is a notable lifecycle event, so surface it at info
-        // level (the deferral/rejection paths below are already warn/error).
-        logger.info(
-          `Adopted Commerce App Management Service record "${recordId}"`,
-        );
-      } catch (error) {
-        if (error instanceof CamsAdoptConflictError) {
-          logger.error(`Adoption rejected: ${error.message}`);
-          return conflict(error.message);
-        }
-
-        // Ownership isn't bound now, but it isn't lost: the record stays unowned
-        // until the app next reaches the service under its own S2S credentials —
-        // a later redeploy's adopt, or the service self-healing ownership when the
-        // next upgrade notification arrives.
-        logger.warn(
-          `Adoption deferred; ownership will bind on a later redeploy's adopt or on the next upgrade notification: ${
-            error instanceof Error ? error.message : String(error)
-          }`,
-        );
-      }
-    } else {
-      logger.debug(
-        "Adopt identifiers absent; skipping adoption — ownership binds on a later redeploy's adopt or the next upgrade notification",
-      );
-    }
+    const { commerceBaseUrl, commerceEnv } = req.body;
 
     logger.debug(
       `Storing association data (baseUrl: "${commerceBaseUrl}", env: "${commerceEnv}")`,
@@ -124,7 +67,8 @@ router.post("/", {
       },
     });
 
-    return noContent();
+    const { clientId } = resolveImsAuthParams(rawParams);
+    return ok({ body: { clientId } });
   },
 });
 
