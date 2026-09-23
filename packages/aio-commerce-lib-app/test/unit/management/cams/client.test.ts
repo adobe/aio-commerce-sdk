@@ -19,6 +19,7 @@ import {
   CamsRecordNotFoundError,
   CamsUnavailableError,
 } from "#management/cams/errors";
+import { minimalValidConfig } from "#test/fixtures/config";
 import { apiServer, setupApiTestLifecycle } from "#test/setup/api";
 
 import type { ImsAuthProvider } from "@adobe/aio-commerce-lib-auth";
@@ -230,9 +231,9 @@ describe("createCamsClient", () => {
       );
 
       const client = createClient();
-      await client.patchConfig({ foo: "bar" });
+      await client.patchConfig(minimalValidConfig);
 
-      expect(patchBody).toEqual({ appConfig: { foo: "bar" } });
+      expect(patchBody).toEqual({ appConfig: minimalValidConfig });
     });
   });
 });

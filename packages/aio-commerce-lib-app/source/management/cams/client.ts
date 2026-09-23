@@ -10,6 +10,11 @@
  * governing permissions and limitations under the License.
  */
 
+import {
+  HTTP_CONFLICT,
+  HTTP_INTERNAL_SERVER_ERROR,
+  HTTP_NOT_FOUND,
+} from "@adobe/aio-commerce-lib-core/responses";
 import ky, { HTTPError } from "ky";
 
 import {
@@ -21,6 +26,7 @@ import {
 import type { ImsAuthProvider } from "@adobe/aio-commerce-lib-auth";
 import type AioLogger from "@adobe/aio-lib-core-logging";
 import type { Options } from "ky";
+import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 
 /** Identifiers that locate and guard the app's record in the service. */
 export type CamsExtensionIdentity = {
@@ -96,7 +102,7 @@ export type CamsClient = {
   postStatus: (update: CamsStatusUpdate) => Promise<void>;
 
   /** Patches the stored app config (`PATCH /v1/extensions/{id}`); adopts first. */
-  patchConfig: (appConfig: unknown) => Promise<void>;
+  patchConfig: (appConfig: CommerceAppConfigOutputModel) => Promise<void>;
 };
 
 /** Backoff schedule (ms) applied to each successive retry, in order. */
@@ -115,26 +121,11 @@ const RETRYABLE_METHODS = [
 /** Transient response codes retried on every call. */
 const TRANSIENT_STATUS_CODES = [408, 429, 500, 502, 503, 504] as const;
 
-const HTTP_NOT_FOUND = 404;
-const HTTP_CONFLICT = 409;
-const HTTP_SERVER_ERROR_MIN = 500;
-
 /** Backoff delay for the n-th retry (`attemptCount` is 1-based). */
 const retryDelay = (attemptCount: number) =>
   DEFAULT_RETRY_DELAYS_MS.at(attemptCount - 1) ??
   DEFAULT_RETRY_DELAYS_MS.at(-1) ??
   0;
-
-/** Reads a JSON body defensively, returning `undefined` on any failure. */
-async function readJsonBody(
-  response: Response,
-): Promise<Record<string, unknown> | undefined> {
-  try {
-    return (await response.clone().json()) as Record<string, unknown>;
-  } catch {
-    return undefined;
-  }
-}
 
 /**
  * Maps a failed adopt request to the matching {@link CamsError}. `409` → terminal
@@ -155,9 +146,20 @@ async function mapAdoptError(error: unknown): Promise<Error> {
   }
 
   const { status } = error.response;
-  const body = await readJsonBody(error.response);
-  const detail =
-    typeof body?.detail === "string" ? body.detail : error.response.statusText;
+
+  // Prefer the problem+json `detail`; fall back to the status text when the body
+  // is missing or not JSON.
+  let detail = error.response.statusText;
+  try {
+    const { detail: bodyDetail } = (await error.response
+      .clone()
+      .json()) as Record<string, unknown>;
+    if (typeof bodyDetail === "string") {
+      detail = bodyDetail;
+    }
+  } catch {
+    // Non-JSON body; keep the status-text fallback.
+  }
 
   if (status === HTTP_CONFLICT) {
     return new CamsAdoptConflictError(detail, { cause: error });
@@ -169,7 +171,7 @@ async function mapAdoptError(error: unknown): Promise<Error> {
 
   return new CamsUnavailableError(
     `The Commerce App Management Service returned HTTP ${status}: ${detail}`,
-    { cause: error, retryable: status >= HTTP_SERVER_ERROR_MIN },
+    { cause: error, retryable: status >= HTTP_INTERNAL_SERVER_ERROR },
   );
 }
 
@@ -248,7 +250,9 @@ export function createCamsClient(options: CamsClientOptions): CamsClient {
     await http.post(`v1/extensions/${id}/status`, { json: update });
   }
 
-  async function patchConfig(appConfig: unknown): Promise<void> {
+  async function patchConfig(
+    appConfig: CommerceAppConfigOutputModel,
+  ): Promise<void> {
     const id = await ensureAdopted();
     await http.patch(`v1/extensions/${id}`, { json: { appConfig } });
   }
