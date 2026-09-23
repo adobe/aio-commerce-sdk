@@ -123,6 +123,9 @@ export function buildAppManagementExtConfig(
             "app-config": createActionDefinition("app-config"),
             association: createActionDefinition("association"),
           } as Record<string, ActionDefinition>,
+          inputs: {
+            LOG_LEVEL: "$LOG_LEVEL",
+          },
           license: "Apache-2.0",
         },
       },
@@ -143,7 +146,7 @@ export function buildAppManagementExtConfig(
       "installation",
       { requiresEncryptionKey: hasPasswordFieldsInSchema },
       {
-        inputs: { ...COMMERCE_ACTION_INPUTS, LOG_LEVEL: "$LOG_LEVEL" },
+        inputs: COMMERCE_ACTION_INPUTS,
         limits: {
           timeout: 600_000,
         },
