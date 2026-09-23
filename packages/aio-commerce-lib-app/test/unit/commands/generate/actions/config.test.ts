@@ -532,6 +532,25 @@ describe("requiresWebSource", () => {
 });
 
 describe("buildBusinessConfigurationExtConfig", () => {
+  test("declares LOG_LEVEL at the package level", () => {
+    const result = buildBusinessConfigurationExtConfig();
+    const appManagementPackage =
+      result.runtimeManifest?.packages?.[PACKAGE_NAME];
+
+    expect(appManagementPackage?.inputs).toEqual({
+      LOG_LEVEL: "$LOG_LEVEL",
+    });
+    expect(appManagementPackage?.actions?.config?.inputs).toEqual(
+      expect.objectContaining({
+        AIO_COMMERCE_CONFIG_ENCRYPTION_KEY:
+          "$AIO_COMMERCE_CONFIG_ENCRYPTION_KEY",
+      }),
+    );
+    expect(
+      appManagementPackage?.actions?.["scope-tree"]?.inputs,
+    ).toBeUndefined();
+  });
+
   test("config action is included", () => {
     const result = buildBusinessConfigurationExtConfig();
     const actions = result.runtimeManifest?.packages?.[PACKAGE_NAME]?.actions;

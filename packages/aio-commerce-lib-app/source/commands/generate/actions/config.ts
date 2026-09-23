@@ -192,6 +192,9 @@ export function buildBusinessConfigurationExtConfig() {
               createActionDefinition(action.name, action),
             ]),
           ),
+          inputs: {
+            LOG_LEVEL: "$LOG_LEVEL",
+          },
           license: "Apache-2.0",
         },
       },
