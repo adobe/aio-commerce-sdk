@@ -909,11 +909,11 @@ describe("commands/generate/actions", () => {
           const expected = {
             [BACKEND_UI_V2_EXTENSION_POINT_ID]: {
               "pre-app-build": 'preAppBuild("backend-ui/2")',
-              "pre-app-dev": "preAppDev()",
-              "pre-app-run": "preAppRun()",
+              "pre-app-dev": 'preAppDev("backend-ui/2")',
+              "pre-app-run": 'preAppRun("backend-ui/2")',
             },
             [EXTENSIBILITY_EXTENSION_POINT_ID]: {
-              "post-app-deploy": "postAppDeploy()",
+              "post-app-deploy": 'postAppDeploy("extensibility/1")',
               "pre-app-build": 'preAppBuild("extensibility/1")',
             },
           };

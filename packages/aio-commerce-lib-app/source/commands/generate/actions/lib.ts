@@ -73,10 +73,11 @@ const LEADING_DOT_SLASH_PATTERN = /^\.\//u;
 
 /** The `@adobe/aio-commerce-lib-app/cli` call exported by each generated hook file. */
 const HOOK_HANDLER_CALLS: Record<string, (extension: string) => string> = {
-  "post-app-deploy": () => "postAppDeploy()",
+  "post-app-deploy": (extension) =>
+    `postAppDeploy(${JSON.stringify(extension)})`,
   "pre-app-build": (extension) => `preAppBuild(${JSON.stringify(extension)})`,
-  "pre-app-dev": () => "preAppDev()",
-  "pre-app-run": () => "preAppRun()",
+  "pre-app-dev": (extension) => `preAppDev(${JSON.stringify(extension)})`,
+  "pre-app-run": (extension) => `preAppRun(${JSON.stringify(extension)})`,
 };
 
 /** Normalize a path for use as an ESM import specifier. */

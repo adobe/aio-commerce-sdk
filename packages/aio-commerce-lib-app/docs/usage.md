@@ -130,7 +130,30 @@ Generated Runtime actions always use `.js`.
 - `src/commerce-backend-ui-2/web-src/`: browser scaffold generated when iframe-based Admin UI features require a `view` operation. Existing `web-src/index.html` files are never overwritten. A separate required-file phase runs on every generation to ensure support files are present without replacing existing versions (e.g. a `.babelrc` file).
 
 > [!NOTE]
-> Each hook in a generated `ext.config.yaml` points to its JavaScript file under `.generated/hooks/`, relative to the project root (for example, `pre-app-build: src/commerce-backend-ui-2/.generated/hooks/pre-app-build.cjs`). The aio CLI runs these hooks in its own process, so a failing hook stops the command. Generation replaces the hook values on every run, including hook commands registered by earlier versions, so don't edit them by hand.
+> Each hook in a generated `ext.config.yaml` points to its JavaScript file under `.generated/hooks/`, relative to the project root (for example, `pre-app-build: src/commerce-backend-ui-2/.generated/hooks/pre-app-build.cjs`). The aio CLI runs these hooks in its own process, so a failing hook stops the command. Generation replaces the hook values on every run, including hook commands registered by earlier versions, so don't edit them by hand. To run your own code in these hooks, add a hook file as described in [Custom hook code](#custom-hook-code).
+
+##### Custom hook code
+
+Generation owns the `pre-app-build`, `pre-app-run`, `pre-app-dev` and `post-app-deploy` hooks of each generated `ext.config.yaml`. To run your own code in one of them, add a hook file named after the hook. The generated hook runs your file after its own work.
+
+- `hooks/<hook>.<ext>` at the project root runs for every extension point that registers that hook.
+- `src/<extension-point>/hooks/<hook>.<ext>` (for example `src/commerce-backend-ui-2/hooks/pre-app-build.ts`) runs only for that extension point. When it exists, the project root file doesn't run for that extension point.
+
+Hook files can be `.js`, `.mjs`, `.cjs`, `.ts`, `.mts` or `.cts`, and must export a function as their default export. The function receives the argument the aio CLI passes to the hook, and an object with the ID of the extension point that runs it:
+
+```ts
+// hooks/pre-app-build.ts
+export default async function (
+  config: unknown,
+  { extensionPoint }: { extensionPoint: string },
+) {
+  if (extensionPoint === "commerce/backend-ui/2") {
+    // ...
+  }
+}
+```
+
+If a hook file throws, or a folder has more than one file for the same hook, the command stops with an error. To run code in a hook that generation doesn't register, such as `post-app-build`, set it in `ext.config.yaml` directly. Generation keeps hooks it doesn't own.
 
 > [!NOTE]
 > Generated actions default to the `nodejs:24` runtime. To pin a different runtime, set the `runtime` field on the action in the generated `ext.config.yaml`. Codegen preserves a `runtime` you set there, so it survives regeneration.

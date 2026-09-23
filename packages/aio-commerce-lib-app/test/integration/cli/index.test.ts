@@ -67,9 +67,9 @@ describe("cli", () => {
   test("exports hook factories that return async functions", () => {
     const hooks = [
       cli.preAppBuild("backend-ui/2"),
-      cli.preAppRun(),
-      cli.preAppDev(),
-      cli.postAppDeploy(),
+      cli.preAppRun("backend-ui/2"),
+      cli.preAppDev("backend-ui/2"),
+      cli.postAppDeploy("extensibility/1"),
     ];
 
     for (const hook of hooks) {
@@ -84,7 +84,7 @@ describe("cli", () => {
       await withTempProject(
         { ".env": "NODE_ENV=production\n", "package.json": "{}" },
         async (tempDir) => {
-          await cli[hookName]()();
+          await cli[hookName]("backend-ui/2")();
 
           expect(process.env.NODE_ENV).toBe("development");
           expect(readFileSync(join(tempDir, ".env"), "utf8")).toContain(
@@ -110,12 +110,148 @@ describe("cli", () => {
 
   test("preAppBuild keeps NODE_ENV as development after preAppRun", async () => {
     await withTempProject(ADMIN_UI_WEB_PROJECT, async (tempDir) => {
-      await cli.preAppRun()();
+      await cli.preAppRun("backend-ui/2")();
       await cli.preAppBuild("backend-ui/2")();
 
       expect(process.env.NODE_ENV).toBe("development");
       expect(readFileSync(join(tempDir, ".env"), "utf8")).toContain(
         "NODE_ENV=development",
+      );
+    });
+  });
+
+  describe("user hooks", () => {
+    type UserHookCall = {
+      source: string;
+      args: unknown;
+      context: unknown;
+      nodeEnv?: string;
+    };
+    const calls = (): UserHookCall[] =>
+      (globalThis as { __userHookCalls?: UserHookCall[] }).__userHookCalls ??
+      [];
+
+    const esmHook = (source: string) =>
+      `export default (args, context) => { (globalThis.__userHookCalls ??= []).push({ source: "${source}", args, context, nodeEnv: process.env.NODE_ENV }); };`;
+
+    beforeEach(() => {
+      (globalThis as { __userHookCalls?: UserHookCall[] }).__userHookCalls = [];
+    });
+
+    test("runs the project root hook after ours with the CLI argument and the extension point", async () => {
+      await withTempProject(
+        {
+          ".env": "NODE_ENV=production\n",
+          "hooks/pre-app-run.mjs": esmHook("root"),
+          "package.json": "{}",
+        },
+        async () => {
+          await cli.preAppRun("backend-ui/2")({ config: { name: "app" } });
+
+          expect(calls()).toEqual([
+            {
+              args: { config: { name: "app" } },
+              context: { extensionPoint: "commerce/backend-ui/2" },
+              nodeEnv: "development",
+              source: "root",
+            },
+          ]);
+          expect(exitSpy).not.toHaveBeenCalled();
+        },
+      );
+    });
+
+    test("prefers the extension point hook over the project root hook", async () => {
+      await withTempProject(
+        {
+          "hooks/pre-app-run.mjs": esmHook("root"),
+          "package.json": "{}",
+          "src/commerce-backend-ui-2/hooks/pre-app-run.mjs":
+            esmHook("extension"),
+        },
+        async () => {
+          await cli.preAppRun("backend-ui/2")();
+
+          expect(calls().map(({ source }) => source)).toEqual(["extension"]);
+        },
+      );
+    });
+
+    test.each([
+      [
+        "cjs",
+        'module.exports = (args, context) => { (globalThis.__userHookCalls ??= []).push({ source: "cjs", args, context }); };',
+      ],
+      [
+        "ts",
+        'export default (args: unknown, context: { extensionPoint: string }): void => { ((globalThis as any).__userHookCalls ??= []).push({ source: "ts", args, context }); };',
+      ],
+    ])("loads %s hook files", async (extension, content) => {
+      await withTempProject(
+        { [`hooks/pre-app-dev.${extension}`]: content, "package.json": "{}" },
+        async () => {
+          await cli.preAppDev("backend-ui/2")();
+
+          expect(calls().map(({ source }) => source)).toEqual([extension]);
+          expect(exitSpy).not.toHaveBeenCalled();
+        },
+      );
+    });
+
+    test("exits with 1 when a folder has more than one file for the same hook", async () => {
+      await withTempProject(
+        {
+          "hooks/pre-app-run.js": esmHook("js"),
+          "hooks/pre-app-run.ts": esmHook("ts"),
+          "package.json": "{}",
+        },
+        async () => {
+          await cli.preAppRun("backend-ui/2")();
+
+          expect(calls()).toEqual([]);
+          expect(errorSpy).toHaveBeenCalledWith(
+            expect.objectContaining({
+              message: expect.stringContaining(
+                'more than one "pre-app-run" hook file',
+              ),
+            }),
+          );
+          expect(exitSpy).toHaveBeenCalledWith(1);
+        },
+      );
+    });
+
+    test("exits with 1 when the hook file doesn't export a function", async () => {
+      await withTempProject(
+        { "hooks/pre-app-run.mjs": "export default 42;", "package.json": "{}" },
+        async () => {
+          await cli.preAppRun("backend-ui/2")();
+
+          expect(errorSpy).toHaveBeenCalledWith(
+            expect.objectContaining({
+              message: expect.stringContaining("must export a function"),
+            }),
+          );
+          expect(exitSpy).toHaveBeenCalledWith(1);
+        },
+      );
+    });
+
+    test("exits with 1 when the user hook throws", async () => {
+      await withTempProject(
+        {
+          "hooks/pre-app-run.mjs":
+            'export default () => { throw new Error("user hook failed"); };',
+          "package.json": "{}",
+        },
+        async () => {
+          await cli.preAppRun("backend-ui/2")();
+
+          expect(errorSpy).toHaveBeenCalledWith(
+            expect.objectContaining({ message: "user hook failed" }),
+          );
+          expect(exitSpy).toHaveBeenCalledWith(1);
+        },
       );
     });
   });
