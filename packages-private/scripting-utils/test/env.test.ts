@@ -134,6 +134,29 @@ describe("syncImsCredentials", () => {
     );
   });
 
+  test("should set synced IMS credentials in the current process", async () => {
+    vi.stubEnv("AIO_COMMERCE_AUTH_IMS_CLIENT_ID", "stale-client-id");
+    vi.mocked(config.get).mockReturnValue([
+      { integration_type: "oauth_server_to_server", name: "my-s2s-context" },
+    ]);
+    vi.mocked(context.get).mockResolvedValue({
+      data: { client_id: "fresh-client-id" },
+      name: "my-s2s-context",
+    });
+
+    await withTempFiles(
+      { ".env": "", "package.json": "{}" },
+      async (tempDir) => {
+        await syncImsCredentials(tempDir);
+        expect(process.env.AIO_COMMERCE_AUTH_IMS_CLIENT_ID).toBe(
+          "fresh-client-id",
+        );
+      },
+    );
+
+    vi.unstubAllEnvs();
+  });
+
   test("should update existing IMS credentials when values differ", async () => {
     vi.mocked(config.get).mockReturnValue([
       { integration_type: "oauth_server_to_server", name: "my-s2s-context" },
