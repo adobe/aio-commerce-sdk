@@ -164,10 +164,24 @@ describe("post-app-deploy hook", () => {
     });
   });
 
-  test("exits when the notification fails", async () => {
+  test("soft-skips (does not fail the deploy) when no service token can be minted", async () => {
     getServiceTokenMock.mockRejectedValue(new Error("no service credential"));
 
-    await withTempProject(MINIMAL_PROJECT, exec);
-    expect(processExitMock).toHaveBeenCalledWith(1);
+    await withTempProject(AUTO_UPGRADE_PROJECT, async () => {
+      await expect(run()).resolves.toEqual({
+        notified: false,
+        reason: "no-service-token",
+      });
+    });
+
+    // The service requires a service token, so no notification is attempted.
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  test("does not fail the deploy when no service token can be minted", async () => {
+    getServiceTokenMock.mockRejectedValue(new Error("no service credential"));
+
+    await withTempProject(AUTO_UPGRADE_PROJECT, exec);
+    expect(processExitMock).not.toHaveBeenCalled();
   });
 });

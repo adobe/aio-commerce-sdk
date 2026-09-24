@@ -1037,7 +1037,7 @@ The Commerce App Management Service is the orchestrator and single source of tru
 
 #### The `post-app-deploy` Hook
 
-The generated `commerce/extensibility/1` extension wires a `post-app-deploy` hook automatically (alongside `pre-app-build`). After every `aio app deploy`, the hook **notifies the Commerce App Management Service that an upgrade is available** and exits — it does not invoke the app, print a plan, or wait for the upgrade to run. The notification carries the target version, the app namespace, `metadata.id`, and the org/workspace context, and forwards the workspace's **service (technical-account) token** so the service can execute and poll the app for an automatic upgrade with no user in the loop.
+The generated `commerce/extensibility/1` extension wires a `post-app-deploy` hook automatically (alongside `pre-app-build`). After every `aio app deploy`, the hook **notifies the Commerce App Management Service that an upgrade is available** and exits — it does not invoke the app, print a plan, or wait for the upgrade to run. The notification carries the target version, the app namespace, `metadata.id`, and the org/workspace context, and forwards the workspace's **service (technical-account) token** so the service can execute and poll the app for an automatic upgrade with no user in the loop. The service requires a service token, so if the workspace has no mintable server-to-server credential the hook warns and skips the notification rather than failing the deploy; the next deploy re-announces once a credential is configured.
 
 The service then either starts the upgrade immediately (`auto`) or waits for the merchant to start it from the Commerce App Management UI (`manual`).
 

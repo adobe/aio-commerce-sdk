@@ -32,7 +32,10 @@ import type { NotifyUpgradeRequest } from "#management/cams/upgrade-notify";
 /** The result of the post-deploy upgrade notification. */
 export type NotifyResult =
   | { notified: true; extensionId: string }
-  | { notified: false; reason: "not-associated" | "service-unavailable" };
+  | {
+      notified: false;
+      reason: "not-associated" | "service-unavailable" | "no-service-token";
+    };
 
 /**
  * Notifies the Commerce App Management Service that an upgrade is available.
@@ -48,10 +51,23 @@ export async function run(): Promise<NotifyResult> {
 
   const { project, namespace } = getAioProjectContext();
 
-  // Forward a SERVICE (technical-account) token, not the developer's user token,
-  // so the Commerce App Management Service can reuse it to execute and poll the
-  // app for an automatic upgrade with no user in the loop.
-  const token = await getServiceToken();
+  // The service reuses this token to execute and poll the app for an automatic
+  // upgrade with no user in the loop, so it must be a SERVICE (technical-account)
+  // token — the service rejects a user token. When the workspace has no mintable
+  // server-to-server credential the upgrade cannot be announced; that is a soft
+  // skip (a deploy must not fail because the upgrade could not be announced), and
+  // the next deploy re-announces once a credential is configured.
+  let token: string;
+  try {
+    token = await getServiceToken();
+  } catch (error) {
+    consola.warn(
+      `Could not obtain a service (technical-account) token, so the upgrade notification was skipped: ${
+        error instanceof Error ? error.message : String(error)
+      }\nAdd an OAuth server-to-server credential to the workspace to enable automatic upgrade notifications.`,
+    );
+    return { notified: false, reason: "no-service-token" };
+  }
   // Target the service host for the app's environment: stage apps talk to the stage
   // host, everything else to production (an explicit override still wins).
   const cliEnv = getAioCliEnv();
