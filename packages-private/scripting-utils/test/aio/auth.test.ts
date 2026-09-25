@@ -12,7 +12,7 @@
 
 import { describe, expect, test, vi } from "vitest";
 
-import { getUserToken } from "#aio/auth";
+import { getServiceToken, getUserToken } from "#aio/auth";
 import { withAioConfig } from "#test/fixtures/aio-config";
 
 const { getTokenMock } = vi.hoisted(() => ({
@@ -45,5 +45,55 @@ describe("getUserToken", () => {
       await getUserToken();
       expect(getTokenMock).toHaveBeenCalledWith("cli", {});
     });
+  });
+});
+
+describe("getServiceToken", () => {
+  test("gets a token for the workspace OAuth server-to-server credential", async () => {
+    getTokenMock.mockReset().mockResolvedValue("service-token");
+
+    await withAioConfig(
+      {
+        project: {
+          workspace: {
+            details: {
+              credentials: [
+                { integration_type: "apikey", name: "api-key-cred" },
+                {
+                  integration_type: "oauth_server_to_server",
+                  name: "s2s-cred",
+                },
+              ],
+            },
+          },
+        },
+      },
+      async () => {
+        await expect(getServiceToken()).resolves.toBe("service-token");
+        expect(getTokenMock).toHaveBeenCalledWith("s2s-cred", {});
+      },
+    );
+  });
+
+  test("throws when the workspace has no server-to-server credential", async () => {
+    getTokenMock.mockReset();
+
+    await withAioConfig(
+      {
+        project: {
+          workspace: {
+            details: {
+              credentials: [{ integration_type: "apikey", name: "x" }],
+            },
+          },
+        },
+      },
+      async () => {
+        await expect(getServiceToken()).rejects.toThrow(
+          "No OAuth server-to-server credential",
+        );
+        expect(getTokenMock).not.toHaveBeenCalled();
+      },
+    );
   });
 });

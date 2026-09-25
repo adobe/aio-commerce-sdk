@@ -527,14 +527,15 @@ where the package is not yet a local dependency, the unscoped bin name
 The `init` command installs required dependencies and generates the full `src/` extension
 structure from `app.commerce.config.ts` in one step.
 
-It also wires the `post-app-deploy` hook to the desired-state
-`POST /installation` endpoint. A first deployment installs when no baseline
-exists. Later deployments plan an upgrade from the stored baseline:
+It also wires the `post-app-deploy` hook. On every deploy the hook notifies the
+Commerce App Management Service that an upgrade is available and exits — the
+service orchestrates the upgrade (it calls the app to execute and polls it for
+status), so the hook no longer runs or waits for the upgrade itself:
 
-- `metadata.upgradeMode: "auto"` starts the planned upgrade and waits for its
-  lifecycle result.
-- `metadata.upgradeMode: "manual"` creates or reuses the plan and returns it
-  without starting execution.
+- `metadata.upgradeMode: "auto"` tells the service to start the upgrade
+  immediately once notified.
+- `metadata.upgradeMode: "manual"` tells the service to wait for the merchant to
+  start it from the Commerce App Management UI.
 
 **If the init command is denied or blocked (permission error, sandbox rejection,
 or non-zero exit with no network output):**

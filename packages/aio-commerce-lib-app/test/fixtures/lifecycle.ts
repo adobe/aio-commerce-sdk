@@ -173,11 +173,14 @@ export function createMockLifecycleRuntime(options?: {
     delete: (key: string) => Promise<boolean>;
     values: Map<string, OrchestrationState>;
   };
+  attemptStore?: ReturnType<typeof createMockLifecycleStore<LifecycleAttempt>>;
 }) {
   const snapshotStore =
     options?.snapshotStore ?? createMockLifecycleStore<AppStateSnapshot>();
   const stateStore =
     options?.stateStore ?? createMockLifecycleStore<OrchestrationState>();
+  const attemptStore =
+    options?.attemptStore ?? createMockLifecycleStore<LifecycleAttempt>();
 
   const baseline =
     // baseline can be null and we want to preserve that.
@@ -186,6 +189,7 @@ export function createMockLifecycleRuntime(options?: {
       : options.baseline;
 
   const runtime: LifecycleRuntime = {
+    attemptStore,
     baselineProvider:
       options?.baselineProvider ??
       createLifecycleBaselineProvider(snapshotStore, {
@@ -197,5 +201,5 @@ export function createMockLifecycleRuntime(options?: {
     stateStore,
   };
 
-  return { runtime, snapshotStore, stateStore };
+  return { attemptStore, runtime, snapshotStore, stateStore };
 }

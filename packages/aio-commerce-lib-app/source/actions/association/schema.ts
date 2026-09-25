@@ -13,7 +13,13 @@
 import { CommerceEnvSchema } from "@adobe/aio-commerce-lib-core/commerce";
 import * as v from "valibot";
 
-/** Request body for POST / — store association data. */
+// A plain `v.object` (not `strictObject`) so unknown keys stay ignored.
+/**
+ * Request body for POST / — store the Commerce instance the app is associated
+ * with. The Commerce App Management Service orchestrates association: it calls
+ * this action and reads the app's own `client_id` from the response to bind
+ * ownership of the record, so no identifiers need to be sent here.
+ */
 export const AssociationRequestBodySchema = v.object({
   commerceBaseUrl: v.pipe(
     v.string(),

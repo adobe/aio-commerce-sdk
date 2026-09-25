@@ -12,10 +12,31 @@
 
 import aioIms from "@adobe/aio-lib-ims";
 
+import { resolveImsS2SContextName } from "#env";
+
 const { context, getToken } = aioIms;
 
 /** Gets an IMS access token for the current CLI IMS context. */
 export async function getUserToken(): Promise<string> {
   const contextName = (await context.getCurrent()) ?? "cli";
   return getToken(contextName, {});
+}
+
+/**
+ * Gets an IMS access token for the workspace OAuth server-to-server (technical
+ * account) credential. Use this when a flow with no user in the loop — such as
+ * the post-deploy upgrade notification — must authenticate as the app itself
+ * rather than the developer running the CLI.
+ * @throws If the workspace has no OAuth server-to-server credential configured.
+ */
+export async function getServiceToken(): Promise<string> {
+  const contextName = resolveImsS2SContextName();
+  if (!contextName) {
+    throw new Error(
+      "No OAuth server-to-server credential is configured for this workspace. " +
+        "Add an OAuth server-to-server credential to the workspace and run `aio app use` to sync it.",
+    );
+  }
+
+  return await getToken(contextName, {});
 }

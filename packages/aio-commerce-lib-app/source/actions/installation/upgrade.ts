@@ -24,7 +24,11 @@ import { getAssociationData } from "#management/association/repository";
 import { executeLifecycleAttempt } from "#management/lifecycle/execution";
 import { planLifecycle } from "#management/lifecycle/planning";
 import { startLifecycleAttempt } from "#management/lifecycle/start";
-import { CURRENT_STATE_KEY } from "#management/lifecycle/state";
+import {
+  putAttempt,
+  readAttempt,
+  updateLatestAttempt,
+} from "#management/lifecycle/state";
 
 import { createLifecycleRuntime, DEFAULT_ACTION_NAME } from "./common";
 
@@ -32,9 +36,8 @@ import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 import type {
   AppStateSnapshot,
   LifecycleAttempt,
-  OrchestrationState,
 } from "#management/common/orchestration";
-import type { LifecycleStore } from "#management/lifecycle/state";
+import type { LifecycleRuntime } from "#management/lifecycle/state";
 import type {
   ExecutionHandlerArgs,
   LifecycleExecutionRouteParams,
@@ -49,8 +52,13 @@ type StartUpgradeArgs = RequestHandlerArgs & {
 };
 
 /**
- * Plans an upgrade from the current baseline toward the target config and,
- * for automatic upgrades, starts it asynchronously.
+ * Externally-callable execute entry point.
+ *
+ * Called by the Commerce App Management Service to run an upgrade (for both auto
+ * and manual modes — they differ only in who triggers this call). It (re)plans
+ * from the current baseline toward the target config, mints a persisted attempt
+ * so status is pollable, asynchronously dispatches the actual work, and returns
+ * `{ attemptId, plan: { source, target } }` synchronously.
  */
 export async function startUpgrade({
   appConfig,
@@ -129,17 +137,6 @@ export async function startUpgrade({
     });
   }
 
-  const { upgradeMode } = appConfig.metadata;
-  if (upgradeMode === "manual") {
-    return ok({
-      body: {
-        message: "Upgrade planned",
-        operation: "upgrade",
-        plan: planning.plan,
-      },
-    });
-  }
-
   if (!rawExecutionDeadline) {
     return internalServerError(
       "The OpenWhisk action deadline is required to start an upgrade",
@@ -169,16 +166,20 @@ export async function startUpgrade({
     });
     ({ activationId } = activation);
   } catch (error) {
-    await persistDispatchFailure(runtime.stateStore, attempt, error);
+    await persistDispatchFailure(runtime, attempt, error);
     throw error;
   }
 
   logger.debug(`Async upgrade execution started: ${String(activationId)}`);
   return accepted({
     body: {
-      message: "Upgrade started",
-      operation: "upgrade",
-      plan: planning.plan,
+      attemptId: attempt.id,
+      // Return only the versions the orchestrator needs — not the full validated
+      // target config that plan.target also carries.
+      plan: {
+        source: { appVersion: planning.plan.source.appVersion },
+        target: { appVersion: planning.plan.target.appVersion },
+      },
     },
   });
 }
@@ -218,6 +219,7 @@ export async function executeUpgrade({
   const result = await executeLifecycleAttempt({
     actionVersion,
     attemptId,
+    attemptStore: runtime.attemptStore,
     executionDeadline: new Date(executionDeadline).toISOString(),
     lifecycleContext: runtime.lifecycleContext,
     rootStep: runtime.rootStep,
@@ -239,34 +241,30 @@ export async function executeUpgrade({
   return ok({ body: result });
 }
 
-/** Marks an attempt retryable when its background invocation cannot be dispatched. */
+/** Marks an attempt failed when its background invocation cannot be dispatched. */
 async function persistDispatchFailure(
-  stateStore: LifecycleStore<OrchestrationState>,
+  stores: Pick<LifecycleRuntime, "stateStore" | "attemptStore">,
   attempt: LifecycleAttempt,
   error: unknown,
 ) {
-  const state = await stateStore.get(CURRENT_STATE_KEY);
-  if (
-    !state ||
-    state.latestAttempt?.id !== attempt.id ||
-    state.latestAttempt.status !== "pending"
-  ) {
+  const current = await readAttempt(stores.attemptStore, attempt.id);
+  if (current?.status !== "pending") {
     throw new Error("The dispatched lifecycle attempt is missing or stale");
   }
 
-  await stateStore.put(CURRENT_STATE_KEY, {
-    ...state,
-    latestAttempt: {
-      ...attempt,
-      failure: {
-        key: "LIFECYCLE_DISPATCH_FAILED",
-        message:
-          error instanceof Error
-            ? error.message
-            : "Lifecycle execution dispatch failed",
-        path: [],
-      },
-      status: "failed",
+  const failed: LifecycleAttempt = {
+    ...attempt,
+    failure: {
+      key: "LIFECYCLE_DISPATCH_FAILED",
+      message:
+        error instanceof Error
+          ? error.message
+          : "Lifecycle execution dispatch failed",
+      path: [],
     },
-  });
+    status: "failed",
+  };
+
+  await putAttempt(stores.attemptStore, failed);
+  await updateLatestAttempt(stores.stateStore, failed);
 }

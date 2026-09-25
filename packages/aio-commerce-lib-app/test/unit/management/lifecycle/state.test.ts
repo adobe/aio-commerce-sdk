@@ -15,9 +15,13 @@ import { describe, expect, test, vi } from "vitest";
 import {
   CURRENT_STATE_KEY,
   normalizeExpiredAttempt,
+  putAttempt,
+  readNormalizedAttempt,
   readOrInitializeState,
+  requireActiveAttempt,
   requireCurrentAttempt,
   requireState,
+  updateLatestAttempt,
 } from "#management/lifecycle/state";
 import {
   createMockAppStateSnapshot,
@@ -29,6 +33,7 @@ import {
 
 import type {
   AppStateSnapshot,
+  LifecycleAttempt,
   OrchestrationState,
 } from "#management/common/orchestration";
 
@@ -233,6 +238,77 @@ describe("requireCurrentAttempt", () => {
     const store = createMockLifecycleStore({ initial: state });
     await expect(requireCurrentAttempt(store, "attempt-1")).rejects.toThrow(
       "stale",
+    );
+  });
+});
+
+describe("per-attempt addressing", () => {
+  test("putAttempt and readNormalizedAttempt round-trip by id", async () => {
+    const attemptStore = createMockLifecycleStore<LifecycleAttempt>();
+    const attempt = createMockLifecycleAttempt({ id: "attempt-9" });
+
+    await putAttempt(attemptStore, attempt);
+    expect(await readNormalizedAttempt(attemptStore, "attempt-9")).toEqual(
+      attempt,
+    );
+    expect(await readNormalizedAttempt(attemptStore, "missing")).toBeNull();
+  });
+
+  test("readNormalizedAttempt fails an attempt past its deadline", async () => {
+    const attemptStore = createMockLifecycleStore<LifecycleAttempt>();
+    await putAttempt(
+      attemptStore,
+      createMockLifecycleAttempt({
+        executionDeadline: PAST,
+        id: "attempt-expired",
+        status: "in-progress",
+      }),
+    );
+
+    const normalized = await readNormalizedAttempt(
+      attemptStore,
+      "attempt-expired",
+    );
+    expect(normalized).toMatchObject({
+      failure: { key: "LIFECYCLE_ATTEMPT_EXPIRED" },
+      status: "failed",
+    });
+    expect(await attemptStore.get("attempt-expired")).toMatchObject({
+      status: "failed",
+    });
+  });
+
+  test("requireActiveAttempt throws for a missing or terminal attempt", async () => {
+    const attemptStore = createMockLifecycleStore<LifecycleAttempt>();
+    await putAttempt(
+      attemptStore,
+      createMockLifecycleAttempt({ id: "attempt-1", status: "succeeded" }),
+    );
+
+    await expect(
+      requireActiveAttempt(attemptStore, "attempt-1"),
+    ).rejects.toThrow("stale");
+    await expect(requireActiveAttempt(attemptStore, "missing")).rejects.toThrow(
+      "stale",
+    );
+  });
+
+  test("updateLatestAttempt only mirrors while the attempt is still the latest", async () => {
+    const latest = createMockLifecycleAttempt({ id: "attempt-1" });
+    const stateStore = createMockLifecycleStore({
+      initial: createMockOrchestrationState({ latestAttempt: latest }),
+    });
+
+    const superseded: LifecycleAttempt = { ...latest, id: "attempt-0" };
+    await updateLatestAttempt(stateStore, {
+      ...superseded,
+      failure: { key: "X", message: "m", path: [] },
+      status: "failed",
+    });
+
+    // The older attempt does not overwrite the newer latest pointer.
+    expect((await stateStore.get(CURRENT_STATE_KEY))?.latestAttempt?.id).toBe(
+      "attempt-1",
     );
   });
 });

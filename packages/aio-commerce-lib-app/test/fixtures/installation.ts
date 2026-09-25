@@ -17,6 +17,7 @@ import { createMockStepStatus } from "./workflow";
 
 import type {
   AppStateSnapshot,
+  LifecycleAttempt,
   OrchestrationState,
 } from "#management/common/orchestration";
 import type { LifecycleContext } from "#management/common/workflow/step";
@@ -326,6 +327,7 @@ export type MockInstallationStore = ReturnType<
 export function createMockCombinedStoreImpl(
   getStores: () => {
     appStateSnapshot?: LifecycleStore<AppStateSnapshot>;
+    attempt?: LifecycleStore<LifecycleAttempt>;
     installation: MockInstallationStore;
     orchestrationState?: LifecycleStore<OrchestrationState>;
     uninstallation: MockInstallationStore;
@@ -352,6 +354,12 @@ export function createMockCombinedStoreImpl(
         throw new Error("Missing lifecycle app-state snapshot store");
       }
       return stores.appStateSnapshot;
+    }
+    if (prefix === "lifecycle-attempt") {
+      if (!stores.attempt) {
+        throw new Error("Missing lifecycle attempt store");
+      }
+      return stores.attempt;
     }
 
     throw new Error(`Unexpected store prefix: ${String(prefix)}`);

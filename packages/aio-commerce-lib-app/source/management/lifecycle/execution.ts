@@ -19,16 +19,15 @@ import {
   persistSuccess,
 } from "./persistence";
 import {
-  CURRENT_STATE_KEY,
-  normalizeExpiredAttempt,
-  requireCurrentAttempt,
-  requireState,
+  putAttempt,
+  readAttempt,
+  requireActiveAttempt,
+  updateLatestAttempt,
 } from "./state";
 
 import type {
   AppStateSnapshot,
   LifecycleAttempt,
-  OrchestrationState,
 } from "#management/common/orchestration";
 import type { WorkflowHooks } from "#management/common/workflow/hooks";
 import type {
@@ -37,7 +36,7 @@ import type {
   SucceededWorkflowState,
   WorkflowRunState,
 } from "#management/common/workflow/types";
-import type { LifecycleRuntime, LifecycleStore } from "./state";
+import type { LifecycleRuntime } from "./state";
 
 /** Inputs used by the asynchronous lifecycle executor. */
 export type ExecuteLifecycleAttemptOptions = Omit<
@@ -56,8 +55,10 @@ export type ExecuteLifecycleAttemptOptions = Omit<
 export async function executeLifecycleAttempt(
   options: ExecuteLifecycleAttemptOptions,
 ): Promise<LifecycleAttempt> {
-  let state = await requireState(options.stateStore);
-  const currentAttempt = state.latestAttempt;
+  const currentAttempt = await readAttempt(
+    options.attemptStore,
+    options.attemptId,
+  );
   if (!currentAttempt || currentAttempt.id !== options.attemptId) {
     throw new Error("The lifecycle attempt is missing or stale");
   }
@@ -94,12 +95,10 @@ export async function executeLifecycleAttempt(
     status: "in-progress",
   };
 
-  state = { ...state, latestAttempt: attempt };
+  await putAttempt(options.attemptStore, attempt);
+  await updateLatestAttempt(options.stateStore, attempt);
 
-  await options.stateStore.put(CURRENT_STATE_KEY, state);
-  state = await normalizeExpiredAttempt(options.stateStore, state);
-
-  const hooks = createProgressHooks(options.stateStore, attempt.id);
+  const hooks = createProgressHooks(options, attempt.id);
   const workflow = await executePlanWithRetry(
     options,
     attempt,
@@ -107,21 +106,21 @@ export async function executeLifecycleAttempt(
     hooks,
   );
 
-  state = await requireCurrentAttempt(options.stateStore, attempt.id);
+  await requireActiveAttempt(options.attemptStore, attempt.id);
   if (workflow.status === "failed") {
-    return persistApplyFailure(options.stateStore, state, attempt, workflow);
+    return persistApplyFailure(options, attempt, workflow);
   }
 
-  return persistSuccess(options, state, attempt, workflow);
+  return persistSuccess(options, attempt, workflow);
 }
 
 /** Creates hooks that persist execution progress after every step transition. */
 function createProgressHooks(
-  stateStore: LifecycleStore<OrchestrationState>,
+  stores: Pick<LifecycleRuntime, "stateStore" | "attemptStore">,
   attemptId: string,
 ): WorkflowHooks {
   const persistExecutionProgress = (progressState: WorkflowRunState) =>
-    persistProgress(stateStore, attemptId, progressState);
+    persistProgress(stores, attemptId, progressState);
   return {
     onStepFailure: (_event, progressState) =>
       persistExecutionProgress(progressState),

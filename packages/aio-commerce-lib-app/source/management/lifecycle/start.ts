@@ -15,6 +15,7 @@ import { createInitialPlanExecutionState } from "#management/common/workflow/exe
 import {
   CURRENT_STATE_KEY,
   normalizeExpiredAttempt,
+  putAttempt,
   readOrInitializeState,
 } from "./state";
 
@@ -88,6 +89,7 @@ export async function startLifecycleAttempt(
     latestAttempt: attempt,
     pendingPlan: null,
   });
+  await putAttempt(options.attemptStore, attempt);
   return attempt;
 }
 
@@ -116,6 +118,7 @@ async function resumeFailedAttempt(
     ...state,
     latestAttempt: resumed,
   });
+  await putAttempt(options.attemptStore, resumed);
   return resumed;
 }
 

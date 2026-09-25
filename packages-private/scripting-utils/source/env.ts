@@ -24,6 +24,10 @@ import aioIms from "@adobe/aio-lib-ims";
 import dotenv from "dotenv";
 
 const { context } = aioIms;
+
+/** The `integration_type` of an OAuth server-to-server (technical account) workspace credential. */
+const OAUTH_SERVER_TO_SERVER = "oauth_server_to_server";
+
 const IMS_KEYS = {
   client_id: "AIO_COMMERCE_AUTH_IMS_CLIENT_ID",
   client_secrets: "AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS",
@@ -95,22 +99,31 @@ export function setNodeEnv(
   replaceEnvVar(envPath, "NODE_ENV", mode);
 }
 
-/** Resolves the IMS server to server context from the project workspace credentials. */
-function resolveImsS2SContext(): Promise<ImsContext | null> {
+/**
+ * Resolves the IMS context name of the workspace's OAuth server-to-server (technical
+ * account) credential, or `null` when the workspace has none.
+ */
+export function resolveImsS2SContextName(): string | null {
   const credentials: WorkspaceCredentials[] =
     config.get("project.workspace.details.credentials") ?? [];
 
-  const [credential] = credentials
+  const [name] = credentials
     .filter(
-      ({ integration_type }) => integration_type === "oauth_server_to_server",
+      ({ integration_type }) => integration_type === OAUTH_SERVER_TO_SERVER,
     )
-    .map(({ name }) => name);
+    .map((credential) => credential.name);
 
-  if (!credential) {
+  return name ?? null;
+}
+
+/** Resolves the IMS server to server context from the project workspace credentials. */
+function resolveImsS2SContext(): Promise<ImsContext | null> {
+  const name = resolveImsS2SContextName();
+  if (!name) {
     return Promise.resolve(null);
   }
 
-  return context.get(credential);
+  return context.get(name);
 }
 
 export type SyncImsCredentialsResult =

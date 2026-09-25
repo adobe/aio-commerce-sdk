@@ -14,11 +14,13 @@ import { createCombinedStore } from "@aio-commerce-sdk/common-utils/storage";
 
 import type {
   AppStateSnapshot,
+  LifecycleAttempt,
   OrchestrationState,
 } from "#management/common/orchestration";
 
 const ORCHESTRATION_STATE_PREFIX = "lifecycle-orchestration-state";
 const APP_STATE_SNAPSHOT_PREFIX = "lifecycle-app-state-snapshot";
+const LIFECYCLE_ATTEMPT_PREFIX = "lifecycle-attempt";
 
 /** Creates the always-persisted store for the current orchestration state. */
 export function createOrchestrationStateStore() {
@@ -37,6 +39,23 @@ export function createAppStateSnapshotStore() {
     cache: { keyPrefix: APP_STATE_SNAPSHOT_PREFIX },
     persistent: {
       dirPrefix: APP_STATE_SNAPSHOT_PREFIX,
+      shouldPersist: () => true,
+    },
+  });
+}
+
+/**
+ * Creates the store of lifecycle attempts addressed by their own id.
+ *
+ * Attempts are persisted per id (not under a single "current" key) so a newer
+ * attempt never shadows an older one the Commerce App Management Service may
+ * still be polling for status.
+ */
+export function createLifecycleAttemptStore() {
+  return createCombinedStore<LifecycleAttempt>({
+    cache: { keyPrefix: LIFECYCLE_ATTEMPT_PREFIX },
+    persistent: {
+      dirPrefix: LIFECYCLE_ATTEMPT_PREFIX,
       shouldPersist: () => true,
     },
   });

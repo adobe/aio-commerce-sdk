@@ -19,6 +19,7 @@ import { createRootInstallationStep } from "#management/installation/root";
 import { createLifecycleBaselineProvider } from "#management/lifecycle/baseline";
 import {
   createAppStateSnapshotStore,
+  createLifecycleAttemptStore,
   createOrchestrationStateStore,
 } from "#management/lifecycle/storage";
 
@@ -287,12 +288,14 @@ export function getExecutedCustomInstallationSteps(
 
 /** Creates the shared storage read/write dependencies used by lifecycle orchestration. */
 export async function createLifecyclePersistence() {
-  const [stateStore, snapshotStore] = await Promise.all([
+  const [stateStore, snapshotStore, attemptStore] = await Promise.all([
     createOrchestrationStateStore(),
     createAppStateSnapshotStore(),
+    createLifecycleAttemptStore(),
   ]);
 
   return {
+    attemptStore,
     baselineProvider: createLifecycleBaselineProvider(snapshotStore, {
       get: getInstallationSnapshot,
     }),

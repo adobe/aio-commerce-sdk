@@ -32,14 +32,124 @@ export type LifecycleBaselineProvider = {
   get: (snapshotId: string | null) => Promise<AppStateSnapshot | null>;
 };
 
+/** Persistence contract for lifecycle attempts addressed by attempt id. */
+export type LifecycleAttemptStore = LifecycleStore<LifecycleAttempt>;
+
 /** Dependencies shared by lifecycle orchestration operations. */
 export type LifecycleRuntime = {
   rootStep: BranchStep;
   lifecycleContext: LifecycleContext;
   stateStore: LifecycleStore<OrchestrationState>;
   snapshotStore: LifecycleStore<AppStateSnapshot>;
+  attemptStore: LifecycleAttemptStore;
   baselineProvider: LifecycleBaselineProvider;
 };
+
+/** Returns whether an attempt is still active (running and within its deadline). */
+function isActiveAttempt(attempt: LifecycleAttempt): boolean {
+  return (
+    (attempt.status === "pending" || attempt.status === "in-progress") &&
+    Date.parse(attempt.executionDeadline) > Date.now()
+  );
+}
+
+/**
+ * Returns the attempt failed with an expiry failure when its deadline has
+ * elapsed while still active, or the attempt unchanged otherwise.
+ */
+function expireAttemptIfElapsed(attempt: LifecycleAttempt): LifecycleAttempt {
+  if (
+    (attempt.status !== "pending" && attempt.status !== "in-progress") ||
+    Date.parse(attempt.executionDeadline) > Date.now()
+  ) {
+    return attempt;
+  }
+
+  return {
+    ...attempt,
+    failure: {
+      key: "LIFECYCLE_ATTEMPT_EXPIRED",
+      message: "The lifecycle attempt exceeded its execution deadline",
+      path: [],
+    },
+    status: "failed",
+  };
+}
+
+/** Persists an attempt addressed by its id. */
+export async function putAttempt(
+  attemptStore: LifecycleAttemptStore,
+  attempt: LifecycleAttempt,
+): Promise<void> {
+  await attemptStore.put(attempt.id, attempt);
+}
+
+/**
+ * Mirrors an attempt into the orchestration state's `latestAttempt` pointer,
+ * but only while it is still the latest — so a superseding attempt is never
+ * shadowed. The per-id attempt record remains the source of truth for polling.
+ */
+export async function updateLatestAttempt(
+  stateStore: LifecycleStore<OrchestrationState>,
+  attempt: LifecycleAttempt,
+  patch?: Partial<OrchestrationState>,
+): Promise<void> {
+  const state = await stateStore.get(CURRENT_STATE_KEY);
+  if (!state || state.latestAttempt?.id !== attempt.id) {
+    return;
+  }
+
+  await stateStore.put(CURRENT_STATE_KEY, {
+    ...state,
+    ...patch,
+    latestAttempt: attempt,
+  });
+}
+
+/** Reads a persisted attempt by id, or `null` when none exists. */
+export function readAttempt(
+  attemptStore: LifecycleAttemptStore,
+  attemptId: string,
+): Promise<LifecycleAttempt | null> {
+  return attemptStore.get(attemptId).then((attempt) => attempt ?? null);
+}
+
+/**
+ * Reads an attempt by id and, when its deadline elapsed while still active,
+ * persists and returns it as failed. Returns `null` when no attempt exists.
+ */
+export async function readNormalizedAttempt(
+  attemptStore: LifecycleAttemptStore,
+  attemptId: string,
+): Promise<LifecycleAttempt | null> {
+  const attempt = await readAttempt(attemptStore, attemptId);
+  if (!attempt) {
+    return null;
+  }
+
+  const normalized = expireAttemptIfElapsed(attempt);
+  if (normalized !== attempt) {
+    await putAttempt(attemptStore, normalized);
+  }
+
+  return normalized;
+}
+
+/**
+ * Requires an attempt addressed by id to still be active, returning it.
+ * @throws When the attempt is missing, terminal, or past its deadline.
+ */
+export async function requireActiveAttempt(
+  attemptStore: LifecycleAttemptStore,
+  attemptId: string,
+): Promise<LifecycleAttempt> {
+  const attempt = await readAttempt(attemptStore, attemptId);
+  if (!attempt || attempt.id !== attemptId || !isActiveAttempt(attempt)) {
+    throw new Error("The lifecycle attempt is stale");
+  }
+
+  return attempt;
+}
 
 /** Reads orchestration state and initializes its baseline snapshot if needed. */
 export async function readOrInitializeState(
@@ -89,23 +199,14 @@ export async function normalizeExpiredAttempt(
   state: OrchestrationState,
 ): Promise<OrchestrationState> {
   const attempt = state.latestAttempt;
-  if (
-    !attempt ||
-    (attempt.status !== "pending" && attempt.status !== "in-progress") ||
-    Date.parse(attempt.executionDeadline) > Date.now()
-  ) {
+  if (!attempt) {
     return state;
   }
 
-  const failed: LifecycleAttempt = {
-    ...attempt,
-    failure: {
-      key: "LIFECYCLE_ATTEMPT_EXPIRED",
-      message: "The lifecycle attempt exceeded its execution deadline",
-      path: [],
-    },
-    status: "failed",
-  };
+  const failed = expireAttemptIfElapsed(attempt);
+  if (failed === attempt) {
+    return state;
+  }
 
   const normalized = { ...state, latestAttempt: failed };
   await store.put(CURRENT_STATE_KEY, normalized);

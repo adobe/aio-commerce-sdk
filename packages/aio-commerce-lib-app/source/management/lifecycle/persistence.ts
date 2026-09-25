@@ -10,44 +10,43 @@
  * governing permissions and limitations under the License.
  */
 
-import { CURRENT_STATE_KEY, requireCurrentAttempt } from "./state";
+import { putAttempt, requireActiveAttempt, updateLatestAttempt } from "./state";
 
 import type {
   AppStateSnapshot,
   LifecycleAttempt,
-  OrchestrationState,
 } from "#management/common/orchestration";
 import type {
   FailedWorkflowState,
   SucceededWorkflowState,
   WorkflowRunState,
 } from "#management/common/workflow/types";
-import type { LifecycleRuntime, LifecycleStore } from "./state";
+import type { LifecycleRuntime } from "./state";
 
-/** Persists execution progress for the current lifecycle attempt. */
+/** Stores shared by the persistence writers. */
+type PersistStores = Pick<LifecycleRuntime, "stateStore" | "attemptStore">;
+
+/** Persists execution progress for the lifecycle attempt addressed by id. */
 export async function persistProgress(
-  stateStore: LifecycleStore<OrchestrationState>,
+  stores: PersistStores,
   attemptId: string,
   progressState: WorkflowRunState,
 ): Promise<void> {
-  const state = await requireCurrentAttempt(stateStore, attemptId);
-  const current = state.latestAttempt as LifecycleAttempt;
+  const current = await requireActiveAttempt(stores.attemptStore, attemptId);
+  const updated: LifecycleAttempt = {
+    ...current,
+    data: progressState.data,
+    progress: progressState.step,
+    status: "in-progress",
+  };
 
-  await stateStore.put(CURRENT_STATE_KEY, {
-    ...state,
-    latestAttempt: {
-      ...current,
-      data: progressState.data,
-      progress: progressState.step,
-      status: "in-progress",
-    },
-  });
+  await putAttempt(stores.attemptStore, updated);
+  await updateLatestAttempt(stores.stateStore, updated);
 }
 
 /** Persists an apply failure as the attempt's terminal result. */
 export async function persistApplyFailure(
-  stateStore: LifecycleStore<OrchestrationState>,
-  state: OrchestrationState,
+  stores: PersistStores,
   attempt: LifecycleAttempt,
   workflow: FailedWorkflowState,
 ): Promise<LifecycleAttempt> {
@@ -67,18 +66,18 @@ export async function persistApplyFailure(
     status: "failed",
   };
 
-  await stateStore.put(CURRENT_STATE_KEY, {
-    ...state,
-    latestAttempt: failed,
-  });
+  await putAttempt(stores.attemptStore, failed);
+  await updateLatestAttempt(stores.stateStore, failed);
 
   return failed;
 }
 
 /** Persists the successful snapshot and terminal attempt state. */
 export async function persistSuccess(
-  stores: Pick<LifecycleRuntime, "snapshotStore" | "stateStore">,
-  state: OrchestrationState,
+  stores: Pick<
+    LifecycleRuntime,
+    "snapshotStore" | "stateStore" | "attemptStore"
+  >,
   attempt: LifecycleAttempt,
   workflow: SucceededWorkflowState,
 ): Promise<LifecycleAttempt> {
@@ -101,10 +100,9 @@ export async function persistSuccess(
     status: "succeeded",
   };
 
-  await stores.stateStore.put(CURRENT_STATE_KEY, {
-    ...state,
+  await putAttempt(stores.attemptStore, succeeded);
+  await updateLatestAttempt(stores.stateStore, succeeded, {
     baselineSnapshotId: snapshot.id,
-    latestAttempt: succeeded,
   });
 
   return succeeded;
