@@ -21,6 +21,7 @@ import {
   getRuntimeActions,
   requiresWebSource,
 } from "#commands/generate/actions/config";
+import { COMMERCE_ACTION_INPUTS } from "#commands/generate/actions/constants";
 import {
   configWithAdminUiAllGrids,
   configWithAdminUiInvoiceCreditMemoShipmentGrids,
@@ -44,6 +45,33 @@ const CONFIGURATION_EXTENSION_MATCHER = /EXTENSION=configuration\/1/;
 const BACKEND_UI_V2_EXTENSION_MATCHER = /EXTENSION=backend-ui\/2/;
 
 describe("buildAppManagementExtConfig", () => {
+  test("declares LOG_LEVEL at the package level", () => {
+    const result = buildAppManagementExtConfig(minimalValidConfig);
+    const appManagementPackage =
+      result.runtimeManifest?.packages?.[PACKAGE_NAME];
+
+    expect(appManagementPackage?.inputs).toEqual({
+      LOG_LEVEL: "$LOG_LEVEL",
+    });
+    expect(appManagementPackage?.actions?.["app-config"]).toEqual(
+      expect.objectContaining({
+        function: expect.any(String),
+      }),
+    );
+    expect(
+      appManagementPackage?.actions?.["app-config"]?.inputs,
+    ).toBeUndefined();
+    expect(appManagementPackage?.actions?.association).toEqual(
+      expect.objectContaining({
+        function: expect.any(String),
+      }),
+    );
+    expect(appManagementPackage?.actions?.association?.inputs).toBeUndefined();
+    expect(appManagementPackage?.actions?.installation?.inputs).toEqual(
+      COMMERCE_ACTION_INPUTS,
+    );
+  });
+
   test("app-config action is included with minimal config", () => {
     const result = buildAppManagementExtConfig(minimalValidConfig);
 
@@ -504,6 +532,25 @@ describe("requiresWebSource", () => {
 });
 
 describe("buildBusinessConfigurationExtConfig", () => {
+  test("declares LOG_LEVEL at the package level", () => {
+    const result = buildBusinessConfigurationExtConfig();
+    const appManagementPackage =
+      result.runtimeManifest?.packages?.[PACKAGE_NAME];
+
+    expect(appManagementPackage?.inputs).toEqual({
+      LOG_LEVEL: "$LOG_LEVEL",
+    });
+    expect(appManagementPackage?.actions?.config?.inputs).toEqual(
+      expect.objectContaining({
+        AIO_COMMERCE_CONFIG_ENCRYPTION_KEY:
+          "$AIO_COMMERCE_CONFIG_ENCRYPTION_KEY",
+      }),
+    );
+    expect(
+      appManagementPackage?.actions?.["scope-tree"]?.inputs,
+    ).toBeUndefined();
+  });
+
   test("config action is included", () => {
     const result = buildBusinessConfigurationExtConfig();
     const actions = result.runtimeManifest?.packages?.[PACKAGE_NAME]?.actions;
