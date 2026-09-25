@@ -130,9 +130,6 @@ export function buildAppManagementExtConfig(
         [PACKAGE_NAME]: {
           actions: {
             "app-config": createActionDefinition("app-config"),
-            // The association action adopts the app's Commerce App Management
-            // Service record with the app's own S2S credentials, so it needs the
-            // Commerce auth inputs (and the optional service URL override).
             association: createActionDefinition(
               "association",
               {},
