@@ -23,7 +23,9 @@ import {
 } from "#commands/generate/actions/config";
 import {
   configWithAdminUiAllGrids,
+  configWithAdminUiInvoiceCreditMemoShipmentGrids,
   configWithAdminUiMenu,
+  configWithAdminUiNewsletterGrid,
   configWithAdminUiNewsletterMassActions,
   configWithAdminUiSingleGrid,
   configWithCommerceEventing,
@@ -167,16 +169,15 @@ describe("buildAdminUiV2ExtConfig", () => {
     expect(preBuildHook).toMatch(BACKEND_UI_V2_EXTENSION_MATCHER);
   });
 
-  test("declares one workerProcess entry per unique runtimeAction (4 grids)", () => {
+  test("declares one workerProcess entry per unique runtimeAction (3 grids)", () => {
     const config = buildAdminUiV2ExtConfig(configWithAdminUiAllGrids);
     const workerImpls =
       config.operations?.workerProcess?.map((op) => op.impl) ?? [];
 
-    expect(workerImpls).toHaveLength(4);
+    expect(workerImpls).toHaveLength(3);
     expect(workerImpls).toContain("orders/fetch-order-grid-data");
     expect(workerImpls).toContain("products/fetch-product-grid-data");
     expect(workerImpls).toContain("customers/fetch-customer-grid-data");
-    expect(workerImpls).toContain("newsletter/fetch-subscriber-grid-data");
   });
 
   test("declares one workerProcess entry for single-grid config", () => {
@@ -444,14 +445,6 @@ describe("collectUniqueRuntimeActions", () => {
     expect(result).toContain("orders/fetch-order-grid-data");
     expect(result).toContain("products/fetch-product-grid-data");
     expect(result).toContain("customers/fetch-customer-grid-data");
-    expect(result).toContain("newsletter/fetch-subscriber-grid-data");
-  });
-
-  test("collects runtimeAction from a worker newsletter mass action", () => {
-    const result = collectUniqueRuntimeActions(
-      configWithAdminUiNewsletterMassActions.adminUi,
-    );
-    expect(result).toContain("newsletter/unsubscribe-subscribers");
   });
 
   test("collects runtimeAction from worker view buttons", () => {
@@ -466,6 +459,29 @@ describe("collectUniqueRuntimeActions", () => {
       configWithOrderViewTypeButtons.adminUi,
     );
     expect(result).toEqual([]);
+  });
+
+  test("collects runtimeActions from invoice, creditMemo, and shipment grid columns", () => {
+    const result = collectUniqueRuntimeActions(
+      configWithAdminUiInvoiceCreditMemoShipmentGrids.adminUi,
+    );
+    expect(result).toContain("invoices/fetch-invoice-grid-data");
+    expect(result).toContain("credit-memos/fetch-credit-memo-grid-data");
+    expect(result).toContain("shipments/fetch-shipment-grid-data");
+  });
+
+  test("collects runtimeAction from newsletter grid columns", () => {
+    const result = collectUniqueRuntimeActions(
+      configWithAdminUiNewsletterGrid.adminUi,
+    );
+    expect(result).toContain("newsletter/fetch-subscriber-grid-data");
+  });
+
+  test("collects runtimeAction from a worker newsletter mass action", () => {
+    const result = collectUniqueRuntimeActions(
+      configWithAdminUiNewsletterMassActions.adminUi,
+    );
+    expect(result).toContain("newsletter/unsubscribe-subscribers");
   });
 });
 
@@ -492,6 +508,14 @@ describe("requiresWebSource", () => {
 
   test("returns false for a grid-only adminUi config", () => {
     expect(requiresWebSource(configWithAdminUiAllGrids.adminUi)).toBe(false);
+  });
+
+  test("returns false for a grid-only config on invoice, creditMemo, and shipment", () => {
+    expect(
+      requiresWebSource(
+        configWithAdminUiInvoiceCreditMemoShipmentGrids.adminUi,
+      ),
+    ).toBe(false);
   });
 
   test("returns true for a newsletter view mass action", () => {

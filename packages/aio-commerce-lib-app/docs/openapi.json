@@ -3219,6 +3219,30 @@
               }
             }
           },
+          "invoice": {
+            "type": "object",
+            "properties": {
+              "gridColumns": {
+                "$ref": "#/components/schemas/AdminUiGridColumns"
+              }
+            }
+          },
+          "creditMemo": {
+            "type": "object",
+            "properties": {
+              "gridColumns": {
+                "$ref": "#/components/schemas/AdminUiGridColumns"
+              }
+            }
+          },
+          "shipment": {
+            "type": "object",
+            "properties": {
+              "gridColumns": {
+                "$ref": "#/components/schemas/AdminUiGridColumns"
+              }
+            }
+          },
           "newsletter": {
             "type": "object",
             "properties": {

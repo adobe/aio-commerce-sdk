@@ -187,18 +187,9 @@ const MassActionsSchema = v.pipe(
   ),
 );
 
-/**
- * Grid columns and mass actions — the components every Commerce entity supports.
- * `product`, `customer`, and `newsletter` use this shape as-is; `order` extends it
- * with view buttons.
- */
-const AdminUiEntitySchema = v.object({
+const AdminUiOrderSchema = v.object({
   gridColumns: v.optional(GridColumnsSchema),
   massActions: v.optional(MassActionsSchema),
-});
-
-const AdminUiOrderSchema = v.object({
-  ...AdminUiEntitySchema.entries,
   viewButtons: v.optional(
     v.pipe(
       v.array(OrderViewButtonSchema),
@@ -208,6 +199,27 @@ const AdminUiOrderSchema = v.object({
       ),
     ),
   ),
+});
+
+const AdminUiProductSchema = v.object({
+  gridColumns: v.optional(GridColumnsSchema),
+  massActions: v.optional(MassActionsSchema),
+});
+
+const AdminUiCustomerSchema = v.object({
+  gridColumns: v.optional(GridColumnsSchema),
+  massActions: v.optional(MassActionsSchema),
+});
+
+const AdminUiNewsletterSchema = v.object({
+  gridColumns: v.optional(GridColumnsSchema),
+  massActions: v.optional(MassActionsSchema),
+});
+
+// Shared by invoice, credit memo, and shipment: unlike order/product/customer,
+// these expose grid columns only — no mass actions or view buttons.
+const AdminUiGridOnlyEntitySchema = v.object({
+  gridColumns: v.optional(GridColumnsSchema),
 });
 
 const MenuIdSchema = v.pipe(
@@ -332,11 +344,14 @@ const AdminUiAclSchema = v.pipe(
  */
 export const AdminUiSchema = v.object({
   acl: v.optional(AdminUiAclSchema),
-  customer: v.optional(AdminUiEntitySchema),
+  creditMemo: v.optional(AdminUiGridOnlyEntitySchema),
+  customer: v.optional(AdminUiCustomerSchema),
+  invoice: v.optional(AdminUiGridOnlyEntitySchema),
   menu: v.optional(MenuSchema),
-  newsletter: v.optional(AdminUiEntitySchema),
+  newsletter: v.optional(AdminUiNewsletterSchema),
   order: v.optional(AdminUiOrderSchema),
-  product: v.optional(AdminUiEntitySchema),
+  product: v.optional(AdminUiProductSchema),
+  shipment: v.optional(AdminUiGridOnlyEntitySchema),
 });
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -350,6 +365,28 @@ export type AdminUiConfiguration = v.InferInput<typeof AdminUiSchema>;
  * The validated Admin UI configuration for an Adobe Commerce application.
  */
 export type AdminUi = v.InferOutput<typeof AdminUiSchema>;
+
+/**
+ * Entities that support grid column extensions, in a stable order. Shared so the
+ * runtime-action collection and the upgrade planner enumerate the same entities.
+ */
+export const ADMIN_UI_GRID_COLUMN_ENTITIES = [
+  "order",
+  "product",
+  "customer",
+  "invoice",
+  "creditMemo",
+  "shipment",
+  "newsletter",
+] as const satisfies readonly Exclude<keyof AdminUi, "acl" | "menu">[];
+
+/** Entities that additionally support mass actions, in a stable order. */
+export const ADMIN_UI_MASS_ACTION_ENTITIES = [
+  "order",
+  "product",
+  "customer",
+  "newsletter",
+] as const satisfies readonly Exclude<keyof AdminUi, "acl" | "menu">[];
 
 /** A single custom ACL resource leaf. */
 export type AclResource = v.InferInput<typeof AclResourceLeafSchema>;
@@ -441,6 +478,9 @@ export function hasBackendUiV2Components<T extends AnyCommerceAppConfig>(
       adminUi.product?.massActions?.length ||
       adminUi.customer?.gridColumns ||
       adminUi.customer?.massActions?.length ||
+      adminUi.invoice?.gridColumns ||
+      adminUi.creditMemo?.gridColumns ||
+      adminUi.shipment?.gridColumns ||
       adminUi.newsletter?.gridColumns ||
       adminUi.newsletter?.massActions?.length,
   );

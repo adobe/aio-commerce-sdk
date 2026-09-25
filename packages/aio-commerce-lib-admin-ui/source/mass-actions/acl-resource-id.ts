@@ -12,7 +12,7 @@
 
 import { getAclResourceId, sanitizeSegment } from "#api/lib/acl-resource-id";
 
-import type { AdminUiEntity } from "#api/lib/acl-resource-id";
+import type { MassActionEntity } from "#api/lib/acl-resource-id";
 
 /**
  * Derives the deterministic Commerce ACL resource id for a mass action.
@@ -39,7 +39,7 @@ import type { AdminUiEntity } from "#api/lib/acl-resource-id";
  */
 export function getMassActionAclResourceId(
   metadataId: string,
-  entity: AdminUiEntity,
+  entity: MassActionEntity,
   actionId: string,
 ): string {
   const appRoot = getAclResourceId(metadataId);

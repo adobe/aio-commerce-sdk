@@ -24,13 +24,18 @@ const VALID_REQUEST = {
 };
 
 describe("parseGridRequest", () => {
-  it.each(["order", "product", "customer", "newsletter"] satisfies GridType[])(
-    "accepts gridType %s",
-    (gridType) => {
-      const result = parseGridRequest({ ...VALID_REQUEST, gridType });
-      expect(result.gridType).toBe(gridType);
-    },
-  );
+  it.each([
+    "order",
+    "product",
+    "customer",
+    "invoice",
+    "creditmemo",
+    "shipment",
+    "newsletter",
+  ] satisfies GridType[])("accepts gridType %s", (gridType) => {
+    const result = parseGridRequest({ ...VALID_REQUEST, gridType });
+    expect(result.gridType).toBe(gridType);
+  });
 
   it("returns the parsed request when input is valid", () => {
     expect(parseGridRequest(VALID_REQUEST)).toEqual(VALID_REQUEST);

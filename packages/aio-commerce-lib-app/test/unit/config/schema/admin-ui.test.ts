@@ -26,6 +26,7 @@ import {
   configWithAdminUiAclOnly,
   configWithAdminUiAllGrids,
   configWithAdminUiEmptyBlock,
+  configWithAdminUiInvoiceCreditMemoShipmentGrids,
   configWithAdminUiMenu,
   configWithAdminUiNewsletterGrid,
   configWithAdminUiNewsletterMassActions,
@@ -39,6 +40,10 @@ import {
 // actions) — both predicates report these as present.
 const backendUiV2ComponentCases = [
   { config: configWithAdminUiAllGrids, label: "grid columns for all entities" },
+  {
+    config: configWithAdminUiInvoiceCreditMemoShipmentGrids,
+    label: "grid columns for invoice, creditMemo, and shipment",
+  },
   {
     config: configWithAdminUiNewsletterGrid,
     label: "newsletter grid columns only",
@@ -202,7 +207,7 @@ describe("AdminUiSchema", () => {
       }
     });
 
-    test("grids configured for all entities", () => {
+    test("all three grids configured", () => {
       const result = v.safeParse(
         AdminUiSchema,
         configWithAdminUiAllGrids.adminUi,
@@ -210,16 +215,16 @@ describe("AdminUiSchema", () => {
       expect(result.success).toBe(true);
     });
 
-    test("newsletter grid configured (grid columns only)", () => {
+    test("only one grid configured (others absent)", () => {
       const result = v.safeParse(AdminUiSchema, {
-        newsletter: {
+        order: {
           gridColumns: {
             columns: [
               { align: "left", id: "col", label: "Col", type: "string" },
             ],
             description: "Adds a column",
-            label: "Newsletter grid",
-            runtimeAction: "newsletter/fetch",
+            label: "Order grid",
+            runtimeAction: "orders/fetch",
           },
         },
       });
@@ -246,22 +251,6 @@ describe("AdminUiSchema", () => {
             },
             { id: "review", label: "Review", path: "#/review", type: "view" },
           ],
-        },
-      });
-      expect(result.success).toBe(true);
-    });
-
-    test("only one grid configured (others absent)", () => {
-      const result = v.safeParse(AdminUiSchema, {
-        order: {
-          gridColumns: {
-            columns: [
-              { align: "left", id: "col", label: "Col", type: "string" },
-            ],
-            description: "Adds a column",
-            label: "Order grid",
-            runtimeAction: "orders/fetch",
-          },
         },
       });
       expect(result.success).toBe(true);
@@ -777,6 +766,45 @@ describe("AdminUiSchema", () => {
       expect(result.success).toBe(false);
     });
   });
+});
+
+describe("adminUi.invoice / adminUi.creditMemo / adminUi.shipment", () => {
+  test.each(["invoice", "creditMemo", "shipment"] as const)(
+    "accepts gridColumns on %s",
+    (entity) => {
+      const result = v.safeParse(AdminUiSchema, {
+        [entity]: {
+          gridColumns: {
+            columns: [
+              { align: "left", id: "col", label: "Col", type: "string" },
+            ],
+            description: "Adds a column",
+            label: `${entity} grid`,
+            runtimeAction: `${entity}/fetch`,
+          },
+        },
+      });
+      expect(result.success).toBe(true);
+    },
+  );
+
+  test("accepts all three entities configured together", () => {
+    const result = v.safeParse(
+      AdminUiSchema,
+      configWithAdminUiInvoiceCreditMemoShipmentGrids.adminUi,
+    );
+    expect(result.success).toBe(true);
+  });
+
+  test.each(["invoice", "creditMemo", "shipment"] as const)(
+    "rejects an empty object under %s (gridColumns must be a valid GridColumns object when present)",
+    (entity) => {
+      const result = v.safeParse(AdminUiSchema, {
+        [entity]: { gridColumns: {} },
+      });
+      expect(result.success).toBe(false);
+    },
+  );
 });
 
 describe("adminUi.acl", () => {

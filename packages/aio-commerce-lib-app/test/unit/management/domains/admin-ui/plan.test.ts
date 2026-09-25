@@ -17,6 +17,7 @@ import { createMockAdminUiContext } from "#test/fixtures/admin-ui";
 import {
   configWithAdminUiAllGrids,
   configWithAdminUiEmptyBlock,
+  configWithAdminUiInvoiceCreditMemoShipmentGrids,
   configWithAdminUiNewsletterMassActions,
   configWithAdminUiSingleGrid,
 } from "#test/fixtures/config";
@@ -74,6 +75,20 @@ describe("planAdminUi", () => {
     expect(plan.operations[0]?.id).toBe("add:order.grid-columns");
   });
 
+  test("registers a newsletter mass action as its own component", async () => {
+    const { plan } = await planned(
+      null,
+      configWithAdminUiNewsletterMassActions as AdminUiConfig,
+    );
+
+    expect(plan.extensionAction).toBe("register");
+    expect(plan.operations).toHaveLength(1);
+    expect(plan.operations[0]?.kind).toBe("add");
+    expect(plan.operations[0]?.id).toBe(
+      "add:newsletter.mass-action.unsubscribe-subscribers",
+    );
+  });
+
   test("unregisters with one remove per component when the target dropped Admin UI", async () => {
     const { plan } = await planned(
       configWithAdminUiSingleGrid as AdminUiConfig,
@@ -93,15 +108,11 @@ describe("planAdminUi", () => {
     );
 
     expect(plan.extensionAction).toBe("refresh");
-    expect(plan.operations).toHaveLength(3);
+    expect(plan.operations).toHaveLength(2);
     expect(plan.operations.every((op) => op.kind === "add")).toBe(true);
     expect(
       plan.operations.map((op) => op.id).sort((a, b) => a.localeCompare(b)),
-    ).toEqual([
-      "add:customer.grid-columns",
-      "add:newsletter.grid-columns",
-      "add:product.grid-columns",
-    ]);
+    ).toEqual(["add:customer.grid-columns", "add:product.grid-columns"]);
   });
 
   test("refreshes with a remove per dropped component", async () => {
@@ -111,29 +122,11 @@ describe("planAdminUi", () => {
     );
 
     expect(plan.extensionAction).toBe("refresh");
-    expect(plan.operations).toHaveLength(3);
+    expect(plan.operations).toHaveLength(2);
     expect(plan.operations.every((op) => op.kind === "remove")).toBe(true);
     expect(
       plan.operations.map((op) => op.id).sort((a, b) => a.localeCompare(b)),
-    ).toEqual([
-      "remove:customer.grid-columns",
-      "remove:newsletter.grid-columns",
-      "remove:product.grid-columns",
-    ]);
-  });
-
-  test("registers a newsletter mass action as its own component", async () => {
-    const { plan } = await planned(
-      null,
-      configWithAdminUiNewsletterMassActions as AdminUiConfig,
-    );
-
-    expect(plan.extensionAction).toBe("register");
-    expect(plan.operations).toHaveLength(1);
-    expect(plan.operations[0]?.kind).toBe("add");
-    expect(plan.operations[0]?.id).toBe(
-      "add:newsletter.mass-action.unsubscribe-subscribers",
-    );
+    ).toEqual(["remove:customer.grid-columns", "remove:product.grid-columns"]);
   });
 
   test("plans nothing when the components are unchanged", async () => {
@@ -211,7 +204,6 @@ describe("planAdminUi", () => {
       ...configWithAdminUiAllGrids,
       adminUi: {
         ...configWithAdminUiAllGrids.adminUi,
-        newsletter: undefined,
         order: {
           ...configWithAdminUiAllGrids.adminUi.order,
           gridColumns: {
@@ -349,5 +341,21 @@ describe("planAdminUi", () => {
     expect(context.adminUiClient.registerExtension).not.toHaveBeenCalled();
     expect(context.adminUiClient.refreshExtension).not.toHaveBeenCalled();
     expect(context.adminUiClient.unregisterExtension).not.toHaveBeenCalled();
+  });
+
+  test("registers grid columns declared on invoice, creditMemo, and shipment", async () => {
+    const { plan } = await planned(
+      null,
+      configWithAdminUiInvoiceCreditMemoShipmentGrids as AdminUiConfig,
+    );
+
+    expect(plan.extensionAction).toBe("register");
+    expect(
+      plan.operations.map((op) => op.id).sort((a, b) => a.localeCompare(b)),
+    ).toEqual([
+      "add:creditMemo.grid-columns",
+      "add:invoice.grid-columns",
+      "add:shipment.grid-columns",
+    ]);
   });
 });
