@@ -25,6 +25,8 @@ import {
   configWithAdminUiAllGrids,
   configWithAdminUiInvoiceCreditMemoShipmentGrids,
   configWithAdminUiMenu,
+  configWithAdminUiNewsletterGrid,
+  configWithAdminUiNewsletterMassActions,
   configWithAdminUiSingleGrid,
   configWithCommerceEventing,
   configWithCustomInstallationSteps,
@@ -467,6 +469,20 @@ describe("collectUniqueRuntimeActions", () => {
     expect(result).toContain("credit-memos/fetch-credit-memo-grid-data");
     expect(result).toContain("shipments/fetch-shipment-grid-data");
   });
+
+  test("collects runtimeAction from newsletter grid columns", () => {
+    const result = collectUniqueRuntimeActions(
+      configWithAdminUiNewsletterGrid.adminUi,
+    );
+    expect(result).toContain("newsletter/fetch-subscriber-grid-data");
+  });
+
+  test("collects runtimeAction from a worker newsletter mass action", () => {
+    const result = collectUniqueRuntimeActions(
+      configWithAdminUiNewsletterMassActions.adminUi,
+    );
+    expect(result).toContain("newsletter/unsubscribe-subscribers");
+  });
 });
 
 describe("requiresWebSource", () => {
@@ -499,6 +515,29 @@ describe("requiresWebSource", () => {
       requiresWebSource(
         configWithAdminUiInvoiceCreditMemoShipmentGrids.adminUi,
       ),
+    ).toBe(false);
+  });
+
+  test("returns true for a newsletter view mass action", () => {
+    expect(
+      requiresWebSource({
+        newsletter: {
+          massActions: [
+            {
+              id: "review-subscribers",
+              label: "Review",
+              path: "#/review-subscribers",
+              type: "view",
+            },
+          ],
+        },
+      }),
+    ).toBe(true);
+  });
+
+  test("returns false for a worker-only newsletter mass action", () => {
+    expect(
+      requiresWebSource(configWithAdminUiNewsletterMassActions.adminUi),
     ).toBe(false);
   });
 });

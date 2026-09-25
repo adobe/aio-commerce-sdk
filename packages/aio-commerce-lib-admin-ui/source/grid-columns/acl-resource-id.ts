@@ -33,7 +33,7 @@ import type { AdminUiEntity } from "#api/lib/acl-resource-id";
  *
  * @param metadataId - The application's `metadata.id` value (e.g. `"approval-dashboard-app"`).
  * @param entity - The grid's Commerce entity (`"order"`, `"product"`, `"customer"`, `"invoice"`,
- *   `"creditmemo"`, or `"shipment"`).
+ *   `"creditmemo"`, `"shipment"`, or `"newsletter"`).
  * @param columnId - The column's `id` value from `adminUi.<entity>.gridColumns.columns[].id`.
  * @returns The full Commerce ACL resource id for the grid-column leaf node, or an empty string
  *   when `metadataId` is blank.
