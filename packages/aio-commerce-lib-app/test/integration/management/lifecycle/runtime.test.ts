@@ -410,7 +410,7 @@ describe("lifecycle runtime", () => {
       targetConfig: createConfig("3.0.0"),
     });
 
-    expect(nextPlanning.plan.source.appVersion).toBe("2.0.0");
+    expect(nextPlanning.plan.source?.appVersion).toBe("2.0.0");
   });
 
   test("records the execution delivery deadline on the completed attempt", async () => {
@@ -1551,16 +1551,105 @@ describe("lifecycle runtime", () => {
     }
   });
 
-  test("requires a compatible baseline", async () => {
-    const { runtime } = createMockLifecycleRuntime({ baseline: null });
-    await expect(
-      planLifecycle({
-        ...runtime,
-        actionVersion: "1.0.0",
-        operation: "upgrade",
-        targetAppVersion: "2.0.0",
-        targetConfig: createConfig("2.0.0"),
+  test("plans and applies a first install from no baseline", async () => {
+    const addOnlyPlan = (name: string) =>
+      vi.fn(async ({ baseline: leafBaseline, targetConfig: leafTarget }) => ({
+        kind: "planned" as const,
+        plan: {
+          operations:
+            !leafBaseline && leafTarget
+              ? [
+                  {
+                    after: { name },
+                    id: `add-${name}`,
+                    kind: "add" as const,
+                    label: `Add ${name}`,
+                  },
+                ]
+              : [],
+          path: ["root", name],
+        },
+      }));
+
+    const applied: unknown[] = [];
+    const apply = vi.fn(async (_plan, context) => {
+      applied.push(context.baseline);
+      return { snapshotData: { remoteId: "resource-1" } };
+    });
+
+    const rootStep = createMockLifecycleRoot([
+      createMockLifecycleLeaf({ apply, plan: addOnlyPlan("synthetic") }),
+      createMockLifecycleLeaf({
+        apply,
+        name: "secondary",
+        plan: addOnlyPlan("secondary"),
       }),
-    ).rejects.toThrow("compatible lifecycle baseline");
+    ]);
+
+    const targetConfig = createConfig("1.0.0");
+    const { runtime, snapshotStore, stateStore } = createMockLifecycleRuntime({
+      baseline: null,
+      rootStep,
+    });
+
+    const planning = await planLifecycle({
+      ...runtime,
+      actionVersion: "1.0.0",
+      operation: "install",
+      targetAppVersion: "1.0.0",
+      targetConfig,
+    });
+
+    expect.assert(planning.kind === "planned", "Expected an executable plan");
+    expect(planning.plan.source).toBeNull();
+    expect(planning.plan.domains).toEqual([
+      expect.objectContaining({ path: ["root", "synthetic"] }),
+      expect.objectContaining({ path: ["root", "secondary"] }),
+    ]);
+
+    const operations = planning.plan.domains.flatMap(
+      (domain) => domain.operations,
+    );
+    expect(operations).toHaveLength(2);
+    expect(operations.map((operation) => operation.kind)).toEqual([
+      "add",
+      "add",
+    ]);
+
+    const started = await startLifecycleAttempt({
+      ...runtime,
+      actionVersion: "1.0.0",
+      executionDeadline: EXECUTION_DEADLINE,
+      planId: planning.plan.id,
+    });
+
+    vi.mocked(snapshotStore.get).mockClear();
+    const completed = await executeLifecycleAttempt({
+      ...runtime,
+      actionVersion: "1.0.0",
+      attemptId: started.id,
+      executionDeadline: EXECUTION_DEADLINE,
+    });
+
+    expect(snapshotStore.get).not.toHaveBeenCalled();
+    expect(applied).toEqual([null, null]);
+    expect.assert(
+      completed.status === "succeeded",
+      "Expected a succeeded lifecycle attempt",
+    );
+
+    expect(await snapshotStore.get(completed.result.snapshotId)).toMatchObject({
+      config: targetConfig,
+      data: {
+        root: {
+          secondary: { remoteId: "resource-1" },
+          synthetic: { remoteId: "resource-1" },
+        },
+      },
+    });
+
+    expect((await stateStore.get("current"))?.baselineSnapshotId).toBe(
+      completed.result.snapshotId,
+    );
   });
 });

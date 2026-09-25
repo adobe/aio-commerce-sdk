@@ -23,7 +23,9 @@ import type { WorkflowData } from "./types";
 export type PlanWorkflowOptions = {
   rootStep: BranchStep;
   lifecycleContext: LifecycleContext;
-  baseline: AppStateSnapshot;
+
+  /** The state to plan from, or `null` when there is nothing installed yet. */
+  baseline: AppStateSnapshot | null;
   target: {
     config: CommerceAppConfigOutputModel;
   };
@@ -49,7 +51,8 @@ export async function planWorkflow(
     options.rootStep,
     [],
     {},
-    isStepConfigured(options.rootStep, options.baseline.config),
+    options.baseline !== null &&
+      isStepConfigured(options.rootStep, options.baseline.config),
     isStepConfigured(options.rootStep, options.target.config),
     options,
     domains,
@@ -80,6 +83,7 @@ async function planStep(
     for (const child of step.children) {
       const childConfiguredInBaseline =
         configuredInBaseline &&
+        options.baseline !== null &&
         isStepConfigured(child, options.baseline.config);
 
       const childConfiguredInTarget =
@@ -105,12 +109,13 @@ async function planStep(
     return;
   }
 
-  const domainBaseline = configuredInBaseline
-    ? {
-        config: options.baseline.config,
-        data: getAtPath(options.baseline.data ?? {}, path) as WorkflowData,
-      }
-    : null;
+  const domainBaseline =
+    configuredInBaseline && options.baseline
+      ? {
+          config: options.baseline.config,
+          data: getAtPath(options.baseline.data ?? {}, path) as WorkflowData,
+        }
+      : null;
 
   const domainTargetConfig = configuredInTarget ? options.target.config : null;
 

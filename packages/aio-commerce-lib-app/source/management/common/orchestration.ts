@@ -36,14 +36,14 @@ export type LifecyclePlan = {
   /** Version of the action that produced the plan. */
   actionVersion: string;
 
-  /** The state the plan transitions from. */
+  /** The state the plan transitions from, or `null` when there is none. */
   source: {
     /** Identifier of the baseline snapshot. */
     snapshotId: string;
 
     /** App version of the baseline. */
     appVersion: string;
-  };
+  } | null;
 
   /** The state the plan transitions to. */
   target: {
