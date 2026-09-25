@@ -40,16 +40,7 @@ export const router = new HttpActionRouter<AssociationActionContext>().use(
   withLogger({ name: () => "association" }),
 );
 
-/**
- * POST / - Store association data and return the app's own `client_id`.
- *
- * The Commerce App Management Service orchestrates association: it calls this
- * action while creating the record and reads the returned `client_id` to bind
- * ownership of the record (replacing the former app-initiated `:adopt`
- * handshake). Here the app persists the Commerce instance it is associated with
- * — so runtime actions can later retrieve it via `getCommerceInstance` /
- * `getCommerceClient` — and returns its S2S `client_id`.
- */
+/** POST / - Store association data and return the app's own `client_id`. */
 router.post("/", {
   body: AssociationRequestBodySchema,
 
