@@ -530,6 +530,10 @@ export function makeWorkspaceConfig(context: EventsExecutionContext) {
     scopes,
   } = authParams;
 
+  // Commerce's OAuth config factory requires these fields even though this credential
+  // type doesn't otherwise need them, so default them when absent.
+  const defaultTechnicalAccount = `${process.env.__OW_NAMESPACE}@techacct.adobe.com`;
+
   return {
     project: {
       id: projectId,
@@ -555,8 +559,10 @@ export function makeWorkspaceConfig(context: EventsExecutionContext) {
                 client_id: clientId,
                 client_secrets: clientSecrets,
                 scopes: scopes.map((scope) => scope.trim()),
-                technical_account_email: technicalAccountEmail,
-                technical_account_id: technicalAccountId,
+                technical_account_email:
+                  technicalAccountEmail ?? defaultTechnicalAccount,
+                technical_account_id:
+                  technicalAccountId ?? defaultTechnicalAccount,
               },
             },
           ],

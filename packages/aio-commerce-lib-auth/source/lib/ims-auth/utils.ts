@@ -11,6 +11,7 @@
  */
 
 import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
+import { resolveCredentials } from "@adobe/aio-lib-core-auth";
 import { safeParse } from "valibot";
 
 import {
@@ -111,6 +112,11 @@ export function assertImsAuthParams(
 
 /**
  * Resolves an {@link ImsAuthParams} from the given App Builder action inputs.
+ *
+ * Supports both ways of getting OAuth Server-to-Server credentials into an action: the
+ * `include-ims-credentials: true` action annotation is tried first, and the manually-wired
+ * `AIO_COMMERCE_AUTH_IMS_*` params are used as a fallback if the annotation isn't present.
+ *
  * @param params The App Builder action inputs to resolve the IMS authentication parameters from.
  * @throws {CommerceSdkValidationError} If the parameters are invalid and cannot be resolved.
  *
@@ -131,6 +137,22 @@ export function assertImsAuthParams(
 export function resolveImsAuthParams(
   params: Record<string, unknown>,
 ): ImsAuthParams {
+  try {
+    const { credentials, env } = resolveCredentials(
+      params as Parameters<typeof resolveCredentials>[0],
+    );
+
+    return __parseImsAuthParams({
+      clientId: credentials.clientId,
+      clientSecrets: [credentials.clientSecret],
+      environment: env,
+      imsOrgId: credentials.orgId,
+      scopes: credentials.scopes,
+    });
+  } catch {
+    // No minimal OAuth Server-to-Server credentials/annotation present, fall back below.
+  }
+
   const resolvedParams = {
     clientId: params.AIO_COMMERCE_AUTH_IMS_CLIENT_ID,
     clientSecrets: __transformStringArray(

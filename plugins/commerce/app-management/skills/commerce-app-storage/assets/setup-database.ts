@@ -30,8 +30,9 @@
 // Two easy mistakes this file avoids:
 //   1. Resolve the IMS auth params from context.params — NOT config. config is the
 //      app configuration and carries no credentials; context.params carries the
-//      injected IMS credentials (AIO_COMMERCE_AUTH_IMS_*) read by
-//      @adobe/aio-commerce-lib-auth.
+//      OAuth Server-to-Server credentials that resolveImsAuthParams reads, whether
+//      they came from the include-ims-credentials annotation or from manually-wired
+//      AIO_COMMERCE_AUTH_IMS_* inputs.
 //   2. createIndex is called ON A COLLECTION OBJECT, not with a collection-name string.
 
 import { defineCustomInstallationStep } from "@adobe/aio-commerce-lib-app/management";
@@ -46,8 +47,8 @@ const COLLECTION = "held_orders";
 // Open a DB client using the credentials on context.params. The caller is
 // responsible for closing it (see the finally blocks below).
 async function openClient(context: { params: Record<string, unknown> }) {
-  // include-ims-credentials makes the AIO_COMMERCE_AUTH_IMS_* credentials available
-  // on context.params; resolve them and mint a raw access token string.
+  // resolveImsAuthParams reads the OAuth Server-to-Server credentials from context.params
+  // (via include-ims-credentials, or manually-wired inputs) and mints a raw access token string.
   const authProvider = getImsAuthProvider(resolveImsAuthParams(context.params));
   const token = await authProvider.getAccessToken();
   const db = await initDb({
