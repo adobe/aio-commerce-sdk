@@ -28,13 +28,16 @@ import type {
 } from "#management/common/orchestration";
 import type { LifecycleRuntime } from "./state";
 
+/** The state a lifecycle plan transitions to, or nothing at all. */
+type PlanLifecycleTarget =
+  | { targetAppVersion: string; targetConfig: CommerceAppConfigOutputModel }
+  | { targetAppVersion?: null; targetConfig?: null };
+
 /** Inputs used to produce a lifecycle plan. */
 export type PlanLifecycleOptions = LifecycleRuntime & {
   actionVersion: string;
   operation: LifecycleOperation;
-  targetAppVersion: string;
-  targetConfig: CommerceAppConfigOutputModel;
-};
+} & PlanLifecycleTarget;
 
 /** Result of a lifecycle planning pass. */
 export type PlanLifecycleResult =
@@ -65,13 +68,18 @@ export async function planLifecycle(
     return createPlanningResult(existingPlan, true);
   }
 
+  const target = options.targetConfig
+    ? {
+        appVersion: options.targetAppVersion,
+        config: options.targetConfig,
+      }
+    : null;
+
   const planning = await planWorkflow({
     baseline,
     lifecycleContext: options.lifecycleContext,
     rootStep: options.rootStep,
-    target: {
-      config: options.targetConfig,
-    },
+    target: target && { config: target.config },
   });
 
   const plan: LifecyclePlan = {
@@ -86,10 +94,7 @@ export async function planLifecycle(
           snapshotId: state.baselineSnapshotId ?? baseline.id,
         }
       : null,
-    target: {
-      appVersion: options.targetAppVersion,
-      config: options.targetConfig,
-    },
+    target,
   };
 
   await options.stateStore.put(CURRENT_STATE_KEY, {

@@ -45,14 +45,17 @@ export type LifecyclePlan = {
     appVersion: string;
   } | null;
 
-  /** The state the plan transitions to. */
+  /**
+   * The state the plan transitions to, or `null` when there is no target, i.e.
+   * the app should end up with nothing installed.
+   */
   target: {
     /** App version being transitioned to. */
     appVersion: string;
 
     /** Validated configuration used to produce and execute the plan. */
     config: CommerceAppConfigOutputModel;
-  };
+  } | null;
 
   /** Per-domain plans that compose the operation. */
   domains: DomainPlan[];

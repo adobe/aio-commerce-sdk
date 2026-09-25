@@ -1551,6 +1551,109 @@ describe("lifecycle runtime", () => {
     }
   });
 
+  test("plans and applies an uninstall towards no target", async () => {
+    const removeOnlyPlan = (name: string) =>
+      vi.fn(async ({ baseline: leafBaseline, targetConfig: leafTarget }) => ({
+        kind: "planned" as const,
+        plan: {
+          operations:
+            leafBaseline && !leafTarget
+              ? [
+                  {
+                    before: leafBaseline.data,
+                    id: `remove-${name}`,
+                    kind: "remove" as const,
+                    label: `Remove ${name}`,
+                  },
+                ]
+              : [],
+          path: ["root", name],
+        },
+      }));
+
+    const appliedTargets: unknown[] = [];
+    const apply = vi.fn(async (_plan, context) => {
+      appliedTargets.push(context.targetConfig);
+      return { snapshotData: null };
+    });
+
+    const leafMeta = {
+      install: { label: "Synthetic domain" },
+      uninstall: { label: "Synthetic domain" },
+    };
+    const rootStep = createMockLifecycleRoot(
+      [
+        createMockLifecycleLeaf({
+          apply,
+          meta: leafMeta,
+          plan: removeOnlyPlan("synthetic"),
+        }),
+        createMockLifecycleLeaf({
+          apply,
+          meta: leafMeta,
+          name: "secondary",
+          plan: removeOnlyPlan("secondary"),
+        }),
+      ],
+      {
+        meta: {
+          install: { label: "Lifecycle" },
+          uninstall: { label: "Lifecycle" },
+        },
+      },
+    );
+
+    const baseline = createBaseline("1.0.0", {
+      root: {
+        secondary: { remoteId: "resource-2" },
+        synthetic: { remoteId: "resource-1" },
+      },
+    });
+
+    const { runtime, snapshotStore, stateStore } = createMockLifecycleRuntime({
+      baseline,
+      rootStep,
+    });
+
+    const planning = await planLifecycle({
+      ...runtime,
+      actionVersion: "1.0.0",
+      operation: "uninstall",
+    });
+
+    expect.assert(planning.kind === "planned", "Expected an executable plan");
+    expect(planning.plan.target).toBeNull();
+    expect(planning.plan.operation).toBe("uninstall");
+
+    const operations = planning.plan.domains.flatMap(
+      (domain) => domain.operations,
+    );
+    expect(operations.map((operation) => operation.kind)).toEqual([
+      "remove",
+      "remove",
+    ]);
+
+    const started = await startLifecycleAttempt({
+      ...runtime,
+      actionVersion: "1.0.0",
+      executionDeadline: EXECUTION_DEADLINE,
+      planId: planning.plan.id,
+    });
+
+    const completed = await executeLifecycleAttempt({
+      ...runtime,
+      actionVersion: "1.0.0",
+      attemptId: started.id,
+      executionDeadline: EXECUTION_DEADLINE,
+    });
+
+    expect(completed.status).toBe("succeeded");
+    expect(appliedTargets).toEqual([null, null]);
+    expect(await stateStore.get("current")).toBeNull();
+    expect(await snapshotStore.get(baseline.id)).toBeNull();
+    expect(snapshotStore.put).not.toHaveBeenCalled();
+  });
+
   test("plans and applies a first install from no baseline", async () => {
     const addOnlyPlan = (name: string) =>
       vi.fn(async ({ baseline: leafBaseline, targetConfig: leafTarget }) => ({

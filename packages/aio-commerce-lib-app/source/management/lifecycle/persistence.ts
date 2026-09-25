@@ -75,15 +75,24 @@ export async function persistApplyFailure(
   return failed;
 }
 
-/** Persists the successful snapshot and terminal attempt state. */
+/**
+ * Persists the terminal attempt state: a new baseline snapshot for an
+ * operation that leaves the app installed, or the removal of the orchestration
+ * state and its snapshots for a successful uninstall.
+ */
 export async function persistSuccess(
   stores: Pick<LifecycleRuntime, "snapshotStore" | "stateStore">,
   state: OrchestrationState,
   attempt: LifecycleAttempt,
   workflow: SucceededWorkflowState,
 ): Promise<LifecycleAttempt> {
+  const { target } = attempt.plan;
+  if (attempt.plan.operation === "uninstall" || !target) {
+    return clearLifecycleState(stores, state, attempt, workflow);
+  }
+
   const snapshot: AppStateSnapshot = {
-    config: attempt.plan.target.config,
+    config: target.config,
     createdAt: workflow.completedAt,
     data: workflow.data,
     id: crypto.randomUUID(),
@@ -95,7 +104,7 @@ export async function persistSuccess(
     data: workflow.data,
     progress: workflow.step,
     result: {
-      appVersion: attempt.plan.target.appVersion,
+      appVersion: target.appVersion,
       snapshotId: snapshot.id,
     },
     status: "succeeded",
@@ -108,4 +117,44 @@ export async function persistSuccess(
   });
 
   return succeeded;
+}
+
+/**
+ * Removes the orchestration state and the snapshots it referenced, and returns
+ * the terminal attempt of the uninstall that emptied them.
+ */
+async function clearLifecycleState(
+  stores: Pick<LifecycleRuntime, "snapshotStore" | "stateStore">,
+  state: OrchestrationState,
+  attempt: LifecycleAttempt,
+  workflow: SucceededWorkflowState,
+): Promise<LifecycleAttempt> {
+  const { source } = attempt.plan;
+
+  // Drop the state first: a failed snapshot deletion then only leaks storage,
+  // instead of leaving state pointing at a snapshot that no longer exists.
+  await stores.stateStore.delete(CURRENT_STATE_KEY);
+
+  const snapshotIds = new Set(
+    [state.baselineSnapshotId, source?.snapshotId].filter(
+      (id): id is string => typeof id === "string",
+    ),
+  );
+
+  await Promise.all(
+    [...snapshotIds].map((id) => stores.snapshotStore.delete(id)),
+  );
+
+  return {
+    ...attempt,
+    data: workflow.data,
+    progress: workflow.step,
+
+    // Nothing was captured, so the result can only name the state torn down.
+    result: {
+      appVersion: source?.appVersion ?? "0.0.0",
+      snapshotId: source?.snapshotId ?? "",
+    },
+    status: "succeeded",
+  };
 }

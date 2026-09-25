@@ -26,9 +26,11 @@ export type PlanWorkflowOptions = {
 
   /** The state to plan from, or `null` when there is nothing installed yet. */
   baseline: AppStateSnapshot | null;
+
+  /** The state to plan towards, or `null` when nothing should remain installed. */
   target: {
     config: CommerceAppConfigOutputModel;
-  };
+  } | null;
 };
 
 /** Aggregated output of a workflow planning pass. */
@@ -53,7 +55,8 @@ export async function planWorkflow(
     {},
     options.baseline !== null &&
       isStepConfigured(options.rootStep, options.baseline.config),
-    isStepConfigured(options.rootStep, options.target.config),
+    options.target !== null &&
+      isStepConfigured(options.rootStep, options.target.config),
     options,
     domains,
     issues,
@@ -87,7 +90,9 @@ async function planStep(
         isStepConfigured(child, options.baseline.config);
 
       const childConfiguredInTarget =
-        configuredInTarget && isStepConfigured(child, options.target.config);
+        configuredInTarget &&
+        options.target !== null &&
+        isStepConfigured(child, options.target.config);
 
       // biome-ignore lint/performance/noAwaitInLoops: planning follows declared domain order
       await planStep(
@@ -117,7 +122,8 @@ async function planStep(
         }
       : null;
 
-  const domainTargetConfig = configuredInTarget ? options.target.config : null;
+  const domainTargetConfig =
+    configuredInTarget && options.target ? options.target.config : null;
 
   const domainContext = {
     ...options.lifecycleContext,

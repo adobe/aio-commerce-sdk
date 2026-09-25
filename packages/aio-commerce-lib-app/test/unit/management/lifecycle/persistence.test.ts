@@ -24,6 +24,7 @@ import {
   createMockSucceededState,
 } from "#test/fixtures/installation";
 import {
+  createMockAppStateSnapshot,
   createMockLifecycleAttempt,
   createMockLifecyclePlan,
   createMockLifecycleStore,
@@ -145,7 +146,7 @@ describe("persistSuccess", () => {
     const { snapshotId } = succeeded.result;
     const snapshot = await snapshotStore.get(snapshotId);
     expect(snapshot).toMatchObject({
-      config: plan.target.config,
+      config: plan.target?.config,
       data: { remoteId: "resource-1" },
     });
 
@@ -158,5 +159,42 @@ describe("persistSuccess", () => {
       baselineSnapshotId: snapshotId,
       latestAttempt: succeeded,
     });
+  });
+
+  test("removes the orchestration state and its snapshots after an uninstall", async () => {
+    const attempt = createMockLifecycleAttempt({
+      operation: "uninstall",
+      plan: createMockLifecyclePlan({ operation: "uninstall", target: null }),
+    });
+
+    const state = createMockOrchestrationState({ latestAttempt: attempt });
+    const stateStore = createMockLifecycleStore({ initial: state });
+    const snapshotStore = createMockLifecycleStore<AppStateSnapshot>();
+    snapshotStore.values.set("snapshot-1", createMockAppStateSnapshot());
+
+    const succeeded = await persistSuccess(
+      { snapshotStore, stateStore },
+      state,
+      attempt,
+      createMockSucceededState({ data: null, id: "uninstallation-1" }),
+    );
+
+    expect.assert(
+      succeeded.status === "succeeded",
+      "Expected a succeeded attempt",
+    );
+
+    expect(succeeded.result).toEqual({
+      appVersion: "1.0.0",
+      snapshotId: "snapshot-1",
+    });
+
+    expect(stateStore.delete).toHaveBeenCalledWith(CURRENT_STATE_KEY);
+    expect(snapshotStore.delete).toHaveBeenCalledExactlyOnceWith("snapshot-1");
+    expect(stateStore.put).not.toHaveBeenCalled();
+    expect(snapshotStore.put).not.toHaveBeenCalled();
+
+    expect(await stateStore.get(CURRENT_STATE_KEY)).toBeNull();
+    expect(await snapshotStore.get("snapshot-1")).toBeNull();
   });
 });

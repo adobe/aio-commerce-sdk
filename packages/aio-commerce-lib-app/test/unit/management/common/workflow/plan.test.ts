@@ -24,6 +24,7 @@ import {
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 
 const TARGET_VERSION = "2.0.0";
+const BASELINE_VERSION = "1.0.0";
 
 function createConfig(version: string): CommerceAppConfigOutputModel {
   return createMockConfig({ metadata: { id: "synthetic-app", version } });
@@ -46,6 +47,32 @@ function createAddOnlyLeaf(name: string) {
                   id: `add-${name}`,
                   kind: "add" as const,
                   label: `Add ${name}`,
+                },
+              ]
+            : [],
+        path: input.path,
+      },
+    }),
+  });
+}
+
+/** Creates a leaf that only plans a remove when it has no target. */
+function createRemoveOnlyLeaf(name: string) {
+  return createMockLifecycleLeaf({
+    isConfigured: (config): config is CommerceAppConfigOutputModel =>
+      config.metadata.version === BASELINE_VERSION,
+    name,
+    plan: async (input) => ({
+      kind: "planned" as const,
+      plan: {
+        operations:
+          input.baseline && !input.targetConfig
+            ? [
+                {
+                  before: { name },
+                  id: `remove-${name}`,
+                  kind: "remove" as const,
+                  label: `Remove ${name}`,
                 },
               ]
             : [],
@@ -84,6 +111,33 @@ describe("planWorkflow", () => {
     expect(operations.map((operation) => operation.kind)).toEqual([
       "add",
       "add",
+    ]);
+  });
+
+  test("plans pure removes when there is no target", async () => {
+    const result = await planWorkflow({
+      baseline: createMockAppStateSnapshot({
+        config: createConfig(BASELINE_VERSION),
+      }),
+      lifecycleContext: createMockInstallationContextWithScripts(),
+      rootStep: createMockLifecycleRoot([
+        createRemoveOnlyLeaf("synthetic"),
+        createRemoveOnlyLeaf("secondary"),
+      ]),
+      target: null,
+    });
+
+    expect(result.issues).toEqual([]);
+    expect(result.domains.map((domain) => domain.path)).toEqual([
+      ["root", "synthetic"],
+      ["root", "secondary"],
+    ]);
+
+    const operations = result.domains.flatMap((domain) => domain.operations);
+    expect(operations).toHaveLength(2);
+    expect(operations.map((operation) => operation.kind)).toEqual([
+      "remove",
+      "remove",
     ]);
   });
 

@@ -32,6 +32,10 @@ export const CURRENT_STATE_KEY = "current";
 /** Minimal persistence contract required by lifecycle orchestration. */
 export type LifecycleStore<T> = Pick<KeyValueStore<T>, "get" | "put">;
 
+/** Persistence contract for lifecycle stores whose entries are also removed. */
+export type DeletableLifecycleStore<T> = LifecycleStore<T> &
+  Pick<KeyValueStore<T>, "delete">;
+
 /** Resolves the baseline snapshot selected by orchestration state. */
 export type LifecycleBaselineProvider = {
   /** Loads the stored snapshot, or `null` when there is no baseline. */
@@ -42,8 +46,8 @@ export type LifecycleBaselineProvider = {
 export type LifecycleRuntime = {
   rootStep: BranchStep;
   lifecycleContext: LifecycleContext;
-  stateStore: LifecycleStore<OrchestrationState>;
-  snapshotStore: LifecycleStore<AppStateSnapshot>;
+  stateStore: DeletableLifecycleStore<OrchestrationState>;
+  snapshotStore: DeletableLifecycleStore<AppStateSnapshot>;
   baselineProvider: LifecycleBaselineProvider;
 };
 

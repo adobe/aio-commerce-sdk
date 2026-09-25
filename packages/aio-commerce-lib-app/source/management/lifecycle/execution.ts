@@ -170,7 +170,10 @@ async function executePlanWithRetry(
   };
   let result = await executePlannedWorkflow({
     ...executionOptions,
-    initialState: toWorkflowState(attempt, attempt.plan.target.config),
+    initialState: toWorkflowState(
+      attempt,
+      attempt.plan.target?.config ?? baseline?.config,
+    ),
   });
   if (result.state.status === "failed") {
     result = await executePlannedWorkflow({
@@ -184,7 +187,7 @@ async function executePlanWithRetry(
 /** Recreates workflow execution state from a persisted lifecycle attempt. */
 function toWorkflowState(
   attempt: LifecycleAttempt,
-  config: AppStateSnapshot["config"],
+  config: AppStateSnapshot["config"] | undefined,
 ): InProgressWorkflowState {
   return {
     config,

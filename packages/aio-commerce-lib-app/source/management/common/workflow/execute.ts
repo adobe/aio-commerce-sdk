@@ -42,7 +42,9 @@ import type {
 /** Options for creating the initial execution state for a lifecycle plan. */
 export type CreateInitialPlanExecutionStateOptions = {
   rootStep: BranchStep;
-  targetConfig: CommerceAppConfigOutputModel;
+
+  /** Configuration recorded on the state, or `undefined` when there is none. */
+  targetConfig: CommerceAppConfigOutputModel | undefined;
   plan: LifecyclePlan;
 };
 
@@ -68,7 +70,7 @@ export type PlannedWorkflowResult = {
 /** Mutable state shared while executing a persisted lifecycle plan. */
 type PlannedStepExecutionContext = {
   lifecycleContext: LifecycleContext;
-  config: CommerceAppConfigOutputModel;
+  config: CommerceAppConfigOutputModel | undefined;
   baseline: AppStateSnapshot | null;
   id: string;
   startedAt: string;
@@ -144,7 +146,7 @@ export async function executePlannedWorkflow(
   const context: PlannedStepExecutionContext = {
     attemptId,
     baseline: options.baseline,
-    config: plan.target.config,
+    config: plan.target?.config ?? options.baseline?.config,
     data: initialState.data as Record<string, unknown> | null,
     error: null,
     hooks,
@@ -159,11 +161,7 @@ export async function executePlannedWorkflow(
   try {
     const rootConfigurationFlags = {
       configuredInBaseline: isConfiguredInBaseline(rootStep, context, true),
-      configuredInTarget: areStepAndParentConfigured(
-        rootStep,
-        context.config,
-        true,
-      ),
+      configuredInTarget: isConfiguredInTarget(rootStep, context, true),
     };
     await executePlannedStep(
       rootStep,
@@ -270,6 +268,21 @@ function isConfiguredInBaseline(
     : false;
 }
 
+/** Returns whether a step is configured in the executed plan's target. */
+function isConfiguredInTarget(
+  step: AnyStep,
+  context: PlannedStepExecutionContext,
+  isParentConfigured: boolean,
+): boolean {
+  return context.plan.target
+    ? areStepAndParentConfigured(
+        step,
+        context.plan.target.config,
+        isParentConfigured,
+      )
+    : false;
+}
+
 /** Resolves the baseline slice handed to a leaf's apply context. */
 function getLeafBaseline(
   context: PlannedStepExecutionContext,
@@ -335,9 +348,9 @@ async function executePlannedStep(
             context,
             configurationFlags.configuredInBaseline,
           ),
-          configuredInTarget: areStepAndParentConfigured(
+          configuredInTarget: isConfiguredInTarget(
             child,
-            context.config,
+            context,
             configurationFlags.configuredInTarget,
           ),
         });
@@ -356,9 +369,10 @@ async function executePlannedStep(
         ...accumulatedContext,
         attemptId: context.attemptId,
         baseline: getLeafBaseline(context, path, configurationFlags),
-        targetConfig: configurationFlags.configuredInTarget
-          ? context.config
-          : null,
+        targetConfig:
+          context.plan.target && configurationFlags.configuredInTarget
+            ? context.plan.target.config
+            : null,
       });
 
       context.data ??= {};
