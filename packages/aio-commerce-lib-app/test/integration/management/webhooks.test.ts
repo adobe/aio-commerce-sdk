@@ -14,14 +14,14 @@ import { HttpResponse, http } from "msw";
 import { afterEach, describe, expect, test, vi } from "vitest";
 
 import { isSucceededState } from "#management/common/workflow/types";
-import { applyWebhookSubscriptions } from "#management/domains/webhooks/apply";
-import { createWebhooksStepContext } from "#management/domains/webhooks/context";
-import { planWebhookSubscriptions } from "#management/domains/webhooks/plan";
 import {
   createInitialInstallationState,
   runInstallation,
   runValidation,
-} from "#management/installation/runner";
+} from "#management/deprecated/runner";
+import { applyWebhookSubscriptions } from "#management/domains/webhooks/apply";
+import { createWebhooksStepContext } from "#management/domains/webhooks/context";
+import { planWebhookSubscriptions } from "#management/domains/webhooks/plan";
 import { configWithWebhooks } from "#test/fixtures/config";
 import { createMockInstallationContext } from "#test/fixtures/installation";
 import { createMockExistingCommerceWebhook } from "#test/fixtures/webhooks";

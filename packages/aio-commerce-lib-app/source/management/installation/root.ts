@@ -23,10 +23,10 @@ import type { CustomInstallationStepIdentity } from "#management/domains/custom-
 /**
  * Creates the default child steps built-in in the library with dynamic children based on the
  * config. `executedCustomInstallationSteps` is only meaningful for a full uninstall (see
- * {@link createRootUninstallationStep}). `includeReconciliation` adds the reconciliation leaf,
+ * `createRootUninstallationStep`). `includeReconciliation` adds the reconciliation leaf,
  * which only runs on upgrade.
  */
-function createDefaultChildSteps(
+export function createDefaultChildSteps(
   config: CommerceAppConfigOutputModel,
   executedCustomInstallationSteps: readonly CustomInstallationStepIdentity[] = [],
   includeReconciliation = false,
@@ -68,28 +68,5 @@ export function createRootInstallationStep(
       },
     },
     name: "installation",
-  });
-}
-
-/**
- * Creates a root uninstallation step with dynamic children based on the config.
- *
- * `executedCustomInstallationSteps` is the persisted history of every custom installation step
- * that ever ran (from the lifecycle baseline snapshot). Passing it lets a full unassociate reach
- * steps that ran in a previous version but were since removed from the config.
- */
-export function createRootUninstallationStep(
-  config: CommerceAppConfigOutputModel,
-  executedCustomInstallationSteps: readonly CustomInstallationStepIdentity[] = [],
-): BranchStep {
-  return defineBranchStep({
-    children: createDefaultChildSteps(config, executedCustomInstallationSteps),
-    meta: {
-      install: {
-        description: "App uninstallation workflow",
-        label: "Uninstallation",
-      },
-    },
-    name: "uninstallation",
   });
 }

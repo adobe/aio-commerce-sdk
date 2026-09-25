@@ -10,7 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
-import { isBranchStep } from "./step";
+import { isBranchStep } from "#management/common/workflow/step";
 
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 import type {
@@ -19,9 +19,9 @@ import type {
   StepMetaInfo,
   ValidationContext,
   ValidationIssue,
-} from "./step";
+} from "#management/common/workflow/step";
 
-export type { ValidationIssue } from "./step";
+export type { ValidationIssue } from "#management/common/workflow/step";
 
 /** Validation result for a single step, mirroring the step hierarchy. */
 export type StepValidationResult = {

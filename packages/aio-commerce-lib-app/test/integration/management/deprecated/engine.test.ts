@@ -13,13 +13,13 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 import {
-  createInitialState,
-  executeWorkflow,
-} from "#management/common/workflow/runner";
-import {
   defineBranchStep,
   defineLeafStep,
 } from "#management/common/workflow/step";
+import {
+  createInitialState,
+  executeWorkflow,
+} from "#management/deprecated/engine";
 import { minimalValidConfig } from "#test/fixtures/config";
 import {
   createMockInstallationContext,

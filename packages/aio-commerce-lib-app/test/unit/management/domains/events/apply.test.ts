@@ -13,18 +13,18 @@
 import { HTTPError } from "ky";
 import { afterEach, describe, expect, test, vi } from "vitest";
 
-import {
-  applyCommerceEvents,
-  commerceEventsStep,
-} from "#management/domains/events/commerce";
-import {
-  applyExternalEvents,
-  externalEventsStep,
-} from "#management/domains/events/external";
+import { applyCommerceEvents } from "#management/domains/events/commerce";
+import { applyExternalEvents } from "#management/domains/events/external";
 import {
   planCommerceEvents,
   planExternalEvents,
 } from "#management/domains/events/plan";
+import {
+  createCommerceEvents,
+  createExternalEvents,
+  removeCommerceEvents,
+  removeExternalEvents,
+} from "#management/domains/events/provisioning";
 import {
   COMMERCE_PROVIDER_TYPE,
   EXTERNAL_PROVIDER_TYPE,
@@ -59,6 +59,15 @@ import type {
   EventingDomainPlan,
   EventingSnapshotData,
 } from "#management/domains/events/types";
+
+// The leaf provisioning handlers are stubbed at the module they live in, so the apply wrappers
+// under test are exercised end to end (their own provisioning is covered by the leaf tests).
+vi.mock("#management/domains/events/provisioning", () => ({
+  createCommerceEvents: vi.fn(),
+  createExternalEvents: vi.fn(),
+  removeCommerceEvents: vi.fn(),
+  removeExternalEvents: vi.fn(),
+}));
 
 const { metadata } = configWithCommerceEventing;
 
@@ -105,13 +114,11 @@ async function planExternal(
 
 describe("applyCommerceEvents", () => {
   afterEach(() => {
-    vi.restoreAllMocks();
+    vi.clearAllMocks();
   });
 
   test("converges the target providers through the (idempotent) install", async () => {
-    const install = vi
-      .spyOn(commerceEventsStep, "install")
-      .mockResolvedValue([]);
+    const install = vi.mocked(createCommerceEvents).mockResolvedValue([]);
     const context = createMockEventingInstallationContext({
       ioEventsClient: ioEventsClient({
         providers: [
@@ -151,17 +158,9 @@ describe("applyCommerceEvents", () => {
   });
 
   test("offboards providers dropped from the target through uninstall", async () => {
-    vi.spyOn(commerceEventsStep, "install").mockResolvedValue([]);
+    vi.mocked(createCommerceEvents).mockResolvedValue([]);
     const uninstall = vi
-      .spyOn(
-        commerceEventsStep as unknown as {
-          uninstall: (
-            config: CommerceEventsConfig,
-            context: unknown,
-          ) => Promise<void>;
-        },
-        "uninstall",
-      )
+      .mocked(removeCommerceEvents)
       .mockResolvedValue(undefined);
     const context = createMockEventingInstallationContext({
       ioEventsClient: ioEventsClient({
@@ -194,7 +193,7 @@ describe("applyCommerceEvents", () => {
   });
 
   test("PUT-updates a registration whose event set changed on a persisting provider", async () => {
-    vi.spyOn(commerceEventsStep, "install").mockResolvedValue([]);
+    vi.mocked(createCommerceEvents).mockResolvedValue([]);
 
     const provider: EventProvider = {
       description: "P1",
@@ -239,7 +238,7 @@ describe("applyCommerceEvents", () => {
   });
 
   test("resolves the current-scheme provider over a stale deprecated-scheme duplicate", async () => {
-    vi.spyOn(commerceEventsStep, "install").mockResolvedValue([]);
+    vi.mocked(createCommerceEvents).mockResolvedValue([]);
     const provider: EventProvider = {
       description: "P1",
       key: "k1",
@@ -303,7 +302,7 @@ describe("applyCommerceEvents", () => {
   });
 
   test("deletes metadata and subscription for an event dropped from a persisting provider", async () => {
-    vi.spyOn(commerceEventsStep, "install").mockResolvedValue([]);
+    vi.mocked(createCommerceEvents).mockResolvedValue([]);
 
     const provider: EventProvider = {
       description: "P1",
@@ -370,7 +369,7 @@ describe("applyCommerceEvents", () => {
   });
 
   test("deletes the registration, metadata, and subscription when a runtime action is fully dropped", async () => {
-    vi.spyOn(commerceEventsStep, "install").mockResolvedValue([]);
+    vi.mocked(createCommerceEvents).mockResolvedValue([]);
 
     const provider: EventProvider = {
       description: "P1",
@@ -437,7 +436,7 @@ describe("applyCommerceEvents", () => {
     const registration = createMockDeployedRegistration;
 
     test("fails the apply when updating a registration's event set errors", async () => {
-      vi.spyOn(commerceEventsStep, "install").mockResolvedValue([]);
+      vi.mocked(createCommerceEvents).mockResolvedValue([]);
       const data = providerData();
 
       const context = createMockEventingInstallationContext({
@@ -465,7 +464,7 @@ describe("applyCommerceEvents", () => {
     });
 
     test("recreates a missing registration from the target config", async () => {
-      vi.spyOn(commerceEventsStep, "install").mockResolvedValue([]);
+      vi.mocked(createCommerceEvents).mockResolvedValue([]);
       const data = providerData();
       const createRegistration = vi.fn().mockResolvedValue({ id: "reg-new" });
 
@@ -501,7 +500,7 @@ describe("applyCommerceEvents", () => {
     });
 
     test("fails the apply when recreating a missing registration errors", async () => {
-      vi.spyOn(commerceEventsStep, "install").mockResolvedValue([]);
+      vi.mocked(createCommerceEvents).mockResolvedValue([]);
       const data = providerData();
 
       const context = createMockEventingInstallationContext({
@@ -526,7 +525,7 @@ describe("applyCommerceEvents", () => {
     });
 
     test("fails the apply when deleting a dropped registration errors", async () => {
-      vi.spyOn(commerceEventsStep, "install").mockResolvedValue([]);
+      vi.mocked(createCommerceEvents).mockResolvedValue([]);
       const data = providerData();
 
       const context = createMockEventingInstallationContext({
@@ -554,7 +553,7 @@ describe("applyCommerceEvents", () => {
     });
 
     test("fails the apply when deleting a dropped Commerce subscription errors", async () => {
-      vi.spyOn(commerceEventsStep, "install").mockResolvedValue([]);
+      vi.mocked(createCommerceEvents).mockResolvedValue([]);
       const data = providerData();
 
       const context = createMockEventingInstallationContext({
@@ -584,7 +583,7 @@ describe("applyCommerceEvents", () => {
     });
 
     test("tolerates a not-found when deleting a Commerce subscription", async () => {
-      vi.spyOn(commerceEventsStep, "install").mockResolvedValue([]);
+      vi.mocked(createCommerceEvents).mockResolvedValue([]);
       const data = providerData();
 
       const context = createMockEventingInstallationContext({
@@ -619,7 +618,7 @@ describe("applyCommerceEvents", () => {
     });
 
     test("tolerates metadata already removed by the subscription cascade", async () => {
-      vi.spyOn(commerceEventsStep, "install").mockResolvedValue([]);
+      vi.mocked(createCommerceEvents).mockResolvedValue([]);
       const data = providerData();
 
       const context = createMockEventingInstallationContext({
@@ -652,7 +651,7 @@ describe("applyCommerceEvents", () => {
     });
 
     test("keeps applying when deleting dropped metadata errors (best-effort)", async () => {
-      vi.spyOn(commerceEventsStep, "install").mockResolvedValue([]);
+      vi.mocked(createCommerceEvents).mockResolvedValue([]);
       const data = providerData();
 
       const context = createMockEventingInstallationContext({
@@ -685,7 +684,7 @@ describe("applyCommerceEvents", () => {
     });
 
     test("deletes the Commerce subscription before the I/O Events metadata", async () => {
-      vi.spyOn(commerceEventsStep, "install").mockResolvedValue([]);
+      vi.mocked(createCommerceEvents).mockResolvedValue([]);
       const data = providerData();
 
       const context = createMockEventingInstallationContext({
@@ -724,7 +723,7 @@ describe("applyCommerceEvents", () => {
     });
 
     test("fails the apply when the deployed provider cannot be resolved", async () => {
-      vi.spyOn(commerceEventsStep, "install").mockResolvedValue([]);
+      vi.mocked(createCommerceEvents).mockResolvedValue([]);
 
       // No providers in live state → the persisting provider cannot be resolved.
       const context = createMockEventingInstallationContext({
@@ -771,7 +770,7 @@ describe("applyCommerceEvents", () => {
   }
 
   test("updates a persisting subscription in place for an additive config change", async () => {
-    vi.spyOn(commerceEventsStep, "install").mockResolvedValue([]);
+    vi.mocked(createCommerceEvents).mockResolvedValue([]);
     const provider: EventProvider = {
       description: "P1",
       key: "k1",
@@ -820,7 +819,7 @@ describe("applyCommerceEvents", () => {
   });
 
   test("updates a persisting subscription in place when a scalar is disabled (true -> false)", async () => {
-    vi.spyOn(commerceEventsStep, "install").mockResolvedValue([]);
+    vi.mocked(createCommerceEvents).mockResolvedValue([]);
     const provider: EventProvider = {
       description: "P1",
       key: "k1",
@@ -884,7 +883,7 @@ describe("applyCommerceEvents", () => {
   });
 
   test("recreates a persisting subscription (unsubscribe then resubscribe) for an orphaning change", async () => {
-    vi.spyOn(commerceEventsStep, "install").mockResolvedValue([]);
+    vi.mocked(createCommerceEvents).mockResolvedValue([]);
     const provider: EventProvider = {
       description: "P1",
       key: "k1",
@@ -943,7 +942,7 @@ describe("applyCommerceEvents", () => {
   });
 
   test("fails the apply when a subscription config update cannot be applied", async () => {
-    vi.spyOn(commerceEventsStep, "install").mockResolvedValue([]);
+    vi.mocked(createCommerceEvents).mockResolvedValue([]);
     const provider: EventProvider = {
       description: "P1",
       key: "k1",
@@ -984,13 +983,11 @@ describe("applyCommerceEvents", () => {
 
 describe("applyExternalEvents", () => {
   afterEach(() => {
-    vi.restoreAllMocks();
+    vi.clearAllMocks();
   });
 
   test("converges external providers without touching Commerce subscriptions", async () => {
-    const install = vi
-      .spyOn(externalEventsStep, "install")
-      .mockResolvedValue([]);
+    const install = vi.mocked(createExternalEvents).mockResolvedValue([]);
     const context = createMockEventingInstallationContext({
       ioEventsClient: ioEventsClient() as never,
     });
@@ -1030,17 +1027,9 @@ describe("applyExternalEvents", () => {
   });
 
   test("offboards dropped external providers through uninstall", async () => {
-    vi.spyOn(externalEventsStep, "install").mockResolvedValue([]);
+    vi.mocked(createExternalEvents).mockResolvedValue([]);
     const uninstall = vi
-      .spyOn(
-        externalEventsStep as unknown as {
-          uninstall: (
-            config: ExternalEventsConfig,
-            context: unknown,
-          ) => Promise<void>;
-        },
-        "uninstall",
-      )
+      .mocked(removeExternalEvents)
       .mockResolvedValue(undefined);
     const context = createMockEventingInstallationContext({
       ioEventsClient: ioEventsClient({
@@ -1073,7 +1062,7 @@ describe("applyExternalEvents", () => {
   });
 
   test("deletes metadata and registration for a dropped external event without touching Commerce subscriptions", async () => {
-    vi.spyOn(externalEventsStep, "install").mockResolvedValue([]);
+    vi.mocked(createExternalEvents).mockResolvedValue([]);
 
     const provider: EventProvider = {
       description: "EP1",
@@ -1128,7 +1117,7 @@ describe("applyExternalEvents", () => {
   });
 
   test("PUT-updates a persisting external registration when a shared-action event is dropped", async () => {
-    vi.spyOn(externalEventsStep, "install").mockResolvedValue([]);
+    vi.mocked(createExternalEvents).mockResolvedValue([]);
 
     const provider: EventProvider = {
       description: "EP1",

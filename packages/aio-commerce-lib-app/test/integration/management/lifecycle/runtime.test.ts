@@ -12,6 +12,19 @@
 
 import { describe, expect, test, vi } from "vitest";
 
+import {
+  BlockedLifecyclePlanError,
+  InvalidExecutionDeadlineError,
+  InvalidStartDeadlineError,
+  LifecycleAttemptActionVersionMismatchError,
+  LifecycleAttemptAlreadyExecutingError,
+  LifecycleAttemptInProgressError,
+  LifecycleAttemptNotFoundError,
+  LifecycleBaselineNotFoundError,
+  LifecycleOrchestrationError,
+  LifecyclePlanActionVersionMismatchError,
+  PendingLifecyclePlanNotFoundError,
+} from "#management/lifecycle/errors";
 import { executeLifecycleAttempt } from "#management/lifecycle/execution";
 import { planLifecycle } from "#management/lifecycle/planning";
 import { startLifecycleAttempt } from "#management/lifecycle/start";
@@ -32,6 +45,7 @@ import type {
   AppStateSnapshot,
   OrchestrationState,
 } from "#management/common/orchestration";
+import type { BranchStep } from "#management/common/workflow/step";
 
 const EXECUTION_DEADLINE = "2099-01-01T00:00:00.000Z";
 
@@ -51,6 +65,265 @@ function createBaseline(
     id: `baseline-${version}`,
   });
 }
+
+/** Captures the error rejected by a lifecycle operation. */
+async function captureError(operation: Promise<unknown>) {
+  return await operation.catch((error: unknown) => error);
+}
+
+describe("lifecycle orchestration error types", () => {
+  function createRuntime(rootStep?: BranchStep) {
+    return createMockLifecycleRuntime({
+      baseline: createBaseline("1.0.0"),
+      rootStep,
+    });
+  }
+
+  async function planUpgrade(
+    runtime: ReturnType<typeof createMockLifecycleRuntime>["runtime"],
+    actionVersion = "1.0.0",
+  ) {
+    return await planLifecycle({
+      ...runtime,
+      actionVersion,
+      operation: "upgrade",
+      targetAppVersion: "2.0.0",
+      targetConfig: createConfig("2.0.0"),
+    });
+  }
+
+  test("reports an unknown plan id as PendingLifecyclePlanNotFoundError", async () => {
+    const { runtime } = createRuntime();
+    await planUpgrade(runtime);
+
+    const error = await captureError(
+      startLifecycleAttempt({
+        ...runtime,
+        actionVersion: "1.0.0",
+        executionDeadline: EXECUTION_DEADLINE,
+        planId: "stale-plan",
+      }),
+    );
+
+    expect(error).toBeInstanceOf(PendingLifecyclePlanNotFoundError);
+    expect(error).toBeInstanceOf(LifecycleOrchestrationError);
+    expect(error).toHaveProperty("planId", "stale-plan");
+  });
+
+  test("reports a foreign plan as LifecyclePlanActionVersionMismatchError", async () => {
+    const { runtime } = createRuntime();
+    const planning = await planUpgrade(runtime);
+
+    const error = await captureError(
+      startLifecycleAttempt({
+        ...runtime,
+        actionVersion: "2.0.0",
+        executionDeadline: EXECUTION_DEADLINE,
+        planId: planning.plan.id,
+      }),
+    );
+
+    expect(error).toBeInstanceOf(LifecyclePlanActionVersionMismatchError);
+    expect(error).toBeInstanceOf(LifecycleOrchestrationError);
+    expect(error).toHaveProperty("actionVersion", "1.0.0");
+  });
+
+  test("reports a blocked plan as BlockedLifecyclePlanError carrying its id", async () => {
+    const { runtime } = createRuntime(
+      createMockLifecycleRoot([
+        createMockLifecycleLeaf({
+          apply: vi.fn(),
+          plan: vi.fn().mockResolvedValue({
+            issues: [
+              {
+                code: "MISSING_CONFIGURATION",
+                domain: "synthetic",
+                message: "Configuration is required",
+              },
+            ],
+            kind: "blocked",
+          }),
+        }),
+      ]),
+    );
+
+    const planning = await planUpgrade(runtime);
+    const error = await captureError(
+      startLifecycleAttempt({
+        ...runtime,
+        actionVersion: "1.0.0",
+        executionDeadline: EXECUTION_DEADLINE,
+        planId: planning.plan.id,
+      }),
+    );
+
+    expect(error).toBeInstanceOf(BlockedLifecyclePlanError);
+    expect(error).toBeInstanceOf(LifecycleOrchestrationError);
+    expect(error).toHaveProperty("planId", planning.plan.id);
+  });
+
+  test("reports an invalid start deadline as InvalidStartDeadlineError", async () => {
+    const { runtime } = createRuntime();
+    const planning = await planUpgrade(runtime);
+
+    const error = await captureError(
+      startLifecycleAttempt({
+        ...runtime,
+        actionVersion: "1.0.0",
+        executionDeadline: "not-a-date",
+        planId: planning.plan.id,
+      }),
+    );
+
+    expect(error).toBeInstanceOf(InvalidStartDeadlineError);
+    expect(error).toBeInstanceOf(LifecycleOrchestrationError);
+    expect(error).toHaveProperty("executionDeadline", "not-a-date");
+  });
+
+  test("reports planning during an active attempt as LifecycleAttemptInProgressError", async () => {
+    const { runtime } = createRuntime();
+    const planning = await planUpgrade(runtime);
+    await startLifecycleAttempt({
+      ...runtime,
+      actionVersion: "1.0.0",
+      executionDeadline: EXECUTION_DEADLINE,
+      planId: planning.plan.id,
+    });
+
+    const error = await captureError(planUpgrade(runtime, "1.0.1"));
+    expect(error).toBeInstanceOf(LifecycleAttemptInProgressError);
+    expect(error).toBeInstanceOf(LifecycleOrchestrationError);
+  });
+
+  test("reports an unknown attempt id as LifecycleAttemptNotFoundError", async () => {
+    const { runtime } = createRuntime();
+    const planning = await planUpgrade(runtime);
+    await startLifecycleAttempt({
+      ...runtime,
+      actionVersion: "1.0.0",
+      executionDeadline: EXECUTION_DEADLINE,
+      planId: planning.plan.id,
+    });
+
+    const error = await captureError(
+      executeLifecycleAttempt({
+        ...runtime,
+        actionVersion: "1.0.0",
+        attemptId: "stale-attempt",
+        executionDeadline: EXECUTION_DEADLINE,
+      }),
+    );
+
+    expect(error).toBeInstanceOf(LifecycleAttemptNotFoundError);
+    expect(error).toBeInstanceOf(LifecycleOrchestrationError);
+    expect(error).toHaveProperty("attemptId", "stale-attempt");
+  });
+
+  test("reports a foreign attempt as LifecycleAttemptActionVersionMismatchError", async () => {
+    const { runtime } = createRuntime();
+    const planning = await planUpgrade(runtime);
+    const attempt = await startLifecycleAttempt({
+      ...runtime,
+      actionVersion: "1.0.0",
+      executionDeadline: EXECUTION_DEADLINE,
+      planId: planning.plan.id,
+    });
+
+    const error = await captureError(
+      executeLifecycleAttempt({
+        ...runtime,
+        actionVersion: "2.0.0",
+        attemptId: attempt.id,
+        executionDeadline: EXECUTION_DEADLINE,
+      }),
+    );
+
+    expect(error).toBeInstanceOf(LifecycleAttemptActionVersionMismatchError);
+    expect(error).toBeInstanceOf(LifecycleOrchestrationError);
+    expect(error).toHaveProperty("actionVersion", "1.0.0");
+  });
+
+  test("reports a running attempt as LifecycleAttemptAlreadyExecutingError", async () => {
+    const { runtime, stateStore } = createRuntime();
+    const planning = await planUpgrade(runtime);
+    const attempt = await startLifecycleAttempt({
+      ...runtime,
+      actionVersion: "1.0.0",
+      executionDeadline: EXECUTION_DEADLINE,
+      planId: planning.plan.id,
+    });
+
+    const state = await stateStore.get("current");
+    expect.assert(state?.latestAttempt, "Expected a persisted attempt");
+    await stateStore.put("current", {
+      ...state,
+      latestAttempt: { ...state.latestAttempt, status: "in-progress" },
+    });
+
+    const error = await captureError(
+      executeLifecycleAttempt({
+        ...runtime,
+        actionVersion: "1.0.0",
+        attemptId: attempt.id,
+        executionDeadline: EXECUTION_DEADLINE,
+      }),
+    );
+
+    expect(error).toBeInstanceOf(LifecycleAttemptAlreadyExecutingError);
+    expect(error).toBeInstanceOf(LifecycleOrchestrationError);
+    expect(error).toHaveProperty("attemptId", attempt.id);
+  });
+
+  test("reports an invalid execution deadline as InvalidExecutionDeadlineError", async () => {
+    const { runtime } = createRuntime();
+    const planning = await planUpgrade(runtime);
+    const attempt = await startLifecycleAttempt({
+      ...runtime,
+      actionVersion: "1.0.0",
+      executionDeadline: EXECUTION_DEADLINE,
+      planId: planning.plan.id,
+    });
+
+    const error = await captureError(
+      executeLifecycleAttempt({
+        ...runtime,
+        actionVersion: "1.0.0",
+        attemptId: attempt.id,
+        executionDeadline: "not-a-date",
+      }),
+    );
+
+    expect(error).toBeInstanceOf(InvalidExecutionDeadlineError);
+    expect(error).toBeInstanceOf(LifecycleOrchestrationError);
+    expect(error).toHaveProperty("executionDeadline", "not-a-date");
+  });
+
+  test("reports a missing execution baseline as LifecycleBaselineNotFoundError", async () => {
+    const baseline = createBaseline("1.0.0");
+    const { runtime, snapshotStore } = createMockLifecycleRuntime({ baseline });
+
+    const planning = await planUpgrade(runtime);
+    const attempt = await startLifecycleAttempt({
+      ...runtime,
+      actionVersion: "1.0.0",
+      executionDeadline: EXECUTION_DEADLINE,
+      planId: planning.plan.id,
+    });
+
+    await snapshotStore.delete(baseline.id);
+    const error = await captureError(
+      executeLifecycleAttempt({
+        ...runtime,
+        actionVersion: "1.0.0",
+        attemptId: attempt.id,
+        executionDeadline: EXECUTION_DEADLINE,
+      }),
+    );
+
+    expect(error).toBeInstanceOf(LifecycleBaselineNotFoundError);
+    expect(error).toBeInstanceOf(LifecycleOrchestrationError);
+  });
+});
 
 describe("lifecycle runtime", () => {
   test("plans, starts, applies, retries, and commits a snapshot", async () => {

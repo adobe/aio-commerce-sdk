@@ -21,6 +21,12 @@ import openwhisk from "openwhisk";
 
 import { validateRecordedCommerceAppConfig } from "#config/lib/validate";
 import {
+  createInstallationHooks,
+  createInstallationStore,
+  createUninstallationStore,
+  getStorageKey,
+} from "#management/deprecated/stores";
+import {
   createInitialUninstallationState,
   isFailedState,
   isInProgressState,
@@ -34,13 +40,9 @@ import { createOrchestrationStateStore } from "#management/lifecycle/storage";
 import {
   buildLifecycleContext,
   buildWorkflowParams,
-  createInstallationHooks,
-  createInstallationStore,
   createLifecyclePersistence,
-  createUninstallationStore,
   DEFAULT_ACTION_NAME,
   getExecutedCustomInstallationSteps,
-  getStorageKey,
 } from "./common";
 
 import type { ExecutionHandlerArgs, RequestHandlerArgs } from "./common";

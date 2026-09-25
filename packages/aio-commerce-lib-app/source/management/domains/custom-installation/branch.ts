@@ -15,6 +15,7 @@ import {
   defineBranchStep,
   defineLeafStep,
 } from "#management/common/workflow/index";
+import { deprecatedReconciliationStep } from "#management/deprecated/domains/custom-installation";
 
 import { applyCustomInstallationSteps } from "./apply";
 import {
@@ -24,35 +25,15 @@ import {
 import { planCustomInstallationSteps } from "./plan";
 
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
-import type {
-  CustomInstallationSnapshotData,
-  CustomInstallationStepIdentity,
-} from "./types";
+import type { CustomInstallationStepIdentity } from "./types";
 
 /**
  * Leaf step that reconciles the custom installation steps domain as a whole via `plan`/`apply`.
  * It participates only in the upgrade tree; the per-script leaves handle install and uninstall.
  */
 const reconciliationStep = defineLeafStep({
+  ...deprecatedReconciliationStep,
   apply: applyCustomInstallationSteps,
-
-  // Unused in practice: this leaf only runs on upgrade (via `apply`), but `LeafStep` requires an
-  // `install`.
-  install: (
-    config: CommerceAppConfigOutputModel,
-  ): CustomInstallationSnapshotData => {
-    if (!hasCustomInstallationSteps(config)) {
-      return { executedSteps: [] };
-    }
-
-    const executedSteps: CustomInstallationStepIdentity[] =
-      config.installation.customInstallationSteps.map((step) => ({
-        name: step.name,
-        script: step.script,
-      }));
-
-    return { executedSteps };
-  },
 
   meta: {
     install: {
