@@ -13,15 +13,13 @@
 import { nonEmptyStringValueSchema } from "@aio-commerce-sdk/common-utils/valibot";
 import * as v from "valibot";
 
+import { MASS_ACTION_ENTITIES } from "#api/lib/acl-resource-id";
+
 /**
  * Grid identifier sent by Commerce on the `commerce/backend-ui/2` wire contract
  * for worker mass actions.
  */
-export const MassActionGridTypeSchema = v.picklist([
-  "order",
-  "product",
-  "customer",
-]);
+export const MassActionGridTypeSchema = v.picklist(MASS_ACTION_ENTITIES);
 
 /**
  * Schema for the JSON body Commerce POSTs to a worker mass action handler.
