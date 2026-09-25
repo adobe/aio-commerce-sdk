@@ -26,6 +26,7 @@ import type {
   CommerceAppConfig,
   CommerceAppConfigOutputModel,
 } from "#config/schema/app";
+import type { LifecycleOperation } from "#management/common/orchestration";
 import type { LifecycleRequestContext } from "#management/common/schema";
 import type {
   InProgressWorkflowState,
@@ -39,6 +40,13 @@ import type { LifecycleContext } from "#management/index";
 
 /** Action name for async invocation. */
 export const DEFAULT_ACTION_NAME = "app-management/installation";
+
+/** Human-readable name of each lifecycle operation, used in response messages. */
+export const LIFECYCLE_OPERATION_LABEL = {
+  install: "Installation",
+  uninstall: "Uninstallation",
+  upgrade: "Upgrade",
+} as const satisfies Record<LifecycleOperation, string>;
 
 /** Header used to identify the source of an installation action request. */
 export const INSTALLATION_INVOCATION_SOURCE_HEADER =
@@ -98,7 +106,7 @@ export type ExecutionRouteParams = WorkflowRouteParams & {
   executedCustomInstallationSteps?: CustomInstallationStepIdentity[];
 };
 
-/** Params for the upgrade execution route. */
+/** Params for the lifecycle execution route. */
 export type LifecycleExecutionRouteParams = WorkflowRouteParams & {
   attemptId: string;
 };
@@ -121,9 +129,9 @@ export type ExecutionHandlerArgs<TParams = ExecutionRouteParams> = {
  * Shared by lifecycle start and execution routes.
  */
 export function buildWorkflowParams(
-  body: LifecycleRequestContext,
+  body: LifecycleRequestContext & { commerceBaseUrl: string },
   rawParams: RuntimeActionArgs,
-) {
+): WorkflowRouteParams {
   return {
     ...rawParams,
     AIO_COMMERCE_API_BASE_URL: body.commerceBaseUrl,
@@ -196,13 +204,14 @@ export async function createLifecyclePersistence() {
 }
 
 /** Creates the shared dependencies used by lifecycle orchestration. */
-export async function createLifecycleRuntime(
+export function createLifecycleRuntime(
+  persistence: Awaited<ReturnType<typeof createLifecyclePersistence>>,
   params: WorkflowRouteParams,
   appConfig: CommerceAppConfigOutputModel,
   logger: LifecycleContext["logger"],
 ) {
   return {
-    ...(await createLifecyclePersistence()),
+    ...persistence,
     lifecycleContext: buildLifecycleContext(params, appConfig, logger),
     rootStep: createRootInstallationStep(appConfig, { forUpgrade: true }),
   };

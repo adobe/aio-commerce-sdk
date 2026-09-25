@@ -11,40 +11,21 @@
  */
 
 import {
-  internalServerError,
-  noContent,
-  ok,
-} from "@adobe/aio-commerce-lib-core/responses";
-import {
   HttpActionRouter,
   logger as withLogger,
 } from "@aio-commerce-sdk/common-utils/actions";
 
-import { validateCommerceAppConfig } from "#config/lib/validate";
 import { LifecycleRequestContextSchema } from "#management/common/schema";
-import {
-  createInstallationStore,
-  createUninstallationStore,
-  getStorageKey,
-  readStateFromStore,
-} from "#management/deprecated/stores";
-import { getCurrentLifecycleBaseline } from "#management/lifecycle/baseline";
-import {
-  CURRENT_STATE_KEY,
-  normalizeExpiredAttempt,
-} from "#management/lifecycle/state";
 
+import { executeLifecycle } from "./lifecycle";
+import { startLifecycle } from "./start";
+import { getLifecycleStatus, getUninstallationStatus } from "./status";
 import {
-  createLifecyclePersistence,
-  isPostAppDeployInvocation,
-} from "./common";
-import {
-  executeInstallation,
-  startInstallation,
-  validateInstallation,
-} from "./install";
-import { executeUninstallation, startUninstallation } from "./uninstall";
-import { executeUpgrade, startUpgrade } from "./upgrade";
+  clearUninstallationState,
+  executeUninstallation,
+  startUninstallation,
+} from "./uninstall";
+import { validateInstallation } from "./validation";
 
 import type {
   ExecutionRouteParams,
@@ -59,9 +40,9 @@ export type { CustomScriptsLoader, RuntimeActionFactoryArgs } from "./common";
  * Installation action router.
  *
  * Routes:
- * - GET /                            Get current installation or upgrade status
+ * - GET /                            Get the current lifecycle attempt status
  * - POST /                           Reconcile to the target config: install when no baseline exists, otherwise upgrade
- * - POST /execution                  Execute an installation or upgrade (internal, called async)
+ * - POST /execution                  Execute a lifecycle attempt (internal, called async)
  * - POST /validation                 Pre-installation validation
  * - POST /uninstallation             Start uninstallation (creates plan, invokes execution async)
  * - GET /uninstallation              Get current uninstallation status
@@ -72,36 +53,9 @@ export const router = new HttpActionRouter<InstallationActionContext>().use(
   withLogger({ name: () => "installation" }),
 );
 
-/** GET / - Get current installation or upgrade status. */
+/** GET / - Get the current lifecycle attempt status. */
 router.get("/", {
-  handler: async (req, { logger }) => {
-    const isPostAppDeploy = isPostAppDeployInvocation(req.headers);
-
-    // TODO(CEXT-6556): Unify the GET branches behind one lifecycle flow.
-    if (isPostAppDeploy) {
-      logger.debug("Getting upgrade execution status...");
-      const { stateStore } = await createLifecyclePersistence();
-      const state = await stateStore.get(CURRENT_STATE_KEY);
-      if (!state?.latestAttempt) {
-        logger.debug("No upgrade state found");
-        return noContent();
-      }
-
-      const normalized = await normalizeExpiredAttempt(stateStore, state);
-      const attempt = normalized.latestAttempt;
-      if (!attempt) {
-        return noContent();
-      }
-
-      const { plan: _plan, ...attemptState } = attempt;
-      logger.debug(`Found upgrade state: ${attemptState.status}`);
-      return ok({ body: attemptState });
-    }
-
-    logger.debug("Getting installation execution status...");
-    const store = await createInstallationStore();
-    return readStateFromStore(store, (msg) => logger.debug(msg));
-  },
+  handler: (_req, { logger }) => getLifecycleStatus(logger),
 });
 
 /**
@@ -113,63 +67,27 @@ router.get("/", {
  */
 router.post("/", {
   body: LifecycleRequestContextSchema,
-  handler: async (req, { logger, rawParams }) => {
-    const rawAppConfig = rawParams.appConfig;
-    if (!rawAppConfig) {
-      return internalServerError(
-        "The app config is missing. Does the action receive it as a parameter?",
-      );
-    }
-
-    const appConfig = validateCommerceAppConfig(rawAppConfig);
-    const { baselineProvider, stateStore } = await createLifecyclePersistence();
-    const baseline = await getCurrentLifecycleBaseline(
-      stateStore,
-      baselineProvider,
-    );
-
-    const hasNoBaseline = baseline === null;
-    const isPostAppDeploy = isPostAppDeployInvocation(req.headers);
-
-    // TODO(CEXT-6556): Unify the POST branches behind one lifecycle flow.
-    if (hasNoBaseline && !isPostAppDeploy) {
-      return startInstallation({
-        appConfig,
-        body: req.body,
-        logger,
-        rawParams,
-      });
-    }
-
-    return startUpgrade({
-      appConfig,
-      baseline,
+  handler: (req, { logger, rawParams }) =>
+    startLifecycle({
       body: req.body,
+      headers: req.headers,
       logger,
       rawParams,
-    });
-  },
+    }),
 });
 
 /**
- * POST /execution - Execute an installation or upgrade.
+ * POST /execution - Execute a lifecycle attempt.
  * @internal - Do not add to OpenAPI Spec.
  *
- * Called asynchronously by POST /. Upgrade executions carry an `attemptId`;
- * installation executions carry an `initialState`.
+ * Called asynchronously by POST /.
  */
 router.post("/execution", {
-  handler: (_req, { logger, rawParams }) => {
-    const params = rawParams as ExecutionRouteParams &
-      Partial<LifecycleExecutionRouteParams>;
-
-    return params.attemptId
-      ? executeUpgrade({
-          logger,
-          params: params as LifecycleExecutionRouteParams,
-        })
-      : executeInstallation({ logger, params });
-  },
+  handler: (_req, { logger, rawParams }) =>
+    executeLifecycle({
+      logger,
+      params: rawParams as LifecycleExecutionRouteParams,
+    }),
 });
 
 /** POST /validation - Pre-installation validation. */
@@ -181,11 +99,7 @@ router.post("/validation", {
 
 /** GET /uninstallation - Get current uninstallation status. */
 router.get("/uninstallation", {
-  handler: async (_req, { logger }) => {
-    logger.debug("Getting uninstallation execution status...");
-    const store = await createUninstallationStore();
-    return readStateFromStore(store, (msg) => logger.debug(msg));
-  },
+  handler: (_req, { logger }) => getUninstallationStatus(logger),
 });
 
 /** POST /uninstallation - Start uninstallation (async). */
@@ -209,11 +123,5 @@ router.post("/uninstallation/execution", {
 
 /** DELETE /uninstallation - Clear uninstallation state (no offboarding). */
 router.delete("/uninstallation", {
-  handler: async (_req, { logger }) => {
-    logger.debug("Clearing uninstallation state...");
-    const store = await createUninstallationStore();
-    await store.delete(getStorageKey());
-    logger.debug("Uninstallation state cleared");
-    return noContent();
-  },
+  handler: (_req, { logger }) => clearUninstallationState(logger),
 });

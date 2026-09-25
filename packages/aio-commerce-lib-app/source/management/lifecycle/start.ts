@@ -78,7 +78,7 @@ export async function startLifecycleAttempt(
     targetConfig: plan.target.config,
   });
   const attempt: LifecycleAttempt = {
-    data: baseline.data,
+    data: baseline?.data ?? null,
     executionDeadline: options.executionDeadline,
     id: crypto.randomUUID(),
     operation: plan.operation,

@@ -15,6 +15,7 @@ import {
   badRequest,
   conflict,
   internalServerError,
+  noContent,
   ok,
 } from "@adobe/aio-commerce-lib-core/responses";
 import openwhisk from "openwhisk";
@@ -103,7 +104,10 @@ export async function startUninstallation({
   logger.debug(`Created initial uninstall state: ${initialState.id}`);
   await store.put(getStorageKey(), initialState);
 
-  const workflowParams = buildWorkflowParams(body, rawParams);
+  const workflowParams = buildWorkflowParams(
+    { ...body, commerceBaseUrl },
+    rawParams,
+  );
   const activation = await openwhisk().actions.invoke({
     blocking: false,
     name: DEFAULT_ACTION_NAME,
@@ -126,6 +130,19 @@ export async function startUninstallation({
       ...initialState,
     },
   });
+}
+
+/** Clears the stored uninstallation state without running any offboarding. */
+export async function clearUninstallationState(
+  logger: RequestHandlerArgs["logger"],
+) {
+  logger.debug("Clearing uninstallation state...");
+
+  const store = await createUninstallationStore();
+  await store.delete(getStorageKey());
+  logger.debug("Uninstallation state cleared");
+
+  return noContent();
 }
 
 /** Runs the uninstallation workflow and clears lifecycle state on success. */
