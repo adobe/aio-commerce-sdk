@@ -15,23 +15,15 @@ import {
   defineBranchStep,
   defineLeafStep,
 } from "#management/common/workflow/step";
+import { deprecatedSubscriptionsStep } from "#management/deprecated/domains/webhooks";
 
 import { applyWebhookSubscriptions } from "./apply";
 import { createWebhooksStepContext } from "./context";
-import {
-  createWebhookSubscriptions,
-  deleteWebhookSubscriptions,
-  validateWebhookConflicts,
-} from "./helpers";
 import { planWebhookSubscriptions } from "./plan";
 
-import type { WebhooksConfig } from "#config/schema/webhooks";
-import type { WebhooksExecutionContext } from "./context";
-
 const subscriptionsStep = defineLeafStep({
+  ...deprecatedSubscriptionsStep,
   apply: applyWebhookSubscriptions,
-  install: (config: WebhooksConfig, context: WebhooksExecutionContext) =>
-    createWebhookSubscriptions(config, context),
   meta: {
     install: {
       description: "Creates webhook subscriptions in Adobe Commerce",
@@ -48,16 +40,6 @@ const subscriptionsStep = defineLeafStep({
   },
   name: "subscriptions",
   plan: planWebhookSubscriptions,
-
-  uninstall: async (
-    config: WebhooksConfig,
-    context: WebhooksExecutionContext,
-  ) => {
-    await deleteWebhookSubscriptions(config, context);
-  },
-
-  validate: (config: WebhooksConfig, context: WebhooksExecutionContext) =>
-    validateWebhookConflicts(config, context),
 });
 
 /** Branch step for setting up Commerce webhooks. */

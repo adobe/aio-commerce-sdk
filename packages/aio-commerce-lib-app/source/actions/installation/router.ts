@@ -22,6 +22,12 @@ import {
 
 import { validateCommerceAppConfig } from "#config/lib/validate";
 import { LifecycleRequestContextSchema } from "#management/common/schema";
+import {
+  createInstallationStore,
+  createUninstallationStore,
+  getStorageKey,
+  readStateFromStore,
+} from "#management/deprecated/stores";
 import { getCurrentLifecycleBaseline } from "#management/lifecycle/baseline";
 import {
   CURRENT_STATE_KEY,
@@ -29,12 +35,8 @@ import {
 } from "#management/lifecycle/state";
 
 import {
-  createInstallationStore,
   createLifecyclePersistence,
-  createUninstallationStore,
-  getStorageKey,
   isPostAppDeployInvocation,
-  readStateFromStore,
 } from "./common";
 import {
   executeInstallation,

@@ -28,11 +28,6 @@ import type {
   WorkflowError,
   WorkflowRunState,
 } from "#management/common/workflow/types";
-import type {
-  StepValidationResult,
-  ValidationResult,
-  ValidationSummary,
-} from "#management/common/workflow/validation";
 import type { LifecycleStore } from "#management/lifecycle/state";
 
 export const FAKE_SYSTEM_TIME = "2026-01-30T10:00:00.000Z";
@@ -190,19 +185,6 @@ export function createMockInProgressState(
   };
 }
 
-/** Creates a default installation in-progress state for runner tests. */
-export function createMockInstallationInProgressState(
-  overrides?: Partial<InProgressWorkflowState>,
-): InProgressWorkflowState {
-  return createMockInProgressState({
-    data: null,
-    id: "installation-id",
-    startedAt: FAKE_SYSTEM_TIME,
-    step: createMockInstallationStepStatus(),
-    ...overrides,
-  });
-}
-
 /** Creates a mock SucceededWorkflowState. */
 export function createMockSucceededState(
   overrides?: Partial<SucceededWorkflowState>,
@@ -242,44 +224,6 @@ export function createMockFailedState(
     startedAt: FAKE_SYSTEM_TIME,
     status: "failed",
     step: createMockStepStatus({ status: "failed" }),
-    ...overrides,
-  };
-}
-
-/** Creates a mock validation result node for tests. */
-export function createMockStepValidationResult(
-  overrides?: Partial<StepValidationResult>,
-): StepValidationResult {
-  return {
-    children: [],
-    issues: [],
-    meta: { label: "Installation" },
-    name: "installation",
-    path: ["installation"],
-    ...overrides,
-  };
-}
-
-/** Creates a mock validation summary for tests. */
-export function createMockValidationSummary(
-  overrides?: Partial<ValidationSummary>,
-): ValidationSummary {
-  return {
-    errors: 0,
-    totalIssues: 0,
-    warnings: 0,
-    ...overrides,
-  };
-}
-
-/** Creates a mock ValidationResult for tests. */
-export function createMockValidationResult(
-  overrides?: Partial<ValidationResult>,
-): ValidationResult {
-  return {
-    result: createMockStepValidationResult(),
-    summary: createMockValidationSummary(),
-    valid: true,
     ...overrides,
   };
 }

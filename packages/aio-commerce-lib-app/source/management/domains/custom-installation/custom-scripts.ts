@@ -16,16 +16,11 @@ import * as v from "valibot";
 
 import { hasCustomInstallationSteps } from "#config/schema/installation";
 import { defineLeafStep } from "#management/common/workflow/step";
+import { createDeprecatedCustomScriptHandlers } from "#management/deprecated/domains/custom-installation";
 
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
-import type {
-  ConfigWithInstallationSteps,
-  CustomInstallationStep,
-} from "#config/schema/installation";
-import type {
-  AnyStep,
-  ExecutionContext,
-} from "#management/common/workflow/step";
+import type { CustomInstallationStep } from "#config/schema/installation";
+import type { AnyStep } from "#management/common/workflow/step";
 import type {
   CustomInstallationStepDefinition,
   CustomInstallationStepHandler,
@@ -74,7 +69,7 @@ function assertScriptModule(module: unknown): asserts module is ScriptModule {
  * @param script - The script path to resolve the module for
  * @returns The resolved script module, or `undefined` if the script is not present in the context.
  */
-function getScriptModule(
+export function getScriptModule(
   customScripts: Record<string, unknown>,
   script: string,
 ): ScriptModule | undefined {
@@ -129,15 +124,6 @@ export function resolveCustomScriptHandler(
   return null;
 }
 
-/** Result of executing a single custom installation script. */
-type ScriptExecutionResult = {
-  /** The script path that was executed. */
-  script: string;
-
-  /** Any data returned by the script. */
-  data?: unknown;
-};
-
 /**
  * Resolves a script module from the customScripts context, throwing when it's absent.
  *
@@ -165,29 +151,9 @@ export function getScriptModuleOrThrow(
 export function createCustomScriptStep(
   scriptConfig: CustomInstallationStep,
 ): AnyStep {
-  const { script, name, description } = scriptConfig;
+  const { name, description } = scriptConfig;
   return defineLeafStep({
-    install: async (
-      config: ConfigWithInstallationSteps,
-      context: ExecutionContext,
-    ): Promise<ScriptExecutionResult> => {
-      const { logger } = context;
-      const customScripts = context.customScripts || {};
-
-      logger.info(`Executing custom installation script: ${name}`);
-      logger.debug(`Script path: ${script}`);
-
-      const scriptModule = getScriptModuleOrThrow(customScripts, script);
-      const install = resolveCustomScriptHandler(scriptModule, "install");
-
-      const scriptResult = await install(config, context);
-      logger.info(`Successfully executed script: ${name}`);
-
-      return {
-        data: scriptResult,
-        script,
-      };
-    },
+    ...createDeprecatedCustomScriptHandlers(scriptConfig),
     meta: {
       install: {
         description,
@@ -195,37 +161,6 @@ export function createCustomScriptStep(
       },
     },
     name: camelcase(name),
-
-    uninstall: async (
-      config: ConfigWithInstallationSteps,
-      context: ExecutionContext,
-    ): Promise<void> => {
-      const { logger } = context;
-      const customScripts = context.customScripts || {};
-      logger.debug(`Uninstalling custom script: ${name}`);
-
-      const scriptModule = getScriptModule(customScripts, script);
-      if (!scriptModule) {
-        logger.warn(
-          `Script ${script} not found in customScripts context, skipping uninstall. It may have been removed from the project after being configured.`,
-        );
-
-        return;
-      }
-
-      const uninstall = resolveCustomScriptHandler(scriptModule, "uninstall");
-
-      if (!uninstall) {
-        logger.debug(
-          `Script ${script} does not export an uninstall function, skipping uninstall.`,
-        );
-
-        return;
-      }
-
-      await uninstall(config, context);
-      logger.info(`Successfully uninstalled script: ${name}`);
-    },
   });
 }
 

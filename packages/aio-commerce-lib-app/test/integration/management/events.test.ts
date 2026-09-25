@@ -17,7 +17,7 @@ import { isSucceededState } from "#management/common/workflow/types";
 import {
   createInitialInstallationState,
   runInstallation,
-} from "#management/installation/runner";
+} from "#management/deprecated/runner";
 import { configWithFullEventing } from "#test/fixtures/config";
 import {
   createMockCommerceEventProvider,

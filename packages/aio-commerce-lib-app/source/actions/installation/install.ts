@@ -21,6 +21,11 @@ import openwhisk from "openwhisk";
 
 import { validateCommerceAppConfig } from "#config/lib/validate";
 import {
+  createInstallationHooks,
+  createInstallationStore,
+  getStorageKey,
+} from "#management/deprecated/stores";
+import {
   createInitialInstallationState,
   isFailedState,
   isInProgressState,
@@ -32,10 +37,7 @@ import {
 import {
   buildLifecycleContext,
   buildWorkflowParams,
-  createInstallationHooks,
-  createInstallationStore,
   DEFAULT_ACTION_NAME,
-  getStorageKey,
 } from "./common";
 
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
