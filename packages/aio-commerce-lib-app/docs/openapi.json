@@ -2302,8 +2302,22 @@
           }
         },
         "responses": {
-          "204": {
-            "description": "Association data stored successfully."
+          "200": {
+            "description": "Association data stored successfully. Returns the app's IMS client ID so the Commerce App Management Service can bind record ownership.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "clientId": {
+                      "description": "The app's IMS S2S client ID.",
+                      "type": "string"
+                    }
+                  },
+                  "required": ["clientId"]
+                }
+              }
+            }
           },
           "400": {
             "description": "Bad request, the request body is invalid.",
