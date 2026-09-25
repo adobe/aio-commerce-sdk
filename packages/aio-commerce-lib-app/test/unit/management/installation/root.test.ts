@@ -21,6 +21,7 @@ import {
   createRootInstallationStep,
   createRootUninstallationStep,
 } from "#management/installation/root";
+import { createLifecycleRootStep } from "#management/lifecycle/root";
 import {
   configWithCustomInstallationSteps,
   configWithWebhooks,
@@ -64,11 +65,11 @@ describe("createRootInstallationStep", () => {
     ).not.toContain("reconciliation");
   });
 
-  test("includes the reconciliation leaf when built for an upgrade", () => {
+  test("includes the reconciliation leaf when requested", () => {
     const result = createRootInstallationStep(
       configWithCustomInstallationSteps,
       {
-        forUpgrade: true,
+        includeReconciliation: true,
       },
     );
 
@@ -106,7 +107,6 @@ describe("createRootInstallationStep", () => {
     const state = createInitialPlanExecutionState({
       plan,
       rootStep,
-      targetConfig: configWithWebhooks,
     });
 
     const [webhooksStatus] = state.step.children;
@@ -174,5 +174,19 @@ describe("createRootUninstallationStep", () => {
     expect.assert(isBranchStep(customInstallationStep));
     expect(customInstallationStep.children.length).toBe(1);
     expect(customInstallationStep.children[0].name).toBe("oldStep");
+  });
+});
+
+describe("createLifecycleRootStep", () => {
+  test("names the root after the operation it runs", () => {
+    expect(createLifecycleRootStep(minimalValidConfig, "install").name).toBe(
+      "installation",
+    );
+    expect(createLifecycleRootStep(minimalValidConfig, "upgrade").name).toBe(
+      "installation",
+    );
+    expect(createLifecycleRootStep(minimalValidConfig, "uninstall").name).toBe(
+      "uninstallation",
+    );
   });
 });

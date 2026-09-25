@@ -11,36 +11,28 @@
  */
 
 import { getHeader } from "@adobe/aio-commerce-lib-core/headers";
-import { noContent, ok } from "@adobe/aio-commerce-lib-core/responses";
 import { createCombinedStore } from "@aio-commerce-sdk/common-utils/storage";
 
 import { isCompletedState, isSucceededState } from "#management/index";
-import { createRootInstallationStep } from "#management/installation/root";
 import { createLifecycleBaselineProvider } from "#management/lifecycle/baseline";
+import { createLifecycleRootStep } from "#management/lifecycle/root";
 import {
   createAppStateSnapshotStore,
   createOrchestrationStateStore,
 } from "#management/lifecycle/storage";
 
-import type { ActionResponse } from "@adobe/aio-commerce-lib-core/responses";
 import type { BaseContext } from "@aio-commerce-sdk/common-utils/actions";
-import type { KeyValueStore } from "@aio-commerce-sdk/common-utils/storage";
 import type {
   CommerceAppConfig,
   CommerceAppConfigOutputModel,
 } from "#config/schema/app";
-import type { AppStateSnapshot } from "#management/common/orchestration";
+import type {
+  AppStateSnapshot,
+  LifecycleAttempt,
+  LifecycleOperation,
+} from "#management/common/orchestration";
 import type { LifecycleRequestContext } from "#management/common/schema";
-import type { StepFailedEvent } from "#management/common/workflow/hooks";
-import type {
-  InProgressWorkflowState,
-  WorkflowData,
-  WorkflowRunState,
-} from "#management/common/workflow/types";
-import type {
-  CustomInstallationSnapshotData,
-  CustomInstallationStepIdentity,
-} from "#management/domains/custom-installation/index";
+import type { WorkflowRunState } from "#management/common/workflow/types";
 import type { LifecycleContext } from "#management/index";
 
 /** Action name for async invocation. */
@@ -96,17 +88,10 @@ export type WorkflowRouteParams = RuntimeActionArgs & {
   appData: LifecycleContext["appData"];
 };
 
-/** Params for the installation/uninstallation execution routes. */
-export type ExecutionRouteParams = WorkflowRouteParams & {
-  initialState: InProgressWorkflowState;
-
-  /** Same as {@link getExecutedCustomInstallationSteps}'s return value, passed through from `startUninstallation`. */
-  executedCustomInstallationSteps?: CustomInstallationStepIdentity[];
-};
-
-/** Params for the upgrade execution route. */
+/** Params for the lifecycle execution routes. */
 export type LifecycleExecutionRouteParams = WorkflowRouteParams & {
   attemptId: string;
+  operation: LifecycleOperation;
 };
 
 /** Shared inputs for the request handlers that plan work (start/validate). */
@@ -116,9 +101,9 @@ export type RequestHandlerArgs = {
   logger: LifecycleContext["logger"];
 };
 
-/** Inputs for the async execution handlers. */
-export type ExecutionHandlerArgs<TParams = ExecutionRouteParams> = {
-  params: TParams;
+/** Inputs for the async execution handler. */
+export type ExecutionHandlerArgs = {
+  params: LifecycleExecutionRouteParams;
   logger: LifecycleContext["logger"];
 };
 
@@ -169,6 +154,55 @@ export function buildWorkflowParams(
 }
 
 /**
+ * Projects an internal lifecycle attempt onto the public workflow run state returned by the
+ * status endpoints, so routing through the lifecycle path keeps the legacy response body.
+ *
+ * @param attempt - The lifecycle attempt to project.
+ * @param config - The configuration the attempt ran under, when known.
+ * @param completedAtFallback - Completion timestamp recovered from the resulting snapshot.
+ */
+export function toWorkflowRunState(
+  attempt: LifecycleAttempt,
+  config?: CommerceAppConfigOutputModel,
+  completedAtFallback?: string,
+): WorkflowRunState {
+  const base = {
+    config,
+    data: attempt.data,
+    id: attempt.id,
+    startedAt: attempt.startedAt,
+    step: attempt.progress,
+  };
+
+  // Older stored attempts record no completion time when failed, so startedAt is the last stable fallback.
+  // The field is required for terminal states, so we provide a fallback. Subsequent runs will have a proper completedAt timestamp.
+  const fallbackCompletedAt = completedAtFallback ?? attempt.startedAt;
+  const terminal = {
+    ...base,
+    ...(attempt.metadata ? { metadata: attempt.metadata } : {}),
+  };
+
+  switch (attempt.status) {
+    case "pending":
+    case "in-progress":
+      return { ...base, status: "in-progress" };
+    case "succeeded":
+      return {
+        ...terminal,
+        completedAt: attempt.completedAt ?? fallbackCompletedAt,
+        status: "succeeded",
+      };
+    default:
+      return {
+        ...terminal,
+        completedAt: attempt.completedAt ?? fallbackCompletedAt,
+        error: attempt.failure,
+        status: "failed",
+      };
+  }
+}
+
+/**
  * Builds a LifecycleContext from merged workflow params.
  * Shared by installation, uninstallation, and upgrade execution.
  */
@@ -182,57 +216,6 @@ export function buildLifecycleContext(
     customScripts: params.customScriptsLoader?.(appConfig, logFn) ?? {},
     logger: logFn,
     params,
-  };
-}
-
-/**
- * Reads state from a store and returns 200 with body or 204.
- * Shared by GET / and GET /uninstallation.
- */
-export async function readStateFromStore(
-  store: KeyValueStore<WorkflowRunState>,
-  logFn: (msg: string) => void,
-): Promise<ActionResponse> {
-  const state = await store.get(getStorageKey());
-  if (state) {
-    logFn(`Found state: ${state.status}`);
-    return ok({ body: state });
-  }
-  logFn("No state found");
-  return noContent();
-}
-
-/** Creates hooks to sync installation state to storage. */
-export function createInstallationHooks(
-  store: KeyValueStore<WorkflowRunState>,
-  logFn: (message: string) => void,
-) {
-  const logAndSave = async (message: string, data: WorkflowRunState) => {
-    logFn(message);
-    await store.put(getStorageKey(), data);
-  };
-
-  return {
-    onInstallationFailure: (state: WorkflowRunState) =>
-      logAndSave("Installation failed", state),
-    onInstallationStart: (state: WorkflowRunState) =>
-      logAndSave("Installation started", state),
-    onInstallationSuccess: (state: WorkflowRunState) =>
-      logAndSave(
-        state.status === "succeeded" && state.metadata?.isRetry
-          ? "Installation succeeded on retry"
-          : "Installation succeeded",
-        state,
-      ),
-    onStepFailure: (event: StepFailedEvent, state: WorkflowRunState) =>
-      logAndSave(
-        `Step failed: ${event.stepName} — ${event.error.message ?? `(key: ${event.error.key})`}`,
-        state,
-      ),
-    onStepStart: (event: { stepName: string }, state: WorkflowRunState) =>
-      logAndSave(`Step started: ${event.stepName}`, state),
-    onStepSuccess: (event: { stepName: string }, state: WorkflowRunState) =>
-      logAndSave(`Step succeeded: ${event.stepName}`, state),
   };
 }
 
@@ -262,29 +245,6 @@ export async function getInstallationSnapshot(): Promise<AppStateSnapshot | null
   };
 }
 
-/**
- * Reads the persisted custom installation step history from a lifecycle snapshot's data. Returns
- * `[]` when there's no snapshot or none was recorded (e.g. an install from before this feature).
- */
-export function getExecutedCustomInstallationSteps(
-  data: WorkflowData | null | undefined,
-): CustomInstallationStepIdentity[] {
-  const snapshot = (
-    data as
-      | {
-          installation?: {
-            customInstallationSteps?: {
-              reconciliation?: CustomInstallationSnapshotData;
-            };
-          };
-        }
-      | null
-      | undefined
-  )?.installation?.customInstallationSteps?.reconciliation;
-
-  return snapshot?.executedSteps ?? [];
-}
-
 /** Creates the shared storage read/write dependencies used by lifecycle orchestration. */
 export async function createLifecyclePersistence() {
   const [stateStore, snapshotStore] = await Promise.all([
@@ -307,10 +267,11 @@ export async function createLifecycleRuntime(
   params: WorkflowRouteParams,
   appConfig: CommerceAppConfigOutputModel,
   logger: LifecycleContext["logger"],
+  operation: LifecycleOperation,
 ) {
   return {
     ...(await createLifecyclePersistence()),
     lifecycleContext: buildLifecycleContext(params, appConfig, logger),
-    rootStep: createRootInstallationStep(appConfig, { forUpgrade: true }),
+    rootStep: createLifecycleRootStep(appConfig, operation),
   };
 }

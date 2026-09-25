@@ -10,6 +10,8 @@
  * governing permissions and limitations under the License.
  */
 
+import { nowIsoString } from "#management/common/workflow/utils";
+
 import type { KeyValueStore } from "@aio-commerce-sdk/common-utils/storage";
 import type {
   AppStateSnapshot,
@@ -41,40 +43,55 @@ export type LifecycleRuntime = {
   baselineProvider: LifecycleBaselineProvider;
 };
 
-/** Reads orchestration state and initializes its baseline snapshot if needed. */
+/** The orchestration state together with the baseline snapshot it points to. */
+type LoadedState = {
+  state: OrchestrationState;
+  baseline: AppStateSnapshot | null;
+};
+
+/** Reads orchestration state, or creates it on the app's first lifecycle run. */
 export async function readOrInitializeState(
   runtime: LifecycleRuntime,
-): Promise<{ state: OrchestrationState; baseline: AppStateSnapshot }> {
+): Promise<LoadedState> {
   const existing = await runtime.stateStore.get(CURRENT_STATE_KEY);
-  if (existing) {
-    const baseline = await runtime.baselineProvider.get(
-      existing.baselineSnapshotId,
-    );
+  return existing
+    ? loadStateBaseline(runtime, existing)
+    : initializeState(runtime);
+}
 
-    if (!baseline) {
-      throw new Error("The lifecycle baseline snapshot is missing");
-    }
-
-    if (existing.baselineSnapshotId) {
-      return { baseline, state: existing };
-    }
-
-    const initialized = { ...existing, baselineSnapshotId: baseline.id };
-    await runtime.snapshotStore.put(baseline.id, baseline);
-    await runtime.stateStore.put(CURRENT_STATE_KEY, initialized);
-
-    return { baseline, state: initialized };
+/** Loads the baseline an existing state points to, or `null` when the app is not installed. */
+async function loadStateBaseline(
+  runtime: LifecycleRuntime,
+  state: OrchestrationState,
+): Promise<LoadedState> {
+  // A null id covers a fresh app and a completed uninstall alike. Asking the provider with a null
+  // id reads the old legacy stored data and returns the corresponding baseline snapshot.
+  if (!state.baselineSnapshotId) {
+    return { baseline: null, state };
   }
 
-  const baseline = await runtime.baselineProvider.get(null);
-
+  const baseline = await runtime.baselineProvider.get(state.baselineSnapshotId);
   if (!baseline) {
-    throw new Error("A compatible lifecycle baseline is required");
+    throw new Error("The lifecycle baseline snapshot is missing");
   }
 
-  await runtime.snapshotStore.put(baseline.id, baseline);
+  return { baseline, state };
+}
+
+/**
+ * Creates the first lifecycle state. An app installed before the lifecycle gets its install record
+ * copied into the snapshot store as the baseline; any other app starts as not installed.
+ */
+async function initializeState(
+  runtime: LifecycleRuntime,
+): Promise<LoadedState> {
+  const baseline = await runtime.baselineProvider.get(null);
+  if (baseline) {
+    await runtime.snapshotStore.put(baseline.id, baseline);
+  }
+
   const state: OrchestrationState = {
-    baselineSnapshotId: baseline.id,
+    baselineSnapshotId: baseline?.id ?? null,
     latestAttempt: null,
     pendingPlan: null,
   };
@@ -99,6 +116,7 @@ export async function normalizeExpiredAttempt(
 
   const failed: LifecycleAttempt = {
     ...attempt,
+    completedAt: nowIsoString(),
     failure: {
       key: "LIFECYCLE_ATTEMPT_EXPIRED",
       message: "The lifecycle attempt exceeded its execution deadline",

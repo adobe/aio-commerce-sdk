@@ -70,7 +70,7 @@ describe("createCustomInstallationStep", () => {
     function getReconciliationStep(
       config: CommerceAppConfigOutputModel = configWithCustomInstallationSteps,
     ) {
-      // The reconciliation leaf is only added to the upgrade tree.
+      // The reconciliation leaf is only added to the lifecycle tree.
       const step = createCustomInstallationStep(config, [], true);
       const reconciliation = step.children.find(
         (child) => child.name === "reconciliation",
@@ -94,30 +94,15 @@ describe("createCustomInstallationStep", () => {
       expect(reconciliation.apply).toBeDefined();
     });
 
-    test("records the configured steps' identities when its install runs", () => {
+    test("throws if its install is ever called", () => {
       const reconciliation = getReconciliationStep();
 
-      const result = reconciliation.install(
-        configWithCustomInstallationSteps,
-        createMockInstallationContext(),
-      );
-
-      expect(result).toEqual({
-        executedSteps: [
-          { name: "Demo Success", script: "./demo-success.js" },
-          { name: "Demo Error", script: "./demo-error.js" },
-        ],
-      });
-    });
-
-    test("records no executed steps for a config without custom installation steps", () => {
-      const reconciliation = getReconciliationStep(minimalValidConfig);
-
-      const result = reconciliation.install(
-        minimalValidConfig,
-        createMockInstallationContext(),
-      );
-      expect(result).toEqual({ executedSteps: [] });
+      expect(() =>
+        reconciliation.install(
+          configWithCustomInstallationSteps,
+          createMockInstallationContext(),
+        ),
+      ).toThrow("only runs through plan/apply");
     });
   });
 });

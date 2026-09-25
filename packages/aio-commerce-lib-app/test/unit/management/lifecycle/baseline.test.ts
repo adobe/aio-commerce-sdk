@@ -37,15 +37,21 @@ const lifecycleBaseline: AppStateSnapshot = {
 };
 
 describe("createLifecycleBaselineProvider", () => {
-  test("does not return a stale lifecycle snapshot when the app is no longer installed", async () => {
+  test("returns the lifecycle snapshot even when the compatibility source is empty", async () => {
+    // A lifecycle-owned install leaves no compatibility record behind, so the
+    // recorded snapshot id is the only authority on what is installed.
     const snapshotGet = vi.fn().mockResolvedValue(lifecycleBaseline);
+    const compatibilityGet = vi.fn().mockResolvedValue(null);
     const provider = createLifecycleBaselineProvider(
       { get: snapshotGet, put: vi.fn() },
-      { get: vi.fn().mockResolvedValue(null) },
+      { get: compatibilityGet },
     );
 
-    await expect(provider.get(lifecycleBaseline.id)).resolves.toBeNull();
-    expect(snapshotGet).not.toHaveBeenCalled();
+    await expect(provider.get(lifecycleBaseline.id)).resolves.toBe(
+      lifecycleBaseline,
+    );
+    expect(snapshotGet).toHaveBeenCalledWith(lifecycleBaseline.id);
+    expect(compatibilityGet).not.toHaveBeenCalled();
   });
 
   test("uses the compatibility baseline to initialize lifecycle state", async () => {

@@ -30,9 +30,9 @@ import type { LifecycleRuntime } from "./state";
 /** Inputs used to produce a lifecycle plan. */
 export type PlanLifecycleOptions = LifecycleRuntime & {
   actionVersion: string;
-  operation: LifecycleOperation;
-  targetAppVersion: string;
-  targetConfig: CommerceAppConfigOutputModel;
+
+  /** The configuration to converge to, or `null` to uninstall. */
+  targetConfig: CommerceAppConfigOutputModel | null;
 };
 
 /** Result of a lifecycle planning pass. */
@@ -44,9 +44,7 @@ export type PlanLifecycleResult =
 export async function planLifecycle(
   options: PlanLifecycleOptions,
 ): Promise<PlanLifecycleResult> {
-  const loaded = await readOrInitializeState(options);
-  const state = await normalizeExpiredAttempt(options.stateStore, loaded.state);
-  const { baseline } = loaded;
+  const { baseline, operation, state } = await loadPlanningState(options);
 
   if (
     state.latestAttempt?.status === "pending" ||
@@ -58,7 +56,7 @@ export async function planLifecycle(
   const existingPlan = findReusablePlan(
     state,
     options.actionVersion,
-    options.operation,
+    operation,
   );
   if (existingPlan) {
     return createPlanningResult(existingPlan, true);
@@ -68,9 +66,7 @@ export async function planLifecycle(
     baseline,
     lifecycleContext: options.lifecycleContext,
     rootStep: options.rootStep,
-    target: {
-      config: options.targetConfig,
-    },
+    target: options.targetConfig ? { config: options.targetConfig } : null,
   });
 
   const plan: LifecyclePlan = {
@@ -78,15 +74,19 @@ export async function planLifecycle(
     domains: planning.domains,
     id: crypto.randomUUID(),
     issues: planning.issues,
-    operation: options.operation,
-    source: {
-      appVersion: getBaselineAppVersion(state, baseline),
-      snapshotId: state.baselineSnapshotId ?? baseline.id,
-    },
-    target: {
-      appVersion: options.targetAppVersion,
-      config: options.targetConfig,
-    },
+    operation,
+    source: baseline
+      ? {
+          appVersion: baseline.config.metadata.version,
+          snapshotId: state.baselineSnapshotId ?? baseline.id,
+        }
+      : null,
+    target: options.targetConfig
+      ? {
+          appVersion: options.targetConfig.metadata.version,
+          config: options.targetConfig,
+        }
+      : null,
   };
 
   await options.stateStore.put(CURRENT_STATE_KEY, {
@@ -94,6 +94,36 @@ export async function planLifecycle(
     pendingPlan: plan,
   });
   return createPlanningResult(plan, false);
+}
+
+/** Loads the normalized state and baseline, and derives the operation they represent. */
+async function loadPlanningState(options: PlanLifecycleOptions) {
+  const loaded = await readOrInitializeState(options);
+  const state = await normalizeExpiredAttempt(options.stateStore, loaded.state);
+
+  const { baseline } = loaded;
+  const operation = getLifecycleOperation(baseline, options.targetConfig);
+
+  if (!operation) {
+    throw new Error("A lifecycle plan requires a source or target state");
+  }
+
+  return { baseline, operation, state };
+}
+
+/**
+ * Derives the lifecycle operation represented by a nullable baseline and target, or `null` when
+ * neither is present.
+ */
+export function getLifecycleOperation(
+  baseline: AppStateSnapshot | null,
+  targetConfig: CommerceAppConfigOutputModel | null,
+): LifecycleOperation | null {
+  if (!baseline) {
+    return targetConfig ? "install" : null;
+  }
+
+  return targetConfig ? "upgrade" : "uninstall";
 }
 
 /** Finds a plan produced by the current action version that can be reused. */
@@ -113,20 +143,6 @@ function findReusablePlan(
     latestPlan.operation === operation
     ? latestPlan
     : null;
-}
-
-/** Resolves the version of the app represented by the current baseline. */
-function getBaselineAppVersion(
-  state: OrchestrationState,
-  baseline: AppStateSnapshot,
-): string {
-  if (state.latestAttempt?.status === "succeeded") {
-    return state.latestAttempt.result.appVersion;
-  }
-  return (
-    (baseline.config as { metadata?: { version?: string } }).metadata
-      ?.version ?? "0.0.0"
-  );
 }
 
 /** Converts a persisted plan into its public planning result. */

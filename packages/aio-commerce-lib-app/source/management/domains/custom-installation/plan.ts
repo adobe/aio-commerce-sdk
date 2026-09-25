@@ -24,6 +24,7 @@ import type {
   CustomInstallationDomainPlan,
   CustomInstallationSnapshotData,
   CustomInstallationStepIdentity,
+  ExecutedCustomInstallationStep,
 } from "./types";
 
 /** Builds an `add` operation for a step run for the first time. */
@@ -62,7 +63,7 @@ function resolveBaselineExecutedSteps(
     CommerceAppConfigOutputModel,
     CustomInstallationSnapshotData
   >["baseline"],
-): CustomInstallationStepIdentity[] {
+): ExecutedCustomInstallationStep[] {
   const recorded = baseline?.data?.executedSteps;
   if (recorded) {
     return recorded;

@@ -49,10 +49,10 @@ export function planWebhookSubscriptions(
   const { path, baseline, targetConfig } = input;
   const { params } = context;
 
-  // An existing baseline with unresolved data isn't "no prior state" — webhooks may
-  // still be live, so don't silently drop their removal.
+  // Webhooks may still be live, so an upgrade refuses to drop their removal. An uninstall
+  // falls back to the installed config instead, as uninstalling did before the lifecycle.
   // biome-ignore lint/suspicious/noUnnecessaryConditions: data can still be null/undefined at runtime despite the type
-  if (baseline && !baseline.data?.subscribedWebhooks) {
+  if (targetConfig && baseline && !baseline.data?.subscribedWebhooks) {
     return Promise.resolve({
       issues: [
         {
@@ -69,7 +69,9 @@ export function planWebhookSubscriptions(
   const env = getInstallCommerceEnv(params);
   const desired = targetConfig ? resolveDesiredWebhooks(targetConfig, env) : [];
 
-  const ownedFromBaseline = baseline?.data?.subscribedWebhooks ?? [];
+  const ownedFromBaseline =
+    baseline?.data?.subscribedWebhooks ??
+    (baseline ? resolveDesiredWebhooks(baseline.config, env) : []);
 
   // Removes precede adds (see the concat below) so a rename never briefly double-registers a hook point.
   const addOperations: ResourceOperation<WebhookOperationValue>[] = [];

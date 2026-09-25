@@ -131,7 +131,11 @@ export type LeafStep<
 > = StepBase<TName, TConfig> & {
   type: "leaf";
 
-  /** The execution handler for the step. */
+  /**
+   * The execution handler for the step.
+   * @deprecated Express installation through `plan`/`apply`: a plan of `add` operations against
+   * an empty baseline.
+   */
   install: (
     config: TConfig,
     context: ExecutionContext<TStepCtx>,
@@ -151,6 +155,9 @@ export type LeafStep<
    * Optional uninstall handler for the step.
    * Called during uninstallation to reverse the work done by `install`.
    * If absent, the step is silently skipped during uninstallation.
+   *
+   * @deprecated Express uninstallation through `plan`/`apply`: a plan of `remove` operations
+   * against a `null` target.
    */
   uninstall?: (
     config: TConfig,

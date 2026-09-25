@@ -11,7 +11,7 @@
  */
 
 import { isBranchStep, isLeafStep } from "./step";
-import { getAtPath, isStepConfigured } from "./utils";
+import { getAtPath, isStepConfigured, toDataPath } from "./utils";
 
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 import type { AppStateSnapshot } from "#management/common/orchestration";
@@ -23,10 +23,10 @@ import type { WorkflowData } from "./types";
 export type PlanWorkflowOptions = {
   rootStep: BranchStep;
   lifecycleContext: LifecycleContext;
-  baseline: AppStateSnapshot;
+  baseline: AppStateSnapshot | null;
   target: {
     config: CommerceAppConfigOutputModel;
-  };
+  } | null;
 };
 
 /** Aggregated output of a workflow planning pass. */
@@ -49,8 +49,8 @@ export async function planWorkflow(
     options.rootStep,
     [],
     {},
-    isStepConfigured(options.rootStep, options.baseline.config),
-    isStepConfigured(options.rootStep, options.target.config),
+    isStepConfigured(options.rootStep, options.baseline?.config),
+    isStepConfigured(options.rootStep, options.target?.config),
     options,
     domains,
     issues,
@@ -80,10 +80,10 @@ async function planStep(
     for (const child of step.children) {
       const childConfiguredInBaseline =
         configuredInBaseline &&
-        isStepConfigured(child, options.baseline.config);
+        isStepConfigured(child, options.baseline?.config);
 
       const childConfiguredInTarget =
-        configuredInTarget && isStepConfigured(child, options.target.config);
+        configuredInTarget && isStepConfigured(child, options.target?.config);
 
       // biome-ignore lint/performance/noAwaitInLoops: planning follows declared domain order
       await planStep(
@@ -105,14 +105,19 @@ async function planStep(
     return;
   }
 
-  const domainBaseline = configuredInBaseline
-    ? {
-        config: options.baseline.config,
-        data: getAtPath(options.baseline.data ?? {}, path) as WorkflowData,
-      }
-    : null;
+  const domainBaseline =
+    configuredInBaseline && options.baseline
+      ? {
+          config: options.baseline.config,
+          data: getAtPath(
+            options.baseline.data ?? {},
+            toDataPath(path),
+          ) as WorkflowData,
+        }
+      : null;
 
-  const domainTargetConfig = configuredInTarget ? options.target.config : null;
+  const domainTargetConfig =
+    configuredInTarget && options.target ? options.target.config : null;
 
   const domainContext = {
     ...options.lifecycleContext,

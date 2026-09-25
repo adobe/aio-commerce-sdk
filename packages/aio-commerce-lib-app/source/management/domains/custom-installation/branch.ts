@@ -24,40 +24,32 @@ import {
 import { planCustomInstallationSteps } from "./plan";
 
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
-import type {
-  CustomInstallationSnapshotData,
-  CustomInstallationStepIdentity,
-} from "./types";
+import type { CustomInstallationStepIdentity } from "./types";
 
 /**
- * Leaf step that reconciles the custom installation steps domain as a whole via `plan`/`apply`.
- * It participates only in the upgrade tree; the per-script leaves handle install and uninstall.
+ * Leaf step that plans and runs every custom installation script at once, through `plan`/`apply`.
+ * The lifecycle only runs leaves that have a `plan`, and the per-script leaves don't, so lifecycle
+ * trees need this leaf. The legacy runner runs the per-script leaves itself and leaves it out.
  */
 const reconciliationStep = defineLeafStep({
   apply: applyCustomInstallationSteps,
 
-  // Unused in practice: this leaf only runs on upgrade (via `apply`), but `LeafStep` requires an
-  // `install`.
-  install: (
-    config: CommerceAppConfigOutputModel,
-  ): CustomInstallationSnapshotData => {
-    if (!hasCustomInstallationSteps(config)) {
-      return { executedSteps: [] };
-    }
-
-    const executedSteps: CustomInstallationStepIdentity[] =
-      config.installation.customInstallationSteps.map((step) => ({
-        name: step.name,
-        script: step.script,
-      }));
-
-    return { executedSteps };
+  // `LeafStep` requires an `install`, but this leaf only runs through `plan`/`apply`: the legacy
+  // runner leaves it out of its tree.
+  install: () => {
+    throw new Error(
+      "The custom installation steps reconciliation leaf only runs through plan/apply",
+    );
   },
 
   meta: {
     install: {
       description:
         "Records which custom installation steps ran, so future upgrades can detect additions and removals",
+      label: "Reconcile Custom Installation Steps",
+    },
+    uninstall: {
+      description: "Runs the uninstall handler of every executed custom step",
       label: "Reconcile Custom Installation Steps",
     },
     upgrade: {
@@ -96,10 +88,13 @@ const customInstallationStepBase = defineBranchStep({
 });
 
 /**
- * Creates the custom installation step with dynamic children based on config. `executedSteps` is
- * the recorded run history, only passed when building the full-uninstall tree.
- * `includeReconciliation` adds the reconciliation leaf, which only runs on upgrade; install and
- * uninstall leave it out.
+ * Creates the custom installation steps branch, with one leaf per configured script.
+ *
+ * @param config - The configuration that lists the scripts.
+ * @param executedSteps - The recorded run history. Only passed when building the full-uninstall tree.
+ * @param includeReconciliation - Adds the leaf that runs every script through `plan`/`apply`
+ * (see `reconciliationStep`). Set it for trees the lifecycle runs; leave it off for the legacy
+ * runner, which runs the per-script leaves.
  */
 export function createCustomInstallationStep(
   config: CommerceAppConfigOutputModel,

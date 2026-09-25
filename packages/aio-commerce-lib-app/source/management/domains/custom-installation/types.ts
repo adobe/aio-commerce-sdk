@@ -26,13 +26,18 @@ export type CustomInstallationStepIdentity = {
   script: string;
 };
 
+/** A custom installation step that ran, with the value its `install` handler returned. */
+export type ExecutedCustomInstallationStep = CustomInstallationStepIdentity & {
+  data?: unknown;
+};
+
 /**
  * Snapshot data persisted for the custom installation steps domain: every step that has ever
  * run, whether or not it's still present in the current config. A step is never removed from this
  * list during an upgrade, so a later unassociate can still resolve and call its `uninstall`.
  */
 export type CustomInstallationSnapshotData = {
-  executedSteps: CustomInstallationStepIdentity[];
+  executedSteps: ExecutedCustomInstallationStep[];
 };
 
 /**
@@ -43,7 +48,7 @@ export type CustomInstallationSnapshotData = {
 export type CustomInstallationDomainPlan =
   DomainPlan<CustomInstallationStepIdentity> & {
     /** Every step that ever ran, from the baseline snapshot (`[]` when there is no baseline). */
-    baselineExecutedSteps: CustomInstallationStepIdentity[];
+    baselineExecutedSteps: ExecutedCustomInstallationStep[];
 
     /** The target configuration to converge to, or `null` when none is available. */
     targetConfig: CommerceAppConfigOutputModel | null;

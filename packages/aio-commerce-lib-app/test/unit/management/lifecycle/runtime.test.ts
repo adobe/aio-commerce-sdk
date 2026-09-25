@@ -88,10 +88,8 @@ describe("lifecycle runtime", () => {
     });
 
     const planning = await planLifecycle({
-      operation: "upgrade",
       ...runtime,
       actionVersion: "1.0.0",
-      targetAppVersion: "2.0.0",
       targetConfig,
     });
 
@@ -115,6 +113,7 @@ describe("lifecycle runtime", () => {
       completed.status === "succeeded",
       "Expected a succeeded lifecycle attempt",
     );
+    expect.assert(completed.result.snapshotId, "Expected a committed snapshot");
 
     const committedSnapshot = await snapshotStore.get(
       completed.result.snapshotId,
@@ -122,7 +121,7 @@ describe("lifecycle runtime", () => {
 
     expect(committedSnapshot).toMatchObject({
       config: targetConfig,
-      data: { root: { synthetic: { remoteId: "resource-1" } } },
+      data: { installation: { synthetic: { remoteId: "resource-1" } } },
     });
 
     expect((await stateStore.get("current"))?.baselineSnapshotId).toBe(
@@ -130,14 +129,136 @@ describe("lifecycle runtime", () => {
     );
 
     const nextPlanning = await planLifecycle({
-      operation: "upgrade",
       ...runtime,
       actionVersion: "1.0.1",
-      targetAppVersion: "3.0.0",
       targetConfig: createConfig("3.0.0"),
     });
 
-    expect(nextPlanning.plan.source.appVersion).toBe("2.0.0");
+    expect(nextPlanning.plan.source?.appVersion).toBe("2.0.0");
+  });
+
+  test("logs run and step progress for an upgrade that succeeds on retry", async () => {
+    const leaf = createMockLifecycleLeaf({
+      apply: vi
+        .fn()
+        .mockRejectedValueOnce(new Error("transient"))
+        .mockResolvedValue({ snapshotData: null }),
+      plan: vi.fn().mockResolvedValue({
+        kind: "planned",
+        plan: {
+          operations: [
+            {
+              after: { name: "resource" },
+              id: "add-resource",
+              kind: "add",
+              label: "Add resource",
+            },
+          ],
+          path: ["root", "synthetic"],
+        },
+      }),
+    });
+    const { runtime } = createMockLifecycleRuntime({
+      baseline: createBaseline("1.0.0"),
+      rootStep: createMockLifecycleRoot([leaf]),
+    });
+    const planning = await planLifecycle({
+      ...runtime,
+      actionVersion: "1.0.0",
+      targetConfig: createConfig("2.0.0"),
+    });
+    expect.assert(planning.kind === "planned", "Expected an executable plan");
+    const started = await startLifecycleAttempt({
+      ...runtime,
+      actionVersion: "1.0.0",
+      executionDeadline: EXECUTION_DEADLINE,
+      planId: planning.plan.id,
+    });
+
+    await executeLifecycleAttempt({
+      ...runtime,
+      actionVersion: "1.0.0",
+      attemptId: started.id,
+      executionDeadline: EXECUTION_DEADLINE,
+    });
+
+    expect(vi.mocked(runtime.lifecycleContext.logger.debug).mock.calls).toEqual(
+      [
+        ["Upgrade started"],
+        ["Step started: root"],
+        ["Step started: synthetic"],
+        ["Step failed: synthetic — transient"],
+        ["Step failed: root — transient"],
+        ["Step started: root"],
+        ["Step started: synthetic"],
+        ["Step succeeded: synthetic"],
+        ["Step succeeded: root"],
+        ["Upgrade succeeded on retry"],
+      ],
+    );
+  });
+
+  test("logs run and step progress for an uninstall", async () => {
+    const leaf = createMockLifecycleLeaf({
+      apply: vi.fn().mockResolvedValue({ snapshotData: null }),
+      meta: {
+        install: { label: "Synthetic domain" },
+        uninstall: { label: "Synthetic domain" },
+      },
+      plan: vi.fn().mockResolvedValue({
+        kind: "planned",
+        plan: {
+          operations: [
+            {
+              before: { name: "resource" },
+              id: "remove-resource",
+              kind: "remove",
+              label: "Remove resource",
+            },
+          ],
+          path: ["root", "synthetic"],
+        },
+      }),
+    });
+    const { runtime } = createMockLifecycleRuntime({
+      baseline: createBaseline("1.0.0"),
+      rootStep: createMockLifecycleRoot([leaf], {
+        meta: {
+          install: { label: "Lifecycle" },
+          uninstall: { label: "Lifecycle" },
+        },
+      }),
+    });
+    const planning = await planLifecycle({
+      ...runtime,
+      actionVersion: "1.0.0",
+      targetConfig: null,
+    });
+    expect.assert(planning.kind === "planned", "Expected an executable plan");
+    const started = await startLifecycleAttempt({
+      ...runtime,
+      actionVersion: "1.0.0",
+      executionDeadline: EXECUTION_DEADLINE,
+      planId: planning.plan.id,
+    });
+
+    await executeLifecycleAttempt({
+      ...runtime,
+      actionVersion: "1.0.0",
+      attemptId: started.id,
+      executionDeadline: EXECUTION_DEADLINE,
+    });
+
+    expect(vi.mocked(runtime.lifecycleContext.logger.debug).mock.calls).toEqual(
+      [
+        ["Uninstallation started"],
+        ["Step started: root"],
+        ["Step started: synthetic"],
+        ["Step succeeded: synthetic"],
+        ["Step succeeded: root"],
+        ["Uninstallation succeeded"],
+      ],
+    );
   });
 
   test("records the execution delivery deadline on the completed attempt", async () => {
@@ -146,10 +267,8 @@ describe("lifecycle runtime", () => {
     });
 
     const planning = await planLifecycle({
-      operation: "upgrade",
       ...runtime,
       actionVersion: "1.0.0",
-      targetAppVersion: "2.0.0",
       targetConfig: createConfig("2.0.0"),
     });
 
@@ -202,10 +321,8 @@ describe("lifecycle runtime", () => {
     });
 
     const planning = await planLifecycle({
-      operation: "upgrade",
       ...runtime,
       actionVersion: "1.0.0",
-      targetAppVersion: "2.0.0",
       targetConfig: createConfig("2.0.0"),
     });
 
@@ -278,8 +395,6 @@ describe("lifecycle runtime", () => {
     const planning = await planLifecycle({
       ...runtime,
       actionVersion: "1.0.0",
-      operation: "upgrade",
-      targetAppVersion: "2.0.0",
       targetConfig: createConfig("2.0.0"),
     });
 
@@ -345,8 +460,6 @@ describe("lifecycle runtime", () => {
     const planning = await planLifecycle({
       ...runtime,
       actionVersion: "1.0.0",
-      operation: "upgrade",
-      targetAppVersion: "2.0.0",
       targetConfig: createConfig("2.0.0"),
     });
 
@@ -400,8 +513,6 @@ describe("lifecycle runtime", () => {
     const result = await planLifecycle({
       ...runtime,
       actionVersion: "1.0.0",
-      operation: "upgrade",
-      targetAppVersion: "2.0.0",
       targetConfig: createConfig("2.0.0"),
     });
 
@@ -426,8 +537,6 @@ describe("lifecycle runtime", () => {
     const skipped = await planLifecycle({
       ...runtime,
       actionVersion: "1.0.0",
-      operation: "upgrade",
-      targetAppVersion: "2.0.0",
       targetConfig: createConfig("2.0.0"),
     });
 
@@ -449,7 +558,7 @@ describe("lifecycle runtime", () => {
     });
 
     const baseline = createBaseline("1.0.0", {
-      root: { synthetic: { remoteId: "resource-1" } },
+      installation: { synthetic: { remoteId: "resource-1" } },
     });
 
     const { runtime, stateStore } = createMockLifecycleRuntime({
@@ -460,8 +569,6 @@ describe("lifecycle runtime", () => {
     const result = await planLifecycle({
       ...runtime,
       actionVersion: "1.0.0",
-      operation: "upgrade",
-      targetAppVersion: "1.0.0",
       targetConfig: config,
     });
 
@@ -488,7 +595,7 @@ describe("lifecycle runtime", () => {
     });
 
     const baseline = createBaseline("1.0.0", {
-      root: { synthetic: { remoteId: "resource-1" } },
+      installation: { synthetic: { remoteId: "resource-1" } },
     });
 
     const { runtime, snapshotStore, stateStore } = createMockLifecycleRuntime({
@@ -497,10 +604,8 @@ describe("lifecycle runtime", () => {
     });
 
     const planning = await planLifecycle({
-      operation: "upgrade",
       ...runtime,
       actionVersion: "1.0.0",
-      targetAppVersion: "2.0.0",
       targetConfig: config,
     });
 
@@ -524,6 +629,7 @@ describe("lifecycle runtime", () => {
       completed.status === "succeeded",
       "Expected a succeeded lifecycle attempt",
     );
+    expect.assert(completed.result.snapshotId, "Expected a committed snapshot");
 
     expect(apply).not.toHaveBeenCalled();
     expect(await snapshotStore.get(completed.result.snapshotId)).toMatchObject({
@@ -630,7 +736,7 @@ describe("lifecycle runtime", () => {
     const baseline = createMockAppStateSnapshot({
       config: baselineConfig,
       data: {
-        root: {
+        installation: {
           "removed-parent": {
             removed: { id: "old" },
           },
@@ -649,10 +755,8 @@ describe("lifecycle runtime", () => {
     });
 
     const planning = await planLifecycle({
-      operation: "upgrade",
       ...runtime,
       actionVersion: "1.0.0",
-      targetAppVersion: "2.0.0",
       targetConfig,
     });
 
@@ -690,11 +794,12 @@ describe("lifecycle runtime", () => {
       completed.status === "succeeded",
       "Expected a succeeded lifecycle attempt",
     );
+    expect.assert(completed.result.snapshotId, "Expected a committed snapshot");
 
     expect(await snapshotStore.get(completed.result.snapshotId)).toMatchObject({
       config: targetConfig,
       data: {
-        root: {
+        installation: {
           "added-parent": {
             added: { id: "new" },
           },
@@ -712,10 +817,8 @@ describe("lifecycle runtime", () => {
     });
 
     const planning = await planLifecycle({
-      operation: "upgrade",
       ...runtime,
       actionVersion: "1.0.0",
-      targetAppVersion: "2.0.0",
       targetConfig: createConfig("2.0.0"),
     });
 
@@ -737,28 +840,24 @@ describe("lifecycle runtime", () => {
 
     const planOptions = {
       ...runtime,
-      targetAppVersion: "2.0.0",
       targetConfig: createConfig("2.0.0"),
     };
 
     const first = await planLifecycle({
       ...planOptions,
       actionVersion: "1.0.0",
-      operation: "upgrade",
     });
 
     expect.assert(first.kind === "planned", "Expected an executable plan");
     const skipped = await planLifecycle({
       ...planOptions,
       actionVersion: "1.0.0",
-      operation: "upgrade",
     });
 
     expect(skipped).toEqual({ ...first, skipped: true });
     const replacement = await planLifecycle({
       ...planOptions,
       actionVersion: "1.0.1",
-      operation: "upgrade",
     });
 
     expect(replacement.kind).toBe("planned");
@@ -773,10 +872,8 @@ describe("lifecycle runtime", () => {
     });
 
     const planning = await planLifecycle({
-      operation: "upgrade",
       ...runtime,
       actionVersion: "1.0.0",
-      targetAppVersion: "2.0.0",
       targetConfig: createConfig("2.0.0"),
     });
 
@@ -821,7 +918,7 @@ describe("lifecycle runtime", () => {
 
     const baseline = createMockAppStateSnapshot({
       config: createConfig("1.0.0"),
-      data: { root: { synthetic: { id: "old" } } },
+      data: { installation: { synthetic: { id: "old" } } },
       id: "baseline-1",
     });
 
@@ -831,10 +928,8 @@ describe("lifecycle runtime", () => {
     });
 
     const planning = await planLifecycle({
-      operation: "upgrade",
       ...runtime,
       actionVersion: "1.0.0",
-      targetAppVersion: "2.0.0",
       targetConfig: config,
     });
 
@@ -886,10 +981,8 @@ describe("lifecycle runtime", () => {
     });
 
     const planning = await planLifecycle({
-      operation: "upgrade",
       ...runtime,
       actionVersion: "1.0.0",
-      targetAppVersion: "2.0.0",
       targetConfig: createConfig("2.0.0"),
     });
 
@@ -950,10 +1043,8 @@ describe("lifecycle runtime", () => {
     });
 
     const planning = await planLifecycle({
-      operation: "upgrade",
       ...runtime,
       actionVersion: "1.0.0",
-      targetAppVersion: "2.0.0",
       targetConfig: createConfig("2.0.0"),
     });
 
@@ -975,10 +1066,8 @@ describe("lifecycle runtime", () => {
     ).resolves.toMatchObject({ status: "failed" });
 
     const repeatedPlanning = await planLifecycle({
-      operation: "upgrade",
       ...runtime,
       actionVersion: "1.0.0",
-      targetAppVersion: "2.0.0",
       targetConfig: createConfig("2.0.0"),
     });
 
@@ -1050,10 +1139,8 @@ describe("lifecycle runtime", () => {
     });
 
     const planning = await planLifecycle({
-      operation: "upgrade",
       ...runtime,
       actionVersion: "1.0.0",
-      targetAppVersion: "2.0.0",
       targetConfig: config,
     });
 
@@ -1081,7 +1168,7 @@ describe("lifecycle runtime", () => {
 
     expect(await snapshotStore.get(targetSnapshotId)).toMatchObject({
       config,
-      data: { root: { synthetic: { id: "resource" } } },
+      data: { installation: { synthetic: { id: "resource" } } },
     });
 
     expect((await stateStore.get("current"))?.baselineSnapshotId).toBe(
@@ -1094,10 +1181,8 @@ describe("lifecycle runtime", () => {
       baseline: createBaseline("1.0.0"),
     });
     const planning = await planLifecycle({
-      operation: "upgrade",
       ...runtime,
       actionVersion: "1.0.0",
-      targetAppVersion: "2.0.0",
       targetConfig: createConfig("2.0.0"),
     });
 
@@ -1119,10 +1204,8 @@ describe("lifecycle runtime", () => {
       baseline: createBaseline("1.0.0"),
     });
     const planning = await planLifecycle({
-      operation: "upgrade",
       ...runtime,
       actionVersion: "1.0.0",
-      targetAppVersion: "2.0.0",
       targetConfig: createConfig("2.0.0"),
     });
 
@@ -1142,10 +1225,8 @@ describe("lifecycle runtime", () => {
     });
 
     const planning = await planLifecycle({
-      operation: "upgrade",
       ...runtime,
       actionVersion: "1.0.0",
-      targetAppVersion: "2.0.0",
       targetConfig: createConfig("2.0.0"),
     });
 
@@ -1158,10 +1239,8 @@ describe("lifecycle runtime", () => {
 
     await expect(
       planLifecycle({
-        operation: "upgrade",
         ...runtime,
         actionVersion: "1.0.1",
-        targetAppVersion: "3.0.0",
         targetConfig: createConfig("3.0.0"),
       }),
     ).rejects.toThrow("already in progress");
@@ -1176,10 +1255,8 @@ describe("lifecycle runtime", () => {
     });
 
     const planning = await planLifecycle({
-      operation: "upgrade",
       ...runtime,
       actionVersion: "1.0.0",
-      targetAppVersion: "2.0.0",
       targetConfig: createConfig("2.0.0"),
     });
 
@@ -1216,10 +1293,8 @@ describe("lifecycle runtime", () => {
       });
 
       const first = await planLifecycle({
-        operation: "upgrade",
         ...runtime,
         actionVersion: "1.0.0",
-        targetAppVersion: "2.0.0",
         targetConfig: createConfig("2.0.0"),
       });
 
@@ -1232,10 +1307,8 @@ describe("lifecycle runtime", () => {
 
       vi.setSystemTime("2026-08-10T10:02:00.000Z");
       const skipped = await planLifecycle({
-        operation: "upgrade",
         ...runtime,
         actionVersion: "1.0.0",
-        targetAppVersion: "2.0.0",
         targetConfig: createConfig("2.0.0"),
       });
       expect(skipped).toEqual({ ...first, skipped: true });
@@ -1251,10 +1324,8 @@ describe("lifecycle runtime", () => {
 
       vi.setSystemTime("2026-08-10T10:04:00.000Z");
       const replacement = await planLifecycle({
-        operation: "upgrade",
         ...runtime,
         actionVersion: "1.0.1",
-        targetAppVersion: "3.0.0",
         targetConfig: createConfig("3.0.0"),
       });
 
@@ -1278,16 +1349,110 @@ describe("lifecycle runtime", () => {
     }
   });
 
-  test("requires a compatible baseline", async () => {
+  test("plans an install when there is no baseline", async () => {
     const { runtime } = createMockLifecycleRuntime({ baseline: null });
-    await expect(
-      planLifecycle({
-        ...runtime,
-        actionVersion: "1.0.0",
-        operation: "upgrade",
-        targetAppVersion: "2.0.0",
-        targetConfig: createConfig("2.0.0"),
+    const planning = await planLifecycle({
+      ...runtime,
+      actionVersion: "1.0.0",
+      targetConfig: createConfig("2.0.0"),
+    });
+
+    expect(planning.kind).toBe("planned");
+    expect(planning.plan).toMatchObject({
+      operation: "install",
+      source: null,
+      target: { appVersion: "2.0.0" },
+    });
+  });
+
+  test("plans an uninstall when there is no target config", async () => {
+    const { runtime } = createMockLifecycleRuntime({
+      baseline: createBaseline("1.0.0"),
+    });
+    const planning = await planLifecycle({
+      ...runtime,
+      actionVersion: "1.0.0",
+      targetConfig: null,
+    });
+
+    expect(planning.kind).toBe("planned");
+    expect(planning.plan).toMatchObject({
+      operation: "uninstall",
+      target: null,
+    });
+    expect(planning.plan.source).not.toBeNull();
+  });
+
+  test("reads install data from installation when the root is named uninstallation", async () => {
+    const plan = vi.fn(async (input: { path: string[] }) => ({
+      kind: "planned" as const,
+      plan: {
+        operations: [
+          {
+            before: { name: "resource" },
+            id: "remove-resource",
+            kind: "remove" as const,
+            label: "Remove resource",
+          },
+        ],
+        path: input.path,
+      },
+    }));
+    const apply = vi.fn().mockResolvedValue({ snapshotData: null });
+    const leaf = createMockLifecycleLeaf({
+      apply,
+      meta: {
+        install: { label: "Synthetic domain" },
+        uninstall: { label: "Synthetic domain" },
+      },
+      plan,
+    });
+    const { runtime } = createMockLifecycleRuntime({
+      baseline: createBaseline("1.0.0", {
+        installation: { synthetic: { remoteId: "resource-1" } },
       }),
-    ).rejects.toThrow("compatible lifecycle baseline");
+      rootStep: createMockLifecycleRoot([leaf], {
+        meta: {
+          install: { label: "Lifecycle" },
+          uninstall: { label: "Lifecycle" },
+        },
+        name: "uninstallation",
+      }),
+    });
+
+    const planning = await planLifecycle({
+      ...runtime,
+      actionVersion: "1.0.0",
+      targetConfig: null,
+    });
+    expect.assert(planning.kind === "planned", "Expected an executable plan");
+    expect(plan).toHaveBeenCalledWith(
+      expect.objectContaining({
+        baseline: expect.objectContaining({ data: { remoteId: "resource-1" } }),
+        path: ["uninstallation", "synthetic"],
+      }),
+      expect.anything(),
+    );
+
+    const started = await startLifecycleAttempt({
+      ...runtime,
+      actionVersion: "1.0.0",
+      executionDeadline: EXECUTION_DEADLINE,
+      planId: planning.plan.id,
+    });
+    expect(started.progress).toMatchObject({
+      children: [{ path: ["uninstallation", "synthetic"] }],
+      name: "uninstallation",
+      path: ["uninstallation"],
+    });
+
+    const completed = await executeLifecycleAttempt({
+      ...runtime,
+      actionVersion: "1.0.0",
+      attemptId: started.id,
+      executionDeadline: EXECUTION_DEADLINE,
+    });
+    expect(completed.status).toBe("succeeded");
+    expect(apply).toHaveBeenCalledTimes(1);
   });
 });

@@ -33,12 +33,13 @@ export function createLifecycleBaselineProvider(
 ): LifecycleBaselineProvider {
   return {
     get: async (snapshotId) => {
-      const compatibilityBaseline = await compatibilitySource.get();
-      if (!compatibilityBaseline) {
-        return null;
+      // A lifecycle-owned snapshot is authoritative on its own: once an install
+      // runs through the lifecycle path there is no compatibility state left.
+      if (snapshotId) {
+        return snapshotStore.get(snapshotId);
       }
 
-      return snapshotId ? snapshotStore.get(snapshotId) : compatibilityBaseline;
+      return compatibilitySource.get();
     },
   };
 }
@@ -49,5 +50,11 @@ export async function getCurrentLifecycleBaseline(
   baselineProvider: LifecycleBaselineProvider,
 ): Promise<AppStateSnapshot | null> {
   const state = await stateStore.get(CURRENT_STATE_KEY);
-  return baselineProvider.get(state?.baselineSnapshotId ?? null);
+  if (state) {
+    return state.baselineSnapshotId
+      ? baselineProvider.get(state.baselineSnapshotId)
+      : null;
+  }
+
+  return baselineProvider.get(null);
 }

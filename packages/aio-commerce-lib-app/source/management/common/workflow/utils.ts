@@ -46,6 +46,12 @@ export function setAtPath(
   current[lastKey] = value;
 }
 
+/** Maps a step path to the path its data is saved under, which always starts at `installation`. */
+export function toDataPath(path: string[]): string[] {
+  // Upgrade and uninstall read what install saved, so the key can't follow the root step's name.
+  return ["installation", ...path.slice(1)];
+}
+
 /** Compares two workflow paths by segment. */
 export function pathsEqual(left: string[], right: string[]): boolean {
   return (
@@ -57,8 +63,12 @@ export function pathsEqual(left: string[], right: string[]): boolean {
 /** Returns whether a workflow step is present in an app configuration. */
 export function isStepConfigured(
   step: AnyStep,
-  config: CommerceAppConfigOutputModel,
+  config?: CommerceAppConfigOutputModel | null,
 ): boolean {
+  if (!config) {
+    return false;
+  }
+
   const predicate = step.isConfigured ?? step.when;
   return !predicate || predicate(config);
 }

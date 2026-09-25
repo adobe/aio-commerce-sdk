@@ -70,10 +70,9 @@ export async function startLifecycleAttempt(
   const workflow = createInitialPlanExecutionState({
     plan,
     rootStep: options.rootStep,
-    targetConfig: plan.target.config,
   });
   const attempt: LifecycleAttempt = {
-    data: baseline.data,
+    data: baseline?.data ?? null,
     executionDeadline: options.executionDeadline,
     id: crypto.randomUUID(),
     operation: plan.operation,

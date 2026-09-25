@@ -28,9 +28,11 @@ import {
 import type {
   AppStateSnapshot,
   LifecycleAttempt,
+  LifecycleOperation,
   OrchestrationState,
 } from "#management/common/orchestration";
 import type { WorkflowHooks } from "#management/common/workflow/hooks";
+import type { LifecycleContext } from "#management/common/workflow/step";
 import type {
   FailedWorkflowState,
   InProgressWorkflowState,
@@ -38,6 +40,12 @@ import type {
   WorkflowRunState,
 } from "#management/common/workflow/types";
 import type { LifecycleRuntime, LifecycleStore } from "./state";
+
+const OPERATION_LABELS: Record<LifecycleOperation, string> = {
+  install: "Installation",
+  uninstall: "Uninstallation",
+  upgrade: "Upgrade",
+};
 
 /** Inputs used by the asynchronous lifecycle executor. */
 export type ExecuteLifecycleAttemptOptions = Omit<
@@ -81,10 +89,11 @@ export async function executeLifecycleAttempt(
     throw new Error("The lifecycle execution deadline is invalid or elapsed");
   }
 
-  const baseline = await options.snapshotStore.get(
-    currentAttempt.plan.source.snapshotId,
-  );
-  if (!baseline) {
+  const baseline = currentAttempt.plan.source
+    ? await options.snapshotStore.get(currentAttempt.plan.source.snapshotId)
+    : null;
+
+  if (currentAttempt.plan.source && !baseline) {
     throw new Error("The lifecycle baseline snapshot is missing");
   }
 
@@ -99,13 +108,27 @@ export async function executeLifecycleAttempt(
   await options.stateStore.put(CURRENT_STATE_KEY, state);
   state = await normalizeExpiredAttempt(options.stateStore, state);
 
-  const hooks = createProgressHooks(options.stateStore, attempt.id);
+  const { logger } = options.lifecycleContext;
+  const operationLabel = OPERATION_LABELS[attempt.operation];
+  const hooks = createProgressHooks(options.stateStore, attempt.id, logger);
+
+  logger.debug(`${operationLabel} started`);
   const workflow = await executePlanWithRetry(
     options,
     attempt,
     baseline,
     hooks,
   );
+
+  if (workflow.status === "failed") {
+    logger.debug(`${operationLabel} failed`);
+  } else {
+    logger.debug(
+      workflow.metadata?.isRetry
+        ? `${operationLabel} succeeded on retry`
+        : `${operationLabel} succeeded`,
+    );
+  }
 
   state = await requireCurrentAttempt(options.stateStore, attempt.id);
   if (workflow.status === "failed") {
@@ -115,20 +138,27 @@ export async function executeLifecycleAttempt(
   return persistSuccess(options, state, attempt, workflow);
 }
 
-/** Creates hooks that persist execution progress after every step transition. */
+/** Creates hooks that log and persist execution progress after every step transition. */
 function createProgressHooks(
   stateStore: LifecycleStore<OrchestrationState>,
   attemptId: string,
+  logger: LifecycleContext["logger"],
 ): WorkflowHooks {
-  const persistExecutionProgress = (progressState: WorkflowRunState) =>
-    persistProgress(stateStore, attemptId, progressState);
+  const logAndPersist = (message: string, progressState: WorkflowRunState) => {
+    logger.debug(message);
+    return persistProgress(stateStore, attemptId, progressState);
+  };
+
   return {
-    onStepFailure: (_event, progressState) =>
-      persistExecutionProgress(progressState),
-    onStepStart: (_event, progressState) =>
-      persistExecutionProgress(progressState),
-    onStepSuccess: (_event, progressState) =>
-      persistExecutionProgress(progressState),
+    onStepFailure: (event, progressState) =>
+      logAndPersist(
+        `Step failed: ${event.stepName} — ${event.error.message ?? `(key: ${event.error.key})`}`,
+        progressState,
+      ),
+    onStepStart: (event, progressState) =>
+      logAndPersist(`Step started: ${event.stepName}`, progressState),
+    onStepSuccess: (event, progressState) =>
+      logAndPersist(`Step succeeded: ${event.stepName}`, progressState),
   };
 }
 
@@ -136,7 +166,7 @@ function createProgressHooks(
 async function executePlanWithRetry(
   options: ExecuteLifecycleAttemptOptions,
   attempt: LifecycleAttempt,
-  baseline: AppStateSnapshot,
+  baseline: AppStateSnapshot | null,
   hooks: WorkflowHooks,
 ): Promise<SucceededWorkflowState | FailedWorkflowState> {
   const executionOptions = {
@@ -148,23 +178,31 @@ async function executePlanWithRetry(
     plan: attempt.plan,
     rootStep: options.rootStep,
   };
+
   let result = await executePlannedWorkflow({
     ...executionOptions,
-    initialState: toWorkflowState(attempt, attempt.plan.target.config),
+    initialState: toWorkflowState(
+      attempt,
+      attempt.plan.target?.config ?? baseline?.config,
+    ),
   });
+
   if (result.state.status === "failed") {
     result = await executePlannedWorkflow({
       ...executionOptions,
       initialState: createRetryState(result.state),
     });
+
+    return { ...result.state, metadata: { isRetry: true } };
   }
+
   return result.state;
 }
 
 /** Recreates workflow execution state from a persisted lifecycle attempt. */
 function toWorkflowState(
   attempt: LifecycleAttempt,
-  config: AppStateSnapshot["config"],
+  config?: AppStateSnapshot["config"],
 ): InProgressWorkflowState {
   return {
     config,

@@ -53,6 +53,9 @@ export async function persistApplyFailure(
 ): Promise<LifecycleAttempt> {
   const failed: LifecycleAttempt = {
     ...attempt,
+    ...(workflow.metadata ? { metadata: workflow.metadata } : {}),
+
+    completedAt: workflow.completedAt,
     data: workflow.data,
     failure: {
       key: workflow.error.key,
@@ -82,28 +85,37 @@ export async function persistSuccess(
   attempt: LifecycleAttempt,
   workflow: SucceededWorkflowState,
 ): Promise<LifecycleAttempt> {
-  const snapshot: AppStateSnapshot = {
-    config: attempt.plan.target.config,
-    createdAt: workflow.completedAt,
-    data: workflow.data,
-    id: crypto.randomUUID(),
-  };
+  // An uninstall lands on no state at all, so it records no snapshot.
+  const snapshot: AppStateSnapshot | null = attempt.plan.target
+    ? {
+        config: attempt.plan.target.config,
+        createdAt: workflow.completedAt,
+        data: workflow.data,
+        id: crypto.randomUUID(),
+      }
+    : null;
 
-  await stores.snapshotStore.put(snapshot.id, snapshot);
+  if (snapshot) {
+    await stores.snapshotStore.put(snapshot.id, snapshot);
+  }
+
   const succeeded: LifecycleAttempt = {
     ...attempt,
+    ...(workflow.metadata ? { metadata: workflow.metadata } : {}),
+
+    completedAt: workflow.completedAt,
     data: workflow.data,
     progress: workflow.step,
     result: {
-      appVersion: attempt.plan.target.appVersion,
-      snapshotId: snapshot.id,
+      appVersion: attempt.plan.target?.appVersion ?? null,
+      snapshotId: snapshot?.id ?? null,
     },
     status: "succeeded",
   };
 
   await stores.stateStore.put(CURRENT_STATE_KEY, {
     ...state,
-    baselineSnapshotId: snapshot.id,
+    baselineSnapshotId: snapshot?.id ?? null,
     latestAttempt: succeeded,
   });
 

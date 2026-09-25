@@ -12,37 +12,21 @@
 
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
-const {
-  invokeMock,
-  openwhiskMock,
-  createCombinedStoreMock,
-  createInitialInstallationStateMock,
-  createInitialUninstallationStateMock,
-  createRootInstallationStepMock,
-  getAssociationDataMock,
-  runInstallationMock,
-  runUninstallationMock,
-  runValidationMock,
-} = vi.hoisted(() => {
-  const actionInvokeMock = vi.fn();
+const { invokeMock, openwhiskMock, createCombinedStoreMock, systemConfig } =
+  vi.hoisted(() => {
+    const actionInvokeMock = vi.fn();
 
-  return {
-    createCombinedStoreMock: vi.fn(),
-    createInitialInstallationStateMock: vi.fn(),
-    createInitialUninstallationStateMock: vi.fn(),
-    createRootInstallationStepMock: vi.fn(),
-    getAssociationDataMock: vi.fn(),
-    invokeMock: actionInvokeMock,
-    openwhiskMock: vi.fn(() => ({
-      actions: {
-        invoke: actionInvokeMock,
-      },
-    })),
-    runInstallationMock: vi.fn(),
-    runUninstallationMock: vi.fn(),
-    runValidationMock: vi.fn(),
-  };
-});
+    return {
+      createCombinedStoreMock: vi.fn(),
+      invokeMock: actionInvokeMock,
+      openwhiskMock: vi.fn(() => ({
+        actions: {
+          invoke: actionInvokeMock,
+        },
+      })),
+      systemConfig: new Map<string, unknown>(),
+    };
+  });
 
 vi.mock("@aio-commerce-sdk/common-utils/storage", () => ({
   createCombinedStore: createCombinedStoreMock,
@@ -52,33 +36,31 @@ vi.mock("openwhisk", () => ({
   default: openwhiskMock,
 }));
 
-vi.mock("#management/association/repository", () => ({
-  getAssociationData: getAssociationDataMock,
-}));
-
-vi.mock("#management/installation/root", () => ({
-  createRootInstallationStep: createRootInstallationStepMock,
-}));
-
-vi.mock("#management/index", async () => {
-  const actual =
-    await vi.importActual<typeof import("#management/index")>(
-      "#management/index",
-    );
+// In-memory stand-in for the system config storage behind the association repository.
+vi.mock("@adobe/aio-commerce-lib-config", async () => {
+  const actual = await vi.importActual<
+    typeof import("@adobe/aio-commerce-lib-config")
+  >("@adobe/aio-commerce-lib-config");
 
   return {
     ...actual,
-    createInitialInstallationState: createInitialInstallationStateMock,
-    createInitialUninstallationState: createInitialUninstallationStateMock,
-    runInstallation: runInstallationMock,
-    runUninstallation: runUninstallationMock,
-    runValidation: runValidationMock,
+    getSystemConfigByKey: vi.fn(
+      async (key: string) => systemConfig.get(key) ?? null,
+    ),
+    setSystemConfigByKey: vi.fn(async (key: string, value: unknown) => {
+      systemConfig.set(key, value);
+    }),
   };
 });
 
 import { installationRuntimeAction } from "#actions/installation/index";
+import {
+  clearAssociationData,
+  setAssociationData,
+} from "#management/association/repository";
 import { createRuntimeActionParams } from "#test/fixtures/actions";
 import {
+  configWithAdminUiSingleGrid,
   configWithCommerceEventing,
   configWithDynamicListOptions,
   createMockConfig,
@@ -92,7 +74,6 @@ import {
   createMockInstallationStore,
   createMockInstallationSucceededState,
   createMockSucceededState,
-  createMockValidationResult,
   DEFAULT_INSTALLATION_PARAMS,
 } from "#test/fixtures/installation";
 import {
@@ -100,27 +81,54 @@ import {
   createMockLifecycleStore,
   createMockOrchestrationState,
 } from "#test/fixtures/lifecycle";
-import {
-  createMockBranchStep,
-  createMockLifecycleLeaf,
-} from "#test/fixtures/workflow";
 
+import type { RuntimeActionFactoryArgs } from "#actions/installation/common";
+import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 import type {
   AppStateSnapshot,
   OrchestrationState,
 } from "#management/common/orchestration";
-import type { AnyStep, LeafStep } from "#management/common/workflow/step";
-import type { InProgressWorkflowState } from "#management/common/workflow/types";
-import type { InstallationHooks } from "#management/installation/runner";
 
 const POST_APP_DEPLOY_HEADERS = {
   "x-aio-commerce-installation-invocation-source": "post-app-deploy",
 };
 
-type WorkflowRunnerArgs = {
-  initialState: InProgressWorkflowState;
-  hooks: InstallationHooks;
+const ASSOCIATION = {
+  commerce: { baseUrl: "https://commerce.example.com", env: "paas" as const },
 };
+
+const SCRIPT_PATH = "./synthetic-step.js";
+
+const failingScript = () => Promise.reject(new Error("boom"));
+
+type ActionArgs = Omit<RuntimeActionFactoryArgs, "appConfig"> & {
+  appConfig: CommerceAppConfigOutputModel;
+};
+
+/**
+ * Adds a custom installation step to the config and loads the given script module for it, so the
+ * real lifecycle tree runs the script through the custom-scripts loader.
+ */
+function withCustomScript(
+  config: CommerceAppConfigOutputModel,
+  script: unknown,
+): ActionArgs {
+  return {
+    appConfig: {
+      ...config,
+      installation: {
+        customInstallationSteps: [
+          {
+            description: "Synthetic step",
+            name: "Synthetic step",
+            script: SCRIPT_PATH,
+          },
+        ],
+      },
+    },
+    customScriptsLoader: () => ({ [SCRIPT_PATH]: script }),
+  };
+}
 
 const { appData } = createMockInstallationContext();
 const requestBody = {
@@ -131,14 +139,26 @@ const requestBody = {
   ioEventsUrl: "https://events.example.com",
 };
 
+/** Starts an installation through POST /. */
+function requestInstall(handler: ReturnType<typeof installationRuntimeAction>) {
+  return handler(
+    createRuntimeActionParams({
+      body: requestBody,
+      method: "post",
+      ...DEFAULT_INSTALLATION_PARAMS,
+    }),
+  );
+}
+
 describe("installationRuntimeAction", () => {
   let appStateSnapshotStore = createMockLifecycleStore<AppStateSnapshot>();
   let installationStore = createMockInstallationStore();
   let orchestrationStateStore = createMockLifecycleStore<OrchestrationState>();
   let uninstallationStore = createMockInstallationStore();
 
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks();
+    systemConfig.clear();
 
     appStateSnapshotStore = createMockLifecycleStore<AppStateSnapshot>();
     installationStore = createMockInstallationStore();
@@ -155,78 +175,9 @@ describe("installationRuntimeAction", () => {
     );
 
     invokeMock.mockResolvedValue({ activationId: "activation-123" });
-
-    createInitialInstallationStateMock.mockImplementation(() =>
-      createMockInProgressState({
-        id: "installation-1",
-      }),
-    );
-
-    createInitialUninstallationStateMock.mockImplementation(() =>
-      createMockInProgressState({
-        id: "uninstallation-1",
-      }),
-    );
-
-    runInstallationMock.mockImplementation(
-      async ({ initialState, hooks }: WorkflowRunnerArgs) => {
-        const inProgressState = createMockInProgressState({
-          id: initialState.id,
-        });
-        const succeededState = createMockSucceededState({
-          id: initialState.id,
-        });
-
-        await hooks.onInstallationStart?.(inProgressState);
-        await hooks.onStepStart?.(
-          { isLeaf: true, path: ["validate"], stepName: "validate" },
-          inProgressState,
-        );
-        await hooks.onStepSuccess?.(
-          {
-            isLeaf: true,
-            path: ["validate"],
-            result: undefined,
-            stepName: "validate",
-          },
-          succeededState,
-        );
-        await hooks.onInstallationSuccess?.(succeededState);
-
-        return succeededState;
-      },
-    );
-
-    runUninstallationMock.mockImplementation(
-      async ({ initialState, hooks }: WorkflowRunnerArgs) => {
-        const inProgressState = createMockInProgressState({
-          id: initialState.id,
-        });
-        const succeededState = createMockSucceededState({
-          id: initialState.id,
-        });
-
-        await hooks.onInstallationStart?.(inProgressState);
-        await hooks.onStepStart?.(
-          { isLeaf: true, path: ["cleanup"], stepName: "cleanup" },
-          inProgressState,
-        );
-        await hooks.onStepSuccess?.(
-          {
-            isLeaf: true,
-            path: ["cleanup"],
-            result: undefined,
-            stepName: "cleanup",
-          },
-          succeededState,
-        );
-        await hooks.onInstallationSuccess?.(succeededState);
-
-        return succeededState;
-      },
-    );
-
-    runValidationMock.mockResolvedValue(createMockValidationResult());
+    await setAssociationData(ASSOCIATION);
+    vi.stubEnv("__OW_ACTION_VERSION", "7");
+    vi.stubEnv("__OW_DEADLINE", "4070908800000");
   });
 
   describe("GET /", () => {
@@ -347,39 +298,8 @@ describe("installationRuntimeAction", () => {
     );
   }
 
-  function createUpgradeRoot(leaf?: AnyStep) {
-    return createMockBranchStep({
-      children: leaf ? [leaf] : [],
-      meta: {
-        install: { label: "Installation" },
-        upgrade: { label: "Upgrade" },
-      },
-    });
-  }
-
-  function createUpgradeLeaf(overrides?: Partial<LeafStep>) {
-    return createMockLifecycleLeaf({
-      apply: vi.fn().mockResolvedValue({ snapshotData: null }),
-      plan: vi.fn().mockResolvedValue({
-        kind: "planned",
-        plan: {
-          operations: [
-            {
-              after: {},
-              id: "operation-1",
-              kind: "add",
-              label: "Apply synthetic change",
-            },
-          ],
-          path: ["installation", "synthetic"],
-        },
-      }),
-      ...overrides,
-    });
-  }
-
   describe("POST /installation desired-state routing", () => {
-    beforeEach(() => {
+    beforeEach(async () => {
       vi.clearAllMocks();
       vi.stubEnv("__OW_ACTION_VERSION", "7");
       vi.stubEnv("__OW_DEADLINE", "4070908800000");
@@ -397,17 +317,14 @@ describe("installationRuntimeAction", () => {
       );
       seedInstalledBaseline("0.9.0");
 
-      createRootInstallationStepMock.mockReturnValue(createUpgradeRoot());
-      getAssociationDataMock.mockResolvedValue({
-        commerce: { baseUrl: "https://commerce.example.com", env: "paas" },
-      });
+      await setAssociationData(ASSOCIATION);
       invokeMock.mockResolvedValue({ activationId: "activation-123" });
     });
 
-    async function startAutomaticUpgrade() {
-      const action = installationRuntimeAction({
-        appConfig: configWithAutoUpgrade,
-      });
+    async function startAutomaticUpgrade(
+      args: ActionArgs = { appConfig: configWithAutoUpgrade },
+    ) {
+      const action = installationRuntimeAction(args);
       const result = await action(
         createRuntimeActionParams({
           body: upgradeRequestBody,
@@ -437,7 +354,6 @@ describe("installationRuntimeAction", () => {
         );
 
         expect(invokeMock).not.toHaveBeenCalled();
-        expect(getAssociationDataMock).toHaveBeenCalledOnce();
         expect(result).toMatchObject({
           error: {
             body: {
@@ -450,18 +366,40 @@ describe("installationRuntimeAction", () => {
         });
       });
 
-      test("dispatches to installation when no completed install exists", async () => {
+      test("returns 409 not-associated when post-app-deploy runs on an unassociated, uninstalled app", async () => {
         desiredInstallationStore = createMockInstallationStore();
+        await clearAssociationData();
         const action = installationRuntimeAction({
           appConfig: configWithAutoUpgrade,
         });
         const result = await action(
           createRuntimeActionParams({
-            body: requestBody,
+            body: upgradeRequestBody,
+            headers: POST_APP_DEPLOY_HEADERS,
             method: "post",
             ...DEFAULT_INSTALLATION_PARAMS,
           }),
         );
+
+        expect(invokeMock).not.toHaveBeenCalled();
+        expect(result).toMatchObject({
+          error: {
+            body: {
+              message: "The app is not associated with a Commerce instance.",
+              reason: "not-associated",
+            },
+            statusCode: 409,
+          },
+          type: "error",
+        });
+      });
+
+      test("dispatches to installation when no completed install exists", async () => {
+        desiredInstallationStore = createMockInstallationStore();
+        const action = installationRuntimeAction({
+          appConfig: configWithAutoUpgrade,
+        });
+        const result = await requestInstall(action);
 
         expect(invokeMock).toHaveBeenCalledWith(
           expect.objectContaining({
@@ -469,6 +407,7 @@ describe("installationRuntimeAction", () => {
             params: expect.objectContaining({
               __ow_method: "post",
               __ow_path: "/execution",
+              operation: "install",
             }),
           }),
         );
@@ -503,7 +442,7 @@ describe("installationRuntimeAction", () => {
       });
 
       test("returns 409 when the app is not associated", async () => {
-        getAssociationDataMock.mockResolvedValue(null);
+        await clearAssociationData();
         const action = installationRuntimeAction({
           appConfig: configWithAutoUpgrade,
         });
@@ -538,7 +477,7 @@ describe("installationRuntimeAction", () => {
           }),
         );
 
-        expect(createRootInstallationStepMock).not.toHaveBeenCalled();
+        expect(await desiredStateStore.get("current")).toBeNull();
         expect(invokeMock).not.toHaveBeenCalled();
         expect(result).toMatchObject({
           error: {
@@ -576,18 +515,13 @@ describe("installationRuntimeAction", () => {
       });
 
       test("returns 409 without a reason when upgrade planning is blocked", async () => {
-        createRootInstallationStepMock.mockReturnValue(
-          createUpgradeRoot(
-            createUpgradeLeaf({
-              plan: vi.fn().mockResolvedValue({
-                issues: [{ message: "incompatible" }],
-                kind: "blocked",
-              }),
-            }),
-          ),
-        );
+        // Registering the Admin UI extension needs the namespace, so planning blocks without it.
+        vi.stubEnv("__OW_NAMESPACE", undefined);
         const action = installationRuntimeAction({
-          appConfig: configWithAutoUpgrade,
+          appConfig: createMockConfig({
+            adminUi: configWithAdminUiSingleGrid.adminUi,
+            metadata: { upgradeMode: "auto" },
+          }),
         });
         const result = await action(
           createRuntimeActionParams({
@@ -601,7 +535,11 @@ describe("installationRuntimeAction", () => {
         expect(result).toMatchObject({
           error: {
             body: {
-              issues: [{ message: "incompatible" }],
+              issues: [
+                expect.objectContaining({
+                  code: "admin-ui-namespace-unavailable",
+                }),
+              ],
               message: "Upgrade planning is blocked",
             },
             statusCode: 409,
@@ -743,6 +681,7 @@ describe("installationRuntimeAction", () => {
             appData,
             attemptId,
             method: "post",
+            operation: "upgrade",
             path: "/execution",
             ...DEFAULT_INSTALLATION_PARAMS,
           }),
@@ -767,6 +706,7 @@ describe("installationRuntimeAction", () => {
             appData,
             attemptId,
             method: "post",
+            operation: "upgrade",
             path: "/execution",
             ...DEFAULT_INSTALLATION_PARAMS,
           }),
@@ -779,20 +719,43 @@ describe("installationRuntimeAction", () => {
         });
       });
 
-      test("returns 500 when the attempt fails", async () => {
-        createRootInstallationStepMock.mockReturnValue(
-          createUpgradeRoot(
-            createUpgradeLeaf({
-              apply: vi.fn().mockRejectedValue(new Error("boom")),
-            }),
-          ),
+      test("reports isRetry when the attempt succeeds on its retry", async () => {
+        const install = vi
+          .fn()
+          .mockRejectedValueOnce(new Error("boom"))
+          .mockResolvedValue(null);
+        const { action, attemptId } = await startAutomaticUpgrade(
+          withCustomScript(configWithAutoUpgrade, { install }),
         );
-        const { action, attemptId } = await startAutomaticUpgrade();
+        await action(
+          createRuntimeActionParams({
+            appData,
+            attemptId,
+            method: "post",
+            operation: "upgrade",
+            path: "/execution",
+            ...DEFAULT_INSTALLATION_PARAMS,
+          }),
+        );
+
+        const result = await action(createRuntimeActionParams());
+
+        expect(result).toMatchObject({
+          body: { metadata: { isRetry: true }, status: "succeeded" },
+          statusCode: 200,
+        });
+      });
+
+      test("returns 500 when the attempt fails", async () => {
+        const { action, attemptId } = await startAutomaticUpgrade(
+          withCustomScript(configWithAutoUpgrade, { install: failingScript }),
+        );
         const result = await action(
           createRuntimeActionParams({
             appData,
             attemptId,
             method: "post",
+            operation: "upgrade",
             path: "/execution",
             ...DEFAULT_INSTALLATION_PARAMS,
           }),
@@ -826,6 +789,53 @@ describe("installationRuntimeAction", () => {
         body: existingState,
         type: "success",
       });
+    });
+
+    test("returns the lifecycle attempt over a stale legacy failed record", async () => {
+      installationStore = createMockInstallationStore(
+        createMockFailedState({ id: "legacy-installation" }),
+      );
+      orchestrationStateStore = createMockLifecycleStore({
+        initial: createMockOrchestrationState({
+          latestAttempt: createMockLifecycleAttempt({
+            id: "attempt-1",
+            operation: "install",
+            status: "succeeded",
+          }),
+        }),
+      });
+      const handler = installationRuntimeAction({
+        appConfig: minimalValidConfig,
+      });
+
+      const result = await handler(createRuntimeActionParams());
+
+      expect(result).toMatchObject({
+        body: { id: "attempt-1", status: "succeeded" },
+        statusCode: 200,
+      });
+    });
+
+    test("reports the recorded completedAt of failed and succeeded attempts", async () => {
+      const completedAt = "2026-08-12T09:30:00.000Z";
+      for (const status of ["failed", "succeeded"] as const) {
+        orchestrationStateStore = createMockLifecycleStore({
+          initial: createMockOrchestrationState({
+            latestAttempt: Object.assign(
+              createMockLifecycleAttempt({ operation: "install", status }),
+              { completedAt },
+            ),
+          }),
+        });
+        const handler = installationRuntimeAction({
+          appConfig: minimalValidConfig,
+        });
+
+        // biome-ignore lint/performance/noAwaitInLoops: each status replaces the shared store
+        const result = await handler(createRuntimeActionParams());
+
+        expect(result).toMatchObject({ body: { completedAt, status } });
+      }
     });
   });
 
@@ -942,43 +952,24 @@ describe("installationRuntimeAction", () => {
       });
     });
 
-    test("stores the initial state when installation starts", async () => {
-      const initialState = createMockInProgressState({ id: "installation-1" });
-      createInitialInstallationStateMock.mockReturnValue(initialState);
-
+    test("persists a pending install attempt when installation starts", async () => {
       const handler = installationRuntimeAction({
         appConfig: minimalValidConfig,
       });
 
-      await handler(
-        createRuntimeActionParams({
-          body: requestBody,
-          method: "post",
-          ...DEFAULT_INSTALLATION_PARAMS,
-        }),
-      );
+      await requestInstall(handler);
 
-      expect(installationStore.put).toHaveBeenCalledWith(
-        "current",
-        initialState,
-      );
+      expect(await orchestrationStateStore.get("current")).toMatchObject({
+        latestAttempt: { operation: "install", status: "pending" },
+      });
     });
 
     test("invokes the installation workflow asynchronously via openwhisk", async () => {
-      const initialState = createMockInProgressState({ id: "installation-1" });
-      createInitialInstallationStateMock.mockReturnValue(initialState);
-
       const handler = installationRuntimeAction({
         appConfig: minimalValidConfig,
       });
 
-      await handler(
-        createRuntimeActionParams({
-          body: requestBody,
-          method: "post",
-          ...DEFAULT_INSTALLATION_PARAMS,
-        }),
-      );
+      await requestInstall(handler);
 
       expect(invokeMock).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -989,24 +980,20 @@ describe("installationRuntimeAction", () => {
       );
     });
 
-    test("returns 202 with the initial state when installation starts", async () => {
-      const initialState = createMockInProgressState({ id: "installation-1" });
-      createInitialInstallationStateMock.mockReturnValue(initialState);
-
+    test("returns 202 with the attempt state when installation starts", async () => {
       const handler = installationRuntimeAction({
         appConfig: minimalValidConfig,
       });
 
-      const result = await handler(
-        createRuntimeActionParams({
-          body: requestBody,
-          method: "post",
-          ...DEFAULT_INSTALLATION_PARAMS,
-        }),
-      );
+      const result = await requestInstall(handler);
 
       expect(result).toMatchObject({
-        body: expect.objectContaining({ ...initialState }),
+        body: {
+          activationId: "activation-123",
+          message: "Installation started",
+          operation: "install",
+          status: "in-progress",
+        },
         statusCode: 202,
         type: "success",
       });
@@ -1014,14 +1001,57 @@ describe("installationRuntimeAction", () => {
   });
 
   describe("POST /execution", () => {
-    test("returns 400 when installation execution is missing the initial state", async () => {
+    /** Starts an install through POST / and returns its persisted attempt id. */
+    async function startInstall(
+      args: ActionArgs = { appConfig: minimalValidConfig },
+    ) {
+      const handler = installationRuntimeAction(args);
+
+      await requestInstall(handler);
+
+      const attempt = (await orchestrationStateStore.get("current"))
+        ?.latestAttempt;
+      expect.assert(attempt, "Expected a persisted install attempt");
+
+      return { attemptId: attempt.id, handler };
+    }
+
+    test("returns 400 when lifecycle execution is missing the app config", async () => {
+      const handler = installationRuntimeAction({
+        // @ts-expect-error - intentionally missing app config
+        appConfig: undefined,
+      });
+
+      const result = await handler(
+        createRuntimeActionParams({
+          appData,
+          attemptId: "attempt-1",
+          method: "post",
+          operation: "install",
+          path: "/execution",
+          ...DEFAULT_INSTALLATION_PARAMS,
+        }),
+      );
+
+      expect(result).toMatchObject({
+        error: {
+          body: { message: "appConfig is required for lifecycle execution" },
+          statusCode: 400,
+        },
+        type: "error",
+      });
+    });
+
+    test("returns 400 when lifecycle execution is missing the operation", async () => {
       const handler = installationRuntimeAction({
         appConfig: minimalValidConfig,
       });
 
       const result = await handler(
         createRuntimeActionParams({
+          appConfig: minimalValidConfig,
           appData,
+          attemptId: "attempt-1",
           method: "post",
           path: "/execution",
           ...DEFAULT_INSTALLATION_PARAMS,
@@ -1032,96 +1062,73 @@ describe("installationRuntimeAction", () => {
         error: { statusCode: 400 },
         type: "error",
       });
+      expect(orchestrationStateStore.put).not.toHaveBeenCalled();
     });
 
-    test("runs the installation workflow with the provided initial state", async () => {
-      const initialState = createMockInProgressState({ id: "installation-1" });
-      const handler = installationRuntimeAction({
-        appConfig: minimalValidConfig,
-      });
-
-      await handler(
-        createRuntimeActionParams({
-          appData,
-          initialState,
-          method: "post",
-          path: "/execution",
-          ...DEFAULT_INSTALLATION_PARAMS,
-        }),
-      );
-
-      expect(runInstallationMock).toHaveBeenCalledWith(
-        expect.objectContaining({ initialState }),
-      );
-    });
-
-    test("stores the final installation state after execution", async () => {
-      const initialState = createMockInProgressState({ id: "installation-1" });
-      const handler = installationRuntimeAction({
-        appConfig: minimalValidConfig,
-      });
-
-      await handler(
-        createRuntimeActionParams({
-          appData,
-          initialState,
-          method: "post",
-          path: "/execution",
-          ...DEFAULT_INSTALLATION_PARAMS,
-        }),
-      );
-
-      expect(installationStore.put).toHaveBeenCalledWith(
-        "current",
-        expect.objectContaining({ id: "installation-1", status: "succeeded" }),
-      );
-    });
-
-    test("returns 500 when the installation workflow fails", async () => {
-      const initialState = createMockInProgressState({ id: "installation-1" });
-      const failedState = createMockFailedState({ id: "installation-1" });
-
-      runInstallationMock.mockImplementation(
-        async ({
-          initialState: failedInitialState,
-          hooks,
-        }: WorkflowRunnerArgs) => {
-          const inProgressState = createMockInProgressState({
-            id: failedInitialState.id,
-          });
-
-          await hooks.onInstallationStart?.(inProgressState);
-          await hooks.onStepFailure?.(
-            {
-              error: failedState.error,
-              isLeaf: true,
-              path: ["installation", "validate"],
-              stepName: "validate",
-            },
-            failedState,
-          );
-          await hooks.onInstallationFailure?.(failedState);
-
-          return failedState;
-        },
-      );
-
-      const handler = installationRuntimeAction({
-        appConfig: minimalValidConfig,
-      });
+    test("executes the persisted install attempt", async () => {
+      const { attemptId, handler } = await startInstall();
 
       const result = await handler(
         createRuntimeActionParams({
           appData,
-          initialState,
+          attemptId,
           method: "post",
+          operation: "install",
           path: "/execution",
           ...DEFAULT_INSTALLATION_PARAMS,
         }),
       );
 
       expect(result).toMatchObject({
-        error: { statusCode: 500 },
+        body: { id: attemptId, status: "succeeded" },
+        statusCode: 200,
+        type: "success",
+      });
+    });
+
+    test("records the terminal attempt state after execution", async () => {
+      const { attemptId, handler } = await startInstall();
+
+      await handler(
+        createRuntimeActionParams({
+          appData,
+          attemptId,
+          method: "post",
+          operation: "install",
+          path: "/execution",
+          ...DEFAULT_INSTALLATION_PARAMS,
+        }),
+      );
+
+      expect(await orchestrationStateStore.get("current")).toMatchObject({
+        latestAttempt: { id: attemptId, status: "succeeded" },
+      });
+    });
+
+    test("returns 500 when the installation workflow fails", async () => {
+      const { attemptId, handler } = await startInstall(
+        withCustomScript(minimalValidConfig, { install: failingScript }),
+      );
+
+      const result = await handler(
+        createRuntimeActionParams({
+          appData,
+          attemptId,
+          method: "post",
+          operation: "install",
+          path: "/execution",
+          ...DEFAULT_INSTALLATION_PARAMS,
+        }),
+      );
+
+      expect(result).toMatchObject({
+        error: {
+          body: {
+            attempt: { id: attemptId, status: "failed" },
+            message: "install failed",
+          },
+          statusCode: 500,
+        },
         type: "error",
       });
     });
@@ -1150,9 +1157,6 @@ describe("installationRuntimeAction", () => {
     });
 
     test("returns the validation result for POST /validation", async () => {
-      const validationResult = createMockValidationResult({ valid: false });
-      runValidationMock.mockResolvedValue(validationResult);
-
       const handler = installationRuntimeAction({
         appConfig: minimalValidConfig,
       });
@@ -1167,7 +1171,10 @@ describe("installationRuntimeAction", () => {
       );
 
       expect(result).toMatchObject({
-        body: validationResult,
+        body: {
+          summary: { errors: 0, warnings: 0 },
+          valid: true,
+        },
         type: "success",
       });
     });
@@ -1222,11 +1229,41 @@ describe("installationRuntimeAction", () => {
       });
     });
 
-    test("stores the initial state when uninstallation starts", async () => {
-      const initialState = createMockInProgressState({
-        id: "uninstallation-1",
+    test("returns 500 when there is no recorded installation and no app config", async () => {
+      const handler = installationRuntimeAction({
+        // @ts-expect-error - intentionally missing app config
+        appConfig: undefined,
       });
-      createInitialUninstallationStateMock.mockReturnValue(initialState);
+
+      const result = await handler(
+        createRuntimeActionParams({
+          body: requestBody,
+          method: "post",
+          path: "/uninstallation",
+          ...DEFAULT_INSTALLATION_PARAMS,
+        }),
+      );
+
+      expect(invokeMock).not.toHaveBeenCalled();
+      expect(result).toMatchObject({
+        error: {
+          body: {
+            message:
+              "Cannot determine what to uninstall: no recorded lifecycle baseline and no app config was provided.",
+          },
+          statusCode: 500,
+        },
+        type: "error",
+      });
+    });
+
+    test("persists a pending uninstall attempt when uninstallation starts", async () => {
+      installationStore = createMockInstallationStore(
+        createMockSucceededState({
+          config: minimalValidConfig,
+          id: "installation-1",
+        }),
+      );
 
       const handler = installationRuntimeAction({
         appConfig: minimalValidConfig,
@@ -1241,18 +1278,12 @@ describe("installationRuntimeAction", () => {
         }),
       );
 
-      expect(uninstallationStore.put).toHaveBeenCalledWith(
-        "current",
-        initialState,
-      );
+      expect(await orchestrationStateStore.get("current")).toMatchObject({
+        latestAttempt: { operation: "uninstall", status: "pending" },
+      });
     });
 
     test("invokes the uninstallation workflow asynchronously via openwhisk", async () => {
-      const initialState = createMockInProgressState({
-        id: "uninstallation-1",
-      });
-      createInitialUninstallationStateMock.mockReturnValue(initialState);
-
       const handler = installationRuntimeAction({
         appConfig: minimalValidConfig,
       });
@@ -1271,18 +1302,21 @@ describe("installationRuntimeAction", () => {
           blocking: false,
           name: "app-management/installation",
           params: expect.objectContaining({
-            __ow_path: "/uninstallation/execution",
+            __ow_path: "/execution",
+            operation: "uninstall",
           }),
           result: false,
         }),
       );
     });
 
-    test("returns 202 with the initial state when uninstallation starts", async () => {
-      const initialState = createMockInProgressState({
-        id: "uninstallation-1",
-      });
-      createInitialUninstallationStateMock.mockReturnValue(initialState);
+    test("returns 202 with the attempt state when uninstallation starts", async () => {
+      installationStore = createMockInstallationStore(
+        createMockSucceededState({
+          config: minimalValidConfig,
+          id: "installation-1",
+        }),
+      );
 
       const handler = installationRuntimeAction({
         appConfig: minimalValidConfig,
@@ -1298,7 +1332,11 @@ describe("installationRuntimeAction", () => {
       );
 
       expect(result).toMatchObject({
-        body: expect.objectContaining({ ...initialState }),
+        body: {
+          activationId: "activation-123",
+          message: "Uninstallation started",
+          status: "in-progress",
+        },
         statusCode: 202,
         type: "success",
       });
@@ -1327,16 +1365,11 @@ describe("installationRuntimeAction", () => {
         }),
       );
 
-      // Uninstall must be built from the recorded snapshot config.
-      expect(createInitialUninstallationStateMock).toHaveBeenCalledWith({
-        config: configWithCommerceEventing,
-        executedCustomInstallationSteps: [],
-      });
-
-      // ...and the recorded config must flow to the async execution action.
+      // The recorded config must drive the plan and flow to the async execution action.
       expect(invokeMock).toHaveBeenCalledWith(
         expect.objectContaining({
           params: expect.objectContaining({
+            __ow_path: "/execution",
             appConfig: configWithCommerceEventing,
           }),
         }),
@@ -1361,10 +1394,11 @@ describe("installationRuntimeAction", () => {
         }),
       );
 
-      expect(createInitialUninstallationStateMock).toHaveBeenCalledWith({
-        config: minimalValidConfig,
-        executedCustomInstallationSteps: [],
-      });
+      expect(invokeMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          params: expect.objectContaining({ appConfig: minimalValidConfig }),
+        }),
+      );
     });
 
     test("ignores an in-progress install snapshot and falls back to the request config", async () => {
@@ -1390,10 +1424,11 @@ describe("installationRuntimeAction", () => {
         }),
       );
 
-      expect(createInitialUninstallationStateMock).toHaveBeenCalledWith({
-        config: minimalValidConfig,
-        executedCustomInstallationSteps: [],
-      });
+      expect(invokeMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          params: expect.objectContaining({ appConfig: minimalValidConfig }),
+        }),
+      );
     });
 
     test("CEXT-6661: uninstalls when the recorded snapshot lost its dynamicList functions to storage", async () => {
@@ -1426,136 +1461,123 @@ describe("installationRuntimeAction", () => {
       );
 
       expect(result).not.toMatchObject({ statusCode: 500 });
-      expect(createInitialUninstallationStateMock).toHaveBeenCalledWith({
-        config: expect.objectContaining({
-          businessConfig: expect.objectContaining({
-            schema: [
-              expect.objectContaining({
-                name: "paymentMethod",
-                type: "dynamicList",
+      expect(invokeMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          params: expect.objectContaining({
+            appConfig: expect.objectContaining({
+              businessConfig: expect.objectContaining({
+                schema: [
+                  expect.objectContaining({
+                    name: "paymentMethod",
+                    type: "dynamicList",
+                  }),
+                ],
               }),
-            ],
+            }),
           }),
         }),
-        executedCustomInstallationSteps: [],
-      });
+      );
     });
   });
 
   describe("POST /uninstallation/execution", () => {
-    test("runs the uninstallation workflow with the provided initial state", async () => {
-      const initialState = createMockInProgressState({
-        id: "uninstallation-1",
-      });
+    /** Starts an uninstall from a recorded install and returns its attempt id. */
+    async function startUninstall(
+      args: ActionArgs = { appConfig: minimalValidConfig },
+    ) {
+      installationStore = createMockInstallationStore(
+        createMockSucceededState({
+          config: args.appConfig,
+          id: "installation-1",
+        }),
+      );
 
-      const handler = installationRuntimeAction({
-        appConfig: minimalValidConfig,
-      });
+      const handler = installationRuntimeAction(args);
 
       await handler(
         createRuntimeActionParams({
-          appData,
-          initialState,
+          body: requestBody,
           method: "post",
-          path: "/uninstallation/execution",
+          path: "/uninstallation",
           ...DEFAULT_INSTALLATION_PARAMS,
         }),
       );
 
-      expect(runUninstallationMock).toHaveBeenCalledWith(
-        expect.objectContaining({ initialState }),
-      );
-    });
+      const attempt = (await orchestrationStateStore.get("current"))
+        ?.latestAttempt;
+      expect.assert(attempt, "Expected a persisted uninstall attempt");
 
-    test("clears the installation state after a successful uninstallation", async () => {
-      const initialState = createMockInProgressState({
-        id: "uninstallation-1",
-      });
-      installationStore = createMockInstallationStore(
-        createMockSucceededState({ id: "installation-1" }),
-      );
-      orchestrationStateStore = createMockLifecycleStore<OrchestrationState>({
-        initial: createMockOrchestrationState(),
-      });
+      return { attemptId: attempt.id, handler };
+    }
 
-      const handler = installationRuntimeAction({
-        appConfig: minimalValidConfig,
-      });
-
-      await handler(
-        createRuntimeActionParams({
-          appData,
-          initialState,
-          method: "post",
-          path: "/uninstallation/execution",
-          ...DEFAULT_INSTALLATION_PARAMS,
-        }),
-      );
-
-      const installation = await handler(
-        createRuntimeActionParams({ method: "get", path: "/" }),
-      );
-      expect(installation).toMatchObject({
-        statusCode: 204,
-        type: "success",
-      });
-      expect(await orchestrationStateStore.get("current")).toBeNull();
-    });
-
-    test("returns 500 and preserves existing state when uninstallation fails", async () => {
-      const initialState = createMockInProgressState({
-        id: "uninstallation-1",
-      });
-      const failedState = createMockFailedState({ id: "uninstallation-1" });
-      installationStore = createMockInstallationStore(
-        createMockSucceededState({ id: "installation-1" }),
-      );
-      const orchestrationState = createMockOrchestrationState();
-      orchestrationStateStore = createMockLifecycleStore<OrchestrationState>({
-        initial: orchestrationState,
-      });
-
-      runUninstallationMock.mockImplementation(
-        async ({
-          initialState: failedInitialState,
-          hooks,
-        }: WorkflowRunnerArgs) => {
-          const inProgressState = createMockInProgressState({
-            id: failedInitialState.id,
-          });
-
-          await hooks.onInstallationStart?.(inProgressState);
-          await hooks.onStepFailure?.(
-            {
-              error: failedState.error,
-              isLeaf: true,
-              path: ["uninstallation", "cleanup"],
-              stepName: "cleanup",
-            },
-            failedState,
-          );
-          await hooks.onInstallationFailure?.(failedState);
-
-          return failedState;
-        },
-      );
-
-      const handler = installationRuntimeAction({
-        appConfig: minimalValidConfig,
-      });
+    test("executes the persisted uninstall attempt", async () => {
+      const { attemptId, handler } = await startUninstall();
 
       const result = await handler(
         createRuntimeActionParams({
           appData,
-          initialState,
+          attemptId,
           method: "post",
+          operation: "uninstall",
           path: "/uninstallation/execution",
           ...DEFAULT_INSTALLATION_PARAMS,
         }),
       );
 
       expect(result).toMatchObject({
-        error: { statusCode: 500 },
+        body: { id: attemptId, operation: "uninstall", status: "succeeded" },
+        statusCode: 200,
+        type: "success",
+      });
+    });
+
+    test("clears the installation state after a successful uninstallation", async () => {
+      const { attemptId, handler } = await startUninstall();
+
+      await handler(
+        createRuntimeActionParams({
+          appData,
+          attemptId,
+          method: "post",
+          operation: "uninstall",
+          path: "/uninstallation/execution",
+          ...DEFAULT_INSTALLATION_PARAMS,
+        }),
+      );
+
+      expect(installationStore.delete).toHaveBeenCalledWith("current");
+      expect(await orchestrationStateStore.get("current")).toMatchObject({
+        baselineSnapshotId: null,
+      });
+    });
+
+    test("returns 500 and preserves existing state when uninstallation fails", async () => {
+      const { attemptId, handler } = await startUninstall(
+        withCustomScript(minimalValidConfig, {
+          install: vi.fn(),
+          uninstall: failingScript,
+        }),
+      );
+      const baselineSnapshotId = (await orchestrationStateStore.get("current"))
+        ?.baselineSnapshotId;
+      expect.assert(baselineSnapshotId, "Expected a recorded baseline");
+
+      const result = await handler(
+        createRuntimeActionParams({
+          appData,
+          attemptId,
+          method: "post",
+          operation: "uninstall",
+          path: "/uninstallation/execution",
+          ...DEFAULT_INSTALLATION_PARAMS,
+        }),
+      );
+
+      expect(result).toMatchObject({
+        error: {
+          body: { message: "uninstall failed" },
+          statusCode: 500,
+        },
         type: "error",
       });
       const installation = await handler(
@@ -1566,9 +1588,10 @@ describe("installationRuntimeAction", () => {
         statusCode: 200,
         type: "success",
       });
-      expect(await orchestrationStateStore.get("current")).toEqual(
-        orchestrationState,
-      );
+      expect(await orchestrationStateStore.get("current")).toMatchObject({
+        baselineSnapshotId,
+        latestAttempt: { id: attemptId, status: "failed" },
+      });
     });
   });
 

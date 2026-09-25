@@ -92,7 +92,7 @@ describe("readOrInitializeState", () => {
     );
   });
 
-  test("adopts the compatibility baseline when the existing state has no snapshot id", async () => {
+  test("treats a null snapshot id on existing state as not installed", async () => {
     const baseline = createSnapshot("compat-1");
     const state = createMockOrchestrationState({ baselineSnapshotId: null });
     const { runtime, snapshotStore, stateStore } = createRuntime({
@@ -102,12 +102,9 @@ describe("readOrInitializeState", () => {
 
     const result = await readOrInitializeState(runtime);
 
-    expect(result.baseline).toEqual(baseline);
-    expect(result.state.baselineSnapshotId).toBe("compat-1");
-    expect(await snapshotStore.get("compat-1")).toEqual(baseline);
-    expect(await stateStore.get(CURRENT_STATE_KEY)).toMatchObject({
-      baselineSnapshotId: "compat-1",
-    });
+    expect(result).toEqual({ baseline: null, state });
+    expect(await snapshotStore.get("compat-1")).toBeNull();
+    expect(stateStore.put).not.toHaveBeenCalled();
   });
 
   test("initializes fresh state from the compatibility baseline when none exists", async () => {
@@ -127,11 +124,20 @@ describe("readOrInitializeState", () => {
     expect(await stateStore.get(CURRENT_STATE_KEY)).toEqual(result.state);
   });
 
-  test("throws when no compatible baseline exists and no state is recorded", async () => {
-    const { runtime } = createRuntime({ baselineFor: () => null });
-    await expect(readOrInitializeState(runtime)).rejects.toThrow(
-      "compatible lifecycle baseline is required",
-    );
+  test("initializes baseline-less state when nothing is installed yet", async () => {
+    const { runtime, stateStore } = createRuntime({ baselineFor: () => null });
+
+    const result = await readOrInitializeState(runtime);
+    expect(result).toEqual({
+      baseline: null,
+      state: {
+        baselineSnapshotId: null,
+        latestAttempt: null,
+        pendingPlan: null,
+      },
+    });
+
+    expect(await stateStore.get(CURRENT_STATE_KEY)).toEqual(result.state);
   });
 });
 

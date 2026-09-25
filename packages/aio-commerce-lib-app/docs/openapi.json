@@ -1476,7 +1476,7 @@
             "description": "The access token is valid, but it is not allowed to access the requested organization or operation."
           },
           "409": {
-            "description": "The request is not actionable. This covers both non-actionable no-op states and real failures. A `409` carrying a `reason` is a graceful no-op the caller can ignore: `not-installed` (a post-deploy invocation cannot install the app), `not-associated` (the app is not associated with a Commerce instance), or `already-current` (the installed version already matches `metadata.version`). A `409` without a `reason` is a real failure — for example, an installation already running or completed, an attempted change to the installed `metadata.id`, or upgrade planning blocked by configuration `issues`.",
+            "description": "The request is not actionable. This covers both non-actionable no-op states and real failures. A `409` carrying a `reason` is a graceful no-op the caller can ignore: `not-installed` (a post-deploy invocation cannot install the app), `not-associated` (the app is not associated with a Commerce instance), or `already-current` (the installed version already matches `metadata.version`). A `409` without a `reason` is a real failure — for example, an installation already running or completed, an attempted change to the installed `metadata.id`, or planning blocked by configuration `issues`.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1495,7 +1495,7 @@
                       ]
                     },
                     "issues": {
-                      "description": "Blocking issues reported when upgrade planning is blocked.",
+                      "description": "Blocking issues reported when planning is blocked.",
                       "type": "array",
                       "items": {
                         "type": "object",
@@ -1766,6 +1766,9 @@
                     "message": {
                       "type": "string"
                     },
+                    "operation": {
+                      "const": "uninstall"
+                    },
                     "activationId": {
                       "type": "string"
                     },
@@ -1804,6 +1807,7 @@
                   },
                   "required": [
                     "message",
+                    "operation",
                     "activationId",
                     "id",
                     "status",

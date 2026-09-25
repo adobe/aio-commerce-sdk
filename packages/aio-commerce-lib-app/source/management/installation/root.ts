@@ -23,8 +23,8 @@ import type { CustomInstallationStepIdentity } from "#management/domains/custom-
 /**
  * Creates the default child steps built-in in the library with dynamic children based on the
  * config. `executedCustomInstallationSteps` is only meaningful for a full uninstall (see
- * {@link createRootUninstallationStep}). `includeReconciliation` adds the reconciliation leaf,
- * which only runs on upgrade.
+ * {@link createRootUninstallationStep}). `includeReconciliation` adds the leaf that runs custom
+ * installation scripts through `plan`/`apply`, which trees run by the lifecycle need.
  */
 function createDefaultChildSteps(
   config: CommerceAppConfigOutputModel,
@@ -44,15 +44,23 @@ function createDefaultChildSteps(
 }
 
 /**
- * Creates a root installation step with dynamic children based on the config. `forUpgrade` adds the
- * reconciliation leaf, which only runs on upgrade.
+ * Creates a root installation step with dynamic children based on the config.
+ *
+ * Options:
+ * - `name`: the root step's name. Defaults to `installation`.
+ * - `includeReconciliation`: adds the leaf that runs custom installation scripts through
+ *   `plan`/`apply`. Set it for trees the lifecycle runs, which skips the per-script leaves because
+ *   they have no `plan`. Leave it off for the legacy runner, which runs the per-script leaves.
  */
 export function createRootInstallationStep(
   config: CommerceAppConfigOutputModel,
-  { forUpgrade = false }: { forUpgrade?: boolean } = {},
+  {
+    includeReconciliation = false,
+    name = "installation",
+  }: { includeReconciliation?: boolean; name?: string } = {},
 ): BranchStep {
   return defineBranchStep({
-    children: createDefaultChildSteps(config, [], forUpgrade),
+    children: createDefaultChildSteps(config, [], includeReconciliation),
     meta: {
       install: {
         description: "App installation workflow",
@@ -67,7 +75,7 @@ export function createRootInstallationStep(
         label: "Upgrade",
       },
     },
-    name: "installation",
+    name,
   });
 }
 

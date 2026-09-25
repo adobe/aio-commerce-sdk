@@ -20,6 +20,7 @@ import type {
   SucceededWorkflowState,
   WorkflowData,
   WorkflowError,
+  WorkflowStateMetadata,
 } from "#management/common/workflow/types";
 
 /** The kind of lifecycle operation an orchestration run performs. */
@@ -36,23 +37,23 @@ export type LifecyclePlan = {
   /** Version of the action that produced the plan. */
   actionVersion: string;
 
-  /** The state the plan transitions from. */
+  /** The state the plan transitions from, or `null` for an install. */
   source: {
     /** Identifier of the baseline snapshot. */
     snapshotId: string;
 
     /** App version of the baseline. */
     appVersion: string;
-  };
+  } | null;
 
-  /** The state the plan transitions to. */
+  /** The state the plan transitions to, or `null` for an uninstall. */
   target: {
     /** App version being transitioned to. */
     appVersion: string;
 
     /** Validated configuration used to produce and execute the plan. */
     config: CommerceAppConfigOutputModel;
-  };
+  } | null;
 
   /** Per-domain plans that compose the operation. */
   domains: DomainPlan[];
@@ -63,11 +64,11 @@ export type LifecyclePlan = {
 
 /** The result recorded when a lifecycle attempt succeeds. */
 export type SuccessfulResult = {
-  /** Identifier of the snapshot captured after the operation. */
-  snapshotId: string;
+  /** Identifier of the snapshot captured after the operation, or `null` when the app was removed. */
+  snapshotId: string | null;
 
-  /** App version the operation landed on. */
-  appVersion: string;
+  /** App version the operation landed on, or `null` when the app was removed. */
+  appVersion: string | null;
 };
 
 /** Properties shared by every lifecycle attempt, regardless of status. */
@@ -92,6 +93,9 @@ type LifecycleAttemptBase = {
 
   /** Snapshot data produced by completed leaves. */
   data: WorkflowData | null;
+
+  /** Per-run state metadata. */
+  metadata?: WorkflowStateMetadata;
 };
 
 /**
@@ -103,8 +107,20 @@ type LifecycleAttemptBase = {
 export type LifecycleAttempt = LifecycleAttemptBase &
   (
     | { status: "pending" | "in-progress" }
-    | { status: "succeeded"; result: SuccessfulResult }
-    | { status: "failed"; failure: WorkflowError<{ operationId?: string }> }
+    | {
+        status: "succeeded";
+        result: SuccessfulResult;
+
+        /** ISO timestamp when the attempt completed. Absent on older stored attempts. */
+        completedAt?: string;
+      }
+    | {
+        status: "failed";
+        failure: WorkflowError<{ operationId?: string }>;
+
+        /** ISO timestamp when the attempt completed. Absent on older stored attempts. */
+        completedAt?: string;
+      }
   );
 
 /** A captured snapshot of app state: its configuration and collected workflow data. */

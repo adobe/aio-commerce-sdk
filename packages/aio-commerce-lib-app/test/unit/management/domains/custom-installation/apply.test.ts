@@ -69,7 +69,41 @@ describe("applyCustomInstallationSteps", () => {
       context,
     );
     expect(result.snapshotData?.executedSteps).toEqual([
-      { name: "Demo Success", script: "./demo-success.js" },
+      {
+        data: { status: "success" },
+        name: "Demo Success",
+        script: "./demo-success.js",
+      },
+    ]);
+  });
+
+  test("records the install handler's return value in the snapshot data", async () => {
+    const plan: CustomInstallationDomainPlan = {
+      baselineExecutedSteps: [],
+      operations: [
+        {
+          after: { name: "Demo Success", script: "./demo-success.js" },
+          id: "add:Demo Success",
+          kind: "add",
+          label: "Run",
+        },
+      ],
+      path,
+      targetConfig: configWithCustomInstallationSteps,
+    };
+    const context = buildApplyContext(
+      { "./demo-success.js": { install: () => ({ token: "abc" }) } },
+      configWithCustomInstallationSteps,
+    );
+
+    const result = await applyCustomInstallationSteps(plan, context);
+
+    expect(result.snapshotData?.executedSteps).toEqual([
+      {
+        data: { token: "abc" },
+        name: "Demo Success",
+        script: "./demo-success.js",
+      },
     ]);
   });
 
@@ -178,13 +212,36 @@ describe("applyCustomInstallationSteps", () => {
     );
   });
 
-  test("returns the baseline unchanged when there is no target config", async () => {
+  test("uninstalls every recorded step, newest first, when there is no target config", async () => {
+    const order: string[] = [];
+    const first = {
+      install: vi.fn(),
+      uninstall: vi.fn(() => {
+        order.push("first");
+      }),
+    };
+    const second = {
+      install: vi.fn(),
+      uninstall: vi.fn(() => {
+        order.push("second");
+      }),
+    };
+
     const plan: CustomInstallationDomainPlan = {
-      baselineExecutedSteps: [{ name: "Old Step", script: "./old-step.js" }],
+      baselineExecutedSteps: [
+        { name: "First Step", script: "./first.js" },
+        { name: "Second Step", script: "./second.js" },
+      ],
       operations: [
         {
-          before: { name: "Old Step", script: "./old-step.js" },
-          id: "remove:Old Step",
+          before: { name: "First Step", script: "./first.js" },
+          id: "remove:First Step",
+          kind: "remove",
+          label: "Removed",
+        },
+        {
+          before: { name: "Second Step", script: "./second.js" },
+          id: "remove:Second Step",
           kind: "remove",
           label: "Removed",
         },
@@ -193,11 +250,44 @@ describe("applyCustomInstallationSteps", () => {
       targetConfig: null,
     };
 
-    const context = buildApplyContext({}, null);
+    const context = {
+      ...buildApplyContext({ "./first.js": first, "./second.js": second }),
+      baseline: { config: minimalValidConfig, data: null },
+    };
+
     const result = await applyCustomInstallationSteps(plan, context);
 
-    expect(result.snapshotData?.executedSteps).toEqual(
-      plan.baselineExecutedSteps,
-    );
+    expect(order).toEqual(["second", "first"]);
+    expect(result.snapshotData?.executedSteps).toEqual([]);
+  });
+
+  test("throws when uninstalling without a baseline configuration", async () => {
+    const plan: CustomInstallationDomainPlan = {
+      baselineExecutedSteps: [{ name: "Old Step", script: "./old-step.js" }],
+      operations: [],
+      path,
+      targetConfig: null,
+    };
+
+    await expect(
+      applyCustomInstallationSteps(plan, buildApplyContext({}, null)),
+    ).rejects.toThrow("without a baseline configuration");
+  });
+
+  test("skips a recorded step whose script is no longer loadable", async () => {
+    const plan: CustomInstallationDomainPlan = {
+      baselineExecutedSteps: [{ name: "Old Step", script: "./old-step.js" }],
+      operations: [],
+      path,
+      targetConfig: null,
+    };
+
+    const context = {
+      ...buildApplyContext({}),
+      baseline: { config: minimalValidConfig, data: null },
+    };
+
+    const result = await applyCustomInstallationSteps(plan, context);
+    expect(result.snapshotData?.executedSteps).toEqual([]);
   });
 });

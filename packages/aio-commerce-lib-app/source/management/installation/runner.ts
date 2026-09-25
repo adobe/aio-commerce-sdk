@@ -39,7 +39,10 @@ import type {
 import type { ValidationResult } from "#management/common/workflow/validation";
 import type { CustomInstallationStepIdentity } from "#management/domains/custom-installation/index";
 
-/** Lifecycle hooks for an installation or uninstallation run. */
+/**
+ * Lifecycle hooks for an installation or uninstallation run.
+ * @deprecated Companion of the deprecated installation runners. Use `WorkflowHooks`.
+ */
 export type InstallationHooks = {
   onInstallationStart?: (state: WorkflowRunState) => void | Promise<void>;
   onInstallationSuccess?: (state: WorkflowRunState) => void | Promise<void>;
@@ -75,13 +78,19 @@ function toWorkflowHooks(hooks?: InstallationHooks): WorkflowHooks | undefined {
   };
 }
 
-/** Options for creating an initial installation state. */
+/**
+ * Options for creating an initial installation state.
+ * @deprecated Companion of the deprecated {@link createInitialInstallationState}.
+ */
 export type CreateInitialInstallationStateOptions = {
   /** The app configuration used to determine applicable steps. */
   config: CommerceAppConfigOutputModel;
 };
 
-/** Options for running an installation. */
+/**
+ * Options for running an installation.
+ * @deprecated Companion of the deprecated {@link runInstallation}.
+ */
 export type RunInstallationOptions = {
   /** Shared installation context (params, logger, etc.). */
   installationContext: LifecycleContext;
@@ -100,6 +109,9 @@ export type RunInstallationOptions = {
  * Creates an initial installation state from the config and step definitions.
  * Filters steps based on their `when` conditions and builds a tree structure
  * with all steps set to "pending".
+ *
+ * @deprecated Use the lifecycle path: `startLifecycleAttempt` builds the run state from the plan
+ * produced by `planLifecycle`.
  */
 export function createInitialInstallationState(
   options: CreateInitialInstallationStateOptions,
@@ -115,6 +127,9 @@ export function createInitialInstallationState(
  *
  * Retries once on failure. `onInstallationFailure` only fires if both attempts
  * fail; `isRetry: true` is set on the result when the retry succeeds.
+ *
+ * @deprecated Use `executeLifecycleAttempt` from `#management/lifecycle/execution`, which applies
+ * the recorded lifecycle plan.
  */
 export async function runInstallation(
   options: RunInstallationOptions,
@@ -169,7 +184,10 @@ export async function runInstallation(
   return { ...retryResult, metadata: { isRetry: true } };
 }
 
-/** Options for creating an initial uninstallation state. */
+/**
+ * Options for creating an initial uninstallation state.
+ * @deprecated Companion of the deprecated {@link createInitialUninstallationState}.
+ */
 export type CreateInitialUninstallationStateOptions = {
   /** The app configuration used to determine applicable steps. */
   config: CommerceAppConfigOutputModel;
@@ -182,7 +200,10 @@ export type CreateInitialUninstallationStateOptions = {
   executedCustomInstallationSteps?: readonly CustomInstallationStepIdentity[];
 };
 
-/** Options for running an uninstallation. */
+/**
+ * Options for running an uninstallation.
+ * @deprecated Companion of the deprecated {@link runUninstallation}.
+ */
 export type RunUninstallationOptions = {
   /** Shared installation context (params, logger, etc.). */
   installationContext: LifecycleContext;
@@ -199,6 +220,9 @@ export type RunUninstallationOptions = {
 
 /**
  * Creates an initial uninstallation state from the config and step definitions.
+ *
+ * @deprecated Use the lifecycle path: `startLifecycleAttempt` builds the run state from the plan
+ * produced by `planLifecycle` with a `null` target.
  */
 export function createInitialUninstallationState(
   options: CreateInitialUninstallationStateOptions,
@@ -213,6 +237,9 @@ export function createInitialUninstallationState(
 
 /**
  * Runs the full uninstallation workflow. Returns the final state (never throws).
+ *
+ * @deprecated Use `executeLifecycleAttempt` from `#management/lifecycle/execution` with an
+ * uninstall plan.
  */
 export function runUninstallation(
   options: RunUninstallationOptions,
