@@ -339,7 +339,7 @@ describe("installationRuntimeAction", () => {
       });
     });
 
-    test("returns the attempt status without plan, data, or progress", async () => {
+    test("returns the attempt status with the step tree but without plan or data", async () => {
       const attempt = createMockLifecycleAttempt({
         id: "attempt-1",
         status: "succeeded",
@@ -360,6 +360,7 @@ describe("installationRuntimeAction", () => {
           result: { appVersion: "2.0.0", snapshotId: "snapshot-2" },
           startedAt: attempt.startedAt,
           status: "succeeded",
+          step: attempt.progress,
         },
         statusCode: 200,
         type: "success",

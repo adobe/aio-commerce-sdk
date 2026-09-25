@@ -47,6 +47,7 @@ import { executeUninstallation, startUninstallation } from "./uninstall";
 import { executeUpgrade, startUpgrade } from "./upgrade";
 
 import type { LifecycleAttempt } from "#management/common/orchestration";
+import type { StepStatus } from "#management/common/workflow/types";
 import type {
   ExecutionRouteParams,
   InstallationActionContext,
@@ -62,14 +63,16 @@ type AttemptStatusView = {
   status: LifecycleAttempt["status"];
   startedAt: string;
   executionDeadline: string;
+  step: StepStatus;
   result?: { appVersion: string; snapshotId: string };
   failure?: { key: string; message?: string; path: (string | number)[] };
 };
 
 /**
- * Projects an attempt to its pollable status view, stripping the plan, merchant
- * `data`, and step `progress` — the Commerce App Management Service needs only
- * the terminal `result`/`failure`.
+ * Projects an attempt to its pollable status view. Carries the step-tree
+ * `progress` (as `step`) so the Commerce App Management Service can surface
+ * per-step progress; the plan and merchant `data` are stripped. Step metadata
+ * (labels/descriptions/paths) is authored by the app, never by the merchant.
  */
 function toAttemptStatusView(attempt: LifecycleAttempt): AttemptStatusView {
   const view: AttemptStatusView = {
@@ -77,6 +80,7 @@ function toAttemptStatusView(attempt: LifecycleAttempt): AttemptStatusView {
     id: attempt.id,
     startedAt: attempt.startedAt,
     status: attempt.status,
+    step: attempt.progress,
   };
 
   if (attempt.status === "succeeded") {
@@ -149,9 +153,10 @@ router.get("/", {
  * GET /execution/:attemptId - Get a single upgrade attempt's pollable status.
  *
  * Externally callable: the Commerce App Management Service polls this while it
- * orchestrates an upgrade. Returns the attempt's `id`, `status`, terminal
- * `result`/`failure`, `startedAt`, and `executionDeadline` — the plan, merchant
- * `data`, and step `progress` are stripped. Responds 404 for an unknown id.
+ * orchestrates an upgrade. Returns the attempt's `id`, `status`, step-tree
+ * `step` (progress), terminal `result`/`failure`, `startedAt`, and
+ * `executionDeadline` — the plan and merchant `data` are stripped. Responds 404
+ * for an unknown id.
  * An attempt past its deadline is normalized to `failed` (keyed
  * `LIFECYCLE_ATTEMPT_EXPIRED`) so callers key a timeout off `failure.key`.
  */
