@@ -44,23 +44,13 @@ export async function persistProgress(
   });
 }
 
-/** Persists an apply failure, advancing the baseline with whatever the attempt actually created. */
+/** Persists an apply failure as the attempt's terminal result. */
 export async function persistApplyFailure(
-  stores: Pick<LifecycleRuntime, "snapshotStore" | "stateStore">,
+  stateStore: LifecycleStore<OrchestrationState>,
   state: OrchestrationState,
   attempt: LifecycleAttempt,
-  baseline: AppStateSnapshot,
   workflow: FailedWorkflowState,
 ): Promise<LifecycleAttempt> {
-  const snapshot: AppStateSnapshot = {
-    config: baseline.config,
-    createdAt: workflow.completedAt,
-    data: workflow.data,
-    id: crypto.randomUUID(),
-  };
-
-  await stores.snapshotStore.put(snapshot.id, snapshot);
-
   const failed: LifecycleAttempt = {
     ...attempt,
     data: workflow.data,
@@ -77,9 +67,8 @@ export async function persistApplyFailure(
     status: "failed",
   };
 
-  await stores.stateStore.put(CURRENT_STATE_KEY, {
+  await stateStore.put(CURRENT_STATE_KEY, {
     ...state,
-    baselineSnapshotId: snapshot.id,
     latestAttempt: failed,
   });
 
