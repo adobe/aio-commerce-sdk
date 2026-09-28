@@ -73,12 +73,10 @@ function createActionDefinition(
 
 /**
  * Inputs shared by the runtime actions that talk to the Commerce App Management
- * Service: the Commerce auth inputs plus the action log level.
+ * Service. `LOG_LEVEL` is declared once at the package level, so it's omitted
+ * here to avoid duplicating it on every action.
  */
-const RUNTIME_ACTION_INPUTS = {
-  ...COMMERCE_ACTION_INPUTS,
-  LOG_LEVEL: "$LOG_LEVEL",
-};
+const RUNTIME_ACTION_INPUTS = COMMERCE_ACTION_INPUTS;
 
 /**
  * Gets the runtime actions to be generated from the ext.config.yaml configuration.

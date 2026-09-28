@@ -66,7 +66,9 @@ describe("buildAppManagementExtConfig", () => {
         function: expect.any(String),
       }),
     );
-    expect(appManagementPackage?.actions?.association?.inputs).toBeUndefined();
+    expect(appManagementPackage?.actions?.association?.inputs).toEqual(
+      COMMERCE_ACTION_INPUTS,
+    );
     expect(appManagementPackage?.actions?.installation?.inputs).toEqual(
       COMMERCE_ACTION_INPUTS,
     );
