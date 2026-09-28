@@ -24,6 +24,7 @@ import {
   createMockSucceededState,
 } from "#test/fixtures/installation";
 import {
+  createMockAppStateSnapshot,
   createMockLifecycleAttempt,
   createMockLifecyclePlan,
   createMockLifecycleStore,
@@ -72,12 +73,20 @@ describe("persistProgress", () => {
 
 describe("persistApplyFailure", () => {
   test("maps the workflow error onto a failed attempt and persists it", async () => {
+    const baseline = createMockAppStateSnapshot();
     const attempt = createMockLifecycleAttempt({ plan });
     const state = createMockOrchestrationState({ latestAttempt: attempt });
-    const store = createMockLifecycleStore({ initial: state });
+    const stateStore = createMockLifecycleStore({ initial: state });
+    const snapshotStore = createMockLifecycleStore<AppStateSnapshot>();
     const workflow = createMockFailedState({ id: "installation-1" });
 
-    const failed = await persistApplyFailure(store, state, attempt, workflow);
+    const failed = await persistApplyFailure(
+      { snapshotStore, stateStore },
+      state,
+      attempt,
+      baseline,
+      workflow,
+    );
 
     expect(failed).toMatchObject({
       failure: {
@@ -88,15 +97,17 @@ describe("persistApplyFailure", () => {
       status: "failed",
     });
 
-    expect(await store.get(CURRENT_STATE_KEY)).toMatchObject({
+    expect(await stateStore.get(CURRENT_STATE_KEY)).toMatchObject({
       latestAttempt: failed,
     });
   });
 
   test("preserves the failure payload in the returned and persisted attempt", async () => {
+    const baseline = createMockAppStateSnapshot();
     const attempt = createMockLifecycleAttempt({ plan });
     const state = createMockOrchestrationState({ latestAttempt: attempt });
-    const store = createMockLifecycleStore({ initial: state });
+    const stateStore = createMockLifecycleStore({ initial: state });
+    const snapshotStore = createMockLifecycleStore<AppStateSnapshot>();
     const workflow = createMockFailedState({
       error: {
         key: "STEP_EXECUTION_FAILED",
@@ -106,15 +117,61 @@ describe("persistApplyFailure", () => {
       },
     });
 
-    const failed = await persistApplyFailure(store, state, attempt, workflow);
+    const failed = await persistApplyFailure(
+      { snapshotStore, stateStore },
+      state,
+      attempt,
+      baseline,
+      workflow,
+    );
     expect(failed).toMatchObject({
       failure: { payload: { operationId: "operation-1" } },
     });
 
-    expect(await store.get(CURRENT_STATE_KEY)).toMatchObject({
+    expect(await stateStore.get(CURRENT_STATE_KEY)).toMatchObject({
       latestAttempt: {
         failure: { payload: { operationId: "operation-1" } },
       },
+    });
+  });
+
+  test("advances the baseline snapshot with the failed attempt's collected data", async () => {
+    const baseline = createMockAppStateSnapshot({
+      data: { eventing: { providers: [] } },
+      id: "baseline-1",
+    });
+    const attempt = createMockLifecycleAttempt({ plan });
+    const state = createMockOrchestrationState({
+      baselineSnapshotId: baseline.id,
+      latestAttempt: attempt,
+    });
+    const stateStore = createMockLifecycleStore({ initial: state });
+    const snapshotStore = createMockLifecycleStore<AppStateSnapshot>();
+    const workflow = createMockFailedState({
+      data: { eventing: { providers: ["evt-new"] } },
+      id: "installation-1",
+    });
+
+    const failed = await persistApplyFailure(
+      { snapshotStore, stateStore },
+      state,
+      attempt,
+      baseline,
+      workflow,
+    );
+
+    expect.assert(failed.status === "failed", "Expected a failed attempt");
+
+    const persistedState = await stateStore.get(CURRENT_STATE_KEY);
+    expect(persistedState?.baselineSnapshotId).toBeDefined();
+    expect(persistedState?.baselineSnapshotId).not.toBe(baseline.id);
+
+    const newSnapshot = await snapshotStore.get(
+      persistedState?.baselineSnapshotId as string,
+    );
+    expect(newSnapshot).toMatchObject({
+      config: baseline.config,
+      data: { eventing: { providers: ["evt-new"] } },
     });
   });
 });
