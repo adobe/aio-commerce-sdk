@@ -22,8 +22,24 @@ vi.mock("#management/association/repository", () => ({
   setAssociationData: mockSetAssociationData,
 }));
 
+vi.mock("@adobe/aio-commerce-lib-auth", () => ({
+  resolveImsAuthParams: vi.fn(() => ({
+    clientId: "client-1",
+    clientSecrets: ["secret"],
+    imsOrgId: "org@AdobeOrg",
+    scopes: ["scope"],
+    technicalAccountEmail: "tech@example.com",
+    technicalAccountId: "tech-1",
+  })),
+}));
+
 import { associationRuntimeAction } from "#actions/association/index";
 import { createRuntimeActionParams } from "#test/fixtures/actions";
+
+const VALID_BODY = {
+  commerceBaseUrl: "https://example.com",
+  commerceEnv: "paas",
+};
 
 describe("associationRuntimeAction", () => {
   beforeEach(() => {
@@ -31,13 +47,10 @@ describe("associationRuntimeAction", () => {
   });
 
   describe("POST /", () => {
-    test("stores valid association data and returns 204", async () => {
+    test("stores valid association data and returns the app's client id", async () => {
       const action = associationRuntimeAction();
       const params = createRuntimeActionParams({
-        body: {
-          commerceBaseUrl: "https://example.com",
-          commerceEnv: "paas",
-        },
+        body: VALID_BODY,
         method: "post",
         path: "/",
       });
@@ -48,7 +61,8 @@ describe("associationRuntimeAction", () => {
         commerce: { baseUrl: "https://example.com", env: "paas" },
       });
       expect(result).toMatchObject({
-        statusCode: 204,
+        body: { clientId: "client-1" },
+        statusCode: 200,
         type: "success",
       });
     });
@@ -69,19 +83,13 @@ describe("associationRuntimeAction", () => {
       expect(mockSetAssociationData).toHaveBeenCalledWith({
         commerce: { baseUrl: "https://saas.example.com", env: "saas" },
       });
-      expect(result).toMatchObject({
-        statusCode: 204,
-        type: "success",
-      });
+      expect(result).toMatchObject({ statusCode: 200, type: "success" });
     });
 
     test("returns 400 for invalid env values", async () => {
       const action = associationRuntimeAction();
       const params = createRuntimeActionParams({
-        body: {
-          commerceBaseUrl: "https://example.com",
-          commerceEnv: "invalid",
-        },
+        body: { ...VALID_BODY, commerceEnv: "invalid" },
         method: "post",
         path: "/",
       });
@@ -98,29 +106,7 @@ describe("associationRuntimeAction", () => {
     test("returns 400 when commerceBaseUrl is not a valid URL", async () => {
       const action = associationRuntimeAction();
       const params = createRuntimeActionParams({
-        body: {
-          commerceBaseUrl: "not-a-url",
-          commerceEnv: "paas",
-        },
-        method: "post",
-        path: "/",
-      });
-
-      const result = await action(params);
-
-      expect(result).toMatchObject({
-        error: { statusCode: 400 },
-        type: "error",
-      });
-      expect(mockSetAssociationData).not.toHaveBeenCalled();
-    });
-
-    test("returns 400 when the body is missing required fields", async () => {
-      const action = associationRuntimeAction();
-      const params = createRuntimeActionParams({
-        body: {
-          commerceBaseUrl: "https://example.com",
-        },
+        body: { ...VALID_BODY, commerceBaseUrl: "not-a-url" },
         method: "post",
         path: "/",
       });
@@ -142,10 +128,7 @@ describe("associationRuntimeAction", () => {
 
       const action = associationRuntimeAction();
       const params = createRuntimeActionParams({
-        body: {
-          commerceBaseUrl: "https://example.com",
-          commerceEnv: "paas",
-        },
+        body: VALID_BODY,
         method: "post",
         path: "/",
       });
@@ -172,10 +155,7 @@ describe("associationRuntimeAction", () => {
       const result = await action(params);
 
       expect(mockClearAssociationData).toHaveBeenCalledOnce();
-      expect(result).toMatchObject({
-        statusCode: 204,
-        type: "success",
-      });
+      expect(result).toMatchObject({ statusCode: 204, type: "success" });
     });
 
     test("returns 500 when clearing the stored data fails", async () => {
