@@ -31,6 +31,7 @@ describe("parseGridRequest", () => {
     "invoice",
     "creditmemo",
     "shipment",
+    "newsletter",
   ] satisfies GridType[])("accepts gridType %s", (gridType) => {
     const result = parseGridRequest({ ...VALID_REQUEST, gridType });
     expect(result.gridType).toBe(gridType);

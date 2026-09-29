@@ -109,6 +109,7 @@ export const ADMIN_UI_GRID_ENTITIES = [
   "invoice",
   "creditmemo",
   "shipment",
+  "newsletter",
 ] as const;
 
 /** Commerce entity an Admin UI component is attached to. */
@@ -123,6 +124,7 @@ export const MASS_ACTION_ENTITIES = [
   "order",
   "product",
   "customer",
+  "newsletter",
 ] as const satisfies readonly AdminUiEntity[];
 
 /** Commerce entity a mass action is attached to. */

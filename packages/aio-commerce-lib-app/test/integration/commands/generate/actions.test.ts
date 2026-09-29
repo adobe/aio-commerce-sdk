@@ -40,6 +40,8 @@ import {
 import { makeTemplateFiles } from "#test/fixtures/commands";
 import {
   configWithAdminUiMenu,
+  configWithAdminUiNewsletterGrid,
+  configWithAdminUiNewsletterMassActions,
   configWithBusinessConfig,
   configWithDynamicListOptions,
   configWithFullAdminUiV2,
@@ -428,6 +430,44 @@ describe("commands/generate/actions", () => {
           const content = await readFile(extConfigPath, "utf-8");
           expect(content).toContain("workerProcess");
           expect(content).toContain("customers/export-customers");
+        },
+      );
+    });
+
+    test("includes workerProcess for a newsletter grid in backend-ui/2 ext.config.yaml", async () => {
+      await withTempFiles(
+        { ...EMPTY_PROJECT, ...makeTemplateFiles() },
+        async (tempDir) => {
+          await run(configWithAdminUiNewsletterGrid, tempDir, tempDir);
+
+          const extConfigPath = join(
+            tempDir,
+            getExtensionPointFolderPath(BACKEND_UI_V2_EXTENSION_POINT_ID),
+            "ext.config.yaml",
+          );
+
+          const content = await readFile(extConfigPath, "utf-8");
+          expect(content).toContain("workerProcess");
+          expect(content).toContain("newsletter/fetch-subscriber-grid-data");
+        },
+      );
+    });
+
+    test("includes workerProcess for a worker newsletter mass action in backend-ui/2 ext.config.yaml", async () => {
+      await withTempFiles(
+        { ...EMPTY_PROJECT, ...makeTemplateFiles() },
+        async (tempDir) => {
+          await run(configWithAdminUiNewsletterMassActions, tempDir, tempDir);
+
+          const extConfigPath = join(
+            tempDir,
+            getExtensionPointFolderPath(BACKEND_UI_V2_EXTENSION_POINT_ID),
+            "ext.config.yaml",
+          );
+
+          const content = await readFile(extConfigPath, "utf-8");
+          expect(content).toContain("workerProcess");
+          expect(content).toContain("newsletter/unsubscribe-subscribers");
         },
       );
     });
