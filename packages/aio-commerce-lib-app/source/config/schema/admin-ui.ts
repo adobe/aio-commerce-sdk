@@ -201,14 +201,12 @@ const AdminUiOrderSchema = v.object({
   ),
 });
 
-// Shared by product, customer, and newsletter: grid columns plus mass actions,
-// with no view buttons (unlike order).
 const AdminUiGridAndMassActionEntitySchema = v.object({
   gridColumns: v.optional(GridColumnsSchema),
   massActions: v.optional(MassActionsSchema),
 });
 
-// Shared by invoice, credit memo, and shipment: unlike order/product/customer/newsletter,
+// Shared by invoice, credit memo, and shipment: unlike order/product/customer,
 // these expose grid columns only — no mass actions or view buttons.
 const AdminUiGridOnlyEntitySchema = v.object({
   gridColumns: v.optional(GridColumnsSchema),
