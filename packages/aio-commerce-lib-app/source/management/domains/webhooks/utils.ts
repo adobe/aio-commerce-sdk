@@ -17,6 +17,7 @@ import { stringify } from "safe-stable-stringify";
 import { appliesToEnv } from "#config/lib/environment";
 
 import type {
+  CommerceWebhook,
   WebhookSubscribeParams,
   WebhookUnsubscribeParams,
 } from "@adobe/aio-commerce-lib-webhooks/api";
@@ -187,15 +188,29 @@ export function buildWebhookIdPrefix(appId: string): string {
   return prefix.endsWith("_") ? prefix : `${prefix}_`;
 }
 
-/** Returns whether a Commerce webhook belongs to the app with the given metadata ID. */
-export function isWebhookOwnedByApp(
-  webhook: Pick<WebhookIdentity, "batch_name" | "hook_name">,
+/** The host of a webhook URL, or `null` when the URL cannot be parsed. */
+function webhookHost(url: string): string | null {
+  try {
+    return new URL(url).host;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Proven-owned when both `batch_name` and `hook_name` carry the app's id prefix and the URL
+ * targets this workspace's runtime namespace. Explicit-url and other-namespace webhooks are never owned.
+ */
+export function isWebhookProvenOwnedByApp(
+  webhook: Pick<CommerceWebhook, "batch_name" | "hook_name" | "url">,
   appId: string,
+  namespace: string,
 ): boolean {
   const idPrefix = buildWebhookIdPrefix(appId);
   return (
     webhook.batch_name.startsWith(idPrefix) &&
-    webhook.hook_name.startsWith(idPrefix)
+    webhook.hook_name.startsWith(idPrefix) &&
+    webhookHost(webhook.url) === `${namespace}.adobeioruntime.net`
   );
 }
 

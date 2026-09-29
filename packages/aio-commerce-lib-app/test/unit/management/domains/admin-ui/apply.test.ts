@@ -14,6 +14,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 import { applyAdminUi } from "#management/domains/admin-ui/apply";
 import { createMockAdminUiContext } from "#test/fixtures/admin-ui";
+import { configWithAdminUiSingleGrid } from "#test/fixtures/config";
 import { makeHttpError } from "#test/fixtures/http-error";
 
 import type {
@@ -68,6 +69,34 @@ describe("applyAdminUi", () => {
     expect(context.adminUiClient.enableAdminUiSdk).toHaveBeenCalledOnce();
     expect(context.adminUiClient.registerExtension).toHaveBeenCalledOnce();
     expect(result.snapshotData).toEqual({ extensionId: "ext-123" });
+  });
+
+  test("prune: unregisters a leftover extension when neither side declares admin UI", async () => {
+    // applyContext() has targetConfig: null and the plan carries no extension action.
+    const context = applyContext();
+    const result = await applyAdminUi(makePlan(null), context);
+
+    expect(context.adminUiClient.unregisterExtension).toHaveBeenCalledOnce();
+    expect(result.snapshotData).toBeNull();
+  });
+
+  // Prunes are best-effort, we don't block on failure.
+  test("prune: swallows a delete failure so the attempt still succeeds", async () => {
+    const httpError = makeHttpError(
+      500,
+      "Internal Server Error",
+      JSON.stringify({ message: "Service unavailable" }),
+    );
+
+    const context = applyContext({
+      unregisterExtensionImpl: () => Promise.reject(httpError),
+    });
+
+    const warn = vi.spyOn(context.logger, "warn");
+    const result = await applyAdminUi(makePlan(null), context);
+
+    expect(result.snapshotData).toBeNull();
+    expect(warn).toHaveBeenCalled();
   });
 
   test("refresh: enables the SDK (idempotent safeguard) and calls the refresh endpoint, carrying the baseline's extensionId forward", async () => {
@@ -133,8 +162,13 @@ describe("applyAdminUi", () => {
     expect(result.snapshotData).toBeNull();
   });
 
-  test("no-op: does nothing when the extension action is null", async () => {
-    const context = applyContext();
+  test("no-op: does nothing when the extension action is null and the target still declares admin UI", async () => {
+    // extensionAction is null on a both-sides-present, no-op upgrade: the target still declares
+    // admin UI, so the prune lane must not unregister it.
+    const context = {
+      ...applyContext(),
+      targetConfig: configWithAdminUiSingleGrid,
+    };
     const result = await applyAdminUi(makePlan(null), context);
 
     expect(context.adminUiClient.enableAdminUiSdk).not.toHaveBeenCalled();

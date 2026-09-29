@@ -129,26 +129,53 @@ describe("applyWebhookSubscriptions", () => {
     expect(result.snapshotData?.subscribedWebhooks).toEqual([retainedWebhook]);
   });
 
-  test("prunes live app-owned webhooks absent from the target", async () => {
+  const NAMESPACE_URL =
+    "https://test-namespace.adobeioruntime.net/api/v1/web/pkg/x";
+
+  test("prunes only webhooks proven-owned by this app on this namespace", async () => {
     const targetConfig = createMockWebhooksConfig();
     const baseline = {
       config: targetConfig,
       data: { subscribedWebhooks: [retainedWebhook] },
     };
 
+    // Proven-owned: app prefix + this-namespace URL. Pruned.
     const staleAppWebhook = createMockResolvedWebhook({
       batch_name: "test_app_webhooks_stale",
       hook_name: "test_app_webhooks_stale",
+      url: NAMESPACE_URL,
     });
 
+    // Foreign app prefix. Never pruned.
     const foreignWebhook = createMockResolvedWebhook({
       batch_name: "other_app_default",
       hook_name: "other_app_stale",
+      url: NAMESPACE_URL,
+    });
+
+    // App prefix but another namespace. Never pruned.
+    const otherNamespaceWebhook = createMockResolvedWebhook({
+      batch_name: "test_app_webhooks_other_ns",
+      hook_name: "test_app_webhooks_other_ns",
+      url: "https://other-namespace.adobeioruntime.net/api/v1/web/pkg/x",
+    });
+
+    // App prefix but an explicit (non-runtime) URL. Never pruned.
+    const explicitUrlWebhook = createMockResolvedWebhook({
+      batch_name: "test_app_webhooks_explicit",
+      hook_name: "test_app_webhooks_explicit",
+      url: "https://example.com/hook",
     });
 
     const getWebhookList = vi
       .fn()
-      .mockResolvedValue([retainedWebhook, staleAppWebhook, foreignWebhook]);
+      .mockResolvedValue([
+        retainedWebhook,
+        staleAppWebhook,
+        foreignWebhook,
+        otherNamespaceWebhook,
+        explicitUrlWebhook,
+      ]);
 
     const unsubscribeWebhook = vi.fn().mockResolvedValue(null);
     const context = {
@@ -177,6 +204,153 @@ describe("applyWebhookSubscriptions", () => {
     );
 
     expect(result.snapshotData?.subscribedWebhooks).toEqual([retainedWebhook]);
+  });
+
+  test("does not attempt a planned remove again through the prune lane", async () => {
+    const targetConfig = createMockWebhooksConfig();
+    const stale = createMockResolvedWebhook({
+      batch_name: "test_app_webhooks_stale",
+      hook_name: "test_app_webhooks_stale",
+      url: NAMESPACE_URL,
+    });
+
+    // A failing delete surfaces which lane owns the remove: the planned (loud) lane must run it
+    // exactly once, and the prune (swallow) lane must not also attempt it.
+    const unsubscribeWebhook = vi
+      .fn()
+      .mockRejectedValue(new Error("Commerce API error"));
+
+    const getWebhookList = vi.fn().mockResolvedValue([stale]);
+    const context = {
+      ...makeContext(
+        vi.fn(),
+        getWebhookList,
+        DEFAULT_PARAMS,
+        unsubscribeWebhook,
+      ),
+      attemptId: "attempt-1",
+      baseline: {
+        config: targetConfig,
+        data: { subscribedWebhooks: [stale] },
+      },
+      targetConfig,
+    };
+
+    await expect(
+      applyWebhookSubscriptions(
+        {
+          operations: [
+            {
+              before: stale,
+              id: "op-1",
+              kind: "remove" as const,
+              label: "Unsubscribe",
+            },
+          ],
+          path: UPGRADE_PATH,
+        },
+        context,
+      ),
+    ).rejects.toThrow();
+
+    expect(unsubscribeWebhook).toHaveBeenCalledOnce();
+  });
+
+  test("swallows and logs a prune-lane delete failure", async () => {
+    const targetConfig = createMockWebhooksConfig();
+    const stale = createMockResolvedWebhook({
+      batch_name: "test_app_webhooks_stale",
+      hook_name: "test_app_webhooks_stale",
+      url: NAMESPACE_URL,
+    });
+
+    const getWebhookList = vi.fn().mockResolvedValue([stale]);
+    const unsubscribeWebhook = vi
+      .fn()
+      .mockRejectedValue(new Error("Commerce API error"));
+
+    const baseContext = makeContext(
+      vi.fn(),
+      getWebhookList,
+      DEFAULT_PARAMS,
+      unsubscribeWebhook,
+    );
+
+    const warn = vi.spyOn(baseContext.logger, "warn");
+    const context = {
+      ...baseContext,
+      attemptId: "attempt-1",
+      baseline: {
+        config: targetConfig,
+        data: { subscribedWebhooks: [stale] },
+      },
+      targetConfig,
+    };
+
+    // A prune-lane failure must not fail the attempt.
+    await expect(
+      applyWebhookSubscriptions(
+        { operations: [], path: UPGRADE_PATH },
+        context,
+      ),
+    ).resolves.toBeDefined();
+
+    expect(warn).toHaveBeenCalled();
+  });
+
+  test("with no planned operations, a listing failure is logged and leaves the domain unchanged", async () => {
+    const getWebhookList = vi
+      .fn()
+      .mockRejectedValue(new Error("Commerce API error"));
+    const baseContext = makeContext(vi.fn(), getWebhookList);
+    const warn = vi.spyOn(baseContext.logger, "warn");
+    const context = {
+      ...baseContext,
+      attemptId: "attempt-1",
+      baseline: {
+        config: createMockWebhooksConfig(),
+        data: { subscribedWebhooks: [retainedWebhook] },
+      },
+      targetConfig: createMockWebhooksConfig(),
+    };
+
+    const result = await applyWebhookSubscriptions(
+      { operations: [], path: UPGRADE_PATH },
+      context,
+    );
+
+    expect(result.snapshotData?.subscribedWebhooks).toEqual([retainedWebhook]);
+    expect(warn).toHaveBeenCalled();
+  });
+
+  test("with planned operations, a listing failure fails the upgrade", async () => {
+    const getWebhookList = vi
+      .fn()
+      .mockRejectedValue(new Error("Commerce API error"));
+
+    const context = {
+      ...makeContext(vi.fn(), getWebhookList),
+      attemptId: "attempt-1",
+      baseline: null,
+      targetConfig: createMockWebhooksConfig(),
+    };
+
+    await expect(
+      applyWebhookSubscriptions(
+        {
+          operations: [
+            {
+              after: addWebhook,
+              id: "op-1",
+              kind: "add" as const,
+              label: "Subscribe",
+            },
+          ],
+          path: UPGRADE_PATH,
+        },
+        context,
+      ),
+    ).rejects.toThrow();
   });
 
   test("attaches credentials to the subscribe call but keeps the snapshot secret-free", async () => {

@@ -179,6 +179,7 @@ export function buildLifecycleContext(
 ): LifecycleContext {
   return {
     appData: params.appData,
+    appId: appConfig.metadata.id,
     customScripts: params.customScriptsLoader?.(appConfig, logFn) ?? {},
     logger: logFn,
     params,

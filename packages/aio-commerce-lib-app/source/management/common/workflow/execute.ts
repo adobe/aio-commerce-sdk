@@ -104,7 +104,7 @@ function buildInitialPlanExecutionStepStatus(
   const path = [...parentPath, step.name];
   const children = isBranchStep(step)
     ? step.children
-        .filter((child) => hasPlannedOperations(child, plan, path))
+        .filter(hasApplyCapableLeaf)
         .map((child) => buildInitialPlanExecutionStepStatus(child, path, plan))
     : [];
 
@@ -206,23 +206,13 @@ export async function executePlannedWorkflow(
   }
 }
 
-/** Returns whether a step or one of its descendants has planned operations. */
-function hasPlannedOperations(
-  step: AnyStep,
-  plan: LifecyclePlan,
-  parentPath: string[],
-): boolean {
-  const path = [...parentPath, step.name];
-
+/** Whether a step is, or contains, a leaf that contributes an `apply` handler. */
+function hasApplyCapableLeaf(step: AnyStep): boolean {
   if (isBranchStep(step)) {
-    return step.children.some((child) =>
-      hasPlannedOperations(child, plan, path),
-    );
+    return step.children.some(hasApplyCapableLeaf);
   }
 
-  return plan.domains.some(
-    (domain) => pathsEqual(domain.path, path) && domain.operations.length > 0,
-  );
+  return isLeafStep(step) && typeof step.apply === "function";
 }
 
 /** Creates an in-progress state snapshot from the current planned execution. */

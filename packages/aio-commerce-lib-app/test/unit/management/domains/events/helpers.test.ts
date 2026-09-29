@@ -78,7 +78,7 @@ const RE_FAIL_COMMERCE_PROVIDER =
   /^Failed to create Adobe Commerce event provider '/;
 const RE_FAIL_COMMERCE_SUBSCRIPTION =
   /^Failed to create Adobe Commerce event subscription for '/;
-const RE_CONTINUING_UNINSTALL = /Continuing uninstall\./;
+const RE_CONTINUING = /Continuing\./;
 
 function createDefaultEventingContext() {
   return createMockEventingInstallationContext();
@@ -955,7 +955,7 @@ describe("offboardIoEvents", () => {
     ).resolves.toBeUndefined();
 
     expect(context.logger.warn).toHaveBeenCalledWith(
-      expect.stringMatching(RE_CONTINUING_UNINSTALL),
+      expect.stringMatching(RE_CONTINUING),
     );
     expect(context.logger.warn).toHaveBeenCalledWith(
       expect.stringContaining(registrationName),
@@ -995,7 +995,7 @@ describe("offboardIoEvents", () => {
     ).resolves.toBeUndefined();
 
     expect(context.logger.warn).toHaveBeenCalledWith(
-      expect.stringMatching(RE_CONTINUING_UNINSTALL),
+      expect.stringMatching(RE_CONTINUING),
     );
     expect(context.logger.warn).toHaveBeenCalledWith(
       expect.stringContaining(eventMetadata.event_code),
@@ -1028,7 +1028,7 @@ describe("offboardIoEvents", () => {
     ).resolves.toBeUndefined();
 
     expect(context.logger.warn).toHaveBeenCalledWith(
-      expect.stringMatching(RE_CONTINUING_UNINSTALL),
+      expect.stringMatching(RE_CONTINUING),
     );
     expect(context.logger.warn).toHaveBeenCalledWith(
       expect.stringContaining(provider.label),
@@ -1099,7 +1099,7 @@ describe("offboardCommerceEventing", () => {
     ).resolves.toBeUndefined();
 
     expect(context.logger.warn).toHaveBeenCalledWith(
-      expect.stringMatching(RE_CONTINUING_UNINSTALL),
+      expect.stringMatching(RE_CONTINUING),
     );
     expect(context.logger.warn).toHaveBeenCalledWith(
       expect.stringContaining(eventName),
@@ -1144,7 +1144,7 @@ describe("offboardCommerceEventing", () => {
     ).resolves.toBeUndefined();
 
     expect(context.logger.warn).toHaveBeenCalledWith(
-      expect.stringMatching(RE_CONTINUING_UNINSTALL),
+      expect.stringMatching(RE_CONTINUING),
     );
     expect(context.logger.warn).toHaveBeenCalledWith(
       expect.stringContaining(provider.label),

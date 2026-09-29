@@ -242,6 +242,8 @@ describe("webhooks upgrade planning integration", () => {
   });
 
   test("prunes a live app webhook absent from the baseline and target", async () => {
+    vi.stubEnv("__OW_NAMESPACE", "test-namespace");
+
     const [subscribedWebhook] = configWithWebhooks.webhooks;
     const baselineWebhook = {
       batch_name: "test_app_webhooks_default",

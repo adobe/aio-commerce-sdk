@@ -657,7 +657,7 @@ export async function onboardCommerceEventing(
 /**
  * Deletes all I/O Events registrations for the given provider.
  * Registration names are reconstructed deterministically using the same logic as during installation.
- * Errors are caught and logged so that uninstall remains best-effort.
+ * Errors are caught and logged, so deletion is best effort.
  */
 async function deleteIoEventRegistrations(
   providerData: IoEventProviderWithMetadata,
@@ -710,7 +710,7 @@ async function deleteIoEventRegistrations(
     );
 
     try {
-      // biome-ignore lint/performance/noAwaitInLoops: deletes hit the Adobe I/O Events API sequentially to avoid a rate-limit burst during uninstall
+      // biome-ignore lint/performance/noAwaitInLoops: deletes hit the Adobe I/O Events API sequentially to avoid a rate-limit burst
       await ioEventsClient.deleteRegistration({
         ...appCredentials,
         registrationId: registration.registration_id,
@@ -721,7 +721,7 @@ async function deleteIoEventRegistrations(
     } catch (error) {
       const msg = await unwrapHttpError(error);
       logger.warn(
-        `Failed to delete I/O Events registration "${registration.name}" (ID: ${registration.id}): ${msg}. Continuing uninstall.`,
+        `Failed to delete I/O Events registration "${registration.name}" (ID: ${registration.id}): ${msg}. Continuing.`,
       );
     }
   }
@@ -729,11 +729,10 @@ async function deleteIoEventRegistrations(
 
 /**
  * Deletes all event metadata entries from the given I/O Events provider.
- * Errors are caught and logged so that uninstall remains best-effort.
+ * Errors are caught and logged, so deletion is best effort.
  */
-async function deleteIoEventMetadata(
+export async function deleteIoEventMetadata(
   providerData: IoEventProviderWithMetadata,
-  provider: EventProvider,
   context: EventsExecutionContext,
 ) {
   const { ioEventsClient, appData, logger } = context;
@@ -747,13 +746,13 @@ async function deleteIoEventMetadata(
 
   if (eventMetadataList.length === 0) {
     logger.info(
-      `No event metadata found for provider "${provider.label}" (ID: ${providerData.id}).`,
+      `No event metadata found for provider "${providerData.label}" (ID: ${providerData.id}).`,
     );
     return;
   }
 
   logger.info(
-    `Deleting ${eventMetadataList.length} event metadata entry(s) for provider "${provider.label}" (ID: ${providerData.id})...`,
+    `Deleting ${eventMetadataList.length} event metadata entry(s) for provider "${providerData.label}" (ID: ${providerData.id})...`,
   );
 
   for (const eventMetadata of eventMetadataList) {
@@ -762,7 +761,7 @@ async function deleteIoEventMetadata(
     );
 
     try {
-      // biome-ignore lint/performance/noAwaitInLoops: deletes hit the Adobe I/O Events API sequentially to avoid a rate-limit burst during uninstall
+      // biome-ignore lint/performance/noAwaitInLoops: deletes hit the Adobe I/O Events API sequentially to avoid a rate-limit burst
       await ioEventsClient.deleteEventMetadataForProvider({
         ...appCredentials,
         eventCode: eventMetadata.event_code,
@@ -774,7 +773,7 @@ async function deleteIoEventMetadata(
     } catch (error) {
       const msg = await unwrapHttpError(error);
       logger.warn(
-        `Failed to delete I/O Events metadata "${eventMetadata.event_code}" from provider "${providerData.id}": ${msg}. Continuing uninstall.`,
+        `Failed to delete I/O Events metadata "${eventMetadata.event_code}" from provider "${providerData.id}": ${msg}. Continuing.`,
       );
     }
   }
@@ -782,11 +781,10 @@ async function deleteIoEventMetadata(
 
 /**
  * Deletes a single I/O Events provider.
- * Errors are caught and logged so that uninstall remains best-effort.
+ * Errors are caught and logged, so deletion is best effort.
  */
-async function deleteIoEventProvider(
+export async function deleteIoEventProvider(
   providerData: IoEventProviderWithMetadata,
-  provider: EventProvider,
   context: EventsExecutionContext,
 ) {
   const { ioEventsClient, appData, logger } = context;
@@ -797,7 +795,7 @@ async function deleteIoEventProvider(
   };
 
   logger.info(
-    `Deleting I/O Events provider "${provider.label}" (ID: ${providerData.id})...`,
+    `Deleting I/O Events provider "${providerData.label}" (ID: ${providerData.id})...`,
   );
 
   try {
@@ -806,12 +804,12 @@ async function deleteIoEventProvider(
       providerId: providerData.id,
     });
     logger.info(
-      `Deleted I/O Events provider "${provider.label}" (ID: ${providerData.id}).`,
+      `Deleted I/O Events provider "${providerData.label}" (ID: ${providerData.id}).`,
     );
   } catch (error) {
     const msg = await unwrapHttpError(error);
     logger.warn(
-      `Failed to delete I/O Events provider "${provider.label}" (ID: ${providerData.id}): ${msg}. Continuing uninstall.`,
+      `Failed to delete I/O Events provider "${providerData.label}" (ID: ${providerData.id}): ${msg}. Continuing.`,
     );
   }
 }
@@ -822,8 +820,8 @@ async function deleteIoEventProvider(
  * 2. All event metadata entries on the provider.
  * 3. The provider itself.
  *
- * This is the reverse of {@link onboardIoEvents} and is called during uninstall.
- * All deletion errors are caught and logged so that uninstall remains best-effort.
+ * This is the reverse of {@link onboardIoEvents}. All deletion errors are caught and logged, so
+ * deletion is best effort.
  *
  * @param params - Configuration identifying the provider to offboard.
  * @param existingData - Current I/O Events data (providers and registrations).
@@ -862,14 +860,14 @@ export async function offboardIoEvents(
     existingData.registrations,
     context,
   );
-  await deleteIoEventMetadata(providerData, provider, context);
-  await deleteIoEventProvider(providerData, provider, context);
+  await deleteIoEventMetadata(providerData, context);
+  await deleteIoEventProvider(providerData, context);
 }
 
 /**
  * Deletes all Commerce event subscriptions for the given events.
  * Subscriptions are matched by their namespaced name, built the same way as during installation.
- * Errors are caught and logged so that uninstall remains best-effort.
+ * Errors are caught and logged, so deletion is best effort.
  */
 async function deleteCommerceEventSubscriptions(
   events: AppEvent[],
@@ -899,7 +897,7 @@ async function deleteCommerceEventSubscriptions(
     );
 
     try {
-      // biome-ignore lint/performance/noAwaitInLoops: unsubscribes hit the Adobe Commerce API sequentially to avoid a rate-limit burst during uninstall
+      // biome-ignore lint/performance/noAwaitInLoops: unsubscribes hit the Adobe Commerce API sequentially to avoid a rate-limit burst
       await commerceEventsClient.deleteEventSubscription({
         name: eventName,
       });
@@ -909,7 +907,7 @@ async function deleteCommerceEventSubscriptions(
     } catch (error) {
       const msg = await unwrapHttpError(error);
       logger.warn(
-        `Failed to unsubscribe Adobe Commerce event subscription for "${eventName}": ${msg}. Continuing uninstall.`,
+        `Failed to unsubscribe Adobe Commerce event subscription for "${eventName}": ${msg}. Continuing.`,
       );
     }
   }
@@ -918,7 +916,7 @@ async function deleteCommerceEventSubscriptions(
 /**
  * Deletes a single Commerce-side event provider.
  * The provider is matched by its deterministic `instance_id`. If not found, deletion is skipped.
- * Errors are caught and logged so that uninstall remains best-effort.
+ * Errors are caught and logged, so deletion is best effort.
  */
 async function deleteCommerceEventProvider(
   metadata: ApplicationMetadata,
@@ -962,7 +960,7 @@ async function deleteCommerceEventProvider(
   } catch (error) {
     const msg = await unwrapHttpError(error);
     logger.warn(
-      `Failed to delete Adobe Commerce event provider "${provider.label}" (provider_id: ${commerceProvider.provider_id}): ${msg}. Continuing uninstall.`,
+      `Failed to delete Adobe Commerce event provider "${provider.label}" (provider_id: ${commerceProvider.provider_id}): ${msg}. Continuing.`,
     );
   }
 }
@@ -975,7 +973,7 @@ async function deleteCommerceEventProvider(
  * Subscriptions are matched by their namespaced name, which is deterministic and built the
  * same way as during {@link onboardCommerceEventing}. The provider is matched by its
  * `instance_id`. Missing subscriptions or providers are silently skipped. All errors are
- * caught and logged so that uninstall remains best-effort.
+ * caught and logged, so deletion is best effort.
  *
  * @param params - Configuration identifying the provider and its events to offboard.
  * @param existingData - Current Commerce eventing data (providers and subscriptions).

@@ -15,6 +15,7 @@ import { describe, expect, test, vi } from "vitest";
 import {
   buildWebhookIdPrefix,
   createWebhookSubscription,
+  isWebhookProvenOwnedByApp,
   resolveDeveloperConsoleOAuthCredentials,
 } from "#management/domains/webhooks/utils";
 import { makeHttpError } from "#test/fixtures/http-error";
@@ -236,5 +237,93 @@ describe("buildWebhookIdPrefix", () => {
     ],
   ] as const)("%s", (_desc, appId, expected) => {
     expect(buildWebhookIdPrefix(appId)).toBe(expected);
+  });
+});
+
+describe("isWebhookProvenOwnedByApp", () => {
+  const NS = "foo-ns";
+  const onNamespace = (namespace: string) =>
+    `https://${namespace}.adobeioruntime.net/api/v1/web/pkg/action`;
+
+  test("owned when names carry the app prefix and the URL is on this namespace", () => {
+    expect(
+      isWebhookProvenOwnedByApp(
+        {
+          batch_name: "foo_batch",
+          hook_name: "foo_hook",
+          url: onNamespace(NS),
+        },
+        "foo",
+        NS,
+      ),
+    ).toBe(true);
+  });
+
+  test("a foo-bar webhook is not owned by foo (its URL is on another namespace)", () => {
+    // "foo_bar_..." shares the "foo_" name prefix, but foo-bar deploys to its own namespace,
+    // so the namespace check keeps foo from claiming it.
+    expect(
+      isWebhookProvenOwnedByApp(
+        {
+          batch_name: "foo_bar_batch",
+          hook_name: "foo_bar_hook",
+          url: onNamespace("foo-bar-ns"),
+        },
+        "foo",
+        NS,
+      ),
+    ).toBe(false);
+  });
+
+  test("a webhook on another namespace is not owned", () => {
+    expect(
+      isWebhookProvenOwnedByApp(
+        {
+          batch_name: "foo_batch",
+          hook_name: "foo_hook",
+          url: onNamespace("other-ns"),
+        },
+        "foo",
+        NS,
+      ),
+    ).toBe(false);
+  });
+
+  test("an explicit (non-runtime) URL webhook is not owned", () => {
+    expect(
+      isWebhookProvenOwnedByApp(
+        {
+          batch_name: "foo_batch",
+          hook_name: "foo_hook",
+          url: "https://example.com/hook",
+        },
+        "foo",
+        NS,
+      ),
+    ).toBe(false);
+  });
+
+  test("a webhook without the app prefix is not owned", () => {
+    expect(
+      isWebhookProvenOwnedByApp(
+        {
+          batch_name: "other_batch",
+          hook_name: "other_hook",
+          url: onNamespace(NS),
+        },
+        "foo",
+        NS,
+      ),
+    ).toBe(false);
+  });
+
+  test("not owned when the URL is empty", () => {
+    expect(
+      isWebhookProvenOwnedByApp(
+        { batch_name: "foo_batch", hook_name: "foo_hook", url: "" },
+        "foo",
+        NS,
+      ),
+    ).toBe(false);
   });
 });

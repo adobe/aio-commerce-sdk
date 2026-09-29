@@ -10,6 +10,8 @@
  * governing permissions and limitations under the License.
  */
 
+import { unwrapHttpError } from "@adobe/aio-commerce-lib-api/utils";
+
 import { getInstallCommerceEnv } from "#config/lib/environment";
 
 import {
@@ -18,7 +20,7 @@ import {
   getWebhookName,
   isDesiredWebhook,
   isWebhookInList,
-  isWebhookOwnedByApp,
+  isWebhookProvenOwnedByApp,
   resolveDesiredWebhooks,
   resolveDeveloperConsoleOAuthCredentials,
   toIdentity,
@@ -56,28 +58,24 @@ export async function applyWebhookSubscriptions(
 ): Promise<ApplyResult<WebhookSnapshotData>> {
   const { logger, commerceWebhooksClient, params } = context;
 
-  const liveWebhooks = await commerceWebhooksClient.getWebhookList();
+  const liveWebhooks = await listLiveWebhooks(plan, context);
 
   let subscribedWebhooks: WebhookSubscribeParams[] = [
     ...(context.baseline?.data.subscribedWebhooks ?? []),
   ];
-
-  const appConfig = context.targetConfig ?? context.baseline?.config;
-  if (!appConfig) {
-    throw new Error(
-      "Cannot apply webhook subscriptions without a baseline or target config",
-    );
-  }
 
   const env = getInstallCommerceEnv(params);
   const desired = context.targetConfig
     ? resolveDesiredWebhooks(context.targetConfig, env)
     : [];
 
+  // Identities the planned lane already handles must never be touched by the prune lane.
+  const plannedIdentities = plannedIdentitiesOf(plan);
   let liveIdentities = await pruneStaleWebhooks(
     liveWebhooks,
     desired,
-    appConfig.metadata.id,
+    plannedIdentities,
+    context.appId,
     context,
   );
 
@@ -174,32 +172,88 @@ export async function applyWebhookSubscriptions(
   };
 }
 
-/** Removes live webhooks owned by this app that are absent from the target. */
+/** Identities the planned lane already handles, which the prune lane must not touch. */
+function plannedIdentitiesOf(plan: WebhookDomainPlan): WebhookIdentity[] {
+  return plan.operations.map((operation) =>
+    operation.kind === "add"
+      ? toIdentity(operation.after)
+      : toIdentity(operation.before),
+  );
+}
+
+/**
+ * Lists live webhooks. When listing fails with no operation planned, apply runs only to prune, so
+ * the failure is logged and an empty list is returned to leave the domain unchanged; when operations
+ * are planned the failure is rethrown to fail the upgrade.
+ */
+async function listLiveWebhooks(
+  plan: WebhookDomainPlan,
+  context: WebhooksExecutionContext,
+): Promise<CommerceWebhook[]> {
+  try {
+    return await context.commerceWebhooksClient.getWebhookList();
+  } catch (error) {
+    if (plan.operations.length > 0) {
+      throw error;
+    }
+
+    context.logger.warn(
+      `Failed to list webhooks for pruning: ${await unwrapHttpError(error)}. Skipping prune lane.`,
+    );
+
+    return [];
+  }
+}
+
+/**
+ * Removes live webhooks proven-owned by this app that the target no longer declares and the planned
+ * lane does not handle. Each delete error is logged and never rethrown; listing is handled by the caller.
+ */
 async function pruneStaleWebhooks(
   liveWebhooks: CommerceWebhook[],
   desiredWebhooks: readonly WebhookIdentity[],
+  plannedIdentities: readonly WebhookIdentity[],
   appId: string,
   context: WebhooksExecutionContext,
 ): Promise<WebhookIdentity[]> {
   const { commerceWebhooksClient, logger } = context;
   let liveIdentities = liveWebhooks.map(toIdentity);
+
+  const namespace = process.env.__OW_NAMESPACE;
+  if (!namespace) {
+    // Ownership cannot be proven without the runtime namespace, so prune nothing.
+    return liveIdentities;
+  }
+
   const staleWebhooks = liveWebhooks.filter(
     (webhook) =>
-      isWebhookOwnedByApp(webhook, appId) &&
-      !isDesiredWebhook(webhook, desiredWebhooks),
+      isWebhookProvenOwnedByApp(webhook, appId, namespace) &&
+      !isDesiredWebhook(webhook, desiredWebhooks) &&
+      !isWebhookInList(plannedIdentities, webhook),
   );
 
   for (const stale of staleWebhooks) {
     const identity = toIdentity(stale);
 
-    // biome-ignore lint/performance/noAwaitInLoops: removals must run sequentially so a failure aborts the remaining work
-    await deleteWebhookSubscription(commerceWebhooksClient, identity, identity);
+    try {
+      // biome-ignore lint/performance/noAwaitInLoops: prune deletes run sequentially to avoid a Commerce rate-limit burst
+      await deleteWebhookSubscription(
+        commerceWebhooksClient,
+        identity,
+        identity,
+      );
 
-    logger.info(`Unsubscribed webhook: ${getWebhookName(identity)}`);
-    liveIdentities = liveIdentities.filter(
-      (live) => !webhookIdentitiesMatch(live, identity),
-    );
+      logger.info(`Unsubscribed stale webhook: ${getWebhookName(identity)}`);
+      liveIdentities = liveIdentities.filter(
+        (live) => !webhookIdentitiesMatch(live, identity),
+      );
+    } catch (error) {
+      logger.warn(
+        `Failed to prune stale webhook ${getWebhookName(identity)}: ${await unwrapHttpError(error)}. Continuing apply.`,
+      );
+    }
   }
+
   return liveIdentities;
 }
 

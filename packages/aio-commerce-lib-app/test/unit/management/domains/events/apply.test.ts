@@ -28,6 +28,7 @@ import {
 import {
   COMMERCE_PROVIDER_TYPE,
   EXTERNAL_PROVIDER_TYPE,
+  generateInstanceId,
   generateInstanceIdDeprecated,
   getIoEventCode,
   getNamespacedEvent,
@@ -1182,5 +1183,249 @@ describe("applyExternalEvents", () => {
     expect(
       context.commerceEventsClient.deleteEventSubscription,
     ).not.toHaveBeenCalled();
+  });
+});
+
+describe("eventing prune lane", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  /** A plan configured in neither baseline nor target, so only the prune lane can act. */
+  function emptyPlan(): EventingDomainPlan {
+    return {
+      baselineMetadata: null,
+      baselineProviders: [],
+      operations: [],
+      path: ["eventing", "commerce"],
+      removedProviders: [],
+      targetMetadata: null,
+      targetProviders: [],
+    };
+  }
+
+  test("removes an owned stale provider of this type, leaving foreign, other-workspace, and other-type providers", async () => {
+    const owned = {
+      ...createMockDeployedIoProvider({
+        id: "owned-1",
+        provider: { key: "p1", label: "P1" },
+        type: COMMERCE_PROVIDER_TYPE,
+      }),
+      _embedded: {
+        eventmetadata: [
+          { description: "stale", event_code: "stale-event", label: "stale" },
+        ],
+      },
+    };
+
+    const externalType = createMockDeployedIoProvider({
+      id: "ext-1",
+      provider: { key: "e1", label: "E1" },
+      type: EXTERNAL_PROVIDER_TYPE,
+    });
+
+    const foreign = {
+      ...createMockDeployedIoProvider({
+        id: "foreign-1",
+        provider: { key: "f1", label: "F1" },
+      }),
+
+      instance_id: "other-app-f1-test-workspace-id",
+    };
+    const otherWorkspace = {
+      ...createMockDeployedIoProvider({
+        id: "otherws-1",
+        provider: { key: "w1", label: "W1" },
+      }),
+
+      instance_id: generateInstanceId(
+        configWithCommerceEventing.metadata,
+        { key: "w1", label: "W1" } as EventProvider,
+        "some-other-workspace",
+      ),
+    };
+
+    const context = {
+      ...createMockEventingInstallationContext({
+        ioEventsClient: {
+          getAllEventProviders: () =>
+            Promise.resolve({
+              _embedded: {
+                providers: [owned, externalType, foreign, otherWorkspace],
+              },
+            }),
+
+          getAllRegistrations: () =>
+            Promise.resolve({ _embedded: { registrations: [] } }),
+        } as never,
+      }),
+      attemptId: "attempt-1",
+      baseline: null,
+      targetConfig: null,
+    };
+
+    await applyCommerceEvents(
+      emptyPlan(),
+      context as ApplyContext<EventsStepContext>,
+    );
+
+    expect(context.ioEventsClient.deleteEventProvider).toHaveBeenCalledTimes(1);
+    expect(context.ioEventsClient.deleteEventProvider).toHaveBeenCalledWith(
+      expect.objectContaining({ providerId: "owned-1" }),
+    );
+    expect(
+      context.ioEventsClient.deleteEventMetadataForProvider,
+    ).toHaveBeenCalledExactlyOnceWith(
+      expect.objectContaining({
+        eventCode: "stale-event",
+        providerId: "owned-1",
+      }),
+    );
+  });
+
+  test("swallows a delete failure so the attempt still succeeds", async () => {
+    const owned = createMockDeployedIoProvider({
+      id: "owned-1",
+      provider: { key: "p1", label: "P1" },
+      type: COMMERCE_PROVIDER_TYPE,
+    });
+
+    const context = {
+      ...createMockEventingInstallationContext({
+        ioEventsClient: {
+          deleteEventProvider: () => Promise.reject(new Error("io error")),
+          getAllEventProviders: () =>
+            Promise.resolve({ _embedded: { providers: [owned] } }),
+          getAllRegistrations: () =>
+            Promise.resolve({ _embedded: { registrations: [] } }),
+        } as never,
+      }),
+
+      attemptId: "attempt-1",
+      baseline: null,
+      targetConfig: null,
+    };
+
+    const warn = vi.spyOn(context.logger, "warn");
+    await expect(
+      applyCommerceEvents(
+        emptyPlan(),
+        context as ApplyContext<EventsStepContext>,
+      ),
+    ).resolves.toBeDefined();
+
+    expect(warn).toHaveBeenCalled();
+  });
+
+  test("prunes leaked subscription and metadata of a still-wanted provider, sparing wanted and unowned resources", async () => {
+    vi.spyOn(commerceEventsStep, "install").mockResolvedValue([]);
+
+    const provider = { key: "orders", label: "Orders" };
+    const wantedCode = getIoEventCode(
+      getNamespacedEvent(metadata, "order_placed"),
+      COMMERCE_PROVIDER_TYPE,
+    );
+
+    const leakedCode = getIoEventCode(
+      getNamespacedEvent(metadata, "extra"),
+      COMMERCE_PROVIDER_TYPE,
+    );
+
+    const wantedName = getNamespacedEvent(metadata, "order_placed");
+    const leakedName = getNamespacedEvent(metadata, "extra");
+    const foreignName = getNamespacedEvent(metadata, "foreign_only");
+
+    // The app's owned commerce provider, still wanted, but carrying a leaked event X.
+    const ownedProvider = {
+      ...createMockDeployedIoProvider({
+        id: "prov-1",
+        provider,
+        type: COMMERCE_PROVIDER_TYPE,
+      }),
+      _embedded: {
+        eventmetadata: [
+          { description: "order", event_code: wantedCode, label: "order" },
+          { description: "extra", event_code: leakedCode, label: "extra" },
+        ],
+      },
+    };
+
+    // A provider of another workspace: same id prefix, but not owned here.
+    const foreignProvider = {
+      ...createMockDeployedIoProvider({
+        id: "foreign-io",
+        provider,
+        type: COMMERCE_PROVIDER_TYPE,
+      }),
+
+      instance_id: generateInstanceId(
+        metadata,
+        provider as EventProvider,
+        "other-workspace",
+      ),
+    };
+
+    const context = {
+      ...createMockEventingInstallationContext({
+        commerceEventsClient: {
+          getAllEventProviders: () => Promise.resolve([]),
+          // @ts-expect-error Just a mock for testing purposes
+          getAllEventSubscriptions: () =>
+            Promise.resolve([
+              { name: leakedName, provider_id: "prov-1" },
+              { name: wantedName, provider_id: "prov-1" },
+              { name: foreignName, provider_id: "foreign-io" },
+            ]),
+        },
+        ioEventsClient: {
+          // @ts-expect-error Just a mock for testing purposes
+          getAllEventProviders: () =>
+            Promise.resolve({
+              _embedded: { providers: [ownedProvider, foreignProvider] },
+            }),
+          // @ts-expect-error Just a mock for testing purposes
+          getAllRegistrations: () =>
+            Promise.resolve({ _embedded: { registrations: [] } }),
+        },
+      }),
+      attemptId: "attempt-1",
+      baseline: null,
+      targetConfig: null,
+    };
+
+    // Baseline and target both declare only "order_placed"; the leaked "extra" is in neither.
+    const plan = await planCommerce(
+      commerceConfig([
+        { events: [event("order_placed", ["pkg/a"])], provider },
+      ]),
+
+      commerceConfig([
+        { events: [event("order_placed", ["pkg/a"])], provider },
+      ]),
+    );
+
+    await applyCommerceEvents(plan, context as ApplyContext<EventsStepContext>);
+    const { deleteEventSubscription } = context.commerceEventsClient;
+    const { deleteEventMetadataForProvider } = context.ioEventsClient;
+
+    // The leaked subscription and metadata are pruned.
+    expect(deleteEventSubscription).toHaveBeenCalledWith({ name: leakedName });
+    expect(deleteEventMetadataForProvider).toHaveBeenCalledWith(
+      expect.objectContaining({ eventCode: leakedCode, providerId: "prov-1" }),
+    );
+
+    // Wanted resources are left untouched.
+    expect(deleteEventSubscription).not.toHaveBeenCalledWith({
+      name: wantedName,
+    });
+
+    expect(deleteEventMetadataForProvider).not.toHaveBeenCalledWith(
+      expect.objectContaining({ eventCode: wantedCode }),
+    );
+
+    // A subscription on a provider owned by another workspace is left untouched.
+    expect(deleteEventSubscription).not.toHaveBeenCalledWith({
+      name: foreignName,
+    });
   });
 });

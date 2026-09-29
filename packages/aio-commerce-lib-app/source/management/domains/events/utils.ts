@@ -140,6 +140,37 @@ export function getProviderKey(provider: EventProvider) {
 }
 
 /**
+ * Proven-owned when the I/O provider's `instance_id` matches this app's current-format id for
+ * this workspace: it starts with the (truncated, lowercased) app id and ends with the workspace id.
+ * Deprecated workspace-less ids (see {@link generateInstanceIdDeprecated}) are never owned.
+ */
+export function isIoProviderProvenOwnedByApp(
+  instanceId: string,
+  appId: string,
+  workspaceId: string,
+): boolean {
+  const prefix = appId
+    .slice(0, METADATA_ID_MAX_LENGTH_FOR_INSTANCE_ID)
+    .toLowerCase();
+
+  const id = instanceId.toLowerCase();
+  return (
+    id.startsWith(`${prefix}-`) && id.endsWith(`-${workspaceId.toLowerCase()}`)
+  );
+}
+
+/**
+ * Whether a Commerce eventing resource (provider or subscription) belongs to this app: its
+ * `provider_id` is one of the app's proven-owned I/O provider ids.
+ */
+export function isCommerceEventResourceOwnedByApp(
+  providerId: string,
+  ownedIoProviderIds: ReadonlySet<string>,
+): boolean {
+  return ownedIoProviderIds.has(providerId);
+}
+
+/**
  * Find an existing event provider by its instance ID.
  * @param allProviders - The list of all existing event providers.
  * @param instanceId - The instance ID to search for.

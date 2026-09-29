@@ -137,6 +137,7 @@ export function createMockInstallationContext(
       workspaceTitle: "Test Workspace Title",
       ...appDataOverrides,
     },
+    appId: "test-app",
 
     ...contextOverrides,
     logger: contextOverrides.logger ?? createMockLogger(),

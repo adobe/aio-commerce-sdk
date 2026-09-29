@@ -16,12 +16,15 @@ import {
   COMMERCE_PROVIDER_TYPE,
   EXTERNAL_PROVIDER_TYPE,
   generateInstanceId,
+  generateInstanceIdDeprecated,
   getCommerceEventingConfigurationUpdateParams,
   getCommerceEventingExistingData,
   getIoEventCode,
   getIoEventsExistingData,
   getNamespacedEvent,
   getSubscriptionChangeKind,
+  isCommerceEventResourceOwnedByApp,
+  isIoProviderProvenOwnedByApp,
   makeWorkspaceConfig,
   sanitizeEventingIdentifier,
 } from "#management/domains/events/utils";
@@ -44,6 +47,7 @@ import type {
   IoEventProviderManyResponse,
   IoEventRegistrationManyResponse,
 } from "@adobe/aio-commerce-lib-events/io-events";
+import type { ApplicationMetadata } from "#config/index";
 import type { CommerceEvent } from "#config/schema/eventing";
 
 const TEST_WORKSPACE_ID = "4567890123456789";
@@ -797,5 +801,62 @@ describe("getSubscriptionChangeKind", () => {
       rules: [{ field: "state", operator: "greaterThan", value: "1" }],
     });
     expect(getSubscriptionChangeKind(baseline, target)).toBe("recreate");
+  });
+});
+
+describe("isIoProviderProvenOwnedByApp", () => {
+  const APP_ID = "my-app";
+  const WS = "ws-123";
+  const provider = { description: "whatever", key: "orders", label: "Orders" };
+
+  test("owned when instance id is the current-format id for this workspace", () => {
+    const instanceId = generateInstanceId(
+      { id: APP_ID } as ApplicationMetadata,
+      provider,
+      WS,
+    );
+
+    expect(isIoProviderProvenOwnedByApp(instanceId, APP_ID, WS)).toBe(true);
+  });
+
+  test("old-format (workspace-less) ids are not owned", () => {
+    const deprecated = generateInstanceIdDeprecated(
+      { id: APP_ID } as ApplicationMetadata,
+      provider,
+    );
+
+    expect(isIoProviderProvenOwnedByApp(deprecated, APP_ID, WS)).toBe(false);
+  });
+
+  test("a provider from another workspace is not owned", () => {
+    const otherWs = generateInstanceId(
+      { id: APP_ID } as ApplicationMetadata,
+      provider,
+      "ws-999",
+    );
+
+    expect(isIoProviderProvenOwnedByApp(otherWs, APP_ID, WS)).toBe(false);
+  });
+
+  test("a provider of a different app is not owned", () => {
+    const other = generateInstanceId(
+      { id: "other-app" } as ApplicationMetadata,
+      provider,
+      WS,
+    );
+
+    expect(isIoProviderProvenOwnedByApp(other, APP_ID, WS)).toBe(false);
+  });
+});
+
+describe("isCommerceEventResourceOwnedByApp", () => {
+  test("owned when the provider_id is in the owned set", () => {
+    const owned = new Set(["p1", "p2"]);
+    expect(isCommerceEventResourceOwnedByApp("p1", owned)).toBe(true);
+  });
+
+  test("not owned when the provider_id is absent from the owned set", () => {
+    const owned = new Set(["p1", "p2"]);
+    expect(isCommerceEventResourceOwnedByApp("other", owned)).toBe(false);
   });
 });

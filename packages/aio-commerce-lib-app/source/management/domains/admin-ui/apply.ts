@@ -10,6 +10,8 @@
  * governing permissions and limitations under the License.
  */
 
+import { unwrapHttpError } from "@adobe/aio-commerce-lib-api/utils";
+
 import {
   enableAdminUiSdk,
   refreshExtension,
@@ -65,5 +67,23 @@ export async function applyAdminUi(
     return { snapshotData: null };
   }
 
+  // Neither side declares an extension, but an earlier failed upgrade may have left one registered.
+  if (plan.extensionAction === null && !context.targetConfig) {
+    await pruneStaleAdminUiExtension(context);
+  }
+
   return { snapshotData: null };
+}
+
+/** Best-effort unregister of a leftover extension: a 404 counts as clean, any other error is logged. */
+async function pruneStaleAdminUiExtension(
+  context: ApplyContext<AdminUiStepContext>,
+): Promise<void> {
+  try {
+    await unregisterExtensionForUpgrade(context);
+  } catch (error) {
+    context.logger.warn(
+      `Failed to prune Admin UI extension: ${await unwrapHttpError(error)}. Continuing apply.`,
+    );
+  }
 }

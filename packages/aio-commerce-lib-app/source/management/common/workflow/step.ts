@@ -40,6 +40,9 @@ export type ValidationIssue = {
 
 /** Shared context available to all steps during a lifecycle workflow. */
 export type LifecycleContext = {
+  /** The `metadata.id` of the app being managed. */
+  appId: string;
+
   /** The credentials of the app being managed. */
   appData: AppData;
 

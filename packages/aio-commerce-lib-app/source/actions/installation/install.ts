@@ -189,6 +189,7 @@ export async function validateInstallation({
 
   const validationContext: ValidationContext = {
     appData,
+    appId: appConfig.metadata.id,
     logger,
     params,
   };
