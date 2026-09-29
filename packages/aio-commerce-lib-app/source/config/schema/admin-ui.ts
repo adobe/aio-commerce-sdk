@@ -201,22 +201,14 @@ const AdminUiOrderSchema = v.object({
   ),
 });
 
-const AdminUiProductSchema = v.object({
+// Shared by product, customer, and newsletter: grid columns plus mass actions,
+// with no view buttons (unlike order).
+const AdminUiGridAndMassActionEntitySchema = v.object({
   gridColumns: v.optional(GridColumnsSchema),
   massActions: v.optional(MassActionsSchema),
 });
 
-const AdminUiCustomerSchema = v.object({
-  gridColumns: v.optional(GridColumnsSchema),
-  massActions: v.optional(MassActionsSchema),
-});
-
-const AdminUiNewsletterSchema = v.object({
-  gridColumns: v.optional(GridColumnsSchema),
-  massActions: v.optional(MassActionsSchema),
-});
-
-// Shared by invoice, credit memo, and shipment: unlike order/product/customer,
+// Shared by invoice, credit memo, and shipment: unlike order/product/customer/newsletter,
 // these expose grid columns only — no mass actions or view buttons.
 const AdminUiGridOnlyEntitySchema = v.object({
   gridColumns: v.optional(GridColumnsSchema),
@@ -345,12 +337,12 @@ const AdminUiAclSchema = v.pipe(
 export const AdminUiSchema = v.object({
   acl: v.optional(AdminUiAclSchema),
   creditMemo: v.optional(AdminUiGridOnlyEntitySchema),
-  customer: v.optional(AdminUiCustomerSchema),
+  customer: v.optional(AdminUiGridAndMassActionEntitySchema),
   invoice: v.optional(AdminUiGridOnlyEntitySchema),
   menu: v.optional(MenuSchema),
-  newsletter: v.optional(AdminUiNewsletterSchema),
+  newsletter: v.optional(AdminUiGridAndMassActionEntitySchema),
   order: v.optional(AdminUiOrderSchema),
-  product: v.optional(AdminUiProductSchema),
+  product: v.optional(AdminUiGridAndMassActionEntitySchema),
   shipment: v.optional(AdminUiGridOnlyEntitySchema),
 });
 
