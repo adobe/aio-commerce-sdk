@@ -28,6 +28,8 @@ import {
   configWithAdminUiEmptyBlock,
   configWithAdminUiInvoiceCreditMemoShipmentGrids,
   configWithAdminUiMenu,
+  configWithAdminUiNewsletterGrid,
+  configWithAdminUiNewsletterMassActions,
   configWithFullAdminUiV2,
   configWithViewMassActions,
   configWithWorkerMassActions,
@@ -41,6 +43,14 @@ const backendUiV2ComponentCases = [
   {
     config: configWithAdminUiInvoiceCreditMemoShipmentGrids,
     label: "grid columns for invoice, creditMemo, and shipment",
+  },
+  {
+    config: configWithAdminUiNewsletterGrid,
+    label: "newsletter grid columns only",
+  },
+  {
+    config: configWithAdminUiNewsletterMassActions,
+    label: "newsletter mass actions only",
   },
   { config: configWithAdminUiMenu, label: "menu only" },
   { config: configWithViewMassActions, label: "view mass actions" },
@@ -216,6 +226,31 @@ describe("AdminUiSchema", () => {
             label: "Order grid",
             runtimeAction: "orders/fetch",
           },
+        },
+      });
+      expect(result.success).toBe(true);
+    });
+
+    test("newsletter grid columns and mass actions configured together", () => {
+      const result = v.safeParse(AdminUiSchema, {
+        newsletter: {
+          gridColumns: {
+            columns: [
+              { align: "left", id: "col", label: "Col", type: "string" },
+            ],
+            description: "Adds a column",
+            label: "Newsletter grid",
+            runtimeAction: "newsletter/fetch",
+          },
+          massActions: [
+            {
+              id: "unsubscribe",
+              label: "Unsubscribe",
+              runtimeAction: "newsletter/unsubscribe",
+              type: "worker",
+            },
+            { id: "review", label: "Review", path: "#/review", type: "view" },
+          ],
         },
       });
       expect(result.success).toBe(true);

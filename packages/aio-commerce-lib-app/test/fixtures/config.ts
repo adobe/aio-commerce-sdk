@@ -488,6 +488,49 @@ export const configWithAdminUiInvoiceCreditMemoShipmentGrids = {
   },
 } satisfies CommerceAppConfigOutputModel;
 
+/** Config fixture with only newsletter adminUi grid columns configured. */
+export const configWithAdminUiNewsletterGrid = {
+  adminUi: {
+    newsletter: {
+      gridColumns: {
+        columns: [
+          {
+            align: "left" as const,
+            id: "subscription_source",
+            label: "Source",
+            type: "string" as const,
+          },
+        ],
+        description:
+          "Adds subscription source to the newsletter subscriber grid",
+        label: "Newsletter engagement data",
+        runtimeAction: "newsletter/fetch-subscriber-grid-data",
+      },
+    },
+  },
+  metadata: { ...mockMetadata, id: "test-app-admin-ui-newsletter-grid" },
+} satisfies CommerceAppConfigOutputModel;
+
+/** Config fixture with only a worker newsletter mass action configured. */
+export const configWithAdminUiNewsletterMassActions = {
+  adminUi: {
+    newsletter: {
+      massActions: [
+        {
+          id: "unsubscribe-subscribers",
+          label: "Unsubscribe",
+          runtimeAction: "newsletter/unsubscribe-subscribers",
+          type: "worker" as const,
+        },
+      ],
+    },
+  },
+  metadata: {
+    ...mockMetadata,
+    id: "test-app-admin-ui-newsletter-mass-actions",
+  },
+} satisfies CommerceAppConfigOutputModel;
+
 /** Minimal valid adminUi menu object (required fields only). */
 const adminUiMenuMinimalPart = {
   description: "Review and approve purchase requests from Commerce Admin.",

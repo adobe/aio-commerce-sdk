@@ -18,6 +18,7 @@ import {
   configWithAdminUiAllGrids,
   configWithAdminUiEmptyBlock,
   configWithAdminUiInvoiceCreditMemoShipmentGrids,
+  configWithAdminUiNewsletterMassActions,
   configWithAdminUiSingleGrid,
 } from "#test/fixtures/config";
 
@@ -72,6 +73,20 @@ describe("planAdminUi", () => {
     expect(plan.operations).toHaveLength(1);
     expect(plan.operations[0]?.kind).toBe("add");
     expect(plan.operations[0]?.id).toBe("add:order.grid-columns");
+  });
+
+  test("registers a newsletter mass action as its own component", async () => {
+    const { plan } = await planned(
+      null,
+      configWithAdminUiNewsletterMassActions as AdminUiConfig,
+    );
+
+    expect(plan.extensionAction).toBe("register");
+    expect(plan.operations).toHaveLength(1);
+    expect(plan.operations[0]?.kind).toBe("add");
+    expect(plan.operations[0]?.id).toBe(
+      "add:newsletter.mass-action.unsubscribe-subscribers",
+    );
   });
 
   test("unregisters with one remove per component when the target dropped Admin UI", async () => {
