@@ -24,6 +24,7 @@ import {
   validateWebhookConflicts,
 } from "./helpers";
 import { planWebhookSubscriptions } from "./plan";
+import { pruneWebhookSubscriptions } from "./prune";
 
 import type { WebhooksConfig } from "#config/schema/webhooks";
 import type { WebhooksExecutionContext } from "./context";
@@ -48,6 +49,7 @@ const subscriptionsStep = defineLeafStep({
   },
   name: "subscriptions",
   plan: planWebhookSubscriptions,
+  prune: pruneWebhookSubscriptions,
 
   uninstall: async (
     config: WebhooksConfig,

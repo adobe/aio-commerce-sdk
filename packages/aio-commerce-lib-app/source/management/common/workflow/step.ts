@@ -203,6 +203,7 @@ export type AnyStep = {
 
   // biome-ignore-start lint/suspicious/noExplicitAny: We need the flexibility here
   apply?: (plan: any, context: any) => unknown | Promise<unknown>;
+  prune?: (plan: any, context: any) => unknown | Promise<unknown>;
   context?: (context: LifecycleContext) => any;
   install?: (config: any, context: any) => unknown | Promise<unknown>;
   meta: StepMeta;
@@ -292,6 +293,7 @@ export function defineLeafStep<
     meta: options.meta,
     name: options.name,
     plan: options.plan,
+    prune: options.prune,
     type: "leaf",
     uninstall: options.uninstall,
     validate: options.validate,

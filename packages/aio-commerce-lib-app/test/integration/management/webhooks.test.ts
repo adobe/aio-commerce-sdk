@@ -17,6 +17,7 @@ import { isSucceededState } from "#management/common/workflow/types";
 import { applyWebhookSubscriptions } from "#management/domains/webhooks/apply";
 import { createWebhooksStepContext } from "#management/domains/webhooks/context";
 import { planWebhookSubscriptions } from "#management/domains/webhooks/plan";
+import { pruneWebhookSubscriptions } from "#management/domains/webhooks/prune";
 import {
   createInitialInstallationState,
   runInstallation,
@@ -302,7 +303,7 @@ describe("webhooks upgrade planning integration", () => {
     expect.assert(planResult.kind === "planned");
     expect(planResult.plan.operations).toEqual([]);
 
-    const applyResult = await applyWebhookSubscriptions(planResult.plan, {
+    await pruneWebhookSubscriptions(planResult.plan, {
       ...context,
       attemptId: "attempt-1",
       baseline,
@@ -315,7 +316,6 @@ describe("webhooks upgrade planning integration", () => {
         hook_name: "test_app_webhooks_order_created",
       }),
     });
-    expect(applyResult.snapshotData?.subscribedWebhooks).toEqual([]);
   });
 
   test("plans and applies an update for a webhook whose config changed", async () => {

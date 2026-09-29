@@ -22,6 +22,7 @@ import { defineLeafStep } from "#management/common/workflow/step";
 import { applyEventingLeaf } from "./apply";
 import { offboardIoEvents, onboardIoEvents } from "./helpers";
 import { planExternalEvents } from "./plan";
+import { pruneEventingLeaf } from "./prune";
 import {
   EVENTS_STORAGE_KEY,
   EXTERNAL_PROVIDER_TYPE,
@@ -68,6 +69,7 @@ export const externalEventsStep = defineLeafStep({
   },
   name: "external",
   plan: planExternalEvents,
+  prune: pruneExternalEvents,
   uninstall: removeExternalEvents,
 });
 
@@ -91,6 +93,23 @@ export function applyExternalEvents(
     uninstall: async (config, ctx) => {
       await externalEventsStep.uninstall?.(config as ExternalEventsConfig, ctx);
     },
+  });
+}
+
+/**
+ * Prunes the external eventing resources this app owns in this workspace that the target no longer
+ * declares, by delegating to the shared leaf prune with this leaf's provider-type discriminators.
+ *
+ * @param plan - The eventing domain plan produced by `planExternalEvents`.
+ * @param context - The attempt-scoped execution context.
+ */
+export function pruneExternalEvents(
+  plan: EventingDomainPlan,
+  context: ApplyContext<EventsStepContext>,
+): Promise<void> {
+  return pruneEventingLeaf(plan, context, {
+    isCommerce: false,
+    type: EXTERNAL_PROVIDER_TYPE,
   });
 }
 

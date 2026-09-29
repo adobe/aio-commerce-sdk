@@ -116,4 +116,13 @@ export type ResourceCapability<
     plan: TPlan,
     context: ApplyContext<TStepCtx, TConfig, TSnapshotData>,
   ) => Promise<ApplyResult<TSnapshotData>>;
+
+  /**
+   * Optional hidden best-effort pass, run after the planned tree succeeds, that removes live
+   * resources the app owns that the target does not want. Its errors never fail the attempt.
+   */
+  prune?: (
+    plan: TPlan,
+    context: ApplyContext<TStepCtx, TConfig, TSnapshotData>,
+  ) => Promise<void>;
 };

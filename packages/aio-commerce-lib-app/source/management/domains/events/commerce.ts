@@ -28,6 +28,7 @@ import {
   onboardIoEvents,
 } from "./helpers";
 import { planCommerceEvents } from "./plan";
+import { pruneEventingLeaf } from "./prune";
 import {
   COMMERCE_PROVIDER_TYPE,
   EVENTS_STORAGE_KEY,
@@ -77,6 +78,7 @@ export const commerceEventsStep = defineLeafStep({
   },
   name: "commerce",
   plan: planCommerceEvents,
+  prune: pruneCommerceEvents,
   uninstall: removeCommerceEvents,
 });
 
@@ -100,6 +102,23 @@ export function applyCommerceEvents(
     uninstall: async (config, ctx) => {
       await commerceEventsStep.uninstall?.(config as CommerceEventsConfig, ctx);
     },
+  });
+}
+
+/**
+ * Prunes the Commerce eventing resources this app owns in this workspace that the target no longer
+ * declares, by delegating to the shared leaf prune with this leaf's provider-type discriminators.
+ *
+ * @param plan - The eventing domain plan produced by `planCommerceEvents`.
+ * @param context - The attempt-scoped execution context (carries the provisioned clients).
+ */
+export function pruneCommerceEvents(
+  plan: EventingDomainPlan,
+  context: ApplyContext<EventsStepContext>,
+): Promise<void> {
+  return pruneEventingLeaf(plan, context, {
+    isCommerce: true,
+    type: COMMERCE_PROVIDER_TYPE,
   });
 }
 

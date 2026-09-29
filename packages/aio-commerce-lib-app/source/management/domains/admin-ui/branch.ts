@@ -23,6 +23,7 @@ import {
   unregisterExtension,
 } from "./helpers";
 import { planAdminUi } from "./plan";
+import { pruneAdminUi } from "./prune";
 import { createAdminUiStepContext } from "./utils";
 
 import type { AdminUiConfig, AdminUiExecutionContext } from "./utils";
@@ -68,6 +69,7 @@ const registerExtensionStep = defineLeafStep({
   },
   name: "register-extension",
   plan: planAdminUi,
+  prune: pruneAdminUi,
 
   uninstall: (_: AdminUiConfig, context: AdminUiExecutionContext) =>
     unregisterExtension(context),

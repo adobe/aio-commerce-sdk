@@ -16,6 +16,7 @@ import { afterEach, describe, expect, test, vi } from "vitest";
 import {
   applyCommerceEvents,
   commerceEventsStep,
+  pruneCommerceEvents,
 } from "#management/domains/events/commerce";
 import {
   applyExternalEvents,
@@ -1264,7 +1265,7 @@ describe("eventing prune lane", () => {
       targetConfig: null,
     };
 
-    await applyCommerceEvents(
+    await pruneCommerceEvents(
       emptyPlan(),
       context as ApplyContext<EventsStepContext>,
     );
@@ -1308,11 +1309,11 @@ describe("eventing prune lane", () => {
 
     const warn = vi.spyOn(context.logger, "warn");
     await expect(
-      applyCommerceEvents(
+      pruneCommerceEvents(
         emptyPlan(),
         context as ApplyContext<EventsStepContext>,
       ),
-    ).resolves.toBeDefined();
+    ).resolves.toBeUndefined();
 
     expect(warn).toHaveBeenCalled();
   });
@@ -1404,7 +1405,7 @@ describe("eventing prune lane", () => {
       ]),
     );
 
-    await applyCommerceEvents(plan, context as ApplyContext<EventsStepContext>);
+    await pruneCommerceEvents(plan, context as ApplyContext<EventsStepContext>);
     const { deleteEventSubscription } = context.commerceEventsClient;
     const { deleteEventMetadataForProvider } = context.ioEventsClient;
 

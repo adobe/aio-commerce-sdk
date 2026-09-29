@@ -32,6 +32,7 @@ import type {
   AppStateSnapshot,
   OrchestrationState,
 } from "#management/common/orchestration";
+import type { StepStatus } from "#management/common/workflow/types";
 
 const EXECUTION_DEADLINE = "2099-01-01T00:00:00.000Z";
 
@@ -472,14 +473,9 @@ describe("lifecycle runtime", () => {
     );
   });
 
-  test("commits version-only plans, still running apply for every leaf", async () => {
+  test("commits version-only plans without invoking apply", async () => {
     const config = createConfig("2.0.0");
-
-    // Apply-capable leaves always run so their prune lane can converge live state,
-    // even when the plan carries no operations.
-    const apply = vi.fn().mockResolvedValue({
-      snapshotData: { remoteId: "resource-1" },
-    });
+    const apply = vi.fn();
 
     const leaf = createMockLifecycleLeaf({
       apply,
@@ -530,7 +526,7 @@ describe("lifecycle runtime", () => {
       "Expected a succeeded lifecycle attempt",
     );
 
-    expect(apply).toHaveBeenCalledOnce();
+    expect(apply).not.toHaveBeenCalled();
     expect(await snapshotStore.get(completed.result.snapshotId)).toMatchObject({
       config,
       data: baseline.data,
@@ -617,7 +613,7 @@ describe("lifecycle runtime", () => {
     });
 
     const inactiveLeaf = createMockLifecycleLeaf({
-      apply: async () => ({ snapshotData: null }),
+      apply: vi.fn(),
       isConfigured: () => false,
 
       name: "inactive",
@@ -1283,42 +1279,33 @@ describe("lifecycle runtime", () => {
     }
   });
 
-  test("apply runs with zero planned operations, and a failed attempt persists no baseline", async () => {
-    // Simulated live resources shared across leaves and attempts.
-    const live = new Set<string>();
-
-    // An eventing-like leaf: its planned lane creates X when the target wants it, and its prune
-    // lane (always runs) drops X once the target stops declaring it.
+  test("a failed planned leaf fails the attempt, persists no baseline, and skips prune", async () => {
+    const prune = vi.fn(async () => undefined);
     const eventsLeaf = createMockLifecycleLeaf({
-      apply: async (_plan, { targetConfig }) => {
-        const wantsX = targetConfig?.metadata.version === "2.0.0";
-        if (wantsX) {
-          live.add("X");
-        } else {
-          live.delete("X");
-        }
-        return { snapshotData: { live: [...live] } };
-      },
+      apply: async () => ({ snapshotData: null }),
       name: "events",
       plan: async () => ({
         kind: "planned",
-        plan: { operations: [], path: ["root", "events"] },
+        plan: {
+          operations: [{ after: {}, id: "op", kind: "add", label: "Add" }],
+          path: ["root", "events"],
+        },
       }),
+      prune,
     });
-
-    // A webhooks-like leaf that fails only on the v2 upgrade, after the eventing leaf ran.
     const webhookLeaf = createMockLifecycleLeaf({
-      apply: async (_plan, { targetConfig }) => {
-        if (targetConfig?.metadata.version === "2.0.0") {
-          throw new Error("webhook step failure");
-        }
-        return { snapshotData: null };
+      apply: async () => {
+        throw new Error("webhook step failure");
       },
       name: "webhooks",
       plan: async () => ({
         kind: "planned",
-        plan: { operations: [], path: ["root", "webhooks"] },
+        plan: {
+          operations: [{ after: {}, id: "op", kind: "add", label: "Add" }],
+          path: ["root", "webhooks"],
+        },
       }),
+      prune: vi.fn(),
     });
 
     const baseline = createBaseline("1.0.0");
@@ -1327,67 +1314,225 @@ describe("lifecycle runtime", () => {
       rootStep: createMockLifecycleRoot([eventsLeaf, webhookLeaf]),
     });
 
-    const upgradeToV2 = await planLifecycle({
+    const planning = await planLifecycle({
       ...runtime,
       actionVersion: "1.0.0",
       operation: "upgrade",
       targetAppVersion: "2.0.0",
       targetConfig: createConfig("2.0.0"),
     });
-    expect.assert(
-      upgradeToV2.kind === "planned",
-      "Expected an executable plan",
-    );
-    const attemptV2 = await startLifecycleAttempt({
+    expect.assert(planning.kind === "planned", "Expected an executable plan");
+    const attempt = await startLifecycleAttempt({
       ...runtime,
       actionVersion: "1.0.0",
       executionDeadline: EXECUTION_DEADLINE,
-      planId: upgradeToV2.plan.id,
+      planId: planning.plan.id,
     });
-    const completedV2 = await executeLifecycleAttempt({
+    const completed = await executeLifecycleAttempt({
       ...runtime,
       actionVersion: "1.0.0",
-      attemptId: attemptV2.id,
+      attemptId: attempt.id,
       executionDeadline: EXECUTION_DEADLINE,
     });
 
-    // The webhook step failed, so the resource the eventing step created is leaked...
-    expect(completedV2.status).toBe("failed");
-    expect(live.has("X")).toBe(true);
-    // ...and no new baseline is committed on the failed attempt.
+    expect(completed.status).toBe("failed");
     expect((await stateStore.get("current"))?.baselineSnapshotId).toBe(
       baseline.id,
     );
+    expect(prune).not.toHaveBeenCalled();
+  });
 
-    const upgradeToV3 = await planLifecycle({
+  test("runs prune for every leaf that defines it in declared order with branch context, and the progress tree only contains leaves with planned operations", async () => {
+    const pruneOrder: string[] = [];
+    let branchContextSeen: string | undefined;
+
+    const withOpsLeaf = createMockLifecycleLeaf({
+      apply: async () => ({ snapshotData: null }),
+      name: "with-ops",
+      plan: async () => ({
+        kind: "planned",
+        plan: {
+          operations: [{ after: {}, id: "op", kind: "add", label: "Add" }],
+          path: ["root", "eventing", "with-ops"],
+        },
+      }),
+      prune: async (_plan, ctx) => {
+        pruneOrder.push("with-ops");
+        branchContextSeen = (ctx as { shared?: string }).shared;
+      },
+    });
+
+    const zeroOpsLeaf = createMockLifecycleLeaf({
+      apply: vi.fn(),
+      name: "zero-ops",
+      plan: async () => ({
+        kind: "planned",
+        plan: { operations: [], path: ["root", "eventing", "zero-ops"] },
+      }),
+      prune: async () => {
+        pruneOrder.push("zero-ops");
+      },
+    });
+
+    const eventingBranch = createMockBranchStep({
+      children: [withOpsLeaf, zeroOpsLeaf],
+      context: async () => ({ shared: "ctx-value" }),
+      meta: {
+        install: { label: "Eventing" },
+        upgrade: { label: "Eventing" },
+      },
+      name: "eventing",
+    });
+
+    const baseline = createBaseline("1.0.0");
+    const { runtime } = createMockLifecycleRuntime({
+      baseline,
+      rootStep: createMockLifecycleRoot([eventingBranch]),
+    });
+
+    const planning = await planLifecycle({
       ...runtime,
-      actionVersion: "1.0.1",
+      actionVersion: "1.0.0",
       operation: "upgrade",
-      targetAppVersion: "3.0.0",
-      targetConfig: createConfig("3.0.0"),
+      targetAppVersion: "2.0.0",
+      targetConfig: createConfig("2.0.0"),
     });
-    expect.assert(
-      upgradeToV3.kind === "planned",
-      "Expected an executable plan",
-    );
-    // The next upgrade plans from the retained v1 baseline, not the failed v2 attempt.
-    expect(upgradeToV3.plan.source.appVersion).toBe("1.0.0");
-    const attemptV3 = await startLifecycleAttempt({
+    expect.assert(planning.kind === "planned", "Expected an executable plan");
+    const attempt = await startLifecycleAttempt({
       ...runtime,
-      actionVersion: "1.0.1",
+      actionVersion: "1.0.0",
       executionDeadline: EXECUTION_DEADLINE,
-      planId: upgradeToV3.plan.id,
+      planId: planning.plan.id,
     });
-    const completedV3 = await executeLifecycleAttempt({
+    const completed = await executeLifecycleAttempt({
       ...runtime,
-      actionVersion: "1.0.1",
-      attemptId: attemptV3.id,
+      actionVersion: "1.0.0",
+      attemptId: attempt.id,
       executionDeadline: EXECUTION_DEADLINE,
     });
 
-    // The eventing leaf's prune lane runs even with no planned operations and removes the leftover.
-    expect(completedV3.status).toBe("succeeded");
-    expect(live.has("X")).toBe(false);
+    expect.assert(
+      completed.status === "succeeded",
+      "Expected a succeeded lifecycle attempt",
+    );
+    expect(pruneOrder).toEqual(["with-ops", "zero-ops"]);
+    expect(branchContextSeen).toBe("ctx-value");
+
+    const eventingProgress = completed.progress.children.find(
+      (child) => child.name === "eventing",
+    );
+    expect(eventingProgress?.children.map((child) => child.name)).toEqual([
+      "with-ops",
+    ]);
+  });
+
+  test("logs a failing prune with the step path and still succeeds", async () => {
+    const failingPrune = vi.fn(async () => {
+      throw new Error("prune boom");
+    });
+    const leaf = createMockLifecycleLeaf({
+      apply: async () => ({ snapshotData: null }),
+      name: "synthetic",
+      plan: async () => ({
+        kind: "planned",
+        plan: {
+          operations: [{ after: {}, id: "op", kind: "add", label: "Add" }],
+          path: ["root", "synthetic"],
+        },
+      }),
+      prune: failingPrune,
+    });
+
+    const { runtime } = createMockLifecycleRuntime({
+      baseline: createBaseline("1.0.0"),
+      rootStep: createMockLifecycleRoot([leaf]),
+    });
+    const warn = vi.spyOn(runtime.lifecycleContext.logger, "warn");
+
+    const planning = await planLifecycle({
+      ...runtime,
+      actionVersion: "1.0.0",
+      operation: "upgrade",
+      targetAppVersion: "2.0.0",
+      targetConfig: createConfig("2.0.0"),
+    });
+    expect.assert(planning.kind === "planned", "Expected an executable plan");
+    const attempt = await startLifecycleAttempt({
+      ...runtime,
+      actionVersion: "1.0.0",
+      executionDeadline: EXECUTION_DEADLINE,
+      planId: planning.plan.id,
+    });
+    const completed = await executeLifecycleAttempt({
+      ...runtime,
+      actionVersion: "1.0.0",
+      attemptId: attempt.id,
+      executionDeadline: EXECUTION_DEADLINE,
+    });
+
+    expect(completed.status).toBe("succeeded");
+    expect(failingPrune).toHaveBeenCalledOnce();
+    expect(warn).toHaveBeenCalledWith(
+      expect.stringContaining('"root.synthetic"'),
+    );
+  });
+
+  test("runs prune while the attempt is still in-progress with every step already succeeded", async () => {
+    let stateDuringPrune: OrchestrationState | null = null;
+    const leaf = createMockLifecycleLeaf({
+      apply: async () => ({ snapshotData: null }),
+      name: "synthetic",
+      plan: async () => ({
+        kind: "planned",
+        plan: {
+          operations: [{ after: {}, id: "op", kind: "add", label: "Add" }],
+          path: ["root", "synthetic"],
+        },
+      }),
+      prune: async () => {
+        stateDuringPrune = await stateStore.get("current");
+      },
+    });
+
+    const { runtime, stateStore } = createMockLifecycleRuntime({
+      baseline: createBaseline("1.0.0"),
+      rootStep: createMockLifecycleRoot([leaf]),
+    });
+
+    const planning = await planLifecycle({
+      ...runtime,
+      actionVersion: "1.0.0",
+      operation: "upgrade",
+      targetAppVersion: "2.0.0",
+      targetConfig: createConfig("2.0.0"),
+    });
+    expect.assert(planning.kind === "planned", "Expected an executable plan");
+    const attempt = await startLifecycleAttempt({
+      ...runtime,
+      actionVersion: "1.0.0",
+      executionDeadline: EXECUTION_DEADLINE,
+      planId: planning.plan.id,
+    });
+    const completed = await executeLifecycleAttempt({
+      ...runtime,
+      actionVersion: "1.0.0",
+      attemptId: attempt.id,
+      executionDeadline: EXECUTION_DEADLINE,
+    });
+
+    const allSucceeded = (node: StepStatus): boolean =>
+      node.status === "succeeded" && node.children.every(allSucceeded);
+
+    expect(stateDuringPrune).not.toBeNull();
+    expect(
+      (stateDuringPrune as OrchestrationState | null)?.latestAttempt?.status,
+    ).toBe("in-progress");
+    const persistedAttempt = (stateDuringPrune as OrchestrationState | null)
+      ?.latestAttempt;
+    expect(
+      persistedAttempt ? allSucceeded(persistedAttempt.progress) : false,
+    ).toBe(true);
+    expect(completed.status).toBe("succeeded");
   });
 
   test("requires a compatible baseline", async () => {

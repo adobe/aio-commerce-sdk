@@ -109,11 +109,7 @@ describe("createRootInstallationStep", () => {
       targetConfig: configWithWebhooks,
     });
 
-    // Every apply-capable leaf now appears in the plan execution tree, so select webhooks by name.
-    const webhooksStatus = state.step.children.find(
-      (child) => child.name === "webhooks",
-    );
-
+    const [webhooksStatus] = state.step.children;
     expect.assert(webhooksStatus, "Expected webhook upgrade progress");
     expect(webhooksStatus.meta).toEqual(webhooksStep.meta.upgrade);
     expect(webhooksStatus.children.at(0)?.meta).toEqual(

@@ -13,6 +13,7 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 import { applyAdminUi } from "#management/domains/admin-ui/apply";
+import { pruneAdminUi } from "#management/domains/admin-ui/prune";
 import { createMockAdminUiContext } from "#test/fixtures/admin-ui";
 import { configWithAdminUiSingleGrid } from "#test/fixtures/config";
 import { makeHttpError } from "#test/fixtures/http-error";
@@ -74,10 +75,9 @@ describe("applyAdminUi", () => {
   test("prune: unregisters a leftover extension when neither side declares admin UI", async () => {
     // applyContext() has targetConfig: null and the plan carries no extension action.
     const context = applyContext();
-    const result = await applyAdminUi(makePlan(null), context);
+    await pruneAdminUi(makePlan(null), context);
 
     expect(context.adminUiClient.unregisterExtension).toHaveBeenCalledOnce();
-    expect(result.snapshotData).toBeNull();
   });
 
   // Prunes are best-effort, we don't block on failure.
@@ -93,9 +93,8 @@ describe("applyAdminUi", () => {
     });
 
     const warn = vi.spyOn(context.logger, "warn");
-    const result = await applyAdminUi(makePlan(null), context);
+    await pruneAdminUi(makePlan(null), context);
 
-    expect(result.snapshotData).toBeNull();
     expect(warn).toHaveBeenCalled();
   });
 
@@ -162,20 +161,15 @@ describe("applyAdminUi", () => {
     expect(result.snapshotData).toBeNull();
   });
 
-  test("no-op: does nothing when the extension action is null and the target still declares admin UI", async () => {
-    // extensionAction is null on a both-sides-present, no-op upgrade: the target still declares
-    // admin UI, so the prune lane must not unregister it.
+  test("prune: does not unregister when the target still declares admin UI", async () => {
+    // The target still declares admin UI, so prune must not unregister the extension.
     const context = {
       ...applyContext(),
       targetConfig: configWithAdminUiSingleGrid,
     };
-    const result = await applyAdminUi(makePlan(null), context);
+    await pruneAdminUi(makePlan(null), context);
 
-    expect(context.adminUiClient.enableAdminUiSdk).not.toHaveBeenCalled();
-    expect(context.adminUiClient.registerExtension).not.toHaveBeenCalled();
-    expect(context.adminUiClient.refreshExtension).not.toHaveBeenCalled();
     expect(context.adminUiClient.unregisterExtension).not.toHaveBeenCalled();
-    expect(result.snapshotData).toBeNull();
   });
 
   test("register: aborts (throws) when registration fails", async () => {
