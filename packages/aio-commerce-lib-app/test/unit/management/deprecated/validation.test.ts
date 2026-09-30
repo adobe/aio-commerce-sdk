@@ -16,7 +16,7 @@ import {
   defineBranchStep,
   defineLeafStep,
 } from "#management/common/workflow/step";
-import { validateStepTree } from "#management/common/workflow/validation";
+import { validateStepTree } from "#management/deprecated/validation";
 import { minimalValidConfig } from "#test/fixtures/config";
 import { createMockInstallationContext } from "#test/fixtures/installation";
 

@@ -13,7 +13,6 @@
 import { stringifyError } from "@aio-commerce-sdk/scripting-utils/error";
 
 import { appliesToEnv, getInstallCommerceEnv } from "#config/lib/environment";
-
 import {
   buildWebhookIdPrefix,
   createWebhookSubscription,
@@ -21,7 +20,7 @@ import {
   getWebhookName,
   isWebhookInList,
   resolveWebhookSubscribeParams,
-} from "./utils";
+} from "#management/domains/webhooks/utils";
 
 import type {
   CommerceWebhook,
@@ -30,12 +29,12 @@ import type {
 } from "@adobe/aio-commerce-lib-webhooks/api";
 import type { WebhooksConfig } from "#config/schema/webhooks";
 import type { ValidationIssue } from "#management/common/workflow/step";
-import type { WebhooksExecutionContext } from "./context";
+import type { WebhooksExecutionContext } from "#management/domains/webhooks/context";
 import type {
   ConflictingWebhook,
   WebhookSubscriptionResult,
   WebhookUnsubscriptionResult,
-} from "./types";
+} from "#management/domains/webhooks/types";
 
 /**
  * Validates that no modification webhooks conflict with webhooks Commerce already has

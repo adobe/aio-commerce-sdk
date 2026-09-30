@@ -17,15 +17,11 @@ import {
   getCurrentLifecycleBaseline,
 } from "#management/lifecycle/baseline";
 import { minimalValidConfig } from "#test/fixtures/config";
+import { createMockInstallationStore } from "#test/fixtures/installation";
+import { createMockLifecycleStore } from "#test/fixtures/lifecycle";
 
 import type { AppStateSnapshot } from "#management/common/orchestration";
 
-const compatibilityBaseline: AppStateSnapshot = {
-  config: minimalValidConfig,
-  createdAt: "2026-08-12T08:00:00.000Z",
-  data: null,
-  id: "installation-snapshot",
-};
 const lifecycleBaseline: AppStateSnapshot = {
   config: {
     ...minimalValidConfig,
@@ -37,37 +33,41 @@ const lifecycleBaseline: AppStateSnapshot = {
 };
 
 describe("createLifecycleBaselineProvider", () => {
-  test("does not return a stale lifecycle snapshot when the app is no longer installed", async () => {
+  test("resolves the requested lifecycle snapshot", async () => {
     const snapshotGet = vi.fn().mockResolvedValue(lifecycleBaseline);
-    const provider = createLifecycleBaselineProvider(
-      { get: snapshotGet, put: vi.fn() },
-      { get: vi.fn().mockResolvedValue(null) },
-    );
-
-    await expect(provider.get(lifecycleBaseline.id)).resolves.toBeNull();
-    expect(snapshotGet).not.toHaveBeenCalled();
-  });
-
-  test("uses the compatibility baseline to initialize lifecycle state", async () => {
-    const provider = createLifecycleBaselineProvider(
-      { get: vi.fn(), put: vi.fn() },
-      { get: vi.fn().mockResolvedValue(compatibilityBaseline) },
-    );
-
-    await expect(provider.get(null)).resolves.toBe(compatibilityBaseline);
-  });
-
-  test("uses the persisted lifecycle snapshot after initialization", async () => {
-    const snapshotGet = vi.fn().mockResolvedValue(lifecycleBaseline);
-    const provider = createLifecycleBaselineProvider(
-      { get: snapshotGet, put: vi.fn() },
-      { get: vi.fn().mockResolvedValue(compatibilityBaseline) },
-    );
+    const provider = createLifecycleBaselineProvider({
+      get: snapshotGet,
+      put: vi.fn(),
+    });
 
     await expect(provider.get(lifecycleBaseline.id)).resolves.toBe(
       lifecycleBaseline,
     );
     expect(snapshotGet).toHaveBeenCalledWith(lifecycleBaseline.id);
+  });
+
+  test("resolves to null when there is no baseline snapshot id", async () => {
+    const snapshotGet = vi.fn();
+    const provider = createLifecycleBaselineProvider({
+      get: snapshotGet,
+      put: vi.fn(),
+    });
+
+    await expect(provider.get(null)).resolves.toBeNull();
+    expect(snapshotGet).not.toHaveBeenCalled();
+  });
+
+  test("resolves a lifecycle snapshot even when the legacy store is empty", async () => {
+    const snapshotStore = createMockLifecycleStore<AppStateSnapshot>();
+    await snapshotStore.put(lifecycleBaseline.id, lifecycleBaseline);
+    const legacyStore = createMockInstallationStore();
+
+    const provider = createLifecycleBaselineProvider(snapshotStore);
+
+    await expect(provider.get(lifecycleBaseline.id)).resolves.toEqual(
+      lifecycleBaseline,
+    );
+    expect(await legacyStore.get("current")).toBeNull();
   });
 });
 
@@ -89,15 +89,15 @@ describe("getCurrentLifecycleBaseline", () => {
     expect(providerGet).toHaveBeenCalledWith(lifecycleBaseline.id);
   });
 
-  test("uses the compatibility baseline before lifecycle state exists", async () => {
-    const providerGet = vi.fn().mockResolvedValue(compatibilityBaseline);
+  test("resolves to no baseline before lifecycle state exists", async () => {
+    const providerGet = vi.fn().mockResolvedValue(null);
 
     await expect(
       getCurrentLifecycleBaseline(
         { get: vi.fn().mockResolvedValue(null), put: vi.fn() },
         { get: providerGet },
       ),
-    ).resolves.toBe(compatibilityBaseline);
+    ).resolves.toBeNull();
     expect(providerGet).toHaveBeenCalledWith(null);
   });
 });

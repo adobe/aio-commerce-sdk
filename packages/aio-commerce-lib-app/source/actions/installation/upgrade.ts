@@ -21,6 +21,7 @@ import openwhisk from "openwhisk";
 
 import { validateCommerceAppConfig } from "#config/lib/validate";
 import { getAssociationData } from "#management/association/repository";
+import { DispatchedLifecycleAttemptNotFoundError } from "#management/lifecycle/errors";
 import { executeLifecycleAttempt } from "#management/lifecycle/execution";
 import { planLifecycle } from "#management/lifecycle/planning";
 import { startLifecycleAttempt } from "#management/lifecycle/start";
@@ -251,7 +252,7 @@ async function persistDispatchFailure(
     state.latestAttempt?.id !== attempt.id ||
     state.latestAttempt.status !== "pending"
   ) {
-    throw new Error("The dispatched lifecycle attempt is missing or stale");
+    throw new DispatchedLifecycleAttemptNotFoundError(attempt.id);
   }
 
   await stateStore.put(CURRENT_STATE_KEY, {

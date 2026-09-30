@@ -10,6 +10,13 @@
  * governing permissions and limitations under the License.
  */
 
+import {
+  LifecycleBaselineIncompatibleError,
+  LifecycleBaselineNotFoundError,
+  LifecycleStateNotInitializedError,
+  StaleLifecycleAttemptError,
+} from "./errors";
+
 import type { KeyValueStore } from "@aio-commerce-sdk/common-utils/storage";
 import type {
   AppStateSnapshot,
@@ -26,9 +33,9 @@ export const CURRENT_STATE_KEY = "current";
 /** Minimal persistence contract required by lifecycle orchestration. */
 export type LifecycleStore<T> = Pick<KeyValueStore<T>, "get" | "put">;
 
-/** Resolves the selected baseline, including any compatibility fallback. */
+/** Resolves the baseline snapshot selected by orchestration state. */
 export type LifecycleBaselineProvider = {
-  /** Loads a stored snapshot, or resolves the baseline when its ID is `null`. */
+  /** Loads the stored snapshot, or `null` when there is no baseline. */
   get: (snapshotId: string | null) => Promise<AppStateSnapshot | null>;
 };
 
@@ -52,7 +59,7 @@ export async function readOrInitializeState(
     );
 
     if (!baseline) {
-      throw new Error("The lifecycle baseline snapshot is missing");
+      throw new LifecycleBaselineNotFoundError();
     }
 
     if (existing.baselineSnapshotId) {
@@ -69,7 +76,7 @@ export async function readOrInitializeState(
   const baseline = await runtime.baselineProvider.get(null);
 
   if (!baseline) {
-    throw new Error("A compatible lifecycle baseline is required");
+    throw new LifecycleBaselineIncompatibleError();
   }
 
   await runtime.snapshotStore.put(baseline.id, baseline);
@@ -119,7 +126,7 @@ export async function requireState(
 ): Promise<OrchestrationState> {
   const state = await store.get(CURRENT_STATE_KEY);
   if (!state) {
-    throw new Error("Lifecycle orchestration state has not been initialized");
+    throw new LifecycleStateNotInitializedError();
   }
 
   return state;
@@ -138,7 +145,7 @@ export async function requireCurrentAttempt(
       state.latestAttempt.status !== "in-progress") ||
     Date.parse(state.latestAttempt.executionDeadline) <= Date.now()
   ) {
-    throw new Error("The lifecycle attempt is stale");
+    throw new StaleLifecycleAttemptError(attemptId);
   }
 
   return state;

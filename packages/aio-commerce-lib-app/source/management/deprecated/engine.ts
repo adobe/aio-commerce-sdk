@@ -10,8 +10,8 @@
  * governing permissions and limitations under the License.
  */
 
-import { callHook } from "./hooks";
-import { isBranchStep, isLeafStep } from "./step";
+import { callHook } from "#management/common/workflow/hooks";
+import { isBranchStep, isLeafStep } from "#management/common/workflow/step";
 import {
   createFailedState,
   createSucceededState,
@@ -20,18 +20,23 @@ import {
   isStepConfigured,
   nowIsoString,
   setAtPath,
-} from "./utils";
+} from "#management/common/workflow/utils";
 
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
-import type { WorkflowHooks } from "./hooks";
-import type { AnyStep, BranchStep, LeafStep, LifecycleContext } from "./step";
+import type { WorkflowHooks } from "#management/common/workflow/hooks";
+import type {
+  AnyStep,
+  BranchStep,
+  LeafStep,
+  LifecycleContext,
+} from "#management/common/workflow/step";
 import type {
   FailedWorkflowState,
   InProgressWorkflowState,
   StepStatus,
   SucceededWorkflowState,
   WorkflowError,
-} from "./types";
+} from "#management/common/workflow/types";
 
 /** Options for creating an initial workflow run state. */
 export type CreateInitialStateOptions = {
@@ -99,33 +104,6 @@ export function createInitialState(
     startedAt: nowIsoString(),
     status: "in-progress",
     step: buildInitialStepStatus(rootStep, config, [], mode),
-  };
-}
-
-/**
- * Creates a retry state from a failed state.
- * Preserves succeeded steps and their data so the workflow resumes from
- * the failed step rather than restarting from scratch.
- */
-export function createRetryState(
-  failedState: FailedWorkflowState,
-): InProgressWorkflowState {
-  return {
-    config: failedState.config,
-    data: failedState.data,
-    id: failedState.id,
-    startedAt: failedState.startedAt,
-    status: "in-progress",
-    step: resetFailedSteps(failedState.step),
-  };
-}
-
-/** Recursively resets non-succeeded steps back to "pending". */
-function resetFailedSteps(step: StepStatus): StepStatus {
-  return {
-    ...step,
-    children: step.children.map(resetFailedSteps),
-    status: step.status === "succeeded" ? "succeeded" : "pending",
   };
 }
 

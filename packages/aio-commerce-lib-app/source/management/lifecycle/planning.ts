@@ -12,6 +12,7 @@
 
 import { planWorkflow } from "#management/common/workflow/plan";
 
+import { LifecycleAttemptInProgressError } from "./errors";
 import {
   CURRENT_STATE_KEY,
   normalizeExpiredAttempt,
@@ -52,7 +53,7 @@ export async function planLifecycle(
     state.latestAttempt?.status === "pending" ||
     state.latestAttempt?.status === "in-progress"
   ) {
-    throw new Error("A lifecycle attempt is already in progress");
+    throw new LifecycleAttemptInProgressError();
   }
 
   const existingPlan = findReusablePlan(

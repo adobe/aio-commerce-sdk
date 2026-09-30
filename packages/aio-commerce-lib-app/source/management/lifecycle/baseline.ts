@@ -18,28 +18,13 @@ import type {
 } from "#management/common/orchestration";
 import type { LifecycleBaselineProvider, LifecycleStore } from "./state";
 
-/** Source temporarily used to establish whether a compatible app is installed. */
-export type CompatibilityBaselineSource = {
-  get: () => Promise<AppStateSnapshot | null>;
-};
-
-/**
- * Resolves lifecycle snapshots only while the compatibility source remains
- * authoritative for an installed app.
- */
+/** Resolves lifecycle snapshots from the snapshot store. */
 export function createLifecycleBaselineProvider(
   snapshotStore: LifecycleStore<AppStateSnapshot>,
-  compatibilitySource: CompatibilityBaselineSource,
 ): LifecycleBaselineProvider {
   return {
-    get: async (snapshotId) => {
-      const compatibilityBaseline = await compatibilitySource.get();
-      if (!compatibilityBaseline) {
-        return null;
-      }
-
-      return snapshotId ? snapshotStore.get(snapshotId) : compatibilityBaseline;
-    },
+    get: async (snapshotId) =>
+      snapshotId ? await snapshotStore.get(snapshotId) : null,
   };
 }
 
