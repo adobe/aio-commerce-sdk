@@ -88,12 +88,7 @@ export async function executeLifecycleAttempt(
     throw new InvalidExecutionDeadlineError(options.executionDeadline);
   }
 
-  const baseline = await options.snapshotStore.get(
-    currentAttempt.plan.source.snapshotId,
-  );
-  if (!baseline) {
-    throw new LifecycleBaselineNotFoundError();
-  }
+  const baseline = await resolveAttemptBaseline(options, currentAttempt);
 
   const attempt: LifecycleAttempt = {
     ...currentAttempt,
@@ -122,6 +117,24 @@ export async function executeLifecycleAttempt(
   return persistSuccess(options, state, attempt, workflow);
 }
 
+/** Loads the snapshot an attempt transitions from, or `null` when it has none. */
+async function resolveAttemptBaseline(
+  options: ExecuteLifecycleAttemptOptions,
+  attempt: LifecycleAttempt,
+): Promise<AppStateSnapshot | null> {
+  const { source } = attempt.plan;
+  if (!source) {
+    return null;
+  }
+
+  const baseline = await options.snapshotStore.get(source.snapshotId);
+  if (!baseline) {
+    throw new LifecycleBaselineNotFoundError();
+  }
+
+  return baseline;
+}
+
 /** Creates hooks that persist execution progress after every step transition. */
 function createProgressHooks(
   stateStore: LifecycleStore<OrchestrationState>,
@@ -143,7 +156,7 @@ function createProgressHooks(
 async function executePlanWithRetry(
   options: ExecuteLifecycleAttemptOptions,
   attempt: LifecycleAttempt,
-  baseline: AppStateSnapshot,
+  baseline: AppStateSnapshot | null,
   hooks: WorkflowHooks,
 ): Promise<SucceededWorkflowState | FailedWorkflowState> {
   const executionOptions = {

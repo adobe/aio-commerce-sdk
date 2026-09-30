@@ -96,6 +96,7 @@ import {
   DEFAULT_INSTALLATION_PARAMS,
 } from "#test/fixtures/installation";
 import {
+  createMockAppStateSnapshot,
   createMockLifecycleAttempt,
   createMockLifecycleStore,
   createMockOrchestrationState,
@@ -243,14 +244,19 @@ describe("installationRuntimeAction", () => {
       });
     });
 
-    test("returns 204 when there is no upgrade state for post-app-deploy", async () => {
+    test("returns 204 when there is neither an attempt nor a legacy record", async () => {
+      orchestrationStateStore = createMockLifecycleStore({
+        initial: createMockOrchestrationState({
+          baselineSnapshotId: null,
+          latestAttempt: null,
+        }),
+      });
+
       const handler = installationRuntimeAction({
         appConfig: minimalValidConfig,
       });
 
-      const result = await handler(
-        createRuntimeActionParams({ headers: POST_APP_DEPLOY_HEADERS }),
-      );
+      const result = await handler(createRuntimeActionParams());
 
       expect(result).toMatchObject({
         statusCode: 204,
@@ -258,7 +264,74 @@ describe("installationRuntimeAction", () => {
       });
     });
 
-    test("returns the latest upgrade attempt without its plan for post-app-deploy", async () => {
+    test("returns the legacy installation record when there is no lifecycle attempt", async () => {
+      const legacyState = createMockInstallationSucceededState({
+        config: minimalValidConfig,
+        data: appData,
+      });
+      installationStore = createMockInstallationStore(legacyState);
+
+      const handler = installationRuntimeAction({
+        appConfig: minimalValidConfig,
+      });
+
+      const result = await handler(createRuntimeActionParams());
+
+      expect(result).toMatchObject({ statusCode: 200, type: "success" });
+      expect((result as { body: unknown }).body).toStrictEqual(legacyState);
+    });
+
+    test("returns a succeeded legacy record that has no recorded config", async () => {
+      const legacyState = createMockInstallationSucceededState();
+      installationStore = createMockInstallationStore(legacyState);
+
+      const handler = installationRuntimeAction({
+        appConfig: minimalValidConfig,
+      });
+
+      const result = await handler(createRuntimeActionParams());
+
+      expect(result).toMatchObject({ statusCode: 200, type: "success" });
+      expect((result as { body: unknown }).body).toStrictEqual(legacyState);
+    });
+
+    test("prefers the latest attempt over the legacy record fallback", async () => {
+      const snapshot = createMockAppStateSnapshot();
+      const attempt = createMockLifecycleAttempt({
+        id: "attempt-1",
+        status: "succeeded",
+      });
+
+      installationStore = createMockInstallationStore(
+        createMockInstallationSucceededState({ config: minimalValidConfig }),
+      );
+      appStateSnapshotStore = createMockLifecycleStore<AppStateSnapshot>();
+      await appStateSnapshotStore.put(snapshot.id, snapshot);
+      orchestrationStateStore = createMockLifecycleStore({
+        initial: createMockOrchestrationState({
+          baselineSnapshotId: snapshot.id,
+          latestAttempt: attempt,
+        }),
+      });
+
+      const handler = installationRuntimeAction({
+        appConfig: minimalValidConfig,
+      });
+
+      const result = await handler(createRuntimeActionParams());
+      const { plan: _plan, ...expectedState } = attempt;
+
+      expect(result).toMatchObject({
+        body: expectedState,
+        statusCode: 200,
+        type: "success",
+      });
+      expect((result as { body: unknown }).body).toMatchObject({
+        id: attempt.id,
+      });
+    });
+
+    test("returns the latest lifecycle attempt without its plan", async () => {
       const attempt = createMockLifecycleAttempt({
         id: "attempt-1",
         status: "in-progress",
@@ -270,9 +343,7 @@ describe("installationRuntimeAction", () => {
         appConfig: minimalValidConfig,
       });
 
-      const result = await handler(
-        createRuntimeActionParams({ headers: POST_APP_DEPLOY_HEADERS }),
-      );
+      const result = await handler(createRuntimeActionParams());
       const { plan: _plan, ...expectedState } = attempt;
 
       expect(result).toMatchObject({
@@ -285,7 +356,7 @@ describe("installationRuntimeAction", () => {
       });
     });
 
-    test("returns an upgrade failure for post-app-deploy", async () => {
+    test("returns a failed lifecycle attempt", async () => {
       const attempt = createMockLifecycleAttempt({
         failure: {
           key: "WEBHOOK_RECONCILIATION_FAILED",
@@ -301,9 +372,7 @@ describe("installationRuntimeAction", () => {
         appConfig: minimalValidConfig,
       });
 
-      const result = await handler(
-        createRuntimeActionParams({ headers: POST_APP_DEPLOY_HEADERS }),
-      );
+      const result = await handler(createRuntimeActionParams());
 
       expect(result).toMatchObject({
         body: {
@@ -450,7 +519,7 @@ describe("installationRuntimeAction", () => {
         });
       });
 
-      test("dispatches to installation when no completed install exists", async () => {
+      async function startInstallation() {
         desiredInstallationStore = createMockInstallationStore();
         const action = installationRuntimeAction({
           appConfig: configWithAutoUpgrade,
@@ -462,21 +531,130 @@ describe("installationRuntimeAction", () => {
             ...DEFAULT_INSTALLATION_PARAMS,
           }),
         );
+        const attempt = (await desiredStateStore.get("current"))?.latestAttempt;
+        expect.assert(attempt, "Expected a persisted install attempt");
 
+        return { action, attemptId: attempt.id, result };
+      }
+
+      test("plans and starts an installation when no baseline exists", async () => {
+        const { attemptId, result } = await startInstallation();
+
+        expect(createRootInstallationStepMock).toHaveBeenCalledWith(
+          configWithAutoUpgrade,
+          { forUpgrade: true },
+        );
         expect(invokeMock).toHaveBeenCalledWith(
           expect.objectContaining({
+            blocking: false,
             name: "app-management/installation",
             params: expect.objectContaining({
               __ow_method: "post",
               __ow_path: "/execution",
+
+              // The install derives its Commerce URLs from the request body.
+              AIO_COMMERCE_API_BASE_URL: requestBody.commerceBaseUrl,
+              attemptId,
             }),
+            result: false,
           }),
         );
+        expect(result).toMatchObject({
+          body: {
+            message: "Installation started",
+            operation: "install",
+            plan: {
+              actionVersion: "7",
+              operation: "install",
+              source: null,
+              target: { config: configWithAutoUpgrade },
+            },
+          },
+          statusCode: 202,
+          type: "success",
+        });
+      });
+
+      test("skips the upgrade-only guards on a first install", async () => {
+        getAssociationDataMock.mockResolvedValue(null);
+        const { result } = await startInstallation();
+
+        expect(getAssociationDataMock).not.toHaveBeenCalled();
         expect(result).toMatchObject({
           body: { operation: "install" },
           statusCode: 202,
           type: "success",
         });
+      });
+
+      test("returns 400 when installing without a commerceBaseUrl", async () => {
+        const { commerceBaseUrl: _omitted, ...bodyWithoutCommerce } =
+          requestBody;
+        desiredInstallationStore = createMockInstallationStore();
+        const action = installationRuntimeAction({
+          appConfig: configWithAutoUpgrade,
+        });
+
+        const result = await action(
+          createRuntimeActionParams({
+            body: bodyWithoutCommerce,
+            method: "post",
+            ...DEFAULT_INSTALLATION_PARAMS,
+          }),
+        );
+
+        expect(invokeMock).not.toHaveBeenCalled();
+        expect(result).toMatchObject({
+          error: { statusCode: 400 },
+          type: "error",
+        });
+      });
+
+      test("returns 409, not 500, when an install attempt is already in progress", async () => {
+        const { action } = await startInstallation();
+
+        const result = await action(
+          createRuntimeActionParams({
+            body: requestBody,
+            method: "post",
+            ...DEFAULT_INSTALLATION_PARAMS,
+          }),
+        );
+
+        expect(invokeMock).toHaveBeenCalledOnce();
+        expect(result).toMatchObject({
+          error: {
+            body: {
+              message:
+                "Installation is already in progress. Wait for it to complete.",
+            },
+            statusCode: 409,
+          },
+          type: "error",
+        });
+      });
+
+      test("executes the persisted install attempt", async () => {
+        const { action, attemptId } = await startInstallation();
+
+        const result = await action(
+          createRuntimeActionParams({
+            appData,
+            attemptId,
+            method: "post",
+            path: "/execution",
+            ...DEFAULT_INSTALLATION_PARAMS,
+          }),
+        );
+
+        expect(result).toMatchObject({
+          body: { id: attemptId, operation: "install", status: "succeeded" },
+          statusCode: 200,
+          type: "success",
+        });
+        expect(
+          (await desiredStateStore.get("current"))?.baselineSnapshotId,
+        ).toEqual(expect.any(String));
       });
     });
 
@@ -811,77 +989,7 @@ describe("installationRuntimeAction", () => {
     });
   });
 
-  describe("GET / with state", () => {
-    test("returns installation state when one exists", async () => {
-      const existingState = createMockInProgressState({ id: "installation-1" });
-      installationStore = createMockInstallationStore(existingState);
-
-      const handler = installationRuntimeAction({
-        appConfig: minimalValidConfig,
-      });
-
-      const result = await handler(createRuntimeActionParams());
-
-      expect(result).toMatchObject({
-        body: existingState,
-        type: "success",
-      });
-    });
-  });
-
   describe("POST /", () => {
-    test("returns 409 when installation is already in progress", async () => {
-      installationStore = createMockInstallationStore(
-        createMockInProgressState(),
-      );
-
-      const handler = installationRuntimeAction({
-        appConfig: minimalValidConfig,
-      });
-
-      const result = await handler(
-        createRuntimeActionParams({
-          body: requestBody,
-          method: "post",
-          ...DEFAULT_INSTALLATION_PARAMS,
-        }),
-      );
-
-      expect(result).toMatchObject({
-        error: { statusCode: 409 },
-        type: "error",
-      });
-    });
-
-    test("returns 409 when a completed installation has no saved config", async () => {
-      installationStore = createMockInstallationStore(
-        createMockInstallationSucceededState(),
-      );
-      const handler = installationRuntimeAction({
-        appConfig: minimalValidConfig,
-      });
-
-      const result = await handler(
-        createRuntimeActionParams({
-          body: requestBody,
-          method: "post",
-          ...DEFAULT_INSTALLATION_PARAMS,
-        }),
-      );
-
-      expect(invokeMock).not.toHaveBeenCalled();
-      expect(result).toMatchObject({
-        error: {
-          body: {
-            message:
-              "The existing installation does not include its original config and cannot be upgraded safely. Uninstall and reinstall the app.",
-          },
-          statusCode: 409,
-        },
-        type: "error",
-      });
-    });
-
     test("returns 400 when commerceEnv is not a valid Commerce flavor", async () => {
       const handler = installationRuntimeAction({
         appConfig: minimalValidConfig,
@@ -890,27 +998,6 @@ describe("installationRuntimeAction", () => {
       const result = await handler(
         createRuntimeActionParams({
           body: { ...requestBody, commerceEnv: "production" },
-          method: "post",
-          ...DEFAULT_INSTALLATION_PARAMS,
-        }),
-      );
-
-      expect(result).toMatchObject({
-        error: { statusCode: 400 },
-        type: "error",
-      });
-    });
-
-    test("returns 400 when installing without a commerceBaseUrl", async () => {
-      const { commerceBaseUrl: _omitted, ...bodyWithoutCommerce } = requestBody;
-
-      const handler = installationRuntimeAction({
-        appConfig: minimalValidConfig,
-      });
-
-      const result = await handler(
-        createRuntimeActionParams({
-          body: bodyWithoutCommerce,
           method: "post",
           ...DEFAULT_INSTALLATION_PARAMS,
         }),
@@ -941,193 +1028,31 @@ describe("installationRuntimeAction", () => {
         type: "error",
       });
     });
-
-    test("stores the initial state when installation starts", async () => {
-      const initialState = createMockInProgressState({ id: "installation-1" });
-      createInitialInstallationStateMock.mockReturnValue(initialState);
-
-      const handler = installationRuntimeAction({
-        appConfig: minimalValidConfig,
-      });
-
-      await handler(
-        createRuntimeActionParams({
-          body: requestBody,
-          method: "post",
-          ...DEFAULT_INSTALLATION_PARAMS,
-        }),
-      );
-
-      expect(installationStore.put).toHaveBeenCalledWith(
-        "current",
-        initialState,
-      );
-    });
-
-    test("invokes the installation workflow asynchronously via openwhisk", async () => {
-      const initialState = createMockInProgressState({ id: "installation-1" });
-      createInitialInstallationStateMock.mockReturnValue(initialState);
-
-      const handler = installationRuntimeAction({
-        appConfig: minimalValidConfig,
-      });
-
-      await handler(
-        createRuntimeActionParams({
-          body: requestBody,
-          method: "post",
-          ...DEFAULT_INSTALLATION_PARAMS,
-        }),
-      );
-
-      expect(invokeMock).toHaveBeenCalledWith(
-        expect.objectContaining({
-          blocking: false,
-          name: "app-management/installation",
-          result: false,
-        }),
-      );
-    });
-
-    test("returns 202 with the initial state when installation starts", async () => {
-      const initialState = createMockInProgressState({ id: "installation-1" });
-      createInitialInstallationStateMock.mockReturnValue(initialState);
-
-      const handler = installationRuntimeAction({
-        appConfig: minimalValidConfig,
-      });
-
-      const result = await handler(
-        createRuntimeActionParams({
-          body: requestBody,
-          method: "post",
-          ...DEFAULT_INSTALLATION_PARAMS,
-        }),
-      );
-
-      expect(result).toMatchObject({
-        body: expect.objectContaining({ ...initialState }),
-        statusCode: 202,
-        type: "success",
-      });
-    });
   });
 
-  describe("POST /execution", () => {
-    test("returns 400 when installation execution is missing the initial state", async () => {
+  describe("POST /validation", () => {
+    test("returns 400 when commerceBaseUrl is missing", async () => {
       const handler = installationRuntimeAction({
         appConfig: minimalValidConfig,
       });
 
+      const { commerceBaseUrl: _omitted, ...bodyWithoutBaseUrl } = requestBody;
       const result = await handler(
         createRuntimeActionParams({
-          appData,
+          body: bodyWithoutBaseUrl,
           method: "post",
-          path: "/execution",
+          path: "/validation",
           ...DEFAULT_INSTALLATION_PARAMS,
         }),
       );
 
+      expect(runValidationMock).not.toHaveBeenCalled();
       expect(result).toMatchObject({
         error: { statusCode: 400 },
         type: "error",
       });
     });
 
-    test("runs the installation workflow with the provided initial state", async () => {
-      const initialState = createMockInProgressState({ id: "installation-1" });
-      const handler = installationRuntimeAction({
-        appConfig: minimalValidConfig,
-      });
-
-      await handler(
-        createRuntimeActionParams({
-          appData,
-          initialState,
-          method: "post",
-          path: "/execution",
-          ...DEFAULT_INSTALLATION_PARAMS,
-        }),
-      );
-
-      expect(runInstallationMock).toHaveBeenCalledWith(
-        expect.objectContaining({ initialState }),
-      );
-    });
-
-    test("stores the final installation state after execution", async () => {
-      const initialState = createMockInProgressState({ id: "installation-1" });
-      const handler = installationRuntimeAction({
-        appConfig: minimalValidConfig,
-      });
-
-      await handler(
-        createRuntimeActionParams({
-          appData,
-          initialState,
-          method: "post",
-          path: "/execution",
-          ...DEFAULT_INSTALLATION_PARAMS,
-        }),
-      );
-
-      expect(installationStore.put).toHaveBeenCalledWith(
-        "current",
-        expect.objectContaining({ id: "installation-1", status: "succeeded" }),
-      );
-    });
-
-    test("returns 500 when the installation workflow fails", async () => {
-      const initialState = createMockInProgressState({ id: "installation-1" });
-      const failedState = createMockFailedState({ id: "installation-1" });
-
-      runInstallationMock.mockImplementation(
-        async ({
-          initialState: failedInitialState,
-          hooks,
-        }: WorkflowRunnerArgs) => {
-          const inProgressState = createMockInProgressState({
-            id: failedInitialState.id,
-          });
-
-          await hooks.onInstallationStart?.(inProgressState);
-          await hooks.onStepFailure?.(
-            {
-              error: failedState.error,
-              isLeaf: true,
-              path: ["installation", "validate"],
-              stepName: "validate",
-            },
-            failedState,
-          );
-          await hooks.onInstallationFailure?.(failedState);
-
-          return failedState;
-        },
-      );
-
-      const handler = installationRuntimeAction({
-        appConfig: minimalValidConfig,
-      });
-
-      const result = await handler(
-        createRuntimeActionParams({
-          appData,
-          initialState,
-          method: "post",
-          path: "/execution",
-          ...DEFAULT_INSTALLATION_PARAMS,
-        }),
-      );
-
-      expect(result).toMatchObject({
-        error: { statusCode: 500 },
-        type: "error",
-      });
-    });
-  });
-
-  describe("POST /validation", () => {
     test("returns 500 when validation runs without an app config", async () => {
       const handler = installationRuntimeAction({
         // @ts-expect-error - intentionally missing app config
@@ -1558,13 +1483,9 @@ describe("installationRuntimeAction", () => {
         error: { statusCode: 500 },
         type: "error",
       });
-      const installation = await handler(
-        createRuntimeActionParams({ method: "get", path: "/" }),
-      );
-      expect(installation).toMatchObject({
-        body: { id: "installation-1", status: "succeeded" },
-        statusCode: 200,
-        type: "success",
+      expect(await installationStore.get("current")).toMatchObject({
+        id: "installation-1",
+        status: "succeeded",
       });
       expect(await orchestrationStateStore.get("current")).toEqual(
         orchestrationState,

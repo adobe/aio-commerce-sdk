@@ -13,7 +13,6 @@
 import { describe, expect, test, vi } from "vitest";
 
 import {
-  LifecycleBaselineIncompatibleError,
   LifecycleBaselineNotFoundError,
   LifecycleOrchestrationError,
   LifecycleStateNotInitializedError,
@@ -91,14 +90,6 @@ describe("lifecycle orchestration error types", () => {
 
     const error = await captureError(readOrInitializeState(runtime));
     expect(error).toBeInstanceOf(LifecycleBaselineNotFoundError);
-    expect(error).toBeInstanceOf(LifecycleOrchestrationError);
-  });
-
-  test("reports a missing compatible baseline as LifecycleBaselineIncompatibleError", async () => {
-    const { runtime } = createRuntime({ baselineFor: () => null });
-
-    const error = await captureError(readOrInitializeState(runtime));
-    expect(error).toBeInstanceOf(LifecycleBaselineIncompatibleError);
     expect(error).toBeInstanceOf(LifecycleOrchestrationError);
   });
 
@@ -181,11 +172,33 @@ describe("readOrInitializeState", () => {
     expect(await stateStore.get(CURRENT_STATE_KEY)).toEqual(result.state);
   });
 
-  test("throws when no compatible baseline exists and no state is recorded", async () => {
-    const { runtime } = createRuntime({ baselineFor: () => null });
-    await expect(readOrInitializeState(runtime)).rejects.toThrow(
-      "compatible lifecycle baseline is required",
-    );
+  test("initializes a first-install state when no baseline exists", async () => {
+    const { runtime, snapshotStore, stateStore } = createRuntime({
+      baselineFor: () => null,
+    });
+
+    const result = await readOrInitializeState(runtime);
+    expect(result).toEqual({
+      baseline: null,
+      state: {
+        baselineSnapshotId: null,
+        latestAttempt: null,
+        pendingPlan: null,
+      },
+    });
+
+    expect(await stateStore.get(CURRENT_STATE_KEY)).toEqual(result.state);
+    expect(snapshotStore.put).not.toHaveBeenCalled();
+  });
+
+  test("keeps a null baseline when the existing state never recorded one", async () => {
+    const state = createMockOrchestrationState({ baselineSnapshotId: null });
+    const { runtime } = createRuntime({ baselineFor: () => null, state });
+
+    expect(await readOrInitializeState(runtime)).toEqual({
+      baseline: null,
+      state,
+    });
   });
 });
 

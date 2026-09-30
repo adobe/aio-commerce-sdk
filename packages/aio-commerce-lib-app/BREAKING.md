@@ -13,7 +13,11 @@
 
 <!-- Internal tracking: https://jira.corp.adobe.com/browse/CEXT-6527 -->
 
-- The step-authoring surface will converge every lifecycle onto the resource-reconciliation capability: the `install`/`uninstall`/`validate` handlers on `LeafStep` will be expressed through `plan`/`apply` (installation becomes a plan of `add` operations against an empty baseline; uninstallation a plan of `remove` operations), and `LifecyclePlan.source`/`target` will become nullable to model first-install (no source snapshot) and uninstall (no target). **Replacement:** author steps with `plan`/`apply` once the runtime lands; the current `install`/`uninstall`/`validate` handlers remain until the major.
+- The step-authoring surface will converge every lifecycle onto the resource-reconciliation capability: the `install`/`uninstall`/`validate` handlers on `LeafStep` will be expressed through `plan`/`apply` (installation becomes a plan of `add` operations against an empty baseline; uninstallation a plan of `remove` operations), and `LifecyclePlan.target` will become nullable to model uninstall (no target). `LifecyclePlan.source` is already nullable to model first-install (no source snapshot). **Replacement:** author steps with `plan`/`apply` once the runtime lands; the current `install`/`uninstall`/`validate` handlers remain until the major.
+
+<!-- Internal tracking: https://jira.corp.adobe.com/browse/CEXT-6556 -->
+
+- A first-time installation runs through the lifecycle plan/apply engine, so `POST /installation` answers `202` with `{ message, operation, plan }` for an install exactly as it already does for an upgrade, instead of the legacy installation state (`activationId`, `id`, `status`, `startedAt`, `step`, `data`, `config`). `GET /installation` reports the latest lifecycle attempt instead of the legacy installation record, and returns `204` when the app has no recorded installation. **Replacement:** read `plan` from the `202` body and poll `GET /installation` for attempt progress. `GET /installation` is unchanged for an app that has not run a lifecycle attempt yet: an app installed on the pre-lifecycle engine and never upgraded since still gets its recorded installation state until its next upgrade.
 
 <!-- Internal tracking: https://jira.corp.adobe.com/browse/CEXT-6337 -->
 

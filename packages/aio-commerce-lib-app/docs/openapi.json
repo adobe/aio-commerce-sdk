@@ -3,7 +3,7 @@
   "info": {
     "title": "App Management API",
     "description": "REST API for managing Adobe Commerce App Builder apps: resolving app configuration, managing configuration values, running the installation, upgrade, and uninstallation lifecycle, and managing the scope tree.",
-    "version": "3.1.0",
+    "version": "4.0.0",
     "contact": {},
     "license": {
       "identifier": "Apache-2.0",
@@ -1224,7 +1224,7 @@
       "get": {
         "operationId": "getInstallationState",
         "summary": "Get Installation State",
-        "description": "Returns the current installation workflow state. When `x-aio-commerce-installation-invocation-source` is `post-app-deploy`, returns the latest lifecycle attempt without its plan instead.",
+        "description": "Returns the latest lifecycle attempt, without its plan, for both installations and upgrades. An app installed before the lifecycle engine, and never upgraded since, has no attempt, so its recorded installation workflow state is returned instead.",
         "parameters": [
           {
             "name": "x-gw-ims-org-id",
@@ -1234,25 +1234,18 @@
             "schema": {
               "type": "string"
             }
-          },
-          {
-            "name": "x-aio-commerce-installation-invocation-source",
-            "in": "header",
-            "description": "Identifies the source of the request. When set to `post-app-deploy`, the latest lifecycle attempt is returned without its plan.",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "enum": ["post-app-deploy"]
-            }
           }
         ],
         "responses": {
           "200": {
-            "description": "The current installation workflow state, or the latest lifecycle attempt without its plan for a post-deploy request.",
+            "description": "The latest lifecycle attempt, without its plan, or the installation workflow state recorded for an app that has not run a lifecycle attempt yet.",
             "content": {
               "application/json": {
                 "schema": {
                   "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/LifecycleAttemptState"
+                    },
                     {
                       "$ref": "#/components/schemas/InProgressWorkflowState"
                     },
@@ -1261,9 +1254,6 @@
                     },
                     {
                       "$ref": "#/components/schemas/FailedWorkflowState"
-                    },
-                    {
-                      "$ref": "#/components/schemas/LifecycleAttemptState"
                     }
                   ]
                 }
@@ -1271,7 +1261,7 @@
             }
           },
           "204": {
-            "description": "No installation workflow state or lifecycle attempt has been stored yet."
+            "description": "The app has no recorded installation."
           },
           "401": {
             "description": "You are not authorized to access this resource. Ensure the IMS token and the x-gw-ims-org-id header are correctly set and valid."
@@ -1374,87 +1364,26 @@
             }
           },
           "202": {
-            "description": "The operation was accepted for asynchronous execution: either a first-time installation or an automatic upgrade. The `operation` field indicates which branch ran.",
+            "description": "The operation was planned and accepted for asynchronous execution: either a first-time installation or an automatic upgrade. The `operation` field indicates which branch ran.",
             "content": {
               "application/json": {
                 "schema": {
-                  "oneOf": [
-                    {
-                      "description": "A first-time installation was accepted and queued.",
-                      "type": "object",
-                      "properties": {
-                        "message": {
-                          "type": "string"
-                        },
-                        "operation": {
-                          "const": "install"
-                        },
-                        "activationId": {
-                          "type": "string"
-                        },
-                        "id": {
-                          "type": "string"
-                        },
-                        "status": {
-                          "const": "in-progress"
-                        },
-                        "startedAt": {
-                          "type": "string",
-                          "format": "date-time"
-                        },
-                        "step": {
-                          "$ref": "#/components/schemas/StepStatus"
-                        },
-                        "config": {
-                          "description": "The validated app configuration recorded at install time. Present so uninstallation can be sourced from what was actually installed rather than the current request config. Absent on states persisted before this field was introduced.",
-                          "type": "object",
-                          "additionalProperties": true
-                        },
-                        "data": {
-                          "anyOf": [
-                            {
-                              "type": "object",
-                              "propertyNames": {
-                                "type": "string"
-                              },
-                              "additionalProperties": {}
-                            },
-                            {
-                              "type": "null"
-                            }
-                          ]
-                        }
-                      },
-                      "required": [
-                        "message",
-                        "operation",
-                        "activationId",
-                        "id",
-                        "status",
-                        "startedAt",
-                        "step",
-                        "data"
-                      ]
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
                     },
-                    {
-                      "description": "An automatic upgrade was planned and its execution started asynchronously.",
+                    "operation": {
+                      "type": "string",
+                      "enum": ["install", "upgrade"]
+                    },
+                    "plan": {
+                      "description": "The planned operation, spanning every participating domain.",
                       "type": "object",
-                      "properties": {
-                        "message": {
-                          "type": "string"
-                        },
-                        "operation": {
-                          "const": "upgrade"
-                        },
-                        "plan": {
-                          "description": "The planned upgrade, spanning every participating domain.",
-                          "type": "object",
-                          "additionalProperties": true
-                        }
-                      },
-                      "required": ["message", "operation", "plan"]
+                      "additionalProperties": true
                     }
-                  ]
+                  },
+                  "required": ["message", "operation", "plan"]
                 }
               }
             }
@@ -1476,7 +1405,7 @@
             "description": "The access token is valid, but it is not allowed to access the requested organization or operation."
           },
           "409": {
-            "description": "The request is not actionable. This covers both non-actionable no-op states and real failures. A `409` carrying a `reason` is a graceful no-op the caller can ignore: `not-installed` (a post-deploy invocation cannot install the app), `not-associated` (the app is not associated with a Commerce instance), or `already-current` (the installed version already matches `metadata.version`). A `409` without a `reason` is a real failure — for example, an installation already running or completed, an attempted change to the installed `metadata.id`, or upgrade planning blocked by configuration `issues`.",
+            "description": "The request is not actionable. This covers both non-actionable no-op states and real failures. A `409` carrying a `reason` is a graceful no-op the caller can ignore: `not-installed` (a post-deploy invocation cannot install the app), `not-associated` (the app is not associated with a Commerce instance), or `already-current` (the installed version already matches `metadata.version`). A `409` without a `reason` is a real failure — for example, an installation or upgrade already running, an attempted change to the installed `metadata.id`, or planning blocked by configuration `issues`.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1495,7 +1424,7 @@
                       ]
                     },
                     "issues": {
-                      "description": "Blocking issues reported when upgrade planning is blocked.",
+                      "description": "Blocking issues reported when planning is blocked.",
                       "type": "array",
                       "items": {
                         "type": "object",

@@ -80,10 +80,12 @@ export async function planLifecycle(
     id: crypto.randomUUID(),
     issues: planning.issues,
     operation: options.operation,
-    source: {
-      appVersion: getBaselineAppVersion(state, baseline),
-      snapshotId: state.baselineSnapshotId ?? baseline.id,
-    },
+    source: baseline
+      ? {
+          appVersion: getBaselineAppVersion(state, baseline),
+          snapshotId: state.baselineSnapshotId ?? baseline.id,
+        }
+      : null,
     target: {
       appVersion: options.targetAppVersion,
       config: options.targetConfig,

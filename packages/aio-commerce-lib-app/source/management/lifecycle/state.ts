@@ -11,7 +11,6 @@
  */
 
 import {
-  LifecycleBaselineIncompatibleError,
   LifecycleBaselineNotFoundError,
   LifecycleStateNotInitializedError,
   StaleLifecycleAttemptError,
@@ -48,22 +47,28 @@ export type LifecycleRuntime = {
   baselineProvider: LifecycleBaselineProvider;
 };
 
-/** Reads orchestration state and initializes its baseline snapshot if needed. */
+/**
+ * Reads orchestration state and initializes its baseline snapshot if needed.
+ * Resolves a `null` baseline when nothing has been installed yet.
+ */
 export async function readOrInitializeState(
   runtime: LifecycleRuntime,
-): Promise<{ state: OrchestrationState; baseline: AppStateSnapshot }> {
+): Promise<{ state: OrchestrationState; baseline: AppStateSnapshot | null }> {
   const existing = await runtime.stateStore.get(CURRENT_STATE_KEY);
   if (existing) {
     const baseline = await runtime.baselineProvider.get(
       existing.baselineSnapshotId,
     );
 
-    if (!baseline) {
-      throw new LifecycleBaselineNotFoundError();
+    if (existing.baselineSnapshotId) {
+      if (!baseline) {
+        throw new LifecycleBaselineNotFoundError();
+      }
+      return { baseline, state: existing };
     }
 
-    if (existing.baselineSnapshotId) {
-      return { baseline, state: existing };
+    if (!baseline) {
+      return { baseline: null, state: existing };
     }
 
     const initialized = { ...existing, baselineSnapshotId: baseline.id };
@@ -75,13 +80,12 @@ export async function readOrInitializeState(
 
   const baseline = await runtime.baselineProvider.get(null);
 
-  if (!baseline) {
-    throw new LifecycleBaselineIncompatibleError();
+  if (baseline) {
+    await runtime.snapshotStore.put(baseline.id, baseline);
   }
 
-  await runtime.snapshotStore.put(baseline.id, baseline);
   const state: OrchestrationState = {
-    baselineSnapshotId: baseline.id,
+    baselineSnapshotId: baseline?.id ?? null,
     latestAttempt: null,
     pendingPlan: null,
   };
