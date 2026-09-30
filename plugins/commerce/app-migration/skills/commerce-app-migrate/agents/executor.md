@@ -157,8 +157,8 @@ with:
 
 If the body reads IMS credentials directly (any `OAUTH_*` or `AIO_COMMERCE_AUTH_IMS_*`
 key), resolve them with `resolveImsAuthParams(params)` from `@adobe/aio-commerce-lib-auth`
-instead. The installation action receives the credentials through the
-`include-ims-credentials` annotation, not as individual params:
+instead. Runtime actions can receive the credentials through the
+`include-ims-credentials` annotation, without manually wiring individual params:
 
     import { resolveImsAuthParams } from "@adobe/aio-commerce-lib-auth";
 

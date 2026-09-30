@@ -117,15 +117,21 @@ For App Builder runtime actions, you can use `resolveCommerceHttpClientParams` t
 
 **Example: SaaS with IMS Auth**
 
-```yaml
+```diff
 # app.config.yaml
-actions:
-  my-action:
-    function: src/actions/my-action/index.js
-    inputs:
-      AIO_COMMERCE_API_BASE_URL: $AIO_COMMERCE_API_BASE_URL # e.g., https://api.commerce.adobe.com/tenant
-    annotations:
-      include-ims-credentials: true
+ actions:
+   my-action:
+     function: src/actions/my-action/index.js
+     inputs:
+       AIO_COMMERCE_API_BASE_URL: $AIO_COMMERCE_API_BASE_URL # e.g., https://api.commerce.adobe.com/tenant
+-      AIO_COMMERCE_AUTH_IMS_CLIENT_ID: $AIO_COMMERCE_AUTH_IMS_CLIENT_ID
+-      AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS: $AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS
+-      AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID: $AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID
+-      AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL: $AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL
+-      AIO_COMMERCE_AUTH_IMS_ORG_ID: $AIO_COMMERCE_AUTH_IMS_ORG_ID
+-      AIO_COMMERCE_AUTH_IMS_SCOPES: $AIO_COMMERCE_AUTH_IMS_SCOPES
++    annotations:
++      include-ims-credentials: true
 ```
 
 The `include-ims-credentials` annotation injects the workspace OAuth Server-to-Server credentials into the action at runtime. Manually wiring the `AIO_COMMERCE_AUTH_IMS_*` inputs is deprecated.
