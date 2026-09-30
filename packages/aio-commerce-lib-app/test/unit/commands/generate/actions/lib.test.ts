@@ -11,6 +11,7 @@
  */
 
 import { afterEach, describe, expect, test, vi } from "vitest";
+import { parseDocument } from "yaml";
 
 import { EXTENSIBILITY_EXTENSION_POINT_ID } from "#commands/constants";
 import {
@@ -22,6 +23,7 @@ import {
   applyCustomScripts,
   generateCustomScriptsTemplate,
   readExtConfig,
+  removeLegacyImsInputs,
 } from "#commands/generate/actions/lib";
 import { templates } from "#test/fixtures/commands";
 import {
@@ -63,6 +65,53 @@ describe("readExtConfig", () => {
     ).rejects.toThrow(
       "Could not read ext.config.yaml for commerce/extensibility/1",
     );
+  });
+});
+
+describe("removeLegacyImsInputs", () => {
+  test("removes legacy IMS inputs only from actions with include-ims-credentials", () => {
+    const doc = parseDocument(`
+runtimeManifest:
+  packages:
+    app-management:
+      actions:
+        annotated:
+          inputs:
+            AIO_COMMERCE_AUTH_IMS_CLIENT_ID: $AIO_COMMERCE_AUTH_IMS_CLIENT_ID
+            AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS: $AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS
+            PAYMENT_API_KEY: $PAYMENT_API_KEY
+        plain:
+          inputs:
+            AIO_COMMERCE_AUTH_IMS_ORG_ID: $AIO_COMMERCE_AUTH_IMS_ORG_ID
+`);
+
+    removeLegacyImsInputs(doc, {
+      runtimeManifest: {
+        packages: {
+          "app-management": {
+            actions: {
+              annotated: {
+                annotations: { "include-ims-credentials": true },
+                function: "annotated.js",
+              },
+              "new-action": {
+                annotations: { "include-ims-credentials": true },
+                function: "new-action.js",
+              },
+              plain: { function: "plain.js" },
+            },
+          },
+        },
+      },
+    });
+
+    const { actions } = doc.toJS().runtimeManifest.packages["app-management"];
+    expect(actions.annotated.inputs).toEqual({
+      PAYMENT_API_KEY: "$PAYMENT_API_KEY",
+    });
+    expect(actions.plain.inputs).toEqual({
+      AIO_COMMERCE_AUTH_IMS_ORG_ID: "$AIO_COMMERCE_AUTH_IMS_ORG_ID",
+    });
   });
 });
 
