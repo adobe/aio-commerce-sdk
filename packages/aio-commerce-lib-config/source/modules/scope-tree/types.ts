@@ -67,7 +67,7 @@ export type GetScopeTreeResult = {
 export type ScopeTreeContext = {
   /** The namespace for isolating scope tree data. */
   namespace: string;
-  /** Cache timeout in milliseconds. */
+  /** Cache timeout in seconds. */
   cacheTimeout: number;
   /** Optional Commerce API client configuration for fetching fresh data. */
   commerceConfig?: CommerceHttpClientParams;

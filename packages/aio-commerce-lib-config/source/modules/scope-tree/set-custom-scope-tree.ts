@@ -49,7 +49,7 @@ import type { ScopeNode, ScopeTree, ScopeTreeContext } from "./types";
  * ```typescript
  * import { setCustomScopeTree } from "./modules/scope-tree";
  *
- * const context = { namespace: "my-app", cacheTimeout: 300000 };
+ * const context = { namespace: "my-app", cacheTimeout: 300 }; // 5 minutes
  *
  * // Replace all custom scopes with new ones
  * const result = await setCustomScopeTree(context, {

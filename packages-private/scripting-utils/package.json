@@ -40,7 +40,7 @@
     "@adobe/aio-lib-ims": "catalog:",
     "@npmcli/package-json": "^8.0.0",
     "@types/semver": "^7.7.1",
-    "dotenv": "^17.2.3",
+    "dotenv": "^18.0.0",
     "local-pkg": "^1.2.1",
     "package-manager-detector": "^1.6.0",
     "semver": "^7.8.5",

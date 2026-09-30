@@ -12,7 +12,7 @@
 
 import { getAclResourceId, sanitizeSegment } from "#api/lib/acl-resource-id";
 
-import type { AdminUiEntity } from "#api/lib/acl-resource-id";
+import type { MassActionEntity } from "#api/lib/acl-resource-id";
 
 /**
  * Derives the deterministic Commerce ACL resource id for a mass action.
@@ -32,14 +32,14 @@ import type { AdminUiEntity } from "#api/lib/acl-resource-id";
  * ```
  *
  * @param metadataId - The application's `metadata.id` value (e.g. `"approval-dashboard-app"`).
- * @param entity - The grid's Commerce entity (`"order"`, `"product"`, or `"customer"`).
+ * @param entity - The grid's Commerce entity (`"order"`, `"product"`, `"customer"`, or `"newsletter"`).
  * @param actionId - The action's `id` value from `adminUi.<entity>.massActions[].id`.
  * @returns The full Commerce ACL resource id for the mass-action leaf node, or an empty string
  *   when `metadataId` is blank.
  */
 export function getMassActionAclResourceId(
   metadataId: string,
-  entity: AdminUiEntity,
+  entity: MassActionEntity,
   actionId: string,
 ): string {
   const appRoot = getAclResourceId(metadataId);

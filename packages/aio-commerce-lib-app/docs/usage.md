@@ -688,6 +688,67 @@ export default defineConfig({
         ],
       },
     },
+    invoice: {
+      gridColumns: {
+        label: "Invoice payment data",
+        description: "Adds payment status to the invoice grid",
+        runtimeAction: "invoices/fetch-invoice-grid-data",
+        columns: [
+          {
+            id: "payment_status",
+            label: "Payment Status",
+            type: "string",
+            align: "left",
+          },
+        ],
+      },
+    },
+    creditMemo: {
+      gridColumns: {
+        label: "Credit memo refund data",
+        description: "Adds refund status to the credit memo grid",
+        runtimeAction: "credit-memos/fetch-credit-memo-grid-data",
+        columns: [
+          {
+            id: "refund_status",
+            label: "Refund Status",
+            type: "string",
+            align: "left",
+          },
+        ],
+      },
+    },
+    shipment: {
+      gridColumns: {
+        label: "Shipment carrier data",
+        description: "Adds carrier to the shipment grid",
+        runtimeAction: "shipments/fetch-shipment-grid-data",
+        columns: [
+          {
+            id: "carrier",
+            label: "Carrier",
+            type: "string",
+            align: "left",
+          },
+        ],
+      },
+    },
+    newsletter: {
+      gridColumns: {
+        label: "Newsletter engagement data",
+        description:
+          "Adds subscription source to the newsletter subscriber grid",
+        runtimeAction: "newsletter/fetch-subscriber-grid-data",
+        columns: [
+          {
+            id: "subscription_source",
+            label: "Source",
+            type: "string",
+            align: "left",
+          },
+        ],
+      },
+    },
   },
 });
 ```
@@ -704,7 +765,7 @@ export default defineConfig({
   - **align**: one of `"left"`, `"center"`, `"right"`
   - **aclProtected** (optional): boolean — when `true`, Commerce generates a per-app nested ACL resource for this column in the Adobe Commerce User Roles tree, so admins can grant or deny it per role; roles without the resource don't see the column. Derive the id with `getGridColumnAclResourceId` from `@adobe/aio-commerce-lib-admin-ui/api`. See the [`@adobe/aio-commerce-lib-admin-ui` Permission Client documentation](../../aio-commerce-lib-admin-ui/docs/usage.md#permission-client).
 
-Each of `order`, `product`, and `customer` is optional — configure only the grids your application extends.
+Each of `order`, `product`, `customer`, `invoice`, `creditMemo`, `shipment`, and `newsletter` is optional — configure only the grids your application extends. Only `order`, `product`, `customer`, and `newsletter` also support `massActions`; `invoice`, `creditMemo`, and `shipment` support `gridColumns` only.
 
 ##### Order View Buttons
 
@@ -1138,7 +1199,7 @@ export async function main(params) {
 
 The data is managed automatically by the SDK during the app association lifecycle: a standalone `association` runtime action (always deployed alongside `app-config`) stores it on association and clears it on unassociation. Apps scaffolded with a version of the SDK that includes this feature have the `association` action wired in from the start — no extra setup beyond your normal deploy.
 
-#### Adopting association in an existing app
+#### Enabling association in an existing app
 
 Apps scaffolded before this feature was introduced do not have the `association` action yet. After upgrading `@adobe/aio-commerce-lib-app`, regenerate the runtime actions and redeploy so the `/association` endpoint exists:
 

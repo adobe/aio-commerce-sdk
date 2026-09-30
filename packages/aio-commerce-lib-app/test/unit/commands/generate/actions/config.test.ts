@@ -21,9 +21,13 @@ import {
   getRuntimeActions,
   requiresWebSource,
 } from "#commands/generate/actions/config";
+import { COMMERCE_ACTION_INPUTS } from "#commands/generate/actions/constants";
 import {
   configWithAdminUiAllGrids,
+  configWithAdminUiInvoiceCreditMemoShipmentGrids,
   configWithAdminUiMenu,
+  configWithAdminUiNewsletterGrid,
+  configWithAdminUiNewsletterMassActions,
   configWithAdminUiSingleGrid,
   configWithCommerceEventing,
   configWithCustomInstallationSteps,
@@ -43,6 +47,35 @@ const CONFIGURATION_EXTENSION_MATCHER = /EXTENSION=configuration\/1/;
 const BACKEND_UI_V2_EXTENSION_MATCHER = /EXTENSION=backend-ui\/2/;
 
 describe("buildAppManagementExtConfig", () => {
+  test("declares LOG_LEVEL at the package level", () => {
+    const result = buildAppManagementExtConfig(minimalValidConfig);
+    const appManagementPackage =
+      result.runtimeManifest?.packages?.[PACKAGE_NAME];
+
+    expect(appManagementPackage?.inputs).toEqual({
+      LOG_LEVEL: "$LOG_LEVEL",
+    });
+    expect(appManagementPackage?.actions?.["app-config"]).toEqual(
+      expect.objectContaining({
+        function: expect.any(String),
+      }),
+    );
+    expect(
+      appManagementPackage?.actions?.["app-config"]?.inputs,
+    ).toBeUndefined();
+    expect(appManagementPackage?.actions?.association).toEqual(
+      expect.objectContaining({
+        function: expect.any(String),
+      }),
+    );
+    expect(appManagementPackage?.actions?.association?.inputs).toEqual(
+      COMMERCE_ACTION_INPUTS,
+    );
+    expect(appManagementPackage?.actions?.installation?.inputs).toEqual(
+      COMMERCE_ACTION_INPUTS,
+    );
+  });
+
   test("app-config action is included with minimal config", () => {
     const result = buildAppManagementExtConfig(minimalValidConfig);
 
@@ -92,6 +125,16 @@ describe("buildAppManagementExtConfig", () => {
       expect(workerImpls).toContain("app-management/installation");
     },
   );
+
+  test("association action carries the S2S auth inputs", () => {
+    const result = buildAppManagementExtConfig(minimalValidConfig);
+    const associationAction =
+      result.runtimeManifest?.packages?.[PACKAGE_NAME]?.actions?.association;
+
+    expect(associationAction?.inputs?.AIO_COMMERCE_AUTH_IMS_CLIENT_ID).toBe(
+      "$AIO_COMMERCE_AUTH_IMS_CLIENT_ID",
+    );
+  });
 
   test("installation action includes encryption key input when schema has password fields", () => {
     const configWithPassword = {
@@ -457,6 +500,29 @@ describe("collectUniqueRuntimeActions", () => {
     );
     expect(result).toEqual([]);
   });
+
+  test("collects runtimeActions from invoice, creditMemo, and shipment grid columns", () => {
+    const result = collectUniqueRuntimeActions(
+      configWithAdminUiInvoiceCreditMemoShipmentGrids.adminUi,
+    );
+    expect(result).toContain("invoices/fetch-invoice-grid-data");
+    expect(result).toContain("credit-memos/fetch-credit-memo-grid-data");
+    expect(result).toContain("shipments/fetch-shipment-grid-data");
+  });
+
+  test("collects runtimeAction from newsletter grid columns", () => {
+    const result = collectUniqueRuntimeActions(
+      configWithAdminUiNewsletterGrid.adminUi,
+    );
+    expect(result).toContain("newsletter/fetch-subscriber-grid-data");
+  });
+
+  test("collects runtimeAction from a worker newsletter mass action", () => {
+    const result = collectUniqueRuntimeActions(
+      configWithAdminUiNewsletterMassActions.adminUi,
+    );
+    expect(result).toContain("newsletter/unsubscribe-subscribers");
+  });
 });
 
 describe("requiresWebSource", () => {
@@ -483,9 +549,59 @@ describe("requiresWebSource", () => {
   test("returns false for a grid-only adminUi config", () => {
     expect(requiresWebSource(configWithAdminUiAllGrids.adminUi)).toBe(false);
   });
+
+  test("returns false for a grid-only config on invoice, creditMemo, and shipment", () => {
+    expect(
+      requiresWebSource(
+        configWithAdminUiInvoiceCreditMemoShipmentGrids.adminUi,
+      ),
+    ).toBe(false);
+  });
+
+  test("returns true for a newsletter view mass action", () => {
+    expect(
+      requiresWebSource({
+        newsletter: {
+          massActions: [
+            {
+              id: "review-subscribers",
+              label: "Review",
+              path: "#/review-subscribers",
+              type: "view",
+            },
+          ],
+        },
+      }),
+    ).toBe(true);
+  });
+
+  test("returns false for a worker-only newsletter mass action", () => {
+    expect(
+      requiresWebSource(configWithAdminUiNewsletterMassActions.adminUi),
+    ).toBe(false);
+  });
 });
 
 describe("buildBusinessConfigurationExtConfig", () => {
+  test("declares LOG_LEVEL at the package level", () => {
+    const result = buildBusinessConfigurationExtConfig();
+    const appManagementPackage =
+      result.runtimeManifest?.packages?.[PACKAGE_NAME];
+
+    expect(appManagementPackage?.inputs).toEqual({
+      LOG_LEVEL: "$LOG_LEVEL",
+    });
+    expect(appManagementPackage?.actions?.config?.inputs).toEqual(
+      expect.objectContaining({
+        AIO_COMMERCE_CONFIG_ENCRYPTION_KEY:
+          "$AIO_COMMERCE_CONFIG_ENCRYPTION_KEY",
+      }),
+    );
+    expect(
+      appManagementPackage?.actions?.["scope-tree"]?.inputs,
+    ).toBeUndefined();
+  });
+
   test("config action is included", () => {
     const result = buildBusinessConfigurationExtConfig();
     const actions = result.runtimeManifest?.packages?.[PACKAGE_NAME]?.actions;

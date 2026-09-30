@@ -138,14 +138,14 @@ const freshResult = await getScopeTree(
     refreshData: true,
     commerceConfig,
   },
-  { cacheTimeout: 600000 },
+  { cacheTimeout: 600 }, // 10 minutes
 );
 
 console.log("Using fresh data:", !freshResult.isCachedData);
 
 // Sync Commerce scopes explicitly (requires commerce config)
 const syncResult = await syncCommerceScopes(commerceConfig, {
-  cacheTimeout: 600000,
+  cacheTimeout: 600, // 10 minutes
 });
 console.log("Synced:", syncResult.synced);
 

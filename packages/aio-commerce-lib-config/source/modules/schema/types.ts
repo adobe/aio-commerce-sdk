@@ -18,7 +18,7 @@ export type SchemaContext = {
   /** The namespace for isolating schema data. */
   namespace: string;
 
-  /** Cache timeout in milliseconds. */
+  /** Cache timeout in seconds. */
   cacheTimeout: number;
 };
 

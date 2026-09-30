@@ -1,6 +1,6 @@
 # Mass Actions (`commerce/backend-ui/2`)
 
-Adds a bulk action to the order, product, or customer grid, applied to the records the user selects.
+Adds a bulk action to the order, product, customer, or newsletter grid, applied to the records the user selects.
 Declared under `adminUi.<entity>.massActions` (an array). Two variants, discriminated by `type`:
 
 - **`worker`** — Commerce calls a runtime action with the selected ids (server-side processing).
@@ -56,7 +56,7 @@ adminUi: {
 | `path`               | view       | Required; route into `web-src`                                                                                                      |
 | `sandboxPermissions` | view       | Optional; `allow-downloads` / `allow-modals` / `allow-popups`                                                                       |
 
-Available on `order`, `product`, and `customer`.
+Available on `order`, `product`, `customer`, and `newsletter`.
 
 ## Worker handler wire contract
 
