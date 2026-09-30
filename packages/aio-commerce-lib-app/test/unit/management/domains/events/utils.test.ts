@@ -255,8 +255,6 @@ describe("workspace configuration", () => {
     const context: typeof baseContext = {
       ...baseContext,
 
-      // @ts-expect-error This test intentionally swaps IMS installation params
-      // for valid Integration auth inputs to assert that IMS auth is required.
       params: {
         AIO_COMMERCE_AUTH_INTEGRATION_ACCESS_TOKEN: "access-token",
         AIO_COMMERCE_AUTH_INTEGRATION_ACCESS_TOKEN_SECRET:

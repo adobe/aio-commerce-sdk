@@ -541,6 +541,15 @@ export default defineCustomInstallationStep(async (config, context) => {
 });
 ```
 
+To authenticate against Adobe APIs, resolve the IMS credentials from the step context:
+
+```typescript
+import { resolveImsAuthParams } from "@adobe/aio-commerce-lib-auth";
+
+// Inside a custom installation step handler
+const { clientId, imsOrgId } = resolveImsAuthParams(context.params);
+```
+
 ##### Example: Successful Installation Script
 
 ```typescript

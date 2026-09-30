@@ -19,8 +19,6 @@ import {
 } from "#config/schema/admin-ui";
 import { hasBusinessConfigSchema } from "#config/schema/business-configuration";
 
-import { COMMERCE_ACTION_INPUTS } from "./constants";
-
 import type {
   ActionDefinition,
   ExtConfig,
@@ -31,6 +29,7 @@ import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 type ActionConfig = {
   requiresSchema?: boolean;
   requiresEncryptionKey?: boolean;
+  requiresImsCredentials?: boolean;
 };
 
 export type TemplateAction = ActionConfig & {
@@ -54,6 +53,9 @@ function createActionDefinition(
     annotations: {
       final: true,
       "require-adobe-auth": true,
+      ...(config.requiresImsCredentials && {
+        "include-ims-credentials": true,
+      }),
     },
 
     function: `${GENERATED_ACTIONS_PATH}/${actionName}.js`,
@@ -70,13 +72,6 @@ function createActionDefinition(
 
   return def;
 }
-
-/**
- * Inputs shared by the runtime actions that talk to the Commerce App Management
- * Service. `LOG_LEVEL` is declared once at the package level, so it's omitted
- * here to avoid duplicating it on every action.
- */
-const RUNTIME_ACTION_INPUTS = COMMERCE_ACTION_INPUTS;
 
 /**
  * Gets the runtime actions to be generated from the ext.config.yaml configuration.
@@ -128,11 +123,9 @@ export function buildAppManagementExtConfig(
         [PACKAGE_NAME]: {
           actions: {
             "app-config": createActionDefinition("app-config"),
-            association: createActionDefinition(
-              "association",
-              {},
-              { inputs: RUNTIME_ACTION_INPUTS },
-            ),
+            association: createActionDefinition("association", {
+              requiresImsCredentials: true,
+            }),
           } as Record<string, ActionDefinition>,
           inputs: {
             LOG_LEVEL: "$LOG_LEVEL",
@@ -155,9 +148,11 @@ export function buildAppManagementExtConfig(
   extConfig.runtimeManifest.packages[PACKAGE_NAME].actions.installation =
     createActionDefinition(
       "installation",
-      { requiresEncryptionKey: hasPasswordFieldsInSchema },
       {
-        inputs: RUNTIME_ACTION_INPUTS,
+        requiresEncryptionKey: hasPasswordFieldsInSchema,
+        requiresImsCredentials: true,
+      },
+      {
         limits: {
           timeout: 600_000,
         },

@@ -43,14 +43,26 @@ export type LifecycleContext = {
   /** The credentials of the app being managed. */
   appData: AppData;
 
-  /** The raw action parameters from the App Builder runtime action. */
+  /**
+   * The raw action parameters from the App Builder runtime action.
+   *
+   * The `AIO_COMMERCE_AUTH_IMS_*` fields are deprecated: generated actions receive
+   * OAuth Server-to-Server credentials via the `include-ims-credentials` annotation.
+   * Use `resolveImsAuthParams(context.params)` from `@adobe/aio-commerce-lib-auth` instead.
+   */
   params: RuntimeActionParams & {
-    AIO_COMMERCE_AUTH_IMS_CLIENT_ID: string;
-    AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS: string | string[];
-    AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID: string;
-    AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL: string;
-    AIO_COMMERCE_AUTH_IMS_ORG_ID: string;
-    AIO_COMMERCE_AUTH_IMS_SCOPES: string | string[];
+    /** @deprecated Use `resolveImsAuthParams(context.params).clientId` instead. */
+    AIO_COMMERCE_AUTH_IMS_CLIENT_ID?: string;
+    /** @deprecated Use `resolveImsAuthParams(context.params).clientSecrets` instead. */
+    AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS?: string | string[];
+    /** @deprecated Use `resolveImsAuthParams(context.params).technicalAccountId` instead. */
+    AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID?: string;
+    /** @deprecated Use `resolveImsAuthParams(context.params).technicalAccountEmail` instead. */
+    AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL?: string;
+    /** @deprecated Use `resolveImsAuthParams(context.params).imsOrgId` instead. */
+    AIO_COMMERCE_AUTH_IMS_ORG_ID?: string;
+    /** @deprecated Use `resolveImsAuthParams(context.params).scopes` instead. */
+    AIO_COMMERCE_AUTH_IMS_SCOPES?: string | string[];
   };
 
   /** Logger instance for workflow logging. */

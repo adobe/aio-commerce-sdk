@@ -11,6 +11,7 @@
  */
 
 import { unwrapHttpError } from "@adobe/aio-commerce-lib-api/utils";
+import { resolveImsAuthParams } from "@adobe/aio-commerce-lib-auth";
 
 import {
   isHttpNotFoundError,
@@ -378,7 +379,7 @@ async function putRegistration(
 
   const name = getRegistrationName(providerData, runtimeAction);
   const payload = {
-    clientId: params.AIO_COMMERCE_AUTH_IMS_CLIENT_ID,
+    clientId: resolveImsAuthParams(params).clientId,
     consumerOrgId: appData.consumerOrgId,
     deliveryType: "webhook",
     description: getRegistrationDescription(
@@ -647,7 +648,7 @@ function findDeployedRegistration(
   existingData: ExistingIoEventsData,
   context: EventsExecutionContext,
 ) {
-  const clientId = context.params.AIO_COMMERCE_AUTH_IMS_CLIENT_ID;
+  const { clientId } = resolveImsAuthParams(context.params);
   return (
     findExistingRegistrations(
       existingData.registrations,
