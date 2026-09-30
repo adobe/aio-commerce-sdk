@@ -40,3 +40,5 @@ allowBuilds:
   msw: true
   playwright: true
   protobufjs: true
+minimumReleaseAgeExclude:
+  - '@adobe/aio-lib-core-auth@1.2.0'
