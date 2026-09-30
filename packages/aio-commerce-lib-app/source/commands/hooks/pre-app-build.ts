@@ -77,6 +77,12 @@ export async function run(
     );
 
     consola.info("Syncing IMS credentials...");
+    consola.warn(
+      "Deprecated: if your actions use AIO_COMMERCE_AUTH_IMS_* inputs for OAuth Server-to-Server " +
+        "credentials, replace them with the `include-ims-credentials: true` action annotation. " +
+        "This hook still syncs legacy credentials for compatibility; that sync will be removed " +
+        "in a future major release.",
+    );
     await syncImsCredentials(projectRoot);
 
     return;

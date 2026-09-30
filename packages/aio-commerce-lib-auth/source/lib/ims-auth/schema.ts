@@ -103,7 +103,14 @@ export const StringArrayTransformSchema = (name: string) =>
 /** Validation schema for IMS auth environment values. */
 const ImsAuthEnvSchema = picklist(["prod", "stage"]);
 
-/** Defines the schema to validate the necessary parameters for the IMS auth service. */
+/**
+ * Defines the schema to validate the necessary parameters for the IMS auth service.
+ *
+ * `technicalAccountId`/`technicalAccountEmail` are optional because they only apply to the full
+ * OAuth Server-to-Server credential shape (used via `@adobe/aio-lib-ims`). The minimal
+ * OAuth Server-to-Server shape resolved from the `include-ims-credentials` annotation (used via
+ * `@adobe/aio-lib-core-auth`) has no technical account.
+ */
 export const ImsAuthParamsSchema = object({
   clientId: imsAuthParameter("clientId"),
   clientSecrets: stringArray("clientSecrets", 1),
@@ -111,13 +118,15 @@ export const ImsAuthParamsSchema = object({
   environment: pipe(optional(ImsAuthEnvSchema)),
   imsOrgId: imsAuthParameter("imsOrgId"),
   scopes: stringArray("scopes", 1),
-  technicalAccountEmail: pipe(
-    string(
-      "Expected a string value for the IMS auth parameter technicalAccountEmail",
+  technicalAccountEmail: optional(
+    pipe(
+      string(
+        "Expected a string value for the IMS auth parameter technicalAccountEmail",
+      ),
+      email("Expected a valid email format for technicalAccountEmail"),
     ),
-    email("Expected a valid email format for technicalAccountEmail"),
   ),
-  technicalAccountId: imsAuthParameter("technicalAccountId"),
+  technicalAccountId: optional(imsAuthParameter("technicalAccountId")),
 });
 
 /** Defines the parameters for the IMS auth service. */

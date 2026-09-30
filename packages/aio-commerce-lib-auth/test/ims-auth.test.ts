@@ -11,6 +11,10 @@
  */
 
 import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
+import {
+  generateAccessToken,
+  resolveCredentials,
+} from "@adobe/aio-lib-core-auth";
 import aioLibIms from "@adobe/aio-lib-ims";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
@@ -36,11 +40,83 @@ vi.mock("@adobe/aio-lib-ims", () => ({
   },
 }));
 
+vi.mock("@adobe/aio-lib-core-auth", () => ({
+  generateAccessToken: vi.fn(),
+  resolveCredentials: vi.fn(),
+}));
+
 describe("aio-commerce-lib-auth/ims-auth", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+
+    // Most tests exercise the manually-wired AIO_COMMERCE_AUTH_IMS_* path; default
+    // resolveCredentials to "not found" so it consistently falls through to that path
+    // unless a test explicitly overrides it to resolve OAuth Server-to-Server credentials.
+    vi.mocked(resolveCredentials).mockImplementation(() => {
+      throw new Error("No OAuth Server-to-Server credentials found");
+    });
   });
   describe("getImsAuthProvider", () => {
+    test("should mint a token via generateAccessToken when no technical account is present", async () => {
+      vi.mocked(generateAccessToken).mockResolvedValue({
+        access_token: "s2s-token",
+        expires_in: 3600,
+        token_type: "bearer",
+      });
+
+      const config: ImsAuthParams = {
+        clientId: "s2s-client-id",
+        clientSecrets: ["s2s-secret"],
+        imsOrgId: "s2s-org-id",
+        scopes: ["scope1"],
+      };
+
+      const imsAuthProvider = getImsAuthProvider(config);
+
+      const token = await imsAuthProvider.getAccessToken();
+      expect(token).toEqual("s2s-token");
+      expect(generateAccessToken).toHaveBeenCalledWith({
+        credentials: {
+          clientId: "s2s-client-id",
+          clientSecret: "s2s-secret",
+          orgId: "s2s-org-id",
+          scopes: ["scope1"],
+        },
+        env: "prod",
+      });
+
+      const headers = await imsAuthProvider.getHeaders();
+      expect(headers).toEqual({
+        Authorization: "Bearer s2s-token",
+        "x-api-key": "s2s-client-id",
+      });
+
+      expect(context.set).not.toHaveBeenCalled();
+      expect(getToken).not.toHaveBeenCalled();
+    });
+
+    test("should pass a non-default environment to generateAccessToken", async () => {
+      vi.mocked(generateAccessToken).mockResolvedValue({
+        access_token: "s2s-token",
+        expires_in: 3600,
+        token_type: "bearer",
+      });
+
+      const config: ImsAuthParams = {
+        clientId: "s2s-client-id",
+        clientSecrets: ["s2s-secret"],
+        environment: "stage",
+        imsOrgId: "s2s-org-id",
+        scopes: ["scope1"],
+      };
+
+      await getImsAuthProvider(config).getAccessToken();
+
+      expect(generateAccessToken).toHaveBeenCalledWith(
+        expect.objectContaining({ env: "stage" }),
+      );
+    });
+
     test("should export token", async () => {
       const authToken = "supersecrettoken";
       vi.mocked(getToken).mockResolvedValue(authToken);
@@ -485,8 +561,6 @@ describe("aio-commerce-lib-auth/ims-auth", () => {
     test.each([
       ["clientId", { clientId: undefined }],
       ["clientSecrets", { clientSecrets: undefined }],
-      ["technicalAccountId", { technicalAccountId: undefined }],
-      ["technicalAccountEmail", { technicalAccountEmail: undefined }],
       ["imsOrgId", { imsOrgId: undefined }],
       ["scopes", { scopes: undefined }],
     ])("should throw when %s is missing", (_field, overrides) => {
@@ -497,9 +571,65 @@ describe("aio-commerce-lib-auth/ims-auth", () => {
         });
       }).toThrow("Invalid ImsAuthProvider configuration");
     });
+
+    test("should not throw when technicalAccountId and technicalAccountEmail are missing", () => {
+      const {
+        technicalAccountId: _id,
+        technicalAccountEmail: _email,
+        ...configWithoutTechnicalAccount
+      } = validConfig;
+
+      expect(() => {
+        assertImsAuthParams(configWithoutTechnicalAccount);
+      }).not.toThrow();
+    });
   });
 
   describe("resolveImsAuthParams", () => {
+    test("should resolve OAuth Server-to-Server credentials before falling back to manually-wired params", () => {
+      vi.mocked(resolveCredentials).mockReturnValue({
+        credentials: {
+          clientId: "s2s-client-id",
+          clientSecret: "s2s-secret",
+          orgId: "s2s-org-id",
+          scopes: ["s2s-scope"],
+        },
+        env: "stage",
+      });
+
+      const resolved = resolveImsAuthParams({ __ims_oauth_s2s: {} });
+
+      expect(resolved).toEqual({
+        clientId: "s2s-client-id",
+        clientSecrets: ["s2s-secret"],
+        environment: "stage",
+        imsOrgId: "s2s-org-id",
+        scopes: ["s2s-scope"],
+      });
+    });
+
+    test("should fall back to manually-wired AIO_COMMERCE_AUTH_IMS_* params when OAuth Server-to-Server credentials cannot be resolved", () => {
+      const params = {
+        AIO_COMMERCE_AUTH_IMS_CLIENT_ID: "test-client-id",
+        AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS: ["supersecret"],
+        AIO_COMMERCE_AUTH_IMS_ORG_ID: "test-org-id",
+        AIO_COMMERCE_AUTH_IMS_SCOPES: ["scope1"],
+        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL: "test-email@example.com",
+        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID: "test-technical-account-id",
+      };
+
+      const resolved = resolveImsAuthParams(params);
+
+      expect(resolved).toEqual({
+        clientId: "test-client-id",
+        clientSecrets: ["supersecret"],
+        imsOrgId: "test-org-id",
+        scopes: ["scope1"],
+        technicalAccountEmail: "test-email@example.com",
+        technicalAccountId: "test-technical-account-id",
+      });
+    });
+
     test("should resolve IMS auth params from App Builder action inputs with all fields", () => {
       const params = {
         AIO_COMMERCE_AUTH_IMS_CLIENT_ID: "test-client-id",

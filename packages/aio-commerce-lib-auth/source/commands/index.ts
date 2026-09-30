@@ -26,7 +26,8 @@ const USAGE = `
 Usage: ${NAMESPACE} <command> [target]
 
 Commands:
-  sync-ims-credentials                 Syncs the IMS credentials from the current context to the .env file.
+  sync-ims-credentials                 (deprecated) Syncs IMS credentials to .env.
+                                       Use include-ims-credentials instead.
 
   help                                 Show this help message
 
