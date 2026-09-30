@@ -117,6 +117,9 @@ For App Builder runtime actions, you can use `resolveCommerceHttpClientParams` t
 
 **Example: SaaS with IMS Auth**
 
+> [!IMPORTANT]
+> The `include-ims-credentials` annotation injects the workspace OAuth Server-to-Server credentials into the action at runtime. Manually wiring the `AIO_COMMERCE_AUTH_IMS_*` inputs is deprecated.
+
 ```diff
 # app.config.yaml
  actions:
@@ -133,8 +136,6 @@ For App Builder runtime actions, you can use `resolveCommerceHttpClientParams` t
 +    annotations:
 +      include-ims-credentials: true
 ```
-
-The `include-ims-credentials` annotation injects the workspace OAuth Server-to-Server credentials into the action at runtime. Manually wiring the `AIO_COMMERCE_AUTH_IMS_*` inputs is deprecated.
 
 ```typescript
 // src/actions/my-action/index.js
