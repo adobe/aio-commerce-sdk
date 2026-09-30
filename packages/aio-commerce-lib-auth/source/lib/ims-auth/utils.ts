@@ -113,9 +113,9 @@ export function assertImsAuthParams(
 /**
  * Resolves an {@link ImsAuthParams} from the given App Builder action inputs.
  *
- * Supports both ways of getting OAuth Server-to-Server credentials into an action: the
- * `include-ims-credentials: true` action annotation is tried first, and the manually-wired
- * `AIO_COMMERCE_AUTH_IMS_*` params are used as a fallback if the annotation isn't present.
+ * For OAuth Server-to-Server credentials, use the `include-ims-credentials: true` action
+ * annotation. The legacy fallback to manually-wired `AIO_COMMERCE_AUTH_IMS_*` params is
+ * deprecated and will be removed in a future major release.
  *
  * @param params The App Builder action inputs to resolve the IMS authentication parameters from.
  * @throws {CommerceSdkValidationError} If the parameters are invalid and cannot be resolved.
@@ -123,14 +123,15 @@ export function assertImsAuthParams(
  * @example
  * ```typescript
  * // Some App Builder runtime action that needs IMS authentication
- * export function main(params) {
- *   const imsAuthProvider = getImsAuthProvider(resolveImsAuthParams(params));
+ * export async function main(params) {
+ *   const authProvider = getImsAuthProvider(resolveImsAuthParams(params));
  *
  *   // Get headers for API requests
  *   const headers = await authProvider.getHeaders();
  *   const response = await fetch('https://api.adobe.io/some-endpoint', {
- *     headers: await authProvider.getHeaders()
+ *     headers
  *   });
+ *   return { statusCode: response.status };
  * }
  * ```
  */
@@ -150,7 +151,7 @@ export function resolveImsAuthParams(
       scopes: credentials.scopes,
     });
   } catch {
-    // No minimal OAuth Server-to-Server credentials/annotation present, fall back below.
+    // No annotated OAuth Server-to-Server credentials present; retain the deprecated fallback.
   }
 
   const resolvedParams = {

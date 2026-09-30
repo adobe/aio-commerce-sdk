@@ -20,6 +20,11 @@ import consola from "consola";
  */
 export async function run() {
   consola.start("Syncing IMS credentials...");
+  consola.warn(
+    "Deprecated: if your actions use AIO_COMMERCE_AUTH_IMS_* inputs for OAuth Server-to-Server " +
+      "credentials, replace them with the `include-ims-credentials: true` action annotation. " +
+      "The sync-ims-credentials command will be removed in a future major release.",
+  );
 
   try {
     const projectRoot = await getProjectRootDirectory();
@@ -46,7 +51,7 @@ export async function run() {
     }
 
     consola.success(
-      "IMS credentials successfully synced to their AIO_COMMERCE_IMS_AUTH counterparts!",
+      "IMS credentials successfully synced to AIO_COMMERCE_AUTH_IMS_* variables.",
     );
   } catch (error) {
     consola.error(stringifyError(error));

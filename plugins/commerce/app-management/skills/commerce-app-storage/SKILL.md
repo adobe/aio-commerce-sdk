@@ -89,6 +89,9 @@ Gather from the user:
 Add the action to a user-defined package in `src/commerce-extensibility-1/ext.config.yaml` (any name except `app-management`, which is reserved).
 
 > **`include-ims-credentials: true` is required on every DB action.** Without it, `aio-lib-db` has no IMS token to authenticate with and the connection fails at runtime (and the app installation fails if the action runs during install). Do not omit this annotation.
+>
+> Do not manually wire OAuth Server-to-Server credentials with `AIO_COMMERCE_AUTH_IMS_*` inputs.
+> That legacy fallback is deprecated and planned for removal in a future major release.
 
 ```yaml
 # src/commerce-extensibility-1/ext.config.yaml
@@ -131,7 +134,7 @@ import { init as initDb } from "@adobe/aio-lib-db";
 export async function main(params: Record<string, unknown>) {
   let client;
   try {
-    // Resolve the injected AIO_COMMERCE_AUTH_IMS_* params, then mint a raw token string.
+    // Resolve credentials injected by include-ims-credentials, then mint a raw token string.
     const authProvider = getImsAuthProvider(resolveImsAuthParams(params));
     const token = await authProvider.getAccessToken();
     const db = await initDb({ token, region: "emea" }); // must match the manifest database.region
@@ -327,7 +330,7 @@ A build failure points directly to the offending config field. To exercise the a
 
   See [assets/db-action.ts](assets/db-action.ts) for the full reference.
 
-- **Auth fails inside an installation step**: resolve the IMS auth params from `context.params` (`resolveImsAuthParams(context.params)`) — which carries the OAuth Server-to-Server credentials, whether from `include-ims-credentials` or manually-wired `AIO_COMMERCE_AUTH_IMS_*` inputs — not from `config`, which holds no credentials.
+- **Auth fails inside an installation step**: resolve the injected IMS auth params from `context.params` with `resolveImsAuthParams(context.params)` — not from `config`, which holds no credentials. Ensure the action is annotated with `include-ims-credentials: true`; manually wired `AIO_COMMERCE_AUTH_IMS_*` credentials are deprecated.
 - **Installation step fails to load (`must export a default function or object`)**: the script was authored as CommonJS. Author it as an ES module with `export default`; `module.exports` (or `module.exports.default`) surfaces through the framework's `import * as` loader as `.default.default` and fails validation.
 - **`createIndex` errors or has no effect**: it must be called on a collection object (`client.collection("name").createIndex({ field: 1 })`), not with a collection-name string. Get the collection first, then call `createIndex` on it.
 - **Custom installation step registered and deployed but never runs**: `init` wasn't re-run after registering the first install-requiring domain (Step 7) — no `installation` action, no install endpoint.

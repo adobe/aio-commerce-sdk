@@ -8,8 +8,8 @@
 //   resolveImsAuthParams -> getAccessToken -> init -> connect -> use collection -> ALWAYS close.
 //
 // Registration requirements (in src/commerce-extensibility-1/ext.config.yaml):
-//   - include-ims-credentials: true   (REQUIRED — makes the OAuth Server-to-Server
-//     credentials resolveImsAuthParams needs below available on params)
+//   - include-ims-credentials: true   (REQUIRED — injects the OAuth Server-to-Server
+//     credentials that resolveImsAuthParams reads from params)
 //   - web: "yes" for an HTTP-invokable web action; "no" for an event or webhook handler
 //   - the "App Builder Data Services" API must be added to the project in the
 //     Adobe Developer Console (every workspace that uses the database)

@@ -36,50 +36,36 @@ See the [API Reference](./api-reference/README.md) for a full list of symbols ex
 
 ### IMS Provider
 
+For OAuth Server-to-Server credentials in an App Builder action, use the
+`include-ims-credentials: true` annotation and resolve the injected credentials with
+`resolveImsAuthParams` as shown below. Avoid manually wiring `AIO_COMMERCE_AUTH_IMS_*`
+credentials; that fallback is deprecated and is planned for removal in a future major release.
+
 ```typescript
 import {
-  assertImsAuthParams,
   getImsAuthProvider,
+  resolveImsAuthParams,
 } from "@adobe/aio-commerce-lib-auth";
 
-import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core";
-
 export const main = async function (params: Record<string, unknown>) {
-  try {
-    // Validate parameters and get the IMS auth provider
-    assertImsAuthParams(params);
-    const imsAuthProvider = getImsAuthProvider(params);
+  const imsAuthProvider = getImsAuthProvider(resolveImsAuthParams(params));
+  const headers = await imsAuthProvider.getHeaders();
 
-    const token = await imsAuthProvider.getAccessToken();
-    const headers = await imsAuthProvider.getHeaders();
-
-    // Use headers in your API calls
-    // business logic e.g requesting orders
-    return { statusCode: 200 };
-  } catch (error) {
-    if (error instanceof CommerceSdkValidationError) {
-      return {
-        statusCode: 400,
-        body: {
-          error: `Invalid IMS configuration: ${error.message}`,
-        },
-      };
-    }
-    throw error;
-  }
+  // Use headers in your API calls
+  return { statusCode: 200 };
 };
 ```
 
 ### OAuth Server-to-Server via the `include-ims-credentials` annotation
 
-Annotating an action with `include-ims-credentials: true` in `app.config.yaml` is a leaner
-alternative to manually wiring `AIO_COMMERCE_AUTH_IMS_*` inputs (see [Automatic Auth
-Resolution](#automatic-auth-resolution)): App Builder's runtime injects the workspace's OAuth
-Server-to-Server credentials directly into the action's `params`.
+Annotate an action with `include-ims-credentials: true` in `app.config.yaml`. App Builder's
+runtime injects the workspace's OAuth Server-to-Server credentials directly into the action's
+`params`. This is the recommended way to provide IMS credentials; manually wiring
+`AIO_COMMERCE_AUTH_IMS_*` inputs is deprecated and planned for removal in a future major release.
 
-`resolveImsAuthParams` resolves this shape transparently, falling back to the manually-wired
-`AIO_COMMERCE_AUTH_IMS_*` params when the annotation isn't present. `getImsAuthProvider` then picks
-the matching token flow automatically, so you don't need to branch on which shape you got:
+`resolveImsAuthParams` resolves the injected credentials. Its legacy fallback to manually-wired
+`AIO_COMMERCE_AUTH_IMS_*` params remains temporarily for compatibility, but should not be used
+for new actions.
 
 ```typescript
 import {
@@ -244,25 +230,26 @@ try {
 
 ### Automatic Auth Resolution
 
-The `resolveAuthParams` function automatically detects and resolves authentication parameters from your runtime action inputs. It tries IMS authentication first, which covers both the `include-ims-credentials` annotation and manually-wired params (see [OAuth Server-to-Server via the `include-ims-credentials` annotation](#oauth-server-to-server-via-the-include-ims-credentials-annotation)), then falls back to Integration authentication if no IMS credentials can be resolved.
+The `resolveAuthParams` function automatically detects and resolves authentication parameters from your runtime action inputs. It tries IMS authentication first, using the `include-ims-credentials` annotation (or the deprecated manually-wired IMS fallback), then falls back to Integration authentication if no IMS credentials can be resolved.
 
 #### Required Parameters
 
-**IMS Authentication** is resolved via `resolveImsAuthParams`, so either of these is enough:
+**IMS Authentication** is resolved via `resolveImsAuthParams`. For new actions, add the
+`include-ims-credentials: true` annotation; no credentials need to be wired into action inputs.
 
-- The `include-ims-credentials: true` action annotation (no params wiring needed), or
-- All of the following manually-wired params:
+> [!CAUTION]
+> Manually wiring `AIO_COMMERCE_AUTH_IMS_CLIENT_ID`, `AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS`,
+> `AIO_COMMERCE_AUTH_IMS_ORG_ID`, `AIO_COMMERCE_AUTH_IMS_SCOPES`,
+> `AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID`, `AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL`,
+> `AIO_COMMERCE_AUTH_IMS_ENVIRONMENT`, or `AIO_COMMERCE_AUTH_IMS_CONTEXT` for OAuth
+> Server-to-Server credentials is deprecated. Existing actions continue to work for now, but
+> migrate them to the `include-ims-credentials` annotation before the next major release. This
+> deprecation does not apply to `AIO_COMMERCE_AUTH_IMS_TOKEN` /
+> `AIO_COMMERCE_AUTH_IMS_API_KEY` used to forward an existing token, or to
+> `AIO_COMMERCE_AUTH_INTEGRATION_*` Commerce Integration credentials.
 
-  | Parameter Key                                   | Description                          |
-  | ----------------------------------------------- | ------------------------------------ |
-  | `AIO_COMMERCE_AUTH_IMS_CLIENT_ID`               | IMS OAuth client ID                  |
-  | `AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS`          | IMS client secrets (comma-separated) |
-  | `AIO_COMMERCE_AUTH_IMS_ORG_ID`                  | IMS organization ID                  |
-  | `AIO_COMMERCE_AUTH_IMS_SCOPES`                  | OAuth scopes (comma-separated)       |
-  | `AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID`    | Technical account ID (optional)      |
-  | `AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL` | Technical account email (optional)   |
-
-**Integration Authentication** (requires all of these):
+**Integration Authentication** continues to use the manually configured parameters (requires all
+of these):
 
 | Parameter Key                                       | Description               |
 | --------------------------------------------------- | ------------------------- |
@@ -311,7 +298,7 @@ export const main = async function (params: Record<string, unknown>) {
 
 The resolver tries strategies in the following order:
 
-1. **IMS auth** - If IMS credentials can be resolved (via the `include-ims-credentials` annotation or manually-wired params), returns IMS auth with `strategy: "ims"`
+1. **IMS auth** - If IMS credentials can be resolved (via the `include-ims-credentials` annotation or legacy manually-wired params), returns IMS auth with `strategy: "ims"`
 2. **Integration parameters** - If all Integration parameters are present, returns Integration auth with `strategy: "integration"`
 
 If neither resolves, it throws an error.
@@ -331,20 +318,23 @@ If neither resolves, it throws an error.
 
 ## CLI Commands
 
-The library provides CLI commands to help manage authentication credentials:
+The library provides CLI commands to help manage authentication credentials. The legacy
+`sync-ims-credentials` command is deprecated; use `include-ims-credentials: true` on each action
+that needs OAuth Server-to-Server credentials.
 
 ```bash
 # Sync IMS credentials from the current workspace context to the .env file
 npx @adobe/aio-commerce-lib-auth sync-ims-credentials
 ```
 
-### `sync-ims-credentials`
+### `sync-ims-credentials` (deprecated)
 
-Synchronizes the IMS credentials from your current Adobe I/O workspace context (stored in `.aio`) to the `.env` file, mapping them to the environment variables expected by this library.
+This command synchronizes IMS credentials from your current Adobe I/O workspace context (stored
+in `.aio`) to `.env` using `AIO_COMMERCE_AUTH_IMS_*` variables. It remains available temporarily
+for compatibility and will be removed in a future major release. Prefer the
+`include-ims-credentials: true` action annotation instead.
 
-This command reads the IMS S2S credentials from your configured workspace and writes them to your `.env` file using the `AIO_COMMERCE_AUTH_IMS_*` naming convention.
-
-**Mapped environment variables:**
+**Legacy environment variable mapping:**
 
 | Source (`.aio` context)   | Target (`.env` file)                            |
 | ------------------------- | ----------------------------------------------- |
@@ -358,7 +348,8 @@ This command reads the IMS S2S credentials from your configured workspace and wr
 **Usage:**
 
 > [!TIP]
-> Run this command after setting up your Adobe I/O workspace credentials with `aio app use` to automatically populate your `.env` file with the IMS authentication parameters required by the library.
+> Existing projects may continue to use this command temporarily. For new and updated actions,
+> use the `include-ims-credentials: true` annotation instead.
 
 ```bash
 npx @adobe/aio-commerce-lib-auth sync-ims-credentials
@@ -368,5 +359,5 @@ npx @adobe/aio-commerce-lib-auth sync-ims-credentials
 
 ```
 ℹ Syncing IMS credentials...
-✔ IMS credentials successfully synced to their AIO_COMMERCE_IMS_AUTH counterparts!
+✔ IMS credentials successfully synced to AIO_COMMERCE_AUTH_IMS_* variables.
 ```
