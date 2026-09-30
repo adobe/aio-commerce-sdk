@@ -10,7 +10,10 @@
  * governing permissions and limitations under the License.
  */
 
-import { resolveAuthParams } from "@adobe/aio-commerce-lib-auth";
+import {
+  resolveAuthParams,
+  resolveImsAuthParams,
+} from "@adobe/aio-commerce-lib-auth";
 import {
   getSystemConfigByKey,
   setSystemConfigByKey,
@@ -493,6 +496,14 @@ export function sanitizeEventingIdentifier(value: string) {
     .toLowerCase()
     .replace(/\s+/g, "_")
     .replace(/[^a-z0-9_]/g, "");
+}
+
+/**
+ * Resolves the IMS client ID of the app from the runtime action params.
+ * @param params - The runtime action params.
+ */
+export function getImsClientId(params: Record<string, unknown>) {
+  return resolveImsAuthParams(params).clientId;
 }
 
 /**

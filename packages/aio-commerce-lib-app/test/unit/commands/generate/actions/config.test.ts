@@ -21,7 +21,6 @@ import {
   getRuntimeActions,
   requiresWebSource,
 } from "#commands/generate/actions/config";
-import { COMMERCE_ACTION_INPUTS } from "#commands/generate/actions/constants";
 import {
   configWithAdminUiAllGrids,
   configWithAdminUiInvoiceCreditMemoShipmentGrids,
@@ -68,12 +67,8 @@ describe("buildAppManagementExtConfig", () => {
         function: expect.any(String),
       }),
     );
-    expect(appManagementPackage?.actions?.association?.inputs).toEqual(
-      COMMERCE_ACTION_INPUTS,
-    );
-    expect(appManagementPackage?.actions?.installation?.inputs).toEqual(
-      COMMERCE_ACTION_INPUTS,
-    );
+    expect(appManagementPackage?.actions?.association?.inputs).toBeUndefined();
+    expect(appManagementPackage?.actions?.installation?.inputs).toBeUndefined();
   });
 
   test("app-config action is included with minimal config", () => {
@@ -126,15 +121,17 @@ describe("buildAppManagementExtConfig", () => {
     },
   );
 
-  test("association action carries the S2S auth inputs", () => {
-    const result = buildAppManagementExtConfig(minimalValidConfig);
-    const associationAction =
-      result.runtimeManifest?.packages?.[PACKAGE_NAME]?.actions?.association;
+  test.each(["association", "installation"])(
+    "%s action includes IMS credentials via annotation",
+    (name) => {
+      const result = buildAppManagementExtConfig(minimalValidConfig);
+      const action =
+        result.runtimeManifest?.packages?.[PACKAGE_NAME]?.actions?.[name];
 
-    expect(associationAction?.inputs?.AIO_COMMERCE_AUTH_IMS_CLIENT_ID).toBe(
-      "$AIO_COMMERCE_AUTH_IMS_CLIENT_ID",
-    );
-  });
+      expect(action?.annotations?.["include-ims-credentials"]).toBe(true);
+      expect(action?.inputs?.AIO_COMMERCE_AUTH_IMS_CLIENT_ID).toBeUndefined();
+    },
+  );
 
   test("installation action includes encryption key input when schema has password fields", () => {
     const configWithPassword = {

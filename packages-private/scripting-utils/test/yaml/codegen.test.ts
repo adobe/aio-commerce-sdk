@@ -649,6 +649,63 @@ runtimeManifest:
         },
       );
     });
+
+    test("drops legacy IMS credential inputs from actions with include-ims-credentials", async () => {
+      const existingConfig = `
+runtimeManifest:
+  packages:
+    test-package:
+      license: Apache-2.0
+      actions:
+        annotated-action:
+          function: actions/annotated.js
+          inputs:
+            AIO_COMMERCE_AUTH_IMS_CLIENT_ID: $AIO_COMMERCE_AUTH_IMS_CLIENT_ID
+            AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS: $AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS
+            PAYMENT_API_KEY: $PAYMENT_API_KEY
+        plain-action:
+          function: actions/plain.js
+          inputs:
+            AIO_COMMERCE_AUTH_IMS_ORG_ID: $AIO_COMMERCE_AUTH_IMS_ORG_ID
+`;
+
+      await withTempFiles(
+        { "ext.config.yaml": existingConfig },
+        async (tempDir) => {
+          const configPath = join(tempDir, "ext.config.yaml");
+          const existingDoc = parseDocument(existingConfig);
+          const config = {
+            runtimeManifest: {
+              packages: {
+                "test-package": {
+                  actions: {
+                    "annotated-action": {
+                      annotations: { "include-ims-credentials": true },
+                      function: "actions/annotated.js",
+                    },
+                    "plain-action": { function: "actions/plain.js" },
+                  },
+                },
+              },
+            },
+          };
+
+          await createOrUpdateExtConfig(configPath, config, existingDoc);
+          const { actions } = parseDocument(
+            await readFile(configPath, "utf-8"),
+          ).toJS().runtimeManifest.packages["test-package"];
+
+          expect(actions["annotated-action"].inputs).toEqual({
+            LOG_LEVEL: "$LOG_LEVEL",
+            PAYMENT_API_KEY: "$PAYMENT_API_KEY",
+          });
+          expect(actions["plain-action"].inputs).toEqual({
+            AIO_COMMERCE_AUTH_IMS_ORG_ID: "$AIO_COMMERCE_AUTH_IMS_ORG_ID",
+            LOG_LEVEL: "$LOG_LEVEL",
+          });
+        },
+      );
+    });
   });
 
   describe("preserves the runtime field", () => {

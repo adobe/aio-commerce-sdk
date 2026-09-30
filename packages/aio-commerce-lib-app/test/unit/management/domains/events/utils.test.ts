@@ -18,6 +18,7 @@ import {
   generateInstanceId,
   getCommerceEventingConfigurationUpdateParams,
   getCommerceEventingExistingData,
+  getImsClientId,
   getIoEventCode,
   getIoEventsExistingData,
   getNamespacedEvent,
@@ -255,8 +256,6 @@ describe("workspace configuration", () => {
     const context: typeof baseContext = {
       ...baseContext,
 
-      // @ts-expect-error This test intentionally swaps IMS installation params
-      // for valid Integration auth inputs to assert that IMS auth is required.
       params: {
         AIO_COMMERCE_AUTH_INTEGRATION_ACCESS_TOKEN: "access-token",
         AIO_COMMERCE_AUTH_INTEGRATION_ACCESS_TOKEN_SECRET:
@@ -267,6 +266,35 @@ describe("workspace configuration", () => {
     };
 
     expect(() => makeWorkspaceConfig(context)).toThrow();
+  });
+});
+
+describe("getImsClientId", () => {
+  test("resolves the client ID from include-ims-credentials annotation params", () => {
+    const clientId = getImsClientId({
+      __ims_env: "prod",
+      __ims_oauth_s2s: {
+        clientId: "annotated-client-id",
+        clientSecret: "annotated-secret",
+        orgId: "annotated-org-id",
+        scopes: ["openid"],
+      },
+    });
+
+    expect(clientId).toBe("annotated-client-id");
+  });
+
+  test("falls back to legacy AIO_COMMERCE_AUTH_IMS_* params", () => {
+    const clientId = getImsClientId({
+      AIO_COMMERCE_AUTH_IMS_CLIENT_ID: "legacy-client-id",
+      AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS: ["legacy-secret"],
+      AIO_COMMERCE_AUTH_IMS_ORG_ID: "legacy-org-id",
+      AIO_COMMERCE_AUTH_IMS_SCOPES: ["openid"],
+      AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL: "tech@example.com",
+      AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID: "tech-id",
+    });
+
+    expect(clientId).toBe("legacy-client-id");
   });
 });
 

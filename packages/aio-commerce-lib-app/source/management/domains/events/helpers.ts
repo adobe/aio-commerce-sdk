@@ -23,6 +23,7 @@ import {
   generateInstanceId,
   generateInstanceIdDeprecated,
   getCommerceEventingConfigurationUpdateParams,
+  getImsClientId,
   getIoEventCode,
   getLegacyRegistrationName,
   getNamespacedEvent,
@@ -236,7 +237,7 @@ async function createIoEventRegistration(params: CreateRegistrationParams) {
 
   const payload = {
     ...appCredentials,
-    clientId: runtimeParams.AIO_COMMERCE_AUTH_IMS_CLIENT_ID,
+    clientId: getImsClientId(runtimeParams),
     deliveryType: "webhook",
     description,
 
@@ -287,7 +288,7 @@ async function createOrGetIoEventRegistration(
   const name = getRegistrationName(provider, runtimeAction);
   const existing = findExistingRegistrations(
     registrations,
-    runtimeParams.AIO_COMMERCE_AUTH_IMS_CLIENT_ID,
+    getImsClientId(runtimeParams),
     name,
   );
 
@@ -687,10 +688,9 @@ async function deleteIoEventRegistrations(
       getLegacyRegistrationName(providerData, runtimeAction),
     ),
   ]);
+  const clientId = getImsClientId(runtimeParams);
   const providerRegistrations = registrations.filter(
-    (reg) =>
-      reg.client_id === runtimeParams.AIO_COMMERCE_AUTH_IMS_CLIENT_ID &&
-      registrationNames.has(reg.name),
+    (reg) => reg.client_id === clientId && registrationNames.has(reg.name),
   );
 
   if (providerRegistrations.length === 0) {

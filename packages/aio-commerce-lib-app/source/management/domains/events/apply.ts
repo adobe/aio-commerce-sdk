@@ -23,6 +23,7 @@ import {
   findExistingRegistrations,
   generateInstanceId,
   generateInstanceIdDeprecated,
+  getImsClientId,
   getIoEventsExistingData,
   getLegacyRegistrationName,
   getNamespacedEvent,
@@ -378,7 +379,7 @@ async function putRegistration(
 
   const name = getRegistrationName(providerData, runtimeAction);
   const payload = {
-    clientId: params.AIO_COMMERCE_AUTH_IMS_CLIENT_ID,
+    clientId: getImsClientId(params),
     consumerOrgId: appData.consumerOrgId,
     deliveryType: "webhook",
     description: getRegistrationDescription(
@@ -647,7 +648,7 @@ function findDeployedRegistration(
   existingData: ExistingIoEventsData,
   context: EventsExecutionContext,
 ) {
-  const clientId = context.params.AIO_COMMERCE_AUTH_IMS_CLIENT_ID;
+  const clientId = getImsClientId(context.params);
   return (
     findExistingRegistrations(
       existingData.registrations,

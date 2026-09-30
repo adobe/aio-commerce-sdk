@@ -10,6 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
+import { resolveImsAuthParams } from "@adobe/aio-commerce-lib-auth";
 import { getHeader } from "@adobe/aio-commerce-lib-core/headers";
 import { noContent, ok } from "@adobe/aio-commerce-lib-core/responses";
 import { createCombinedStore } from "@aio-commerce-sdk/common-utils/storage";
@@ -169,6 +170,36 @@ export function buildWorkflowParams(
 }
 
 /**
+ * Returns the deprecated `AIO_COMMERCE_AUTH_IMS_*` params resolved from the
+ * given runtime params, or an empty object if no IMS credentials can be resolved.
+ */
+function getLegacyImsParams(params: Record<string, unknown>) {
+  try {
+    const {
+      clientId,
+      clientSecrets,
+      imsOrgId,
+      scopes,
+      technicalAccountEmail,
+      technicalAccountId,
+    } = resolveImsAuthParams(params);
+
+    return Object.fromEntries(
+      Object.entries({
+        AIO_COMMERCE_AUTH_IMS_CLIENT_ID: clientId,
+        AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS: clientSecrets,
+        AIO_COMMERCE_AUTH_IMS_ORG_ID: imsOrgId,
+        AIO_COMMERCE_AUTH_IMS_SCOPES: scopes,
+        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL: technicalAccountEmail,
+        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID: technicalAccountId,
+      }).filter(([, value]) => value !== undefined),
+    );
+  } catch {
+    return {};
+  }
+}
+
+/**
  * Builds a LifecycleContext from merged workflow params.
  * Shared by installation, uninstallation, and upgrade execution.
  */
@@ -181,7 +212,10 @@ export function buildLifecycleContext(
     appData: params.appData,
     customScripts: params.customScriptsLoader?.(appConfig, logFn) ?? {},
     logger: logFn,
-    params,
+
+    // Keeps custom scripts that still read the deprecated `AIO_COMMERCE_AUTH_IMS_*`
+    // params working when credentials are injected via `include-ims-credentials`.
+    params: { ...getLegacyImsParams(params), ...params },
   };
 }
 

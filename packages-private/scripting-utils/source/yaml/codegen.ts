@@ -34,6 +34,16 @@ import type {
   RuntimeManifest,
 } from "#yaml/types";
 
+/** Inputs superseded by the `include-ims-credentials` action annotation. */
+const LEGACY_IMS_CREDENTIAL_INPUTS = new Set([
+  "AIO_COMMERCE_AUTH_IMS_CLIENT_ID",
+  "AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS",
+  "AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID",
+  "AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL",
+  "AIO_COMMERCE_AUTH_IMS_ORG_ID",
+  "AIO_COMMERCE_AUTH_IMS_SCOPES",
+]);
+
 /**
  * Create an ext.config.yaml file
  * @param path - The path to the ext.config.yaml file
@@ -87,6 +97,9 @@ function buildWeb(extConfig: Document, web: string) {
  * developer can pin a different Node runtime (e.g. `nodejs:24`) in
  * `ext.config.yaml` once without codegen reverting it on the next run.
  *
+ * Existing legacy `AIO_COMMERCE_AUTH_IMS_*` credential inputs are dropped from
+ * actions annotated with `include-ims-credentials`.
+ *
  * @param action - The action definition to build.
  * @param existingAction - The action's previous YAML definition, if any.
  */
@@ -95,7 +108,14 @@ function buildActionDefinition(
   existingAction?: YAMLMap,
 ) {
   const actionDef: YAMLMap = new YAMLMap();
-  const existingInputs = getExistingInputs(existingAction);
+  const includesImsCredentials =
+    action.annotations?.["include-ims-credentials"] === true;
+  const existingInputs = Object.fromEntries(
+    Object.entries(getExistingInputs(existingAction)).filter(
+      ([key]) =>
+        !(includesImsCredentials && LEGACY_IMS_CREDENTIAL_INPUTS.has(key)),
+    ),
+  );
   const existingRuntime = getExistingString("runtime", existingAction);
   const managedInputs = {
     LOG_LEVEL: "$LOG_LEVEL",
