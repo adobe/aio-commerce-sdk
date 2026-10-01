@@ -40,6 +40,8 @@
   - `FailedInstallationState` → `FailedWorkflowState`
   - `InstallationRetryMetadata` → `WorkflowStateMetadata`
 
+- The `AIO_COMMERCE_AUTH_IMS_*` fields of `LifecycleContext["params"]` are deprecated and now optional. The generated `association` and `installation` actions receive OAuth Server-to-Server credentials through the `include-ims-credentials` annotation instead of these inputs; the fields are still populated from the resolved credentials for compatibility, but will be removed in the next major. **Replacement:** use `resolveImsAuthParams(context.params)` from `@adobe/aio-commerce-lib-auth`.
+
 ## Released
 
 ### [1.8.0]

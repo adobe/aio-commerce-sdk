@@ -11,6 +11,7 @@
  */
 
 import { unwrapHttpError } from "@adobe/aio-commerce-lib-api/utils";
+import { resolveImsAuthParams } from "@adobe/aio-commerce-lib-auth";
 import { inspect } from "@aio-commerce-sdk/common-utils/logging";
 
 import { throwHttpError } from "#management/common/utils/http-error";
@@ -236,7 +237,7 @@ async function createIoEventRegistration(params: CreateRegistrationParams) {
 
   const payload = {
     ...appCredentials,
-    clientId: runtimeParams.AIO_COMMERCE_AUTH_IMS_CLIENT_ID,
+    clientId: resolveImsAuthParams(runtimeParams).clientId,
     deliveryType: "webhook",
     description,
 
@@ -287,7 +288,7 @@ async function createOrGetIoEventRegistration(
   const name = getRegistrationName(provider, runtimeAction);
   const existing = findExistingRegistrations(
     registrations,
-    runtimeParams.AIO_COMMERCE_AUTH_IMS_CLIENT_ID,
+    resolveImsAuthParams(runtimeParams).clientId,
     name,
   );
 
@@ -687,10 +688,9 @@ async function deleteIoEventRegistrations(
       getLegacyRegistrationName(providerData, runtimeAction),
     ),
   ]);
+  const { clientId } = resolveImsAuthParams(runtimeParams);
   const providerRegistrations = registrations.filter(
-    (reg) =>
-      reg.client_id === runtimeParams.AIO_COMMERCE_AUTH_IMS_CLIENT_ID &&
-      registrationNames.has(reg.name),
+    (reg) => reg.client_id === clientId && registrationNames.has(reg.name),
   );
 
   if (providerRegistrations.length === 0) {

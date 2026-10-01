@@ -201,12 +201,7 @@ const AdminUiOrderSchema = v.object({
   ),
 });
 
-const AdminUiProductSchema = v.object({
-  gridColumns: v.optional(GridColumnsSchema),
-  massActions: v.optional(MassActionsSchema),
-});
-
-const AdminUiCustomerSchema = v.object({
+const AdminUiGridAndMassActionEntitySchema = v.object({
   gridColumns: v.optional(GridColumnsSchema),
   massActions: v.optional(MassActionsSchema),
 });
@@ -340,11 +335,12 @@ const AdminUiAclSchema = v.pipe(
 export const AdminUiSchema = v.object({
   acl: v.optional(AdminUiAclSchema),
   creditMemo: v.optional(AdminUiGridOnlyEntitySchema),
-  customer: v.optional(AdminUiCustomerSchema),
+  customer: v.optional(AdminUiGridAndMassActionEntitySchema),
   invoice: v.optional(AdminUiGridOnlyEntitySchema),
   menu: v.optional(MenuSchema),
+  newsletter: v.optional(AdminUiGridAndMassActionEntitySchema),
   order: v.optional(AdminUiOrderSchema),
-  product: v.optional(AdminUiProductSchema),
+  product: v.optional(AdminUiGridAndMassActionEntitySchema),
   shipment: v.optional(AdminUiGridOnlyEntitySchema),
 });
 
@@ -371,6 +367,7 @@ export const ADMIN_UI_GRID_COLUMN_ENTITIES = [
   "invoice",
   "creditMemo",
   "shipment",
+  "newsletter",
 ] as const satisfies readonly Exclude<keyof AdminUi, "acl" | "menu">[];
 
 /** Entities that additionally support mass actions, in a stable order. */
@@ -378,6 +375,7 @@ export const ADMIN_UI_MASS_ACTION_ENTITIES = [
   "order",
   "product",
   "customer",
+  "newsletter",
 ] as const satisfies readonly Exclude<keyof AdminUi, "acl" | "menu">[];
 
 /** A single custom ACL resource leaf. */
@@ -472,7 +470,9 @@ export function hasBackendUiV2Components<T extends AnyCommerceAppConfig>(
       adminUi.customer?.massActions?.length ||
       adminUi.invoice?.gridColumns ||
       adminUi.creditMemo?.gridColumns ||
-      adminUi.shipment?.gridColumns,
+      adminUi.shipment?.gridColumns ||
+      adminUi.newsletter?.gridColumns ||
+      adminUi.newsletter?.massActions?.length,
   );
 }
 

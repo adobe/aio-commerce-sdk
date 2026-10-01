@@ -82,7 +82,7 @@ type InstallationImsParams = Pick<
   | "AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL"
 >;
 
-export const DEFAULT_INSTALLATION_IMS_PARAMS: InstallationImsParams = {
+export const DEFAULT_INSTALLATION_IMS_PARAMS = {
   AIO_COMMERCE_AUTH_IMS_CLIENT_ID: "test-client-id",
   AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS: ["test-secret-1"],
   AIO_COMMERCE_AUTH_IMS_ORG_ID: "test-ims-org-id",
@@ -90,7 +90,7 @@ export const DEFAULT_INSTALLATION_IMS_PARAMS: InstallationImsParams = {
   AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL:
     "test-technical-account@example.com",
   AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID: "test-technical-account-id",
-};
+} satisfies InstallationImsParams;
 
 export const DEFAULT_INSTALLATION_PARAMS = {
   ...DEFAULT_INSTALLATION_IMS_PARAMS,

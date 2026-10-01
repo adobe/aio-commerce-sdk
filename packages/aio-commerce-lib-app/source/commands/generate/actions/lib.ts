@@ -58,6 +58,7 @@ import {
 } from "./constants";
 
 import type { ExtConfig } from "@aio-commerce-sdk/scripting-utils/yaml";
+import type { Document } from "yaml";
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 import type { CustomInstallationStep } from "#config/schema/installation";
 import type { TemplateAction } from "./config";
@@ -285,6 +286,53 @@ export async function readExtConfig(
   }
 }
 
+/** Inputs superseded by the `include-ims-credentials` action annotation. */
+const LEGACY_IMS_CREDENTIAL_INPUTS = [
+  "AIO_COMMERCE_AUTH_IMS_CLIENT_ID",
+  "AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS",
+  "AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID",
+  "AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL",
+  "AIO_COMMERCE_AUTH_IMS_ORG_ID",
+  "AIO_COMMERCE_AUTH_IMS_SCOPES",
+];
+
+/**
+ * Removes the legacy `AIO_COMMERCE_AUTH_IMS_*` inputs from the existing
+ * `ext.config.yaml` document for every action annotated with `include-ims-credentials`.
+ * @param extConfigDoc - The existing `ext.config.yaml` document, mutated in place.
+ * @param extConfig - The generated extension config.
+ */
+export function removeLegacyImsInputs(
+  extConfigDoc: Document,
+  extConfig: ExtConfig,
+) {
+  const packages = Object.entries(extConfig.runtimeManifest?.packages ?? {});
+
+  for (const [packageName, { actions = {} }] of packages) {
+    for (const [actionName, action] of Object.entries(actions)) {
+      if (action.annotations?.["include-ims-credentials"] !== true) {
+        continue;
+      }
+
+      const inputsPath = [
+        "runtimeManifest",
+        "packages",
+        packageName,
+        "actions",
+        actionName,
+        "inputs",
+      ];
+
+      for (const input of LEGACY_IMS_CREDENTIAL_INPUTS) {
+        const inputPath = [...inputsPath, input];
+        if (extConfigDoc.hasIn(inputPath)) {
+          extConfigDoc.deleteIn(inputPath);
+        }
+      }
+    }
+  }
+}
+
 /**
  * Updates an extension point's ext.config.yaml with generated configuration.
  * @param appConfig - App configuration used to build the extension config.
@@ -330,6 +378,7 @@ export async function updateExtConfig(
     }
   }
 
+  removeLegacyImsInputs(extConfigDoc, extConfig);
   await createOrUpdateExtConfig(extConfigPath, extConfig, extConfigDoc);
   return extConfig;
 }

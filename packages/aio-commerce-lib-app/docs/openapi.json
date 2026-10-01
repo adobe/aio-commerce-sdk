@@ -3256,6 +3256,20 @@
                 "$ref": "#/components/schemas/AdminUiGridColumns"
               }
             }
+          },
+          "newsletter": {
+            "type": "object",
+            "properties": {
+              "massActions": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/AdminUiMassAction"
+                }
+              },
+              "gridColumns": {
+                "$ref": "#/components/schemas/AdminUiGridColumns"
+              }
+            }
           }
         },
         "additionalProperties": false,

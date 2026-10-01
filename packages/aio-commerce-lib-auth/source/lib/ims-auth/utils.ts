@@ -11,6 +11,7 @@
  */
 
 import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
+import { resolveCredentials } from "@adobe/aio-lib-core-auth";
 import { safeParse } from "valibot";
 
 import {
@@ -111,26 +112,48 @@ export function assertImsAuthParams(
 
 /**
  * Resolves an {@link ImsAuthParams} from the given App Builder action inputs.
+ *
+ * For OAuth Server-to-Server credentials, use the `include-ims-credentials: true` action
+ * annotation. The legacy fallback to manually-wired `AIO_COMMERCE_AUTH_IMS_*` params is
+ * deprecated and will be removed in a future major release.
+ *
  * @param params The App Builder action inputs to resolve the IMS authentication parameters from.
  * @throws {CommerceSdkValidationError} If the parameters are invalid and cannot be resolved.
  *
  * @example
  * ```typescript
  * // Some App Builder runtime action that needs IMS authentication
- * export function main(params) {
- *   const imsAuthProvider = getImsAuthProvider(resolveImsAuthParams(params));
+ * export async function main(params) {
+ *   const authProvider = getImsAuthProvider(resolveImsAuthParams(params));
  *
  *   // Get headers for API requests
  *   const headers = await authProvider.getHeaders();
  *   const response = await fetch('https://api.adobe.io/some-endpoint', {
- *     headers: await authProvider.getHeaders()
+ *     headers
  *   });
+ *   return { statusCode: response.status };
  * }
  * ```
  */
 export function resolveImsAuthParams(
   params: Record<string, unknown>,
 ): ImsAuthParams {
+  try {
+    const { credentials, env } = resolveCredentials(
+      params as Parameters<typeof resolveCredentials>[0],
+    );
+
+    return __parseImsAuthParams({
+      clientId: credentials.clientId,
+      clientSecrets: [credentials.clientSecret],
+      environment: env,
+      imsOrgId: credentials.orgId,
+      scopes: credentials.scopes,
+    });
+  } catch {
+    // No annotated OAuth Server-to-Server credentials present; retain the deprecated fallback.
+  }
+
   const resolvedParams = {
     clientId: params.AIO_COMMERCE_AUTH_IMS_CLIENT_ID,
     clientSecrets: __transformStringArray(

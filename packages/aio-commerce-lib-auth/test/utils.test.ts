@@ -107,6 +107,28 @@ describe("aio-commerce-lib-auth/utils", () => {
       expect(resolved).toHaveProperty("clientId", "test-client-id");
     });
 
+    test("should resolve IMS auth via the include-ims-credentials annotation, without any legacy params", () => {
+      const params = {
+        __ims_oauth_s2s: {
+          clientId: "s2s-client-id",
+          clientSecret: "s2s-secret",
+          orgId: "s2s-org-id",
+          scopes: ["scope1"],
+        },
+      };
+
+      const resolved = resolveAuthParams(params);
+
+      expect(resolved).toEqual({
+        clientId: "s2s-client-id",
+        clientSecrets: ["s2s-secret"],
+        environment: "prod",
+        imsOrgId: "s2s-org-id",
+        scopes: ["scope1"],
+        strategy: "ims",
+      });
+    });
+
     test("should throw error when neither IMS nor Integration params are provided", () => {
       const params = {};
       expect(() => {
