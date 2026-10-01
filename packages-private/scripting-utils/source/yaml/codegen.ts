@@ -76,12 +76,20 @@ function buildWeb(extConfig: Document, web: string) {
   }
 }
 
+function buildInputs(inputs: Record<string, unknown>) {
+  const map = new YAMLMap();
+  for (const [name, value] of Object.entries(inputs)) {
+    map.set(name, value);
+  }
+  return map;
+}
+
 /**
  * Build the definition for a runtime action.
  *
- * Developer-added `inputs` keys (anything not in the generator-managed set) on
- * `existingAction` are preserved so that hand-written entries — for example
- * factory credentials for `dynamicList` fields — survive regeneration.
+ * Developer-added `inputs` keys on `existingAction` are preserved so that
+ * hand-written entries — for example factory credentials for `dynamicList`
+ * fields — survive regeneration.
  *
  * A `runtime` already set on `existingAction` is likewise preserved, so a
  * developer can pin a different Node runtime (e.g. `nodejs:24`) in
@@ -89,26 +97,34 @@ function buildWeb(extConfig: Document, web: string) {
  *
  * @param action - The action definition to build.
  * @param existingAction - The action's previous YAML definition, if any.
+ * @param packageInputs - The package-level inputs supplied by the generator.
  */
 function buildActionDefinition(
   action: ActionDefinition,
   existingAction?: YAMLMap,
+  packageInputs?: Record<string, string>,
 ) {
   const actionDef: YAMLMap = new YAMLMap();
   const existingInputs = getExistingInputs(existingAction);
   const existingRuntime = getExistingString("runtime", existingAction);
-  const managedInputs = {
-    LOG_LEVEL: "$LOG_LEVEL",
+  const legacyLogLevel =
+    packageInputs?.LOG_LEVEL === "$LOG_LEVEL" &&
+    existingAction?.getIn(["inputs", "LOG_LEVEL"]) === "$LOG_LEVEL";
+  const inputs = {
+    ...Object.fromEntries(
+      Object.entries(existingInputs).filter(
+        ([name]) => name !== "LOG_LEVEL" || !legacyLogLevel,
+      ),
+    ),
+    ...(action.inputs ?? {}),
   };
 
   actionDef.set("function", action.function);
   actionDef.set("web", action.web ?? "yes");
   actionDef.set("runtime", existingRuntime ?? action.runtime ?? "nodejs:24");
-  actionDef.set("inputs", {
-    ...existingInputs,
-    ...managedInputs,
-    ...(action.inputs ?? {}),
-  });
+  if (Object.keys(inputs).length > 0) {
+    actionDef.set("inputs", buildInputs(inputs));
+  }
   actionDef.set("annotations", {
     ...(action.annotations ?? {
       final: true,
@@ -238,8 +254,15 @@ function buildRuntimeManifest(extConfig: Document, manifest: RuntimeManifest) {
 
     const existingActions = packageDef.get("actions");
     const actions = new YAMLMap();
+    const packageInputs = {
+      ...getExistingInputs(packageDef),
+      ...(pkg.inputs ?? {}),
+    };
 
     packageDef.set("license", pkg.license ?? "Apache-2.0");
+    if (Object.keys(packageInputs).length > 0) {
+      packageDef.set("inputs", buildInputs(packageInputs));
+    }
     packageDef.set("actions", actions);
 
     for (const [actionName, action] of Object.entries(pkg.actions ?? {})) {
@@ -250,6 +273,7 @@ function buildRuntimeManifest(extConfig: Document, manifest: RuntimeManifest) {
       const actionDef = buildActionDefinition(
         action,
         isMap(existingAction) ? existingAction : undefined,
+        pkg.inputs,
       );
 
       actions.set(actionName, actionDef);
