@@ -84,6 +84,7 @@ import {
   createMockConfig,
   minimalValidConfig,
 } from "#test/fixtures/config";
+import { createMockValidationResult } from "#test/fixtures/deprecated-installation";
 import {
   createMockCombinedStoreImpl,
   createMockFailedState,
@@ -92,7 +93,6 @@ import {
   createMockInstallationStore,
   createMockInstallationSucceededState,
   createMockSucceededState,
-  createMockValidationResult,
   DEFAULT_INSTALLATION_PARAMS,
 } from "#test/fixtures/installation";
 import {
@@ -111,7 +111,7 @@ import type {
 } from "#management/common/orchestration";
 import type { AnyStep, LeafStep } from "#management/common/workflow/step";
 import type { InProgressWorkflowState } from "#management/common/workflow/types";
-import type { InstallationHooks } from "#management/installation/runner";
+import type { InstallationHooks } from "#management/deprecated/runner";
 
 const POST_APP_DEPLOY_HEADERS = {
   "x-aio-commerce-installation-invocation-source": "post-app-deploy",

@@ -10,10 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
-import {
-  HTTP_NOT_FOUND,
-  unwrapHttpError,
-} from "@adobe/aio-commerce-lib-api/utils";
+import { HTTP_NOT_FOUND } from "@adobe/aio-commerce-lib-api/utils";
 import { HTTPError } from "ky";
 
 import { throwHttpError } from "#management/common/utils/http-error";
@@ -21,7 +18,7 @@ import { throwHttpError } from "#management/common/utils/http-error";
 import type { AdminUiExecutionContext } from "./utils";
 
 /** The Admin UI extension name (the deployment namespace), or `undefined` when unset. */
-function getExtensionName(): string | undefined {
+export function getExtensionName(): string | undefined {
   return process.env.__OW_NAMESPACE;
 }
 
@@ -134,7 +131,7 @@ export async function refreshExtension(
  * @param context - The execution context providing the Admin UI client and logger.
  * @param extensionName - The resolved extension name (the deployment namespace).
  */
-async function deleteExtensionRegistration(
+export async function deleteExtensionRegistration(
   context: AdminUiExecutionContext,
   extensionName: string,
 ): Promise<void> {
@@ -155,37 +152,8 @@ async function deleteExtensionRegistration(
 }
 
 /**
- * Unregisters the extension from Commerce via DELETE /V1/adminuisdk/extension/:workspace_name/:extension_name.
- * Best-effort: errors are logged as warnings and do not stop the uninstall workflow.
- *
- * @param context - The execution context providing the Admin UI client and logger.
- */
-export async function unregisterExtension(
-  context: AdminUiExecutionContext,
-): Promise<void> {
-  const { logger } = context;
-  const extensionName = getExtensionName();
-
-  if (!extensionName) {
-    logger.warn(
-      "__OW_NAMESPACE environment variable is not set; skipping Admin UI extension unregistration. Continuing uninstall.",
-    );
-    return;
-  }
-
-  try {
-    await deleteExtensionRegistration(context, extensionName);
-  } catch (error: unknown) {
-    const msg = await unwrapHttpError(error);
-    logger.warn(
-      `Failed to unregister Admin UI extension "${extensionName}": ${msg}. Continuing uninstall.`,
-    );
-  }
-}
-
-/**
  * Unregisters the extension during an upgrade removal. Unlike the best-effort
- * {@link unregisterExtension} used on uninstall, this validates the removal: a
+ * `unregisterExtension` used on uninstall, this validates the removal: a
  * missing extension (404) is treated as already removed, but any other failure
  * is enriched and thrown so the upgrade attempt reports it.
  *

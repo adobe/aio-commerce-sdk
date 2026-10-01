@@ -13,22 +13,19 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 import {
-  createInitialState,
-  createRetryState,
-  executeUninstallWorkflow,
-  executeWorkflow,
-} from "#management/common/workflow/runner";
-import {
   defineBranchStep,
   defineLeafStep,
 } from "#management/common/workflow/step";
+import {
+  createInitialState,
+  executeUninstallWorkflow,
+  executeWorkflow,
+} from "#management/deprecated/engine";
 import { minimalValidConfig } from "#test/fixtures/config";
 import {
-  createMockFailedState,
   createMockInstallationContext,
   FAKE_SYSTEM_TIME,
 } from "#test/fixtures/installation";
-import { createMockStepStatus } from "#test/fixtures/workflow";
 
 import type { WorkflowHooks } from "#management/common/workflow/hooks";
 
@@ -1005,73 +1002,6 @@ describe("executeUninstallWorkflow", () => {
     expect(installFn2).not.toHaveBeenCalled();
     // Overall workflow result should be succeeded
     expect(result.status).toBe("succeeded");
-  });
-});
-
-describe("createRetryState", () => {
-  test("should preserve id and startedAt from failed state", () => {
-    const failedState = createMockFailedState({
-      id: "install-abc",
-      startedAt: FAKE_SYSTEM_TIME,
-    });
-
-    const retryState = createRetryState(failedState);
-
-    expect(retryState.id).toBe("install-abc");
-    expect(retryState.startedAt).toBe(FAKE_SYSTEM_TIME);
-    expect(retryState.status).toBe("in-progress");
-  });
-
-  test("should preserve succeeded child statuses and reset failed child to pending", () => {
-    const failedState = createMockFailedState({
-      step: createMockStepStatus({
-        children: [
-          createMockStepStatus({
-            name: "step-a",
-            path: ["installation", "step-a"],
-            status: "succeeded",
-          }),
-          createMockStepStatus({
-            name: "step-b",
-            path: ["installation", "step-b"],
-            status: "failed",
-          }),
-        ],
-        status: "failed",
-      }),
-    });
-
-    const retryState = createRetryState(failedState);
-
-    expect(retryState.step.children[0].status).toBe("succeeded");
-    expect(retryState.step.children[1].status).toBe("pending");
-  });
-
-  test("should reset root step to pending when it was failed", () => {
-    const failedState = createMockFailedState({
-      step: createMockStepStatus({ children: [], status: "failed" }),
-    });
-
-    const retryState = createRetryState(failedState);
-
-    expect(retryState.step.status).toBe("pending");
-  });
-
-  test("should carry over data from the failed state", () => {
-    const partialData = { installation: { "step-a": { id: "123" } } };
-    const failedState = createMockFailedState({ data: partialData });
-
-    const retryState = createRetryState(failedState);
-
-    expect(retryState.data).toBe(partialData);
-  });
-
-  test("should carry over the config from the failed state", () => {
-    const failedState = createMockFailedState({ config: minimalValidConfig });
-
-    const retryState = createRetryState(failedState);
-
-    expect(retryState.config).toEqual(minimalValidConfig);
   });
 });
 

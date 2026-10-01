@@ -22,7 +22,7 @@ import {
   runInstallation,
   runUninstallation,
   runValidation,
-} from "#management/installation/runner";
+} from "#management/deprecated/runner";
 import {
   configWithCustomInstallationSteps,
   configWithOneScript,
@@ -33,7 +33,7 @@ import {
   createMockInstallationContextWithScripts,
 } from "#test/fixtures/installation";
 
-import type { InstallationHooks } from "#management/installation/runner";
+import type { InstallationHooks } from "#management/deprecated/runner";
 
 type StepStatusNode = {
   name: string;

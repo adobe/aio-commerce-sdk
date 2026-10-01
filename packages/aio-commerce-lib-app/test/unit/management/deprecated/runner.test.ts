@@ -27,7 +27,7 @@ import {
   createInitialUninstallationState,
   runInstallation,
   runUninstallation,
-} from "#management/installation/runner";
+} from "#management/deprecated/runner";
 import {
   configWithCommerceEventing,
   configWithWebhooks,
@@ -41,7 +41,7 @@ import {
 } from "#test/fixtures/installation";
 import { createMockStepStatus } from "#test/fixtures/workflow";
 
-import type { InstallationHooks } from "#management/installation/runner";
+import type { InstallationHooks } from "#management/deprecated/runner";
 
 describe("createInitialInstallationState", () => {
   beforeEach(() => {

@@ -17,7 +17,7 @@ import {
   createWebhookSubscriptions,
   deleteWebhookSubscriptions,
   validateWebhookConflicts,
-} from "#management/domains/webhooks/helpers";
+} from "#management/deprecated/domains/webhooks-helpers";
 import { configWithWebhooks, createMockMetadata } from "#test/fixtures/config";
 import { makeHttpError } from "#test/fixtures/http-error";
 import {

@@ -13,6 +13,13 @@
 import { describe, expect, test, vi } from "vitest";
 
 import {
+  LifecycleBaselineIncompatibleError,
+  LifecycleBaselineNotFoundError,
+  LifecycleOrchestrationError,
+  LifecycleStateNotInitializedError,
+  StaleLifecycleAttemptError,
+} from "#management/lifecycle/errors";
+import {
   CURRENT_STATE_KEY,
   normalizeExpiredAttempt,
   readOrInitializeState,
@@ -69,6 +76,53 @@ function createRuntime(args: {
 
   return { baselineProvider, runtime, snapshotStore, stateStore };
 }
+
+/** Captures the error rejected by a lifecycle operation. */
+async function captureError(operation: Promise<unknown>) {
+  return await operation.catch((error: unknown) => error);
+}
+
+describe("lifecycle orchestration error types", () => {
+  test("reports a missing baseline snapshot as LifecycleBaselineNotFoundError", async () => {
+    const { runtime } = createRuntime({
+      baselineFor: () => null,
+      state: createMockOrchestrationState(),
+    });
+
+    const error = await captureError(readOrInitializeState(runtime));
+    expect(error).toBeInstanceOf(LifecycleBaselineNotFoundError);
+    expect(error).toBeInstanceOf(LifecycleOrchestrationError);
+  });
+
+  test("reports a missing compatible baseline as LifecycleBaselineIncompatibleError", async () => {
+    const { runtime } = createRuntime({ baselineFor: () => null });
+
+    const error = await captureError(readOrInitializeState(runtime));
+    expect(error).toBeInstanceOf(LifecycleBaselineIncompatibleError);
+    expect(error).toBeInstanceOf(LifecycleOrchestrationError);
+  });
+
+  test("reports uninitialized state as LifecycleStateNotInitializedError", async () => {
+    const store = createMockLifecycleStore<OrchestrationState>();
+
+    const error = await captureError(requireState(store));
+    expect(error).toBeInstanceOf(LifecycleStateNotInitializedError);
+    expect(error).toBeInstanceOf(LifecycleOrchestrationError);
+  });
+
+  test("reports a stale attempt as StaleLifecycleAttemptError carrying its id", async () => {
+    const state = createMockOrchestrationState({
+      latestAttempt: pendingAttempt(FUTURE),
+    });
+
+    const store = createMockLifecycleStore({ initial: state });
+    const error = await captureError(requireCurrentAttempt(store, "other"));
+
+    expect(error).toBeInstanceOf(StaleLifecycleAttemptError);
+    expect(error).toBeInstanceOf(LifecycleOrchestrationError);
+    expect(error).toHaveProperty("attemptId", "other");
+  });
+});
 
 describe("readOrInitializeState", () => {
   test("returns the existing state and baseline", async () => {

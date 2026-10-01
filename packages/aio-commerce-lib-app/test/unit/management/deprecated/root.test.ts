@@ -12,25 +12,22 @@
 
 import { describe, expect, test } from "vitest";
 
-import { createInitialPlanExecutionState } from "#management/common/workflow/execute";
 import { isBranchStep } from "#management/common/workflow/step";
+import { createRootUninstallationStep } from "#management/deprecated/root";
 import { adminUiStep } from "#management/domains/admin-ui/branch";
 import { eventingStep } from "#management/domains/events/branch";
 import { webhooksStep } from "#management/domains/webhooks/branch";
-import { createRootInstallationStep } from "#management/installation/root";
 import {
   configWithCustomInstallationSteps,
-  configWithWebhooks,
   minimalValidConfig,
 } from "#test/fixtures/config";
-import { createMockLifecyclePlan } from "#test/fixtures/lifecycle";
 
-describe("createRootInstallationStep", () => {
-  test("should create installation step with default children", () => {
-    const result = createRootInstallationStep(minimalValidConfig);
+describe("createRootUninstallationStep", () => {
+  test("should create uninstallation step with default children", () => {
+    const result = createRootUninstallationStep(minimalValidConfig);
 
     expect(result.type).toBe("branch");
-    expect(result.name).toBe("installation");
+    expect(result.name).toBe("uninstallation");
 
     expect(result.children.length).toBe(4);
     expect(result.children[0]).toBe(eventingStep);
@@ -39,8 +36,19 @@ describe("createRootInstallationStep", () => {
     expect(result.children[3].name).toBe("customInstallationSteps");
   });
 
-  test("should create custom installation step with dynamic children when config has custom steps", () => {
-    const result = createRootInstallationStep(
+  test("should have correct meta label for uninstallation", () => {
+    const result = createRootUninstallationStep(minimalValidConfig);
+
+    expect(result.meta).toEqual({
+      install: {
+        description: "App uninstallation workflow",
+        label: "Uninstallation",
+      },
+    });
+  });
+
+  test("should create custom uninstallation step with dynamic children when config has custom steps", () => {
+    const result = createRootUninstallationStep(
       configWithCustomInstallationSteps,
     );
 
@@ -61,56 +69,14 @@ describe("createRootInstallationStep", () => {
     ).not.toContain("reconciliation");
   });
 
-  test("includes the reconciliation leaf when built for an upgrade", () => {
-    const result = createRootInstallationStep(
-      configWithCustomInstallationSteps,
-      {
-        forUpgrade: true,
-      },
-    );
+  test("includes an uninstall-only leaf for a custom installation step no longer in the config", () => {
+    const result = createRootUninstallationStep(minimalValidConfig, [
+      { name: "Old Step", script: "./old-step.js" },
+    ]);
 
     const [, , , customInstallationStep] = result.children;
     expect.assert(isBranchStep(customInstallationStep));
-    expect(customInstallationStep.children.map((child) => child.name)).toEqual([
-      "demoSuccess",
-      "demoError",
-      "reconciliation",
-    ]);
-  });
-
-  test("creates upgrade progress for a planned webhook operation", () => {
-    const rootStep = createRootInstallationStep(configWithWebhooks);
-    const plan = createMockLifecyclePlan({
-      domains: [
-        {
-          operations: [
-            {
-              after: {},
-              id: "webhook-add",
-              kind: "add",
-              label: "Add webhook",
-            },
-          ],
-          path: ["installation", "webhooks", "subscriptions"],
-        },
-      ],
-      target: {
-        appVersion: configWithWebhooks.metadata.version,
-        config: configWithWebhooks,
-      },
-    });
-
-    const state = createInitialPlanExecutionState({
-      plan,
-      rootStep,
-      targetConfig: configWithWebhooks,
-    });
-
-    const [webhooksStatus] = state.step.children;
-    expect.assert(webhooksStatus, "Expected webhook upgrade progress");
-    expect(webhooksStatus.meta).toEqual(webhooksStep.meta.upgrade);
-    expect(webhooksStatus.children.at(0)?.meta).toEqual(
-      webhooksStep.children.at(0)?.meta.upgrade,
-    );
+    expect(customInstallationStep.children.length).toBe(1);
+    expect(customInstallationStep.children[0].name).toBe("oldStep");
   });
 });

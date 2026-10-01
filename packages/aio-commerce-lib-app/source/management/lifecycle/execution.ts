@@ -11,8 +11,15 @@
  */
 
 import { executePlannedWorkflow } from "#management/common/workflow/execute";
-import { createRetryState } from "#management/common/workflow/runner";
+import { createRetryState } from "#management/common/workflow/retry";
 
+import {
+  InvalidExecutionDeadlineError,
+  LifecycleAttemptActionVersionMismatchError,
+  LifecycleAttemptAlreadyExecutingError,
+  LifecycleAttemptNotFoundError,
+  LifecycleBaselineNotFoundError,
+} from "./errors";
 import {
   persistApplyFailure,
   persistProgress,
@@ -59,7 +66,7 @@ export async function executeLifecycleAttempt(
   let state = await requireState(options.stateStore);
   const currentAttempt = state.latestAttempt;
   if (!currentAttempt || currentAttempt.id !== options.attemptId) {
-    throw new Error("The lifecycle attempt is missing or stale");
+    throw new LifecycleAttemptNotFoundError(options.attemptId);
   }
   if (
     currentAttempt.status === "succeeded" ||
@@ -68,24 +75,24 @@ export async function executeLifecycleAttempt(
     return currentAttempt;
   }
   if (currentAttempt.plan.actionVersion !== options.actionVersion) {
-    throw new Error(
-      "The lifecycle attempt was created by another action version",
+    throw new LifecycleAttemptActionVersionMismatchError(
+      currentAttempt.plan.actionVersion,
     );
   }
   if (currentAttempt.status === "in-progress") {
-    throw new Error("The lifecycle attempt is already in progress");
+    throw new LifecycleAttemptAlreadyExecutingError(currentAttempt.id);
   }
 
   const executionDeadline = Date.parse(options.executionDeadline);
   if (!Number.isFinite(executionDeadline) || executionDeadline <= Date.now()) {
-    throw new Error("The lifecycle execution deadline is invalid or elapsed");
+    throw new InvalidExecutionDeadlineError(options.executionDeadline);
   }
 
   const baseline = await options.snapshotStore.get(
     currentAttempt.plan.source.snapshotId,
   );
   if (!baseline) {
-    throw new Error("The lifecycle baseline snapshot is missing");
+    throw new LifecycleBaselineNotFoundError();
   }
 
   const attempt: LifecycleAttempt = {

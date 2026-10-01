@@ -13,6 +13,13 @@
 import { createInitialPlanExecutionState } from "#management/common/workflow/execute";
 
 import {
+  BlockedLifecyclePlanError,
+  InvalidStartDeadlineError,
+  LifecycleAttemptInProgressError,
+  LifecyclePlanActionVersionMismatchError,
+  PendingLifecyclePlanNotFoundError,
+} from "./errors";
+import {
   CURRENT_STATE_KEY,
   normalizeExpiredAttempt,
   readOrInitializeState,
@@ -48,21 +55,19 @@ export async function startLifecycleAttempt(
     if (resumed) {
       return resumed;
     }
-    throw new Error("The pending lifecycle plan is missing or stale");
+    throw new PendingLifecyclePlanNotFoundError(options.planId);
   }
   if (plan.actionVersion !== options.actionVersion) {
-    throw new Error(
-      "The pending lifecycle plan was created by another action version",
-    );
+    throw new LifecyclePlanActionVersionMismatchError(plan.actionVersion);
   }
   if (plan.issues.length > 0) {
-    throw new Error("The lifecycle plan is blocked by planning issues");
+    throw new BlockedLifecyclePlanError(plan.id);
   }
   if (
     state.latestAttempt?.status === "pending" ||
     state.latestAttempt?.status === "in-progress"
   ) {
-    throw new Error("A lifecycle attempt is already in progress");
+    throw new LifecycleAttemptInProgressError();
   }
 
   assertFutureExecutionDeadline(options.executionDeadline);
@@ -123,6 +128,6 @@ async function resumeFailedAttempt(
 function assertFutureExecutionDeadline(executionDeadline: string): void {
   const deadline = Date.parse(executionDeadline);
   if (!Number.isFinite(deadline) || deadline <= Date.now()) {
-    throw new Error("Execution deadline is invalid or has already elapsed");
+    throw new InvalidStartDeadlineError(executionDeadline);
   }
 }

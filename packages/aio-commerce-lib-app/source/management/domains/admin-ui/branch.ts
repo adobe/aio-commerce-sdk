@@ -15,42 +15,24 @@ import {
   defineBranchStep,
   defineLeafStep,
 } from "#management/common/workflow/step";
+import {
+  deprecatedAdminUiSteps,
+  deprecatedRegisterExtensionStep,
+} from "#management/deprecated/domains/admin-ui";
 
 import { applyAdminUi } from "./apply";
-import {
-  enableAdminUiSdk,
-  registerExtension,
-  unregisterExtension,
-} from "./helpers";
 import { planAdminUi } from "./plan";
 import { createAdminUiStepContext } from "./utils";
 
-import type { AdminUiConfig, AdminUiExecutionContext } from "./utils";
-
-/**
- * Leaf step that enables the Admin UI SDK (PUT) on install, before
- * {@link registerExtensionStep}. Install-only: it has no uninstall handler.
- */
-const enableAdminUiSdkStep = defineLeafStep({
-  install: (_: AdminUiConfig, context: AdminUiExecutionContext) =>
-    enableAdminUiSdk(context),
-  meta: {
-    install: {
-      description: "Enables the Admin UI SDK in Adobe Commerce",
-      label: "Enable Admin UI SDK",
-    },
-  },
-  name: "enable-admin-ui-sdk",
-});
+import type { registerExtension } from "./helpers";
 
 /**
  * Leaf step that registers the extension (POST) on install and unregisters it
  * (DELETE) on uninstall, and reconciles it during upgrade via `plan`/`apply`.
  */
 const registerExtensionStep = defineLeafStep({
+  ...deprecatedRegisterExtensionStep,
   apply: applyAdminUi,
-  install: (_: AdminUiConfig, context: AdminUiExecutionContext) =>
-    registerExtension(context),
   meta: {
     install: {
       description: "Registers the Admin UI extension in Adobe Commerce",
@@ -68,9 +50,6 @@ const registerExtensionStep = defineLeafStep({
   },
   name: "register-extension",
   plan: planAdminUi,
-
-  uninstall: (_: AdminUiConfig, context: AdminUiExecutionContext) =>
-    unregisterExtension(context),
 });
 
 // Derived from `registerExtension` rather than `InferStepOutput<typeof
@@ -83,7 +62,7 @@ export type RegisterExtensionStepData = Awaited<
 
 /** Branch step for setting up the Admin UI extension registration. */
 export const adminUiStep = defineBranchStep({
-  children: [enableAdminUiSdkStep, registerExtensionStep],
+  children: [...deprecatedAdminUiSteps, registerExtensionStep],
   context: createAdminUiStepContext,
 
   isConfigured: hasAdminUi,

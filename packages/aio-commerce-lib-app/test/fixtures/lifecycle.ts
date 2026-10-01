@@ -185,12 +185,21 @@ export function createMockLifecycleRuntime(options?: {
       ? createMockAppStateSnapshot()
       : options.baseline;
 
+  // Mirrors a lifecycle that has already been initialized from the baseline.
+  if (baseline && !options?.baselineProvider) {
+    snapshotStore.values.set(baseline.id, baseline);
+    if (!stateStore.values.has(CURRENT_STATE_KEY)) {
+      stateStore.values.set(
+        CURRENT_STATE_KEY,
+        createMockOrchestrationState({ baselineSnapshotId: baseline.id }),
+      );
+    }
+  }
+
   const runtime: LifecycleRuntime = {
     baselineProvider:
       options?.baselineProvider ??
-      createLifecycleBaselineProvider(snapshotStore, {
-        get: async () => baseline,
-      }),
+      createLifecycleBaselineProvider(snapshotStore),
     lifecycleContext: createMockInstallationContextWithScripts(),
     rootStep: options?.rootStep ?? createMockLifecycleRoot(),
     snapshotStore,

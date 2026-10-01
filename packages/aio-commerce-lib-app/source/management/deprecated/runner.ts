@@ -16,12 +16,10 @@ import {
   executeUninstallWorkflow,
   executeWorkflow,
 } from "#management/common/workflow/index";
-import { validateStepTree } from "#management/common/workflow/validation";
+import { createRootInstallationStep } from "#management/installation/root";
 
-import {
-  createRootInstallationStep,
-  createRootUninstallationStep,
-} from "./root";
+import { createRootUninstallationStep } from "./root";
+import { validateStepTree } from "./validation";
 
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 import type {
@@ -36,10 +34,14 @@ import type {
   WorkflowHooks,
   WorkflowRunState,
 } from "#management/common/workflow/index";
-import type { ValidationResult } from "#management/common/workflow/validation";
 import type { CustomInstallationStepIdentity } from "#management/domains/custom-installation/index";
+import type { ValidationResult } from "./validation";
 
-/** Lifecycle hooks for an installation or uninstallation run. */
+/**
+ * Lifecycle hooks for an installation or uninstallation run.
+ *
+ * @deprecated Removed in the next major together with {@link runInstallation}.
+ */
 export type InstallationHooks = {
   onInstallationStart?: (state: WorkflowRunState) => void | Promise<void>;
   onInstallationSuccess?: (state: WorkflowRunState) => void | Promise<void>;
@@ -75,13 +77,21 @@ function toWorkflowHooks(hooks?: InstallationHooks): WorkflowHooks | undefined {
   };
 }
 
-/** Options for creating an initial installation state. */
+/**
+ * Options for creating an initial installation state.
+ *
+ * @deprecated Removed in the next major together with {@link createInitialInstallationState}.
+ */
 export type CreateInitialInstallationStateOptions = {
   /** The app configuration used to determine applicable steps. */
   config: CommerceAppConfigOutputModel;
 };
 
-/** Options for running an installation. */
+/**
+ * Options for running an installation.
+ *
+ * @deprecated Removed in the next major together with {@link runInstallation}.
+ */
 export type RunInstallationOptions = {
   /** Shared installation context (params, logger, etc.). */
   installationContext: LifecycleContext;
@@ -100,6 +110,10 @@ export type RunInstallationOptions = {
  * Creates an initial installation state from the config and step definitions.
  * Filters steps based on their `when` conditions and builds a tree structure
  * with all steps set to "pending".
+ *
+ * @deprecated The pre-lifecycle engine is removed in the next major. Drive installs
+ * and uninstalls through the installation runtime action, which runs the lifecycle
+ * plan/apply engine.
  */
 export function createInitialInstallationState(
   options: CreateInitialInstallationStateOptions,
@@ -115,6 +129,10 @@ export function createInitialInstallationState(
  *
  * Retries once on failure. `onInstallationFailure` only fires if both attempts
  * fail; `isRetry: true` is set on the result when the retry succeeds.
+ *
+ * @deprecated The pre-lifecycle engine is removed in the next major. Drive installs
+ * and uninstalls through the installation runtime action, which runs the lifecycle
+ * plan/apply engine.
  */
 export async function runInstallation(
   options: RunInstallationOptions,
@@ -169,7 +187,11 @@ export async function runInstallation(
   return { ...retryResult, metadata: { isRetry: true } };
 }
 
-/** Options for creating an initial uninstallation state. */
+/**
+ * Options for creating an initial uninstallation state.
+ *
+ * @deprecated Removed in the next major together with {@link createInitialUninstallationState}.
+ */
 export type CreateInitialUninstallationStateOptions = {
   /** The app configuration used to determine applicable steps. */
   config: CommerceAppConfigOutputModel;
@@ -182,7 +204,11 @@ export type CreateInitialUninstallationStateOptions = {
   executedCustomInstallationSteps?: readonly CustomInstallationStepIdentity[];
 };
 
-/** Options for running an uninstallation. */
+/**
+ * Options for running an uninstallation.
+ *
+ * @deprecated Removed in the next major together with {@link runUninstallation}.
+ */
 export type RunUninstallationOptions = {
   /** Shared installation context (params, logger, etc.). */
   installationContext: LifecycleContext;
@@ -199,6 +225,10 @@ export type RunUninstallationOptions = {
 
 /**
  * Creates an initial uninstallation state from the config and step definitions.
+ *
+ * @deprecated The pre-lifecycle engine is removed in the next major. Drive installs
+ * and uninstalls through the installation runtime action, which runs the lifecycle
+ * plan/apply engine.
  */
 export function createInitialUninstallationState(
   options: CreateInitialUninstallationStateOptions,
@@ -213,6 +243,10 @@ export function createInitialUninstallationState(
 
 /**
  * Runs the full uninstallation workflow. Returns the final state (never throws).
+ *
+ * @deprecated The pre-lifecycle engine is removed in the next major. Drive installs
+ * and uninstalls through the installation runtime action, which runs the lifecycle
+ * plan/apply engine.
  */
 export function runUninstallation(
   options: RunUninstallationOptions,
@@ -238,7 +272,11 @@ export function runUninstallation(
   });
 }
 
-/** Options for running pre-installation validation. */
+/**
+ * Options for running pre-installation validation.
+ *
+ * @deprecated Removed in the next major together with {@link runValidation}.
+ */
 export type RunValidationOptions = {
   /** Validation context (params, logger, appData — no customScripts). */
   validationContext: ValidationContext;
@@ -254,6 +292,9 @@ export type RunValidationOptions = {
  * each step's optional `validate` handler rather than executing side effects.
  * Always resolves (never throws). Returns a structured result with per-step
  * issues and an aggregated summary.
+ *
+ * @deprecated The pre-lifecycle engine is removed in the next major. The lifecycle
+ * has no equivalent step-tree validation pass yet.
  */
 export function runValidation(
   options: RunValidationOptions,

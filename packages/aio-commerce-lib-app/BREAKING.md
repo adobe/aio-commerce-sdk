@@ -21,6 +21,10 @@
 
 ### Deprecated
 
+<!-- Internal tracking: https://jira.corp.adobe.com/browse/CEXT-6556 -->
+
+- The pre-lifecycle installation engine is deprecated and will be removed in the next major, along with every leaf step's `install`/`uninstall`/`validate` handler. Affected exports from `@adobe/aio-commerce-lib-app/management`: `runInstallation`, `runUninstallation`, `runValidation`, `createInitialInstallationState`, `createInitialUninstallationState`, `InstallationHooks`, `CreateInitialInstallationStateOptions`, `RunInstallationOptions`, `CreateInitialUninstallationStateOptions`, `RunUninstallationOptions` and `RunValidationOptions`. **Replacement:** drive installs and uninstalls through the installation runtime action, which runs the lifecycle plan/apply engine. `runValidation` has no replacement yet; the lifecycle reports planning problems on the plan itself rather than through a separate validation pass.
+
 - `StepBase.when` is deprecated in favor of `StepBase.isConfigured`, which clarifies that the predicate identifies whether the step's domain is represented in a configuration.
 
 <!-- Internal tracking: https://jira.corp.adobe.com/browse/CEXT-6527 -->
