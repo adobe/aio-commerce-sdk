@@ -116,7 +116,7 @@ export async function executeLifecycleAttempt(
 
   state = await requireCurrentAttempt(options.stateStore, attempt.id);
   if (workflow.status === "failed") {
-    return persistApplyFailure(options, state, attempt, baseline, workflow);
+    return persistApplyFailure(options.stateStore, state, attempt, workflow);
   }
 
   return persistSuccess(options, state, attempt, workflow);
