@@ -78,6 +78,14 @@ const newProvider = await commerceEventsClient.createEventProvider({
     // Workspace configuration object
   },
 });
+
+// Update an event provider. Omitted label, description and workspaceConfiguration
+await commerceEventsClient.updateEventProvider({
+  id: 1,
+  provider_id: "my-provider-id",
+  instance_id: "my-instance-id",
+  label: "My Renamed Provider",
+});
 ```
 
 #### Managing Event Subscriptions
@@ -160,6 +168,17 @@ const newProvider = await ioEventsClient.createEventProvider({
   description: "Description of my event provider",
 });
 
+// Update an event provider. This replaces it: an omitted description or docsUrl
+// is reset to the default of the provider type, not kept.
+await ioEventsClient.updateEventProvider({
+  consumerOrgId: "your-consumer-org-id",
+  projectId: "your-project-id",
+  workspaceId: "your-workspace-id",
+  providerId: "my-provider-id",
+  label: "My Renamed Provider",
+  description: "Description of my event provider",
+});
+
 // Create a Commerce-specific event provider
 const commerceProvider = await ioEventsClient.createCommerceEventProvider({
   consumerOrgId: "your-consumer-org-id",
@@ -203,6 +222,18 @@ const newMetadata = await ioEventsClient.createEventMetadataForProvider({
   providerId: "my-provider-id",
   label: "My Event",
   description: "Description of my event",
+  eventCode: "my-event-code",
+});
+
+// Update event metadata. This replaces it: an omitted sampleEventTemplate
+// clears the stored sample event.
+await ioEventsClient.updateEventMetadataForProvider({
+  consumerOrgId: "your-consumer-org-id",
+  projectId: "your-project-id",
+  workspaceId: "your-workspace-id",
+  providerId: "my-provider-id",
+  label: "My Renamed Event",
+  description: "New description of my event",
   eventCode: "my-event-code",
 });
 ```

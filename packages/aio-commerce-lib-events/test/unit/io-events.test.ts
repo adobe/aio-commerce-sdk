@@ -31,6 +31,7 @@ describe("Adobe I/O Events API", () => {
       expect(client).toHaveProperty("getAllEventProviders");
       expect(client).toHaveProperty("getEventProviderById");
       expect(client).toHaveProperty("createEventProvider");
+      expect(client).toHaveProperty("updateEventProvider");
       expect(client).toHaveProperty("getAllCommerceEventProviders");
       expect(client).toHaveProperty("getAll3rdPartyCustomEventProviders");
       expect(client).toHaveProperty("createCommerceEventProvider");
@@ -38,6 +39,7 @@ describe("Adobe I/O Events API", () => {
       expect(client).toHaveProperty("getAllEventMetadataForProvider");
       expect(client).toHaveProperty("getEventMetadataForEventAndProvider");
       expect(client).toHaveProperty("createEventMetadataForProvider");
+      expect(client).toHaveProperty("updateEventMetadataForProvider");
       expect(client).toHaveProperty("deleteEventMetadataForProvider");
       expect(client).toHaveProperty("getAllRegistrationsByConsumerOrg");
       expect(client).toHaveProperty("getAllRegistrations");

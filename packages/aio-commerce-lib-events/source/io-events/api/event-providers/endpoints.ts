@@ -19,6 +19,7 @@ import {
   EventProviderDeleteParamsSchema,
   EventProviderGetByIdParamsSchema,
   EventProviderListAllParamsSchema,
+  EventProviderUpdateParamsSchema,
 } from "./schema";
 
 import type { AdobeIoEventsHttpClient } from "@adobe/aio-commerce-lib-api";
@@ -29,6 +30,7 @@ import type {
   EventProviderDeleteParams,
   EventProviderGetByIdParams,
   EventProviderListAllParams,
+  EventProviderUpdateParams,
 } from "./schema";
 import type {
   IoEventProviderManyResponse,
@@ -138,6 +140,40 @@ export async function createEventProvider(
           docs_url: validatedParams.docsUrl,
           instance_id: validatedParams.instanceId,
           provider_metadata: validatedParams.providerType,
+        },
+      },
+    )
+    .json<IoEventProviderOneResponse>();
+}
+
+/**
+ * Updates an event provider. This replaces the provider: a `description` or `docsUrl` that is
+ * omitted is reset to the default of the provider type, not kept.
+ * @see https://developer.adobe.com/events/docs/api#operation/putProvider
+ *
+ * @param httpClient - The {@link AdobeIoEventsHttpClient} to use to make the request.
+ * @param params - The parameters to update the event provider with.
+ * @param fetchOptions - The {@link Options} to use to make the request.
+ *
+ * @throws A {@link CommerceSdkValidationError} If the parameters are in the wrong format.
+ * @throws An {@link HTTPError} If the status code is not 2XX.
+ */
+export async function updateEventProvider(
+  httpClient: AdobeIoEventsHttpClient,
+  params: EventProviderUpdateParams,
+  fetchOptions?: Options,
+) {
+  const validatedParams = parseOrThrow(EventProviderUpdateParamsSchema, params);
+
+  return httpClient
+    .put(
+      `${validatedParams.consumerOrgId}/${validatedParams.projectId}/${validatedParams.workspaceId}/providers/${validatedParams.providerId}`,
+      {
+        ...fetchOptions,
+        json: {
+          description: validatedParams.description,
+          docs_url: validatedParams.docsUrl,
+          label: validatedParams.label,
         },
       },
     )
