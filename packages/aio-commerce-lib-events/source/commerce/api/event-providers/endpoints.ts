@@ -17,6 +17,7 @@ import {
   EventProviderCreateParamsSchema,
   EventProviderDeleteParamsSchema,
   EventProviderGetByIdParamsSchema,
+  EventProviderUpdateParamsSchema,
 } from "./schema";
 
 import type { AdobeCommerceHttpClient } from "@adobe/aio-commerce-lib-api";
@@ -25,6 +26,7 @@ import type {
   EventProviderCreateParams,
   EventProviderDeleteParams,
   EventProviderGetByIdParams,
+  EventProviderUpdateParams,
 } from "./schema";
 import type {
   CommerceEventProviderManyResponse,
@@ -95,6 +97,36 @@ export async function createEventProvider(
 
   return httpClient
     .post("eventing/eventProvider", {
+      ...fetchOptions,
+      json: { eventProvider },
+    })
+    .json<CommerceEventProviderOneResponse>();
+}
+
+/**
+ * Updates an event provider in the Commerce instance bound to the given {@link AdobeCommerceHttpClient}.
+ * Omitted `label`, `description` and `workspace_configuration` keep their stored values.
+ * @see https://developer.adobe.com/commerce/extensibility/events/api/#update-an-event-provider
+ *
+ * Commerce looks the provider up by `id` (its numeric Commerce ID, not the I/O provider ID) and
+ * overwrites `provider_id` and `instance_id` with the given values. Read the provider first and
+ * pass its own `id`, `provider_id` and `instance_id`.
+ *
+ * @param httpClient - The {@link AdobeCommerceHttpClient} to use to make the request.
+ * @param params - The parameters to update the event provider with.
+ * @param fetchOptions - The {@link Options} to use to make the request.
+ *
+ * @throws A {@link CommerceSdkValidationError} If the parameters are in the wrong format.
+ * @throws An {@link HTTPError} If the status code is not 2XX.
+ */
+export async function updateEventProvider(
+  httpClient: AdobeCommerceHttpClient,
+  params: EventProviderUpdateParams,
+  fetchOptions?: Options,
+) {
+  const eventProvider = parseOrThrow(EventProviderUpdateParamsSchema, params);
+  return httpClient
+    .put("eventing/eventProvider", {
       ...fetchOptions,
       json: { eventProvider },
     })
