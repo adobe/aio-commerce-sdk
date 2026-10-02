@@ -90,6 +90,7 @@ export function planWebhookSubscriptions(
           id: webhookOperationId("update", identity),
           kind: "update",
           label: `Update webhook: ${getWebhookName(identity)}`,
+          reason: "change",
         });
       }
       continue;
@@ -101,6 +102,7 @@ export function planWebhookSubscriptions(
       id: webhookOperationId("add", identity),
       kind: "add",
       label: `Subscribe webhook: ${getWebhookName(identity)}`,
+      reason: "change",
     });
   }
 
@@ -115,6 +117,7 @@ export function planWebhookSubscriptions(
       id: webhookOperationId("remove", identity),
       kind: "remove",
       label: `Unsubscribe webhook: ${getWebhookName(identity)}`,
+      reason: "change",
     });
   }
 

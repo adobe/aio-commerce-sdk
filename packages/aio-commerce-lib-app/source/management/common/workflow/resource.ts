@@ -35,6 +35,12 @@ export type ResourceOperation<TBefore, TAfter = TBefore> = {
 
   /** Human-readable label for display. */
   label: string;
+
+  /**
+   * Why the operation exists: `change` when the target config differs from the baseline,
+   * `drift` when the target matches the baseline but deployed state does not.
+   */
+  reason: "change" | "drift";
 } & (
   | { kind: "add"; after: TAfter }
   | { kind: "update"; before: TBefore; after: TAfter }

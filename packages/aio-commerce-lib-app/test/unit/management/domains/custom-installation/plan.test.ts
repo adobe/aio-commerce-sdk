@@ -48,12 +48,14 @@ describe("planCustomInstallationSteps", () => {
         id: "add:Demo Success",
         kind: "add",
         label: 'Run custom installation step "Demo Success"',
+        reason: "change",
       },
       {
         after: { name: "Demo Error", script: "./demo-error.js" },
         id: "add:Demo Error",
         kind: "add",
         label: 'Run custom installation step "Demo Error"',
+        reason: "change",
       },
     ]);
     expect(result.plan.baselineExecutedSteps).toEqual([]);
@@ -117,6 +119,7 @@ describe("planCustomInstallationSteps", () => {
         kind: "remove",
         label:
           'Custom installation step "Demo Success" no longer in the configuration',
+        reason: "change",
       },
       {
         before: { name: "Demo Error", script: "./demo-error.js" },
@@ -124,6 +127,7 @@ describe("planCustomInstallationSteps", () => {
         kind: "remove",
         label:
           'Custom installation step "Demo Error" no longer in the configuration',
+        reason: "change",
       },
     ]);
   });
@@ -185,6 +189,7 @@ describe("planCustomInstallationSteps", () => {
         id: "add:Demo Error",
         kind: "add",
         label: 'Run custom installation step "Demo Error"',
+        reason: "change",
       },
     ]);
   });
