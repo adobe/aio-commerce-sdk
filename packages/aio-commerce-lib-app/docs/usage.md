@@ -1053,7 +1053,7 @@ The endpoint derives the operation and returns it as `operation` (`"install"` or
 `metadata.upgradeMode` controls what happens once an upgrade has been planned:
 
 - **`auto`** (experimental): the plan is created and its execution starts immediately.
-- **`manual`** (default): the plan is created or reused and returned without starting execution.
+- **`manual`** (default): the plan is created and returned without starting execution.
 
 > [!NOTE]
 > `auto` is experimental and `upgradeMode` currently defaults to `manual` while automatic upgrade execution is stabilizing. This will change back to `auto` in a future release — if you want manual behavior permanently, set `upgradeMode: "manual"` explicitly now.

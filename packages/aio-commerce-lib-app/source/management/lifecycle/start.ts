@@ -25,10 +25,7 @@ import {
   readOrInitializeState,
 } from "./state";
 
-import type {
-  LifecycleAttempt,
-  OrchestrationState,
-} from "#management/common/orchestration";
+import type { LifecycleAttempt } from "#management/common/orchestration";
 import type { LifecycleRuntime } from "./state";
 
 /** Inputs used to consume a reviewed plan and create an attempt. */
@@ -38,10 +35,7 @@ export type StartLifecycleAttemptOptions = LifecycleRuntime & {
   planId: string;
 };
 
-/**
- * Creates and persists an attempt for an exact pending plan, or resumes its
- * failed attempt when it is still eligible for retry.
- */
+/** Creates and persists an attempt for an exact pending plan. */
 export async function startLifecycleAttempt(
   options: StartLifecycleAttemptOptions,
 ): Promise<LifecycleAttempt> {
@@ -51,10 +45,6 @@ export async function startLifecycleAttempt(
   const plan = state.pendingPlan;
 
   if (!plan || plan.id !== options.planId) {
-    const resumed = await resumeFailedAttempt(options, state);
-    if (resumed) {
-      return resumed;
-    }
     throw new PendingLifecyclePlanNotFoundError(options.planId);
   }
   if (plan.actionVersion !== options.actionVersion) {
@@ -94,34 +84,6 @@ export async function startLifecycleAttempt(
     pendingPlan: null,
   });
   return attempt;
-}
-
-/** Resumes the failed attempt for the requested plan when it remains eligible. */
-async function resumeFailedAttempt(
-  options: StartLifecycleAttemptOptions,
-  state: OrchestrationState,
-): Promise<LifecycleAttempt | null> {
-  const failedAttempt = state.latestAttempt;
-  if (
-    failedAttempt?.status !== "failed" ||
-    failedAttempt.plan.id !== options.planId ||
-    failedAttempt.plan.actionVersion !== options.actionVersion
-  ) {
-    return null;
-  }
-
-  assertFutureExecutionDeadline(options.executionDeadline);
-  const { failure: _failure, ...attempt } = failedAttempt;
-  const resumed: LifecycleAttempt = {
-    ...attempt,
-    executionDeadline: options.executionDeadline,
-    status: "pending",
-  };
-  await options.stateStore.put(CURRENT_STATE_KEY, {
-    ...state,
-    latestAttempt: resumed,
-  });
-  return resumed;
 }
 
 /** Rejects an execution deadline that has already elapsed. */

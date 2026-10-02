@@ -80,6 +80,12 @@ export type PlanningInput<TConfig, TSnapshotData> = {
 
   /** The target configuration to converge to, or `null` when none is available. */
   targetConfig: TConfig | null;
+
+  /**
+   * The latest attempt, when it failed after the baseline was saved: its target configuration
+   * (`null` when the domain was absent from it) and this domain's plan in it. Absent otherwise.
+   */
+  failedAttempt?: { targetConfig: TConfig | null; plan: DomainPlan | null };
 };
 
 /** The outcome a domain reports after applying its plan. */
