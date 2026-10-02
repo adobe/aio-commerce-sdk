@@ -75,6 +75,7 @@ describe("lifecycle type surface", () => {
       id: "op-1",
       kind: "add",
       label: "Add order webhook",
+      reason: "change",
     };
     expectTypeOf(add).toExtend<ResourceOperation<Partial<WebhookEntry>>>();
 
@@ -85,6 +86,7 @@ describe("lifecycle type surface", () => {
       id: "op-2",
       kind: "update",
       label: "Update order webhook",
+      reason: "change",
     };
     expectTypeOf(update).toMatchTypeOf<
       ResourceOperation<Partial<WebhookEntry>>
@@ -97,6 +99,7 @@ describe("lifecycle type surface", () => {
       id: "op-3",
       kind: "add",
       label: "Invalid",
+      reason: "change",
     };
     expectTypeOf(invalid).toBeObject();
   });
