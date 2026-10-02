@@ -97,25 +97,16 @@ function buildInputs(inputs: Record<string, unknown>) {
  *
  * @param action - The action definition to build.
  * @param existingAction - The action's previous YAML definition, if any.
- * @param packageInputs - The package-level inputs supplied by the generator.
  */
 function buildActionDefinition(
   action: ActionDefinition,
   existingAction?: YAMLMap,
-  packageInputs?: Record<string, string>,
 ) {
   const actionDef: YAMLMap = new YAMLMap();
   const existingInputs = getExistingInputs(existingAction);
   const existingRuntime = getExistingString("runtime", existingAction);
-  const legacyLogLevel =
-    packageInputs?.LOG_LEVEL === "$LOG_LEVEL" &&
-    existingAction?.getIn(["inputs", "LOG_LEVEL"]) === "$LOG_LEVEL";
   const inputs = {
-    ...Object.fromEntries(
-      Object.entries(existingInputs).filter(
-        ([name]) => name !== "LOG_LEVEL" || !legacyLogLevel,
-      ),
-    ),
+    ...existingInputs,
     ...(action.inputs ?? {}),
   };
 
@@ -273,7 +264,6 @@ function buildRuntimeManifest(extConfig: Document, manifest: RuntimeManifest) {
       const actionDef = buildActionDefinition(
         action,
         isMap(existingAction) ? existingAction : undefined,
-        pkg.inputs,
       );
 
       actions.set(actionName, actionDef);

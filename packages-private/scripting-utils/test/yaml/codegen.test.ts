@@ -290,7 +290,7 @@ runtimeManifest:
     });
   });
 
-  test("migrates generated action LOG_LEVEL while retaining custom inputs", async () => {
+  test("preserves existing package and action inputs across regeneration", async () => {
     const existingConfig = `
 runtimeManifest:
   packages:
@@ -342,8 +342,11 @@ runtimeManifest:
         });
         expect(pkg.actions["app-config"].inputs).toEqual({
           ACTION_KEY: "$ACTION_KEY",
+          LOG_LEVEL: "$LOG_LEVEL",
         });
-        expect(pkg.actions.association).not.toHaveProperty("inputs");
+        expect(pkg.actions.association.inputs).toEqual({
+          LOG_LEVEL: "$LOG_LEVEL",
+        });
         expect(pkg.actions.installation.inputs).toEqual({
           LOG_LEVEL: "custom-level",
         });

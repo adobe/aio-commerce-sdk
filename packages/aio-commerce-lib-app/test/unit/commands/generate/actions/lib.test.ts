@@ -10,6 +10,10 @@
  * governing permissions and limitations under the License.
  */
 
+import { readFile } from "node:fs/promises";
+import { join } from "node:path";
+
+import { withTempFiles } from "@aio-commerce-sdk/scripting-utils/filesystem";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { parseDocument } from "yaml";
 
@@ -24,6 +28,8 @@ import {
   generateCustomScriptsTemplate,
   readExtConfig,
   removeLegacyImsInputs,
+  removeLegacyLogLevelInputs,
+  updateExtConfig,
 } from "#commands/generate/actions/lib";
 import { templates } from "#test/fixtures/commands";
 import {
@@ -44,9 +50,15 @@ vi.mock("@aio-commerce-sdk/scripting-utils/project", async (importOriginal) => {
   };
 });
 
-vi.mock("@aio-commerce-sdk/scripting-utils/yaml/index", () => ({
-  readYamlFile: vi.fn(),
-}));
+vi.mock(
+  "@aio-commerce-sdk/scripting-utils/yaml/index",
+  async (importOriginal) => ({
+    ...(await importOriginal<
+      typeof import("@aio-commerce-sdk/scripting-utils/yaml/index")
+    >()),
+    readYamlFile: vi.fn(),
+  }),
+);
 
 afterEach(() => {
   vi.clearAllMocks();
@@ -112,6 +124,126 @@ runtimeManifest:
     expect(actions.plain.inputs).toEqual({
       AIO_COMMERCE_AUTH_IMS_ORG_ID: "$AIO_COMMERCE_AUTH_IMS_ORG_ID",
     });
+  });
+});
+
+describe("removeLegacyLogLevelInputs", () => {
+  test("migrates legacy inputs when updating the generated extension manifest", async () => {
+    const { readYamlFile } = await import(
+      "@aio-commerce-sdk/scripting-utils/yaml/index"
+    );
+    const doc = parseDocument(`
+runtimeManifest:
+  packages:
+    app-management:
+      inputs:
+        PACKAGE_KEY: $PACKAGE_KEY
+      actions:
+        app-config:
+          inputs:
+            LOG_LEVEL: $LOG_LEVEL
+            ACTION_KEY: $ACTION_KEY
+        association:
+          inputs:
+            LOG_LEVEL: $LOG_LEVEL
+        installation:
+          inputs:
+            LOG_LEVEL: debug
+`);
+    vi.mocked(readYamlFile).mockResolvedValue(doc);
+
+    await withTempFiles(
+      { "src/commerce-extensibility-1/ext.config.yaml": "" },
+      async (projectRoot) => {
+        await updateExtConfig(
+          minimalValidConfig,
+          EXTENSIBILITY_EXTENSION_POINT_ID,
+          projectRoot,
+        );
+        const output = parseDocument(
+          await readFile(
+            join(projectRoot, "src/commerce-extensibility-1/ext.config.yaml"),
+            "utf8",
+          ),
+        ).toJS();
+        const pkg = output.runtimeManifest.packages["app-management"];
+
+        expect(pkg.inputs).toEqual({
+          LOG_LEVEL: "$LOG_LEVEL",
+          PACKAGE_KEY: "$PACKAGE_KEY",
+        });
+        expect(pkg.actions["app-config"].inputs).toEqual({
+          ACTION_KEY: "$ACTION_KEY",
+        });
+        expect(pkg.actions.association.inputs).toBeUndefined();
+        expect(pkg.actions.installation.inputs).toEqual({ LOG_LEVEL: "debug" });
+      },
+    );
+  });
+
+  test("removes only generated LOG_LEVEL inputs for generated actions with package defaults", () => {
+    const doc = parseDocument(`
+runtimeManifest:
+  packages:
+    app-management:
+      actions:
+        generated:
+          inputs:
+            LOG_LEVEL: $LOG_LEVEL
+            PAYMENT_API_KEY: $PAYMENT_API_KEY
+        customized:
+          inputs:
+            LOG_LEVEL: debug
+        unmanaged:
+          inputs:
+            LOG_LEVEL: $LOG_LEVEL
+    other-package:
+      actions:
+        plain:
+          inputs:
+            LOG_LEVEL: $LOG_LEVEL
+`);
+
+    const extConfig = {
+      runtimeManifest: {
+        packages: {
+          "app-management": {
+            actions: {
+              customized: { function: "customized.js" },
+              generated: { function: "generated.js" },
+              missing: { function: "missing.js" },
+            },
+            inputs: { LOG_LEVEL: "$LOG_LEVEL" },
+          },
+          "other-package": {
+            actions: { plain: { function: "plain.js" } },
+          },
+        },
+      },
+    };
+
+    removeLegacyLogLevelInputs(doc, extConfig);
+    removeLegacyLogLevelInputs(doc, extConfig);
+
+    const { packages } = doc.toJS().runtimeManifest;
+    expect(packages["app-management"].actions.generated.inputs).toEqual({
+      PAYMENT_API_KEY: "$PAYMENT_API_KEY",
+    });
+    expect(packages["app-management"].actions.customized.inputs).toEqual({
+      LOG_LEVEL: "debug",
+    });
+    expect(packages["app-management"].actions.unmanaged.inputs).toEqual({
+      LOG_LEVEL: "$LOG_LEVEL",
+    });
+    expect(packages["other-package"].actions.plain.inputs).toEqual({
+      LOG_LEVEL: "$LOG_LEVEL",
+    });
+  });
+
+  test("handles configurations without runtime packages", () => {
+    const doc = parseDocument("{}");
+    removeLegacyLogLevelInputs(doc, {});
+    expect(doc.toJS()).toEqual({});
   });
 });
 
