@@ -15,8 +15,10 @@ import { resolveImsAuthParams } from "@adobe/aio-commerce-lib-auth";
 import { stringify } from "safe-stable-stringify";
 
 import { appliesToEnv } from "#config/lib/environment";
+import { fieldValuesEqual, isUnset } from "#management/common/utils/values";
 
 import type {
+  CommerceWebhook,
   WebhookSubscribeParams,
   WebhookUnsubscribeParams,
 } from "@adobe/aio-commerce-lib-webhooks/api";
@@ -40,14 +42,18 @@ const MUTABLE_SCALAR_FIELDS = [
   "fallback_error_message",
   "ttl",
   "batch_order",
-] as const satisfies (keyof WebhookSubscribeParams)[];
+  "requiresAdobeAuth",
+] as const satisfies (keyof ResolvedWebhookPayload)[];
 
 /** Mutable (non-identity) array fields compared to detect a config change. */
 const MUTABLE_ARRAY_FIELDS = [
   "fields",
   "rules",
   "headers",
-] as const satisfies (keyof WebhookSubscribeParams)[];
+] as const satisfies (keyof ResolvedWebhookPayload)[];
+
+/** Every mutable (non-identity) field compared to detect a config change. */
+const MUTABLE_FIELDS = [...MUTABLE_SCALAR_FIELDS, ...MUTABLE_ARRAY_FIELDS];
 
 /** Matches any character that is not a valid identifier character (letter, digit, or underscore). */
 const NON_IDENTIFIER_CHAR_REGEX = /[^a-zA-Z0-9_]/g;
@@ -121,40 +127,61 @@ export function isDesiredWebhook(
   return isWebhookInList(desiredWebhooks, webhook);
 }
 
-/** True when two optional arrays contain the same elements, regardless of order. Treats `undefined` and `[]` as equal. */
-function arraysEqualUnordered(
-  a: unknown[] | undefined,
-  b: unknown[] | undefined,
-): boolean {
-  // `stringify` sorts object keys, so equal elements serialize identically regardless of key order.
-  const normalizedA = (a ?? []).map((item) => stringify(item) ?? "").sort();
-  const normalizedB = (b ?? []).map((item) => stringify(item) ?? "").sort();
-  return (
-    normalizedA.length === normalizedB.length &&
-    normalizedA.every((value, index) => value === normalizedB[index])
-  );
+/** A stable key for a webhook's identity, insensitive to the `.magento` segment of plugin methods. */
+export function webhookKey(identity: WebhookIdentity): string {
+  return [
+    normalizeWebhookMethod(identity.webhook_method),
+    identity.webhook_type,
+    identity.batch_name,
+    identity.hook_name,
+  ].join(":");
+}
+
+/** Adds the given webhooks to the configured values under their identity, skipping exact duplicates. */
+export function collectConfiguredValues(
+  webhooks: readonly ResolvedWebhookPayload[],
+  into: Record<string, Partial<ResolvedWebhookPayload>[]>,
+): Record<string, Partial<ResolvedWebhookPayload>[]> {
+  for (const webhook of webhooks) {
+    const key = webhookKey(webhook);
+    const known = into[key] ?? [];
+
+    if (!known.some((other) => stringify(other) === stringify(webhook))) {
+      into[key] = [...known, webhook];
+    }
+  }
+
+  return into;
 }
 
 /**
- * True when any mutable (non-identity) field differs between a baseline webhook and
- * its desired target payload. `batch_name`/`hook_name`/`webhook_method`/`webhook_type`
- * are identity fields — a change there is a rename (remove+add), not a config update.
+ * True when a live webhook differs from its target. A field the target sets must match
+ * exactly. A field the target leaves out only differs when live still holds a value a
+ * config set for it (`configured`), since otherwise it holds Commerce's own value.
+ * `batch_name`/`hook_name`/`webhook_method`/`webhook_type` are identity fields — a change
+ * there is a rename (remove+add), not a config update.
  */
 export function hasWebhookConfigChanged(
-  before: WebhookSubscribeParams,
-  after: WebhookOperationValue,
+  live: WebhookOperationValue,
+  target: WebhookOperationValue,
+  configured: readonly Partial<ResolvedWebhookPayload>[] = [],
 ): boolean {
-  const scalarChanged = MUTABLE_SCALAR_FIELDS.some(
-    (field) => before[field] !== after[field],
-  );
+  return MUTABLE_FIELDS.some((field) => {
+    const liveValue = live[field];
+    const targetValue = target[field];
 
-  if (scalarChanged) {
-    return true;
-  }
+    if (targetValue !== undefined) {
+      return !fieldValuesEqual(liveValue, targetValue);
+    }
 
-  return MUTABLE_ARRAY_FIELDS.some(
-    (field) => !arraysEqualUnordered(before[field], after[field]),
-  );
+    // Commerce always returns a value, so for a field the target leaves out only a value one
+    // of our configs set proves live is stale. Any other value is Commerce's own.
+    const configuredValues = configured
+      .map((webhook) => webhook[field])
+      .filter((value) => !isUnset(value));
+
+    return configuredValues.some((value) => fieldValuesEqual(liveValue, value));
+  });
 }
 
 /** Strips the `.magento` segment Commerce drops when persisting plugin webhook methods. */
@@ -187,16 +214,49 @@ export function buildWebhookIdPrefix(appId: string): string {
   return prefix.endsWith("_") ? prefix : `${prefix}_`;
 }
 
-/** Returns whether a Commerce webhook belongs to the app with the given metadata ID. */
-export function isWebhookOwnedByApp(
-  webhook: Pick<WebhookIdentity, "batch_name" | "hook_name">,
+/** The host of a webhook URL, or `null` when the URL cannot be parsed. */
+function webhookHost(url: string): string | null {
+  try {
+    return new URL(url).host;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Proven-owned when both `batch_name` and `hook_name` carry the app's id prefix and the URL
+ * targets this workspace's runtime namespace. Explicit-url and other-namespace webhooks are never
+ * owned, and nothing is when the namespace is unknown.
+ */
+export function isWebhookProvenOwnedByApp(
+  webhook: Pick<CommerceWebhook, "batch_name" | "hook_name" | "url">,
   appId: string,
 ): boolean {
+  const namespace = process.env.__OW_NAMESPACE;
+  if (namespace === undefined) {
+    return false;
+  }
+
   const idPrefix = buildWebhookIdPrefix(appId);
-  return (
+  const hasAppPrefix =
     webhook.batch_name.startsWith(idPrefix) &&
-    webhook.hook_name.startsWith(idPrefix)
-  );
+    webhook.hook_name.startsWith(idPrefix);
+
+  const callsThisNamespace =
+    webhookHost(webhook.url) === `${namespace}.adobeioruntime.net`;
+
+  return hasAppPrefix && callsThisNamespace;
+}
+
+/** Maps a live Commerce webhook to the resolved payload shape the target is compared in. */
+export function toResolvedWebhookPayload({
+  developer_console_oauth,
+  ...webhook
+}: CommerceWebhook): ResolvedWebhookPayload {
+  return {
+    ...webhook,
+    requiresAdobeAuth: developer_console_oauth !== undefined,
+  };
 }
 
 /** Resolves every configured webhook that applies to the Commerce environment. */

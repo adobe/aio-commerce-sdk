@@ -10,15 +10,22 @@
  * governing permissions and limitations under the License.
  */
 
+import { unwrapHttpError } from "@adobe/aio-commerce-lib-api/utils";
+
 import { getInstallCommerceEnv } from "#config/lib/environment";
 
 import {
+  collectConfiguredValues,
   getWebhookName,
   hasWebhookConfigChanged,
   isDesiredWebhook,
+  isWebhookInList,
+  isWebhookProvenOwnedByApp,
   resolveDesiredWebhooks,
   toIdentity,
+  toResolvedWebhookPayload,
   webhookIdentitiesMatch,
+  webhookKey,
   webhookOperationId,
 } from "./utils";
 
@@ -31,100 +38,172 @@ import type {
 import type { ValidationExecutionContext } from "#management/common/workflow/step";
 import type { WebhooksStepContext } from "./context";
 import type {
+  ResolvedWebhookPayload,
   WebhookDomainPlan,
   WebhookOperationValue,
   WebhookSnapshotData,
 } from "./types";
 
 /**
- * Diffs the target config against the baseline into add, update, and remove
- * operations. Pure — no external reads or writes, since an observation made
- * here could be stale by execution time. Blocks with
- * `WEBHOOK_BASELINE_UNRESOLVED` if the baseline data cannot be resolved.
+ * Diffs the live webhooks against the target config into add, update, and remove
+ * operations. Removes cover live webhooks the app owns that the target does not
+ * declare. Blocks with `WEBHOOK_LIVE_READ_FAILED` if the live webhooks cannot be listed.
  */
-export function planWebhookSubscriptions(
+export async function planWebhookSubscriptions(
   input: PlanningInput<WebhooksConfig, WebhookSnapshotData>,
   context: ValidationExecutionContext<WebhooksStepContext>,
 ): Promise<PlanningResult<WebhookDomainPlan>> {
-  const { path, baseline, targetConfig } = input;
-  const { params } = context;
+  const { path, baseline, targetConfig, failedAttempt } = input;
+  const env = getInstallCommerceEnv(context.params);
 
-  // An existing baseline with unresolved data isn't "no prior state" — webhooks may
-  // still be live, so don't silently drop their removal.
-  if (baseline && !baseline.data?.subscribedWebhooks) {
-    return Promise.resolve({
+  let live: ResolvedWebhookPayload[];
+  try {
+    const webhooks = await context.commerceWebhooksClient.getWebhookList();
+    live = webhooks.map(toResolvedWebhookPayload);
+  } catch (error) {
+    return {
       issues: [
         {
-          code: "WEBHOOK_BASELINE_UNRESOLVED",
+          code: "WEBHOOK_LIVE_READ_FAILED",
           domain: "webhooks",
-          message:
-            "A prior webhooks baseline exists, but its subscribed-webhooks data could not be resolved. Refusing to plan without it, since previously subscribed webhooks could otherwise go unremoved.",
+          message: `Could not list the live webhooks to plan against: ${await unwrapHttpError(error)}`,
         },
       ],
       kind: "blocked",
-    });
+    };
   }
 
-  const env = getInstallCommerceEnv(params);
   const desired = targetConfig ? resolveDesiredWebhooks(targetConfig, env) : [];
+  const declaredInBaseline = baseline
+    ? resolveDesiredWebhooks(baseline.config, env)
+    : [];
 
-  const ownedFromBaseline = baseline?.data?.subscribedWebhooks ?? [];
+  const failedPlan = failedAttempt?.plan as WebhookDomainPlan | null;
+  const declaredInFailedAttempt = failedAttempt?.targetConfig
+    ? resolveDesiredWebhooks(failedAttempt.targetConfig, env)
+    : [];
 
-  // Removes precede adds (see the concat below) so a rename never briefly double-registers a hook point.
-  const addOperations: ResourceOperation<WebhookOperationValue>[] = [];
-  const updateOperations: ResourceOperation<WebhookOperationValue>[] = [];
-  const removeOperations: ResourceOperation<WebhookOperationValue>[] = [];
+  const configuredValues = collectConfiguredValues(
+    [...declaredInBaseline, ...declaredInFailedAttempt],
+    { ...failedPlan?.configuredValues },
+  );
 
-  for (const webhook of desired) {
-    const owned = ownedFromBaseline.find((candidate) =>
+  return {
+    kind: "planned",
+    plan: {
+      configuredValues,
+      operations: [
+        // Removes precede adds so a rename never briefly double-registers a hook point.
+        ...planRemovals(live, desired, declaredInBaseline, context.appId),
+        ...planUpdates(live, desired, declaredInBaseline, configuredValues),
+        ...planAdditions(live, desired, declaredInBaseline),
+      ],
+      path,
+    },
+  };
+}
+
+/** Plans an add for every desired webhook missing from Commerce. */
+function planAdditions(
+  live: readonly ResolvedWebhookPayload[],
+  desired: readonly ResolvedWebhookPayload[],
+  declaredInBaseline: readonly ResolvedWebhookPayload[],
+): ResourceOperation<WebhookOperationValue>[] {
+  return desired
+    .filter((webhook) => !isWebhookInList(live, webhook))
+    .map((webhook) => {
+      const identity = toIdentity(webhook);
+      return {
+        after: webhook,
+        id: webhookOperationId("add", identity),
+        kind: "add",
+        label: `Subscribe webhook: ${getWebhookName(identity)}`,
+        reason: isChangedFromBaseline(webhook, declaredInBaseline)
+          ? "change"
+          : "drift",
+      };
+    });
+}
+
+/** Plans an update for every desired webhook whose live copy differs from it. */
+function planUpdates(
+  live: readonly ResolvedWebhookPayload[],
+  desired: readonly ResolvedWebhookPayload[],
+  declaredInBaseline: readonly ResolvedWebhookPayload[],
+  configuredValues: NonNullable<WebhookDomainPlan["configuredValues"]>,
+): ResourceOperation<WebhookOperationValue>[] {
+  return desired.flatMap((webhook) => {
+    const current = live.find((candidate) =>
       webhookIdentitiesMatch(candidate, webhook),
     );
 
-    if (owned) {
-      if (hasWebhookConfigChanged(owned, webhook)) {
-        const identity = toIdentity(webhook);
-        updateOperations.push({
-          after: webhook,
-          before: identity,
-          id: webhookOperationId("update", identity),
-          kind: "update",
-          label: `Update webhook: ${getWebhookName(identity)}`,
-          reason: "change",
-        });
-      }
-      continue;
+    if (!current) {
+      return [];
+    }
+
+    const configured = configuredValues[webhookKey(webhook)];
+    if (!hasWebhookConfigChanged(current, webhook, configured)) {
+      return [];
     }
 
     const identity = toIdentity(webhook);
-    addOperations.push({
+    return {
       after: webhook,
-      id: webhookOperationId("add", identity),
-      kind: "add",
-      label: `Subscribe webhook: ${getWebhookName(identity)}`,
-      reason: "change",
-    });
-  }
+      before: current,
+      id: webhookOperationId("update", identity),
+      kind: "update",
+      label: `Update webhook: ${getWebhookName(identity)}`,
+      reason: isChangedFromBaseline(webhook, declaredInBaseline)
+        ? "change"
+        : "drift",
+    };
+  });
+}
 
-  const staleFromBaseline = ownedFromBaseline.filter(
-    (owned) => !isDesiredWebhook(owned, desired),
+/** Plans a remove for every live webhook the app owns that is not desired. */
+function planRemovals(
+  live: readonly ResolvedWebhookPayload[],
+  desired: readonly ResolvedWebhookPayload[],
+  declaredInBaseline: readonly ResolvedWebhookPayload[],
+  appId: string,
+): ResourceOperation<WebhookOperationValue>[] {
+  return live
+    .filter((webhook) => {
+      // The baseline also covers webhooks with an explicit url, which are never proven-owned.
+      const isOwned =
+        isWebhookInList(declaredInBaseline, webhook) ||
+        isWebhookProvenOwnedByApp(webhook, appId);
+
+      const isDesired = isDesiredWebhook(webhook, desired);
+      return isOwned && !isDesired;
+    })
+    .map((webhook) => {
+      const identity = toIdentity(webhook);
+      return {
+        before: webhook,
+        id: webhookOperationId("remove", identity),
+        kind: "remove",
+        label: `Unsubscribe webhook: ${getWebhookName(identity)}`,
+        reason: isWebhookInList(declaredInBaseline, webhook)
+          ? "change"
+          : "drift",
+      };
+    });
+}
+
+/** Whether the target config adds or changes a webhook compared with the baseline config. */
+function isChangedFromBaseline(
+  webhook: ResolvedWebhookPayload,
+  declaredInBaseline: readonly ResolvedWebhookPayload[],
+): boolean {
+  const declared = declaredInBaseline.find((candidate) =>
+    webhookIdentitiesMatch(candidate, webhook),
   );
 
-  for (const stale of staleFromBaseline) {
-    const identity = toIdentity(stale);
-    removeOperations.push({
-      before: identity,
-      id: webhookOperationId("remove", identity),
-      kind: "remove",
-      label: `Unsubscribe webhook: ${getWebhookName(identity)}`,
-      reason: "change",
-    });
+  if (!declared) {
+    return true;
   }
 
-  return Promise.resolve({
-    kind: "planned",
-    plan: {
-      operations: [...removeOperations, ...updateOperations, ...addOperations],
-      path,
-    },
-  });
+  // The baseline is its own evidence, so a field the target drops counts as changed.
+  return hasWebhookConfigChanged(declared, webhook, [declared]);
 }
