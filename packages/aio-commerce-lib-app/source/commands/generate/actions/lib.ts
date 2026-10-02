@@ -334,6 +334,39 @@ export function removeLegacyImsInputs(
 }
 
 /**
+ * Removes generated action-level `LOG_LEVEL` inputs superseded by package inputs.
+ * @param extConfigDoc - The existing extension document, mutated in place.
+ * @param extConfig - The generated extension config.
+ */
+export function removeLegacyLogLevelInputs(
+  extConfigDoc: Document,
+  extConfig: ExtConfig,
+) {
+  for (const [packageName, pkg] of Object.entries(
+    extConfig.runtimeManifest?.packages ?? {},
+  )) {
+    if (pkg.inputs?.LOG_LEVEL !== "$LOG_LEVEL") {
+      continue;
+    }
+
+    for (const actionName of Object.keys(pkg.actions ?? {})) {
+      const inputPath = [
+        "runtimeManifest",
+        "packages",
+        packageName,
+        "actions",
+        actionName,
+        "inputs",
+        "LOG_LEVEL",
+      ];
+      if (extConfigDoc.getIn(inputPath) === "$LOG_LEVEL") {
+        extConfigDoc.deleteIn(inputPath);
+      }
+    }
+  }
+}
+
+/**
  * Updates an extension point's ext.config.yaml with generated configuration.
  * @param appConfig - App configuration used to build the extension config.
  * @param extensionPointId - Extension point whose config is updated.
@@ -379,6 +412,7 @@ export async function updateExtConfig(
   }
 
   removeLegacyImsInputs(extConfigDoc, extConfig);
+  removeLegacyLogLevelInputs(extConfigDoc, extConfig);
   await createOrUpdateExtConfig(extConfigPath, extConfig, extConfigDoc);
   return extConfig;
 }

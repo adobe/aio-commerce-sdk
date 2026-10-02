@@ -259,6 +259,109 @@ runtimeManifest:
     });
   });
 
+  test("writes package inputs without injecting them into actions", async () => {
+    await withTempFiles({}, async (tempDir) => {
+      const configPath = join(tempDir, "ext.config.yaml");
+      const config = {
+        runtimeManifest: {
+          packages: {
+            "app-management": {
+              actions: {
+                "app-config": { function: "actions/app-config.js" },
+                installation: {
+                  function: "actions/installation.js",
+                  inputs: { ENCRYPTION_KEY: "$ENCRYPTION_KEY" },
+                },
+              },
+              inputs: { LOG_LEVEL: "$LOG_LEVEL" },
+            },
+          },
+        },
+      };
+
+      const doc = await createOrUpdateExtConfig(configPath, config);
+      const pkg = doc.toJS().runtimeManifest.packages["app-management"];
+
+      expect(pkg.inputs).toEqual({ LOG_LEVEL: "$LOG_LEVEL" });
+      expect(pkg.actions["app-config"]).not.toHaveProperty("inputs");
+      expect(pkg.actions.installation.inputs).toEqual({
+        ENCRYPTION_KEY: "$ENCRYPTION_KEY",
+      });
+    });
+  });
+
+  test("preserves existing package and action inputs across regeneration", async () => {
+    const existingConfig = `
+runtimeManifest:
+  packages:
+    app-management:
+      inputs:
+        PACKAGE_KEY: $PACKAGE_KEY
+      actions:
+        app-config:
+          inputs:
+            LOG_LEVEL: $LOG_LEVEL
+            ACTION_KEY: $ACTION_KEY
+        association:
+          inputs:
+            LOG_LEVEL: $LOG_LEVEL
+        installation:
+          inputs:
+            LOG_LEVEL: custom-level
+`;
+
+    await withTempFiles(
+      { "ext.config.yaml": existingConfig },
+      async (tempDir) => {
+        const configPath = join(tempDir, "ext.config.yaml");
+        const config = {
+          runtimeManifest: {
+            packages: {
+              "app-management": {
+                actions: {
+                  "app-config": { function: "actions/app-config.js" },
+                  association: { function: "actions/association.js" },
+                  installation: { function: "actions/installation.js" },
+                },
+                inputs: { LOG_LEVEL: "$LOG_LEVEL" },
+              },
+            },
+          },
+        };
+
+        const doc = await createOrUpdateExtConfig(
+          configPath,
+          config,
+          parseDocument(existingConfig),
+        );
+        const pkg = doc.toJS().runtimeManifest.packages["app-management"];
+
+        expect(pkg.inputs).toEqual({
+          LOG_LEVEL: "$LOG_LEVEL",
+          PACKAGE_KEY: "$PACKAGE_KEY",
+        });
+        expect(pkg.actions["app-config"].inputs).toEqual({
+          ACTION_KEY: "$ACTION_KEY",
+          LOG_LEVEL: "$LOG_LEVEL",
+        });
+        expect(pkg.actions.association.inputs).toEqual({
+          LOG_LEVEL: "$LOG_LEVEL",
+        });
+        expect(pkg.actions.installation.inputs).toEqual({
+          LOG_LEVEL: "custom-level",
+        });
+
+        const firstGeneration = doc.toJS();
+        const regenerated = await createOrUpdateExtConfig(
+          configPath,
+          config,
+          doc,
+        );
+        expect(regenerated.toJS()).toEqual(firstGeneration);
+      },
+    );
+  });
+
   test("should use default license if not provided", async () => {
     await withTempFiles({}, async (tempDir) => {
       const configPath = join(tempDir, "ext.config.yaml");
@@ -640,11 +743,10 @@ runtimeManifest:
           const fileContent = await readFile(configPath, "utf-8");
 
           expect(fileContent).toContain("PAYMENT_API_KEY: $PAYMENT_API_KEY");
-          expect(fileContent).toContain("LOG_LEVEL: $LOG_LEVEL");
+          expect(fileContent).toContain("LOG_LEVEL: custom-log-level");
           expect(fileContent).toContain(
             "AIO_COMMERCE_CONFIG_ENCRYPTION_KEY: $AIO_COMMERCE_CONFIG_ENCRYPTION_KEY",
           );
-          expect(fileContent).not.toContain("custom-log-level");
           expect(fileContent).not.toContain("custom-key");
         },
       );

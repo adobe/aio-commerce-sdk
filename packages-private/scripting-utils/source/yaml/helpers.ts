@@ -18,6 +18,7 @@ import {
   Document,
   isMap,
   isPair,
+  isScalar,
   isSeq,
   parseDocument,
   YAMLMap,
@@ -142,11 +143,10 @@ export function getOrCreateMap(
 }
 
 /**
- * Read the `inputs` map from an existing YAML action definition into a plain
- * object. Used by codegen to merge developer-added inputs with the ones the
- * generator manages, so regeneration does not strip user-added entries.
+ * Read the `inputs` map from an existing YAML action or package definition
+ * into a plain object, so regeneration does not strip developer-added entries.
  *
- * @param existingAction - The YAML map representing the existing action.
+ * @param existingAction - The existing action or package YAML map.
  */
 export function getExistingInputs(existingAction?: YAMLMap) {
   const inputs = existingAction?.get("inputs");
@@ -161,7 +161,10 @@ export function getExistingInputs(existingAction?: YAMLMap) {
         return [];
       }
 
-      return [String(item.key), item.value];
+      return [
+        String(item.key),
+        isScalar(item.value) ? item.value.value : item.value,
+      ];
     }),
   );
 }
