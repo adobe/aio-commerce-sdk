@@ -30,6 +30,21 @@ export const EventProviderCreateParamsSchema = v.object({
   ),
 });
 
+export const EventProviderUpdateParamsSchema = v.object({
+  description: v.optional(stringValueSchema("description")),
+  id: v.pipe(
+    v.number("Expected id to be a number"),
+    v.integer("Expected id to be an integer"),
+  ),
+  instance_id: stringValueSchema("instance_id"),
+
+  label: v.optional(stringValueSchema("label")),
+  provider_id: stringValueSchema("provider_id"),
+  workspace_configuration: v.optional(
+    workspaceConfigurationSchema("workspace_configuration"),
+  ),
+});
+
 export const EventProviderDeleteParamsSchema = v.object({
   provider_id: stringValueSchema("provider_id"),
 });
@@ -54,6 +69,10 @@ export type EventProviderCreateParams = v.InferInput<
  * The schema of the parameters received by the DELETE `eventing/eventProvider/:provider_id` Commerce API endpoint.
  * @see https://developer.adobe.com/commerce/extensibility/events/api/#delete-event-provider
  */
+export type EventProviderUpdateParams = v.InferInput<
+  typeof EventProviderUpdateParamsSchema
+>;
+
 export type EventProviderDeleteParams = v.InferInput<
   typeof EventProviderDeleteParamsSchema
 >;

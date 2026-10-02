@@ -97,6 +97,9 @@ export const CreateEventMetadataForProviderSchema = v.object({
  * The schema of the parameters received by the GET `providers/:id/eventmetadata` Adobe I/O Events API endpoint.
  * @see https://developer.adobe.com/events/docs/api#operation/getByProviderId
  */
+export const UpdateEventMetadataForProviderSchema =
+  CreateEventMetadataForProviderSchema;
+
 export type GetAllEventMetadataForProviderParams = v.InferInput<
   typeof GetAllEventMetadataForProviderSchema
 >;
@@ -130,6 +133,10 @@ export type CreateEventMetadataForProviderParams = v.InferInput<
  * The schema of the parameters received by the DELETE `providers/:id/eventmetadata/:code` Adobe I/O Events API endpoint.
  * @see https://developer.adobe.com/events/docs/api#operation/deleteEventMetadata
  */
+export type UpdateEventMetadataForProviderParams = v.InferInput<
+  typeof UpdateEventMetadataForProviderSchema
+>;
+
 export type DeleteEventMetadataForProviderParams = v.InferInput<
   typeof DeleteEventMetadataForProviderSchema
 >;

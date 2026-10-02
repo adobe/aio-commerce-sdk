@@ -161,6 +161,85 @@ describe("Adobe IO Events API - Integration Tests", () => {
     );
   });
 
+  describe("update bodies", () => {
+    const WS_PATH = "org-1/project-1/workspace-1";
+    const base = {
+      consumerOrgId: "org-1",
+      projectId: "project-1",
+      providerId: "provider-1",
+      workspaceId: "workspace-1",
+    };
+
+    async function captureBody(pathname: string, call: () => Promise<unknown>) {
+      const capture = { body: null as Record<string, unknown> | null };
+      server.use(
+        http.put(makeUrl(pathname), async ({ request }) => {
+          capture.body = (await request.json()) as Record<string, unknown>;
+          return HttpResponse.json({});
+        }),
+      );
+
+      await call();
+      return capture.body;
+    }
+
+    test("updateEventProvider should send label, description and docs_url", async () => {
+      const body = await captureBody(`${WS_PATH}/providers/provider-1`, () =>
+        client.updateEventProvider({
+          ...base,
+          description: "desc",
+          docsUrl: "https://example.com/docs",
+          label: "label",
+        }),
+      );
+
+      expect(body).toEqual({
+        description: "desc",
+        docs_url: "https://example.com/docs",
+        label: "label",
+      });
+    });
+
+    test("updateEventProvider should require a label", async () => {
+      // @ts-expect-error - Testing missing label
+      await expect(client.updateEventProvider(base)).rejects.toThrow();
+    });
+
+    test("updateEventMetadataForProvider should send the event code and encode the sample template", async () => {
+      const body = await captureBody(
+        `${WS_PATH}/providers/provider-1/eventmetadata/event-1`,
+        () =>
+          client.updateEventMetadataForProvider({
+            ...base,
+            description: "desc",
+            eventCode: "event-1",
+            label: "label",
+            sampleEventTemplate: { sku: "1" },
+          }),
+      );
+
+      expect(body).toEqual({
+        description: "desc",
+        event_code: "event-1",
+        label: "label",
+        sample_event_template: Buffer.from(
+          JSON.stringify({ sku: "1" }),
+        ).toString("base64"),
+      });
+    });
+
+    test("updateEventMetadataForProvider should require a description", async () => {
+      await expect(
+        // @ts-expect-error - Testing missing description
+        client.updateEventMetadataForProvider({
+          ...base,
+          eventCode: "event-1",
+          label: "label",
+        }),
+      ).rejects.toThrow();
+    });
+  });
+
   describe("publishEvent", () => {
     const ingressBaseUrl = "https://eventsingress.adobe.io";
     const TEST_PROVIDER_ID = "test-provider-uuid";

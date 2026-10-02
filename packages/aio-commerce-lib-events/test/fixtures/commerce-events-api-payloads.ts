@@ -119,4 +119,23 @@ export const COMMERCE_EVENTS_API_PAYLOADS = [
     name: "updateEventingConfiguration",
     pathname: "eventing/updateConfiguration",
   },
+  {
+    hasInputValidation: true,
+
+    invoke(client: CommerceEventsApiClient, fetchOptions?: Options) {
+      return client.updateEventProvider(
+        {
+          description: "Provider 1 description",
+          id: 1,
+          instance_id: "instance-1",
+          label: "Provider 1",
+          provider_id: "provider-1",
+        },
+        fetchOptions,
+      );
+    },
+    method: "PUT",
+    name: "updateEventProvider",
+    pathname: "eventing/eventProvider",
+  },
 ] as const;
