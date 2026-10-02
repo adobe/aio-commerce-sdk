@@ -648,7 +648,7 @@ describe("lifecycle runtime", () => {
     });
   });
 
-  test("persists blocked plans and skips replanning the same action version", async () => {
+  test("persists blocked plans and plans again on the next request", async () => {
     const plan = vi.fn().mockResolvedValue({
       issues: [
         {
@@ -696,7 +696,7 @@ describe("lifecycle runtime", () => {
       }),
     ).rejects.toThrow("blocked by planning issues");
 
-    const skipped = await planLifecycle({
+    const replanned = await planLifecycle({
       ...runtime,
       actionVersion: "1.0.0",
       operation: "upgrade",
@@ -704,8 +704,9 @@ describe("lifecycle runtime", () => {
       targetConfig: createConfig("2.0.0"),
     });
 
-    expect(skipped).toEqual({ ...result, skipped: true });
-    expect(plan).toHaveBeenCalledOnce();
+    expect(replanned.kind).toBe("blocked");
+    expect(replanned.plan.id).not.toBe(result.plan.id);
+    expect(plan).toHaveBeenCalledTimes(2);
   });
 
   test("persists an executable plan when no domain operations are required", async () => {
@@ -1003,7 +1004,7 @@ describe("lifecycle runtime", () => {
     ).rejects.toThrow("missing or stale");
   });
 
-  test("skips the same action version and replaces plans from older versions", async () => {
+  test("replaces the pending plan on every request", async () => {
     const { runtime, stateStore } = createMockLifecycleRuntime({
       baseline: createBaseline("1.0.0"),
     });
@@ -1021,13 +1022,16 @@ describe("lifecycle runtime", () => {
     });
 
     expect.assert(first.kind === "planned", "Expected an executable plan");
-    const skipped = await planLifecycle({
+    const replanned = await planLifecycle({
       ...planOptions,
       actionVersion: "1.0.0",
       operation: "upgrade",
     });
 
-    expect(skipped).toEqual({ ...first, skipped: true });
+    expect(replanned.plan.id).not.toBe(first.plan.id);
+    expect((await stateStore.get("current"))?.pendingPlan?.id).toBe(
+      replanned.plan.id,
+    );
     const replacement = await planLifecycle({
       ...planOptions,
       actionVersion: "1.0.1",
@@ -1192,30 +1196,28 @@ describe("lifecycle runtime", () => {
     expect(apply).toHaveBeenCalledTimes(2);
   });
 
-  test("resumes a failed apply attempt when the same plan is requested again", async () => {
+  test("plans again instead of resuming a failed apply attempt", async () => {
     const apply = vi
       .fn()
       .mockRejectedValueOnce(new Error("first failure"))
       .mockRejectedValueOnce(new Error("retry failure"))
       .mockResolvedValue({ snapshotData: { id: "resource" } });
 
-    const leaf = createMockLifecycleLeaf({
-      apply,
-      plan: vi.fn().mockResolvedValue({
-        kind: "planned",
-        plan: {
-          operations: [
-            {
-              after: { id: "resource" },
-              id: "add-resource",
-              kind: "add",
-              label: "Add resource",
-            },
-          ],
-          path: ["root", "synthetic"],
-        },
-      }),
+    const plan = vi.fn().mockResolvedValue({
+      kind: "planned",
+      plan: {
+        operations: [
+          {
+            after: { id: "resource" },
+            id: "add-resource",
+            kind: "add",
+            label: "Add resource",
+          },
+        ],
+        path: ["root", "synthetic"],
+      },
     });
+    const leaf = createMockLifecycleLeaf({ apply, plan });
 
     const { runtime } = createMockLifecycleRuntime({
       baseline: createBaseline("1.0.0"),
@@ -1269,7 +1271,19 @@ describe("lifecycle runtime", () => {
       executionDeadline: EXECUTION_DEADLINE,
     });
 
-    expect(resumed.id).toBe(firstAttempt.id);
+    expect(plan).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        failedAttempt: {
+          plan: expect.objectContaining({ path: ["root", "synthetic"] }),
+          targetConfig: expect.objectContaining({
+            metadata: expect.objectContaining({ version: "2.0.0" }),
+          }),
+        },
+      }),
+      expect.anything(),
+    );
+    expect(repeatedPlanning.plan.id).not.toBe(planning.plan.id);
+    expect(resumed.id).not.toBe(firstAttempt.id);
     expect(completed.status).toBe("succeeded");
   });
 
@@ -1504,23 +1518,24 @@ describe("lifecycle runtime", () => {
       });
 
       vi.setSystemTime("2026-08-10T10:02:00.000Z");
-      const skipped = await planLifecycle({
+      const replanned = await planLifecycle({
         operation: "upgrade",
         ...runtime,
         actionVersion: "1.0.0",
         targetAppVersion: "2.0.0",
         targetConfig: createConfig("2.0.0"),
       });
-      expect(skipped).toEqual({ ...first, skipped: true });
+      expect(replanned.kind).toBe("planned");
+      expect(replanned.plan.id).not.toBe(first.plan.id);
 
-      const resumed = await startLifecycleAttempt({
+      const restartedOnSameVersion = await startLifecycleAttempt({
         ...runtime,
         actionVersion: "1.0.0",
         executionDeadline: "2026-08-10T10:03:00.000Z",
-        planId: skipped.plan.id,
+        planId: replanned.plan.id,
       });
 
-      expect(resumed.id).toBe(active.id);
+      expect(restartedOnSameVersion.id).not.toBe(active.id);
 
       vi.setSystemTime("2026-08-10T10:04:00.000Z");
       const replacement = await planLifecycle({
@@ -1534,7 +1549,7 @@ describe("lifecycle runtime", () => {
       expect(replacement.kind).toBe("planned");
       expect((await stateStore.get("current"))?.latestAttempt).toEqual(
         expect.objectContaining({
-          id: active.id,
+          id: restartedOnSameVersion.id,
           status: "failed",
         }),
       );

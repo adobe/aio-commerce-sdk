@@ -613,7 +613,7 @@ describe("installationRuntimeAction", () => {
         });
       });
 
-      test("reuses the plan without starting execution in manual mode", async () => {
+      test("plans again without starting execution in manual mode", async () => {
         const action = installationRuntimeAction({
           appConfig: createMockConfig({
             metadata: { upgradeMode: "manual" },
@@ -627,8 +627,8 @@ describe("installationRuntimeAction", () => {
           }),
         );
 
-        const plan = (await desiredStateStore.get("current"))?.pendingPlan;
-        expect.assert(plan, "Expected a persisted manual upgrade plan");
+        const firstPlan = (await desiredStateStore.get("current"))?.pendingPlan;
+        expect.assert(firstPlan, "Expected a persisted manual upgrade plan");
 
         const result = await action(
           createRuntimeActionParams({
@@ -638,18 +638,20 @@ describe("installationRuntimeAction", () => {
           }),
         );
 
+        const state = await desiredStateStore.get("current");
+        expect.assert(state?.pendingPlan, "Expected a replaced manual plan");
+
         expect(invokeMock).not.toHaveBeenCalled();
+        expect(state.pendingPlan.id).not.toBe(firstPlan.id);
         expect(result).toMatchObject({
           body: {
             operation: "upgrade",
-            plan: { id: plan.id, operation: "upgrade" },
+            plan: { id: state.pendingPlan.id, operation: "upgrade" },
           },
           statusCode: 200,
           type: "success",
         });
-        expect(
-          (await desiredStateStore.get("current"))?.latestAttempt,
-        ).toBeNull();
+        expect(state.latestAttempt).toBeNull();
       });
 
       test("starts the planned upgrade in auto mode", async () => {
@@ -729,7 +731,7 @@ describe("installationRuntimeAction", () => {
           retriedInvocation as { params?: { attemptId?: string } }
         ).params?.attemptId;
 
-        expect(retriedAttemptId).toBe(firstAttemptId);
+        expect(retriedAttemptId).not.toBe(firstAttemptId);
       });
     });
 
