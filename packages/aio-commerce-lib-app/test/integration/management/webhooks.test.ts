@@ -241,7 +241,9 @@ describe("webhooks upgrade planning integration", () => {
     );
   });
 
-  test("prunes a live app webhook absent from the baseline and target", async () => {
+  test("plans and applies a remove for an owned live webhook the target drops", async () => {
+    vi.stubEnv("__OW_NAMESPACE", "test-namespace");
+
     const [subscribedWebhook] = configWithWebhooks.webhooks;
     const baselineWebhook = {
       batch_name: "test_app_webhooks_default",
@@ -298,7 +300,14 @@ describe("webhooks upgrade planning integration", () => {
     );
 
     expect.assert(planResult.kind === "planned");
-    expect(planResult.plan.operations).toEqual([]);
+    expect(planResult.plan.operations).toEqual([
+      expect.objectContaining({
+        before: expect.objectContaining({
+          hook_name: "test_app_webhooks_order_created",
+        }),
+        kind: "remove",
+      }),
+    ]);
 
     const applyResult = await applyWebhookSubscriptions(planResult.plan, {
       ...context,
@@ -314,6 +323,98 @@ describe("webhooks upgrade planning integration", () => {
       }),
     });
     expect(applyResult.snapshotData?.subscribedWebhooks).toEqual([]);
+  });
+
+  test("restores a webhook a failed attempt left with a value the target does not set", async () => {
+    vi.stubEnv("__OW_NAMESPACE", "test-namespace");
+
+    const [subscribedWebhook] = configWithWebhooks.webhooks;
+    const liveWebhook = {
+      batch_name: "test_app_webhooks_default",
+      developer_console_oauth: {
+        client_id: "client-id",
+        client_secret: "******",
+        environment: "production",
+        org_id: "org-id",
+      },
+      hook_name: "test_app_webhooks_order_created",
+      method: subscribedWebhook.webhook.method,
+      timeout: 30,
+      url: "https://test-namespace.adobeioruntime.net/api/v1/web/my-package/handle-webhook",
+      webhook_method: subscribedWebhook.webhook.webhook_method,
+      webhook_type: subscribedWebhook.webhook.webhook_type,
+    };
+
+    const capture = {
+      subscribeBody: null as Record<string, unknown> | null,
+      unsubscribed: false,
+    };
+
+    apiServer.use(
+      http.get(`${COMMERCE_BASE_URL}/webhooks/list`, () =>
+        HttpResponse.json([liveWebhook]),
+      ),
+      http.post(`${COMMERCE_BASE_URL}/webhooks/unsubscribe`, () => {
+        capture.unsubscribed = true;
+        return HttpResponse.json({});
+      }),
+      http.post(
+        `${COMMERCE_BASE_URL}/webhooks/subscribe`,
+        async ({ request }) => {
+          capture.subscribeBody = (await request.json()) as Record<
+            string,
+            unknown
+          >;
+
+          return HttpResponse.json({});
+        },
+      ),
+    );
+
+    const lifecycleContext = createMockInstallationContext();
+    const context = {
+      ...lifecycleContext,
+      ...createWebhooksStepContext(lifecycleContext),
+    };
+    const baseline = {
+      config: configWithWebhooks,
+      data: { subscribedWebhooks: [] },
+    };
+
+    const failedTargetConfig = {
+      ...configWithWebhooks,
+      webhooks: [
+        {
+          ...configWithWebhooks.webhooks[0],
+          webhook: { ...configWithWebhooks.webhooks[0].webhook, timeout: 30 },
+        },
+      ],
+    };
+
+    const planResult = await planWebhookSubscriptions(
+      {
+        baseline,
+        failedAttempt: { plan: null, targetConfig: failedTargetConfig },
+        path: UPGRADE_PATH,
+        targetConfig: configWithWebhooks,
+      },
+      context,
+    );
+
+    expect.assert(planResult.kind === "planned");
+    expect(planResult.plan.operations).toEqual([
+      expect.objectContaining({ kind: "update" }),
+    ]);
+
+    await applyWebhookSubscriptions(planResult.plan, {
+      ...context,
+      attemptId: "attempt-1",
+      baseline,
+      targetConfig: configWithWebhooks,
+    });
+
+    expect(capture.unsubscribed).toBe(true);
+    expect(capture.subscribeBody?.webhook).not.toHaveProperty("timeout");
   });
 
   test("plans and applies an update for a webhook whose config changed", async () => {

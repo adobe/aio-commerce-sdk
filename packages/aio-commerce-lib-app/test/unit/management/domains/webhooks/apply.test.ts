@@ -130,7 +130,7 @@ describe("applyWebhookSubscriptions", () => {
     expect(result.snapshotData?.subscribedWebhooks).toEqual([retainedWebhook]);
   });
 
-  test("prunes live app-owned webhooks absent from the target", async () => {
+  test("only removes the webhooks the plan lists", async () => {
     const targetConfig = createMockWebhooksConfig();
     const baseline = {
       config: targetConfig,
@@ -169,14 +169,7 @@ describe("applyWebhookSubscriptions", () => {
       context,
     );
 
-    expect(unsubscribeWebhook).toHaveBeenCalledOnce();
-    expect(unsubscribeWebhook).toHaveBeenCalledWith(
-      expect.objectContaining({
-        batch_name: staleAppWebhook.batch_name,
-        hook_name: staleAppWebhook.hook_name,
-      }),
-    );
-
+    expect(unsubscribeWebhook).not.toHaveBeenCalled();
     expect(result.snapshotData?.subscribedWebhooks).toEqual([retainedWebhook]);
   });
 

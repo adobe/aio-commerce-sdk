@@ -133,6 +133,7 @@ export function createMockInstallationContext(
       ...appDataOverrides,
     },
 
+    appId: "test-app",
     ...contextOverrides,
     logger: contextOverrides.logger ?? createMockLogger(),
     params: createMockInstallationParams(paramOverrides),
