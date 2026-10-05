@@ -74,25 +74,41 @@ export async function executeLifecycleAttempt(
   ) {
     return currentAttempt;
   }
-  if (currentAttempt.plan.actionVersion !== options.actionVersion) {
-    throw new LifecycleAttemptActionVersionMismatchError(
-      currentAttempt.plan.actionVersion,
-    );
-  }
   if (currentAttempt.status === "in-progress") {
     throw new LifecycleAttemptAlreadyExecutingError(currentAttempt.id);
+  }
+  if (currentAttempt.plan.actionVersion !== options.actionVersion) {
+    return await failPendingAttempt(
+      options.stateStore,
+      state,
+      currentAttempt,
+      new LifecycleAttemptActionVersionMismatchError(
+        currentAttempt.plan.actionVersion,
+      ),
+    );
   }
 
   const executionDeadline = Date.parse(options.executionDeadline);
   if (!Number.isFinite(executionDeadline) || executionDeadline <= Date.now()) {
-    throw new InvalidExecutionDeadlineError(options.executionDeadline);
+    return await failPendingAttempt(
+      options.stateStore,
+      state,
+      currentAttempt,
+      new InvalidExecutionDeadlineError(options.executionDeadline),
+    );
   }
 
   const baseline = await options.snapshotStore.get(
     currentAttempt.plan.source.snapshotId,
   );
+
   if (!baseline) {
-    throw new LifecycleBaselineNotFoundError();
+    return await failPendingAttempt(
+      options.stateStore,
+      state,
+      currentAttempt,
+      new LifecycleBaselineNotFoundError(),
+    );
   }
 
   const attempt: LifecycleAttempt = {
@@ -120,6 +136,37 @@ export async function executeLifecycleAttempt(
   }
 
   return persistSuccess(options, state, attempt, workflow);
+}
+
+/**
+ * Records a pending attempt that cannot start as failed, then throws why.
+ *
+ * @param stateStore - The orchestration state store.
+ * @param state - The current orchestration state.
+ * @param attempt - The pending attempt.
+ * @param error - Why the attempt cannot start.
+ */
+async function failPendingAttempt(
+  stateStore: LifecycleStore<OrchestrationState>,
+  state: OrchestrationState,
+  attempt: LifecycleAttempt,
+  error: Error,
+): Promise<never> {
+  // A pending attempt counts as in progress, so leaving it would block every request until its deadline.
+  await stateStore.put(CURRENT_STATE_KEY, {
+    ...state,
+    latestAttempt: {
+      ...attempt,
+      failure: {
+        key: "LIFECYCLE_START_FAILED",
+        message: error.message,
+        path: [],
+      },
+      status: "failed",
+    },
+  });
+
+  throw error;
 }
 
 /** Creates hooks that persist execution progress after every step transition. */
