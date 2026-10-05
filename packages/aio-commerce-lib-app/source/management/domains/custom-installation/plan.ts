@@ -35,6 +35,7 @@ function buildAddOperation(
     id: `add:${step.name}`,
     kind: "add",
     label: `Run custom installation step "${step.name}"`,
+    reason: "change",
   };
 }
 
@@ -50,6 +51,7 @@ function buildRemoveOperation(
     id: `remove:${step.name}`,
     kind: "remove",
     label: `Custom installation step "${step.name}" no longer in the configuration`,
+    reason: "change",
   };
 }
 

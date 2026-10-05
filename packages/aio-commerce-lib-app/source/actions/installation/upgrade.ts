@@ -21,7 +21,10 @@ import openwhisk from "openwhisk";
 
 import { validateCommerceAppConfig } from "#config/lib/validate";
 import { getAssociationData } from "#management/association/repository";
-import { DispatchedLifecycleAttemptNotFoundError } from "#management/lifecycle/errors";
+import {
+  DispatchedLifecycleAttemptNotFoundError,
+  PendingLifecyclePlanNotFoundError,
+} from "#management/lifecycle/errors";
 import { executeLifecycleAttempt } from "#management/lifecycle/execution";
 import { planLifecycle } from "#management/lifecycle/planning";
 import { startLifecycleAttempt } from "#management/lifecycle/start";
@@ -51,7 +54,9 @@ type StartUpgradeArgs = RequestHandlerArgs & {
 
 /**
  * Plans an upgrade from the current baseline toward the target config and,
- * for automatic upgrades, starts it asynchronously.
+ * for automatic upgrades or when `body.planId` names a reviewed plan, starts it
+ * asynchronously. A reviewed start runs the new plan and records how it differs
+ * from the reviewed one on the attempt.
  */
 export async function startUpgrade({
   appConfig,
@@ -109,17 +114,37 @@ export async function startUpgrade({
     ...rawParams,
     AIO_COMMERCE_API_BASE_URL: association.commerce.baseUrl,
     AIO_COMMERCE_API_FLAVOR: association.commerce.env,
+    AIO_COMMERCE_AUTH_IMS_ENVIRONMENT: body.ioEventsEnv,
+    AIO_EVENTS_API_BASE_URL: body.ioEventsUrl,
     appData: body.appData,
   } as WorkflowRouteParams;
 
   const runtime = await createLifecycleRuntime(params, appConfig, logger);
+  const reviewedPlanId = body.planId;
   const planning = await planLifecycle({
     ...runtime,
     actionVersion,
     operation: "upgrade",
+    reviewedPlanId,
     targetAppVersion: appConfig.metadata.version,
     targetConfig: appConfig,
+  }).catch((error: unknown) => {
+    if (error instanceof PendingLifecyclePlanNotFoundError) {
+      return null;
+    }
+
+    throw error;
   });
+
+  if (!planning) {
+    return conflict({
+      body: {
+        message:
+          "The reviewed plan is no longer the pending plan. Plan the upgrade again and review the new plan.",
+        reason: "stale-plan",
+      },
+    });
+  }
 
   if (planning.kind === "blocked") {
     return conflict({
@@ -130,8 +155,10 @@ export async function startUpgrade({
     });
   }
 
-  const { upgradeMode } = appConfig.metadata;
-  if (upgradeMode === "manual") {
+  const isManualMode = appConfig.metadata.upgradeMode === "manual";
+  const isReviewedStart = reviewedPlanId !== undefined;
+
+  if (isManualMode && !isReviewedStart) {
     return ok({
       body: {
         message: "Upgrade planned",
@@ -152,6 +179,7 @@ export async function startUpgrade({
     actionVersion,
     executionDeadline: new Date(Number(rawExecutionDeadline)).toISOString(),
     planId: planning.plan.id,
+    review: planning.review,
   });
 
   const ow = openwhisk();
@@ -180,6 +208,7 @@ export async function startUpgrade({
       message: "Upgrade started",
       operation: "upgrade",
       plan: planning.plan,
+      review: planning.review,
     },
   });
 }

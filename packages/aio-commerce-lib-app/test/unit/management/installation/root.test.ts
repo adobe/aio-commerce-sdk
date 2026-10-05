@@ -89,6 +89,7 @@ describe("createRootInstallationStep", () => {
               id: "webhook-add",
               kind: "add",
               label: "Add webhook",
+              reason: "change",
             },
           ],
           path: ["installation", "webhooks", "subscriptions"],

@@ -12,7 +12,11 @@
 
 import { planWorkflow } from "#management/common/workflow/plan";
 
-import { LifecycleAttemptInProgressError } from "./errors";
+import {
+  LifecycleAttemptInProgressError,
+  PendingLifecyclePlanNotFoundError,
+} from "./errors";
+import { compareWithReviewedPlan } from "./review";
 import {
   CURRENT_STATE_KEY,
   normalizeExpiredAttempt,
@@ -24,6 +28,7 @@ import type {
   AppStateSnapshot,
   LifecycleOperation,
   LifecyclePlan,
+  LifecyclePlanReview,
   OrchestrationState,
 } from "#management/common/orchestration";
 import type { LifecycleRuntime } from "./state";
@@ -34,14 +39,25 @@ export type PlanLifecycleOptions = LifecycleRuntime & {
   operation: LifecycleOperation;
   targetAppVersion: string;
   targetConfig: CommerceAppConfigOutputModel;
+
+  /** Identifier of the pending plan a reviewer approved, to compare the new plan against. */
+  reviewedPlanId?: string;
 };
 
 /** Result of a lifecycle planning pass. */
-export type PlanLifecycleResult =
-  | { kind: "blocked"; plan: LifecyclePlan; skipped: boolean }
-  | { kind: "planned"; plan: LifecyclePlan; skipped: boolean };
+export type PlanLifecycleResult = (
+  | { kind: "blocked"; plan: LifecyclePlan }
+  | { kind: "planned"; plan: LifecyclePlan }
+) & {
+  /** How the new plan differs from the reviewed one, when `reviewedPlanId` was given. */
+  review?: LifecyclePlanReview;
+};
 
-/** Produces and persists a plan from the current baseline to the target config. */
+/**
+ * Produces and persists a plan from the current baseline to the target config, replacing any
+ * pending plan. Throws {@link PendingLifecyclePlanNotFoundError} when `reviewedPlanId` is not
+ * the pending plan.
+ */
 export async function planLifecycle(
   options: PlanLifecycleOptions,
 ): Promise<PlanLifecycleResult> {
@@ -56,17 +72,18 @@ export async function planLifecycle(
     throw new LifecycleAttemptInProgressError();
   }
 
-  const existingPlan = findReusablePlan(
-    state,
-    options.actionVersion,
-    options.operation,
-  );
-  if (existingPlan) {
-    return createPlanningResult(existingPlan, true);
-  }
+  const reviewedPlan = options.reviewedPlanId
+    ? requirePendingPlan(state, options.reviewedPlanId)
+    : null;
+
+  const failedPlan =
+    state.latestAttempt?.status === "failed" ? state.latestAttempt.plan : null;
 
   const planning = await planWorkflow({
     baseline,
+    failedAttempt: failedPlan
+      ? { config: failedPlan.target.config, domains: failedPlan.domains }
+      : undefined,
     lifecycleContext: options.lifecycleContext,
     rootStep: options.rootStep,
     target: {
@@ -94,26 +111,24 @@ export async function planLifecycle(
     ...state,
     pendingPlan: plan,
   });
-  return createPlanningResult(plan, false);
+
+  const result = createPlanningResult(plan);
+  return reviewedPlan
+    ? { ...result, review: compareWithReviewedPlan(reviewedPlan, plan) }
+    : result;
 }
 
-/** Finds a plan produced by the current action version that can be reused. */
-function findReusablePlan(
+/** Returns the pending plan, or throws when it is not the plan with the given id. */
+function requirePendingPlan(
   state: OrchestrationState,
-  actionVersion: string,
-  operation: LifecycleOperation,
-): LifecyclePlan | null {
-  if (
-    state.pendingPlan?.actionVersion === actionVersion &&
-    state.pendingPlan.operation === operation
-  ) {
-    return state.pendingPlan;
+  planId: string,
+): LifecyclePlan {
+  const plan = state.pendingPlan;
+  if (!plan || plan.id !== planId) {
+    throw new PendingLifecyclePlanNotFoundError(planId);
   }
-  const latestPlan = state.latestAttempt?.plan;
-  return latestPlan?.actionVersion === actionVersion &&
-    latestPlan.operation === operation
-    ? latestPlan
-    : null;
+
+  return plan;
 }
 
 /** Resolves the version of the app represented by the current baseline. */
@@ -131,11 +146,8 @@ function getBaselineAppVersion(
 }
 
 /** Converts a persisted plan into its public planning result. */
-function createPlanningResult(
-  plan: LifecyclePlan,
-  skipped: boolean,
-): PlanLifecycleResult {
+function createPlanningResult(plan: LifecyclePlan): PlanLifecycleResult {
   return plan.issues.length > 0
-    ? { kind: "blocked", plan, skipped }
-    : { kind: "planned", plan, skipped };
+    ? { kind: "blocked", plan }
+    : { kind: "planned", plan };
 }

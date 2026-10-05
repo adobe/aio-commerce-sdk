@@ -61,6 +61,36 @@ export type LifecyclePlan = {
   issues: PlanningIssue[];
 };
 
+/** A `change` operation a review reports, identified by its domain path and operation id. */
+export type ReviewedOperation = {
+  /** Full workflow path of the domain the operation belongs to. */
+  path: string[];
+
+  /** Identifier of the operation within its domain plan. */
+  id: string;
+
+  /** Human-readable label of the operation. */
+  label: string;
+};
+
+/**
+ * How the plan an attempt runs differs from the plan the reviewer approved. Only `change`
+ * operations are compared.
+ */
+export type LifecyclePlanReview = {
+  /** Identifier of the reviewed plan. */
+  planId: string;
+
+  /** Operations the executed plan has and the reviewed plan did not. */
+  added: ReviewedOperation[];
+
+  /** Operations the reviewed plan had and the executed plan does not. */
+  dropped: ReviewedOperation[];
+
+  /** Operations in both plans that do something different. */
+  changed: ReviewedOperation[];
+};
+
 /** The result recorded when a lifecycle attempt succeeds. */
 export type SuccessfulResult = {
   /** Identifier of the snapshot captured after the operation. */
@@ -92,6 +122,9 @@ type LifecycleAttemptBase = {
 
   /** Snapshot data produced by completed leaves. */
   data: WorkflowData | null;
+
+  /** How the executed plan differs from the reviewed one, when the attempt started from a review. */
+  review?: LifecyclePlanReview;
 };
 
 /**

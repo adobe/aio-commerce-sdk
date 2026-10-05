@@ -140,6 +140,7 @@ function buildComponentOperation(
       id: `add:${key}`,
       kind: "add",
       label: `Add Admin UI ${component.label}`,
+      reason: "change",
     };
   }
 
@@ -148,6 +149,7 @@ function buildComponentOperation(
     id: `remove:${key}`,
     kind: "remove",
     label: `Remove Admin UI ${component.label}`,
+    reason: "change",
   };
 }
 
@@ -163,6 +165,7 @@ function buildUpdateOperation(
     id: `update:${key}`,
     kind: "update",
     label: `Update Admin UI ${after.label}`,
+    reason: "change",
   };
 }
 

@@ -43,6 +43,9 @@ export const LifecycleRequestContextSchema = v.object({
 
   ioEventsEnv: v.string(),
   ioEventsUrl: v.string(),
+
+  // Upgrade only: the id of a plan a reviewer approved, which starts the upgrade.
+  planId: v.optional(v.string()),
 });
 
 /** The request context passed to lifecycle runtime actions. */
