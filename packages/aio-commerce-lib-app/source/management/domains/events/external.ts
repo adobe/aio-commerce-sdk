@@ -16,7 +16,7 @@ import { deprecatedExternalEventsStep } from "#management/deprecated/domains/eve
 
 import { applyEventingLeaf } from "./apply";
 import { planExternalEvents } from "./plan";
-import { createExternalEvents, removeExternalEvents } from "./provisioning";
+import { createExternalEvents } from "./provisioning";
 import { EXTERNAL_PROVIDER_TYPE } from "./utils";
 
 import type {
@@ -70,6 +70,5 @@ export function applyExternalEvents(
     install: createExternalEvents,
     isCommerce: false,
     type: EXTERNAL_PROVIDER_TYPE,
-    uninstall: removeExternalEvents,
   });
 }
