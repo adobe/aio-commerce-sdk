@@ -10,6 +10,10 @@
  * governing permissions and limitations under the License.
  */
 
+import { join } from "node:path";
+
+import { withTempFiles } from "@aio-commerce-sdk/scripting-utils/filesystem";
+import { createOrUpdateExtConfig } from "@aio-commerce-sdk/scripting-utils/yaml";
 import { describe, expect, test } from "vitest";
 
 import { PACKAGE_NAME } from "#commands/constants";
@@ -46,6 +50,33 @@ const CONFIGURATION_EXTENSION_MATCHER = /EXTENSION=configuration\/1/;
 const BACKEND_UI_V2_EXTENSION_MATCHER = /EXTENSION=backend-ui\/2/;
 
 describe("buildAppManagementExtConfig", () => {
+  test.each([
+    {
+      build: () => buildAppManagementExtConfig(minimalValidConfig),
+      names: ["app-config", "association", "installation"],
+    },
+    {
+      build: buildBusinessConfigurationExtConfig,
+      names: ["config", "scope-tree"],
+    },
+  ])(
+    "generates package-level LOG_LEVEL for $names",
+    async ({ build, names }) => {
+      await withTempFiles({}, async (tempDir) => {
+        const doc = await createOrUpdateExtConfig(
+          join(tempDir, "ext.config.yaml"),
+          build(),
+        );
+        const pkg = doc.toJS().runtimeManifest.packages[PACKAGE_NAME];
+
+        expect(pkg.inputs).toEqual({ LOG_LEVEL: "$LOG_LEVEL" });
+        for (const name of names) {
+          expect(pkg.actions[name].inputs?.LOG_LEVEL).toBeUndefined();
+        }
+      });
+    },
+  );
+
   test("declares LOG_LEVEL at the package level", () => {
     const result = buildAppManagementExtConfig(minimalValidConfig);
     const appManagementPackage =
