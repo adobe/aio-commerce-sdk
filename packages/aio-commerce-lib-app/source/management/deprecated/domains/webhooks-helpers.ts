@@ -14,9 +14,11 @@ import { stringifyError } from "@aio-commerce-sdk/scripting-utils/error";
 
 import { appliesToEnv, getInstallCommerceEnv } from "#config/lib/environment";
 import {
-  buildWebhookIdPrefix,
   createWebhookSubscription,
   deleteWebhookSubscription,
+} from "#management/domains/webhooks/api";
+import {
+  buildWebhookIdPrefix,
   getWebhookName,
   isWebhookInList,
   resolveWebhookSubscribeParams,

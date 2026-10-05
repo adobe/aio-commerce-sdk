@@ -591,7 +591,7 @@ describe("lifecycle runtime", () => {
     await expect(execution).resolves.toMatchObject({ status: "succeeded" });
   });
 
-  test("stops before execution when the plan baseline is missing", async () => {
+  test("records the attempt as failed when the plan baseline is missing", async () => {
     const apply = vi.fn();
     const baseline = createBaseline("1.0.0");
 
@@ -647,8 +647,9 @@ describe("lifecycle runtime", () => {
 
     expect(apply).not.toHaveBeenCalled();
     expect((await stateStore.get("current"))?.latestAttempt).toMatchObject({
+      failure: { key: "LIFECYCLE_START_FAILED" },
       id: attempt.id,
-      status: "pending",
+      status: "failed",
     });
   });
 

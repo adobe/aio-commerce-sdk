@@ -23,6 +23,7 @@ import {
   getAllEventProviders as getAllEventProvidersCommerce,
   getAllEventSubscriptions,
   updateEventingConfiguration,
+  updateEventProvider as updateEventProviderCommerce,
   updateEventSubscription,
 } from "@adobe/aio-commerce-lib-events/commerce";
 import {
@@ -35,6 +36,8 @@ import {
   deleteRegistration,
   getAllEventProviders,
   getAllRegistrations,
+  updateEventMetadataForProvider,
+  updateEventProvider,
   updateRegistration,
 } from "@adobe/aio-commerce-lib-events/io-events";
 
@@ -66,6 +69,7 @@ function createCommerceEventsApiClient(params: RuntimeActionParams) {
     getAllEventProviders: getAllEventProvidersCommerce,
     getAllEventSubscriptions,
     updateEventingConfiguration,
+    updateEventProvider: updateEventProviderCommerce,
     updateEventSubscription,
   });
 }
@@ -93,6 +97,8 @@ function createIoEventsApiClient(params: RuntimeActionParams) {
     deleteRegistration,
     getAllEventProviders,
     getAllRegistrations,
+    updateEventMetadataForProvider,
+    updateEventProvider,
     updateRegistration,
   });
 }

@@ -33,6 +33,19 @@ export const CURRENT_STATE_KEY = "current";
 /** Minimal persistence contract required by lifecycle orchestration. */
 export type LifecycleStore<T> = Pick<KeyValueStore<T>, "get" | "put">;
 
+/**
+ * Whether the orchestration state is stored but cannot be read, as when its content is not
+ * valid JSON. The store's `get` returns `null` for such a value, as for a missing one.
+ *
+ * @param store - The orchestration state store.
+ */
+export async function isOrchestrationStateUnreadable(
+  store: Pick<KeyValueStore<OrchestrationState>, "get" | "has">,
+): Promise<boolean> {
+  const state = await store.get(CURRENT_STATE_KEY);
+  return state === null && (await store.has(CURRENT_STATE_KEY));
+}
+
 /** Resolves the baseline snapshot selected by orchestration state. */
 export type LifecycleBaselineProvider = {
   /** Loads the stored snapshot, or `null` when there is no baseline. */

@@ -39,7 +39,7 @@ import type {
 
 /** A minimal event source shape (provider + events) for building eventing configs in tests. */
 export type MockEventSource = {
-  provider: { label: string; key?: string };
+  provider: { label: string; key?: string; description?: string };
   events: unknown[];
 };
 
@@ -221,6 +221,11 @@ export function createMockCommerceEventsClient(
     getAllEventProviders: vi.fn(overrides?.getAllEventProviders),
     getAllEventSubscriptions: vi.fn(overrides?.getAllEventSubscriptions),
     updateEventingConfiguration: vi.fn(overrides?.updateEventingConfiguration),
+    updateEventProvider: vi
+      .fn()
+      .mockImplementation(
+        overrides?.updateEventProvider ?? (() => Promise.resolve()),
+      ),
     updateEventSubscription: vi
       .fn()
       .mockImplementation(
@@ -255,6 +260,16 @@ export function createMockIoEventsClient(
       ),
     getAllEventProviders: vi.fn(overrides?.getAllEventProviders),
     getAllRegistrations: vi.fn(overrides?.getAllRegistrations),
+    updateEventMetadataForProvider: vi
+      .fn()
+      .mockImplementation(
+        overrides?.updateEventMetadataForProvider ?? (() => Promise.resolve()),
+      ),
+    updateEventProvider: vi
+      .fn()
+      .mockImplementation(
+        overrides?.updateEventProvider ?? (() => Promise.resolve()),
+      ),
     updateRegistration: vi
       .fn()
       .mockImplementation(

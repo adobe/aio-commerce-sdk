@@ -42,6 +42,7 @@ export function createMockLifecycleStore<T>(options?: {
   onPut?: (key: string, value: T) => void;
 }): LifecycleStore<T> & {
   delete: (key: string) => Promise<boolean>;
+  has: (key: string) => Promise<boolean>;
   values: Map<string, T>;
 } {
   const values = new Map<string, T>();
@@ -52,6 +53,7 @@ export function createMockLifecycleStore<T>(options?: {
   return {
     delete: vi.fn(async (key: string) => values.delete(key)),
     get: vi.fn(async (key: string) => values.get(key) ?? null),
+    has: vi.fn(async (key: string) => values.has(key)),
     put: vi.fn(async (key: string, value: T) => {
       options?.onPut?.(key, value);
       values.set(key, value);

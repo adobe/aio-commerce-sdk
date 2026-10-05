@@ -23,6 +23,7 @@ import { validateCommerceAppConfig } from "#config/lib/validate";
 import { getAssociationData } from "#management/association/repository";
 import {
   DispatchedLifecycleAttemptNotFoundError,
+  LifecycleAttemptInProgressError,
   PendingLifecyclePlanNotFoundError,
 } from "#management/lifecycle/errors";
 import { executeLifecycleAttempt } from "#management/lifecycle/execution";
@@ -121,29 +122,33 @@ export async function startUpgrade({
 
   const runtime = await createLifecycleRuntime(params, appConfig, logger);
   const reviewedPlanId = body.planId;
-  const planning = await planLifecycle({
-    ...runtime,
-    actionVersion,
-    operation: "upgrade",
-    reviewedPlanId,
-    targetAppVersion: appConfig.metadata.version,
-    targetConfig: appConfig,
-  }).catch((error: unknown) => {
+
+  let planning: Awaited<ReturnType<typeof planLifecycle>>;
+  try {
+    planning = await planLifecycle({
+      ...runtime,
+      actionVersion,
+      operation: "upgrade",
+      reviewedPlanId,
+      targetAppVersion: appConfig.metadata.version,
+      targetConfig: appConfig,
+    });
+  } catch (error) {
+    if (error instanceof LifecycleAttemptInProgressError) {
+      return attemptInProgressConflict();
+    }
+
     if (error instanceof PendingLifecyclePlanNotFoundError) {
-      return null;
+      return conflict({
+        body: {
+          message:
+            "The reviewed plan is no longer the pending plan. Plan the upgrade again and review the new plan.",
+          reason: "stale-plan",
+        },
+      });
     }
 
     throw error;
-  });
-
-  if (!planning) {
-    return conflict({
-      body: {
-        message:
-          "The reviewed plan is no longer the pending plan. Plan the upgrade again and review the new plan.",
-        reason: "stale-plan",
-      },
-    });
   }
 
   if (planning.kind === "blocked") {
@@ -174,13 +179,33 @@ export async function startUpgrade({
     );
   }
 
-  const attempt = await startLifecycleAttempt({
-    ...runtime,
-    actionVersion,
-    executionDeadline: new Date(Number(rawExecutionDeadline)).toISOString(),
-    planId: planning.plan.id,
-    review: planning.review,
-  });
+  let attempt: LifecycleAttempt;
+  try {
+    attempt = await startLifecycleAttempt({
+      ...runtime,
+      actionVersion,
+      executionDeadline: new Date(Number(rawExecutionDeadline)).toISOString(),
+      planId: planning.plan.id,
+      review: planning.review,
+    });
+  } catch (error) {
+    if (error instanceof LifecycleAttemptInProgressError) {
+      return attemptInProgressConflict();
+    }
+
+    // This request planned it a moment ago, so only a simultaneous request can have replaced it.
+    if (error instanceof PendingLifecyclePlanNotFoundError) {
+      return conflict({
+        body: {
+          message:
+            "Another upgrade request replaced this plan. Plan the upgrade again.",
+          reason: "stale-plan",
+        },
+      });
+    }
+
+    throw error;
+  }
 
   const ow = openwhisk();
   let activationId: unknown;
@@ -297,6 +322,17 @@ async function persistDispatchFailure(
         path: [],
       },
       status: "failed",
+    },
+  });
+}
+
+/** The response for a request that finds another upgrade attempt starting or running. */
+function attemptInProgressConflict() {
+  return conflict({
+    body: {
+      message:
+        "Another upgrade is already in progress. Wait for it to finish, then upgrade again if needed.",
+      reason: "in-progress",
     },
   });
 }

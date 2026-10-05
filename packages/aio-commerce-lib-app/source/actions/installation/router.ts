@@ -11,6 +11,7 @@
  */
 
 import {
+  conflict,
   internalServerError,
   noContent,
   ok,
@@ -31,6 +32,7 @@ import {
 import { getCurrentLifecycleBaseline } from "#management/lifecycle/baseline";
 import {
   CURRENT_STATE_KEY,
+  isOrchestrationStateUnreadable,
   normalizeExpiredAttempt,
 } from "#management/lifecycle/state";
 
@@ -130,6 +132,17 @@ router.post("/", {
 
     const hasNoBaseline = baseline === null;
     const isPostAppDeploy = isPostAppDeployInvocation(req.headers);
+
+    // An unreadable state reads as missing, which would install again over the installed app.
+    if (hasNoBaseline && (await isOrchestrationStateUnreadable(stateStore))) {
+      return conflict({
+        body: {
+          message:
+            "The stored lifecycle state cannot be read and there is no installation record to rebuild it from. Nothing was installed or upgraded.",
+          reason: "unreadable-state",
+        },
+      });
+    }
 
     // TODO(CEXT-6556): Unify the POST branches behind one lifecycle flow.
     if (hasNoBaseline && !isPostAppDeploy) {

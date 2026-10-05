@@ -647,6 +647,40 @@ describe("onboardCommerceEventing", () => {
     expect(commerceEventsClient.createEventSubscription).toHaveBeenCalledOnce();
   });
 
+  test("restores the configured metadata label after subscribing, and only warns when it cannot", async () => {
+    const { context, metadata, provider, ioProvider, ioData } =
+      createCommerceOnboardingScenario();
+    const { commerceEventsClient, ioEventsClient, logger } = context;
+    const [event] = ioData.events;
+
+    vi.mocked(commerceEventsClient.createEventProvider).mockResolvedValue(
+      createMockCommerceEventProvider({ provider_id: ioProvider.id }),
+    );
+    vi.mocked(commerceEventsClient.createEventSubscription).mockResolvedValue(
+      undefined,
+    );
+    vi.mocked(ioEventsClient.updateEventMetadataForProvider).mockRejectedValue(
+      new Error("boom"),
+    );
+
+    await onboardCommerceEventing(
+      { context, ioData, metadata, provider },
+      createMockExistingCommerceEventingData(),
+    );
+
+    expect(ioEventsClient.updateEventMetadataForProvider).toHaveBeenCalledWith(
+      expect.objectContaining({
+        description: event.config.description,
+        eventCode: event.data.metadata.event_code,
+        label: event.config.label,
+        providerId: ioProvider.id,
+      }),
+    );
+    expect(logger.warn).toHaveBeenCalledWith(
+      expect.stringContaining("Could not restore the label"),
+    );
+  });
+
   test("creates Commerce event subscriptions sequentially", async () => {
     const { context, metadata, provider, ioProvider, ioData } =
       createCommerceOnboardingScenario();

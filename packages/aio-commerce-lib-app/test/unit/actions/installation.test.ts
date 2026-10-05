@@ -556,6 +556,73 @@ describe("installationRuntimeAction", () => {
         });
       });
 
+      test("returns 409 instead of installing again when the stored state cannot be read", async () => {
+        desiredInstallationStore = createMockInstallationStore();
+        vi.mocked(desiredStateStore.has).mockResolvedValue(true);
+        const action = installationRuntimeAction({
+          appConfig: configWithAutoUpgrade,
+        });
+        const result = await action(
+          createRuntimeActionParams({
+            body: upgradeRequestBody,
+            method: "post",
+            ...DEFAULT_INSTALLATION_PARAMS,
+          }),
+        );
+
+        expect(createInitialInstallationStateMock).not.toHaveBeenCalled();
+        expect(invokeMock).not.toHaveBeenCalled();
+        expect(result).toMatchObject({
+          error: { body: { reason: "unreadable-state" }, statusCode: 409 },
+          type: "error",
+        });
+      });
+
+      test("returns 409 when another upgrade attempt is in progress", async () => {
+        const { action } = await startAutomaticUpgrade();
+        invokeMock.mockClear();
+
+        const result = await action(
+          createRuntimeActionParams({
+            body: upgradeRequestBody,
+            method: "post",
+            ...DEFAULT_INSTALLATION_PARAMS,
+          }),
+        );
+
+        expect(invokeMock).not.toHaveBeenCalled();
+        expect(result).toMatchObject({
+          error: { body: { reason: "in-progress" }, statusCode: 409 },
+          type: "error",
+        });
+      });
+
+      test("returns 409 when a simultaneous request replaces the plan before it starts", async () => {
+        desiredStateStore = createMockLifecycleStore<OrchestrationState>({
+          onPut: (_key, state) => {
+            if (state.pendingPlan) {
+              state.pendingPlan = { ...state.pendingPlan, id: "other-plan" };
+            }
+          },
+        });
+        const action = installationRuntimeAction({
+          appConfig: configWithAutoUpgrade,
+        });
+        const result = await action(
+          createRuntimeActionParams({
+            body: upgradeRequestBody,
+            method: "post",
+            ...DEFAULT_INSTALLATION_PARAMS,
+          }),
+        );
+
+        expect(invokeMock).not.toHaveBeenCalled();
+        expect(result).toMatchObject({
+          error: { body: { reason: "stale-plan" }, statusCode: 409 },
+          type: "error",
+        });
+      });
+
       test("returns 409 when the installed version is already current", async () => {
         seedInstalledBaseline(configWithAutoUpgrade.metadata.version);
         const action = installationRuntimeAction({
@@ -843,7 +910,7 @@ describe("installationRuntimeAction", () => {
     });
 
     describe("upgrade execution", () => {
-      test("rejects an attempt created by an older action version", async () => {
+      test("rejects an attempt created by an older action version and records it as failed", async () => {
         const { action, attemptId } = await startAutomaticUpgrade();
         vi.stubEnv("__OW_ACTION_VERSION", "8");
 
@@ -864,8 +931,9 @@ describe("installationRuntimeAction", () => {
         expect(
           (await desiredStateStore.get("current"))?.latestAttempt,
         ).toMatchObject({
+          failure: { key: "LIFECYCLE_START_FAILED" },
           id: attemptId,
-          status: "pending",
+          status: "failed",
         });
       });
 
