@@ -12,7 +12,11 @@
 
 import { planWorkflow } from "#management/common/workflow/plan";
 
-import { LifecycleAttemptInProgressError } from "./errors";
+import {
+  LifecycleAttemptInProgressError,
+  PendingLifecyclePlanNotFoundError,
+} from "./errors";
+import { compareWithReviewedPlan } from "./review";
 import {
   CURRENT_STATE_KEY,
   normalizeExpiredAttempt,
@@ -24,6 +28,7 @@ import type {
   AppStateSnapshot,
   LifecycleOperation,
   LifecyclePlan,
+  LifecyclePlanReview,
   OrchestrationState,
 } from "#management/common/orchestration";
 import type { LifecycleRuntime } from "./state";
@@ -34,14 +39,25 @@ export type PlanLifecycleOptions = LifecycleRuntime & {
   operation: LifecycleOperation;
   targetAppVersion: string;
   targetConfig: CommerceAppConfigOutputModel;
+
+  /** Identifier of the pending plan a reviewer approved, to compare the new plan against. */
+  reviewedPlanId?: string;
 };
 
 /** Result of a lifecycle planning pass. */
-export type PlanLifecycleResult =
+export type PlanLifecycleResult = (
   | { kind: "blocked"; plan: LifecyclePlan }
-  | { kind: "planned"; plan: LifecyclePlan };
+  | { kind: "planned"; plan: LifecyclePlan }
+) & {
+  /** How the new plan differs from the reviewed one, when `reviewedPlanId` was given. */
+  review?: LifecyclePlanReview;
+};
 
-/** Produces and persists a plan from the current baseline to the target config, replacing any pending plan. */
+/**
+ * Produces and persists a plan from the current baseline to the target config, replacing any
+ * pending plan. Throws {@link PendingLifecyclePlanNotFoundError} when `reviewedPlanId` is not
+ * the pending plan.
+ */
 export async function planLifecycle(
   options: PlanLifecycleOptions,
 ): Promise<PlanLifecycleResult> {
@@ -55,6 +71,10 @@ export async function planLifecycle(
   ) {
     throw new LifecycleAttemptInProgressError();
   }
+
+  const reviewedPlan = options.reviewedPlanId
+    ? requirePendingPlan(state, options.reviewedPlanId)
+    : null;
 
   const failedPlan =
     state.latestAttempt?.status === "failed" ? state.latestAttempt.plan : null;
@@ -91,7 +111,24 @@ export async function planLifecycle(
     ...state,
     pendingPlan: plan,
   });
-  return createPlanningResult(plan);
+
+  const result = createPlanningResult(plan);
+  return reviewedPlan
+    ? { ...result, review: compareWithReviewedPlan(reviewedPlan, plan) }
+    : result;
+}
+
+/** Returns the pending plan, or throws when it is not the plan with the given id. */
+function requirePendingPlan(
+  state: OrchestrationState,
+  planId: string,
+): LifecyclePlan {
+  const plan = state.pendingPlan;
+  if (!plan || plan.id !== planId) {
+    throw new PendingLifecyclePlanNotFoundError(planId);
+  }
+
+  return plan;
 }
 
 /** Resolves the version of the app represented by the current baseline. */

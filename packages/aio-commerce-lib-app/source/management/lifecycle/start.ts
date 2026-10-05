@@ -25,7 +25,10 @@ import {
   readOrInitializeState,
 } from "./state";
 
-import type { LifecycleAttempt } from "#management/common/orchestration";
+import type {
+  LifecycleAttempt,
+  LifecyclePlanReview,
+} from "#management/common/orchestration";
 import type { LifecycleRuntime } from "./state";
 
 /** Inputs used to consume a reviewed plan and create an attempt. */
@@ -33,6 +36,9 @@ export type StartLifecycleAttemptOptions = LifecycleRuntime & {
   actionVersion: string;
   executionDeadline: string;
   planId: string;
+
+  /** How the plan differs from the one a reviewer approved, recorded on the attempt. */
+  review?: LifecyclePlanReview;
 };
 
 /** Creates and persists an attempt for an exact pending plan. */
@@ -74,6 +80,7 @@ export async function startLifecycleAttempt(
     operation: plan.operation,
     plan,
     progress: workflow.step,
+    review: options.review,
     startedAt: workflow.startedAt,
     status: "pending",
   };

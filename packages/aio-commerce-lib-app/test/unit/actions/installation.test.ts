@@ -369,6 +369,7 @@ describe("installationRuntimeAction", () => {
               id: "operation-1",
               kind: "add",
               label: "Apply synthetic change",
+              reason: "change",
             },
           ],
           path: ["installation", "synthetic"],
@@ -652,6 +653,110 @@ describe("installationRuntimeAction", () => {
           type: "success",
         });
         expect(state.latestAttempt).toBeNull();
+      });
+
+      test("starts a reviewed plan in manual mode and records how the new plan differs", async () => {
+        const operation = (
+          id: string,
+          after: unknown,
+          reason: "change" | "drift" = "change",
+        ) => ({ after, id, kind: "add", label: `Label ${id}`, reason });
+
+        const planned = (operations: ReturnType<typeof operation>[]) => ({
+          kind: "planned",
+          plan: { operations, path: ["installation", "synthetic"] },
+        });
+
+        createRootInstallationStepMock.mockReturnValue(
+          createUpgradeRoot(
+            createUpgradeLeaf({
+              plan: vi
+                .fn()
+                .mockResolvedValueOnce(
+                  planned([
+                    operation("kept", { value: 1 }),
+                    operation("changed", { value: 1 }),
+                    operation("dropped", { value: 1 }),
+                  ]),
+                )
+                .mockResolvedValueOnce(
+                  planned([
+                    operation("kept", { value: 1 }),
+                    operation("changed", { value: 2 }),
+                    operation("added", { value: 1 }),
+                    operation("hidden", { value: 1 }, "drift"),
+                  ]),
+                ),
+            }),
+          ),
+        );
+
+        const action = installationRuntimeAction({
+          appConfig: createMockConfig({ metadata: { upgradeMode: "manual" } }),
+        });
+        const request = (body: object) =>
+          action(
+            createRuntimeActionParams({
+              body,
+              method: "post",
+              ...DEFAULT_INSTALLATION_PARAMS,
+            }),
+          );
+
+        await request(upgradeRequestBody);
+        const reviewed = (await desiredStateStore.get("current"))?.pendingPlan;
+        expect.assert(reviewed, "Expected a pending plan to review");
+
+        const result = await request({
+          ...upgradeRequestBody,
+          planId: reviewed.id,
+        });
+
+        const attempt = (await desiredStateStore.get("current"))?.latestAttempt;
+        expect.assert(attempt, "Expected the reviewed plan to start");
+
+        const ref = (id: string) => expect.objectContaining({ id });
+        const review = {
+          added: [ref("added")],
+          changed: [ref("changed")],
+          dropped: [ref("dropped")],
+          planId: reviewed.id,
+        };
+
+        expect(invokeMock).toHaveBeenCalledOnce();
+        expect(attempt.plan.id).not.toBe(reviewed.id);
+        expect(attempt.review).toEqual(review);
+        expect(result).toMatchObject({
+          body: { operation: "upgrade", review },
+          statusCode: 202,
+          type: "success",
+        });
+      });
+
+      test("returns 409 with reason stale-plan when the reviewed plan is no longer pending", async () => {
+        const action = installationRuntimeAction({
+          appConfig: createMockConfig({ metadata: { upgradeMode: "manual" } }),
+        });
+        const request = (body: object) =>
+          action(
+            createRuntimeActionParams({
+              body,
+              method: "post",
+              ...DEFAULT_INSTALLATION_PARAMS,
+            }),
+          );
+
+        await request(upgradeRequestBody);
+        const result = await request({
+          ...upgradeRequestBody,
+          planId: "not-the-pending-plan",
+        });
+
+        expect(invokeMock).not.toHaveBeenCalled();
+        expect(result).toMatchObject({
+          error: { body: { reason: "stale-plan" }, statusCode: 409 },
+          type: "error",
+        });
       });
 
       test("starts the planned upgrade in auto mode", async () => {
