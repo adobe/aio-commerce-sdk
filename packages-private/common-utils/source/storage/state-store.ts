@@ -73,6 +73,7 @@ class StateStore<T> implements KeyValueStore<T> {
     const fullKey = this.buildKey(key);
     const result = await this.state.get(fullKey);
 
+    // biome-ignore lint/suspicious/noUnnecessaryConditions: aio-lib-state returns undefined for missing keys despite its non-nullable return type.
     if (!result?.value) {
       return null;
     }
