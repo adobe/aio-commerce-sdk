@@ -468,11 +468,12 @@ async function createCommerceEventSubscription(
 
   return commerceEventsClient
     .createEventSubscription(eventSpec)
-    .then((_res) => {
+    .then(async (_res) => {
       logger.info(
         `Created event subscription for event "${event.config.name}" to provider "${provider.label} (instance ID: ${provider.instance_id})"`,
       );
 
+      await restoreEventMetadataText(params);
       return eventSpec;
     })
     .catch((err) =>
@@ -482,6 +483,32 @@ async function createCommerceEventSubscription(
         `Failed to create Adobe Commerce event subscription for '${event.config.name}'`,
       ),
     );
+}
+
+/** Sets the I/O metadata of a subscribed event back to its configured label and description. */
+async function restoreEventMetadataText(
+  params: CreateCommerceEventSubscriptionParams,
+) {
+  const { context, provider, event } = params;
+  const { appData, ioEventsClient, logger } = context;
+  const eventCode = event.data.metadata.event_code;
+
+  // Commerce overwrites the label and description of an event's I/O metadata when it subscribes.
+  try {
+    await ioEventsClient.updateEventMetadataForProvider({
+      consumerOrgId: appData.consumerOrgId,
+      description: event.config.description,
+      eventCode,
+      label: event.config.label,
+      projectId: appData.projectId,
+      providerId: provider.id,
+      workspaceId: appData.workspaceId,
+    });
+  } catch (error) {
+    logger.warn(
+      `Could not restore the label of event metadata "${eventCode}": ${await unwrapHttpError(error)}`,
+    );
+  }
 }
 
 /**

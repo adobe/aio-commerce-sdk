@@ -31,7 +31,7 @@ import {
   getCommerceEventingExistingData,
   getIoEventsExistingData,
   makeWorkspaceConfig,
-  removeStoredEventProviders,
+  pruneStoredEventProviders,
   sanitizeEventingIdentifier,
 } from "./utils";
 
@@ -201,7 +201,7 @@ export async function removeCommerceEvents(
     );
   }
 
-  await removeStoredEventProviders(
+  await pruneStoredEventProviders(
     config.eventing.commerce
       .map(({ provider }) => provider.key)
       .filter((key): key is string => typeof key === "string"),
@@ -319,7 +319,7 @@ export async function removeExternalEvents(
     );
   }
 
-  await removeStoredEventProviders(
+  await pruneStoredEventProviders(
     config.eventing.external
       .map(({ provider }) => provider.key)
       .filter((key): key is string => typeof key === "string"),

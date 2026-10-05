@@ -18,7 +18,20 @@ import {
   createInitialInstallationState,
   runInstallation,
 } from "#management/deprecated/runner";
-import { configWithFullEventing } from "#test/fixtures/config";
+import { applyCommerceEvents } from "#management/domains/events/commerce";
+import { createEventsStepContext } from "#management/domains/events/context";
+import { planCommerceEvents } from "#management/domains/events/plan";
+import {
+  eventCodeOf,
+  generateInstanceId,
+  getNamespacedEvent,
+  getRegistrationDescription,
+  getRegistrationName,
+} from "#management/domains/events/utils";
+import {
+  configWithCommerceEventing,
+  configWithFullEventing,
+} from "#test/fixtures/config";
 import {
   createMockCommerceEventProvider,
   createMockIoEventMetadata,
@@ -368,5 +381,235 @@ describe("eventing installation", () => {
         },
       },
     });
+  });
+});
+
+describe("commerce events upgrade planning integration", () => {
+  const upgradeConfig = configWithCommerceEventing;
+  const [source] = upgradeConfig.eventing.commerce;
+  const [orderPlaced] = source.events;
+  const [action] = orderPlaced.runtimeActions;
+  const lifecycleContext = createMockInstallationContext({
+    appId: upgradeConfig.metadata.id,
+  });
+
+  const {
+    consumerOrgId: orgId,
+    projectId,
+    workspaceId,
+  } = lifecycleContext.appData;
+
+  const workspacePath = `${IO_EVENTS_BASE_URL}/${orgId}/${projectId}/${workspaceId}`;
+  const instanceId = generateInstanceId(
+    upgradeConfig.metadata,
+    source.provider,
+    workspaceId,
+  );
+
+  const eventCode = eventCodeOf(
+    orderPlaced,
+    upgradeConfig.metadata,
+    "dx_commerce_events",
+  );
+
+  const subscriptionName = getNamespacedEvent(
+    upgradeConfig.metadata,
+    orderPlaced.name,
+  );
+
+  const ioProvider = {
+    instance_id: instanceId,
+    label: source.provider.label,
+    provider_metadata: "dx_commerce_events",
+  };
+
+  const liveSubscription = {
+    destination: "default",
+    fields: orderPlaced.fields,
+    hipaa_audit_required: false,
+    name: subscriptionName,
+    parent: orderPlaced.name,
+    priority: false,
+    provider_id: "io-1",
+    rules: orderPlaced.rules,
+  };
+
+  /** Serves the state the 1.0.0 install left, with the given subscriptions and metadata label. */
+  function serveLiveState(options: {
+    subscriptions: unknown[];
+    metadataLabel?: string;
+  }) {
+    const capture = {
+      metadataUpdate: null as unknown,
+      subscribe: null as unknown,
+      unsubscribed: [] as string[],
+    };
+
+    apiServer.use(
+      http.get(`${IO_EVENTS_BASE_URL}/${orgId}/providers`, () =>
+        HttpResponse.json({
+          _embedded: {
+            providers: [
+              createMockIoEventProviderHalModel({
+                ...createMockIoEventProvider({
+                  ...ioProvider,
+                  description: source.provider.description,
+                  id: "io-1",
+                }),
+                _embedded: {
+                  eventmetadata: [
+                    createMockIoEventMetadataHalModel(
+                      createMockIoEventMetadata({
+                        description: orderPlaced.description,
+                        event_code: eventCode,
+                        label: options.metadataLabel ?? orderPlaced.label,
+                      }),
+                    ),
+                  ],
+                },
+              } as never),
+            ],
+          },
+          _links: { self: { href: "/providers" } },
+        }),
+      ),
+      http.get(`${workspacePath}/registrations`, () =>
+        HttpResponse.json({
+          _embedded: {
+            registrations: [
+              createMockIoEventRegistrationHalModel({
+                client_id: "test-client-id",
+                description: getRegistrationDescription(
+                  ioProvider,
+                  [orderPlaced],
+                  action,
+                ),
+                enabled: true,
+                events_of_interest: [
+                  { event_code: eventCode, provider_id: "io-1" },
+                ],
+                name: getRegistrationName(ioProvider, action),
+                runtime_action: action,
+              }),
+            ],
+          },
+          _links: { self: { href: "/registrations" } },
+        }),
+      ),
+      http.get(`${COMMERCE_BASE_URL}/eventing/eventProvider`, () =>
+        HttpResponse.json([
+          { workspace_configuration: '{"project":{}}' },
+          createMockCommerceEventProvider({
+            description: source.provider.description,
+            id: "5",
+            instance_id: instanceId,
+            label: source.provider.label,
+            provider_id: "io-1",
+          }),
+        ]),
+      ),
+      http.get(`${COMMERCE_BASE_URL}/eventing/getEventSubscriptions`, () =>
+        HttpResponse.json(options.subscriptions),
+      ),
+      http.post(
+        `${COMMERCE_BASE_URL}/eventing/eventSubscribe`,
+        async ({ request }) => {
+          capture.subscribe = await request.json();
+          return HttpResponse.json([]);
+        },
+      ),
+      http.post(
+        `${COMMERCE_BASE_URL}/eventing/eventUnsubscribe/:name`,
+        ({ params }) => {
+          capture.unsubscribed.push(String(params.name));
+          return HttpResponse.json(true);
+        },
+      ),
+      http.put(
+        `${workspacePath}/providers/io-1/eventmetadata/:code`,
+        async ({ request }) => {
+          capture.metadataUpdate = await request.json();
+          return HttpResponse.json(
+            createMockIoEventMetadataHalModel(createMockIoEventMetadata()),
+          );
+        },
+      ),
+    );
+
+    return capture;
+  }
+
+  async function planAndApply() {
+    const context = {
+      ...lifecycleContext,
+      ...createEventsStepContext(lifecycleContext),
+    };
+    const baseline = { config: upgradeConfig, data: null };
+
+    const planned = await planCommerceEvents(
+      {
+        baseline,
+        path: ["upgrade", "eventing", "commerce"],
+        targetConfig: upgradeConfig,
+      } as never,
+      context,
+    );
+
+    expect.assert(planned.kind === "planned");
+    await applyCommerceEvents(planned.plan, {
+      ...context,
+      attemptId: "attempt-1",
+      baseline,
+      targetConfig: upgradeConfig,
+    } as never);
+
+    return planned.plan;
+  }
+
+  test("subscribes again an event a failed upgrade left unsubscribed, as drift", async () => {
+    vi.stubEnv("__OW_NAMESPACE", "test-namespace");
+    const capture = serveLiveState({ subscriptions: [] });
+
+    const plan = await planAndApply();
+
+    expect(plan.operations).toEqual([
+      expect.objectContaining({ kind: "add", reason: "drift" }),
+    ]);
+    expect(capture.subscribe).toEqual({
+      event: expect.objectContaining({
+        name: subscriptionName,
+        provider_id: "io-1",
+        rules: orderPlaced.rules,
+      }),
+    });
+  });
+
+  test("removes an unknown subscription on the app's provider and resets drifted metadata", async () => {
+    vi.stubEnv("__OW_NAMESPACE", "test-namespace");
+    const leftover = getNamespacedEvent(
+      upgradeConfig.metadata,
+      "plugin.leftover",
+    );
+
+    const capture = serveLiveState({
+      metadataLabel: "Edited",
+      subscriptions: [
+        liveSubscription,
+        { ...liveSubscription, name: leftover },
+      ],
+    });
+
+    const plan = await planAndApply();
+
+    expect(plan.operations.map((op) => `${op.kind} ${op.reason}`)).toEqual([
+      "remove drift",
+      "update drift",
+    ]);
+    expect(capture.unsubscribed).toEqual([leftover]);
+    expect(capture.metadataUpdate).toMatchObject({
+      event_code: eventCode,
+      label: orderPlaced.label,
+    });
+    expect(capture.subscribe).toBeNull();
   });
 });

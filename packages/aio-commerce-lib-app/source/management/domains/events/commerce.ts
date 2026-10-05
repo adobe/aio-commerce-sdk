@@ -16,7 +16,7 @@ import { deprecatedCommerceEventsStep } from "#management/deprecated/domains/eve
 
 import { applyEventingLeaf } from "./apply";
 import { planCommerceEvents } from "./plan";
-import { createCommerceEvents, removeCommerceEvents } from "./provisioning";
+import { createCommerceEvents } from "./provisioning";
 import { COMMERCE_PROVIDER_TYPE } from "./utils";
 
 import type {
@@ -70,6 +70,5 @@ export function applyCommerceEvents(
     install: createCommerceEvents,
     isCommerce: true,
     type: COMMERCE_PROVIDER_TYPE,
-    uninstall: removeCommerceEvents,
   });
 }
