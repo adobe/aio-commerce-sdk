@@ -433,7 +433,6 @@ export class HttpActionRouter<TContext extends BaseContext = BaseContext> {
 
       for (const route of this.routes) {
         const match = route.pattern.exec(path);
-        // biome-ignore lint/suspicious/noUnnecessaryConditions: Biome 2.5.14 infers RegExp.exec() as non-nullable, but it can return null (biomejs/biome#11278).
         if (!match) {
           continue;
         }
@@ -443,8 +442,8 @@ export class HttpActionRouter<TContext extends BaseContext = BaseContext> {
           continue;
         }
 
-        // biome-ignore lint/performance/noAwaitInLoops: must stop at the first matching route that returns a response
-        const response = await this.handleRoute(
+        // biome-ignore lint/performance/noAwaitInLoops: must stop at the first matching route
+        return await this.handleRoute(
           route,
           match,
           body,
@@ -454,10 +453,6 @@ export class HttpActionRouter<TContext extends BaseContext = BaseContext> {
           path,
           context,
         );
-
-        if (response) {
-          return response;
-        }
       }
 
       // If path matched but method didn't, return 405

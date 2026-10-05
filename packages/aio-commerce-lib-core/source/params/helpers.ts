@@ -21,7 +21,7 @@ export function nonEmpty(name: string, value: unknown): boolean {
     return false;
   }
 
-  const v = String(value)?.trim();
+  const v = String(value).trim();
   return !!v && v !== `$${name}`;
 }
 
