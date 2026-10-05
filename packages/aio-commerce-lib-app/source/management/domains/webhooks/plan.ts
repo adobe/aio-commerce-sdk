@@ -51,7 +51,6 @@ export function planWebhookSubscriptions(
 
   // An existing baseline with unresolved data isn't "no prior state" — webhooks may
   // still be live, so don't silently drop their removal.
-  // biome-ignore lint/suspicious/noUnnecessaryConditions: data can still be null/undefined at runtime despite the type
   if (baseline && !baseline.data?.subscribedWebhooks) {
     return Promise.resolve({
       issues: [
@@ -90,6 +89,7 @@ export function planWebhookSubscriptions(
           id: webhookOperationId("update", identity),
           kind: "update",
           label: `Update webhook: ${getWebhookName(identity)}`,
+          reason: "change",
         });
       }
       continue;
@@ -101,6 +101,7 @@ export function planWebhookSubscriptions(
       id: webhookOperationId("add", identity),
       kind: "add",
       label: `Subscribe webhook: ${getWebhookName(identity)}`,
+      reason: "change",
     });
   }
 
@@ -115,6 +116,7 @@ export function planWebhookSubscriptions(
       id: webhookOperationId("remove", identity),
       kind: "remove",
       label: `Unsubscribe webhook: ${getWebhookName(identity)}`,
+      reason: "change",
     });
   }
 

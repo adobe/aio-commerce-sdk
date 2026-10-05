@@ -542,7 +542,7 @@ exists. Later deployments plan an upgrade from the stored baseline:
 
 - `metadata.upgradeMode: "auto"` starts the planned upgrade and waits for its
   lifecycle result.
-- `metadata.upgradeMode: "manual"` creates or reuses the plan and returns it
+- `metadata.upgradeMode: "manual"` creates the plan and returns it
   without starting execution.
 
 **If the init command is denied or blocked (permission error, sandbox rejection,

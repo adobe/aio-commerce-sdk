@@ -120,6 +120,7 @@ class LeafPlanBuilder {
       id: operationId("add", value),
       kind: "add",
       label,
+      reason: "change",
     });
   }
 
@@ -129,6 +130,7 @@ class LeafPlanBuilder {
       id: operationId("remove", value),
       kind: "remove",
       label,
+      reason: "change",
     });
   }
 
@@ -143,6 +145,7 @@ class LeafPlanBuilder {
       id: operationId("update", after),
       kind: "update",
       label,
+      reason: "change",
     });
   }
 

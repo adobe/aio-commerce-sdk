@@ -36,6 +36,7 @@ const SCHEMA_REF_PATTERN = /"#\/components\/schemas\/(\w+)"/g;
  * @param value - Any part of the spec to scan.
  */
 function collectSchemaRefs(value: unknown) {
+  // biome-ignore lint/suspicious/noUnnecessaryConditions: JSON.stringify can return undefined for missing schema references.
   const matches = (JSON.stringify(value) ?? "").matchAll(SCHEMA_REF_PATTERN);
   return [...matches].map((match) => match[1]);
 }

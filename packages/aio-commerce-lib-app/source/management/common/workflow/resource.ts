@@ -35,6 +35,12 @@ export type ResourceOperation<TBefore, TAfter = TBefore> = {
 
   /** Human-readable label for display. */
   label: string;
+
+  /**
+   * Why the operation exists: `change` when the target config differs from the baseline,
+   * `drift` when the target matches the baseline but deployed state does not.
+   */
+  reason: "change" | "drift";
 } & (
   | { kind: "add"; after: TAfter }
   | { kind: "update"; before: TBefore; after: TAfter }
@@ -80,6 +86,12 @@ export type PlanningInput<TConfig, TSnapshotData> = {
 
   /** The target configuration to converge to, or `null` when none is available. */
   targetConfig: TConfig | null;
+
+  /**
+   * The latest attempt, when it failed after the baseline was saved: its target configuration
+   * (`null` when the domain was absent from it) and this domain's plan in it. Absent otherwise.
+   */
+  failedAttempt?: { targetConfig: TConfig | null; plan: DomainPlan | null };
 };
 
 /** The outcome a domain reports after applying its plan. */
