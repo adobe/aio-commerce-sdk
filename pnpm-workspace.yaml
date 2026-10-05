@@ -15,7 +15,7 @@ catalog:
   camelcase: ^9.0.0
   consola: ^3.4.2
   ky: ^1.9.0
-  msw: ^2.11.1
+  msw: ^3.0.0
   prettier: ^3.8.1
   safe-stable-stringify: ^2.5.0
   type-fest: ^5.0.0

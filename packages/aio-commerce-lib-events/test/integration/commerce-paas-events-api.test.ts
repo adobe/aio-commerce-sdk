@@ -23,7 +23,7 @@ const REGEX_OAUTH_TOKEN = /^OAuth/;
 // See: https://vitest.dev/guide/mocking.html#requests
 const server = setupServer();
 
-beforeAll(() => server.listen({ onUnhandledRequest: "error" }));
+beforeAll(() => server.listen({ onUnhandledFrame: "error" }));
 afterAll(() => server.close());
 afterEach(() => server.resetHandlers());
 
