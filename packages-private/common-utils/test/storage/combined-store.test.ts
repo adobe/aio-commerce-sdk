@@ -84,6 +84,51 @@ describe("createCombinedStore", () => {
     await expect(store.put("key", "new")).rejects.toThrow("state down");
   });
 
+  test("reads the cache first", async () => {
+    cache.values.set("key", "cached");
+    persistent.values.set("key", "persisted");
+    const store = await createCombinedStore<string>();
+
+    expect(await store.get("key")).toBe("cached");
+    expect(persistent.get).not.toHaveBeenCalled();
+  });
+
+  test("falls back to the persisted value and caches it, ignoring a failed cache write", async () => {
+    persistent.values.set("key", "persisted");
+    vi.mocked(cache.put).mockRejectedValueOnce(new Error("state down"));
+    const store = await createCombinedStore<string>();
+
+    expect(await store.get("key")).toBe("persisted");
+    expect(await store.get("key")).toBe("persisted");
+    expect(cache.values.get("key")).toBe("persisted");
+  });
+
+  test("returns null when neither store has the key", async () => {
+    const store = await createCombinedStore<string>();
+    expect(await store.get("key")).toBeNull();
+  });
+
+  test("only caches values the predicate does not persist", async () => {
+    const store = await createCombinedStore<string>({
+      persistent: { shouldPersist: (data) => data !== "draft" },
+    });
+
+    await store.put("key", "draft");
+
+    expect(persistent.put).not.toHaveBeenCalled();
+    expect(cache.values.get("key")).toBe("draft");
+  });
+
+  test("deletes from both stores", async () => {
+    cache.values.set("key", "cached");
+    persistent.values.set("key", "persisted");
+    const store = await createCombinedStore<string>();
+
+    expect(await store.delete("key")).toBe(true);
+    expect(cache.values.has("key")).toBe(false);
+    expect(persistent.values.has("key")).toBe(false);
+  });
+
   test("reports a value stored in either store", async () => {
     persistent.values.set("key", "value");
     const store = await createCombinedStore<string>();
