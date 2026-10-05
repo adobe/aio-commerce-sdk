@@ -114,6 +114,8 @@ export async function startUpgrade({
     ...rawParams,
     AIO_COMMERCE_API_BASE_URL: association.commerce.baseUrl,
     AIO_COMMERCE_API_FLAVOR: association.commerce.env,
+    AIO_COMMERCE_AUTH_IMS_ENVIRONMENT: body.ioEventsEnv,
+    AIO_EVENTS_API_BASE_URL: body.ioEventsUrl,
     appData: body.appData,
   } as WorkflowRouteParams;
 

@@ -769,6 +769,8 @@ describe("installationRuntimeAction", () => {
             params: expect.objectContaining({
               __ow_method: "post",
               __ow_path: "/execution",
+              AIO_COMMERCE_AUTH_IMS_ENVIRONMENT: upgradeRequestBody.ioEventsEnv,
+              AIO_EVENTS_API_BASE_URL: upgradeRequestBody.ioEventsUrl,
               attemptId,
             }),
             result: false,
