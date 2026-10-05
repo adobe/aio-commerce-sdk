@@ -10,50 +10,19 @@
  * governing permissions and limitations under the License.
  */
 
-import { unwrapHttpError } from "@adobe/aio-commerce-lib-api/utils";
 import { resolveImsAuthParams } from "@adobe/aio-commerce-lib-auth";
 import { stringify } from "safe-stable-stringify";
 
 import { appliesToEnv } from "#config/lib/environment";
-import { fieldValuesEqual, isUnset } from "#management/common/utils/values";
 
 import type {
   CommerceWebhook,
   WebhookSubscribeParams,
-  WebhookUnsubscribeParams,
 } from "@adobe/aio-commerce-lib-webhooks/api";
 import type { getInstallCommerceEnv } from "#config/lib/environment";
 import type { WebhookEntry } from "#config/schema/webhooks";
 import type { WebhooksExecutionContext } from "./context";
-import type {
-  ResolvedWebhookPayload,
-  WebhookIdentity,
-  WebhookOperationValue,
-} from "./types";
-
-/** Mutable (non-identity) scalar fields compared to detect a config change. */
-const MUTABLE_SCALAR_FIELDS = [
-  "url",
-  "priority",
-  "method",
-  "required",
-  "soft_timeout",
-  "timeout",
-  "fallback_error_message",
-  "ttl",
-  "batch_order",
-  "requiresAdobeAuth",
-] as const satisfies (keyof ResolvedWebhookPayload)[];
-
-/** Mutable (non-identity) array fields compared to detect a config change. */
-const MUTABLE_ARRAY_FIELDS = [
-  "fields",
-  "rules",
-  "headers",
-] as const satisfies (keyof ResolvedWebhookPayload)[];
-
-/** Every mutable (non-identity) field compared to detect a config change. */
-const MUTABLE_FIELDS = [...MUTABLE_SCALAR_FIELDS, ...MUTABLE_ARRAY_FIELDS];
+import type { ResolvedWebhookPayload, WebhookIdentity } from "./types";
 
 /** Matches any character that is not a valid identifier character (letter, digit, or underscore). */
 const NON_IDENTIFIER_CHAR_REGEX = /[^a-zA-Z0-9_]/g;
@@ -65,6 +34,7 @@ const MULTIPLE_UNDERSCORES_REGEX = /_+/g;
 const PLUGIN_MAGENTO_REGEX = /^plugin\.magento\./;
 
 const ENVIRONMENT_PRODUCTION = "production";
+
 const ENVIRONMENT_STAGING = "staging";
 
 /** Narrows any webhook-like value down to its identity fields. */
@@ -152,36 +122,6 @@ export function collectConfiguredValues(
   }
 
   return into;
-}
-
-/**
- * True when a live webhook differs from its target. A field the target sets must match
- * exactly. A field the target leaves out only differs when live still holds a value a
- * config set for it (`configured`), since otherwise it holds Commerce's own value.
- * `batch_name`/`hook_name`/`webhook_method`/`webhook_type` are identity fields — a change
- * there is a rename (remove+add), not a config update.
- */
-export function hasWebhookConfigChanged(
-  live: WebhookOperationValue,
-  target: WebhookOperationValue,
-  configured: readonly Partial<ResolvedWebhookPayload>[] = [],
-): boolean {
-  return MUTABLE_FIELDS.some((field) => {
-    const liveValue = live[field];
-    const targetValue = target[field];
-
-    if (targetValue !== undefined) {
-      return !fieldValuesEqual(liveValue, targetValue);
-    }
-
-    // Commerce always returns a value, so for a field the target leaves out only a value one
-    // of our configs set proves live is stale. Any other value is Commerce's own.
-    const configuredValues = configured
-      .map((webhook) => webhook[field])
-      .filter((value) => !isUnset(value));
-
-    return configuredValues.some((value) => fieldValuesEqual(liveValue, value));
-  });
 }
 
 /** Strips the `.magento` segment Commerce drops when persisting plugin webhook methods. */
@@ -336,50 +276,4 @@ export function resolveDeveloperConsoleOAuthCredentials(
         : ENVIRONMENT_STAGING,
     org_id: imsOrgId,
   };
-}
-
-/** Re-throws `err` with an enriched message: the webhook name and the unwrapped HTTP body, if any. */
-async function rethrowWithWebhookName(
-  err: unknown,
-  webhookName: string,
-  operation: string,
-): Promise<never> {
-  const msg = await unwrapHttpError(err);
-  throw new Error(
-    `Failed to ${operation} webhook subscription for "${webhookName}": ${msg}`,
-  );
-}
-
-/** Subscribes a single webhook, enriching the error with the webhook name if the API responds with a string `message`. */
-export async function createWebhookSubscription(
-  client: WebhooksExecutionContext["commerceWebhooksClient"],
-  resolvedWebhook: WebhookSubscribeParams,
-): Promise<WebhookSubscribeParams> {
-  try {
-    await client.subscribeWebhook(resolvedWebhook);
-    return resolvedWebhook;
-  } catch (err) {
-    return await rethrowWithWebhookName(
-      err,
-      getWebhookName(resolvedWebhook),
-      "create",
-    );
-  }
-}
-
-/** Unsubscribes a single webhook, enriching the error with the webhook name if the API responds with a string `message`. */
-export async function deleteWebhookSubscription(
-  client: WebhooksExecutionContext["commerceWebhooksClient"],
-  resolvedWebhook: WebhookIdentity,
-  params: WebhookUnsubscribeParams,
-): Promise<void> {
-  try {
-    await client.unsubscribeWebhook(params);
-  } catch (err) {
-    return rethrowWithWebhookName(
-      err,
-      getWebhookName(resolvedWebhook),
-      "delete",
-    );
-  }
 }

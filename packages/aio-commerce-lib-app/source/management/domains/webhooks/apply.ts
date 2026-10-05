@@ -10,9 +10,8 @@
  * governing permissions and limitations under the License.
  */
 
+import { createWebhookSubscription, deleteWebhookSubscription } from "./api";
 import {
-  createWebhookSubscription,
-  deleteWebhookSubscription,
   getWebhookName,
   isWebhookInList,
   resolveDeveloperConsoleOAuthCredentials,
