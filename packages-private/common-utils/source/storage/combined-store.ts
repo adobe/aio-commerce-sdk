@@ -25,8 +25,8 @@ const DEFAULT_CACHE_TTL_SECONDS = 10 * 60;
  *
  * Read strategy: cache first, then persistent storage
  * Write strategy:
- * - Always write to cache for fast reads
- * - Write to persistent storage based on shouldPersist predicate
+ * - Write to persistent storage first, based on the shouldPersist predicate. A failed write leaves both stores unchanged.
+ * - Then write to cache for fast reads, dropping the cached value if that write fails
  *
  * @typeParam T - The type of data to store.
  * @param options - Configuration options for the stores.
@@ -113,13 +113,23 @@ class CombinedStore<T> implements KeyValueStore<T> {
     return null;
   }
 
-  public async put(key: string, data: T): Promise<void> {
-    // Always write to cache for fast reads
-    await this.cache.put(key, data);
+  public async has(key: string): Promise<boolean> {
+    return (await this.cache.has(key)) || (await this.persistent.has(key));
+  }
 
-    // Persist based on predicate (or always if no predicate)
+  public async put(key: string, data: T): Promise<void> {
     if (!this.shouldPersist || this.shouldPersist(data)) {
       await this.persistent.put(key, data);
+    }
+
+    try {
+      await this.cache.put(key, data);
+    } catch (error) {
+      // `get` reads the cache first, so a cached value older than the persisted one must not stay.
+      const isDropped = await this.cache.delete(key);
+      if (!isDropped) {
+        throw error;
+      }
     }
   }
 

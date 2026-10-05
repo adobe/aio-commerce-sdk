@@ -31,6 +31,14 @@ export type KeyValueStore<T> = {
   get: (key: string) => Promise<T | null>;
 
   /**
+   * Checks whether a value is stored under the key, even one `get` cannot read.
+   *
+   * @param key - The key to check.
+   * @returns True if a value is stored under the key.
+   */
+  has: (key: string) => Promise<boolean>;
+
+  /**
    * Saves data with the given key.
    *
    * @param key - The key to save under.

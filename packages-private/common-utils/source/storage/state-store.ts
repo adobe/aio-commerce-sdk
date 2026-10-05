@@ -85,6 +85,13 @@ class StateStore<T> implements KeyValueStore<T> {
     }
   }
 
+  public async has(key: string): Promise<boolean> {
+    const result = await this.state.get(this.buildKey(key));
+
+    // biome-ignore lint/suspicious/noUnnecessaryConditions: aio-lib-state returns undefined for missing keys despite its non-nullable return type.
+    return Boolean(result?.value);
+  }
+
   public async put(key: string, data: T): Promise<void> {
     const fullKey = this.buildKey(key);
     const value = JSON.stringify(data);
