@@ -26,6 +26,7 @@ import { toSubscriptionValues } from "./operations";
 import {
   COMMERCE_PROVIDER_TYPE,
   EXTERNAL_PROVIDER_TYPE,
+  generateInstanceId,
   getNamespacedEvent,
   getProviderSnapshots,
   isIoProviderProvenOwnedByApp,
@@ -51,6 +52,7 @@ import type { LiveEventingProvider, LiveEventingState } from "./live";
 import type { LeafPlanContext, Operation } from "./operations";
 import type {
   EventingDomainPlan,
+  EventingModuleState,
   EventingProviderSnapshot,
   EventingSnapshotData,
   SubscriptionValues,
@@ -173,10 +175,12 @@ async function planEventingLeaf(
     kind: "planned",
     plan: {
       configuredValues: leaf.isCommerce ? ctx.configuredValues : undefined,
+      eventingModule: getEventingModuleState(live, matches, ctx),
       operations: operations.sort(
         (a, b) => KIND_ORDER[a.kind] - KIND_ORDER[b.kind],
       ),
       path,
+      providerIds: getLiveProviderIds(matches),
     },
   };
 }
@@ -337,6 +341,33 @@ function getTargetSubscriptionNames(
       ),
     ),
   );
+}
+
+/** The I/O provider ids of the target providers that exist live, by provider key. */
+function getLiveProviderIds(matches: ProviderMatches): Record<string, string> {
+  return Object.fromEntries(
+    matches.matched.flatMap(({ target, live }) =>
+      live ? [[target.key, live.ioProvider.id]] : [],
+    ),
+  );
+}
+
+/** The eventing module state for the Commerce leaf, tied to its first target provider. */
+function getEventingModuleState(
+  live: LiveEventingState,
+  matches: ProviderMatches,
+  ctx: LeafPlanContext,
+): EventingModuleState | undefined {
+  const [first] = matches.matched;
+  if (!(live.eventingModule && first)) {
+    return;
+  }
+
+  const instanceId =
+    first.live?.ioProvider.instance_id ??
+    generateInstanceId(ctx.metadata, first.target.provider, ctx.workspaceId);
+
+  return { ...live.eventingModule, instanceId };
 }
 
 /** Adds the subscription values of the given providers' Commerce events, skipping exact duplicates. */
