@@ -1038,41 +1038,36 @@ The `#app.commerce.config` package import resolves to a generated JavaScript com
 
 ### Upgrading a Deployed App
 
-After an app is installed, the installation endpoint is **desired-state**. It compares the recorded installation baseline against the app configuration and reconciles the app toward it:
-
-- **No baseline yet**: it installs the app.
-- **A baseline exists**: it upgrades the app from the baseline to the version declared in `metadata.version`.
+Installing, upgrading and uninstalling all plan the operation and validate the plan before anything changes. An installed app upgrades from its installed version to the one declared in `metadata.version`.
 
 > [!IMPORTANT]
-> `metadata.id` identifies the installed application and cannot change during an upgrade. The endpoint rejects a different ID before planning starts. To use a different ID, uninstall the existing app and install it again.
-
-The endpoint derives the operation and returns it as `operation` (`"install"` or `"upgrade"`) in the response.
+> `metadata.id` identifies the installed application and cannot change during an upgrade. The SDK refuses to plan an upgrade that changes it. To use a different ID, uninstall the existing app and install it again.
 
 #### Automatic vs. Manual Upgrades
 
-`metadata.upgradeMode` controls what happens once an upgrade has been planned:
+`metadata.upgradeMode` controls what the `post-app-deploy` hook does with the upgrade it plans:
 
-- **`auto`** (experimental): the plan is created and its execution starts immediately.
-- **`manual`** (default): the plan is created and returned without starting execution.
+- **`auto`** (experimental): the hook starts the plan.
+- **`manual`** (default): the plan stays pending for review.
 
 > [!NOTE]
 > `auto` is experimental and `upgradeMode` currently defaults to `manual` while automatic upgrade execution is stabilizing. This will change back to `auto` in a future release — if you want manual behavior permanently, set `upgradeMode: "manual"` explicitly now.
 
 #### The `post-app-deploy` Hook
 
-The generated `commerce/extensibility/1` extension wires a `post-app-deploy` hook automatically (alongside `pre-app-build`). After every `aio app deploy`, the hook triggers the desired-state reconciliation, so a redeploy of an installed app runs an upgrade check without any manual step:
+The generated `commerce/extensibility/1` extension wires a `post-app-deploy` hook automatically (alongside `pre-app-build`). After every `aio app deploy`, the hook plans an upgrade, so a redeploy of an installed app runs an upgrade check without any manual step. The hook never installs an app that is not installed yet.
 
-- In `auto` mode it prints the plan and waits for the execution result when progress is available.
+- In `auto` mode it prints the plan, starts it, and waits for the execution result when progress is available.
 - In `manual` mode it reports that a plan was created but was not executed.
 
 #### No-op Upgrade States
 
-Some states are not actionable upgrades. In these cases the endpoint responds with `409 Conflict` carrying a `reason`, and the `post-app-deploy` hook treats them as a no-op rather than a failure:
+Some states are not actionable upgrades. The `post-app-deploy` hook treats them as a no-op rather than a failure:
 
 - **`not-associated`**: the app is not associated with a Commerce instance.
 - **`already-current`**: the installed version already matches `metadata.version`.
 
-A `409` **without** a `reason` (for example, when upgrade planning is blocked by configuration issues) is a real failure and surfaces as an error.
+Any other planning failure, for example configuration issues that block the upgrade, surfaces as an error.
 
 ### Using the Configuration API
 

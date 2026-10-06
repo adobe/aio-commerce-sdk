@@ -28,11 +28,11 @@ import { parseCommerceAppConfig } from "#config/lib/parser";
 
 import { waitForAutomaticUpgrade } from "./polling";
 
-import type { LifecyclePlan } from "#management/common/orchestration";
+import type { PlanPreview } from "#actions/installation/plan";
 
 type SkippedReason = "already-current" | "not-associated" | "not-installed";
 type SkippedResult = { skipped: true; reason: SkippedReason };
-type UpgradePlanResult = { plan: LifecyclePlan };
+type UpgradePlanResult = { plan: PlanPreview };
 type UpgradeResult = SkippedResult | UpgradePlanResult;
 
 /** Returns true for a no-op reason defined by the upgrade API contract. */
@@ -86,19 +86,25 @@ async function createUpgradeRequest() {
   };
 }
 
-/** Invokes the upgrade action. */
-async function invokeAction(
-  request: Awaited<ReturnType<typeof createUpgradeRequest>>,
-): Promise<UpgradeResult> {
+/** The request the hook sends to the installation action. */
+type UpgradeRequest = Awaited<ReturnType<typeof createUpgradeRequest>>;
+
+/** Plans the upgrade. Skips when the app is not installed, not associated or already current. */
+async function planUpgrade(request: UpgradeRequest): Promise<UpgradeResult> {
   consola.debug(`Upgrade endpoint: ${request.endpoint}`);
 
   try {
-    return await ky
-      .post(request.endpoint, {
+    const { plan } = await ky
+      .post(`${request.endpoint}/plan`, {
         headers: request.headers,
         json: request.body,
       })
       .json<UpgradePlanResult>();
+
+    // Without a baseline the action plans an install, which the hook never runs.
+    return plan.operation === "upgrade"
+      ? { plan }
+      : { reason: "not-installed", skipped: true };
   } catch (error) {
     if (error instanceof HTTPError) {
       const details = await error.response.json<{ reason?: string }>();
@@ -117,7 +123,27 @@ async function invokeAction(
   }
 }
 
-/** Invokes the deployed app's upgrade endpoint. */
+/** Starts the planned upgrade. */
+async function startUpgrade(request: UpgradeRequest, plan: PlanPreview) {
+  try {
+    await ky.post(request.endpoint, {
+      headers: request.headers,
+      json: { ...request.body, planId: plan.id },
+    });
+  } catch (error) {
+    if (error instanceof HTTPError) {
+      const details = await error.response.json();
+      throw new Error(
+        `Failed to start the app upgrade (HTTP ${error.response.status}): ${JSON.stringify(details, null, 2)}`,
+        { cause: error },
+      );
+    }
+
+    throw error;
+  }
+}
+
+/** Plans the deployed app's upgrade, and starts it when the app upgrades automatically. */
 export async function run() {
   const appConfig = await parseCommerceAppConfig();
   const { upgradeMode } = appConfig.metadata;
@@ -125,7 +151,7 @@ export async function run() {
   consola.log(""); // Leave a bit of whitespace before the output to make it more readable.
   consola.start("Checking for app upgrades...");
   const request = await createUpgradeRequest();
-  const result = await invokeAction(request);
+  const result = await planUpgrade(request);
 
   if (isSkippedResult(result)) {
     consola.info(`No upgrade was run: ${result.reason}.\n`);
@@ -147,6 +173,7 @@ export async function run() {
   );
 
   if (upgradeMode === "auto") {
+    await startUpgrade(request, result.plan);
     await waitForAutomaticUpgrade(request);
   }
 

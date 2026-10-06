@@ -12,8 +12,9 @@
 
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 import type { ExecutionContext, ValidationExecutionContext } from "./step";
+import type { ValidationIssue, ValidationIssueSeverity } from "./validation";
 
-/** A planning problem that prevents a domain from producing an executable plan. */
+/** A problem found while planning or validating a plan. Blocking issues prevent the plan from running. */
 export type PlanningIssue = {
   /** The domain that raised the issue. */
   domain: string;
@@ -23,6 +24,18 @@ export type PlanningIssue = {
 
   /** Human-readable description of the issue. */
   message: string;
+
+  /** Whether the issue prevents the plan from running. Defaults to `true` when absent. */
+  blocking?: boolean;
+
+  /** Severity of the issue. Defaults to `error` when absent. */
+  severity?: ValidationIssueSeverity;
+
+  /** Full workflow path of the step that raised the issue. */
+  path?: string[];
+
+  /** Additional context about the issue. */
+  details?: Record<string, unknown>;
 };
 
 /**
@@ -102,10 +115,11 @@ export type ApplyResult<TSnapshotData> = {
 
 /**
  * The outcome of a domain's planning pass, discriminated by `kind`: `planned`
- * carries the executable plan, `blocked` carries the issues preventing one.
+ * carries the executable plan and any issues that do not block it, `blocked`
+ * carries the issues preventing one.
  */
 export type PlanningResult<TPlan extends DomainPlan = DomainPlan> =
-  | { kind: "planned"; plan: TPlan }
+  | { kind: "planned"; plan: TPlan; issues?: PlanningIssue[] }
   | { kind: "blocked"; issues: PlanningIssue[] };
 
 /**
@@ -124,8 +138,23 @@ export type ResourceCapability<
     context: ValidationExecutionContext<TStepCtx>,
   ) => Promise<PlanningResult<TPlan>>;
 
+  /**
+   * Checks the operations of a plan the step produced, with the same input `plan` received.
+   * May read external state. Its issues never block the plan.
+   */
+  validatePlan?: (
+    plan: TPlan,
+    input: PlanningInput<TConfig, TSnapshotData>,
+    context: ValidationExecutionContext<TStepCtx>,
+  ) => ValidationIssue[] | Promise<ValidationIssue[]>;
+
   apply: (
     plan: TPlan,
     context: ApplyContext<TStepCtx, TConfig, TSnapshotData>,
   ) => Promise<ApplyResult<TSnapshotData>>;
 };
+
+/** Whether an issue prevents the plan it belongs to from running. */
+export function isBlockingIssue(issue: PlanningIssue): boolean {
+  return issue.blocking !== false;
+}

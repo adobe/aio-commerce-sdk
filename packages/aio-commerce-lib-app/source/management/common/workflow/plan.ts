@@ -16,24 +16,31 @@ import { getAtPath, isStepConfigured, pathsEqual } from "./utils";
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 import type { AppStateSnapshot } from "#management/common/orchestration";
 import type { DomainPlan, PlanningIssue } from "./resource";
-import type { AnyStep, BranchStep, LifecycleContext } from "./step";
+import type { AnyStep, BranchStep, LeafStep, LifecycleContext } from "./step";
 import type { WorkflowData } from "./types";
+import type { ValidationIssue } from "./validation";
 
 /** Options for planning every resource-capable leaf in a workflow. */
 export type PlanWorkflowOptions = {
   rootStep: BranchStep;
   lifecycleContext: LifecycleContext;
 
-  baseline: AppStateSnapshot;
+  /** The state to plan from, or `null` when nothing is installed. */
+  baseline: Pick<AppStateSnapshot, "config" | "data"> | null;
+
+  /** The state to plan towards, or `null` when nothing should remain installed. */
   target: {
     config: CommerceAppConfigOutputModel;
-  };
+  } | null;
 
   /** The latest attempt, when it failed after the baseline was saved. */
   failedAttempt?: {
     config: CommerceAppConfigOutputModel;
     domains: DomainPlan[];
   };
+
+  /** Whether to also run each planned leaf's `validatePlan` on its plan. */
+  validate?: boolean;
 };
 
 /** Aggregated output of a workflow planning pass. */
@@ -56,8 +63,8 @@ export async function planWorkflow(
     options.rootStep,
     [],
     {},
-    isStepConfigured(options.rootStep, options.baseline.config),
-    isStepConfigured(options.rootStep, options.target.config),
+    isConfiguredIn(options.rootStep, options.baseline),
+    isConfiguredIn(options.rootStep, options.target),
     options.failedAttempt
       ? isStepConfigured(options.rootStep, options.failedAttempt.config)
       : false,
@@ -102,12 +109,11 @@ async function planStep(
     for (const child of step.children) {
       // A child only counts as configured in the baseline when its parent is configured.
       const childConfiguredInBaseline =
-        configuredInBaseline &&
-        isStepConfigured(child, options.baseline.config);
+        configuredInBaseline && isConfiguredIn(child, options.baseline);
 
       // A child only counts as configured in the target when its parent is configured.
       const childConfiguredInTarget =
-        configuredInTarget && isStepConfigured(child, options.target.config);
+        configuredInTarget && isConfiguredIn(child, options.target);
 
       // A child only counts as configured in the failed attempt when its parent is configured.
       // Domains use the failed attempt's config to recognize values it may have left behind.
@@ -137,14 +143,8 @@ async function planStep(
     return;
   }
 
-  const domainBaseline = configuredInBaseline
-    ? {
-        config: options.baseline.config,
-        data: getAtPath(options.baseline.data ?? {}, path) as WorkflowData,
-      }
-    : null;
-
-  const domainTargetConfig = configuredInTarget ? options.target.config : null;
+  const domainTargetConfig =
+    configuredInTarget && options.target ? options.target.config : null;
   const domainContext = {
     ...options.lifecycleContext,
     ...accumulatedContext,
@@ -156,7 +156,9 @@ async function planStep(
   );
 
   const planningInput = {
-    baseline: domainBaseline,
+    baseline: configuredInBaseline
+      ? getDomainBaseline(options.baseline, path)
+      : null,
     failedAttempt: failedAttempt && {
       plan: domainPlan ?? null,
       targetConfig: configuredInFailedAttempt ? failedAttempt.config : null,
@@ -169,8 +171,81 @@ async function planStep(
 
   // Accumulate in-place (for recursive traversal)
   if (result.kind === "blocked") {
-    issues.push(...result.issues);
-  } else {
-    domains.push(result.plan);
+    issues.push(...result.issues.map((issue) => ({ path, ...issue })));
+    return;
   }
+
+  domains.push(result.plan);
+  issues.push(...asNonBlocking(result.issues ?? [], path));
+
+  if (options.validate) {
+    issues.push(
+      ...(await validateLeafPlan(
+        step,
+        result.plan,
+        planningInput,
+        domainContext,
+      )),
+    );
+  }
+}
+
+/** The given issues of a planned leaf, marked as not blocking its plan. */
+function asNonBlocking(issues: PlanningIssue[], path: string[]) {
+  return issues.map((issue) => ({ path, ...issue, blocking: false }));
+}
+
+/** The baseline config and the slice of its data at the given path, or `null` without a baseline. */
+function getDomainBaseline(
+  baseline: PlanWorkflowOptions["baseline"],
+  path: string[],
+) {
+  return baseline
+    ? {
+        config: baseline.config,
+        data: getAtPath(baseline.data ?? {}, path) as WorkflowData,
+      }
+    : null;
+}
+
+/**
+ * Runs a leaf's `validatePlan`, if it has one, and returns what it finds as non-blocking issues
+ * of the leaf. A failure to validate is reported as an error issue.
+ */
+async function validateLeafPlan(
+  step: LeafStep,
+  ...[plan, input, context]: Parameters<NonNullable<LeafStep["validatePlan"]>>
+): Promise<PlanningIssue[]> {
+  if (!step.validatePlan) {
+    return [];
+  }
+
+  const domain = input.path.at(1) ?? step.name;
+  const toPlanningIssue = (issue: ValidationIssue): PlanningIssue => ({
+    ...issue,
+    blocking: false,
+    domain,
+    path: input.path,
+  });
+
+  try {
+    const found = await step.validatePlan(plan, input, context);
+    return found.map(toPlanningIssue);
+  } catch (error) {
+    return [
+      toPlanningIssue({
+        code: "VALIDATION_HANDLER_ERROR",
+        message: error instanceof Error ? error.message : String(error),
+        severity: "error",
+      }),
+    ];
+  }
+}
+
+/** Whether a step is configured in a snapshot's config. Always `false` without a snapshot. */
+function isConfiguredIn(
+  step: AnyStep,
+  state: Pick<AppStateSnapshot, "config"> | null,
+) {
+  return state !== null && isStepConfigured(step, state.config);
 }

@@ -18,6 +18,10 @@ import {
   deleteWebhookSubscription,
 } from "#management/domains/webhooks/api";
 import {
+  findConflictingWebhooks,
+  toWebhookConflictIssues,
+} from "#management/domains/webhooks/comparison";
+import {
   buildWebhookIdPrefix,
   getWebhookName,
   isWebhookInList,
@@ -30,10 +34,9 @@ import type {
   WebhookUnsubscribeParams,
 } from "@adobe/aio-commerce-lib-webhooks/api";
 import type { WebhooksConfig } from "#config/schema/webhooks";
-import type { ValidationIssue } from "#management/common/workflow/step";
+import type { ValidationIssue } from "#management/common/workflow/validation";
 import type { WebhooksExecutionContext } from "#management/domains/webhooks/context";
 import type {
-  ConflictingWebhook,
   WebhookSubscriptionResult,
   WebhookUnsubscriptionResult,
 } from "#management/domains/webhooks/types";
@@ -66,45 +69,19 @@ export async function validateWebhookConflicts(
   );
 
   const existingWebhooks = await commerceWebhooksClient.getWebhookList();
-  const idPrefix = buildWebhookIdPrefix(config.metadata.id);
-  const conflictedWebhooks: ConflictingWebhook[] = [];
+  const issues = toWebhookConflictIssues(
+    findConflictingWebhooks(
+      modificationWebhooks,
+      existingWebhooks,
+      buildWebhookIdPrefix(config.metadata.id),
+    ),
+  );
 
-  for (const entry of modificationWebhooks) {
-    const { webhook } = entry;
-    const resolvedBatch = `${idPrefix}${webhook.batch_name}`;
-    const resolvedHook = `${idPrefix}${webhook.hook_name}`;
-
-    for (const existing of existingWebhooks) {
-      if (
-        existing.webhook_method === webhook.webhook_method &&
-        existing.webhook_type === webhook.webhook_type &&
-        !(
-          existing.batch_name === resolvedBatch &&
-          existing.hook_name === resolvedHook
-        )
-      ) {
-        conflictedWebhooks.push({
-          label: entry.label,
-          ...existing,
-        });
-        break;
-      }
-    }
+  if (issues.length === 0) {
+    logger.info("No webhook conflicts found.");
   }
 
-  if (conflictedWebhooks.length > 0) {
-    return [
-      {
-        code: "WEBHOOK_CONFLICTS",
-        details: { conflictedWebhooks },
-        message: `Webhook conflicts detected: ${conflictedWebhooks.length} webhook(s) already registered for the same method and type by another app`,
-        severity: "warning",
-      },
-    ];
-  }
-
-  logger.info("No webhook conflicts found.");
-  return [];
+  return issues;
 }
 
 /**

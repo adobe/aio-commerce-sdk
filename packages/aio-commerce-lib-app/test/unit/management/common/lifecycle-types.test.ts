@@ -154,7 +154,7 @@ describe("lifecycle type surface", () => {
     // failure (reusing the engine WorkflowError). Neither leaks onto the other.
     expectTypeOf<
       Extract<LifecycleAttempt, { status: "succeeded" }>["result"]
-    >().toEqualTypeOf<SuccessfulResult>();
+    >().toEqualTypeOf<SuccessfulResult | null>();
     expectTypeOf<
       Extract<LifecycleAttempt, { status: "failed" }>["failure"]
     >().toEqualTypeOf<WorkflowError<{ operationId?: string }>>();

@@ -12,7 +12,9 @@
 
 import { resolveImsAuthParams } from "@adobe/aio-commerce-lib-auth";
 import { getHeader } from "@adobe/aio-commerce-lib-core/headers";
+import { conflict } from "@adobe/aio-commerce-lib-core/responses";
 
+import { getAssociationData } from "#management/association/repository";
 import { migrateLegacyInstallationState } from "#management/deprecated/migration";
 import { createInstallationStore } from "#management/deprecated/stores";
 import { createRootInstallationStep } from "#management/installation/root";
@@ -28,14 +30,6 @@ import type {
   CommerceAppConfigOutputModel,
 } from "#config/schema/app";
 import type { LifecycleRequestContext } from "#management/common/schema";
-import type {
-  InProgressWorkflowState,
-  WorkflowData,
-} from "#management/common/workflow/types";
-import type {
-  CustomInstallationSnapshotData,
-  CustomInstallationStepIdentity,
-} from "#management/domains/custom-installation/index";
 import type { LifecycleContext } from "#management/index";
 
 /** Action name for async invocation. */
@@ -91,15 +85,7 @@ export type WorkflowRouteParams = RuntimeActionArgs & {
   appData: LifecycleContext["appData"];
 };
 
-/** Params for the installation/uninstallation execution routes. */
-export type ExecutionRouteParams = WorkflowRouteParams & {
-  initialState: InProgressWorkflowState;
-
-  /** Same as {@link getExecutedCustomInstallationSteps}'s return value, passed through from `startUninstallation`. */
-  executedCustomInstallationSteps?: CustomInstallationStepIdentity[];
-};
-
-/** Params for the upgrade execution route. */
+/** Params for the lifecycle execution route. */
 export type LifecycleExecutionRouteParams = WorkflowRouteParams & {
   attemptId: string;
 };
@@ -112,27 +98,42 @@ export type RequestHandlerArgs = {
 };
 
 /** Inputs for the async execution handlers. */
-export type ExecutionHandlerArgs<TParams = ExecutionRouteParams> = {
+export type ExecutionHandlerArgs<TParams = LifecycleExecutionRouteParams> = {
   params: TParams;
   logger: LifecycleContext["logger"];
 };
 
 /**
- * Merges rawParams with body fields, overriding API URLs.
- * Shared by lifecycle start and execution routes.
+ * Merges the runtime params with the request body and the Commerce instance the app is
+ * associated with. Returns `null` when the app is not associated.
  */
-export function buildWorkflowParams(
+export async function resolveWorkflowParams(
   body: LifecycleRequestContext,
   rawParams: RuntimeActionArgs,
-) {
+): Promise<WorkflowRouteParams | null> {
+  const association = await getAssociationData();
+  if (!association) {
+    return null;
+  }
+
   return {
     ...rawParams,
-    AIO_COMMERCE_API_BASE_URL: body.commerceBaseUrl,
-    AIO_COMMERCE_API_FLAVOR: body.commerceEnv,
+    AIO_COMMERCE_API_BASE_URL: association.commerce.baseUrl,
+    AIO_COMMERCE_API_FLAVOR: association.commerce.env,
     AIO_COMMERCE_AUTH_IMS_ENVIRONMENT: body.ioEventsEnv,
     AIO_EVENTS_API_BASE_URL: body.ioEventsUrl,
     appData: body.appData,
   };
+}
+
+/** The response for a request on an app that is not associated with a Commerce instance. */
+export function notAssociatedConflict() {
+  return conflict({
+    body: {
+      message: "The app is not associated with a Commerce instance.",
+      reason: "not-associated",
+    },
+  });
 }
 
 /**
@@ -184,29 +185,6 @@ export function buildLifecycleContext(
     // params working when credentials are injected via `include-ims-credentials`.
     params: { ...getLegacyImsParams(params), ...params },
   };
-}
-
-/**
- * Reads the persisted custom installation step history from a lifecycle snapshot's data. Returns
- * `[]` when there's no snapshot or none was recorded (e.g. an install from before this feature).
- */
-export function getExecutedCustomInstallationSteps(
-  data: WorkflowData | null | undefined,
-): CustomInstallationStepIdentity[] {
-  const snapshot = (
-    data as
-      | {
-          installation?: {
-            customInstallationSteps?: {
-              reconciliation?: CustomInstallationSnapshotData;
-            };
-          };
-        }
-      | null
-      | undefined
-  )?.installation?.customInstallationSteps?.reconciliation;
-
-  return snapshot?.executedSteps ?? [];
 }
 
 /** Creates the shared storage read/write dependencies used by lifecycle orchestration. */

@@ -11,36 +11,11 @@
 
 - The generated `app.commerce.config.js`, `app.commerce.manifest.json`, and `configuration-schema.json` compatibility artifacts will be removed, and `#app.commerce.config` will resolve to the root source config for every config format. After the change, importers will receive the input model and must validate it before using it. **Replacement:** import the root `app.commerce.config.*` file as the single source of truth.
 
-<!-- Internal tracking: https://jira.corp.adobe.com/browse/CEXT-6527 -->
-
-- The step-authoring surface will converge every lifecycle onto the resource-reconciliation capability: the `install`/`uninstall`/`validate` handlers on `LeafStep` will be expressed through `plan`/`apply` (installation becomes a plan of `add` operations against an empty baseline; uninstallation a plan of `remove` operations), and `LifecyclePlan.source`/`target` will become nullable to model first-install (no source snapshot) and uninstall (no target). **Replacement:** author steps with `plan`/`apply` once the runtime lands; the current `install`/`uninstall`/`validate` handlers remain until the major.
-
-<!-- Internal tracking: https://jira.corp.adobe.com/browse/CEXT-6337 -->
-
-- The `PUT /config` action endpoint is removed. It overwrote all values for the scope and did not support partial updates or unset semantics, which could cause data loss when callers only intended to update a subset of config keys. **Replacement:** use `PATCH /config`, which updates only the provided fields and unsets a key when its value is `null`.
-
 ### Deprecated
 
 <!-- Internal tracking: https://jira.corp.adobe.com/browse/CEXT-6556 -->
 
-- The pre-lifecycle installation engine is deprecated and will be removed in the next major, along with every leaf step's `install`/`uninstall`/`validate` handler. Affected exports from `@adobe/aio-commerce-lib-app/management`: `runInstallation`, `runUninstallation`, `runValidation`, `createInitialInstallationState`, `createInitialUninstallationState`, `InstallationHooks`, `CreateInitialInstallationStateOptions`, `RunInstallationOptions`, `CreateInitialUninstallationStateOptions`, `RunUninstallationOptions` and `RunValidationOptions`. **Replacement:** drive installs and uninstalls through the installation runtime action, which runs the lifecycle plan/apply engine. `runValidation` has no replacement yet; the lifecycle reports planning problems on the plan itself rather than through a separate validation pass.
-
-- `StepBase.when` is deprecated in favor of `StepBase.isConfigured`, which clarifies that the predicate identifies whether the step's domain is represented in a configuration.
-
-<!-- Internal tracking: https://jira.corp.adobe.com/browse/CEXT-6527 -->
-
-- The workflow engine was generalized to lifecycle-neutral names so it can be shared across lifecycle modules (installation, upgrade). The following installation-branded types are now `@deprecated` aliases and will be removed in a future major — migrate to their lifecycle-neutral replacements from `@adobe/aio-commerce-lib-app/management`:
-  - `InstallationContext` → `LifecycleContext`
-  - `InstallationData` → `WorkflowData`
-  - `InstallationError` → `WorkflowError`
-  - `InstallationStatus` → `ExecutionStatus`
-  - `InstallationState` → `WorkflowRunState`
-  - `InProgressInstallationState` → `InProgressWorkflowState`
-  - `SucceededInstallationState` → `SucceededWorkflowState`
-  - `FailedInstallationState` → `FailedWorkflowState`
-  - `InstallationRetryMetadata` → `WorkflowStateMetadata`
-
-- The `AIO_COMMERCE_AUTH_IMS_*` fields of `LifecycleContext["params"]` are deprecated and now optional. The generated `association` and `installation` actions receive OAuth Server-to-Server credentials through the `include-ims-credentials` annotation instead of these inputs; the fields are still populated from the resolved credentials for compatibility, but will be removed in the next major. **Replacement:** use `resolveImsAuthParams(context.params)` from `@adobe/aio-commerce-lib-auth`.
+- The `@adobe/aio-commerce-lib-app/management` entrypoint is deprecated and will no longer be exported in the next major.
 
 ## Released
 

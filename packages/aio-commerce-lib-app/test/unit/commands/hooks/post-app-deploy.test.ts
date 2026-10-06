@@ -77,6 +77,19 @@ const project = {
   },
 };
 
+/** The plan preview the action's `POST /plan` returns for an installed app. */
+const UPGRADE_PLAN = { id: "plan-1", operation: "upgrade" };
+
+/** A JSON response with the given status. */
+function json(body: unknown, status: number) {
+  return new Response(JSON.stringify(body), { status });
+}
+
+/** The status the action returns for an attempt. */
+function attemptStatus(status: string, extra: object = {}) {
+  return json({ id: "attempt-1", status, ...extra }, 200);
+}
+
 describe("post-app-deploy hook", () => {
   const processExitMock = vi
     .spyOn(process, "exit")
@@ -97,43 +110,42 @@ describe("post-app-deploy hook", () => {
         return new Response(null, { status: 204 });
       }
 
-      return new Response(JSON.stringify({ plan: { id: "plan-1" } }), {
-        status: 202,
-      });
+      return input.url.endsWith("/plan")
+        ? json({ plan: UPGRADE_PLAN }, 200)
+        : json({ id: "attempt-1", status: "pending" }, 202);
     });
   });
 
-  test("POSTs authenticated project context to the deployed upgrade endpoint", async () => {
-    let capturedRequest: Request | undefined;
-    fetchMock.mockImplementation(async (input: Request) => {
-      if (input.method === "GET") {
-        return new Response(null, { status: 204 });
+  test("plans the upgrade with the project context, then starts it from its plan id", async () => {
+    const posted: Request[] = [];
+    const respond = fetchMock.getMockImplementation();
+    fetchMock.mockImplementation((input: Request) => {
+      if (input.method === "POST") {
+        posted.push(input.clone());
       }
 
-      capturedRequest = input.clone();
-      return new Response(JSON.stringify({ plan: { id: "plan-1" } }), {
-        status: 202,
-      });
+      return respond?.(input);
     });
 
     await withTempProject(MINIMAL_PROJECT, async () => {
-      await expect(run()).resolves.toEqual({ plan: { id: "plan-1" } });
+      await expect(run()).resolves.toEqual({ plan: UPGRADE_PLAN });
     });
 
-    expect(fetchMock).toHaveBeenCalledTimes(2);
-    const request = capturedRequest as Request;
-    expect(request.url).toBe(
-      "https://runtime-namespace.adobeioruntime.net/api/v1/web/app-management/installation",
-    );
-    expect(request.method).toBe("POST");
-    expect(request.headers.get("authorization")).toBe("Bearer ims-token");
-    expect(
-      request.headers.get("x-aio-commerce-installation-invocation-source"),
-    ).toBe("post-app-deploy");
-    expect(request.headers.get("x-gw-ims-org-id")).toBe("ims-org-id");
-    expect(request.headers.get("content-type")).toBe("application/json");
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+    const [planRequest, startRequest] = posted;
 
-    expect(await request.json()).toEqual({
+    const endpoint =
+      "https://runtime-namespace.adobeioruntime.net/api/v1/web/app-management/installation";
+    expect(planRequest.url).toBe(`${endpoint}/plan`);
+    expect(planRequest.method).toBe("POST");
+    expect(planRequest.headers.get("authorization")).toBe("Bearer ims-token");
+    expect(
+      planRequest.headers.get("x-aio-commerce-installation-invocation-source"),
+    ).toBe("post-app-deploy");
+    expect(planRequest.headers.get("x-gw-ims-org-id")).toBe("ims-org-id");
+    expect(planRequest.headers.get("content-type")).toBe("application/json");
+
+    const context = {
       appData: {
         consumerOrgId: "org-id",
         orgName: "org-name",
@@ -146,50 +158,28 @@ describe("post-app-deploy hook", () => {
       },
       ioEventsEnv: "prod",
       ioEventsUrl: "https://events.adobe.io",
-    });
+    };
+
+    expect(await planRequest.json()).toEqual(context);
+    expect(startRequest.url).toBe(endpoint);
+    expect(startRequest.method).toBe("POST");
+    expect(await startRequest.json()).toEqual({ ...context, planId: "plan-1" });
   });
 
   test("polls an automatic upgrade until it succeeds", async () => {
     fetchMock
-      .mockResolvedValueOnce(
-        new Response(JSON.stringify({ plan: { id: "plan-1" } }), {
-          status: 202,
-        }),
-      )
-      .mockResolvedValueOnce(
-        new Response(
-          JSON.stringify({
-            id: "attempt-1",
-            status: "pending",
-          }),
-          { status: 200 },
-        ),
-      )
-      .mockResolvedValueOnce(
-        new Response(
-          JSON.stringify({
-            id: "attempt-1",
-            status: "in-progress",
-          }),
-          { status: 200 },
-        ),
-      )
-      .mockResolvedValueOnce(
-        new Response(
-          JSON.stringify({
-            id: "attempt-1",
-            status: "succeeded",
-          }),
-          { status: 200 },
-        ),
-      );
+      .mockResolvedValueOnce(json({ plan: UPGRADE_PLAN }, 200))
+      .mockResolvedValueOnce(json({ id: "attempt-1", status: "pending" }, 202))
+      .mockResolvedValueOnce(attemptStatus("pending"))
+      .mockResolvedValueOnce(attemptStatus("in-progress"))
+      .mockResolvedValueOnce(attemptStatus("succeeded"));
 
     await withTempProject(MINIMAL_PROJECT, async () => {
-      await expect(run()).resolves.toEqual({ plan: { id: "plan-1" } });
+      await expect(run()).resolves.toEqual({ plan: UPGRADE_PLAN });
     });
 
-    expect(fetchMock).toHaveBeenCalledTimes(4);
-    const statusRequest = fetchMock.mock.calls.at(1)?.at(0) as Request;
+    expect(fetchMock).toHaveBeenCalledTimes(5);
+    const statusRequest = fetchMock.mock.calls.at(2)?.at(0) as Request;
     expect(statusRequest.method).toBe("GET");
     expect(
       statusRequest.headers.get(
@@ -211,23 +201,15 @@ describe("post-app-deploy hook", () => {
 
   test("reports an automatic upgrade failure", async () => {
     fetchMock
+      .mockResolvedValueOnce(json({ plan: UPGRADE_PLAN }, 200))
+      .mockResolvedValueOnce(json({ id: "attempt-1", status: "pending" }, 202))
       .mockResolvedValueOnce(
-        new Response(JSON.stringify({ plan: { id: "plan-1" } }), {
-          status: 202,
+        attemptStatus("failed", {
+          error: {
+            key: "WEBHOOK_RECONCILIATION_FAILED",
+            message: "Webhook reconciliation failed",
+          },
         }),
-      )
-      .mockResolvedValueOnce(
-        new Response(
-          JSON.stringify({
-            failure: {
-              key: "WEBHOOK_RECONCILIATION_FAILED",
-              message: "Webhook reconciliation failed",
-            },
-            id: "attempt-1",
-            status: "failed",
-          }),
-          { status: 200 },
-        ),
       );
 
     await withTempProject(MINIMAL_PROJECT, async () => {
@@ -237,9 +219,38 @@ describe("post-app-deploy hook", () => {
     });
   });
 
-  test("does not poll a manual upgrade", async () => {
+  test("reports an upgrade that cannot start", async () => {
+    fetchMock
+      .mockResolvedValueOnce(json({ plan: UPGRADE_PLAN }, 200))
+      .mockResolvedValueOnce(
+        json({ message: "Stale", reason: "stale-plan" }, 409),
+      );
+
+    await withTempProject(MINIMAL_PROJECT, async () => {
+      await expect(run()).rejects.toThrow(
+        "Failed to start the app upgrade (HTTP 409)",
+      );
+    });
+  });
+
+  test("plans a manual upgrade without starting it", async () => {
     await withTempProject(MANUAL_UPGRADE_PROJECT, async () => {
-      await expect(run()).resolves.toEqual({ plan: { id: "plan-1" } });
+      await expect(run()).resolves.toEqual({ plan: UPGRADE_PLAN });
+    });
+
+    expect(fetchMock).toHaveBeenCalledOnce();
+  });
+
+  test("skips an app that is not installed without starting the install the action plans", async () => {
+    fetchMock.mockResolvedValueOnce(
+      json({ plan: { id: "plan-1", operation: "install" } }, 200),
+    );
+
+    await withTempProject(MINIMAL_PROJECT, async () => {
+      await expect(run()).resolves.toEqual({
+        reason: "not-installed",
+        skipped: true,
+      });
     });
 
     expect(fetchMock).toHaveBeenCalledOnce();
@@ -247,15 +258,12 @@ describe("post-app-deploy hook", () => {
 
   test("ignores an unavailable upgrade status endpoint", async () => {
     fetchMock
-      .mockResolvedValueOnce(
-        new Response(JSON.stringify({ plan: { id: "plan-1" } }), {
-          status: 202,
-        }),
-      )
+      .mockResolvedValueOnce(json({ plan: UPGRADE_PLAN }, 200))
+      .mockResolvedValueOnce(json({ id: "attempt-1", status: "pending" }, 202))
       .mockRejectedValueOnce(new Error("Status endpoint is unavailable"));
 
     await withTempProject(MINIMAL_PROJECT, async () => {
-      await expect(run()).resolves.toEqual({ plan: { id: "plan-1" } });
+      await expect(run()).resolves.toEqual({ plan: UPGRADE_PLAN });
     });
   });
 
