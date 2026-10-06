@@ -133,8 +133,7 @@
     "@adobe/aio-commerce-lib-auth": "workspace:*",
     "@adobe/aio-commerce-lib-core": "workspace:*",
     "@adobe/aio-commerce-lib-events": "workspace:*",
-    "@adobe/aio-commerce-lib-webhooks": "workspace:*",
-    "type-fest": "catalog:"
+    "@adobe/aio-commerce-lib-webhooks": "workspace:*"
   },
   "devDependencies": {
     "@aio-commerce-sdk/config-tsdown": "workspace:*",

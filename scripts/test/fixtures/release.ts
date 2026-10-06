@@ -14,18 +14,10 @@ import { vi } from "vitest";
 
 import type { AsyncFunctionArguments } from "#ci/release/types";
 
-/** The registry URL for internally released packages. */
-export const INTERNAL_REGISTRY_URL =
-  "https://artifactory.example.com/artifactory/api/npm/npm-internal/";
-
 /** The base URL to preview internally released packages. */
 export const INTERNAL_PACKAGE_BASE_URL =
   "https://artifactory.example.com/ui/native/npm-internal/";
-
-export const PUBLIC_REGISTRY_URL = "https://registry.npmjs.org";
 export const PUBLIC_PACKAGE_BASE_URL = "https://npmx.dev/package";
-export const INTERNAL_AUTH_TOKEN = "token-123";
-export const PUBLIC_AUTH_TOKEN = "token-public";
 
 export const CORE_PACKAGE_JSON = JSON.stringify([
   { name: "@adobe/aio-commerce-lib-core", version: "1.2.3" },

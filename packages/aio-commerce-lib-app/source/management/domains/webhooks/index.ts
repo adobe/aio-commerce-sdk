@@ -13,6 +13,3 @@
 /** biome-ignore-all lint/performance/noBarrelFile: Convenience entrypoint for the webhooks module */
 
 export { webhooksStep } from "./branch";
-
-export type { WebhooksConfig } from "#config/schema/webhooks";
-export type { ConflictingWebhook } from "./types";

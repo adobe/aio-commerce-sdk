@@ -33,10 +33,6 @@ import type { LifecycleStore } from "#management/lifecycle/state";
 export const FAKE_SYSTEM_TIME = "2026-01-30T10:00:00.000Z";
 export const FAKE_COMPLETED_TIME = "2026-01-30T10:05:00.000Z";
 
-/** Matches any RFC-4122 UUID string. */
-export const UUID_PATTERN =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
-
 /** Creates a mock AioLogger with all methods as vi.fn(). */
 export function createMockLogger(): ReturnType<typeof AioLogger> {
   const logger = AioLogger("test");

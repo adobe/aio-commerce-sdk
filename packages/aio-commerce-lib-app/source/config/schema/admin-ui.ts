@@ -378,9 +378,6 @@ export const ADMIN_UI_MASS_ACTION_ENTITIES = [
   "newsletter",
 ] as const satisfies readonly Exclude<keyof AdminUi, "acl" | "menu">[];
 
-/** A single custom ACL resource leaf. */
-export type AclResource = v.InferInput<typeof AclResourceLeafSchema>;
-
 /** A custom ACL resource entry: a leaf or a one-level group of leaves. */
 export type AclResourceEntry = v.InferInput<typeof AclResourceEntrySchema>;
 

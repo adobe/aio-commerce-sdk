@@ -23,12 +23,8 @@ import type {
   ApplyContext,
   ApplyResult,
 } from "#management/common/workflow/resource";
-import type { InferStepOutput } from "#management/common/workflow/step";
 import type { EventsStepContext } from "./context";
 import type { EventingDomainPlan, EventingSnapshotData } from "./types";
-
-/** The output data of the Commerce Eventing step (auto-inferred). */
-export type CommerceEventsStepData = InferStepOutput<typeof commerceEventsStep>;
 
 /** Leaf step for installing and upgrading commerce event sources. */
 export const commerceEventsStep = defineLeafStep({
