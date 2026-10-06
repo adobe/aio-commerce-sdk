@@ -10,31 +10,11 @@
  * governing permissions and limitations under the License.
  */
 
-import {
-  createMockInProgressState,
-  createMockInstallationStepStatus,
-  FAKE_SYSTEM_TIME,
-} from "./installation";
-
-import type { InProgressWorkflowState } from "#management/common/workflow/types";
 import type {
   StepValidationResult,
   ValidationResult,
   ValidationSummary,
 } from "#management/deprecated/validation";
-
-/** Creates a default installation in-progress state for runner tests. */
-export function createMockInstallationInProgressState(
-  overrides?: Partial<InProgressWorkflowState>,
-): InProgressWorkflowState {
-  return createMockInProgressState({
-    data: null,
-    id: "installation-id",
-    startedAt: FAKE_SYSTEM_TIME,
-    step: createMockInstallationStepStatus(),
-    ...overrides,
-  });
-}
 
 /** Creates a mock validation result node for tests. */
 export function createMockStepValidationResult(

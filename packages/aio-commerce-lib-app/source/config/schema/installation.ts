@@ -103,9 +103,6 @@ export const InstallationSchema = v.object({
   messages: v.optional(MessagesSchema),
 });
 
-/** The installation configuration for an Adobe Commerce application */
-export type InstallationConfiguration = v.InferInput<typeof InstallationSchema>;
-
 /** Custom installation step configuration */
 export type CustomInstallationStep = v.InferInput<
   typeof CustomInstallationStepSchema

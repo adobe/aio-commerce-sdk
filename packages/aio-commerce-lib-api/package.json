@@ -67,7 +67,6 @@
   "dependencies": {
     "@adobe/aio-commerce-lib-auth": "workspace:*",
     "@adobe/aio-commerce-lib-core": "workspace:*",
-    "camelcase": "catalog:",
     "ky": "catalog:",
     "type-fest": "catalog:"
   },

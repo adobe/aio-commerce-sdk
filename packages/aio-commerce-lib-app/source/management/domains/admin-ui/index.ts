@@ -13,6 +13,3 @@
 /** biome-ignore-all lint/performance/noBarrelFile: Convenience entrypoint for the admin-ui module */
 
 export { adminUiStep } from "./branch";
-
-export type { RegisterExtensionStepData } from "./branch";
-export type { AdminUiConfig } from "./utils";

@@ -23,12 +23,8 @@ import type {
   ApplyContext,
   ApplyResult,
 } from "#management/common/workflow/resource";
-import type { InferStepOutput } from "#management/common/workflow/step";
 import type { EventsStepContext } from "./context";
 import type { EventingDomainPlan, EventingSnapshotData } from "./types";
-
-/** The output data of the External Eventing step (auto-inferred). */
-export type ExternalEventsStepData = InferStepOutput<typeof externalEventsStep>;
 
 /** Leaf step for installing and upgrading external event sources. */
 export const externalEventsStep = defineLeafStep({

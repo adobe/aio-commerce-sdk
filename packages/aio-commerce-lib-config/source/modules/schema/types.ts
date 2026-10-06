@@ -13,15 +13,6 @@
 import type * as v from "valibot";
 import type { SchemaBusinessConfigSchema } from "./fields";
 
-/** Context needed for schema operations. */
-export type SchemaContext = {
-  /** The namespace for isolating schema data. */
-  namespace: string;
-
-  /** Cache timeout in seconds. */
-  cacheTimeout: number;
-};
-
 /** A business configuration schema as the developer writes it. */
 export type BusinessConfigSchema = v.InferInput<
   typeof SchemaBusinessConfigSchema

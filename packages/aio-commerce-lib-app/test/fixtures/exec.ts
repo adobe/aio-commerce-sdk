@@ -19,25 +19,6 @@ export const INSTALL_COMMAND_RE =
   /^(npm (i|install)|pnpm add|yarn add|bun add)\b/;
 
 /**
- * Builds a `vi.fn` spy that stubs package-install invocations
- * (`npm install`, `pnpm add`, `yarn add`, `bun add`) so they don't hit the
- * registry, and forwards everything else (e.g. `npm pkg set`) to the real
- * `execSync`.
- */
-export async function stubInstallCommands() {
-  const { execSync: real } =
-    await vi.importActual<typeof ChildProcess>("node:child_process");
-
-  return vi.fn((command: string, options?: ChildProcess.ExecSyncOptions) => {
-    if (INSTALL_COMMAND_RE.test(command)) {
-      return Buffer.from("");
-    }
-
-    return real(command, options);
-  });
-}
-
-/**
  * Creates a `spawnSync` implementation that stubs commands unless their
  * arguments contain one of the packages that should execute.
  */
