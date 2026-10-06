@@ -140,7 +140,7 @@ export type LeafStep<
    * Called before the workflow begins to surface issues (errors or warnings).
    * Returning an empty array means the step has no issues.
    *
-   * @deprecated Use `validatePlan`, which validates the step's plan.
+   * @deprecated Use `plan`, which reports issues alongside the step's plan.
    */
   validate?: (
     config: TConfig,
@@ -180,7 +180,7 @@ export type BranchStep<
    * Called before children are validated. Returning an empty array means
    * the branch has no issues at this level.
    *
-   * @deprecated Use `validatePlan` on the branch's leaf steps.
+   * @deprecated Use `plan` on the branch's leaf steps, which reports issues alongside their plans.
    */
   validate?: (
     config: TConfig,
@@ -296,7 +296,6 @@ export function defineLeafStep<
     type: "leaf",
     uninstall: options.uninstall,
     validate: options.validate,
-    validatePlan: options.validatePlan,
     when: options.when,
   } satisfies LeafStep<TName, TConfig, TStepCtx, TOutput, TPlan, TSnapshotData>;
 }

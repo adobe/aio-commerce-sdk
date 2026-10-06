@@ -77,9 +77,6 @@ type PlanOperationArgs = {
   /** The config to plan from when no baseline is stored. */
   fallbackBaselineConfig?: CommerceAppConfigOutputModel;
   reviewedPlanId?: string;
-
-  /** Whether to also validate the plan's operations. */
-  validate?: boolean;
 };
 
 /** The planning result, or the response that ends the request. */
@@ -101,7 +98,6 @@ export async function planOperation({
   targetConfig,
   fallbackBaselineConfig,
   reviewedPlanId,
-  validate,
 }: PlanOperationArgs): Promise<PlanOperationResult> {
   const label = OPERATION_LABEL[operation];
 
@@ -114,7 +110,6 @@ export async function planOperation({
       operation,
       reviewedPlanId,
       targetConfig,
-      validate,
     });
   } catch (error) {
     if (error instanceof LifecycleAttemptInProgressError) {

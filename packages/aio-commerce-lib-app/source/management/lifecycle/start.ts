@@ -11,7 +11,6 @@
  */
 
 import { createInitialPlanExecutionState } from "#management/common/workflow/execute";
-import { isBlockingIssue } from "#management/common/workflow/resource";
 
 import {
   BlockedLifecyclePlanError,
@@ -59,7 +58,7 @@ export async function startLifecycleAttempt(
     throw new LifecyclePlanActionVersionMismatchError(plan.actionVersion);
   }
 
-  if (plan.issues.some(isBlockingIssue)) {
+  if (plan.issues.some((issue) => issue.blocking)) {
     throw new BlockedLifecyclePlanError(plan.id);
   }
 

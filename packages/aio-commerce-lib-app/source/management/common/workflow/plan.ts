@@ -16,9 +16,8 @@ import { getAtPath, isStepConfigured, pathsEqual } from "./utils";
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 import type { AppStateSnapshot } from "#management/common/orchestration";
 import type { DomainPlan, PlanningIssue } from "./resource";
-import type { AnyStep, BranchStep, LeafStep, LifecycleContext } from "./step";
+import type { AnyStep, BranchStep, LifecycleContext } from "./step";
 import type { WorkflowData } from "./types";
-import type { ValidationIssue } from "./validation";
 
 /** Options for planning every resource-capable leaf in a workflow. */
 export type PlanWorkflowOptions = {
@@ -38,9 +37,6 @@ export type PlanWorkflowOptions = {
     config: CommerceAppConfigOutputModel;
     domains: DomainPlan[];
   };
-
-  /** Whether to also run each planned leaf's `validatePlan` on its plan. */
-  validate?: boolean;
 };
 
 /** Aggregated output of a workflow planning pass. */
@@ -170,29 +166,10 @@ async function planStep(
   const result = await step.plan(planningInput, domainContext);
 
   // Accumulate in-place (for recursive traversal)
-  if (result.kind === "blocked") {
-    issues.push(...result.issues.map((issue) => ({ path, ...issue })));
-    return;
+  issues.push(...(result.issues ?? []).map((issue) => ({ path, ...issue })));
+  if (result.kind === "planned") {
+    domains.push(result.plan);
   }
-
-  domains.push(result.plan);
-  issues.push(...asNonBlocking(result.issues ?? [], path));
-
-  if (options.validate) {
-    issues.push(
-      ...(await validateLeafPlan(
-        step,
-        result.plan,
-        planningInput,
-        domainContext,
-      )),
-    );
-  }
-}
-
-/** The given issues of a planned leaf, marked as not blocking its plan. */
-function asNonBlocking(issues: PlanningIssue[], path: string[]) {
-  return issues.map((issue) => ({ path, ...issue, blocking: false }));
 }
 
 /** The baseline config and the slice of its data at the given path, or `null` without a baseline. */
@@ -206,40 +183,6 @@ function getDomainBaseline(
         data: getAtPath(baseline.data ?? {}, path) as WorkflowData,
       }
     : null;
-}
-
-/**
- * Runs a leaf's `validatePlan`, if it has one, and returns what it finds as non-blocking issues
- * of the leaf. A failure to validate is reported as an error issue.
- */
-async function validateLeafPlan(
-  step: LeafStep,
-  ...[plan, input, context]: Parameters<NonNullable<LeafStep["validatePlan"]>>
-): Promise<PlanningIssue[]> {
-  if (!step.validatePlan) {
-    return [];
-  }
-
-  const domain = input.path.at(1) ?? step.name;
-  const toPlanningIssue = (issue: ValidationIssue): PlanningIssue => ({
-    ...issue,
-    blocking: false,
-    domain,
-    path: input.path,
-  });
-
-  try {
-    const found = await step.validatePlan(plan, input, context);
-    return found.map(toPlanningIssue);
-  } catch (error) {
-    return [
-      toPlanningIssue({
-        code: "VALIDATION_HANDLER_ERROR",
-        message: error instanceof Error ? error.message : String(error),
-        severity: "error",
-      }),
-    ];
-  }
 }
 
 /** Whether a step is configured in a snapshot's config. Always `false` without a snapshot. */

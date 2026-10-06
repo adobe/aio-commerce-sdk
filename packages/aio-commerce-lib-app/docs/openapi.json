@@ -1413,7 +1413,7 @@
       "post": {
         "operationId": "planLifecycleOperation",
         "summary": "Plan a Lifecycle Operation",
-        "description": "Plans the install or upgrade the installed state calls for, or an uninstallation when `operation` is `uninstall`. Validates the plan's operations, stores it as the pending plan and returns it for review, together with the validation result. Start it with `POST /installation` and its `id` as `planId`.",
+        "description": "Plans the install or upgrade the installed state calls for, or an uninstallation when `operation` is `uninstall`. Stores it as the pending plan and returns it for review, together with its issues as a validation result. Start it with `POST /installation` and its `id` as `planId`.",
         "parameters": [
           {
             "name": "x-gw-ims-org-id",

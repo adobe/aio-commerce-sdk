@@ -42,8 +42,8 @@ import type {
 } from "#config/schema/eventing";
 import type { ApplicationMetadata } from "#config/schema/metadata";
 import type {
+  BlockingPlanningIssue,
   PlanningInput,
-  PlanningIssue,
   PlanningResult,
 } from "#management/common/workflow/resource";
 import type { ValidationExecutionContext } from "#management/common/workflow/step";
@@ -149,6 +149,7 @@ async function planEventingLeaf(
   } catch (error) {
     return blocked([
       {
+        blocking: true,
         code: "EVENTS_LIVE_READ_FAILED",
         domain: "eventing",
         message: `Could not read the live event state to plan against: ${await unwrapHttpError(error)}`,
@@ -163,6 +164,7 @@ async function planEventingLeaf(
   if (foreignSubscriptions.length > 0) {
     return blocked(
       foreignSubscriptions.map((subscription) => ({
+        blocking: true,
         code: "EVENTS_SUBSCRIPTION_NOT_OWNED",
         domain: "eventing",
         message: `Commerce subscription "${subscription.name}" belongs to provider "${subscription.provider_id}", which this app does not own.`,
@@ -186,7 +188,9 @@ async function planEventingLeaf(
 }
 
 /** A blocked planning result with the given issues. */
-function blocked(issues: PlanningIssue[]): PlanningResult<EventingDomainPlan> {
+function blocked(
+  issues: BlockingPlanningIssue[],
+): PlanningResult<EventingDomainPlan> {
   return { issues, kind: "blocked" };
 }
 

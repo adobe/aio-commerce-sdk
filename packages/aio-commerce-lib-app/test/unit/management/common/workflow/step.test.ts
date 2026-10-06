@@ -51,10 +51,9 @@ describe("defineLeafStep", () => {
     expect(step.install).toBe(installFn);
   });
 
-  test("preserves the plan, apply and validatePlan capabilities", () => {
+  test("preserves the plan and apply capabilities", () => {
     const plan = vi.fn();
     const apply = vi.fn();
-    const validatePlan = vi.fn();
 
     const step = defineLeafStep({
       apply,
@@ -62,10 +61,9 @@ describe("defineLeafStep", () => {
       meta: { install: { label: "Planned Step" } },
       name: "planned-step",
       plan,
-      validatePlan,
     });
 
-    expect(step).toMatchObject({ apply, plan, validatePlan });
+    expect(step).toMatchObject({ apply, plan });
   });
 
   test("works with minimal options (just name, meta, install)", () => {

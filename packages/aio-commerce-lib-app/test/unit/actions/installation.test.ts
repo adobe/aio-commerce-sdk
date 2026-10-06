@@ -523,19 +523,36 @@ describe("installationRuntimeAction", () => {
         expect(invokeMock).not.toHaveBeenCalled();
       });
 
-      test("reports the issues a step's plan validation finds under that step, without blocking", async () => {
+      test("reports the non-blocking issues a step's planner finds under that step", async () => {
         desiredInstallationStore = createMockInstallationStore();
         createRootInstallationStepMock.mockReturnValue(
           createUpgradeRoot(
             createUpgradeLeaf({
-              validatePlan: vi.fn().mockResolvedValue([
-                {
-                  code: "WEBHOOK_CONFLICTS",
-                  details: { conflictedWebhooks: [] },
-                  message: "Conflict",
-                  severity: "warning",
+              plan: vi.fn().mockResolvedValue({
+                issues: [
+                  {
+                    blocking: false,
+                    code: "WEBHOOK_CONFLICTS",
+                    details: { conflictedWebhooks: [] },
+                    domain: "synthetic",
+                    message: "Conflict",
+                    severity: "warning",
+                  },
+                ],
+                kind: "planned",
+                plan: {
+                  operations: [
+                    {
+                      after: {},
+                      id: "operation-1",
+                      kind: "add",
+                      label: "Apply synthetic change",
+                      reason: "change",
+                    },
+                  ],
+                  path: ["installation", "synthetic"],
                 },
-              ]),
+              }),
             }),
           ),
         );
@@ -728,7 +745,7 @@ describe("installationRuntimeAction", () => {
           createUpgradeRoot(
             createUpgradeLeaf({
               plan: vi.fn().mockResolvedValue({
-                issues: [{ message: "incompatible" }],
+                issues: [{ blocking: true, message: "incompatible" }],
                 kind: "blocked",
               }),
             }),

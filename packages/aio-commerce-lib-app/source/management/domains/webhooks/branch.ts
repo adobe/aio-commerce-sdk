@@ -20,7 +20,6 @@ import { deprecatedSubscriptionsStep } from "#management/deprecated/domains/webh
 import { applyWebhookSubscriptions } from "./apply";
 import { createWebhooksStepContext } from "./context";
 import { planWebhookSubscriptions } from "./plan";
-import { validateWebhookSubscriptionsPlan } from "./validate";
 
 const subscriptionsStep = defineLeafStep({
   ...deprecatedSubscriptionsStep,
@@ -41,7 +40,6 @@ const subscriptionsStep = defineLeafStep({
   },
   name: "subscriptions",
   plan: planWebhookSubscriptions,
-  validatePlan: validateWebhookSubscriptionsPlan,
 });
 
 /** Branch step for setting up Commerce webhooks. */

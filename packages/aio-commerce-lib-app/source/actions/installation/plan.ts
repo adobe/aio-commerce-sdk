@@ -173,8 +173,8 @@ export async function prepareRequest({
 }
 
 /**
- * Plans the operation a request asks for, validates the plan's operations and stores it as the
- * pending plan. The response carries the validation result and the plan, whose `id` starts it.
+ * Plans the operation a request asks for and stores it as the pending plan. The response carries
+ * the plan's issues as a validation result, and the plan, whose `id` starts it.
  */
 export async function planRequestedOperation(args: RequestHandlerArgs) {
   const prepared = await prepareRequest(args);
@@ -189,13 +189,12 @@ export async function planRequestedOperation(args: RequestHandlerArgs) {
   }
 
   const { operation } = resolved;
-  args.logger.debug(`Planning and validating the ${operation}...`);
+  args.logger.debug(`Planning the ${operation}...`);
   const planned = await planOperation({
     ...getPlanInputs(operation, request.appConfig),
     actionVersion: request.actionVersion,
     operation,
     runtime: request.runtime,
-    validate: true,
   });
 
   if (planned.kind === "rejected") {
@@ -398,7 +397,7 @@ function toPlanPreview(plan: LifecyclePlan): PlanPreview {
     })),
     id: plan.id,
     issues: plan.issues.map((issue) => ({
-      blocking: issue.blocking !== false,
+      blocking: issue.blocking,
       code: issue.code,
       domain: issue.domain,
       message: issue.message,

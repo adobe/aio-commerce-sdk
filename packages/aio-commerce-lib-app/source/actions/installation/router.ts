@@ -48,7 +48,7 @@ export type { CustomScriptsLoader, RuntimeActionFactoryArgs } from "./common";
  * Routes:
  * - GET /                            Get the status of the latest lifecycle operation
  * - POST /                           Start the pending plan named by `planId`
- * - POST /plan                       Plan and validate an install, upgrade or uninstall
+ * - POST /plan                       Plan an install, upgrade or uninstall for review
  * - POST /execution                  Execute a started lifecycle attempt (internal, called async)
  */
 export const router = new HttpActionRouter<InstallationActionContext>().use(
@@ -102,7 +102,7 @@ router.post("/", {
  * POST /plan - Plan a lifecycle operation for review.
  *
  * Plans the install or upgrade the installed state calls for, or an uninstall when the body asks
- * for one. Validates the plan's operations and stores it as the pending plan.
+ * for one. Stores it as the pending plan.
  */
 router.post("/plan", {
   body: LifecycleRequestContextSchema,

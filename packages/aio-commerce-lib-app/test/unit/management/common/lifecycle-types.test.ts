@@ -25,9 +25,10 @@ import type {
 import type {
   ApplyContext,
   ApplyResult,
+  BlockingPlanningIssue,
   DomainPlan,
+  NonBlockingPlanningIssue,
   PlanningInput,
-  PlanningIssue,
   PlanningResult,
   ResourceOperation,
 } from "#management/common/workflow/resource";
@@ -178,8 +179,11 @@ describe("lifecycle type surface", () => {
       Extract<Result, { kind: "planned" }>["plan"]
     >().toEqualTypeOf<WebhookPlan>();
     expectTypeOf<
+      Extract<Result, { kind: "planned" }>["issues"]
+    >().toEqualTypeOf<NonBlockingPlanningIssue[] | undefined>();
+    expectTypeOf<
       Extract<Result, { kind: "blocked" }>["issues"]
-    >().toEqualTypeOf<PlanningIssue[]>();
+    >().toEqualTypeOf<BlockingPlanningIssue[]>();
   });
 
   test("defineLeafStep infers the resource generics from the handlers", () => {

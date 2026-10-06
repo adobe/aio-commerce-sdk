@@ -135,6 +135,7 @@ describe("lifecycle orchestration error types", () => {
           plan: vi.fn().mockResolvedValue({
             issues: [
               {
+                blocking: true,
                 code: "MISSING_CONFIGURATION",
                 domain: "synthetic",
                 message: "Configuration is required",
@@ -651,6 +652,7 @@ describe("lifecycle runtime", () => {
     const plan = vi.fn().mockResolvedValue({
       issues: [
         {
+          blocking: true,
           code: "MISSING_CONFIGURATION",
           domain: "synthetic",
           message: "Configuration is required",
@@ -1555,7 +1557,7 @@ describe("lifecycle runtime", () => {
     }
   });
 
-  describe("plan validation", () => {
+  describe("planner issues", () => {
     function plannedLeaf(
       overrides: Parameters<typeof createMockLifecycleLeaf>[0] = {},
     ) {
@@ -1573,7 +1575,6 @@ describe("lifecycle runtime", () => {
 
     async function planWithLeaf(
       leaf: ReturnType<typeof createMockLifecycleLeaf>,
-      validate?: boolean,
     ) {
       const { runtime } = createMockLifecycleRuntime({
         baseline: createBaseline("1.0.0"),
@@ -1586,7 +1587,6 @@ describe("lifecycle runtime", () => {
         actionVersion: "1.0.0",
         operation: "upgrade",
         targetConfig: createConfig("2.0.0"),
-        validate,
       });
     }
 
@@ -1596,9 +1596,16 @@ describe("lifecycle runtime", () => {
       severity: "warning" as const,
     };
 
-    test("adds a leaf's validation issues as non-blocking issues of its step", async () => {
-      const validatePlan = vi.fn().mockResolvedValue([warning]);
-      const planning = await planWithLeaf(plannedLeaf({ validatePlan }), true);
+    test("keeps a planner's issues on a planned result without blocking it", async () => {
+      const planning = await planWithLeaf(
+        plannedLeaf({
+          plan: vi.fn().mockResolvedValue({
+            issues: [{ ...warning, blocking: false, domain: "synthetic" }],
+            kind: "planned",
+            plan: { operations: [], path: ["root", "synthetic"] },
+          }),
+        }),
+      );
 
       expect(planning.kind).toBe("planned");
       expect(planning.plan.issues).toEqual([
@@ -1608,46 +1615,6 @@ describe("lifecycle runtime", () => {
           domain: "synthetic",
           path: ["root", "synthetic"],
         },
-      ]);
-    });
-
-    test("does not validate unless asked to", async () => {
-      const validatePlan = vi.fn().mockResolvedValue([warning]);
-      const planning = await planWithLeaf(plannedLeaf({ validatePlan }));
-
-      expect(validatePlan).not.toHaveBeenCalled();
-      expect(planning.plan.issues).toEqual([]);
-    });
-
-    test("reports a validation that fails as a non-blocking error issue", async () => {
-      const validatePlan = vi.fn().mockRejectedValue(new Error("boom"));
-      const planning = await planWithLeaf(plannedLeaf({ validatePlan }), true);
-
-      expect(planning.kind).toBe("planned");
-      expect(planning.plan.issues).toEqual([
-        expect.objectContaining({
-          blocking: false,
-          code: "VALIDATION_HANDLER_ERROR",
-          message: "boom",
-          severity: "error",
-        }),
-      ]);
-    });
-
-    test("keeps a planner's issues on a planned result without blocking it", async () => {
-      const planning = await planWithLeaf(
-        plannedLeaf({
-          plan: vi.fn().mockResolvedValue({
-            issues: [{ ...warning, domain: "synthetic" }],
-            kind: "planned",
-            plan: { operations: [], path: ["root", "synthetic"] },
-          }),
-        }),
-      );
-
-      expect(planning.kind).toBe("planned");
-      expect(planning.plan.issues).toEqual([
-        expect.objectContaining({ blocking: false, code: "CONFLICT" }),
       ]);
 
       const attempt = await startLifecycleAttempt({

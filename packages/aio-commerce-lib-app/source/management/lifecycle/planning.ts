@@ -11,7 +11,6 @@
  */
 
 import { planWorkflow } from "#management/common/workflow/plan";
-import { isBlockingIssue } from "#management/common/workflow/resource";
 
 import {
   LifecycleAttemptInProgressError,
@@ -57,9 +56,6 @@ export type PlanLifecycleOptions = LifecycleRuntime & {
 
   /** Identifier of the pending plan a reviewer approved, to compare the new plan against. */
   reviewedPlanId?: string;
-
-  /** Whether to also validate the plan's operations, adding the non-blocking issues found. */
-  validate?: boolean;
 };
 
 /** Result of a lifecycle planning pass. */
@@ -113,7 +109,6 @@ export async function planLifecycle(
     lifecycleContext: options.lifecycleContext,
     rootStep: options.rootStep,
     target,
-    validate: options.validate,
   });
 
   const issues = isPlannedFromFallback
@@ -170,7 +165,7 @@ function getFailedAttempt(state: OrchestrationState) {
 
 /** Converts a persisted plan into its public planning result. */
 function createPlanningResult(plan: LifecyclePlan): PlanLifecycleResult {
-  return plan.issues.some(isBlockingIssue)
+  return plan.issues.some((issue) => issue.blocking)
     ? { kind: "blocked", plan }
     : { kind: "planned", plan };
 }
