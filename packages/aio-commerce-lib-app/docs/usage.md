@@ -1069,6 +1069,33 @@ Some states are not actionable upgrades. The `post-app-deploy` hook treats them 
 
 Any other planning failure, for example configuration issues that block the upgrade, surfaces as an error.
 
+#### Troubleshooting a Lifecycle Operation
+
+Every install, upgrade and uninstall leaves a trail you can follow back when something goes wrong. Call `GET /installation?history=true` on the `app-management` package. The response is the status of the latest attempt plus three lists:
+
+- `plans`: the plan the latest attempt executed, followed by the plans it replaced before it started, newest first. Because starting a plan plans it again, the reviewed plan (`review.planId`) is usually the second entry.
+- `history`: the earlier attempts, newest first, each with its own `plans`. Add `limit=<n>` to read only the last `n` earlier attempts.
+- `pendingPlans`: plans made after the latest attempt that were never started.
+
+Plans carry the full target configuration, so `GET /installation` returns them only with `history=true`. Without it, the response stays the status of the latest attempt.
+
+Each attempt links to the rest of the trail:
+
+- `previousAttemptId` and `previousPlanId` name the attempt and the plan it replaced.
+- `plans[0].source.snapshotId` names the snapshot the attempt started from, and `result.snapshotId` the one a successful attempt produced. Snapshots live in the app's file storage under `lifecycle-app-state-snapshot`, and each one records the `attemptId` that produced it.
+- `step` lists every step with its `status`, and `startedAt` and `completedAt` once it ran, so an expired attempt shows which step hung.
+- `activations.start` and `activations.execution` are the OpenWhisk activations that started and executed the attempt.
+
+To read the logs of a failed attempt, pass its execution activation to the CLI:
+
+```bash
+aio rt activation logs <activations.execution>
+```
+
+The default log level shows each lifecycle transition with its ids, and an `error` line names the step that failed and its message. Set the `LOG_LEVEL` input of the action to `debug` to also log the progress of every step. Logs never include request params or configuration.
+
+When an automatic upgrade fails, the `post-app-deploy` hook prints the attempt id and, when known, the execution activation id.
+
 ### Using the Configuration API
 
 The library provides functions for reading, parsing, and validating app configurations. These are primarily used in build scripts and CLI tools.

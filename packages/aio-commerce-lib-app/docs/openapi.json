@@ -1224,8 +1224,29 @@
       "get": {
         "operationId": "getInstallationState",
         "summary": "Get Installation State",
-        "description": "Returns the status of the latest lifecycle attempt, whatever its operation. Without one, returns the installation record of an older library version, if any.",
+        "description": "Returns the status of the latest lifecycle attempt, whatever its operation. With `history=true`, also returns the plans of that attempt, the earlier attempts with their plans, and the plans made since the latest attempt. Without a lifecycle attempt, returns the installation record of an older library version, if any, and ignores `history` and `limit`.",
         "parameters": [
+          {
+            "name": "history",
+            "in": "query",
+            "description": "When `true`, the body also carries `plans`, `history` and `pendingPlans`. Plans carry the full target configuration.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "false",
+              "enum": ["true", "false"]
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "How many earlier attempts `history` lists at most. Applies only with `history=true`. When omitted, `history` lists every earlier attempt.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
           {
             "name": "x-gw-ims-org-id",
             "in": "header",
@@ -1248,13 +1269,16 @@
         ],
         "responses": {
           "200": {
-            "description": "The latest lifecycle attempt, or the installation record of an older library version.",
+            "description": "The latest lifecycle attempt, with its history on `history=true`, or the installation record of an older library version.",
             "content": {
               "application/json": {
                 "schema": {
                   "oneOf": [
                     {
                       "$ref": "#/components/schemas/LifecycleAttemptStatus"
+                    },
+                    {
+                      "$ref": "#/components/schemas/LifecycleAttemptHistory"
                     },
                     {
                       "$ref": "#/components/schemas/InProgressWorkflowState"
@@ -1272,6 +1296,16 @@
           },
           "204": {
             "description": "No installation workflow state or lifecycle attempt has been stored yet."
+          },
+          "400": {
+            "description": "The `history` or `limit` query parameter is invalid.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
           },
           "401": {
             "description": "You are not authorized to access this resource. Ensure the IMS token and the x-gw-ims-org-id header are correctly set and valid."
@@ -2510,6 +2544,16 @@
           "status": {
             "enum": ["pending", "in-progress", "succeeded", "failed"]
           },
+          "startedAt": {
+            "description": "When the step started executing.",
+            "type": "string",
+            "format": "date-time"
+          },
+          "completedAt": {
+            "description": "When the step succeeded or failed.",
+            "type": "string",
+            "format": "date-time"
+          },
           "children": {
             "type": "array",
             "items": {
@@ -3293,6 +3337,47 @@
           "id": {
             "type": "string"
           },
+          "previousAttemptId": {
+            "description": "The attempt this one replaced as the latest, or `null` for the first attempt.",
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "planId": {
+            "description": "The plan the attempt executed.",
+            "type": "string"
+          },
+          "previousPlanId": {
+            "description": "The pending plan the executed plan replaced, or `null` when none was pending.",
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "activations": {
+            "description": "The OpenWhisk activations that worked on the attempt. Read their logs with `aio rt activation logs <id>`.",
+            "type": "object",
+            "properties": {
+              "start": {
+                "description": "The activation that started the attempt.",
+                "type": "string"
+              },
+              "execution": {
+                "description": "The activation that executed the attempt. Absent until execution begins.",
+                "type": "string"
+              }
+            },
+            "required": ["start"]
+          },
           "operation": {
             "type": "string",
             "enum": ["install", "upgrade", "uninstall"]
@@ -3309,6 +3394,28 @@
             "description": "Present once the attempt succeeded or failed.",
             "type": "string",
             "format": "date-time"
+          },
+          "result": {
+            "description": "Present when the attempt succeeded. What the attempt left installed, or `null` when it left nothing installed.",
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "snapshotId": {
+                    "description": "The snapshot captured after the attempt.",
+                    "type": "string"
+                  },
+                  "appVersion": {
+                    "description": "The app version the attempt installed.",
+                    "type": "string"
+                  }
+                },
+                "required": ["snapshotId", "appVersion"]
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "step": {
             "$ref": "#/components/schemas/StepStatus"
@@ -3353,7 +3460,177 @@
             "additionalProperties": true
           }
         },
-        "required": ["id", "operation", "status", "startedAt", "step", "data"]
+        "required": [
+          "id",
+          "previousAttemptId",
+          "planId",
+          "previousPlanId",
+          "activations",
+          "operation",
+          "status",
+          "startedAt",
+          "step",
+          "data"
+        ]
+      },
+      "LifecycleAttemptHistory": {
+        "description": "The status of the latest lifecycle attempt with the trail that led to it.",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/LifecycleAttemptStatus"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "plans": {
+                "description": "The plan the attempt executed, followed by the stored plans it replaced, newest first.",
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/LifecyclePlan"
+                }
+              },
+              "history": {
+                "description": "Earlier attempts, newest first, each with its own plans. Stops at `limit` attempts or at the first attempt that is no longer stored.",
+                "type": "array",
+                "items": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/LifecycleAttemptStatus"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "plans": {
+                          "description": "The plan the attempt executed, followed by the stored plans it replaced, newest first.",
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/LifecyclePlan"
+                          }
+                        }
+                      },
+                      "required": ["plans"]
+                    }
+                  ]
+                }
+              },
+              "pendingPlans": {
+                "description": "The pending plan followed by the plans it replaced, newest first. Empty when no plan is pending.",
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/LifecyclePlan"
+                }
+              }
+            },
+            "required": ["plans", "history", "pendingPlans"]
+          }
+        ]
+      },
+      "LifecyclePlan": {
+        "description": "A lifecycle plan as stored, with the full target configuration.",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "previousPlanId": {
+            "description": "The pending plan this plan replaced, or `null` when none was pending.",
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "operation": {
+            "type": "string",
+            "enum": ["install", "upgrade", "uninstall"]
+          },
+          "actionVersion": {
+            "description": "Version of the action that made the plan.",
+            "type": "string"
+          },
+          "source": {
+            "description": "The state the plan starts from, or `null` when nothing is installed.",
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "snapshotId": {
+                    "type": "string"
+                  },
+                  "appVersion": {
+                    "type": "string"
+                  }
+                },
+                "required": ["snapshotId", "appVersion"]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "target": {
+            "description": "The state the plan leads to, or `null` when the app ends up with nothing installed.",
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "appVersion": {
+                    "type": "string"
+                  },
+                  "config": {
+                    "type": "object",
+                    "additionalProperties": true
+                  }
+                },
+                "required": ["appVersion", "config"]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "domains": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "path": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "operations": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": true
+                  }
+                }
+              },
+              "required": ["path", "operations"]
+            }
+          },
+          "issues": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PlanningIssue"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "previousPlanId",
+          "operation",
+          "actionVersion",
+          "source",
+          "target",
+          "domains",
+          "issues"
+        ]
       },
       "PlanningIssue": {
         "type": "object",

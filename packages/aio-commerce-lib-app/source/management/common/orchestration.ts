@@ -59,6 +59,9 @@ export type LifecyclePlan = {
 
   /** Issues reported while planning or validating the plan. Blocking ones prevent it from running. */
   issues: PlanningIssue[];
+
+  /** Identifier of the pending plan this plan replaced, or `null` when none was pending. */
+  previousPlanId: string | null;
 };
 
 /** A `change` operation a review reports, identified by its domain path and operation id. */
@@ -100,10 +103,25 @@ export type SuccessfulResult = {
   appVersion: string;
 };
 
+/** The OpenWhisk activations that worked on a lifecycle attempt. */
+export type LifecycleAttemptActivations = {
+  /** Identifier of the activation that started the attempt. */
+  start: string;
+
+  /** Identifier of the activation that executed the attempt. Absent until execution begins. */
+  execution?: string;
+};
+
 /** Properties shared by every lifecycle attempt, regardless of status. */
 type LifecycleAttemptBase = {
   /** Unique attempt identifier. */
   id: string;
+
+  /** Identifier of the attempt this one replaced as the latest, or `null` when it is the first. */
+  previousAttemptId: string | null;
+
+  /** The OpenWhisk activations that worked on this attempt. */
+  activations: LifecycleAttemptActivations;
 
   /** The lifecycle operation this attempt performs. */
   operation: LifecycleOperation;
@@ -152,6 +170,9 @@ export type LifecycleAttempt = LifecycleAttemptBase &
 export type AppStateSnapshot = {
   /** ISO timestamp when the captured state became authoritative. */
   createdAt: string;
+
+  /** Identifier of the attempt that produced the snapshot, or `null` when no attempt did. */
+  attemptId: string | null;
 } & Required<Pick<SucceededWorkflowState, "id" | "config" | "data">>;
 
 /** The persisted orchestration state driving a lifecycle. */

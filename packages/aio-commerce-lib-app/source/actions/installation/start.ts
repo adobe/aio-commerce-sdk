@@ -23,6 +23,7 @@ import {
   stalePlanConflict,
   startPlannedOperation,
 } from "./lifecycle";
+import { describeActiveAttempt } from "./logging";
 import { getPlanInputs, prepareRequest, resolveOperation } from "./plan";
 
 import type { RequestHandlerArgs } from "./common";
@@ -40,6 +41,8 @@ export async function startPlannedRequest(args: RequestHandlerArgs) {
   }
 
   const prepared = await prepareRequest(args);
+  const { logger } = args;
+
   if (prepared.kind === "rejected") {
     return prepared.response;
   }
@@ -48,15 +51,24 @@ export async function startPlannedRequest(args: RequestHandlerArgs) {
   const { stateStore } = request.runtime;
   const storedState = await stateStore.get(CURRENT_STATE_KEY);
   const state =
-    storedState && (await normalizeExpiredAttempt(stateStore, storedState));
+    storedState &&
+    (await normalizeExpiredAttempt(stateStore, storedState, logger));
 
   const attempt = state?.latestAttempt;
   if (attempt?.status === "pending" || attempt?.status === "in-progress") {
+    logger.warn(
+      `Refused to start plan ${planId} because ${describeActiveAttempt(attempt)}.`,
+    );
+
     return attemptInProgressConflict(attempt);
   }
 
   const pendingPlan = state?.pendingPlan;
   if (pendingPlan?.id !== planId) {
+    logger.warn(
+      `Refused to start plan ${planId} because it is not the pending plan (the pending plan is ${pendingPlan?.id ?? "none"}).`,
+    );
+
     return stalePlanConflict(
       "The plan is no longer the pending plan. Call POST /plan again and review the new plan.",
     );
@@ -75,6 +87,10 @@ export async function startPlannedRequest(args: RequestHandlerArgs) {
 
   // The installed state changed since planning, so the reviewed plan no longer applies.
   if (operation !== pendingPlan.operation) {
+    logger.warn(
+      `Refused to start plan ${planId} because it is for an ${pendingPlan.operation}, but the app now needs an ${operation}.`,
+    );
+
     return stalePlanConflict(
       `The plan is for an ${pendingPlan.operation}, but the app now needs an ${operation}. Call POST /plan again.`,
     );
@@ -94,7 +110,7 @@ export async function startPlannedRequest(args: RequestHandlerArgs) {
 
   return startPlannedOperation({
     actionVersion: request.actionVersion,
-    logger: args.logger,
+    logger,
     params: request.params,
     planning: planned.planning,
     runtime: request.runtime,

@@ -69,14 +69,19 @@ export type PlanLifecycleResult = (
 
 /**
  * Produces and persists a plan from the current baseline to the target config, replacing any
- * pending plan. Throws {@link PendingLifecyclePlanNotFoundError} when `reviewedPlanId` is not
+ * pending plan. Every plan is also kept in the plan store. Throws {@link PendingLifecyclePlanNotFoundError} when `reviewedPlanId` is not
  * the pending plan.
  */
 export async function planLifecycle(
   options: PlanLifecycleOptions,
 ): Promise<PlanLifecycleResult> {
   const loaded = await readOrInitializeState(options);
-  const state = await normalizeExpiredAttempt(options.stateStore, loaded.state);
+  const state = await normalizeExpiredAttempt(
+    options.stateStore,
+    loaded.state,
+    options.lifecycleContext.logger,
+  );
+
   const { baseline } = loaded;
 
   if (
@@ -125,10 +130,13 @@ export async function planLifecycle(
     id: crypto.randomUUID(),
     issues,
     operation: options.operation,
+    previousPlanId: state.pendingPlan?.id ?? null,
     source,
     target,
   };
 
+  // Stored first, so a plan that is replaced or never started stays readable.
+  await options.planStore.put(plan.id, plan);
   await options.stateStore.put(CURRENT_STATE_KEY, {
     ...state,
     pendingPlan: plan,

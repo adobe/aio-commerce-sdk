@@ -20,6 +20,7 @@ import { createMockLifecycleStore } from "#test/fixtures/lifecycle";
 import type { AppStateSnapshot } from "#management/common/orchestration";
 
 const lifecycleBaseline: AppStateSnapshot = {
+  attemptId: null,
   config: {
     ...minimalValidConfig,
     metadata: { ...minimalValidConfig.metadata, version: "2.0.0" },

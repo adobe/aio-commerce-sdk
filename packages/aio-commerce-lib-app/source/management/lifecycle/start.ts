@@ -37,16 +37,26 @@ export type StartLifecycleAttemptOptions = LifecycleRuntime & {
   executionDeadline: string;
   planId: string;
 
+  /** Identifier of the OpenWhisk activation that starts the attempt. */
+  activationId: string;
+
   /** How the plan differs from the one a reviewer approved, recorded on the attempt. */
   review?: LifecyclePlanReview;
 };
 
-/** Creates and persists an attempt for an exact pending plan. */
+/**
+ * Creates and persists an attempt for an exact pending plan. Moves the attempt it replaces as the
+ * latest to the attempt store first, so the new attempt can link to it.
+ */
 export async function startLifecycleAttempt(
   options: StartLifecycleAttemptOptions,
 ): Promise<LifecycleAttempt> {
   const loaded = await readOrInitializeState(options);
-  const state = await normalizeExpiredAttempt(options.stateStore, loaded.state);
+  const state = await normalizeExpiredAttempt(
+    options.stateStore,
+    loaded.state,
+    options.lifecycleContext.logger,
+  );
 
   const { baseline } = loaded;
   const plan = state.pendingPlan;
@@ -76,17 +86,25 @@ export async function startLifecycleAttempt(
     targetConfig: plan.target?.config,
   });
 
+  const previousAttempt = state.latestAttempt;
   const attempt: LifecycleAttempt = {
+    activations: { start: options.activationId },
     data: baseline?.data ?? null,
     executionDeadline: options.executionDeadline,
     id: crypto.randomUUID(),
     operation: plan.operation,
     plan,
+    previousAttemptId: previousAttempt?.id ?? null,
     progress: workflow.step,
     review: options.review,
     startedAt: workflow.startedAt,
     status: "pending",
   };
+
+  // Archived before the state changes, so a failed write leaves the previous attempt as the latest.
+  if (previousAttempt) {
+    await options.attemptStore.put(previousAttempt.id, previousAttempt);
+  }
 
   await options.stateStore.put(CURRENT_STATE_KEY, {
     ...state,

@@ -92,6 +92,7 @@ export async function persistSuccess(
   }
 
   const snapshot: AppStateSnapshot = {
+    attemptId: attempt.id,
     config: target.config,
     createdAt: workflow.completedAt,
     data: workflow.data,
