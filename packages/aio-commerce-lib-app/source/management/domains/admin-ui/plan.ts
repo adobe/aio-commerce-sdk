@@ -15,6 +15,7 @@ import { stringify } from "safe-stable-stringify";
 import {
   ADMIN_UI_GRID_COLUMN_ENTITIES,
   ADMIN_UI_MASS_ACTION_ENTITIES,
+  ADMIN_UI_VIEW_BUTTON_ENTITIES,
 } from "#config/schema/admin-ui";
 
 import { hasExtensionName } from "./helpers";
@@ -103,14 +104,16 @@ function enumerateComponents(
     }
   }
 
-  for (const viewButton of adminUi.order?.viewButtons ?? []) {
-    const key = `order.view-button.${viewButton.id}`;
-    components.set(key, {
-      config: viewButton,
-      key,
-      label: `order view button "${viewButton.id}"`,
-      ref: { entity: "order", id: viewButton.id, kind: "viewButtons" },
-    });
+  for (const entity of ADMIN_UI_VIEW_BUTTON_ENTITIES) {
+    for (const viewButton of adminUi[entity]?.viewButtons ?? []) {
+      const key = `${entity}.view-button.${viewButton.id}`;
+      components.set(key, {
+        config: viewButton,
+        key,
+        label: `${entity} view button "${viewButton.id}"`,
+        ref: { entity, id: viewButton.id, kind: "viewButtons" },
+      });
+    }
   }
 
   return components;

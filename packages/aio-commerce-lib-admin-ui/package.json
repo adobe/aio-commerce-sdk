@@ -34,6 +34,7 @@
   "exports": {
     "./api": "./source/api/index.ts",
     "./grid-columns": "./source/grid-columns/index.ts",
+    "./invoice-view-buttons": "./source/invoice-view-buttons/index.ts",
     "./mass-actions": "./source/mass-actions/index.ts",
     "./menu": "./source/menu/index.ts",
     "./order-view-buttons": "./source/order-view-buttons/index.ts",
@@ -134,6 +135,16 @@
         "require": {
           "types": "./dist/cjs/grid-columns/index.d.cts",
           "default": "./dist/cjs/grid-columns/index.cjs"
+        }
+      },
+      "./invoice-view-buttons": {
+        "import": {
+          "types": "./dist/es/invoice-view-buttons/index.d.mts",
+          "default": "./dist/es/invoice-view-buttons/index.mjs"
+        },
+        "require": {
+          "types": "./dist/cjs/invoice-view-buttons/index.d.cts",
+          "default": "./dist/cjs/invoice-view-buttons/index.cjs"
         }
       },
       "./mass-actions": {
