@@ -192,13 +192,21 @@ export async function startPlannedOperation({
     throw error;
   }
 
-  await dispatchExecution(runtime.stateStore, attempt, params);
+  const activationId = await dispatchExecution(
+    runtime.stateStore,
+    attempt,
+    params,
+  );
   logger.debug(
-    `Async ${operation} execution started for attempt ${attempt.id}`,
+    `Async ${operation} execution started for attempt ${attempt.id}: ${activationId}`,
   );
 
   return accepted({
-    body: { ...toAttemptStatus(attempt), message: `${label} started` },
+    body: {
+      ...toAttemptStatus(attempt),
+      activationId,
+      message: `${label} started`,
+    },
   });
 }
 
@@ -293,14 +301,14 @@ export function stalePlanConflict(message: string) {
   return conflict({ body: { message, reason: "stale-plan" } });
 }
 
-/** Invokes the execution route asynchronously for a started attempt. */
+/** Invokes the execution route asynchronously for a started attempt and returns its activation id. */
 async function dispatchExecution(
   stateStore: LifecycleStore<OrchestrationState>,
   attempt: LifecycleAttempt,
   params: WorkflowRouteParams,
 ) {
   try {
-    await openwhisk().actions.invoke({
+    const activation = await openwhisk().actions.invoke({
       blocking: false,
       name: DEFAULT_ACTION_NAME,
       params: {
@@ -311,6 +319,8 @@ async function dispatchExecution(
       },
       result: false,
     });
+
+    return activation.activationId;
   } catch (error) {
     await persistDispatchFailure(stateStore, attempt, error);
     throw error;

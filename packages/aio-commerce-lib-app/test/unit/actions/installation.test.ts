@@ -410,7 +410,11 @@ describe("installationRuntimeAction", () => {
           }),
         );
         expect(result).toMatchObject({
-          body: { operation: "install", status: "pending" },
+          body: {
+            activationId: "activation-123",
+            operation: "install",
+            status: "pending",
+          },
           statusCode: 202,
           type: "success",
         });

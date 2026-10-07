@@ -1342,9 +1342,13 @@
                       "properties": {
                         "message": {
                           "type": "string"
+                        },
+                        "activationId": {
+                          "description": "The activation id of the background execution.",
+                          "type": "string"
                         }
                       },
-                      "required": ["message"]
+                      "required": ["message", "activationId"]
                     }
                   ]
                 }
