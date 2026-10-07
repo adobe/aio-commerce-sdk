@@ -100,7 +100,7 @@ export function planNewProvider(
         const reason = subscriptionReason(target, event, ctx);
         const current = ctx.subscriptions.get(value.name);
 
-        // Install finds subscriptions by name, so one left under the old provider would be kept.
+        // Commerce subscription names are unique, so one left under another provider is replaced.
         const isUnderKeptProvider =
           current !== undefined &&
           !leftoverProviderIds.has(current.provider_id);
@@ -112,11 +112,19 @@ export function planNewProvider(
     : [];
 
   const commerceProvider = ctx.isCommerce
-    ? [add(commerceProviderValue(target), providerReason(target, ctx))]
+    ? [
+        add(
+          { ...commerceProviderValue(target), instanceId },
+          providerReason(target, ctx),
+        ),
+      ]
     : [];
 
   return [
-    add(providerValue(target, ctx), providerReason(target, ctx)),
+    add(
+      { ...providerValue(target, ctx), instanceId },
+      providerReason(target, ctx),
+    ),
     ...commerceProvider,
     ...target.events.map((event) =>
       add(
@@ -153,14 +161,14 @@ export function planExistingProvider(
       )
     : [];
 
-  // Commerce deletes the metadata of an event it unsubscribes, and I/O then drops the event from
-  // every registration, so a replaced subscription takes its event out of the registrations.
-  const replacedCodes = new Set(
+  // Commerce may delete the metadata of an event it unsubscribes, and I/O then drops the event from
+  // every registration, so a replaced subscription recreates its metadata and routes it again.
+  const replacedCodes = new Map(
     subscriptions.flatMap((op) =>
       op.kind === "update" &&
       op.after.resourceType === "subscription" &&
       op.after.changeMode === "replace"
-        ? [getIoEventCode(op.after.name, ctx.type)]
+        ? [[getIoEventCode(op.after.name, ctx.type), op.reason] as const]
         : [],
     ),
   );
@@ -168,8 +176,8 @@ export function planExistingProvider(
   return [
     ...planProviderUpdate(target, live, ctx),
     ...(ctx.isCommerce ? planCommerceProvider(target, live, ctx) : []),
-    ...planMetadata(target, live, ctx),
-    ...planRegistrations(target, live, replacedCodes, ctx),
+    ...planMetadata(target, live, replacedCodes, ctx),
+    ...planRegistrations(target, live, new Set(replacedCodes.keys()), ctx),
     ...subscriptions,
   ];
 }
@@ -212,7 +220,13 @@ function planCommerceProvider(
   const { commerceProvider } = live;
   const reason = providerReason(target, ctx);
   if (!commerceProvider) {
-    return [add(commerceProviderValue(target), reason)];
+    const value = {
+      ...commerceProviderValue(target),
+      instanceId: live.ioProvider.instance_id,
+      providerId: live.ioProvider.id,
+    };
+
+    return [add(value, reason)];
   }
 
   const isSame =
@@ -236,10 +250,14 @@ function planCommerceProvider(
   return [update(before, commerceProviderValue(target), reason)];
 }
 
-/** Plans metadata adds, updates and removes for a live provider. */
+/**
+ * Plans metadata adds, updates and removes for a live provider. The live metadata of one of the
+ * `replacedCodes` is removed and added again, with the reason of its subscription's replace.
+ */
 function planMetadata(
   target: EventingProviderSnapshot,
   live: LiveEventingProvider,
+  replacedCodes: ReadonlyMap<string, Reason>,
   ctx: LeafPlanContext,
 ): Operation[] {
   const providerId = live.ioProvider.id;
@@ -259,6 +277,17 @@ function planMetadata(
       return [add(value, reason)];
     }
 
+    const before: EventingOperationValue = {
+      ...value,
+      description: current.description,
+      label: current.label,
+    };
+
+    const replaceReason = replacedCodes.get(value.eventCode);
+    if (replaceReason) {
+      return [remove(before, replaceReason), add(value, replaceReason)];
+    }
+
     const isSame =
       current.label === value.label &&
       current.description === value.description;
@@ -267,11 +296,6 @@ function planMetadata(
       return [];
     }
 
-    const before: EventingOperationValue = {
-      ...value,
-      description: current.description,
-      label: current.label,
-    };
     return [update(before, value, reason)];
   });
 
@@ -324,7 +348,7 @@ function planRegistrations(
     kept.add(current);
     const before = registrationValueOf(current, target.key, ctx.type);
 
-    // Install finds registrations by name, so a renamed one is recreated by install instead.
+    // Apply creates the registration under its new name before it removes the old one.
     if (before.name !== value.name) {
       return [remove(before, reason), add(value, reason)];
     }
@@ -376,8 +400,8 @@ function planRegistrations(
 
 /**
  * Finds the live registration for a desired one by runtime action, preferring the one with the
- * desired name. Falls back to an empty registration with the desired name, which install would
- * otherwise reuse unchanged.
+ * desired name. Falls back to an empty registration with the desired name, so it is updated
+ * instead of created again.
  */
 function findRegistration(
   live: LiveEventingProvider,

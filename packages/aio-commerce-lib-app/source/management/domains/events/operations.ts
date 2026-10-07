@@ -60,7 +60,7 @@ export type LeafPlanContext = {
 export function providerValue(
   target: EventingProviderSnapshot,
   ctx: LeafPlanContext,
-): EventingOperationValue {
+): Extract<EventingOperationValue, { resourceType: "provider" }> {
   return {
     description: target.provider.description,
     label: target.provider.label,
@@ -73,7 +73,7 @@ export function providerValue(
 /** The desired value of a provider's Commerce provider. */
 export function commerceProviderValue(
   target: EventingProviderSnapshot,
-): EventingOperationValue {
+): Extract<EventingOperationValue, { resourceType: "commerceProvider" }> {
   return {
     description: target.provider.description,
     label: target.provider.label,
