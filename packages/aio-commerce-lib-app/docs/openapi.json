@@ -3,7 +3,7 @@
   "info": {
     "title": "App Management API",
     "description": "REST API for managing Adobe Commerce App Builder apps: resolving app configuration, managing configuration values, running the installation, upgrade, and uninstallation lifecycle, and managing the scope tree.",
-    "version": "4.0.0",
+    "version": "4.1.0",
     "contact": {},
     "license": {
       "identifier": "Apache-2.0",
@@ -2816,6 +2816,12 @@
             "properties": {
               "gridColumns": {
                 "$ref": "#/components/schemas/AdminUiGridColumns"
+              },
+              "viewButtons": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/AdminUiInvoiceViewButton"
+                }
               }
             }
           },
@@ -2920,6 +2926,122 @@
             "$ref": "#/components/schemas/AdminUiOrderViewWorkerButton"
           }
         ]
+      },
+      "AdminUiInvoiceViewButton": {
+        "discriminator": {
+          "propertyName": "type",
+          "mapping": {
+            "view": "#/components/schemas/AdminUiInvoiceViewNavigationButton",
+            "worker": "#/components/schemas/AdminUiInvoiceViewWorkerButton"
+          }
+        },
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/AdminUiInvoiceViewNavigationButton"
+          },
+          {
+            "$ref": "#/components/schemas/AdminUiInvoiceViewWorkerButton"
+          }
+        ]
+      },
+      "AdminUiInvoiceViewNavigationButton": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "view"
+          },
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "label": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1
+          },
+          "path": {
+            "type": "string",
+            "minLength": 1
+          },
+          "aclProtected": {
+            "type": "boolean"
+          },
+          "level": {
+            "type": "number",
+            "enum": [-1, 0, 1]
+          },
+          "sortOrder": {
+            "type": "number",
+            "minimum": 0
+          },
+          "confirm": {
+            "$ref": "#/components/schemas/AdminUiConfirm"
+          },
+          "sandboxPermissions": {
+            "$ref": "#/components/schemas/AdminUiSandboxPermissions"
+          },
+          "notifications": {
+            "$ref": "#/components/schemas/AdminUiNotifications"
+          }
+        },
+        "additionalProperties": false,
+        "required": ["type", "id", "label", "path"]
+      },
+      "AdminUiInvoiceViewWorkerButton": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "worker"
+          },
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "label": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1
+          },
+          "runtimeAction": {
+            "type": "string",
+            "minLength": 1
+          },
+          "aclProtected": {
+            "type": "boolean"
+          },
+          "level": {
+            "type": "number",
+            "enum": [-1, 0, 1]
+          },
+          "sortOrder": {
+            "type": "number",
+            "minimum": 0
+          },
+          "confirm": {
+            "$ref": "#/components/schemas/AdminUiConfirm"
+          },
+          "timeout": {
+            "type": "number",
+            "minimum": 0
+          },
+          "notifications": {
+            "$ref": "#/components/schemas/AdminUiNotifications"
+          }
+        },
+        "additionalProperties": false,
+        "required": ["type", "id", "label", "runtimeAction"]
       },
       "AdminUiConfirm": {
         "type": "object",

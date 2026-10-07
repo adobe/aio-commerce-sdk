@@ -55,6 +55,7 @@ export type {
   AdminUiConfiguration,
   GridColumn,
   GridColumns,
+  InvoiceViewButton,
   MassAction,
   Menu,
   Notifications,

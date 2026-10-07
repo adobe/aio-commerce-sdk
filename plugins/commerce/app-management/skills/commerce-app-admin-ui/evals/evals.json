@@ -2,6 +2,22 @@
   "skill_name": "commerce-app-admin-ui",
   "evals": [
     {
+      "id": 9,
+      "name": "invoice-view-and-worker-buttons",
+      "prompt": "In my initialized Commerce app, add an Invoice details iframe button on the invoice detail page with title 'Custom invoice details' and a Send invoice worker button using invoice/send. Include a confirmation, success/error notifications, and the matching iframe context and runtime helpers.",
+      "expected_output": "Declares adminUi.invoice.viewButtons with a view entry using path, title, and sandboxPermissions and a worker entry using runtimeAction, timeout, confirm, and notifications. Uses useInvoiceViewButtonContext plus useHostConnection for the iframe, and invoice-specific request/response helpers for the worker. Regenerates backend-ui/2 operations without placing invoice buttons under order or introducing invoice mass actions.",
+      "files": [],
+      "assertions": [
+        "Declares both buttons under adminUi.invoice.viewButtons",
+        "View entry includes path and title but no runtimeAction or timeout",
+        "Worker entry includes runtimeAction invoice/send and notifications but no path or sandboxPermissions",
+        "Worker imports parseInvoiceViewButtonRequest and invoice response helpers from @adobe/aio-commerce-sdk/admin-ui/invoice-view-buttons",
+        "Iframe reads data.invoiceId using useInvoiceViewButtonContext after handling hook errors",
+        "Iframe uses useHostConnection actions to close on success or failure",
+        "Registers the worker action and runs generation to wire workerProcess and view operations"
+      ]
+    },
+    {
       "id": 0,
       "name": "order-grid-column",
       "prompt": "I've got a base Commerce app scaffolded with the aio-commerce-sdk (app.commerce.config.ts exists and the project is initialized). I need to add a 'Fulfillment' column to the Admin order grid, the value for each order comes from our warehouse API. Wire up the config and the runtime action handler.",
@@ -117,7 +133,7 @@
         "Iframe/web-src code either throws the useHostConnection error during render or renders local fallback UI before calling actions.close() or actions.closeWithError()",
         "View button does NOT include worker-only fields (no runtimeAction, no timeout)",
         "Does not scaffold or register a backend worker action for the view button",
-        "Does not declare viewButtons under product or customer because only order supports view buttons",
+        "Does not declare viewButtons under product or customer; view buttons support only order and invoice",
         "Uses the v2 adminUi shape (no commerce/backend-ui/1 or adminUiSdk.registration legacy API)",
         "Notes mention running npx @adobe/aio-commerce-lib-app init and aio app build"
       ]

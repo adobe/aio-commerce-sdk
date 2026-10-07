@@ -24,6 +24,7 @@ import {
 import {
   configWithDynamicListOptions,
   configWithFullAdminUiV2,
+  configWithInvoiceViewButtons,
   minimalValidConfig,
 } from "#test/fixtures/config";
 
@@ -186,6 +187,18 @@ describe("appConfigRuntimeAction", () => {
 
       expect(result).toMatchObject({
         body: { adminUi: configWithFullAdminUiV2.adminUi },
+        type: "success",
+      });
+    });
+
+    test("returns invoice view buttons including iframe title and worker settings", async () => {
+      const handler = appConfigRuntimeAction({
+        appConfig: configWithInvoiceViewButtons,
+      });
+      const result = await handler(createRuntimeActionParams());
+
+      expect(result).toMatchObject({
+        body: { adminUi: configWithInvoiceViewButtons.adminUi },
         type: "success",
       });
     });
