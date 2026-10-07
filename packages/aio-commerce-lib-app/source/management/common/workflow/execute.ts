@@ -308,6 +308,7 @@ async function executePlannedStep(
   const { path } = currentStep;
   const isLeaf = isLeafStep(step);
   currentStep.status = "in-progress";
+  currentStep.startedAt = nowIsoString();
 
   await callHook(
     context.hooks,
@@ -376,6 +377,7 @@ async function executePlannedStep(
     }
 
     currentStep.status = "succeeded";
+    currentStep.completedAt = nowIsoString();
     context.data ??= {};
 
     await callHook(
@@ -391,6 +393,7 @@ async function executePlannedStep(
     );
   } catch (error) {
     currentStep.status = "failed";
+    currentStep.completedAt = nowIsoString();
     context.error ??= await createWorkflowError(error, path);
 
     await callHook(

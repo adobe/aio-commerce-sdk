@@ -25,6 +25,7 @@ import {
   requireCurrentAttempt,
   requireState,
 } from "#management/lifecycle/state";
+import { createMockLogger } from "#test/fixtures/installation";
 import {
   createMockAppStateSnapshot,
   createMockLifecycleAttempt,
@@ -32,6 +33,7 @@ import {
   createMockLifecycleStore,
   createMockOrchestrationState,
 } from "#test/fixtures/lifecycle";
+import { createMockStepStatus } from "#test/fixtures/workflow";
 
 import type {
   AppStateSnapshot,
@@ -207,6 +209,46 @@ describe("normalizeExpiredAttempt", () => {
     });
 
     expect(await store.get(CURRENT_STATE_KEY)).toEqual(normalized);
+  });
+
+  test("warns with the attempt id and the step that was in progress when an attempt expires", async () => {
+    const logger = createMockLogger();
+    const attempt = createMockLifecycleAttempt({
+      executionDeadline: PAST,
+      id: "attempt-expired",
+      progress: createMockStepStatus({
+        children: [
+          createMockStepStatus({
+            path: ["root", "webhooks"],
+            startedAt: "1999-12-31T23:59:00.000Z",
+            status: "in-progress",
+          }),
+        ],
+        status: "in-progress",
+      }),
+      status: "in-progress",
+    });
+
+    await normalizeExpiredAttempt(
+      createMockLifecycleStore<OrchestrationState>(),
+      createMockOrchestrationState({ latestAttempt: attempt }),
+      logger,
+    );
+
+    expect(logger.warn).toHaveBeenCalledWith(
+      `The upgrade attempt attempt-expired expired at its execution deadline ${PAST} while step root/webhooks was in progress since 1999-12-31T23:59:00.000Z.`,
+    );
+  });
+
+  test("does not warn when the attempt has not expired", async () => {
+    const logger = createMockLogger();
+    await normalizeExpiredAttempt(
+      createMockLifecycleStore<OrchestrationState>(),
+      createMockOrchestrationState({ latestAttempt: pendingAttempt() }),
+      logger,
+    );
+
+    expect(logger.warn).not.toHaveBeenCalled();
   });
 });
 

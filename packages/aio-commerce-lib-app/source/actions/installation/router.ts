@@ -30,8 +30,13 @@ import {
   createLifecyclePersistence,
   isPostAppDeployInvocation,
 } from "./common";
-import { executeLifecycle, toAttemptStatus } from "./lifecycle";
+import {
+  executeLifecycle,
+  toAttemptHistory,
+  toAttemptStatus,
+} from "./lifecycle";
 import { planRequestedOperation } from "./plan";
+import { StatusQuerySchema } from "./schema";
 import { startPlannedRequest } from "./start";
 
 import type {
@@ -46,7 +51,7 @@ export type { CustomScriptsLoader, RuntimeActionFactoryArgs } from "./common";
  * Installation action router.
  *
  * Routes:
- * - GET /                            Get the status of the latest lifecycle operation
+ * - GET /                            Get the status of the latest lifecycle operation, with its history on `history=true`
  * - POST /                           Start the pending plan named by `planId`
  * - POST /plan                       Plan an install, upgrade or uninstall for review
  * - POST /execution                  Execute a started lifecycle attempt (internal, called async)
@@ -55,24 +60,38 @@ export const router = new HttpActionRouter<InstallationActionContext>().use(
   withLogger({ name: () => "installation" }),
 );
 
-/** Reads the latest lifecycle attempt, or `null` when none has run. */
-async function getLatestAttempt() {
-  const { stateStore } = await createLifecyclePersistence();
-  const state = await stateStore.get(CURRENT_STATE_KEY);
-  return state
-    ? (await normalizeExpiredAttempt(stateStore, state)).latestAttempt
-    : null;
-}
-
 /**
- * GET / - Get the status of the latest installation or upgrade. Falls back to the record of an
+ * GET / - Get the status of the latest lifecycle operation. Falls back to the record of an
  * installation made by an older library version.
+ *
+ * With `history=true`, the body also lists the plans of the latest attempt, the earlier attempts
+ * (at most `limit` of them) and the plans made since the latest attempt.
  */
 router.get("/", {
   handler: async (req, { logger }) => {
-    const attempt = await getLatestAttempt();
-    if (attempt) {
-      logger.debug(`Found ${attempt.operation} state: ${attempt.status}`);
+    const persistence = await createLifecyclePersistence();
+    const stored = await persistence.stateStore.get(CURRENT_STATE_KEY);
+    const state =
+      stored &&
+      (await normalizeExpiredAttempt(persistence.stateStore, stored, logger));
+
+    const attempt = state?.latestAttempt;
+    if (state && attempt) {
+      logger.debug(
+        `Found the ${attempt.operation} attempt ${attempt.id} with status ${attempt.status}.`,
+      );
+
+      if (req.query.history === "true") {
+        return ok({
+          body: await toAttemptHistory(
+            attempt,
+            state.pendingPlan,
+            persistence,
+            req.query.limit,
+          ),
+        });
+      }
+
       return ok({ body: toAttemptStatus(attempt) });
     }
 
@@ -85,6 +104,7 @@ router.get("/", {
     const store = await createInstallationStore();
     return readStateFromStore(store, (msg) => logger.debug(msg));
   },
+  query: StatusQuerySchema,
 });
 
 /**

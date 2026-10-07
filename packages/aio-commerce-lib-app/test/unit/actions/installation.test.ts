@@ -63,6 +63,7 @@ import {
 } from "#test/fixtures/installation";
 import {
   createMockLifecycleAttempt,
+  createMockLifecyclePlan,
   createMockLifecycleStore,
   createMockOrchestrationState,
 } from "#test/fixtures/lifecycle";
@@ -73,6 +74,8 @@ import {
 
 import type {
   AppStateSnapshot,
+  LifecycleAttempt,
+  LifecyclePlan,
   OrchestrationState,
 } from "#management/common/orchestration";
 import type { AnyStep, LeafStep } from "#management/common/workflow/step";
@@ -90,6 +93,8 @@ const requestBody = {
 
 describe("installationRuntimeAction", () => {
   let appStateSnapshotStore = createMockLifecycleStore<AppStateSnapshot>();
+  let attemptStore = createMockLifecycleStore<LifecycleAttempt>();
+  let planStore = createMockLifecycleStore<LifecyclePlan>();
   let installationStore = createMockInstallationStore();
   let orchestrationStateStore = createMockLifecycleStore<OrchestrationState>();
   let uninstallationStore = createMockInstallationStore();
@@ -98,6 +103,8 @@ describe("installationRuntimeAction", () => {
     vi.clearAllMocks();
 
     appStateSnapshotStore = createMockLifecycleStore<AppStateSnapshot>();
+    attemptStore = createMockLifecycleStore<LifecycleAttempt>();
+    planStore = createMockLifecycleStore<LifecyclePlan>();
     installationStore = createMockInstallationStore();
     orchestrationStateStore = createMockLifecycleStore<OrchestrationState>();
     uninstallationStore = createMockInstallationStore();
@@ -106,6 +113,8 @@ describe("installationRuntimeAction", () => {
       createMockCombinedStoreImpl(() => ({
         appStateSnapshot: appStateSnapshotStore,
         installation: installationStore,
+        lifecycleAttempt: attemptStore,
+        lifecyclePlan: planStore,
         orchestrationState: orchestrationStateStore,
         uninstallation: uninstallationStore,
       })),
@@ -231,6 +240,183 @@ describe("installationRuntimeAction", () => {
         type: "success",
       });
     });
+
+    describe("history", () => {
+      const plan = (id: string, previousPlanId: string | null = null) =>
+        createMockLifecyclePlan({ id, previousPlanId });
+
+      const attempt3 = createMockLifecycleAttempt({
+        activations: { execution: "exec-3", start: "start-3" },
+        id: "attempt-3",
+        plan: plan("plan-3b", "plan-3a"),
+        previousAttemptId: "attempt-2",
+        status: "failed",
+      });
+      const attempt2 = createMockLifecycleAttempt({
+        id: "attempt-2",
+        plan: plan("plan-2"),
+        previousAttemptId: "attempt-1",
+        status: "failed",
+      });
+      const attempt1 = createMockLifecycleAttempt({
+        id: "attempt-1",
+        operation: "install",
+        plan: plan("plan-1b", "plan-1a"),
+        status: "succeeded",
+      });
+
+      function seedChain(pendingPlan: LifecyclePlan | null = null) {
+        orchestrationStateStore = createMockLifecycleStore({
+          initial: createMockOrchestrationState({
+            latestAttempt: attempt3,
+            pendingPlan,
+          }),
+        });
+
+        for (const archived of [attempt2, attempt1]) {
+          attemptStore.values.set(archived.id, archived);
+        }
+
+        for (const stored of [
+          plan("plan-1a"),
+          attempt1.plan,
+          attempt2.plan,
+          plan("plan-3a"),
+          attempt3.plan,
+          plan("plan-4a"),
+        ]) {
+          planStore.values.set(stored.id, stored);
+        }
+      }
+
+      async function getStatus(query?: string) {
+        const handler = installationRuntimeAction({
+          appConfig: minimalValidConfig,
+        });
+
+        return await handler(createRuntimeActionParams({ query }));
+      }
+
+      const ids = (items: { id: string }[]) => items.map(({ id }) => id);
+
+      test("returns the latest attempt with every earlier attempt and the plans of each", async () => {
+        seedChain();
+        const result = await getStatus("history=true");
+
+        expect.assert(result.type === "success", "Expected a status");
+        const body = result.body as {
+          history: { id: string; plans: { id: string }[] }[];
+          pendingPlans: unknown[];
+          plans: { id: string }[];
+        };
+
+        expect(body).toMatchObject({
+          activations: { execution: "exec-3", start: "start-3" },
+          id: "attempt-3",
+          planId: "plan-3b",
+          previousAttemptId: "attempt-2",
+          previousPlanId: "plan-3a",
+        });
+        expect(ids(body.plans)).toEqual(["plan-3b", "plan-3a"]);
+        expect(ids(body.history)).toEqual(["attempt-2", "attempt-1"]);
+        expect(ids(body.history[0].plans)).toEqual(["plan-2"]);
+        expect(ids(body.history[1].plans)).toEqual(["plan-1b", "plan-1a"]);
+        expect(body.history[1]).toMatchObject({
+          operation: "install",
+          previousAttemptId: null,
+          status: "succeeded",
+        });
+        expect(body.pendingPlans).toEqual([]);
+      });
+
+      test("reads at most `limit` earlier attempts", async () => {
+        seedChain();
+        const result = await getStatus("history=true&limit=1");
+
+        expect.assert(result.type === "success", "Expected a status");
+        const body = result.body as { history: { id: string }[] };
+        expect(ids(body.history)).toEqual(["attempt-2"]);
+      });
+
+      test("lists the plans made since the latest attempt", async () => {
+        seedChain(plan("plan-4b", "plan-4a"));
+        const result = await getStatus("history=true");
+
+        expect.assert(result.type === "success", "Expected a status");
+        const body = result.body as { pendingPlans: { id: string }[] };
+        expect(ids(body.pendingPlans)).toEqual(["plan-4b", "plan-4a"]);
+      });
+
+      test("stops at an archived attempt that is missing", async () => {
+        seedChain();
+        attemptStore.values.delete("attempt-1");
+        const result = await getStatus("history=true");
+
+        expect.assert(result.type === "success", "Expected a status");
+        const body = result.body as { history: { id: string }[] };
+        expect(ids(body.history)).toEqual(["attempt-2"]);
+      });
+
+      test("stops at a stored plan that is missing", async () => {
+        seedChain();
+        planStore.values.delete("plan-3a");
+        const result = await getStatus("history=true");
+
+        expect.assert(result.type === "success", "Expected a status");
+        const body = result.body as { plans: { id: string }[] };
+        expect(ids(body.plans)).toEqual(["plan-3b"]);
+      });
+
+      test.each([
+        ["without history", undefined],
+        ["with history=false", "history=false"],
+        ["with history=false and a limit", "history=false&limit=2"],
+      ])("returns only the latest attempt's status %s", async (_, query) => {
+        seedChain(plan("plan-4b", "plan-4a"));
+        const result = await getStatus(query);
+
+        expect.assert(result.type === "success", "Expected a status");
+        expect(Object.keys(result.body as object).sort()).toEqual([
+          "activations",
+          "completedAt",
+          "data",
+          "error",
+          "id",
+          "operation",
+          "planId",
+          "previousAttemptId",
+          "previousPlanId",
+          "result",
+          "review",
+          "startedAt",
+          "status",
+          "step",
+        ]);
+        expect(attemptStore.get).not.toHaveBeenCalled();
+        expect(planStore.get).not.toHaveBeenCalled();
+      });
+
+      test.each([
+        "history=yes",
+        "history=true&limit=0",
+        "history=true&limit=abc",
+        "history=true&limit=1.5",
+      ])("returns 400 for the query %s", async (query) => {
+        seedChain();
+        const result = await getStatus(query);
+
+        expect(result).toMatchObject({
+          error: { statusCode: 400 },
+          type: "error",
+        });
+      });
+
+      test("ignores history when no attempt exists", async () => {
+        const result = await getStatus("history=true");
+
+        expect(result).toMatchObject({ statusCode: 204, type: "success" });
+      });
+    });
   });
 
   const upgradeRequestBody = {
@@ -247,6 +433,8 @@ describe("installationRuntimeAction", () => {
   let desiredUninstallationStore = createMockInstallationStore();
   let desiredSnapshotStore = createMockLifecycleStore<AppStateSnapshot>();
   let desiredStateStore = createMockLifecycleStore<OrchestrationState>();
+  let desiredAttemptStore = createMockLifecycleStore<LifecycleAttempt>();
+  let desiredPlanStore = createMockLifecycleStore<LifecyclePlan>();
 
   function seedInstalledBaseline(
     version: string,
@@ -300,15 +488,20 @@ describe("installationRuntimeAction", () => {
       vi.clearAllMocks();
       vi.stubEnv("__OW_ACTION_VERSION", "7");
       vi.stubEnv("__OW_DEADLINE", "4070908800000");
+      vi.stubEnv("__OW_ACTIVATION_ID", "activation-start");
 
       desiredInstallationStore = createMockInstallationStore();
       desiredUninstallationStore = createMockInstallationStore();
       desiredSnapshotStore = createMockLifecycleStore<AppStateSnapshot>();
       desiredStateStore = createMockLifecycleStore<OrchestrationState>();
+      desiredAttemptStore = createMockLifecycleStore<LifecycleAttempt>();
+      desiredPlanStore = createMockLifecycleStore<LifecyclePlan>();
       createCombinedStoreMock.mockImplementation(
         createMockCombinedStoreImpl(() => ({
           appStateSnapshot: desiredSnapshotStore,
           installation: desiredInstallationStore,
+          lifecycleAttempt: desiredAttemptStore,
+          lifecyclePlan: desiredPlanStore,
           orchestrationState: desiredStateStore,
           uninstallation: desiredUninstallationStore,
         })),
@@ -1218,7 +1411,7 @@ describe("installationRuntimeAction", () => {
 
         const status = await action(createRuntimeActionParams({ path: "/" }));
         expect(status).toMatchObject({
-          body: { operation: "uninstall", status: "succeeded" },
+          body: { operation: "uninstall", result: null, status: "succeeded" },
           statusCode: 200,
         });
         expect(status).not.toHaveProperty("body.plan");
@@ -1283,10 +1476,91 @@ describe("installationRuntimeAction", () => {
         );
 
         expect(result).toMatchObject({
-          body: { id: attemptId, status: "succeeded" },
+          body: {
+            id: attemptId,
+            result: {
+              appVersion: expect.any(String),
+              snapshotId: expect.any(String),
+            },
+            status: "succeeded",
+          },
           statusCode: 200,
           type: "success",
         });
+      });
+
+      test("records the activations and links the attempts and plans for GET /?history=true", async () => {
+        createRootInstallationStepMock.mockReturnValue(
+          createUpgradeRoot(
+            createUpgradeLeaf({
+              apply: vi.fn().mockRejectedValue(new Error("boom")),
+            }),
+          ),
+        );
+
+        const execute = (action: Action, attemptId: string) => {
+          vi.stubEnv("__OW_ACTIVATION_ID", `exec-${attemptId}`);
+          return action(
+            createRuntimeActionParams({
+              appData,
+              attemptId,
+              method: "post",
+              path: "/execution",
+              ...DEFAULT_INSTALLATION_PARAMS,
+            }),
+          );
+        };
+
+        const first = await startAutomaticUpgrade();
+        await execute(first.action, first.attemptId);
+
+        vi.stubEnv("__OW_ACTIVATION_ID", "activation-start");
+        const replaced = await planRequest(first.action);
+        expect.assert(replaced.type === "success", "Expected a plan");
+
+        const second = await startAutomaticUpgrade();
+        await execute(second.action, second.attemptId);
+
+        vi.stubEnv("__OW_ACTIVATION_ID", "activation-start");
+        const pending = await planRequest(second.action);
+        expect.assert(pending.type === "success", "Expected a plan");
+
+        const result = await second.action(
+          createRuntimeActionParams({ query: "history=true" }),
+        );
+        expect.assert(result.type === "success", "Expected a status");
+
+        const planIdOf = (response: typeof pending) =>
+          (response.body as { plan: { id: string } }).plan.id;
+        const ids = (items: { id: string }[]) => items.map(({ id }) => id);
+        const body = result.body as {
+          history: { id: string; plans: { id: string }[] }[];
+          pendingPlans: { id: string }[];
+          plans: { id: string }[];
+        };
+
+        expect(body).toMatchObject({
+          activations: {
+            execution: `exec-${second.attemptId}`,
+            start: "activation-start",
+          },
+          id: second.attemptId,
+          previousAttemptId: first.attemptId,
+          status: "failed",
+        });
+        expect(ids(body.history)).toEqual([first.attemptId]);
+        expect(body.history[0]).toMatchObject({
+          activations: {
+            execution: `exec-${first.attemptId}`,
+            start: "activation-start",
+          },
+          previousAttemptId: null,
+        });
+        // Each start plans again, so an attempt runs a plan that replaced the reviewed one.
+        expect(ids(body.history[0].plans)).toHaveLength(2);
+        expect(ids(body.plans)).toHaveLength(3);
+        expect(ids(body.plans)).toContain(planIdOf(replaced));
+        expect(ids(body.pendingPlans)).toEqual([planIdOf(pending)]);
       });
 
       test("returns 500 when the attempt fails", async () => {

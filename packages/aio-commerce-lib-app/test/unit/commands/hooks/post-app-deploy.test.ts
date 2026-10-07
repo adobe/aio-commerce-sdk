@@ -199,12 +199,13 @@ describe("post-app-deploy hook", () => {
     expect(delayMock).toHaveBeenCalledWith(1000);
   });
 
-  test("reports an automatic upgrade failure", async () => {
+  test("reports an automatic upgrade failure with its attempt and execution activation", async () => {
     fetchMock
       .mockResolvedValueOnce(json({ plan: UPGRADE_PLAN }, 200))
       .mockResolvedValueOnce(json({ id: "attempt-1", status: "pending" }, 202))
       .mockResolvedValueOnce(
         attemptStatus("failed", {
+          activations: { execution: "activation-exec", start: "activation-1" },
           error: {
             key: "WEBHOOK_RECONCILIATION_FAILED",
             message: "Webhook reconciliation failed",
@@ -214,7 +215,25 @@ describe("post-app-deploy hook", () => {
 
     await withTempProject(MINIMAL_PROJECT, async () => {
       await expect(run()).rejects.toThrow(
-        "App upgrade failed: Webhook reconciliation failed",
+        "App upgrade failed (attempt attempt-1, execution activation activation-exec): Webhook reconciliation failed",
+      );
+    });
+  });
+
+  test("reports an automatic upgrade failure without a known execution activation", async () => {
+    fetchMock
+      .mockResolvedValueOnce(json({ plan: UPGRADE_PLAN }, 200))
+      .mockResolvedValueOnce(json({ id: "attempt-1", status: "pending" }, 202))
+      .mockResolvedValueOnce(
+        attemptStatus("failed", {
+          activations: { start: "activation-1" },
+          error: { key: "LIFECYCLE_DISPATCH_FAILED" },
+        }),
+      );
+
+    await withTempProject(MINIMAL_PROJECT, async () => {
+      await expect(run()).rejects.toThrow(
+        "App upgrade failed (attempt attempt-1): LIFECYCLE_DISPATCH_FAILED",
       );
     });
   });

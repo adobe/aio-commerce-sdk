@@ -21,6 +21,8 @@ import { createRootInstallationStep } from "#management/installation/root";
 import { createLifecycleBaselineProvider } from "#management/lifecycle/baseline";
 import {
   createAppStateSnapshotStore,
+  createLifecycleAttemptStore,
+  createLifecyclePlanStore,
   createOrchestrationStateStore,
 } from "#management/lifecycle/storage";
 
@@ -189,9 +191,17 @@ export function buildLifecycleContext(
 
 /** Creates the shared storage read/write dependencies used by lifecycle orchestration. */
 export async function createLifecyclePersistence() {
-  const [stateStore, snapshotStore, installationStore] = await Promise.all([
+  const [
+    stateStore,
+    snapshotStore,
+    attemptStore,
+    planStore,
+    installationStore,
+  ] = await Promise.all([
     createOrchestrationStateStore(),
     createAppStateSnapshotStore(),
+    createLifecycleAttemptStore(),
+    createLifecyclePlanStore(),
     createInstallationStore(),
   ]);
 
@@ -202,7 +212,9 @@ export async function createLifecyclePersistence() {
   });
 
   return {
+    attemptStore,
     baselineProvider: createLifecycleBaselineProvider(snapshotStore),
+    planStore,
     snapshotStore,
     stateStore,
   };

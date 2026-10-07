@@ -189,7 +189,6 @@ export async function planRequestedOperation(args: RequestHandlerArgs) {
   }
 
   const { operation } = resolved;
-  args.logger.debug(`Planning the ${operation}...`);
   const planned = await planOperation({
     ...getPlanInputs(operation, request.appConfig),
     actionVersion: request.actionVersion,

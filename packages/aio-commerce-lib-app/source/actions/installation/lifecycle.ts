@@ -36,12 +36,20 @@ import { startLifecycleAttempt } from "#management/lifecycle/start";
 import { CURRENT_STATE_KEY } from "#management/lifecycle/state";
 
 import { createLifecycleRuntime, DEFAULT_ACTION_NAME } from "./common";
+import {
+  describeActiveAttempt,
+  logAttemptEnded,
+  logAttemptStarted,
+  logBlockedPlan,
+  logPlan,
+} from "./logging";
 
 import type { ActionResponse } from "@adobe/aio-commerce-lib-core/responses";
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 import type {
   LifecycleAttempt,
   LifecycleOperation,
+  LifecyclePlan,
   OrchestrationState,
 } from "#management/common/orchestration";
 import type { PlanLifecycleResult } from "#management/lifecycle/planning";
@@ -100,6 +108,7 @@ export async function planOperation({
   reviewedPlanId,
 }: PlanOperationArgs): Promise<PlanOperationResult> {
   const label = OPERATION_LABEL[operation];
+  const { logger } = runtime.lifecycleContext;
 
   let planning: PlanLifecycleResult;
   try {
@@ -114,6 +123,10 @@ export async function planOperation({
   } catch (error) {
     if (error instanceof LifecycleAttemptInProgressError) {
       const state = await runtime.stateStore.get(CURRENT_STATE_KEY);
+      logger.warn(
+        `Refused to plan the ${operation} because ${describeActiveAttempt(state?.latestAttempt)}.`,
+      );
+
       return {
         kind: "rejected",
         response: attemptInProgressConflict(state?.latestAttempt),
@@ -121,6 +134,10 @@ export async function planOperation({
     }
 
     if (error instanceof PendingLifecyclePlanNotFoundError) {
+      logger.warn(
+        `Refused to plan the ${operation} because the reviewed plan ${reviewedPlanId} is no longer the pending plan.`,
+      );
+
       return {
         kind: "rejected",
         response: stalePlanConflict(
@@ -132,7 +149,10 @@ export async function planOperation({
     throw error;
   }
 
+  logPlan(logger, planning.plan);
   if (planning.kind === "blocked") {
+    logBlockedPlan(logger, planning.plan);
+
     return {
       kind: "rejected",
       response: conflict({
@@ -172,6 +192,7 @@ export async function startPlannedOperation({
     attempt = await startLifecycleAttempt({
       ...runtime,
       actionVersion,
+      activationId: getActivationId(),
       executionDeadline: getExecutionDeadline(),
       planId: planning.plan.id,
       review: planning.review,
@@ -179,11 +200,19 @@ export async function startPlannedOperation({
   } catch (error) {
     if (error instanceof LifecycleAttemptInProgressError) {
       const state = await runtime.stateStore.get(CURRENT_STATE_KEY);
+      logger.warn(
+        `Refused to start plan ${planning.plan.id} because ${describeActiveAttempt(state?.latestAttempt)}.`,
+      );
+
       return attemptInProgressConflict(state?.latestAttempt);
     }
 
     // This request planned it a moment ago, so only a simultaneous request can have replaced it.
     if (error instanceof PendingLifecyclePlanNotFoundError) {
+      logger.warn(
+        `Refused to start plan ${planning.plan.id} because another request replaced it.`,
+      );
+
       return stalePlanConflict(
         `Another request replaced this plan. Plan the ${label.toLowerCase()} again.`,
       );
@@ -196,11 +225,10 @@ export async function startPlannedOperation({
     runtime.stateStore,
     attempt,
     params,
-  );
-  logger.debug(
-    `Async ${operation} execution started for attempt ${attempt.id}: ${activationId}`,
+    logger,
   );
 
+  logAttemptStarted(logger, label, attempt, activationId);
   return accepted({
     body: {
       ...toAttemptStatus(attempt),
@@ -213,6 +241,12 @@ export async function startPlannedOperation({
 /** The deadline of the current activation as an ISO timestamp. */
 function getExecutionDeadline() {
   return new Date(Number(process.env.__OW_DEADLINE)).toISOString();
+}
+
+/** The identifier of the current activation. */
+function getActivationId() {
+  // OpenWhisk always sets it. The fallback keeps a local run from failing on a missing log reference.
+  return process.env.__OW_ACTIVATION_ID ?? "unknown";
 }
 
 /** Executes a started lifecycle attempt. */
@@ -239,8 +273,16 @@ export async function executeLifecycle({
 
   const appConfig = validateCommerceAppConfig(rawAppConfig);
   const runtime = await createLifecycleRuntime(params, appConfig, logger);
+  const activationId = getActivationId();
+  const executionStartedAt = Date.now();
+
+  logger.info(
+    `Executing lifecycle attempt ${attemptId} in activation ${activationId}.`,
+  );
+
   const result = await executeLifecycleAttempt({
     actionVersion,
+    activationId,
     attemptId,
     executionDeadline: getExecutionDeadline(),
     lifecycleContext: runtime.lifecycleContext,
@@ -250,7 +292,7 @@ export async function executeLifecycle({
   });
 
   const label = OPERATION_LABEL[result.operation];
-  logger.debug(`${label} completed: ${result.status}`);
+  logAttemptEnded(logger, label, result, Date.now() - executionStartedAt);
 
   // An older library version's record would otherwise refuse a later install as already installed.
   if (result.operation === "uninstall" && result.status === "succeeded") {
@@ -269,16 +311,94 @@ export async function executeLifecycle({
 /** The status of a lifecycle attempt as clients read it. */
 export function toAttemptStatus(attempt: LifecycleAttempt) {
   return {
+    activations: attempt.activations,
     completedAt: attempt.completedAt,
     data: attempt.data,
     error: attempt.status === "failed" ? attempt.failure : undefined,
     id: attempt.id,
     operation: attempt.operation,
+    planId: attempt.plan.id,
+    previousAttemptId: attempt.previousAttemptId,
+    previousPlanId: attempt.plan.previousPlanId,
+    result: attempt.status === "succeeded" ? attempt.result : undefined,
     review: attempt.review,
     startedAt: attempt.startedAt,
     status: attempt.status,
     step: attempt.progress,
   };
+}
+
+/** The stores the lifecycle history is read from. */
+type LifecycleHistoryStores = {
+  attemptStore: LifecycleStore<LifecycleAttempt>;
+  planStore: LifecycleStore<LifecyclePlan>;
+};
+
+/**
+ * The status of the latest attempt with the plans it ran and replaced, every earlier attempt
+ * (newest first, each with its own plans) and the plans made since it.
+ *
+ * @param attempt - The latest attempt.
+ * @param pendingPlan - The pending plan, or `null` when none is pending.
+ * @param stores - The attempt and plan stores.
+ * @param limit - How many earlier attempts to read at most. Reads all of them when absent.
+ */
+export async function toAttemptHistory(
+  attempt: LifecycleAttempt,
+  pendingPlan: LifecyclePlan | null,
+  stores: LifecycleHistoryStores,
+  limit?: number,
+) {
+  const history: (ReturnType<typeof toAttemptStatus> & {
+    plans: LifecyclePlan[];
+  })[] = [];
+
+  let previousId = attempt.previousAttemptId;
+  while (previousId && (limit === undefined || history.length < limit)) {
+    // biome-ignore lint/performance/noAwaitInLoops: each attempt names the one before it
+    const previous = await stores.attemptStore.get(previousId);
+    if (!previous) {
+      break;
+    }
+
+    history.push({
+      ...toAttemptStatus(previous),
+      plans: await readPlanChain(previous.plan, stores.planStore),
+    });
+
+    previousId = previous.previousAttemptId;
+  }
+
+  return {
+    ...toAttemptStatus(attempt),
+    history,
+    pendingPlans: pendingPlan
+      ? await readPlanChain(pendingPlan, stores.planStore)
+      : [],
+    plans: await readPlanChain(attempt.plan, stores.planStore),
+  };
+}
+
+/** The given plan followed by the stored plans it replaced, newest first, up to the first missing one. */
+async function readPlanChain(
+  plan: LifecyclePlan,
+  planStore: LifecycleStore<LifecyclePlan>,
+) {
+  const plans = [plan];
+  let previousId = plan.previousPlanId;
+
+  while (previousId) {
+    // biome-ignore lint/performance/noAwaitInLoops: each plan names the one before it
+    const previous = await planStore.get(previousId);
+    if (!previous) {
+      break;
+    }
+
+    plans.push(previous);
+    previousId = previous.previousPlanId;
+  }
+
+  return plans;
 }
 
 /**
@@ -306,6 +426,7 @@ async function dispatchExecution(
   stateStore: LifecycleStore<OrchestrationState>,
   attempt: LifecycleAttempt,
   params: WorkflowRouteParams,
+  logger: RequestHandlerArgs["logger"],
 ) {
   try {
     const activation = await openwhisk().actions.invoke({
@@ -322,7 +443,7 @@ async function dispatchExecution(
 
     return activation.activationId;
   } catch (error) {
-    await persistDispatchFailure(stateStore, attempt, error);
+    await persistDispatchFailure(stateStore, attempt, error, logger);
     throw error;
   }
 }
@@ -332,7 +453,13 @@ async function persistDispatchFailure(
   stateStore: LifecycleStore<OrchestrationState>,
   attempt: LifecycleAttempt,
   error: unknown,
+  logger: RequestHandlerArgs["logger"],
 ) {
+  const message =
+    error instanceof Error
+      ? error.message
+      : "Lifecycle execution dispatch failed";
+
   const state = await stateStore.get(CURRENT_STATE_KEY);
 
   if (
@@ -350,13 +477,14 @@ async function persistDispatchFailure(
       completedAt: nowIsoString(),
       failure: {
         key: "LIFECYCLE_DISPATCH_FAILED",
-        message:
-          error instanceof Error
-            ? error.message
-            : "Lifecycle execution dispatch failed",
+        message,
         path: [],
       },
       status: "failed",
     },
   });
+
+  logger.error(
+    `Could not dispatch the execution of the ${attempt.operation} attempt ${attempt.id}, so it was marked failed: ${message}`,
+  );
 }

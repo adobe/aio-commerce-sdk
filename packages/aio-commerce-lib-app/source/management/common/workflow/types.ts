@@ -52,6 +52,12 @@ export type StepStatus = {
   /** Current execution status. */
   status: ExecutionStatus;
 
+  /** ISO timestamp when the step started executing. */
+  startedAt?: string;
+
+  /** ISO timestamp when the step succeeded or failed. */
+  completedAt?: string;
+
   /** Child step statuses (empty for leaf steps). */
   children: StepStatus[];
 };
