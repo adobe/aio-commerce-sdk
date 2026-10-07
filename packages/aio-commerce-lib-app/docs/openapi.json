@@ -3,7 +3,7 @@
   "info": {
     "title": "App Management API",
     "description": "REST API for managing Adobe Commerce App Builder apps: resolving app configuration, managing configuration values, running the installation, upgrade, and uninstallation lifecycle, and managing the scope tree.",
-    "version": "3.1.0",
+    "version": "4.0.0",
     "contact": {},
     "license": {
       "identifier": "Apache-2.0",
@@ -1224,7 +1224,7 @@
       "get": {
         "operationId": "getInstallationState",
         "summary": "Get Installation State",
-        "description": "Returns the current installation workflow state. When `x-aio-commerce-installation-invocation-source` is `post-app-deploy`, returns the latest lifecycle attempt without its plan instead.",
+        "description": "Returns the status of the latest lifecycle attempt, whatever its operation. Without one, returns the installation record of an older library version, if any.",
         "parameters": [
           {
             "name": "x-gw-ims-org-id",
@@ -1238,7 +1238,7 @@
           {
             "name": "x-aio-commerce-installation-invocation-source",
             "in": "header",
-            "description": "Identifies the source of the request. When set to `post-app-deploy`, the latest lifecycle attempt is returned without its plan.",
+            "description": "Identifies the source of the request. When set to `post-app-deploy` and no lifecycle attempt exists, returns `204` instead of an older library version's installation record.",
             "required": false,
             "schema": {
               "type": "string",
@@ -1248,11 +1248,14 @@
         ],
         "responses": {
           "200": {
-            "description": "The current installation workflow state, or the latest lifecycle attempt without its plan for a post-deploy request.",
+            "description": "The latest lifecycle attempt, or the installation record of an older library version.",
             "content": {
               "application/json": {
                 "schema": {
                   "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/LifecycleAttemptStatus"
+                    },
                     {
                       "$ref": "#/components/schemas/InProgressWorkflowState"
                     },
@@ -1261,9 +1264,6 @@
                     },
                     {
                       "$ref": "#/components/schemas/FailedWorkflowState"
-                    },
-                    {
-                      "$ref": "#/components/schemas/LifecycleAttemptState"
                     }
                   ]
                 }
@@ -1293,9 +1293,9 @@
         "tags": ["Management"]
       },
       "post": {
-        "operationId": "reconcileInstallation",
-        "summary": "Reconcile Installation (Install or Upgrade)",
-        "description": "Desired-state endpoint. Reconciles the app toward the target configuration: when no installation baseline exists it installs the app, except for `post-app-deploy` invocations, which return `409 not-installed`; when a baseline exists it upgrades from the baseline to the version declared in `metadata.version`. An upgrade must keep the installed `metadata.id`; a different application ID is rejected before planning. The chosen branch is reported in the response `operation` field.",
+        "operationId": "startLifecyclePlan",
+        "summary": "Start a Planned Lifecycle Operation",
+        "description": "Starts the pending plan named by `planId`, whatever its operation (install, upgrade or uninstall). Get the plan from `POST /installation/plan`. The plan is made again from the current state before it starts, and the attempt records how it differs from the reviewed plan in `review`.",
         "parameters": [
           {
             "name": "x-gw-ims-org-id",
@@ -1322,137 +1322,33 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "properties": {
-                  "appData": {
-                    "$ref": "#/components/schemas/AppData"
-                  },
-                  "commerceBaseUrl": {
-                    "description": "Commerce instance base URL. Required for a first-time installation; for an upgrade it is optional and derived from the existing Commerce association.",
-                    "type": "string"
-                  },
-                  "commerceEnv": {
-                    "description": "Commerce deployment flavor. Required for a first-time installation; for an upgrade it is optional and derived from the existing Commerce association.",
-                    "type": "string",
-                    "enum": ["paas", "saas"]
-                  },
-                  "ioEventsUrl": {
-                    "type": "string"
-                  },
-                  "ioEventsEnv": {
-                    "type": "string"
-                  }
-                },
-                "required": ["appData", "ioEventsUrl", "ioEventsEnv"]
+                "$ref": "#/components/schemas/LifecycleRequest"
               }
             }
           }
         },
         "responses": {
-          "200": {
-            "description": "Manual-mode upgrade: the upgrade plan was created or reused and returned without starting execution (`metadata.upgradeMode` is `manual`).",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    },
-                    "operation": {
-                      "const": "upgrade"
-                    },
-                    "plan": {
-                      "description": "The planned upgrade, spanning every participating domain.",
-                      "type": "object",
-                      "additionalProperties": true
-                    }
-                  },
-                  "required": ["message", "operation", "plan"]
-                }
-              }
-            }
-          },
           "202": {
-            "description": "The operation was accepted for asynchronous execution: either a first-time installation or an automatic upgrade. The `operation` field indicates which branch ran.",
+            "description": "The plan started. Poll `GET /installation` for its status.",
             "content": {
               "application/json": {
                 "schema": {
-                  "oneOf": [
+                  "allOf": [
                     {
-                      "description": "A first-time installation was accepted and queued.",
+                      "$ref": "#/components/schemas/LifecycleAttemptStatus"
+                    },
+                    {
                       "type": "object",
                       "properties": {
                         "message": {
                           "type": "string"
-                        },
-                        "operation": {
-                          "const": "install"
                         },
                         "activationId": {
+                          "description": "The activation id of the background execution.",
                           "type": "string"
-                        },
-                        "id": {
-                          "type": "string"
-                        },
-                        "status": {
-                          "const": "in-progress"
-                        },
-                        "startedAt": {
-                          "type": "string",
-                          "format": "date-time"
-                        },
-                        "step": {
-                          "$ref": "#/components/schemas/StepStatus"
-                        },
-                        "config": {
-                          "description": "The validated app configuration recorded at install time. Present so uninstallation can be sourced from what was actually installed rather than the current request config. Absent on states persisted before this field was introduced.",
-                          "type": "object",
-                          "additionalProperties": true
-                        },
-                        "data": {
-                          "anyOf": [
-                            {
-                              "type": "object",
-                              "propertyNames": {
-                                "type": "string"
-                              },
-                              "additionalProperties": {}
-                            },
-                            {
-                              "type": "null"
-                            }
-                          ]
                         }
                       },
-                      "required": [
-                        "message",
-                        "operation",
-                        "activationId",
-                        "id",
-                        "status",
-                        "startedAt",
-                        "step",
-                        "data"
-                      ]
-                    },
-                    {
-                      "description": "An automatic upgrade was planned and its execution started asynchronously.",
-                      "type": "object",
-                      "properties": {
-                        "message": {
-                          "type": "string"
-                        },
-                        "operation": {
-                          "const": "upgrade"
-                        },
-                        "plan": {
-                          "description": "The planned upgrade, spanning every participating domain.",
-                          "type": "object",
-                          "additionalProperties": true
-                        }
-                      },
-                      "required": ["message", "operation", "plan"]
+                      "required": ["message", "activationId"]
                     }
                   ]
                 }
@@ -1460,7 +1356,7 @@
             }
           },
           "400": {
-            "description": "The request is invalid or could not be parsed (for example, a first-time installation without a `commerceBaseUrl`).",
+            "description": "The request is invalid, for example without a `planId`.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1476,7 +1372,7 @@
             "description": "The access token is valid, but it is not allowed to access the requested organization or operation."
           },
           "409": {
-            "description": "The request is not actionable. This covers both non-actionable no-op states and real failures. A `409` carrying a `reason` is a graceful no-op the caller can ignore: `not-installed` (a post-deploy invocation cannot install the app), `not-associated` (the app is not associated with a Commerce instance), or `already-current` (the installed version already matches `metadata.version`). A `409` without a `reason` is a real failure — for example, an installation already running or completed, an attempted change to the installed `metadata.id`, or upgrade planning blocked by configuration `issues`.",
+            "description": "The plan cannot start. `reason` tells why: `in-progress` (another attempt is running; `attempt` carries its status), `stale-plan` (the `planId` is not the pending plan, or the installed state now calls for another operation; plan again), `not-associated`, `unreadable-state`, `baseline-missing` (the stored state names a baseline snapshot that no longer exists), `installed-without-config`, or `already-current`. Without a `reason`, planning is blocked by the `issues`, or the application ID changed.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1486,20 +1382,15 @@
                       "type": "string"
                     },
                     "reason": {
-                      "description": "Present only for non-actionable no-op states.",
-                      "type": "string",
-                      "enum": [
-                        "not-installed",
-                        "not-associated",
-                        "already-current"
-                      ]
+                      "type": "string"
+                    },
+                    "attempt": {
+                      "$ref": "#/components/schemas/LifecycleAttemptStatus"
                     },
                     "issues": {
-                      "description": "Blocking issues reported when upgrade planning is blocked.",
                       "type": "array",
                       "items": {
-                        "type": "object",
-                        "additionalProperties": true
+                        "$ref": "#/components/schemas/PlanningIssue"
                       }
                     }
                   },
@@ -1522,11 +1413,11 @@
         "tags": ["Management"]
       }
     },
-    "/installation/validation": {
+    "/installation/plan": {
       "post": {
-        "operationId": "validateInstallation",
-        "summary": "Validate Installation",
-        "description": "Validates the installation inputs and workflow steps without starting installation.",
+        "operationId": "planLifecycleOperation",
+        "summary": "Plan a Lifecycle Operation",
+        "description": "Plans the install or upgrade the installed state calls for, or an uninstallation when `operation` is `uninstall`. Stores it as the pending plan and returns it for review, together with its issues as a validation result. Start it with `POST /installation` and its `id` as `planId`.",
         "parameters": [
           {
             "name": "x-gw-ims-org-id",
@@ -1543,273 +1434,54 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "properties": {
-                  "appData": {
-                    "$ref": "#/components/schemas/AppData"
-                  },
-                  "commerceBaseUrl": {
-                    "type": "string"
-                  },
-                  "commerceEnv": {
-                    "type": "string",
-                    "enum": ["paas", "saas"]
-                  },
-                  "ioEventsUrl": {
-                    "type": "string"
-                  },
-                  "ioEventsEnv": {
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "appData",
-                  "commerceBaseUrl",
-                  "commerceEnv",
-                  "ioEventsUrl",
-                  "ioEventsEnv"
-                ]
+                "$ref": "#/components/schemas/LifecycleRequest"
               }
             }
           }
         },
         "responses": {
           "200": {
-            "description": "The validation result, including issue counts and per-step validation results.",
+            "description": "The plan and its validation result.",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "valid": {
-                      "type": "boolean"
-                    },
-                    "summary": {
+                  "allOf": [
+                    {
                       "type": "object",
                       "properties": {
-                        "totalIssues": {
-                          "type": "number"
+                        "valid": {
+                          "type": "boolean"
                         },
-                        "errors": {
-                          "type": "number"
+                        "summary": {
+                          "type": "object",
+                          "properties": {
+                            "totalIssues": {
+                              "type": "number"
+                            },
+                            "errors": {
+                              "type": "number"
+                            },
+                            "warnings": {
+                              "type": "number"
+                            }
+                          },
+                          "required": ["totalIssues", "errors", "warnings"]
                         },
-                        "warnings": {
-                          "type": "number"
+                        "result": {
+                          "$ref": "#/components/schemas/StepValidationResult"
                         }
                       },
-                      "required": ["totalIssues", "errors", "warnings"]
-                    },
-                    "result": {
-                      "$ref": "#/components/schemas/StepValidationResult"
-                    }
-                  },
-                  "required": ["valid", "summary", "result"]
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "The request is invalid or could not be parsed.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "You are not authorized to access this resource. Ensure the IMS token and the x-gw-ims-org-id header are correctly set and valid."
-          },
-          "403": {
-            "description": "The access token is valid, but it is not allowed to access the requested organization or operation."
-          },
-          "500": {
-            "description": "An unexpected server error occurred.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          }
-        },
-        "tags": ["Management"]
-      }
-    },
-    "/installation/uninstallation": {
-      "get": {
-        "operationId": "getUninstallationState",
-        "summary": "Get Uninstallation State",
-        "description": "Returns the current uninstallation workflow state if an uninstallation has been started.",
-        "parameters": [
-          {
-            "name": "x-gw-ims-org-id",
-            "in": "header",
-            "description": "Adobe IMS organization ID that identifies the organization for the request.",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "The current uninstallation workflow state.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "discriminator": {
-                    "propertyName": "status",
-                    "mapping": {
-                      "in-progress": "#/components/schemas/InProgressWorkflowState",
-                      "succeeded": "#/components/schemas/SucceededWorkflowState",
-                      "failed": "#/components/schemas/FailedWorkflowState"
-                    }
-                  },
-                  "oneOf": [
-                    {
-                      "$ref": "#/components/schemas/InProgressWorkflowState"
+                      "required": ["valid", "summary", "result"]
                     },
                     {
-                      "$ref": "#/components/schemas/SucceededWorkflowState"
-                    },
-                    {
-                      "$ref": "#/components/schemas/FailedWorkflowState"
-                    }
-                  ]
-                }
-              }
-            }
-          },
-          "204": {
-            "description": "No uninstallation workflow state has been stored yet."
-          },
-          "401": {
-            "description": "You are not authorized to access this resource. Ensure the IMS token and the x-gw-ims-org-id header are correctly set and valid."
-          },
-          "403": {
-            "description": "The access token is valid, but it is not allowed to access the requested organization or operation."
-          },
-          "500": {
-            "description": "An unexpected server error occurred.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          }
-        },
-        "tags": ["Management"]
-      },
-      "post": {
-        "operationId": "startUninstallation",
-        "summary": "Start Uninstallation",
-        "description": "Starts the uninstallation workflow and stores the initial execution state.",
-        "parameters": [
-          {
-            "name": "x-gw-ims-org-id",
-            "in": "header",
-            "description": "Adobe IMS organization ID that identifies the organization for the request.",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "appData": {
-                    "$ref": "#/components/schemas/AppData"
-                  },
-                  "commerceBaseUrl": {
-                    "type": "string"
-                  },
-                  "commerceEnv": {
-                    "type": "string",
-                    "enum": ["paas", "saas"]
-                  },
-                  "ioEventsUrl": {
-                    "type": "string"
-                  },
-                  "ioEventsEnv": {
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "appData",
-                  "commerceBaseUrl",
-                  "commerceEnv",
-                  "ioEventsUrl",
-                  "ioEventsEnv"
-                ]
-              }
-            }
-          }
-        },
-        "responses": {
-          "202": {
-            "description": "The uninstallation workflow was accepted and queued for asynchronous execution.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    },
-                    "activationId": {
-                      "type": "string"
-                    },
-                    "id": {
-                      "type": "string"
-                    },
-                    "status": {
-                      "const": "in-progress"
-                    },
-                    "startedAt": {
-                      "type": "string",
-                      "format": "date-time"
-                    },
-                    "step": {
-                      "$ref": "#/components/schemas/StepStatus"
-                    },
-                    "config": {
-                      "description": "The validated app configuration recorded at install time. Present so uninstallation can be sourced from what was actually installed rather than the current request config. Absent on states persisted before this field was introduced.",
                       "type": "object",
-                      "additionalProperties": true
-                    },
-                    "data": {
-                      "anyOf": [
-                        {
-                          "type": "object",
-                          "propertyNames": {
-                            "type": "string"
-                          },
-                          "additionalProperties": {}
-                        },
-                        {
-                          "type": "null"
+                      "properties": {
+                        "plan": {
+                          "$ref": "#/components/schemas/PlanPreview"
                         }
-                      ]
+                      },
+                      "required": ["plan"]
                     }
-                  },
-                  "required": [
-                    "message",
-                    "activationId",
-                    "id",
-                    "status",
-                    "startedAt",
-                    "step",
-                    "data"
                   ]
                 }
               }
@@ -1832,7 +1504,7 @@
             "description": "The access token is valid, but it is not allowed to access the requested organization or operation."
           },
           "409": {
-            "description": "The uninstallation workflow is already running.",
+            "description": "Nothing was planned. `reason` tells why: `in-progress` (an attempt is running; `attempt` carries its status), `not-associated`, `unreadable-state`, `baseline-missing` (the stored state names a baseline snapshot that no longer exists), `installed-without-config`, or `already-current`. Without a `reason`, planning is blocked by the `issues`, or the application ID changed.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1840,50 +1512,24 @@
                   "properties": {
                     "message": {
                       "type": "string"
+                    },
+                    "reason": {
+                      "type": "string"
+                    },
+                    "attempt": {
+                      "$ref": "#/components/schemas/LifecycleAttemptStatus"
+                    },
+                    "issues": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/PlanningIssue"
+                      }
                     }
                   },
                   "required": ["message"]
                 }
               }
             }
-          },
-          "500": {
-            "description": "An unexpected server error occurred.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          }
-        },
-        "tags": ["Management"]
-      },
-      "delete": {
-        "operationId": "clearUninstallationState",
-        "summary": "Clear Uninstallation State",
-        "description": "Clears the stored uninstallation workflow state without starting offboarding.",
-        "parameters": [
-          {
-            "name": "x-gw-ims-org-id",
-            "in": "header",
-            "description": "Adobe IMS organization ID that identifies the organization for the request.",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "The stored uninstallation workflow state was cleared."
-          },
-          "401": {
-            "description": "You are not authorized to access this resource. Ensure the IMS token and the x-gw-ims-org-id header are correctly set and valid."
-          },
-          "403": {
-            "description": "The access token is valid, but it is not allowed to access the requested organization or operation."
           },
           "500": {
             "description": "An unexpected server error occurred.",
@@ -2843,74 +2489,6 @@
         },
         "required": ["label", "description", "webhook"]
       },
-      "LifecycleAttemptStateBase": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "operation": {
-            "type": "string",
-            "enum": ["install", "upgrade", "uninstall"]
-          },
-          "progress": {
-            "$ref": "#/components/schemas/StepStatus"
-          },
-          "startedAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "executionDeadline": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "data": {
-            "anyOf": [
-              {
-                "type": "object",
-                "propertyNames": {
-                  "type": "string"
-                },
-                "additionalProperties": {}
-              },
-              {
-                "type": "null"
-              }
-            ]
-          }
-        },
-        "required": [
-          "id",
-          "operation",
-          "progress",
-          "startedAt",
-          "executionDeadline",
-          "data"
-        ]
-      },
-      "LifecycleAttemptState": {
-        "discriminator": {
-          "propertyName": "status",
-          "mapping": {
-            "pending": "#/components/schemas/ActiveLifecycleAttemptState",
-            "in-progress": "#/components/schemas/ActiveLifecycleAttemptState",
-            "succeeded": "#/components/schemas/SucceededLifecycleAttemptState",
-            "failed": "#/components/schemas/FailedLifecycleAttemptState"
-          }
-        },
-        "oneOf": [
-          {
-            "$ref": "#/components/schemas/ActiveLifecycleAttemptState"
-          },
-          {
-            "$ref": "#/components/schemas/SucceededLifecycleAttemptState"
-          },
-          {
-            "$ref": "#/components/schemas/FailedLifecycleAttemptState"
-          }
-        ],
-        "title": "LifecycleAttemptState"
-      },
       "StepStatus": {
         "type": "object",
         "properties": {
@@ -3598,86 +3176,6 @@
           "error"
         ]
       },
-      "ActiveLifecycleAttemptState": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/LifecycleAttemptStateBase"
-          },
-          {
-            "type": "object",
-            "properties": {
-              "status": {
-                "type": "string",
-                "enum": ["pending", "in-progress"]
-              }
-            },
-            "required": ["status"]
-          }
-        ]
-      },
-      "SucceededLifecycleAttemptState": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/LifecycleAttemptStateBase"
-          },
-          {
-            "type": "object",
-            "properties": {
-              "status": {
-                "const": "succeeded"
-              },
-              "result": {
-                "type": "object",
-                "properties": {
-                  "snapshotId": {
-                    "type": "string"
-                  },
-                  "appVersion": {
-                    "type": "string"
-                  }
-                },
-                "required": ["snapshotId", "appVersion"]
-              }
-            },
-            "required": ["status", "result"]
-          }
-        ]
-      },
-      "FailedLifecycleAttemptState": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/LifecycleAttemptStateBase"
-          },
-          {
-            "type": "object",
-            "properties": {
-              "status": {
-                "const": "failed"
-              },
-              "failure": {
-                "type": "object",
-                "properties": {
-                  "path": {
-                    "type": "array",
-                    "items": {
-                      "type": "string"
-                    }
-                  },
-                  "key": {
-                    "type": "string"
-                  },
-                  "message": {
-                    "type": "string"
-                  },
-                  "payload": {}
-                },
-                "required": ["path", "key"]
-              }
-            },
-            "required": ["status", "failure"]
-          }
-        ]
-      },
       "AdminUiOrderViewNavigationButton": {
         "type": "object",
         "properties": {
@@ -3764,6 +3262,187 @@
           }
         },
         "required": ["type", "id", "label", "runtimeAction"]
+      },
+      "LifecycleRequest": {
+        "type": "object",
+        "properties": {
+          "appData": {
+            "$ref": "#/components/schemas/AppData"
+          },
+          "ioEventsUrl": {
+            "type": "string"
+          },
+          "ioEventsEnv": {
+            "type": "string"
+          },
+          "operation": {
+            "description": "Set to `uninstall` to plan an uninstallation. Without it, `POST /installation/plan` plans the install or upgrade the installed state calls for.",
+            "const": "uninstall"
+          },
+          "planId": {
+            "description": "The id of the pending plan to start. Required by `POST /installation`.",
+            "type": "string"
+          }
+        },
+        "required": ["appData", "ioEventsUrl", "ioEventsEnv"]
+      },
+      "LifecycleAttemptStatus": {
+        "description": "The status of a lifecycle attempt. Only one lifecycle operation runs at a time; `id` identifies the run.",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "operation": {
+            "type": "string",
+            "enum": ["install", "upgrade", "uninstall"]
+          },
+          "status": {
+            "type": "string",
+            "enum": ["pending", "in-progress", "succeeded", "failed"]
+          },
+          "startedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "completedAt": {
+            "description": "Present once the attempt succeeded or failed.",
+            "type": "string",
+            "format": "date-time"
+          },
+          "step": {
+            "$ref": "#/components/schemas/StepStatus"
+          },
+          "data": {
+            "anyOf": [
+              {
+                "type": "object",
+                "propertyNames": {
+                  "type": "string"
+                },
+                "additionalProperties": {}
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "error": {
+            "description": "Present when the attempt failed.",
+            "type": "object",
+            "properties": {
+              "path": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "key": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              },
+              "payload": {}
+            },
+            "required": ["path", "key"]
+          },
+          "review": {
+            "description": "How the started plan differs from the reviewed one. Present when the attempt started from a reviewed plan.",
+            "type": "object",
+            "additionalProperties": true
+          }
+        },
+        "required": ["id", "operation", "status", "startedAt", "step", "data"]
+      },
+      "PlanningIssue": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "domain": {
+            "type": "string"
+          },
+          "path": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "severity": {
+            "type": "string",
+            "enum": ["error", "warning", "info"]
+          },
+          "blocking": {
+            "description": "Whether the issue prevents the plan from running.",
+            "type": "boolean"
+          }
+        },
+        "required": ["code", "message", "domain", "severity", "blocking"]
+      },
+      "PlanPreview": {
+        "description": "A lifecycle plan for review, without internal or sensitive values.",
+        "type": "object",
+        "properties": {
+          "id": {
+            "description": "The `planId` to start the plan with.",
+            "type": "string"
+          },
+          "operation": {
+            "type": "string",
+            "enum": ["install", "upgrade", "uninstall"]
+          },
+          "domains": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "path": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "operations": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string"
+                      },
+                      "kind": {
+                        "type": "string",
+                        "enum": ["add", "update", "remove"]
+                      },
+                      "label": {
+                        "type": "string"
+                      },
+                      "reason": {
+                        "description": "`change` when the config changed, `drift` when the live state differs from what was installed.",
+                        "type": "string",
+                        "enum": ["change", "drift"]
+                      }
+                    },
+                    "required": ["id", "kind", "label", "reason"]
+                  }
+                }
+              },
+              "required": ["path", "operations"]
+            }
+          },
+          "issues": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PlanningIssue"
+            }
+          }
+        },
+        "required": ["id", "operation", "domains", "issues"]
       }
     },
     "securitySchemes": {

@@ -539,6 +539,102 @@ describe("planWebhookSubscriptions", () => {
     ]);
   });
 
+  describe("conflict warnings", () => {
+    /** Another app's webhook on the same hook point as the app's default webhook. */
+    const FOREIGN_WEBHOOK = createMockExistingCommerceWebhook({
+      batch_name: "other_app_batch",
+      hook_name: "other_app_hook",
+    });
+
+    const CONFLICT_WARNING = {
+      blocking: false,
+      code: "WEBHOOK_CONFLICTS",
+      details: {
+        conflictedWebhooks: [
+          expect.objectContaining({ batch_name: "other_app_batch" }),
+        ],
+      },
+      domain: "webhooks",
+      message: expect.any(String),
+      severity: "warning",
+    };
+
+    test("warns when a modification webhook the plan adds conflicts with another app's webhook", async () => {
+      const result = await plan({
+        live: [FOREIGN_WEBHOOK],
+        target: configWith({ category: "modification" }),
+      }).result;
+
+      expect.assert(result.kind === "planned");
+      expect(result.issues).toEqual([CONFLICT_WARNING]);
+    });
+
+    test("warns when a modification webhook the plan updates conflicts with another app's webhook", async () => {
+      const config = configWith({
+        category: "modification",
+        webhook: { fields: [{ name: "sku" }] },
+      });
+      const result = await plan({
+        baseline: config,
+        live: [liveFrom(config, { fields: [] }), FOREIGN_WEBHOOK],
+        target: config,
+      }).result;
+
+      expect.assert(result.kind === "planned");
+      expect(result.plan.operations).toEqual([
+        expect.objectContaining({ kind: "update" }),
+      ]);
+      expect(result.issues).toEqual([CONFLICT_WARNING]);
+    });
+
+    test("does not warn about a webhook the plan leaves unchanged", async () => {
+      const config = configWith({ category: "modification" });
+      const result = await plan({
+        baseline: config,
+        live: [liveFrom(config), FOREIGN_WEBHOOK],
+        target: config,
+      }).result;
+
+      expect.assert(result.kind === "planned");
+      expect(result.issues).toEqual([]);
+    });
+
+    test("does not warn without a target config", async () => {
+      const result = await plan({
+        baseline: configWith({ category: "modification" }),
+        live: [FOREIGN_WEBHOOK],
+      }).result;
+
+      expect.assert(result.kind === "planned");
+      expect(result.issues).toEqual([]);
+    });
+
+    test("does not warn about webhooks that are not modification webhooks", async () => {
+      const result = await plan({
+        live: [FOREIGN_WEBHOOK],
+        target: configWith({ category: "validation" }),
+      }).result;
+
+      expect.assert(result.kind === "planned");
+      expect(result.issues).toEqual([]);
+    });
+
+    test("does not warn about the app's own webhook", async () => {
+      const config = configWith({
+        category: "modification",
+        webhook: { fields: [{ name: "sku" }] },
+      });
+      const result = await plan({
+        baseline: config,
+        live: [liveFrom(config, { fields: [] })],
+        target: config,
+      }).result;
+
+      expect.assert(result.kind === "planned");
+      expect(result.issues).toEqual([]);
+    });
+  });
+
   test("never writes to Commerce", async () => {
     const config = createMockWebhooksConfig();
     const { result, subscribeWebhook, unsubscribeWebhook } = plan({

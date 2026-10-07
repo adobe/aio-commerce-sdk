@@ -11,7 +11,7 @@
  */
 
 import { executePlannedWorkflow } from "#management/common/workflow/execute";
-import { createRetryState } from "#management/common/workflow/retry";
+import { nowIsoString } from "#management/common/workflow/utils";
 
 import {
   InvalidExecutionDeadlineError,
@@ -57,7 +57,7 @@ export type ExecuteLifecycleAttemptOptions = Omit<
 };
 
 /**
- * Executes the current attempt, retries failed leaves once, and persists its
+ * Executes the current attempt once and persists its
  * terminal state and successful snapshot.
  */
 export async function executeLifecycleAttempt(
@@ -65,18 +65,22 @@ export async function executeLifecycleAttempt(
 ): Promise<LifecycleAttempt> {
   let state = await requireState(options.stateStore);
   const currentAttempt = state.latestAttempt;
+
   if (!currentAttempt || currentAttempt.id !== options.attemptId) {
     throw new LifecycleAttemptNotFoundError(options.attemptId);
   }
+
   if (
     currentAttempt.status === "succeeded" ||
     currentAttempt.status === "failed"
   ) {
     return currentAttempt;
   }
+
   if (currentAttempt.status === "in-progress") {
     throw new LifecycleAttemptAlreadyExecutingError(currentAttempt.id);
   }
+
   if (currentAttempt.plan.actionVersion !== options.actionVersion) {
     return await failPendingAttempt(
       options.stateStore,
@@ -98,11 +102,12 @@ export async function executeLifecycleAttempt(
     );
   }
 
-  const baseline = await options.snapshotStore.get(
-    currentAttempt.plan.source.snapshotId,
-  );
+  const { source } = currentAttempt.plan;
+  const baseline = source
+    ? await options.snapshotStore.get(source.snapshotId)
+    : null;
 
-  if (!baseline) {
+  if (source && !baseline) {
     return await failPendingAttempt(
       options.stateStore,
       state,
@@ -123,12 +128,7 @@ export async function executeLifecycleAttempt(
   state = await normalizeExpiredAttempt(options.stateStore, state);
 
   const hooks = createProgressHooks(options.stateStore, attempt.id);
-  const workflow = await executePlanWithRetry(
-    options,
-    attempt,
-    baseline,
-    hooks,
-  );
+  const workflow = await executePlan(options, attempt, baseline, hooks);
 
   state = await requireCurrentAttempt(options.stateStore, attempt.id);
   if (workflow.status === "failed") {
@@ -157,6 +157,7 @@ async function failPendingAttempt(
     ...state,
     latestAttempt: {
       ...attempt,
+      completedAt: nowIsoString(),
       failure: {
         key: "LIFECYCLE_START_FAILED",
         message: error.message,
@@ -186,39 +187,31 @@ function createProgressHooks(
   };
 }
 
-/** Applies an attempt's plan and retries its failed leaves once. */
-async function executePlanWithRetry(
+/** Applies an attempt's plan once. */
+async function executePlan(
   options: ExecuteLifecycleAttemptOptions,
   attempt: LifecycleAttempt,
-  baseline: AppStateSnapshot,
+  baseline: AppStateSnapshot | null,
   hooks: WorkflowHooks,
 ): Promise<SucceededWorkflowState | FailedWorkflowState> {
-  const executionOptions = {
+  const result = await executePlannedWorkflow({
     attemptId: attempt.id,
     baseline,
     failureKey: "LIFECYCLE_APPLY_FAILED",
     hooks,
+    initialState: toWorkflowState(attempt, attempt.plan.target?.config),
     lifecycleContext: options.lifecycleContext,
     plan: attempt.plan,
     rootStep: options.rootStep,
-  };
-  let result = await executePlannedWorkflow({
-    ...executionOptions,
-    initialState: toWorkflowState(attempt, attempt.plan.target.config),
   });
-  if (result.state.status === "failed") {
-    result = await executePlannedWorkflow({
-      ...executionOptions,
-      initialState: createRetryState(result.state),
-    });
-  }
+
   return result.state;
 }
 
 /** Recreates workflow execution state from a persisted lifecycle attempt. */
 function toWorkflowState(
   attempt: LifecycleAttempt,
-  config: AppStateSnapshot["config"],
+  config?: AppStateSnapshot["config"],
 ): InProgressWorkflowState {
   return {
     config,

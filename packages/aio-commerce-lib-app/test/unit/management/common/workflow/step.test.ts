@@ -51,6 +51,21 @@ describe("defineLeafStep", () => {
     expect(step.install).toBe(installFn);
   });
 
+  test("preserves the plan and apply capabilities", () => {
+    const plan = vi.fn();
+    const apply = vi.fn();
+
+    const step = defineLeafStep({
+      apply,
+      install: vi.fn(),
+      meta: { install: { label: "Planned Step" } },
+      name: "planned-step",
+      plan,
+    });
+
+    expect(step).toMatchObject({ apply, plan });
+  });
+
   test("works with minimal options (just name, meta, install)", () => {
     const installFn = vi.fn(() => ({ result: "test" }));
 

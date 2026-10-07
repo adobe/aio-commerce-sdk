@@ -14,30 +14,32 @@ import { unwrapHttpError } from "@adobe/aio-commerce-lib-api/utils";
 
 import { getInstallCommerceEnv } from "#config/lib/environment";
 
+import { findConflictingWebhooks, toWebhookConflictIssues } from "./comparison";
 import { planAdditions, planRemovals, planUpdates } from "./diff";
 import {
+  buildWebhookIdPrefix,
   collectConfiguredValues,
+  isWebhookInList,
   resolveDesiredWebhooks,
   toResolvedWebhookPayload,
 } from "./utils";
 
+import type { CommerceWebhook } from "@adobe/aio-commerce-lib-webhooks/api";
 import type { WebhooksConfig } from "#config/schema/webhooks";
 import type {
+  NonBlockingPlanningIssue,
   PlanningInput,
   PlanningResult,
 } from "#management/common/workflow/resource";
 import type { ValidationExecutionContext } from "#management/common/workflow/step";
 import type { WebhooksStepContext } from "./context";
-import type {
-  ResolvedWebhookPayload,
-  WebhookDomainPlan,
-  WebhookSnapshotData,
-} from "./types";
+import type { WebhookDomainPlan, WebhookSnapshotData } from "./types";
 
 /**
  * Diffs the live webhooks against the target config into add, update, and remove
  * operations. Removes cover live webhooks the app owns that the target does not
- * declare. Blocks with `WEBHOOK_LIVE_READ_FAILED` if the live webhooks cannot be listed.
+ * declare. Blocks with `WEBHOOK_LIVE_READ_FAILED` if the live webhooks cannot be listed, and
+ * warns with `WEBHOOK_CONFLICTS` when another app has a webhook on a hook point the plan changes.
  */
 export async function planWebhookSubscriptions(
   input: PlanningInput<WebhooksConfig, WebhookSnapshotData>,
@@ -46,14 +48,14 @@ export async function planWebhookSubscriptions(
   const { path, baseline, targetConfig, failedAttempt } = input;
   const env = getInstallCommerceEnv(context.params);
 
-  let live: ResolvedWebhookPayload[];
+  let webhooks: CommerceWebhook[];
   try {
-    const webhooks = await context.commerceWebhooksClient.getWebhookList();
-    live = webhooks.map(toResolvedWebhookPayload);
+    webhooks = await context.commerceWebhooksClient.getWebhookList();
   } catch (error) {
     return {
       issues: [
         {
+          blocking: true,
           code: "WEBHOOK_LIVE_READ_FAILED",
           domain: "webhooks",
           message: `Could not list the live webhooks to plan against: ${await unwrapHttpError(error)}`,
@@ -63,6 +65,7 @@ export async function planWebhookSubscriptions(
     };
   }
 
+  const live = webhooks.map(toResolvedWebhookPayload);
   const desired = targetConfig ? resolveDesiredWebhooks(targetConfig, env) : [];
   const declaredInBaseline = baseline
     ? resolveDesiredWebhooks(baseline.config, env)
@@ -78,17 +81,56 @@ export async function planWebhookSubscriptions(
     { ...failedPlan?.configuredValues },
   );
 
+  const operations = [
+    // Removes precede adds so a rename never briefly double-registers a hook point.
+    ...planRemovals(live, desired, declaredInBaseline, context.appId),
+    ...planUpdates(live, desired, declaredInBaseline, configuredValues),
+    ...planAdditions(live, desired, declaredInBaseline),
+  ];
+
   return {
+    issues: findConflictIssues(targetConfig, operations, webhooks),
     kind: "planned",
-    plan: {
-      configuredValues,
-      operations: [
-        // Removes precede adds so a rename never briefly double-registers a hook point.
-        ...planRemovals(live, desired, declaredInBaseline, context.appId),
-        ...planUpdates(live, desired, declaredInBaseline, configuredValues),
-        ...planAdditions(live, desired, declaredInBaseline),
-      ],
-      path,
-    },
+    plan: { configuredValues, operations, path },
   };
+}
+
+/**
+ * Warns about the modification webhooks the plan adds or updates when another app already has a
+ * webhook on the same hook point.
+ */
+function findConflictIssues(
+  targetConfig: WebhooksConfig | null,
+  operations: WebhookDomainPlan["operations"],
+  webhooks: CommerceWebhook[],
+): NonBlockingPlanningIssue[] {
+  if (!targetConfig) {
+    return [];
+  }
+
+  const changed = operations
+    .filter((op) => op.kind !== "remove")
+    .map((op) => op.after);
+
+  const idPrefix = buildWebhookIdPrefix(targetConfig.metadata.id);
+  const entries = targetConfig.webhooks.filter((entry) => {
+    const { webhook } = entry;
+
+    const isModification = entry.category === "modification";
+    const isChanged = isWebhookInList(changed, {
+      batch_name: `${idPrefix}${webhook.batch_name}`,
+      hook_name: `${idPrefix}${webhook.hook_name}`,
+      webhook_method: webhook.webhook_method,
+      webhook_type: webhook.webhook_type,
+    });
+
+    return isModification && isChanged;
+  });
+
+  const conflicts = findConflictingWebhooks(entries, webhooks, idPrefix);
+  return toWebhookConflictIssues(conflicts).map((issue) => ({
+    ...issue,
+    blocking: false,
+    domain: "webhooks",
+  }));
 }

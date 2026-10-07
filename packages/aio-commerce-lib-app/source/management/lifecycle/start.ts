@@ -47,6 +47,7 @@ export async function startLifecycleAttempt(
 ): Promise<LifecycleAttempt> {
   const loaded = await readOrInitializeState(options);
   const state = await normalizeExpiredAttempt(options.stateStore, loaded.state);
+
   const { baseline } = loaded;
   const plan = state.pendingPlan;
 
@@ -56,9 +57,11 @@ export async function startLifecycleAttempt(
   if (plan.actionVersion !== options.actionVersion) {
     throw new LifecyclePlanActionVersionMismatchError(plan.actionVersion);
   }
-  if (plan.issues.length > 0) {
+
+  if (plan.issues.some((issue) => issue.blocking)) {
     throw new BlockedLifecyclePlanError(plan.id);
   }
+
   if (
     state.latestAttempt?.status === "pending" ||
     state.latestAttempt?.status === "in-progress"
@@ -67,14 +70,14 @@ export async function startLifecycleAttempt(
   }
 
   assertFutureExecutionDeadline(options.executionDeadline);
-
   const workflow = createInitialPlanExecutionState({
     plan,
     rootStep: options.rootStep,
-    targetConfig: plan.target.config,
+    targetConfig: plan.target?.config,
   });
+
   const attempt: LifecycleAttempt = {
-    data: baseline.data,
+    data: baseline?.data ?? null,
     executionDeadline: options.executionDeadline,
     id: crypto.randomUUID(),
     operation: plan.operation,
@@ -90,6 +93,7 @@ export async function startLifecycleAttempt(
     latestAttempt: attempt,
     pendingPlan: null,
   });
+
   return attempt;
 }
 

@@ -13,6 +13,7 @@
 import { hasCustomInstallationSteps } from "#config/schema/installation";
 
 import {
+  getScriptModule,
   getScriptModuleOrThrow,
   resolveCustomScriptHandler,
 } from "./custom-scripts";
@@ -50,9 +51,79 @@ async function runAddedStep(
 }
 
 /**
- * Applies the plan: runs `install` for first-time steps, warns about retained steps that point to
- * a different script (without re-running them), and ignores steps no longer in the config. Returns
- * the baseline history with the newly-added steps appended.
+ * Runs the `uninstall` of a step that ran before. Returns whether it ran: a step whose script is
+ * not deployed, or that exports no `uninstall`, is skipped with a warning.
+ */
+async function runRemovedStep(
+  step: CustomInstallationStepIdentity,
+  baselineConfig: CommerceAppConfigOutputModel,
+  context: ApplyContext,
+): Promise<boolean> {
+  const { logger } = context;
+  const scriptModule = getScriptModule(
+    context.customScripts ?? {},
+    step.script,
+  );
+
+  if (!scriptModule) {
+    logger.warn(
+      `Skipping the uninstall of custom installation step "${step.name}": its script "${step.script}" is not deployed.`,
+    );
+    return false;
+  }
+
+  const uninstall = resolveCustomScriptHandler(scriptModule, "uninstall");
+  if (!uninstall) {
+    logger.warn(
+      `Skipping the uninstall of custom installation step "${step.name}": its script exports no uninstall function.`,
+    );
+    return false;
+  }
+
+  logger.info(`Executing custom uninstallation script: ${step.name}`);
+  await uninstall(baselineConfig, context);
+  logger.info(`Successfully executed script: ${step.name}`);
+
+  return true;
+}
+
+/**
+ * Runs `uninstall` for every step the plan removes, newest first, and returns the history without
+ * the steps whose `uninstall` ran.
+ */
+async function uninstallRemovedSteps(
+  plan: CustomInstallationDomainPlan,
+  context: ApplyContext,
+): Promise<ApplyResult<CustomInstallationSnapshotData>> {
+  const { baselineConfig, baselineExecutedSteps, operations } = plan;
+  const removed = operations
+    .filter((op) => op.kind === "remove")
+    .map((op) => op.before);
+
+  const uninstalled = new Set<string>();
+  if (baselineConfig) {
+    for (const step of removed.reverse()) {
+      // biome-ignore lint/performance/noAwaitInLoops: steps are undone in reverse order of installation
+      if (await runRemovedStep(step, baselineConfig, context)) {
+        uninstalled.add(step.name);
+      }
+    }
+  }
+
+  return {
+    snapshotData: {
+      executedSteps: baselineExecutedSteps.filter(
+        (step) => !uninstalled.has(step.name),
+      ),
+    },
+  };
+}
+
+/**
+ * Applies the plan. Without a target config, it runs `uninstall` for the removed steps. Otherwise
+ * it runs `install` for first-time steps, warns about retained steps that point to a different
+ * script (without re-running them), and ignores steps no longer in the config. Returns the
+ * baseline history with the newly-added steps appended.
  */
 export async function applyCustomInstallationSteps(
   plan: CustomInstallationDomainPlan,
@@ -61,10 +132,7 @@ export async function applyCustomInstallationSteps(
   const { baselineExecutedSteps, targetConfig, operations } = plan;
 
   if (!targetConfig) {
-    // No target config: nothing to install. `operations` can only be `remove`s here (the plan
-    // only proposes `add`s when a target config with steps exists), so just carry the baseline
-    // history forward untouched.
-    return { snapshotData: { executedSteps: baselineExecutedSteps } };
+    return await uninstallRemovedSteps(plan, context);
   }
 
   const targetSteps = hasCustomInstallationSteps(targetConfig)

@@ -158,8 +158,7 @@ export async function buildOpenApiSpec(
     );
 
     stripPath("/installation");
-    stripPath("/installation/validation");
-    stripPath("/installation/uninstallation");
+    stripPath("/installation/plan");
   }
 
   pruneUnusedSchemas(spec);
