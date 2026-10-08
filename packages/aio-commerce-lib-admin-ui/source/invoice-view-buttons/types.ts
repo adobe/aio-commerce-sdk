@@ -10,17 +10,16 @@
  * governing permissions and limitations under the License.
  */
 
-import { baseConfig } from "@aio-commerce-sdk/config-tsdown/tsdown.config.base";
-import { mergeConfig } from "tsdown";
+import type * as v from "valibot";
+import type { InvoiceViewButtonRequestSchema } from "./schema";
 
-export default mergeConfig(baseConfig, {
-  entry: [
-    "./source/api/index.ts",
-    "./source/grid-columns/index.ts",
-    "./source/invoice-view-buttons/index.ts",
-    "./source/mass-actions/index.ts",
-    "./source/menu/index.ts",
-    "./source/web/index.ts",
-    "./source/order-view-buttons/index.ts",
-  ],
-});
+/** Parsed request body for an invoice view-button worker. */
+export type InvoiceViewButtonRequest = v.InferOutput<
+  typeof InvoiceViewButtonRequestSchema
+>;
+
+/** Empty success body returned by an invoice view-button worker. */
+export type InvoiceViewButtonSuccessBody = Record<string, never>;
+
+/** Error body returned by an invoice view-button worker. */
+export type InvoiceViewButtonErrorBody = { message: string };

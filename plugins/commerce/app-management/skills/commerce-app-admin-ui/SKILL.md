@@ -3,10 +3,10 @@ name: commerce-app-admin-ui
 description: >
   Add or modify Adobe Commerce Admin UI extensions on the
   commerce/backend-ui/2 extension point: custom grid columns, mass actions,
-  order view buttons, a custom Admin menu entry, and custom ACL resources. Use
+  order and invoice view buttons, a custom Admin menu entry, and custom ACL resources. Use
   whenever the user wants to extend the Commerce Admin — add a column to the
   order, product, customer, invoice, credit memo, shipment, or newsletter grid, add a
-  bulk/mass action to a grid, add a button to the order view page, add a
+  bulk/mass action to a grid, add a button to the order or invoice view page, add a
   custom menu item or page, or declare custom permissions the app checks
   itself — even when they don't name the extension point.
 license: Apache-2.0
@@ -23,7 +23,7 @@ metadata:
 # Configure Commerce App Admin UI
 
 Adds or modifies the `adminUi` block in an existing `app.commerce.config.ts`.
-The Admin UI extension point (`commerce/backend-ui/2`) lets a Commerce app extend the Commerce Admin with custom grid columns, mass actions, order view buttons, a menu entry, and custom ACL resources.
+The Admin UI extension point (`commerce/backend-ui/2`) lets a Commerce app extend the Commerce Admin with custom grid columns, mass actions, order and invoice view buttons, a menu entry, and custom ACL resources.
 Other extensibility domains (webhooks, events, business config) are added separately via their own skills.
 
 ## Prerequisites
@@ -37,13 +37,14 @@ Other extensibility domains (webhooks, events, business config) are added separa
 
 ## Extension points at a glance
 
-| Extension point    | Entities                                                            | Variants      | Server handler | Reference                                              |
-| ------------------ | ------------------------------------------------------------------- | ------------- | -------------- | ------------------------------------------------------ |
-| Grid columns       | order, product, customer, invoice, creditMemo, shipment, newsletter | worker only   | yes            | [grid-columns](references/grid-columns.md)             |
-| Mass actions       | order, product, customer, newsletter                                | view / worker | worker only    | [mass-actions](references/mass-actions.md)             |
-| Order view buttons | order only                                                          | view / worker | worker only    | [order-view-buttons](references/order-view-buttons.md) |
-| Menu               | single entry (`adminUi.menu`)                                       | view (iframe) | no             | [menu](references/menu.md)                             |
-| Custom ACL         | list (`adminUi.acl`)                                                | none          | no             | [custom-acl](references/custom-acl.md)                 |
+| Extension point      | Entities                                                            | Variants      | Server handler | Reference                                                  |
+| -------------------- | ------------------------------------------------------------------- | ------------- | -------------- | ---------------------------------------------------------- |
+| Grid columns         | order, product, customer, invoice, creditMemo, shipment, newsletter | worker only   | yes            | [grid-columns](references/grid-columns.md)                 |
+| Mass actions         | order, product, customer, newsletter                                | view / worker | worker only    | [mass-actions](references/mass-actions.md)                 |
+| Order view buttons   | order only                                                          | view / worker | worker only    | [order-view-buttons](references/order-view-buttons.md)     |
+| Invoice view buttons | invoice only                                                        | view / worker | worker only    | [invoice-view-buttons](references/invoice-view-buttons.md) |
+| Menu                 | single entry (`adminUi.menu`)                                       | view (iframe) | no             | [menu](references/menu.md)                                 |
+| Custom ACL           | list (`adminUi.acl`)                                                | none          | no             | [custom-acl](references/custom-acl.md)                     |
 
 `view` renders an iframe into the app's web UI (`web-src`) at the entry's `path`; `worker` invokes a runtime action server-side.
 Custom ACL resources have no variant and no handler: they are standalone permissions Commerce renders in the User Roles tree, and the app checks them itself (see [custom-acl](references/custom-acl.md)).
@@ -53,8 +54,8 @@ Grid columns are always worker; the menu is always an iframe.
 
 For each thing the user wants to add, gather:
 
-- **Which extension point** — grid columns, mass actions, order view buttons, menu, or custom ACL resources
-- **Which entity** — grid columns support `order`, `product`, `customer`, `invoice`, `creditMemo`, `shipment`, or `newsletter`; mass actions support only `order`, `product`, `customer`, or `newsletter`; view buttons are order-only; menu and custom ACL resources have no entity
+- **Which extension point** — grid columns, mass actions, order or invoice view buttons, menu, or custom ACL resources
+- **Which entity** — grid columns support `order`, `product`, `customer`, `invoice`, `creditMemo`, `shipment`, or `newsletter`; mass actions support only `order`, `product`, `customer`, or `newsletter`; view buttons support `order` and `invoice`; menu and custom ACL resources have no entity
 - **For mass actions and view buttons, the variant** — `worker` (runtime action) or `view` (iframe into `web-src`)
 - The fields for that extension point (column definitions, button labels, menu parent, etc.) — see the reference file in the table above for the full field set
 
@@ -215,7 +216,7 @@ Just as the worker variants wire a `runtimeAction` to an action, each `view` ent
 
 The **menu** has no `path`: it renders at the index route (`src/pages/main-page.jsx`), which the scaffold already created as a plain page. There is nothing to scaffold for the menu — leave `main-page.jsx` in place (customize its content if you like). It needs only the `MENU_*` constant for `parentMenu` in the config (see [menu](references/menu.md)).
 
-For each `view`-type **mass action** and **order view button** (both carry a `path`):
+For each `view`-type **mass action** and **order or invoice view button** (both carry a `path`):
 
 1. **Check for the route.** Look in `src/app.jsx` for a `routes` entry whose `path` equals the entry's config `path`, and in `web-src/src/pages/` for its page file. If a route for that `path` already exists, leave it and its page untouched and move on.
 
@@ -225,11 +226,12 @@ For each `view`-type **mass action** and **order view button** (both carry a `pa
 
 Pre-wire the hook by view type — all from `@adobe/aio-commerce-lib-admin-ui/web`:
 
-| View entry           | Context hook                                                          | Also                                                                | Reference                                              |
-| -------------------- | --------------------------------------------------------------------- | ------------------------------------------------------------------- | ------------------------------------------------------ |
-| Mass action (`view`) | `useMassActionContext()` → `{ data, error }`; use `data.selectedIds`  | `useHostConnection()` → `{ actions, error }`; use `actions.close()` | [mass-actions](references/mass-actions.md)             |
-| Order view button    | `useOrderViewButtonContext()` → `{ data, error }`; use `data.orderId` | `useHostConnection()` → `{ actions, error }`; use `actions.close()` | [order-view-buttons](references/order-view-buttons.md) |
-| Menu                 | none (plain index page)                                               | —                                                                   | [menu](references/menu.md)                             |
+| View entry           | Context hook                                                              | Also                                                                | Reference                                                  |
+| -------------------- | ------------------------------------------------------------------------- | ------------------------------------------------------------------- | ---------------------------------------------------------- |
+| Mass action (`view`) | `useMassActionContext()` → `{ data, error }`; use `data.selectedIds`      | `useHostConnection()` → `{ actions, error }`; use `actions.close()` | [mass-actions](references/mass-actions.md)                 |
+| Order view button    | `useOrderViewButtonContext()` → `{ data, error }`; use `data.orderId`     | `useHostConnection()` → `{ actions, error }`; use `actions.close()` | [order-view-buttons](references/order-view-buttons.md)     |
+| Invoice view button  | `useInvoiceViewButtonContext()` → `{ data, error }`; use `data.invoiceId` | `useHostConnection()` → `{ actions, error }`; use `actions.close()` | [invoice-view-buttons](references/invoice-view-buttons.md) |
+| Menu                 | none (plain index page)                                                   | —                                                                   | [menu](references/menu.md)                                 |
 
 These hooks return errors instead of throwing them. A route can throw a returned error during render to send it to the SDK's error boundary, which replaces the extension content with its fallback UI. If the route must stay mounted, handle the error locally by rendering a message, offering a retry, disabling the affected feature, or providing another degraded state. The placeholder examples below throw because they don't define custom recovery UI.
 
@@ -324,7 +326,7 @@ A build failure with a validation error points directly to the offending `adminU
 ## Common Issues
 
 - **`view` vs `worker` mismatch**: each variant is a strict object — a `worker` entry requires `runtimeAction` (and rejects `path`/`sandboxPermissions`); a `view` entry requires `path` (and rejects `runtimeAction`/`timeout`). They are discriminated by `type`.
-- **Grid columns are worker-only**: there is no `view` grid column. `order`, `product`, `customer`, `invoice`, `creditMemo`, `shipment`, and `newsletter` support `gridColumns`; only `order`, `product`, `customer`, and `newsletter` support `massActions`; and only `order` supports `viewButtons`.
+- **Grid columns are worker-only**: there is no `view` grid column. `order`, `product`, `customer`, `invoice`, `creditMemo`, `shipment`, and `newsletter` support `gridColumns`; only `order`, `product`, `customer`, and `newsletter` support `massActions`; only `order` and `invoice` support `viewButtons`.
 - **`runtimeAction` with no handler**: a worker entry whose `<package>/<action>` is not declared under `runtimeManifest` in `src/commerce-backend-ui-2/ext.config.yaml` leaves the generated `workerProcess` reference unresolved at deploy.
 - **Wrong action location**: handler sources and their `runtimeManifest` entry belong in the Admin UI extension folder `src/commerce-backend-ui-2/` — not `src/commerce-extensibility-1/` (where webhook and event handlers live). The `function` path is relative to `src/commerce-backend-ui-2/`.
 - **Grid row keys must match column ids**: keys in the `okGridResponse` rows must equal the `id`s in `gridColumns.columns`, or cells render empty (or fall back to the defaults bag).
@@ -352,5 +354,6 @@ After `aio app build` passes:
 - [references/grid-columns.md](references/grid-columns.md) — Grid column config and handler contract
 - [references/mass-actions.md](references/mass-actions.md) — Mass action config (view and worker) and handler contract
 - [references/order-view-buttons.md](references/order-view-buttons.md) — Order view button config (view and worker) and handler contract
+- [references/invoice-view-buttons.md](references/invoice-view-buttons.md) — Invoice view button config (view and worker) and handler contract
 - [references/menu.md](references/menu.md) — Menu config and parent-menu constants
 - [references/custom-acl.md](references/custom-acl.md) — Custom ACL resource config and runtime permission checks

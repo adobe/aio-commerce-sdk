@@ -488,6 +488,39 @@ export const configWithAdminUiInvoiceCreditMemoShipmentGrids = {
   },
 } satisfies CommerceAppConfigOutputModel;
 
+/** Config fixture with invoice view and worker buttons. */
+export const configWithInvoiceViewButtons = {
+  ...minimalValidConfig,
+  adminUi: {
+    invoice: {
+      viewButtons: [
+        {
+          id: "invoice-details",
+          label: "Invoice details",
+          path: "#/invoice-details",
+          sandboxPermissions: ["allow-modals"],
+          sortOrder: 100,
+          title: "Custom invoice details",
+          type: "view",
+        },
+        {
+          confirm: { message: "Send this invoice?" },
+          id: "send-invoice",
+          label: "Send invoice",
+          notifications: {
+            error: "Unable to send the invoice.",
+            success: "Invoice sent successfully.",
+          },
+          runtimeAction: "invoice/send",
+          sortOrder: 110,
+          timeout: 15,
+          type: "worker",
+        },
+      ],
+    },
+  },
+} satisfies CommerceAppConfigOutputModel;
+
 /** Config fixture with only newsletter adminUi grid columns configured. */
 export const configWithAdminUiNewsletterGrid = {
   adminUi: {
