@@ -38,7 +38,8 @@ export function appliesToEnv(item: EnvScopedItem, env: CommerceEnv): boolean {
 }
 
 /**
- * Reads and validates the target Commerce environment from the install workflow params.
+ * Reads and validates the target Commerce environment from the install workflow params,
+ * where the router maps the request's `commerceEnv` onto `AIO_COMMERCE_API_FLAVOR`.
  * Throws if the value is absent or not a recognised Commerce environment.
  *
  * @param params - The runtime action params available to install steps.

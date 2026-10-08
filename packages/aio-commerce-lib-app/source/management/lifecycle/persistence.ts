@@ -53,7 +53,6 @@ export async function persistApplyFailure(
 ): Promise<LifecycleAttempt> {
   const failed: LifecycleAttempt = {
     ...attempt,
-    completedAt: workflow.completedAt,
     data: workflow.data,
     failure: {
       key: workflow.error.key,
@@ -76,24 +75,15 @@ export async function persistApplyFailure(
   return failed;
 }
 
-/**
- * Persists the terminal attempt state, with a new baseline snapshot when the attempt leaves the
- * app installed. Otherwise it clears the baseline.
- */
+/** Persists the successful snapshot and terminal attempt state. */
 export async function persistSuccess(
   stores: Pick<LifecycleRuntime, "snapshotStore" | "stateStore">,
   state: OrchestrationState,
   attempt: LifecycleAttempt,
   workflow: SucceededWorkflowState,
 ): Promise<LifecycleAttempt> {
-  const { target } = attempt.plan;
-  if (!target) {
-    return persistUninstalled(stores.stateStore, state, attempt, workflow);
-  }
-
   const snapshot: AppStateSnapshot = {
-    attemptId: attempt.id,
-    config: target.config,
+    config: attempt.plan.target.config,
     createdAt: workflow.completedAt,
     data: workflow.data,
     id: crypto.randomUUID(),
@@ -102,11 +92,10 @@ export async function persistSuccess(
   await stores.snapshotStore.put(snapshot.id, snapshot);
   const succeeded: LifecycleAttempt = {
     ...attempt,
-    completedAt: workflow.completedAt,
     data: workflow.data,
     progress: workflow.step,
     result: {
-      appVersion: target.appVersion,
+      appVersion: attempt.plan.target.appVersion,
       snapshotId: snapshot.id,
     },
     status: "succeeded",
@@ -115,31 +104,6 @@ export async function persistSuccess(
   await stores.stateStore.put(CURRENT_STATE_KEY, {
     ...state,
     baselineSnapshotId: snapshot.id,
-    latestAttempt: succeeded,
-  });
-
-  return succeeded;
-}
-
-/** Records a successful attempt that left nothing installed. The old snapshot stays stored for troubleshooting. */
-async function persistUninstalled(
-  stateStore: LifecycleStore<OrchestrationState>,
-  state: OrchestrationState,
-  attempt: LifecycleAttempt,
-  workflow: SucceededWorkflowState,
-): Promise<LifecycleAttempt> {
-  const succeeded: LifecycleAttempt = {
-    ...attempt,
-    completedAt: workflow.completedAt,
-    data: null,
-    progress: workflow.step,
-    result: null,
-    status: "succeeded",
-  };
-
-  await stateStore.put(CURRENT_STATE_KEY, {
-    ...state,
-    baselineSnapshotId: null,
     latestAttempt: succeeded,
   });
 

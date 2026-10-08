@@ -42,7 +42,7 @@ import type {
 /** Options for creating the initial execution state for a lifecycle plan. */
 export type CreateInitialPlanExecutionStateOptions = {
   rootStep: BranchStep;
-  targetConfig?: CommerceAppConfigOutputModel;
+  targetConfig: CommerceAppConfigOutputModel;
   plan: LifecyclePlan;
 };
 
@@ -56,8 +56,8 @@ export type ExecutePlannedWorkflowOptions = {
   attemptId: string;
   plan: LifecyclePlan;
 
-  /** The baseline snapshot the plan transitions from, or `null` when nothing is installed. */
-  baseline: AppStateSnapshot | null;
+  /** The baseline snapshot the plan transitions from. */
+  baseline: AppStateSnapshot;
 };
 
 /** Outcome of executing the `apply` methods selected by a persisted plan. */
@@ -68,8 +68,8 @@ export type PlannedWorkflowResult = {
 /** Mutable state shared while executing a persisted lifecycle plan. */
 type PlannedStepExecutionContext = {
   lifecycleContext: LifecycleContext;
-  config: CommerceAppConfigOutputModel | undefined;
-  baseline: AppStateSnapshot | null;
+  config: CommerceAppConfigOutputModel;
+  baseline: AppStateSnapshot;
   id: string;
   startedAt: string;
   rootStep: StepStatus;
@@ -144,7 +144,7 @@ export async function executePlannedWorkflow(
   const context: PlannedStepExecutionContext = {
     attemptId,
     baseline: options.baseline,
-    config: plan.target?.config,
+    config: plan.target.config,
     data: initialState.data as Record<string, unknown> | null,
     error: null,
     hooks,
@@ -158,8 +158,16 @@ export async function executePlannedWorkflow(
   await callHook(hooks, "onStart", snapshot(context));
   try {
     const rootConfigurationFlags = {
-      configuredInBaseline: isConfiguredInBaseline(rootStep, context, true),
-      configuredInTarget: isConfiguredInTarget(rootStep, context, true),
+      configuredInBaseline: areStepAndParentConfigured(
+        rootStep,
+        context.baseline.config,
+        true,
+      ),
+      configuredInTarget: areStepAndParentConfigured(
+        rootStep,
+        context.config,
+        true,
+      ),
     };
     await executePlannedStep(
       rootStep,
@@ -251,48 +259,6 @@ function areStepAndParentConfigured(
   return isParentConfigured && isStepConfigured(step, config);
 }
 
-/** Whether a step and its parent are configured in the baseline. Always `false` without one. */
-function isConfiguredInBaseline(
-  step: AnyStep,
-  context: PlannedStepExecutionContext,
-  isParentConfigured: boolean,
-): boolean {
-  return (
-    context.baseline !== null &&
-    areStepAndParentConfigured(
-      step,
-      context.baseline.config,
-      isParentConfigured,
-    )
-  );
-}
-
-/** Whether a step and its parent are configured in the target. Always `false` without one. */
-function isConfiguredInTarget(
-  step: AnyStep,
-  context: PlannedStepExecutionContext,
-  isParentConfigured: boolean,
-): boolean {
-  return (
-    context.config !== undefined &&
-    areStepAndParentConfigured(step, context.config, isParentConfigured)
-  );
-}
-
-/** The baseline config and data a leaf applies against, or `null` when it has none. */
-function getLeafBaseline(
-  context: PlannedStepExecutionContext,
-  path: string[],
-  configurationFlags: StepConfigurationFlags,
-) {
-  return configurationFlags.configuredInBaseline && context.baseline
-    ? {
-        config: context.baseline.config,
-        data: getAtPath(context.baseline.data ?? {}, path) as WorkflowData,
-      }
-    : null;
-}
-
 /** Executes one planned step and updates its persisted progress snapshot. */
 async function executePlannedStep(
   step: AnyStep,
@@ -308,7 +274,6 @@ async function executePlannedStep(
   const { path } = currentStep;
   const isLeaf = isLeafStep(step);
   currentStep.status = "in-progress";
-  currentStep.startedAt = nowIsoString();
 
   await callHook(
     context.hooks,
@@ -340,14 +305,14 @@ async function executePlannedStep(
 
         // biome-ignore lint/performance/noAwaitInLoops: plan steps execute in declared order
         await executePlannedStep(child, childStatus, childContext, context, {
-          configuredInBaseline: isConfiguredInBaseline(
+          configuredInBaseline: areStepAndParentConfigured(
             child,
-            context,
+            context.baseline.config,
             configurationFlags.configuredInBaseline,
           ),
-          configuredInTarget: isConfiguredInTarget(
+          configuredInTarget: areStepAndParentConfigured(
             child,
-            context,
+            context.config,
             configurationFlags.configuredInTarget,
           ),
         });
@@ -361,15 +326,21 @@ async function executePlannedStep(
         throw new Error(`Step "${step.name}" cannot apply its lifecycle plan`);
       }
 
+      const baseline = configurationFlags.configuredInBaseline
+        ? {
+            config: context.baseline.config,
+            data: getAtPath(context.baseline.data ?? {}, path) as WorkflowData,
+          }
+        : null;
+
       const result = await step.apply(domainPlan, {
         ...context.lifecycleContext,
         ...accumulatedContext,
         attemptId: context.attemptId,
-        baseline: getLeafBaseline(context, path, configurationFlags),
-        targetConfig:
-          configurationFlags.configuredInTarget && context.config
-            ? context.config
-            : null,
+        baseline,
+        targetConfig: configurationFlags.configuredInTarget
+          ? context.config
+          : null,
       });
 
       context.data ??= {};
@@ -377,7 +348,6 @@ async function executePlannedStep(
     }
 
     currentStep.status = "succeeded";
-    currentStep.completedAt = nowIsoString();
     context.data ??= {};
 
     await callHook(
@@ -393,7 +363,6 @@ async function executePlannedStep(
     );
   } catch (error) {
     currentStep.status = "failed";
-    currentStep.completedAt = nowIsoString();
     context.error ??= await createWorkflowError(error, path);
 
     await callHook(

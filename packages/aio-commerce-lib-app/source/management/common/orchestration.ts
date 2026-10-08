@@ -36,32 +36,29 @@ export type LifecyclePlan = {
   /** Version of the action that produced the plan. */
   actionVersion: string;
 
-  /** The state the plan transitions from, or `null` when nothing is installed. */
+  /** The state the plan transitions from. */
   source: {
     /** Identifier of the baseline snapshot. */
     snapshotId: string;
 
     /** App version of the baseline. */
     appVersion: string;
-  } | null;
+  };
 
-  /** The state the plan transitions to, or `null` when the app ends up with nothing installed. */
+  /** The state the plan transitions to. */
   target: {
     /** App version being transitioned to. */
     appVersion: string;
 
     /** Validated configuration used to produce and execute the plan. */
     config: CommerceAppConfigOutputModel;
-  } | null;
+  };
 
   /** Per-domain plans that compose the operation. */
   domains: DomainPlan[];
 
-  /** Issues reported while planning or validating the plan. Blocking ones prevent it from running. */
+  /** Blocking issues reported while planning. */
   issues: PlanningIssue[];
-
-  /** Identifier of the pending plan this plan replaced, or `null` when none was pending. */
-  previousPlanId: string | null;
 };
 
 /** A `change` operation a review reports, identified by its domain path and operation id. */
@@ -103,25 +100,10 @@ export type SuccessfulResult = {
   appVersion: string;
 };
 
-/** The OpenWhisk activations that worked on a lifecycle attempt. */
-export type LifecycleAttemptActivations = {
-  /** Identifier of the activation that started the attempt. */
-  start: string;
-
-  /** Identifier of the activation that executed the attempt. Absent until execution begins. */
-  execution?: string;
-};
-
 /** Properties shared by every lifecycle attempt, regardless of status. */
 type LifecycleAttemptBase = {
   /** Unique attempt identifier. */
   id: string;
-
-  /** Identifier of the attempt this one replaced as the latest, or `null` when it is the first. */
-  previousAttemptId: string | null;
-
-  /** The OpenWhisk activations that worked on this attempt. */
-  activations: LifecycleAttemptActivations;
 
   /** The lifecycle operation this attempt performs. */
   operation: LifecycleOperation;
@@ -134,9 +116,6 @@ type LifecycleAttemptBase = {
 
   /** ISO timestamp when the attempt started. */
   startedAt: string;
-
-  /** ISO timestamp when the attempt succeeded or failed. Absent while it is pending or in progress. */
-  completedAt?: string;
 
   /** ISO timestamp after which an active attempt no longer blocks orchestration. */
   executionDeadline: string;
@@ -157,12 +136,7 @@ type LifecycleAttemptBase = {
 export type LifecycleAttempt = LifecycleAttemptBase &
   (
     | { status: "pending" | "in-progress" }
-    | {
-        status: "succeeded";
-
-        /** What the attempt left installed, or `null` when it left nothing installed. */
-        result: SuccessfulResult | null;
-      }
+    | { status: "succeeded"; result: SuccessfulResult }
     | { status: "failed"; failure: WorkflowError<{ operationId?: string }> }
   );
 
@@ -170,9 +144,6 @@ export type LifecycleAttempt = LifecycleAttemptBase &
 export type AppStateSnapshot = {
   /** ISO timestamp when the captured state became authoritative. */
   createdAt: string;
-
-  /** Identifier of the attempt that produced the snapshot, or `null` when no attempt did. */
-  attemptId: string | null;
 } & Required<Pick<SucceededWorkflowState, "id" | "config" | "data">>;
 
 /** The persisted orchestration state driving a lifecycle. */

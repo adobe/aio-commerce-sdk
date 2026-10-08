@@ -17,8 +17,6 @@ import { createMockStepStatus } from "./workflow";
 
 import type {
   AppStateSnapshot,
-  LifecycleAttempt,
-  LifecyclePlan,
   OrchestrationState,
 } from "#management/common/orchestration";
 import type { LifecycleContext } from "#management/common/workflow/step";
@@ -270,8 +268,6 @@ export function createMockCombinedStoreImpl(
   getStores: () => {
     appStateSnapshot?: LifecycleStore<AppStateSnapshot>;
     installation: MockInstallationStore;
-    lifecycleAttempt?: LifecycleStore<LifecycleAttempt>;
-    lifecyclePlan?: LifecycleStore<LifecyclePlan>;
     orchestrationState?: LifecycleStore<OrchestrationState>;
     uninstallation: MockInstallationStore;
   },
@@ -279,31 +275,26 @@ export function createMockCombinedStoreImpl(
   return async (options?: { cache?: { keyPrefix?: string } }) => {
     const prefix = options?.cache?.keyPrefix;
     const stores = getStores();
-    const byPrefix: Record<string, [store: unknown, name: string]> = {
-      installation: [stores.installation, "installation"],
-      "lifecycle-app-state-snapshot": [
-        stores.appStateSnapshot,
-        "lifecycle app-state snapshot",
-      ],
-      "lifecycle-attempt": [stores.lifecycleAttempt, "lifecycle attempt"],
-      "lifecycle-orchestration-state": [
-        stores.orchestrationState,
-        "lifecycle orchestration state",
-      ],
-      "lifecycle-plan": [stores.lifecyclePlan, "lifecycle plan"],
-      uninstallation: [stores.uninstallation, "uninstallation"],
-    };
 
-    const entry = prefix ? byPrefix[prefix] : undefined;
-    if (!entry) {
-      throw new Error(`Unexpected store prefix: ${String(prefix)}`);
+    if (prefix === "installation") {
+      return stores.installation;
+    }
+    if (prefix === "uninstallation") {
+      return stores.uninstallation;
+    }
+    if (prefix === "lifecycle-orchestration-state") {
+      if (!stores.orchestrationState) {
+        throw new Error("Missing lifecycle orchestration state store");
+      }
+      return stores.orchestrationState;
+    }
+    if (prefix === "lifecycle-app-state-snapshot") {
+      if (!stores.appStateSnapshot) {
+        throw new Error("Missing lifecycle app-state snapshot store");
+      }
+      return stores.appStateSnapshot;
     }
 
-    const [store, name] = entry;
-    if (!store) {
-      throw new Error(`Missing ${name} store`);
-    }
-
-    return store;
+    throw new Error(`Unexpected store prefix: ${String(prefix)}`);
   };
 }

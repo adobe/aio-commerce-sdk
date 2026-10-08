@@ -12,7 +12,10 @@
 
 import { describe, expect, test, vi } from "vitest";
 
-import { createLifecycleBaselineProvider } from "#management/lifecycle/baseline";
+import {
+  createLifecycleBaselineProvider,
+  getCurrentLifecycleBaseline,
+} from "#management/lifecycle/baseline";
 import { minimalValidConfig } from "#test/fixtures/config";
 import { createMockInstallationStore } from "#test/fixtures/installation";
 import { createMockLifecycleStore } from "#test/fixtures/lifecycle";
@@ -20,7 +23,6 @@ import { createMockLifecycleStore } from "#test/fixtures/lifecycle";
 import type { AppStateSnapshot } from "#management/common/orchestration";
 
 const lifecycleBaseline: AppStateSnapshot = {
-  attemptId: null,
   config: {
     ...minimalValidConfig,
     metadata: { ...minimalValidConfig.metadata, version: "2.0.0" },
@@ -66,5 +68,36 @@ describe("createLifecycleBaselineProvider", () => {
       lifecycleBaseline,
     );
     expect(await legacyStore.get("current")).toBeNull();
+  });
+});
+
+describe("getCurrentLifecycleBaseline", () => {
+  test("uses the lifecycle snapshot selected by orchestration state", async () => {
+    const providerGet = vi.fn().mockResolvedValue(lifecycleBaseline);
+
+    await expect(
+      getCurrentLifecycleBaseline(
+        {
+          get: vi.fn().mockResolvedValue({
+            baselineSnapshotId: lifecycleBaseline.id,
+          }),
+          put: vi.fn(),
+        },
+        { get: providerGet },
+      ),
+    ).resolves.toBe(lifecycleBaseline);
+    expect(providerGet).toHaveBeenCalledWith(lifecycleBaseline.id);
+  });
+
+  test("resolves to no baseline before lifecycle state exists", async () => {
+    const providerGet = vi.fn().mockResolvedValue(null);
+
+    await expect(
+      getCurrentLifecycleBaseline(
+        { get: vi.fn().mockResolvedValue(null), put: vi.fn() },
+        { get: providerGet },
+      ),
+    ).resolves.toBeNull();
+    expect(providerGet).toHaveBeenCalledWith(null);
   });
 });

@@ -29,7 +29,7 @@ import type { CustomInstallationStepIdentity } from "./types";
 
 /**
  * Leaf step that reconciles the custom installation steps domain as a whole via `plan`/`apply`.
- * The per-script leaves only run under the deprecated installation and uninstallation runners.
+ * It participates only in the upgrade tree; the per-script leaves handle install and uninstall.
  */
 const reconciliationStep = defineLeafStep({
   ...deprecatedReconciliationStep,
@@ -39,10 +39,6 @@ const reconciliationStep = defineLeafStep({
     install: {
       description:
         "Records which custom installation steps ran, so future upgrades can detect additions and removals",
-      label: "Reconcile Custom Installation Steps",
-    },
-    uninstall: {
-      description: "Runs the uninstall of custom installation steps that ran",
       label: "Reconcile Custom Installation Steps",
     },
     upgrade: {
@@ -83,8 +79,8 @@ const customInstallationStepBase = defineBranchStep({
 /**
  * Creates the custom installation step with dynamic children based on config. `executedSteps` is
  * the recorded run history, only passed when building the full-uninstall tree.
- * `includeReconciliation` adds the reconciliation leaf, which the lifecycle plans and applies;
- * the deprecated runners leave it out.
+ * `includeReconciliation` adds the reconciliation leaf, which only runs on upgrade; install and
+ * uninstall leave it out.
  */
 export function createCustomInstallationStep(
   config: CommerceAppConfigOutputModel,
