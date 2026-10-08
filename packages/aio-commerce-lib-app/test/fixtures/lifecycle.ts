@@ -72,7 +72,6 @@ export function createMockLifecyclePlan(
     id: "plan-1",
     issues: [],
     operation: "upgrade",
-    previousPlanId: null,
     source: { appVersion: "1.0.0", snapshotId: "snapshot-1" },
     target: {
       appVersion: "2.0.0",
@@ -86,8 +85,6 @@ export function createMockLifecyclePlan(
 }
 
 type LifecycleAttemptOverrides = Partial<{
-  activations: LifecycleAttempt["activations"];
-  previousAttemptId: string | null;
   data: LifecycleAttempt["data"];
   executionDeadline: string;
   failure: WorkflowError<{ operationId?: string }>;
@@ -105,13 +102,11 @@ export function createMockLifecycleAttempt(
   overrides: LifecycleAttemptOverrides = {},
 ): LifecycleAttempt {
   const base = {
-    activations: overrides.activations ?? { start: "activation-start-1" },
     data: overrides.data ?? null,
     executionDeadline: overrides.executionDeadline ?? DEFAULT_DEADLINE,
     id: overrides.id ?? "attempt-1",
     operation: overrides.operation ?? "upgrade",
     plan: overrides.plan ?? createMockLifecyclePlan(),
-    previousAttemptId: overrides.previousAttemptId ?? null,
     progress: overrides.progress ?? createMockStepStatus(),
     startedAt: overrides.startedAt ?? "2026-08-12T09:00:00.000Z",
   };
@@ -162,7 +157,6 @@ export function createMockAppStateSnapshot(
   overrides?: Partial<AppStateSnapshot>,
 ): AppStateSnapshot {
   return {
-    attemptId: null,
     config: minimalValidConfig,
     createdAt: "2026-08-12T08:00:00.000Z",
     data: null,
@@ -173,8 +167,6 @@ export function createMockAppStateSnapshot(
 
 /** Creates an in-memory lifecycle runtime backed by the real baseline provider. */
 export function createMockLifecycleRuntime(options?: {
-  attemptStore?: ReturnType<typeof createMockLifecycleStore<LifecycleAttempt>>;
-  planStore?: ReturnType<typeof createMockLifecycleStore<LifecyclePlan>>;
   baseline?: AppStateSnapshot | null;
   baselineProvider?: LifecycleRuntime["baselineProvider"];
   rootStep?: LifecycleRuntime["rootStep"];
@@ -188,10 +180,6 @@ export function createMockLifecycleRuntime(options?: {
     options?.snapshotStore ?? createMockLifecycleStore<AppStateSnapshot>();
   const stateStore =
     options?.stateStore ?? createMockLifecycleStore<OrchestrationState>();
-  const attemptStore =
-    options?.attemptStore ?? createMockLifecycleStore<LifecycleAttempt>();
-  const planStore =
-    options?.planStore ?? createMockLifecycleStore<LifecyclePlan>();
 
   const baseline =
     // baseline can be null and we want to preserve that.
@@ -211,16 +199,14 @@ export function createMockLifecycleRuntime(options?: {
   }
 
   const runtime: LifecycleRuntime = {
-    attemptStore,
     baselineProvider:
       options?.baselineProvider ??
       createLifecycleBaselineProvider(snapshotStore),
     lifecycleContext: createMockInstallationContextWithScripts(),
-    planStore,
     rootStep: options?.rootStep ?? createMockLifecycleRoot(),
     snapshotStore,
     stateStore,
   };
 
-  return { attemptStore, planStore, runtime, snapshotStore, stateStore };
+  return { runtime, snapshotStore, stateStore };
 }

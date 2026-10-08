@@ -19,4 +19,7 @@ export type {
   CustomInstallationStepDefinition,
   CustomInstallationStepHandler,
 } from "./define";
-export type { CustomInstallationStepIdentity } from "./types";
+export type {
+  CustomInstallationSnapshotData,
+  CustomInstallationStepIdentity,
+} from "./types";

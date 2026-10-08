@@ -25,10 +25,9 @@ import type {
 import type {
   ApplyContext,
   ApplyResult,
-  BlockingPlanningIssue,
   DomainPlan,
-  NonBlockingPlanningIssue,
   PlanningInput,
+  PlanningIssue,
   PlanningResult,
   ResourceOperation,
 } from "#management/common/workflow/resource";
@@ -155,7 +154,7 @@ describe("lifecycle type surface", () => {
     // failure (reusing the engine WorkflowError). Neither leaks onto the other.
     expectTypeOf<
       Extract<LifecycleAttempt, { status: "succeeded" }>["result"]
-    >().toEqualTypeOf<SuccessfulResult | null>();
+    >().toEqualTypeOf<SuccessfulResult>();
     expectTypeOf<
       Extract<LifecycleAttempt, { status: "failed" }>["failure"]
     >().toEqualTypeOf<WorkflowError<{ operationId?: string }>>();
@@ -179,11 +178,8 @@ describe("lifecycle type surface", () => {
       Extract<Result, { kind: "planned" }>["plan"]
     >().toEqualTypeOf<WebhookPlan>();
     expectTypeOf<
-      Extract<Result, { kind: "planned" }>["issues"]
-    >().toEqualTypeOf<NonBlockingPlanningIssue[] | undefined>();
-    expectTypeOf<
       Extract<Result, { kind: "blocked" }>["issues"]
-    >().toEqualTypeOf<BlockingPlanningIssue[]>();
+    >().toEqualTypeOf<PlanningIssue[]>();
   });
 
   test("defineLeafStep infers the resource generics from the handlers", () => {

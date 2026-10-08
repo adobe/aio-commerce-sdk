@@ -1038,63 +1038,41 @@ The `#app.commerce.config` package import resolves to a generated JavaScript com
 
 ### Upgrading a Deployed App
 
-Installing, upgrading and uninstalling all plan the operation and validate the plan before anything changes. An installed app upgrades from its installed version to the one declared in `metadata.version`.
+After an app is installed, the installation endpoint is **desired-state**. It compares the recorded installation baseline against the app configuration and reconciles the app toward it:
+
+- **No baseline yet**: it installs the app.
+- **A baseline exists**: it upgrades the app from the baseline to the version declared in `metadata.version`.
 
 > [!IMPORTANT]
-> `metadata.id` identifies the installed application and cannot change during an upgrade. The SDK refuses to plan an upgrade that changes it. To use a different ID, uninstall the existing app and install it again.
+> `metadata.id` identifies the installed application and cannot change during an upgrade. The endpoint rejects a different ID before planning starts. To use a different ID, uninstall the existing app and install it again.
+
+The endpoint derives the operation and returns it as `operation` (`"install"` or `"upgrade"`) in the response.
 
 #### Automatic vs. Manual Upgrades
 
-`metadata.upgradeMode` controls what the `post-app-deploy` hook does with the upgrade it plans:
+`metadata.upgradeMode` controls what happens once an upgrade has been planned:
 
-- **`auto`** (experimental): the hook starts the plan.
-- **`manual`** (default): the plan stays pending for review.
+- **`auto`** (experimental): the plan is created and its execution starts immediately.
+- **`manual`** (default): the plan is created and returned without starting execution.
 
 > [!NOTE]
 > `auto` is experimental and `upgradeMode` currently defaults to `manual` while automatic upgrade execution is stabilizing. This will change back to `auto` in a future release — if you want manual behavior permanently, set `upgradeMode: "manual"` explicitly now.
 
 #### The `post-app-deploy` Hook
 
-The generated `commerce/extensibility/1` extension wires a `post-app-deploy` hook automatically (alongside `pre-app-build`). After every `aio app deploy`, the hook plans an upgrade, so a redeploy of an installed app runs an upgrade check without any manual step. The hook never installs an app that is not installed yet.
+The generated `commerce/extensibility/1` extension wires a `post-app-deploy` hook automatically (alongside `pre-app-build`). After every `aio app deploy`, the hook triggers the desired-state reconciliation, so a redeploy of an installed app runs an upgrade check without any manual step:
 
-- In `auto` mode it prints the plan, starts it, and waits for the execution result when progress is available.
+- In `auto` mode it prints the plan and waits for the execution result when progress is available.
 - In `manual` mode it reports that a plan was created but was not executed.
 
 #### No-op Upgrade States
 
-Some states are not actionable upgrades. The `post-app-deploy` hook treats them as a no-op rather than a failure:
+Some states are not actionable upgrades. In these cases the endpoint responds with `409 Conflict` carrying a `reason`, and the `post-app-deploy` hook treats them as a no-op rather than a failure:
 
 - **`not-associated`**: the app is not associated with a Commerce instance.
 - **`already-current`**: the installed version already matches `metadata.version`.
 
-Any other planning failure, for example configuration issues that block the upgrade, surfaces as an error.
-
-#### Troubleshooting a Lifecycle Operation
-
-Every install, upgrade and uninstall leaves a trail you can follow back when something goes wrong. Call `GET /installation?history=true` on the `app-management` package. The response is the status of the latest attempt plus three lists:
-
-- `plans`: the plan the latest attempt executed, followed by the plans it replaced before it started, newest first. Because starting a plan plans it again, the reviewed plan (`review.planId`) is usually the second entry.
-- `history`: the earlier attempts, newest first, each with its own `plans`. Add `limit=<n>` to read only the last `n` earlier attempts.
-- `pendingPlans`: plans made after the latest attempt that were never started.
-
-Plans carry the full target configuration, so `GET /installation` returns them only with `history=true`. Without it, the response stays the status of the latest attempt.
-
-Each attempt links to the rest of the trail:
-
-- `previousAttemptId` and `previousPlanId` name the attempt and the plan it replaced.
-- `plans[0].source.snapshotId` names the snapshot the attempt started from, and `result.snapshotId` the one a successful attempt produced. Snapshots live in the app's file storage under `lifecycle-app-state-snapshot`, and each one records the `attemptId` that produced it.
-- `step` lists every step with its `status`, and `startedAt` and `completedAt` once it ran, so an expired attempt shows which step hung.
-- `activations.start` and `activations.execution` are the OpenWhisk activations that started and executed the attempt.
-
-To read the logs of a failed attempt, pass its execution activation to the CLI:
-
-```bash
-aio rt activation logs <activations.execution>
-```
-
-The default log level shows each lifecycle transition with its ids, and an `error` line names the step that failed and its message. Set the `LOG_LEVEL` input of the action to `debug` to also log the progress of every step. Logs never include request params or configuration.
-
-When an automatic upgrade fails, the `post-app-deploy` hook prints the attempt id and, when known, the execution activation id.
+A `409` **without** a `reason` (for example, when upgrade planning is blocked by configuration issues) is a real failure and surfaces as an error.
 
 ### Using the Configuration API
 

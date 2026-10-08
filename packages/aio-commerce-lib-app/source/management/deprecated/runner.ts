@@ -31,11 +31,11 @@ import type {
   StepSucceededEvent,
   SucceededWorkflowState,
   ValidationContext,
-  ValidationResult,
   WorkflowHooks,
   WorkflowRunState,
 } from "#management/common/workflow/index";
 import type { CustomInstallationStepIdentity } from "#management/domains/custom-installation/index";
+import type { ValidationResult } from "./validation";
 
 /**
  * Lifecycle hooks for an installation or uninstallation run.

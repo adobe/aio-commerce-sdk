@@ -15,17 +15,22 @@ import { resolveImsAuthParams } from "@adobe/aio-commerce-lib-auth";
 import { inspect } from "@aio-commerce-sdk/common-utils/logging";
 
 import { throwHttpError } from "#management/common/utils/http-error";
-import { restoreEventMetadataText } from "#management/domains/events/api";
+
 import {
+  findExistingProvider,
+  findExistingProviderMetadata,
+  findExistingRegistrations,
+  findExistingSubscription,
   generateInstanceId,
   generateInstanceIdDeprecated,
+  getCommerceEventingConfigurationUpdateParams,
   getIoEventCode,
   getLegacyRegistrationName,
   getNamespacedEvent,
   getRegistrationDescription,
   getRegistrationName,
   groupEventsByRuntimeActions,
-} from "#management/domains/events/utils";
+} from "./utils";
 
 import type {
   CommerceEventProvider,
@@ -38,159 +43,25 @@ import type {
   IoEventProvider,
   IoEventRegistration,
 } from "@adobe/aio-commerce-lib-events/io-events";
-import type { ArrayElement } from "type-fest";
-import type {
-  AppEvent,
-  CommerceEvent,
-  EventProvider,
-} from "#config/schema/eventing";
+import type { AppEvent, EventProvider } from "#config/schema/eventing";
 import type { ApplicationMetadata } from "#config/schema/metadata";
-import type { EventsExecutionContext } from "#management/domains/events/context";
-import type { AppEventWithoutRuntimeActions } from "#management/domains/events/types";
+import type { EventsExecutionContext } from "./context";
+import type {
+  ConfigureCommerceEventingParams,
+  CreateCommerceEventSubscriptionParams,
+  CreateCommerceProviderParams,
+  CreateIoProviderEventsMetadataParams,
+  CreateIoProviderParams,
+  CreateRegistrationParams,
+  OffboardEventsParams,
+  OnboardCommerceEventingParams,
+  OnboardIoEventsParams,
+} from "./types";
 import type {
   ExistingCommerceEventingData,
   ExistingIoEventsData,
   IoEventProviderWithMetadata,
-} from "#management/domains/events/utils";
-
-/** Augmented provider data with it's type. */
-export type ProviderWithType = EventProvider & { type: EventProviderType };
-
-/** Parameters needed to create a provider in Adobe I/O Events */
-export type CreateIoProviderParams = {
-  context: EventsExecutionContext;
-  provider: ProviderWithType & { instanceId: string };
-};
-
-/** Parameters needed to create event metadata of a provider in Adobe I/O Events */
-export type CreateIoProviderEventsMetadataParams = {
-  metadata: ApplicationMetadata;
-  context: EventsExecutionContext;
-  type: EventProviderType;
-  provider: IoEventProvider;
-  event: AppEvent;
-};
-
-/** Parameters needed to create event event registrations in Adobe I/O Events. */
-export type CreateRegistrationParams = {
-  context: EventsExecutionContext;
-  metadata: ApplicationMetadata;
-  events: AppEventWithoutRuntimeActions[];
-  provider: IoEventProvider;
-  runtimeAction: string;
-};
-
-/** Parameters needed to onboard all the entities of Adobe I/O Events. */
-export type OnboardIoEventsParams<EventType extends AppEvent> = {
-  context: EventsExecutionContext;
-  metadata: ApplicationMetadata;
-  provider: EventProvider;
-  events: EventType[];
-  providerType: EventProviderType;
-};
-
-/** The returned data of an onboarded Adobe I/O event provider. */
-export type ProviderDataFromIo<EventType extends AppEvent> = Awaited<
-  ReturnType<typeof onboardIoEvents<EventType>>
->["providerData"];
-
-/** The returned data of onboarded Adobe I/O events. */
-export type EventsDataFromIo<EventType extends AppEvent> = Awaited<
-  ReturnType<typeof onboardIoEvents<EventType>>
->["eventsData"];
-
-/** The parameters needed to create an event provider in Commerce */
-export type CreateCommerceProviderParams = {
-  context: EventsExecutionContext;
-  provider: Pick<
-    IoEventProvider,
-    "label" | "description" | "instance_id" | "id"
-  > & { workspace_configuration: string };
-};
-
-/** The parameters needed to create event subscriptions in Commerce. */
-export type CreateCommerceEventSubscriptionParams = {
-  context: EventsExecutionContext;
-  metadata: ApplicationMetadata;
-  provider: ProviderDataFromIo<CommerceEvent>;
-  event: ArrayElement<EventsDataFromIo<CommerceEvent>>;
-};
-
-/** The parameters needed to onboard all the entities of Commerce Eventing. */
-export type OnboardCommerceEventingParams = {
-  context: EventsExecutionContext;
-  metadata: ApplicationMetadata;
-  provider: EventProvider;
-
-  ioData: {
-    provider: ProviderDataFromIo<CommerceEvent>;
-    events: EventsDataFromIo<CommerceEvent>;
-    workspaceConfiguration: string;
-  };
-};
-
-/** Parameters shared by `offboardIoEvents` and `offboardCommerceEventing`. */
-export type OffboardEventsParams = {
-  context: EventsExecutionContext;
-  metadata: ApplicationMetadata;
-  provider: EventProvider;
-  events: AppEvent[];
-};
-
-/**
- * Find an existing event provider by its instance ID.
- * @param allProviders - The list of all existing event providers.
- * @param instanceId - The instance ID to search for.
- */
-export function findExistingProvider<
-  TProvider extends IoEventProvider | CommerceEventProvider,
->(allProviders: TProvider[], instanceId: string) {
-  return (
-    allProviders.find((provider) => provider.instance_id === instanceId) ?? null
-  );
-}
-
-/**
- * Find existing event metadata by its event name.
- * @param allMetadata - The list of all existing event metadata.
- * @param eventName - The event name to search for.
- */
-export function findExistingProviderMetadata(
-  allMetadata: IoEventMetadata[],
-  eventName: string,
-) {
-  return allMetadata.find((meta) => meta.event_code === eventName) ?? null;
-}
-
-/**
- * Find existing event registrations by client ID and name.
- * @param allRegistrations - The list of all existing event registrations.
- * @param clientId - The client ID of the workspace where the registration was created.
- * @param name - The name of the registration to search for.
- */
-export function findExistingRegistrations(
-  allRegistrations: IoEventRegistration[],
-  clientId: string,
-  name: string,
-) {
-  // We don't have an ID to search for, but names are deterministic and calculated by us so it should be fine.
-  // To be safe, the `allRegistrations` should come from the current installation data.
-  return allRegistrations.find(
-    (reg) => reg.client_id === clientId && reg.name === name,
-  );
-}
-
-/*
- * Find an existing Commerce event subscription by its event name.
- * @param allSubscriptions - Map of all existing event subscriptions keyed by event name.
- * @param eventName - The namespaced event name to search for.
- */
-export function findExistingSubscription(
-  allSubscriptions: Map<string, CommerceEventSubscription>,
-  eventName: string,
-) {
-  return allSubscriptions.get(eventName) ?? null;
-}
+} from "./utils";
 
 /**
  * Creates an event provider if it does not already exist.
@@ -433,6 +304,58 @@ async function createOrGetIoEventRegistration(
 }
 
 /**
+ * Ensures Commerce Eventing is configured with the given configuration, updating it if it already exists.
+ * @param params - The parameters necessary to configure Commerce Eventing.
+ * @param existingData - Existing Commerce Eventing data.
+ */
+export async function configureCommerceEventing(
+  params: ConfigureCommerceEventingParams,
+  existingData: ExistingCommerceEventingData,
+) {
+  const { context, config } = params;
+  const { commerceEventsClient, logger } = context;
+
+  logger.info("Starting configuration of the Commerce Eventing Module");
+  const updateParams = getCommerceEventingConfigurationUpdateParams(
+    config,
+    existingData,
+  );
+
+  if (updateParams === null) {
+    logger.info(
+      "Commerce Eventing Module is already configured, skipping configuration step.",
+    );
+
+    return;
+  }
+
+  logger.info(
+    `Updating Commerce Eventing Module configuration with the following data: [${Object.keys(updateParams).join(", ")}]`,
+  );
+
+  return commerceEventsClient
+    .updateEventingConfiguration(updateParams)
+    .then((success) => {
+      if (success) {
+        logger.info("Commerce Eventing Module configured successfully.");
+        return;
+      }
+
+      // This will be catched by the catch block below, and logged accordingly.
+      throw new Error(
+        "Something went wrong while configuring Commerce Eventing Module. Response was not successful but no error was thrown.",
+      );
+    })
+    .catch((err) =>
+      throwHttpError(
+        logger,
+        err,
+        "Failed to configure Adobe Commerce eventing",
+      ),
+    );
+}
+
+/**
  * Creates an event provider in Commerce for a given {@link IoEventProvider}.
  * @param params - The parameters necessary to create the Commerce provider.
  */
@@ -550,12 +473,7 @@ async function createCommerceEventSubscription(
         `Created event subscription for event "${event.config.name}" to provider "${provider.label} (instance ID: ${provider.instance_id})"`,
       );
 
-      await restoreEventMetadataText(
-        event.data.metadata.event_code,
-        event.config,
-        provider.id,
-        context,
-      );
+      await restoreEventMetadataText(params);
       return eventSpec;
     })
     .catch((err) =>
@@ -565,6 +483,32 @@ async function createCommerceEventSubscription(
         `Failed to create Adobe Commerce event subscription for '${event.config.name}'`,
       ),
     );
+}
+
+/** Sets the I/O metadata of a subscribed event back to its configured label and description. */
+async function restoreEventMetadataText(
+  params: CreateCommerceEventSubscriptionParams,
+) {
+  const { context, provider, event } = params;
+  const { appData, ioEventsClient, logger } = context;
+  const eventCode = event.data.metadata.event_code;
+
+  // Commerce overwrites the label and description of an event's I/O metadata when it subscribes.
+  try {
+    await ioEventsClient.updateEventMetadataForProvider({
+      consumerOrgId: appData.consumerOrgId,
+      description: event.config.description,
+      eventCode,
+      label: event.config.label,
+      projectId: appData.projectId,
+      providerId: provider.id,
+      workspaceId: appData.workspaceId,
+    });
+  } catch (error) {
+    logger.warn(
+      `Could not restore the label of event metadata "${eventCode}": ${await unwrapHttpError(error)}`,
+    );
+  }
 }
 
 /**
