@@ -52,7 +52,7 @@
     "husky": "^9.1.7",
     "knip": "^6.39.0",
     "lint-staged": "^17.0.0",
-    "playwright": "1.63.0",
+    "playwright": "1.64.0",
     "prettier": "catalog:",
     "publint": "^0.3.18",
     "tsdown": "^0.23.0",
@@ -61,11 +61,11 @@
     "typedoc": "^0.28.17",
     "typedoc-plugin-markdown": "^4.10.0",
     "typescript": "catalog:",
-    "ultracite": "7.12.2",
+    "ultracite": "7.12.4",
     "vitest": "^5.0.0",
     "vitest-browser-react": "^2.2.0"
   },
-  "packageManager": "pnpm@12.8.2",
+  "packageManager": "pnpm@12.10.1",
   "engines": {
     "node": "^22.11 || ^24",
     "pnpm": ">=10"
