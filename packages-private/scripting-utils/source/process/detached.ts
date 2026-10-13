@@ -15,6 +15,8 @@ import { closeSync, openSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
+import { LIVENESS_FD_ENV, OWNER_PID_ENV } from "./liveness";
+
 import type { ChildProcess } from "node:child_process";
 import type { Socket } from "node:net";
 
@@ -38,6 +40,8 @@ export type SpawnDetachedOptions = {
 
   /** The file that receives the standard output and the standard error of the process. */
   logPath: string;
+
+  /** The environment of the process. Defaults to the environment of this one. */
   env?: NodeJS.ProcessEnv;
   cwd?: string;
 
@@ -51,6 +55,9 @@ export type DetachedProcess = {
   child: ChildProcess;
 };
 
+/** The file descriptor of the liveness pipe in the process that is started. */
+const LIVENESS_PIPE_FD = 3;
+
 /** Keeps the parent end of every liveness pipe referenced until its child exits. */
 const livenessPipes: Socket[] = [];
 
@@ -59,8 +66,10 @@ const livenessPipes: Socket[] = [];
  *
  * The process runs in its own session without a terminal, so Ctrl-C, a closed terminal and a kill
  * of this process do not reach it. Its standard input is closed, and its output goes to a log
- * file. A pipe on file descriptor 3 lets the process see this one die, see
- * {@link waitForOwnerExit}.
+ * file. A pipe on file descriptor 3 lets the process see this one die. The process tells it
+ * through the environment variables {@link OWNER_PID_ENV}, with the pid of this process, and
+ * {@link LIVENESS_FD_ENV}, with the file descriptor of the pipe, which {@link waitForOwnerExit}
+ * reads.
  *
  * Failures after the spawn, such as a missing node binary, arrive only through `onError`. A script
  * that does not exist shows up only in the log file.
@@ -88,7 +97,11 @@ export function spawnDetached(
       cwd,
       // A new session, so signals sent to this process group do not reach the child.
       detached: true,
-      env,
+      env: {
+        ...(env ?? process.env),
+        [LIVENESS_FD_ENV]: String(LIVENESS_PIPE_FD),
+        [OWNER_PID_ENV]: String(process.pid),
+      },
       // Never "inherit": a reader of this process pipes, such as a CI log capture, would wait for it.
       stdio: ["ignore", logFd, logFd, "pipe"],
       windowsHide: true,

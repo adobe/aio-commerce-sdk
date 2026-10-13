@@ -18,6 +18,7 @@ import { join } from "node:path";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
 import { getTempLogPath, spawnDetached } from "#process/detached";
+import { LIVENESS_FD_ENV, OWNER_PID_ENV } from "#process/liveness";
 
 vi.mock("node:fs", () => ({ closeSync: vi.fn(), openSync: vi.fn() }));
 
@@ -64,7 +65,11 @@ describe("spawnDetached", () => {
       {
         cwd: "/work",
         detached: true,
-        env: { KEY: "value" },
+        env: {
+          [LIVENESS_FD_ENV]: "3",
+          [OWNER_PID_ENV]: String(process.pid),
+          KEY: "value",
+        },
         stdio: ["ignore", LOG_FD, LOG_FD, "pipe"],
         windowsHide: true,
       },
@@ -82,6 +87,36 @@ describe("spawnDetached", () => {
     child.emit("exit");
 
     expect(pipe.destroy).toHaveBeenCalledOnce();
+  });
+
+  test("passes the environment of this process on when no environment is given", () => {
+    const { spawnProcess } = createFakeChild();
+    vi.stubEnv("DETACHED_TEST_KEY", "inherited");
+
+    spawnDetached({ logPath: LOG_PATH, script: "s.mjs", spawnProcess });
+
+    expect(spawnProcess.mock.calls[0][2].env).toMatchObject({
+      [LIVENESS_FD_ENV]: "3",
+      [OWNER_PID_ENV]: String(process.pid),
+      DETACHED_TEST_KEY: "inherited",
+    });
+    vi.unstubAllEnvs();
+  });
+
+  test("overrides a pid and a pipe marker that the environment already has", () => {
+    const { spawnProcess } = createFakeChild();
+
+    spawnDetached({
+      env: { [LIVENESS_FD_ENV]: "9", [OWNER_PID_ENV]: "1" },
+      logPath: LOG_PATH,
+      script: "s.mjs",
+      spawnProcess,
+    });
+
+    expect(spawnProcess.mock.calls[0][2].env).toMatchObject({
+      [LIVENESS_FD_ENV]: "3",
+      [OWNER_PID_ENV]: String(process.pid),
+    });
   });
 
   test("runs the script without arguments by default", () => {

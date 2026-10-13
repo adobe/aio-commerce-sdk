@@ -18,3 +18,4 @@
  */
 
 export * from "./detached";
+export * from "./liveness";
