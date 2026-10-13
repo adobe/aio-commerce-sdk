@@ -10,7 +10,11 @@
  * governing permissions and limitations under the License.
  */
 
-import { noContent, ok } from "@adobe/aio-commerce-lib-core/responses";
+import {
+  noContent,
+  notFound,
+  ok,
+} from "@adobe/aio-commerce-lib-core/responses";
 import {
   HttpActionRouter,
   logger as withLogger,
@@ -32,6 +36,7 @@ import {
 } from "./common";
 import {
   executeLifecycle,
+  findAttempt,
   toAttemptHistory,
   toAttemptStatus,
 } from "./lifecycle";
@@ -51,7 +56,7 @@ export type { CustomScriptsLoader, RuntimeActionFactoryArgs } from "./common";
  * Installation action router.
  *
  * Routes:
- * - GET /                            Get the status of the latest lifecycle operation, with its history on `history=true`
+ * - GET /                            Get the status of the latest lifecycle operation, with its history on `history=true`, or of one attempt on `attemptId`
  * - POST /                           Start the pending plan named by `planId`
  * - POST /plan                       Plan an install, upgrade or uninstall for review
  * - POST /execution                  Execute a started lifecycle attempt (internal, called async)
@@ -63,6 +68,9 @@ export const router = new HttpActionRouter<InstallationActionContext>().use(
 /**
  * GET / - Get the status of the latest lifecycle operation. Falls back to the record of an
  * installation made by an older library version.
+ *
+ * With `attemptId`, returns the status of that attempt, whether it is the latest or an earlier one,
+ * and answers 404 when no such attempt exists.
  *
  * With `history=true`, the body also lists the plans of the latest attempt, the earlier attempts
  * (at most `limit` of them) and the plans made since the latest attempt.
@@ -76,6 +84,22 @@ router.get("/", {
       (await normalizeExpiredAttempt(persistence.stateStore, stored, logger));
 
     const attempt = state?.latestAttempt;
+
+    if (req.query.attemptId !== undefined) {
+      const found = await findAttempt(
+        req.query.attemptId,
+        attempt,
+        persistence.attemptStore,
+      );
+
+      if (!found) {
+        logger.debug(`Lifecycle attempt ${req.query.attemptId} not found`);
+        return notFound(`Lifecycle attempt ${req.query.attemptId} not found`);
+      }
+
+      return ok({ body: toAttemptStatus(found) });
+    }
+
     if (state && attempt) {
       logger.debug(
         `Found the ${attempt.operation} attempt ${attempt.id} with status ${attempt.status}.`,
