@@ -12,150 +12,184 @@
 
 import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
 import {
-  getAioCliEnv,
-  getAioProjectContext,
-  getUserToken,
-} from "@aio-commerce-sdk/scripting-utils/aio";
+  getTempLogPath,
+  spawnDetached,
+} from "@aio-commerce-sdk/scripting-utils/process";
 import { consola } from "consola";
 import { colors } from "consola/utils";
-import ky, { HTTPError } from "ky";
 
 import {
-  INSTALLATION_INVOCATION_SOURCE_HEADER,
-  POST_APP_DEPLOY_INVOCATION_SOURCE,
-} from "#actions/installation/common";
+  createCamsContext,
+  findWorkspaceExtensionId,
+} from "#commands/common/cams/context";
+import { CamsConflictError } from "#commands/common/cams/errors";
+import { noticeInterrupt } from "#commands/hooks/post-app-deploy/interrupt";
+import {
+  describeOutcome,
+  pollUntilSettled,
+  whenStatusChanges,
+} from "#commands/lifecycle/poll";
 import { parseCommerceAppConfig } from "#config/lib/parser";
 
-import { waitForAutomaticUpgrade } from "./polling";
+import type { CamsContext } from "#commands/common/cams/context";
+import type { AttemptStatus, UpgradePlan } from "#commands/common/cams/schema";
+import type { InterruptNotice } from "#commands/hooks/post-app-deploy/interrupt";
 
-import type { PlanPreview } from "#actions/installation/plan";
+/** The codes that end the hook without an upgrade and without an error. */
+type SkipCode = "already-current" | "not-associated" | "not-installed";
 
-type SkippedReason = "already-current" | "not-associated" | "not-installed";
-type SkippedResult = { skipped: true; reason: SkippedReason };
-type UpgradePlanResult = { plan: PlanPreview };
-type UpgradeResult = SkippedResult | UpgradePlanResult;
+/** How the hook ended when it did not fail. */
+type HookResult =
+  | { kind: "skipped"; code: SkipCode }
+  | { kind: "planned"; plan: UpgradePlan }
+  | { kind: "upgraded"; runId: string };
 
-/** Returns true for a no-op reason defined by the upgrade API contract. */
-function isSkippedReason(reason: unknown): reason is SkippedReason {
+function isSkipCode(code: unknown): code is SkipCode {
   return (
-    reason === "already-current" ||
-    reason === "not-associated" ||
-    reason === "not-installed"
+    code === "already-current" ||
+    code === "not-associated" ||
+    code === "not-installed"
   );
 }
 
-/** Returns true if the result indicates that the upgrade was skipped. */
-function isSkippedResult(result: UpgradeResult): result is SkippedResult {
-  return "skipped" in result;
-}
-
-/** Invokes the upgrade action. */
-async function createUpgradeRequest() {
-  const { project, namespace } = getAioProjectContext();
-  const token = await getUserToken();
-
-  const endpoint = `https://${namespace}.adobeioruntime.net/api/v1/web/app-management/installation`;
-  const ioEventsEnv = getAioCliEnv();
-  const ioEventsUrl =
-    ioEventsEnv === "stage"
-      ? "https://events-stage.adobe.io"
-      : "https://events.adobe.io";
-
-  return {
-    body: {
-      appData: {
-        consumerOrgId: project.org.id,
-        orgName: project.org.name,
-        projectId: project.id,
-        projectName: project.name,
-        projectTitle: project.title,
-        workspaceId: project.workspace.id,
-        workspaceName: project.workspace.name,
-        workspaceTitle: project.workspace.title,
-      },
-      ioEventsEnv,
-      ioEventsUrl,
-    },
-    endpoint,
-    headers: {
-      Authorization: `Bearer ${token}`,
-      [INSTALLATION_INVOCATION_SOURCE_HEADER]:
-        POST_APP_DEPLOY_INVOCATION_SOURCE,
-      "x-gw-ims-org-id": project.org.ims_org_id,
-    },
-  };
-}
-
-/** The request the hook sends to the installation action. */
-type UpgradeRequest = Awaited<ReturnType<typeof createUpgradeRequest>>;
-
-/** Plans the upgrade. Skips when the app is not installed, not associated or already current. */
-async function planUpgrade(request: UpgradeRequest): Promise<UpgradeResult> {
-  consola.debug(`Upgrade endpoint: ${request.endpoint}`);
-
+/**
+ * Asks the service to plan the upgrade.
+ * @returns The plan, or the code of the reason the upgrade does not apply.
+ */
+async function planUpgrade(context: CamsContext, extensionId: string) {
   try {
-    const { plan } = await ky
-      .post(`${request.endpoint}/plan`, {
-        headers: request.headers,
-        json: request.body,
-      })
-      .json<UpgradePlanResult>();
-
-    // Without a baseline the action plans an install, which the hook never runs.
-    return plan.operation === "upgrade"
-      ? { plan }
-      : { reason: "not-installed", skipped: true };
+    return await context.client.planUpgrade({ extensionId });
   } catch (error) {
-    if (error instanceof HTTPError) {
-      const details = await error.response.json<{ reason?: string }>();
-
-      if (error.response.status === 409 && isSkippedReason(details.reason)) {
-        return { reason: details.reason, skipped: true };
+    if (error instanceof CamsConflictError) {
+      if (isSkipCode(error.code)) {
+        return error.code;
       }
 
-      throw new Error(
-        `Failed to trigger app upgrade (HTTP ${error.response.status}): ${JSON.stringify(details, null, 2)}`,
-        { cause: error },
-      );
+      throw new Error(`The upgrade was not planned: ${error.message}`, {
+        cause: error,
+      });
     }
 
     throw error;
   }
 }
 
-/** Starts the planned upgrade. */
-async function startUpgrade(request: UpgradeRequest, plan: PlanPreview) {
+/** Starts the planned upgrade and returns the status of the new run. */
+async function startUpgrade(
+  context: CamsContext,
+  extensionId: string,
+  plan: UpgradePlan,
+) {
   try {
-    await ky.post(request.endpoint, {
-      headers: request.headers,
-      json: { ...request.body, planId: plan.id },
-    });
+    return await context.client.startUpgrade({ extensionId, planId: plan.id });
   } catch (error) {
-    if (error instanceof HTTPError) {
-      const details = await error.response.json();
-      throw new Error(
-        `Failed to start the app upgrade (HTTP ${error.response.status}): ${JSON.stringify(details, null, 2)}`,
-        { cause: error },
-      );
+    if (error instanceof CamsConflictError) {
+      throw new Error(`The upgrade was not started: ${error.message}`, {
+        cause: error,
+      });
     }
 
     throw error;
   }
 }
 
-/** Plans the deployed app's upgrade, and starts it when the app upgrades automatically. */
-export async function run() {
+/**
+ * Starts the watcher that follows the run if this process stops, and tells the user how to check
+ * the run. The run goes on without the watcher.
+ *
+ * @returns The path of the log of the watcher, or `undefined` when it could not start.
+ */
+function announceBackgroundWatcher(
+  extensionId: string,
+  started: AttemptStatus,
+) {
+  const logPath = getTempLogPath(`aio-commerce-lifecycle-${started.id}`);
+  const args = ["lifecycle", "watch", extensionId, started.id];
+
+  consola.debug("Starting the watcher.", { args, logPath });
+  const watcher = spawnDetached({
+    args,
+    logPath,
+    onError: (error) => {
+      consola.debug("The watcher could not start.", { args, error, logPath });
+    },
+    script: process.argv[1],
+  });
+
+  const statusCommand = `npx aio-commerce-lib-app lifecycle status ${started.id}`;
+  consola.info(
+    watcher
+      ? `Check the run with "${statusCommand}", or follow its log with "tail -f ${logPath}".`
+      : `Check the run with "${statusCommand}".`,
+  );
+
+  return watcher ? logPath : undefined;
+}
+
+/** Polls the run and prints its progress until it settles. Throws when it does not succeed. */
+async function followRun(
+  context: CamsContext,
+  extensionId: string,
+  started: AttemptStatus,
+) {
+  const result = await pollUntilSettled({
+    onRetry: (error) => {
+      consola.warn(`${error.message}. Trying again.`);
+    },
+    onStatus: whenStatusChanges((status) => {
+      consola.start(`App upgrade is ${status.status}.`);
+    }),
+    poll: () => context.client.pollUpgrade({ extensionId, runId: started.id }),
+  });
+
+  const outcome = describeOutcome(result, started.id);
+  if (!outcome.succeeded) {
+    throw new Error(outcome.message);
+  }
+
+  consola.success(`${outcome.message}\n`);
+}
+
+/**
+ * Runs the hook: plans an upgrade of the app and, with `metadata.upgradeMode` set to `auto`, starts
+ * it and follows it until it settles.
+ *
+ * The hook runs after the deploy, so it cannot undo it. Its exit code only reports what the
+ * upgrade did.
+ *
+ * @throws When the upgrade is refused, fails or does not finish in time.
+ */
+export async function run(): Promise<HookResult> {
+  const interrupt = noticeInterrupt();
+
+  try {
+    return await runHook(interrupt);
+  } finally {
+    interrupt.dispose();
+  }
+}
+
+/** Plans, starts and follows the upgrade. Tells `interrupt` the run id once the run exists. */
+async function runHook(interrupt: InterruptNotice): Promise<HookResult> {
   const appConfig = await parseCommerceAppConfig();
   const { upgradeMode } = appConfig.metadata;
 
   consola.log(""); // Leave a bit of whitespace before the output to make it more readable.
   consola.start("Checking for app upgrades...");
-  const request = await createUpgradeRequest();
-  const result = await planUpgrade(request);
 
-  if (isSkippedResult(result)) {
-    consola.info(`No upgrade was run: ${result.reason}.\n`);
-    return result;
+  const context = createCamsContext();
+  consola.debug(`Service: ${context.baseUrl}`);
+
+  const extensionId = await findWorkspaceExtensionId(context);
+  if (!extensionId) {
+    consola.info("No upgrade was run: not-associated.\n");
+    return { code: "not-associated", kind: "skipped" };
+  }
+
+  const plan = await planUpgrade(context, extensionId);
+  if (typeof plan === "string") {
+    consola.info(`No upgrade was run: ${plan}.\n`);
+    return { code: plan, kind: "skipped" };
   }
 
   if (upgradeMode === "manual") {
@@ -168,19 +202,25 @@ export async function run() {
     );
   }
 
-  consola.box(
-    ["Upgrade plan", JSON.stringify(result.plan, null, 2)].join("\n\n"),
-  );
+  consola.box(["Upgrade plan", JSON.stringify(plan, null, 2)].join("\n\n"));
 
-  if (upgradeMode === "auto") {
-    await startUpgrade(request, result.plan);
-    await waitForAutomaticUpgrade(request);
+  if (upgradeMode === "manual") {
+    return { kind: "planned", plan };
   }
 
-  return result;
+  const started = await startUpgrade(context, extensionId, plan);
+  interrupt.setRunId(started.id);
+
+  consola.info(`App upgrade started (run ${started.id}).`);
+  const watcherLog = announceBackgroundWatcher(extensionId, started);
+  if (watcherLog) {
+    interrupt.setWatcherLog(watcherLog);
+  }
+
+  await followRun(context, extensionId, started);
+  return { kind: "upgraded", runId: started.id };
 }
 
-/** Runs the post-app-deploy hook. */
 export async function exec() {
   try {
     await run();
