@@ -24,11 +24,12 @@ import { exec as preAppBuildHookCommand } from "#commands/hooks/pre-app-build";
 import { exec as preAppDevHookCommand } from "#commands/hooks/pre-app-dev";
 import { exec as preAppRunHookCommand } from "#commands/hooks/pre-app-run";
 import { exec as initCommand } from "#commands/init/main";
+import { exec as lifecycleWatchCommand } from "#commands/lifecycle/watcher/main";
 
 const NAMESPACE = "@adobe/aio-commerce-lib-app";
 
 const args = process.argv.slice(2);
-const [command, subcommand] = args;
+const [command, subcommand, ...targetArgs] = args;
 
 const USAGE = `
 Usage: ${NAMESPACE} <command> [target]
@@ -78,6 +79,9 @@ const COMMANDS = {
     "pre-app-run": preAppRunHookCommand,
   },
   init: initCommand,
+  lifecycle: {
+    watch: lifecycleWatchCommand,
+  },
 } as const;
 
 /**
@@ -89,7 +93,8 @@ const COMMANDS = {
 async function handleCommand(
   commandName: string,
   target: string,
-  handlers: Record<string, () => Promise<unknown>>,
+  handlerArgs: string[],
+  handlers: Record<string, (...args: string[]) => Promise<unknown>>,
 ) {
   function invalidTargetError(message: string) {
     consola.error(message);
@@ -108,7 +113,7 @@ async function handleCommand(
     invalidTargetError(`Unknown ${commandName} target: ${target}`);
   }
 
-  await handler();
+  await handler(...handlerArgs);
 }
 
 async function main() {
@@ -139,7 +144,7 @@ async function main() {
     }
 
     // Handle commands with subcommands (like generate)
-    await handleCommand(command, subcommand, handlers);
+    await handleCommand(command, subcommand, targetArgs, handlers);
   } catch (error) {
     consola.error(stringifyError(error));
   }
