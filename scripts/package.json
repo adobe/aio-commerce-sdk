@@ -12,6 +12,7 @@
     "#test/*": "./test/*.ts"
   },
   "bin": {
+    "sdk-collect-package-tarballs": "./source/collect-package-tarballs.ts",
     "sdk-postpack": "./source/postpack.ts",
     "sdk-prepack": "./source/prepack.ts",
     "sdk-sync-plugin-version": "./source/sync-plugin-version.ts"
