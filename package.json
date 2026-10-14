@@ -19,7 +19,7 @@
     "knip": "knip",
     "lint": "turbo run lint",
     "lint:fix": "turbo run lint:fix",
-    "pack": "turbo run pack",
+    "pack": "turbo run pack && pnpm exec tsx scripts/source/collect-package-tarballs.ts",
     "prepare": "husky",
     "publint": "turbo run publint",
     "release:publish": "changeset publish",
