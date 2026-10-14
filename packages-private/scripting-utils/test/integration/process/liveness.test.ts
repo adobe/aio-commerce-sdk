@@ -23,7 +23,15 @@ import type { ChildProcess } from "node:child_process";
 const PACKAGE_ROOT = fileURLToPath(new URL("../../..", import.meta.url));
 const LIVENESS = join(PACKAGE_ROOT, "source/process/liveness.ts");
 
-describe("waitForOwnerExit in a real process", () => {
+/** Starting a process through tsx can take seconds on a busy machine, and the owner check runs every second. */
+const REAL_PROCESS_TIMEOUT_MS = 30_000;
+
+/** Longer than one check of the owner pid, so a check happens while the owner is alive. */
+const IDLE_WAIT_MS = 1500;
+
+describe("waitForOwnerExit in a real process", {
+  timeout: REAL_PROCESS_TIMEOUT_MS,
+}, () => {
   const started: ChildProcess[] = [];
   let directory: string;
   let script: string;
@@ -84,7 +92,7 @@ try {
     await vi.waitFor(() => expect(output.text).toContain("waiting"), {
       timeout: 10_000,
     });
-    await new Promise((resolve) => setTimeout(resolve, 2500));
+    await new Promise((resolve) => setTimeout(resolve, IDLE_WAIT_MS));
     expect(output.text).not.toContain("owner gone");
 
     owner.kill();

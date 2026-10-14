@@ -24,7 +24,12 @@ import type { Socket } from "node:net";
 const PACKAGE_ROOT = fileURLToPath(new URL("../../..", import.meta.url));
 const LIVENESS = join(PACKAGE_ROOT, "source/process/liveness.ts");
 
-describe("spawnDetached with a real process", () => {
+/** Starting a process through tsx can take seconds on a busy machine. */
+const REAL_PROCESS_TIMEOUT_MS = 30_000;
+
+describe("spawnDetached with a real process", {
+  timeout: REAL_PROCESS_TIMEOUT_MS,
+}, () => {
   let directory: string;
   let logPath: string;
 
