@@ -1055,19 +1055,42 @@ Installing, upgrading and uninstalling all plan the operation and validate the p
 
 #### The `post-app-deploy` Hook
 
-The generated `commerce/extensibility/1` extension wires a `post-app-deploy` hook automatically (alongside `pre-app-build`). After every `aio app deploy`, the hook plans an upgrade, so a redeploy of an installed app runs an upgrade check without any manual step. The hook never installs an app that is not installed yet.
+The generated `commerce/extensibility/1` extension wires a `post-app-deploy` hook automatically (alongside `pre-app-build`). After every `aio app deploy`, the hook plans an upgrade, so a redeploy of an installed app runs an upgrade check without any manual step. The hook never installs an app that is not installed yet. You must be logged in with `aio login`.
 
-- In `auto` mode it prints the plan, starts it, and waits for the execution result when progress is available.
+- In `auto` mode the hook prints the plan, starts the upgrade, and shows its status until the upgrade finishes. It prints a run id, the command to check the run later, and the command to follow the log of the background watcher.
 - In `manual` mode it reports that a plan was created but was not executed.
+
+The hook runs after the deploy and cannot undo it, so its exit code only reports what the upgrade did.
+
+If you press Ctrl-C or close the terminal while an upgrade runs, the upgrade keeps running. Check its result with `lifecycle status`. On Ctrl-C the hook prints the command to check the run and the path of the watcher log.
+
+##### Exit codes
+
+The hook exits with `0` when the upgrade succeeded, when it was skipped (see the no-op states below), or when the upgrade mode is `manual` and the plan is waiting. It exits with `1` when the upgrade failed, was refused because another operation is running, or could not be checked, for example because the service stayed unreachable.
+
+#### Checking an upgrade run
+
+Use `lifecycle status` to check an upgrade run after the hook is gone, from the project directory:
+
+```bash
+# Check the latest upgrade run.
+npx aio-commerce-lib-app lifecycle status
+
+# Check a specific run.
+npx aio-commerce-lib-app lifecycle status <run-id>
+```
+
+It exits with `0` when the run succeeded or is still running, and with `1` when the run failed or could not be read.
 
 #### No-op Upgrade States
 
 Some states are not actionable upgrades. The `post-app-deploy` hook treats them as a no-op rather than a failure:
 
 - **`not-associated`**: the app is not associated with a Commerce instance.
+- **`not-installed`**: the app is associated but not installed.
 - **`already-current`**: the installed version already matches `metadata.version`.
 
-Any other planning failure, for example configuration issues that block the upgrade, surfaces as an error.
+Any other planning failure, for example configuration issues that block the upgrade or another operation that is already running, surfaces as an error.
 
 #### Troubleshooting a Lifecycle Operation
 
@@ -1094,7 +1117,7 @@ aio rt activation logs <activations.execution>
 
 The default log level shows each lifecycle transition with its ids, and an `error` line names the step that failed and its message. Set the `LOG_LEVEL` input of the action to `debug` to also log the progress of every step. Logs never include request params or configuration.
 
-When an automatic upgrade fails, the `post-app-deploy` hook prints the attempt id and, when known, the execution activation id.
+When an automatic upgrade fails, the `post-app-deploy` hook prints the run id and, when known, the execution activation id.
 
 ### Using the Configuration API
 

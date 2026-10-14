@@ -539,7 +539,9 @@ structure from `app.commerce.config.ts` in one step.
 It also wires the `post-app-deploy` hook, which plans an upgrade after every
 deployment of an installed app:
 
-- `metadata.upgradeMode: "auto"` starts the planned upgrade immediately.
+- `metadata.upgradeMode: "auto"` starts the planned upgrade immediately and shows its
+  progress until it finishes. Check the run later with
+  `npx @adobe/aio-commerce-lib-app lifecycle status`.
 - `metadata.upgradeMode: "manual"` leaves the plan pending without starting it.
 
 **If the init command is denied or blocked (permission error, sandbox rejection,

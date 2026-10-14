@@ -12,10 +12,29 @@
 
 import * as v from "valibot";
 
-/** Query params of `GET /`. Query values arrive as strings. */
-export const StatusQuerySchema = v.object({
+/** Query params that read the history of attempts. */
+const HistoryQuerySchema = v.object({
+  attemptId: v.optional(v.never()),
   history: v.optional(v.picklist(["true", "false"]), "false"),
   limit: v.optional(
     v.pipe(v.string(), v.toNumber(), v.integer(), v.minValue(1)),
   ),
 });
+
+/** Query params that read one attempt by id. */
+const AttemptQuerySchema = v.object({
+  attemptId: v.pipe(v.string(), v.minLength(1)),
+  history: v.optional(v.never()),
+  limit: v.optional(v.never()),
+});
+
+/**
+ * Query params of `GET /`. Query values arrive as strings.
+ *
+ * Unknown keys are accepted: with an empty query string the router falls back to every other
+ * action param, such as `appConfig`.
+ */
+export const StatusQuerySchema = v.union([
+  AttemptQuerySchema,
+  HistoryQuerySchema,
+]);

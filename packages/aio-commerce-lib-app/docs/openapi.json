@@ -1224,8 +1224,18 @@
       "get": {
         "operationId": "getInstallationState",
         "summary": "Get Installation State",
-        "description": "Returns the status of the latest lifecycle attempt, whatever its operation. With `history=true`, also returns the plans of that attempt, the earlier attempts with their plans, and the plans made since the latest attempt. Without a lifecycle attempt, returns the installation record of an older library version, if any, and ignores `history` and `limit`.",
+        "description": "Returns the status of the latest lifecycle attempt, whatever its operation. With `attemptId`, returns the status of that attempt instead, whether it is the latest or an earlier one. With `history=true`, also returns the plans of that attempt, the earlier attempts with their plans, and the plans made since the latest attempt. Without a lifecycle attempt, returns the installation record of an older library version, if any, and ignores `history` and `limit`.",
         "parameters": [
+          {
+            "name": "attemptId",
+            "in": "query",
+            "description": "The attempt to read. Cannot be combined with `history` or `limit`.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
           {
             "name": "history",
             "in": "query",
@@ -1269,7 +1279,7 @@
         ],
         "responses": {
           "200": {
-            "description": "The latest lifecycle attempt, with its history on `history=true`, or the installation record of an older library version.",
+            "description": "The latest lifecycle attempt, or the one named by `attemptId`, with its history on `history=true`, or the installation record of an older library version.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1298,7 +1308,7 @@
             "description": "No installation workflow state or lifecycle attempt has been stored yet."
           },
           "400": {
-            "description": "The `history` or `limit` query parameter is invalid.",
+            "description": "The `attemptId`, `history` or `limit` query parameter is invalid, or `attemptId` is combined with `history` or `limit`.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1312,6 +1322,16 @@
           },
           "403": {
             "description": "The access token is valid, but it is not allowed to access the requested organization or operation."
+          },
+          "404": {
+            "description": "No lifecycle attempt has the given `attemptId`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
           },
           "500": {
             "description": "An unexpected server error occurred.",

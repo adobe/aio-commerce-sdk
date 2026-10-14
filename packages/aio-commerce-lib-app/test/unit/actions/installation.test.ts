@@ -417,6 +417,109 @@ describe("installationRuntimeAction", () => {
         expect(result).toMatchObject({ statusCode: 204, type: "success" });
       });
     });
+
+    describe("attemptId", () => {
+      const latest = createMockLifecycleAttempt({
+        id: "attempt-2",
+        previousAttemptId: "attempt-1",
+        status: "in-progress",
+      });
+      const archived = createMockLifecycleAttempt({
+        id: "attempt-1",
+        status: "failed",
+      });
+
+      function seedAttempts(latestAttempt: LifecycleAttempt | null = latest) {
+        orchestrationStateStore = createMockLifecycleStore({
+          initial: createMockOrchestrationState({ latestAttempt }),
+        });
+        attemptStore.values.set(archived.id, archived);
+      }
+
+      function getStatus(query: string, params: object = {}) {
+        const handler = installationRuntimeAction({
+          appConfig: minimalValidConfig,
+        });
+
+        return handler(createRuntimeActionParams({ query, ...params }));
+      }
+
+      test.each([
+        ["the latest attempt", "attempt-2", "in-progress"],
+        ["an archived attempt", "attempt-1", "failed"],
+      ])("returns %s without the history", async (_, id, status) => {
+        seedAttempts();
+        const result = await getStatus(`attemptId=${id}`);
+
+        expect(result).toMatchObject({ body: { id, status }, statusCode: 200 });
+        expect(result).not.toHaveProperty("body.history");
+      });
+
+      test("reports the latest attempt as expired once its deadline passed", async () => {
+        seedAttempts(
+          createMockLifecycleAttempt({
+            executionDeadline: "2020-01-01T00:00:00.000Z",
+            id: "attempt-2",
+            status: "in-progress",
+          }),
+        );
+        const result = await getStatus("attemptId=attempt-2");
+
+        expect(result).toMatchObject({
+          body: {
+            error: { key: "LIFECYCLE_ATTEMPT_EXPIRED" },
+            status: "failed",
+          },
+          statusCode: 200,
+        });
+      });
+
+      test.each([
+        ["an unknown id", () => seedAttempts(), {}],
+        ["no attempt at all", () => undefined, {}],
+        [
+          "only the record of an older library version",
+          () => {
+            installationStore = createMockInstallationStore(
+              createMockInstallationSucceededState(),
+            );
+          },
+          { headers: POST_APP_DEPLOY_HEADERS },
+        ],
+      ])("returns 404 for %s", async (_, seed, params) => {
+        seed();
+        const result = await getStatus("attemptId=attempt-9", params);
+
+        expect(result).toMatchObject({
+          error: { statusCode: 404 },
+          type: "error",
+        });
+      });
+
+      test.each([
+        "attemptId=attempt-2&history=true",
+        "attemptId=attempt-2&limit=1",
+        "attemptId=",
+      ])("returns 400 for the query %s", async (query) => {
+        seedAttempts();
+        const result = await getStatus(query);
+
+        expect(result).toMatchObject({
+          error: { statusCode: 400 },
+          type: "error",
+        });
+      });
+
+      test("accepts unknown keys next to an attemptId", async () => {
+        seedAttempts();
+        const result = await getStatus("attemptId=attempt-1&other=1");
+
+        expect(result).toMatchObject({
+          body: { id: "attempt-1" },
+          statusCode: 200,
+        });
+      });
+    });
   });
 
   const upgradeRequestBody = {

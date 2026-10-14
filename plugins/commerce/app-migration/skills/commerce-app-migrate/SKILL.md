@@ -305,7 +305,9 @@ export default defineConfig({
 - `version`: Use `package.json` `version`. Default: `"1.0.0"`.
 - `upgradeMode`: Use `"manual"` (currently the default while upgrade execution
   stabilizes) unless the developer explicitly asks for automatic execution. `"auto"` is
-  experimental: the generated post-deploy hook plans an upgrade and starts immediately. In `"manual"` mode, the hook leaves the plan pending without starting execution.
+  experimental: the generated post-deploy hook plans an upgrade, starts it and shows
+  its progress until it finishes. In `"manual"` mode, the hook leaves the plan pending
+  without starting execution.
 - `description`: Use `package.json` `description` if present.
   If the description exceeds 255 characters, do NOT truncate it mid-sentence.
   Instead, rewrite it: read the full description and compose a shorter one that

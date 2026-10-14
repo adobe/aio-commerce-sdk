@@ -328,6 +328,25 @@ export function toAttemptStatus(attempt: LifecycleAttempt) {
   };
 }
 
+/**
+ * The attempt with the given id: the latest one or an archived earlier one.
+ *
+ * @param attemptId - The id to look for.
+ * @param latestAttempt - The latest attempt, or `null` when there is none.
+ * @param attemptStore - The store of attempts that are no longer the latest.
+ */
+export async function findAttempt(
+  attemptId: string,
+  latestAttempt: LifecycleAttempt | null | undefined,
+  attemptStore: LifecycleStore<LifecycleAttempt>,
+) {
+  if (latestAttempt?.id === attemptId) {
+    return latestAttempt;
+  }
+
+  return await attemptStore.get(attemptId);
+}
+
 /** The stores the lifecycle history is read from. */
 type LifecycleHistoryStores = {
   attemptStore: LifecycleStore<LifecycleAttempt>;
