@@ -19,7 +19,7 @@
     "knip": "knip",
     "lint": "turbo run lint",
     "lint:fix": "turbo run lint:fix",
-    "pack": "turbo run pack && pnpm exec tsx scripts/source/collect-package-tarballs.ts",
+    "pack": "turbo run pack && sdk-collect-package-tarballs",
     "prepare": "husky",
     "publint": "turbo run publint",
     "release:publish": "changeset publish",
@@ -40,6 +40,7 @@
     ]
   },
   "devDependencies": {
+    "@aio-commerce-sdk/scripts": "workspace:*",
     "@biomejs/biome": "2.5.15",
     "@changesets/changelog-github": "^1.0.0",
     "@changesets/cli": "^3.0.0",
