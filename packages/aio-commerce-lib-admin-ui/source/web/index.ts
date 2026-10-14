@@ -22,6 +22,7 @@ export { useSharedContext } from "#web/react/commerce/context/shared-context.tsx
 export { useCommerce } from "#web/react/commerce/hooks/use-commerce";
 export {
   useMassActionContext,
+  useNativeUiContext,
   useOrderViewButtonContext,
 } from "#web/react/commerce/hooks/use-extension-context";
 export { useHostConnection } from "#web/react/commerce/hooks/use-host-connection";
@@ -31,6 +32,7 @@ export type { ImsContext } from "#web/react/auth/types";
 export type {
   HostConnection,
   MassActionContext,
+  NativeUiContext,
   OrderViewButtonContext,
   SharedContext,
 } from "#web/react/commerce/types";

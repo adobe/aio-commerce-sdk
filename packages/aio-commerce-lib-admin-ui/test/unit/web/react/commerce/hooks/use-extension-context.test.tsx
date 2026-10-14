@@ -17,6 +17,7 @@ import { createMockGuestConnection } from "#test/fixtures/uix-guest";
 import { sharedContextProvider } from "#test/utils/shared-context.tsx";
 import {
   useMassActionContext,
+  useNativeUiContext,
   useOrderViewButtonContext,
 } from "#web/react/commerce/hooks/use-extension-context";
 
@@ -135,6 +136,54 @@ describe("useOrderViewButtonContext", () => {
     expect.assert.isNull(result.current.data);
     expect(result.current.error.message).toContain(
       "Could not find an order ID",
+    );
+  });
+});
+
+describe("useNativeUiContext", () => {
+  test("returns customerId and storeId when they are provided", async () => {
+    const { result } = await renderHook(() => useNativeUiContext(), {
+      wrapper: provide({ customerId: 123, storeId: "2" }),
+    });
+
+    expect(result.current).toEqual({
+      data: { customerId: 123, storeId: "2" },
+      error: null,
+    });
+  });
+
+  test("omits identifiers that are not provided", async () => {
+    const { result } = await renderHook(() => useNativeUiContext(), {
+      wrapper: provide({}),
+    });
+
+    expect(result.current).toEqual({ data: {}, error: null });
+  });
+
+  test.each([
+    { customerId: true },
+    { storeId: {} },
+    { customerId: Number.NaN },
+  ])(
+    "returns an error when a provided identifier is invalid",
+    async (values) => {
+      const { result } = await renderHook(() => useNativeUiContext(), {
+        wrapper: provide(values),
+      });
+
+      expect.assert.isNull(result.current.data);
+      expect(result.current.error.message).toContain(
+        "must be a string or finite number",
+      );
+    },
+  );
+
+  test("returns an error outside the Commerce shared context", async () => {
+    const { result } = await renderHook(() => useNativeUiContext());
+
+    expect.assert.isNull(result.current.data);
+    expect(result.current.error.message).toContain(
+      "useSharedContext must be used inside a SharedContextProvider",
     );
   });
 });

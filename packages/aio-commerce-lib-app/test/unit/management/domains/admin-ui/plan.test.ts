@@ -89,6 +89,42 @@ describe("planAdminUi", () => {
     );
   });
 
+  test("registers each native UI replaced page as its own component", async () => {
+    const config = {
+      adminUi: {
+        nativeUi: {
+          replacedPages: [
+            {
+              path: "#/create-order",
+              target: "order.create",
+              title: "Create Order (App)",
+            },
+            {
+              path: "#/edit-product",
+              target: "product.edit",
+              title: "Edit Product (App)",
+            },
+          ],
+        },
+      },
+    } as AdminUiConfig;
+    const { plan } = await planned(null, config);
+
+    expect(plan.extensionAction).toBe("register");
+    expect(plan.operations.map((operation) => operation.id)).toEqual([
+      "add:nativeUi.replacedPages.order.create",
+      "add:nativeUi.replacedPages.product.edit",
+    ]);
+    expect(
+      plan.operations.map((operation) =>
+        operation.kind === "add" ? operation.after.component : null,
+      ),
+    ).toEqual([
+      { id: "order.create", kind: "replacedPages" },
+      { id: "product.edit", kind: "replacedPages" },
+    ]);
+  });
+
   test("unregisters with one remove per component when the target dropped Admin UI", async () => {
     const { plan } = await planned(
       configWithAdminUiSingleGrid as AdminUiConfig,
