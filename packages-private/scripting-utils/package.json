@@ -16,6 +16,7 @@
     "./env": "./source/env.ts",
     "./yaml": "./source/yaml/index.ts",
     "./filesystem": "./source/filesystem/index.ts",
+    "./process": "./source/process/index.ts",
     "./package.json": "./package.json"
   },
   "scripts": {
