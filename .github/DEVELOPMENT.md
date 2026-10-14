@@ -388,7 +388,7 @@ You can test your changes locally without waiting for them to be published. Just
 To test changes across multiple packages, run the following command from the repo root. It builds and packs each package, then collects the generated `.tgz` files in `.local-testing/`:
 
 ```bash
-pnpm run pack
+pnpm run clean:tgz && pnpm turbo run build pack
 ```
 
 ## Release Process
