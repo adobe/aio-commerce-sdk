@@ -63,6 +63,7 @@ export function noticeInterrupt(statusCommand: string): InterruptNotice {
   let hasWatcher = false;
 
   const onInterrupt = () => {
+    console.log("\n");
     consola.info(
       describeInterrupt(statusCommand, runId, hasWatcher).join("\n"),
     );
