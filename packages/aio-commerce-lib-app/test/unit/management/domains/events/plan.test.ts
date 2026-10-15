@@ -272,9 +272,10 @@ describe("planCommerceEvents", () => {
   });
 
   test("plans every resource of a new provider as a change", async () => {
+    const target = oneProvider([commerceEvent()]);
     const plan = await planCommerce({
       live: deployed(commerceConfig([]), COMMERCE_PROVIDER_TYPE),
-      target: oneProvider([commerceEvent()]),
+      target,
     });
 
     expect(summary(plan)).toEqual([
@@ -284,6 +285,43 @@ describe("planCommerceEvents", () => {
       "add registration change",
       "add subscription change",
     ]);
+
+    const instanceId = generateInstanceId(
+      metadata,
+      target.eventing.commerce[0].provider,
+      TEST_WORKSPACE_ID,
+    );
+    expect(plan.operations[0]).toMatchObject({ after: { instanceId } });
+    expect(plan.operations[1]).toMatchObject({ after: { instanceId } });
+    expect(plan.providerIds).toEqual({});
+    expect(plan.eventingModule).toEqual({
+      instanceId,
+      isDefaultProviderConfigured: false,
+      isDefaultWorkspaceConfigurationEmpty: true,
+    });
+  });
+
+  test("adds the Commerce provider of a live provider under its live ids", async () => {
+    const config = oneProvider([commerceEvent()]);
+    const live = deployed(config, COMMERCE_PROVIDER_TYPE);
+    live.commerceProviders = [
+      { workspace_configuration: '{"project":{}}' } as CommerceEventProvider,
+    ];
+
+    const plan = await planCommerce({ baseline: config, live, target: config });
+
+    expect(summary(plan)).toEqual(["add commerceProvider drift"]);
+    expect(plan.operations[0]).toMatchObject({
+      after: {
+        instanceId: live.providers[0].instance_id,
+        providerId: "io-orders",
+      },
+    });
+    expect(plan.providerIds).toEqual({ orders: "io-orders" });
+    expect(plan.eventingModule).toMatchObject({
+      isDefaultProviderConfigured: true,
+      isDefaultWorkspaceConfigurationEmpty: false,
+    });
   });
 
   test("restores a provider the baseline declares but live lacks as drift", async () => {
@@ -357,9 +395,14 @@ describe("planCommerceEvents", () => {
     const plan = await planCommerce({ baseline: config, live, target: config });
 
     expect(summary(plan)).toEqual([
+      "remove metadata drift",
       "update registration drift",
       "update subscription:replace drift",
+      "add metadata drift",
     ]);
+    expect(plan.operations[0]).toMatchObject({
+      before: { providerId: "io-orders", resourceType: "metadata" },
+    });
   });
 
   test("updates a subscription in place when the target adds a field", async () => {
@@ -388,8 +431,10 @@ describe("planCommerceEvents", () => {
     });
 
     expect(summary(plan)).toEqual([
+      "remove metadata change",
       "update registration drift",
       "update subscription:replace change",
+      "add metadata change",
     ]);
   });
 
@@ -419,8 +464,10 @@ describe("planCommerceEvents", () => {
     });
 
     expect(summary(plan)).toEqual([
+      "remove metadata drift",
       "update registration drift",
       "update subscription:replace drift",
+      "add metadata drift",
     ]);
   });
 
@@ -450,8 +497,10 @@ describe("planCommerceEvents", () => {
       expect.objectContaining({ priority: true }),
     );
     expect(summary(plan)).toEqual([
+      "remove metadata drift",
       "update registration drift",
       "update subscription:replace drift",
+      "add metadata drift",
     ]);
   });
 
@@ -577,10 +626,12 @@ describe("planCommerceEvents", () => {
     const plan = await planCommerce({ baseline: config, live, target: config });
 
     expect(summary(plan)).toEqual([
+      "remove metadata drift",
       "update registration drift",
       "update subscription:replace drift",
+      "add metadata drift",
     ]);
-    expect(plan.operations[1]).toMatchObject({
+    expect(plan.operations[2]).toMatchObject({
       after: { changeMode: "replace", providerId: "io-other" },
     });
   });
@@ -781,6 +832,7 @@ describe("planCommerceEvents", () => {
     const plan = await planCommerce({ baseline: config, live, target: config });
 
     expect(summary(plan)).toEqual(["update registration drift"]);
+    expect(plan.eventingModule?.instanceId).toBe(live.providers[0].instance_id);
   });
 
   test("removes the subscription of an event the target scopes to another environment", async () => {
@@ -891,6 +943,7 @@ describe("planExternalEvents", () => {
       "add registration change",
     ]);
     expect(plan.configuredValues).toBeUndefined();
+    expect(plan.eventingModule).toBeUndefined();
   });
 
   test("updates a registration when the target routes another event to its action", async () => {

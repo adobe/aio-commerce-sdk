@@ -10,6 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
+import { unwrapHttpError } from "@adobe/aio-commerce-lib-api/utils";
 import { resolveImsAuthParams } from "@adobe/aio-commerce-lib-auth";
 import { HTTPError } from "ky";
 
@@ -18,9 +19,20 @@ import {
   throwHttpError,
 } from "#management/common/utils/http-error";
 
+import {
+  COMMERCE_PROVIDER_TYPE,
+  getCommerceEventingConfigurationUpdateParams,
+  getIoEventCode,
+  makeWorkspaceConfig,
+} from "./utils";
+
 import type { CommerceEvent } from "#config/schema/eventing";
 import type { EventsExecutionContext } from "./context";
-import type { EventingOperationValue } from "./types";
+import type {
+  ConfigureCommerceEventingParams,
+  EventingOperationValue,
+} from "./types";
+import type { ExistingCommerceEventingData } from "./utils";
 
 /** The operation value of one resource type. */
 export type ValueOf<TType extends EventingOperationValue["resourceType"]> =
@@ -272,28 +284,13 @@ export async function updateRegistration(
   }
 }
 
-/**
- * Updates a Commerce subscription in place, or unsubscribes it for a replace: the install pass
- * that follows subscribes it again with the target settings.
- */
+/** Updates a Commerce subscription in place with its target event settings. */
 export async function updateSubscription(
   after: ValueOf<"subscription">,
-  targetEvents: Map<string, CommerceEvent>,
+  event: CommerceEvent,
   context: EventsExecutionContext,
 ): Promise<void> {
-  if (after.changeMode === "replace") {
-    return await deleteSubscription(after.name, context);
-  }
-
   const { commerceEventsClient, logger } = context;
-  const event = targetEvents.get(after.name);
-
-  if (!event) {
-    throw new Error(
-      `Commerce subscription "${after.name}" is not in the target configuration.`,
-    );
-  }
-
   try {
     await commerceEventsClient.updateEventSubscription({
       fields: event.fields,
@@ -314,4 +311,232 @@ export async function updateSubscription(
       `Failed to update Commerce event subscription "${after.name}"`,
     );
   }
+}
+
+/** Creates an I/O Events provider and returns its id. */
+export async function createProvider(
+  value: ValueOf<"provider">,
+  context: EventsExecutionContext,
+): Promise<string> {
+  const { ioEventsClient, logger } = context;
+  try {
+    const provider = await ioEventsClient.createEventProvider({
+      ...workspaceOf(context),
+      description: value.description,
+      instanceId: value.instanceId as string,
+      label: value.label,
+      providerType: value.type,
+    });
+
+    logger.info(`Created event provider "${value.label}" (${provider.id}).`);
+    return provider.id;
+  } catch (error) {
+    return await throwHttpError(
+      logger,
+      error,
+      `Failed to create event provider "${value.label}"`,
+    );
+  }
+}
+
+/** Registers an I/O Events provider in Commerce. */
+export async function createCommerceProvider(
+  value: ValueOf<"commerceProvider">,
+  providerId: string,
+  context: EventsExecutionContext,
+): Promise<void> {
+  const { commerceEventsClient, logger } = context;
+  try {
+    await commerceEventsClient.createEventProvider({
+      description: value.description,
+      instance_id: value.instanceId as string,
+      label: value.label,
+      provider_id: providerId,
+      workspace_configuration: JSON.stringify(makeWorkspaceConfig(context)),
+    });
+
+    logger.info(`Created Commerce event provider "${value.label}".`);
+  } catch (error) {
+    await throwHttpError(
+      logger,
+      error,
+      `Failed to create Commerce event provider "${value.label}"`,
+    );
+  }
+}
+
+/** Creates an event's metadata on its provider. */
+export async function createMetadata(
+  value: ValueOf<"metadata">,
+  providerId: string,
+  context: EventsExecutionContext,
+): Promise<void> {
+  const { ioEventsClient, logger } = context;
+  try {
+    await ioEventsClient.createEventMetadataForProvider({
+      ...workspaceOf(context),
+      description: value.description ?? "",
+      eventCode: value.eventCode,
+      label: value.label,
+      providerId,
+    });
+
+    logger.info(`Created event metadata "${value.eventCode}".`);
+  } catch (error) {
+    await throwHttpError(
+      logger,
+      error,
+      `Failed to create event metadata "${value.eventCode}"`,
+    );
+  }
+}
+
+/** Creates a registration that delivers the given events of a provider to a runtime action. */
+export async function createRegistration(
+  value: ValueOf<"registration">,
+  providerId: string,
+  context: EventsExecutionContext,
+): Promise<void> {
+  const { ioEventsClient, logger, params } = context;
+  try {
+    await ioEventsClient.createRegistration({
+      ...workspaceOf(context),
+      clientId: resolveImsAuthParams(params).clientId,
+      deliveryType: "webhook",
+      description: value.description,
+      enabled: true,
+      eventsOfInterest: value.eventCodes.map((eventCode) => ({
+        eventCode,
+        providerId,
+      })),
+      name: value.name,
+      runtimeAction: value.runtimeAction,
+    });
+
+    logger.info(`Created registration "${value.name}".`);
+  } catch (error) {
+    await throwHttpError(
+      logger,
+      error,
+      `Failed to create registration "${value.name}"`,
+    );
+  }
+}
+
+/** Subscribes a Commerce event under a provider with its target settings. */
+export async function createSubscription(
+  value: ValueOf<"subscription">,
+  event: CommerceEvent,
+  providerId: string,
+  context: EventsExecutionContext,
+): Promise<void> {
+  const { commerceEventsClient, logger } = context;
+  try {
+    await commerceEventsClient.createEventSubscription({
+      destination: event.destination,
+      fields: event.fields,
+      force: event.force,
+      hipaa_audit_required: event.hipaa_audit_required,
+      name: value.name,
+      parent: event.name,
+      priority: event.priority,
+      provider_id: providerId,
+      rules: event.rules,
+    });
+
+    logger.info(`Created Commerce event subscription "${value.name}".`);
+  } catch (error) {
+    await throwHttpError(
+      logger,
+      error,
+      `Failed to create Commerce event subscription "${value.name}"`,
+    );
+  }
+
+  await restoreEventMetadataText(
+    getIoEventCode(value.name, COMMERCE_PROVIDER_TYPE),
+    event,
+    providerId,
+    context,
+  );
+}
+
+/** Sets the I/O metadata of a subscribed event back to its configured label and description. */
+export async function restoreEventMetadataText(
+  eventCode: string,
+  event: Pick<CommerceEvent, "label" | "description">,
+  providerId: string,
+  context: EventsExecutionContext,
+): Promise<void> {
+  const { ioEventsClient, logger } = context;
+
+  // Commerce overwrites the label and description of an event's I/O metadata when it subscribes.
+  try {
+    await ioEventsClient.updateEventMetadataForProvider({
+      ...workspaceOf(context),
+      description: event.description,
+      eventCode,
+      label: event.label,
+      providerId,
+    });
+  } catch (error) {
+    logger.warn(
+      `Could not restore the label of event metadata "${eventCode}": ${await unwrapHttpError(error)}`,
+    );
+  }
+}
+
+/**
+ * Ensures Commerce Eventing is configured with the given configuration, updating it if it already exists.
+ * @param params - The parameters necessary to configure Commerce Eventing.
+ * @param existingData - Existing Commerce Eventing data.
+ */
+export async function configureCommerceEventing(
+  params: ConfigureCommerceEventingParams,
+  existingData: Pick<
+    ExistingCommerceEventingData,
+    "isDefaultProviderConfigured" | "isDefaultWorkspaceConfigurationEmpty"
+  >,
+) {
+  const { context, config } = params;
+  const { commerceEventsClient, logger } = context;
+
+  logger.info("Starting configuration of the Commerce Eventing Module");
+  const updateParams = getCommerceEventingConfigurationUpdateParams(
+    config,
+    existingData,
+  );
+
+  if (updateParams === null) {
+    logger.info(
+      "Commerce Eventing Module is already configured, skipping configuration step.",
+    );
+
+    return;
+  }
+
+  logger.info(
+    `Updating Commerce Eventing Module configuration with the following data: [${Object.keys(updateParams).join(", ")}]`,
+  );
+
+  return commerceEventsClient
+    .updateEventingConfiguration(updateParams)
+    .then((success) => {
+      if (success) {
+        logger.info("Commerce Eventing Module configured successfully.");
+        return;
+      }
+
+      // This will be catched by the catch block below, and logged accordingly.
+      throw new Error(
+        "Something went wrong while configuring Commerce Eventing Module. Response was not successful but no error was thrown.",
+      );
+    })
+    .catch((err) =>
+      throwHttpError(
+        logger,
+        err,
+        "Failed to configure Adobe Commerce eventing",
+      ),
+    );
 }

@@ -250,6 +250,7 @@ export function planAdminUi(
     return Promise.resolve({
       issues: [
         {
+          blocking: true,
           code: "admin-ui-namespace-unavailable",
           domain: "admin-ui",
           message:
