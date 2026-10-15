@@ -12,13 +12,23 @@
 
 import * as v from "valibot";
 
-/** Query params that read the history of attempts. */
+import type { LifecycleOperation } from "#management/common/orchestration";
+
+/** The lifecycle operations an attempt can have. */
+const OPERATIONS = [
+  "install",
+  "upgrade",
+  "uninstall",
+] as const satisfies readonly LifecycleOperation[];
+
+/** Query params that read the latest attempt or its history. */
 const HistoryQuerySchema = v.object({
   attemptId: v.optional(v.never()),
   history: v.optional(v.picklist(["true", "false"]), "false"),
   limit: v.optional(
     v.pipe(v.string(), v.toNumber(), v.integer(), v.minValue(1)),
   ),
+  operation: v.optional(v.picklist(OPERATIONS)),
 });
 
 /** Query params that read one attempt by id. */
@@ -26,6 +36,7 @@ const AttemptQuerySchema = v.object({
   attemptId: v.pipe(v.string(), v.minLength(1)),
   history: v.optional(v.never()),
   limit: v.optional(v.never()),
+  operation: v.optional(v.never()),
 });
 
 /**

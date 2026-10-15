@@ -1102,6 +1102,8 @@ Every install, upgrade and uninstall leaves a trail you can follow back when som
 
 Plans carry the full target configuration, so `GET /installation` returns them only with `history=true`. Without it, the response stays the status of the latest attempt.
 
+Add `operation=install`, `operation=upgrade` or `operation=uninstall` to read only that operation. The status is then the latest attempt that ran it, `history` and `pendingPlans` list only that operation, and the answer is `404` when no attempt ran it.
+
 Each attempt links to the rest of the trail:
 
 - `previousAttemptId` and `previousPlanId` name the attempt and the plan it replaced.

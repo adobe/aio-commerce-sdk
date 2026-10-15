@@ -416,6 +416,103 @@ describe("installationRuntimeAction", () => {
 
         expect(result).toMatchObject({ statusCode: 204, type: "success" });
       });
+
+      describe("operation", () => {
+        test.each([
+          ["upgrade", "attempt-3"],
+          ["install", "attempt-1"],
+        ])(
+          "returns the latest %s attempt, even when a later attempt ran another operation",
+          async (operation, id) => {
+            seedChain();
+            const result = await getStatus(`operation=${operation}`);
+
+            expect(result).toMatchObject({
+              body: { id, operation },
+              statusCode: 200,
+            });
+            expect(result).not.toHaveProperty("body.history");
+          },
+        );
+
+        test("answers 404 when no attempt ran the operation", async () => {
+          seedChain();
+          const result = await getStatus("operation=uninstall");
+
+          expect(result).toMatchObject({
+            error: { statusCode: 404 },
+            type: "error",
+          });
+        });
+
+        test("answers 404 when no attempt exists, without the installation record of an older version", async () => {
+          const result = await getStatus("operation=upgrade");
+
+          expect(result).toMatchObject({
+            error: { statusCode: 404 },
+            type: "error",
+          });
+        });
+
+        test("lists only the earlier attempts that ran the operation", async () => {
+          seedChain();
+          const upgrades = await getStatus("history=true&operation=upgrade");
+          const installs = await getStatus("history=true&operation=install");
+
+          expect.assert(
+            upgrades.type === "success" && installs.type === "success",
+            "Expected statuses",
+          );
+          expect(
+            ids((upgrades.body as { history: { id: string }[] }).history),
+          ).toEqual(["attempt-2"]);
+          expect(installs.body).toMatchObject({ history: [], id: "attempt-1" });
+        });
+
+        test("applies the limit to the attempts of the operation", async () => {
+          seedChain();
+          attemptStore.values.set("attempt-2", {
+            ...attempt2,
+            operation: "install",
+          });
+          const result = await getStatus(
+            "history=true&operation=upgrade&limit=1",
+          );
+
+          expect.assert(result.type === "success", "Expected a status");
+          const body = result.body as { history: { id: string }[] };
+          expect(body.history).toEqual([]);
+        });
+
+        test("lists only the plans made since the latest attempt for the operation", async () => {
+          seedChain(plan("plan-4b", "plan-4a"));
+          const upgrades = await getStatus("history=true&operation=upgrade");
+          const installs = await getStatus("history=true&operation=install");
+
+          expect.assert(
+            upgrades.type === "success" && installs.type === "success",
+            "Expected statuses",
+          );
+          const pending = (body: unknown) =>
+            ids((body as { pendingPlans: { id: string }[] }).pendingPlans);
+          expect(pending(upgrades.body)).toEqual(["plan-4b", "plan-4a"]);
+          expect(pending(installs.body)).toEqual([]);
+        });
+
+        test.each([
+          "operation=reinstall",
+          "operation=",
+          "attemptId=attempt-2&operation=upgrade",
+        ])("returns 400 for the query %s", async (query) => {
+          seedChain();
+          const result = await getStatus(query);
+
+          expect(result).toMatchObject({
+            error: { statusCode: 400 },
+            type: "error",
+          });
+        });
+      });
     });
 
     describe("attemptId", () => {

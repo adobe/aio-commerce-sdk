@@ -37,6 +37,7 @@ import {
 import {
   executeLifecycle,
   findAttempt,
+  findLatestAttemptOf,
   toAttemptHistory,
   toAttemptStatus,
 } from "./lifecycle";
@@ -74,6 +75,9 @@ export const router = new HttpActionRouter<InstallationActionContext>().use(
  *
  * With `history=true`, the body also lists the plans of the latest attempt, the earlier attempts
  * (at most `limit` of them) and the plans made since the latest attempt.
+ *
+ * With `operation`, the latest attempt is the most recent one that ran that operation, the history
+ * and the plans made since only list that operation, and the answer is 404 when no attempt ran it.
  */
 router.get("/", {
   handler: async (req, { logger }) => {
@@ -83,7 +87,14 @@ router.get("/", {
       stored &&
       (await normalizeExpiredAttempt(persistence.stateStore, stored, logger));
 
-    const attempt = state?.latestAttempt;
+    const { operation } = req.query;
+    const attempt = operation
+      ? await findLatestAttemptOf(
+          operation,
+          state?.latestAttempt,
+          persistence.attemptStore,
+        )
+      : state?.latestAttempt;
 
     if (req.query.attemptId !== undefined) {
       const found = await findAttempt(
@@ -112,11 +123,17 @@ router.get("/", {
             state.pendingPlan,
             persistence,
             req.query.limit,
+            operation,
           ),
         });
       }
 
       return ok({ body: toAttemptStatus(attempt) });
+    }
+
+    if (operation) {
+      logger.debug(`No ${operation} attempt found`);
+      return notFound(`No ${operation} attempt found`);
     }
 
     if (isPostAppDeployInvocation(req.headers)) {
