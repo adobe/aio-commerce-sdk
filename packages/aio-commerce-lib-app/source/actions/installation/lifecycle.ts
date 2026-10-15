@@ -462,16 +462,16 @@ export function attemptInProgressConflict(attempt?: LifecycleAttempt | null) {
   return conflict({
     body: {
       ...(attempt && { attempt: toAttemptStatus(attempt) }),
+      code: "in-progress",
       message:
         "Another lifecycle operation is already in progress. Wait for it to finish, then try again if needed.",
-      reason: "in-progress",
     },
   });
 }
 
 /** The response for a request whose plan is no longer the pending one. */
 export function stalePlanConflict(message: string) {
-  return conflict({ body: { message, reason: "stale-plan" } });
+  return conflict({ body: { code: "stale-plan", message } });
 }
 
 /** Invokes the execution route asynchronously for a started attempt and returns its activation id. */

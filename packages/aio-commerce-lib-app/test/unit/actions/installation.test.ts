@@ -867,7 +867,7 @@ describe("installationRuntimeAction", () => {
 
         expect(invokeMock).not.toHaveBeenCalled();
         expect(result).toMatchObject({
-          error: { body: { reason: "in-progress" }, statusCode: 409 },
+          error: { body: { code: "in-progress" }, statusCode: 409 },
         });
       });
 
@@ -887,7 +887,7 @@ describe("installationRuntimeAction", () => {
 
         expect(invokeMock).not.toHaveBeenCalled();
         expect(result).toMatchObject({
-          error: { body: { reason: "stale-plan" }, statusCode: 409 },
+          error: { body: { code: "stale-plan" }, statusCode: 409 },
         });
       });
     });
@@ -1026,7 +1026,7 @@ describe("installationRuntimeAction", () => {
                 operation: "upgrade",
                 status: "pending",
               },
-              reason: "in-progress",
+              code: "in-progress",
             },
             statusCode: 409,
           },
@@ -1044,7 +1044,7 @@ describe("installationRuntimeAction", () => {
 
         expect(invokeMock).not.toHaveBeenCalled();
         expect(result).toMatchObject({
-          error: { body: { reason: "not-associated" }, statusCode: 409 },
+          error: { body: { code: "not-associated" }, statusCode: 409 },
           type: "error",
         });
       });
@@ -1085,7 +1085,7 @@ describe("installationRuntimeAction", () => {
 
         expect(invokeMock).not.toHaveBeenCalled();
         expect(result).toMatchObject({
-          error: { body: { reason: "unreadable-state" }, statusCode: 409 },
+          error: { body: { code: "unreadable-state" }, statusCode: 409 },
           type: "error",
         });
       });
@@ -1098,7 +1098,7 @@ describe("installationRuntimeAction", () => {
 
         expect(invokeMock).not.toHaveBeenCalled();
         expect(result).toMatchObject({
-          error: { body: { reason: "in-progress" }, statusCode: 409 },
+          error: { body: { code: "in-progress" }, statusCode: 409 },
           type: "error",
         });
       });
@@ -1118,7 +1118,7 @@ describe("installationRuntimeAction", () => {
 
         expect(invokeMock).not.toHaveBeenCalled();
         expect(result).toMatchObject({
-          error: { body: { reason: "stale-plan" }, statusCode: 409 },
+          error: { body: { code: "stale-plan" }, statusCode: 409 },
           type: "error",
         });
       });
@@ -1132,7 +1132,7 @@ describe("installationRuntimeAction", () => {
 
         expect(invokeMock).not.toHaveBeenCalled();
         expect(result).toMatchObject({
-          error: { body: { reason: "already-current" }, statusCode: 409 },
+          error: { body: { code: "already-current" }, statusCode: 409 },
           type: "error",
         });
       });
@@ -1293,9 +1293,9 @@ describe("installationRuntimeAction", () => {
         expect(result).toMatchObject({
           error: {
             body: {
+              code: "stale-plan",
               message:
                 "The plan is for an upgrade, but the app now needs an install. Call POST /plan again.",
-              reason: "stale-plan",
             },
             statusCode: 409,
           },
@@ -1314,7 +1314,7 @@ describe("installationRuntimeAction", () => {
         expect(desiredStateStore.put).not.toHaveBeenCalled();
         expect(invokeMock).not.toHaveBeenCalled();
         expect(result).toMatchObject({
-          error: { body: { reason: "stale-plan" }, statusCode: 409 },
+          error: { body: { code: "stale-plan" }, statusCode: 409 },
           type: "error",
         });
       });
@@ -1338,7 +1338,7 @@ describe("installationRuntimeAction", () => {
                 id: (started as unknown as { body: { id: string } }).body.id,
                 status: "pending",
               },
-              reason: "in-progress",
+              code: "in-progress",
             },
             statusCode: 409,
           },
@@ -1554,7 +1554,7 @@ describe("installationRuntimeAction", () => {
         ]) {
           // biome-ignore lint/performance/noAwaitInLoops: one plan request per operation
           expect(await planRequest(action, body)).toMatchObject({
-            error: { body: { reason: "baseline-missing" }, statusCode: 409 },
+            error: { body: { code: "baseline-missing" }, statusCode: 409 },
           });
         }
 
@@ -1571,7 +1571,7 @@ describe("installationRuntimeAction", () => {
 
         expect(invokeMock).not.toHaveBeenCalled();
         expect(result).toMatchObject({
-          error: { body: { reason: "in-progress" }, statusCode: 409 },
+          error: { body: { code: "in-progress" }, statusCode: 409 },
         });
       });
 
@@ -1582,7 +1582,7 @@ describe("installationRuntimeAction", () => {
 
         expect(invokeMock).not.toHaveBeenCalled();
         expect(result).toMatchObject({
-          error: { body: { reason: "not-associated" }, statusCode: 409 },
+          error: { body: { code: "not-associated" }, statusCode: 409 },
         });
       });
 
@@ -1884,7 +1884,7 @@ describe("installationRuntimeAction", () => {
       );
 
       expect(result).toMatchObject({
-        error: { body: { reason: "not-associated" }, statusCode: 409 },
+        error: { body: { code: "not-associated" }, statusCode: 409 },
         type: "error",
       });
       expect(invokeMock).not.toHaveBeenCalled();

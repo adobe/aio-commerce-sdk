@@ -1436,7 +1436,7 @@
             "description": "The access token is valid, but it is not allowed to access the requested organization or operation."
           },
           "409": {
-            "description": "The plan cannot start. `reason` tells why: `in-progress` (another attempt is running; `attempt` carries its status), `stale-plan` (the `planId` is not the pending plan, or the installed state now calls for another operation; plan again), `not-associated`, `unreadable-state`, `baseline-missing` (the stored state names a baseline snapshot that no longer exists), `installed-without-config`, or `already-current`. Without a `reason`, planning is blocked by the `issues`, or the application ID changed.",
+            "description": "The plan cannot start. `code` tells why: `in-progress` (another attempt is running; `attempt` carries its status), `stale-plan` (the `planId` is not the pending plan, or the installed state now calls for another operation; plan again), `not-associated`, `unreadable-state`, `baseline-missing` (the stored state names a baseline snapshot that no longer exists), `installed-without-config`, or `already-current`. Without a `code`, planning is blocked by the `issues`, or the application ID changed.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1445,7 +1445,7 @@
                     "message": {
                       "type": "string"
                     },
-                    "reason": {
+                    "code": {
                       "type": "string"
                     },
                     "attempt": {
@@ -1568,7 +1568,7 @@
             "description": "The access token is valid, but it is not allowed to access the requested organization or operation."
           },
           "409": {
-            "description": "Nothing was planned. `reason` tells why: `in-progress` (an attempt is running; `attempt` carries its status), `not-associated`, `unreadable-state`, `baseline-missing` (the stored state names a baseline snapshot that no longer exists), `installed-without-config`, or `already-current`. Without a `reason`, planning is blocked by the `issues`, or the application ID changed.",
+            "description": "Nothing was planned. `code` tells why: `in-progress` (an attempt is running; `attempt` carries its status), `not-associated`, `unreadable-state`, `baseline-missing` (the stored state names a baseline snapshot that no longer exists), `installed-without-config`, or `already-current`. Without a `code`, planning is blocked by the `issues`, or the application ID changed.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1577,7 +1577,7 @@
                     "message": {
                       "type": "string"
                     },
-                    "reason": {
+                    "code": {
                       "type": "string"
                     },
                     "attempt": {

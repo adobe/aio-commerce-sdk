@@ -218,9 +218,9 @@ export async function resolveOperation(
     return rejected(
       conflict({
         body: {
+          code: "unreadable-state",
           message:
             "The stored lifecycle state cannot be read and there is no installation record to rebuild it from. Nothing was planned.",
-          reason: "unreadable-state",
         },
       }),
     );
@@ -231,9 +231,9 @@ export async function resolveOperation(
     return rejected(
       conflict({
         body: {
+          code: "baseline-missing",
           message:
             "The lifecycle state names a baseline snapshot that no longer exists. Nothing was planned.",
-          reason: "baseline-missing",
         },
       }),
     );
@@ -288,9 +288,9 @@ async function refuseLegacyInstall() {
   if (record && isSucceededState(record)) {
     return conflict({
       body: {
+        code: "installed-without-config",
         message:
           "The existing installation does not include its original config and cannot be upgraded safely. Uninstall and reinstall the app.",
-        reason: "installed-without-config",
       },
     });
   }
@@ -314,8 +314,8 @@ function refuseUpgrade(
   if (baseline.config.metadata.version === appConfig.metadata.version) {
     return conflict({
       body: {
+        code: "already-current",
         message: "The app is already on the target version.",
-        reason: "already-current",
       },
     });
   }
