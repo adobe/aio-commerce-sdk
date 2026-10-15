@@ -12,15 +12,20 @@
 
 import { describe, expect, test } from "vitest";
 
-import { parseStatusArgs } from "#commands/lifecycle/status/main";
+import { parseWatcherArgs } from "#commands/upgrade/watcher/main";
 
-describe("parseStatusArgs", () => {
-  test.each([
-    [[], { options: { runId: undefined } }],
-    [["run-1"], { options: { runId: "run-1" } }],
-    [["--watch"], { error: "Unknown option: --watch" }],
-    [["run-1", "run-2"], { error: "Unexpected argument: run-2" }],
-  ])("reads %j", (argv, expected) => {
-    expect(parseStatusArgs(argv)).toEqual(expected);
+describe("parseWatcherArgs", () => {
+  test("reads the extension and the run", () => {
+    expect(parseWatcherArgs(["ext-1", "run-1"])).toEqual({
+      extensionId: "ext-1",
+      runId: "run-1",
+    });
   });
+
+  test.each([[[]], [["ext-1"]], [["", "run-1"]], [["ext-1", ""]]])(
+    "rejects the arguments %j",
+    (argv) => {
+      expect(parseWatcherArgs(argv)).toBeUndefined();
+    },
+  );
 });

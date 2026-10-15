@@ -47,7 +47,7 @@ async function getTokenWithTimeout() {
       () =>
         reject(
           new Error(
-            "No valid Adobe IMS token is available. Run aio login, then check the run with lifecycle status",
+            "No valid Adobe IMS token is available. Run aio login, then check the run with upgrade status",
           ),
         ),
       TOKEN_TIMEOUT_MS,

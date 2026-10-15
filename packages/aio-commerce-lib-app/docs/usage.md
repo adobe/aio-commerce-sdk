@@ -1062,7 +1062,7 @@ The generated `commerce/extensibility/1` extension wires a `post-app-deploy` hoo
 
 The hook runs after the deploy and cannot undo it, so its exit code only reports what the upgrade did.
 
-If you press Ctrl-C or close the terminal while an upgrade runs, the upgrade keeps running. Check its result with `lifecycle status`. On Ctrl-C the hook prints the command to check the run and the path of the watcher log.
+If you press Ctrl-C or close the terminal while an upgrade runs, the upgrade keeps running. Check its result with `upgrade status`. On Ctrl-C the hook prints the command to check the run and the path of the watcher log.
 
 ##### Exit codes
 
@@ -1070,14 +1070,14 @@ The hook exits with `0` when the upgrade succeeded, when it was skipped (see the
 
 #### Checking an upgrade run
 
-Use `lifecycle status` to check an upgrade run after the hook is gone, from the project directory:
+Use `upgrade status` to check an upgrade run after the hook is gone, from the project directory:
 
 ```bash
 # Check the latest upgrade run.
-npx aio-commerce-lib-app lifecycle status
+npx aio-commerce-lib-app upgrade status
 
 # Check a specific run.
-npx aio-commerce-lib-app lifecycle status <run-id>
+npx aio-commerce-lib-app upgrade status <run-id>
 ```
 
 It exits with `0` when the run succeeded or is still running, and with `1` when the run failed or could not be read.

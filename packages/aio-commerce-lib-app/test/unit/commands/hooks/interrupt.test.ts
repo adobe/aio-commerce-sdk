@@ -37,22 +37,22 @@ describe("noticeInterrupt", () => {
     [
       undefined,
       undefined,
-      "Stopped waiting. The upgrade keeps running. If it was started, find the latest run with: npx aio-commerce-lib-app lifecycle status",
+      "Stopped waiting. The upgrade keeps running. If it was started, find the latest run with: npx aio-commerce-lib-app upgrade status",
     ],
     [
       "run-1",
       undefined,
-      "Stopped waiting. The upgrade keeps running. Check it with: npx aio-commerce-lib-app lifecycle status run-1",
+      "Stopped waiting. The upgrade keeps running. Check it with: npx aio-commerce-lib-app upgrade status run-1",
     ],
     [
       "run-1",
       "/tmp/watcher.log",
-      "Stopped waiting. The upgrade keeps running. Check it with: npx aio-commerce-lib-app lifecycle status run-1. Watcher log: /tmp/watcher.log",
+      "Stopped waiting. The upgrade keeps running. Check it with: npx aio-commerce-lib-app upgrade status run-1. Watcher log: /tmp/watcher.log",
     ],
     [
       undefined,
       "/tmp/watcher.log",
-      "Stopped waiting. The upgrade keeps running. If it was started, find the latest run with: npx aio-commerce-lib-app lifecycle status",
+      "Stopped waiting. The upgrade keeps running. If it was started, find the latest run with: npx aio-commerce-lib-app upgrade status",
     ],
   ])(
     "on SIGINT with the run id %s and the watcher log %s, prints one line and exits with code 130",

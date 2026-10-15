@@ -27,7 +27,7 @@ vi.mock("@aio-commerce-sdk/scripting-utils/process", () => owner);
 
 import { createCamsClient } from "#commands/common/cams/api-client";
 import { CAMS_URL_ENV_VAR } from "#commands/common/cams/config";
-import { exec, runWatcher } from "#commands/lifecycle/watcher/main";
+import { exec, runWatcher } from "#commands/upgrade/watcher/main";
 import { apiServer, setupApiTestLifecycle } from "#test/setup/api";
 
 import type { CamsContext } from "#commands/common/cams/context";

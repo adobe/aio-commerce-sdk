@@ -15,7 +15,7 @@ import { consola } from "consola";
 /** The exit code of a process that stopped because of Ctrl+C. */
 const SIGINT_EXIT_CODE = 130;
 
-const STATUS_COMMAND = "npx aio-commerce-lib-app lifecycle status";
+const STATUS_COMMAND = "npx aio-commerce-lib-app upgrade status";
 
 /** Tells the hook which run the user can follow, and removes the handler when the hook ends. */
 export type InterruptNotice = {

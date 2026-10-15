@@ -111,10 +111,10 @@ export function whenStatusChanges(report: (status: AttemptStatus) => void) {
  * Describes how polling a run ended.
  *
  * @param result - The result of the poll loop.
- * @param runId - The id of the run, which the user can check later with `lifecycle status`.
+ * @param runId - The id of the run, which the user can check later with `upgrade status`.
  */
 export function describeOutcome(result: PollResult, runId: string) {
-  const check = `Check it later with "lifecycle status ${runId}".`;
+  const check = `Check it later with "upgrade status ${runId}".`;
 
   if (result.kind === "failed") {
     const reason = stringifyError(result.error);

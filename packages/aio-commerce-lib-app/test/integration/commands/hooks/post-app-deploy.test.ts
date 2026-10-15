@@ -75,7 +75,7 @@ const EXTENSIONS = `${SERVICE}/v1/extensions`;
 const UPGRADES = `${EXTENSIONS}/ext-1/upgrades`;
 const PLAN = { id: "plan-1", operation: "upgrade" };
 const NOT_PLANNED = /The upgrade was not planned: .*Refused/;
-const WATCHER_LOG = join(tmpdir(), "aio-commerce-lifecycle-run-1.log");
+const WATCHER_LOG = join(tmpdir(), "aio-commerce-upgrade-run-1.log");
 
 /** The status the service returns for the run. */
 function attempt(status: string, extra: object = {}) {
@@ -328,13 +328,13 @@ describe("post-app-deploy hook", () => {
       expect(spawnedBeforeFirstPoll).toEqual([true]);
       expect(spawnDetachedMock).toHaveBeenCalledExactlyOnceWith(
         expect.objectContaining({
-          args: ["lifecycle", "watch", "ext-1", "run-1"],
+          args: ["upgrade", "watch", "ext-1", "run-1"],
           logPath: WATCHER_LOG,
           script: process.argv[1],
         }),
       );
       expect(consola.info).toHaveBeenCalledWith(
-        `Check the run with "npx aio-commerce-lib-app lifecycle status run-1", or follow its log with "tail -f ${WATCHER_LOG}".`,
+        `Check the run with "npx aio-commerce-lib-app upgrade status run-1", or follow its log with "tail -f ${WATCHER_LOG}".`,
       );
     });
 
@@ -344,7 +344,7 @@ describe("post-app-deploy hook", () => {
       await runHook();
 
       expect(consola.debug).toHaveBeenCalledWith("Starting the watcher.", {
-        args: ["lifecycle", "watch", "ext-1", "run-1"],
+        args: ["upgrade", "watch", "ext-1", "run-1"],
         logPath: WATCHER_LOG,
       });
     });
@@ -360,13 +360,13 @@ describe("post-app-deploy hook", () => {
       expect(consola.debug).toHaveBeenCalledWith(
         "The watcher could not start.",
         {
-          args: ["lifecycle", "watch", "ext-1", "run-1"],
+          args: ["upgrade", "watch", "ext-1", "run-1"],
           error: new Error("spawn failed"),
           logPath: WATCHER_LOG,
         },
       );
       expect(consola.info).toHaveBeenCalledWith(
-        'Check the run with "npx aio-commerce-lib-app lifecycle status run-1".',
+        'Check the run with "npx aio-commerce-lib-app upgrade status run-1".',
       );
     });
   });
@@ -382,7 +382,7 @@ describe("post-app-deploy hook", () => {
 
       expect(processExitMock).toHaveBeenCalledWith(130);
       expect(consola.info).toHaveBeenCalledWith(
-        `Stopped waiting. The upgrade keeps running. Check it with: npx aio-commerce-lib-app lifecycle status run-1. Watcher log: ${WATCHER_LOG}`,
+        `Stopped waiting. The upgrade keeps running. Check it with: npx aio-commerce-lib-app upgrade status run-1. Watcher log: ${WATCHER_LOG}`,
       );
     });
 
@@ -396,7 +396,7 @@ describe("post-app-deploy hook", () => {
       await runHook();
 
       expect(consola.info).toHaveBeenCalledWith(
-        "Stopped waiting. The upgrade keeps running. Check it with: npx aio-commerce-lib-app lifecycle status run-1",
+        "Stopped waiting. The upgrade keeps running. Check it with: npx aio-commerce-lib-app upgrade status run-1",
       );
     });
 

@@ -32,7 +32,7 @@ vi.mock("consola", () => ({
 }));
 
 import { CAMS_URL_ENV_VAR } from "#commands/common/cams/config";
-import { exec, run } from "#commands/lifecycle/status/main";
+import { exec, run } from "#commands/upgrade/status/main";
 import { apiServer, setupApiTestLifecycle } from "#test/setup/api";
 
 const SERVICE = "https://service.example.com";
@@ -79,7 +79,7 @@ function serve(poll: () => Response, latest: object[] = [IN_PROGRESS]) {
 
 setupApiTestLifecycle();
 
-describe("lifecycle status", () => {
+describe("upgrade status", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.stubEnv(CAMS_URL_ENV_VAR, SERVICE);

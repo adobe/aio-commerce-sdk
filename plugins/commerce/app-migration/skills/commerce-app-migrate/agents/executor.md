@@ -541,7 +541,7 @@ deployment of an installed app:
 
 - `metadata.upgradeMode: "auto"` starts the planned upgrade immediately and shows its
   progress until it finishes. Check the run later with
-  `npx @adobe/aio-commerce-lib-app lifecycle status`.
+  `npx @adobe/aio-commerce-lib-app upgrade status`.
 - `metadata.upgradeMode: "manual"` leaves the plan pending without starting it.
 
 **If the init command is denied or blocked (permission error, sandbox rejection,

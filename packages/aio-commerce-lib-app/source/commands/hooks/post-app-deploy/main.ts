@@ -103,8 +103,8 @@ function announceBackgroundWatcher(
   extensionId: string,
   started: AttemptStatus,
 ) {
-  const logPath = getTempLogPath(`aio-commerce-lifecycle-${started.id}`);
-  const args = ["lifecycle", "watch", extensionId, started.id];
+  const logPath = getTempLogPath(`aio-commerce-upgrade-${started.id}`);
+  const args = ["upgrade", "watch", extensionId, started.id];
 
   consola.debug("Starting the watcher.", { args, logPath });
   const watcher = spawnDetached({
@@ -116,7 +116,7 @@ function announceBackgroundWatcher(
     script: process.argv[1],
   });
 
-  const statusCommand = `npx aio-commerce-lib-app lifecycle status ${started.id}`;
+  const statusCommand = `npx aio-commerce-lib-app upgrade status ${started.id}`;
   consola.info(
     watcher
       ? `Check the run with "${statusCommand}", or follow its log with "tail -f ${logPath}".`

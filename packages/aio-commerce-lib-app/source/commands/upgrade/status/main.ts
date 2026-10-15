@@ -21,14 +21,14 @@ import { describeOutcome, isSettled } from "#commands/lifecycle/poll";
 import type { CamsContext } from "#commands/common/cams/context";
 import type { AttemptStatus } from "#commands/common/cams/schema";
 
-/** The command line of `lifecycle status`. */
+/** The command line of `upgrade status`. */
 export type StatusOptions = {
   /** The run to check. Without it, the latest upgrade run is checked. */
   runId?: string;
 };
 
 /**
- * Reads the arguments of `lifecycle status`.
+ * Reads the arguments of `upgrade status`.
  * @returns The options, or a message that tells what is wrong with the arguments.
  */
 export function parseStatusArgs(
@@ -122,13 +122,13 @@ export async function run(options: StatusOptions): Promise<number> {
   }
 }
 
-/** The `lifecycle status` command. Sets the exit code of the process. */
+/** The `upgrade status` command. Sets the exit code of the process. */
 export async function exec(...argv: string[]) {
   const parsed = parseStatusArgs(argv);
 
   if ("error" in parsed) {
     consola.error(parsed.error);
-    consola.info("Usage: lifecycle status [run-id]");
+    consola.info("Usage: upgrade status [run-id]");
 
     process.exitCode = 1;
     return;
