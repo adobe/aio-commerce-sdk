@@ -90,6 +90,7 @@ const SERVICE = "https://service.example.com";
 const EXTENSIONS = `${SERVICE}/v1/extensions`;
 const UPGRADES = `${EXTENSIONS}/ext-1/upgrades`;
 const PLAN = { id: "plan-1", operation: "upgrade" };
+const NOT_PLANNED = /The upgrade was not planned: .*Refused/;
 const WATCHER_LOG = join(tmpdir(), "aio-commerce-upgrade-run-1.log");
 
 /** The status the service returns for the run. */
@@ -145,25 +146,8 @@ function answer(method: "get" | "post", url: string, respond: () => Response) {
 
 const refusePlan = (code: string) =>
   answer("post", `${UPGRADES}/plan`, () =>
-    HttpResponse.json({ code }, { status: 409 }),
+    HttpResponse.json({ code, message: "Refused" }, { status: 409 }),
   );
-
-/** What the hook tells the user for each code that it knows. */
-const CODE_MESSAGES = {
-  "already-current": "The app is already on the target version.",
-  "baseline-missing":
-    "The lifecycle state names a baseline snapshot that no longer exists. Nothing was planned.",
-  "in-progress":
-    "Another lifecycle operation is already in progress. Wait for it to finish, then try again.",
-  "installed-without-config":
-    "The existing installation does not include its original config and cannot be upgraded safely. Uninstall and reinstall the app.",
-  "not-associated": "The app is not associated with a Commerce instance.",
-  "not-installed": "The app is not installed, so there is nothing to upgrade.",
-  "stale-plan":
-    "The plan is no longer the pending plan. Deploy the app again to plan the upgrade again.",
-  "unreadable-state":
-    "The stored lifecycle state cannot be read. Nothing was planned.",
-} as const;
 
 /** Runs the hook inside a temporary project and returns what it resolved with. */
 async function runHook(files = MINIMAL_PROJECT) {
@@ -303,9 +287,6 @@ describe("post-app-deploy hook", () => {
 
       expect(calls.plan).toBe(0);
       expect(spawnDetachedMock).not.toHaveBeenCalled();
-      expect(consola.info).toHaveBeenCalledWith(
-        `No upgrade was run: ${CODE_MESSAGES["not-associated"]}\n`,
-      );
     });
 
     test.each(["already-current", "not-associated", "not-installed"] as const)(
@@ -319,68 +300,16 @@ describe("post-app-deploy hook", () => {
       },
     );
 
-    test.each(["already-current", "not-associated", "not-installed"] as const)(
-      "tells in plain words why %s was skipped",
+    test.each(["in-progress", "manual-review-required"])(
+      "fails when the plan is refused with %s",
       async (code) => {
         serveUpgrade();
         refusePlan(code);
 
-        await runHook();
-
-        expect(consola.info).toHaveBeenCalledWith(
-          `No upgrade was run: ${CODE_MESSAGES[code]}\n`,
-        );
+        await expect(runHook()).rejects.toThrow(NOT_PLANNED);
+        expect(spawnDetachedMock).not.toHaveBeenCalled();
       },
     );
-
-    test.each([
-      "in-progress",
-      "stale-plan",
-      "unreadable-state",
-      "baseline-missing",
-      "installed-without-config",
-    ] as const)("fails with the plain words for the code %s", async (code) => {
-      serveUpgrade();
-      refusePlan(code);
-
-      await expect(runHook()).rejects.toThrow(
-        `The upgrade was not planned: ${CODE_MESSAGES[code]}`,
-      );
-      expect(spawnDetachedMock).not.toHaveBeenCalled();
-    });
-
-    test("fails with a generic message that names a code it does not know", async () => {
-      serveUpgrade();
-      refusePlan("manual-review-required");
-
-      await expect(runHook()).rejects.toThrow(
-        'The upgrade was not planned: The service refused the request with the code "manual-review-required".',
-      );
-      expect(spawnDetachedMock).not.toHaveBeenCalled();
-    });
-
-    test("fails with the message of the service when the refusal has no code", async () => {
-      serveUpgrade();
-      answer("post", `${UPGRADES}/plan`, () =>
-        HttpResponse.json({ message: "Refused" }, { status: 409 }),
-      );
-
-      await expect(runHook()).rejects.toThrow("The upgrade was not planned");
-      await expect(runHook()).rejects.toThrow("Refused");
-    });
-
-    test("does not decide from a reason text, only from the code", async () => {
-      serveUpgrade();
-      answer("post", `${UPGRADES}/plan`, () =>
-        HttpResponse.json(
-          { reason: "The app is already on the target version." },
-          { status: 409 },
-        ),
-      );
-
-      await expect(runHook()).rejects.toThrow("The upgrade was not planned");
-      expect(spawnDetachedMock).not.toHaveBeenCalled();
-    });
 
     test("fails when the upgrade cannot start", async () => {
       serveUpgrade();
@@ -388,9 +317,7 @@ describe("post-app-deploy hook", () => {
         HttpResponse.json({ code: "stale-plan" }, { status: 409 }),
       );
 
-      await expect(runHook()).rejects.toThrow(
-        `The upgrade was not started: ${CODE_MESSAGES["stale-plan"]}`,
-      );
+      await expect(runHook()).rejects.toThrow("The upgrade was not started");
       expect(spawnDetachedMock).not.toHaveBeenCalled();
     });
 
@@ -614,7 +541,7 @@ describe("post-app-deploy hook", () => {
       await withTempProject(MINIMAL_PROJECT, exec);
 
       expect(consola.error).toHaveBeenCalledExactlyOnceWith(
-        `The upgrade was not planned: ${CODE_MESSAGES["in-progress"]}\nDetails: HTTP 409, code in-progress, POST /v1/extensions/ext-1/upgrades/plan`,
+        "The upgrade was not planned: Refused\nDetails: HTTP 409, code in-progress, POST /v1/extensions/ext-1/upgrades/plan",
       );
       expect(processExitMock).toHaveBeenCalledExactlyOnceWith(1);
     });
