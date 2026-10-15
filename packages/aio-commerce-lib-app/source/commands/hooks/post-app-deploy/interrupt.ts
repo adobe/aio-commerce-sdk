@@ -17,6 +17,23 @@ const SIGINT_EXIT_CODE = 130;
 
 const STATUS_COMMAND = "npx aio-commerce-lib-app upgrade status";
 
+/**
+ * The lines that tell the user how to follow a run: the status command, and the watcher log when
+ * a watcher follows the run. Without a run id, the lines tell how to find the latest run.
+ */
+export function getFollowUpLines(runId?: string, watcherLog?: string) {
+  if (!runId) {
+    return [`If it was started, find the latest run with: ${STATUS_COMMAND}`];
+  }
+
+  return [
+    `Check the run with: ${STATUS_COMMAND} ${runId}`,
+    ...(watcherLog
+      ? [`Follow the watcher log with: tail -f ${watcherLog}`]
+      : []),
+  ];
+}
+
 /** Tells the hook which run the user can follow, and removes the handler when the hook ends. */
 export type InterruptNotice = {
   setRunId: (runId: string) => void;
@@ -37,12 +54,12 @@ export function noticeInterrupt(): InterruptNotice {
   let watcherLog: string | undefined;
 
   const onInterrupt = () => {
-    const watcher = watcherLog ? `. Watcher log: ${watcherLog}` : "";
-    const followUp = runId
-      ? `Check it with: ${STATUS_COMMAND} ${runId}${watcher}`
-      : `If it was started, find the latest run with: ${STATUS_COMMAND}`;
-
-    consola.info(`Stopped waiting. The upgrade keeps running. ${followUp}`);
+    consola.info(
+      [
+        "Stopped waiting. The upgrade keeps running.",
+        ...getFollowUpLines(runId, watcherLog),
+      ].join("\n"),
+    );
     process.exit(SIGINT_EXIT_CODE);
   };
 

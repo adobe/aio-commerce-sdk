@@ -23,7 +23,10 @@ import {
   findWorkspaceExtensionId,
 } from "#commands/common/cams/context";
 import { CamsConflictError } from "#commands/common/cams/errors";
-import { noticeInterrupt } from "#commands/hooks/post-app-deploy/interrupt";
+import {
+  getFollowUpLines,
+  noticeInterrupt,
+} from "#commands/hooks/post-app-deploy/interrupt";
 import {
   describeOutcome,
   pollUntilSettled,
@@ -116,12 +119,12 @@ function announceBackgroundWatcher(
     script: process.argv[1],
   });
 
-  const statusCommand = `npx aio-commerce-lib-app upgrade status ${started.id}`;
-  consola.info(
-    watcher
-      ? `Check the run with "${statusCommand}", or follow its log with "tail -f ${logPath}".`
-      : `Check the run with "${statusCommand}".`,
-  );
+  for (const line of getFollowUpLines(
+    started.id,
+    watcher ? logPath : undefined,
+  )) {
+    consola.info(line);
+  }
 
   return watcher ? logPath : undefined;
 }
@@ -216,6 +219,8 @@ async function runHook(interrupt: InterruptNotice): Promise<HookResult> {
   if (watcherLog) {
     interrupt.setWatcherLog(watcherLog);
   }
+
+  consola.log("");
 
   await followRun(context, extensionId, started);
   return { kind: "upgraded", runId: started.id };

@@ -334,7 +334,49 @@ describe("post-app-deploy hook", () => {
         }),
       );
       expect(consola.info).toHaveBeenCalledWith(
-        `Check the run with "npx aio-commerce-lib-app upgrade status run-1", or follow its log with "tail -f ${WATCHER_LOG}".`,
+        "Check the run with: npx aio-commerce-lib-app upgrade status run-1",
+      );
+      expect(consola.info).toHaveBeenCalledWith(
+        `Follow the watcher log with: tail -f ${WATCHER_LOG}`,
+      );
+    });
+
+    test("prints one empty line after the follow-up lines and before the status of the run", async () => {
+      serveUpgrade([attempt("in-progress"), attempt("succeeded")]);
+
+      await runHook();
+
+      const orderOf = (mock: typeof consola.info, index: number) =>
+        vi.mocked(mock).mock.invocationCallOrder[index];
+      const lastFollowUp = vi
+        .mocked(consola.info)
+        .mock.calls.findLastIndex(([message]) =>
+          String(message).startsWith("Follow the watcher log with"),
+        );
+      const firstStatus = vi
+        .mocked(consola.start)
+        .mock.calls.findIndex(([message]) =>
+          String(message).startsWith("App upgrade is"),
+        );
+      const started = vi
+        .mocked(consola.info)
+        .mock.calls.findIndex(([message]) =>
+          String(message).startsWith("App upgrade started"),
+        );
+      const blanksAfterStart = vi
+        .mocked(consola.log)
+        .mock.invocationCallOrder.filter(
+          (order, index) =>
+            vi.mocked(consola.log).mock.calls[index][0] === "" &&
+            order > orderOf(consola.info, started),
+        );
+
+      expect(blanksAfterStart).toHaveLength(1);
+      expect(blanksAfterStart[0]).toBeGreaterThan(
+        orderOf(consola.info, lastFollowUp),
+      );
+      expect(blanksAfterStart[0]).toBeLessThan(
+        orderOf(consola.start, firstStatus),
       );
     });
 
@@ -366,7 +408,10 @@ describe("post-app-deploy hook", () => {
         },
       );
       expect(consola.info).toHaveBeenCalledWith(
-        'Check the run with "npx aio-commerce-lib-app upgrade status run-1".',
+        "Check the run with: npx aio-commerce-lib-app upgrade status run-1",
+      );
+      expect(consola.info).not.toHaveBeenCalledWith(
+        expect.stringContaining("watcher log"),
       );
     });
   });
@@ -382,7 +427,7 @@ describe("post-app-deploy hook", () => {
 
       expect(processExitMock).toHaveBeenCalledWith(130);
       expect(consola.info).toHaveBeenCalledWith(
-        `Stopped waiting. The upgrade keeps running. Check it with: npx aio-commerce-lib-app upgrade status run-1. Watcher log: ${WATCHER_LOG}`,
+        `Stopped waiting. The upgrade keeps running.\nCheck the run with: npx aio-commerce-lib-app upgrade status run-1\nFollow the watcher log with: tail -f ${WATCHER_LOG}`,
       );
     });
 
@@ -396,7 +441,7 @@ describe("post-app-deploy hook", () => {
       await runHook();
 
       expect(consola.info).toHaveBeenCalledWith(
-        "Stopped waiting. The upgrade keeps running. Check it with: npx aio-commerce-lib-app upgrade status run-1",
+        "Stopped waiting. The upgrade keeps running.\nCheck the run with: npx aio-commerce-lib-app upgrade status run-1",
       );
     });
 
