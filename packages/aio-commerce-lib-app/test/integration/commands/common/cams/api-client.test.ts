@@ -200,6 +200,20 @@ describe("pollUpgrade", () => {
     });
   });
 
+  test("asks only for an attempt that ran an upgrade", async () => {
+    let query = "";
+    apiServer.use(
+      http.post(STATUS_URL, ({ request }) => {
+        query = new URL(request.url).search;
+        return HttpResponse.json(RUNNING);
+      }),
+    );
+
+    await createClient().pollUpgrade(IDS);
+
+    expect(query).toBe("?operation=upgrade");
+  });
+
   const SUCCEEDED = {
     id: "run-1",
     result: { appVersion: "2", snapshotId: "s" },
@@ -368,10 +382,10 @@ describe("readLatestUpgrade", () => {
     ["a single attempt", RUNNING, RUNNING],
     ["no attempt", [], null],
   ])("returns %s", async (_, body, expected) => {
-    let limit: string | null = null;
+    let query = "";
     apiServer.use(
       http.get(UPGRADES, ({ request }) => {
-        limit = new URL(request.url).searchParams.get("limit");
+        query = new URL(request.url).search;
         return HttpResponse.json(body);
       }),
     );
@@ -381,7 +395,8 @@ describe("readLatestUpgrade", () => {
     });
 
     expect(latest).toEqual(expected);
-    expect(limit).toBe("1");
+    expect(new URLSearchParams(query).get("limit")).toBe("1");
+    expect(new URLSearchParams(query).get("operation")).toBe("upgrade");
   });
 });
 

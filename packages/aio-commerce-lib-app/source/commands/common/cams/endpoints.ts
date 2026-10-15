@@ -35,6 +35,9 @@ import type {
   StartUpgradeParams,
 } from "#commands/common/cams/schema";
 
+/** Limits a read of an attempt to the attempts that ran an upgrade. */
+const UPGRADE_QUERY = { operation: "upgrade" };
+
 /** The path of the upgrades of an extension, relative to the base URL. */
 function upgradesPath(extensionId: string) {
   return `v1/extensions/${encodeURIComponent(extensionId)}/upgrades`;
@@ -185,13 +188,14 @@ export async function pollUpgrade(
     AttemptStatusSchema,
     httpClient.post(
       `${upgradesPath(extensionId)}/${encodeURIComponent(runId)}/status`,
-      { ...fetchOptions, retry: 0 },
+      { ...fetchOptions, retry: 0, searchParams: UPGRADE_QUERY },
     ),
   );
 }
 
 /**
- * Reads the latest upgrade attempt without changing anything.
+ * Reads the latest upgrade attempt without changing anything. Attempts that ran another operation
+ * do not count.
  *
  * @param httpClient - The {@link CamsHttpClient} to use to make the request.
  * @param params - The extension to read the latest attempt of.
@@ -211,7 +215,7 @@ export async function readLatestUpgrade(
     LatestAttemptSchema,
     httpClient.get(upgradesPath(extensionId), {
       ...fetchOptions,
-      searchParams: { limit: "1" },
+      searchParams: { ...UPGRADE_QUERY, limit: "1" },
     }),
   );
 
