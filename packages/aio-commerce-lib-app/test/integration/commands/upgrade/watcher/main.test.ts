@@ -146,6 +146,15 @@ describe("runWatcher", () => {
     expect(log).toHaveBeenCalledWith(expect.stringContaining("is gone (pid)"));
   });
 
+  test("logs the details of the call that failed when the run cannot be read", async () => {
+    serveAnswers([json({ message: "Forbidden" }, 403)]);
+
+    await expect(watch("pipe")).resolves.toBe(1);
+    expect(log).toHaveBeenLastCalledWith(
+      "Details: HTTP 403, POST /v1/extensions/ext-1/upgrades/run-1/status",
+    );
+  });
+
   test("exits with 1 and logs the reason when the run failed", async () => {
     serveAnswers([
       json({

@@ -16,6 +16,7 @@ import {
   createCamsContext,
   findWorkspaceExtensionId,
 } from "#commands/common/cams/context";
+import { reportFailure } from "#commands/common/cams/report";
 import { describeOutcome, isSettled } from "#commands/lifecycle/poll";
 
 import type { CamsContext } from "#commands/common/cams/context";
@@ -114,7 +115,8 @@ export async function run(options: StatusOptions): Promise<number> {
     printStatus(status);
     return status.status === "failed" ? 1 : 0;
   } catch (error) {
-    consola.error(
+    reportFailure(
+      error,
       describeOutcome({ error, kind: "failed" }, targetRunId).message,
     );
 
@@ -137,7 +139,10 @@ export async function exec(...argv: string[]) {
   try {
     process.exitCode = await run(parsed.options);
   } catch (error) {
-    consola.error(error instanceof Error ? error.message : String(error));
+    reportFailure(
+      error,
+      error instanceof Error ? error.message : String(error),
+    );
     process.exitCode = 1;
   }
 }

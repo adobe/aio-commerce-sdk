@@ -120,8 +120,10 @@ describe("upgrade status", () => {
       await expect(run({ runId: "run-1" })).resolves.toBe(1);
 
       expect(calls.polls).toBe(1);
-      expect(consola.error).toHaveBeenCalledWith(
-        expect.stringContaining(`HTTP ${status}`),
+      expect(consola.error).toHaveBeenCalledExactlyOnceWith(
+        expect.stringContaining(
+          `\nDetails: HTTP ${status}, POST /v1/extensions/ext-1/upgrades/run-1/status`,
+        ),
       );
     },
   );

@@ -1068,6 +1068,10 @@ If you press Ctrl-C or close the terminal while an upgrade runs, the upgrade kee
 
 The hook exits with `0` when the upgrade succeeded, when it was skipped (see the no-op states below), or when the upgrade mode is `manual` and the plan is waiting. It exits with `1` when the upgrade failed, was refused because another operation is running, or could not be checked, for example because the service stayed unreachable.
 
+##### Error output
+
+When the Commerce App Management Service refuses or fails a request, the hook and `upgrade status` print the message and one line with the HTTP status, the code, and the method and path of the request. Set `DEBUG=1` to also print the full chain of causes with the stacks. Any other error is unexpected and prints with its stack.
+
 #### Checking an upgrade run
 
 Use `upgrade status` to check an upgrade run after the hook is gone, from the project directory:

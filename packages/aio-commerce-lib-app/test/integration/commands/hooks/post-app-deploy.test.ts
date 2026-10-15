@@ -56,6 +56,7 @@ vi.mock("consola/utils", () => ({
 }));
 
 import { CAMS_URL_ENV_VAR } from "#commands/common/cams/config";
+import { CamsConflictError } from "#commands/common/cams/errors";
 import { exec, run } from "#commands/hooks/post-app-deploy/main";
 import { createMockConfig } from "#test/fixtures/config";
 import {
@@ -69,6 +70,9 @@ import { apiServer, setupApiTestLifecycle } from "#test/setup/api";
 const MANUAL_PROJECT = makeProjectFiles(
   createMockConfig({ metadata: { upgradeMode: "manual" } }),
 );
+
+const FORBIDDEN_STATUS =
+  /Forbidden[\s\S]*\nDetails: HTTP 403, POST \/v1\/extensions\/ext-1\/upgrades\/run-1\/status$/;
 
 const SERVICE = "https://service.example.com";
 const EXTENSIONS = `${SERVICE}/v1/extensions`;
@@ -383,7 +387,7 @@ describe("post-app-deploy hook", () => {
         HttpResponse.json({ message: "Boom" }, { status: 500 }),
       );
 
-      await expect(runHook()).rejects.toThrow("HTTP 500");
+      await expect(runHook()).rejects.toThrow("Boom");
     });
   });
 
@@ -532,6 +536,60 @@ describe("post-app-deploy hook", () => {
   });
 
   describe("exec", () => {
+    test("prints a refusal of the service as one block without a stack", async () => {
+      serveUpgrade();
+      refusePlan("in-progress");
+
+      await withTempProject(MINIMAL_PROJECT, exec);
+
+      expect(consola.error).toHaveBeenCalledExactlyOnceWith(
+        `The upgrade was not planned: ${CODE_MESSAGES["in-progress"]}\nDetails: HTTP 409, code in-progress, POST /v1/extensions/ext-1/upgrades/plan`,
+      );
+      expect(processExitMock).toHaveBeenCalledExactlyOnceWith(1);
+    });
+
+    test("sends the whole chain of a failure of the service to the debug log", async () => {
+      serveUpgrade();
+      refusePlan("in-progress");
+
+      await withTempProject(MINIMAL_PROJECT, exec);
+
+      const [logged, ...others] = vi
+        .mocked(consola.debug)
+        .mock.calls.map(([message]) => message)
+        .filter((message) => message instanceof Error);
+
+      expect(others).toEqual([]);
+      expect(logged.message).toContain("The upgrade was not planned");
+      expect(logged.cause).toBeInstanceOf(CamsConflictError);
+    });
+
+    test("prints the details of the call that could not read the run", async () => {
+      serveUpgrade();
+      answer("post", `${UPGRADES}/run-1/status`, () =>
+        HttpResponse.json({ message: "Forbidden" }, { status: 403 }),
+      );
+
+      await withTempProject(MINIMAL_PROJECT, exec);
+
+      expect(consola.error).toHaveBeenCalledExactlyOnceWith(
+        expect.stringMatching(FORBIDDEN_STATUS),
+      );
+    });
+
+    test("prints an unexpected failure with its stack", async () => {
+      const failure = new Error("Broken");
+      aio.getAioProjectContext.mockImplementation(() => {
+        throw failure;
+      });
+
+      await withTempProject(MINIMAL_PROJECT, exec);
+
+      expect(consola.error).toHaveBeenCalledExactlyOnceWith(failure);
+      expect(consola.debug).not.toHaveBeenCalled();
+      expect(processExitMock).toHaveBeenCalledExactlyOnceWith(1);
+    });
+
     test("exits with code 1 when the hook fails", async () => {
       serveUpgrade([attempt("failed")]);
 

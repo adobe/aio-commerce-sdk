@@ -10,9 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
-import { unwrapHttpError } from "@adobe/aio-commerce-lib-api/utils";
 import { CommerceSdkErrorBase } from "@adobe/aio-commerce-lib-core/error";
-import * as v from "valibot";
 
 import type { CommerceSdkErrorBaseOptions } from "@adobe/aio-commerce-lib-core/error";
 import type { HTTPError } from "ky";
@@ -20,10 +18,28 @@ import type { HTTPError } from "ky";
 const HTTP_CONFLICT = 409;
 const HTTP_BAD_GATEWAY = 502;
 
+/** The longest text of an error answer that is kept when the answer is not JSON. */
+const MAX_TEXT_LENGTH = 300;
+
+/** The request that CAMS answered with an error: its method and its path, without the host. */
+export type CamsRequest = {
+  method: string;
+  path: string;
+};
+
 /** Options for {@link CamsClientError}. */
 type CamsClientErrorOptions = CommerceSdkErrorBaseOptions & {
   /** Whether repeating the same request later can succeed. Defaults to `false`. */
   retryable?: boolean;
+
+  /** The HTTP status of the answer. */
+  status?: number;
+
+  /** The machine-readable code of the answer, for example `in-progress` or `stale-plan`. */
+  code?: string;
+
+  /** The request that CAMS answered with an error. */
+  request?: CamsRequest;
 };
 
 /**
@@ -35,64 +51,83 @@ export class CamsClientError extends CommerceSdkErrorBase {
   /** Whether repeating the same request later can succeed. */
   public readonly retryable: boolean;
 
+  /** The HTTP status of the answer, when CAMS answered. */
+  public readonly status: number | undefined;
+
+  /** The machine-readable code of the answer, when it has one. */
+  public readonly code: string | undefined;
+
+  /** The request that CAMS answered with an error, when CAMS answered. */
+  public readonly request: CamsRequest | undefined;
+
   public constructor(message: string, options: CamsClientErrorOptions = {}) {
-    const { retryable = false, ...rest } = options;
+    const { retryable = false, status, code, request, ...rest } = options;
     super(message, rest);
 
     this.retryable = retryable;
-  }
-}
-
-/** Thrown when CAMS refuses a request with a 409 and a code. */
-export class CamsConflictError extends CamsClientError {
-  /** The code of the refusal, for example `in-progress` or `stale-plan`. */
-  public readonly code: string | undefined;
-
-  public constructor(
-    message: string,
-    options: CommerceSdkErrorBaseOptions & { code?: string } = {},
-  ) {
-    const { code, ...rest } = options;
-    super(message, rest);
-
+    this.status = status;
     this.code = code;
+    this.request = request;
   }
 }
 
-const ConflictBodySchema = v.object({ code: v.string() });
+/** Thrown when CAMS refuses a request with a 409. Its `code` tells why. */
+export class CamsConflictError extends CamsClientError {}
 
-/** The `code` in the body of a 409 answer, if it has one. */
-async function readCode(error: HTTPError) {
-  const response = error.response.clone();
+/** The `code` and the text of an error answer. The text is the `message`, or the body when it is not JSON. */
+async function readAnswer(response: Response) {
+  const body = (
+    await response
+      .clone()
+      .text()
+      .catch(() => "")
+  ).trim();
 
-  let body: unknown;
   try {
-    body = await response.json();
+    const json: unknown = JSON.parse(body);
+    if (typeof json === "object" && json !== null) {
+      const { code, message } = json as Record<string, unknown>;
+
+      return {
+        code: typeof code === "string" ? code : undefined,
+        text: typeof message === "string" ? message : "",
+      };
+    }
   } catch {
-    return;
+    // The body is not JSON, so its text is the message.
   }
 
-  const parsed = v.safeParse(ConflictBodySchema, body);
-  return parsed.success ? parsed.output.code : undefined;
+  return { code: undefined, text: body.slice(0, MAX_TEXT_LENGTH) };
 }
 
 /**
- * Builds the error for an answer with an error status. A 409 keeps its `code`. A 502 means CAMS
- * could not read the app, which can pass, so it is the only retryable status.
+ * Builds the error for an answer with an error status. A 409 is a conflict. A 502 means CAMS could
+ * not read the app, which can pass, so it is the only retryable status.
  */
 export async function toCamsResponseError(error: HTTPError) {
-  const { status } = error.response;
-  const message = `The Commerce App Management Service answered: ${await unwrapHttpError(error)}`;
+  const { status, statusText } = error.response;
+  const { code, text } = await readAnswer(error.response);
+
+  const answer = [status, statusText].filter(Boolean).join(" ");
+  const message =
+    text || `The Commerce App Management Service answered with HTTP ${answer}`;
+
+  const options = {
+    cause: error,
+    code,
+    request: {
+      method: error.request.method,
+      path: new URL(error.request.url).pathname,
+    },
+    status,
+  };
 
   if (status === HTTP_CONFLICT) {
-    return new CamsConflictError(message, {
-      cause: error,
-      code: await readCode(error),
-    });
+    return new CamsConflictError(message, options);
   }
 
   return new CamsClientError(message, {
-    cause: error,
+    ...options,
     retryable: status === HTTP_BAD_GATEWAY,
   });
 }

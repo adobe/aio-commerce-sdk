@@ -10,7 +10,6 @@
  * governing permissions and limitations under the License.
  */
 
-import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
 import {
   getTempLogPath,
   spawnDetached,
@@ -23,6 +22,7 @@ import {
   findWorkspaceExtensionId,
 } from "#commands/common/cams/context";
 import { CamsConflictError } from "#commands/common/cams/errors";
+import { reportFailure } from "#commands/common/cams/report";
 import {
   getFollowUpLines,
   noticeInterrupt,
@@ -200,7 +200,9 @@ async function followRun(
 
   const outcome = describeOutcome(result, started.id);
   if (!outcome.succeeded) {
-    throw new Error(outcome.message);
+    throw new Error(outcome.message, {
+      cause: result.kind === "finished" ? undefined : result.error,
+    });
   }
 
   consola.success(`${outcome.message}\n`);
@@ -285,12 +287,7 @@ export async function exec() {
   try {
     await run();
   } catch (error) {
-    if (error instanceof CommerceSdkValidationError) {
-      consola.error(error.display());
-    } else {
-      consola.error(error);
-    }
-
+    reportFailure(error);
     process.exit(1);
   }
 }

@@ -264,6 +264,77 @@ describe("pollUpgrade", () => {
     },
   );
 
+  test("keeps the status, the code and the request of an error answer, without the host", async () => {
+    apiServer.use(
+      http.post(STATUS_URL, () =>
+        HttpResponse.json(
+          { code: "forbidden", message: "No access" },
+          { status: 403 },
+        ),
+      ),
+    );
+
+    const error = await failureOf(createClient().pollUpgrade(IDS));
+
+    expect(error).toMatchObject({
+      code: "forbidden",
+      message: "No access",
+      request: {
+        method: "POST",
+        path: "/v1/extensions/ext-1/upgrades/run-1/status",
+      },
+      status: 403,
+    });
+  });
+
+  test("leaves the status text out of the message when the answer has none", async () => {
+    const client = createClient({
+      fetch: async () => new Response(null, { status: 500, statusText: "" }),
+    });
+
+    const error = await failureOf(client.pollUpgrade(IDS));
+
+    expect(error.message).toBe(
+      "The Commerce App Management Service answered with HTTP 500",
+    );
+  });
+
+  test.each([
+    [
+      "JSON without a message",
+      () =>
+        HttpResponse.json(
+          {},
+          { status: 503, statusText: "Service Unavailable" },
+        ),
+      "The Commerce App Management Service answered with HTTP 503 Service Unavailable",
+    ],
+    [
+      "a body that is not JSON",
+      () => new HttpResponse("Gateway timed out", { status: 504 }),
+      "Gateway timed out",
+    ],
+  ])("words an answer with %s", async (_, respond, message) => {
+    apiServer.use(http.post(STATUS_URL, respond));
+
+    const error = await failureOf(createClient().pollUpgrade(IDS));
+
+    expect(error.message).toBe(message);
+  });
+
+  test("cuts a long body that is not JSON", async () => {
+    apiServer.use(
+      http.post(
+        STATUS_URL,
+        () => new HttpResponse("x".repeat(1000), { status: 500 }),
+      ),
+    );
+
+    const error = await failureOf(createClient().pollUpgrade(IDS));
+
+    expect(error.message).toBe("x".repeat(300));
+  });
+
   test("marks a network failure as retryable", async () => {
     apiServer.use(http.post(STATUS_URL, () => HttpResponse.error()));
 
