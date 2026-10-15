@@ -87,6 +87,14 @@ export type PlanPreview = {
   /** The `planId` to start the plan with. */
   id: string;
   operation: LifecycleOperation;
+
+  /** The app version the plan starts from, or `null` when nothing is installed. */
+  sourceVersion: string | null;
+
+  /** The app version the plan ends at, or `null` when the app ends up with nothing installed. */
+  targetVersion: string | null;
+
+  /** The domains with operations to run. A domain without operations is left out. */
   domains: PlanPreviewDomain[];
   issues: PlanPreviewIssue[];
 };
@@ -385,15 +393,17 @@ function toValidationIssue(issue: PlanningIssue): ValidationIssue {
 /** The preview of a plan returned for review. */
 function toPlanPreview(plan: LifecyclePlan): PlanPreview {
   return {
-    domains: plan.domains.map((domain) => ({
-      operations: domain.operations.map(({ id, kind, label, reason }) => ({
-        id,
-        kind,
-        label,
-        reason,
+    domains: plan.domains
+      .filter((domain) => domain.operations.length > 0)
+      .map((domain) => ({
+        operations: domain.operations.map(({ id, kind, label, reason }) => ({
+          id,
+          kind,
+          label,
+          reason,
+        })),
+        path: domain.path,
       })),
-      path: domain.path,
-    })),
     id: plan.id,
     issues: plan.issues.map((issue) => ({
       blocking: issue.blocking,
@@ -404,5 +414,7 @@ function toPlanPreview(plan: LifecyclePlan): PlanPreview {
       severity: issue.severity ?? "error",
     })),
     operation: plan.operation,
+    sourceVersion: plan.source?.appVersion ?? null,
+    targetVersion: plan.target?.appVersion ?? null,
   };
 }

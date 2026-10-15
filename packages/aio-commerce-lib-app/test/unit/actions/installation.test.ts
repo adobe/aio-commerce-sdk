@@ -970,6 +970,31 @@ describe("installationRuntimeAction", () => {
         expect(invokeMock).not.toHaveBeenCalled();
       });
 
+      test("previews an install from no version to the configured version", async () => {
+        desiredInstallationStore = createMockInstallationStore();
+        const action = installationRuntimeAction({
+          appConfig: configWithAutoUpgrade,
+        });
+        const result = await action(
+          createRuntimeActionParams({
+            body: requestBody,
+            method: "post",
+            path: "/plan",
+            ...DEFAULT_INSTALLATION_PARAMS,
+          }),
+        );
+
+        expect(result).toMatchObject({
+          body: {
+            plan: {
+              sourceVersion: null,
+              targetVersion: configWithAutoUpgrade.metadata.version,
+            },
+          },
+          statusCode: 200,
+        });
+      });
+
       test("reports the non-blocking issues a step's planner finds under that step", async () => {
         desiredInstallationStore = createMockInstallationStore();
         createRootInstallationStepMock.mockReturnValue(
@@ -1121,7 +1146,7 @@ describe("installationRuntimeAction", () => {
           type: "error",
         });
         expect(result).not.toMatchObject({
-          error: { body: { reason: expect.anything() } },
+          error: { body: { code: expect.anything() } },
         });
       });
 
@@ -1187,7 +1212,7 @@ describe("installationRuntimeAction", () => {
         });
       });
 
-      test("returns 409 without a reason when upgrade planning is blocked", async () => {
+      test("returns 409 without a code when upgrade planning is blocked", async () => {
         createRootInstallationStepMock.mockReturnValue(
           createUpgradeRoot(
             createUpgradeLeaf({
@@ -1215,7 +1240,91 @@ describe("installationRuntimeAction", () => {
           type: "error",
         });
         expect(result).not.toMatchObject({
-          error: { body: { reason: expect.anything() } },
+          error: { body: { code: expect.anything() } },
+        });
+      });
+
+      test("previews an upgrade from the installed version to the configured one", async () => {
+        const action = installationRuntimeAction({
+          appConfig: configWithAutoUpgrade,
+        });
+        const result = await planRequest(action);
+
+        expect(configWithAutoUpgrade.metadata.version).not.toBe("0.9.0");
+        expect(result).toMatchObject({
+          body: {
+            plan: {
+              operation: "upgrade",
+              sourceVersion: "0.9.0",
+              targetVersion: configWithAutoUpgrade.metadata.version,
+            },
+          },
+          statusCode: 200,
+        });
+      });
+
+      test("leaves the domains without operations out of the preview, and keeps them in the stored plan", async () => {
+        const emptyLeaf = createUpgradeLeaf({
+          name: "empty",
+          plan: vi.fn().mockResolvedValue({
+            kind: "planned",
+            plan: { operations: [], path: ["installation", "empty"] },
+          }),
+        });
+        createRootInstallationStepMock.mockReturnValue(
+          createMockBranchStep({
+            children: [emptyLeaf, createUpgradeLeaf()],
+            meta: {
+              install: { label: "Installation" },
+              uninstall: { label: "Uninstallation" },
+              upgrade: { label: "Upgrade" },
+            },
+          }),
+        );
+        const action = installationRuntimeAction({
+          appConfig: configWithAutoUpgrade,
+        });
+        const result = await planRequest(action);
+
+        expect(result).toMatchObject({
+          body: {
+            plan: {
+              domains: [
+                {
+                  operations: [{ id: "operation-1" }],
+                  path: ["installation", "synthetic"],
+                },
+              ],
+            },
+          },
+        });
+
+        const stored = (await desiredStateStore.get("current"))?.pendingPlan;
+        expect(stored?.domains.map((domain) => domain.path)).toEqual([
+          ["installation", "empty"],
+          ["installation", "synthetic"],
+        ]);
+      });
+
+      test("previews a plan without any operation with no domain", async () => {
+        createRootInstallationStepMock.mockReturnValue(
+          createUpgradeRoot(
+            createUpgradeLeaf({
+              plan: vi.fn().mockResolvedValue({
+                kind: "planned",
+                plan: { operations: [], path: ["installation", "synthetic"] },
+              }),
+            }),
+          ),
+        );
+        const action = installationRuntimeAction({
+          appConfig: configWithAutoUpgrade,
+        });
+        const result = await planRequest(action);
+
+        expect(result).toMatchObject({
+          body: { plan: { domains: [] } },
+          statusCode: 200,
         });
       });
 
@@ -1352,7 +1461,7 @@ describe("installationRuntimeAction", () => {
         });
       });
 
-      test("returns 409 with reason stale-plan when the reviewed plan is no longer pending", async () => {
+      test("returns 409 with code stale-plan when the reviewed plan is no longer pending", async () => {
         const action = installationRuntimeAction({
           appConfig: createMockConfig({ metadata: { upgradeMode: "manual" } }),
         });
@@ -1482,6 +1591,28 @@ describe("installationRuntimeAction", () => {
         createRootInstallationStepMock.mockReturnValue(createUpgradeRoot(leaf));
         return leaf;
       }
+
+      test("previews an uninstall from the installed version to no version", async () => {
+        useUninstallLeaf();
+        const action = installationRuntimeAction({
+          appConfig: configWithAutoUpgrade,
+        });
+        const result = await planRequest(action, {
+          ...requestBody,
+          operation: "uninstall",
+        });
+
+        expect(result).toMatchObject({
+          body: {
+            plan: {
+              operation: "uninstall",
+              sourceVersion: "0.9.0",
+              targetVersion: null,
+            },
+          },
+          statusCode: 200,
+        });
+      });
 
       async function startUninstall() {
         const action = installationRuntimeAction({

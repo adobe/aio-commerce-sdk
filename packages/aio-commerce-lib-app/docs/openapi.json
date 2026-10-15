@@ -3703,7 +3703,30 @@
             "type": "string",
             "enum": ["install", "upgrade", "uninstall"]
           },
+          "sourceVersion": {
+            "description": "The app version the plan starts from, or `null` when nothing is installed.",
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "targetVersion": {
+            "description": "The app version the plan ends at, or `null` when the app ends up with nothing installed.",
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "domains": {
+            "description": "The domains with operations to run. A domain without operations is left out.",
             "type": "array",
             "items": {
               "type": "object",
@@ -3749,7 +3772,14 @@
             }
           }
         },
-        "required": ["id", "operation", "domains", "issues"]
+        "required": [
+          "id",
+          "operation",
+          "sourceVersion",
+          "targetVersion",
+          "domains",
+          "issues"
+        ]
       }
     },
     "securitySchemes": {
