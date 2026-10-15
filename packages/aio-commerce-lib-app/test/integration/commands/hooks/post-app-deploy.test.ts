@@ -86,6 +86,9 @@ const MANUAL_PROJECT = makeProjectFiles(
 const FORBIDDEN_STATUS =
   /Forbidden[\s\S]*\nDetails: HTTP 403, POST \/v1\/extensions\/ext-1\/upgrades\/run-1\/status$/;
 
+const STATUS_HINT = /Check (the run|it)|tail -f/;
+const LOG_HINT = /tail -f|\.log/;
+
 const SERVICE = "https://service.example.com";
 const EXTENSIONS = `${SERVICE}/v1/extensions`;
 const UPGRADES = `${EXTENSIONS}/ext-1/upgrades`;
@@ -148,6 +151,20 @@ const refusePlan = (code: string) =>
   answer("post", `${UPGRADES}/plan`, () =>
     HttpResponse.json({ code, message: "Refused" }, { status: 409 }),
   );
+
+/** Every message that the hook printed at the default level of consola. */
+function printedMessages() {
+  return [
+    consola.box,
+    consola.info,
+    consola.log,
+    consola.start,
+    consola.success,
+    consola.warn,
+  ].flatMap((mock) =>
+    vi.mocked(mock).mock.calls.map(([message]) => String(message)),
+  );
+}
 
 /** Runs the hook inside a temporary project and returns what it resolved with. */
 async function runHook(files = MINIMAL_PROJECT) {
@@ -332,7 +349,7 @@ describe("post-app-deploy hook", () => {
   });
 
   describe("watcher", () => {
-    test("starts before the first poll, for the extension and the run, and tells how to check it", async () => {
+    test("starts before the first poll, for the extension and the run", async () => {
       const spawnedBeforeFirstPoll: boolean[] = [];
       serveUpgrade();
       answer("post", `${UPGRADES}/run-1/status`, () => {
@@ -350,51 +367,17 @@ describe("post-app-deploy hook", () => {
           script: process.argv[1],
         }),
       );
-      expect(consola.info).toHaveBeenCalledWith(
-        "Check the run with: npx aio-commerce-lib-app upgrade status run-1",
-      );
-      expect(consola.info).toHaveBeenCalledWith(
-        `Follow the watcher log with: tail -f ${WATCHER_LOG}`,
-      );
     });
 
-    test("prints one empty line after the follow-up lines and before the status of the run", async () => {
+    test("prints no hint to check the run and no empty line after the start line", async () => {
       serveUpgrade([attempt("in-progress"), attempt("succeeded")]);
 
       await runHook();
 
-      const orderOf = (mock: typeof consola.info, index: number) =>
-        vi.mocked(mock).mock.invocationCallOrder[index];
-      const lastFollowUp = vi
-        .mocked(consola.info)
-        .mock.calls.findLastIndex(([message]) =>
-          String(message).startsWith("Follow the watcher log with"),
-        );
-      const firstStatus = vi
-        .mocked(consola.start)
-        .mock.calls.findIndex(([message]) =>
-          String(message).startsWith("App upgrade is"),
-        );
-      const started = vi
-        .mocked(consola.info)
-        .mock.calls.findIndex(([message]) =>
-          String(message).startsWith("App upgrade started"),
-        );
-      const blanksAfterStart = vi
-        .mocked(consola.log)
-        .mock.invocationCallOrder.filter(
-          (order, index) =>
-            vi.mocked(consola.log).mock.calls[index][0] === "" &&
-            order > orderOf(consola.info, started),
-        );
-
-      expect(blanksAfterStart).toHaveLength(1);
-      expect(blanksAfterStart[0]).toBeGreaterThan(
-        orderOf(consola.info, lastFollowUp),
+      expect(printedMessages()).not.toContainEqual(
+        expect.stringMatching(STATUS_HINT),
       );
-      expect(blanksAfterStart[0]).toBeLessThan(
-        orderOf(consola.start, firstStatus),
-      );
+      expect(consola.log).toHaveBeenCalledExactlyOnceWith("");
     });
 
     test("logs the log path and the arguments of the watcher when it starts", async () => {
@@ -406,6 +389,17 @@ describe("post-app-deploy hook", () => {
         args: ["upgrade", "watch", "ext-1", "run-1"],
         logPath: WATCHER_LOG,
       });
+      expect(consola.debug).toHaveBeenCalledWith(`Watcher log: ${WATCHER_LOG}`);
+    });
+
+    test("does not print the log path at the default level", async () => {
+      serveUpgrade([attempt("in-progress"), attempt("succeeded")]);
+
+      await runHook();
+
+      expect(printedMessages()).not.toContainEqual(
+        expect.stringContaining(WATCHER_LOG),
+      );
     });
 
     test("does not fail the hook when it cannot start", async () => {
@@ -424,32 +418,63 @@ describe("post-app-deploy hook", () => {
           logPath: WATCHER_LOG,
         },
       );
-      expect(consola.info).toHaveBeenCalledWith(
-        "Check the run with: npx aio-commerce-lib-app upgrade status run-1",
-      );
-      expect(consola.info).not.toHaveBeenCalledWith(
-        expect.stringContaining("watcher log"),
+      expect(consola.debug).not.toHaveBeenCalledWith(
+        expect.stringContaining("Watcher log:"),
       );
     });
   });
 
-  describe("package manager", () => {
-    test("prints the status command of the package manager of the project, in the start line and in the Ctrl+C notice", async () => {
-      detectPackageManagerMock.mockResolvedValue("pnpm");
+  describe("Ctrl+C", () => {
+    const WITH_WATCHER = (command: string) =>
+      `Stopped waiting for the upgrade (run run-1). It keeps running in the background.\nCheck it with: ${command} run-1`;
+    const WITHOUT_WATCHER = (command: string) =>
+      `Stopped waiting for the upgrade (run run-1). Nothing follows it in the background, so its result is recorded only when you check it.\nCheck it with: ${command} run-1`;
+    const NPX = "npx aio-commerce-lib-app upgrade status";
+    const PNPM = "pnpm exec aio-commerce-lib-app upgrade status";
+
+    /** Presses Ctrl+C during the first wait between two polls. */
+    function interruptWhileWaiting() {
       serveUpgrade([attempt("in-progress"), attempt("succeeded")]);
       delayMock.mockImplementationOnce(async () => {
         process.emit("SIGINT");
       });
+    }
+
+    test("tells that the upgrade keeps running in the background and how to check it", async () => {
+      interruptWhileWaiting();
 
       await runHook();
 
-      const command = "pnpm exec aio-commerce-lib-app upgrade status run-1";
-      expect(consola.info).toHaveBeenCalledWith(
-        `Check the run with: ${command}`,
+      expect(processExitMock).toHaveBeenCalledWith(130);
+      expect(consola.info).toHaveBeenCalledWith(WITH_WATCHER(NPX));
+    });
+
+    test("tells that nothing follows the upgrade when the watcher could not start", async () => {
+      interruptWhileWaiting();
+      spawnDetachedMock.mockReturnValue(undefined);
+
+      await runHook();
+
+      expect(consola.info).toHaveBeenCalledWith(WITHOUT_WATCHER(NPX));
+    });
+
+    test("does not name the log of the watcher", async () => {
+      interruptWhileWaiting();
+
+      await runHook();
+
+      expect(printedMessages()).not.toContainEqual(
+        expect.stringMatching(LOG_HINT),
       );
-      expect(consola.info).toHaveBeenCalledWith(
-        expect.stringContaining(`\nCheck the run with: ${command}\n`),
-      );
+    });
+
+    test("uses the command of the package manager of the project", async () => {
+      detectPackageManagerMock.mockResolvedValue("pnpm");
+      interruptWhileWaiting();
+
+      await runHook();
+
+      expect(consola.info).toHaveBeenCalledWith(WITH_WATCHER(PNPM));
       expect(detectPackageManagerMock).toHaveBeenCalledOnce();
     });
 
@@ -467,57 +492,13 @@ describe("post-app-deploy hook", () => {
       );
     });
 
-    test("prints npx with npm", async () => {
-      serveUpgrade();
-
-      await runHook();
-
-      expect(consola.info).toHaveBeenCalledWith(
-        "Check the run with: npx aio-commerce-lib-app upgrade status run-1",
-      );
-    });
-
-    test("prints npx and still runs the hook when the package manager cannot be detected", async () => {
+    test("uses npx and still runs the hook when the package manager cannot be detected", async () => {
       detectPackageManagerMock.mockRejectedValue(new Error("No access"));
-      serveUpgrade();
-
-      await expect(runHook()).resolves.toEqual({
-        kind: "upgraded",
-        runId: "run-1",
-      });
-      expect(consola.info).toHaveBeenCalledWith(
-        "Check the run with: npx aio-commerce-lib-app upgrade status run-1",
-      );
-    });
-  });
-
-  describe("Ctrl+C", () => {
-    test("names the run and the log of the watcher in the notice", async () => {
-      serveUpgrade([attempt("in-progress"), attempt("succeeded")]);
-      delayMock.mockImplementationOnce(async () => {
-        process.emit("SIGINT");
-      });
+      interruptWhileWaiting();
 
       await runHook();
 
-      expect(processExitMock).toHaveBeenCalledWith(130);
-      expect(consola.info).toHaveBeenCalledWith(
-        `Stopped waiting. The upgrade keeps running.\nCheck the run with: npx aio-commerce-lib-app upgrade status run-1\nFollow the watcher log with: tail -f ${WATCHER_LOG}`,
-      );
-    });
-
-    test("names only the run when the watcher could not start", async () => {
-      serveUpgrade([attempt("in-progress"), attempt("succeeded")]);
-      spawnDetachedMock.mockReturnValue(undefined);
-      delayMock.mockImplementationOnce(async () => {
-        process.emit("SIGINT");
-      });
-
-      await runHook();
-
-      expect(consola.info).toHaveBeenCalledWith(
-        "Stopped waiting. The upgrade keeps running.\nCheck the run with: npx aio-commerce-lib-app upgrade status run-1",
-      );
+      expect(consola.info).toHaveBeenCalledWith(WITH_WATCHER(NPX));
     });
 
     test.each([

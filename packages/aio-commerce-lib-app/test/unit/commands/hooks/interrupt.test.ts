@@ -37,34 +37,38 @@ describe("noticeInterrupt", () => {
 
   test.each([
     [
+      "no run was started",
       undefined,
-      undefined,
-      "Stopped waiting. The upgrade keeps running.\nIf it was started, find the latest run with: pnpm exec aio-commerce-lib-app upgrade status",
+      false,
+      `Stopped waiting before the upgrade was confirmed as started.\nIf it was started, find the latest run with: ${STATUS_COMMAND}`,
     ],
     [
+      "no run was started, even with a watcher",
+      undefined,
+      true,
+      `Stopped waiting before the upgrade was confirmed as started.\nIf it was started, find the latest run with: ${STATUS_COMMAND}`,
+    ],
+    [
+      "a watcher follows the run",
       "run-1",
-      undefined,
-      "Stopped waiting. The upgrade keeps running.\nCheck the run with: pnpm exec aio-commerce-lib-app upgrade status run-1",
+      true,
+      `Stopped waiting for the upgrade (run run-1). It keeps running in the background.\nCheck it with: ${STATUS_COMMAND} run-1`,
     ],
     [
+      "no watcher follows the run",
       "run-1",
-      "/tmp/watcher.log",
-      "Stopped waiting. The upgrade keeps running.\nCheck the run with: pnpm exec aio-commerce-lib-app upgrade status run-1\nFollow the watcher log with: tail -f /tmp/watcher.log",
-    ],
-    [
-      undefined,
-      "/tmp/watcher.log",
-      "Stopped waiting. The upgrade keeps running.\nIf it was started, find the latest run with: pnpm exec aio-commerce-lib-app upgrade status",
+      false,
+      `Stopped waiting for the upgrade (run run-1). Nothing follows it in the background, so its result is recorded only when you check it.\nCheck it with: ${STATUS_COMMAND} run-1`,
     ],
   ])(
-    "on SIGINT with the run id %s and the watcher log %s, prints one notice and exits with code 130",
-    (runId, watcherLog, message) => {
+    "on SIGINT when %s, prints one notice and exits with code 130",
+    (_, runId, hasWatcher, message) => {
       if (runId) {
         notice.setRunId(runId);
       }
 
-      if (watcherLog) {
-        notice.setWatcherLog(watcherLog);
+      if (hasWatcher) {
+        notice.setWatcherStarted();
       }
 
       process.emit("SIGINT");

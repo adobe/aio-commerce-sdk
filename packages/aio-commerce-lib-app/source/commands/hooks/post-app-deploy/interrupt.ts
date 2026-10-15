@@ -16,25 +16,30 @@ import { consola } from "consola";
 const SIGINT_EXIT_CODE = 130;
 
 /**
- * The lines that tell the user how to follow a run: the status command, and the watcher log when
- * a watcher follows the run. Without a run id, the lines tell how to find the latest run.
+ * What the user needs to know after Ctrl+C: whether anything still follows the upgrade, and the
+ * command that checks it.
  *
  * @param statusCommand - The command that runs `upgrade status` in the package manager of the project.
+ * @param runId - The run that was started, if one was.
+ * @param hasWatcher - Whether a background watcher follows the run.
  */
-export function getFollowUpLines(
+function describeInterrupt(
   statusCommand: string,
-  runId?: string,
-  watcherLog?: string,
+  runId: string | undefined,
+  hasWatcher: boolean,
 ) {
   if (!runId) {
-    return [`If it was started, find the latest run with: ${statusCommand}`];
+    return [
+      "Stopped waiting before the upgrade was confirmed as started.",
+      `If it was started, find the latest run with: ${statusCommand}`,
+    ];
   }
 
   return [
-    `Check the run with: ${statusCommand} ${runId}`,
-    ...(watcherLog
-      ? [`Follow the watcher log with: tail -f ${watcherLog}`]
-      : []),
+    hasWatcher
+      ? `Stopped waiting for the upgrade (run ${runId}). It keeps running in the background.`
+      : `Stopped waiting for the upgrade (run ${runId}). Nothing follows it in the background, so its result is recorded only when you check it.`,
+    `Check it with: ${statusCommand} ${runId}`,
   ];
 }
 
@@ -42,27 +47,24 @@ export function getFollowUpLines(
 export type InterruptNotice = {
   setRunId: (runId: string) => void;
 
-  /** Sets the log of the watcher that follows the run, so the notice can name it. */
-  setWatcherLog: (logPath: string) => void;
+  /** Tells that a background watcher follows the run. */
+  setWatcherStarted: () => void;
   dispose: () => void;
 };
 
 /**
- * Prints the follow-up lines and exits with code 130 when the user presses Ctrl+C while the hook runs.
+ * Prints what the user needs to follow the upgrade and exits with code 130 when the user presses Ctrl+C while the hook runs.
  *
  * It listens to SIGINT only. After SIGTERM or SIGHUP the terminal can be gone, and a write to it
  * can block the process forever.
  */
 export function noticeInterrupt(statusCommand: string): InterruptNotice {
   let runId: string | undefined;
-  let watcherLog: string | undefined;
+  let hasWatcher = false;
 
   const onInterrupt = () => {
     consola.info(
-      [
-        "Stopped waiting. The upgrade keeps running.",
-        ...getFollowUpLines(statusCommand, runId, watcherLog),
-      ].join("\n"),
+      describeInterrupt(statusCommand, runId, hasWatcher).join("\n"),
     );
     process.exit(SIGINT_EXIT_CODE);
   };
@@ -76,8 +78,8 @@ export function noticeInterrupt(statusCommand: string): InterruptNotice {
     setRunId: (id) => {
       runId = id;
     },
-    setWatcherLog: (logPath) => {
-      watcherLog = logPath;
+    setWatcherStarted: () => {
+      hasWatcher = true;
     },
   };
 }

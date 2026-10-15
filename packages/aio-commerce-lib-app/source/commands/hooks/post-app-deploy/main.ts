@@ -27,10 +27,7 @@ import {
 } from "#commands/common/cams/context";
 import { CamsConflictError } from "#commands/common/cams/errors";
 import { reportFailure } from "#commands/common/cams/report";
-import {
-  getFollowUpLines,
-  noticeInterrupt,
-} from "#commands/hooks/post-app-deploy/interrupt";
+import { noticeInterrupt } from "#commands/hooks/post-app-deploy/interrupt";
 import {
   describeOutcome,
   pollUntilSettled,
@@ -101,16 +98,12 @@ async function startUpgrade(
 }
 
 /**
- * Starts the watcher that follows the run if this process stops, and tells the user how to check
- * the run. The run goes on without the watcher.
+ * Starts the watcher that follows the run if this process stops. The run goes on without the
+ * watcher.
  *
- * @returns The path of the log of the watcher, or `undefined` when it could not start.
+ * @returns Whether the watcher started.
  */
-function announceBackgroundWatcher(
-  extensionId: string,
-  started: AttemptStatus,
-  statusCommand: string,
-) {
+function startBackgroundWatcher(extensionId: string, started: AttemptStatus) {
   const logPath = getTempLogPath(`aio-commerce-upgrade-${started.id}`);
   const args = ["upgrade", "watch", extensionId, started.id];
 
@@ -124,15 +117,12 @@ function announceBackgroundWatcher(
     script: process.argv[1],
   });
 
-  for (const line of getFollowUpLines(
-    statusCommand,
-    started.id,
-    watcher ? logPath : undefined,
-  )) {
-    consola.info(line);
+  if (!watcher) {
+    return false;
   }
 
-  return watcher ? logPath : undefined;
+  consola.debug(`Watcher log: ${logPath}`);
+  return true;
 }
 
 /** Polls the run and prints its progress until it settles. Throws when it does not succeed. */
@@ -175,7 +165,7 @@ export async function run(): Promise<HookResult> {
   const interrupt = noticeInterrupt(statusCommand);
 
   try {
-    return await runHook(interrupt, statusCommand);
+    return await runHook(interrupt);
   } finally {
     interrupt.dispose();
   }
@@ -194,10 +184,7 @@ async function getStatusCommand() {
 }
 
 /** Plans, starts and follows the upgrade. Tells `interrupt` the run id once the run exists. */
-async function runHook(
-  interrupt: InterruptNotice,
-  statusCommand: string,
-): Promise<HookResult> {
+async function runHook(interrupt: InterruptNotice): Promise<HookResult> {
   const appConfig = await parseCommerceAppConfig();
   const { upgradeMode } = appConfig.metadata;
 
@@ -239,16 +226,9 @@ async function runHook(
   interrupt.setRunId(started.id);
 
   consola.info(`App upgrade started (run ${started.id}).`);
-  const watcherLog = announceBackgroundWatcher(
-    extensionId,
-    started,
-    statusCommand,
-  );
-  if (watcherLog) {
-    interrupt.setWatcherLog(watcherLog);
+  if (startBackgroundWatcher(extensionId, started)) {
+    interrupt.setWatcherStarted();
   }
-
-  consola.log("");
 
   await followRun(context, extensionId, started);
   return { kind: "upgraded", runId: started.id };

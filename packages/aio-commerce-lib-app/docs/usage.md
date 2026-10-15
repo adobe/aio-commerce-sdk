@@ -1057,12 +1057,12 @@ Installing, upgrading and uninstalling all plan the operation and validate the p
 
 The generated `commerce/extensibility/1` extension wires a `post-app-deploy` hook automatically (alongside `pre-app-build`). After every `aio app deploy`, the hook plans an upgrade, so a redeploy of an installed app runs an upgrade check without any manual step. The hook never installs an app that is not installed yet. You must be logged in with `aio login`.
 
-- In `auto` mode the hook prints the plan, starts the upgrade, and shows its status until the upgrade finishes. It prints a run id, the command to check the run later, and the command to follow the log of the background watcher.
+- In `auto` mode the hook prints the plan, starts the upgrade, and shows its status until the upgrade finishes. It prints the run id when the upgrade starts.
 - In `manual` mode it reports that a plan was created but was not executed.
 
 The hook runs after the deploy and cannot undo it, so its exit code only reports what the upgrade did.
 
-If you press Ctrl-C or close the terminal while an upgrade runs, the upgrade keeps running. Check its result with `upgrade status`. On Ctrl-C the hook prints the command to check the run and the path of the watcher log. The commands that the hook prints use the package manager of the project, for example `pnpm exec aio-commerce-lib-app upgrade status <run-id>` in a pnpm project.
+If you press Ctrl-C or close the terminal while an upgrade runs, the upgrade keeps running. Check its result with `upgrade status`. On Ctrl-C the hook says whether a background watcher follows the upgrade and prints the command to check the run. The command uses the package manager of the project, for example `pnpm exec aio-commerce-lib-app upgrade status <run-id>` in a pnpm project. Set `DEBUG=1` to also print the path of the watcher log.
 
 ##### Exit codes
 
