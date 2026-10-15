@@ -14,7 +14,11 @@ import { getUserToken } from "@aio-commerce-sdk/scripting-utils/aio";
 import { waitForOwnerExit } from "@aio-commerce-sdk/scripting-utils/process";
 
 import { createCamsContext } from "#commands/common/cams/context";
-import { describeOutcome, pollUntilSettled } from "#commands/lifecycle/poll";
+import {
+  describeCamsFailure,
+  findCamsError,
+} from "#commands/common/cams/report";
+import { describeOutcome, pollUntilSettled } from "#commands/upgrade/poll";
 
 import type { CamsContext } from "#commands/common/cams/context";
 
@@ -47,7 +51,7 @@ async function getTokenWithTimeout() {
       () =>
         reject(
           new Error(
-            "No valid Adobe IMS token is available. Run aio login, then check the run with lifecycle status",
+            "No valid Adobe IMS token is available. Run aio login, then check the run with upgrade status",
           ),
         ),
       TOKEN_TIMEOUT_MS,
@@ -109,6 +113,13 @@ export async function runWatcher(
 
   const outcome = describeOutcome(result, args.runId);
   log(outcome.message);
+
+  const failure = result.kind !== "finished" && findCamsError(result.error);
+  const details = failure && describeCamsFailure(failure);
+  if (details) {
+    log(details);
+  }
+
   return outcome.succeeded ? 0 : 1;
 }
 

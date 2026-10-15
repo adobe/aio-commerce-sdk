@@ -347,6 +347,34 @@ export async function findAttempt(
   return await attemptStore.get(attemptId);
 }
 
+/**
+ * The latest attempt that ran the operation: the latest attempt itself, or the most recent
+ * earlier one that did.
+ *
+ * @param operation - The operation to look for.
+ * @param latestAttempt - The latest attempt, or `null` when there is none.
+ * @param attemptStore - The store of attempts that are no longer the latest.
+ * @returns The attempt, or `undefined` when no attempt ran the operation.
+ */
+export async function findLatestAttemptOf(
+  operation: LifecycleOperation,
+  latestAttempt: LifecycleAttempt | null | undefined,
+  attemptStore: LifecycleStore<LifecycleAttempt>,
+) {
+  let attempt = latestAttempt;
+
+  while (attempt && attempt.operation !== operation) {
+    if (!attempt.previousAttemptId) {
+      return;
+    }
+
+    // biome-ignore lint/performance/noAwaitInLoops: each attempt names the one before it
+    attempt = await attemptStore.get(attempt.previousAttemptId);
+  }
+
+  return attempt ?? undefined;
+}
+
 /** The stores the lifecycle history is read from. */
 type LifecycleHistoryStores = {
   attemptStore: LifecycleStore<LifecycleAttempt>;
@@ -361,12 +389,14 @@ type LifecycleHistoryStores = {
  * @param pendingPlan - The pending plan, or `null` when none is pending.
  * @param stores - The attempt and plan stores.
  * @param limit - How many earlier attempts to read at most. Reads all of them when absent.
+ * @param operation - Lists only the earlier attempts and pending plans of this operation.
  */
 export async function toAttemptHistory(
   attempt: LifecycleAttempt,
   pendingPlan: LifecyclePlan | null,
   stores: LifecycleHistoryStores,
   limit?: number,
+  operation?: LifecycleOperation,
 ) {
   const history: (ReturnType<typeof toAttemptStatus> & {
     plans: LifecyclePlan[];
@@ -380,10 +410,12 @@ export async function toAttemptHistory(
       break;
     }
 
-    history.push({
-      ...toAttemptStatus(previous),
-      plans: await readPlanChain(previous.plan, stores.planStore),
-    });
+    if (!operation || previous.operation === operation) {
+      history.push({
+        ...toAttemptStatus(previous),
+        plans: await readPlanChain(previous.plan, stores.planStore),
+      });
+    }
 
     previousId = previous.previousAttemptId;
   }
@@ -392,7 +424,9 @@ export async function toAttemptHistory(
     ...toAttemptStatus(attempt),
     history,
     pendingPlans: pendingPlan
-      ? await readPlanChain(pendingPlan, stores.planStore)
+      ? (await readPlanChain(pendingPlan, stores.planStore)).filter(
+          (plan) => !operation || plan.operation === operation,
+        )
       : [],
     plans: await readPlanChain(attempt.plan, stores.planStore),
   };
@@ -428,16 +462,16 @@ export function attemptInProgressConflict(attempt?: LifecycleAttempt | null) {
   return conflict({
     body: {
       ...(attempt && { attempt: toAttemptStatus(attempt) }),
+      code: "in-progress",
       message:
         "Another lifecycle operation is already in progress. Wait for it to finish, then try again if needed.",
-      reason: "in-progress",
     },
   });
 }
 
 /** The response for a request whose plan is no longer the pending one. */
 export function stalePlanConflict(message: string) {
-  return conflict({ body: { message, reason: "stale-plan" } });
+  return conflict({ body: { code: "stale-plan", message } });
 }
 
 /** Invokes the execution route asynchronously for a started attempt and returns its activation id. */

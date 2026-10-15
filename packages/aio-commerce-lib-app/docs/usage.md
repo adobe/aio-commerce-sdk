@@ -1057,27 +1057,31 @@ Installing, upgrading and uninstalling all plan the operation and validate the p
 
 The generated `commerce/extensibility/1` extension wires a `post-app-deploy` hook automatically (alongside `pre-app-build`). After every `aio app deploy`, the hook plans an upgrade, so a redeploy of an installed app runs an upgrade check without any manual step. The hook never installs an app that is not installed yet. You must be logged in with `aio login`.
 
-- In `auto` mode the hook prints the plan, starts the upgrade, and shows its status until the upgrade finishes. It prints a run id, the command to check the run later, and the command to follow the log of the background watcher.
+- In `auto` mode the hook prints the plan, starts the upgrade, and shows its status until the upgrade finishes. It prints the run id when the upgrade starts.
 - In `manual` mode it reports that a plan was created but was not executed.
 
 The hook runs after the deploy and cannot undo it, so its exit code only reports what the upgrade did.
 
-If you press Ctrl-C or close the terminal while an upgrade runs, the upgrade keeps running. Check its result with `lifecycle status`. On Ctrl-C the hook prints the command to check the run and the path of the watcher log.
+If you press Ctrl-C or close the terminal while an upgrade runs, the upgrade keeps running. Check its result with `upgrade status`. On Ctrl-C the hook says whether a background watcher follows the upgrade and prints the command to check the run. The command uses the package manager of the project, for example `pnpm exec aio-commerce-lib-app upgrade status <run-id>` in a pnpm project. Set `DEBUG=1` to also print the path of the watcher log.
 
 ##### Exit codes
 
 The hook exits with `0` when the upgrade succeeded, when it was skipped (see the no-op states below), or when the upgrade mode is `manual` and the plan is waiting. It exits with `1` when the upgrade failed, was refused because another operation is running, or could not be checked, for example because the service stayed unreachable.
 
+##### Error output
+
+When the Commerce App Management Service refuses or fails a request, the hook and `upgrade status` print the message and one line with the HTTP status, the code, and the method and path of the request. Set `DEBUG=1` to also print the full chain of causes with the stacks. Any other error is unexpected and prints with its stack.
+
 #### Checking an upgrade run
 
-Use `lifecycle status` to check an upgrade run after the hook is gone, from the project directory:
+Use `upgrade status` to check an upgrade run after the hook is gone, from the project directory:
 
 ```bash
 # Check the latest upgrade run.
-npx aio-commerce-lib-app lifecycle status
+npx aio-commerce-lib-app upgrade status
 
 # Check a specific run.
-npx aio-commerce-lib-app lifecycle status <run-id>
+npx aio-commerce-lib-app upgrade status <run-id>
 ```
 
 It exits with `0` when the run succeeded or is still running, and with `1` when the run failed or could not be read.
@@ -1101,6 +1105,8 @@ Every install, upgrade and uninstall leaves a trail you can follow back when som
 - `pendingPlans`: plans made after the latest attempt that were never started.
 
 Plans carry the full target configuration, so `GET /installation` returns them only with `history=true`. Without it, the response stays the status of the latest attempt.
+
+Add `operation=install`, `operation=upgrade` or `operation=uninstall` to read only that operation. The status is then the latest attempt that ran it, `history` and `pendingPlans` list only that operation, and the answer is `204` when no attempt ran it. With `attemptId`, the attempt must have run the operation, or the answer is `404`.
 
 Each attempt links to the rest of the trail:
 

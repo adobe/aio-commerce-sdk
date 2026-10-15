@@ -132,8 +132,8 @@ export async function resolveWorkflowParams(
 export function notAssociatedConflict() {
   return conflict({
     body: {
+      code: "not-associated",
       message: "The app is not associated with a Commerce instance.",
-      reason: "not-associated",
     },
   });
 }

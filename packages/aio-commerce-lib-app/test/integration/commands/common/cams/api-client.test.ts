@@ -105,6 +105,33 @@ describe("planUpgrade", () => {
     expect(body).toBe("");
   });
 
+  test.each([
+    ["the versions", { sourceVersion: "1.0.0", targetVersion: "2.0.0" }],
+    ["no source version", { sourceVersion: null, targetVersion: "2.0.0" }],
+    ["no target version", { sourceVersion: "1.0.0", targetVersion: null }],
+  ])("keeps %s of the plan", async (_, versions) => {
+    const plan = { ...PLAN, domains: [], ...versions };
+    apiServer.use(
+      http.post(`${UPGRADES}/plan`, () => HttpResponse.json({ plan })),
+    );
+
+    await expect(
+      createClient().planUpgrade({ extensionId: "ext-1" }),
+    ).resolves.toEqual(plan);
+  });
+
+  test("rejects a plan with a version that is not text", async () => {
+    apiServer.use(
+      http.post(`${UPGRADES}/plan`, () =>
+        HttpResponse.json({ plan: { ...PLAN, targetVersion: 2 } }),
+      ),
+    );
+
+    await expect(
+      createClient().planUpgrade({ extensionId: "ext-1" }),
+    ).rejects.toThrow("unexpected answer");
+  });
+
   test("throws a conflict error that carries the code of a 409 answer", async () => {
     apiServer.use(
       http.post(`${UPGRADES}/plan`, () =>
@@ -200,6 +227,20 @@ describe("pollUpgrade", () => {
     });
   });
 
+  test("asks only for an attempt that ran an upgrade", async () => {
+    let query = "";
+    apiServer.use(
+      http.post(STATUS_URL, ({ request }) => {
+        query = new URL(request.url).search;
+        return HttpResponse.json(RUNNING);
+      }),
+    );
+
+    await createClient().pollUpgrade(IDS);
+
+    expect(query).toBe("?operation=upgrade");
+  });
+
   const SUCCEEDED = {
     id: "run-1",
     result: { appVersion: "2", snapshotId: "s" },
@@ -260,6 +301,77 @@ describe("pollUpgrade", () => {
     },
   );
 
+  test("keeps the status, the code and the request of an error answer, without the host", async () => {
+    apiServer.use(
+      http.post(STATUS_URL, () =>
+        HttpResponse.json(
+          { code: "forbidden", message: "No access" },
+          { status: 403 },
+        ),
+      ),
+    );
+
+    const error = await failureOf(createClient().pollUpgrade(IDS));
+
+    expect(error).toMatchObject({
+      code: "forbidden",
+      message: "No access",
+      request: {
+        method: "POST",
+        path: "/v1/extensions/ext-1/upgrades/run-1/status",
+      },
+      status: 403,
+    });
+  });
+
+  test("leaves the status text out of the message when the answer has none", async () => {
+    const client = createClient({
+      fetch: async () => new Response(null, { status: 500, statusText: "" }),
+    });
+
+    const error = await failureOf(client.pollUpgrade(IDS));
+
+    expect(error.message).toBe(
+      "The Commerce App Management Service answered with HTTP 500",
+    );
+  });
+
+  test.each([
+    [
+      "JSON without a message",
+      () =>
+        HttpResponse.json(
+          {},
+          { status: 503, statusText: "Service Unavailable" },
+        ),
+      "The Commerce App Management Service answered with HTTP 503 Service Unavailable",
+    ],
+    [
+      "a body that is not JSON",
+      () => new HttpResponse("Gateway timed out", { status: 504 }),
+      "Gateway timed out",
+    ],
+  ])("words an answer with %s", async (_, respond, message) => {
+    apiServer.use(http.post(STATUS_URL, respond));
+
+    const error = await failureOf(createClient().pollUpgrade(IDS));
+
+    expect(error.message).toBe(message);
+  });
+
+  test("cuts a long body that is not JSON", async () => {
+    apiServer.use(
+      http.post(
+        STATUS_URL,
+        () => new HttpResponse("x".repeat(1000), { status: 500 }),
+      ),
+    );
+
+    const error = await failureOf(createClient().pollUpgrade(IDS));
+
+    expect(error.message).toBe("x".repeat(300));
+  });
+
   test("marks a network failure as retryable", async () => {
     apiServer.use(http.post(STATUS_URL, () => HttpResponse.error()));
 
@@ -297,10 +409,10 @@ describe("readLatestUpgrade", () => {
     ["a single attempt", RUNNING, RUNNING],
     ["no attempt", [], null],
   ])("returns %s", async (_, body, expected) => {
-    let limit: string | null = null;
+    let query = "";
     apiServer.use(
       http.get(UPGRADES, ({ request }) => {
-        limit = new URL(request.url).searchParams.get("limit");
+        query = new URL(request.url).search;
         return HttpResponse.json(body);
       }),
     );
@@ -310,7 +422,8 @@ describe("readLatestUpgrade", () => {
     });
 
     expect(latest).toEqual(expected);
-    expect(limit).toBe("1");
+    expect(new URLSearchParams(query).get("limit")).toBe("1");
+    expect(new URLSearchParams(query).get("operation")).toBe("upgrade");
   });
 });
 

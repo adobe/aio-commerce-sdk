@@ -17,15 +17,17 @@ import { consola } from "consola";
 import { HttpResponse, http } from "msw";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
-const { aio, delayMock, spawnDetachedMock } = vi.hoisted(() => ({
-  aio: {
-    getAioCliEnv: vi.fn(),
-    getAioProjectContext: vi.fn(),
-    getUserToken: vi.fn(),
-  },
-  delayMock: vi.fn(),
-  spawnDetachedMock: vi.fn(),
-}));
+const { aio, delayMock, detectPackageManagerMock, spawnDetachedMock } =
+  vi.hoisted(() => ({
+    aio: {
+      getAioCliEnv: vi.fn(),
+      getAioProjectContext: vi.fn(),
+      getUserToken: vi.fn(),
+    },
+    delayMock: vi.fn(),
+    detectPackageManagerMock: vi.fn(),
+    spawnDetachedMock: vi.fn(),
+  }));
 
 vi.mock(
   "@aio-commerce-sdk/scripting-utils/process",
@@ -34,6 +36,16 @@ vi.mock(
       typeof import("@aio-commerce-sdk/scripting-utils/process")
     >()),
     spawnDetached: spawnDetachedMock,
+  }),
+);
+
+vi.mock(
+  "@aio-commerce-sdk/scripting-utils/project",
+  async (importOriginal) => ({
+    ...(await importOriginal<
+      typeof import("@aio-commerce-sdk/scripting-utils/project")
+    >()),
+    detectPackageManager: detectPackageManagerMock,
   }),
 );
 
@@ -56,6 +68,7 @@ vi.mock("consola/utils", () => ({
 }));
 
 import { CAMS_URL_ENV_VAR } from "#commands/common/cams/config";
+import { CamsConflictError } from "#commands/common/cams/errors";
 import { exec, run } from "#commands/hooks/post-app-deploy/main";
 import { createMockConfig } from "#test/fixtures/config";
 import {
@@ -70,12 +83,18 @@ const MANUAL_PROJECT = makeProjectFiles(
   createMockConfig({ metadata: { upgradeMode: "manual" } }),
 );
 
+const FORBIDDEN_STATUS =
+  /Forbidden[\s\S]*\nDetails: HTTP 403, POST \/v1\/extensions\/ext-1\/upgrades\/run-1\/status$/;
+
+const STATUS_HINT = /Check (the run|it)|tail -f/;
+const LOG_HINT = /tail -f|\.log/;
+
 const SERVICE = "https://service.example.com";
 const EXTENSIONS = `${SERVICE}/v1/extensions`;
 const UPGRADES = `${EXTENSIONS}/ext-1/upgrades`;
 const PLAN = { id: "plan-1", operation: "upgrade" };
 const NOT_PLANNED = /The upgrade was not planned: .*Refused/;
-const WATCHER_LOG = join(tmpdir(), "aio-commerce-lifecycle-run-1.log");
+const WATCHER_LOG = join(tmpdir(), "aio-commerce-upgrade-run-1.log");
 
 /** The status the service returns for the run. */
 function attempt(status: string, extra: object = {}) {
@@ -133,6 +152,20 @@ const refusePlan = (code: string) =>
     HttpResponse.json({ code, message: "Refused" }, { status: 409 }),
   );
 
+/** Every message that the hook printed at the default level of consola. */
+function printedMessages() {
+  return [
+    consola.box,
+    consola.info,
+    consola.log,
+    consola.start,
+    consola.success,
+    consola.warn,
+  ].flatMap((mock) =>
+    vi.mocked(mock).mock.calls.map(([message]) => String(message)),
+  );
+}
+
 /** Runs the hook inside a temporary project and returns what it resolved with. */
 async function runHook(files = MINIMAL_PROJECT) {
   let result: Awaited<ReturnType<typeof run>> | undefined;
@@ -172,6 +205,7 @@ describe("post-app-deploy hook", () => {
     aio.getUserToken.mockResolvedValue("ims-token");
     spawnDetachedMock.mockReturnValue({ child: {} });
     delayMock.mockResolvedValue(undefined);
+    detectPackageManagerMock.mockResolvedValue("npm");
   });
 
   afterEach(() => {
@@ -310,12 +344,12 @@ describe("post-app-deploy hook", () => {
         HttpResponse.json({ message: "Boom" }, { status: 500 }),
       );
 
-      await expect(runHook()).rejects.toThrow("HTTP 500");
+      await expect(runHook()).rejects.toThrow("Boom");
     });
   });
 
   describe("watcher", () => {
-    test("starts before the first poll, for the extension and the run, and tells how to check it", async () => {
+    test("starts before the first poll, for the extension and the run", async () => {
       const spawnedBeforeFirstPoll: boolean[] = [];
       serveUpgrade();
       answer("post", `${UPGRADES}/run-1/status`, () => {
@@ -328,14 +362,22 @@ describe("post-app-deploy hook", () => {
       expect(spawnedBeforeFirstPoll).toEqual([true]);
       expect(spawnDetachedMock).toHaveBeenCalledExactlyOnceWith(
         expect.objectContaining({
-          args: ["lifecycle", "watch", "ext-1", "run-1"],
+          args: ["upgrade", "watch", "ext-1", "run-1"],
           logPath: WATCHER_LOG,
           script: process.argv[1],
         }),
       );
-      expect(consola.info).toHaveBeenCalledWith(
-        `Check the run with "npx aio-commerce-lib-app lifecycle status run-1", or follow its log with "tail -f ${WATCHER_LOG}".`,
+    });
+
+    test("prints no hint to check the run and no empty line after the start line", async () => {
+      serveUpgrade([attempt("in-progress"), attempt("succeeded")]);
+
+      await runHook();
+
+      expect(printedMessages()).not.toContainEqual(
+        expect.stringMatching(STATUS_HINT),
       );
+      expect(consola.log).toHaveBeenCalledExactlyOnceWith("");
     });
 
     test("logs the log path and the arguments of the watcher when it starts", async () => {
@@ -344,9 +386,20 @@ describe("post-app-deploy hook", () => {
       await runHook();
 
       expect(consola.debug).toHaveBeenCalledWith("Starting the watcher.", {
-        args: ["lifecycle", "watch", "ext-1", "run-1"],
+        args: ["upgrade", "watch", "ext-1", "run-1"],
         logPath: WATCHER_LOG,
       });
+      expect(consola.debug).toHaveBeenCalledWith(`Watcher log: ${WATCHER_LOG}`);
+    });
+
+    test("does not print the log path at the default level", async () => {
+      serveUpgrade([attempt("in-progress"), attempt("succeeded")]);
+
+      await runHook();
+
+      expect(printedMessages()).not.toContainEqual(
+        expect.stringContaining(WATCHER_LOG),
+      );
     });
 
     test("does not fail the hook when it cannot start", async () => {
@@ -360,44 +413,92 @@ describe("post-app-deploy hook", () => {
       expect(consola.debug).toHaveBeenCalledWith(
         "The watcher could not start.",
         {
-          args: ["lifecycle", "watch", "ext-1", "run-1"],
+          args: ["upgrade", "watch", "ext-1", "run-1"],
           error: new Error("spawn failed"),
           logPath: WATCHER_LOG,
         },
       );
-      expect(consola.info).toHaveBeenCalledWith(
-        'Check the run with "npx aio-commerce-lib-app lifecycle status run-1".',
+      expect(consola.debug).not.toHaveBeenCalledWith(
+        expect.stringContaining("Watcher log:"),
       );
     });
   });
 
   describe("Ctrl+C", () => {
-    test("names the run and the log of the watcher in the notice", async () => {
+    const WITH_WATCHER = (command: string) =>
+      `Stopped waiting for the upgrade (run run-1). It keeps running in the background.\nCheck it with: ${command} run-1`;
+    const WITHOUT_WATCHER = (command: string) =>
+      `Stopped waiting for the upgrade (run run-1). Nothing follows it in the background, so its result is recorded only when you check it.\nCheck it with: ${command} run-1`;
+    const NPX = "npx aio-commerce-lib-app upgrade status";
+    const PNPM = "pnpm exec aio-commerce-lib-app upgrade status";
+
+    /** Presses Ctrl+C during the first wait between two polls. */
+    function interruptWhileWaiting() {
       serveUpgrade([attempt("in-progress"), attempt("succeeded")]);
       delayMock.mockImplementationOnce(async () => {
         process.emit("SIGINT");
       });
+    }
+
+    test("tells that the upgrade keeps running in the background and how to check it", async () => {
+      interruptWhileWaiting();
 
       await runHook();
 
       expect(processExitMock).toHaveBeenCalledWith(130);
-      expect(consola.info).toHaveBeenCalledWith(
-        `Stopped waiting. The upgrade keeps running. Check it with: npx aio-commerce-lib-app lifecycle status run-1. Watcher log: ${WATCHER_LOG}`,
-      );
+      expect(consola.info).toHaveBeenCalledWith(WITH_WATCHER(NPX));
     });
 
-    test("names only the run when the watcher could not start", async () => {
-      serveUpgrade([attempt("in-progress"), attempt("succeeded")]);
+    test("tells that nothing follows the upgrade when the watcher could not start", async () => {
+      interruptWhileWaiting();
       spawnDetachedMock.mockReturnValue(undefined);
-      delayMock.mockImplementationOnce(async () => {
-        process.emit("SIGINT");
-      });
 
       await runHook();
 
-      expect(consola.info).toHaveBeenCalledWith(
-        "Stopped waiting. The upgrade keeps running. Check it with: npx aio-commerce-lib-app lifecycle status run-1",
+      expect(consola.info).toHaveBeenCalledWith(WITHOUT_WATCHER(NPX));
+    });
+
+    test("does not name the log of the watcher", async () => {
+      interruptWhileWaiting();
+
+      await runHook();
+
+      expect(printedMessages()).not.toContainEqual(
+        expect.stringMatching(LOG_HINT),
       );
+    });
+
+    test("uses the command of the package manager of the project", async () => {
+      detectPackageManagerMock.mockResolvedValue("pnpm");
+      interruptWhileWaiting();
+
+      await runHook();
+
+      expect(consola.info).toHaveBeenCalledWith(WITH_WATCHER(PNPM));
+      expect(detectPackageManagerMock).toHaveBeenCalledOnce();
+    });
+
+    test("detects the package manager in the directory of the project", async () => {
+      serveUpgrade();
+
+      let projectDir = "";
+      await withTempProject(MINIMAL_PROJECT, async () => {
+        projectDir = process.cwd();
+        await run();
+      });
+
+      expect(detectPackageManagerMock).toHaveBeenCalledExactlyOnceWith(
+        projectDir,
+      );
+    });
+
+    test("uses npx and still runs the hook when the package manager cannot be detected", async () => {
+      detectPackageManagerMock.mockRejectedValue(new Error("No access"));
+      interruptWhileWaiting();
+
+      await runHook();
+
+      expect(consola.info).toHaveBeenCalledWith(WITH_WATCHER(NPX));
     });
 
     test.each([
@@ -414,6 +515,60 @@ describe("post-app-deploy hook", () => {
   });
 
   describe("exec", () => {
+    test("prints a refusal of the service as one block without a stack", async () => {
+      serveUpgrade();
+      refusePlan("in-progress");
+
+      await withTempProject(MINIMAL_PROJECT, exec);
+
+      expect(consola.error).toHaveBeenCalledExactlyOnceWith(
+        "The upgrade was not planned: Refused\nDetails: HTTP 409, code in-progress, POST /v1/extensions/ext-1/upgrades/plan",
+      );
+      expect(processExitMock).toHaveBeenCalledExactlyOnceWith(1);
+    });
+
+    test("sends the whole chain of a failure of the service to the debug log", async () => {
+      serveUpgrade();
+      refusePlan("in-progress");
+
+      await withTempProject(MINIMAL_PROJECT, exec);
+
+      const [logged, ...others] = vi
+        .mocked(consola.debug)
+        .mock.calls.map(([message]) => message)
+        .filter((message) => message instanceof Error);
+
+      expect(others).toEqual([]);
+      expect(logged.message).toContain("The upgrade was not planned");
+      expect(logged.cause).toBeInstanceOf(CamsConflictError);
+    });
+
+    test("prints the details of the call that could not read the run", async () => {
+      serveUpgrade();
+      answer("post", `${UPGRADES}/run-1/status`, () =>
+        HttpResponse.json({ message: "Forbidden" }, { status: 403 }),
+      );
+
+      await withTempProject(MINIMAL_PROJECT, exec);
+
+      expect(consola.error).toHaveBeenCalledExactlyOnceWith(
+        expect.stringMatching(FORBIDDEN_STATUS),
+      );
+    });
+
+    test("prints an unexpected failure with its stack", async () => {
+      const failure = new Error("Broken");
+      aio.getAioProjectContext.mockImplementation(() => {
+        throw failure;
+      });
+
+      await withTempProject(MINIMAL_PROJECT, exec);
+
+      expect(consola.error).toHaveBeenCalledExactlyOnceWith(failure);
+      expect(consola.debug).not.toHaveBeenCalled();
+      expect(processExitMock).toHaveBeenCalledExactlyOnceWith(1);
+    });
+
     test("exits with code 1 when the hook fails", async () => {
       serveUpgrade([attempt("failed")]);
 

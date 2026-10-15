@@ -27,7 +27,7 @@ vi.mock("@aio-commerce-sdk/scripting-utils/process", () => owner);
 
 import { createCamsClient } from "#commands/common/cams/api-client";
 import { CAMS_URL_ENV_VAR } from "#commands/common/cams/config";
-import { exec, runWatcher } from "#commands/lifecycle/watcher/main";
+import { exec, runWatcher } from "#commands/upgrade/watcher/main";
 import { apiServer, setupApiTestLifecycle } from "#test/setup/api";
 
 import type { CamsContext } from "#commands/common/cams/context";
@@ -144,6 +144,15 @@ describe("runWatcher", () => {
     await expect(watch("pid")).resolves.toBe(0);
 
     expect(log).toHaveBeenCalledWith(expect.stringContaining("is gone (pid)"));
+  });
+
+  test("logs the details of the call that failed when the run cannot be read", async () => {
+    serveAnswers([json({ message: "Forbidden" }, 403)]);
+
+    await expect(watch("pipe")).resolves.toBe(1);
+    expect(log).toHaveBeenLastCalledWith(
+      "Details: HTTP 403, POST /v1/extensions/ext-1/upgrades/run-1/status",
+    );
   });
 
   test("exits with 1 and logs the reason when the run failed", async () => {

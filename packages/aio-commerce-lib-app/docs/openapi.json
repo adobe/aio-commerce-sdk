@@ -1224,16 +1224,26 @@
       "get": {
         "operationId": "getInstallationState",
         "summary": "Get Installation State",
-        "description": "Returns the status of the latest lifecycle attempt, whatever its operation. With `attemptId`, returns the status of that attempt instead, whether it is the latest or an earlier one. With `history=true`, also returns the plans of that attempt, the earlier attempts with their plans, and the plans made since the latest attempt. Without a lifecycle attempt, returns the installation record of an older library version, if any, and ignores `history` and `limit`.",
+        "description": "Returns the status of the latest lifecycle attempt, whatever its operation. With `attemptId`, returns the status of that attempt instead, whether it is the latest or an earlier one. With `attemptId` and `operation`, returns that attempt only when it ran that operation. With `operation` alone, returns the latest attempt that ran that operation instead, and `history` lists only the earlier attempts and pending plans of that operation. With `history=true`, also returns the plans of that attempt, the earlier attempts with their plans, and the plans made since the latest attempt. Without a lifecycle attempt, returns the installation record of an older library version, if any, and ignores `history` and `limit`. With `operation` alone, it answers `204` instead when no attempt ran the operation.",
         "parameters": [
           {
             "name": "attemptId",
             "in": "query",
-            "description": "The attempt to read. Cannot be combined with `history` or `limit`.",
+            "description": "The attempt to read. With `operation`, the attempt must have run that operation, or the answer is `404`. Cannot be combined with `history` or `limit`.",
             "required": false,
             "schema": {
               "type": "string",
               "minLength": 1
+            }
+          },
+          {
+            "name": "operation",
+            "in": "query",
+            "description": "Reads the latest attempt that ran this operation, which can be an earlier attempt than the latest one. With `history=true`, `history` and `pendingPlans` list only this operation. With `attemptId`, it only checks that the attempt ran this operation.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["install", "upgrade", "uninstall"]
             }
           },
           {
@@ -1279,7 +1289,7 @@
         ],
         "responses": {
           "200": {
-            "description": "The latest lifecycle attempt, or the one named by `attemptId`, with its history on `history=true`, or the installation record of an older library version.",
+            "description": "The latest lifecycle attempt, the latest one that ran `operation`, or the one named by `attemptId`, with its history on `history=true`, or the installation record of an older library version.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1305,10 +1315,10 @@
             }
           },
           "204": {
-            "description": "No installation workflow state or lifecycle attempt has been stored yet."
+            "description": "No installation workflow state or lifecycle attempt has been stored yet, or no attempt ran the requested `operation`."
           },
           "400": {
-            "description": "The `attemptId`, `history` or `limit` query parameter is invalid, or `attemptId` is combined with `history` or `limit`.",
+            "description": "The `attemptId`, `history`, `limit` or `operation` query parameter is invalid, or `attemptId` is combined with `history` or `limit`.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1324,7 +1334,7 @@
             "description": "The access token is valid, but it is not allowed to access the requested organization or operation."
           },
           "404": {
-            "description": "No lifecycle attempt has the given `attemptId`.",
+            "description": "No lifecycle attempt has the given `attemptId`, or it did not run the requested `operation`.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1426,7 +1436,7 @@
             "description": "The access token is valid, but it is not allowed to access the requested organization or operation."
           },
           "409": {
-            "description": "The plan cannot start. `reason` tells why: `in-progress` (another attempt is running; `attempt` carries its status), `stale-plan` (the `planId` is not the pending plan, or the installed state now calls for another operation; plan again), `not-associated`, `unreadable-state`, `baseline-missing` (the stored state names a baseline snapshot that no longer exists), `installed-without-config`, or `already-current`. Without a `reason`, planning is blocked by the `issues`, or the application ID changed.",
+            "description": "The plan cannot start. `code` tells why: `in-progress` (another attempt is running; `attempt` carries its status), `stale-plan` (the `planId` is not the pending plan, or the installed state now calls for another operation; plan again), `not-associated`, `unreadable-state`, `baseline-missing` (the stored state names a baseline snapshot that no longer exists), `installed-without-config`, or `already-current`. Without a `code`, planning is blocked by the `issues`, or the application ID changed.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1435,7 +1445,7 @@
                     "message": {
                       "type": "string"
                     },
-                    "reason": {
+                    "code": {
                       "type": "string"
                     },
                     "attempt": {
@@ -1558,7 +1568,7 @@
             "description": "The access token is valid, but it is not allowed to access the requested organization or operation."
           },
           "409": {
-            "description": "Nothing was planned. `reason` tells why: `in-progress` (an attempt is running; `attempt` carries its status), `not-associated`, `unreadable-state`, `baseline-missing` (the stored state names a baseline snapshot that no longer exists), `installed-without-config`, or `already-current`. Without a `reason`, planning is blocked by the `issues`, or the application ID changed.",
+            "description": "Nothing was planned. `code` tells why: `in-progress` (an attempt is running; `attempt` carries its status), `not-associated`, `unreadable-state`, `baseline-missing` (the stored state names a baseline snapshot that no longer exists), `installed-without-config`, or `already-current`. Without a `code`, planning is blocked by the `issues`, or the application ID changed.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1567,7 +1577,7 @@
                     "message": {
                       "type": "string"
                     },
-                    "reason": {
+                    "code": {
                       "type": "string"
                     },
                     "attempt": {
@@ -3693,7 +3703,30 @@
             "type": "string",
             "enum": ["install", "upgrade", "uninstall"]
           },
+          "sourceVersion": {
+            "description": "The app version the plan starts from, or `null` when nothing is installed.",
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "targetVersion": {
+            "description": "The app version the plan ends at, or `null` when the app ends up with nothing installed.",
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "domains": {
+            "description": "The domains with operations to run. A domain without operations is left out.",
             "type": "array",
             "items": {
               "type": "object",
@@ -3739,7 +3772,14 @@
             }
           }
         },
-        "required": ["id", "operation", "domains", "issues"]
+        "required": [
+          "id",
+          "operation",
+          "sourceVersion",
+          "targetVersion",
+          "domains",
+          "issues"
+        ]
       }
     },
     "securitySchemes": {

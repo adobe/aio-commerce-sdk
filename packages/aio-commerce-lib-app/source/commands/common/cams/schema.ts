@@ -37,7 +37,12 @@ export const ExtensionListSchema = v.array(ExtensionSchema);
 
 /** The plan the service returns for review. */
 export const UpgradePlanAnswerSchema = v.object({
-  plan: v.looseObject({ id: v.string(), operation: v.string() }),
+  plan: v.looseObject({
+    id: v.string(),
+    operation: v.string(),
+    sourceVersion: v.optional(v.nullable(v.string())),
+    targetVersion: v.optional(v.nullable(v.string())),
+  }),
 });
 
 export type UpgradePlan = v.InferOutput<typeof UpgradePlanAnswerSchema>["plan"];

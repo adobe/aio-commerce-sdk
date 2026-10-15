@@ -24,8 +24,8 @@ import { exec as preAppBuildHookCommand } from "#commands/hooks/pre-app-build";
 import { exec as preAppDevHookCommand } from "#commands/hooks/pre-app-dev";
 import { exec as preAppRunHookCommand } from "#commands/hooks/pre-app-run";
 import { exec as initCommand } from "#commands/init/main";
-import { exec as lifecycleStatusCommand } from "#commands/lifecycle/status/main";
-import { exec as lifecycleWatchCommand } from "#commands/lifecycle/watcher/main";
+import { exec as upgradeStatusCommand } from "#commands/upgrade/status/main";
+import { exec as upgradeWatchCommand } from "#commands/upgrade/watcher/main";
 
 const NAMESPACE = "@adobe/aio-commerce-lib-app";
 
@@ -44,7 +44,7 @@ Commands:
     manifest           Generate app manifest only
     schema             Generate configuration schema only
 
-  lifecycle <target>   Work with app lifecycle runs
+  upgrade <target>     Work with app upgrade runs
     status [run-id]    Check an upgrade run, or the latest one without a run id
 
   help                 Show this help message
@@ -55,8 +55,8 @@ Examples:
   ${NAMESPACE} generate manifest
   ${NAMESPACE} generate actions
   ${NAMESPACE} generate schema
-  ${NAMESPACE} lifecycle status
-  ${NAMESPACE} lifecycle status <run-id>
+  ${NAMESPACE} upgrade status
+  ${NAMESPACE} upgrade status <run-id>
 `;
 
 /** Run all generate targets in sequence */
@@ -85,9 +85,9 @@ const COMMANDS = {
     "pre-app-run": preAppRunHookCommand,
   },
   init: initCommand,
-  lifecycle: {
-    status: lifecycleStatusCommand,
-    watch: lifecycleWatchCommand,
+  upgrade: {
+    status: upgradeStatusCommand,
+    watch: upgradeWatchCommand,
   },
 } as const;
 

@@ -10,11 +10,14 @@
  * governing permissions and limitations under the License.
  */
 
-import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
 import {
   getTempLogPath,
   spawnDetached,
 } from "@aio-commerce-sdk/scripting-utils/process";
+import {
+  detectPackageManager,
+  getExecCommand,
+} from "@aio-commerce-sdk/scripting-utils/project";
 import { consola } from "consola";
 import { colors } from "consola/utils";
 
@@ -23,12 +26,13 @@ import {
   findWorkspaceExtensionId,
 } from "#commands/common/cams/context";
 import { CamsConflictError } from "#commands/common/cams/errors";
+import { reportFailure } from "#commands/common/cams/report";
 import { noticeInterrupt } from "#commands/hooks/post-app-deploy/interrupt";
 import {
   describeOutcome,
   pollUntilSettled,
   whenStatusChanges,
-} from "#commands/lifecycle/poll";
+} from "#commands/upgrade/poll";
 import { parseCommerceAppConfig } from "#config/lib/parser";
 
 import type { CamsContext } from "#commands/common/cams/context";
@@ -94,17 +98,14 @@ async function startUpgrade(
 }
 
 /**
- * Starts the watcher that follows the run if this process stops, and tells the user how to check
- * the run. The run goes on without the watcher.
+ * Starts the watcher that follows the run if this process stops. The run goes on without the
+ * watcher.
  *
- * @returns The path of the log of the watcher, or `undefined` when it could not start.
+ * @returns Whether the watcher started.
  */
-function announceBackgroundWatcher(
-  extensionId: string,
-  started: AttemptStatus,
-) {
-  const logPath = getTempLogPath(`aio-commerce-lifecycle-${started.id}`);
-  const args = ["lifecycle", "watch", extensionId, started.id];
+function startBackgroundWatcher(extensionId: string, started: AttemptStatus) {
+  const logPath = getTempLogPath(`aio-commerce-upgrade-${started.id}`);
+  const args = ["upgrade", "watch", extensionId, started.id];
 
   consola.debug("Starting the watcher.", { args, logPath });
   const watcher = spawnDetached({
@@ -116,14 +117,12 @@ function announceBackgroundWatcher(
     script: process.argv[1],
   });
 
-  const statusCommand = `npx aio-commerce-lib-app lifecycle status ${started.id}`;
-  consola.info(
-    watcher
-      ? `Check the run with "${statusCommand}", or follow its log with "tail -f ${logPath}".`
-      : `Check the run with "${statusCommand}".`,
-  );
+  if (!watcher) {
+    return false;
+  }
 
-  return watcher ? logPath : undefined;
+  consola.debug(`Watcher log: ${logPath}`);
+  return true;
 }
 
 /** Polls the run and prints its progress until it settles. Throws when it does not succeed. */
@@ -144,7 +143,9 @@ async function followRun(
 
   const outcome = describeOutcome(result, started.id);
   if (!outcome.succeeded) {
-    throw new Error(outcome.message);
+    throw new Error(outcome.message, {
+      cause: result.kind === "finished" ? undefined : result.error,
+    });
   }
 
   consola.success(`${outcome.message}\n`);
@@ -160,13 +161,26 @@ async function followRun(
  * @throws When the upgrade is refused, fails or does not finish in time.
  */
 export async function run(): Promise<HookResult> {
-  const interrupt = noticeInterrupt();
+  const statusCommand = await getStatusCommand();
+  const interrupt = noticeInterrupt(statusCommand);
 
   try {
     return await runHook(interrupt);
   } finally {
     interrupt.dispose();
   }
+}
+
+/**
+ * The command that runs `upgrade status` with the package manager of the project. It is `npx`
+ * when the package manager cannot be detected.
+ */
+async function getStatusCommand() {
+  const packageManager = await detectPackageManager(process.cwd()).catch(
+    () => "npm" as const,
+  );
+
+  return `${getExecCommand(packageManager)} aio-commerce-lib-app upgrade status`;
 }
 
 /** Plans, starts and follows the upgrade. Tells `interrupt` the run id once the run exists. */
@@ -212,9 +226,8 @@ async function runHook(interrupt: InterruptNotice): Promise<HookResult> {
   interrupt.setRunId(started.id);
 
   consola.info(`App upgrade started (run ${started.id}).`);
-  const watcherLog = announceBackgroundWatcher(extensionId, started);
-  if (watcherLog) {
-    interrupt.setWatcherLog(watcherLog);
+  if (startBackgroundWatcher(extensionId, started)) {
+    interrupt.setWatcherStarted();
   }
 
   await followRun(context, extensionId, started);
@@ -225,12 +238,7 @@ export async function exec() {
   try {
     await run();
   } catch (error) {
-    if (error instanceof CommerceSdkValidationError) {
-      consola.error(error.display());
-    } else {
-      consola.error(error);
-    }
-
+    reportFailure(error);
     process.exit(1);
   }
 }

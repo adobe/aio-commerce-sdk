@@ -416,6 +416,153 @@ describe("installationRuntimeAction", () => {
 
         expect(result).toMatchObject({ statusCode: 204, type: "success" });
       });
+
+      describe("operation", () => {
+        test.each([
+          ["upgrade", "attempt-3"],
+          ["install", "attempt-1"],
+        ])(
+          "returns the latest %s attempt, even when a later attempt ran another operation",
+          async (operation, id) => {
+            seedChain();
+            const result = await getStatus(`operation=${operation}`);
+
+            expect(result).toMatchObject({
+              body: { id, operation },
+              statusCode: 200,
+            });
+            expect(result).not.toHaveProperty("body.history");
+          },
+        );
+
+        test("answers 204 when no attempt ran the operation", async () => {
+          seedChain();
+          const result = await getStatus("operation=uninstall");
+
+          expect(result).toMatchObject({ statusCode: 204, type: "success" });
+        });
+
+        test("answers 204 with the history too when no attempt ran the operation", async () => {
+          seedChain();
+          const result = await getStatus("history=true&operation=uninstall");
+
+          expect(result).toMatchObject({ statusCode: 204, type: "success" });
+        });
+
+        test("answers 204 when no attempt exists, without the installation record of an older version", async () => {
+          const result = await getStatus("operation=upgrade");
+
+          expect(result).toMatchObject({ statusCode: 204, type: "success" });
+        });
+
+        test.each([
+          ["the latest attempt", "attempt-3", "upgrade"],
+          ["an earlier attempt", "attempt-1", "install"],
+        ])(
+          "returns %s with the attemptId when it ran the operation",
+          async (_, id, operation) => {
+            seedChain();
+            const result = await getStatus(
+              `attemptId=${id}&operation=${operation}`,
+            );
+
+            expect(result).toMatchObject({
+              body: { id, operation },
+              statusCode: 200,
+            });
+          },
+        );
+
+        test.each([
+          [
+            "an attempt that ran another operation",
+            "attempt-1&operation=upgrade",
+          ],
+          [
+            "the latest attempt of another operation",
+            "attempt-3&operation=install",
+          ],
+          ["an unknown attempt", "attempt-9&operation=upgrade"],
+        ])("answers 404 with the attemptId for %s", async (_, query) => {
+          seedChain();
+          const result = await getStatus(`attemptId=${query}`);
+
+          expect(result).toMatchObject({
+            error: { statusCode: 404 },
+            type: "error",
+          });
+        });
+
+        test("still answers 400 when the attemptId comes with the history", async () => {
+          seedChain();
+          const result = await getStatus(
+            "attemptId=attempt-2&operation=upgrade&history=true",
+          );
+
+          expect(result).toMatchObject({
+            error: { statusCode: 400 },
+            type: "error",
+          });
+        });
+
+        test("lists only the earlier attempts that ran the operation", async () => {
+          seedChain();
+          const upgrades = await getStatus("history=true&operation=upgrade");
+          const installs = await getStatus("history=true&operation=install");
+
+          expect.assert(
+            upgrades.type === "success" && installs.type === "success",
+            "Expected statuses",
+          );
+          expect(
+            ids((upgrades.body as { history: { id: string }[] }).history),
+          ).toEqual(["attempt-2"]);
+          expect(installs.body).toMatchObject({ history: [], id: "attempt-1" });
+        });
+
+        test("applies the limit to the attempts of the operation", async () => {
+          seedChain();
+          attemptStore.values.set("attempt-2", {
+            ...attempt2,
+            operation: "install",
+          });
+          const result = await getStatus(
+            "history=true&operation=upgrade&limit=1",
+          );
+
+          expect.assert(result.type === "success", "Expected a status");
+          const body = result.body as { history: { id: string }[] };
+          expect(body.history).toEqual([]);
+        });
+
+        test("lists only the plans made since the latest attempt for the operation", async () => {
+          seedChain(plan("plan-4b", "plan-4a"));
+          const upgrades = await getStatus("history=true&operation=upgrade");
+          const installs = await getStatus("history=true&operation=install");
+
+          expect.assert(
+            upgrades.type === "success" && installs.type === "success",
+            "Expected statuses",
+          );
+          const pending = (body: unknown) =>
+            ids((body as { pendingPlans: { id: string }[] }).pendingPlans);
+          expect(pending(upgrades.body)).toEqual(["plan-4b", "plan-4a"]);
+          expect(pending(installs.body)).toEqual([]);
+        });
+
+        test.each(["operation=reinstall", "operation="])(
+          "returns 400 for the query %s",
+          async (query) => {
+            seedChain();
+            const result = await getStatus(query);
+
+            expect(result).toMatchObject({
+              error: { statusCode: 400 },
+              type: "error",
+            });
+          },
+        );
+      });
     });
 
     describe("attemptId", () => {
@@ -770,7 +917,7 @@ describe("installationRuntimeAction", () => {
 
         expect(invokeMock).not.toHaveBeenCalled();
         expect(result).toMatchObject({
-          error: { body: { reason: "in-progress" }, statusCode: 409 },
+          error: { body: { code: "in-progress" }, statusCode: 409 },
         });
       });
 
@@ -790,7 +937,7 @@ describe("installationRuntimeAction", () => {
 
         expect(invokeMock).not.toHaveBeenCalled();
         expect(result).toMatchObject({
-          error: { body: { reason: "stale-plan" }, statusCode: 409 },
+          error: { body: { code: "stale-plan" }, statusCode: 409 },
         });
       });
     });
@@ -821,6 +968,31 @@ describe("installationRuntimeAction", () => {
           statusCode: 200,
         });
         expect(invokeMock).not.toHaveBeenCalled();
+      });
+
+      test("previews an install from no version to the configured version", async () => {
+        desiredInstallationStore = createMockInstallationStore();
+        const action = installationRuntimeAction({
+          appConfig: configWithAutoUpgrade,
+        });
+        const result = await action(
+          createRuntimeActionParams({
+            body: requestBody,
+            method: "post",
+            path: "/plan",
+            ...DEFAULT_INSTALLATION_PARAMS,
+          }),
+        );
+
+        expect(result).toMatchObject({
+          body: {
+            plan: {
+              sourceVersion: null,
+              targetVersion: configWithAutoUpgrade.metadata.version,
+            },
+          },
+          statusCode: 200,
+        });
       });
 
       test("reports the non-blocking issues a step's planner finds under that step", async () => {
@@ -929,7 +1101,7 @@ describe("installationRuntimeAction", () => {
                 operation: "upgrade",
                 status: "pending",
               },
-              reason: "in-progress",
+              code: "in-progress",
             },
             statusCode: 409,
           },
@@ -947,7 +1119,7 @@ describe("installationRuntimeAction", () => {
 
         expect(invokeMock).not.toHaveBeenCalled();
         expect(result).toMatchObject({
-          error: { body: { reason: "not-associated" }, statusCode: 409 },
+          error: { body: { code: "not-associated" }, statusCode: 409 },
           type: "error",
         });
       });
@@ -974,7 +1146,7 @@ describe("installationRuntimeAction", () => {
           type: "error",
         });
         expect(result).not.toMatchObject({
-          error: { body: { reason: expect.anything() } },
+          error: { body: { code: expect.anything() } },
         });
       });
 
@@ -988,7 +1160,7 @@ describe("installationRuntimeAction", () => {
 
         expect(invokeMock).not.toHaveBeenCalled();
         expect(result).toMatchObject({
-          error: { body: { reason: "unreadable-state" }, statusCode: 409 },
+          error: { body: { code: "unreadable-state" }, statusCode: 409 },
           type: "error",
         });
       });
@@ -1001,7 +1173,7 @@ describe("installationRuntimeAction", () => {
 
         expect(invokeMock).not.toHaveBeenCalled();
         expect(result).toMatchObject({
-          error: { body: { reason: "in-progress" }, statusCode: 409 },
+          error: { body: { code: "in-progress" }, statusCode: 409 },
           type: "error",
         });
       });
@@ -1021,7 +1193,7 @@ describe("installationRuntimeAction", () => {
 
         expect(invokeMock).not.toHaveBeenCalled();
         expect(result).toMatchObject({
-          error: { body: { reason: "stale-plan" }, statusCode: 409 },
+          error: { body: { code: "stale-plan" }, statusCode: 409 },
           type: "error",
         });
       });
@@ -1035,12 +1207,12 @@ describe("installationRuntimeAction", () => {
 
         expect(invokeMock).not.toHaveBeenCalled();
         expect(result).toMatchObject({
-          error: { body: { reason: "already-current" }, statusCode: 409 },
+          error: { body: { code: "already-current" }, statusCode: 409 },
           type: "error",
         });
       });
 
-      test("returns 409 without a reason when upgrade planning is blocked", async () => {
+      test("returns 409 without a code when upgrade planning is blocked", async () => {
         createRootInstallationStepMock.mockReturnValue(
           createUpgradeRoot(
             createUpgradeLeaf({
@@ -1068,7 +1240,91 @@ describe("installationRuntimeAction", () => {
           type: "error",
         });
         expect(result).not.toMatchObject({
-          error: { body: { reason: expect.anything() } },
+          error: { body: { code: expect.anything() } },
+        });
+      });
+
+      test("previews an upgrade from the installed version to the configured one", async () => {
+        const action = installationRuntimeAction({
+          appConfig: configWithAutoUpgrade,
+        });
+        const result = await planRequest(action);
+
+        expect(configWithAutoUpgrade.metadata.version).not.toBe("0.9.0");
+        expect(result).toMatchObject({
+          body: {
+            plan: {
+              operation: "upgrade",
+              sourceVersion: "0.9.0",
+              targetVersion: configWithAutoUpgrade.metadata.version,
+            },
+          },
+          statusCode: 200,
+        });
+      });
+
+      test("leaves the domains without operations out of the preview, and keeps them in the stored plan", async () => {
+        const emptyLeaf = createUpgradeLeaf({
+          name: "empty",
+          plan: vi.fn().mockResolvedValue({
+            kind: "planned",
+            plan: { operations: [], path: ["installation", "empty"] },
+          }),
+        });
+        createRootInstallationStepMock.mockReturnValue(
+          createMockBranchStep({
+            children: [emptyLeaf, createUpgradeLeaf()],
+            meta: {
+              install: { label: "Installation" },
+              uninstall: { label: "Uninstallation" },
+              upgrade: { label: "Upgrade" },
+            },
+          }),
+        );
+        const action = installationRuntimeAction({
+          appConfig: configWithAutoUpgrade,
+        });
+        const result = await planRequest(action);
+
+        expect(result).toMatchObject({
+          body: {
+            plan: {
+              domains: [
+                {
+                  operations: [{ id: "operation-1" }],
+                  path: ["installation", "synthetic"],
+                },
+              ],
+            },
+          },
+        });
+
+        const stored = (await desiredStateStore.get("current"))?.pendingPlan;
+        expect(stored?.domains.map((domain) => domain.path)).toEqual([
+          ["installation", "empty"],
+          ["installation", "synthetic"],
+        ]);
+      });
+
+      test("previews a plan without any operation with no domain", async () => {
+        createRootInstallationStepMock.mockReturnValue(
+          createUpgradeRoot(
+            createUpgradeLeaf({
+              plan: vi.fn().mockResolvedValue({
+                kind: "planned",
+                plan: { operations: [], path: ["installation", "synthetic"] },
+              }),
+            }),
+          ),
+        );
+        const action = installationRuntimeAction({
+          appConfig: configWithAutoUpgrade,
+        });
+        const result = await planRequest(action);
+
+        expect(result).toMatchObject({
+          body: { plan: { domains: [] } },
+          statusCode: 200,
         });
       });
 
@@ -1196,16 +1452,16 @@ describe("installationRuntimeAction", () => {
         expect(result).toMatchObject({
           error: {
             body: {
+              code: "stale-plan",
               message:
                 "The plan is for an upgrade, but the app now needs an install. Call POST /plan again.",
-              reason: "stale-plan",
             },
             statusCode: 409,
           },
         });
       });
 
-      test("returns 409 with reason stale-plan when the reviewed plan is no longer pending", async () => {
+      test("returns 409 with code stale-plan when the reviewed plan is no longer pending", async () => {
         const action = installationRuntimeAction({
           appConfig: createMockConfig({ metadata: { upgradeMode: "manual" } }),
         });
@@ -1217,7 +1473,7 @@ describe("installationRuntimeAction", () => {
         expect(desiredStateStore.put).not.toHaveBeenCalled();
         expect(invokeMock).not.toHaveBeenCalled();
         expect(result).toMatchObject({
-          error: { body: { reason: "stale-plan" }, statusCode: 409 },
+          error: { body: { code: "stale-plan" }, statusCode: 409 },
           type: "error",
         });
       });
@@ -1241,7 +1497,7 @@ describe("installationRuntimeAction", () => {
                 id: (started as unknown as { body: { id: string } }).body.id,
                 status: "pending",
               },
-              reason: "in-progress",
+              code: "in-progress",
             },
             statusCode: 409,
           },
@@ -1335,6 +1591,28 @@ describe("installationRuntimeAction", () => {
         createRootInstallationStepMock.mockReturnValue(createUpgradeRoot(leaf));
         return leaf;
       }
+
+      test("previews an uninstall from the installed version to no version", async () => {
+        useUninstallLeaf();
+        const action = installationRuntimeAction({
+          appConfig: configWithAutoUpgrade,
+        });
+        const result = await planRequest(action, {
+          ...requestBody,
+          operation: "uninstall",
+        });
+
+        expect(result).toMatchObject({
+          body: {
+            plan: {
+              operation: "uninstall",
+              sourceVersion: "0.9.0",
+              targetVersion: null,
+            },
+          },
+          statusCode: 200,
+        });
+      });
 
       async function startUninstall() {
         const action = installationRuntimeAction({
@@ -1457,7 +1735,7 @@ describe("installationRuntimeAction", () => {
         ]) {
           // biome-ignore lint/performance/noAwaitInLoops: one plan request per operation
           expect(await planRequest(action, body)).toMatchObject({
-            error: { body: { reason: "baseline-missing" }, statusCode: 409 },
+            error: { body: { code: "baseline-missing" }, statusCode: 409 },
           });
         }
 
@@ -1474,7 +1752,7 @@ describe("installationRuntimeAction", () => {
 
         expect(invokeMock).not.toHaveBeenCalled();
         expect(result).toMatchObject({
-          error: { body: { reason: "in-progress" }, statusCode: 409 },
+          error: { body: { code: "in-progress" }, statusCode: 409 },
         });
       });
 
@@ -1485,7 +1763,7 @@ describe("installationRuntimeAction", () => {
 
         expect(invokeMock).not.toHaveBeenCalled();
         expect(result).toMatchObject({
-          error: { body: { reason: "not-associated" }, statusCode: 409 },
+          error: { body: { code: "not-associated" }, statusCode: 409 },
         });
       });
 
@@ -1787,7 +2065,7 @@ describe("installationRuntimeAction", () => {
       );
 
       expect(result).toMatchObject({
-        error: { body: { reason: "not-associated" }, statusCode: 409 },
+        error: { body: { code: "not-associated" }, statusCode: 409 },
         type: "error",
       });
       expect(invokeMock).not.toHaveBeenCalled();
