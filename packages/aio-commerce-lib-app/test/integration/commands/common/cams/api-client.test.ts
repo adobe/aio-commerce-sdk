@@ -105,6 +105,33 @@ describe("planUpgrade", () => {
     expect(body).toBe("");
   });
 
+  test.each([
+    ["the versions", { sourceVersion: "1.0.0", targetVersion: "2.0.0" }],
+    ["no source version", { sourceVersion: null, targetVersion: "2.0.0" }],
+    ["no target version", { sourceVersion: "1.0.0", targetVersion: null }],
+  ])("keeps %s of the plan", async (_, versions) => {
+    const plan = { ...PLAN, domains: [], ...versions };
+    apiServer.use(
+      http.post(`${UPGRADES}/plan`, () => HttpResponse.json({ plan })),
+    );
+
+    await expect(
+      createClient().planUpgrade({ extensionId: "ext-1" }),
+    ).resolves.toEqual(plan);
+  });
+
+  test("rejects a plan with a version that is not text", async () => {
+    apiServer.use(
+      http.post(`${UPGRADES}/plan`, () =>
+        HttpResponse.json({ plan: { ...PLAN, targetVersion: 2 } }),
+      ),
+    );
+
+    await expect(
+      createClient().planUpgrade({ extensionId: "ext-1" }),
+    ).rejects.toThrow("unexpected answer");
+  });
+
   test("throws a conflict error that carries the code of a 409 answer", async () => {
     apiServer.use(
       http.post(`${UPGRADES}/plan`, () =>
