@@ -132,6 +132,10 @@ describe("planUpgrade", () => {
       "only the old reason field",
       () => HttpResponse.json({ reason: "in-progress" }, { status: 409 }),
     ],
+    [
+      "a code that is not text",
+      () => HttpResponse.json({ code: 409 }, { status: 409 }),
+    ],
     ["no JSON", () => new HttpResponse("busy", { status: 409 })],
   ])(
     "throws a conflict error without a code for a 409 answer with %s",

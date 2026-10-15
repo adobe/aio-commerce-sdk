@@ -47,6 +47,36 @@ type HookResult =
   | { kind: "planned"; plan: UpgradePlan }
   | { kind: "upgraded"; runId: string };
 
+/** What each code of the service means, in plain words. */
+const CODE_MESSAGES = new Map([
+  ["already-current", "The app is already on the target version."],
+  ["not-associated", "The app is not associated with a Commerce instance."],
+  [
+    "not-installed",
+    "The app is not installed, so there is nothing to upgrade.",
+  ],
+  [
+    "in-progress",
+    "Another lifecycle operation is already in progress. Wait for it to finish, then try again.",
+  ],
+  [
+    "stale-plan",
+    "The plan is no longer the pending plan. Deploy the app again to plan the upgrade again.",
+  ],
+  [
+    "unreadable-state",
+    "The stored lifecycle state cannot be read. Nothing was planned.",
+  ],
+  [
+    "baseline-missing",
+    "The lifecycle state names a baseline snapshot that no longer exists. Nothing was planned.",
+  ],
+  [
+    "installed-without-config",
+    "The existing installation does not include its original config and cannot be upgraded safely. Uninstall and reinstall the app.",
+  ],
+]);
+
 function isSkipCode(code: unknown): code is SkipCode {
   return (
     code === "already-current" ||
@@ -55,22 +85,42 @@ function isSkipCode(code: unknown): code is SkipCode {
   );
 }
 
+/** The message for a code of the service. A code the SDK does not know is named in a generic one. */
+function describeCode(code: string) {
+  return (
+    CODE_MESSAGES.get(code) ??
+    `The service refused the request with the code "${code}".`
+  );
+}
+
+/** Why the service refused: its code in plain words, or its own message when it sent no code. */
+function describeRefusal(error: CamsConflictError) {
+  return error.code ? describeCode(error.code) : error.message;
+}
+
 /**
  * Asks the service to plan the upgrade.
- * @returns The plan, or the code of the reason the upgrade does not apply.
+ * @returns The plan, or the code of the refusal when the upgrade does not apply.
  */
-async function planUpgrade(context: CamsContext, extensionId: string) {
+async function planUpgrade(
+  context: CamsContext,
+  extensionId: string,
+): Promise<Extract<HookResult, { kind: "planned" | "skipped" }>> {
   try {
-    return await context.client.planUpgrade({ extensionId });
+    const plan = await context.client.planUpgrade({ extensionId });
+    return { kind: "planned", plan };
   } catch (error) {
     if (error instanceof CamsConflictError) {
       if (isSkipCode(error.code)) {
-        return error.code;
+        return { code: error.code, kind: "skipped" };
       }
 
-      throw new Error(`The upgrade was not planned: ${error.message}`, {
-        cause: error,
-      });
+      throw new Error(
+        `The upgrade was not planned: ${describeRefusal(error)}`,
+        {
+          cause: error,
+        },
+      );
     }
 
     throw error;
@@ -87,9 +137,12 @@ async function startUpgrade(
     return await context.client.startUpgrade({ extensionId, planId: plan.id });
   } catch (error) {
     if (error instanceof CamsConflictError) {
-      throw new Error(`The upgrade was not started: ${error.message}`, {
-        cause: error,
-      });
+      throw new Error(
+        `The upgrade was not started: ${describeRefusal(error)}`,
+        {
+          cause: error,
+        },
+      );
     }
 
     throw error;
@@ -185,15 +238,17 @@ async function runHook(interrupt: InterruptNotice): Promise<HookResult> {
 
   const extensionId = await findWorkspaceExtensionId(context);
   if (!extensionId) {
-    consola.info("No upgrade was run: not-associated.\n");
+    consola.info(`No upgrade was run: ${describeCode("not-associated")}\n`);
     return { code: "not-associated", kind: "skipped" };
   }
 
-  const plan = await planUpgrade(context, extensionId);
-  if (typeof plan === "string") {
-    consola.info(`No upgrade was run: ${plan}.\n`);
-    return { code: plan, kind: "skipped" };
+  const planned = await planUpgrade(context, extensionId);
+  if (planned.kind === "skipped") {
+    consola.info(`No upgrade was run: ${describeCode(planned.code)}\n`);
+    return planned;
   }
+
+  const { plan } = planned;
 
   if (upgradeMode === "manual") {
     consola.success(

@@ -1092,6 +1092,8 @@ Some states are not actionable upgrades. The `post-app-deploy` hook treats them 
 
 Any other planning failure, for example configuration issues that block the upgrade or another operation that is already running, surfaces as an error.
 
+The hook decides from the `code` that the service sends and explains it in plain words, for example `No upgrade was run: The app is already on the target version.` A code the hook does not know is printed as it is, so a new code is never lost.
+
 #### Troubleshooting a Lifecycle Operation
 
 Every install, upgrade and uninstall leaves a trail you can follow back when something goes wrong. Call `GET /installation?history=true` on the `app-management` package. The response is the status of the latest attempt plus three lists:

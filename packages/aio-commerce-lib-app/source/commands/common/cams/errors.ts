@@ -59,7 +59,7 @@ export class CamsConflictError extends CamsClientError {
   }
 }
 
-const ConflictBodySchema = v.object({ code: v.optional(v.string()) });
+const ConflictBodySchema = v.object({ code: v.string() });
 
 /** The `code` in the body of a 409 answer, if it has one. */
 async function readCode(error: HTTPError) {
