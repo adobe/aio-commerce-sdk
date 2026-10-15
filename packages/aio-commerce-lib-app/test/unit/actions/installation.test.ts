@@ -435,9 +435,57 @@ describe("installationRuntimeAction", () => {
           },
         );
 
-        test("answers 404 when no attempt ran the operation", async () => {
+        test("answers 204 when no attempt ran the operation", async () => {
           seedChain();
           const result = await getStatus("operation=uninstall");
+
+          expect(result).toMatchObject({ statusCode: 204, type: "success" });
+        });
+
+        test("answers 204 with the history too when no attempt ran the operation", async () => {
+          seedChain();
+          const result = await getStatus("history=true&operation=uninstall");
+
+          expect(result).toMatchObject({ statusCode: 204, type: "success" });
+        });
+
+        test("answers 204 when no attempt exists, without the installation record of an older version", async () => {
+          const result = await getStatus("operation=upgrade");
+
+          expect(result).toMatchObject({ statusCode: 204, type: "success" });
+        });
+
+        test.each([
+          ["the latest attempt", "attempt-3", "upgrade"],
+          ["an earlier attempt", "attempt-1", "install"],
+        ])(
+          "returns %s with the attemptId when it ran the operation",
+          async (_, id, operation) => {
+            seedChain();
+            const result = await getStatus(
+              `attemptId=${id}&operation=${operation}`,
+            );
+
+            expect(result).toMatchObject({
+              body: { id, operation },
+              statusCode: 200,
+            });
+          },
+        );
+
+        test.each([
+          [
+            "an attempt that ran another operation",
+            "attempt-1&operation=upgrade",
+          ],
+          [
+            "the latest attempt of another operation",
+            "attempt-3&operation=install",
+          ],
+          ["an unknown attempt", "attempt-9&operation=upgrade"],
+        ])("answers 404 with the attemptId for %s", async (_, query) => {
+          seedChain();
+          const result = await getStatus(`attemptId=${query}`);
 
           expect(result).toMatchObject({
             error: { statusCode: 404 },
@@ -445,11 +493,14 @@ describe("installationRuntimeAction", () => {
           });
         });
 
-        test("answers 404 when no attempt exists, without the installation record of an older version", async () => {
-          const result = await getStatus("operation=upgrade");
+        test("still answers 400 when the attemptId comes with the history", async () => {
+          seedChain();
+          const result = await getStatus(
+            "attemptId=attempt-2&operation=upgrade&history=true",
+          );
 
           expect(result).toMatchObject({
-            error: { statusCode: 404 },
+            error: { statusCode: 400 },
             type: "error",
           });
         });
@@ -499,19 +550,18 @@ describe("installationRuntimeAction", () => {
           expect(pending(installs.body)).toEqual([]);
         });
 
-        test.each([
-          "operation=reinstall",
-          "operation=",
-          "attemptId=attempt-2&operation=upgrade",
-        ])("returns 400 for the query %s", async (query) => {
-          seedChain();
-          const result = await getStatus(query);
+        test.each(["operation=reinstall", "operation="])(
+          "returns 400 for the query %s",
+          async (query) => {
+            seedChain();
+            const result = await getStatus(query);
 
-          expect(result).toMatchObject({
-            error: { statusCode: 400 },
-            type: "error",
-          });
-        });
+            expect(result).toMatchObject({
+              error: { statusCode: 400 },
+              type: "error",
+            });
+          },
+        );
       });
     });
 

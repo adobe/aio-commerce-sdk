@@ -21,6 +21,8 @@ const OPERATIONS = [
   "uninstall",
 ] as const satisfies readonly LifecycleOperation[];
 
+const OperationSchema = v.optional(v.picklist(OPERATIONS));
+
 /** Query params that read the latest attempt or its history. */
 const HistoryQuerySchema = v.object({
   attemptId: v.optional(v.never()),
@@ -28,7 +30,7 @@ const HistoryQuerySchema = v.object({
   limit: v.optional(
     v.pipe(v.string(), v.toNumber(), v.integer(), v.minValue(1)),
   ),
-  operation: v.optional(v.picklist(OPERATIONS)),
+  operation: OperationSchema,
 });
 
 /** Query params that read one attempt by id. */
@@ -36,7 +38,7 @@ const AttemptQuerySchema = v.object({
   attemptId: v.pipe(v.string(), v.minLength(1)),
   history: v.optional(v.never()),
   limit: v.optional(v.never()),
-  operation: v.optional(v.never()),
+  operation: OperationSchema,
 });
 
 /**

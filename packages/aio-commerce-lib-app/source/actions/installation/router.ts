@@ -71,13 +71,14 @@ export const router = new HttpActionRouter<InstallationActionContext>().use(
  * installation made by an older library version.
  *
  * With `attemptId`, returns the status of that attempt, whether it is the latest or an earlier one,
- * and answers 404 when no such attempt exists.
+ * and answers 404 when no such attempt exists. With `operation` too, the attempt must have run that
+ * operation, or the answer is 404.
  *
  * With `history=true`, the body also lists the plans of the latest attempt, the earlier attempts
  * (at most `limit` of them) and the plans made since the latest attempt.
  *
  * With `operation`, the latest attempt is the most recent one that ran that operation, the history
- * and the plans made since only list that operation, and the answer is 404 when no attempt ran it.
+ * and the plans made since only list that operation, and the answer is 204 when no attempt ran it.
  */
 router.get("/", {
   handler: async (req, { logger }) => {
@@ -87,7 +88,23 @@ router.get("/", {
       stored &&
       (await normalizeExpiredAttempt(persistence.stateStore, stored, logger));
 
-    const { operation } = req.query;
+    const { attemptId, operation } = req.query;
+
+    if (attemptId !== undefined) {
+      const found = await findAttempt(
+        attemptId,
+        state?.latestAttempt,
+        persistence.attemptStore,
+      );
+
+      if (!found || (operation && found.operation !== operation)) {
+        logger.debug(`Lifecycle attempt ${attemptId} not found`);
+        return notFound(`Lifecycle attempt ${attemptId} not found`);
+      }
+
+      return ok({ body: toAttemptStatus(found) });
+    }
+
     const attempt = operation
       ? await findLatestAttemptOf(
           operation,
@@ -95,21 +112,6 @@ router.get("/", {
           persistence.attemptStore,
         )
       : state?.latestAttempt;
-
-    if (req.query.attemptId !== undefined) {
-      const found = await findAttempt(
-        req.query.attemptId,
-        attempt,
-        persistence.attemptStore,
-      );
-
-      if (!found) {
-        logger.debug(`Lifecycle attempt ${req.query.attemptId} not found`);
-        return notFound(`Lifecycle attempt ${req.query.attemptId} not found`);
-      }
-
-      return ok({ body: toAttemptStatus(found) });
-    }
 
     if (state && attempt) {
       logger.debug(
@@ -133,7 +135,7 @@ router.get("/", {
 
     if (operation) {
       logger.debug(`No ${operation} attempt found`);
-      return notFound(`No ${operation} attempt found`);
+      return noContent();
     }
 
     if (isPostAppDeployInvocation(req.headers)) {
