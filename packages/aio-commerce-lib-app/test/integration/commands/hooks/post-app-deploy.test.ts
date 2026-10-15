@@ -17,15 +17,17 @@ import { consola } from "consola";
 import { HttpResponse, http } from "msw";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
-const { aio, delayMock, spawnDetachedMock } = vi.hoisted(() => ({
-  aio: {
-    getAioCliEnv: vi.fn(),
-    getAioProjectContext: vi.fn(),
-    getUserToken: vi.fn(),
-  },
-  delayMock: vi.fn(),
-  spawnDetachedMock: vi.fn(),
-}));
+const { aio, delayMock, detectPackageManagerMock, spawnDetachedMock } =
+  vi.hoisted(() => ({
+    aio: {
+      getAioCliEnv: vi.fn(),
+      getAioProjectContext: vi.fn(),
+      getUserToken: vi.fn(),
+    },
+    delayMock: vi.fn(),
+    detectPackageManagerMock: vi.fn(),
+    spawnDetachedMock: vi.fn(),
+  }));
 
 vi.mock(
   "@aio-commerce-sdk/scripting-utils/process",
@@ -34,6 +36,16 @@ vi.mock(
       typeof import("@aio-commerce-sdk/scripting-utils/process")
     >()),
     spawnDetached: spawnDetachedMock,
+  }),
+);
+
+vi.mock(
+  "@aio-commerce-sdk/scripting-utils/project",
+  async (importOriginal) => ({
+    ...(await importOriginal<
+      typeof import("@aio-commerce-sdk/scripting-utils/project")
+    >()),
+    detectPackageManager: detectPackageManagerMock,
   }),
 );
 
@@ -192,6 +204,7 @@ describe("post-app-deploy hook", () => {
     aio.getUserToken.mockResolvedValue("ims-token");
     spawnDetachedMock.mockReturnValue({ child: {} });
     delayMock.mockResolvedValue(undefined);
+    detectPackageManagerMock.mockResolvedValue("npm");
   });
 
   afterEach(() => {
@@ -489,6 +502,64 @@ describe("post-app-deploy hook", () => {
       );
       expect(consola.info).not.toHaveBeenCalledWith(
         expect.stringContaining("watcher log"),
+      );
+    });
+  });
+
+  describe("package manager", () => {
+    test("prints the status command of the package manager of the project, in the start line and in the Ctrl+C notice", async () => {
+      detectPackageManagerMock.mockResolvedValue("pnpm");
+      serveUpgrade([attempt("in-progress"), attempt("succeeded")]);
+      delayMock.mockImplementationOnce(async () => {
+        process.emit("SIGINT");
+      });
+
+      await runHook();
+
+      const command = "pnpm exec aio-commerce-lib-app upgrade status run-1";
+      expect(consola.info).toHaveBeenCalledWith(
+        `Check the run with: ${command}`,
+      );
+      expect(consola.info).toHaveBeenCalledWith(
+        expect.stringContaining(`\nCheck the run with: ${command}\n`),
+      );
+      expect(detectPackageManagerMock).toHaveBeenCalledOnce();
+    });
+
+    test("detects the package manager in the directory of the project", async () => {
+      serveUpgrade();
+
+      let projectDir = "";
+      await withTempProject(MINIMAL_PROJECT, async () => {
+        projectDir = process.cwd();
+        await run();
+      });
+
+      expect(detectPackageManagerMock).toHaveBeenCalledExactlyOnceWith(
+        projectDir,
+      );
+    });
+
+    test("prints npx with npm", async () => {
+      serveUpgrade();
+
+      await runHook();
+
+      expect(consola.info).toHaveBeenCalledWith(
+        "Check the run with: npx aio-commerce-lib-app upgrade status run-1",
+      );
+    });
+
+    test("prints npx and still runs the hook when the package manager cannot be detected", async () => {
+      detectPackageManagerMock.mockRejectedValue(new Error("No access"));
+      serveUpgrade();
+
+      await expect(runHook()).resolves.toEqual({
+        kind: "upgraded",
+        runId: "run-1",
+      });
+      expect(consola.info).toHaveBeenCalledWith(
+        "Check the run with: npx aio-commerce-lib-app upgrade status run-1",
       );
     });
   });

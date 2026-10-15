@@ -17,6 +17,8 @@ import { noticeInterrupt } from "#commands/hooks/post-app-deploy/interrupt";
 
 vi.mock("consola", () => ({ consola: { info: vi.fn() } }));
 
+const STATUS_COMMAND = "pnpm exec aio-commerce-lib-app upgrade status";
+
 describe("noticeInterrupt", () => {
   const exitMock = vi
     .spyOn(process, "exit")
@@ -26,7 +28,7 @@ describe("noticeInterrupt", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    notice = noticeInterrupt();
+    notice = noticeInterrupt(STATUS_COMMAND);
   });
 
   afterEach(() => {
@@ -37,22 +39,22 @@ describe("noticeInterrupt", () => {
     [
       undefined,
       undefined,
-      "Stopped waiting. The upgrade keeps running.\nIf it was started, find the latest run with: npx aio-commerce-lib-app upgrade status",
+      "Stopped waiting. The upgrade keeps running.\nIf it was started, find the latest run with: pnpm exec aio-commerce-lib-app upgrade status",
     ],
     [
       "run-1",
       undefined,
-      "Stopped waiting. The upgrade keeps running.\nCheck the run with: npx aio-commerce-lib-app upgrade status run-1",
+      "Stopped waiting. The upgrade keeps running.\nCheck the run with: pnpm exec aio-commerce-lib-app upgrade status run-1",
     ],
     [
       "run-1",
       "/tmp/watcher.log",
-      "Stopped waiting. The upgrade keeps running.\nCheck the run with: npx aio-commerce-lib-app upgrade status run-1\nFollow the watcher log with: tail -f /tmp/watcher.log",
+      "Stopped waiting. The upgrade keeps running.\nCheck the run with: pnpm exec aio-commerce-lib-app upgrade status run-1\nFollow the watcher log with: tail -f /tmp/watcher.log",
     ],
     [
       undefined,
       "/tmp/watcher.log",
-      "Stopped waiting. The upgrade keeps running.\nIf it was started, find the latest run with: npx aio-commerce-lib-app upgrade status",
+      "Stopped waiting. The upgrade keeps running.\nIf it was started, find the latest run with: pnpm exec aio-commerce-lib-app upgrade status",
     ],
   ])(
     "on SIGINT with the run id %s and the watcher log %s, prints one notice and exits with code 130",

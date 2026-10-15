@@ -1062,7 +1062,7 @@ The generated `commerce/extensibility/1` extension wires a `post-app-deploy` hoo
 
 The hook runs after the deploy and cannot undo it, so its exit code only reports what the upgrade did.
 
-If you press Ctrl-C or close the terminal while an upgrade runs, the upgrade keeps running. Check its result with `upgrade status`. On Ctrl-C the hook prints the command to check the run and the path of the watcher log.
+If you press Ctrl-C or close the terminal while an upgrade runs, the upgrade keeps running. Check its result with `upgrade status`. On Ctrl-C the hook prints the command to check the run and the path of the watcher log. The commands that the hook prints use the package manager of the project, for example `pnpm exec aio-commerce-lib-app upgrade status <run-id>` in a pnpm project.
 
 ##### Exit codes
 

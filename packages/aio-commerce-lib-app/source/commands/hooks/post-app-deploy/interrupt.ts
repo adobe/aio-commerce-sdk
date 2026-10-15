@@ -15,19 +15,23 @@ import { consola } from "consola";
 /** The exit code of a process that stopped because of Ctrl+C. */
 const SIGINT_EXIT_CODE = 130;
 
-const STATUS_COMMAND = "npx aio-commerce-lib-app upgrade status";
-
 /**
  * The lines that tell the user how to follow a run: the status command, and the watcher log when
  * a watcher follows the run. Without a run id, the lines tell how to find the latest run.
+ *
+ * @param statusCommand - The command that runs `upgrade status` in the package manager of the project.
  */
-export function getFollowUpLines(runId?: string, watcherLog?: string) {
+export function getFollowUpLines(
+  statusCommand: string,
+  runId?: string,
+  watcherLog?: string,
+) {
   if (!runId) {
-    return [`If it was started, find the latest run with: ${STATUS_COMMAND}`];
+    return [`If it was started, find the latest run with: ${statusCommand}`];
   }
 
   return [
-    `Check the run with: ${STATUS_COMMAND} ${runId}`,
+    `Check the run with: ${statusCommand} ${runId}`,
     ...(watcherLog
       ? [`Follow the watcher log with: tail -f ${watcherLog}`]
       : []),
@@ -44,12 +48,12 @@ export type InterruptNotice = {
 };
 
 /**
- * Prints one line and exits with code 130 when the user presses Ctrl+C while the hook runs.
+ * Prints the follow-up lines and exits with code 130 when the user presses Ctrl+C while the hook runs.
  *
  * It listens to SIGINT only. After SIGTERM or SIGHUP the terminal can be gone, and a write to it
  * can block the process forever.
  */
-export function noticeInterrupt(): InterruptNotice {
+export function noticeInterrupt(statusCommand: string): InterruptNotice {
   let runId: string | undefined;
   let watcherLog: string | undefined;
 
@@ -57,7 +61,7 @@ export function noticeInterrupt(): InterruptNotice {
     consola.info(
       [
         "Stopped waiting. The upgrade keeps running.",
-        ...getFollowUpLines(runId, watcherLog),
+        ...getFollowUpLines(statusCommand, runId, watcherLog),
       ].join("\n"),
     );
     process.exit(SIGINT_EXIT_CODE);

@@ -14,6 +14,10 @@ import {
   getTempLogPath,
   spawnDetached,
 } from "@aio-commerce-sdk/scripting-utils/process";
+import {
+  detectPackageManager,
+  getExecCommand,
+} from "@aio-commerce-sdk/scripting-utils/project";
 import { consola } from "consola";
 import { colors } from "consola/utils";
 
@@ -158,6 +162,7 @@ async function startUpgrade(
 function announceBackgroundWatcher(
   extensionId: string,
   started: AttemptStatus,
+  statusCommand: string,
 ) {
   const logPath = getTempLogPath(`aio-commerce-upgrade-${started.id}`);
   const args = ["upgrade", "watch", extensionId, started.id];
@@ -173,6 +178,7 @@ function announceBackgroundWatcher(
   });
 
   for (const line of getFollowUpLines(
+    statusCommand,
     started.id,
     watcher ? logPath : undefined,
   )) {
@@ -218,17 +224,33 @@ async function followRun(
  * @throws When the upgrade is refused, fails or does not finish in time.
  */
 export async function run(): Promise<HookResult> {
-  const interrupt = noticeInterrupt();
+  const statusCommand = await getStatusCommand();
+  const interrupt = noticeInterrupt(statusCommand);
 
   try {
-    return await runHook(interrupt);
+    return await runHook(interrupt, statusCommand);
   } finally {
     interrupt.dispose();
   }
 }
 
+/**
+ * The command that runs `upgrade status` with the package manager of the project. It is `npx`
+ * when the package manager cannot be detected.
+ */
+async function getStatusCommand() {
+  const packageManager = await detectPackageManager(process.cwd()).catch(
+    () => "npm" as const,
+  );
+
+  return `${getExecCommand(packageManager)} aio-commerce-lib-app upgrade status`;
+}
+
 /** Plans, starts and follows the upgrade. Tells `interrupt` the run id once the run exists. */
-async function runHook(interrupt: InterruptNotice): Promise<HookResult> {
+async function runHook(
+  interrupt: InterruptNotice,
+  statusCommand: string,
+): Promise<HookResult> {
   const appConfig = await parseCommerceAppConfig();
   const { upgradeMode } = appConfig.metadata;
 
@@ -272,7 +294,11 @@ async function runHook(interrupt: InterruptNotice): Promise<HookResult> {
   interrupt.setRunId(started.id);
 
   consola.info(`App upgrade started (run ${started.id}).`);
-  const watcherLog = announceBackgroundWatcher(extensionId, started);
+  const watcherLog = announceBackgroundWatcher(
+    extensionId,
+    started,
+    statusCommand,
+  );
   if (watcherLog) {
     interrupt.setWatcherLog(watcherLog);
   }
