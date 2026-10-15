@@ -18,10 +18,10 @@ import {
   MAX_CONSECUTIVE_FAILURES,
   pollUntilSettled,
   whenStatusChanges,
-} from "#commands/lifecycle/poll";
+} from "#commands/upgrade/poll";
 
 import type { AttemptStatus } from "#commands/common/cams/schema";
-import type { PollResult } from "#commands/lifecycle/poll";
+import type { PollResult } from "#commands/upgrade/poll";
 
 /** A sleep that does not wait and records the intervals it was asked for. */
 function createSleep() {

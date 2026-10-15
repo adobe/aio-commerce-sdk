@@ -17,7 +17,7 @@ import {
   findWorkspaceExtensionId,
 } from "#commands/common/cams/context";
 import { reportFailure } from "#commands/common/cams/report";
-import { describeOutcome, isSettled } from "#commands/lifecycle/poll";
+import { describeOutcome, isSettled } from "#commands/upgrade/poll";
 
 import type { CamsContext } from "#commands/common/cams/context";
 import type { AttemptStatus } from "#commands/common/cams/schema";

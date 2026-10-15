@@ -35,7 +35,7 @@ import {
   describeOutcome,
   pollUntilSettled,
   whenStatusChanges,
-} from "#commands/lifecycle/poll";
+} from "#commands/upgrade/poll";
 import { parseCommerceAppConfig } from "#config/lib/parser";
 
 import type { CamsContext } from "#commands/common/cams/context";

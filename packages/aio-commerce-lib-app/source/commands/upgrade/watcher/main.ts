@@ -18,7 +18,7 @@ import {
   describeCamsFailure,
   findCamsError,
 } from "#commands/common/cams/report";
-import { describeOutcome, pollUntilSettled } from "#commands/lifecycle/poll";
+import { describeOutcome, pollUntilSettled } from "#commands/upgrade/poll";
 
 import type { CamsContext } from "#commands/common/cams/context";
 
