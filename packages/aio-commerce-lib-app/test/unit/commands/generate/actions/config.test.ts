@@ -307,6 +307,29 @@ describe("buildAdminUiV2ExtConfig", () => {
     ]);
   });
 
+  test("native UI replaced pages add the web view operation", () => {
+    const config = buildAdminUiV2ExtConfig({
+      ...minimalValidConfig,
+      adminUi: {
+        nativeUi: {
+          replacedPages: [
+            {
+              path: "#/create-order",
+              target: "order.create" as const,
+              title: "Create Order (App)",
+            },
+          ],
+        },
+      },
+    });
+
+    expect(config.operations?.view).toEqual([
+      { impl: "index.html", type: "web" },
+    ]);
+    expect(config.web).toBe("web-src");
+    expect(config.operations?.workerProcess).toBeUndefined();
+  });
+
   test("worker view buttons do not add operations.view", () => {
     const config = buildAdminUiV2ExtConfig(configWithOrderWorkerTypeButtons);
     expect(config.operations?.view).toBeUndefined();
@@ -560,6 +583,22 @@ describe("requiresWebSource", () => {
 
   test("returns true when adminUi has a menu", () => {
     expect(requiresWebSource(configWithAdminUiMenu.adminUi)).toBe(true);
+  });
+
+  test("returns true when adminUi replaces native UI pages", () => {
+    expect(
+      requiresWebSource({
+        nativeUi: {
+          replacedPages: [
+            {
+              path: "#/create-order",
+              target: "order.create",
+              title: "Create Order (App)",
+            },
+          ],
+        },
+      }),
+    ).toBe(true);
   });
 
   test("returns true for a realistic adminUi config with view type buttons", () => {

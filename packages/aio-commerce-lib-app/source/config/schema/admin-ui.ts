@@ -240,6 +240,31 @@ const MenuSchema = v.object({
   sandboxPermissions: v.optional(SandboxPermissionsSchema),
 });
 
+const NATIVE_UI_REPLACED_PAGE_TARGETS = [
+  "order.create",
+] as const satisfies readonly string[];
+
+const NativeUiReplacedPageSchema = v.strictObject({
+  path: nonEmptyStringValueSchema("replaced page path"),
+  sandboxPermissions: v.optional(SandboxPermissionsSchema),
+  target: v.picklist(
+    NATIVE_UI_REPLACED_PAGE_TARGETS,
+    `Invalid native UI replaced page target. Accepted values are: ${NATIVE_UI_REPLACED_PAGE_TARGETS.join(", ")}`,
+  ),
+  title: nonEmptyStringValueSchema("replaced page title"),
+});
+
+const NativeUiSchema = v.object({
+  replacedPages: v.pipe(
+    v.array(NativeUiReplacedPageSchema),
+    v.check(
+      (pages) =>
+        new Set(pages.map((page) => page.target)).size === pages.length,
+      "Native UI replaced page targets must be unique.",
+    ),
+  ),
+});
+
 // ─── Custom ACL resources ──────────────────────────────────────────────────────
 
 // Restricted to the characters Commerce leaves untouched when deriving the ACL resource id
@@ -330,7 +355,7 @@ const AdminUiAclSchema = v.pipe(
 
 /**
  * Schema for the `adminUi` config section.
- * Supports grid column extensions, mass actions, order view buttons, menu, and custom ACL resources on `commerce/backend-ui/2`.
+ * Supports grid column extensions, mass actions, order view buttons, menu, native UI replaced pages, and custom ACL resources on `commerce/backend-ui/2`.
  */
 export const AdminUiSchema = v.object({
   acl: v.optional(AdminUiAclSchema),
@@ -338,6 +363,7 @@ export const AdminUiSchema = v.object({
   customer: v.optional(AdminUiGridAndMassActionEntitySchema),
   invoice: v.optional(AdminUiGridOnlyEntitySchema),
   menu: v.optional(MenuSchema),
+  nativeUi: v.optional(NativeUiSchema),
   newsletter: v.optional(AdminUiGridAndMassActionEntitySchema),
   order: v.optional(AdminUiOrderSchema),
   product: v.optional(AdminUiGridAndMassActionEntitySchema),
@@ -383,13 +409,15 @@ export type AclResourceEntry = v.InferInput<typeof AclResourceEntrySchema>;
 
 /**
  * The validated config of a single Admin UI component: the menu, an entity's
- * grid columns, a single mass action, a single view button, or a custom ACL resource entry.
+ * grid columns, a mass action, a view button, a native UI page replacement, or a
+ * custom ACL resource entry.
  */
 export type AdminUiComponentConfig =
   | v.InferOutput<typeof MenuSchema>
   | v.InferOutput<typeof GridColumnsSchema>
   | v.InferOutput<typeof MassActionSchema>
   | v.InferOutput<typeof OrderViewButtonSchema>
+  | v.InferOutput<typeof NativeUiReplacedPageSchema>
   | AclResourceEntry;
 
 /**
@@ -434,6 +462,13 @@ export type Notifications = v.InferInput<typeof NotificationsSchema>;
  */
 export type Menu = v.InferInput<typeof MenuSchema>;
 
+/**
+ * A native Commerce Admin form replaced by an application page.
+ */
+export type NativeUiReplacedPage = v.InferInput<
+  typeof NativeUiReplacedPageSchema
+>;
+
 /** Config type when `adminUi` configuration is present. */
 export type AdminUiConfig<
   T extends AnyCommerceAppConfig = CommerceAppConfigOutputModel,
@@ -444,9 +479,10 @@ export type AdminUiConfig<
 /**
  * Check whether the config declares an Admin UI component that requires the
  * `commerce/backend-ui/2` extension point — a menu, grid columns, mass actions,
- * or view buttons. Custom ACL resources are deliberately excluded: they reach
- * Commerce through the `extensibility/1` app-config payload, not backend-ui/2,
- * so an acl-only config needs no backend-ui/2 registration.
+ * view buttons, or native UI replaced pages. Custom ACL resources are
+ * deliberately excluded: they reach Commerce through the `extensibility/1`
+ * app-config payload, not backend-ui/2, so an acl-only config needs no
+ * backend-ui/2 registration.
  */
 export function hasBackendUiV2Components<T extends AnyCommerceAppConfig>(
   config: T,
@@ -468,6 +504,7 @@ export function hasBackendUiV2Components<T extends AnyCommerceAppConfig>(
       adminUi.invoice?.gridColumns ||
       adminUi.creditMemo?.gridColumns ||
       adminUi.shipment?.gridColumns ||
+      adminUi.nativeUi?.replacedPages?.length ||
       adminUi.newsletter?.gridColumns ||
       adminUi.newsletter?.massActions?.length,
   );
@@ -475,8 +512,9 @@ export function hasBackendUiV2Components<T extends AnyCommerceAppConfig>(
 
 /**
  * Check whether the config declares at least one Admin UI component (menu, grid
- * columns, mass actions, view buttons, or custom ACL resources). A component-less `adminUi` block is
- * treated as absent — it registers nothing.
+ * columns, mass actions, view buttons, native UI replaced pages, or custom ACL
+ * resources). A component-less `adminUi` block is treated as absent — it
+ * registers nothing.
  */
 export function hasAdminUi<T extends AnyCommerceAppConfig>(
   config: T,

@@ -61,3 +61,9 @@ export type MassActionContext = {
 export type OrderViewButtonContext = {
   orderId: string;
 };
+
+/** Context values provided when a native Commerce Admin form is replaced. */
+export type NativeUiContext = {
+  customerId?: string | number;
+  storeId?: string | number;
+};

@@ -638,6 +638,28 @@ function OrderViewButtonPage() {
 }
 ```
 
+#### Reading native UI form replacement context
+
+`useNativeUiContext` returns optional `customerId` and `storeId` values from the Commerce shared context. Either value may be absent when the host does not provide it; IDs may be strings or numbers:
+
+```jsx
+import { useNativeUiContext } from "@adobe/aio-commerce-lib-admin-ui/web";
+
+function CreateOrderPage() {
+  const { data, error } = useNativeUiContext();
+  if (error) return <span>{error.message}</span>;
+
+  return (
+    <span>
+      Customer: {data.customerId ?? "not selected"}; Store:{" "}
+      {data.storeId ?? "default"}
+    </span>
+  );
+}
+```
+
+The hook returns an error when used outside a Commerce shared context or when a provided ID is not a string or finite number.
+
 #### Low-level shared context access
 
 `useSharedContext` is an escape hatch that exposes the raw Commerce shared context and host proxy from the guest connection. Prefer a purpose-built hook (`useCommerce`, `useMassActionContext`, `useOrderViewButtonContext`, `useHostConnection`) when one covers what you need:

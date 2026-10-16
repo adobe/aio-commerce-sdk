@@ -7,7 +7,7 @@ The `@adobe/aio-commerce-lib-app` library provides:
 - **App Configuration**: Define, validate and read/parse configurations for Adobe Commerce App Builder applications
 - **Business Configuration**: Generate and manage the runtime actions that power the `commerce/configuration/1` extension point.
 - **Installation Management**: Generate and manage the runtime action that powers the app installation and upgrade flow.
-- **Admin UI Configuration** (`commerce/backend-ui/2`): Generate and manage the runtime action and `workerProcess` declarations for Admin UI extensions on `commerce/backend-ui/2`. Currently supports grid column extensions, mass actions, order view buttons, and menu declarations.
+- **Admin UI Configuration** (`commerce/backend-ui/2`): Generate and manage the runtime action and `workerProcess` declarations for Admin UI extensions on `commerce/backend-ui/2`. Currently supports grid column extensions, mass actions, order view buttons, native UI form replacements, and menu declarations.
 - **Association Helpers**: Retrieve the Commerce instance the app is associated with from any runtime action via `getCommerceClient` and `getCommerceInstance`.
 - **Event Emission**: Publish a configured I/O Event from any runtime action by provider key and event name via `publishEvent`.
 - **Event Code Resolution**: Compute the I/O Events event code for a declared event via `resolveIoEventCode`, matching the prefixing rules used at installation time.
@@ -642,7 +642,7 @@ Two things follow from this:
 
 The `adminUi` field declares Admin UI registrations for the `commerce/backend-ui/2` extension point. Unlike `commerce/backend-ui/1`, which required a dedicated registration action, V2 reads the registration directly from the `app-config` endpoint — no separate registration action is generated. Every field of `adminUi` is optional — configure only the extension points your application needs. When defined, `init` and `generate all` automatically wire up the extension, including the `pre-app-build` hook and the `workerProcess` declarations in `ext.config.yaml`.
 
-View-based features also get a minimal `web-src/` scaffold when the resolved `view` entrypoint does not exist yet. The scaffold uses `.tsx` files when the Commerce config uses a TypeScript extension and `.jsx` files otherwise, independently of Runtime action TypeScript enablement. A TypeScript `web-src/tsconfig.json` checks only the Admin UI source and remains independent from the root config. Generation also runs a required-file phase that ensures a set of web source support files is present even when the source scaffold already exists, without replacing existing versions. The current set includes `web-src/.babelrc`, which selects React's automatic JSX transform for each environment so development builds retain JSX diagnostics while production builds do not emit `jsxDEV` calls. If `BABEL_ENV` is set, keep it synchronized with `NODE_ENV`, because Babel gives `BABEL_ENV` precedence when selecting the configuration environment. The scaffold imports app metadata from `#app.commerce.config`, so custom Admin UI code should use the same alias instead of importing generated files by path. Currently supported: grid column extensions, mass actions, order view buttons, and menu declarations. For details on each extension point, see the [Admin UI SDK Extension Points documentation](https://developer.adobe.com/commerce/extensibility/admin-ui-sdk/extension-points/).
+View-based features also get a minimal `web-src/` scaffold when the resolved `view` entrypoint does not exist yet. The scaffold uses `.tsx` files when the Commerce config uses a TypeScript extension and `.jsx` files otherwise, independently of Runtime action TypeScript enablement. A TypeScript `web-src/tsconfig.json` checks only the Admin UI source and remains independent from the root config. Generation also runs a required-file phase that ensures a set of web source support files is present even when the source scaffold already exists, without replacing existing versions. The current set includes `web-src/.babelrc`, which selects React's automatic JSX transform for each environment so development builds retain JSX diagnostics while production builds do not emit `jsxDEV` calls. If `BABEL_ENV` is set, keep it synchronized with `NODE_ENV`, because Babel gives `BABEL_ENV` precedence when selecting the configuration environment. The scaffold imports app metadata from `#app.commerce.config`, so custom Admin UI code should use the same alias instead of importing generated files by path. Currently supported: grid column extensions, mass actions, order view buttons, native UI form replacements, and menu declarations. For details on each extension point, see the [Admin UI SDK Extension Points documentation](https://developer.adobe.com/commerce/extensibility/admin-ui-sdk/extension-points/).
 
 ##### Grid Columns
 
@@ -858,6 +858,27 @@ Shared fields (both types):
 - **timeout**: Optional — positive number (seconds)
 
 For the handler wire contract (request/response shapes), see `@adobe/aio-commerce-lib-admin-ui/order-view-buttons`.
+
+##### Native UI Form Replacements
+
+`adminUi.nativeUi.replacedPages` replaces supported native Commerce Admin forms with pages from the app's `web-src`. Each replacement requires a supported `target`, an app route in `path`, and a `title`. `sandboxPermissions` is optional and uses the same values as other iframe-based extension points. The SDK enables the `view` operation and web source when at least one page replacement is configured.
+
+```ts
+adminUi: {
+  nativeUi: {
+    replacedPages: [
+      {
+        target: "order.create",
+        path: "#/create-order",
+        title: "Create Order (App)",
+        sandboxPermissions: ["allow-modals"],
+      },
+    ],
+  },
+}
+```
+
+The first release supports only the `"order.create"` target. Targets must be unique within `replacedPages`. Only one app can replace a given native UI target at a time, so apps that register `order.create` cannot be installed together on the same Commerce instance. Add a matching route and page for each `path` in the generated web source, following the same conventions as other view-based Admin UI extensions. The `useNativeUiContext` hook from `@adobe/aio-commerce-lib-admin-ui/web` exposes `customerId` and `storeId` from Commerce shared context when the host provides them.
 
 ##### Mass Actions
 
