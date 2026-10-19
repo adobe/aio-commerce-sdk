@@ -115,7 +115,7 @@ export function whenStatusChanges(report: (status: AttemptStatus) => void) {
  * @param runId - The id of the run, which the user can check later with `upgrade status`.
  */
 export function describeOutcome(result: PollResult, runId: string) {
-  const check = `Check it later with  ${colors.yellow(`upgrade status ${colors.cyan(runId)}`)}.`;
+  const check = `Check it later with ${colors.yellow(`upgrade status ${colors.cyan(runId)}`)}.`;
 
   if (result.kind === "failed") {
     const reason = stringifyError(result.error);

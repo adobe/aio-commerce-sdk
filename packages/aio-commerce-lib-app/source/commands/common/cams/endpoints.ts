@@ -191,7 +191,7 @@ export async function pollUpgrade(
     AttemptStatusSchema,
     httpClient.post(
       `${upgradesPath(extensionId)}/${encodeURIComponent(runId)}/sync`,
-      { ...fetchOptions, retry: 0, throwHttpErrors: false },
+      { ...fetchOptions, retry: 0 },
     ),
   );
 
