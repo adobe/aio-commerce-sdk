@@ -72,6 +72,7 @@ import {
   createMockLifecycleLeaf,
 } from "#test/fixtures/workflow";
 
+import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 import type {
   AppStateSnapshot,
   LifecycleAttempt,
@@ -792,10 +793,13 @@ describe("installationRuntimeAction", () => {
       return startPlan(action, plan.id, body);
     }
 
-    async function startAutomaticUpgrade() {
+    async function startAutomaticUpgrade(
+      appConfigOverride?: CommerceAppConfigOutputModel,
+    ) {
       const action = installationRuntimeAction({
-        appConfig: configWithAutoUpgrade,
+        appConfig: appConfigOverride ?? configWithAutoUpgrade,
       });
+
       const result = await planAndStart(action);
       const attempt = (await desiredStateStore.get("current"))?.latestAttempt;
       expect.assert(attempt, "Expected a persisted upgrade attempt");
@@ -1086,6 +1090,43 @@ describe("installationRuntimeAction", () => {
                 status: "pending",
               },
               code: "in-progress",
+            },
+            statusCode: 409,
+          },
+        });
+      });
+
+      test("returns 409 app-attempt-version-mismatch when the latest attempt failed and the new app version does not match the target of the failed plan", async () => {
+        desiredStateStore = createMockLifecycleStore<OrchestrationState>({
+          initial: createMockOrchestrationState({
+            latestAttempt: createMockLifecycleAttempt({
+              id: "latest-attempt-id",
+              plan: createMockLifecyclePlan({
+                target: {
+                  appVersion: configWithAutoUpgrade.metadata.version,
+                  config: configWithAutoUpgrade,
+                },
+              }),
+              status: "failed",
+            }),
+          }),
+        });
+
+        const newVersion = "2.3.4";
+        const { action } = await startAutomaticUpgrade({
+          ...configWithAutoUpgrade,
+          metadata: {
+            ...configWithAutoUpgrade.metadata,
+            version: newVersion,
+          },
+        });
+
+        const result = await planRequest(action, requestBody);
+        expect(result).toMatchObject({
+          error: {
+            body: {
+              code: "app-attempt-version-mismatch",
+              message: expect.stringContaining("latest-attempt-id"),
             },
             statusCode: 409,
           },
