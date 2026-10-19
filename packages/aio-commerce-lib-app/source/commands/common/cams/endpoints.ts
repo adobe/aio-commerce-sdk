@@ -40,24 +40,6 @@ function upgradesPath(extensionId: string) {
 }
 
 /**
- * Reads the JSON body of a response.
- * @throws A {@link CamsClientError} If the body is not JSON.
- */
-async function readBody<TBody>(
-  request: ResponsePromise | Response,
-): Promise<TBody> {
-  const response = await request;
-  try {
-    return (await response.json()) as TBody;
-  } catch (error) {
-    throw new CamsClientError(
-      "The Commerce App Management Service sent an answer that is not JSON",
-      { cause: error },
-    );
-  }
-}
-
-/**
  * Reads the JSON body of an answer and checks it against the schema.
  * @throws A {@link CamsClientError} If the body is not JSON or does not match the schema.
  */
@@ -81,15 +63,19 @@ async function parseBody<TSchema extends v.GenericSchema, TBody = unknown>(
  * Reads the JSON body of a response and checks it against the schema.
  * @throws A {@link CamsClientError} If the body is not JSON or does not match the schema.
  */
-async function readAndParseBody<
-  TSchema extends v.GenericSchema,
-  TBody = unknown,
->(
+async function readAndParseBody<TSchema extends v.GenericSchema>(
   schema: TSchema,
   request: ResponsePromise | Response,
 ): Promise<v.InferOutput<TSchema>> {
-  const body = await readBody<TBody>(request);
-  return parseBody(schema, body);
+  const response = await request;
+  try {
+    return parseBody(schema, await response.json());
+  } catch (error) {
+    throw new CamsClientError(
+      "The Commerce App Management Service sent an answer that is not JSON",
+      { cause: error },
+    );
+  }
 }
 
 /**
@@ -201,21 +187,14 @@ export async function pollUpgrade(
   fetchOptions?: Options,
 ) {
   const { extensionId, runId } = parseOrThrow(FindAttemptParamsSchema, params);
-  const response = await httpClient.post(
-    `${upgradesPath(extensionId)}/${encodeURIComponent(runId)}/sync`,
-    { ...fetchOptions, retry: 0 },
+  const attemptStatus = await readAndParseBody(
+    AttemptStatusSchema,
+    httpClient.post(
+      `${upgradesPath(extensionId)}/${encodeURIComponent(runId)}/sync`,
+      { ...fetchOptions, retry: 0, throwHttpErrors: false },
+    ),
   );
 
-  if (response.status === 409) {
-    const body = await readBody<{ code: string }>(response);
-
-    // This is a supported failsafe, don't throw.
-    if (body.code === "attempt-not-open") {
-      return null;
-    }
-  }
-
-  const attemptStatus = await readAndParseBody(AttemptStatusSchema, response);
   return attemptStatus;
 }
 

@@ -16,6 +16,7 @@ import { HTTPError } from "ky";
 import * as endpoints from "#commands/common/cams/endpoints";
 import {
   CamsClientError,
+  readAnswer,
   toCamsResponseError,
 } from "#commands/common/cams/errors";
 import { CamsHttpClient } from "#commands/common/cams/http-client";
@@ -62,19 +63,21 @@ function bind<TArgs extends unknown[], TResult>(
   };
 }
 
-/** Binds a failsafe version of the poll upgrade endpoint to the given HTTP client. */
+/** Binds a failsafe version of the poll upgrade endpoint that falls back to a normal read upgrade. */
 function bindFailsafePollUpgrade(httpClient: CamsHttpClient) {
   return async (params: FindAttemptParams) => {
     try {
-      const result = await endpoints.pollUpgrade(httpClient, params);
+      return await endpoints.pollUpgrade(httpClient, params);
+    } catch (error) {
+      if (error instanceof HTTPError && error.response?.status === 409) {
+        const { code } = await readAnswer(error.response);
 
-      // The attempt being polled/synced is not the running one, fallback to a normal GET.
-      if (result === null) {
-        return await endpoints.readUpgrade(httpClient, params);
+        if (code === "attempt-not-open") {
+          // The attempt being polled/synced is not the running one, fallback to a normal GET.
+          return await endpoints.readUpgrade(httpClient, params);
+        }
       }
 
-      return result;
-    } catch (error) {
       throw await toCamsError(error);
     }
   };
