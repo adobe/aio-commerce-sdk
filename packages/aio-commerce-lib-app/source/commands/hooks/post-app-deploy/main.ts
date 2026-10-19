@@ -189,11 +189,11 @@ async function runHook(interrupt: InterruptNotice): Promise<HookResult> {
 
   if (upgradeMode === "manual") {
     consola.success(
-      `Upgrade detected. A plan has been created but will not be executed since ${colors.cyan("metadata.upgradeMode")} is set to ${colors.cyan("manual")}. `,
+      `Upgrade detected. A plan has been created but will not be executed since ${colors.cyan("metadata.upgradeMode")} is set to ${colors.cyan("manual")}.\n`,
     );
   } else {
     consola.success(
-      `Upgrade detected. A plan has been created and execution will begin shortly since ${colors.cyan("metadata.upgradeMode")} is set to ${colors.cyan("auto")}. `,
+      `Upgrade detected. A plan has been created and execution will begin shortly since ${colors.cyan("metadata.upgradeMode")} is set to ${colors.cyan("auto")}.\n`,
     );
   }
 
