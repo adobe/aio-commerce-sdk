@@ -169,7 +169,7 @@ async function runHook(interrupt: InterruptNotice): Promise<HookResult> {
   const appConfig = await parseCommerceAppConfig();
   const { upgradeMode } = appConfig.metadata;
 
-  consola.log(""); // Leave a bit of whitespace before the output to make it more readable.
+  console.log(""); // Leave a bit of whitespace before the output to make it more readable.
   consola.start("Checking for app upgrades...");
 
   const context = createCamsContext();
@@ -189,11 +189,11 @@ async function runHook(interrupt: InterruptNotice): Promise<HookResult> {
 
   if (upgradeMode === "manual") {
     consola.success(
-      `You have set ${colors.cyan("metadata.upgradeMode")} to ${colors.cyan("manual")}. The upgrade plan has been created but will not be executed.`,
+      `Upgrade detected. A plan has been created but will not be executed since ${colors.cyan("metadata.upgradeMode")} is set to ${colors.cyan("manual")}. `,
     );
   } else {
     consola.success(
-      `You have set ${colors.cyan("metadata.upgradeMode")} to ${colors.cyan("auto")}. The upgrade plan has been created. Execution will begin shortly.`,
+      `Upgrade detected. A plan has been created and execution will begin shortly since ${colors.cyan("metadata.upgradeMode")} is set to ${colors.cyan("auto")}. `,
     );
   }
 
