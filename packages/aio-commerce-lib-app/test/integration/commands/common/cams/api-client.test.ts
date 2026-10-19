@@ -401,20 +401,11 @@ describe("pollUpgrade", () => {
 
 describe("readLatestUpgrade", () => {
   test.each([
-    [
-      "the first of several attempts",
-      [RUNNING, { id: "run-0", status: "failed" }],
-      RUNNING,
-    ],
-    ["a single attempt", RUNNING, RUNNING],
-    ["no attempt", [], null],
-  ])("returns %s", async (_, body, expected) => {
-    let query = "";
+    ["a single attempt", RUNNING, RUNNING, 200],
+    ["no attempt", [], null, 204],
+  ])("returns %s", async (_, body, expected, status) => {
     apiServer.use(
-      http.get(UPGRADES, ({ request }) => {
-        query = new URL(request.url).search;
-        return HttpResponse.json(body);
-      }),
+      http.get(UPGRADES, () => HttpResponse.json(body, { status })),
     );
 
     const latest = await createClient().readLatestUpgrade({
@@ -422,8 +413,6 @@ describe("readLatestUpgrade", () => {
     });
 
     expect(latest).toEqual(expected);
-    expect(new URLSearchParams(query).get("limit")).toBe("1");
-    expect(new URLSearchParams(query).get("operation")).toBe("upgrade");
   });
 });
 

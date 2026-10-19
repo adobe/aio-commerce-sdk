@@ -21,6 +21,7 @@ import {
 import { CamsHttpClient } from "#commands/common/cams/http-client";
 
 import type { CamsHttpClientParams } from "#commands/common/cams/http-client";
+import type { FindAttemptParams } from "./schema";
 
 /** A function of the API that takes the HTTP client first and then its own arguments. */
 type Endpoint<TArgs extends unknown[], TResult> = (
@@ -61,6 +62,24 @@ function bind<TArgs extends unknown[], TResult>(
   };
 }
 
+/** Binds a failsafe version of the poll upgrade endpoint to the given HTTP client. */
+function bindFailsafePollUpgrade(httpClient: CamsHttpClient) {
+  return async (params: FindAttemptParams) => {
+    try {
+      const result = await endpoints.pollUpgrade(httpClient, params);
+
+      // The attempt being polled/synced is not the running one, fallback to a normal GET.
+      if (result === null) {
+        return await endpoints.readUpgrade(httpClient, params);
+      }
+
+      return result;
+    } catch (error) {
+      throw await toCamsError(error);
+    }
+  };
+}
+
 /**
  * Creates an API client for the Commerce App Management Service (CAMS).
  * @param params - The parameters to build the HTTP client that will communicate with CAMS.
@@ -71,8 +90,9 @@ export function createCamsClient(params: CamsHttpClientParams) {
   return {
     findExtension: bind(httpClient, endpoints.findExtension),
     planUpgrade: bind(httpClient, endpoints.planUpgrade),
-    pollUpgrade: bind(httpClient, endpoints.pollUpgrade),
+    pollUpgrade: bindFailsafePollUpgrade(httpClient),
     readLatestUpgrade: bind(httpClient, endpoints.readLatestUpgrade),
+    readUpgrade: bind(httpClient, endpoints.readUpgrade),
     startUpgrade: bind(httpClient, endpoints.startUpgrade),
   };
 }

@@ -52,7 +52,8 @@ function isSkipCode(code: unknown): code is SkipCode {
   return (
     code === "already-current" ||
     code === "not-associated" ||
-    code === "not-installed"
+    code === "not-installed" ||
+    code === "in-progress"
   );
 }
 
@@ -136,7 +137,7 @@ async function followRun(
       consola.warn(`${error.message}. Trying again.`);
     },
     onStatus: whenStatusChanges((status) => {
-      consola.start(`App upgrade is ${status.status}.`);
+      consola.start(`App upgrade is ${colors.yellow(status.status)}.`);
     }),
     poll: () => context.client.pollUpgrade({ extensionId, runId: started.id }),
   });
@@ -149,26 +150,6 @@ async function followRun(
   }
 
   consola.success(`${outcome.message}\n`);
-}
-
-/**
- * Runs the hook: plans an upgrade of the app and, with `metadata.upgradeMode` set to `auto`, starts
- * it and follows it until it settles.
- *
- * The hook runs after the deploy, so it cannot undo it. Its exit code only reports what the
- * upgrade did.
- *
- * @throws When the upgrade is refused, fails or does not finish in time.
- */
-export async function run(): Promise<HookResult> {
-  const statusCommand = await getStatusCommand();
-  const interrupt = noticeInterrupt(statusCommand);
-
-  try {
-    return await runHook(interrupt);
-  } finally {
-    interrupt.dispose();
-  }
 }
 
 /**
@@ -216,7 +197,11 @@ async function runHook(interrupt: InterruptNotice): Promise<HookResult> {
     );
   }
 
-  consola.box(["Upgrade plan", JSON.stringify(plan, null, 2)].join("\n\n"));
+  consola.debug({
+    message: JSON.stringify(plan, null, 2),
+    title: "Upgrade Plan\n\n",
+    type: "box",
+  });
 
   if (upgradeMode === "manual") {
     return { kind: "planned", plan };
@@ -225,13 +210,33 @@ async function runHook(interrupt: InterruptNotice): Promise<HookResult> {
   const started = await startUpgrade(context, extensionId, plan);
   interrupt.setRunId(started.id);
 
-  consola.info(`App upgrade started (run ${started.id}).`);
+  consola.info(`App upgrade started (run ${colors.cyan(started.id)}).`);
   if (startBackgroundWatcher(extensionId, started)) {
     interrupt.setWatcherStarted();
   }
 
   await followRun(context, extensionId, started);
   return { kind: "upgraded", runId: started.id };
+}
+
+/**
+ * Runs the hook: plans an upgrade of the app and, with `metadata.upgradeMode` set to `auto`, starts
+ * it and follows it until it settles.
+ *
+ * The hook runs after the deploy, so it cannot undo it. Its exit code only reports what the
+ * upgrade did.
+ *
+ * @throws When the upgrade is refused, fails or does not finish in time.
+ */
+export async function run(): Promise<HookResult> {
+  const statusCommand = await getStatusCommand();
+  const interrupt = noticeInterrupt(statusCommand);
+
+  try {
+    return await runHook(interrupt);
+  } finally {
+    interrupt.dispose();
+  }
 }
 
 export async function exec() {
