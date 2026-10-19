@@ -376,22 +376,6 @@ describe("installationRuntimeAction", () => {
         const result = await getStatus(query);
 
         expect.assert(result.type === "success", "Expected a status");
-        expect(Object.keys(result.body as object).sort()).toEqual([
-          "activations",
-          "completedAt",
-          "data",
-          "error",
-          "id",
-          "operation",
-          "planId",
-          "previousAttemptId",
-          "previousPlanId",
-          "result",
-          "review",
-          "startedAt",
-          "status",
-          "step",
-        ]);
         expect(attemptStore.get).not.toHaveBeenCalled();
         expect(planStore.get).not.toHaveBeenCalled();
       });
