@@ -10,6 +10,8 @@
  * governing permissions and limitations under the License.
  */
 
+import { stripVTControlCharacters } from "node:util";
+
 import { HttpResponse, http } from "msw";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
@@ -128,7 +130,9 @@ describe("runWatcher", () => {
     await expect(watch("pipe")).resolves.toBe(0);
 
     expect(polls.count).toBe(3);
-    expect(log.mock.calls.map(([line]) => line)).toEqual([
+    expect(
+      log.mock.calls.map(([line]) => stripVTControlCharacters(line)),
+    ).toEqual([
       "The hook is gone (pipe). Following the run run-1.",
       expect.stringMatching(BAD_GATEWAY_RETRY),
       "Status in-progress.",
@@ -282,7 +286,9 @@ describe("exec", () => {
 
       await watchAfterHookExit();
 
-      expect(written.join("")).toContain("App upgrade completed");
+      expect(stripVTControlCharacters(written.join(""))).toContain(
+        "App upgrade completed",
+      );
       expect(process.exitCode).toBe(0);
     });
   });

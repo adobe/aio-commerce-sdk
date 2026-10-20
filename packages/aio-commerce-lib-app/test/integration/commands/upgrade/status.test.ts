@@ -10,6 +10,8 @@
  * governing permissions and limitations under the License.
  */
 
+import { stripVTControlCharacters } from "node:util";
+
 import { consola } from "consola";
 import { HttpResponse, http } from "msw";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
@@ -110,7 +112,13 @@ describe("upgrade status", () => {
       await expect(run({ runId: "run-1" })).resolves.toBe(code);
 
       expect(calls).toEqual({ latest: 0, polls: 1 });
-      expect(consola[log]).toHaveBeenCalledWith(expect.stringContaining(text));
+      expect(
+        vi
+          .mocked(consola[log])
+          .mock.calls.map(([message]) =>
+            stripVTControlCharacters(String(message)),
+          ),
+      ).toContainEqual(expect.stringContaining(text));
     },
   );
 
