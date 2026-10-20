@@ -1741,6 +1741,63 @@ describe("installationRuntimeAction", () => {
         );
       });
 
+      describe("after a failed uninstall", () => {
+        const newVersion = "2.3.4";
+
+        async function planAfterFailedUninstall(body: object) {
+          useUninstallLeaf();
+          const action = installationRuntimeAction({
+            appConfig: {
+              ...configWithAutoUpgrade,
+              metadata: {
+                ...configWithAutoUpgrade.metadata,
+                version: newVersion,
+              },
+            },
+          });
+
+          // Any request migrates the seeded record into a lifecycle baseline.
+          await action(createRuntimeActionParams({}));
+          const state = await desiredStateStore.get("current");
+          expect.assert(state, "Expected a migrated state");
+          await desiredStateStore.put("current", {
+            ...state,
+            latestAttempt: createMockLifecycleAttempt({
+              id: "failed-uninstall-id",
+              operation: "uninstall",
+              plan: createMockLifecyclePlan({
+                operation: "uninstall",
+                target: null,
+              }),
+              status: "failed",
+            }),
+          });
+
+          return planRequest(action, body);
+        }
+
+        test("plans an uninstall retry", async () => {
+          const result = await planAfterFailedUninstall({
+            ...requestBody,
+            operation: "uninstall",
+          });
+
+          expect(result).toMatchObject({
+            body: { plan: { operation: "uninstall" } },
+            statusCode: 200,
+          });
+        });
+
+        test("plans an install", async () => {
+          const result = await planAfterFailedUninstall(requestBody);
+
+          expect(result).toMatchObject({
+            body: { plan: { targetVersion: newVersion } },
+            statusCode: 200,
+          });
+        });
+      });
+
       test("plans nothing when the baseline snapshot the state names is gone", async () => {
         const leaf = useUninstallLeaf();
         const action = installationRuntimeAction({

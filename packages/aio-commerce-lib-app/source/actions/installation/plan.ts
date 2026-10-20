@@ -167,13 +167,15 @@ export async function prepareRequest({
   const baseline = await runtime.baselineProvider.get(baselineSnapshotId);
   const isBaselineMissing = baselineSnapshotId !== null && !baseline;
 
-  // Latest attempt failed and the new app version does not match the target of the failed plan.
-  if (
-    state?.latestAttempt &&
-    state.latestAttempt.status === "failed" &&
-    appConfig.metadata.version !== state.latestAttempt.plan.target?.appVersion
-  ) {
-    const message = `The latest lifecycle attempt with ID "${state.latestAttempt.id}" failed and the new app version "${appConfig.metadata.version}" does not match the target of the failed plan "${state.latestAttempt.plan.target?.appVersion}". Can't plan without resolving the previous attempt first.`;
+  // The latest attempt failed and the new app version does not match the target of the failed plan.
+  // An uninstall plan has no target, so a failed uninstall never blocks a later plan.
+  const failedTarget =
+    state?.latestAttempt?.status === "failed"
+      ? state.latestAttempt.plan.target
+      : null;
+
+  if (failedTarget && appConfig.metadata.version !== failedTarget.appVersion) {
+    const message = `The latest lifecycle attempt with ID "${state?.latestAttempt?.id}" failed and the new app version "${appConfig.metadata.version}" does not match the target of the failed plan "${failedTarget.appVersion}". Can't plan without resolving the previous attempt first.`;
     logger.error(message);
 
     return rejected(
