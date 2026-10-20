@@ -99,6 +99,14 @@ describe("runWatcher", () => {
         },
         config: { baseUrl: SERVICE },
       }),
+      createClient: (commerceInstance) =>
+        createCamsClient({
+          auth: {
+            getToken: async () => "token",
+            org: { id: "o", ims_org_id: "i", name: "n" },
+          },
+          config: { baseUrl: SERVICE, commerceInstance },
+        }),
       project: {
         workspace: { id: "workspace-id", name: "w", title: "W" },
       } as CamsContext["project"],

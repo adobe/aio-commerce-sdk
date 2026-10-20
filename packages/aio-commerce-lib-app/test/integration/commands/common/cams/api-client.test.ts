@@ -22,6 +22,7 @@ import {
 import { apiServer, setupApiTestLifecycle } from "#test/setup/api";
 
 import type { Options } from "ky";
+import type { AssociatedCommerceData } from "#management/association/types";
 
 const BASE_URL = "https://service.example.com";
 const EXTENSIONS = `${BASE_URL}/v1/extensions`;
@@ -36,10 +37,13 @@ const IDS = { extensionId: "ext-1", runId: "run-1" };
 
 setupApiTestLifecycle();
 
-function createClient(fetchOptions?: Options) {
+function createClient(
+  fetchOptions?: Options,
+  commerceInstance?: AssociatedCommerceData,
+) {
   return createCamsClient({
     auth: { getToken: async () => "user-token", org: ORG },
-    config: { baseUrl: BASE_URL },
+    config: { baseUrl: BASE_URL, commerceInstance },
     fetchOptions,
   });
 }
@@ -81,7 +85,7 @@ describe("findExtension", () => {
 });
 
 describe("the Commerce instance", () => {
-  const COMMERCE_ID = Buffer.from(
+  const LEGACY_COMMERCE_ID = Buffer.from(
     "https://commerce.example.com/env/paas",
   ).toString("base64url");
 
@@ -99,9 +103,14 @@ describe("the Commerce instance", () => {
     return seen;
   }
 
-  test("is named in the requests that follow the lookup of the extension", async () => {
-    const seen = serve({ id: "ext-1", scope: { commerceId: COMMERCE_ID } });
-    const client = createClient();
+  test("is named in requests when configured", async () => {
+    const seen = serve({
+      id: "ext-1",
+    });
+    const client = createClient(undefined, {
+      baseUrl: "https://commerce.example.com",
+      env: "paas",
+    });
 
     await client.findExtension({ workspaceId: "ws-1" });
     await client.planUpgrade({ extensionId: "ext-1" });
@@ -110,36 +119,15 @@ describe("the Commerce instance", () => {
     expect(seen.headers.get("x-ac-env")).toBe("paas");
   });
 
-  test("prefers the decoded Commerce instance fields returned by the service", async () => {
+  test("does not mutate client configuration from the extension response", async () => {
     const seen = serve({
       id: "ext-1",
       scope: {
         commerceBaseUrl: "https://decoded.example.com",
         commerceEnv: "saas",
-        commerceId: COMMERCE_ID,
+        commerceId: LEGACY_COMMERCE_ID,
       },
     });
-    const client = createClient();
-
-    await client.findExtension({ workspaceId: "ws-1" });
-    await client.planUpgrade({ extensionId: "ext-1" });
-
-    expect(seen.headers.get("x-ac-url")).toBe("https://decoded.example.com");
-    expect(seen.headers.get("x-ac-env")).toBe("saas");
-  });
-
-  test.each([
-    ["has no commerce id", { commerceId: undefined }],
-    [
-      "has a commerce id of another format",
-      { commerceId: "bm90LWFuLWluc3RhbmNl" },
-    ],
-    [
-      "has null decoded fields for a legacy id",
-      { commerceBaseUrl: null, commerceEnv: null, commerceId: "ci-legacy" },
-    ],
-  ])("is not named when the extension %s", async (_, scope) => {
-    const seen = serve({ id: "ext-1", scope });
     const client = createClient();
 
     await client.findExtension({ workspaceId: "ws-1" });
@@ -239,11 +227,11 @@ describe("planUpgrade", () => {
 });
 
 describe("startUpgrade", () => {
-  test("starts the planned upgrade without a request body", async () => {
+  test("starts the planned upgrade with its plan id", async () => {
     let requestBody: string | undefined;
     let requestPath: string | undefined;
     apiServer.use(
-      http.post(`${UPGRADES}:start`, async ({ request }) => {
+      http.post(UPGRADES, async ({ request }) => {
         requestBody = await request.text();
         requestPath = new URL(request.url).pathname;
         return HttpResponse.json(
@@ -253,10 +241,13 @@ describe("startUpgrade", () => {
       }),
     );
 
-    const attempt = await createClient().startUpgrade({ extensionId: "ext-1" });
+    const attempt = await createClient().startUpgrade({
+      extensionId: "ext-1",
+      planId: "plan-1",
+    });
 
-    expect(requestPath).toBe("/v1/extensions/ext-1/upgrades:start");
-    expect(requestBody).toBe("");
+    expect(requestPath).toBe("/v1/extensions/ext-1/upgrades");
+    expect(requestBody).toBe(JSON.stringify({ planId: "plan-1" }));
     expect(attempt).toEqual({ id: "run-1", status: "pending" });
   });
 });
@@ -331,7 +322,7 @@ describe("pollUpgrade", () => {
   });
 
   test.each([400, 401, 403, 404, 500, 502, 503])(
-    "marks a %s answer as retryable only when it is a 502 or a 503",
+    "uses the 502/503 fallback for a %s answer without a retryable flag",
     async (status) => {
       apiServer.use(
         http.get(STATUS_URL, () =>
@@ -344,6 +335,24 @@ describe("pollUpgrade", () => {
       expect(error).not.toBeInstanceOf(CamsConflictError);
       expect(error.retryable).toBe(status === 502 || status === 503);
       expect(error.cause).toMatchObject({ response: { status } });
+    },
+  );
+
+  test.each([
+    [400, true],
+    [503, false],
+  ])(
+    "uses the backend retryable flag for HTTP %s",
+    async (status, retryable) => {
+      apiServer.use(
+        http.get(STATUS_URL, () =>
+          HttpResponse.json({ message: "No", retryable }, { status }),
+        ),
+      );
+
+      const error = await failureOf(createClient().pollUpgrade(IDS));
+
+      expect(error.retryable).toBe(retryable);
     },
   );
 
@@ -510,7 +519,8 @@ describe("parameters", () => {
     planUpgrade: () => client.planUpgrade({ extensionId: "" }),
     pollUpgrade: () => client.pollUpgrade({ extensionId: "e", runId: "" }),
     readLatestUpgrade: () => client.readLatestUpgrade({ extensionId: "" }),
-    startUpgrade: () => client.startUpgrade({ extensionId: "" }),
+    startUpgrade: () =>
+      client.startUpgrade({ extensionId: "", planId: "plan-1" }),
   };
 
   test.each(Object.keys(calls) as (keyof typeof calls)[])(

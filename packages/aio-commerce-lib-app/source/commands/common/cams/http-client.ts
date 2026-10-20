@@ -18,7 +18,7 @@ import { CamsClientError } from "#commands/common/cams/errors";
 
 import type { AioProjectConfig } from "@aio-commerce-sdk/scripting-utils/aio";
 import type { KyInstance, KyRequest, Options } from "ky";
-import type { CommerceInstance } from "#commands/common/cams/commerce-instance";
+import type { AssociatedCommerceData } from "#management/association/types";
 
 /** Defines the authentication of a CAMS request: the user token and the organization. */
 export type CamsAuth = {
@@ -36,6 +36,9 @@ export type CamsHttpClientConfig = {
    * @default "https://commerce-app-management.adobe.io"
    */
   baseUrl?: string;
+
+  /** The Commerce instance headers to send with CAMS requests. */
+  commerceInstance?: AssociatedCommerceData;
 };
 
 /** Defines the parameters required to build an HTTP client for CAMS. */
@@ -65,7 +68,7 @@ const COMMERCE_ENV_HEADER = "x-ac-env";
  */
 function buildAuthHook(
   auth: CamsAuth,
-  getCommerceInstance: () => CommerceInstance | undefined,
+  commerceInstance?: AssociatedCommerceData,
 ) {
   return async (request: KyRequest) => {
     let token: string;
@@ -78,10 +81,9 @@ function buildAuthHook(
     request.headers.set("Authorization", `Bearer ${token}`);
     request.headers.set(ORG_HEADER, auth.org.ims_org_id);
 
-    const instance = getCommerceInstance();
-    if (instance) {
-      request.headers.set(COMMERCE_URL_HEADER, instance.url);
-      request.headers.set(COMMERCE_ENV_HEADER, instance.env);
+    if (commerceInstance) {
+      request.headers.set(COMMERCE_URL_HEADER, commerceInstance.baseUrl);
+      request.headers.set(COMMERCE_ENV_HEADER, commerceInstance.env);
     }
   };
 }
@@ -100,7 +102,9 @@ export class CamsHttpClient implements KyHttpClient {
   protected readonly httpClient: Readonly<KyInstance>;
 
   /** The configuration used by the HTTP client, with its defaults applied. */
-  public readonly config: Readonly<Required<CamsHttpClientConfig>>;
+  public readonly config: Readonly<
+    Omit<CamsHttpClientConfig, "baseUrl"> & { baseUrl: string }
+  >;
 
   public readonly get: KyInstance["get"];
   public readonly post: KyInstance["post"];
@@ -111,19 +115,20 @@ export class CamsHttpClient implements KyHttpClient {
   public readonly retry: KyInstance["retry"];
   public readonly stop: KyInstance["stop"];
 
-  private commerceInstance: CommerceInstance | undefined;
-
   /**
    * Creates a new CAMS HTTP client instance.
    * @param params - The authentication, configuration and fetch options.
    */
   public constructor(params: CamsHttpClientParams) {
     const { auth, config, fetchOptions } = params;
-    this.config = Object.freeze({ baseUrl: config?.baseUrl ?? PROD_CAMS_URL });
+    this.config = Object.freeze({
+      baseUrl: config?.baseUrl ?? PROD_CAMS_URL,
+      commerceInstance: config?.commerceInstance,
+    });
 
     const httpClient = ky.create({
       hooks: {
-        beforeRequest: [buildAuthHook(auth, () => this.commerceInstance)],
+        beforeRequest: [buildAuthHook(auth, this.config.commerceInstance)],
       },
       prefixUrl: this.config.baseUrl,
     });
@@ -140,13 +145,5 @@ export class CamsHttpClient implements KyHttpClient {
     this.head = this.httpClient.head.bind(this.httpClient);
     this.retry = this.httpClient.retry.bind(this.httpClient);
     this.stop = this.httpClient.stop;
-  }
-
-  /**
-   * Sets the Commerce instance that the following requests are made for.
-   * @param instance - The instance, or `undefined` to send no instance.
-   */
-  public setCommerceInstance(instance: CommerceInstance | undefined) {
-    this.commerceInstance = instance;
   }
 }

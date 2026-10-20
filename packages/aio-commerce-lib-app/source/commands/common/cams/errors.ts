@@ -87,11 +87,15 @@ async function readAnswer(response: Response) {
   try {
     const json: unknown = JSON.parse(body);
     if (typeof json === "object" && json !== null) {
-      const { code, message, detail } = json as Record<string, unknown>;
+      const { code, message, detail, retryable } = json as Record<
+        string,
+        unknown
+      >;
       const text = [message, detail].find((value) => typeof value === "string");
 
       return {
         code: typeof code === "string" ? code : undefined,
+        retryable: typeof retryable === "boolean" ? retryable : undefined,
         text: typeof text === "string" ? text : "",
       };
     }
@@ -99,17 +103,27 @@ async function readAnswer(response: Response) {
     // The body is not JSON, so its text is the message.
   }
 
-  return { code: undefined, text: body.slice(0, MAX_TEXT_LENGTH) };
+  return {
+    code: undefined,
+    retryable: undefined,
+    text: body.slice(0, MAX_TEXT_LENGTH),
+  };
 }
 
 /**
- * Builds the error for an answer with an error status. A 409 is a conflict. A 502 means CAMS could
- * not read the app, and a 503 means it could not reach the Commerce instance. Both can pass, so
- * they are the only retryable statuses.
+ * Builds the error for an answer with an error status. The backend retryable flag takes precedence;
+ * older responses fall back to treating 502 and 503 as retryable.
  */
 export async function toCamsResponseError(error: HTTPError) {
   const { status, statusText } = error.response;
-  const { code, text } = await readAnswer(error.response);
+  const {
+    code,
+    retryable: backendRetryable,
+    text,
+  } = await readAnswer(error.response);
+  const retryable =
+    backendRetryable ??
+    (status === HTTP_BAD_GATEWAY || status === HTTP_SERVICE_UNAVAILABLE);
 
   const answer = [status, statusText].filter(Boolean).join(" ");
   const message =
@@ -122,6 +136,7 @@ export async function toCamsResponseError(error: HTTPError) {
       method: error.request.method,
       path: new URL(error.request.url).pathname,
     },
+    retryable,
     status,
   };
 
@@ -129,9 +144,5 @@ export async function toCamsResponseError(error: HTTPError) {
     return new CamsConflictError(message, options);
   }
 
-  return new CamsClientError(message, {
-    ...options,
-    retryable:
-      status === HTTP_BAD_GATEWAY || status === HTTP_SERVICE_UNAVAILABLE,
-  });
+  return new CamsClientError(message, options);
 }

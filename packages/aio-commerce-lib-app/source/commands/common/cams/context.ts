@@ -20,10 +20,13 @@ import { createCamsClient } from "#commands/common/cams/api-client";
 import { resolveCamsBaseUrl } from "#commands/common/cams/config";
 
 import type { CamsClient } from "#commands/common/cams/api-client";
+import type { Extension } from "#commands/common/cams/schema";
+import type { AssociatedCommerceData } from "#management/association/types";
 
 /** What a command needs to talk to CAMS about the current workspace. */
 export type CamsContext = {
   client: CamsClient;
+  createClient: (commerceInstance?: AssociatedCommerceData) => CamsClient;
   baseUrl: string;
   project: ReturnType<typeof getAioProjectContext>["project"];
 };
@@ -37,15 +40,33 @@ export function createCamsContext(
 ): CamsContext {
   const { project } = getAioProjectContext();
   const baseUrl = resolveCamsBaseUrl(getAioCliEnv());
+  const auth = { getToken, org: project.org };
+  const createClient = (commerceInstance?: AssociatedCommerceData) =>
+    createCamsClient({
+      auth,
+      config: { baseUrl, commerceInstance },
+    });
 
   return {
     baseUrl,
-    client: createCamsClient({
-      auth: { getToken, org: project.org },
-      config: { baseUrl },
-    }),
+    client: createClient(),
+    createClient,
     project,
   };
+}
+
+/** Rebuilds the context client with the Commerce instance returned by CAMS. */
+export function configureCamsContext(
+  context: CamsContext,
+  extension: Extension | null,
+) {
+  const scope = extension?.scope;
+  const commerceInstance =
+    scope?.commerceBaseUrl && scope.commerceEnv
+      ? { baseUrl: scope.commerceBaseUrl, env: scope.commerceEnv }
+      : undefined;
+
+  context.client = context.createClient(commerceInstance);
 }
 
 /**
@@ -57,6 +78,7 @@ export async function findWorkspaceExtensionId(context: CamsContext) {
   const extension = await context.client.findExtension({
     workspaceId: context.project.workspace.id,
   });
+  configureCamsContext(context, extension);
 
   return extension?.id ?? null;
 }

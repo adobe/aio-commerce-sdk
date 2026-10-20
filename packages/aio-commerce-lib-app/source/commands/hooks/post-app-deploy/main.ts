@@ -79,9 +79,13 @@ async function planUpgrade(context: CamsContext, extensionId: string) {
 }
 
 /** Starts the planned upgrade and returns the status of the new run. */
-async function startUpgrade(context: CamsContext, extensionId: string) {
+async function startUpgrade(
+  context: CamsContext,
+  extensionId: string,
+  plan: UpgradePlan,
+) {
   try {
-    return await context.client.startUpgrade({ extensionId });
+    return await context.client.startUpgrade({ extensionId, planId: plan.id });
   } catch (error) {
     if (error instanceof CamsConflictError) {
       throw new Error(`The upgrade was not started: ${error.message}`, {
@@ -218,7 +222,7 @@ async function runHook(interrupt: InterruptNotice): Promise<HookResult> {
     return { kind: "planned", plan };
   }
 
-  const started = await startUpgrade(context, extensionId);
+  const started = await startUpgrade(context, extensionId, plan);
   interrupt.setRunId(started.id);
 
   consola.info(`App upgrade started (run ${started.id}).`);

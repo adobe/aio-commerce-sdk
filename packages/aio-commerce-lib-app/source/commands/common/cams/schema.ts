@@ -38,6 +38,8 @@ export const ExtensionSchema = v.object({
 /** The answer of the service to a lookup by workspace. */
 export const ExtensionListSchema = v.array(ExtensionSchema);
 
+export type Extension = v.InferOutput<typeof ExtensionSchema>;
+
 /** The plan the service returns for review. */
 export const UpgradePlanAnswerSchema = v.object({
   plan: v.looseObject({
@@ -97,6 +99,14 @@ export const ExtensionParamsSchema = v.object({
 });
 
 export type ExtensionParams = v.InferInput<typeof ExtensionParamsSchema>;
+
+/** The parameters to start a planned upgrade. */
+export const StartUpgradeParamsSchema = v.object({
+  ...ExtensionParamsSchema.entries,
+  planId: nonEmptyStringValueSchema("planId"),
+});
+
+export type StartUpgradeParams = v.InferInput<typeof StartUpgradeParamsSchema>;
 
 /** The parameters to read the status of one upgrade attempt. */
 export const PollUpgradeParamsSchema = v.object({

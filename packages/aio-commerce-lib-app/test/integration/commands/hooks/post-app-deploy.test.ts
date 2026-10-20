@@ -108,7 +108,19 @@ function attempt(status: string, extra: object = {}) {
  * plan id is refused, so a wrong call fails.
  */
 function serveUpgrade(statuses: object[] = [attempt("succeeded")]) {
-  const calls = { plan: 0, polls: 0, start: 0 };
+  const calls = {
+    commerceHeaders: [] as boolean[],
+    plan: 0,
+    polls: 0,
+    start: 0,
+  };
+
+  const recordCommerceHeaders = (request: Request) => {
+    calls.commerceHeaders.push(
+      request.headers.get("x-ac-url") === "https://commerce.example.com" &&
+        request.headers.get("x-ac-env") === "saas",
+    );
+  };
 
   apiServer.use(
     http.get(WORKSPACE_EXTENSIONS, ({ params, request }) => {
@@ -117,21 +129,36 @@ function serveUpgrade(statuses: object[] = [attempt("succeeded")]) {
         request.headers.get("authorization") === "Bearer ims-token" &&
         request.headers.get("x-org-id") === "ims-org-id";
 
-      return HttpResponse.json(found ? [{ id: "ext-1" }] : []);
+      return HttpResponse.json(
+        found
+          ? [
+              {
+                id: "ext-1",
+                scope: {
+                  commerceBaseUrl: "https://commerce.example.com",
+                  commerceEnv: "saas",
+                },
+              },
+            ]
+          : [],
+      );
     }),
-    http.post(`${UPGRADES}/preview`, () => {
+    http.post(`${UPGRADES}/preview`, ({ request }) => {
       calls.plan += 1;
+      recordCommerceHeaders(request);
       return HttpResponse.json({ plan: PLAN }, { status: 201 });
     }),
-    http.post(`${UPGRADES}:start`, async ({ request }) => {
+    http.post(UPGRADES, async ({ request }) => {
       calls.start += 1;
+      recordCommerceHeaders(request);
       const body = await request.text();
 
-      return body === ""
+      return body === JSON.stringify({ planId: PLAN.id })
         ? HttpResponse.json(attempt("pending"), { status: 202 })
         : HttpResponse.json({}, { status: 400 });
     }),
-    http.get(`${UPGRADES}/run-1`, () => {
+    http.get(`${UPGRADES}/run-1`, ({ request }) => {
+      recordCommerceHeaders(request);
       const status = statuses[Math.min(calls.polls, statuses.length - 1)];
       calls.polls += 1;
       return HttpResponse.json(status);
@@ -226,7 +253,7 @@ describe("post-app-deploy hook", () => {
       runId: "run-1",
     });
 
-    expect(calls).toEqual({ plan: 1, polls: 4, start: 1 });
+    expect(calls).toMatchObject({ plan: 1, polls: 4, start: 1 });
     expect(delayMock).toHaveBeenCalledTimes(3);
     expect(delayMock).toHaveBeenCalledWith(2000);
     expect(vi.mocked(consola.start).mock.calls).toEqual([
@@ -280,6 +307,14 @@ describe("post-app-deploy hook", () => {
   });
 
   describe("without an upgrade to follow", () => {
+    test("configures follow-up requests with the Commerce instance from lookup", async () => {
+      const calls = serveUpgrade();
+
+      await expect(runHook()).resolves.toMatchObject({ kind: "upgraded" });
+
+      expect(calls.commerceHeaders).toEqual([true, true, true]);
+    });
+
     test("plans a manual upgrade without starting it", async () => {
       const calls = serveUpgrade();
 
@@ -288,7 +323,7 @@ describe("post-app-deploy hook", () => {
         plan: PLAN,
       });
 
-      expect(calls).toEqual({ plan: 1, polls: 0, start: 0 });
+      expect(calls).toMatchObject({ plan: 1, polls: 0, start: 0 });
       expect(spawnDetachedMock).not.toHaveBeenCalled();
     });
 
@@ -329,7 +364,7 @@ describe("post-app-deploy hook", () => {
 
     test("fails when the upgrade cannot start", async () => {
       serveUpgrade();
-      answer("post", `${UPGRADES}:start`, () =>
+      answer("post", UPGRADES, () =>
         HttpResponse.json({ code: "stale-plan" }, { status: 409 }),
       );
 

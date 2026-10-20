@@ -13,7 +13,10 @@
 import { getUserToken } from "@aio-commerce-sdk/scripting-utils/aio";
 import { waitForOwnerExit } from "@aio-commerce-sdk/scripting-utils/process";
 
-import { createCamsContext } from "#commands/common/cams/context";
+import {
+  configureCamsContext,
+  createCamsContext,
+} from "#commands/common/cams/context";
 import {
   describeCamsFailure,
   findCamsError,
@@ -99,25 +102,26 @@ export async function runWatcher(
 
   log(`The hook is gone (${signal}). Following the run ${args.runId}.`);
 
-  const { client, project } = createContext();
+  const context = createContext();
 
   // The watcher is a new process, so its client does not know the Commerce instance yet. The poll
   // loop retries the lookup like a poll, and the lookup does not retry itself for the same reason
   // a poll does not.
-  let instanceKnown = false;
+  let instanceLookupComplete = false;
   const result = await pollUntilSettled({
     onRetry: (error) => log(`${error.message}. Trying again.`),
     onStatus: (status) => log(`Status ${status.status}.`),
     poll: async () => {
-      if (!instanceKnown) {
-        await client.findExtension(
-          { workspaceId: project.workspace.id },
+      if (!instanceLookupComplete) {
+        const extension = await context.client.findExtension(
+          { workspaceId: context.project.workspace.id },
           { retry: 0 },
         );
-        instanceKnown = true;
+        configureCamsContext(context, extension);
+        instanceLookupComplete = true;
       }
 
-      return await client.pollUpgrade({
+      return await context.client.pollUpgrade({
         extensionId: args.extensionId,
         runId: args.runId,
       });

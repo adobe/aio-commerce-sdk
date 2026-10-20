@@ -13,7 +13,6 @@
 import { parseOrThrow } from "@aio-commerce-sdk/common-utils/valibot";
 import * as v from "valibot";
 
-import { decodeCommerceInstance } from "#commands/common/cams/commerce-instance";
 import { CamsClientError } from "#commands/common/cams/errors";
 import {
   AttemptStatusSchema,
@@ -22,6 +21,7 @@ import {
   FindExtensionParamsSchema,
   LatestAttemptSchema,
   PollUpgradeParamsSchema,
+  StartUpgradeParamsSchema,
   UpgradePlanAnswerSchema,
 } from "#commands/common/cams/schema";
 
@@ -32,6 +32,7 @@ import type {
   ExtensionParams,
   FindExtensionParams,
   PollUpgradeParams,
+  StartUpgradeParams,
 } from "#commands/common/cams/schema";
 
 /** Limits a read of an attempt to the attempts that ran an upgrade. */
@@ -99,14 +100,6 @@ export async function findExtension(
     ),
   );
 
-  // Prefer decoded fields; older service versions only return commerceId.
-  const scope = extension?.scope;
-  const commerceInstance =
-    scope?.commerceBaseUrl && scope.commerceEnv
-      ? { env: scope.commerceEnv, url: scope.commerceBaseUrl }
-      : decodeCommerceInstance(scope?.commerceId);
-  httpClient.setCommerceInstance(commerceInstance);
-
   return extension ?? null;
 }
 
@@ -147,14 +140,20 @@ export async function planUpgrade(
  */
 export async function startUpgrade(
   httpClient: CamsHttpClient,
-  params: ExtensionParams,
+  params: StartUpgradeParams,
   fetchOptions?: Options,
 ) {
-  const { extensionId } = parseOrThrow(ExtensionParamsSchema, params);
+  const { extensionId, planId } = parseOrThrow(
+    StartUpgradeParamsSchema,
+    params,
+  );
 
   return await readJson(
     AttemptStatusSchema,
-    httpClient.post(`${upgradesPath(extensionId)}:start`, fetchOptions),
+    httpClient.post(upgradesPath(extensionId), {
+      ...fetchOptions,
+      json: { planId },
+    }),
   );
 }
 
