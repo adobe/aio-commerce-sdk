@@ -160,7 +160,7 @@ describe("whenStatusChanges", () => {
 });
 
 describe("describeOutcome", () => {
-  const CHECK = 'Check it later with "upgrade status run-1".';
+  const CHECK = "Check it later with upgrade status run-1.";
   const finished = (
     value: AttemptStatus["status"],
     extra?: Partial<AttemptStatus>,

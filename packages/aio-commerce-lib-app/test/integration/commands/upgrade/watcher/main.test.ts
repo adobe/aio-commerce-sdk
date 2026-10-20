@@ -34,7 +34,7 @@ import type { CamsContext } from "#commands/common/cams/context";
 
 const SERVICE = "https://service.example.com";
 const TOKEN_TIMEOUT_MS = 30_000;
-const STATUS_URL = `${SERVICE}/v1/extensions/ext-1/upgrades/run-1/status`;
+const STATUS_URL = `${SERVICE}/v1/extensions/ext-1/upgrades/run-1/sync`;
 
 const BAD_GATEWAY_RETRY = /HTTP 502.*Trying again\.$/;
 const ARGS = { extensionId: "ext-1", runId: "run-1" };
@@ -151,7 +151,7 @@ describe("runWatcher", () => {
 
     await expect(watch("pipe")).resolves.toBe(1);
     expect(log).toHaveBeenLastCalledWith(
-      "Details: HTTP 403, POST /v1/extensions/ext-1/upgrades/run-1/status",
+      "Details: HTTP 403, POST /v1/extensions/ext-1/upgrades/run-1/sync",
     );
   });
 

@@ -60,15 +60,17 @@ const FAILED = {
 };
 
 /** Answers the lookup, the read of the latest run and the poll of run-1, and counts the last two. */
-function serve(poll: () => Response, latest: object[] = [IN_PROGRESS]) {
+function serve(poll: () => Response, latest: object | null = IN_PROGRESS) {
   const calls = { latest: 0, polls: 0 };
   apiServer.use(
     http.get(EXTENSIONS, () => HttpResponse.json([{ id: "ext-1" }])),
     http.get(UPGRADES, () => {
       calls.latest += 1;
-      return HttpResponse.json(latest);
+      return latest === null
+        ? new HttpResponse(null, { status: 204 })
+        : HttpResponse.json(latest);
     }),
-    http.post(`${UPGRADES}/run-1/status`, () => {
+    http.post(`${UPGRADES}/run-1/sync`, () => {
       calls.polls += 1;
       return poll();
     }),
@@ -101,7 +103,7 @@ describe("upgrade status", () => {
     ["a succeeded", SUCCEEDED, 0, "success", "version 2.0.0"],
     ["a failed", FAILED, 1, "error", "The webhooks step failed"],
   ] as const)(
-    "checks %s run once without reading the latest run and exits with %i",
+    "checks %s run once without reading the latest run",
     async (_, body, code, log, text) => {
       const calls = serve(() => HttpResponse.json(body));
 
@@ -122,7 +124,7 @@ describe("upgrade status", () => {
       expect(calls.polls).toBe(1);
       expect(consola.error).toHaveBeenCalledExactlyOnceWith(
         expect.stringContaining(
-          `\nDetails: HTTP ${status}, POST /v1/extensions/ext-1/upgrades/run-1/status`,
+          `\nDetails: HTTP ${status}, POST /v1/extensions/ext-1/upgrades/run-1/sync`,
         ),
       );
     },
@@ -137,7 +139,7 @@ describe("upgrade status", () => {
   });
 
   test("without a run id and without runs, says so and checks nothing", async () => {
-    const calls = serve(() => HttpResponse.json(SUCCEEDED), []);
+    const calls = serve(() => HttpResponse.json(SUCCEEDED), null);
 
     await expect(run({})).resolves.toBe(0);
 
