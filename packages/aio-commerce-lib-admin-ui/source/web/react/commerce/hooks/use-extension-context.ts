@@ -18,9 +18,21 @@ import { error, ok } from "#web/react/result";
 
 import type {
   MassActionContext,
+  NativeUiContext,
   OrderViewButtonContext,
 } from "#web/react/commerce/types";
 import type { Result } from "#web/react/result";
+
+function isOptionalContextId(
+  value: unknown,
+): value is string | number | null | undefined {
+  return (
+    value === undefined ||
+    value === null ||
+    typeof value === "string" ||
+    (typeof value === "number" && Number.isFinite(value))
+  );
+}
 
 /**
  * Returns the context for a mass-action extension point: the selected row IDs the action was
@@ -78,4 +90,38 @@ export function useOrderViewButtonContext(): Result<OrderViewButtonContext> {
 
     return ok({ orderId });
   }, []);
+}
+
+/**
+ * Returns optional customer and store identifiers shared by a native UI form replacement.
+ *
+ * Missing identifiers are omitted. Returns an error outside the Commerce shared context or when
+ * either identifier is not a string or finite number.
+ */
+export function useNativeUiContext(): Result<NativeUiContext> {
+  const { data, error: contextError } = useSharedContext();
+
+  return useMemo<Result<NativeUiContext>>(() => {
+    if (contextError) {
+      return error(contextError.message, { cause: contextError });
+    }
+
+    const customerId = data.sharedContext.get("customerId");
+    const storeId = data.sharedContext.get("storeId");
+    if (!isOptionalContextId(customerId)) {
+      return error(
+        'The Commerce shared context value "customerId" must be a string or finite number when provided.',
+      );
+    }
+    if (!isOptionalContextId(storeId)) {
+      return error(
+        'The Commerce shared context value "storeId" must be a string or finite number when provided.',
+      );
+    }
+
+    return ok({
+      ...(customerId !== undefined && customerId !== null && { customerId }),
+      ...(storeId !== undefined && storeId !== null && { storeId }),
+    });
+  }, [data, contextError]);
 }

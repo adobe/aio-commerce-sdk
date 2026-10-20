@@ -57,6 +57,7 @@ export type {
   GridColumns,
   MassAction,
   Menu,
+  NativeUiReplacedPage,
   Notifications,
   OrderViewButton,
   ViewMassAction,

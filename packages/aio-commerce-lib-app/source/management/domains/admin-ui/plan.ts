@@ -113,6 +113,16 @@ function enumerateComponents(
     });
   }
 
+  for (const replacedPage of adminUi.nativeUi?.replacedPages ?? []) {
+    const key = `nativeUi.replacedPages.${replacedPage.target}`;
+    components.set(key, {
+      config: replacedPage,
+      key,
+      label: `native UI page replacement "${replacedPage.target}"`,
+      ref: { id: replacedPage.target, kind: "replacedPages" },
+    });
+  }
+
   return components;
 }
 
