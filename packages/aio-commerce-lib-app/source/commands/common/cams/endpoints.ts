@@ -13,6 +13,7 @@
 import { parseOrThrow } from "@aio-commerce-sdk/common-utils/valibot";
 import * as v from "valibot";
 
+import { decodeCommerceInstance } from "#commands/common/cams/commerce-instance";
 import { CamsClientError } from "#commands/common/cams/errors";
 import {
   AttemptStatusSchema,
@@ -21,7 +22,6 @@ import {
   FindExtensionParamsSchema,
   LatestAttemptSchema,
   PollUpgradeParamsSchema,
-  StartUpgradeParamsSchema,
   UpgradePlanAnswerSchema,
 } from "#commands/common/cams/schema";
 
@@ -32,7 +32,6 @@ import type {
   ExtensionParams,
   FindExtensionParams,
   PollUpgradeParams,
-  StartUpgradeParams,
 } from "#commands/common/cams/schema";
 
 /** Limits a read of an attempt to the attempts that ran an upgrade. */
@@ -90,25 +89,25 @@ export async function findExtension(
   params: FindExtensionParams,
   fetchOptions?: Options,
 ) {
-  const { workspaceId, workspaceName } = parseOrThrow(
-    FindExtensionParamsSchema,
-    params,
-  );
+  const { workspaceId } = parseOrThrow(FindExtensionParamsSchema, params);
 
   const [extension] = await readJson(
     ExtensionListSchema,
-    httpClient.get("v1/extensions", {
-      ...fetchOptions,
-      searchParams: { workspaceId, workspaceName },
-    }),
+    httpClient.get(
+      `v1/workspaces/${encodeURIComponent(workspaceId)}/extensions`,
+      fetchOptions,
+    ),
   );
 
-  const matches =
-    extension &&
-    (extension.scope?.workspaceId === undefined ||
-      extension.scope.workspaceId === workspaceId);
+  // Prefer decoded fields; older service versions only return commerceId.
+  const scope = extension?.scope;
+  const commerceInstance =
+    scope?.commerceBaseUrl && scope.commerceEnv
+      ? { env: scope.commerceEnv, url: scope.commerceBaseUrl }
+      : decodeCommerceInstance(scope?.commerceId);
+  httpClient.setCommerceInstance(commerceInstance);
 
-  return matches ? extension : null;
+  return extension ?? null;
 }
 
 /**
@@ -129,7 +128,7 @@ export async function planUpgrade(
   const { extensionId } = parseOrThrow(ExtensionParamsSchema, params);
   const { plan } = await readJson(
     UpgradePlanAnswerSchema,
-    httpClient.post(`${upgradesPath(extensionId)}/plan`, fetchOptions),
+    httpClient.post(`${upgradesPath(extensionId)}/preview`, fetchOptions),
   );
 
   return plan;
@@ -148,25 +147,19 @@ export async function planUpgrade(
  */
 export async function startUpgrade(
   httpClient: CamsHttpClient,
-  params: StartUpgradeParams,
+  params: ExtensionParams,
   fetchOptions?: Options,
 ) {
-  const { extensionId, planId } = parseOrThrow(
-    StartUpgradeParamsSchema,
-    params,
-  );
+  const { extensionId } = parseOrThrow(ExtensionParamsSchema, params);
 
   return await readJson(
     AttemptStatusSchema,
-    httpClient.post(upgradesPath(extensionId), {
-      ...fetchOptions,
-      json: { planId },
-    }),
+    httpClient.post(`${upgradesPath(extensionId)}:start`, fetchOptions),
   );
 }
 
 /**
- * Reads the status of an attempt once. CAMS updates the extension from the answer.
+ * Reads the status of an attempt once.
  *
  * The request is not retried, because the polling loop is the retry.
  *
@@ -186,9 +179,9 @@ export async function pollUpgrade(
 
   return await readJson(
     AttemptStatusSchema,
-    httpClient.post(
-      `${upgradesPath(extensionId)}/${encodeURIComponent(runId)}/status`,
-      { ...fetchOptions, retry: 0, searchParams: UPGRADE_QUERY },
+    httpClient.get(
+      `${upgradesPath(extensionId)}/${encodeURIComponent(runId)}`,
+      { ...fetchOptions, retry: 0 },
     ),
   );
 }
@@ -211,13 +204,15 @@ export async function readLatestUpgrade(
   fetchOptions?: Options,
 ) {
   const { extensionId } = parseOrThrow(ExtensionParamsSchema, params);
-  const latest = await readJson(
-    LatestAttemptSchema,
-    httpClient.get(upgradesPath(extensionId), {
-      ...fetchOptions,
-      searchParams: { ...UPGRADE_QUERY, limit: "1" },
-    }),
-  );
+  const request = httpClient.get(upgradesPath(extensionId), {
+    ...fetchOptions,
+    searchParams: { ...UPGRADE_QUERY, limit: "1" },
+  });
+  const response = await request;
+  if (response.status === 204) {
+    return null;
+  }
 
+  const latest = await readJson(LatestAttemptSchema, request);
   return latest ?? null;
 }

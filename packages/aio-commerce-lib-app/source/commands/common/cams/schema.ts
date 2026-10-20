@@ -26,6 +26,9 @@ export const ExtensionSchema = v.object({
   id: v.string(),
   scope: v.optional(
     v.object({
+      commerceBaseUrl: v.optional(v.nullable(v.string())),
+      commerceEnv: v.optional(v.nullable(v.picklist(["paas", "saas"]))),
+      commerceId: v.optional(v.string()),
       workspaceId: v.optional(v.string()),
       workspaceName: v.optional(v.string()),
     }),
@@ -82,7 +85,6 @@ export const LatestAttemptSchema = v.union([
 /** The parameters to find the extension associated with a workspace. */
 export const FindExtensionParamsSchema = v.object({
   workspaceId: nonEmptyStringValueSchema("workspaceId"),
-  workspaceName: nonEmptyStringValueSchema("workspaceName"),
 });
 
 export type FindExtensionParams = v.InferInput<
@@ -95,14 +97,6 @@ export const ExtensionParamsSchema = v.object({
 });
 
 export type ExtensionParams = v.InferInput<typeof ExtensionParamsSchema>;
-
-/** The parameters to start a planned upgrade. */
-export const StartUpgradeParamsSchema = v.object({
-  ...ExtensionParamsSchema.entries,
-  planId: nonEmptyStringValueSchema("planId"),
-});
-
-export type StartUpgradeParams = v.InferInput<typeof StartUpgradeParamsSchema>;
 
 /** The parameters to read the status of one upgrade attempt. */
 export const PollUpgradeParamsSchema = v.object({

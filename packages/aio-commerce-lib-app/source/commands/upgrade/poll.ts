@@ -56,8 +56,8 @@ export function isSettled(status: AttemptStatus) {
 /**
  * Polls an attempt every {@link POLL_INTERVAL_MS} until it is settled.
  *
- * The loop keeps going through the failures that can pass, which are network failures and a 502
- * from the service, and gives up after {@link MAX_CONSECUTIVE_FAILURES} of them in a row. Any
+ * The loop keeps going through the failures that can pass, which are network failures and a 502 or
+ * 503 from the service, and gives up after {@link MAX_CONSECUTIVE_FAILURES} of them in a row. Any
  * answer resets the count. Any other failure ends the loop at once, because repeating the request
  * cannot fix it, as with a refused token.
  */

@@ -99,15 +99,29 @@ export async function runWatcher(
 
   log(`The hook is gone (${signal}). Following the run ${args.runId}.`);
 
-  const { client } = createContext();
+  const { client, project } = createContext();
+
+  // The watcher is a new process, so its client does not know the Commerce instance yet. The poll
+  // loop retries the lookup like a poll, and the lookup does not retry itself for the same reason
+  // a poll does not.
+  let instanceKnown = false;
   const result = await pollUntilSettled({
     onRetry: (error) => log(`${error.message}. Trying again.`),
     onStatus: (status) => log(`Status ${status.status}.`),
-    poll: () =>
-      client.pollUpgrade({
+    poll: async () => {
+      if (!instanceKnown) {
+        await client.findExtension(
+          { workspaceId: project.workspace.id },
+          { retry: 0 },
+        );
+        instanceKnown = true;
+      }
+
+      return await client.pollUpgrade({
         extensionId: args.extensionId,
         runId: args.runId,
-      }),
+      });
+    },
     sleep,
   });
 

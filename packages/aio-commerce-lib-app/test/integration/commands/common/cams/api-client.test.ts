@@ -25,8 +25,10 @@ import type { Options } from "ky";
 
 const BASE_URL = "https://service.example.com";
 const EXTENSIONS = `${BASE_URL}/v1/extensions`;
+const WORKSPACE_EXTENSIONS = `${BASE_URL}/v1/workspaces/:workspaceId/extensions`;
 const UPGRADES = `${EXTENSIONS}/ext-1/upgrades`;
-const STATUS_URL = `${UPGRADES}/run-1/status`;
+const UPGRADE_PREVIEW = `${UPGRADES}/preview`;
+const STATUS_URL = `${UPGRADES}/run-1`;
 
 const ORG = { id: "org-id", ims_org_id: "ims-org-id", name: "org-name" };
 const RUNNING = { id: "run-1", status: "in-progress" };
@@ -54,13 +56,13 @@ async function failureOf(call: Promise<unknown>) {
 }
 
 describe("findExtension", () => {
-  const WORKSPACE = { workspaceId: "ws-1", workspaceName: "A B&C" };
+  const WORKSPACE = { workspaceId: "ws/1" };
 
-  test("looks the workspace up by id and name and returns the first extension", async () => {
-    let query: URLSearchParams | undefined;
+  test("looks the workspace up by its id and returns the first extension", async () => {
+    let workspaceId: string | readonly string[] | undefined;
     apiServer.use(
-      http.get(EXTENSIONS, ({ request }) => {
-        query = new URL(request.url).searchParams;
+      http.get(WORKSPACE_EXTENSIONS, ({ params }) => {
+        ({ workspaceId } = params);
         return HttpResponse.json([{ id: "ext-1" }, { id: "ext-2" }]);
       }),
     );
@@ -68,22 +70,83 @@ describe("findExtension", () => {
     const extension = await createClient().findExtension(WORKSPACE);
 
     expect(extension).toMatchObject({ id: "ext-1" });
-    expect(Object.fromEntries(query ?? [])).toEqual({
-      workspaceId: "ws-1",
-      workspaceName: "A B&C",
+    expect(workspaceId).toBe("ws/1");
+  });
+
+  test("returns null when the workspace has no extension", async () => {
+    apiServer.use(http.get(WORKSPACE_EXTENSIONS, () => HttpResponse.json([])));
+
+    await expect(createClient().findExtension(WORKSPACE)).resolves.toBeNull();
+  });
+});
+
+describe("the Commerce instance", () => {
+  const COMMERCE_ID = Buffer.from(
+    "https://commerce.example.com/env/paas",
+  ).toString("base64url");
+
+  /** Answers the lookup with the extension and records the headers of the plan request. */
+  function serve(extension: object) {
+    const seen = { headers: new Headers() };
+    apiServer.use(
+      http.get(WORKSPACE_EXTENSIONS, () => HttpResponse.json([extension])),
+      http.post(UPGRADE_PREVIEW, ({ request }) => {
+        seen.headers = request.headers;
+        return HttpResponse.json({ plan: { id: "p", operation: "upgrade" } });
+      }),
+    );
+
+    return seen;
+  }
+
+  test("is named in the requests that follow the lookup of the extension", async () => {
+    const seen = serve({ id: "ext-1", scope: { commerceId: COMMERCE_ID } });
+    const client = createClient();
+
+    await client.findExtension({ workspaceId: "ws-1" });
+    await client.planUpgrade({ extensionId: "ext-1" });
+
+    expect(seen.headers.get("x-ac-url")).toBe("https://commerce.example.com");
+    expect(seen.headers.get("x-ac-env")).toBe("paas");
+  });
+
+  test("prefers the decoded Commerce instance fields returned by the service", async () => {
+    const seen = serve({
+      id: "ext-1",
+      scope: {
+        commerceBaseUrl: "https://decoded.example.com",
+        commerceEnv: "saas",
+        commerceId: COMMERCE_ID,
+      },
     });
+    const client = createClient();
+
+    await client.findExtension({ workspaceId: "ws-1" });
+    await client.planUpgrade({ extensionId: "ext-1" });
+
+    expect(seen.headers.get("x-ac-url")).toBe("https://decoded.example.com");
+    expect(seen.headers.get("x-ac-env")).toBe("saas");
   });
 
   test.each([
-    ["has no extension", []],
+    ["has no commerce id", { commerceId: undefined }],
     [
-      "belongs to another workspace",
-      [{ id: "e", scope: { workspaceId: "x" } }],
+      "has a commerce id of another format",
+      { commerceId: "bm90LWFuLWluc3RhbmNl" },
     ],
-  ])("returns null when the workspace %s", async (_, body) => {
-    apiServer.use(http.get(EXTENSIONS, () => HttpResponse.json(body)));
+    [
+      "has null decoded fields for a legacy id",
+      { commerceBaseUrl: null, commerceEnv: null, commerceId: "ci-legacy" },
+    ],
+  ])("is not named when the extension %s", async (_, scope) => {
+    const seen = serve({ id: "ext-1", scope });
+    const client = createClient();
 
-    await expect(createClient().findExtension(WORKSPACE)).resolves.toBeNull();
+    await client.findExtension({ workspaceId: "ws-1" });
+    await client.planUpgrade({ extensionId: "ext-1" });
+
+    expect(seen.headers.has("x-ac-url")).toBe(false);
+    expect(seen.headers.has("x-ac-env")).toBe(false);
   });
 });
 
@@ -93,7 +156,7 @@ describe("planUpgrade", () => {
   test("posts without a body and returns the whole plan", async () => {
     let body: string | undefined;
     apiServer.use(
-      http.post(`${UPGRADES}/plan`, async ({ request }) => {
+      http.post(UPGRADE_PREVIEW, async ({ request }) => {
         body = await request.text();
         return HttpResponse.json({ plan: PLAN, valid: true }, { status: 201 });
       }),
@@ -112,7 +175,7 @@ describe("planUpgrade", () => {
   ])("keeps %s of the plan", async (_, versions) => {
     const plan = { ...PLAN, domains: [], ...versions };
     apiServer.use(
-      http.post(`${UPGRADES}/plan`, () => HttpResponse.json({ plan })),
+      http.post(UPGRADE_PREVIEW, () => HttpResponse.json({ plan })),
     );
 
     await expect(
@@ -122,7 +185,7 @@ describe("planUpgrade", () => {
 
   test("rejects a plan with a version that is not text", async () => {
     apiServer.use(
-      http.post(`${UPGRADES}/plan`, () =>
+      http.post(UPGRADE_PREVIEW, () =>
         HttpResponse.json({ plan: { ...PLAN, targetVersion: 2 } }),
       ),
     );
@@ -134,7 +197,7 @@ describe("planUpgrade", () => {
 
   test("throws a conflict error that carries the code of a 409 answer", async () => {
     apiServer.use(
-      http.post(`${UPGRADES}/plan`, () =>
+      http.post(UPGRADE_PREVIEW, () =>
         HttpResponse.json(
           { code: "in-progress", message: "Refused" },
           { status: 409 },
@@ -163,7 +226,7 @@ describe("planUpgrade", () => {
   ])(
     "throws a conflict error without a code for a 409 answer with %s",
     async (_, answer) => {
-      apiServer.use(http.post(`${UPGRADES}/plan`, answer));
+      apiServer.use(http.post(UPGRADE_PREVIEW, answer));
 
       const error = await failureOf(
         createClient().planUpgrade({ extensionId: "ext-1" }),
@@ -176,11 +239,13 @@ describe("planUpgrade", () => {
 });
 
 describe("startUpgrade", () => {
-  test("posts the plan id and returns the new attempt", async () => {
-    let body: unknown;
+  test("starts the planned upgrade without a request body", async () => {
+    let requestBody: string | undefined;
+    let requestPath: string | undefined;
     apiServer.use(
-      http.post(UPGRADES, async ({ request }) => {
-        body = await request.json();
+      http.post(`${UPGRADES}:start`, async ({ request }) => {
+        requestBody = await request.text();
+        requestPath = new URL(request.url).pathname;
         return HttpResponse.json(
           { ...RUNNING, activationId: "act-1", status: "pending" },
           { status: 202 },
@@ -188,31 +253,26 @@ describe("startUpgrade", () => {
       }),
     );
 
-    const attempt = await createClient().startUpgrade({
-      extensionId: "ext-1",
-      planId: "plan-1",
-    });
+    const attempt = await createClient().startUpgrade({ extensionId: "ext-1" });
 
-    expect(body).toEqual({ planId: "plan-1" });
+    expect(requestPath).toBe("/v1/extensions/ext-1/upgrades:start");
+    expect(requestBody).toBe("");
     expect(attempt).toEqual({ id: "run-1", status: "pending" });
   });
 });
 
 describe("pollUpgrade", () => {
-  test("posts without a body to the encoded path and ignores fields it does not know", async () => {
-    let received: { body: string; path: string } | undefined;
+  test("gets an attempt by its encoded path and ignores fields it does not know", async () => {
+    let received: { method: string; path: string } | undefined;
     apiServer.use(
-      http.post(
-        `${EXTENSIONS}/:extensionId/upgrades/:runId/status`,
-        async ({ request }) => {
-          received = {
-            body: await request.text(),
-            path: new URL(request.url).pathname,
-          };
+      http.get(`${EXTENSIONS}/:extensionId/upgrades/:runId`, ({ request }) => {
+        received = {
+          method: request.method,
+          path: new URL(request.url).pathname,
+        };
 
-          return HttpResponse.json({ ...RUNNING, step: { nested: true } });
-        },
-      ),
+        return HttpResponse.json({ ...RUNNING, step: { nested: true } });
+      }),
     );
 
     const attempt = await createClient().pollUpgrade({
@@ -222,23 +282,9 @@ describe("pollUpgrade", () => {
 
     expect(attempt).toEqual(RUNNING);
     expect(received).toEqual({
-      body: "",
-      path: "/v1/extensions/e%2F1/upgrades/r%2F1/status",
+      method: "GET",
+      path: "/v1/extensions/e%2F1/upgrades/r%2F1",
     });
-  });
-
-  test("asks only for an attempt that ran an upgrade", async () => {
-    let query = "";
-    apiServer.use(
-      http.post(STATUS_URL, ({ request }) => {
-        query = new URL(request.url).search;
-        return HttpResponse.json(RUNNING);
-      }),
-    );
-
-    await createClient().pollUpgrade(IDS);
-
-    expect(query).toBe("?operation=upgrade");
   });
 
   const SUCCEEDED = {
@@ -258,7 +304,7 @@ describe("pollUpgrade", () => {
     ["the result of a succeeded attempt", SUCCEEDED],
     ["the error of a failed attempt", FAILED],
   ])("accepts %s", async (_, body) => {
-    apiServer.use(http.post(STATUS_URL, () => HttpResponse.json(body)));
+    apiServer.use(http.get(STATUS_URL, () => HttpResponse.json(body)));
 
     await expect(createClient().pollUpgrade(IDS)).resolves.toMatchObject(body);
   });
@@ -268,7 +314,7 @@ describe("pollUpgrade", () => {
     ["an error without a key", { error: {}, id: "run-1", status: "failed" }],
     ["no id", { status: "failed" }],
   ])("rejects an answer with %s as unexpected", async (_, body) => {
-    apiServer.use(http.post(STATUS_URL, () => HttpResponse.json(body)));
+    apiServer.use(http.get(STATUS_URL, () => HttpResponse.json(body)));
 
     const error = await failureOf(createClient().pollUpgrade(IDS));
 
@@ -279,16 +325,16 @@ describe("pollUpgrade", () => {
   });
 
   test("rejects an answer that is not JSON", async () => {
-    apiServer.use(http.post(STATUS_URL, () => new HttpResponse("<html>")));
+    apiServer.use(http.get(STATUS_URL, () => new HttpResponse("<html>")));
 
     await expect(createClient().pollUpgrade(IDS)).rejects.toThrow("not JSON");
   });
 
   test.each([400, 401, 403, 404, 500, 502, 503])(
-    "marks a %s answer as retryable only when it is a 502",
+    "marks a %s answer as retryable only when it is a 502 or a 503",
     async (status) => {
       apiServer.use(
-        http.post(STATUS_URL, () =>
+        http.get(STATUS_URL, () =>
           HttpResponse.json({ message: "No" }, { status }),
         ),
       );
@@ -296,14 +342,34 @@ describe("pollUpgrade", () => {
       const error = await failureOf(createClient().pollUpgrade(IDS));
 
       expect(error).not.toBeInstanceOf(CamsConflictError);
-      expect(error.retryable).toBe(status === 502);
+      expect(error.retryable).toBe(status === 502 || status === 503);
       expect(error.cause).toMatchObject({ response: { status } });
     },
   );
 
+  test("keeps the code and the detail of a problem answer", async () => {
+    apiServer.use(
+      http.get(STATUS_URL, () =>
+        HttpResponse.json(
+          { code: "commerce-access-denied", detail: "No access" },
+          { status: 403 },
+        ),
+      ),
+    );
+
+    const error = await failureOf(createClient().pollUpgrade(IDS));
+
+    expect(error).toMatchObject({
+      code: "commerce-access-denied",
+      message: "No access",
+      retryable: false,
+      status: 403,
+    });
+  });
+
   test("keeps the status, the code and the request of an error answer, without the host", async () => {
     apiServer.use(
-      http.post(STATUS_URL, () =>
+      http.get(STATUS_URL, () =>
         HttpResponse.json(
           { code: "forbidden", message: "No access" },
           { status: 403 },
@@ -317,8 +383,8 @@ describe("pollUpgrade", () => {
       code: "forbidden",
       message: "No access",
       request: {
-        method: "POST",
-        path: "/v1/extensions/ext-1/upgrades/run-1/status",
+        method: "GET",
+        path: "/v1/extensions/ext-1/upgrades/run-1",
       },
       status: 403,
     });
@@ -352,7 +418,7 @@ describe("pollUpgrade", () => {
       "Gateway timed out",
     ],
   ])("words an answer with %s", async (_, respond, message) => {
-    apiServer.use(http.post(STATUS_URL, respond));
+    apiServer.use(http.get(STATUS_URL, respond));
 
     const error = await failureOf(createClient().pollUpgrade(IDS));
 
@@ -361,7 +427,7 @@ describe("pollUpgrade", () => {
 
   test("cuts a long body that is not JSON", async () => {
     apiServer.use(
-      http.post(
+      http.get(
         STATUS_URL,
         () => new HttpResponse("x".repeat(1000), { status: 500 }),
       ),
@@ -373,7 +439,7 @@ describe("pollUpgrade", () => {
   });
 
   test("marks a network failure as retryable", async () => {
-    apiServer.use(http.post(STATUS_URL, () => HttpResponse.error()));
+    apiServer.use(http.get(STATUS_URL, () => HttpResponse.error()));
 
     const error = await failureOf(createClient().pollUpgrade(IDS));
 
@@ -381,16 +447,16 @@ describe("pollUpgrade", () => {
     expect(error.retryable).toBe(true);
   });
 
-  test("does not retry, even when the client retries POST requests", async () => {
+  test("does not retry, even when the client retries GET requests", async () => {
     let requests = 0;
     apiServer.use(
-      http.post(STATUS_URL, () => {
+      http.get(STATUS_URL, () => {
         requests += 1;
         return HttpResponse.json({}, { status: 502 });
       }),
     );
     const client = createClient({
-      retry: { delay: () => 0, limit: 2, methods: ["post"] },
+      retry: { delay: () => 0, limit: 2, methods: ["get"] },
     });
 
     await failureOf(client.pollUpgrade(IDS));
@@ -425,17 +491,26 @@ describe("readLatestUpgrade", () => {
     expect(new URLSearchParams(query).get("limit")).toBe("1");
     expect(new URLSearchParams(query).get("operation")).toBe("upgrade");
   });
+
+  test("returns null when the service responds with 204", async () => {
+    apiServer.use(
+      http.get(UPGRADES, () => new HttpResponse(null, { status: 204 })),
+    );
+
+    await expect(
+      createClient().readLatestUpgrade({ extensionId: "ext-1" }),
+    ).resolves.toBeNull();
+  });
 });
 
 describe("parameters", () => {
   const client = createClient();
   const calls = {
-    findExtension: () =>
-      client.findExtension({ workspaceId: "", workspaceName: "w" }),
+    findExtension: () => client.findExtension({ workspaceId: "" }),
     planUpgrade: () => client.planUpgrade({ extensionId: "" }),
     pollUpgrade: () => client.pollUpgrade({ extensionId: "e", runId: "" }),
     readLatestUpgrade: () => client.readLatestUpgrade({ extensionId: "" }),
-    startUpgrade: () => client.startUpgrade({ extensionId: "e", planId: "" }),
+    startUpgrade: () => client.startUpgrade({ extensionId: "" }),
   };
 
   test.each(Object.keys(calls) as (keyof typeof calls)[])(
@@ -454,13 +529,13 @@ describe("unexpected answers", () => {
   test.each([
     [
       "an extension without an id",
-      () => http.get(EXTENSIONS, () => HttpResponse.json([{}])),
-      () => client.findExtension({ workspaceId: "w", workspaceName: "n" }),
+      () => http.get(WORKSPACE_EXTENSIONS, () => HttpResponse.json([{}])),
+      () => client.findExtension({ workspaceId: "w" }),
     ],
     [
       "a plan without an id",
       () =>
-        http.post(`${UPGRADES}/plan`, () =>
+        http.post(UPGRADE_PREVIEW, () =>
           HttpResponse.json({ plan: { operation: "upgrade" } }),
         ),
       () => client.planUpgrade({ extensionId: "ext-1" }),

@@ -54,10 +54,8 @@ export function createCamsContext(
  * @returns The extension id, or `null` when the workspace is not associated.
  */
 export async function findWorkspaceExtensionId(context: CamsContext) {
-  const { workspace } = context.project;
   const extension = await context.client.findExtension({
-    workspaceId: workspace.id,
-    workspaceName: workspace.name,
+    workspaceId: context.project.workspace.id,
   });
 
   return extension?.id ?? null;

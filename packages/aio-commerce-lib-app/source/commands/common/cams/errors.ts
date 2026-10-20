@@ -17,6 +17,7 @@ import type { HTTPError } from "ky";
 
 const HTTP_CONFLICT = 409;
 const HTTP_BAD_GATEWAY = 502;
+const HTTP_SERVICE_UNAVAILABLE = 503;
 
 /** The longest text of an error answer that is kept when the answer is not JSON. */
 const MAX_TEXT_LENGTH = 300;
@@ -74,7 +75,7 @@ export class CamsClientError extends CommerceSdkErrorBase {
 /** Thrown when CAMS refuses a request with a 409. Its `code` tells why. */
 export class CamsConflictError extends CamsClientError {}
 
-/** The `code` and the text of an error answer. The text is the `message`, or the body when it is not JSON. */
+/** The `code` and the text of an error answer. The text is the `message` or `detail`, or the body when it is not JSON. */
 async function readAnswer(response: Response) {
   const body = (
     await response
@@ -86,11 +87,12 @@ async function readAnswer(response: Response) {
   try {
     const json: unknown = JSON.parse(body);
     if (typeof json === "object" && json !== null) {
-      const { code, message } = json as Record<string, unknown>;
+      const { code, message, detail } = json as Record<string, unknown>;
+      const text = [message, detail].find((value) => typeof value === "string");
 
       return {
         code: typeof code === "string" ? code : undefined,
-        text: typeof message === "string" ? message : "",
+        text: typeof text === "string" ? text : "",
       };
     }
   } catch {
@@ -102,7 +104,8 @@ async function readAnswer(response: Response) {
 
 /**
  * Builds the error for an answer with an error status. A 409 is a conflict. A 502 means CAMS could
- * not read the app, which can pass, so it is the only retryable status.
+ * not read the app, and a 503 means it could not reach the Commerce instance. Both can pass, so
+ * they are the only retryable statuses.
  */
 export async function toCamsResponseError(error: HTTPError) {
   const { status, statusText } = error.response;
@@ -128,6 +131,7 @@ export async function toCamsResponseError(error: HTTPError) {
 
   return new CamsClientError(message, {
     ...options,
-    retryable: status === HTTP_BAD_GATEWAY,
+    retryable:
+      status === HTTP_BAD_GATEWAY || status === HTTP_SERVICE_UNAVAILABLE,
   });
 }

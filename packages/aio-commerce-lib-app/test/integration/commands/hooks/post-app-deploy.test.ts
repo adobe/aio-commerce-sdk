@@ -84,13 +84,14 @@ const MANUAL_PROJECT = makeProjectFiles(
 );
 
 const FORBIDDEN_STATUS =
-  /Forbidden[\s\S]*\nDetails: HTTP 403, POST \/v1\/extensions\/ext-1\/upgrades\/run-1\/status$/;
+  /Forbidden[\s\S]*\nDetails: HTTP 403, GET \/v1\/extensions\/ext-1\/upgrades\/run-1$/;
 
 const STATUS_HINT = /Check (the run|it)|tail -f/;
 const LOG_HINT = /tail -f|\.log/;
 
 const SERVICE = "https://service.example.com";
 const EXTENSIONS = `${SERVICE}/v1/extensions`;
+const WORKSPACE_EXTENSIONS = `${SERVICE}/v1/workspaces/:workspaceId/extensions`;
 const UPGRADES = `${EXTENSIONS}/ext-1/upgrades`;
 const PLAN = { id: "plan-1", operation: "upgrade" };
 const NOT_PLANNED = /The upgrade was not planned: .*Refused/;
@@ -110,29 +111,27 @@ function serveUpgrade(statuses: object[] = [attempt("succeeded")]) {
   const calls = { plan: 0, polls: 0, start: 0 };
 
   apiServer.use(
-    http.get(EXTENSIONS, ({ request }) => {
-      const query = new URL(request.url).searchParams;
+    http.get(WORKSPACE_EXTENSIONS, ({ params, request }) => {
       const found =
-        query.get("workspaceId") === "workspace-id" &&
-        query.get("workspaceName") === "workspace-name" &&
+        params.workspaceId === "workspace-id" &&
         request.headers.get("authorization") === "Bearer ims-token" &&
         request.headers.get("x-org-id") === "ims-org-id";
 
       return HttpResponse.json(found ? [{ id: "ext-1" }] : []);
     }),
-    http.post(`${UPGRADES}/plan`, () => {
+    http.post(`${UPGRADES}/preview`, () => {
       calls.plan += 1;
       return HttpResponse.json({ plan: PLAN }, { status: 201 });
     }),
-    http.post(UPGRADES, async ({ request }) => {
+    http.post(`${UPGRADES}:start`, async ({ request }) => {
       calls.start += 1;
-      const body = (await request.json()) as { planId?: string };
+      const body = await request.text();
 
-      return body.planId === "plan-1"
+      return body === ""
         ? HttpResponse.json(attempt("pending"), { status: 202 })
         : HttpResponse.json({}, { status: 400 });
     }),
-    http.post(`${UPGRADES}/run-1/status`, () => {
+    http.get(`${UPGRADES}/run-1`, () => {
       const status = statuses[Math.min(calls.polls, statuses.length - 1)];
       calls.polls += 1;
       return HttpResponse.json(status);
@@ -148,7 +147,7 @@ function answer(method: "get" | "post", url: string, respond: () => Response) {
 }
 
 const refusePlan = (code: string) =>
-  answer("post", `${UPGRADES}/plan`, () =>
+  answer("post", `${UPGRADES}/preview`, () =>
     HttpResponse.json({ code, message: "Refused" }, { status: 409 }),
   );
 
@@ -250,7 +249,7 @@ describe("post-app-deploy hook", () => {
 
   test("gives up after ten failures in a row", async () => {
     const calls = serveUpgrade();
-    answer("post", `${UPGRADES}/run-1/status`, () => {
+    answer("get", `${UPGRADES}/run-1`, () => {
       calls.polls += 1;
       return HttpResponse.json({}, { status: 502 });
     });
@@ -268,7 +267,7 @@ describe("post-app-deploy hook", () => {
       () => HttpResponse.json({}, { status: 401 }),
     ];
     const calls = serveUpgrade();
-    answer("post", `${UPGRADES}/run-1/status`, () => {
+    answer("get", `${UPGRADES}/run-1`, () => {
       calls.polls += 1;
       return (answers.shift() as () => Response)();
     });
@@ -295,7 +294,7 @@ describe("post-app-deploy hook", () => {
 
     test("skips a workspace without an extension and does not plan", async () => {
       const calls = serveUpgrade();
-      answer("get", EXTENSIONS, () => HttpResponse.json([]));
+      answer("get", WORKSPACE_EXTENSIONS, () => HttpResponse.json([]));
 
       await expect(runHook()).resolves.toEqual({
         code: "not-associated",
@@ -330,7 +329,7 @@ describe("post-app-deploy hook", () => {
 
     test("fails when the upgrade cannot start", async () => {
       serveUpgrade();
-      answer("post", UPGRADES, () =>
+      answer("post", `${UPGRADES}:start`, () =>
         HttpResponse.json({ code: "stale-plan" }, { status: 409 }),
       );
 
@@ -340,7 +339,7 @@ describe("post-app-deploy hook", () => {
 
     test("fails on a service error while planning", async () => {
       serveUpgrade();
-      answer("post", `${UPGRADES}/plan`, () =>
+      answer("post", `${UPGRADES}/preview`, () =>
         HttpResponse.json({ message: "Boom" }, { status: 500 }),
       );
 
@@ -352,7 +351,7 @@ describe("post-app-deploy hook", () => {
     test("starts before the first poll, for the extension and the run", async () => {
       const spawnedBeforeFirstPoll: boolean[] = [];
       serveUpgrade();
-      answer("post", `${UPGRADES}/run-1/status`, () => {
+      answer("get", `${UPGRADES}/run-1`, () => {
         spawnedBeforeFirstPoll.push(spawnDetachedMock.mock.calls.length === 1);
         return HttpResponse.json(attempt("succeeded"));
       });
@@ -522,7 +521,7 @@ describe("post-app-deploy hook", () => {
       await withTempProject(MINIMAL_PROJECT, exec);
 
       expect(consola.error).toHaveBeenCalledExactlyOnceWith(
-        "The upgrade was not planned: Refused\nDetails: HTTP 409, code in-progress, POST /v1/extensions/ext-1/upgrades/plan",
+        "The upgrade was not planned: Refused\nDetails: HTTP 409, code in-progress, POST /v1/extensions/ext-1/upgrades/preview",
       );
       expect(processExitMock).toHaveBeenCalledExactlyOnceWith(1);
     });
@@ -545,7 +544,7 @@ describe("post-app-deploy hook", () => {
 
     test("prints the details of the call that could not read the run", async () => {
       serveUpgrade();
-      answer("post", `${UPGRADES}/run-1/status`, () =>
+      answer("get", `${UPGRADES}/run-1`, () =>
         HttpResponse.json({ message: "Forbidden" }, { status: 403 }),
       );
 

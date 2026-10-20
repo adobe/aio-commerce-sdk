@@ -34,7 +34,11 @@ import type { CamsContext } from "#commands/common/cams/context";
 
 const SERVICE = "https://service.example.com";
 const TOKEN_TIMEOUT_MS = 30_000;
-const STATUS_URL = `${SERVICE}/v1/extensions/ext-1/upgrades/run-1/status`;
+const STATUS_URL = `${SERVICE}/v1/extensions/ext-1/upgrades/run-1`;
+const LOOKUP_URL = `${SERVICE}/v1/workspaces/:workspaceId/extensions`;
+const COMMERCE_ID = Buffer.from(
+  "https://commerce.example.com/env/saas",
+).toString("base64url");
 
 const BAD_GATEWAY_RETRY = /HTTP 502.*Trying again\.$/;
 const ARGS = { extensionId: "ext-1", runId: "run-1" };
@@ -47,13 +51,29 @@ const SUCCEEDED = {
 
 setupApiTestLifecycle();
 
-/** Answers the polls with the responses in order, and the last one after that. */
+/**
+ * Answers the lookup of the extension, then the polls with the responses in order, and the last
+ * one after that.
+ */
 function serveAnswers(answers: (() => Response)[]) {
-  const polls = { count: 0 };
+  const polls = { count: 0, headers: new Headers() };
   apiServer.use(
-    http.post(STATUS_URL, () => {
+    http.get(LOOKUP_URL, () =>
+      HttpResponse.json([
+        {
+          id: "ext-1",
+          scope: {
+            commerceBaseUrl: "https://commerce.example.com",
+            commerceEnv: "saas",
+            commerceId: COMMERCE_ID,
+          },
+        },
+      ]),
+    ),
+    http.get(STATUS_URL, ({ request }) => {
       const answer = answers[Math.min(polls.count, answers.length - 1)];
       polls.count += 1;
+      polls.headers = request.headers;
       return answer();
     }),
   );
@@ -79,7 +99,9 @@ describe("runWatcher", () => {
         },
         config: { baseUrl: SERVICE },
       }),
-      project: {} as CamsContext["project"],
+      project: {
+        workspace: { id: "workspace-id", name: "w", title: "W" },
+      } as CamsContext["project"],
     }),
   );
 
@@ -138,6 +160,15 @@ describe("runWatcher", () => {
     expect(sleep.mock.calls).toEqual([[2000], [2000]]);
   });
 
+  test("names the Commerce instance of the extension in its polls", async () => {
+    const polls = serveAnswers([json(SUCCEEDED)]);
+
+    await expect(watch("pipe")).resolves.toBe(0);
+
+    expect(polls.headers.get("x-ac-url")).toBe("https://commerce.example.com");
+    expect(polls.headers.get("x-ac-env")).toBe("saas");
+  });
+
   test("logs the signal that showed that the hook is gone", async () => {
     serveAnswers([json(SUCCEEDED)]);
 
@@ -151,7 +182,7 @@ describe("runWatcher", () => {
 
     await expect(watch("pipe")).resolves.toBe(1);
     expect(log).toHaveBeenLastCalledWith(
-      "Details: HTTP 403, POST /v1/extensions/ext-1/upgrades/run-1/status",
+      "Details: HTTP 403, GET /v1/extensions/ext-1/upgrades/run-1",
     );
   });
 
@@ -272,12 +303,14 @@ describe("exec", () => {
     });
 
     test("uses a token that arrives just before the timeout", async () => {
-      aio.getUserToken.mockImplementation(
-        () =>
-          new Promise((resolve) => {
-            setTimeout(() => resolve("late token"), TOKEN_TIMEOUT_MS - 1);
-          }),
-      );
+      aio.getUserToken
+        .mockImplementationOnce(
+          () =>
+            new Promise((resolve) => {
+              setTimeout(() => resolve("late token"), TOKEN_TIMEOUT_MS - 1);
+            }),
+        )
+        .mockResolvedValue("late token");
       serveAnswers([json(SUCCEEDED)]);
 
       await watchAfterHookExit();

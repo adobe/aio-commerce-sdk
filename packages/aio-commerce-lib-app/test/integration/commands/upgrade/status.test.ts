@@ -37,6 +37,7 @@ import { apiServer, setupApiTestLifecycle } from "#test/setup/api";
 
 const SERVICE = "https://service.example.com";
 const EXTENSIONS = `${SERVICE}/v1/extensions`;
+const WORKSPACE_EXTENSIONS = `${SERVICE}/v1/workspaces/workspace-id/extensions`;
 const UPGRADES = `${EXTENSIONS}/ext-1/upgrades`;
 
 const PROJECT = {
@@ -63,12 +64,14 @@ const FAILED = {
 function serve(poll: () => Response, latest: object[] = [IN_PROGRESS]) {
   const calls = { latest: 0, polls: 0 };
   apiServer.use(
-    http.get(EXTENSIONS, () => HttpResponse.json([{ id: "ext-1" }])),
+    http.get(WORKSPACE_EXTENSIONS, () => HttpResponse.json([{ id: "ext-1" }])),
     http.get(UPGRADES, () => {
       calls.latest += 1;
-      return HttpResponse.json(latest);
+      return latest.length > 0
+        ? HttpResponse.json(latest)
+        : new HttpResponse(null, { status: 204 });
     }),
-    http.post(`${UPGRADES}/run-1/status`, () => {
+    http.get(`${UPGRADES}/run-1`, () => {
       calls.polls += 1;
       return poll();
     }),
@@ -122,7 +125,7 @@ describe("upgrade status", () => {
       expect(calls.polls).toBe(1);
       expect(consola.error).toHaveBeenCalledExactlyOnceWith(
         expect.stringContaining(
-          `\nDetails: HTTP ${status}, POST /v1/extensions/ext-1/upgrades/run-1/status`,
+          `\nDetails: HTTP ${status}, GET /v1/extensions/ext-1/upgrades/run-1`,
         ),
       );
     },
@@ -148,7 +151,7 @@ describe("upgrade status", () => {
   });
 
   test("exits with 1 when the workspace has no extension", async () => {
-    apiServer.use(http.get(EXTENSIONS, () => HttpResponse.json([])));
+    apiServer.use(http.get(WORKSPACE_EXTENSIONS, () => HttpResponse.json([])));
 
     await expect(run({ runId: "run-1" })).resolves.toBe(1);
     expect(consola.error).toHaveBeenCalledWith(
