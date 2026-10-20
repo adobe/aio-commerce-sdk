@@ -11,7 +11,7 @@
  */
 
 import { stringifyError } from "@aio-commerce-sdk/scripting-utils/error";
-import ky from "ky";
+import ky, { HTTPError } from "ky";
 
 import { PROD_CAMS_URL } from "#commands/common/cams/config";
 import { CamsClientError } from "#commands/common/cams/errors";
@@ -88,6 +88,33 @@ function buildAuthHook(
   };
 }
 
+/** Determines if an error is retryable based on the CAMS response. */
+async function isRetryable(error: unknown) {
+  const isObject = (value: unknown): value is Record<string, unknown> =>
+    typeof value === "object" && value !== null;
+
+  // Check the response is an object and contains a boolean "retryable" property.
+  const isCamsResponseWithRetryable = (
+    value: unknown,
+  ): value is { retryable: boolean } =>
+    isObject(value) &&
+    "retryable" in value &&
+    typeof value.retryable === "boolean";
+
+  if (error instanceof HTTPError) {
+    return error.response
+      .clone()
+      .json()
+      .then((body) =>
+        isCamsResponseWithRetryable(body) ? body.retryable : undefined,
+      )
+      .catch(() => undefined);
+  }
+
+  // biome-ignore lint/complexity/noUselessUndefined: Explicit undefined for clarity. Falls back to ky's default rules.
+  return undefined;
+}
+
 type KyHttpClient = Omit<KyInstance, "extend" | "create">;
 
 /**
@@ -131,6 +158,11 @@ export class CamsHttpClient implements KyHttpClient {
         beforeRequest: [buildAuthHook(auth, this.config.commerceInstance)],
       },
       prefixUrl: this.config.baseUrl,
+      retry: {
+        async shouldRetry({ error }) {
+          return isRetryable(error);
+        },
+      },
     });
 
     this.httpClient = Object.freeze(

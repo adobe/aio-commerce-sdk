@@ -315,6 +315,7 @@ export function toAttemptStatus(attempt: LifecycleAttempt) {
     completedAt: attempt.completedAt,
     data: attempt.data,
     error: attempt.status === "failed" ? attempt.failure : undefined,
+    executionDeadline: attempt.executionDeadline,
     id: attempt.id,
     operation: attempt.operation,
     planId: attempt.plan.id,
@@ -325,6 +326,8 @@ export function toAttemptStatus(attempt: LifecycleAttempt) {
     startedAt: attempt.startedAt,
     status: attempt.status,
     step: attempt.progress,
+    targetConfig:
+      attempt.status === "succeeded" ? attempt.plan.target?.config : undefined,
   };
 }
 

@@ -64,7 +64,12 @@ vi.mock("consola", () => ({
   },
 }));
 vi.mock("consola/utils", () => ({
-  colors: { cyan: (value: string) => value },
+  colors: {
+    cyan: (value: string) => value,
+    greenBright: (value: string) => value,
+    redBright: (value: string) => value,
+    yellow: (value: string | number) => String(value),
+  },
 }));
 
 import { CAMS_URL_ENV_VAR } from "#commands/common/cams/config";
@@ -84,7 +89,7 @@ const MANUAL_PROJECT = makeProjectFiles(
 );
 
 const FORBIDDEN_STATUS =
-  /Forbidden[\s\S]*\nDetails: HTTP 403, GET \/v1\/extensions\/ext-1\/upgrades\/run-1$/;
+  /Forbidden[\s\S]*\nDetails: HTTP 403, POST \/v1\/extensions\/ext-1\/upgrades\/run-1\/sync$/;
 
 const STATUS_HINT = /Check (the run|it)|tail -f/;
 const LOG_HINT = /tail -f|\.log/;
@@ -157,7 +162,7 @@ function serveUpgrade(statuses: object[] = [attempt("succeeded")]) {
         ? HttpResponse.json(attempt("pending"), { status: 202 })
         : HttpResponse.json({}, { status: 400 });
     }),
-    http.get(`${UPGRADES}/run-1`, ({ request }) => {
+    http.post(`${UPGRADES}/run-1/sync`, ({ request }) => {
       recordCommerceHeaders(request);
       const status = statuses[Math.min(calls.polls, statuses.length - 1)];
       calls.polls += 1;
@@ -276,7 +281,7 @@ describe("post-app-deploy hook", () => {
 
   test("gives up after ten failures in a row", async () => {
     const calls = serveUpgrade();
-    answer("get", `${UPGRADES}/run-1`, () => {
+    answer("post", `${UPGRADES}/run-1/sync`, () => {
       calls.polls += 1;
       return HttpResponse.json({}, { status: 502 });
     });
@@ -294,7 +299,7 @@ describe("post-app-deploy hook", () => {
       () => HttpResponse.json({}, { status: 401 }),
     ];
     const calls = serveUpgrade();
-    answer("get", `${UPGRADES}/run-1`, () => {
+    answer("post", `${UPGRADES}/run-1/sync`, () => {
       calls.polls += 1;
       return (answers.shift() as () => Response)();
     });
@@ -340,18 +345,20 @@ describe("post-app-deploy hook", () => {
       expect(spawnDetachedMock).not.toHaveBeenCalled();
     });
 
-    test.each(["already-current", "not-associated", "not-installed"] as const)(
-      "skips when the plan is refused with %s",
-      async (code) => {
-        serveUpgrade();
-        refusePlan(code);
+    test.each([
+      "already-current",
+      "not-associated",
+      "not-installed",
+      "in-progress",
+    ] as const)("skips when the plan is refused with %s", async (code) => {
+      serveUpgrade();
+      refusePlan(code);
 
-        await expect(runHook()).resolves.toEqual({ code, kind: "skipped" });
-        expect(spawnDetachedMock).not.toHaveBeenCalled();
-      },
-    );
+      await expect(runHook()).resolves.toEqual({ code, kind: "skipped" });
+      expect(spawnDetachedMock).not.toHaveBeenCalled();
+    });
 
-    test.each(["in-progress", "manual-review-required"])(
+    test.each(["stale-plan", "manual-review-required"])(
       "fails when the plan is refused with %s",
       async (code) => {
         serveUpgrade();
@@ -386,7 +393,7 @@ describe("post-app-deploy hook", () => {
     test("starts before the first poll, for the extension and the run", async () => {
       const spawnedBeforeFirstPoll: boolean[] = [];
       serveUpgrade();
-      answer("get", `${UPGRADES}/run-1`, () => {
+      answer("post", `${UPGRADES}/run-1/sync`, () => {
         spawnedBeforeFirstPoll.push(spawnDetachedMock.mock.calls.length === 1);
         return HttpResponse.json(attempt("succeeded"));
       });
@@ -411,7 +418,7 @@ describe("post-app-deploy hook", () => {
       expect(printedMessages()).not.toContainEqual(
         expect.stringMatching(STATUS_HINT),
       );
-      expect(consola.log).toHaveBeenCalledExactlyOnceWith("");
+      expect(consola.log).not.toHaveBeenCalled();
     });
 
     test("logs the log path and the arguments of the watcher when it starts", async () => {
@@ -551,19 +558,19 @@ describe("post-app-deploy hook", () => {
   describe("exec", () => {
     test("prints a refusal of the service as one block without a stack", async () => {
       serveUpgrade();
-      refusePlan("in-progress");
+      refusePlan("manual-review-required");
 
       await withTempProject(MINIMAL_PROJECT, exec);
 
       expect(consola.error).toHaveBeenCalledExactlyOnceWith(
-        "The upgrade was not planned: Refused\nDetails: HTTP 409, code in-progress, POST /v1/extensions/ext-1/upgrades/preview",
+        "The upgrade was not planned: Refused\nDetails: HTTP 409, code manual-review-required, POST /v1/extensions/ext-1/upgrades/preview",
       );
       expect(processExitMock).toHaveBeenCalledExactlyOnceWith(1);
     });
 
     test("sends the whole chain of a failure of the service to the debug log", async () => {
       serveUpgrade();
-      refusePlan("in-progress");
+      refusePlan("manual-review-required");
 
       await withTempProject(MINIMAL_PROJECT, exec);
 
@@ -579,7 +586,7 @@ describe("post-app-deploy hook", () => {
 
     test("prints the details of the call that could not read the run", async () => {
       serveUpgrade();
-      answer("get", `${UPGRADES}/run-1`, () =>
+      answer("post", `${UPGRADES}/run-1/sync`, () =>
         HttpResponse.json({ message: "Forbidden" }, { status: 403 }),
       );
 

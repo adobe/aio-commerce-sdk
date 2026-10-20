@@ -18,9 +18,8 @@ import {
   AttemptStatusSchema,
   ExtensionListSchema,
   ExtensionParamsSchema,
+  FindAttemptParamsSchema,
   FindExtensionParamsSchema,
-  LatestAttemptSchema,
-  PollUpgradeParamsSchema,
   StartUpgradeParamsSchema,
   UpgradePlanAnswerSchema,
 } from "#commands/common/cams/schema";
@@ -30,13 +29,10 @@ import type { HTTPError, Options, ResponsePromise } from "ky";
 import type { CamsHttpClient } from "#commands/common/cams/http-client";
 import type {
   ExtensionParams,
+  FindAttemptParams,
   FindExtensionParams,
-  PollUpgradeParams,
   StartUpgradeParams,
 } from "#commands/common/cams/schema";
-
-/** Limits a read of an attempt to the attempts that ran an upgrade. */
-const UPGRADE_QUERY = { operation: "upgrade" };
 
 /** The path of the upgrades of an extension, relative to the base URL. */
 function upgradesPath(extensionId: string) {
@@ -47,23 +43,12 @@ function upgradesPath(extensionId: string) {
  * Reads the JSON body of an answer and checks it against the schema.
  * @throws A {@link CamsClientError} If the body is not JSON or does not match the schema.
  */
-async function readJson<TSchema extends v.GenericSchema>(
+async function parseBody<TSchema extends v.GenericSchema, TBody = unknown>(
   schema: TSchema,
-  request: ResponsePromise,
+  body: TBody,
 ): Promise<v.InferOutput<TSchema>> {
-  const response = await request;
-
-  let body: unknown;
-  try {
-    body = await response.json();
-  } catch (error) {
-    throw new CamsClientError(
-      "The Commerce App Management Service sent an answer that is not JSON",
-      { cause: error },
-    );
-  }
-
   const parsed = v.safeParse(schema, body);
+
   if (!parsed.success) {
     throw new CamsClientError(
       "The Commerce App Management Service sent an unexpected answer",
@@ -72,6 +57,25 @@ async function readJson<TSchema extends v.GenericSchema>(
   }
 
   return parsed.output;
+}
+
+/**
+ * Reads the JSON body of a response and checks it against the schema.
+ * @throws A {@link CamsClientError} If the body is not JSON or does not match the schema.
+ */
+async function readAndParseBody<TSchema extends v.GenericSchema>(
+  schema: TSchema,
+  request: ResponsePromise | Response,
+): Promise<v.InferOutput<TSchema>> {
+  const response = await request;
+  try {
+    return parseBody(schema, await response.json());
+  } catch (error) {
+    throw new CamsClientError(
+      "The Commerce App Management Service sent an answer that is not JSON",
+      { cause: error },
+    );
+  }
 }
 
 /**
@@ -92,7 +96,7 @@ export async function findExtension(
 ) {
   const { workspaceId } = parseOrThrow(FindExtensionParamsSchema, params);
 
-  const [extension] = await readJson(
+  const [extension] = await readAndParseBody(
     ExtensionListSchema,
     httpClient.get(
       `v1/workspaces/${encodeURIComponent(workspaceId)}/extensions`,
@@ -119,7 +123,7 @@ export async function planUpgrade(
   fetchOptions?: Options,
 ) {
   const { extensionId } = parseOrThrow(ExtensionParamsSchema, params);
-  const { plan } = await readJson(
+  const { plan } = await readAndParseBody(
     UpgradePlanAnswerSchema,
     httpClient.post(`${upgradesPath(extensionId)}/preview`, fetchOptions),
   );
@@ -148,7 +152,7 @@ export async function startUpgrade(
     params,
   );
 
-  return await readJson(
+  return await readAndParseBody(
     AttemptStatusSchema,
     httpClient.post(upgradesPath(extensionId), {
       ...fetchOptions,
@@ -171,16 +175,44 @@ export async function startUpgrade(
  */
 export async function pollUpgrade(
   httpClient: CamsHttpClient,
-  params: PollUpgradeParams,
+  params: FindAttemptParams,
   fetchOptions?: Options,
 ) {
-  const { extensionId, runId } = parseOrThrow(PollUpgradeParamsSchema, params);
+  const { extensionId, runId } = parseOrThrow(FindAttemptParamsSchema, params);
+  const attemptStatus = await readAndParseBody(
+    AttemptStatusSchema,
+    httpClient.post(
+      `${upgradesPath(extensionId)}/${encodeURIComponent(runId)}/sync`,
+      { ...fetchOptions, retry: 0 },
+    ),
+  );
 
-  return await readJson(
+  return attemptStatus;
+}
+
+/**
+ * Reads the latest upgrade attempt without changing anything. Attempts that ran another operation
+ * do not count.
+ *
+ * @param httpClient - The {@link CamsHttpClient} to use to make the request.
+ * @param params - The extension to read the latest attempt of.
+ * @param fetchOptions - The {@link Options} to use to make the request.
+ *
+ * @returns The attempt, or `null` when there is none.
+ * @throws A {@link CommerceSdkValidationError} If the parameters are in the wrong format.
+ * @throws An {@link HTTPError} If the status code is not 2XX.
+ */
+export async function readUpgrade(
+  httpClient: CamsHttpClient,
+  params: FindAttemptParams,
+  fetchOptions?: Options,
+) {
+  const { extensionId, runId } = parseOrThrow(FindAttemptParamsSchema, params);
+  return await readAndParseBody(
     AttemptStatusSchema,
     httpClient.get(
       `${upgradesPath(extensionId)}/${encodeURIComponent(runId)}`,
-      { ...fetchOptions, retry: 0 },
+      fetchOptions,
     ),
   );
 }
@@ -203,15 +235,13 @@ export async function readLatestUpgrade(
   fetchOptions?: Options,
 ) {
   const { extensionId } = parseOrThrow(ExtensionParamsSchema, params);
-  const request = httpClient.get(upgradesPath(extensionId), {
-    ...fetchOptions,
-    searchParams: { ...UPGRADE_QUERY, limit: "1" },
-  });
-  const response = await request;
+  const response = await httpClient.get(
+    upgradesPath(extensionId),
+    fetchOptions,
+  );
   if (response.status === 204) {
     return null;
   }
 
-  const latest = await readJson(LatestAttemptSchema, request);
-  return latest ?? null;
+  return await readAndParseBody(AttemptStatusSchema, response);
 }

@@ -52,7 +52,8 @@ function isSkipCode(code: unknown): code is SkipCode {
   return (
     code === "already-current" ||
     code === "not-associated" ||
-    code === "not-installed"
+    code === "not-installed" ||
+    code === "in-progress"
   );
 }
 
@@ -136,7 +137,7 @@ async function followRun(
       consola.warn(`${error.message}. Trying again.`);
     },
     onStatus: whenStatusChanges((status) => {
-      consola.start(`App upgrade is ${status.status}.`);
+      consola.start(`App upgrade is ${colors.yellow(status.status)}.`);
     }),
     poll: () => context.client.pollUpgrade({ extensionId, runId: started.id }),
   });
@@ -149,6 +150,73 @@ async function followRun(
   }
 
   consola.success(`${outcome.message}\n`);
+}
+
+/**
+ * The command that runs `upgrade status` with the package manager of the project. It is `npx`
+ * when the package manager cannot be detected.
+ */
+async function getStatusCommand() {
+  const packageManager = await detectPackageManager(process.cwd()).catch(
+    () => "npm" as const,
+  );
+
+  return `${getExecCommand(packageManager)} aio-commerce-lib-app upgrade status`;
+}
+
+/** Plans, starts and follows the upgrade. Tells `interrupt` the run id once the run exists. */
+async function runHook(interrupt: InterruptNotice): Promise<HookResult> {
+  const appConfig = await parseCommerceAppConfig();
+  const { upgradeMode } = appConfig.metadata;
+
+  console.log(""); // Leave a bit of whitespace before the output to make it more readable.
+  consola.start("Checking for app upgrades...");
+
+  const context = createCamsContext();
+  consola.debug(`Service: ${context.baseUrl}`);
+
+  const extensionId = await findWorkspaceExtensionId(context);
+  if (!extensionId) {
+    consola.info("No upgrade was run: not-associated.\n");
+    return { code: "not-associated", kind: "skipped" };
+  }
+
+  const plan = await planUpgrade(context, extensionId);
+  if (typeof plan === "string") {
+    consola.info(`No upgrade was run: ${plan}.\n`);
+    return { code: plan, kind: "skipped" };
+  }
+
+  if (upgradeMode === "manual") {
+    consola.success(
+      `Upgrade detected. A plan has been created but will not be executed since ${colors.cyan("metadata.upgradeMode")} is set to ${colors.cyan("manual")}.\n`,
+    );
+  } else {
+    consola.success(
+      `Upgrade detected. A plan has been created and execution will begin shortly since ${colors.cyan("metadata.upgradeMode")} is set to ${colors.cyan("auto")}.\n`,
+    );
+  }
+
+  consola.debug({
+    message: JSON.stringify(plan, null, 2),
+    title: "Upgrade Plan\n\n",
+    type: "box",
+  });
+
+  if (upgradeMode === "manual") {
+    return { kind: "planned", plan };
+  }
+
+  const started = await startUpgrade(context, extensionId, plan);
+  interrupt.setRunId(started.id);
+
+  consola.info(`App upgrade started (run ${colors.cyan(started.id)}).`);
+  if (startBackgroundWatcher(extensionId, started)) {
+    interrupt.setWatcherStarted();
+  }
+
+  await followRun(context, extensionId, started);
+  return { kind: "upgraded", runId: started.id };
 }
 
 /**
@@ -169,69 +237,6 @@ export async function run(): Promise<HookResult> {
   } finally {
     interrupt.dispose();
   }
-}
-
-/**
- * The command that runs `upgrade status` with the package manager of the project. It is `npx`
- * when the package manager cannot be detected.
- */
-async function getStatusCommand() {
-  const packageManager = await detectPackageManager(process.cwd()).catch(
-    () => "npm" as const,
-  );
-
-  return `${getExecCommand(packageManager)} aio-commerce-lib-app upgrade status`;
-}
-
-/** Plans, starts and follows the upgrade. Tells `interrupt` the run id once the run exists. */
-async function runHook(interrupt: InterruptNotice): Promise<HookResult> {
-  const appConfig = await parseCommerceAppConfig();
-  const { upgradeMode } = appConfig.metadata;
-
-  consola.log(""); // Leave a bit of whitespace before the output to make it more readable.
-  consola.start("Checking for app upgrades...");
-
-  const context = createCamsContext();
-  consola.debug(`Service: ${context.baseUrl}`);
-
-  const extensionId = await findWorkspaceExtensionId(context);
-  if (!extensionId) {
-    consola.info("No upgrade was run: not-associated.\n");
-    return { code: "not-associated", kind: "skipped" };
-  }
-
-  const plan = await planUpgrade(context, extensionId);
-  if (typeof plan === "string") {
-    consola.info(`No upgrade was run: ${plan}.\n`);
-    return { code: plan, kind: "skipped" };
-  }
-
-  if (upgradeMode === "manual") {
-    consola.success(
-      `You have set ${colors.cyan("metadata.upgradeMode")} to ${colors.cyan("manual")}. The upgrade plan has been created but will not be executed.`,
-    );
-  } else {
-    consola.success(
-      `You have set ${colors.cyan("metadata.upgradeMode")} to ${colors.cyan("auto")}. The upgrade plan has been created. Execution will begin shortly.`,
-    );
-  }
-
-  consola.box(["Upgrade plan", JSON.stringify(plan, null, 2)].join("\n\n"));
-
-  if (upgradeMode === "manual") {
-    return { kind: "planned", plan };
-  }
-
-  const started = await startUpgrade(context, extensionId, plan);
-  interrupt.setRunId(started.id);
-
-  consola.info(`App upgrade started (run ${started.id}).`);
-  if (startBackgroundWatcher(extensionId, started)) {
-    interrupt.setWatcherStarted();
-  }
-
-  await followRun(context, extensionId, started);
-  return { kind: "upgraded", runId: started.id };
 }
 
 export async function exec() {

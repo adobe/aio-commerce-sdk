@@ -10,6 +10,8 @@
  * governing permissions and limitations under the License.
  */
 
+import { stripVTControlCharacters } from "node:util";
+
 import { consola } from "consola";
 import { HttpResponse, http } from "msw";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
@@ -61,17 +63,17 @@ const FAILED = {
 };
 
 /** Answers the lookup, the read of the latest run and the poll of run-1, and counts the last two. */
-function serve(poll: () => Response, latest: object[] = [IN_PROGRESS]) {
+function serve(poll: () => Response, latest: object | null = IN_PROGRESS) {
   const calls = { latest: 0, polls: 0 };
   apiServer.use(
     http.get(WORKSPACE_EXTENSIONS, () => HttpResponse.json([{ id: "ext-1" }])),
     http.get(UPGRADES, () => {
       calls.latest += 1;
-      return latest.length > 0
-        ? HttpResponse.json(latest)
-        : new HttpResponse(null, { status: 204 });
+      return latest === null
+        ? new HttpResponse(null, { status: 204 })
+        : HttpResponse.json(latest);
     }),
-    http.get(`${UPGRADES}/run-1`, () => {
+    http.post(`${UPGRADES}/run-1/sync`, () => {
       calls.polls += 1;
       return poll();
     }),
@@ -104,14 +106,20 @@ describe("upgrade status", () => {
     ["a succeeded", SUCCEEDED, 0, "success", "version 2.0.0"],
     ["a failed", FAILED, 1, "error", "The webhooks step failed"],
   ] as const)(
-    "checks %s run once without reading the latest run and exits with %i",
+    "checks %s run once without reading the latest run",
     async (_, body, code, log, text) => {
       const calls = serve(() => HttpResponse.json(body));
 
       await expect(run({ runId: "run-1" })).resolves.toBe(code);
 
       expect(calls).toEqual({ latest: 0, polls: 1 });
-      expect(consola[log]).toHaveBeenCalledWith(expect.stringContaining(text));
+      expect(
+        vi
+          .mocked(consola[log])
+          .mock.calls.map(([message]) =>
+            stripVTControlCharacters(String(message)),
+          ),
+      ).toContainEqual(expect.stringContaining(text));
     },
   );
 
@@ -125,7 +133,7 @@ describe("upgrade status", () => {
       expect(calls.polls).toBe(1);
       expect(consola.error).toHaveBeenCalledExactlyOnceWith(
         expect.stringContaining(
-          `\nDetails: HTTP ${status}, GET /v1/extensions/ext-1/upgrades/run-1`,
+          `\nDetails: HTTP ${status}, POST /v1/extensions/ext-1/upgrades/run-1/sync`,
         ),
       );
     },
@@ -140,7 +148,7 @@ describe("upgrade status", () => {
   });
 
   test("without a run id and without runs, says so and checks nothing", async () => {
-    const calls = serve(() => HttpResponse.json(SUCCEEDED), []);
+    const calls = serve(() => HttpResponse.json(SUCCEEDED), null);
 
     await expect(run({})).resolves.toBe(0);
 

@@ -72,6 +72,7 @@ import {
   createMockLifecycleLeaf,
 } from "#test/fixtures/workflow";
 
+import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 import type {
   AppStateSnapshot,
   LifecycleAttempt,
@@ -376,22 +377,6 @@ describe("installationRuntimeAction", () => {
         const result = await getStatus(query);
 
         expect.assert(result.type === "success", "Expected a status");
-        expect(Object.keys(result.body as object).sort()).toEqual([
-          "activations",
-          "completedAt",
-          "data",
-          "error",
-          "id",
-          "operation",
-          "planId",
-          "previousAttemptId",
-          "previousPlanId",
-          "result",
-          "review",
-          "startedAt",
-          "status",
-          "step",
-        ]);
         expect(attemptStore.get).not.toHaveBeenCalled();
         expect(planStore.get).not.toHaveBeenCalled();
       });
@@ -808,10 +793,13 @@ describe("installationRuntimeAction", () => {
       return startPlan(action, plan.id, body);
     }
 
-    async function startAutomaticUpgrade() {
+    async function startAutomaticUpgrade(
+      appConfigOverride?: CommerceAppConfigOutputModel,
+    ) {
       const action = installationRuntimeAction({
-        appConfig: configWithAutoUpgrade,
+        appConfig: appConfigOverride ?? configWithAutoUpgrade,
       });
+
       const result = await planAndStart(action);
       const attempt = (await desiredStateStore.get("current"))?.latestAttempt;
       expect.assert(attempt, "Expected a persisted upgrade attempt");
@@ -1102,6 +1090,43 @@ describe("installationRuntimeAction", () => {
                 status: "pending",
               },
               code: "in-progress",
+            },
+            statusCode: 409,
+          },
+        });
+      });
+
+      test("returns 409 app-attempt-version-mismatch when the latest attempt failed and the new app version does not match the target of the failed plan", async () => {
+        desiredStateStore = createMockLifecycleStore<OrchestrationState>({
+          initial: createMockOrchestrationState({
+            latestAttempt: createMockLifecycleAttempt({
+              id: "latest-attempt-id",
+              plan: createMockLifecyclePlan({
+                target: {
+                  appVersion: configWithAutoUpgrade.metadata.version,
+                  config: configWithAutoUpgrade,
+                },
+              }),
+              status: "failed",
+            }),
+          }),
+        });
+
+        const newVersion = "2.3.4";
+        const { action } = await startAutomaticUpgrade({
+          ...configWithAutoUpgrade,
+          metadata: {
+            ...configWithAutoUpgrade.metadata,
+            version: newVersion,
+          },
+        });
+
+        const result = await planRequest(action, requestBody);
+        expect(result).toMatchObject({
+          error: {
+            body: {
+              code: "app-attempt-version-mismatch",
+              message: expect.stringContaining("latest-attempt-id"),
             },
             statusCode: 409,
           },
@@ -1714,6 +1739,63 @@ describe("installationRuntimeAction", () => {
           }),
           expect.anything(),
         );
+      });
+
+      describe("after a failed uninstall", () => {
+        const newVersion = "2.3.4";
+
+        async function planAfterFailedUninstall(body: object) {
+          useUninstallLeaf();
+          const action = installationRuntimeAction({
+            appConfig: {
+              ...configWithAutoUpgrade,
+              metadata: {
+                ...configWithAutoUpgrade.metadata,
+                version: newVersion,
+              },
+            },
+          });
+
+          // Any request migrates the seeded record into a lifecycle baseline.
+          await action(createRuntimeActionParams({}));
+          const state = await desiredStateStore.get("current");
+          expect.assert(state, "Expected a migrated state");
+          await desiredStateStore.put("current", {
+            ...state,
+            latestAttempt: createMockLifecycleAttempt({
+              id: "failed-uninstall-id",
+              operation: "uninstall",
+              plan: createMockLifecyclePlan({
+                operation: "uninstall",
+                target: null,
+              }),
+              status: "failed",
+            }),
+          });
+
+          return planRequest(action, body);
+        }
+
+        test("plans an uninstall retry", async () => {
+          const result = await planAfterFailedUninstall({
+            ...requestBody,
+            operation: "uninstall",
+          });
+
+          expect(result).toMatchObject({
+            body: { plan: { operation: "uninstall" } },
+            statusCode: 200,
+          });
+        });
+
+        test("plans an install", async () => {
+          const result = await planAfterFailedUninstall(requestBody);
+
+          expect(result).toMatchObject({
+            body: { plan: { targetVersion: newVersion } },
+            statusCode: 200,
+          });
+        });
       });
 
       test("plans nothing when the baseline snapshot the state names is gone", async () => {

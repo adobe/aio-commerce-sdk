@@ -10,6 +10,8 @@
  * governing permissions and limitations under the License.
  */
 
+import { stripVTControlCharacters } from "node:util";
+
 import { describe, expect, test, vi } from "vitest";
 
 import { CamsClientError } from "#commands/common/cams/errors";
@@ -160,7 +162,7 @@ describe("whenStatusChanges", () => {
 });
 
 describe("describeOutcome", () => {
-  const CHECK = 'Check it later with "upgrade status run-1".';
+  const CHECK = "Check it later with upgrade status run-1.";
   const finished = (
     value: AttemptStatus["status"],
     extra?: Partial<AttemptStatus>,
@@ -217,7 +219,12 @@ describe("describeOutcome", () => {
   ] as [string, PollResult, string, boolean][])(
     "describes %s",
     (_, result, message, succeeded) => {
-      expect(describeOutcome(result, "run-1")).toEqual({ message, succeeded });
+      const outcome = describeOutcome(result, "run-1");
+
+      expect({
+        ...outcome,
+        message: stripVTControlCharacters(outcome.message),
+      }).toEqual({ message, succeeded });
     },
   );
 });

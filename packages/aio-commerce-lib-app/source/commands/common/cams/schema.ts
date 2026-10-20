@@ -75,15 +75,6 @@ export const AttemptStatusSchema = v.object({
 
 export type AttemptStatus = v.InferOutput<typeof AttemptStatusSchema>;
 
-/** The answer of the service to a read of the latest attempts. */
-export const LatestAttemptSchema = v.union([
-  AttemptStatusSchema,
-  v.pipe(
-    v.array(AttemptStatusSchema),
-    v.transform((attempts) => attempts.at(0)),
-  ),
-]);
-
 /** The parameters to find the extension associated with a workspace. */
 export const FindExtensionParamsSchema = v.object({
   workspaceId: nonEmptyStringValueSchema("workspaceId"),
@@ -100,6 +91,14 @@ export const ExtensionParamsSchema = v.object({
 
 export type ExtensionParams = v.InferInput<typeof ExtensionParamsSchema>;
 
+/** The parameters to find a specific upgrade attempt. */
+export const FindAttemptParamsSchema = v.object({
+  ...ExtensionParamsSchema.entries,
+  runId: nonEmptyStringValueSchema("runId"),
+});
+
+export type FindAttemptParams = v.InferInput<typeof FindAttemptParamsSchema>;
+
 /** The parameters to start a planned upgrade. */
 export const StartUpgradeParamsSchema = v.object({
   ...ExtensionParamsSchema.entries,
@@ -107,11 +106,3 @@ export const StartUpgradeParamsSchema = v.object({
 });
 
 export type StartUpgradeParams = v.InferInput<typeof StartUpgradeParamsSchema>;
-
-/** The parameters to read the status of one upgrade attempt. */
-export const PollUpgradeParamsSchema = v.object({
-  ...ExtensionParamsSchema.entries,
-  runId: nonEmptyStringValueSchema("runId"),
-});
-
-export type PollUpgradeParams = v.InferInput<typeof PollUpgradeParamsSchema>;

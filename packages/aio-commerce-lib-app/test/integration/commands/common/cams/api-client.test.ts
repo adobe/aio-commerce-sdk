@@ -29,7 +29,7 @@ const EXTENSIONS = `${BASE_URL}/v1/extensions`;
 const WORKSPACE_EXTENSIONS = `${BASE_URL}/v1/workspaces/:workspaceId/extensions`;
 const UPGRADES = `${EXTENSIONS}/ext-1/upgrades`;
 const UPGRADE_PREVIEW = `${UPGRADES}/preview`;
-const STATUS_URL = `${UPGRADES}/run-1`;
+const STATUS_URL = `${UPGRADES}/run-1/sync`;
 
 const ORG = { id: "org-id", ims_org_id: "ims-org-id", name: "org-name" };
 const RUNNING = { id: "run-1", status: "in-progress" };
@@ -253,17 +253,56 @@ describe("startUpgrade", () => {
 });
 
 describe("pollUpgrade", () => {
-  test("gets an attempt by its encoded path and ignores fields it does not know", async () => {
-    let received: { method: string; path: string } | undefined;
+  test("reads a closed attempt when syncing reports that it is not open", async () => {
+    const completed = { id: "run-1", status: "succeeded" };
+    let reads = 0;
     apiServer.use(
-      http.get(`${EXTENSIONS}/:extensionId/upgrades/:runId`, ({ request }) => {
-        received = {
-          method: request.method,
-          path: new URL(request.url).pathname,
-        };
-
-        return HttpResponse.json({ ...RUNNING, step: { nested: true } });
+      http.post(STATUS_URL, () =>
+        HttpResponse.json({ code: "attempt-not-open" }, { status: 409 }),
+      ),
+      http.get(`${UPGRADES}/run-1`, () => {
+        reads += 1;
+        return HttpResponse.json(completed);
       }),
+    );
+
+    await expect(createClient().pollUpgrade(IDS)).resolves.toEqual(completed);
+    expect(reads).toBe(1);
+  });
+
+  test("does not fall back to a read for another conflict", async () => {
+    let reads = 0;
+    apiServer.use(
+      http.post(STATUS_URL, () =>
+        HttpResponse.json({ code: "in-progress" }, { status: 409 }),
+      ),
+      http.get(`${UPGRADES}/run-1`, () => {
+        reads += 1;
+        return HttpResponse.json(RUNNING);
+      }),
+    );
+
+    const error = await failureOf(createClient().pollUpgrade(IDS));
+
+    expect(error).toBeInstanceOf(CamsConflictError);
+    expect(error).toMatchObject({ code: "in-progress", retryable: false });
+    expect(reads).toBe(0);
+  });
+
+  test("posts without a body to the encoded path and ignores fields it does not know", async () => {
+    let received: { body: string; path: string } | undefined;
+    apiServer.use(
+      http.post(
+        `${EXTENSIONS}/:extensionId/upgrades/:runId/sync`,
+        async ({ request }) => {
+          received = {
+            body: await request.text(),
+            path: new URL(request.url).pathname,
+          };
+
+          return HttpResponse.json({ ...RUNNING, step: { nested: true } });
+        },
+      ),
     );
 
     const attempt = await createClient().pollUpgrade({
@@ -273,9 +312,23 @@ describe("pollUpgrade", () => {
 
     expect(attempt).toEqual(RUNNING);
     expect(received).toEqual({
-      method: "GET",
-      path: "/v1/extensions/e%2F1/upgrades/r%2F1",
+      body: "",
+      path: "/v1/extensions/e%2F1/upgrades/r%2F1/sync",
     });
+  });
+
+  test("does not send an operation query to the upgrade sync endpoint", async () => {
+    let query = "";
+    apiServer.use(
+      http.post(STATUS_URL, ({ request }) => {
+        query = new URL(request.url).search;
+        return HttpResponse.json(RUNNING);
+      }),
+    );
+
+    await createClient().pollUpgrade(IDS);
+
+    expect(query).toBe("");
   });
 
   const SUCCEEDED = {
@@ -295,7 +348,7 @@ describe("pollUpgrade", () => {
     ["the result of a succeeded attempt", SUCCEEDED],
     ["the error of a failed attempt", FAILED],
   ])("accepts %s", async (_, body) => {
-    apiServer.use(http.get(STATUS_URL, () => HttpResponse.json(body)));
+    apiServer.use(http.post(STATUS_URL, () => HttpResponse.json(body)));
 
     await expect(createClient().pollUpgrade(IDS)).resolves.toMatchObject(body);
   });
@@ -305,7 +358,7 @@ describe("pollUpgrade", () => {
     ["an error without a key", { error: {}, id: "run-1", status: "failed" }],
     ["no id", { status: "failed" }],
   ])("rejects an answer with %s as unexpected", async (_, body) => {
-    apiServer.use(http.get(STATUS_URL, () => HttpResponse.json(body)));
+    apiServer.use(http.post(STATUS_URL, () => HttpResponse.json(body)));
 
     const error = await failureOf(createClient().pollUpgrade(IDS));
 
@@ -316,7 +369,7 @@ describe("pollUpgrade", () => {
   });
 
   test("rejects an answer that is not JSON", async () => {
-    apiServer.use(http.get(STATUS_URL, () => new HttpResponse("<html>")));
+    apiServer.use(http.post(STATUS_URL, () => new HttpResponse("<html>")));
 
     await expect(createClient().pollUpgrade(IDS)).rejects.toThrow("not JSON");
   });
@@ -325,7 +378,7 @@ describe("pollUpgrade", () => {
     "uses the 502/503 fallback for a %s answer without a retryable flag",
     async (status) => {
       apiServer.use(
-        http.get(STATUS_URL, () =>
+        http.post(STATUS_URL, () =>
           HttpResponse.json({ message: "No" }, { status }),
         ),
       );
@@ -345,7 +398,7 @@ describe("pollUpgrade", () => {
     "uses the backend retryable flag for HTTP %s",
     async (status, retryable) => {
       apiServer.use(
-        http.get(STATUS_URL, () =>
+        http.post(STATUS_URL, () =>
           HttpResponse.json({ message: "No", retryable }, { status }),
         ),
       );
@@ -358,7 +411,7 @@ describe("pollUpgrade", () => {
 
   test("keeps the code and the detail of a problem answer", async () => {
     apiServer.use(
-      http.get(STATUS_URL, () =>
+      http.post(STATUS_URL, () =>
         HttpResponse.json(
           { code: "commerce-access-denied", detail: "No access" },
           { status: 403 },
@@ -378,7 +431,7 @@ describe("pollUpgrade", () => {
 
   test("keeps the status, the code and the request of an error answer, without the host", async () => {
     apiServer.use(
-      http.get(STATUS_URL, () =>
+      http.post(STATUS_URL, () =>
         HttpResponse.json(
           { code: "forbidden", message: "No access" },
           { status: 403 },
@@ -392,8 +445,8 @@ describe("pollUpgrade", () => {
       code: "forbidden",
       message: "No access",
       request: {
-        method: "GET",
-        path: "/v1/extensions/ext-1/upgrades/run-1",
+        method: "POST",
+        path: "/v1/extensions/ext-1/upgrades/run-1/sync",
       },
       status: 403,
     });
@@ -427,16 +480,16 @@ describe("pollUpgrade", () => {
       "Gateway timed out",
     ],
   ])("words an answer with %s", async (_, respond, message) => {
-    apiServer.use(http.get(STATUS_URL, respond));
+    apiServer.use(http.post(STATUS_URL, respond));
 
     const error = await failureOf(createClient().pollUpgrade(IDS));
 
     expect(error.message).toBe(message);
   });
 
-  test("cuts a long body that is not JSON", async () => {
+  test("preserves a long body that is not JSON", async () => {
     apiServer.use(
-      http.get(
+      http.post(
         STATUS_URL,
         () => new HttpResponse("x".repeat(1000), { status: 500 }),
       ),
@@ -444,11 +497,11 @@ describe("pollUpgrade", () => {
 
     const error = await failureOf(createClient().pollUpgrade(IDS));
 
-    expect(error.message).toBe("x".repeat(300));
+    expect(error.message).toBe("x".repeat(1000));
   });
 
   test("marks a network failure as retryable", async () => {
-    apiServer.use(http.get(STATUS_URL, () => HttpResponse.error()));
+    apiServer.use(http.post(STATUS_URL, () => HttpResponse.error()));
 
     const error = await failureOf(createClient().pollUpgrade(IDS));
 
@@ -456,16 +509,16 @@ describe("pollUpgrade", () => {
     expect(error.retryable).toBe(true);
   });
 
-  test("does not retry, even when the client retries GET requests", async () => {
+  test("does not retry the sync POST, even when the client retries POST requests", async () => {
     let requests = 0;
     apiServer.use(
-      http.get(STATUS_URL, () => {
+      http.post(STATUS_URL, () => {
         requests += 1;
         return HttpResponse.json({}, { status: 502 });
       }),
     );
     const client = createClient({
-      retry: { delay: () => 0, limit: 2, methods: ["get"] },
+      retry: { delay: () => 0, limit: 2, methods: ["post"] },
     });
 
     await failureOf(client.pollUpgrade(IDS));
@@ -474,22 +527,34 @@ describe("pollUpgrade", () => {
   });
 });
 
+describe("readUpgrade", () => {
+  test("reads the encoded attempt path without syncing it", async () => {
+    apiServer.use(
+      http.get(`${EXTENSIONS}/:extensionId/upgrades/:runId`, ({ request }) => {
+        expect(new URL(request.url).pathname).toBe(
+          "/v1/extensions/e%2F1/upgrades/r%2F1",
+        );
+        return HttpResponse.json(RUNNING);
+      }),
+    );
+
+    await expect(
+      createClient().readUpgrade({ extensionId: "e/1", runId: "r/1" }),
+    ).resolves.toEqual(RUNNING);
+  });
+});
+
 describe("readLatestUpgrade", () => {
   test.each([
-    [
-      "the first of several attempts",
-      [RUNNING, { id: "run-0", status: "failed" }],
-      RUNNING,
-    ],
-    ["a single attempt", RUNNING, RUNNING],
-    ["no attempt", [], null],
-  ])("returns %s", async (_, body, expected) => {
-    let query = "";
+    ["a single attempt", RUNNING, RUNNING, 200],
+    ["no attempt", [], null, 204],
+  ])("returns %s", async (_, body, expected, status) => {
     apiServer.use(
-      http.get(UPGRADES, ({ request }) => {
-        query = new URL(request.url).search;
-        return HttpResponse.json(body);
-      }),
+      http.get(UPGRADES, () =>
+        status === 204
+          ? new HttpResponse(null, { status })
+          : HttpResponse.json(body, { status }),
+      ),
     );
 
     const latest = await createClient().readLatestUpgrade({
@@ -497,8 +562,6 @@ describe("readLatestUpgrade", () => {
     });
 
     expect(latest).toEqual(expected);
-    expect(new URLSearchParams(query).get("limit")).toBe("1");
-    expect(new URLSearchParams(query).get("operation")).toBe("upgrade");
   });
 
   test("returns null when the service responds with 204", async () => {
@@ -519,8 +582,11 @@ describe("parameters", () => {
     planUpgrade: () => client.planUpgrade({ extensionId: "" }),
     pollUpgrade: () => client.pollUpgrade({ extensionId: "e", runId: "" }),
     readLatestUpgrade: () => client.readLatestUpgrade({ extensionId: "" }),
+    readUpgrade: () => client.readUpgrade({ extensionId: "e", runId: "" }),
     startUpgrade: () =>
       client.startUpgrade({ extensionId: "", planId: "plan-1" }),
+    startUpgradeWithoutPlan: () =>
+      client.startUpgrade({ extensionId: "e", planId: "" }),
   };
 
   test.each(Object.keys(calls) as (keyof typeof calls)[])(
