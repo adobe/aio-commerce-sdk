@@ -38,7 +38,12 @@ export {
   isSucceededState,
 } from "./types";
 
-export type { ValidateStepTreeOptions } from "#management/deprecated/validation";
+export type {
+  StepValidationResult,
+  ValidateStepTreeOptions,
+  ValidationResult,
+  ValidationSummary,
+} from "#management/deprecated/validation";
 export type {
   StepEvent,
   StepFailedEvent,
@@ -61,6 +66,8 @@ export type {
   StepMetaInfo,
   ValidationContext,
   ValidationExecutionContext,
+  ValidationIssue,
+  ValidationIssueSeverity,
 } from "./step";
 export type {
   ExecutionStatus,
@@ -73,10 +80,3 @@ export type {
   WorkflowRunState,
   WorkflowStateMetadata,
 } from "./types";
-export type {
-  StepValidationResult,
-  ValidationIssue,
-  ValidationIssueSeverity,
-  ValidationResult,
-  ValidationSummary,
-} from "./validation";

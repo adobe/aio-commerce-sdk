@@ -19,10 +19,16 @@ import {
 import { appliesToEnv } from "#config/lib/environment";
 
 import type { CommerceEnv } from "@adobe/aio-commerce-lib-core/commerce";
-import type { UpdateEventingConfigurationParams } from "@adobe/aio-commerce-lib-events/commerce";
+import type {
+  CommerceEventProvider,
+  CommerceEventSubscription,
+  UpdateEventingConfigurationParams,
+} from "@adobe/aio-commerce-lib-events/commerce";
 import type {
   EventProviderType,
+  IoEventMetadata,
   IoEventProvider,
+  IoEventRegistration,
 } from "@adobe/aio-commerce-lib-events/io-events";
 import type { ApplicationMetadata } from "#config/index";
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
@@ -49,25 +55,6 @@ const METADATA_ID_MAX_LENGTH_FOR_INSTANCE_ID = 100;
 
 /** Storage key used for the events installation data in system config. */
 export const EVENTS_STORAGE_KEY = "events";
-
-/**
- * Adds the given providers to the stored events data, replacing stored entries with the same key.
- * @param providers - The stored data of each provider, by provider key.
- */
-export async function storeEventProviders(
-  providers: StoredEventsData["providers"],
-): Promise<void> {
-  if (Object.keys(providers).length === 0) {
-    return;
-  }
-
-  const existing =
-    await getSystemConfigByKey<StoredEventsData>(EVENTS_STORAGE_KEY);
-
-  await setSystemConfigByKey(EVENTS_STORAGE_KEY, {
-    providers: { ...existing?.providers, ...providers },
-  });
-}
 
 /**
  * Prunes the given providers from the stored events data.
@@ -229,6 +216,49 @@ export function getProviderKey(provider: EventProvider) {
 }
 
 /**
+ * Find an existing event provider by its instance ID.
+ * @param allProviders - The list of all existing event providers.
+ * @param instanceId - The instance ID to search for.
+ */
+export function findExistingProvider<
+  TProvider extends IoEventProvider | CommerceEventProvider,
+>(allProviders: TProvider[], instanceId: string) {
+  return (
+    allProviders.find((provider) => provider.instance_id === instanceId) ?? null
+  );
+}
+
+/**
+ * Find existing event metadata by its event name.
+ * @param allMetadata - The list of all existing event metadata.
+ * @param eventName - The event name to search for.
+ */
+export function findExistingProviderMetadata(
+  allMetadata: IoEventMetadata[],
+  eventName: string,
+) {
+  return allMetadata.find((meta) => meta.event_code === eventName) ?? null;
+}
+
+/**
+ * Find existing event registrations by client ID and name.
+ * @param allRegistrations - The list of all existing event registrations.
+ * @param clientId - The client ID of the workspace where the registration was created.
+ * @param name - The name of the registration to search for.
+ */
+export function findExistingRegistrations(
+  allRegistrations: IoEventRegistration[],
+  clientId: string,
+  name: string,
+) {
+  // We don't have an ID to search for, but names are deterministic and calculated by us so it should be fine.
+  // To be safe, the `allRegistrations` should come from the current installation data.
+  return allRegistrations.find(
+    (reg) => reg.client_id === clientId && reg.name === name,
+  );
+}
+
+/**
  * Generates a namespaced event name by combining the application ID with the event name.
  *
  * The application ID is sanitized to comply with the Commerce Eventing API's event code
@@ -372,6 +402,18 @@ export function groupEventsByRuntimeActions(
   }
 
   return actionEventsMap;
+}
+
+/*
+ * Find an existing Commerce event subscription by its event name.
+ * @param allSubscriptions - Map of all existing event subscriptions keyed by event name.
+ * @param eventName - The namespaced event name to search for.
+ */
+export function findExistingSubscription(
+  allSubscriptions: Map<string, CommerceEventSubscription>,
+  eventName: string,
+) {
+  return allSubscriptions.get(eventName) ?? null;
 }
 
 /**

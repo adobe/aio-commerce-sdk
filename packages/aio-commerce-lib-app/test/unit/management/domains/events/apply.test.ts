@@ -16,12 +16,14 @@ import { afterEach, describe, expect, test, vi } from "vitest";
 import { applyCommerceEvents } from "#management/domains/events/commerce";
 import { applyExternalEvents } from "#management/domains/events/external";
 import {
+  createCommerceEvents,
+  createExternalEvents,
+} from "#management/domains/events/provisioning";
+import {
   COMMERCE_PROVIDER_TYPE,
   EXTERNAL_PROVIDER_TYPE,
-  eventCodeOf,
   getNamespacedEvent,
   pruneStoredEventProviders,
-  storeEventProviders,
 } from "#management/domains/events/utils";
 import { configWithCommerceEventing } from "#test/fixtures/config";
 import {
@@ -43,12 +45,19 @@ import type {
   EventingProviderSnapshot,
 } from "#management/domains/events/types";
 
+// The install handlers are covered by the leaf tests; here they only need to be observable.
+vi.mock("#management/domains/events/provisioning", () => ({
+  createCommerceEvents: vi.fn(),
+  createExternalEvents: vi.fn(),
+  removeCommerceEvents: vi.fn(),
+  removeExternalEvents: vi.fn(),
+}));
+
 vi.mock("#management/domains/events/utils", async (importOriginal) => ({
   ...(await importOriginal<
     typeof import("#management/domains/events/utils")
   >()),
   pruneStoredEventProviders: vi.fn(),
-  storeEventProviders: vi.fn(),
 }));
 
 const { metadata } = configWithCommerceEventing;
@@ -97,41 +106,8 @@ function op(
     : { ...base, after: value, before, kind };
 }
 
-function plan(
-  operations: Operation[],
-  extra: Partial<EventingDomainPlan> = {},
-): EventingDomainPlan {
-  return {
-    operations,
-    path: ["eventing", "commerce"],
-    providerIds: { orders: "io-orders" },
-    ...extra,
-  };
-}
-
-/** A subscription replace, under the given live provider id when it exists. */
-function replaceOp(providerId?: string): Operation {
-  const subscription = {
-    name: subscriptionName,
-    providerId,
-    providerKey: "orders",
-    resourceType: "subscription" as const,
-  };
-
-  return op("update", { ...subscription, changeMode: "replace" }, subscription);
-}
-
-/** Records the order of client calls by name. */
-function recorder() {
-  const calls: string[] = [];
-  const record =
-    <TResult>(name: string, result?: TResult) =>
-    () => {
-      calls.push(name);
-      return Promise.resolve(result);
-    };
-
-  return { calls, record };
+function plan(operations: Operation[]): EventingDomainPlan {
+  return { operations, path: ["eventing", "commerce"] };
 }
 
 /** A config declaring the given providers, of the kind their type says. */
@@ -208,38 +184,25 @@ describe("applyCommerceEvents", () => {
     vi.clearAllMocks();
   });
 
-  test("returns the target providers as snapshot data and stores their event data", async () => {
-    const result = await applyCommerceEvents(plan([]), context());
+  test("runs the install for the target providers and returns them as snapshot data", async () => {
+    const ctx = context();
+    const result = await applyCommerceEvents(plan([]), ctx);
 
-    expect(result).toEqual({ snapshotData: { providers: [ordersProvider] } });
-    expect(storeEventProviders).toHaveBeenCalledWith({
-      orders: {
-        events: {
-          [orderPlaced.name]: {
-            code: eventCodeOf(orderPlaced, metadata, COMMERCE_PROVIDER_TYPE),
-            isPhiData: false,
-          },
+    expect(createCommerceEvents).toHaveBeenCalledWith(
+      {
+        eventing: {
+          commerce: [
+            { events: [orderPlaced], provider: ordersProvider.provider },
+          ],
         },
-        id: "io-orders",
+        metadata,
       },
-    });
-  });
-
-  test("stores only the providers with an explicit key", async () => {
-    const unkeyed = {
-      ...ordersProvider,
-      key: "Orders",
-      provider: { description: "d", label: "Orders" },
-    };
-    await applyCommerceEvents(
-      plan([], { providerIds: { Orders: "io-orders" } }),
-      context({}, configWith([unkeyed])),
+      ctx,
     );
-
-    expect(storeEventProviders).toHaveBeenCalledWith({});
+    expect(result).toEqual({ snapshotData: { providers: [ordersProvider] } });
   });
 
-  test("leaves out the events scoped to another environment", async () => {
+  test("leaves out of the install the events scoped to another environment", async () => {
     const saasOnly = {
       ...ordersProvider,
       events: [{ ...orderPlaced, env: ["saas" as const] }],
@@ -249,182 +212,16 @@ describe("applyCommerceEvents", () => {
       context({}, configWith([saasOnly])),
     );
 
+    expect(createCommerceEvents).not.toHaveBeenCalled();
     expect(result).toEqual({ snapshotData: { providers: [] } });
-    expect(storeEventProviders).toHaveBeenCalledWith({});
   });
 
-  test("creates a new provider's resources in dependency order under the created provider", async () => {
-    const { calls, record } = recorder();
-    const ctx = context({
-      commerceEventsClient: {
-        createEventProvider: record("commerce provider") as never,
-        createEventSubscription: record("subscription") as never,
-        updateEventingConfiguration: record("eventing module", true) as never,
-      },
-      ioEventsClient: {
-        createEventMetadataForProvider: record("metadata") as never,
-        createEventProvider: record("provider", { id: "io-new" }) as never,
-        createRegistration: record("registration") as never,
-        updateEventMetadataForProvider: record("metadata label") as never,
-      },
-    });
-
-    const eventCode = eventCodeOf(
-      orderPlaced,
-      metadata,
-      COMMERCE_PROVIDER_TYPE,
-    );
-    await applyCommerceEvents(
-      plan(
-        [
-          op("add", {
-            name: subscriptionName,
-            providerKey: "orders",
-            resourceType: "subscription",
-          }),
-          op("add", {
-            eventCodes: [eventCode],
-            name: "Reg",
-            providerKey: "orders",
-            resourceType: "registration",
-            runtimeAction: "pkg/a",
-            type: COMMERCE_PROVIDER_TYPE,
-          }),
-          op("add", {
-            eventCode,
-            label: "A",
-            providerKey: "orders",
-            resourceType: "metadata",
-            type: COMMERCE_PROVIDER_TYPE,
-          }),
-          op("add", {
-            instanceId: "i-orders",
-            label: "Orders",
-            providerKey: "orders",
-            resourceType: "commerceProvider",
-          }),
-          op("add", {
-            instanceId: "i-orders",
-            label: "Orders",
-            providerKey: "orders",
-            resourceType: "provider",
-            type: COMMERCE_PROVIDER_TYPE,
-          }),
-        ],
-        {
-          eventingModule: {
-            instanceId: "i-orders",
-            isDefaultProviderConfigured: false,
-            isDefaultWorkspaceConfigurationEmpty: true,
-          },
-          providerIds: {},
-        },
-      ),
-      ctx,
-    );
-
-    expect(calls).toEqual([
-      "provider",
-      "eventing module",
-      "commerce provider",
-      "metadata",
-      "subscription",
-      "metadata label",
-      "registration",
-    ]);
-    expect(ctx.ioEventsClient.createEventProvider).toHaveBeenCalledWith(
-      expect.objectContaining({ instanceId: "i-orders", label: "Orders" }),
-    );
-    expect(ctx.commerceEventsClient.createEventProvider).toHaveBeenCalledWith(
-      expect.objectContaining({
-        instance_id: "i-orders",
-        provider_id: "io-new",
-        workspace_configuration: expect.any(String),
-      }),
-    );
-    expect(
-      ctx.ioEventsClient.createEventMetadataForProvider,
-    ).toHaveBeenCalledWith(
-      expect.objectContaining({ eventCode, providerId: "io-new" }),
-    );
-    expect(
-      ctx.commerceEventsClient.createEventSubscription,
-    ).toHaveBeenCalledWith(
-      expect.objectContaining({
-        fields: [{ name: "sku" }],
-        name: subscriptionName,
-        parent: orderPlaced.name,
-        priority: true,
-        provider_id: "io-new",
-      }),
-    );
-    expect(ctx.ioEventsClient.createRegistration).toHaveBeenCalledWith(
-      expect.objectContaining({
-        eventsOfInterest: [{ eventCode, providerId: "io-new" }],
-        name: "Reg",
-        runtimeAction: "pkg/a",
-      }),
-    );
-    expect(storeEventProviders).toHaveBeenCalledWith({
-      orders: expect.objectContaining({ id: "io-new" }),
-    });
+  test("skips the install when the target has no providers", async () => {
+    await applyCommerceEvents(plan([]), context({}, null));
+    expect(createCommerceEvents).not.toHaveBeenCalled();
   });
 
-  test("configures the eventing module only when the plan found it unconfigured", async () => {
-    const eventingModule = {
-      instanceId: "i-orders",
-      isDefaultProviderConfigured: false,
-      isDefaultWorkspaceConfigurationEmpty: false,
-    };
-    const ctx = context({
-      commerceEventsClient: {
-        updateEventingConfiguration: () => Promise.resolve(true),
-      },
-    });
-
-    await applyCommerceEvents(plan([], { eventingModule }), ctx);
-    expect(
-      ctx.commerceEventsClient.updateEventingConfiguration,
-    ).toHaveBeenCalledWith(
-      expect.objectContaining({ enabled: true, instance_id: "i-orders" }),
-    );
-
-    const configured = context();
-    await applyCommerceEvents(
-      plan([], {
-        eventingModule: {
-          ...eventingModule,
-          isDefaultProviderConfigured: true,
-        },
-      }),
-      configured,
-    );
-    expect(
-      configured.commerceEventsClient.updateEventingConfiguration,
-    ).not.toHaveBeenCalled();
-  });
-
-  test("fails the apply when an add has no provider to go under", async () => {
-    await expect(
-      applyCommerceEvents(
-        plan(
-          [
-            op("add", {
-              eventCode: "code.a",
-              label: "A",
-              providerKey: "orders",
-              resourceType: "metadata",
-              type: COMMERCE_PROVIDER_TYPE,
-            }),
-          ],
-          { providerIds: {} },
-        ),
-        context(),
-      ),
-    ).rejects.toThrow('Event provider "orders" does not exist.');
-  });
-
-  test("removes in dependency order and forgets removed providers' stored data", async () => {
+  test("removes in dependency order, before the install, and forgets removed providers' stored data", async () => {
     const calls: string[] = [];
     const record = (name: string) => () => {
       calls.push(name);
@@ -442,6 +239,10 @@ describe("applyCommerceEvents", () => {
         deleteRegistration: record("registration"),
       },
     });
+    vi.mocked(createCommerceEvents).mockImplementation(
+      record("install") as never,
+    );
+
     await applyCommerceEvents(plan(removals), ctx);
 
     expect(calls).toEqual([
@@ -450,6 +251,7 @@ describe("applyCommerceEvents", () => {
       "metadata",
       "commerce provider",
       "provider",
+      "install",
     ]);
     expect(ctx.ioEventsClient.deleteRegistration).toHaveBeenCalledWith(
       expect.objectContaining({ registrationId: "reg-old" }),
@@ -569,14 +371,10 @@ describe("applyCommerceEvents", () => {
     );
   });
 
-  test("removes a renamed registration only after its successor is created", async () => {
+  test("removes a renamed registration only after the install creates its successor", async () => {
     const calls: string[] = [];
     const ctx = context({
       ioEventsClient: {
-        createRegistration: (({ name }: { name: string }) => {
-          calls.push(`create ${name}`);
-          return Promise.resolve();
-        }) as never,
         deleteRegistration: (({
           registrationId,
         }: {
@@ -587,6 +385,10 @@ describe("applyCommerceEvents", () => {
         }) as never,
       },
     });
+    vi.mocked(createCommerceEvents).mockImplementation((() => {
+      calls.push("install");
+      return Promise.resolve();
+    }) as never);
 
     const registration = {
       eventCodes: ["code.a"],
@@ -616,20 +418,26 @@ describe("applyCommerceEvents", () => {
 
     expect(calls).toEqual([
       "delete reg-dropped",
-      "create Reg New Label",
+      "install",
       "delete reg-renamed",
     ]);
   });
 
-  test("updates registrations after the metadata they route is created", async () => {
-    const { calls, record } = recorder();
+  test("updates registrations after the install creates the metadata they route", async () => {
+    const calls: string[] = [];
+    const record = (name: string) => () => {
+      calls.push(name);
+      return Promise.resolve();
+    };
     const ctx = context({
       ioEventsClient: {
-        createEventMetadataForProvider: record("create metadata") as never,
-        updateEventMetadataForProvider: record("update metadata") as never,
+        updateEventMetadataForProvider: record("metadata") as never,
         updateRegistration: record("registration") as never,
       },
     });
+    vi.mocked(createCommerceEvents).mockImplementation(
+      record("install") as never,
+    );
 
     await applyCommerceEvents(
       plan([
@@ -651,22 +459,11 @@ describe("applyCommerceEvents", () => {
           resourceType: "metadata",
           type: COMMERCE_PROVIDER_TYPE,
         }),
-        op("add", {
-          eventCode: "code.b",
-          label: "B",
-          providerKey: "orders",
-          resourceType: "metadata",
-          type: COMMERCE_PROVIDER_TYPE,
-        }),
       ]),
       ctx,
     );
 
-    expect(calls).toEqual([
-      "update metadata",
-      "create metadata",
-      "registration",
-    ]);
+    expect(calls).toEqual(["metadata", "install", "registration"]);
   });
 
   test("updates a subscription in place with the target event settings", async () => {
@@ -697,86 +494,38 @@ describe("applyCommerceEvents", () => {
     });
   });
 
-  test("unsubscribes a replaced subscription with the removes and subscribes it again after its metadata", async () => {
-    const { calls, record } = recorder();
+  test("replaces a subscription by unsubscribing it before the install subscribes it again", async () => {
+    const calls: string[] = [];
     const ctx = context({
       commerceEventsClient: {
-        createEventSubscription: record("subscribe") as never,
-        deleteEventSubscription: record("unsubscribe") as never,
-      },
-      ioEventsClient: {
-        createEventMetadataForProvider: record("create metadata") as never,
-        deleteEventMetadataForProvider: () => {
-          calls.push("delete metadata");
-          return Promise.reject(httpError(404));
+        deleteEventSubscription: () => {
+          calls.push("unsubscribe");
+          return Promise.resolve();
         },
-        updateEventMetadataForProvider: record("metadata label") as never,
       },
     });
-
-    const eventMetadata = {
-      eventCode: eventCodeOf(orderPlaced, metadata, COMMERCE_PROVIDER_TYPE),
-      label: orderPlaced.label,
-      providerId: "io-orders",
-      providerKey: "orders",
-      resourceType: "metadata" as const,
-      type: COMMERCE_PROVIDER_TYPE as EventProviderType,
-    };
+    vi.mocked(createCommerceEvents).mockImplementation((() => {
+      calls.push("install");
+      return Promise.resolve();
+    }) as never);
 
     await applyCommerceEvents(
       plan([
-        op("remove", eventMetadata),
-        replaceOp("io-orders"),
-        op("add", eventMetadata),
+        op("update", {
+          changeMode: "replace",
+          name: subscriptionName,
+          providerId: "io-orders",
+          providerKey: "orders",
+          resourceType: "subscription",
+        }),
       ]),
       ctx,
     );
 
-    expect(calls).toEqual([
-      "unsubscribe",
-      "delete metadata",
-      "create metadata",
-      "subscribe",
-      "metadata label",
-    ]);
+    expect(calls).toEqual(["unsubscribe", "install"]);
     expect(
       ctx.commerceEventsClient.updateEventSubscription,
     ).not.toHaveBeenCalled();
-  });
-
-  test("replaces a subscription that moves to a new provider once that provider exists", async () => {
-    const { calls, record } = recorder();
-    const ctx = context({
-      commerceEventsClient: {
-        createEventSubscription: record("subscribe") as never,
-        deleteEventSubscription: record("unsubscribe") as never,
-      },
-      ioEventsClient: {
-        createEventProvider: record("provider", { id: "io-new" }) as never,
-      },
-    });
-
-    await applyCommerceEvents(
-      plan(
-        [
-          replaceOp(),
-          op("add", {
-            instanceId: "i-orders",
-            label: "Orders",
-            providerKey: "orders",
-            resourceType: "provider",
-            type: COMMERCE_PROVIDER_TYPE,
-          }),
-        ],
-        { providerIds: {} },
-      ),
-      ctx,
-    );
-
-    expect(calls).toEqual(["unsubscribe", "provider", "subscribe"]);
-    expect(
-      ctx.commerceEventsClient.createEventSubscription,
-    ).toHaveBeenCalledWith(expect.objectContaining({ provider_id: "io-new" }));
   });
 
   describe("failure handling", () => {
@@ -790,30 +539,7 @@ describe("applyCommerceEvents", () => {
       await expect(applyCommerceEvents(plan(removals), ctx)).rejects.toThrow(
         "Failed to delete registration",
       );
-      expect(storeEventProviders).not.toHaveBeenCalled();
-    });
-
-    test("fails the apply when a create is rejected", async () => {
-      const ctx = context({
-        ioEventsClient: {
-          createEventMetadataForProvider: () => Promise.reject(httpError(409)),
-        },
-      });
-
-      await expect(
-        applyCommerceEvents(
-          plan([
-            op("add", {
-              eventCode: "code.a",
-              label: "A",
-              providerKey: "orders",
-              resourceType: "metadata",
-              type: COMMERCE_PROVIDER_TYPE,
-            }),
-          ]),
-          ctx,
-        ),
-      ).rejects.toThrow('Failed to create event metadata "code.a"');
+      expect(createCommerceEvents).not.toHaveBeenCalled();
     });
 
     test("tolerates a subscription that is already gone", async () => {
@@ -931,52 +657,25 @@ describe("applyExternalEvents", () => {
     vi.clearAllMocks();
   });
 
-  test("creates external resources without touching Commerce", async () => {
+  test("runs the external install for the target providers", async () => {
     const external: EventingProviderSnapshot = {
       events: [event("ext.created", ["pkg/a"])],
       key: "ext",
       provider: { description: "d", key: "ext", label: "External" },
       type: EXTERNAL_PROVIDER_TYPE,
     };
-    const ctx = context(
+
+    await applyExternalEvents(plan([]), context({}, configWith([external])));
+
+    expect(createExternalEvents).toHaveBeenCalledWith(
       {
-        ioEventsClient: {
-          createEventMetadataForProvider: () => Promise.resolve() as never,
-          createEventProvider: () => Promise.resolve({ id: "io-ext" }) as never,
+        eventing: {
+          external: [{ events: external.events, provider: external.provider }],
         },
+        metadata,
       },
-      configWith([external]),
+      expect.anything(),
     );
-
-    await applyExternalEvents(
-      plan(
-        [
-          op("add", {
-            instanceId: "i-ext",
-            label: "External",
-            providerKey: "ext",
-            resourceType: "provider",
-            type: EXTERNAL_PROVIDER_TYPE,
-          }),
-          op("add", {
-            eventCode: "code.ext",
-            label: "Ext",
-            providerKey: "ext",
-            resourceType: "metadata",
-            type: EXTERNAL_PROVIDER_TYPE,
-          }),
-        ],
-        { providerIds: {} },
-      ),
-      ctx,
-    );
-
-    expect(
-      ctx.ioEventsClient.createEventMetadataForProvider,
-    ).toHaveBeenCalledWith(expect.objectContaining({ providerId: "io-ext" }));
-    expect(ctx.commerceEventsClient.createEventProvider).not.toHaveBeenCalled();
-    expect(storeEventProviders).toHaveBeenCalledWith({
-      ext: expect.objectContaining({ id: "io-ext" }),
-    });
+    expect(createCommerceEvents).not.toHaveBeenCalled();
   });
 });

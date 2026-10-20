@@ -16,7 +16,27 @@ import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 import type { AppData } from "../schema";
 import type { DomainPlan, ResourceCapability } from "./resource";
 import type { WorkflowData } from "./types";
-import type { ValidationIssue } from "./validation";
+
+// Defined here (not in validation.ts) to avoid circular imports, since step
+// validate handlers need this type and validation.ts imports from step.ts.
+
+/** Severity level of a validation issue. */
+export type ValidationIssueSeverity = "error" | "warning" | "info";
+
+/** A single validation issue reported by a step's validate handler. */
+export type ValidationIssue = {
+  /** Machine-readable code identifying the issue type. */
+  code: string;
+
+  /** Human-readable description of the issue. */
+  message: string;
+
+  /** Severity of the issue. Only "error" severity blocks the workflow. */
+  severity: ValidationIssueSeverity;
+
+  /** Optional additional context about the issue. */
+  details?: Record<string, unknown>;
+};
 
 /** Shared context available to all steps during a lifecycle workflow. */
 export type LifecycleContext = {
@@ -126,10 +146,7 @@ export type LeafStep<
 > = StepBase<TName, TConfig> & {
   type: "leaf";
 
-  /**
-   * The execution handler for the step.
-   * @deprecated Use `plan` and `apply`. Installing is a plan with no baseline.
-   */
+  /** The execution handler for the step. */
   install: (
     config: TConfig,
     context: ExecutionContext<TStepCtx>,
@@ -139,8 +156,6 @@ export type LeafStep<
    * Optional pre-execution validation handler.
    * Called before the workflow begins to surface issues (errors or warnings).
    * Returning an empty array means the step has no issues.
-   *
-   * @deprecated Use `plan`, which reports issues alongside the step's plan.
    */
   validate?: (
     config: TConfig,
@@ -151,8 +166,6 @@ export type LeafStep<
    * Optional uninstall handler for the step.
    * Called during uninstallation to reverse the work done by `install`.
    * If absent, the step is silently skipped during uninstallation.
-   *
-   * @deprecated Use `plan` and `apply`. Uninstalling is a plan with no target.
    */
   uninstall?: (
     config: TConfig,
@@ -179,8 +192,6 @@ export type BranchStep<
    * Optional pre-execution validation handler for the branch itself.
    * Called before children are validated. Returning an empty array means
    * the branch has no issues at this level.
-   *
-   * @deprecated Use `plan` on the branch's leaf steps, which reports issues alongside their plans.
    */
   validate?: (
     config: TConfig,

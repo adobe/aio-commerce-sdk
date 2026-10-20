@@ -18,7 +18,7 @@ import * as v from "valibot";
 
 const POLL_INTERVAL_MS = 1000;
 const UpgradeStateSchema = v.object({
-  error: v.optional(
+  failure: v.optional(
     v.object({
       key: v.string(),
       message: v.optional(v.string()),
@@ -75,8 +75,8 @@ export async function waitForAutomaticUpgrade(
 
   if (state.status === "failed") {
     const reason =
-      state.error?.message ??
-      state.error?.key ??
+      state.failure?.message ??
+      state.failure?.key ??
       "The lifecycle attempt failed";
 
     throw new Error(`App upgrade failed: ${reason}`);

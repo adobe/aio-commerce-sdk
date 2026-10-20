@@ -70,10 +70,10 @@ describe("externalEventsStep orchestration", () => {
       setSystemConfigByKey: vi.fn().mockResolvedValue(undefined),
     };
 
-    vi.doMock("#management/deprecated/domains/events-helpers", async () => {
+    vi.doMock("#management/domains/events/helpers", async () => {
       const actual = await vi.importActual<
-        typeof import("#management/deprecated/domains/events-helpers")
-      >("#management/deprecated/domains/events-helpers");
+        typeof import("#management/domains/events/helpers")
+      >("#management/domains/events/helpers");
       return { ...actual, ...helperMocks };
     });
 
@@ -106,7 +106,7 @@ describe("externalEventsStep orchestration", () => {
   afterEach(() => {
     vi.clearAllMocks();
     vi.resetModules();
-    vi.doUnmock("#management/deprecated/domains/events-helpers");
+    vi.doUnmock("#management/domains/events/helpers");
     vi.doUnmock("#management/domains/events/utils");
     vi.doUnmock("@adobe/aio-commerce-lib-config");
   });
@@ -305,10 +305,10 @@ describe("externalEventsStep uninstall orchestration", () => {
       setSystemConfigByKey: vi.fn().mockResolvedValue(undefined),
     };
 
-    vi.doMock("#management/deprecated/domains/events-helpers", async () => {
+    vi.doMock("#management/domains/events/helpers", async () => {
       const actual = await vi.importActual<
-        typeof import("#management/deprecated/domains/events-helpers")
-      >("#management/deprecated/domains/events-helpers");
+        typeof import("#management/domains/events/helpers")
+      >("#management/domains/events/helpers");
       return { ...actual, ...helperMocks };
     });
 
@@ -337,7 +337,7 @@ describe("externalEventsStep uninstall orchestration", () => {
   afterEach(() => {
     vi.clearAllMocks();
     vi.resetModules();
-    vi.doUnmock("#management/deprecated/domains/events-helpers");
+    vi.doUnmock("#management/domains/events/helpers");
     vi.doUnmock("#management/domains/events/utils");
     vi.doUnmock("@adobe/aio-commerce-lib-config");
   });

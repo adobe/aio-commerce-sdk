@@ -10,9 +10,8 @@
  * governing permissions and limitations under the License.
  */
 
-import { nowIsoString } from "#management/common/workflow/utils";
-
 import {
+  LifecycleBaselineIncompatibleError,
   LifecycleBaselineNotFoundError,
   LifecycleStateNotInitializedError,
   StaleLifecycleAttemptError,
@@ -62,38 +61,46 @@ export type LifecycleRuntime = {
   baselineProvider: LifecycleBaselineProvider;
 };
 
-/**
- * Reads the orchestration state and its baseline snapshot. Without stored state, returns an empty
- * state and a `null` baseline, which means nothing is installed.
- */
+/** Reads orchestration state and initializes its baseline snapshot if needed. */
 export async function readOrInitializeState(
   runtime: LifecycleRuntime,
-): Promise<{ state: OrchestrationState; baseline: AppStateSnapshot | null }> {
+): Promise<{ state: OrchestrationState; baseline: AppStateSnapshot }> {
   const existing = await runtime.stateStore.get(CURRENT_STATE_KEY);
-  if (!existing) {
-    return {
-      baseline: null,
-      state: {
-        baselineSnapshotId: null,
-        latestAttempt: null,
-        pendingPlan: null,
-      },
-    };
+  if (existing) {
+    const baseline = await runtime.baselineProvider.get(
+      existing.baselineSnapshotId,
+    );
+
+    if (!baseline) {
+      throw new LifecycleBaselineNotFoundError();
+    }
+
+    if (existing.baselineSnapshotId) {
+      return { baseline, state: existing };
+    }
+
+    const initialized = { ...existing, baselineSnapshotId: baseline.id };
+    await runtime.snapshotStore.put(baseline.id, baseline);
+    await runtime.stateStore.put(CURRENT_STATE_KEY, initialized);
+
+    return { baseline, state: initialized };
   }
 
-  if (!existing.baselineSnapshotId) {
-    return { baseline: null, state: existing };
-  }
-
-  const baseline = await runtime.baselineProvider.get(
-    existing.baselineSnapshotId,
-  );
+  const baseline = await runtime.baselineProvider.get(null);
 
   if (!baseline) {
-    throw new LifecycleBaselineNotFoundError();
+    throw new LifecycleBaselineIncompatibleError();
   }
 
-  return { baseline, state: existing };
+  await runtime.snapshotStore.put(baseline.id, baseline);
+  const state: OrchestrationState = {
+    baselineSnapshotId: baseline.id,
+    latestAttempt: null,
+    pendingPlan: null,
+  };
+
+  await runtime.stateStore.put(CURRENT_STATE_KEY, state);
+  return { baseline, state };
 }
 
 /** Persists an expired active attempt as failed before returning state. */
@@ -112,7 +119,6 @@ export async function normalizeExpiredAttempt(
 
   const failed: LifecycleAttempt = {
     ...attempt,
-    completedAt: nowIsoString(),
     failure: {
       key: "LIFECYCLE_ATTEMPT_EXPIRED",
       message: "The lifecycle attempt exceeded its execution deadline",

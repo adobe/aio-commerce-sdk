@@ -62,7 +62,6 @@ export function createMockLifecycleRoot(
     children,
     meta: {
       install: { label: "Lifecycle" },
-      uninstall: { label: "Lifecycle" },
       upgrade: { label: "Lifecycle" },
     },
     name: "root",
@@ -82,7 +81,6 @@ export function createMockLifecycleLeaf(
     meta: {
       ...overrides?.meta,
       install: { label: "Synthetic domain", ...overrides?.meta?.install },
-      uninstall: { label: "Synthetic domain", ...overrides?.meta?.uninstall },
       upgrade: { label: "Synthetic domain", ...overrides?.meta?.upgrade },
     },
   };

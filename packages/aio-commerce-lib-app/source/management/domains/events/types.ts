@@ -11,18 +11,112 @@
  */
 
 import type { UpdateEventingConfigurationParams } from "@adobe/aio-commerce-lib-events/commerce";
-import type { EventProviderType } from "@adobe/aio-commerce-lib-events/io-events";
-import type { AppEvent, EventProvider } from "#config/schema/eventing";
+import type {
+  EventProviderType,
+  IoEventProvider,
+} from "@adobe/aio-commerce-lib-events/io-events";
+import type { ArrayElement } from "type-fest";
+import type {
+  AppEvent,
+  CommerceEvent,
+  EventProvider,
+} from "#config/schema/eventing";
+import type { ApplicationMetadata } from "#config/schema/metadata";
 import type { DomainPlan } from "#management/common/workflow/resource";
+import type { onboardIoEvents } from "#management/domains/events/helpers";
 import type { EventsExecutionContext } from "./context";
+
+/** Augmented provider data with it's type. */
+export type ProviderWithType = EventProvider & { type: EventProviderType };
+
+/** Parameters needed to create a provider in Adobe I/O Events */
+export type CreateIoProviderParams = {
+  context: EventsExecutionContext;
+  provider: ProviderWithType & { instanceId: string };
+};
+
+/** Parameters needed to create event metadata of a provider in Adobe I/O Events */
+export type CreateIoProviderEventsMetadataParams = {
+  metadata: ApplicationMetadata;
+  context: EventsExecutionContext;
+  type: EventProviderType;
+  provider: IoEventProvider;
+  event: AppEvent;
+};
 
 /** Event data with runtime actions omitted.  */
 export type AppEventWithoutRuntimeActions = Omit<AppEvent, "runtimeActions">;
+
+/** Parameters needed to create event event registrations in Adobe I/O Events. */
+export type CreateRegistrationParams = {
+  context: EventsExecutionContext;
+  metadata: ApplicationMetadata;
+  events: AppEventWithoutRuntimeActions[];
+  provider: IoEventProvider;
+  runtimeAction: string;
+};
+
+/** Parameters needed to onboard all the entities of Adobe I/O Events. */
+export type OnboardIoEventsParams<EventType extends AppEvent> = {
+  context: EventsExecutionContext;
+  metadata: ApplicationMetadata;
+  provider: EventProvider;
+  events: EventType[];
+  providerType: EventProviderType;
+};
+
+/** The returned data of an onboarded Adobe I/O event provider. */
+export type ProviderDataFromIo<EventType extends AppEvent> = Awaited<
+  ReturnType<typeof onboardIoEvents<EventType>>
+>["providerData"];
+
+/** The returned data of onboarded Adobe I/O events. */
+export type EventsDataFromIo<EventType extends AppEvent> = Awaited<
+  ReturnType<typeof onboardIoEvents<EventType>>
+>["eventsData"];
 
 /** The parameters needed to update the eventing module in Commerce. */
 export type ConfigureCommerceEventingParams = {
   context: EventsExecutionContext;
   config: UpdateEventingConfigurationParams;
+};
+
+/** The parameters needed to create an event provider in Commerce */
+export type CreateCommerceProviderParams = {
+  context: EventsExecutionContext;
+  provider: Pick<
+    IoEventProvider,
+    "label" | "description" | "instance_id" | "id"
+  > & { workspace_configuration: string };
+};
+
+/** The parameters needed to create event subscriptions in Commerce. */
+export type CreateCommerceEventSubscriptionParams = {
+  context: EventsExecutionContext;
+  metadata: ApplicationMetadata;
+  provider: ProviderDataFromIo<CommerceEvent>;
+  event: ArrayElement<EventsDataFromIo<CommerceEvent>>;
+};
+
+/** The parameters needed to onboard all the entities of Commerce Eventing. */
+export type OnboardCommerceEventingParams = {
+  context: EventsExecutionContext;
+  metadata: ApplicationMetadata;
+  provider: EventProvider;
+
+  ioData: {
+    provider: ProviderDataFromIo<CommerceEvent>;
+    events: EventsDataFromIo<CommerceEvent>;
+    workspaceConfiguration: string;
+  };
+};
+
+/** Parameters shared by `offboardIoEvents` and `offboardCommerceEventing`. */
+export type OffboardEventsParams = {
+  context: EventsExecutionContext;
+  metadata: ApplicationMetadata;
+  provider: EventProvider;
+  events: AppEvent[];
 };
 
 /** A single event entry stored in system config after installation. */
@@ -81,7 +175,6 @@ export type EventingOperationValue =
       label: string;
       description?: string;
       providerId?: string;
-      instanceId?: string;
     }
   | {
       resourceType: "commerceProvider";
@@ -131,24 +224,10 @@ export type SubscriptionValues = {
   hipaa_audit_required?: boolean;
 };
 
-/** What apply needs to configure the Commerce eventing module, read while planning. */
-export type EventingModuleState = {
-  /** The instance id of the first target provider, for the module's default provider. */
-  instanceId: string;
-  isDefaultProviderConfigured: boolean;
-  isDefaultWorkspaceConfigurationEmpty: boolean;
-};
-
 export type EventingDomainPlan = DomainPlan<EventingOperationValue> & {
   /**
    * Subscription values a config of ours set, keyed by subscription name: from the baseline,
    * the latest failed attempt's target, and the values that attempt's plan carried.
    */
   configuredValues?: Record<string, Partial<SubscriptionValues>[]>;
-
-  /** The I/O provider ids of the target providers that exist live, keyed by provider key. */
-  providerIds?: Record<string, string>;
-
-  /** The Commerce eventing module state, when the Commerce leaf has target providers. */
-  eventingModule?: EventingModuleState;
 };

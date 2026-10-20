@@ -45,9 +45,6 @@ export type CustomInstallationDomainPlan =
     /** Every step that ever ran, from the baseline snapshot (`[]` when there is no baseline). */
     baselineExecutedSteps: CustomInstallationStepIdentity[];
 
-    /** The baseline configuration, handed to the `uninstall` of removed steps, or `null` without one. */
-    baselineConfig: CommerceAppConfigOutputModel | null;
-
     /** The target configuration to converge to, or `null` when none is available. */
     targetConfig: CommerceAppConfigOutputModel | null;
   };

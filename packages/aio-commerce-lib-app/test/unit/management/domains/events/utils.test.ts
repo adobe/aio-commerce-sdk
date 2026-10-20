@@ -543,7 +543,7 @@ describe("existing data normalization", () => {
   });
 });
 
-describe("stored events data", () => {
+describe("pruneStoredEventProviders", () => {
   async function importUtilsWithConfigMocks() {
     vi.resetModules();
 
@@ -564,7 +564,6 @@ describe("stored events data", () => {
     return {
       configMocks,
       pruneStoredEventProviders: utilsModule.pruneStoredEventProviders,
-      storeEventProviders: utilsModule.storeEventProviders,
     };
   }
 
@@ -671,36 +670,5 @@ describe("stored events data", () => {
       "events",
       null,
     );
-  });
-
-  test("stores providers over the stored entries with the same key", async () => {
-    const { storeEventProviders, configMocks } =
-      await importUtilsWithConfigMocks();
-
-    configMocks.getSystemConfigByKey.mockResolvedValue({
-      providers: {
-        kept: { events: {}, id: "io-kept" },
-        orders: { events: {}, id: "io-old" },
-      },
-    });
-
-    await storeEventProviders({ orders: { events: {}, id: "io-orders" } });
-
-    expect(configMocks.setSystemConfigByKey).toHaveBeenCalledWith("events", {
-      providers: {
-        kept: { events: {}, id: "io-kept" },
-        orders: { events: {}, id: "io-orders" },
-      },
-    });
-  });
-
-  test("stores nothing when given no providers", async () => {
-    const { storeEventProviders, configMocks } =
-      await importUtilsWithConfigMocks();
-
-    await storeEventProviders({});
-
-    expect(configMocks.getSystemConfigByKey).not.toHaveBeenCalled();
-    expect(configMocks.setSystemConfigByKey).not.toHaveBeenCalled();
   });
 });

@@ -12,9 +12,8 @@
 
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 import type { ExecutionContext, ValidationExecutionContext } from "./step";
-import type { ValidationIssueSeverity } from "./validation";
 
-/** A problem found while planning. Blocking issues prevent the plan from running. */
+/** A planning problem that prevents a domain from producing an executable plan. */
 export type PlanningIssue = {
   /** The domain that raised the issue. */
   domain: string;
@@ -24,18 +23,6 @@ export type PlanningIssue = {
 
   /** Human-readable description of the issue. */
   message: string;
-
-  /** Whether the issue prevents the plan from running. */
-  blocking: boolean;
-
-  /** Severity of the issue. Defaults to `error` when absent. */
-  severity?: ValidationIssueSeverity;
-
-  /** Full workflow path of the step that raised the issue. */
-  path?: string[];
-
-  /** Additional context about the issue. */
-  details?: Record<string, unknown>;
 };
 
 /**
@@ -113,20 +100,13 @@ export type ApplyResult<TSnapshotData> = {
   snapshotData: TSnapshotData | null;
 };
 
-/** An issue that prevents the plan from running. */
-export type BlockingPlanningIssue = PlanningIssue & { blocking: true };
-
-/** An issue reported with a plan that still runs. */
-export type NonBlockingPlanningIssue = PlanningIssue & { blocking: false };
-
 /**
  * The outcome of a domain's planning pass, discriminated by `kind`: `planned`
- * carries the executable plan and any issues that do not block it, `blocked`
- * carries the issues preventing one.
+ * carries the executable plan, `blocked` carries the issues preventing one.
  */
 export type PlanningResult<TPlan extends DomainPlan = DomainPlan> =
-  | { kind: "planned"; plan: TPlan; issues?: NonBlockingPlanningIssue[] }
-  | { kind: "blocked"; issues: BlockingPlanningIssue[] };
+  | { kind: "planned"; plan: TPlan }
+  | { kind: "blocked"; issues: PlanningIssue[] };
 
 /**
  * The resource-reconciliation behavior a step contributes: planning proposes a

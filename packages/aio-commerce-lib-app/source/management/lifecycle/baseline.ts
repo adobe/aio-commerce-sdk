@@ -9,7 +9,13 @@
  * OF ANY KIND, either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
  */
-import type { AppStateSnapshot } from "#management/common/orchestration";
+
+import { CURRENT_STATE_KEY } from "./state";
+
+import type {
+  AppStateSnapshot,
+  OrchestrationState,
+} from "#management/common/orchestration";
 import type { LifecycleBaselineProvider, LifecycleStore } from "./state";
 
 /** Resolves lifecycle snapshots from the snapshot store. */
@@ -20,4 +26,13 @@ export function createLifecycleBaselineProvider(
     get: async (snapshotId) =>
       snapshotId ? await snapshotStore.get(snapshotId) : null,
   };
+}
+
+/** Resolves the baseline selected by the current lifecycle state. */
+export async function getCurrentLifecycleBaseline(
+  stateStore: LifecycleStore<OrchestrationState>,
+  baselineProvider: LifecycleBaselineProvider,
+): Promise<AppStateSnapshot | null> {
+  const state = await stateStore.get(CURRENT_STATE_KEY);
+  return baselineProvider.get(state?.baselineSnapshotId ?? null);
 }

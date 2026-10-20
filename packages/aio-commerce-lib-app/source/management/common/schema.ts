@@ -10,6 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
+import { CommerceEnvSchema } from "@adobe/aio-commerce-lib-core/commerce";
 import { nonEmptyStringValueSchema } from "@aio-commerce-sdk/common-utils/valibot";
 import * as v from "valibot";
 
@@ -34,13 +35,16 @@ export type AppData = v.InferOutput<typeof AppDataSchema>;
  */
 export const LifecycleRequestContextSchema = v.object({
   appData: AppDataSchema,
+
+  // Optional because an upgrade derives the Commerce instance from the existing
+  // association; install and uninstall read these from the body and guard them.
+  commerceBaseUrl: v.optional(v.string()),
+  commerceEnv: v.optional(CommerceEnvSchema),
+
   ioEventsEnv: v.string(),
   ioEventsUrl: v.string(),
 
-  // Plans an uninstall instead of the install or upgrade the installed state calls for.
-  operation: v.optional(v.literal("uninstall")),
-
-  // The id of the pending plan to start. Required to start any operation.
+  // Upgrade only: the id of a plan a reviewer approved, which starts the upgrade.
   planId: v.optional(v.string()),
 });
 

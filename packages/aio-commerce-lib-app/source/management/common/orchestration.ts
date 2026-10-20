@@ -36,28 +36,28 @@ export type LifecyclePlan = {
   /** Version of the action that produced the plan. */
   actionVersion: string;
 
-  /** The state the plan transitions from, or `null` when nothing is installed. */
+  /** The state the plan transitions from. */
   source: {
     /** Identifier of the baseline snapshot. */
     snapshotId: string;
 
     /** App version of the baseline. */
     appVersion: string;
-  } | null;
+  };
 
-  /** The state the plan transitions to, or `null` when the app ends up with nothing installed. */
+  /** The state the plan transitions to. */
   target: {
     /** App version being transitioned to. */
     appVersion: string;
 
     /** Validated configuration used to produce and execute the plan. */
     config: CommerceAppConfigOutputModel;
-  } | null;
+  };
 
   /** Per-domain plans that compose the operation. */
   domains: DomainPlan[];
 
-  /** Issues reported while planning or validating the plan. Blocking ones prevent it from running. */
+  /** Blocking issues reported while planning. */
   issues: PlanningIssue[];
 };
 
@@ -117,9 +117,6 @@ type LifecycleAttemptBase = {
   /** ISO timestamp when the attempt started. */
   startedAt: string;
 
-  /** ISO timestamp when the attempt succeeded or failed. Absent while it is pending or in progress. */
-  completedAt?: string;
-
   /** ISO timestamp after which an active attempt no longer blocks orchestration. */
   executionDeadline: string;
 
@@ -139,12 +136,7 @@ type LifecycleAttemptBase = {
 export type LifecycleAttempt = LifecycleAttemptBase &
   (
     | { status: "pending" | "in-progress" }
-    | {
-        status: "succeeded";
-
-        /** What the attempt left installed, or `null` when it left nothing installed. */
-        result: SuccessfulResult | null;
-      }
+    | { status: "succeeded"; result: SuccessfulResult }
     | { status: "failed"; failure: WorkflowError<{ operationId?: string }> }
   );
 

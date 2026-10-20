@@ -12,14 +12,7 @@
 
 import { fieldValuesEqual, isUnset } from "#management/common/utils/values";
 
-import type { CommerceWebhook } from "@adobe/aio-commerce-lib-webhooks/api";
-import type { WebhookEntry } from "#config/schema/webhooks";
-import type { ValidationIssue } from "#management/common/workflow/validation";
-import type {
-  ConflictingWebhook,
-  ResolvedWebhookPayload,
-  WebhookOperationValue,
-} from "./types";
+import type { ResolvedWebhookPayload, WebhookOperationValue } from "./types";
 
 /** Mutable (non-identity) scalar fields compared to detect a config change. */
 const MUTABLE_SCALAR_FIELDS = [
@@ -73,53 +66,4 @@ export function hasWebhookConfigChanged(
 
     return configuredValues.some((value) => fieldValuesEqual(liveValue, value));
   });
-}
-
-/**
- * Finds the live webhooks of another app that conflict with the given modification webhooks:
- * same `webhook_method` and `webhook_type`, different batch or hook name.
- *
- * @param entries - The app's modification webhook entries.
- * @param live - The webhooks registered in Commerce.
- * @param idPrefix - The app's batch and hook name prefix.
- */
-export function findConflictingWebhooks(
-  entries: WebhookEntry[],
-  live: CommerceWebhook[],
-  idPrefix: string,
-): ConflictingWebhook[] {
-  return entries.flatMap((entry) => {
-    const { webhook } = entry;
-    const conflicting = live.find((existing) => {
-      const isSameHookPoint =
-        existing.webhook_method === webhook.webhook_method &&
-        existing.webhook_type === webhook.webhook_type;
-
-      const isSameWebhook =
-        existing.batch_name === `${idPrefix}${webhook.batch_name}` &&
-        existing.hook_name === `${idPrefix}${webhook.hook_name}`;
-
-      return isSameHookPoint && !isSameWebhook;
-    });
-
-    return conflicting ? [{ label: entry.label, ...conflicting }] : [];
-  });
-}
-
-/** The `WEBHOOK_CONFLICTS` warning for the given conflicts, or none when there are none. */
-export function toWebhookConflictIssues(
-  conflicts: ConflictingWebhook[],
-): ValidationIssue[] {
-  if (conflicts.length === 0) {
-    return [];
-  }
-
-  return [
-    {
-      code: "WEBHOOK_CONFLICTS",
-      details: { conflictedWebhooks: conflicts },
-      message: `Webhook conflicts detected: ${conflicts.length} webhook(s) already registered for the same method and type by another app`,
-      severity: "warning",
-    },
-  ];
 }
