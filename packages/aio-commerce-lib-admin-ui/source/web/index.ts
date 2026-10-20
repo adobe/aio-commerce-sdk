@@ -21,6 +21,7 @@ export { useIms } from "#web/react/auth/context/ims-context.tsx";
 export { useSharedContext } from "#web/react/commerce/context/shared-context.tsx";
 export { useCommerce } from "#web/react/commerce/hooks/use-commerce";
 export {
+  useInvoiceViewButtonContext,
   useMassActionContext,
   useOrderViewButtonContext,
 } from "#web/react/commerce/hooks/use-extension-context";
@@ -30,6 +31,7 @@ export { createExtensionApp } from "#web/react/extension/create-app.tsx";
 export type { ImsContext } from "#web/react/auth/types";
 export type {
   HostConnection,
+  InvoiceViewButtonContext,
   MassActionContext,
   OrderViewButtonContext,
   SharedContext,

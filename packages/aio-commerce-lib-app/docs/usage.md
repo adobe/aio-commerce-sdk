@@ -7,7 +7,7 @@ The `@adobe/aio-commerce-lib-app` library provides:
 - **App Configuration**: Define, validate and read/parse configurations for Adobe Commerce App Builder applications
 - **Business Configuration**: Generate and manage the runtime actions that power the `commerce/configuration/1` extension point.
 - **Installation Management**: Generate and manage the runtime action that powers the app installation and upgrade flow.
-- **Admin UI Configuration** (`commerce/backend-ui/2`): Generate and manage the runtime action and `workerProcess` declarations for Admin UI extensions on `commerce/backend-ui/2`. Currently supports grid column extensions, mass actions, order view buttons, and menu declarations.
+- **Admin UI Configuration** (`commerce/backend-ui/2`): Generate and manage the runtime action and `workerProcess` declarations for Admin UI extensions on `commerce/backend-ui/2`. Currently supports grid column extensions, mass actions, order and invoice view buttons, and menu declarations.
 - **Association Helpers**: Retrieve the Commerce instance the app is associated with from any runtime action via `getCommerceClient` and `getCommerceInstance`.
 - **Event Emission**: Publish a configured I/O Event from any runtime action by provider key and event name via `publishEvent`.
 - **Event Code Resolution**: Compute the I/O Events event code for a declared event via `resolveIoEventCode`, matching the prefixing rules used at installation time.
@@ -642,7 +642,7 @@ Two things follow from this:
 
 The `adminUi` field declares Admin UI registrations for the `commerce/backend-ui/2` extension point. Unlike `commerce/backend-ui/1`, which required a dedicated registration action, V2 reads the registration directly from the `app-config` endpoint — no separate registration action is generated. Every field of `adminUi` is optional — configure only the extension points your application needs. When defined, `init` and `generate all` automatically wire up the extension, including the `pre-app-build` hook and the `workerProcess` declarations in `ext.config.yaml`.
 
-View-based features also get a minimal `web-src/` scaffold when the resolved `view` entrypoint does not exist yet. The scaffold uses `.tsx` files when the Commerce config uses a TypeScript extension and `.jsx` files otherwise, independently of Runtime action TypeScript enablement. A TypeScript `web-src/tsconfig.json` checks only the Admin UI source and remains independent from the root config. Generation also runs a required-file phase that ensures a set of web source support files is present even when the source scaffold already exists, without replacing existing versions. The current set includes `web-src/.babelrc`, which selects React's automatic JSX transform for each environment so development builds retain JSX diagnostics while production builds do not emit `jsxDEV` calls. If `BABEL_ENV` is set, keep it synchronized with `NODE_ENV`, because Babel gives `BABEL_ENV` precedence when selecting the configuration environment. The scaffold imports app metadata from `#app.commerce.config`, so custom Admin UI code should use the same alias instead of importing generated files by path. Currently supported: grid column extensions, mass actions, order view buttons, and menu declarations. For details on each extension point, see the [Admin UI SDK Extension Points documentation](https://developer.adobe.com/commerce/extensibility/admin-ui-sdk/extension-points/).
+View-based features also get a minimal `web-src/` scaffold when the resolved `view` entrypoint does not exist yet. The scaffold uses `.tsx` files when the Commerce config uses a TypeScript extension and `.jsx` files otherwise, independently of Runtime action TypeScript enablement. A TypeScript `web-src/tsconfig.json` checks only the Admin UI source and remains independent from the root config. Generation also runs a required-file phase that ensures a set of web source support files is present even when the source scaffold already exists, without replacing existing versions. The current set includes `web-src/.babelrc`, which selects React's automatic JSX transform for each environment so development builds retain JSX diagnostics while production builds do not emit `jsxDEV` calls. If `BABEL_ENV` is set, keep it synchronized with `NODE_ENV`, because Babel gives `BABEL_ENV` precedence when selecting the configuration environment. The scaffold imports app metadata from `#app.commerce.config`, so custom Admin UI code should use the same alias instead of importing generated files by path. Currently supported: grid column extensions, mass actions, order and invoice view buttons, and menu declarations. For details on each extension point, see the [Admin UI SDK Extension Points documentation](https://developer.adobe.com/commerce/extensibility/admin-ui-sdk/extension-points/).
 
 ##### Grid Columns
 
@@ -774,7 +774,54 @@ export default defineConfig({
   - **align**: one of `"left"`, `"center"`, `"right"`
   - **aclProtected** (optional): boolean — when `true`, Commerce generates a per-app nested ACL resource for this column in the Adobe Commerce User Roles tree, so admins can grant or deny it per role; roles without the resource don't see the column. Derive the id with `getGridColumnAclResourceId` from `@adobe/aio-commerce-lib-admin-ui/api`. See the [`@adobe/aio-commerce-lib-admin-ui` Permission Client documentation](../../aio-commerce-lib-admin-ui/docs/usage.md#permission-client).
 
-Each of `order`, `product`, `customer`, `invoice`, `creditMemo`, `shipment`, and `newsletter` is optional — configure only the grids your application extends. Only `order`, `product`, `customer`, and `newsletter` also support `massActions`; `invoice`, `creditMemo`, and `shipment` support `gridColumns` only.
+Each of `order`, `product`, `customer`, `invoice`, `creditMemo`, `shipment`, and `newsletter` is optional — configure only the grids your application extends. Only `order`, `product`, `customer`, and `newsletter` also support `massActions`. Order and invoice support `viewButtons`; credit memo and shipment support `gridColumns` only.
+
+##### Invoice View Buttons
+
+`adminUi.invoice.viewButtons` declares buttons on the invoice detail page in
+Commerce Admin. Like order buttons, `type: "view"` opens an iframe and
+`type: "worker"` invokes a registered runtime action. Invoice view buttons may
+also set an optional `title` for the iframe page.
+
+```typescript
+adminUi: {
+  invoice: {
+    viewButtons: [
+      {
+        id: "invoice-details",
+        label: "Invoice details",
+        type: "view",
+        path: "#/invoice-details",
+        title: "Custom invoice details",
+        sortOrder: 100,
+        sandboxPermissions: ["allow-modals"],
+      },
+      {
+        id: "send-invoice",
+        label: "Send invoice",
+        type: "worker",
+        runtimeAction: "invoice/send",
+        timeout: 15,
+        sortOrder: 110,
+        confirm: { message: "Send this invoice?" },
+        notifications: {
+          success: "Invoice sent successfully.",
+          error: "Unable to send the invoice.",
+        },
+      },
+    ],
+  },
+}
+```
+
+The SDK generates the required web and worker operations, and includes invoice
+buttons in installation and upgrade planning. Button ids must be unique after
+Commerce sanitization. Common fields and variant restrictions match order
+buttons below, with `title` supported only on invoice `view` buttons.
+
+Use `@adobe/aio-commerce-sdk/admin-ui/invoice-view-buttons` for invoice worker
+request/response and ACL helpers. Iframe pages use
+`useInvoiceViewButtonContext` from `@adobe/aio-commerce-lib-admin-ui/web`.
 
 ##### Order View Buttons
 

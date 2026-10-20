@@ -20,6 +20,7 @@ import {
   configWithAdminUiInvoiceCreditMemoShipmentGrids,
   configWithAdminUiNewsletterMassActions,
   configWithAdminUiSingleGrid,
+  configWithInvoiceViewButtons,
 } from "#test/fixtures/config";
 
 import type { AdminUiConfig } from "#config/schema/admin-ui";
@@ -356,6 +357,61 @@ describe("planAdminUi", () => {
       "add:creditMemo.grid-columns",
       "add:invoice.grid-columns",
       "add:shipment.grid-columns",
+    ]);
+  });
+
+  test("registers invoice buttons as separate components", async () => {
+    const { plan } = await planned(null, configWithInvoiceViewButtons);
+    expect(plan.extensionAction).toBe("register");
+    expect(plan.operations.map((op) => op.id)).toEqual([
+      "add:invoice.view-button.invoice-details",
+      "add:invoice.view-button.send-invoice",
+    ]);
+  });
+
+  test("keeps order and invoice buttons with the same ids distinct", async () => {
+    const config = {
+      ...configWithInvoiceViewButtons,
+      adminUi: {
+        ...configWithInvoiceViewButtons.adminUi,
+        order: {
+          viewButtons:
+            configWithInvoiceViewButtons.adminUi.invoice.viewButtons.filter(
+              (button) => button.type === "worker",
+            ),
+        },
+      },
+    };
+    const { plan } = await planned(null, config);
+    expect(plan.operations.map((op) => op.id)).toEqual([
+      "add:order.view-button.send-invoice",
+      "add:invoice.view-button.invoice-details",
+      "add:invoice.view-button.send-invoice",
+    ]);
+  });
+
+  test("refreshes changed invoice buttons and unregisters removed ones", async () => {
+    const changed = {
+      ...configWithInvoiceViewButtons,
+      adminUi: {
+        invoice: {
+          viewButtons:
+            configWithInvoiceViewButtons.adminUi.invoice.viewButtons.map(
+              (button) => ({ ...button, label: "Updated invoice button" }),
+            ),
+        },
+      },
+    };
+    const { plan } = await planned(configWithInvoiceViewButtons, changed);
+    expect(plan.extensionAction).toBe("refresh");
+    expect(plan.operations).toHaveLength(2);
+    expect(plan.operations.every((op) => op.kind === "update")).toBe(true);
+
+    const removed = await planned(configWithInvoiceViewButtons, null);
+    expect(removed.plan.extensionAction).toBe("unregister");
+    expect(removed.plan.operations.map((op) => op.id)).toEqual([
+      "remove:invoice.view-button.invoice-details",
+      "remove:invoice.view-button.send-invoice",
     ]);
   });
 });

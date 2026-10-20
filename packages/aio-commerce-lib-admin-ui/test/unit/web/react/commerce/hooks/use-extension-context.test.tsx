@@ -16,6 +16,7 @@ import { renderHook } from "vitest-browser-react";
 import { createMockGuestConnection } from "#test/fixtures/uix-guest";
 import { sharedContextProvider } from "#test/utils/shared-context.tsx";
 import {
+  useInvoiceViewButtonContext,
   useMassActionContext,
   useOrderViewButtonContext,
 } from "#web/react/commerce/hooks/use-extension-context";
@@ -103,6 +104,57 @@ describe("useMassActionContext", () => {
 describe("useOrderViewButtonContext", () => {
   afterEach(() => {
     history.replaceState(null, "", "/");
+  });
+
+  describe("useInvoiceViewButtonContext", () => {
+    afterEach(() => {
+      history.replaceState(null, "", "/");
+    });
+
+    test("returns the invoice ID from URL search params and preserves the result", async () => {
+      window.history.replaceState(null, "", "?invoiceId=000000123");
+
+      const { result, rerender } = await renderHook(() =>
+        useInvoiceViewButtonContext(),
+      );
+      expect(result.current).toEqual({
+        data: { invoiceId: "000000123" },
+        error: null,
+      });
+
+      const initialResult = result.current;
+      await rerender();
+      expect(result.current).toBe(initialResult);
+    });
+
+    test("returns the invoice ID from the URL hash", async () => {
+      window.history.replaceState(null, "", "/#/view?invoiceId=7");
+
+      const { result } = await renderHook(() => useInvoiceViewButtonContext());
+      expect(result.current).toEqual({ data: { invoiceId: "7" }, error: null });
+    });
+
+    test("prefers the search parameter over the hash", async () => {
+      window.history.replaceState(null, "", "?invoiceId=5#/view?invoiceId=7");
+
+      const { result } = await renderHook(() => useInvoiceViewButtonContext());
+      expect(result.current).toEqual({ data: { invoiceId: "5" }, error: null });
+    });
+
+    test.each(["/", "?orderId=5", "?invoiceId=", "?invoiceId=%20%20"])(
+      "returns an error for a missing or blank invoice ID at %s",
+      async (url) => {
+        window.history.replaceState(null, "", url);
+
+        const { result } = await renderHook(() =>
+          useInvoiceViewButtonContext(),
+        );
+        expect.assert.isNull(result.current.data);
+        expect(result.current.error.message).toContain(
+          "Could not find an invoice ID",
+        );
+      },
+    );
   });
 
   test("returns the order ID from the URL search params", async () => {

@@ -36,6 +36,7 @@ import {
   configWithCustomInstallationSteps,
   configWithExternalEventing,
   configWithFullAdminUiV2,
+  configWithInvoiceViewButtons,
   configWithMultipleWorkerMassActions,
   configWithOrderViewButtons,
   configWithOrderViewTypeButtons,
@@ -231,6 +232,46 @@ describe("buildAppManagementExtConfig", () => {
 });
 
 describe("buildAdminUiV2ExtConfig", () => {
+  test("wires invoice iframe and worker buttons into the extension manifest", () => {
+    const result = buildAdminUiV2ExtConfig(configWithInvoiceViewButtons);
+    expect(result.web).toBe("web-src");
+    expect(result.operations?.view).toEqual([
+      { impl: "index.html", type: "web" },
+    ]);
+    expect(result.operations?.workerProcess).toEqual([
+      { impl: "invoice/send", type: "action" },
+    ]);
+  });
+
+  test("invoice worker-only buttons do not require a web source", () => {
+    const worker =
+      configWithInvoiceViewButtons.adminUi.invoice.viewButtons.find(
+        (button) => button.type === "worker",
+      );
+    if (!worker) {
+      throw new Error("Missing invoice worker fixture");
+    }
+    const adminUi = { invoice: { viewButtons: [worker] } };
+    expect(requiresWebSource(adminUi)).toBe(false);
+    expect(collectUniqueRuntimeActions(adminUi)).toEqual(["invoice/send"]);
+  });
+
+  test("deduplicates actions shared by invoice and order buttons", () => {
+    const worker =
+      configWithInvoiceViewButtons.adminUi.invoice.viewButtons.find(
+        (button) => button.type === "worker",
+      );
+    if (!worker) {
+      throw new Error("Missing invoice worker fixture");
+    }
+    expect(
+      collectUniqueRuntimeActions({
+        invoice: { viewButtons: [worker] },
+        order: { viewButtons: [worker] },
+      }),
+    ).toEqual(["invoice/send"]);
+  });
+
   test("pre-app-build hook uses backend-ui/2", () => {
     const config = buildAdminUiV2ExtConfig(configWithFullAdminUiV2);
     const preBuildHook = config.hooks?.["pre-app-build"] ?? "";

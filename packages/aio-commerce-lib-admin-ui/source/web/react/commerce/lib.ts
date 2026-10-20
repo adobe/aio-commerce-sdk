@@ -15,10 +15,23 @@
  * @param href - The URL to read the order ID from (typically `window.location.href`).
  */
 export function parseOrderId(href: string): string | null {
+  return parseViewButtonId(href, "orderId");
+}
+
+/**
+ * Extracts the invoice ID from the given absolute URL.
+ * @param href - The URL to read the invoice ID from (typically `window.location.href`).
+ */
+export function parseInvoiceId(href: string): string | null {
+  return parseViewButtonId(href, "invoiceId");
+}
+
+/** Reads a view-button identifier from the URL search parameters or hash-route query. */
+function parseViewButtonId(href: string, key: string): string | null {
   const urlObj = new URL(href);
   return (
-    urlObj.searchParams.get("orderId") ??
-    new URLSearchParams(urlObj.hash.split("?")[1]).get("orderId")
+    urlObj.searchParams.get(key) ??
+    new URLSearchParams(urlObj.hash.split("?").at(1)).get(key)
   );
 }
 
