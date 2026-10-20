@@ -18,9 +18,6 @@ import type { HTTPError } from "ky";
 const HTTP_CONFLICT = 409;
 const HTTP_BAD_GATEWAY = 502;
 
-/** The longest text of an error answer that is kept when the answer is not JSON. */
-const MAX_TEXT_LENGTH = 300;
-
 /** The request that CAMS answered with an error: its method and its path, without the host. */
 export type CamsRequest = {
   method: string;
@@ -75,7 +72,7 @@ export class CamsClientError extends CommerceSdkErrorBase {
 export class CamsConflictError extends CamsClientError {}
 
 /** The `code` and the text of an error answer. The text is the `message`, or the body when it is not JSON. */
-async function readAnswer(response: Response) {
+export async function readAnswer(response: Response) {
   const body = (
     await response
       .clone()
@@ -97,7 +94,7 @@ async function readAnswer(response: Response) {
     // The body is not JSON, so its text is the message.
   }
 
-  return { code: undefined, text: body.slice(0, MAX_TEXT_LENGTH) };
+  return { code: undefined, text: body };
 }
 
 /**

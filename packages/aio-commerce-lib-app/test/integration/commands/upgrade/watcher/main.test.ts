@@ -10,6 +10,8 @@
  * governing permissions and limitations under the License.
  */
 
+import { stripVTControlCharacters } from "node:util";
+
 import { HttpResponse, http } from "msw";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
@@ -34,7 +36,7 @@ import type { CamsContext } from "#commands/common/cams/context";
 
 const SERVICE = "https://service.example.com";
 const TOKEN_TIMEOUT_MS = 30_000;
-const STATUS_URL = `${SERVICE}/v1/extensions/ext-1/upgrades/run-1/status`;
+const STATUS_URL = `${SERVICE}/v1/extensions/ext-1/upgrades/run-1/sync`;
 
 const BAD_GATEWAY_RETRY = /HTTP 502.*Trying again\.$/;
 const ARGS = { extensionId: "ext-1", runId: "run-1" };
@@ -128,7 +130,9 @@ describe("runWatcher", () => {
     await expect(watch("pipe")).resolves.toBe(0);
 
     expect(polls.count).toBe(3);
-    expect(log.mock.calls.map(([line]) => line)).toEqual([
+    expect(
+      log.mock.calls.map(([line]) => stripVTControlCharacters(line)),
+    ).toEqual([
       "The hook is gone (pipe). Following the run run-1.",
       expect.stringMatching(BAD_GATEWAY_RETRY),
       "Status in-progress.",
@@ -151,7 +155,7 @@ describe("runWatcher", () => {
 
     await expect(watch("pipe")).resolves.toBe(1);
     expect(log).toHaveBeenLastCalledWith(
-      "Details: HTTP 403, POST /v1/extensions/ext-1/upgrades/run-1/status",
+      "Details: HTTP 403, POST /v1/extensions/ext-1/upgrades/run-1/sync",
     );
   });
 
@@ -282,7 +286,9 @@ describe("exec", () => {
 
       await watchAfterHookExit();
 
-      expect(written.join("")).toContain("App upgrade completed");
+      expect(stripVTControlCharacters(written.join(""))).toContain(
+        "App upgrade completed",
+      );
       expect(process.exitCode).toBe(0);
     });
   });

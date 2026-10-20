@@ -13,6 +13,7 @@
 import { setTimeout as sleep } from "node:timers/promises";
 
 import { stringifyError } from "@aio-commerce-sdk/scripting-utils/error";
+import { colors } from "consola/utils";
 
 import { CamsClientError } from "#commands/common/cams/errors";
 
@@ -114,19 +115,19 @@ export function whenStatusChanges(report: (status: AttemptStatus) => void) {
  * @param runId - The id of the run, which the user can check later with `upgrade status`.
  */
 export function describeOutcome(result: PollResult, runId: string) {
-  const check = `Check it later with "upgrade status ${runId}".`;
+  const check = `Check it later with ${colors.yellow(`upgrade status ${colors.cyan(runId)}`)}.`;
 
   if (result.kind === "failed") {
     const reason = stringifyError(result.error);
     return {
-      message: `Could not read the status of the app upgrade (run ${runId}): ${reason}. ${check}`,
+      message: `Could not read the status of the app upgrade (run ${colors.cyan(runId)}): ${reason}. ${check}`,
       succeeded: false,
     };
   }
 
   if (result.kind === "unreachable") {
     return {
-      message: `Stopped following the app upgrade (run ${runId}): the service did not answer ${MAX_CONSECUTIVE_FAILURES} times in a row. ${check}`,
+      message: `Stopped following the app upgrade (run ${colors.cyan(runId)}): the service did not answer ${colors.yellow(MAX_CONSECUTIVE_FAILURES)} times in a row. ${check}`,
       succeeded: false,
     };
   }
@@ -135,19 +136,22 @@ export function describeOutcome(result: PollResult, runId: string) {
   if (status.status === "succeeded") {
     return {
       message: status.result
-        ? `App upgrade completed. The app is now at version ${status.result.appVersion}.`
-        : "App upgrade completed.",
+        ? `App upgrade ${colors.greenBright("completed")}. The app is now at version ${colors.cyan(status.result.appVersion)}.`
+        : `App upgrade ${colors.greenBright("completed")}.`,
       succeeded: true,
     };
   }
 
   const execution = status.activations?.execution;
-  const activation = execution ? `, execution activation ${execution}` : "";
+  const activation = execution
+    ? `, execution activation ${colors.cyan(execution)}`
+    : "";
+
   const reason =
     status.error?.message ?? status.error?.key ?? "No reason was given";
 
   return {
-    message: `App upgrade failed (run ${runId}${activation}): ${reason}`,
+    message: `App upgrade ${colors.redBright("failed")} (run ${colors.cyan(runId)}${activation}): ${reason}`,
     succeeded: false,
   };
 }
