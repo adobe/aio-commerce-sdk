@@ -1438,18 +1438,18 @@ describe("installationRuntimeAction", () => {
         expect.assert(attempt, "Expected the reviewed plan to start");
 
         const ref = (id: string) => expect.objectContaining({ id });
-        const review = {
+        const planDiff = {
           added: [ref("added")],
           changed: [ref("changed")],
           dropped: [ref("dropped")],
-          planId: reviewed.id,
+          reviewedPlanId: reviewed.id,
         };
 
         expect(invokeMock).toHaveBeenCalledOnce();
         expect(attempt.plan.id).not.toBe(reviewed.id);
-        expect(attempt.review).toEqual(review);
+        expect(attempt.planDiff).toEqual(planDiff);
         expect(result).toMatchObject({
-          body: { operation: "upgrade", review },
+          body: { operation: "upgrade", planDiff },
           statusCode: 202,
           type: "success",
         });
