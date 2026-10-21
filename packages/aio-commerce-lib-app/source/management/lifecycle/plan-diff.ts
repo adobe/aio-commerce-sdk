@@ -14,12 +14,12 @@ import stringify from "safe-stable-stringify";
 
 import type {
   LifecyclePlan,
-  LifecyclePlanReview,
+  LifecyclePlanDiff,
   ReviewedOperation,
 } from "#management/common/orchestration";
 import type { ResourceOperation } from "#management/common/workflow/resource";
 
-/** A `change` operation of a plan, with the reference a review reports it under. */
+/** A `change` operation of a plan, with the reference a plan diff reports it under. */
 type IndexedOperation = {
   operation: ResourceOperation<unknown>;
   ref: ReviewedOperation;
@@ -32,10 +32,10 @@ type IndexedOperation = {
  * @param reviewed - The plan the reviewer approved.
  * @param current - The plan produced again from the current state.
  */
-export function compareWithReviewedPlan(
+export function diffAgainstReviewedPlan(
   reviewed: LifecyclePlan,
   current: LifecyclePlan,
-): LifecyclePlanReview {
+): LifecyclePlanDiff {
   const reviewedOperations = indexChangeOperations(reviewed);
   const currentOperations = indexChangeOperations(current);
 
@@ -55,7 +55,7 @@ export function compareWithReviewedPlan(
     .filter(([key]) => !currentOperations.has(key))
     .map(([, entry]) => entry.ref);
 
-  return { added, changed, dropped, planId: reviewed.id };
+  return { added, changed, dropped, reviewedPlanId: reviewed.id };
 }
 
 /** Indexes a plan's `change` operations by domain path and operation id. */

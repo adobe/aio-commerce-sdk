@@ -23,7 +23,7 @@ import { colors } from "consola/utils";
 
 import {
   createCamsContext,
-  findWorkspaceExtensionId,
+  findWorkspaceExtension,
 } from "#commands/common/cams/context";
 import { CamsConflictError } from "#commands/common/cams/errors";
 import { reportFailure } from "#commands/common/cams/report";
@@ -63,7 +63,10 @@ function isSkipCode(code: unknown): code is SkipCode {
  */
 async function planUpgrade(context: CamsContext, extensionId: string) {
   try {
-    return await context.client.planUpgrade({ extensionId });
+    return await context.client.planUpgrade(
+      { extensionId },
+      { commerceInstance: context.commerceInstance },
+    );
   } catch (error) {
     if (error instanceof CamsConflictError) {
       if (isSkipCode(error.code)) {
@@ -86,7 +89,10 @@ async function startUpgrade(
   plan: UpgradePlan,
 ) {
   try {
-    return await context.client.startUpgrade({ extensionId, planId: plan.id });
+    return await context.client.startUpgrade(
+      { extensionId, planId: plan.id },
+      { commerceInstance: context.commerceInstance },
+    );
   } catch (error) {
     if (error instanceof CamsConflictError) {
       throw new Error(`The upgrade was not started: ${error.message}`, {
@@ -139,7 +145,11 @@ async function followRun(
     onStatus: whenStatusChanges((status) => {
       consola.start(`App upgrade is ${colors.yellow(status.status)}.`);
     }),
-    poll: () => context.client.pollUpgrade({ extensionId, runId: started.id }),
+    poll: () =>
+      context.client.pollUpgrade(
+        { extensionId, runId: started.id },
+        { commerceInstance: context.commerceInstance },
+      ),
   });
 
   const outcome = describeOutcome(result, started.id);
@@ -172,10 +182,12 @@ async function runHook(interrupt: InterruptNotice): Promise<HookResult> {
   console.log(""); // Leave a bit of whitespace before the output to make it more readable.
   consola.start("Checking for app upgrades...");
 
-  const context = createCamsContext();
-  consola.debug(`Service: ${context.baseUrl}`);
+  const initialContext = createCamsContext();
+  consola.debug(`Service: ${initialContext.baseUrl}`);
 
-  const extensionId = await findWorkspaceExtensionId(context);
+  const { extensionId, commerceInstance } =
+    await findWorkspaceExtension(initialContext);
+  const context = { ...initialContext, commerceInstance };
   if (!extensionId) {
     consola.info("No upgrade was run: not-associated.\n");
     return { code: "not-associated", kind: "skipped" };

@@ -194,8 +194,8 @@ export async function startPlannedOperation({
       actionVersion,
       activationId: getActivationId(),
       executionDeadline: getExecutionDeadline(),
+      planDiff: planning.planDiff,
       planId: planning.plan.id,
-      review: planning.review,
     });
   } catch (error) {
     if (error instanceof LifecycleAttemptInProgressError) {
@@ -318,11 +318,11 @@ export function toAttemptStatus(attempt: LifecycleAttempt) {
     executionDeadline: attempt.executionDeadline,
     id: attempt.id,
     operation: attempt.operation,
+    planDiff: attempt.planDiff,
     planId: attempt.plan.id,
     previousAttemptId: attempt.previousAttemptId,
     previousPlanId: attempt.plan.previousPlanId,
     result: attempt.status === "succeeded" ? attempt.result : undefined,
-    review: attempt.review,
     startedAt: attempt.startedAt,
     status: attempt.status,
     step: attempt.progress,

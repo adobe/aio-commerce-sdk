@@ -38,8 +38,6 @@ export const ExtensionSchema = v.object({
 /** The answer of the service to a lookup by workspace. */
 export const ExtensionListSchema = v.array(ExtensionSchema);
 
-export type Extension = v.InferOutput<typeof ExtensionSchema>;
-
 /** The plan the service returns for review. */
 export const UpgradePlanAnswerSchema = v.object({
   plan: v.looseObject({

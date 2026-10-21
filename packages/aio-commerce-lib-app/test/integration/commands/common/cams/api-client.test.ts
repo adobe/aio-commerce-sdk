@@ -91,9 +91,12 @@ describe("the Commerce instance", () => {
 
   /** Answers the lookup with the extension and records the headers of the plan request. */
   function serve(extension: object) {
-    const seen = { headers: new Headers() };
+    const seen = { headers: new Headers(), lookupHeaders: new Headers() };
     apiServer.use(
-      http.get(WORKSPACE_EXTENSIONS, () => HttpResponse.json([extension])),
+      http.get(WORKSPACE_EXTENSIONS, ({ request }) => {
+        seen.lookupHeaders = request.headers;
+        return HttpResponse.json([extension]);
+      }),
       http.post(UPGRADE_PREVIEW, ({ request }) => {
         seen.headers = request.headers;
         return HttpResponse.json({ plan: { id: "p", operation: "upgrade" } });
@@ -117,7 +120,63 @@ describe("the Commerce instance", () => {
 
     expect(seen.headers.get("x-ac-url")).toBe("https://commerce.example.com");
     expect(seen.headers.get("x-ac-env")).toBe("paas");
+    expect(seen.lookupHeaders.has("x-ac-url")).toBe(false);
+    expect(seen.lookupHeaders.has("x-ac-env")).toBe(false);
   });
+
+  test.each([
+    "planUpgrade",
+    "startUpgrade",
+    "pollUpgrade",
+    "readUpgrade",
+    "readLatestUpgrade",
+  ] as const)(
+    "uses operation-specific Commerce data for %s",
+    async (operation) => {
+      const client = createClient(undefined, {
+        baseUrl: "https://default.example.com",
+        env: "paas",
+      });
+      const requests: Request[] = [];
+      apiServer.use(
+        http.all("*", ({ request }) => {
+          requests.push(request);
+          return HttpResponse.json(
+            new URL(request.url).pathname.endsWith("/preview")
+              ? { plan: { id: "plan-1", operation: "upgrade" } }
+              : RUNNING,
+          );
+        }),
+      );
+
+      await client[operation](
+        { extensionId: "ext-1", planId: "plan-1", runId: "run-1" },
+        {
+          commerceInstance: {
+            baseUrl: "https://operation.example.com",
+            env: "saas",
+          },
+          headers: new Headers({ "x-extra": "preserved" }),
+        },
+      );
+      await client[operation]({
+        extensionId: "ext-1",
+        planId: "plan-1",
+        runId: "run-1",
+      });
+
+      expect(requests).toHaveLength(2);
+      expect(requests[0]?.headers.get("x-ac-url")).toBe(
+        "https://operation.example.com",
+      );
+      expect(requests[0]?.headers.get("x-ac-env")).toBe("saas");
+      expect(requests[0]?.headers.get("x-extra")).toBe("preserved");
+      expect(requests[1]?.headers.get("x-ac-url")).toBe(
+        "https://default.example.com",
+      );
+      expect(requests[1]?.headers.get("x-ac-env")).toBe("paas");
+    },
+  );
 
   test("does not mutate client configuration from the extension response", async () => {
     const seen = serve({
@@ -256,18 +315,36 @@ describe("pollUpgrade", () => {
   test("reads a closed attempt when syncing reports that it is not open", async () => {
     const completed = { id: "run-1", status: "succeeded" };
     let reads = 0;
+    const requestHeaders: Headers[] = [];
     apiServer.use(
-      http.post(STATUS_URL, () =>
-        HttpResponse.json({ code: "attempt-not-open" }, { status: 409 }),
-      ),
-      http.get(`${UPGRADES}/run-1`, () => {
+      http.post(STATUS_URL, ({ request }) => {
+        requestHeaders.push(request.headers);
+        return HttpResponse.json({ code: "attempt-not-open" }, { status: 409 });
+      }),
+      http.get(`${UPGRADES}/run-1`, ({ request }) => {
+        requestHeaders.push(request.headers);
         reads += 1;
         return HttpResponse.json(completed);
       }),
     );
 
-    await expect(createClient().pollUpgrade(IDS)).resolves.toEqual(completed);
+    await expect(
+      createClient().pollUpgrade(IDS, {
+        commerceInstance: {
+          baseUrl: "https://commerce.example.com",
+          env: "saas",
+        },
+      }),
+    ).resolves.toEqual(completed);
     expect(reads).toBe(1);
+    expect(requestHeaders.map((headers) => headers.get("x-ac-url"))).toEqual([
+      "https://commerce.example.com",
+      "https://commerce.example.com",
+    ]);
+    expect(requestHeaders.map((headers) => headers.get("x-ac-env"))).toEqual([
+      "saas",
+      "saas",
+    ]);
   });
 
   test("does not fall back to a read for another conflict", async () => {

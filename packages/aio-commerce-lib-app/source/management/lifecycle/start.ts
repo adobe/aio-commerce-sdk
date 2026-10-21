@@ -27,7 +27,7 @@ import {
 
 import type {
   LifecycleAttempt,
-  LifecyclePlanReview,
+  LifecyclePlanDiff,
 } from "#management/common/orchestration";
 import type { LifecycleRuntime } from "./state";
 
@@ -41,7 +41,7 @@ export type StartLifecycleAttemptOptions = LifecycleRuntime & {
   activationId: string;
 
   /** How the plan differs from the one a reviewer approved, recorded on the attempt. */
-  review?: LifecyclePlanReview;
+  planDiff?: LifecyclePlanDiff;
 };
 
 /**
@@ -94,9 +94,9 @@ export async function startLifecycleAttempt(
     id: crypto.randomUUID(),
     operation: plan.operation,
     plan,
+    planDiff: options.planDiff,
     previousAttemptId: previousAttempt?.id ?? null,
     progress: workflow.step,
-    review: options.review,
     startedAt: workflow.startedAt,
     status: "pending",
   };

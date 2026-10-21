@@ -16,7 +16,7 @@ import {
   LifecycleAttemptInProgressError,
   PendingLifecyclePlanNotFoundError,
 } from "./errors";
-import { compareWithReviewedPlan } from "./review";
+import { diffAgainstReviewedPlan } from "./plan-diff";
 import {
   CURRENT_STATE_KEY,
   normalizeExpiredAttempt,
@@ -27,7 +27,7 @@ import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 import type {
   LifecycleOperation,
   LifecyclePlan,
-  LifecyclePlanReview,
+  LifecyclePlanDiff,
   OrchestrationState,
 } from "#management/common/orchestration";
 import type { PlanningIssue } from "#management/common/workflow/resource";
@@ -64,7 +64,7 @@ export type PlanLifecycleResult = (
   | { kind: "planned"; plan: LifecyclePlan }
 ) & {
   /** How the new plan differs from the reviewed one, when `reviewedPlanId` was given. */
-  review?: LifecyclePlanReview;
+  planDiff?: LifecyclePlanDiff;
 };
 
 /**
@@ -144,7 +144,7 @@ export async function planLifecycle(
 
   const result = createPlanningResult(plan);
   return reviewedPlan
-    ? { ...result, review: compareWithReviewedPlan(reviewedPlan, plan) }
+    ? { ...result, planDiff: diffAgainstReviewedPlan(reviewedPlan, plan) }
     : result;
 }
 

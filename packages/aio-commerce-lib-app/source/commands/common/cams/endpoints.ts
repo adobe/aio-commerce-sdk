@@ -14,6 +14,7 @@ import { parseOrThrow } from "@aio-commerce-sdk/common-utils/valibot";
 import * as v from "valibot";
 
 import { CamsClientError } from "#commands/common/cams/errors";
+import { withCommerceInstance } from "#commands/common/cams/http-client";
 import {
   AttemptStatusSchema,
   ExtensionListSchema,
@@ -26,7 +27,10 @@ import {
 
 import type { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
 import type { HTTPError, Options, ResponsePromise } from "ky";
-import type { CamsHttpClient } from "#commands/common/cams/http-client";
+import type {
+  CamsHttpClient,
+  CamsRequestOptions,
+} from "#commands/common/cams/http-client";
 import type {
   ExtensionParams,
   FindAttemptParams,
@@ -120,12 +124,15 @@ export async function findExtension(
 export async function planUpgrade(
   httpClient: CamsHttpClient,
   params: ExtensionParams,
-  fetchOptions?: Options,
+  fetchOptions?: CamsRequestOptions,
 ) {
   const { extensionId } = parseOrThrow(ExtensionParamsSchema, params);
   const { plan } = await readAndParseBody(
     UpgradePlanAnswerSchema,
-    httpClient.post(`${upgradesPath(extensionId)}/preview`, fetchOptions),
+    httpClient.post(
+      `${upgradesPath(extensionId)}/preview`,
+      withCommerceInstance(httpClient, fetchOptions),
+    ),
   );
 
   return plan;
@@ -145,7 +152,7 @@ export async function planUpgrade(
 export async function startUpgrade(
   httpClient: CamsHttpClient,
   params: StartUpgradeParams,
-  fetchOptions?: Options,
+  fetchOptions?: CamsRequestOptions,
 ) {
   const { extensionId, planId } = parseOrThrow(
     StartUpgradeParamsSchema,
@@ -155,7 +162,7 @@ export async function startUpgrade(
   return await readAndParseBody(
     AttemptStatusSchema,
     httpClient.post(upgradesPath(extensionId), {
-      ...fetchOptions,
+      ...withCommerceInstance(httpClient, fetchOptions),
       json: { planId },
     }),
   );
@@ -176,14 +183,14 @@ export async function startUpgrade(
 export async function pollUpgrade(
   httpClient: CamsHttpClient,
   params: FindAttemptParams,
-  fetchOptions?: Options,
+  fetchOptions?: CamsRequestOptions,
 ) {
   const { extensionId, runId } = parseOrThrow(FindAttemptParamsSchema, params);
   const attemptStatus = await readAndParseBody(
     AttemptStatusSchema,
     httpClient.post(
       `${upgradesPath(extensionId)}/${encodeURIComponent(runId)}/sync`,
-      { ...fetchOptions, retry: 0 },
+      { ...withCommerceInstance(httpClient, fetchOptions), retry: 0 },
     ),
   );
 
@@ -205,14 +212,14 @@ export async function pollUpgrade(
 export async function readUpgrade(
   httpClient: CamsHttpClient,
   params: FindAttemptParams,
-  fetchOptions?: Options,
+  fetchOptions?: CamsRequestOptions,
 ) {
   const { extensionId, runId } = parseOrThrow(FindAttemptParamsSchema, params);
   return await readAndParseBody(
     AttemptStatusSchema,
     httpClient.get(
       `${upgradesPath(extensionId)}/${encodeURIComponent(runId)}`,
-      fetchOptions,
+      withCommerceInstance(httpClient, fetchOptions),
     ),
   );
 }
@@ -232,12 +239,12 @@ export async function readUpgrade(
 export async function readLatestUpgrade(
   httpClient: CamsHttpClient,
   params: ExtensionParams,
-  fetchOptions?: Options,
+  fetchOptions?: CamsRequestOptions,
 ) {
   const { extensionId } = parseOrThrow(ExtensionParamsSchema, params);
   const response = await httpClient.get(
     upgradesPath(extensionId),
-    fetchOptions,
+    withCommerceInstance(httpClient, fetchOptions),
   );
   if (response.status === 204) {
     return null;

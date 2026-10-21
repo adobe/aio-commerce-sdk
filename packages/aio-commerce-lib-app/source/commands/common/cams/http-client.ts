@@ -53,6 +53,26 @@ export type CamsHttpClientParams = {
   fetchOptions?: Options;
 };
 
+/** Request options for operations targeting a Commerce instance. */
+export type CamsRequestOptions = Options & {
+  commerceInstance?: AssociatedCommerceData;
+};
+
+/** Applies Commerce headers to an individual operation. */
+export function withCommerceInstance(
+  client: CamsHttpClient,
+  options: CamsRequestOptions = {},
+): Options {
+  const { commerceInstance = client.config.commerceInstance, ...fetchOptions } =
+    options;
+  const headers = new Headers(fetchOptions.headers);
+  if (commerceInstance) {
+    headers.set(COMMERCE_URL_HEADER, commerceInstance.baseUrl);
+    headers.set(COMMERCE_ENV_HEADER, commerceInstance.env);
+  }
+  return { ...fetchOptions, headers };
+}
+
 /** Header that carries the organization the request is made for. */
 const ORG_HEADER = "x-org-id";
 
@@ -66,10 +86,7 @@ const COMMERCE_ENV_HEADER = "x-ac-env";
  *
  * @throws A {@link CamsClientError} If the token cannot be read.
  */
-function buildAuthHook(
-  auth: CamsAuth,
-  commerceInstance?: AssociatedCommerceData,
-) {
+function buildAuthHook(auth: CamsAuth) {
   return async (request: KyRequest) => {
     let token: string;
     try {
@@ -80,11 +97,6 @@ function buildAuthHook(
 
     request.headers.set("Authorization", `Bearer ${token}`);
     request.headers.set(ORG_HEADER, auth.org.ims_org_id);
-
-    if (commerceInstance) {
-      request.headers.set(COMMERCE_URL_HEADER, commerceInstance.baseUrl);
-      request.headers.set(COMMERCE_ENV_HEADER, commerceInstance.env);
-    }
   };
 }
 
@@ -155,7 +167,7 @@ export class CamsHttpClient implements KyHttpClient {
 
     const httpClient = ky.create({
       hooks: {
-        beforeRequest: [buildAuthHook(auth, this.config.commerceInstance)],
+        beforeRequest: [buildAuthHook(auth)],
       },
       prefixUrl: this.config.baseUrl,
       retry: {

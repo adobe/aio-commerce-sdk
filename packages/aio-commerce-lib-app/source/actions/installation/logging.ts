@@ -70,10 +70,10 @@ export function logAttemptStarted(
     `${label} attempt ${attempt.id} started from plan ${attempt.plan.id} (previous attempt ${previous}), execution dispatched as activation ${executionActivationId}.`,
   );
 
-  if (attempt.review) {
-    const { added, changed, dropped, planId } = attempt.review;
+  if (attempt.planDiff) {
+    const { added, changed, dropped, reviewedPlanId } = attempt.planDiff;
     logger.debug(
-      `${label} attempt ${attempt.id} differs from the reviewed plan ${planId} by ${added.length} added, ${dropped.length} dropped and ${changed.length} changed operations.`,
+      `${label} attempt ${attempt.id} differs from the reviewed plan ${reviewedPlanId} by ${added.length} added, ${dropped.length} dropped and ${changed.length} changed operations.`,
     );
   }
 }
