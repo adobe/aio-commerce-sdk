@@ -92,7 +92,7 @@ describe("runWatcher", () => {
   const log = vi.fn();
   const sleep = vi.fn(async () => undefined);
   const createContext = vi.fn(
-    (): CamsContext => ({
+    async (): Promise<CamsContext> => ({
       baseUrl: SERVICE,
       client: createCamsClient({
         auth: {
@@ -101,6 +101,10 @@ describe("runWatcher", () => {
         },
         config: { baseUrl: SERVICE },
       }),
+      commerceInstance: {
+        baseUrl: "https://commerce.example.com",
+        env: "saas",
+      },
       project: {
         workspace: { id: "workspace-id", name: "w", title: "W" },
       } as CamsContext["project"],
@@ -152,6 +156,7 @@ describe("runWatcher", () => {
     await expect(watch("pipe")).resolves.toBe(0);
 
     expect(polls.count).toBe(3);
+    expect(createContext).toHaveBeenCalledTimes(1);
     expect(
       log.mock.calls.map(([line]) => stripVTControlCharacters(line)),
     ).toEqual([
@@ -249,6 +254,37 @@ describe("exec", () => {
     await vi.advanceTimersByTimeAsync(TOKEN_TIMEOUT_MS + 1000);
     await watching;
   }
+
+  test("resolves the instance during startup and retries a transient lookup failure", async () => {
+    aio.getUserToken.mockResolvedValue("token");
+    const polls = serveAnswers([json(SUCCEEDED)]);
+    let lookups = 0;
+    apiServer.use(
+      http.get(LOOKUP_URL, () => {
+        lookups += 1;
+        if (lookups === 1) {
+          return HttpResponse.json({ retryable: true }, { status: 502 });
+        }
+        return HttpResponse.json([
+          {
+            id: "ext-1",
+            scope: {
+              commerceBaseUrl: "https://commerce.example.com",
+              commerceEnv: "saas",
+            },
+          },
+        ]);
+      }),
+    );
+
+    await exec("ext-1", "run-1");
+
+    expect(lookups).toBe(2);
+    expect(polls.count).toBe(1);
+    expect(polls.headers.get("x-ac-url")).toBe("https://commerce.example.com");
+    expect(polls.headers.get("x-ac-env")).toBe("saas");
+    expect(process.exitCode).toBe(0);
+  });
 
   test("logs and exits with 1 when the arguments are incomplete", async () => {
     await expect(exec("ext-1")).rejects.toThrow("exit 1");

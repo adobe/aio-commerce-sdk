@@ -102,6 +102,10 @@ function buildAuthHook(auth: CamsAuth) {
 
 /** Determines if an error is retryable based on the CAMS response. */
 async function isRetryable(error: unknown) {
+  if (error instanceof CamsClientError) {
+    return error.retryable;
+  }
+
   const isObject = (value: unknown): value is Record<string, unknown> =>
     typeof value === "object" && value !== null;
 
@@ -141,9 +145,7 @@ export class CamsHttpClient implements KyHttpClient {
   protected readonly httpClient: Readonly<KyInstance>;
 
   /** The configuration used by the HTTP client, with its defaults applied. */
-  public readonly config: Readonly<
-    Omit<CamsHttpClientConfig, "baseUrl"> & { baseUrl: string }
-  >;
+  public readonly config: Readonly<CamsHttpClientConfig & { baseUrl: string }>;
 
   public readonly get: KyInstance["get"];
   public readonly post: KyInstance["post"];

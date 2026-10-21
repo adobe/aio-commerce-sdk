@@ -11,11 +11,11 @@
  */
 
 import { CommerceSdkErrorBase } from "@adobe/aio-commerce-lib-core/error";
+import { HTTP_CONFLICT } from "@adobe/aio-commerce-lib-core/responses";
 
 import type { CommerceSdkErrorBaseOptions } from "@adobe/aio-commerce-lib-core/error";
 import type { HTTPError } from "ky";
 
-const HTTP_CONFLICT = 409;
 const HTTP_BAD_GATEWAY = 502;
 const HTTP_SERVICE_UNAVAILABLE = 503;
 

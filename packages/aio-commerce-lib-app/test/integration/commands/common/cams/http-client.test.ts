@@ -55,9 +55,10 @@ describe("CamsHttpClient", () => {
     const requests = vi.fn();
     apiServer.events.on("request:start", requests);
     const cause = new Error("The token was refused");
+    const getToken = vi.fn().mockRejectedValue(cause);
 
     const client = new CamsHttpClient({
-      auth: { getToken: () => Promise.reject(cause), org: ORG },
+      auth: { getToken, org: ORG },
       config: { baseUrl: BASE_URL },
     });
 
@@ -67,6 +68,7 @@ describe("CamsHttpClient", () => {
       retryable: false,
     });
     expect(requests).not.toHaveBeenCalled();
+    expect(getToken).toHaveBeenCalledTimes(1);
     apiServer.events.removeAllListeners();
   });
 });

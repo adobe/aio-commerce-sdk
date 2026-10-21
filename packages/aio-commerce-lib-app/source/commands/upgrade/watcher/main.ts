@@ -37,7 +37,7 @@ export type WatcherArgs = {
 /** Everything the watcher uses from outside, so tests can replace it. */
 export type WatcherDependencies = {
   log: (message: string) => void;
-  createContext: () => CamsContext;
+  createContext: () => Promise<CamsContext>;
   sleep?: (ms: number) => Promise<void>;
 };
 
@@ -102,32 +102,18 @@ export async function runWatcher(
 
   log(`The hook is gone (${signal}). Following the run ${args.runId}.`);
 
-  const context = createContext();
-
-  // The watcher is a new process, so its client does not know the Commerce instance yet. The poll
-  // loop retries the lookup like a poll, and the lookup does not retry itself for the same reason
-  // a poll does not.
-  let workspaceExtension:
-    | Awaited<ReturnType<typeof findWorkspaceExtension>>
-    | undefined;
+  const context = await createContext();
   const result = await pollUntilSettled({
     onRetry: (error) => log(`${error.message}. Trying again.`),
     onStatus: (status) => log(`Status ${status.status}.`),
-    poll: async () => {
-      if (!workspaceExtension) {
-        workspaceExtension = await findWorkspaceExtension(context, {
-          retry: 0,
-        });
-      }
-
-      return await context.client.pollUpgrade(
+    poll: () =>
+      context.client.pollUpgrade(
         {
           extensionId: args.extensionId,
           runId: args.runId,
         },
-        { commerceInstance: workspaceExtension.commerceInstance },
-      );
-    },
+        { commerceInstance: context.commerceInstance },
+      ),
     sleep,
   });
 
@@ -163,7 +149,11 @@ export async function exec(...argv: string[]) {
 
   try {
     process.exitCode = await runWatcher(args, {
-      createContext: () => createCamsContext(getTokenWithTimeout),
+      createContext: async () => {
+        const context = createCamsContext(getTokenWithTimeout);
+        const { commerceInstance } = await findWorkspaceExtension(context);
+        return { ...context, commerceInstance };
+      },
       log,
     });
   } catch (error) {
