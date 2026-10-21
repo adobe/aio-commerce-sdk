@@ -3484,7 +3484,7 @@
             },
             "required": ["path", "key"]
           },
-          "review": {
+          "planDiff": {
             "description": "How the started plan differs from the reviewed one. Present when the attempt started from a reviewed plan.",
             "type": "object",
             "additionalProperties": true

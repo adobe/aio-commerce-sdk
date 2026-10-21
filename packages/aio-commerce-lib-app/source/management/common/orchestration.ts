@@ -64,7 +64,7 @@ export type LifecyclePlan = {
   previousPlanId: string | null;
 };
 
-/** A `change` operation a review reports, identified by its domain path and operation id. */
+/** A `change` operation a plan diff reports, identified by its domain path and operation id. */
 export type ReviewedOperation = {
   /** Full workflow path of the domain the operation belongs to. */
   path: string[];
@@ -80,9 +80,9 @@ export type ReviewedOperation = {
  * How the plan an attempt runs differs from the plan the reviewer approved. Only `change`
  * operations are compared.
  */
-export type LifecyclePlanReview = {
+export type LifecyclePlanDiff = {
   /** Identifier of the reviewed plan. */
-  planId: string;
+  reviewedPlanId: string;
 
   /** Operations the executed plan has and the reviewed plan did not. */
   added: ReviewedOperation[];
@@ -145,7 +145,7 @@ type LifecycleAttemptBase = {
   data: WorkflowData | null;
 
   /** How the executed plan differs from the reviewed one, when the attempt started from a review. */
-  review?: LifecyclePlanReview;
+  planDiff?: LifecyclePlanDiff;
 };
 
 /**
