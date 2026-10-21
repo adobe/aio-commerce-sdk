@@ -312,6 +312,38 @@ describe("startUpgrade", () => {
 });
 
 describe("pollUpgrade", () => {
+  test.each([true, false])(
+    "does not retry fallback reads and preserves retryable=%s",
+    async (retryable) => {
+      let reads = 0;
+      apiServer.use(
+        http.post(STATUS_URL, () =>
+          HttpResponse.json({ code: "attempt-not-open" }, { status: 409 }),
+        ),
+        http.get(`${UPGRADES}/run-1`, () => {
+          reads += 1;
+          return HttpResponse.json(
+            { code: "upstream-app", message: "Unavailable", retryable },
+            { status: 502 },
+          );
+        }),
+      );
+      const client = createClient({
+        retry: { delay: () => 0, limit: 2, methods: ["get"] },
+      });
+
+      const error = await failureOf(client.pollUpgrade(IDS));
+
+      expect(reads).toBe(1);
+      expect(error).toBeInstanceOf(CamsClientError);
+      expect(error).toMatchObject({
+        code: "upstream-app",
+        retryable,
+        status: 502,
+      });
+    },
+  );
+
   test("reads a closed attempt when syncing reports that it is not open", async () => {
     const completed = { id: "run-1", status: "succeeded" };
     let reads = 0;

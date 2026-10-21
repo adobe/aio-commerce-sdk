@@ -77,7 +77,10 @@ function bindFailsafePollUpgrade(httpClient: CamsHttpClient) {
 
         if (code === "attempt-not-open") {
           // The attempt being polled/synced is not the running one, fallback to a normal GET.
-          return await endpoints.readUpgrade(httpClient, params, options);
+          return await bind(httpClient, endpoints.readUpgrade)(params, {
+            ...options,
+            retry: 0,
+          });
         }
       }
 
