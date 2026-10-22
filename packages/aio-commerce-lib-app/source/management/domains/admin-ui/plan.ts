@@ -16,6 +16,7 @@ import {
   ADMIN_UI_GRID_COLUMN_ENTITIES,
   ADMIN_UI_MASS_ACTION_ENTITIES,
 } from "#config/schema/admin-ui";
+import { toItemRef } from "#management/common/workflow/resource";
 
 import { hasExtensionName } from "./helpers";
 
@@ -123,6 +124,11 @@ function extractBaselineExtensionId(
   return baseline?.data?.extensionId ?? null;
 }
 
+/** The item reference of an Admin UI component, with the label and description of its config. */
+function adminUiItemRef(component: AdminUiComponentDescriptor) {
+  return toItemRef(component.key, component.config);
+}
+
 /** Builds an `add` or `remove` operation for a single enumerated component. */
 function buildComponentOperation(
   kind: "add" | "remove",
@@ -138,6 +144,7 @@ function buildComponentOperation(
     return {
       after: value,
       id: `add:${key}`,
+      itemRefs: [adminUiItemRef(component)],
       kind: "add",
       label: `Add Admin UI ${component.label}`,
       reason: "change",
@@ -147,6 +154,7 @@ function buildComponentOperation(
   return {
     before: value,
     id: `remove:${key}`,
+    itemRefs: [adminUiItemRef(component)],
     kind: "remove",
     label: `Remove Admin UI ${component.label}`,
     reason: "change",
@@ -163,6 +171,7 @@ function buildUpdateOperation(
     after: { component: after.ref, config: after.config },
     before: { component: before.ref, config: before.config },
     id: `update:${key}`,
+    itemRefs: [adminUiItemRef(after)],
     kind: "update",
     label: `Update Admin UI ${after.label}`,
     reason: "change",

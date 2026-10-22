@@ -46,6 +46,7 @@ import type {
   LifecyclePlan,
 } from "#management/common/orchestration";
 import type {
+  ItemRef,
   PlanningIssue,
   ResourceOperation,
 } from "#management/common/workflow/resource";
@@ -64,6 +65,9 @@ type PlanPreviewOperation = {
   kind: ResourceOperation<unknown>["kind"];
   label: string;
   reason: ResourceOperation<unknown>["reason"];
+
+  /** The items the operation changes. Empty for an operation internal to its domain. */
+  itemRefs: ItemRef[];
 };
 
 /** The operations a plan preview lists for one domain. */
@@ -417,12 +421,15 @@ function toPlanPreview(plan: LifecyclePlan): PlanPreview {
     domains: plan.domains
       .filter((domain) => domain.operations.length > 0)
       .map((domain) => ({
-        operations: domain.operations.map(({ id, kind, label, reason }) => ({
-          id,
-          kind,
-          label,
-          reason,
-        })),
+        operations: domain.operations.map(
+          ({ id, kind, label, reason, itemRefs }) => ({
+            id,
+            itemRefs,
+            kind,
+            label,
+            reason,
+          }),
+        ),
         path: domain.path,
       })),
     id: plan.id,

@@ -151,6 +151,96 @@ describe("planWebhookSubscriptions", () => {
     ]);
   });
 
+  describe("item references", () => {
+    const key =
+      "plugin.order.api.order_created:after:test_app_webhooks_default:test_app_webhooks_order_created";
+    const labelled = (label: string, description: string, timeout?: number) =>
+      createMockWebhooksConfig({
+        webhooks: [
+          {
+            ...createMockRuntimeWebhookEntry({ webhook: { timeout } }),
+            description,
+            label,
+          },
+        ],
+      });
+
+    test("references an add with the target's label and description", async () => {
+      const result = await plan({
+        target: labelled("Order created", "Runs after an order is created"),
+      }).result;
+
+      expect.assert(result.kind === "planned");
+      expect(result.plan.operations[0]?.itemRefs).toEqual([
+        {
+          config: expect.objectContaining({
+            description: "Runs after an order is created",
+            label: "Order created",
+          }),
+          key,
+        },
+      ]);
+    });
+
+    test("references an update with the target's text, not the baseline's", async () => {
+      const baseline = labelled("Old label", "Old description", 10);
+      const result = await plan({
+        baseline,
+        live: [liveFrom(baseline)],
+        target: labelled("New label", "New description", 20),
+      }).result;
+
+      expect.assert(result.kind === "planned");
+      expect(result.plan.operations[0]?.itemRefs).toEqual([
+        {
+          config: expect.objectContaining({
+            description: "New description",
+            label: "New label",
+          }),
+          key,
+        },
+      ]);
+    });
+
+    test("references a remove with the baseline's text, and without text for an undeclared leftover", async () => {
+      const baseline = labelled("Old label", "Old description");
+      const none = createMockWebhooksConfig({ webhooks: [] });
+
+      const declared = await plan({
+        baseline,
+        live: [liveFrom(baseline)],
+        target: none,
+      }).result;
+      expect.assert(declared.kind === "planned");
+      expect(declared.plan.operations[0]?.itemRefs).toEqual([
+        {
+          config: expect.objectContaining({
+            description: "Old description",
+            label: "Old label",
+          }),
+          key,
+        },
+      ]);
+
+      const leftover = await plan({
+        live: [liveFrom(baseline)],
+        target: none,
+      }).result;
+      expect.assert(leftover.kind === "planned");
+      expect(leftover.plan.operations[0]?.itemRefs).toEqual([{ key }]);
+    });
+
+    test("keeps the label and description out of the operation values", async () => {
+      const result = await plan({ target: labelled("Label", "Text") }).result;
+
+      expect.assert(result.kind === "planned");
+      const [operation] = result.plan.operations;
+      expect.assert(operation?.kind === "add");
+      expect(operation.after).not.toHaveProperty("meta");
+      expect(operation.after).not.toHaveProperty("label");
+    });
+  });
+
   test("plans nothing when live matches the target and holds Commerce's own values for unset fields", async () => {
     const config = createMockWebhooksConfig();
     const result = await plan({

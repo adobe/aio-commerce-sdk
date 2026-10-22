@@ -85,6 +85,7 @@ function op(
 ): Operation {
   const base = {
     id: `${kind}:${value.resourceType}`,
+    itemRefs: [],
     label: kind,
     reason: "change" as const,
   };

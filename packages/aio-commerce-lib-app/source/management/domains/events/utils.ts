@@ -257,6 +257,19 @@ export function getIoEventCode(name: string, providerType: EventProviderType) {
 }
 
 /**
+ * The namespaced event name of an I/O Events code, the inverse of {@link getIoEventCode}.
+ * @param code - The I/O Events event code.
+ * @param providerType - The type of the event provider.
+ */
+export function getNamespacedNameOfCode(
+  code: string,
+  providerType: EventProviderType,
+) {
+  const prefix = getIoEventCode("", providerType);
+  return code.startsWith(prefix) ? code.slice(prefix.length) : code;
+}
+
+/**
  * The fully-qualified I/O Events code for an event under a provider type: the event name is
  * namespaced with the application id and then qualified by {@link getIoEventCode}.
  *

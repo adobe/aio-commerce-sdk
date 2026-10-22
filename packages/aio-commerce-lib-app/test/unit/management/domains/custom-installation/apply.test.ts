@@ -50,6 +50,7 @@ describe("applyCustomInstallationSteps", () => {
         {
           after: { name: "Demo Success", script: "./demo-success.js" },
           id: "add:Demo Success",
+          itemRefs: [],
           kind: "add",
           label: "Run",
           reason: "change",
@@ -83,6 +84,7 @@ describe("applyCustomInstallationSteps", () => {
         {
           after: { name: "Demo Success", script: "./demo-success.js" },
           id: "add:Demo Success",
+          itemRefs: [],
           kind: "add",
           label: "Run",
           reason: "change",
@@ -169,6 +171,7 @@ describe("applyCustomInstallationSteps", () => {
         {
           before: { name: "Old Step", script: "./old-step.js" },
           id: "remove:Old Step",
+          itemRefs: [],
           kind: "remove",
           label: "Removed",
           reason: "change",
@@ -190,6 +193,7 @@ describe("applyCustomInstallationSteps", () => {
     const removeOf = (name: string, script: string) => ({
       before: { name, script },
       id: `remove:${name}`,
+      itemRefs: [],
       kind: "remove" as const,
       label: "Removed",
       reason: "change" as const,

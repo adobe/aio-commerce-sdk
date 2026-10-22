@@ -3691,6 +3691,22 @@
         },
         "required": ["code", "message", "domain", "severity", "blocking"]
       },
+      "ItemRef": {
+        "description": "A user-visible item an operation changes. Within a domain, operations with the same `key` change the same item.",
+        "type": "object",
+        "properties": {
+          "key": {
+            "description": "Identifies the item within its domain.",
+            "type": "string"
+          },
+          "config": {
+            "description": "The item's config as declared in the app config: the target config item for an add or update, the baseline one for a remove. Its shape depends on the domain: a webhook entry, an event of a provider, an Admin UI component or a custom installation step. Its `label` and `description` are the item's text, and a custom installation step has a `name` instead of a `label`. Absent when the item has no declared config.",
+            "type": "object",
+            "additionalProperties": true
+          }
+        },
+        "required": ["key"]
+      },
       "PlanPreview": {
         "description": "A lifecycle plan for review, without internal or sensitive values.",
         "type": "object",
@@ -3756,9 +3772,16 @@
                         "description": "`change` when the config changed, `drift` when the live state differs from what was installed.",
                         "type": "string",
                         "enum": ["change", "drift"]
+                      },
+                      "itemRefs": {
+                        "description": "The items the operation changes. Empty for an operation internal to its domain.",
+                        "type": "array",
+                        "items": {
+                          "$ref": "#/components/schemas/ItemRef"
+                        }
                       }
                     },
-                    "required": ["id", "kind", "label", "reason"]
+                    "required": ["id", "kind", "label", "reason", "itemRefs"]
                   }
                 }
               },

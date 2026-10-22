@@ -10,7 +10,11 @@
  * governing permissions and limitations under the License.
  */
 
+import type { AdminUiComponentConfig } from "#config/schema/admin-ui";
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
+import type { AppEvent } from "#config/schema/eventing";
+import type { CustomInstallationStep } from "#config/schema/installation";
+import type { WebhookEntry } from "#config/schema/webhooks";
 import type { ExecutionContext, ValidationExecutionContext } from "./step";
 import type { ValidationIssueSeverity } from "./validation";
 
@@ -38,6 +42,40 @@ export type PlanningIssue = {
   details?: Record<string, unknown>;
 };
 
+/** The config of a plan item, as declared in the app config. */
+type ItemConfig =
+  | AdminUiComponentConfig
+  | AppEvent
+  | CustomInstallationStep
+  | WebhookEntry;
+
+/**
+ * A reference to a user-visible item an operation changes. Within a domain plan, operations with
+ * the same `key` are parts of one change to one item, for example the metadata and the subscription
+ * of one event.
+ */
+export type ItemRef = {
+  /** Identifies the item within its domain plan. */
+  key: string;
+
+  /**
+   * The item's config as declared: the target config item for an add or update,
+   * the baseline one for a remove. Absent for an item with no config, such as a live-only resource.
+   * Its `label` and `description` are the item's text. A custom installation step has a `name`
+   * instead of a `label`.
+   */
+  config?: ItemConfig;
+};
+
+/**
+ * Builds an item reference.
+ * @param key - Identifies the item within its domain plan.
+ * @param config - The item's config, when it has one.
+ */
+export function toItemRef(key: string, config?: ItemConfig): ItemRef {
+  return config ? { config, key } : { key };
+}
+
 /**
  * A single change a domain proposes to apply to a resource, discriminated by
  * `kind`: `add` creates a resource, `update` mutates one, `remove` deletes one.
@@ -48,6 +86,12 @@ export type ResourceOperation<TBefore, TAfter = TBefore> = {
 
   /** Human-readable label for display. */
   label: string;
+
+  /**
+   * The user-visible items the operation changes, usually one. Empty when the operation is internal
+   * to its domain. The config comes from the target config item, else the baseline one.
+   */
+  itemRefs: ItemRef[];
 
   /**
    * Why the operation exists: `change` when the target config differs from the baseline,

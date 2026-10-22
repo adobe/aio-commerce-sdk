@@ -11,6 +11,7 @@
  */
 
 import { hasCustomInstallationSteps } from "#config/schema/installation";
+import { toItemRef } from "#management/common/workflow/resource";
 
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 import type { CustomInstallationStep } from "#config/schema/installation";
@@ -33,6 +34,7 @@ function buildAddOperation(
   return {
     after: { name: step.name, script: step.script },
     id: `add:${step.name}`,
+    itemRefs: [toItemRef(step.name, step)],
     kind: "add",
     label: `Run custom installation step "${step.name}"`,
     reason: "change",
@@ -45,10 +47,12 @@ function buildAddOperation(
  */
 function buildRemoveOperation(
   step: CustomInstallationStepIdentity,
+  declared: CustomInstallationStep | undefined,
 ): ResourceOperation<CustomInstallationStepIdentity> {
   return {
     before: { name: step.name, script: step.script },
     id: `remove:${step.name}`,
+    itemRefs: [toItemRef(step.name, declared)],
     kind: "remove",
     label: `Remove custom installation step "${step.name}"`,
     reason: "change",
@@ -110,9 +114,19 @@ export function planCustomInstallationSteps(
     .filter((step) => !baselineNames.has(step.name))
     .map((step) => buildAddOperation(step));
 
+  const baselineSteps =
+    baseline && hasCustomInstallationSteps(baseline.config)
+      ? baseline.config.installation.customInstallationSteps
+      : [];
+
   const removeOperations = baselineExecutedSteps
     .filter((step) => !targetNames.has(step.name))
-    .map((step) => buildRemoveOperation(step));
+    .map((step) =>
+      buildRemoveOperation(
+        step,
+        baselineSteps.find((declared) => declared.name === step.name),
+      ),
+    );
 
   const operations: ResourceOperation<CustomInstallationStepIdentity>[] = [
     ...addOperations,
