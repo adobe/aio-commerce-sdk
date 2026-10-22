@@ -355,6 +355,7 @@ describe("lifecycle runtime", () => {
             {
               after: { name: "resource" },
               id: "add-resource",
+              itemRefs: [],
               kind: "add",
               label: "Add resource",
               reason: "change",
@@ -477,6 +478,7 @@ describe("lifecycle runtime", () => {
               {
                 after: { name: "resource" },
                 id: "add-resource",
+                itemRefs: [],
                 kind: "add",
                 label: "Add resource",
                 reason: "change",
@@ -555,6 +557,7 @@ describe("lifecycle runtime", () => {
             {
               after: { id: "resource" },
               id: "add-resource",
+              itemRefs: [],
               kind: "add",
               label: "Add resource",
               reason: "change",
@@ -625,6 +628,7 @@ describe("lifecycle runtime", () => {
             {
               after: { id: "resource" },
               id: "add-resource",
+              itemRefs: [],
               kind: "add",
               label: "Add resource",
               reason: "change",
@@ -853,6 +857,7 @@ describe("lifecycle runtime", () => {
                   {
                     before: leafBaseline.data,
                     id: "remove-old",
+                    itemRefs: [],
                     kind: "remove",
                     label: "Remove old resource",
                     reason: "change",
@@ -892,6 +897,7 @@ describe("lifecycle runtime", () => {
                   {
                     after: { id: "new" },
                     id: "add-new",
+                    itemRefs: [],
                     kind: "add",
                     label: "Add new resource",
                     reason: "change",
@@ -1120,6 +1126,7 @@ describe("lifecycle runtime", () => {
             {
               after: { id: "resource" },
               id: "add-resource",
+              itemRefs: [],
               kind: "add",
               label: "Add resource",
               reason: "change",
@@ -1186,6 +1193,7 @@ describe("lifecycle runtime", () => {
             {
               after: { id: "resource" },
               id: "add-resource",
+              itemRefs: [],
               kind: "add",
               label: "Add resource",
               reason: "change",
@@ -1250,6 +1258,7 @@ describe("lifecycle runtime", () => {
           {
             after: { id: "resource" },
             id: "add-resource",
+            itemRefs: [],
             kind: "add",
             label: "Add resource",
             reason: "change",
@@ -1364,6 +1373,7 @@ describe("lifecycle runtime", () => {
             {
               after: { id: "resource" },
               id: "add-resource",
+              itemRefs: [],
               kind: "add",
               label: "Add resource",
               reason: "change",
@@ -1745,6 +1755,7 @@ describe("lifecycle paper trail", () => {
             {
               after: { id: "resource" },
               id: "add-resource",
+              itemRefs: [],
               kind: "add",
               label: "Add resource",
               reason: "change",

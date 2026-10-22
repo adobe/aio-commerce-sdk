@@ -351,13 +351,7 @@ function planMetadata(
         declaresMetadata(target.key, entry.event_code, ctx)
           ? "change"
           : "drift",
-        [
-          eventRef(
-            target.key,
-            name,
-            findDeclaredEvent(target.key, name, ctx) ?? entry,
-          ),
-        ],
+        [eventRef(target.key, name, findDeclaredEvent(target.key, name, ctx))],
       );
     });
 
@@ -427,7 +421,11 @@ function planRegistrations(
         desiredActions.has(registration.runtime_action ?? registration.name),
     )
     .map((registration) =>
-      remove(registrationValueOf(registration, target.key, ctx.type), "drift"),
+      remove(
+        registrationValueOf(registration, target.key, ctx.type),
+        "drift",
+        [],
+      ),
     );
 
   const removals = live.registrations
@@ -624,7 +622,7 @@ export function planLeftoverProvider(
           eventRef(
             providerKey,
             name,
-            findDeclaredEvent(providerKey, name, ctx) ?? entry,
+            findDeclaredEvent(providerKey, name, ctx),
           ),
         ],
       );

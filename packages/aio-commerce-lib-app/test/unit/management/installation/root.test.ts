@@ -118,6 +118,7 @@ describe("createRootInstallationStep", () => {
             {
               after: {},
               id: "webhook-add",
+              itemRefs: [],
               kind: "add",
               label: "Add webhook",
               reason: "change",

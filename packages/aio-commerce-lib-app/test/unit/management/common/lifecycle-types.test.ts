@@ -74,6 +74,7 @@ describe("lifecycle type surface", () => {
     const add: ResourceOperation<Partial<WebhookEntry>> = {
       after: { name: "orders" },
       id: "op-1",
+      itemRefs: [],
       kind: "add",
       label: "Add order webhook",
       reason: "change",
@@ -85,6 +86,7 @@ describe("lifecycle type surface", () => {
       after: { name: "orders", url: "https://example.test" },
       before: { name: "orders" },
       id: "op-2",
+      itemRefs: [],
       kind: "update",
       label: "Update order webhook",
       reason: "change",
@@ -98,6 +100,7 @@ describe("lifecycle type surface", () => {
       // @ts-expect-error - "add" operations do not carry a `before` value.
       before: { name: "orders" },
       id: "op-3",
+      itemRefs: [],
       kind: "add",
       label: "Invalid",
       reason: "change",

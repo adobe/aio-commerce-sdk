@@ -126,7 +126,7 @@ function extractBaselineExtensionId(
 
 /** The item reference of an Admin UI component, with the label and description of its config. */
 function adminUiItemRef(component: AdminUiComponentDescriptor) {
-  return toItemRef("admin-ui-component", component.key, component.config);
+  return toItemRef(component.key, component.config);
 }
 
 /** Builds an `add` or `remove` operation for a single enumerated component. */

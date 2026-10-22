@@ -12,7 +12,6 @@
 
 import { describe, expect, test } from "vitest";
 
-import { groupOperationsIntoItems } from "#management/common/workflow/resource";
 import {
   planCommerceEvents,
   planExternalEvents,
@@ -702,24 +701,14 @@ describe("planCommerceEvents", () => {
         target: oneProvider([commerceEvent(eventText)]),
       });
 
-      const evt = [{ key: eventKey, kind: "event", ...eventText }];
+      const declared = commerceEvent(eventText);
+      const evt = [{ config: declared, key: eventKey }];
       expect(refsOf(plan)).toEqual([
         ["add:provider:orders", evt],
         ["add:commerce-provider:orders", evt],
         [`add:metadata:orders:com.adobe.commerce.${subscriptionName}`, evt],
         ["add:registration:orders:pkg/a", evt],
         [`add:subscription:${subscriptionName}`, evt],
-      ]);
-
-      expect(groupOperationsIntoItems(plan.operations)).toEqual([
-        {
-          change: "add",
-          key: eventKey,
-          kind: "event",
-          operationIds: plan.operations.map((op) => op.id),
-          reason: "change",
-          ...eventText,
-        },
       ]);
     });
 
@@ -752,8 +741,8 @@ describe("planCommerceEvents", () => {
         target: config,
       });
       expect(summary(plan)).toEqual(["update provider drift"]);
-      expect(groupOperationsIntoItems(plan.operations)).toMatchObject([
-        { change: "update", key: eventKey, kind: "event", reason: "drift" },
+      expect(plan.operations[0]?.itemRefs?.map((ref) => ref.key)).toEqual([
+        eventKey,
       ]);
     });
 
@@ -783,7 +772,7 @@ describe("planCommerceEvents", () => {
       const provider = removals.find(
         (op) => op.id === "remove:provider:orders",
       );
-      expect(provider?.itemRefs).toBeUndefined();
+      expect(provider?.itemRefs).toEqual([]);
     });
 
     test("references a registration with every event it serves", async () => {
@@ -813,12 +802,9 @@ describe("planCommerceEvents", () => {
       const plan = await planCommerce({ baseline, live, target: baseline });
       expect(summary(plan)).toEqual(["update registration drift"]);
 
-      const [item] = groupOperationsIntoItems(plan.operations);
-      expect(item).toMatchObject({
-        change: "update",
-        key: eventKey,
-        kind: "event",
-      });
+      expect(plan.operations[0]?.itemRefs?.map((ref) => ref.key)).toEqual([
+        eventKey,
+      ]);
     });
 
     test("gives a duplicate registration and one for an undeclared action no item", async () => {
@@ -848,7 +834,7 @@ describe("planCommerceEvents", () => {
       );
       expect(removals).toHaveLength(2);
       for (const op of removals) {
-        expect(op.itemRefs).toBeUndefined();
+        expect(op.itemRefs).toEqual([]);
       }
     });
 
@@ -868,12 +854,6 @@ describe("planCommerceEvents", () => {
         (op) => op.id === "remove:registration:orders:pkg/b",
       );
       expect(registration?.itemRefs?.map((ref) => ref.key)).toEqual([dropped]);
-
-      const item = groupOperationsIntoItems(plan.operations).find(
-        (candidate) => candidate.key === dropped,
-      );
-      expect(item).toMatchObject({ change: "remove", kind: "event" });
-      expect(item?.operationIds).toContain("remove:registration:orders:pkg/b");
     });
 
     test("references a dropped provider's operations with the baseline's events", async () => {
@@ -905,10 +885,12 @@ describe("planCommerceEvents", () => {
       );
       expect(provider?.itemRefs).toEqual([
         {
-          description: "Old text",
+          config: commerceEvent({
+            description: "Old text",
+            label: "Old event",
+            name: "observer.dropped",
+          }),
           key: dropped,
-          kind: "event",
-          label: "Old event",
         },
       ]);
     });

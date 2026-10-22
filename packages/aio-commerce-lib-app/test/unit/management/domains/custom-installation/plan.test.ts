@@ -48,10 +48,12 @@ describe("planCustomInstallationSteps", () => {
         id: "add:Demo Success",
         itemRefs: [
           {
-            description: "Success script",
+            config: {
+              description: "Success script",
+              name: "Demo Success",
+              script: "./demo-success.js",
+            },
             key: "Demo Success",
-            kind: "installation-step",
-            label: "Demo Success",
           },
         ],
         kind: "add",
@@ -63,10 +65,12 @@ describe("planCustomInstallationSteps", () => {
         id: "add:Demo Error",
         itemRefs: [
           {
-            description: "Error script",
+            config: {
+              description: "Error script",
+              name: "Demo Error",
+              script: "./demo-error.js",
+            },
             key: "Demo Error",
-            kind: "installation-step",
-            label: "Demo Error",
           },
         ],
         kind: "add",
@@ -134,10 +138,12 @@ describe("planCustomInstallationSteps", () => {
         id: "remove:Demo Success",
         itemRefs: [
           {
-            description: "Success script",
+            config: {
+              description: "Success script",
+              name: "Demo Success",
+              script: "./demo-success.js",
+            },
             key: "Demo Success",
-            kind: "installation-step",
-            label: "Demo Success",
           },
         ],
         kind: "remove",
@@ -149,10 +155,12 @@ describe("planCustomInstallationSteps", () => {
         id: "remove:Demo Error",
         itemRefs: [
           {
-            description: "Error script",
+            config: {
+              description: "Error script",
+              name: "Demo Error",
+              script: "./demo-error.js",
+            },
             key: "Demo Error",
-            kind: "installation-step",
-            label: "Demo Error",
           },
         ],
         kind: "remove",
@@ -241,10 +249,12 @@ describe("planCustomInstallationSteps", () => {
         id: "add:Demo Error",
         itemRefs: [
           {
-            description: "Error script",
+            config: {
+              description: "Error script",
+              name: "Demo Error",
+              script: "./demo-error.js",
+            },
             key: "Demo Error",
-            kind: "installation-step",
-            label: "Demo Error",
           },
         ],
         kind: "add",

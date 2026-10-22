@@ -47,7 +47,7 @@ function itemRefsOf(
   declared: ReadonlyMap<string, ItemRef>,
 ): ItemRef[] {
   const key = webhookKey(webhook);
-  return [declared.get(key) ?? toItemRef("webhook", key)];
+  return [declared.get(key) ?? toItemRef(key)];
 }
 
 /** Plans an add for every desired webhook missing from Commerce. */

@@ -706,6 +706,7 @@ describe("installationRuntimeAction", () => {
             {
               after: {},
               id: "operation-1",
+              itemRefs: [],
               kind: "add",
               label: "Apply synthetic change",
               reason: "change",
@@ -1006,12 +1007,7 @@ describe("installationRuntimeAction", () => {
                       after: {},
                       id: "operation-1",
                       itemRefs: [
-                        {
-                          description: "Why",
-                          key: "synthetic-1",
-                          kind: "webhook",
-                          label: "Synthetic",
-                        },
+                        { config: { name: "synthetic" }, key: "synthetic-1" },
                       ],
                       kind: "add",
                       label: "Apply synthetic change",
@@ -1020,7 +1016,7 @@ describe("installationRuntimeAction", () => {
                     {
                       after: {},
                       id: "operation-2",
-                      itemRefs: [{ key: "synthetic-1", kind: "webhook" }],
+                      itemRefs: [{ key: "synthetic-1" }],
                       kind: "add",
                       label: "Apply other change",
                       reason: "drift",
@@ -1028,6 +1024,7 @@ describe("installationRuntimeAction", () => {
                     {
                       after: {},
                       id: "operation-3",
+                      itemRefs: [],
                       kind: "add",
                       label: "Internal change",
                       reason: "change",
@@ -1056,17 +1053,6 @@ describe("installationRuntimeAction", () => {
             plan: {
               domains: [
                 {
-                  items: [
-                    {
-                      change: "add",
-                      description: "Why",
-                      key: "synthetic-1",
-                      kind: "webhook",
-                      label: "Synthetic",
-                      operationIds: ["operation-1", "operation-2"],
-                      reason: "change",
-                    },
-                  ],
                   operations: [
                     { id: "operation-1", kind: "add" },
                     { id: "operation-2", kind: "add" },
@@ -1102,6 +1088,36 @@ describe("installationRuntimeAction", () => {
             valid: false,
           },
         });
+
+        expect(
+          (
+            result as unknown as {
+              body: { plan: { domains: { operations: unknown[] }[] } };
+            }
+          ).body.plan.domains[0]?.operations,
+        ).toEqual([
+          {
+            id: "operation-1",
+            itemRefs: [{ config: { name: "synthetic" }, key: "synthetic-1" }],
+            kind: "add",
+            label: "Apply synthetic change",
+            reason: "change",
+          },
+          {
+            id: "operation-2",
+            itemRefs: [{ key: "synthetic-1" }],
+            kind: "add",
+            label: "Apply other change",
+            reason: "drift",
+          },
+          {
+            id: "operation-3",
+            itemRefs: [],
+            kind: "add",
+            label: "Internal change",
+            reason: "change",
+          },
+        ]);
 
         const planId = (result as unknown as { body: { plan: { id: string } } })
           .body.plan.id;
@@ -1636,6 +1652,7 @@ describe("installationRuntimeAction", () => {
             {
               before: {},
               id: "remove-1",
+              itemRefs: [],
               kind: "remove",
               label: "Remove synthetic resource",
               reason: "change",

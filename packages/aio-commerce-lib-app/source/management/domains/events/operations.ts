@@ -294,16 +294,13 @@ export function declaresSubscription(
   );
 }
 
-/** The text a config item or live resource gives to the reference of an item. */
-type ItemText = { label?: string; description?: string };
-
-/** The reference of an event, by its namespaced name. */
+/** The reference of an event, by its namespaced name, with its config when the config declares it. */
 export function eventRef(
   providerKey: string,
   namespacedName: string,
-  source?: ItemText,
+  config?: AppEvent,
 ): ItemRef {
-  return toItemRef("event", `${providerKey}:${namespacedName}`, source);
+  return toItemRef(`${providerKey}:${namespacedName}`, config);
 }
 
 /**
@@ -351,23 +348,18 @@ export function findDeclaredEvent(
     );
 }
 
-/** The `itemRefs` property of an operation, absent when it has no items. */
-function withRefs(itemRefs: ItemRef[] | undefined) {
-  return itemRefs && itemRefs.length > 0 ? { itemRefs } : {};
-}
-
 export function add(
   after: EventingOperationValue,
   reason: Reason,
-  itemRefs?: ItemRef[],
+  itemRefs: ItemRef[],
 ): Operation {
   return {
     after,
     id: operationId("add", after),
+    itemRefs,
     kind: "add",
     label: operationLabel("add", after),
     reason,
-    ...withRefs(itemRefs),
   };
 }
 
@@ -375,31 +367,31 @@ export function update(
   before: EventingOperationValue,
   after: EventingOperationValue,
   reason: Reason,
-  itemRefs?: ItemRef[],
+  itemRefs: ItemRef[],
 ): Operation {
   return {
     after,
     before,
     id: operationId("update", after),
+    itemRefs,
     kind: "update",
     label: operationLabel("update", after),
     reason,
-    ...withRefs(itemRefs),
   };
 }
 
 export function remove(
   before: EventingOperationValue,
   reason: Reason,
-  itemRefs?: ItemRef[],
+  itemRefs: ItemRef[],
 ): Operation {
   return {
     before,
     id: operationId("remove", before),
+    itemRefs,
     kind: "remove",
     label: operationLabel("remove", before),
     reason,
-    ...withRefs(itemRefs),
   };
 }
 

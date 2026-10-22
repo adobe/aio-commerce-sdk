@@ -10,7 +10,11 @@
  * governing permissions and limitations under the License.
  */
 
+import type { AdminUiComponentConfig } from "#config/schema/admin-ui";
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
+import type { AppEvent } from "#config/schema/eventing";
+import type { CustomInstallationStep } from "#config/schema/installation";
+import type { RedactedWebhookEntry } from "#management/domains/webhooks/types";
 import type { ExecutionContext, ValidationExecutionContext } from "./step";
 import type { ValidationIssueSeverity } from "./validation";
 
@@ -38,42 +42,38 @@ export type PlanningIssue = {
   details?: Record<string, unknown>;
 };
 
+/** The config of a plan item, as declared in the app config. */
+type ItemConfig =
+  | AdminUiComponentConfig
+  | AppEvent
+  | CustomInstallationStep
+  | RedactedWebhookEntry;
+
 /**
- * A reference to a user-visible item an operation changes. Operations with the same `kind` and
- * `key` within a domain plan are parts of one change to one item, for example the metadata and the
- * subscription of one event. `label` and `description` are the item's own text, when it has any.
+ * A reference to a user-visible item an operation changes. Within a domain plan, operations with
+ * the same `key` are parts of one change to one item, for example the metadata and the subscription
+ * of one event.
  */
 export type ItemRef = {
-  /** What the item is, for example `webhook` or `event`. */
-  kind: string;
-
-  /** Identifies the item within its domain plan and `kind`. */
+  /** Identifies the item within its domain plan. */
   key: string;
 
-  /** The label of the item's config. Absent when there is none. */
-  label?: string;
-
-  /** The description of the item's config. Absent when there is none. */
-  description?: string;
+  /**
+   * The item's config as declared, without secrets: the target config item for an add or update,
+   * the baseline one for a remove. Absent for an item with no config, such as a live-only resource.
+   * Its `label` and `description` are the item's text. A custom installation step has a `name`
+   * instead of a `label`.
+   */
+  config?: ItemConfig;
 };
 
 /**
- * Builds an item reference, with the label and description of `source` when it has them.
- * @param kind - What the item is.
- * @param key - Identifies the item within its domain plan and `kind`.
- * @param source - The config item, or live resource, the text comes from.
+ * Builds an item reference.
+ * @param key - Identifies the item within its domain plan.
+ * @param config - The item's config, when it has one.
  */
-export function toItemRef(
-  kind: string,
-  key: string,
-  source?: { label?: string; description?: string },
-): ItemRef {
-  return {
-    key,
-    kind,
-    ...(source?.label && { label: source.label }),
-    ...(source?.description && { description: source.description }),
-  };
+export function toItemRef(key: string, config?: ItemConfig): ItemRef {
+  return config ? { config, key } : { key };
 }
 
 /**
@@ -88,11 +88,10 @@ export type ResourceOperation<TBefore, TAfter = TBefore> = {
   label: string;
 
   /**
-   * The user-visible items the operation changes, usually one. Absent when the operation is internal
-   * to its domain. The text comes from the target config item, else the baseline one, else the live
-   * resource.
+   * The user-visible items the operation changes, usually one. Empty when the operation is internal
+   * to its domain. The config comes from the target config item, else the baseline one.
    */
-  itemRefs?: ItemRef[];
+  itemRefs: ItemRef[];
 
   /**
    * Why the operation exists: `change` when the target config differs from the baseline,
@@ -104,67 +103,6 @@ export type ResourceOperation<TBefore, TAfter = TBefore> = {
   | { kind: "update"; before: TBefore; after: TAfter }
   | { kind: "remove"; before: TBefore }
 );
-
-/**
- * One user-visible item of a plan, built from the operations that reference it: it carries their
- * combined change and the item's label and description.
- */
-export type PlanItem = ItemRef & {
-  /** `add` when every operation adds, `remove` when every operation removes, otherwise `update`. */
-  change: ResourceOperation<unknown>["kind"];
-
-  /** `change` when any operation is a `change`, otherwise `drift`. */
-  reason: ResourceOperation<unknown>["reason"];
-
-  /** The ids of the operations that make up the item, in plan order. */
-  operationIds: string[];
-};
-
-/**
- * Groups the operations of a domain plan into its user-visible items, by `kind` and `key`.
- * Operations without `itemRefs` are internal and left out. Items follow the order of their first
- * operation. Each of `label` and `description` comes from the first reference that has it.
- * @param operations - The operations of one domain plan.
- */
-export function groupOperationsIntoItems(
-  operations: readonly ResourceOperation<unknown>[],
-): PlanItem[] {
-  const groups = new Map<
-    string,
-    { refs: ItemRef[]; operations: ResourceOperation<unknown>[] }
-  >();
-
-  for (const operation of operations) {
-    for (const ref of operation.itemRefs ?? []) {
-      const groupKey = JSON.stringify([ref.kind, ref.key]);
-      const group = groups.get(groupKey) ?? { operations: [], refs: [] };
-      group.refs.push(ref);
-      group.operations.push(operation);
-      groups.set(groupKey, group);
-    }
-  }
-
-  return [...groups.values()].map(({ refs, operations: grouped }) => {
-    const [{ kind, key }] = refs;
-    const [first] = grouped;
-    const label = refs.find((ref) => ref.label)?.label;
-    const description = refs.find((ref) => ref.description)?.description;
-
-    return {
-      change: grouped.every((operation) => operation.kind === first.kind)
-        ? first.kind
-        : "update",
-      key,
-      kind,
-      operationIds: grouped.map((operation) => operation.id),
-      reason: grouped.some((operation) => operation.reason === "change")
-        ? "change"
-        : "drift",
-      ...(label && { label }),
-      ...(description && { description }),
-    };
-  });
-}
 
 /** A domain's proposed set of resource operations. */
 export type DomainPlan<TBefore = unknown, TAfter = TBefore> = {

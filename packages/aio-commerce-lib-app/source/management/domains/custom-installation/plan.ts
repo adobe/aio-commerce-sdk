@@ -27,11 +27,6 @@ import type {
   CustomInstallationStepIdentity,
 } from "./types";
 
-/** The item reference of a step: its name is the label, and its description comes from the config. */
-function stepItemRef(name: string, description: string | undefined) {
-  return toItemRef("installation-step", name, { description, label: name });
-}
-
 /** Builds an `add` operation for a step run for the first time. */
 function buildAddOperation(
   step: CustomInstallationStep,
@@ -39,7 +34,7 @@ function buildAddOperation(
   return {
     after: { name: step.name, script: step.script },
     id: `add:${step.name}`,
-    itemRefs: [stepItemRef(step.name, step.description)],
+    itemRefs: [toItemRef(step.name, step)],
     kind: "add",
     label: `Run custom installation step "${step.name}"`,
     reason: "change",
@@ -57,7 +52,7 @@ function buildRemoveOperation(
   return {
     before: { name: step.name, script: step.script },
     id: `remove:${step.name}`,
-    itemRefs: [stepItemRef(step.name, declared?.description)],
+    itemRefs: [toItemRef(step.name, declared)],
     kind: "remove",
     label: `Remove custom installation step "${step.name}"`,
     reason: "change",

@@ -21,10 +21,14 @@ import type {
   WebhookSubscribeParams,
 } from "@adobe/aio-commerce-lib-webhooks/api";
 import type { getInstallCommerceEnv } from "#config/lib/environment";
-import type { WebhookEntry } from "#config/schema/webhooks";
+import type { WebhookDefinition, WebhookEntry } from "#config/schema/webhooks";
 import type { ItemRef } from "#management/common/workflow/resource";
 import type { WebhooksExecutionContext } from "./context";
-import type { ResolvedWebhookPayload, WebhookIdentity } from "./types";
+import type {
+  RedactedWebhookEntry,
+  ResolvedWebhookPayload,
+  WebhookIdentity,
+} from "./types";
 
 /** Matches any character that is not a valid identifier character (letter, digit, or underscore). */
 const NON_IDENTIFIER_CHAR_REGEX = /[^a-zA-Z0-9_]/g;
@@ -212,6 +216,17 @@ export function resolveDesiredWebhooks(
     .map((entry) => resolveWebhookPayload(entry, idPrefix));
 }
 
+/** Drops the `headers` and the explicit `url` of a webhook entry, which can hold secrets. */
+function redactWebhookEntry(entry: WebhookEntry): RedactedWebhookEntry {
+  const {
+    headers: _headers,
+    url: _url,
+    ...webhook
+  } = entry.webhook as WebhookDefinition & { url?: string };
+
+  return { ...entry, webhook } as RedactedWebhookEntry;
+}
+
 /**
  * The item reference of every configured webhook that applies to the Commerce environment, by
  * `webhookKey` of its resolved identity. Empty without a config.
@@ -231,7 +246,7 @@ export function resolveWebhookItemRefs(
         hook_name: `${idPrefix}${entry.webhook.hook_name}`,
       });
 
-      return [key, toItemRef("webhook", key, entry)];
+      return [key, toItemRef(key, redactWebhookEntry(entry))];
     }),
   );
 }

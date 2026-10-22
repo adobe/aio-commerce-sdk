@@ -169,10 +169,8 @@ describe("planAdminUi", () => {
     const config = configWithAdminUiSingleGrid as AdminUiConfig;
     const { gridColumns } = configWithAdminUiSingleGrid.adminUi.order;
     const ref = {
-      description: gridColumns.description,
+      config: gridColumns,
       key: "order.grid-columns",
-      kind: "admin-ui-component",
-      label: gridColumns.label,
     };
 
     const [added] = (await planned(null, config)).plan.operations;
@@ -195,7 +193,10 @@ describe("planAdminUi", () => {
     } as AdminUiConfig;
     const [updated] = (await planned(config, renamed)).plan.operations;
     expect(updated?.itemRefs).toEqual([
-      { ...ref, description: "New text", label: "New" },
+      {
+        ...ref,
+        config: { ...gridColumns, description: "New text", label: "New" },
+      },
     ]);
   });
 
