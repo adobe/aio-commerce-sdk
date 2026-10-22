@@ -3692,14 +3692,13 @@
         "required": ["code", "message", "domain", "severity", "blocking"]
       },
       "PlanItem": {
-        "description": "A user-visible item a plan adds, removes or changes, built from the operations that reference its `kind` and `key`. An event also takes the operations of the registrations that serve it.",
+        "description": "A user-visible item a plan adds, removes or changes, built from the operations that reference its `kind` and `key`. An event also takes the operations of the providers and registrations that serve it.",
         "type": "object",
         "properties": {
           "kind": {
             "description": "What the item is.",
             "type": "string",
             "enum": [
-              "provider",
               "event",
               "webhook",
               "admin-ui-component",

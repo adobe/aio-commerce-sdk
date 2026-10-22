@@ -297,11 +297,6 @@ export function declaresSubscription(
 /** The text a config item or live resource gives to the reference of an item. */
 type ItemText = { label?: string; description?: string };
 
-/** The reference of a provider. */
-export function providerRef(providerKey: string, source: ItemText): ItemRef {
-  return toItemRef("provider", providerKey, source);
-}
-
 /** The reference of an event, by its namespaced name. */
 export function eventRef(
   providerKey: string,
@@ -309,6 +304,20 @@ export function eventRef(
   source?: ItemText,
 ): ItemRef {
   return toItemRef("event", `${providerKey}:${namespacedName}`, source);
+}
+
+/**
+ * The references of the given events of a provider. A provider serves every event it has, so its
+ * operations reference all of them, and a provider with no declared event is internal.
+ */
+export function eventRefs(
+  providerKey: string,
+  events: readonly AppEvent[],
+  ctx: LeafPlanContext,
+): ItemRef[] {
+  return events.map((event) =>
+    eventRef(providerKey, getNamespacedEvent(ctx.metadata, event.name), event),
+  );
 }
 
 /**
@@ -321,15 +330,11 @@ export function registrationRefs(
   runtimeAction: string,
   ctx: LeafPlanContext,
 ): ItemRef[] {
-  return events
-    .filter((event) => event.runtimeActions.includes(runtimeAction))
-    .map((event) =>
-      eventRef(
-        providerKey,
-        getNamespacedEvent(ctx.metadata, event.name),
-        event,
-      ),
-    );
+  return eventRefs(
+    providerKey,
+    events.filter((event) => event.runtimeActions.includes(runtimeAction)),
+    ctx,
+  );
 }
 
 /** The baseline's config for the event with a namespaced name under a provider. */

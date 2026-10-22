@@ -20,11 +20,11 @@ import {
   declaresMetadata,
   declaresSubscription,
   eventRef,
+  eventRefs,
   findDeclaredEvent,
   metadataReason,
   metadataValue,
   providerReason,
-  providerRef,
   providerValue,
   registrationReason,
   registrationRefs,
@@ -118,13 +118,13 @@ export function planNewProvider(
       })
     : [];
 
-  const providerRefs = [providerRef(target.key, target.provider)];
+  const providerOpRefs = eventRefs(target.key, target.events, ctx);
   const commerceProvider = ctx.isCommerce
     ? [
         add(
           { ...commerceProviderValue(target), instanceId },
           providerReason(target, ctx),
-          providerRefs,
+          providerOpRefs,
         ),
       ]
     : [];
@@ -133,7 +133,7 @@ export function planNewProvider(
     add(
       { ...providerValue(target, ctx), instanceId },
       providerReason(target, ctx),
-      providerRefs,
+      providerOpRefs,
     ),
     ...commerceProvider,
     ...target.events.map((event) =>
@@ -228,9 +228,12 @@ function planProviderUpdate(
   };
 
   return [
-    update(before, providerValue(target, ctx), providerReason(target, ctx), [
-      providerRef(target.key, target.provider),
-    ]),
+    update(
+      before,
+      providerValue(target, ctx),
+      providerReason(target, ctx),
+      eventRefs(target.key, target.events, ctx),
+    ),
   ];
 }
 
@@ -242,7 +245,7 @@ function planCommerceProvider(
 ): Operation[] {
   const { commerceProvider } = live;
   const reason = providerReason(target, ctx);
-  const refs = [providerRef(target.key, target.provider)];
+  const refs = eventRefs(target.key, target.events, ctx);
   if (!commerceProvider) {
     const value = {
       ...commerceProviderValue(target),
@@ -586,7 +589,7 @@ export function planLeftoverProvider(
             resourceType: "commerceProvider",
           },
           reason,
-          [providerRef(providerKey, declared?.provider ?? commerceProvider)],
+          eventRefs(providerKey, declared?.events ?? [], ctx),
         ),
       ]
     : [];
@@ -637,7 +640,7 @@ export function planLeftoverProvider(
         type: ctx.type,
       },
       reason,
-      [providerRef(providerKey, declared?.provider ?? ioProvider)],
+      eventRefs(providerKey, declared?.events ?? [], ctx),
     ),
   ];
 }

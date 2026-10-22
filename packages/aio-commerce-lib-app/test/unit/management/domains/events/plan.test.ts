@@ -693,49 +693,97 @@ describe("planCommerceEvents", () => {
   describe("item references", () => {
     const eventKey = `orders:${subscriptionName}`;
     const eventText = { description: "Order text", label: "Order placed" };
-    const providerText = { description: "d", label: "Orders" };
     const refsOf = (plan: EventingDomainPlan) =>
       plan.operations.map((op) => [op.id, op.itemRefs]);
 
-    test("references a new event's operations, registration included, and the provider's", async () => {
+    test("references a new event's operations, provider and registration included", async () => {
       const plan = await planCommerce({
         live: deployed(commerceConfig([]), COMMERCE_PROVIDER_TYPE),
         target: oneProvider([commerceEvent(eventText)]),
       });
 
-      const provider = [{ key: "orders", kind: "provider", ...providerText }];
       const evt = [{ key: eventKey, kind: "event", ...eventText }];
       expect(refsOf(plan)).toEqual([
-        ["add:provider:orders", provider],
-        ["add:commerce-provider:orders", provider],
+        ["add:provider:orders", evt],
+        ["add:commerce-provider:orders", evt],
         [`add:metadata:orders:com.adobe.commerce.${subscriptionName}`, evt],
         ["add:registration:orders:pkg/a", evt],
         [`add:subscription:${subscriptionName}`, evt],
       ]);
 
-      expect(
-        groupOperationsIntoItems(plan.operations).map((item) => ({
-          ...item,
-          operationIds: item.operationIds.length,
-        })),
-      ).toEqual([
-        {
-          change: "add",
-          key: "orders",
-          kind: "provider",
-          operationIds: 2,
-          reason: "change",
-          ...providerText,
-        },
+      expect(groupOperationsIntoItems(plan.operations)).toEqual([
         {
           change: "add",
           key: eventKey,
           kind: "event",
-          operationIds: 3,
+          operationIds: plan.operations.map((op) => op.id),
           reason: "change",
           ...eventText,
         },
       ]);
+    });
+
+    test("references a provider with every event it has", async () => {
+      const plan = await planCommerce({
+        live: deployed(commerceConfig([]), COMMERCE_PROVIDER_TYPE),
+        target: oneProvider([
+          commerceEvent(),
+          commerceEvent({ name: "observer.second" }),
+        ]),
+      });
+
+      const provider = plan.operations.find(
+        (op) => op.id === "add:provider:orders",
+      );
+      expect(provider?.itemRefs?.map((ref) => ref.key)).toEqual([
+        eventKey,
+        `orders:${getNamespacedEvent(metadata, "observer.second")}`,
+      ]);
+    });
+
+    test("makes a provider-only drift an update of its event items", async () => {
+      const config = oneProvider([commerceEvent()]);
+      const live = deployed(config, COMMERCE_PROVIDER_TYPE);
+      live.providers[0].label = "edited";
+
+      const plan = await planCommerce({
+        baseline: config,
+        live,
+        target: config,
+      });
+      expect(summary(plan)).toEqual(["update provider drift"]);
+      expect(groupOperationsIntoItems(plan.operations)).toMatchObject([
+        { change: "update", key: eventKey, kind: "event", reason: "drift" },
+      ]);
+    });
+
+    test("gives a leftover provider the baseline does not declare no item", async () => {
+      const leftover = oneProvider([commerceEvent()]);
+      const target = commerceConfig([
+        {
+          events: [commerceEvent({ name: "observer.other" })],
+          provider: { description: "d", key: "other", label: "Other" },
+        },
+      ]);
+      const plan = await planCommerce({
+        baseline: target,
+        live: deployed(leftover, COMMERCE_PROVIDER_TYPE),
+        target,
+      });
+
+      const removals = plan.operations.filter(
+        (op) => op.kind === "remove" && op.id.includes(":orders"),
+      );
+      expect(removals.length).toBeGreaterThan(0);
+      for (const op of removals) {
+        const keys = op.itemRefs?.map((ref) => ref.key) ?? [];
+        expect(keys.filter((key) => !key.startsWith("orders:"))).toEqual([]);
+      }
+
+      const provider = removals.find(
+        (op) => op.id === "remove:provider:orders",
+      );
+      expect(provider?.itemRefs).toBeUndefined();
     });
 
     test("references a registration with every event it serves", async () => {
@@ -828,15 +876,21 @@ describe("planCommerceEvents", () => {
       expect(item?.operationIds).toContain("remove:registration:orders:pkg/b");
     });
 
-    test("takes the baseline's text for a dropped provider, and the live text for an undeclared one", async () => {
+    test("references a dropped provider's operations with the baseline's events", async () => {
       const baseline = commerceConfig([
         {
           events: [commerceEvent()],
           provider: { description: "d", key: "orders", label: "Orders" },
         },
         {
-          events: [commerceEvent({ name: "observer.dropped" })],
-          provider: { description: "Old text", key: "old", label: "Old" },
+          events: [
+            commerceEvent({
+              description: "Old text",
+              label: "Old event",
+              name: "observer.dropped",
+            }),
+          ],
+          provider: { description: "d", key: "old", label: "Old" },
         },
       ]);
       const plan = await planCommerce({
@@ -845,11 +899,17 @@ describe("planCommerceEvents", () => {
         target: oneProvider([commerceEvent()]),
       });
 
+      const dropped = `old:${getNamespacedEvent(metadata, "observer.dropped")}`;
       const provider = plan.operations.find(
         (op) => op.id === "remove:provider:old",
       );
       expect(provider?.itemRefs).toEqual([
-        { description: "Old text", key: "old", kind: "provider", label: "Old" },
+        {
+          description: "Old text",
+          key: dropped,
+          kind: "event",
+          label: "Old event",
+        },
       ]);
     });
   });
