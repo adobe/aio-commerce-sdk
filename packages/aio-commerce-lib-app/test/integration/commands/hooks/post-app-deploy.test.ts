@@ -345,6 +345,20 @@ describe("post-app-deploy hook", () => {
       expect(spawnDetachedMock).not.toHaveBeenCalled();
     });
 
+    test("refuses to plan when the extension has no Commerce instance", async () => {
+      const calls = serveUpgrade();
+      answer("get", WORKSPACE_EXTENSIONS, () =>
+        HttpResponse.json([{ id: "ext-1" }]),
+      );
+
+      await expect(runHook()).rejects.toThrow(
+        'The extension "ext-1" has no Commerce instance configuration.',
+      );
+
+      expect(calls).toMatchObject({ plan: 0, polls: 0, start: 0 });
+      expect(spawnDetachedMock).not.toHaveBeenCalled();
+    });
+
     test.each([
       "already-current",
       "not-associated",

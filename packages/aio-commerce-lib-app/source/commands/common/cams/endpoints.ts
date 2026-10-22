@@ -14,7 +14,6 @@ import { parseOrThrow } from "@aio-commerce-sdk/common-utils/valibot";
 import * as v from "valibot";
 
 import { CamsClientError } from "#commands/common/cams/errors";
-import { withCommerceInstance } from "#commands/common/cams/http-client";
 import {
   AttemptStatusSchema,
   ExtensionListSchema,
@@ -126,10 +125,7 @@ export async function planUpgrade(
   const { extensionId } = parseOrThrow(ExtensionParamsSchema, params);
   const { plan } = await readAndParseBody(
     UpgradePlanAnswerSchema,
-    httpClient.post(
-      `${upgradesPath(extensionId)}/preview`,
-      withCommerceInstance(httpClient, fetchOptions),
-    ),
+    httpClient.post(`${upgradesPath(extensionId)}/preview`, fetchOptions),
   );
 
   return plan;
@@ -159,7 +155,7 @@ export async function startUpgrade(
   return await readAndParseBody(
     AttemptStatusSchema,
     httpClient.post(upgradesPath(extensionId), {
-      ...withCommerceInstance(httpClient, fetchOptions),
+      ...fetchOptions,
       json: { planId },
     }),
   );
@@ -187,7 +183,7 @@ export async function pollUpgrade(
     AttemptStatusSchema,
     httpClient.post(
       `${upgradesPath(extensionId)}/${encodeURIComponent(runId)}/sync`,
-      { ...withCommerceInstance(httpClient, fetchOptions), retry: 0 },
+      { ...fetchOptions, retry: 0 },
     ),
   );
 
@@ -216,7 +212,7 @@ export async function readUpgrade(
     AttemptStatusSchema,
     httpClient.get(
       `${upgradesPath(extensionId)}/${encodeURIComponent(runId)}`,
-      withCommerceInstance(httpClient, fetchOptions),
+      fetchOptions,
     ),
   );
 }
@@ -241,7 +237,7 @@ export async function readLatestUpgrade(
   const { extensionId } = parseOrThrow(ExtensionParamsSchema, params);
   const response = await httpClient.get(
     upgradesPath(extensionId),
-    withCommerceInstance(httpClient, fetchOptions),
+    fetchOptions,
   );
   if (response.status === 204) {
     return null;

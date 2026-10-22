@@ -66,7 +66,17 @@ const FAILED = {
 function serve(poll: () => Response, latest: object | null = IN_PROGRESS) {
   const calls = { latest: 0, polls: 0 };
   apiServer.use(
-    http.get(WORKSPACE_EXTENSIONS, () => HttpResponse.json([{ id: "ext-1" }])),
+    http.get(WORKSPACE_EXTENSIONS, () =>
+      HttpResponse.json([
+        {
+          id: "ext-1",
+          scope: {
+            commerceBaseUrl: "https://commerce.example.com",
+            commerceEnv: "saas",
+          },
+        },
+      ]),
+    ),
     http.get(UPGRADES, () => {
       calls.latest += 1;
       return latest === null
@@ -147,6 +157,47 @@ describe("upgrade status", () => {
     expect(calls).toEqual({ latest: 1, polls: 1 });
   });
 
+  test("uses instance headers for latest and poll requests but not the workspace lookup", async () => {
+    serve(() => HttpResponse.json(SUCCEEDED));
+    const lookups: Request[] = [];
+    const instanceRequests: Request[] = [];
+    apiServer.use(
+      http.get(WORKSPACE_EXTENSIONS, ({ request }) => {
+        lookups.push(request);
+        return HttpResponse.json([
+          {
+            id: "ext-1",
+            scope: {
+              commerceBaseUrl: "https://commerce.example.com",
+              commerceEnv: "saas",
+            },
+          },
+        ]);
+      }),
+      http.get(UPGRADES, ({ request }) => {
+        instanceRequests.push(request);
+        return HttpResponse.json(IN_PROGRESS);
+      }),
+      http.post(`${UPGRADES}/run-1/sync`, ({ request }) => {
+        instanceRequests.push(request);
+        return HttpResponse.json(SUCCEEDED);
+      }),
+    );
+
+    await expect(run({})).resolves.toBe(0);
+
+    expect(lookups).toHaveLength(1);
+    expect(lookups.at(0)?.headers.has("x-ac-url")).toBe(false);
+    expect(lookups.at(0)?.headers.has("x-ac-env")).toBe(false);
+    expect(instanceRequests).toHaveLength(2);
+    for (const request of instanceRequests) {
+      expect(request.headers.get("x-ac-url")).toBe(
+        "https://commerce.example.com",
+      );
+      expect(request.headers.get("x-ac-env")).toBe("saas");
+    }
+  });
+
   test("without a run id and without runs, says so and checks nothing", async () => {
     const calls = serve(() => HttpResponse.json(SUCCEEDED), null);
 
@@ -168,6 +219,23 @@ describe("upgrade status", () => {
   });
 
   describe("exec", () => {
+    test("reports missing Commerce instance data without reading or polling a run", async () => {
+      const calls = serve(() => HttpResponse.json(SUCCEEDED));
+      apiServer.use(
+        http.get(WORKSPACE_EXTENSIONS, () =>
+          HttpResponse.json([{ id: "ext-1" }]),
+        ),
+      );
+
+      await exec();
+
+      expect(process.exitCode).toBe(1);
+      expect(calls).toEqual({ latest: 0, polls: 0 });
+      expect(consola.error).toHaveBeenCalledWith(
+        'The extension "ext-1" has no Commerce instance configuration.',
+      );
+    });
+
     test("sets the exit code of the process from the run", async () => {
       serve(() => HttpResponse.json(FAILED));
 

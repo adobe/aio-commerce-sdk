@@ -16,6 +16,7 @@ import { waitForOwnerExit } from "@aio-commerce-sdk/scripting-utils/process";
 import {
   createCamsContext,
   findWorkspaceExtension,
+  requireCommerceInstance,
 } from "#commands/common/cams/context";
 import {
   describeCamsFailure,
@@ -23,7 +24,7 @@ import {
 } from "#commands/common/cams/report";
 import { describeOutcome, pollUntilSettled } from "#commands/upgrade/poll";
 
-import type { CamsContext } from "#commands/common/cams/context";
+import type { CamsInstanceClient } from "#commands/common/cams/api-client";
 
 /** How long the watcher waits for a token before it gives up. */
 const TOKEN_TIMEOUT_MS = 30_000;
@@ -37,7 +38,7 @@ export type WatcherArgs = {
 /** Everything the watcher uses from outside, so tests can replace it. */
 export type WatcherDependencies = {
   log: (message: string) => void;
-  createContext: () => Promise<CamsContext>;
+  createClient: () => Promise<CamsInstanceClient>;
   sleep?: (ms: number) => Promise<void>;
 };
 
@@ -96,18 +97,18 @@ export async function runWatcher(
   args: WatcherArgs,
   dependencies: WatcherDependencies,
 ): Promise<number> {
-  const { log, createContext, sleep } = dependencies;
+  const { log, createClient, sleep } = dependencies;
 
   const signal = await waitForOwnerExit();
 
   log(`The hook is gone (${signal}). Following the run ${args.runId}.`);
 
-  const context = await createContext();
+  const client = await createClient();
   const result = await pollUntilSettled({
     onRetry: (error) => log(`${error.message}. Trying again.`),
     onStatus: (status) => log(`Status ${status.status}.`),
     poll: () =>
-      context.client.pollUpgrade({
+      client.pollUpgrade({
         extensionId: args.extensionId,
         runId: args.runId,
       }),
@@ -146,10 +147,10 @@ export async function exec(...argv: string[]) {
 
   try {
     process.exitCode = await runWatcher(args, {
-      createContext: async () => {
+      createClient: async () => {
         const context = createCamsContext(getTokenWithTimeout);
-        await findWorkspaceExtension(context);
-        return context;
+        const extension = await findWorkspaceExtension(context);
+        return context.createInstanceClient(requireCommerceInstance(extension));
       },
       log,
     });

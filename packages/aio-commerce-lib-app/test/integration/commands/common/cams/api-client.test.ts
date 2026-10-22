@@ -14,7 +14,10 @@ import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
 import { HttpResponse, http } from "msw";
 import { describe, expect, test } from "vitest";
 
-import { createCamsClient } from "#commands/common/cams/api-client";
+import {
+  createCamsInstanceClient,
+  createCamsWorkspaceClient,
+} from "#commands/common/cams/api-client";
 import {
   CamsClientError,
   CamsConflictError,
@@ -34,18 +37,29 @@ const STATUS_URL = `${UPGRADES}/run-1/sync`;
 const ORG = { id: "org-id", ims_org_id: "ims-org-id", name: "org-name" };
 const RUNNING = { id: "run-1", status: "in-progress" };
 const IDS = { extensionId: "ext-1", runId: "run-1" };
+const COMMERCE_INSTANCE = {
+  baseUrl: "https://commerce.example.com",
+  env: "paas",
+} satisfies AssociatedCommerceData;
+const CLIENT_PARAMS = {
+  auth: { getToken: async () => "user-token", org: ORG },
+  config: { baseUrl: BASE_URL },
+};
 
 setupApiTestLifecycle();
 
 function createClient(
   fetchOptions?: Options,
-  commerceInstance?: AssociatedCommerceData,
+  commerceInstance: AssociatedCommerceData = COMMERCE_INSTANCE,
 ) {
-  return createCamsClient({
-    auth: { getToken: async () => "user-token", org: ORG },
-    config: { baseUrl: BASE_URL, commerceInstance },
-    fetchOptions,
-  });
+  return createCamsInstanceClient(
+    { ...CLIENT_PARAMS, fetchOptions },
+    commerceInstance,
+  );
+}
+
+function createWorkspaceClient(fetchOptions?: Options) {
+  return createCamsWorkspaceClient({ ...CLIENT_PARAMS, fetchOptions });
 }
 
 /** The error a call rejects with. */
@@ -71,7 +85,7 @@ describe("findExtension", () => {
       }),
     );
 
-    const extension = await createClient().findExtension(WORKSPACE);
+    const extension = await createWorkspaceClient().findExtension(WORKSPACE);
 
     expect(extension).toMatchObject({ id: "ext-1" });
     expect(workspaceId).toBe("ws/1");
@@ -80,7 +94,9 @@ describe("findExtension", () => {
   test("returns null when the workspace has no extension", async () => {
     apiServer.use(http.get(WORKSPACE_EXTENSIONS, () => HttpResponse.json([])));
 
-    await expect(createClient().findExtension(WORKSPACE)).resolves.toBeNull();
+    await expect(
+      createWorkspaceClient().findExtension(WORKSPACE),
+    ).resolves.toBeNull();
   });
 });
 
@@ -106,7 +122,7 @@ describe("the Commerce instance", () => {
     return seen;
   }
 
-  test("is named in requests when configured", async () => {
+  test("is named only in requests from the instance client", async () => {
     const seen = serve({
       id: "ext-1",
     });
@@ -115,8 +131,10 @@ describe("the Commerce instance", () => {
       env: "paas",
     });
 
-    await client.findExtension({ workspaceId: "ws-1" });
+    const workspaceClient = createWorkspaceClient();
+    await workspaceClient.findExtension({ workspaceId: "ws-1" });
     await client.planUpgrade({ extensionId: "ext-1" });
+    await workspaceClient.findExtension({ workspaceId: "ws-1" });
 
     expect(seen.headers.get("x-ac-url")).toBe("https://commerce.example.com");
     expect(seen.headers.get("x-ac-env")).toBe("paas");
@@ -183,13 +201,27 @@ describe("the Commerce instance", () => {
         commerceId: LEGACY_COMMERCE_ID,
       },
     });
-    const client = createClient();
+    const client = createClient(undefined, {
+      baseUrl: "https://configured.example.com",
+      env: "paas",
+    });
 
-    await client.findExtension({ workspaceId: "ws-1" });
+    await createWorkspaceClient().findExtension({ workspaceId: "ws-1" });
     await client.planUpgrade({ extensionId: "ext-1" });
 
-    expect(seen.headers.has("x-ac-url")).toBe(false);
-    expect(seen.headers.has("x-ac-env")).toBe(false);
+    expect(seen.headers.get("x-ac-url")).toBe("https://configured.example.com");
+    expect(seen.headers.get("x-ac-env")).toBe("paas");
+  });
+
+  test("exposes only endpoints for each client's scope", () => {
+    expect(Object.keys(createWorkspaceClient())).toEqual(["findExtension"]);
+    expect(Object.keys(createClient())).toEqual([
+      "planUpgrade",
+      "pollUpgrade",
+      "readLatestUpgrade",
+      "readUpgrade",
+      "startUpgrade",
+    ]);
   });
 });
 
@@ -681,7 +713,8 @@ describe("readLatestUpgrade", () => {
 describe("parameters", () => {
   const client = createClient();
   const calls = {
-    findExtension: () => client.findExtension({ workspaceId: "" }),
+    findExtension: () =>
+      createWorkspaceClient().findExtension({ workspaceId: "" }),
     planUpgrade: () => client.planUpgrade({ extensionId: "" }),
     pollUpgrade: () => client.pollUpgrade({ extensionId: "e", runId: "" }),
     readLatestUpgrade: () => client.readLatestUpgrade({ extensionId: "" }),
@@ -709,7 +742,7 @@ describe("unexpected answers", () => {
     [
       "an extension without an id",
       () => http.get(WORKSPACE_EXTENSIONS, () => HttpResponse.json([{}])),
-      () => client.findExtension({ workspaceId: "w" }),
+      () => createWorkspaceClient().findExtension({ workspaceId: "w" }),
     ],
     [
       "a plan without an id",

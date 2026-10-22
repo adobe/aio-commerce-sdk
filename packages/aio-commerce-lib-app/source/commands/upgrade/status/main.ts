@@ -15,11 +15,12 @@ import { consola } from "consola";
 import {
   createCamsContext,
   findWorkspaceExtension,
+  requireCommerceInstance,
 } from "#commands/common/cams/context";
 import { reportFailure } from "#commands/common/cams/report";
 import { describeOutcome, isSettled } from "#commands/upgrade/poll";
 
-import type { CamsContext } from "#commands/common/cams/context";
+import type { CamsInstanceClient } from "#commands/common/cams/api-client";
 import type { AttemptStatus } from "#commands/common/cams/schema";
 
 /** The command line of `upgrade status`. */
@@ -55,7 +56,7 @@ export function parseStatusArgs(
  * @returns The run id, or `undefined` when the app has no run.
  */
 async function resolveRun(
-  context: CamsContext,
+  client: CamsInstanceClient,
   extensionId: string,
   runId: string | undefined,
 ) {
@@ -63,7 +64,7 @@ async function resolveRun(
     return runId;
   }
 
-  const latest = await context.client.readLatestUpgrade({ extensionId });
+  const latest = await client.readLatestUpgrade({ extensionId });
   return latest?.id;
 }
 
@@ -94,20 +95,24 @@ export async function run(options: StatusOptions): Promise<number> {
   const context = createCamsContext();
   consola.debug(`Service: ${context.baseUrl}`);
 
-  const { extensionId } = await findWorkspaceExtension(context);
-  if (!extensionId) {
+  const extension = await findWorkspaceExtension(context);
+  if (!extension) {
     consola.error("This workspace is not associated with an app extension.");
     return 1;
   }
 
-  const targetRunId = await resolveRun(context, extensionId, options.runId);
+  const { id: extensionId } = extension;
+  const client = context.createInstanceClient(
+    requireCommerceInstance(extension),
+  );
+  const targetRunId = await resolveRun(client, extensionId, options.runId);
   if (!targetRunId) {
     consola.info("The app has no upgrade run yet.");
     return 0;
   }
 
   try {
-    const status = await context.client.pollUpgrade({
+    const status = await client.pollUpgrade({
       extensionId,
       runId: targetRunId,
     });
