@@ -14,20 +14,7 @@ import type {
   WebhookSubscribeParams,
   WebhookUnsubscribeParams,
 } from "@adobe/aio-commerce-lib-webhooks/api";
-import type { WebhookEntry } from "#config/schema/webhooks";
 import type { DomainPlan } from "#management/common/workflow/resource";
-
-/**
- * A webhook config entry without the fields that can hold secrets: the `headers` and the explicit
- * `url` of its `webhook`.
- */
-export type RedactedWebhookEntry = WebhookEntry extends infer Entry
-  ? Entry extends { webhook: infer Definition }
-    ? Omit<Entry, "webhook"> & {
-        webhook: Omit<Definition, "headers" | "url">;
-      }
-    : never
-  : never;
 
 /** Minimal identity fields shared by subscribe and unsubscribe params. */
 export type WebhookIdentity = {

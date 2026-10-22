@@ -230,27 +230,6 @@ describe("planWebhookSubscriptions", () => {
       expect(leftover.plan.operations[0]?.itemRefs).toEqual([{ key }]);
     });
 
-    test("keeps the headers and the explicit url out of the config of a reference", async () => {
-      const secret = "Bearer secret-token";
-      const target = createMockWebhooksConfig({
-        webhooks: [
-          createMockUrlWebhookEntry({
-            webhook: {
-              headers: [{ name: "Authorization", value: secret }],
-              url: "https://user:pass@example.com/hook?token=abc",
-            },
-          }),
-        ],
-      });
-      const result = await plan({ target }).result;
-
-      expect.assert(result.kind === "planned");
-      const [ref] = result.plan.operations[0]?.itemRefs ?? [];
-      expect(ref?.config).toMatchObject({ label: "Test Webhook" });
-      expect(JSON.stringify(ref)).not.toContain("secret-token");
-      expect(JSON.stringify(ref)).not.toContain("user:pass");
-    });
-
     test("keeps the label and description out of the operation values", async () => {
       const result = await plan({ target: labelled("Label", "Text") }).result;
 

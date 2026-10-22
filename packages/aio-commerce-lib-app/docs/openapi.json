@@ -3700,7 +3700,7 @@
             "type": "string"
           },
           "config": {
-            "description": "The item's config as declared in the app config, without secrets (a webhook's `headers` and explicit `url` are left out): the target config item for an add or update, the baseline one for a remove. Its shape depends on the domain: a webhook entry, an event of a provider, an Admin UI component or a custom installation step. Its `label` and `description` are the item's text, and a custom installation step has a `name` instead of a `label`. Absent when the item has no declared config.",
+            "description": "The item's config as declared in the app config: the target config item for an add or update, the baseline one for a remove. Its shape depends on the domain: a webhook entry, an event of a provider, an Admin UI component or a custom installation step. Its `label` and `description` are the item's text, and a custom installation step has a `name` instead of a `label`. Absent when the item has no declared config.",
             "type": "object",
             "additionalProperties": true
           }

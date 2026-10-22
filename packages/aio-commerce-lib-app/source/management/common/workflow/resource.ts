@@ -14,7 +14,7 @@ import type { AdminUiComponentConfig } from "#config/schema/admin-ui";
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 import type { AppEvent } from "#config/schema/eventing";
 import type { CustomInstallationStep } from "#config/schema/installation";
-import type { RedactedWebhookEntry } from "#management/domains/webhooks/types";
+import type { WebhookEntry } from "#config/schema/webhooks";
 import type { ExecutionContext, ValidationExecutionContext } from "./step";
 import type { ValidationIssueSeverity } from "./validation";
 
@@ -47,7 +47,7 @@ type ItemConfig =
   | AdminUiComponentConfig
   | AppEvent
   | CustomInstallationStep
-  | RedactedWebhookEntry;
+  | WebhookEntry;
 
 /**
  * A reference to a user-visible item an operation changes. Within a domain plan, operations with
@@ -59,7 +59,7 @@ export type ItemRef = {
   key: string;
 
   /**
-   * The item's config as declared, without secrets: the target config item for an add or update,
+   * The item's config as declared: the target config item for an add or update,
    * the baseline one for a remove. Absent for an item with no config, such as a live-only resource.
    * Its `label` and `description` are the item's text. A custom installation step has a `name`
    * instead of a `label`.
