@@ -165,6 +165,40 @@ describe("planAdminUi", () => {
     expect(plan.operations[0]?.id).toBe("update:order.grid-columns");
   });
 
+  test("references the component as an item, with the target text for an add or update and the baseline text for a remove", async () => {
+    const config = configWithAdminUiSingleGrid as AdminUiConfig;
+    const { gridColumns } = configWithAdminUiSingleGrid.adminUi.order;
+    const ref = {
+      description: gridColumns.description,
+      key: "order.grid-columns",
+      kind: "admin-ui-component",
+      label: gridColumns.label,
+    };
+
+    const [added] = (await planned(null, config)).plan.operations;
+    const [removed] = (await planned(config, null)).plan.operations;
+    expect(added?.id).toBe("add:order.grid-columns");
+    expect(added?.itemRefs).toEqual([ref]);
+    expect(removed?.itemRefs).toEqual([ref]);
+
+    const renamed = {
+      ...configWithAdminUiSingleGrid,
+      adminUi: {
+        order: {
+          gridColumns: {
+            ...gridColumns,
+            description: "New text",
+            label: "New",
+          },
+        },
+      },
+    } as AdminUiConfig;
+    const [updated] = (await planned(config, renamed)).plan.operations;
+    expect(updated?.itemRefs).toEqual([
+      { ...ref, description: "New text", label: "New" },
+    ]);
+  });
+
   test("detects a modification nested inside a grid-columns component (column-level change)", async () => {
     const modifiedColumn = {
       ...configWithAdminUiSingleGrid,

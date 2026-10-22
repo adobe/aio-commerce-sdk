@@ -12,6 +12,8 @@
 
 import stringify from "safe-stable-stringify";
 
+import { toItemRef } from "#management/common/workflow/resource";
+
 import { getSubscriptionChangeKind } from "./comparison";
 import {
   eventCodeOf,
@@ -25,7 +27,10 @@ import type { CommerceEventSubscription } from "@adobe/aio-commerce-lib-events/c
 import type { EventProviderType } from "@adobe/aio-commerce-lib-events/io-events";
 import type { AppEvent, CommerceEvent } from "#config/schema/eventing";
 import type { ApplicationMetadata } from "#config/schema/metadata";
-import type { ResourceOperation } from "#management/common/workflow/resource";
+import type {
+  ItemRef,
+  ResourceOperation,
+} from "#management/common/workflow/resource";
 import type { LiveEventingProvider, LiveEventingState } from "./live";
 import type {
   EventingOperationValue,
@@ -289,13 +294,75 @@ export function declaresSubscription(
   );
 }
 
-export function add(after: EventingOperationValue, reason: Reason): Operation {
+/** The text a config item or live resource gives to the reference of an item. */
+type ItemText = { label?: string; description?: string };
+
+/** The reference of a provider. */
+export function providerRef(providerKey: string, source: ItemText): ItemRef {
+  return toItemRef("provider", providerKey, source);
+}
+
+/** The reference of an event, by its namespaced name. */
+export function eventRef(
+  providerKey: string,
+  namespacedName: string,
+  source?: ItemText,
+): ItemRef {
+  return toItemRef("event", `${providerKey}:${namespacedName}`, source);
+}
+
+/**
+ * The references of the events a registration serves: the events of `events` that route to its
+ * runtime action. A registration serving no declared event has none and is internal.
+ */
+export function registrationRefs(
+  providerKey: string,
+  events: readonly AppEvent[],
+  runtimeAction: string,
+  ctx: LeafPlanContext,
+): ItemRef[] {
+  return events
+    .filter((event) => event.runtimeActions.includes(runtimeAction))
+    .map((event) =>
+      eventRef(
+        providerKey,
+        getNamespacedEvent(ctx.metadata, event.name),
+        event,
+      ),
+    );
+}
+
+/** The baseline's config for the event with a namespaced name under a provider. */
+export function findDeclaredEvent(
+  providerKey: string,
+  namespacedName: string,
+  ctx: LeafPlanContext,
+): AppEvent | undefined {
+  return ctx.declared
+    .get(providerKey)
+    ?.events.find(
+      (event) =>
+        getNamespacedEvent(ctx.metadata, event.name) === namespacedName,
+    );
+}
+
+/** The `itemRefs` property of an operation, absent when it has no items. */
+function withRefs(itemRefs: ItemRef[] | undefined) {
+  return itemRefs && itemRefs.length > 0 ? { itemRefs } : {};
+}
+
+export function add(
+  after: EventingOperationValue,
+  reason: Reason,
+  itemRefs?: ItemRef[],
+): Operation {
   return {
     after,
     id: operationId("add", after),
     kind: "add",
     label: operationLabel("add", after),
     reason,
+    ...withRefs(itemRefs),
   };
 }
 
@@ -303,6 +370,7 @@ export function update(
   before: EventingOperationValue,
   after: EventingOperationValue,
   reason: Reason,
+  itemRefs?: ItemRef[],
 ): Operation {
   return {
     after,
@@ -311,12 +379,14 @@ export function update(
     kind: "update",
     label: operationLabel("update", after),
     reason,
+    ...withRefs(itemRefs),
   };
 }
 
 export function remove(
   before: EventingOperationValue,
   reason: Reason,
+  itemRefs?: ItemRef[],
 ): Operation {
   return {
     before,
@@ -324,6 +394,7 @@ export function remove(
     kind: "remove",
     label: operationLabel("remove", before),
     reason,
+    ...withRefs(itemRefs),
   };
 }
 

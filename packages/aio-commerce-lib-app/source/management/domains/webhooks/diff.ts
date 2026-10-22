@@ -10,6 +10,8 @@
  * governing permissions and limitations under the License.
  */
 
+import { toItemRef } from "#management/common/workflow/resource";
+
 import { hasWebhookConfigChanged } from "./comparison";
 import {
   getWebhookName,
@@ -22,18 +24,38 @@ import {
   webhookOperationId,
 } from "./utils";
 
-import type { ResourceOperation } from "#management/common/workflow/resource";
+import type {
+  ItemRef,
+  ResourceOperation,
+} from "#management/common/workflow/resource";
 import type {
   ResolvedWebhookPayload,
   WebhookDomainPlan,
+  WebhookIdentity,
   WebhookOperationValue,
 } from "./types";
+
+/** The item references of the webhooks the baseline and the target config declare, by `webhookKey`. */
+type WebhookItemRefs = {
+  baseline: ReadonlyMap<string, ItemRef>;
+  target: ReadonlyMap<string, ItemRef>;
+};
+
+/** The item reference of a webhook, without text when the config does not declare it. */
+function itemRefsOf(
+  webhook: WebhookIdentity,
+  declared: ReadonlyMap<string, ItemRef>,
+): ItemRef[] {
+  const key = webhookKey(webhook);
+  return [declared.get(key) ?? toItemRef("webhook", key)];
+}
 
 /** Plans an add for every desired webhook missing from Commerce. */
 export function planAdditions(
   live: readonly ResolvedWebhookPayload[],
   desired: readonly ResolvedWebhookPayload[],
   declaredInBaseline: readonly ResolvedWebhookPayload[],
+  refs: WebhookItemRefs,
 ): ResourceOperation<WebhookOperationValue>[] {
   return desired
     .filter((webhook) => !isWebhookInList(live, webhook))
@@ -42,6 +64,7 @@ export function planAdditions(
       return {
         after: webhook,
         id: webhookOperationId("add", identity),
+        itemRefs: itemRefsOf(webhook, refs.target),
         kind: "add",
         label: `Subscribe webhook: ${getWebhookName(identity)}`,
         reason: isChangedFromBaseline(webhook, declaredInBaseline)
@@ -57,6 +80,7 @@ export function planUpdates(
   desired: readonly ResolvedWebhookPayload[],
   declaredInBaseline: readonly ResolvedWebhookPayload[],
   configuredValues: NonNullable<WebhookDomainPlan["configuredValues"]>,
+  refs: WebhookItemRefs,
 ): ResourceOperation<WebhookOperationValue>[] {
   return desired.flatMap((webhook) => {
     const current = live.find((candidate) =>
@@ -77,6 +101,7 @@ export function planUpdates(
       after: webhook,
       before: current,
       id: webhookOperationId("update", identity),
+      itemRefs: itemRefsOf(webhook, refs.target),
       kind: "update",
       label: `Update webhook: ${getWebhookName(identity)}`,
       reason: isChangedFromBaseline(webhook, declaredInBaseline)
@@ -92,6 +117,7 @@ export function planRemovals(
   desired: readonly ResolvedWebhookPayload[],
   declaredInBaseline: readonly ResolvedWebhookPayload[],
   appId: string,
+  refs: WebhookItemRefs,
 ): ResourceOperation<WebhookOperationValue>[] {
   return live
     .filter((webhook) => {
@@ -108,6 +134,7 @@ export function planRemovals(
       return {
         before: webhook,
         id: webhookOperationId("remove", identity),
+        itemRefs: itemRefsOf(webhook, refs.baseline),
         kind: "remove",
         label: `Unsubscribe webhook: ${getWebhookName(identity)}`,
         reason: isWebhookInList(declaredInBaseline, webhook)

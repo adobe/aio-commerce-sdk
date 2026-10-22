@@ -12,6 +12,7 @@
 
 import { describe, expect, test } from "vitest";
 
+import { groupOperationsIntoItems } from "#management/common/workflow/resource";
 import {
   planCommerceEvents,
   planExternalEvents,
@@ -687,6 +688,170 @@ describe("planCommerceEvents", () => {
 
     expect(summary(driftPlan)).toEqual(["update metadata drift"]);
     expect(summary(changePlan)).toEqual(["update metadata change"]);
+  });
+
+  describe("item references", () => {
+    const eventKey = `orders:${subscriptionName}`;
+    const eventText = { description: "Order text", label: "Order placed" };
+    const providerText = { description: "d", label: "Orders" };
+    const refsOf = (plan: EventingDomainPlan) =>
+      plan.operations.map((op) => [op.id, op.itemRefs]);
+
+    test("references a new event's operations, registration included, and the provider's", async () => {
+      const plan = await planCommerce({
+        live: deployed(commerceConfig([]), COMMERCE_PROVIDER_TYPE),
+        target: oneProvider([commerceEvent(eventText)]),
+      });
+
+      const provider = [{ key: "orders", kind: "provider", ...providerText }];
+      const evt = [{ key: eventKey, kind: "event", ...eventText }];
+      expect(refsOf(plan)).toEqual([
+        ["add:provider:orders", provider],
+        ["add:commerce-provider:orders", provider],
+        [`add:metadata:orders:com.adobe.commerce.${subscriptionName}`, evt],
+        ["add:registration:orders:pkg/a", evt],
+        [`add:subscription:${subscriptionName}`, evt],
+      ]);
+
+      expect(
+        groupOperationsIntoItems(plan.operations).map((item) => ({
+          ...item,
+          operationIds: item.operationIds.length,
+        })),
+      ).toEqual([
+        {
+          change: "add",
+          key: "orders",
+          kind: "provider",
+          operationIds: 2,
+          reason: "change",
+          ...providerText,
+        },
+        {
+          change: "add",
+          key: eventKey,
+          kind: "event",
+          operationIds: 3,
+          reason: "change",
+          ...eventText,
+        },
+      ]);
+    });
+
+    test("references a registration with every event it serves", async () => {
+      const target = oneProvider([
+        commerceEvent(),
+        commerceEvent({ name: "observer.second" }),
+      ]);
+      const plan = await planCommerce({
+        live: deployed(commerceConfig([]), COMMERCE_PROVIDER_TYPE),
+        target,
+      });
+
+      const registration = plan.operations.find((op) =>
+        op.id.startsWith("add:registration:"),
+      );
+      expect(registration?.itemRefs?.map((ref) => ref.key)).toEqual([
+        eventKey,
+        `orders:${getNamespacedEvent(metadata, "observer.second")}`,
+      ]);
+    });
+
+    test("makes a registration-only change an update of the event item", async () => {
+      const baseline = oneProvider([commerceEvent()]);
+      const live = deployed(baseline, COMMERCE_PROVIDER_TYPE);
+      live.registrations[0].enabled = false;
+
+      const plan = await planCommerce({ baseline, live, target: baseline });
+      expect(summary(plan)).toEqual(["update registration drift"]);
+
+      const [item] = groupOperationsIntoItems(plan.operations);
+      expect(item).toMatchObject({
+        change: "update",
+        key: eventKey,
+        kind: "event",
+      });
+    });
+
+    test("gives a duplicate registration and one for an undeclared action no item", async () => {
+      const config = oneProvider([commerceEvent()]);
+      const live = deployed(config, COMMERCE_PROVIDER_TYPE);
+      live.registrations.push({
+        ...live.registrations[0],
+        id: "dup",
+        registration_id: "dup",
+      });
+      live.registrations.push({
+        ...live.registrations[0],
+        id: "other",
+        name: "other-reg",
+        registration_id: "other",
+        runtime_action: "pkg/unknown",
+      });
+
+      const plan = await planCommerce({
+        baseline: config,
+        live,
+        target: config,
+      });
+      const removals = plan.operations.filter(
+        (op) =>
+          op.kind === "remove" && op.id.startsWith("remove:registration:"),
+      );
+      expect(removals).toHaveLength(2);
+      for (const op of removals) {
+        expect(op.itemRefs).toBeUndefined();
+      }
+    });
+
+    test("references a removed event's registration through the baseline's events", async () => {
+      const baseline = oneProvider([
+        commerceEvent(),
+        commerceEvent({ name: "observer.dropped", runtimeActions: ["pkg/b"] }),
+      ]);
+      const plan = await planCommerce({
+        baseline,
+        live: deployed(baseline, COMMERCE_PROVIDER_TYPE),
+        target: oneProvider([commerceEvent()]),
+      });
+
+      const dropped = `orders:${getNamespacedEvent(metadata, "observer.dropped")}`;
+      const registration = plan.operations.find(
+        (op) => op.id === "remove:registration:orders:pkg/b",
+      );
+      expect(registration?.itemRefs?.map((ref) => ref.key)).toEqual([dropped]);
+
+      const item = groupOperationsIntoItems(plan.operations).find(
+        (candidate) => candidate.key === dropped,
+      );
+      expect(item).toMatchObject({ change: "remove", kind: "event" });
+      expect(item?.operationIds).toContain("remove:registration:orders:pkg/b");
+    });
+
+    test("takes the baseline's text for a dropped provider, and the live text for an undeclared one", async () => {
+      const baseline = commerceConfig([
+        {
+          events: [commerceEvent()],
+          provider: { description: "d", key: "orders", label: "Orders" },
+        },
+        {
+          events: [commerceEvent({ name: "observer.dropped" })],
+          provider: { description: "Old text", key: "old", label: "Old" },
+        },
+      ]);
+      const plan = await planCommerce({
+        baseline,
+        live: deployed(baseline, COMMERCE_PROVIDER_TYPE),
+        target: oneProvider([commerceEvent()]),
+      });
+
+      const provider = plan.operations.find(
+        (op) => op.id === "remove:provider:old",
+      );
+      expect(provider?.itemRefs).toEqual([
+        { description: "Old text", key: "old", kind: "provider", label: "Old" },
+      ]);
+    });
   });
 
   test("updates the provider and its Commerce provider, and recreates its renamed registrations, when the label changes", async () => {

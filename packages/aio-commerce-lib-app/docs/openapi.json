@@ -3691,6 +3691,53 @@
         },
         "required": ["code", "message", "domain", "severity", "blocking"]
       },
+      "PlanItem": {
+        "description": "A user-visible item a plan adds, removes or changes, built from the operations that reference its `kind` and `key`. An event also takes the operations of the registrations that serve it.",
+        "type": "object",
+        "properties": {
+          "kind": {
+            "description": "What the item is.",
+            "type": "string",
+            "enum": [
+              "provider",
+              "event",
+              "webhook",
+              "admin-ui-component",
+              "installation-step"
+            ]
+          },
+          "key": {
+            "description": "Identifies the item within its domain and `kind`.",
+            "type": "string"
+          },
+          "change": {
+            "description": "`add` when every operation adds, `remove` when every operation removes, otherwise `update`.",
+            "type": "string",
+            "enum": ["add", "update", "remove"]
+          },
+          "reason": {
+            "description": "`change` when any operation is a `change`, otherwise `drift`.",
+            "type": "string",
+            "enum": ["change", "drift"]
+          },
+          "label": {
+            "description": "The label of the config item. Absent when it declares none.",
+            "type": "string"
+          },
+          "description": {
+            "description": "The description of the config item. Absent when it declares none.",
+            "type": "string"
+          },
+          "operationIds": {
+            "description": "The ids of the operations that make up the item, in plan order.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": ["kind", "key", "change", "reason", "operationIds"]
+      },
       "PlanPreview": {
         "description": "A lifecycle plan for review, without internal or sensitive values.",
         "type": "object",
@@ -3760,9 +3807,16 @@
                     },
                     "required": ["id", "kind", "label", "reason"]
                   }
+                },
+                "items": {
+                  "description": "The user-visible items the operations change, one per item however many operations it takes.",
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PlanItem"
+                  }
                 }
               },
-              "required": ["path", "operations"]
+              "required": ["path", "operations", "items"]
             }
           },
           "issues": {

@@ -1005,8 +1005,31 @@ describe("installationRuntimeAction", () => {
                     {
                       after: {},
                       id: "operation-1",
+                      itemRefs: [
+                        {
+                          description: "Why",
+                          key: "synthetic-1",
+                          kind: "webhook",
+                          label: "Synthetic",
+                        },
+                      ],
                       kind: "add",
                       label: "Apply synthetic change",
+                      reason: "change",
+                    },
+                    {
+                      after: {},
+                      id: "operation-2",
+                      itemRefs: [{ key: "synthetic-1", kind: "webhook" }],
+                      kind: "add",
+                      label: "Apply other change",
+                      reason: "drift",
+                    },
+                    {
+                      after: {},
+                      id: "operation-3",
+                      kind: "add",
+                      label: "Internal change",
                       reason: "change",
                     },
                   ],
@@ -1033,7 +1056,22 @@ describe("installationRuntimeAction", () => {
             plan: {
               domains: [
                 {
-                  operations: [{ id: "operation-1", kind: "add" }],
+                  items: [
+                    {
+                      change: "add",
+                      description: "Why",
+                      key: "synthetic-1",
+                      kind: "webhook",
+                      label: "Synthetic",
+                      operationIds: ["operation-1", "operation-2"],
+                      reason: "change",
+                    },
+                  ],
+                  operations: [
+                    { id: "operation-1", kind: "add" },
+                    { id: "operation-2", kind: "add" },
+                    { id: "operation-3", kind: "add" },
+                  ],
                   path: ["installation", "synthetic"],
                 },
               ],

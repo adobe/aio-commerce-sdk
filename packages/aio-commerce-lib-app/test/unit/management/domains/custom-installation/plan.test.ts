@@ -46,6 +46,14 @@ describe("planCustomInstallationSteps", () => {
       {
         after: { name: "Demo Success", script: "./demo-success.js" },
         id: "add:Demo Success",
+        itemRefs: [
+          {
+            description: "Success script",
+            key: "Demo Success",
+            kind: "installation-step",
+            label: "Demo Success",
+          },
+        ],
         kind: "add",
         label: 'Run custom installation step "Demo Success"',
         reason: "change",
@@ -53,6 +61,14 @@ describe("planCustomInstallationSteps", () => {
       {
         after: { name: "Demo Error", script: "./demo-error.js" },
         id: "add:Demo Error",
+        itemRefs: [
+          {
+            description: "Error script",
+            key: "Demo Error",
+            kind: "installation-step",
+            label: "Demo Error",
+          },
+        ],
         kind: "add",
         label: 'Run custom installation step "Demo Error"',
         reason: "change",
@@ -116,6 +132,14 @@ describe("planCustomInstallationSteps", () => {
       {
         before: { name: "Demo Success", script: "./demo-success.js" },
         id: "remove:Demo Success",
+        itemRefs: [
+          {
+            description: "Success script",
+            key: "Demo Success",
+            kind: "installation-step",
+            label: "Demo Success",
+          },
+        ],
         kind: "remove",
         label: 'Remove custom installation step "Demo Success"',
         reason: "change",
@@ -123,6 +147,14 @@ describe("planCustomInstallationSteps", () => {
       {
         before: { name: "Demo Error", script: "./demo-error.js" },
         id: "remove:Demo Error",
+        itemRefs: [
+          {
+            description: "Error script",
+            key: "Demo Error",
+            kind: "installation-step",
+            label: "Demo Error",
+          },
+        ],
         kind: "remove",
         label: 'Remove custom installation step "Demo Error"',
         reason: "change",
@@ -207,6 +239,14 @@ describe("planCustomInstallationSteps", () => {
       {
         after: { name: "Demo Error", script: "./demo-error.js" },
         id: "add:Demo Error",
+        itemRefs: [
+          {
+            description: "Error script",
+            key: "Demo Error",
+            kind: "installation-step",
+            label: "Demo Error",
+          },
+        ],
         kind: "add",
         label: 'Run custom installation step "Demo Error"',
         reason: "change",

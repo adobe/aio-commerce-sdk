@@ -14,6 +14,7 @@ import { resolveImsAuthParams } from "@adobe/aio-commerce-lib-auth";
 import { stringify } from "safe-stable-stringify";
 
 import { appliesToEnv } from "#config/lib/environment";
+import { toItemRef } from "#management/common/workflow/resource";
 
 import type {
   CommerceWebhook,
@@ -21,6 +22,7 @@ import type {
 } from "@adobe/aio-commerce-lib-webhooks/api";
 import type { getInstallCommerceEnv } from "#config/lib/environment";
 import type { WebhookEntry } from "#config/schema/webhooks";
+import type { ItemRef } from "#management/common/workflow/resource";
 import type { WebhooksExecutionContext } from "./context";
 import type { ResolvedWebhookPayload, WebhookIdentity } from "./types";
 
@@ -208,6 +210,30 @@ export function resolveDesiredWebhooks(
   return config.webhooks
     .filter((entry) => appliesToEnv(entry, env))
     .map((entry) => resolveWebhookPayload(entry, idPrefix));
+}
+
+/**
+ * The item reference of every configured webhook that applies to the Commerce environment, by
+ * `webhookKey` of its resolved identity. Empty without a config.
+ */
+export function resolveWebhookItemRefs(
+  config: { metadata: { id: string }; webhooks: WebhookEntry[] } | null,
+  env: ReturnType<typeof getInstallCommerceEnv>,
+): ReadonlyMap<string, ItemRef> {
+  const idPrefix = config ? buildWebhookIdPrefix(config.metadata.id) : "";
+  const entries = config?.webhooks.filter((entry) => appliesToEnv(entry, env));
+
+  return new Map(
+    (entries ?? []).map((entry) => {
+      const key = webhookKey({
+        ...entry.webhook,
+        batch_name: `${idPrefix}${entry.webhook.batch_name}`,
+        hook_name: `${idPrefix}${entry.webhook.hook_name}`,
+      });
+
+      return [key, toItemRef("webhook", key, entry)];
+    }),
+  );
 }
 
 /** Resolves a config webhook entry's identity/payload (idPrefix, URL) — no credentials. Pure. */

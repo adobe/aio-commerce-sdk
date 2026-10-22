@@ -19,11 +19,15 @@ import {
   declaresAction,
   declaresMetadata,
   declaresSubscription,
+  eventRef,
+  findDeclaredEvent,
   metadataReason,
   metadataValue,
   providerReason,
+  providerRef,
   providerValue,
   registrationReason,
+  registrationRefs,
   registrationValueOf,
   registrationValues,
   remove,
@@ -36,6 +40,8 @@ import {
   generateInstanceId,
   generateInstanceIdDeprecated,
   getIoEventCode,
+  getNamespacedEvent,
+  getNamespacedNameOfCode,
   getProviderKeyFromInstanceId,
 } from "./utils";
 
@@ -99,6 +105,7 @@ export function planNewProvider(
         const value = subscriptionValue(target, event, ctx);
         const reason = subscriptionReason(target, event, ctx);
         const current = ctx.subscriptions.get(value.name);
+        const refs = [eventRef(target.key, value.name, event)];
 
         // Commerce subscription names are unique, so one left under another provider is replaced.
         const isUnderKeptProvider =
@@ -106,16 +113,18 @@ export function planNewProvider(
           !leftoverProviderIds.has(current.provider_id);
 
         return isUnderKeptProvider
-          ? update(value, { ...value, changeMode: "replace" }, reason)
-          : add(value, reason);
+          ? update(value, { ...value, changeMode: "replace" }, reason, refs)
+          : add(value, reason, refs);
       })
     : [];
 
+  const providerRefs = [providerRef(target.key, target.provider)];
   const commerceProvider = ctx.isCommerce
     ? [
         add(
           { ...commerceProviderValue(target), instanceId },
           providerReason(target, ctx),
+          providerRefs,
         ),
       ]
     : [];
@@ -124,16 +133,28 @@ export function planNewProvider(
     add(
       { ...providerValue(target, ctx), instanceId },
       providerReason(target, ctx),
+      providerRefs,
     ),
     ...commerceProvider,
     ...target.events.map((event) =>
       add(
         metadataValue(target, event, ctx),
         metadataReason(target, event, ctx),
+        [
+          eventRef(
+            target.key,
+            getNamespacedEvent(ctx.metadata, event.name),
+            event,
+          ),
+        ],
       ),
     ),
     ...registrationValues(target, instanceId, ctx).map((value) =>
-      add(value, registrationReason(target, value, ctx)),
+      add(
+        value,
+        registrationReason(target, value, ctx),
+        registrationRefs(target.key, target.events, value.runtimeAction, ctx),
+      ),
     ),
     ...subscriptions,
   ];
@@ -207,7 +228,9 @@ function planProviderUpdate(
   };
 
   return [
-    update(before, providerValue(target, ctx), providerReason(target, ctx)),
+    update(before, providerValue(target, ctx), providerReason(target, ctx), [
+      providerRef(target.key, target.provider),
+    ]),
   ];
 }
 
@@ -219,6 +242,7 @@ function planCommerceProvider(
 ): Operation[] {
   const { commerceProvider } = live;
   const reason = providerReason(target, ctx);
+  const refs = [providerRef(target.key, target.provider)];
   if (!commerceProvider) {
     const value = {
       ...commerceProviderValue(target),
@@ -226,7 +250,7 @@ function planCommerceProvider(
       providerId: live.ioProvider.id,
     };
 
-    return [add(value, reason)];
+    return [add(value, reason, refs)];
   }
 
   const isSame =
@@ -247,7 +271,7 @@ function planCommerceProvider(
     resourceType: "commerceProvider",
   };
 
-  return [update(before, commerceProviderValue(target), reason)];
+  return [update(before, commerceProviderValue(target), reason, refs)];
 }
 
 /**
@@ -273,8 +297,12 @@ function planMetadata(
   const changes = desired.flatMap(({ event, value }) => {
     const current = liveByCode.get(value.eventCode);
     const reason = metadataReason(target, event, ctx);
+    const refs = [
+      eventRef(target.key, getNamespacedEvent(ctx.metadata, event.name), event),
+    ];
+
     if (!current) {
-      return [add(value, reason)];
+      return [add(value, reason, refs)];
     }
 
     const before: EventingOperationValue = {
@@ -285,7 +313,10 @@ function planMetadata(
 
     const replaceReason = replacedCodes.get(value.eventCode);
     if (replaceReason) {
-      return [remove(before, replaceReason), add(value, replaceReason)];
+      return [
+        remove(before, replaceReason, refs),
+        add(value, replaceReason, refs),
+      ];
     }
 
     const isSame =
@@ -296,14 +327,15 @@ function planMetadata(
       return [];
     }
 
-    return [update(before, value, reason)];
+    return [update(before, value, reason, refs)];
   });
 
   const desiredCodes = new Set(desired.map(({ value }) => value.eventCode));
   const removals = live.ioProvider.metadata
     .filter((entry) => !desiredCodes.has(entry.event_code))
-    .map((entry) =>
-      remove(
+    .map((entry) => {
+      const name = getNamespacedNameOfCode(entry.event_code, ctx.type);
+      return remove(
         {
           description: entry.description,
           eventCode: entry.event_code,
@@ -316,8 +348,15 @@ function planMetadata(
         declaresMetadata(target.key, entry.event_code, ctx)
           ? "change"
           : "drift",
-      ),
-    );
+        [
+          eventRef(
+            target.key,
+            name,
+            findDeclaredEvent(target.key, name, ctx) ?? entry,
+          ),
+        ],
+      );
+    });
 
   return [...changes, ...removals];
 }
@@ -341,8 +380,15 @@ function planRegistrations(
   const changes = desired.flatMap((value) => {
     const current = findRegistration(live, value, ctx);
     const reason = registrationReason(target, value, ctx);
+    const refs = registrationRefs(
+      target.key,
+      target.events,
+      value.runtimeAction,
+      ctx,
+    );
+
     if (!current) {
-      return [add(value, reason)];
+      return [add(value, reason, refs)];
     }
 
     kept.add(current);
@@ -350,7 +396,7 @@ function planRegistrations(
 
     // Apply creates the registration under its new name before it removes the old one.
     if (before.name !== value.name) {
-      return [remove(before, reason), add(value, reason)];
+      return [remove(before, reason, refs), add(value, reason, refs)];
     }
 
     const isSame =
@@ -367,7 +413,7 @@ function planRegistrations(
       return [];
     }
 
-    return [update(before, value, reason)];
+    return [update(before, value, reason, refs)];
   });
 
   const desiredActions = new Set(desired.map((value) => value.runtimeAction));
@@ -392,7 +438,14 @@ function planRegistrations(
         ? "change"
         : "drift";
 
-      return remove(value, reason);
+      const refs = registrationRefs(
+        target.key,
+        ctx.declared.get(target.key)?.events ?? [],
+        value.runtimeAction,
+        ctx,
+      );
+
+      return remove(value, reason, refs);
     });
 
   return [...changes, ...duplicates, ...removals];
@@ -434,8 +487,9 @@ function planSubscriptions(
     const value = subscriptionValue(target, event, ctx);
     const reason = subscriptionReason(target, event, ctx);
     const current = ctx.subscriptions.get(value.name);
+    const refs = [eventRef(target.key, value.name, event)];
     if (!current || leftoverProviderIds.has(current.provider_id)) {
-      return [add(value, reason)];
+      return [add(value, reason, refs)];
     }
 
     const changeMode =
@@ -451,7 +505,7 @@ function planSubscriptions(
       return [];
     }
 
-    return [update(value, { ...value, changeMode, providerId }, reason)];
+    return [update(value, { ...value, changeMode, providerId }, reason, refs)];
   });
 
   const removals = [...ctx.subscriptions.values()]
@@ -470,6 +524,13 @@ function planSubscriptions(
         declaresSubscription(target.key, subscription.name, ctx)
           ? "change"
           : "drift",
+        [
+          eventRef(
+            target.key,
+            subscription.name,
+            findDeclaredEvent(target.key, subscription.name, ctx),
+          ),
+        ],
       ),
     );
 
@@ -502,6 +563,13 @@ export function planLeftoverProvider(
       remove(
         { name: subscription.name, providerKey, resourceType: "subscription" },
         reason,
+        [
+          eventRef(
+            providerKey,
+            subscription.name,
+            findDeclaredEvent(providerKey, subscription.name, ctx),
+          ),
+        ],
       ),
     );
 
@@ -518,17 +586,27 @@ export function planLeftoverProvider(
             resourceType: "commerceProvider",
           },
           reason,
+          [providerRef(providerKey, declared?.provider ?? commerceProvider)],
         ),
       ]
     : [];
 
   return [
     ...subscriptions,
-    ...live.registrations.map((registration) =>
-      remove(registrationValueOf(registration, providerKey, ctx.type), reason),
-    ),
-    ...ioProvider.metadata.map((entry) =>
-      remove(
+    ...live.registrations.map((registration) => {
+      const value = registrationValueOf(registration, providerKey, ctx.type);
+      const refs = registrationRefs(
+        providerKey,
+        declared?.events ?? [],
+        value.runtimeAction,
+        ctx,
+      );
+
+      return remove(value, reason, refs);
+    }),
+    ...ioProvider.metadata.map((entry) => {
+      const name = getNamespacedNameOfCode(entry.event_code, ctx.type);
+      return remove(
         {
           description: entry.description,
           eventCode: entry.event_code,
@@ -539,8 +617,15 @@ export function planLeftoverProvider(
           type: ctx.type,
         },
         reason,
-      ),
-    ),
+        [
+          eventRef(
+            providerKey,
+            name,
+            findDeclaredEvent(providerKey, name, ctx) ?? entry,
+          ),
+        ],
+      );
+    }),
     ...commerce,
     remove(
       {
@@ -552,6 +637,7 @@ export function planLeftoverProvider(
         type: ctx.type,
       },
       reason,
+      [providerRef(providerKey, declared?.provider ?? ioProvider)],
     ),
   ];
 }

@@ -21,6 +21,7 @@ import {
   collectConfiguredValues,
   isWebhookInList,
   resolveDesiredWebhooks,
+  resolveWebhookItemRefs,
   toResolvedWebhookPayload,
 } from "./utils";
 
@@ -71,6 +72,11 @@ export async function planWebhookSubscriptions(
     ? resolveDesiredWebhooks(baseline.config, env)
     : [];
 
+  const refs = {
+    baseline: resolveWebhookItemRefs(baseline?.config ?? null, env),
+    target: resolveWebhookItemRefs(targetConfig, env),
+  };
+
   const failedPlan = failedAttempt?.plan as WebhookDomainPlan | null;
   const declaredInFailedAttempt = failedAttempt?.targetConfig
     ? resolveDesiredWebhooks(failedAttempt.targetConfig, env)
@@ -83,9 +89,9 @@ export async function planWebhookSubscriptions(
 
   const operations = [
     // Removes precede adds so a rename never briefly double-registers a hook point.
-    ...planRemovals(live, desired, declaredInBaseline, context.appId),
-    ...planUpdates(live, desired, declaredInBaseline, configuredValues),
-    ...planAdditions(live, desired, declaredInBaseline),
+    ...planRemovals(live, desired, declaredInBaseline, context.appId, refs),
+    ...planUpdates(live, desired, declaredInBaseline, configuredValues, refs),
+    ...planAdditions(live, desired, declaredInBaseline, refs),
   ];
 
   return {

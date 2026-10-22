@@ -17,6 +17,7 @@ import {
 } from "@adobe/aio-commerce-lib-core/responses";
 
 import { validateCommerceAppConfig } from "#config/lib/validate";
+import { groupOperationsIntoItems } from "#management/common/workflow/resource";
 import { isBranchStep } from "#management/common/workflow/step";
 import { isStepConfigured } from "#management/common/workflow/utils";
 import { toValidationResult } from "#management/common/workflow/validation";
@@ -46,6 +47,7 @@ import type {
   LifecyclePlan,
 } from "#management/common/orchestration";
 import type {
+  PlanItem,
   PlanningIssue,
   ResourceOperation,
 } from "#management/common/workflow/resource";
@@ -70,6 +72,9 @@ type PlanPreviewOperation = {
 type PlanPreviewDomain = {
   path: string[];
   operations: PlanPreviewOperation[];
+
+  /** The user-visible items the operations change, one per item however many operations it takes. */
+  items: PlanItem[];
 };
 
 /** An issue listed in a plan preview. */
@@ -417,6 +422,7 @@ function toPlanPreview(plan: LifecyclePlan): PlanPreview {
     domains: plan.domains
       .filter((domain) => domain.operations.length > 0)
       .map((domain) => ({
+        items: groupOperationsIntoItems(domain.operations),
         operations: domain.operations.map(({ id, kind, label, reason }) => ({
           id,
           kind,
