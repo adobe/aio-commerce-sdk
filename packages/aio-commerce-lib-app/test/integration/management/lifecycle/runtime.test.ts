@@ -12,6 +12,7 @@
 
 import { describe, expect, test, vi } from "vitest";
 
+import { createRootInstallationStep } from "#management/installation/root";
 import {
   BlockedLifecyclePlanError,
   InvalidExecutionDeadlineError,
@@ -29,6 +30,7 @@ import { executeLifecycleAttempt } from "#management/lifecycle/execution";
 import { planLifecycle } from "#management/lifecycle/planning";
 import { startLifecycleAttempt } from "#management/lifecycle/start";
 import { createMockConfig } from "#test/fixtures/config";
+import { createMockInstallationContextWithScripts } from "#test/fixtures/installation";
 import {
   createMockAppStateSnapshot,
   createMockLifecycleRuntime,
@@ -1928,5 +1930,108 @@ describe("lifecycle paper trail", () => {
     expect(await snapshotStore.get(completed.result.snapshotId)).toMatchObject({
       attemptId: second.id,
     });
+  });
+});
+
+describe("lifecycle custom installation steps", () => {
+  const config = createMockConfig({
+    installation: {
+      customInstallationSteps: [
+        { description: "Runs first", name: "First", script: "./first.js" },
+        { description: "Runs second", name: "Second", script: "./second.js" },
+        { description: "Runs third", name: "Third", script: "./third.js" },
+      ],
+    },
+  });
+
+  /** The production installation tree, reduced to its custom installation steps branch. */
+  function createRootStep(): BranchStep {
+    const rootStep = createRootInstallationStep(config, { forUpgrade: true });
+
+    // The other domains read live Commerce state while planning, which these tests don't serve.
+    return {
+      ...rootStep,
+      children: rootStep.children.filter(
+        (child) => child.name === "customInstallationSteps",
+      ),
+    };
+  }
+
+  function createRuntime(scripts: Record<string, unknown>) {
+    const { runtime } = createMockLifecycleRuntime({
+      baseline: null,
+      rootStep: createRootStep(),
+    });
+
+    return {
+      ...runtime,
+      lifecycleContext: createMockInstallationContextWithScripts(scripts),
+    };
+  }
+
+  type Runtime = ReturnType<typeof createRuntime>;
+
+  function plan(runtime: Runtime) {
+    return planLifecycle({
+      ...runtime,
+      actionVersion: "1.0.0",
+      operation: "install",
+      targetConfig: config,
+    });
+  }
+
+  function start(runtime: Runtime, planId: string, activationId: string) {
+    return startLifecycleAttempt({
+      ...runtime,
+      actionVersion: "1.0.0",
+      activationId,
+      executionDeadline: EXECUTION_DEADLINE,
+      planId,
+    });
+  }
+
+  function execute(runtime: Runtime, attemptId: string, activationId: string) {
+    return executeLifecycleAttempt({
+      ...runtime,
+      actionVersion: "1.0.0",
+      activationId,
+      attemptId,
+      executionDeadline: EXECUTION_DEADLINE,
+    });
+  }
+
+  test("skips the scripts that already succeeded when retrying a failed install", async () => {
+    const first = vi.fn();
+    const second = vi.fn();
+    const third = vi
+      .fn()
+      .mockRejectedValueOnce(new Error("third failure"))
+      .mockResolvedValue(undefined);
+
+    const runtime = createRuntime({
+      "./first.js": { install: first },
+      "./second.js": { install: second },
+      "./third.js": { install: third },
+    });
+
+    const firstAttempt = await start(
+      runtime,
+      (await plan(runtime)).plan.id,
+      "a1",
+    );
+    const failed = await execute(runtime, firstAttempt.id, "a1-exec");
+    expect(failed.status).toBe("failed");
+
+    const retryAttempt = await start(
+      runtime,
+      (await plan(runtime)).plan.id,
+      "a2",
+    );
+    const retried = await execute(runtime, retryAttempt.id, "a2-exec");
+    expect(retried.status).toBe("succeeded");
+
+    expect(first).toHaveBeenCalledOnce();
+    expect(second).toHaveBeenCalledOnce();
+    expect(third).toHaveBeenCalledTimes(2);
   });
 });

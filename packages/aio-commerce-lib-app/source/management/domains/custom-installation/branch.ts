@@ -21,10 +21,12 @@ import { applyCustomInstallationSteps } from "./apply";
 import {
   createCustomScriptStep,
   createCustomScriptSteps,
+  getCustomScriptStepName,
 } from "./custom-scripts";
 import { planCustomInstallationSteps } from "./plan";
 
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
+import type { AnyStep } from "#management/common/workflow/index";
 import type { CustomInstallationStepIdentity } from "./types";
 
 /**
@@ -81,40 +83,77 @@ const customInstallationStepBase = defineBranchStep({
 });
 
 /**
+ * Creates the leaf of a custom installation step that ran, with the description the config gives
+ * it, or one saying it is no longer configured when the config does not declare it.
+ */
+function createExecutedScriptStep(
+  config: CommerceAppConfigOutputModel,
+  identity: CustomInstallationStepIdentity,
+): AnyStep {
+  const currentStep = hasCustomInstallationSteps(config)
+    ? config.installation.customInstallationSteps.find(
+        (step) => step.name === identity.name,
+      )
+    : undefined;
+
+  return createCustomScriptStep(
+    currentStep ?? {
+      description:
+        "Previously executed custom installation step, no longer present in the configuration.",
+      name: identity.name,
+      script: identity.script,
+    },
+  );
+}
+
+/** Creates the children of the custom installation step (see {@link createCustomInstallationStep}). */
+function createChildSteps(
+  config: CommerceAppConfigOutputModel,
+  executedSteps: readonly CustomInstallationStepIdentity[],
+  includeReconciliation: boolean,
+): AnyStep[] {
+  // The history is append-only, so its order is the real install order; reverse it to
+  // uninstall the newest step first.
+  const executedStepLeaves = [...executedSteps]
+    .reverse()
+    .map((identity) => createExecutedScriptStep(config, identity));
+
+  if (includeReconciliation) {
+    const executedStepNames = new Set(
+      executedSteps.map((step) => getCustomScriptStepName(step.name)),
+    );
+
+    return [
+      ...executedStepLeaves,
+      ...createCustomScriptSteps(config).filter(
+        (step) => !executedStepNames.has(step.name),
+      ),
+      reconciliationStep,
+    ];
+  }
+
+  return executedSteps.length > 0
+    ? executedStepLeaves
+    : createCustomScriptSteps(config);
+}
+
+/**
  * Creates the custom installation step with dynamic children based on config. `executedSteps` is
- * the recorded run history, only passed when building the full-uninstall tree.
- * `includeReconciliation` adds the reconciliation leaf, which the lifecycle plans and applies;
- * the deprecated runners leave it out.
+ * the recorded run history. `includeReconciliation` builds the tree the lifecycle plans and
+ * applies: a leaf per step that ran, newest first, then a leaf per configured step that has not
+ * run, in config order, then the reconciliation leaf. The deprecated runners leave it out, and get
+ * a leaf per step that ran, newest first, or a leaf per configured step when none ran.
  */
 export function createCustomInstallationStep(
   config: CommerceAppConfigOutputModel,
   executedSteps: readonly CustomInstallationStepIdentity[] = [],
   includeReconciliation = false,
 ) {
-  const children =
-    executedSteps.length > 0
-      ? // The history is append-only, so its order is the real install order; reverse it to
-        // uninstall the newest step first.
-        [...executedSteps].reverse().map((identity) => {
-          const currentStep = hasCustomInstallationSteps(config)
-            ? config.installation.customInstallationSteps.find(
-                (step) => step.name === identity.name,
-              )
-            : undefined;
-
-          return createCustomScriptStep(
-            currentStep ?? {
-              description:
-                "Previously executed custom installation step, no longer present in the configuration.",
-              name: identity.name,
-              script: identity.script,
-            },
-          );
-        })
-      : [
-          ...createCustomScriptSteps(config),
-          ...(includeReconciliation ? [reconciliationStep] : []),
-        ];
+  const children = createChildSteps(
+    config,
+    executedSteps,
+    includeReconciliation,
+  );
 
   return {
     ...customInstallationStepBase,

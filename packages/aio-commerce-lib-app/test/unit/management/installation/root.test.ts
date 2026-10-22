@@ -80,6 +80,26 @@ describe("createRootInstallationStep", () => {
     ]);
   });
 
+  test("puts the custom installation steps that ran first when built for the lifecycle", () => {
+    const result = createRootInstallationStep(
+      configWithCustomInstallationSteps,
+      {
+        executedCustomInstallationSteps: [
+          { name: "Demo Error", script: "./demo-error.js" },
+        ],
+        forUpgrade: true,
+      },
+    );
+
+    const [, , , customInstallationStep] = result.children;
+    expect.assert(isBranchStep(customInstallationStep));
+    expect(customInstallationStep.children.map((child) => child.name)).toEqual([
+      "demoError",
+      "demoSuccess",
+      "reconciliation",
+    ]);
+  });
+
   test.each(["install", "uninstall", "upgrade"] as const)(
     "defines %s metadata on every step the lifecycle can plan",
     (operation) => {

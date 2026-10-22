@@ -51,3 +51,13 @@ export type CustomInstallationDomainPlan =
     /** The target configuration to converge to, or `null` when none is available. */
     targetConfig: CommerceAppConfigOutputModel | null;
   };
+
+/**
+ * The plan of a single custom installation step: `add` to run its `install`, or `remove` to run
+ * its `uninstall`. Also carries the baseline configuration, handed to `uninstall`.
+ */
+export type CustomScriptDomainPlan =
+  DomainPlan<CustomInstallationStepIdentity> & {
+    /** The baseline configuration, handed to the `uninstall` of a removed step, or `null` without one. */
+    baselineConfig: CommerceAppConfigOutputModel | null;
+  };

@@ -66,6 +66,54 @@ describe("createCustomInstallationStep", () => {
     ]);
   });
 
+  test("puts the steps that ran first, newest first, then the configured steps that have not run, in the lifecycle tree", () => {
+    const step = createCustomInstallationStep(
+      configWithCustomInstallationSteps,
+      [
+        { name: "Old Step", script: "./old-step.js" },
+        { name: "Demo Error", script: "./demo-error.js" },
+      ],
+      true,
+    );
+
+    expect(step.children.map((child) => child.name)).toEqual([
+      "demoError",
+      "oldStep",
+      "demoSuccess",
+      "reconciliation",
+    ]);
+  });
+
+  test("describes a step that ran but is no longer configured", () => {
+    const step = createCustomInstallationStep(
+      configWithCustomInstallationSteps,
+      [{ name: "Old Step", script: "./old-step.js" }],
+      true,
+    );
+
+    expect(step.children.at(0)?.meta.install).toEqual({
+      description:
+        "Previously executed custom installation step, no longer present in the configuration.",
+      label: "Old Step",
+    });
+  });
+
+  test.each(["install", "uninstall", "upgrade"] as const)(
+    "labels a step with its name and description on %s",
+    (operation) => {
+      const step = createCustomInstallationStep(
+        configWithCustomInstallationSteps,
+        [],
+        true,
+      );
+
+      expect(step.children.at(0)?.meta[operation]).toEqual({
+        description: "Success script",
+        label: "Demo Success",
+      });
+    },
+  );
+
   describe("reconciliation step", () => {
     function getReconciliationStep(
       config: CommerceAppConfigOutputModel = configWithCustomInstallationSteps,

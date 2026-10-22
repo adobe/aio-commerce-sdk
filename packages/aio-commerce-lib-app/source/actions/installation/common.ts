@@ -17,8 +17,10 @@ import { conflict } from "@adobe/aio-commerce-lib-core/responses";
 import { getAssociationData } from "#management/association/repository";
 import { migrateLegacyInstallationState } from "#management/deprecated/migration";
 import { createInstallationStore } from "#management/deprecated/stores";
+import { readRunHistory } from "#management/domains/custom-installation/index";
 import { createRootInstallationStep } from "#management/installation/root";
 import { createLifecycleBaselineProvider } from "#management/lifecycle/baseline";
+import { CURRENT_STATE_KEY } from "#management/lifecycle/state";
 import {
   createAppStateSnapshotStore,
   createLifecycleAttemptStore,
@@ -31,7 +33,12 @@ import type {
   CommerceAppConfig,
   CommerceAppConfigOutputModel,
 } from "#config/schema/app";
+import type {
+  AppStateSnapshot,
+  OrchestrationState,
+} from "#management/common/orchestration";
 import type { LifecycleRequestContext } from "#management/common/schema";
+import type { CustomInstallationStepIdentity } from "#management/domains/custom-installation/index";
 import type { LifecycleContext } from "#management/index";
 
 /** Action name for async invocation. */
@@ -189,6 +196,33 @@ export function buildLifecycleContext(
   };
 }
 
+/**
+ * Reads which custom installation steps ran from the data of the latest attempt when it did not
+ * succeed, or from the baseline snapshot otherwise. Returns `null` when neither is stored.
+ */
+export function getExecutedCustomInstallationSteps(
+  state: OrchestrationState | null,
+  baseline: AppStateSnapshot | null,
+): CustomInstallationStepIdentity[] | null {
+  const attempt = state?.latestAttempt;
+  if (!(attempt || baseline)) {
+    return null;
+  }
+
+  // Steps that ran in an attempt that did not succeed are only in its data, not in the baseline.
+  const data =
+    attempt && attempt.status !== "succeeded" ? attempt.data : baseline?.data;
+
+  const section = (
+    data as
+      | { installation?: { customInstallationSteps?: unknown } }
+      | null
+      | undefined
+  )?.installation?.customInstallationSteps;
+
+  return readRunHistory(section, baseline?.config ?? null);
+}
+
 /** Creates the shared storage read/write dependencies used by lifecycle orchestration. */
 export async function createLifecyclePersistence() {
   const [
@@ -220,15 +254,28 @@ export async function createLifecyclePersistence() {
   };
 }
 
-/** Creates the shared dependencies used by lifecycle orchestration. */
+/**
+ * Creates the shared dependencies used by lifecycle orchestration. The step tree includes the
+ * custom installation steps that ran, read from the stored state.
+ */
 export async function createLifecycleRuntime(
   params: WorkflowRouteParams,
   appConfig: CommerceAppConfigOutputModel,
   logger: LifecycleContext["logger"],
 ) {
+  const persistence = await createLifecyclePersistence();
+  const state = await persistence.stateStore.get(CURRENT_STATE_KEY);
+  const baseline = await persistence.baselineProvider.get(
+    state?.baselineSnapshotId ?? null,
+  );
+
   return {
-    ...(await createLifecyclePersistence()),
+    ...persistence,
     lifecycleContext: buildLifecycleContext(params, appConfig, logger),
-    rootStep: createRootInstallationStep(appConfig, { forUpgrade: true }),
+    rootStep: createRootInstallationStep(appConfig, {
+      executedCustomInstallationSteps:
+        getExecutedCustomInstallationSteps(state, baseline) ?? [],
+      forUpgrade: true,
+    }),
   };
 }

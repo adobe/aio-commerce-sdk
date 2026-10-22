@@ -16,6 +16,7 @@ import { toItemRef } from "#management/common/workflow/resource";
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 import type { CustomInstallationStep } from "#config/schema/installation";
 import type {
+  NonBlockingPlanningIssue,
   PlanningInput,
   PlanningResult,
   ResourceOperation,
@@ -25,6 +26,7 @@ import type {
   CustomInstallationDomainPlan,
   CustomInstallationSnapshotData,
   CustomInstallationStepIdentity,
+  CustomScriptDomainPlan,
 } from "./types";
 
 /** Builds an `add` operation for a step run for the first time. */
@@ -142,5 +144,107 @@ export function planCustomInstallationSteps(
       path,
       targetConfig,
     },
+  });
+}
+
+/** Builds the warning for a step the config no longer declares, whose script is no longer deployed. */
+function buildRemovedStepIssue(name: string): NonBlockingPlanningIssue {
+  return {
+    blocking: false,
+    code: "CUSTOM_INSTALLATION_STEP_REMOVED",
+    domain: "customInstallationSteps",
+    message: `Custom installation step "${name}" is no longer in the configuration, so nothing will run for it. If its script had an uninstall, it can't run, because the script is no longer deployed.`,
+    severity: "warning",
+  };
+}
+
+/**
+ * Whether a step only the run history knows is being removed: by an uninstall, or by an upgrade
+ * whose baseline still declares it.
+ */
+function isRemovedNow(
+  executed: CustomInstallationStepIdentity,
+  baselineConfig: CommerceAppConfigOutputModel | null,
+  targetConfig: CommerceAppConfigOutputModel | null,
+) {
+  return (
+    targetConfig === null ||
+    (baselineConfig !== null &&
+      hasCustomInstallationSteps(baselineConfig) &&
+      baselineConfig.installation.customInstallationSteps.some(
+        (step) => step.name === executed.name,
+      ))
+  );
+}
+
+/** Plans the operations of a step the deployed config declares. */
+function planDeclaredScript(
+  declared: CustomInstallationStep,
+  executed: CustomInstallationStepIdentity | null | undefined,
+  targetConfig: CommerceAppConfigOutputModel | null,
+  context: ValidationExecutionContext,
+): ResourceOperation<CustomInstallationStepIdentity>[] {
+  if (!targetConfig) {
+    // Without a stored run history, the deployed config is all that is known about what ran.
+    return executed === null
+      ? []
+      : [buildRemoveOperation(executed ?? declared, declared)];
+  }
+
+  if (!executed) {
+    return [buildAddOperation(declared)];
+  }
+
+  if (executed.script !== declared.script) {
+    context.logger.warn(
+      `Custom installation step "${declared.name}" now points to a different script ` +
+        `("${declared.script}" instead of "${executed.script}"). This does not affect ` +
+        "append-only behavior: its install already ran and will not run again.",
+    );
+  }
+
+  return [];
+}
+
+/**
+ * Plans a single custom installation step, which never runs twice. With a target config, plans
+ * an `add` when the step is declared and has not run. Without one, plans a `remove` when the step
+ * is declared and ran, or no run history is stored. A step that ran but is no longer declared has
+ * no operation, since its script is no longer deployed, and is reported with a warning when an
+ * uninstall or the upgrade that removes it plans it.
+ *
+ * @param declared - The step as the deployed config declares it, or `null` when it does not.
+ * @param executed - The step as it last ran, `null` when it has not run, or `undefined` when no
+ *   run history is stored.
+ * @param input - The planning input of the step's leaf.
+ * @param context - The planning context.
+ */
+export function planCustomScript(
+  declared: CustomInstallationStep | null,
+  executed: CustomInstallationStepIdentity | null | undefined,
+  input: PlanningInput<
+    CommerceAppConfigOutputModel,
+    CustomInstallationStepIdentity
+  >,
+  context: ValidationExecutionContext,
+): Promise<PlanningResult<CustomScriptDomainPlan>> {
+  const { path, baseline, targetConfig } = input;
+  const baselineConfig = baseline?.config ?? null;
+
+  const operations = declared
+    ? planDeclaredScript(declared, executed, targetConfig, context)
+    : [];
+
+  const issues =
+    !declared &&
+    executed &&
+    isRemovedNow(executed, baselineConfig, targetConfig)
+      ? [buildRemovedStepIssue(executed.name)]
+      : [];
+
+  return Promise.resolve({
+    issues,
+    kind: "planned",
+    plan: { baselineConfig, operations, path },
   });
 }

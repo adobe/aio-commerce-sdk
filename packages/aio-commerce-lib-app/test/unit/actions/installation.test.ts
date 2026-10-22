@@ -1186,6 +1186,50 @@ describe("installationRuntimeAction", () => {
           },
         });
       });
+
+      test("builds the step tree with the custom installation steps the failed attempt ran", async () => {
+        desiredInstallationStore = createMockInstallationStore();
+        desiredStateStore = createMockLifecycleStore<OrchestrationState>({
+          initial: createMockOrchestrationState({
+            baselineSnapshotId: null,
+            latestAttempt: createMockLifecycleAttempt({
+              data: {
+                installation: {
+                  customInstallationSteps: {
+                    first: { name: "First", script: "./first.js" },
+                  },
+                },
+              },
+              operation: "install",
+              plan: createMockLifecyclePlan({
+                operation: "install",
+                source: null,
+                target: {
+                  appVersion: configWithAutoUpgrade.metadata.version,
+                  config: configWithAutoUpgrade,
+                },
+              }),
+              status: "failed",
+            }),
+          }),
+        });
+
+        const action = installationRuntimeAction({
+          appConfig: configWithAutoUpgrade,
+        });
+
+        const result = await planRequest(action, requestBody);
+        expect(result).toMatchObject({ statusCode: 200 });
+        expect(createRootInstallationStepMock).toHaveBeenCalledWith(
+          expect.anything(),
+          {
+            executedCustomInstallationSteps: [
+              { name: "First", script: "./first.js" },
+            ],
+            forUpgrade: true,
+          },
+        );
+      });
     });
 
     describe("upgrade branch", () => {
