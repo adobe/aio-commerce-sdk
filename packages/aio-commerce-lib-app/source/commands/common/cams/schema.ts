@@ -26,6 +26,9 @@ export const ExtensionSchema = v.object({
   id: v.string(),
   scope: v.optional(
     v.object({
+      commerceBaseUrl: v.optional(v.nullable(v.string())),
+      commerceEnv: v.optional(v.nullable(v.picklist(["paas", "saas"]))),
+      commerceId: v.optional(v.string()),
       workspaceId: v.optional(v.string()),
       workspaceName: v.optional(v.string()),
     }),
@@ -34,6 +37,9 @@ export const ExtensionSchema = v.object({
 
 /** The answer of the service to a lookup by workspace. */
 export const ExtensionListSchema = v.array(ExtensionSchema);
+
+/** An extension returned by CAMS. */
+export type Extension = v.InferOutput<typeof ExtensionSchema>;
 
 /** The plan the service returns for review. */
 export const UpgradePlanAnswerSchema = v.object({
@@ -73,7 +79,6 @@ export type AttemptStatus = v.InferOutput<typeof AttemptStatusSchema>;
 /** The parameters to find the extension associated with a workspace. */
 export const FindExtensionParamsSchema = v.object({
   workspaceId: nonEmptyStringValueSchema("workspaceId"),
-  workspaceName: nonEmptyStringValueSchema("workspaceName"),
 });
 
 export type FindExtensionParams = v.InferInput<

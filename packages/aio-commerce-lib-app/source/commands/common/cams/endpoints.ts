@@ -94,25 +94,17 @@ export async function findExtension(
   params: FindExtensionParams,
   fetchOptions?: Options,
 ) {
-  const { workspaceId, workspaceName } = parseOrThrow(
-    FindExtensionParamsSchema,
-    params,
-  );
+  const { workspaceId } = parseOrThrow(FindExtensionParamsSchema, params);
 
   const [extension] = await readAndParseBody(
     ExtensionListSchema,
-    httpClient.get("v1/extensions", {
-      ...fetchOptions,
-      searchParams: { workspaceId, workspaceName },
-    }),
+    httpClient.get(
+      `v1/workspaces/${encodeURIComponent(workspaceId)}/extensions`,
+      fetchOptions,
+    ),
   );
 
-  const matches =
-    extension &&
-    (extension.scope?.workspaceId === undefined ||
-      extension.scope.workspaceId === workspaceId);
-
-  return matches ? extension : null;
+  return extension ?? null;
 }
 
 /**
@@ -170,7 +162,7 @@ export async function startUpgrade(
 }
 
 /**
- * Reads the status of an attempt once. CAMS updates the extension from the answer.
+ * Reads the status of an attempt once.
  *
  * The request is not retried, because the polling loop is the retry.
  *
@@ -247,7 +239,6 @@ export async function readLatestUpgrade(
     upgradesPath(extensionId),
     fetchOptions,
   );
-
   if (response.status === 204) {
     return null;
   }

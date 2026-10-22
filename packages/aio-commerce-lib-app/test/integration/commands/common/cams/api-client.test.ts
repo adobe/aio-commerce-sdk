@@ -14,7 +14,10 @@ import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
 import { HttpResponse, http } from "msw";
 import { describe, expect, test } from "vitest";
 
-import { createCamsClient } from "#commands/common/cams/api-client";
+import {
+  createCamsInstanceClient,
+  createCamsWorkspaceClient,
+} from "#commands/common/cams/api-client";
 import {
   CamsClientError,
   CamsConflictError,
@@ -22,24 +25,41 @@ import {
 import { apiServer, setupApiTestLifecycle } from "#test/setup/api";
 
 import type { Options } from "ky";
+import type { AssociatedCommerceData } from "#management/association/types";
 
 const BASE_URL = "https://service.example.com";
 const EXTENSIONS = `${BASE_URL}/v1/extensions`;
+const WORKSPACE_EXTENSIONS = `${BASE_URL}/v1/workspaces/:workspaceId/extensions`;
 const UPGRADES = `${EXTENSIONS}/ext-1/upgrades`;
+const UPGRADE_PREVIEW = `${UPGRADES}/preview`;
 const STATUS_URL = `${UPGRADES}/run-1/sync`;
 
 const ORG = { id: "org-id", ims_org_id: "ims-org-id", name: "org-name" };
 const RUNNING = { id: "run-1", status: "in-progress" };
 const IDS = { extensionId: "ext-1", runId: "run-1" };
+const COMMERCE_INSTANCE = {
+  baseUrl: "https://commerce.example.com",
+  env: "paas",
+} satisfies AssociatedCommerceData;
+const CLIENT_PARAMS = {
+  auth: { getToken: async () => "user-token", org: ORG },
+  config: { baseUrl: BASE_URL },
+};
 
 setupApiTestLifecycle();
 
-function createClient(fetchOptions?: Options) {
-  return createCamsClient({
-    auth: { getToken: async () => "user-token", org: ORG },
-    config: { baseUrl: BASE_URL },
-    fetchOptions,
-  });
+function createClient(
+  fetchOptions?: Options,
+  commerceInstance: AssociatedCommerceData = COMMERCE_INSTANCE,
+) {
+  return createCamsInstanceClient(
+    { ...CLIENT_PARAMS, fetchOptions },
+    commerceInstance,
+  );
+}
+
+function createWorkspaceClient(fetchOptions?: Options) {
+  return createCamsWorkspaceClient({ ...CLIENT_PARAMS, fetchOptions });
 }
 
 /** The error a call rejects with. */
@@ -54,36 +74,154 @@ async function failureOf(call: Promise<unknown>) {
 }
 
 describe("findExtension", () => {
-  const WORKSPACE = { workspaceId: "ws-1", workspaceName: "A B&C" };
+  const WORKSPACE = { workspaceId: "ws/1" };
 
-  test("looks the workspace up by id and name and returns the first extension", async () => {
-    let query: URLSearchParams | undefined;
+  test("looks the workspace up by its id and returns the first extension", async () => {
+    let workspaceId: string | readonly string[] | undefined;
     apiServer.use(
-      http.get(EXTENSIONS, ({ request }) => {
-        query = new URL(request.url).searchParams;
+      http.get(WORKSPACE_EXTENSIONS, ({ params }) => {
+        ({ workspaceId } = params);
         return HttpResponse.json([{ id: "ext-1" }, { id: "ext-2" }]);
       }),
     );
 
-    const extension = await createClient().findExtension(WORKSPACE);
+    const extension = await createWorkspaceClient().findExtension(WORKSPACE);
 
     expect(extension).toMatchObject({ id: "ext-1" });
-    expect(Object.fromEntries(query ?? [])).toEqual({
-      workspaceId: "ws-1",
-      workspaceName: "A B&C",
+    expect(workspaceId).toBe("ws/1");
+  });
+
+  test("returns null when the workspace has no extension", async () => {
+    apiServer.use(http.get(WORKSPACE_EXTENSIONS, () => HttpResponse.json([])));
+
+    await expect(
+      createWorkspaceClient().findExtension(WORKSPACE),
+    ).resolves.toBeNull();
+  });
+});
+
+describe("the Commerce instance", () => {
+  const LEGACY_COMMERCE_ID = Buffer.from(
+    "https://commerce.example.com/env/paas",
+  ).toString("base64url");
+
+  /** Answers the lookup with the extension and records the headers of the plan request. */
+  function serve(extension: object) {
+    const seen = { headers: new Headers(), lookupHeaders: new Headers() };
+    apiServer.use(
+      http.get(WORKSPACE_EXTENSIONS, ({ request }) => {
+        seen.lookupHeaders = request.headers;
+        return HttpResponse.json([extension]);
+      }),
+      http.post(UPGRADE_PREVIEW, ({ request }) => {
+        seen.headers = request.headers;
+        return HttpResponse.json({ plan: { id: "p", operation: "upgrade" } });
+      }),
+    );
+
+    return seen;
+  }
+
+  test("is named only in requests from the instance client", async () => {
+    const seen = serve({
+      id: "ext-1",
     });
+    const client = createClient(undefined, {
+      baseUrl: "https://commerce.example.com",
+      env: "paas",
+    });
+
+    const workspaceClient = createWorkspaceClient();
+    await workspaceClient.findExtension({ workspaceId: "ws-1" });
+    await client.planUpgrade({ extensionId: "ext-1" });
+    await workspaceClient.findExtension({ workspaceId: "ws-1" });
+
+    expect(seen.headers.get("x-ac-url")).toBe("https://commerce.example.com");
+    expect(seen.headers.get("x-ac-env")).toBe("paas");
+    expect(seen.lookupHeaders.has("x-ac-url")).toBe(false);
+    expect(seen.lookupHeaders.has("x-ac-env")).toBe(false);
   });
 
   test.each([
-    ["has no extension", []],
-    [
-      "belongs to another workspace",
-      [{ id: "e", scope: { workspaceId: "x" } }],
-    ],
-  ])("returns null when the workspace %s", async (_, body) => {
-    apiServer.use(http.get(EXTENSIONS, () => HttpResponse.json(body)));
+    "planUpgrade",
+    "startUpgrade",
+    "pollUpgrade",
+    "readUpgrade",
+    "readLatestUpgrade",
+  ] as const)(
+    "uses configured Commerce data and preserves request options for %s",
+    async (operation) => {
+      const client = createClient(undefined, {
+        baseUrl: "https://default.example.com",
+        env: "paas",
+      });
+      const requests: Request[] = [];
+      apiServer.use(
+        http.all("*", ({ request }) => {
+          requests.push(request);
+          return HttpResponse.json(
+            new URL(request.url).pathname.endsWith("/preview")
+              ? { plan: { id: "plan-1", operation: "upgrade" } }
+              : RUNNING,
+          );
+        }),
+      );
 
-    await expect(createClient().findExtension(WORKSPACE)).resolves.toBeNull();
+      await client[operation](
+        { extensionId: "ext-1", planId: "plan-1", runId: "run-1" },
+        {
+          headers: new Headers({ "x-extra": "preserved" }),
+        },
+      );
+      await client[operation]({
+        extensionId: "ext-1",
+        planId: "plan-1",
+        runId: "run-1",
+      });
+
+      expect(requests).toHaveLength(2);
+      expect(requests[0]?.headers.get("x-ac-url")).toBe(
+        "https://default.example.com",
+      );
+      expect(requests[0]?.headers.get("x-ac-env")).toBe("paas");
+      expect(requests[0]?.headers.get("x-extra")).toBe("preserved");
+      expect(requests[1]?.headers.get("x-ac-url")).toBe(
+        "https://default.example.com",
+      );
+      expect(requests[1]?.headers.get("x-ac-env")).toBe("paas");
+    },
+  );
+
+  test("does not mutate client configuration from the extension response", async () => {
+    const seen = serve({
+      id: "ext-1",
+      scope: {
+        commerceBaseUrl: "https://decoded.example.com",
+        commerceEnv: "saas",
+        commerceId: LEGACY_COMMERCE_ID,
+      },
+    });
+    const client = createClient(undefined, {
+      baseUrl: "https://configured.example.com",
+      env: "paas",
+    });
+
+    await createWorkspaceClient().findExtension({ workspaceId: "ws-1" });
+    await client.planUpgrade({ extensionId: "ext-1" });
+
+    expect(seen.headers.get("x-ac-url")).toBe("https://configured.example.com");
+    expect(seen.headers.get("x-ac-env")).toBe("paas");
+  });
+
+  test("exposes only endpoints for each client's scope", () => {
+    expect(Object.keys(createWorkspaceClient())).toEqual(["findExtension"]);
+    expect(Object.keys(createClient())).toEqual([
+      "planUpgrade",
+      "pollUpgrade",
+      "readLatestUpgrade",
+      "readUpgrade",
+      "startUpgrade",
+    ]);
   });
 });
 
@@ -93,7 +231,7 @@ describe("planUpgrade", () => {
   test("posts without a body and returns the whole plan", async () => {
     let body: string | undefined;
     apiServer.use(
-      http.post(`${UPGRADES}/preview`, async ({ request }) => {
+      http.post(UPGRADE_PREVIEW, async ({ request }) => {
         body = await request.text();
         return HttpResponse.json({ plan: PLAN, valid: true }, { status: 201 });
       }),
@@ -112,7 +250,7 @@ describe("planUpgrade", () => {
   ])("keeps %s of the plan", async (_, versions) => {
     const plan = { ...PLAN, domains: [], ...versions };
     apiServer.use(
-      http.post(`${UPGRADES}/preview`, () => HttpResponse.json({ plan })),
+      http.post(UPGRADE_PREVIEW, () => HttpResponse.json({ plan })),
     );
 
     await expect(
@@ -122,7 +260,7 @@ describe("planUpgrade", () => {
 
   test("rejects a plan with a version that is not text", async () => {
     apiServer.use(
-      http.post(`${UPGRADES}/preview`, () =>
+      http.post(UPGRADE_PREVIEW, () =>
         HttpResponse.json({ plan: { ...PLAN, targetVersion: 2 } }),
       ),
     );
@@ -134,7 +272,7 @@ describe("planUpgrade", () => {
 
   test("throws a conflict error that carries the code of a 409 answer", async () => {
     apiServer.use(
-      http.post(`${UPGRADES}/preview`, () =>
+      http.post(UPGRADE_PREVIEW, () =>
         HttpResponse.json(
           { code: "in-progress", message: "Refused" },
           { status: 409 },
@@ -163,7 +301,7 @@ describe("planUpgrade", () => {
   ])(
     "throws a conflict error without a code for a 409 answer with %s",
     async (_, answer) => {
-      apiServer.use(http.post(`${UPGRADES}/preview`, answer));
+      apiServer.use(http.post(UPGRADE_PREVIEW, answer));
 
       const error = await failureOf(
         createClient().planUpgrade({ extensionId: "ext-1" }),
@@ -176,11 +314,13 @@ describe("planUpgrade", () => {
 });
 
 describe("startUpgrade", () => {
-  test("posts the plan id and returns the new attempt", async () => {
-    let body: unknown;
+  test("starts the planned upgrade with its plan id", async () => {
+    let requestBody: string | undefined;
+    let requestPath: string | undefined;
     apiServer.use(
       http.post(UPGRADES, async ({ request }) => {
-        body = await request.json();
+        requestBody = await request.text();
+        requestPath = new URL(request.url).pathname;
         return HttpResponse.json(
           { ...RUNNING, activationId: "act-1", status: "pending" },
           { status: 202 },
@@ -193,27 +333,76 @@ describe("startUpgrade", () => {
       planId: "plan-1",
     });
 
-    expect(body).toEqual({ planId: "plan-1" });
+    expect(requestPath).toBe("/v1/extensions/ext-1/upgrades");
+    expect(requestBody).toBe(JSON.stringify({ planId: "plan-1" }));
     expect(attempt).toEqual({ id: "run-1", status: "pending" });
   });
 });
 
 describe("pollUpgrade", () => {
+  test.each([true, false])(
+    "does not retry fallback reads and preserves retryable=%s",
+    async (retryable) => {
+      let reads = 0;
+      apiServer.use(
+        http.post(STATUS_URL, () =>
+          HttpResponse.json({ code: "attempt-not-open" }, { status: 409 }),
+        ),
+        http.get(`${UPGRADES}/run-1`, () => {
+          reads += 1;
+          return HttpResponse.json(
+            { code: "upstream-app", message: "Unavailable", retryable },
+            { status: 502 },
+          );
+        }),
+      );
+      const client = createClient({
+        retry: { delay: () => 0, limit: 2, methods: ["get"] },
+      });
+
+      const error = await failureOf(client.pollUpgrade(IDS));
+
+      expect(reads).toBe(1);
+      expect(error).toBeInstanceOf(CamsClientError);
+      expect(error).toMatchObject({
+        code: "upstream-app",
+        retryable,
+        status: 502,
+      });
+    },
+  );
+
   test("reads a closed attempt when syncing reports that it is not open", async () => {
     const completed = { id: "run-1", status: "succeeded" };
     let reads = 0;
+    const requestHeaders: Headers[] = [];
     apiServer.use(
-      http.post(STATUS_URL, () =>
-        HttpResponse.json({ code: "attempt-not-open" }, { status: 409 }),
-      ),
-      http.get(`${UPGRADES}/run-1`, () => {
+      http.post(STATUS_URL, ({ request }) => {
+        requestHeaders.push(request.headers);
+        return HttpResponse.json({ code: "attempt-not-open" }, { status: 409 });
+      }),
+      http.get(`${UPGRADES}/run-1`, ({ request }) => {
+        requestHeaders.push(request.headers);
         reads += 1;
         return HttpResponse.json(completed);
       }),
     );
 
-    await expect(createClient().pollUpgrade(IDS)).resolves.toEqual(completed);
+    await expect(
+      createClient(undefined, {
+        baseUrl: "https://commerce.example.com",
+        env: "saas",
+      }).pollUpgrade(IDS),
+    ).resolves.toEqual(completed);
     expect(reads).toBe(1);
+    expect(requestHeaders.map((headers) => headers.get("x-ac-url"))).toEqual([
+      "https://commerce.example.com",
+      "https://commerce.example.com",
+    ]);
+    expect(requestHeaders.map((headers) => headers.get("x-ac-env"))).toEqual([
+      "saas",
+      "saas",
+    ]);
   });
 
   test("does not fall back to a read for another conflict", async () => {
@@ -321,7 +510,7 @@ describe("pollUpgrade", () => {
   });
 
   test.each([400, 401, 403, 404, 500, 502, 503])(
-    "marks a %s answer as retryable only when it is a 502",
+    "uses the 502/503 fallback for a %s answer without a retryable flag",
     async (status) => {
       apiServer.use(
         http.post(STATUS_URL, () =>
@@ -332,10 +521,48 @@ describe("pollUpgrade", () => {
       const error = await failureOf(createClient().pollUpgrade(IDS));
 
       expect(error).not.toBeInstanceOf(CamsConflictError);
-      expect(error.retryable).toBe(status === 502);
+      expect(error.retryable).toBe(status === 502 || status === 503);
       expect(error.cause).toMatchObject({ response: { status } });
     },
   );
+
+  test.each([
+    [400, true],
+    [503, false],
+  ])(
+    "uses the backend retryable flag for HTTP %s",
+    async (status, retryable) => {
+      apiServer.use(
+        http.post(STATUS_URL, () =>
+          HttpResponse.json({ message: "No", retryable }, { status }),
+        ),
+      );
+
+      const error = await failureOf(createClient().pollUpgrade(IDS));
+
+      expect(error.retryable).toBe(retryable);
+    },
+  );
+
+  test("keeps the code and the detail of a problem answer", async () => {
+    apiServer.use(
+      http.post(STATUS_URL, () =>
+        HttpResponse.json(
+          { code: "commerce-access-denied", detail: "No access" },
+          { status: 403 },
+        ),
+      ),
+    );
+
+    const error = await failureOf(createClient().pollUpgrade(IDS));
+
+    expect(error).toMatchObject({
+      code: "commerce-access-denied",
+      message: "No access",
+      retryable: false,
+      status: 403,
+    });
+  });
 
   test("keeps the status, the code and the request of an error answer, without the host", async () => {
     apiServer.use(
@@ -417,7 +644,7 @@ describe("pollUpgrade", () => {
     expect(error.retryable).toBe(true);
   });
 
-  test("does not retry, even when the client retries POST requests", async () => {
+  test("does not retry the sync POST, even when the client retries POST requests", async () => {
     let requests = 0;
     apiServer.use(
       http.post(STATUS_URL, () => {
@@ -471,18 +698,31 @@ describe("readLatestUpgrade", () => {
 
     expect(latest).toEqual(expected);
   });
+
+  test("returns null when the service responds with 204", async () => {
+    apiServer.use(
+      http.get(UPGRADES, () => new HttpResponse(null, { status: 204 })),
+    );
+
+    await expect(
+      createClient().readLatestUpgrade({ extensionId: "ext-1" }),
+    ).resolves.toBeNull();
+  });
 });
 
 describe("parameters", () => {
   const client = createClient();
   const calls = {
     findExtension: () =>
-      client.findExtension({ workspaceId: "", workspaceName: "w" }),
+      createWorkspaceClient().findExtension({ workspaceId: "" }),
     planUpgrade: () => client.planUpgrade({ extensionId: "" }),
     pollUpgrade: () => client.pollUpgrade({ extensionId: "e", runId: "" }),
     readLatestUpgrade: () => client.readLatestUpgrade({ extensionId: "" }),
     readUpgrade: () => client.readUpgrade({ extensionId: "e", runId: "" }),
-    startUpgrade: () => client.startUpgrade({ extensionId: "e", planId: "" }),
+    startUpgrade: () =>
+      client.startUpgrade({ extensionId: "", planId: "plan-1" }),
+    startUpgradeWithoutPlan: () =>
+      client.startUpgrade({ extensionId: "e", planId: "" }),
   };
 
   test.each(Object.keys(calls) as (keyof typeof calls)[])(
@@ -501,13 +741,13 @@ describe("unexpected answers", () => {
   test.each([
     [
       "an extension without an id",
-      () => http.get(EXTENSIONS, () => HttpResponse.json([{}])),
-      () => client.findExtension({ workspaceId: "w", workspaceName: "n" }),
+      () => http.get(WORKSPACE_EXTENSIONS, () => HttpResponse.json([{}])),
+      () => createWorkspaceClient().findExtension({ workspaceId: "w" }),
     ],
     [
       "a plan without an id",
       () =>
-        http.post(`${UPGRADES}/preview`, () =>
+        http.post(UPGRADE_PREVIEW, () =>
           HttpResponse.json({ plan: { operation: "upgrade" } }),
         ),
       () => client.planUpgrade({ extensionId: "ext-1" }),

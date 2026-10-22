@@ -23,7 +23,8 @@ import { colors } from "consola/utils";
 
 import {
   createCamsContext,
-  findWorkspaceExtensionId,
+  findWorkspaceExtension,
+  requireCommerceInstance,
 } from "#commands/common/cams/context";
 import { CamsConflictError } from "#commands/common/cams/errors";
 import { reportFailure } from "#commands/common/cams/report";
@@ -35,7 +36,7 @@ import {
 } from "#commands/upgrade/poll";
 import { parseCommerceAppConfig } from "#config/lib/parser";
 
-import type { CamsContext } from "#commands/common/cams/context";
+import type { CamsInstanceClient } from "#commands/common/cams/api-client";
 import type { AttemptStatus, UpgradePlan } from "#commands/common/cams/schema";
 import type { InterruptNotice } from "#commands/hooks/post-app-deploy/interrupt";
 
@@ -61,9 +62,9 @@ function isSkipCode(code: unknown): code is SkipCode {
  * Asks the service to plan the upgrade.
  * @returns The plan, or the code of the reason the upgrade does not apply.
  */
-async function planUpgrade(context: CamsContext, extensionId: string) {
+async function planUpgrade(client: CamsInstanceClient, extensionId: string) {
   try {
-    return await context.client.planUpgrade({ extensionId });
+    return await client.planUpgrade({ extensionId });
   } catch (error) {
     if (error instanceof CamsConflictError) {
       if (isSkipCode(error.code)) {
@@ -81,12 +82,12 @@ async function planUpgrade(context: CamsContext, extensionId: string) {
 
 /** Starts the planned upgrade and returns the status of the new run. */
 async function startUpgrade(
-  context: CamsContext,
+  client: CamsInstanceClient,
   extensionId: string,
   plan: UpgradePlan,
 ) {
   try {
-    return await context.client.startUpgrade({ extensionId, planId: plan.id });
+    return await client.startUpgrade({ extensionId, planId: plan.id });
   } catch (error) {
     if (error instanceof CamsConflictError) {
       throw new Error(`The upgrade was not started: ${error.message}`, {
@@ -128,7 +129,7 @@ function startBackgroundWatcher(extensionId: string, started: AttemptStatus) {
 
 /** Polls the run and prints its progress until it settles. Throws when it does not succeed. */
 async function followRun(
-  context: CamsContext,
+  client: CamsInstanceClient,
   extensionId: string,
   started: AttemptStatus,
 ) {
@@ -139,7 +140,7 @@ async function followRun(
     onStatus: whenStatusChanges((status) => {
       consola.start(`App upgrade is ${colors.yellow(status.status)}.`);
     }),
-    poll: () => context.client.pollUpgrade({ extensionId, runId: started.id }),
+    poll: () => client.pollUpgrade({ extensionId, runId: started.id }),
   });
 
   const outcome = describeOutcome(result, started.id);
@@ -175,13 +176,17 @@ async function runHook(interrupt: InterruptNotice): Promise<HookResult> {
   const context = createCamsContext();
   consola.debug(`Service: ${context.baseUrl}`);
 
-  const extensionId = await findWorkspaceExtensionId(context);
-  if (!extensionId) {
+  const extension = await findWorkspaceExtension(context);
+  if (!extension) {
     consola.info("No upgrade was run: not-associated.\n");
     return { code: "not-associated", kind: "skipped" };
   }
 
-  const plan = await planUpgrade(context, extensionId);
+  const { id: extensionId } = extension;
+  const client = context.createInstanceClient(
+    requireCommerceInstance(extension),
+  );
+  const plan = await planUpgrade(client, extensionId);
   if (typeof plan === "string") {
     consola.info(`No upgrade was run: ${plan}.\n`);
     return { code: plan, kind: "skipped" };
@@ -207,7 +212,7 @@ async function runHook(interrupt: InterruptNotice): Promise<HookResult> {
     return { kind: "planned", plan };
   }
 
-  const started = await startUpgrade(context, extensionId, plan);
+  const started = await startUpgrade(client, extensionId, plan);
   interrupt.setRunId(started.id);
 
   consola.info(`App upgrade started (run ${colors.cyan(started.id)}).`);
@@ -215,7 +220,7 @@ async function runHook(interrupt: InterruptNotice): Promise<HookResult> {
     interrupt.setWatcherStarted();
   }
 
-  await followRun(context, extensionId, started);
+  await followRun(client, extensionId, started);
   return { kind: "upgraded", runId: started.id };
 }
 

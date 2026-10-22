@@ -13,14 +13,18 @@
 import { getUserToken } from "@aio-commerce-sdk/scripting-utils/aio";
 import { waitForOwnerExit } from "@aio-commerce-sdk/scripting-utils/process";
 
-import { createCamsContext } from "#commands/common/cams/context";
+import {
+  createCamsContext,
+  findWorkspaceExtension,
+  requireCommerceInstance,
+} from "#commands/common/cams/context";
 import {
   describeCamsFailure,
   findCamsError,
 } from "#commands/common/cams/report";
 import { describeOutcome, pollUntilSettled } from "#commands/upgrade/poll";
 
-import type { CamsContext } from "#commands/common/cams/context";
+import type { CamsInstanceClient } from "#commands/common/cams/api-client";
 
 /** How long the watcher waits for a token before it gives up. */
 const TOKEN_TIMEOUT_MS = 30_000;
@@ -34,7 +38,7 @@ export type WatcherArgs = {
 /** Everything the watcher uses from outside, so tests can replace it. */
 export type WatcherDependencies = {
   log: (message: string) => void;
-  createContext: () => CamsContext;
+  createClient: () => Promise<CamsInstanceClient>;
   sleep?: (ms: number) => Promise<void>;
 };
 
@@ -93,13 +97,13 @@ export async function runWatcher(
   args: WatcherArgs,
   dependencies: WatcherDependencies,
 ): Promise<number> {
-  const { log, createContext, sleep } = dependencies;
+  const { log, createClient, sleep } = dependencies;
 
   const signal = await waitForOwnerExit();
 
   log(`The hook is gone (${signal}). Following the run ${args.runId}.`);
 
-  const { client } = createContext();
+  const client = await createClient();
   const result = await pollUntilSettled({
     onRetry: (error) => log(`${error.message}. Trying again.`),
     onStatus: (status) => log(`Status ${status.status}.`),
@@ -143,7 +147,11 @@ export async function exec(...argv: string[]) {
 
   try {
     process.exitCode = await runWatcher(args, {
-      createContext: () => createCamsContext(getTokenWithTimeout),
+      createClient: async () => {
+        const context = createCamsContext(getTokenWithTimeout);
+        const extension = await findWorkspaceExtension(context);
+        return context.createInstanceClient(requireCommerceInstance(extension));
+      },
       log,
     });
   } catch (error) {

@@ -96,6 +96,7 @@ const LOG_HINT = /tail -f|\.log/;
 
 const SERVICE = "https://service.example.com";
 const EXTENSIONS = `${SERVICE}/v1/extensions`;
+const WORKSPACE_EXTENSIONS = `${SERVICE}/v1/workspaces/:workspaceId/extensions`;
 const UPGRADES = `${EXTENSIONS}/ext-1/upgrades`;
 const PLAN = { id: "plan-1", operation: "upgrade" };
 const NOT_PLANNED = /The upgrade was not planned: .*Refused/;
@@ -112,32 +113,57 @@ function attempt(status: string, extra: object = {}) {
  * plan id is refused, so a wrong call fails.
  */
 function serveUpgrade(statuses: object[] = [attempt("succeeded")]) {
-  const calls = { plan: 0, polls: 0, start: 0 };
+  const calls = {
+    commerceHeaders: [] as boolean[],
+    plan: 0,
+    polls: 0,
+    start: 0,
+  };
+
+  const recordCommerceHeaders = (request: Request) => {
+    calls.commerceHeaders.push(
+      request.headers.get("x-ac-url") === "https://commerce.example.com" &&
+        request.headers.get("x-ac-env") === "saas",
+    );
+  };
 
   apiServer.use(
-    http.get(EXTENSIONS, ({ request }) => {
-      const query = new URL(request.url).searchParams;
+    http.get(WORKSPACE_EXTENSIONS, ({ params, request }) => {
       const found =
-        query.get("workspaceId") === "workspace-id" &&
-        query.get("workspaceName") === "workspace-name" &&
+        params.workspaceId === "workspace-id" &&
         request.headers.get("authorization") === "Bearer ims-token" &&
         request.headers.get("x-org-id") === "ims-org-id";
 
-      return HttpResponse.json(found ? [{ id: "ext-1" }] : []);
+      return HttpResponse.json(
+        found
+          ? [
+              {
+                id: "ext-1",
+                scope: {
+                  commerceBaseUrl: "https://commerce.example.com",
+                  commerceEnv: "saas",
+                },
+              },
+            ]
+          : [],
+      );
     }),
-    http.post(`${UPGRADES}/preview`, () => {
+    http.post(`${UPGRADES}/preview`, ({ request }) => {
       calls.plan += 1;
+      recordCommerceHeaders(request);
       return HttpResponse.json({ plan: PLAN }, { status: 201 });
     }),
     http.post(UPGRADES, async ({ request }) => {
       calls.start += 1;
-      const body = (await request.json()) as { planId?: string };
+      recordCommerceHeaders(request);
+      const body = await request.text();
 
-      return body.planId === "plan-1"
+      return body === JSON.stringify({ planId: PLAN.id })
         ? HttpResponse.json(attempt("pending"), { status: 202 })
         : HttpResponse.json({}, { status: 400 });
     }),
-    http.post(`${UPGRADES}/run-1/sync`, () => {
+    http.post(`${UPGRADES}/run-1/sync`, ({ request }) => {
+      recordCommerceHeaders(request);
       const status = statuses[Math.min(calls.polls, statuses.length - 1)];
       calls.polls += 1;
       return HttpResponse.json(status);
@@ -232,7 +258,7 @@ describe("post-app-deploy hook", () => {
       runId: "run-1",
     });
 
-    expect(calls).toEqual({ plan: 1, polls: 4, start: 1 });
+    expect(calls).toMatchObject({ plan: 1, polls: 4, start: 1 });
     expect(delayMock).toHaveBeenCalledTimes(3);
     expect(delayMock).toHaveBeenCalledWith(2000);
     expect(vi.mocked(consola.start).mock.calls).toEqual([
@@ -286,6 +312,14 @@ describe("post-app-deploy hook", () => {
   });
 
   describe("without an upgrade to follow", () => {
+    test("configures follow-up requests with the Commerce instance from lookup", async () => {
+      const calls = serveUpgrade();
+
+      await expect(runHook()).resolves.toMatchObject({ kind: "upgraded" });
+
+      expect(calls.commerceHeaders).toEqual([true, true, true]);
+    });
+
     test("plans a manual upgrade without starting it", async () => {
       const calls = serveUpgrade();
 
@@ -294,13 +328,13 @@ describe("post-app-deploy hook", () => {
         plan: PLAN,
       });
 
-      expect(calls).toEqual({ plan: 1, polls: 0, start: 0 });
+      expect(calls).toMatchObject({ plan: 1, polls: 0, start: 0 });
       expect(spawnDetachedMock).not.toHaveBeenCalled();
     });
 
     test("skips a workspace without an extension and does not plan", async () => {
       const calls = serveUpgrade();
-      answer("get", EXTENSIONS, () => HttpResponse.json([]));
+      answer("get", WORKSPACE_EXTENSIONS, () => HttpResponse.json([]));
 
       await expect(runHook()).resolves.toEqual({
         code: "not-associated",
@@ -308,6 +342,20 @@ describe("post-app-deploy hook", () => {
       });
 
       expect(calls.plan).toBe(0);
+      expect(spawnDetachedMock).not.toHaveBeenCalled();
+    });
+
+    test("refuses to plan when the extension has no Commerce instance", async () => {
+      const calls = serveUpgrade();
+      answer("get", WORKSPACE_EXTENSIONS, () =>
+        HttpResponse.json([{ id: "ext-1" }]),
+      );
+
+      await expect(runHook()).rejects.toThrow(
+        'The extension "ext-1" has no Commerce instance configuration.',
+      );
+
+      expect(calls).toMatchObject({ plan: 0, polls: 0, start: 0 });
       expect(spawnDetachedMock).not.toHaveBeenCalled();
     });
 

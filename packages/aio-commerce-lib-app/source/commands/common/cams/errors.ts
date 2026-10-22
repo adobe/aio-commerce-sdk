@@ -11,12 +11,13 @@
  */
 
 import { CommerceSdkErrorBase } from "@adobe/aio-commerce-lib-core/error";
+import { HTTP_CONFLICT } from "@adobe/aio-commerce-lib-core/responses";
 
 import type { CommerceSdkErrorBaseOptions } from "@adobe/aio-commerce-lib-core/error";
 import type { HTTPError } from "ky";
 
-const HTTP_CONFLICT = 409;
 const HTTP_BAD_GATEWAY = 502;
+const HTTP_SERVICE_UNAVAILABLE = 503;
 
 /** The request that CAMS answered with an error: its method and its path, without the host. */
 export type CamsRequest = {
@@ -71,7 +72,7 @@ export class CamsClientError extends CommerceSdkErrorBase {
 /** Thrown when CAMS refuses a request with a 409. Its `code` tells why. */
 export class CamsConflictError extends CamsClientError {}
 
-/** The `code` and the text of an error answer. The text is the `message`, or the body when it is not JSON. */
+/** The `code` and text of an error answer, plus retryability when provided. */
 export async function readAnswer(response: Response) {
   const body = (
     await response
@@ -83,27 +84,39 @@ export async function readAnswer(response: Response) {
   try {
     const json: unknown = JSON.parse(body);
     if (typeof json === "object" && json !== null) {
-      const { code, message } = json as Record<string, unknown>;
+      const { code, message, detail, retryable } = json as Record<
+        string,
+        unknown
+      >;
+      const text = [message, detail].find((value) => typeof value === "string");
 
       return {
         code: typeof code === "string" ? code : undefined,
-        text: typeof message === "string" ? message : "",
+        retryable: typeof retryable === "boolean" ? retryable : undefined,
+        text: typeof text === "string" ? text : "",
       };
     }
   } catch {
     // The body is not JSON, so its text is the message.
   }
 
-  return { code: undefined, text: body };
+  return { code: undefined, retryable: undefined, text: body };
 }
 
 /**
- * Builds the error for an answer with an error status. A 409 is a conflict. A 502 means CAMS could
- * not read the app, which can pass, so it is the only retryable status.
+ * Builds the error for an answer with an error status. The backend retryable flag takes precedence;
+ * older responses fall back to treating 502 and 503 as retryable.
  */
 export async function toCamsResponseError(error: HTTPError) {
   const { status, statusText } = error.response;
-  const { code, text } = await readAnswer(error.response);
+  const {
+    code,
+    retryable: backendRetryable,
+    text,
+  } = await readAnswer(error.response);
+  const retryable =
+    backendRetryable ??
+    (status === HTTP_BAD_GATEWAY || status === HTTP_SERVICE_UNAVAILABLE);
 
   const answer = [status, statusText].filter(Boolean).join(" ");
   const message =
@@ -116,6 +129,7 @@ export async function toCamsResponseError(error: HTTPError) {
       method: error.request.method,
       path: new URL(error.request.url).pathname,
     },
+    retryable,
     status,
   };
 
@@ -123,8 +137,5 @@ export async function toCamsResponseError(error: HTTPError) {
     return new CamsConflictError(message, options);
   }
 
-  return new CamsClientError(message, {
-    ...options,
-    retryable: status === HTTP_BAD_GATEWAY,
-  });
+  return new CamsClientError(message, options);
 }

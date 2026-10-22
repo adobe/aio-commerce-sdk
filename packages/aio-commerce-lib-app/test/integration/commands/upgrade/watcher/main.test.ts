@@ -27,16 +27,18 @@ const { aio, owner } = vi.hoisted(() => ({
 vi.mock("@aio-commerce-sdk/scripting-utils/aio", () => aio);
 vi.mock("@aio-commerce-sdk/scripting-utils/process", () => owner);
 
-import { createCamsClient } from "#commands/common/cams/api-client";
+import { createCamsInstanceClient } from "#commands/common/cams/api-client";
 import { CAMS_URL_ENV_VAR } from "#commands/common/cams/config";
 import { exec, runWatcher } from "#commands/upgrade/watcher/main";
 import { apiServer, setupApiTestLifecycle } from "#test/setup/api";
 
-import type { CamsContext } from "#commands/common/cams/context";
-
 const SERVICE = "https://service.example.com";
 const TOKEN_TIMEOUT_MS = 30_000;
 const STATUS_URL = `${SERVICE}/v1/extensions/ext-1/upgrades/run-1/sync`;
+const LOOKUP_URL = `${SERVICE}/v1/workspaces/:workspaceId/extensions`;
+const COMMERCE_ID = Buffer.from(
+  "https://commerce.example.com/env/saas",
+).toString("base64url");
 
 const BAD_GATEWAY_RETRY = /HTTP 502.*Trying again\.$/;
 const ARGS = { extensionId: "ext-1", runId: "run-1" };
@@ -49,13 +51,29 @@ const SUCCEEDED = {
 
 setupApiTestLifecycle();
 
-/** Answers the polls with the responses in order, and the last one after that. */
+/**
+ * Answers the lookup of the extension, then the polls with the responses in order, and the last
+ * one after that.
+ */
 function serveAnswers(answers: (() => Response)[]) {
-  const polls = { count: 0 };
+  const polls = { count: 0, headers: new Headers() };
   apiServer.use(
-    http.post(STATUS_URL, () => {
+    http.get(LOOKUP_URL, () =>
+      HttpResponse.json([
+        {
+          id: "ext-1",
+          scope: {
+            commerceBaseUrl: "https://commerce.example.com",
+            commerceEnv: "saas",
+            commerceId: COMMERCE_ID,
+          },
+        },
+      ]),
+    ),
+    http.post(STATUS_URL, ({ request }) => {
       const answer = answers[Math.min(polls.count, answers.length - 1)];
       polls.count += 1;
+      polls.headers = request.headers;
       return answer();
     }),
   );
@@ -71,18 +89,17 @@ const json =
 describe("runWatcher", () => {
   const log = vi.fn();
   const sleep = vi.fn(async () => undefined);
-  const createContext = vi.fn(
-    (): CamsContext => ({
-      baseUrl: SERVICE,
-      client: createCamsClient({
+  const createClient = vi.fn(async () =>
+    createCamsInstanceClient(
+      {
         auth: {
           getToken: async () => "token",
           org: { id: "o", ims_org_id: "i", name: "n" },
         },
         config: { baseUrl: SERVICE },
-      }),
-      project: {} as CamsContext["project"],
-    }),
+      },
+      { baseUrl: "https://commerce.example.com", env: "saas" },
+    ),
   );
 
   /** Runs the watcher. The owner exit settles with `signal` at once, or never when it is `undefined`. */
@@ -91,7 +108,7 @@ describe("runWatcher", () => {
       signal ? Promise.resolve(signal) : new Promise(() => undefined),
     );
 
-    return runWatcher(ARGS, { createContext, log, sleep });
+    return runWatcher(ARGS, { createClient, log, sleep });
   }
 
   beforeEach(() => {
@@ -107,7 +124,7 @@ describe("runWatcher", () => {
       }),
     );
     const outcome: { code?: number } = {};
-    const watching = runWatcher(ARGS, { createContext, log, sleep });
+    const watching = runWatcher(ARGS, { createClient, log, sleep });
     watching.then((code) => {
       outcome.code = code;
     });
@@ -117,7 +134,7 @@ describe("runWatcher", () => {
     expect(owner.waitForOwnerExit).toHaveBeenCalledOnce();
     expect(outcome.code).toBeUndefined();
     expect(polls.count).toBe(0);
-    expect(createContext).not.toHaveBeenCalled();
+    expect(createClient).not.toHaveBeenCalled();
     expect(log).not.toHaveBeenCalled();
 
     release("pipe");
@@ -130,6 +147,7 @@ describe("runWatcher", () => {
     await expect(watch("pipe")).resolves.toBe(0);
 
     expect(polls.count).toBe(3);
+    expect(createClient).toHaveBeenCalledTimes(1);
     expect(
       log.mock.calls.map(([line]) => stripVTControlCharacters(line)),
     ).toEqual([
@@ -140,6 +158,15 @@ describe("runWatcher", () => {
       "App upgrade completed. The app is now at version 2.0.0.",
     ]);
     expect(sleep.mock.calls).toEqual([[2000], [2000]]);
+  });
+
+  test("names the Commerce instance of the extension in its polls", async () => {
+    const polls = serveAnswers([json(SUCCEEDED)]);
+
+    await expect(watch("pipe")).resolves.toBe(0);
+
+    expect(polls.headers.get("x-ac-url")).toBe("https://commerce.example.com");
+    expect(polls.headers.get("x-ac-env")).toBe("saas");
   });
 
   test("logs the signal that showed that the hook is gone", async () => {
@@ -219,6 +246,60 @@ describe("exec", () => {
     await watching;
   }
 
+  test("resolves the instance during startup and retries a transient lookup failure", async () => {
+    aio.getUserToken.mockResolvedValue("token");
+    const polls = serveAnswers([json(SUCCEEDED)]);
+    let lookups = 0;
+    apiServer.use(
+      http.get(LOOKUP_URL, () => {
+        lookups += 1;
+        if (lookups === 1) {
+          return HttpResponse.json({ retryable: true }, { status: 502 });
+        }
+        return HttpResponse.json([
+          {
+            id: "ext-1",
+            scope: {
+              commerceBaseUrl: "https://commerce.example.com",
+              commerceEnv: "saas",
+            },
+          },
+        ]);
+      }),
+    );
+
+    await exec("ext-1", "run-1");
+
+    expect(lookups).toBe(2);
+    expect(polls.count).toBe(1);
+    expect(polls.headers.get("x-ac-url")).toBe("https://commerce.example.com");
+    expect(polls.headers.get("x-ac-env")).toBe("saas");
+    expect(process.exitCode).toBe(0);
+  });
+
+  test.each([
+    [
+      "no extension",
+      [],
+      "This workspace is not associated with an app extension.",
+    ],
+    [
+      "no Commerce instance",
+      [{ id: "ext-1" }],
+      'The extension "ext-1" has no Commerce instance configuration.',
+    ],
+  ])("stops during initialization with %s", async (_, extensions, message) => {
+    aio.getUserToken.mockResolvedValue("token");
+    const polls = serveAnswers([json(SUCCEEDED)]);
+    apiServer.use(http.get(LOOKUP_URL, () => HttpResponse.json(extensions)));
+
+    await exec("ext-1", "run-1");
+
+    expect(process.exitCode).toBe(1);
+    expect(polls.count).toBe(0);
+    expect(written.join("")).toContain(`The watcher stopped: ${message}`);
+  });
+
   test("logs and exits with 1 when the arguments are incomplete", async () => {
     await expect(exec("ext-1")).rejects.toThrow("exit 1");
 
@@ -276,12 +357,14 @@ describe("exec", () => {
     });
 
     test("uses a token that arrives just before the timeout", async () => {
-      aio.getUserToken.mockImplementation(
-        () =>
-          new Promise((resolve) => {
-            setTimeout(() => resolve("late token"), TOKEN_TIMEOUT_MS - 1);
-          }),
-      );
+      aio.getUserToken
+        .mockImplementationOnce(
+          () =>
+            new Promise((resolve) => {
+              setTimeout(() => resolve("late token"), TOKEN_TIMEOUT_MS - 1);
+            }),
+        )
+        .mockResolvedValue("late token");
       serveAnswers([json(SUCCEEDED)]);
 
       await watchAfterHookExit();

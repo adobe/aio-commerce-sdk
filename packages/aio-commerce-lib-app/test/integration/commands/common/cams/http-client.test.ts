@@ -49,15 +49,46 @@ describe("CamsHttpClient", () => {
     ]);
     expect(received[0].headers.get("x-org-id")).toBe("ims-org-id");
     expect(received[0].headers.get("x-extra")).toBe("1");
+    expect(received[0].headers.has("x-ac-url")).toBe(false);
+    expect(received[0].headers.has("x-ac-env")).toBe(false);
+  });
+
+  test("sends configured instance headers alongside request headers", async () => {
+    const received: Request[] = [];
+    apiServer.use(
+      http.get(`${BASE_URL}/ping`, ({ request }) => {
+        received.push(request);
+        return HttpResponse.json({});
+      }),
+    );
+    const client = new CamsHttpClient({
+      auth: { getToken: async () => "token", org: ORG },
+      config: {
+        baseUrl: BASE_URL,
+        commerceInstance: {
+          baseUrl: "https://commerce.example.com",
+          env: "saas",
+        },
+      },
+    });
+
+    await client.get("ping", { headers: { "x-extra": "preserved" } });
+
+    expect(received.at(0)?.headers.get("x-ac-url")).toBe(
+      "https://commerce.example.com",
+    );
+    expect(received.at(0)?.headers.get("x-ac-env")).toBe("saas");
+    expect(received.at(0)?.headers.get("x-extra")).toBe("preserved");
   });
 
   test("fails without sending the request when the token cannot be read", async () => {
     const requests = vi.fn();
     apiServer.events.on("request:start", requests);
     const cause = new Error("The token was refused");
+    const getToken = vi.fn().mockRejectedValue(cause);
 
     const client = new CamsHttpClient({
-      auth: { getToken: () => Promise.reject(cause), org: ORG },
+      auth: { getToken, org: ORG },
       config: { baseUrl: BASE_URL },
     });
 
@@ -67,6 +98,7 @@ describe("CamsHttpClient", () => {
       retryable: false,
     });
     expect(requests).not.toHaveBeenCalled();
+    expect(getToken).toHaveBeenCalledTimes(1);
     apiServer.events.removeAllListeners();
   });
 });

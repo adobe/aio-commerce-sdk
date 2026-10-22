@@ -18,6 +18,7 @@ import { CamsClientError } from "#commands/common/cams/errors";
 
 import type { AioProjectConfig } from "@aio-commerce-sdk/scripting-utils/aio";
 import type { KyInstance, KyRequest, Options } from "ky";
+import type { AssociatedCommerceData } from "#management/association/types";
 
 /** Defines the authentication of a CAMS request: the user token and the organization. */
 export type CamsAuth = {
@@ -35,6 +36,9 @@ export type CamsHttpClientConfig = {
    * @default "https://commerce-app-management.adobe.io"
    */
   baseUrl?: string;
+
+  /** The Commerce instance headers to send with CAMS requests. */
+  commerceInstance?: AssociatedCommerceData;
 };
 
 /** Defines the parameters required to build an HTTP client for CAMS. */
@@ -52,13 +56,20 @@ export type CamsHttpClientParams = {
 /** Header that carries the organization the request is made for. */
 const ORG_HEADER = "x-org-id";
 
+/** Headers that carry the Commerce instance the request is made for. */
+const COMMERCE_URL_HEADER = "x-ac-url";
+const COMMERCE_ENV_HEADER = "x-ac-env";
+
 /**
- * Builds a before request hook that sets the user token as a bearer token and the IMS organization
- * id of the project.
+ * Builds a before request hook that sets the user token as a bearer token, the IMS organization
+ * id of the project and, when there is one, the Commerce instance.
  *
  * @throws A {@link CamsClientError} If the token cannot be read.
  */
-function buildAuthHook(auth: CamsAuth) {
+function buildAuthHook(
+  auth: CamsAuth,
+  commerceInstance?: AssociatedCommerceData,
+) {
   return async (request: KyRequest) => {
     let token: string;
     try {
@@ -69,11 +80,19 @@ function buildAuthHook(auth: CamsAuth) {
 
     request.headers.set("Authorization", `Bearer ${token}`);
     request.headers.set(ORG_HEADER, auth.org.ims_org_id);
+    if (commerceInstance) {
+      request.headers.set(COMMERCE_URL_HEADER, commerceInstance.baseUrl);
+      request.headers.set(COMMERCE_ENV_HEADER, commerceInstance.env);
+    }
   };
 }
 
 /** Determines if an error is retryable based on the CAMS response. */
 async function isRetryable(error: unknown) {
+  if (error instanceof CamsClientError) {
+    return error.retryable;
+  }
+
   const isObject = (value: unknown): value is Record<string, unknown> =>
     typeof value === "object" && value !== null;
 
@@ -113,7 +132,7 @@ export class CamsHttpClient implements KyHttpClient {
   protected readonly httpClient: Readonly<KyInstance>;
 
   /** The configuration used by the HTTP client, with its defaults applied. */
-  public readonly config: Readonly<Required<CamsHttpClientConfig>>;
+  public readonly config: Readonly<CamsHttpClientConfig & { baseUrl: string }>;
 
   public readonly get: KyInstance["get"];
   public readonly post: KyInstance["post"];
@@ -130,10 +149,15 @@ export class CamsHttpClient implements KyHttpClient {
    */
   public constructor(params: CamsHttpClientParams) {
     const { auth, config, fetchOptions } = params;
-    this.config = Object.freeze({ baseUrl: config?.baseUrl ?? PROD_CAMS_URL });
+    this.config = Object.freeze({
+      baseUrl: config?.baseUrl ?? PROD_CAMS_URL,
+      commerceInstance: config?.commerceInstance,
+    });
 
     const httpClient = ky.create({
-      hooks: { beforeRequest: [buildAuthHook(auth)] },
+      hooks: {
+        beforeRequest: [buildAuthHook(auth, this.config.commerceInstance)],
+      },
       prefixUrl: this.config.baseUrl,
       retry: {
         async shouldRetry({ error }) {

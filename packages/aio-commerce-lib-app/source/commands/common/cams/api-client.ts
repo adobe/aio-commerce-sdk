@@ -21,8 +21,18 @@ import {
 } from "#commands/common/cams/errors";
 import { CamsHttpClient } from "#commands/common/cams/http-client";
 
-import type { CamsHttpClientParams } from "#commands/common/cams/http-client";
+import type { Options } from "ky";
+import type {
+  CamsHttpClientConfig,
+  CamsHttpClientParams,
+} from "#commands/common/cams/http-client";
+import type { AssociatedCommerceData } from "#management/association/types";
 import type { FindAttemptParams } from "./schema";
+
+/** Connection options shared by workspace and instance clients. */
+type CamsClientParams = Omit<CamsHttpClientParams, "config"> & {
+  config?: Omit<CamsHttpClientConfig, "commerceInstance">;
+};
 
 /** A function of the API that takes the HTTP client first and then its own arguments. */
 type Endpoint<TArgs extends unknown[], TResult> = (
@@ -65,16 +75,19 @@ function bind<TArgs extends unknown[], TResult>(
 
 /** Binds a failsafe version of the poll upgrade endpoint that falls back to a normal read upgrade. */
 function bindFailsafePollUpgrade(httpClient: CamsHttpClient) {
-  return async (params: FindAttemptParams) => {
+  return async (params: FindAttemptParams, options?: Options) => {
     try {
-      return await endpoints.pollUpgrade(httpClient, params);
+      return await endpoints.pollUpgrade(httpClient, params, options);
     } catch (error) {
       if (error instanceof HTTPError && error.response?.status === 409) {
         const { code } = await readAnswer(error.response);
 
         if (code === "attempt-not-open") {
           // The attempt being polled/synced is not the running one, fallback to a normal GET.
-          return await endpoints.readUpgrade(httpClient, params);
+          return await bind(httpClient, endpoints.readUpgrade)(params, {
+            ...options,
+            retry: 0,
+          });
         }
       }
 
@@ -84,14 +97,32 @@ function bindFailsafePollUpgrade(httpClient: CamsHttpClient) {
 }
 
 /**
- * Creates an API client for the Commerce App Management Service (CAMS).
+ * Creates a CAMS client for workspace operations without Commerce instance headers.
  * @param params - The parameters to build the HTTP client that will communicate with CAMS.
  */
-export function createCamsClient(params: CamsHttpClientParams) {
+export function createCamsWorkspaceClient(params: CamsClientParams) {
   const httpClient = new CamsHttpClient(params);
 
   return {
     findExtension: bind(httpClient, endpoints.findExtension),
+  };
+}
+
+/**
+ * Creates a CAMS client for operations targeting a Commerce instance.
+ * @param params - The authentication, configuration and fetch options.
+ * @param commerceInstance - The Commerce instance to target.
+ */
+export function createCamsInstanceClient(
+  params: CamsClientParams,
+  commerceInstance: AssociatedCommerceData,
+) {
+  const httpClient = new CamsHttpClient({
+    ...params,
+    config: { ...params.config, commerceInstance },
+  });
+
+  return {
     planUpgrade: bind(httpClient, endpoints.planUpgrade),
     pollUpgrade: bindFailsafePollUpgrade(httpClient),
     readLatestUpgrade: bind(httpClient, endpoints.readLatestUpgrade),
@@ -100,8 +131,8 @@ export function createCamsClient(params: CamsHttpClientParams) {
   };
 }
 
-/**
- * An API client for CAMS.
- * @see {@link createCamsClient}
- */
-export type CamsClient = ReturnType<typeof createCamsClient>;
+/** A CAMS client for workspace operations. */
+export type CamsWorkspaceClient = ReturnType<typeof createCamsWorkspaceClient>;
+
+/** A CAMS client for Commerce instance operations. */
+export type CamsInstanceClient = ReturnType<typeof createCamsInstanceClient>;

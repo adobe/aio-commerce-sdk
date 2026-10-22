@@ -16,20 +16,33 @@ import {
   getUserToken,
 } from "@aio-commerce-sdk/scripting-utils/aio";
 
-import { createCamsClient } from "#commands/common/cams/api-client";
+import {
+  createCamsInstanceClient,
+  createCamsWorkspaceClient,
+} from "#commands/common/cams/api-client";
 import { resolveCamsBaseUrl } from "#commands/common/cams/config";
+import { CamsClientError } from "#commands/common/cams/errors";
 
-import type { CamsClient } from "#commands/common/cams/api-client";
+import type { Options } from "ky";
+import type {
+  CamsInstanceClient,
+  CamsWorkspaceClient,
+} from "#commands/common/cams/api-client";
+import type { Extension } from "#commands/common/cams/schema";
+import type { AssociatedCommerceData } from "#management/association/types";
 
 /** What a command needs to talk to CAMS about the current workspace. */
 export type CamsContext = {
-  client: CamsClient;
+  createWorkspaceClient: () => CamsWorkspaceClient;
+  createInstanceClient: (
+    commerceInstance: AssociatedCommerceData,
+  ) => CamsInstanceClient;
   baseUrl: string;
   project: ReturnType<typeof getAioProjectContext>["project"];
 };
 
 /**
- * Reads the current App Builder project and creates the CAMS client for it.
+ * Reads the current App Builder project and supplies lazy CAMS client factories.
  * @param getToken - Reads the user token before every request. Defaults to the AIO CLI token.
  */
 export function createCamsContext(
@@ -37,28 +50,49 @@ export function createCamsContext(
 ): CamsContext {
   const { project } = getAioProjectContext();
   const baseUrl = resolveCamsBaseUrl(getAioCliEnv());
+  const params = {
+    auth: { getToken, org: project.org },
+    config: { baseUrl },
+  };
 
   return {
     baseUrl,
-    client: createCamsClient({
-      auth: { getToken, org: project.org },
-      config: { baseUrl },
-    }),
+    createInstanceClient: (commerceInstance) =>
+      createCamsInstanceClient(params, commerceInstance),
+    createWorkspaceClient: () => createCamsWorkspaceClient(params),
     project,
   };
 }
 
-/**
- * Finds the id of the extension associated with the current workspace.
- * @param context - The CAMS context containing the current workspace and client.
- * @returns The extension id, or `null` when the workspace is not associated.
- */
-export async function findWorkspaceExtensionId(context: CamsContext) {
-  const { workspace } = context.project;
-  const extension = await context.client.findExtension({
-    workspaceId: workspace.id,
-    workspaceName: workspace.name,
-  });
+/** Finds the extension associated with the current workspace without changing the context. */
+export async function findWorkspaceExtension(
+  context: CamsContext,
+  fetchOptions?: Options,
+) {
+  return await context
+    .createWorkspaceClient()
+    .findExtension({ workspaceId: context.project.workspace.id }, fetchOptions);
+}
 
-  return extension?.id ?? null;
+/**
+ * Reads the Commerce instance from an extension's explicit scope fields.
+ * @throws A {@link CamsClientError} If the extension or its Commerce instance is missing.
+ */
+export function requireCommerceInstance(
+  extension: Extension | null,
+): AssociatedCommerceData {
+  if (!extension) {
+    throw new CamsClientError(
+      "This workspace is not associated with an app extension.",
+    );
+  }
+
+  const { scope } = extension;
+  if (!(scope?.commerceBaseUrl && scope.commerceEnv)) {
+    throw new CamsClientError(
+      `The extension "${extension.id}" has no Commerce instance configuration.`,
+    );
+  }
+
+  return { baseUrl: scope.commerceBaseUrl, env: scope.commerceEnv };
 }
