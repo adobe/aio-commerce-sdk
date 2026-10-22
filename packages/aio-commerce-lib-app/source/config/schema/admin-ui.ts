@@ -206,7 +206,7 @@ const AdminUiGridAndMassActionEntitySchema = v.object({
   massActions: v.optional(MassActionsSchema),
 });
 
-// Shared by invoice, credit memo, and shipment: unlike order/product/customer,
+// Shared by invoice, credit memo, shipment, and newsletter: unlike order/product/customer,
 // these expose grid columns only — no mass actions or view buttons.
 const AdminUiGridOnlyEntitySchema = v.object({
   gridColumns: v.optional(GridColumnsSchema),
@@ -338,7 +338,7 @@ export const AdminUiSchema = v.object({
   customer: v.optional(AdminUiGridAndMassActionEntitySchema),
   invoice: v.optional(AdminUiGridOnlyEntitySchema),
   menu: v.optional(MenuSchema),
-  newsletter: v.optional(AdminUiGridAndMassActionEntitySchema),
+  newsletter: v.optional(AdminUiGridOnlyEntitySchema),
   order: v.optional(AdminUiOrderSchema),
   product: v.optional(AdminUiGridAndMassActionEntitySchema),
   shipment: v.optional(AdminUiGridOnlyEntitySchema),
@@ -375,7 +375,6 @@ export const ADMIN_UI_MASS_ACTION_ENTITIES = [
   "order",
   "product",
   "customer",
-  "newsletter",
 ] as const satisfies readonly Exclude<keyof AdminUi, "acl" | "menu">[];
 
 /** A custom ACL resource entry: a leaf or a one-level group of leaves. */
@@ -468,8 +467,7 @@ export function hasBackendUiV2Components<T extends AnyCommerceAppConfig>(
       adminUi.invoice?.gridColumns ||
       adminUi.creditMemo?.gridColumns ||
       adminUi.shipment?.gridColumns ||
-      adminUi.newsletter?.gridColumns ||
-      adminUi.newsletter?.massActions?.length,
+      adminUi.newsletter?.gridColumns,
   );
 }
 
