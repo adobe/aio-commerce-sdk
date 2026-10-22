@@ -33,6 +33,7 @@ import { exec, runWatcher } from "#commands/upgrade/watcher/main";
 import { apiServer, setupApiTestLifecycle } from "#test/setup/api";
 
 import type { CamsContext } from "#commands/common/cams/context";
+import type { AssociatedCommerceData } from "#management/association/types";
 
 const SERVICE = "https://service.example.com";
 const TOKEN_TIMEOUT_MS = 30_000;
@@ -91,20 +92,22 @@ const json =
 describe("runWatcher", () => {
   const log = vi.fn();
   const sleep = vi.fn(async () => undefined);
+  const createClient = (commerceInstance?: AssociatedCommerceData) =>
+    createCamsClient({
+      auth: {
+        getToken: async () => "token",
+        org: { id: "o", ims_org_id: "i", name: "n" },
+      },
+      config: { baseUrl: SERVICE, commerceInstance },
+    });
   const createContext = vi.fn(
     async (): Promise<CamsContext> => ({
       baseUrl: SERVICE,
-      client: createCamsClient({
-        auth: {
-          getToken: async () => "token",
-          org: { id: "o", ims_org_id: "i", name: "n" },
-        },
-        config: { baseUrl: SERVICE },
-      }),
-      commerceInstance: {
+      client: createClient({
         baseUrl: "https://commerce.example.com",
         env: "saas",
-      },
+      }),
+      createClient,
       project: {
         workspace: { id: "workspace-id", name: "w", title: "W" },
       } as CamsContext["project"],

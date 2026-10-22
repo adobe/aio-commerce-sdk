@@ -63,10 +63,7 @@ function isSkipCode(code: unknown): code is SkipCode {
  */
 async function planUpgrade(context: CamsContext, extensionId: string) {
   try {
-    return await context.client.planUpgrade(
-      { extensionId },
-      { commerceInstance: context.commerceInstance },
-    );
+    return await context.client.planUpgrade({ extensionId });
   } catch (error) {
     if (error instanceof CamsConflictError) {
       if (isSkipCode(error.code)) {
@@ -89,10 +86,7 @@ async function startUpgrade(
   plan: UpgradePlan,
 ) {
   try {
-    return await context.client.startUpgrade(
-      { extensionId, planId: plan.id },
-      { commerceInstance: context.commerceInstance },
-    );
+    return await context.client.startUpgrade({ extensionId, planId: plan.id });
   } catch (error) {
     if (error instanceof CamsConflictError) {
       throw new Error(`The upgrade was not started: ${error.message}`, {
@@ -145,11 +139,7 @@ async function followRun(
     onStatus: whenStatusChanges((status) => {
       consola.start(`App upgrade is ${colors.yellow(status.status)}.`);
     }),
-    poll: () =>
-      context.client.pollUpgrade(
-        { extensionId, runId: started.id },
-        { commerceInstance: context.commerceInstance },
-      ),
+    poll: () => context.client.pollUpgrade({ extensionId, runId: started.id }),
   });
 
   const outcome = describeOutcome(result, started.id);
@@ -182,12 +172,10 @@ async function runHook(interrupt: InterruptNotice): Promise<HookResult> {
   console.log(""); // Leave a bit of whitespace before the output to make it more readable.
   consola.start("Checking for app upgrades...");
 
-  const initialContext = createCamsContext();
-  consola.debug(`Service: ${initialContext.baseUrl}`);
+  const context = createCamsContext();
+  consola.debug(`Service: ${context.baseUrl}`);
 
-  const { extensionId, commerceInstance } =
-    await findWorkspaceExtension(initialContext);
-  const context = { ...initialContext, commerceInstance };
+  const { extensionId } = await findWorkspaceExtension(context);
   if (!extensionId) {
     consola.info("No upgrade was run: not-associated.\n");
     return { code: "not-associated", kind: "skipped" };

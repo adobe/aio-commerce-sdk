@@ -107,13 +107,10 @@ export async function runWatcher(
     onRetry: (error) => log(`${error.message}. Trying again.`),
     onStatus: (status) => log(`Status ${status.status}.`),
     poll: () =>
-      context.client.pollUpgrade(
-        {
-          extensionId: args.extensionId,
-          runId: args.runId,
-        },
-        { commerceInstance: context.commerceInstance },
-      ),
+      context.client.pollUpgrade({
+        extensionId: args.extensionId,
+        runId: args.runId,
+      }),
     sleep,
   });
 
@@ -151,8 +148,8 @@ export async function exec(...argv: string[]) {
     process.exitCode = await runWatcher(args, {
       createContext: async () => {
         const context = createCamsContext(getTokenWithTimeout);
-        const { commerceInstance } = await findWorkspaceExtension(context);
-        return { ...context, commerceInstance };
+        await findWorkspaceExtension(context);
+        return context;
       },
       log,
     });

@@ -21,10 +21,8 @@ import {
 } from "#commands/common/cams/errors";
 import { CamsHttpClient } from "#commands/common/cams/http-client";
 
-import type {
-  CamsHttpClientParams,
-  CamsRequestOptions,
-} from "#commands/common/cams/http-client";
+import type { Options } from "ky";
+import type { CamsHttpClientParams } from "#commands/common/cams/http-client";
 import type { FindAttemptParams } from "./schema";
 
 /** A function of the API that takes the HTTP client first and then its own arguments. */
@@ -68,7 +66,7 @@ function bind<TArgs extends unknown[], TResult>(
 
 /** Binds a failsafe version of the poll upgrade endpoint that falls back to a normal read upgrade. */
 function bindFailsafePollUpgrade(httpClient: CamsHttpClient) {
-  return async (params: FindAttemptParams, options?: CamsRequestOptions) => {
+  return async (params: FindAttemptParams, options?: Options) => {
     try {
       return await endpoints.pollUpgrade(httpClient, params, options);
     } catch (error) {

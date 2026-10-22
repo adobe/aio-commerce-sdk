@@ -131,7 +131,7 @@ describe("the Commerce instance", () => {
     "readUpgrade",
     "readLatestUpgrade",
   ] as const)(
-    "uses operation-specific Commerce data for %s",
+    "uses configured Commerce data and preserves request options for %s",
     async (operation) => {
       const client = createClient(undefined, {
         baseUrl: "https://default.example.com",
@@ -152,10 +152,6 @@ describe("the Commerce instance", () => {
       await client[operation](
         { extensionId: "ext-1", planId: "plan-1", runId: "run-1" },
         {
-          commerceInstance: {
-            baseUrl: "https://operation.example.com",
-            env: "saas",
-          },
           headers: new Headers({ "x-extra": "preserved" }),
         },
       );
@@ -167,9 +163,9 @@ describe("the Commerce instance", () => {
 
       expect(requests).toHaveLength(2);
       expect(requests[0]?.headers.get("x-ac-url")).toBe(
-        "https://operation.example.com",
+        "https://default.example.com",
       );
-      expect(requests[0]?.headers.get("x-ac-env")).toBe("saas");
+      expect(requests[0]?.headers.get("x-ac-env")).toBe("paas");
       expect(requests[0]?.headers.get("x-extra")).toBe("preserved");
       expect(requests[1]?.headers.get("x-ac-url")).toBe(
         "https://default.example.com",
@@ -361,12 +357,10 @@ describe("pollUpgrade", () => {
     );
 
     await expect(
-      createClient().pollUpgrade(IDS, {
-        commerceInstance: {
-          baseUrl: "https://commerce.example.com",
-          env: "saas",
-        },
-      }),
+      createClient(undefined, {
+        baseUrl: "https://commerce.example.com",
+        env: "saas",
+      }).pollUpgrade(IDS),
     ).resolves.toEqual(completed);
     expect(reads).toBe(1);
     expect(requestHeaders.map((headers) => headers.get("x-ac-url"))).toEqual([

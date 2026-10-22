@@ -26,7 +26,7 @@ import type { AssociatedCommerceData } from "#management/association/types";
 /** What a command needs to talk to CAMS about the current workspace. */
 export type CamsContext = {
   client: CamsClient;
-  commerceInstance?: AssociatedCommerceData;
+  createClient: (commerceInstance?: AssociatedCommerceData) => CamsClient;
   baseUrl: string;
   project: ReturnType<typeof getAioProjectContext>["project"];
 };
@@ -41,15 +41,18 @@ export function createCamsContext(
   const { project } = getAioProjectContext();
   const baseUrl = resolveCamsBaseUrl(getAioCliEnv());
   const auth = { getToken, org: project.org };
+  const createClient = (commerceInstance?: AssociatedCommerceData) =>
+    createCamsClient({ auth, config: { baseUrl, commerceInstance } });
 
   return {
     baseUrl,
-    client: createCamsClient({ auth, config: { baseUrl } }),
+    client: createClient(),
+    createClient,
     project,
   };
 }
 
-/** Finds the workspace extension and its explicit Commerce instance fields. */
+/** Finds the workspace extension and configures the client with its Commerce instance. */
 export async function findWorkspaceExtension(
   context: CamsContext,
   fetchOptions?: Options,
@@ -64,5 +67,7 @@ export async function findWorkspaceExtension(
       ? { baseUrl: scope.commerceBaseUrl, env: scope.commerceEnv }
       : undefined;
 
-  return { commerceInstance, extensionId: extension?.id ?? null };
+  context.client = context.createClient(commerceInstance);
+
+  return { extensionId: extension?.id ?? null };
 }

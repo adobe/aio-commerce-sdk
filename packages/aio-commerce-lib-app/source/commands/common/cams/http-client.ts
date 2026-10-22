@@ -53,18 +53,12 @@ export type CamsHttpClientParams = {
   fetchOptions?: Options;
 };
 
-/** Request options for operations targeting a Commerce instance. */
-export type CamsRequestOptions = Options & {
-  commerceInstance?: AssociatedCommerceData;
-};
-
 /** Applies Commerce headers to an individual operation. */
 export function withCommerceInstance(
   client: CamsHttpClient,
-  options: CamsRequestOptions = {},
+  fetchOptions: Options = {},
 ): Options {
-  const { commerceInstance = client.config.commerceInstance, ...fetchOptions } =
-    options;
+  const { commerceInstance } = client.config;
   const headers = new Headers(fetchOptions.headers);
   if (commerceInstance) {
     headers.set(COMMERCE_URL_HEADER, commerceInstance.baseUrl);

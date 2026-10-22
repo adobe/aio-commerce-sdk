@@ -27,10 +27,7 @@ import {
 
 import type { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
 import type { HTTPError, Options, ResponsePromise } from "ky";
-import type {
-  CamsHttpClient,
-  CamsRequestOptions,
-} from "#commands/common/cams/http-client";
+import type { CamsHttpClient } from "#commands/common/cams/http-client";
 import type {
   ExtensionParams,
   FindAttemptParams,
@@ -124,7 +121,7 @@ export async function findExtension(
 export async function planUpgrade(
   httpClient: CamsHttpClient,
   params: ExtensionParams,
-  fetchOptions?: CamsRequestOptions,
+  fetchOptions?: Options,
 ) {
   const { extensionId } = parseOrThrow(ExtensionParamsSchema, params);
   const { plan } = await readAndParseBody(
@@ -152,7 +149,7 @@ export async function planUpgrade(
 export async function startUpgrade(
   httpClient: CamsHttpClient,
   params: StartUpgradeParams,
-  fetchOptions?: CamsRequestOptions,
+  fetchOptions?: Options,
 ) {
   const { extensionId, planId } = parseOrThrow(
     StartUpgradeParamsSchema,
@@ -183,7 +180,7 @@ export async function startUpgrade(
 export async function pollUpgrade(
   httpClient: CamsHttpClient,
   params: FindAttemptParams,
-  fetchOptions?: CamsRequestOptions,
+  fetchOptions?: Options,
 ) {
   const { extensionId, runId } = parseOrThrow(FindAttemptParamsSchema, params);
   const attemptStatus = await readAndParseBody(
@@ -212,7 +209,7 @@ export async function pollUpgrade(
 export async function readUpgrade(
   httpClient: CamsHttpClient,
   params: FindAttemptParams,
-  fetchOptions?: CamsRequestOptions,
+  fetchOptions?: Options,
 ) {
   const { extensionId, runId } = parseOrThrow(FindAttemptParamsSchema, params);
   return await readAndParseBody(
@@ -239,7 +236,7 @@ export async function readUpgrade(
 export async function readLatestUpgrade(
   httpClient: CamsHttpClient,
   params: ExtensionParams,
-  fetchOptions?: CamsRequestOptions,
+  fetchOptions?: Options,
 ) {
   const { extensionId } = parseOrThrow(ExtensionParamsSchema, params);
   const response = await httpClient.get(

@@ -63,10 +63,7 @@ async function resolveRun(
     return runId;
   }
 
-  const latest = await context.client.readLatestUpgrade(
-    { extensionId },
-    { commerceInstance: context.commerceInstance },
-  );
+  const latest = await context.client.readLatestUpgrade({ extensionId });
   return latest?.id;
 }
 
@@ -94,12 +91,10 @@ function printStatus(status: AttemptStatus) {
  * could not be read.
  */
 export async function run(options: StatusOptions): Promise<number> {
-  const initialContext = createCamsContext();
-  consola.debug(`Service: ${initialContext.baseUrl}`);
+  const context = createCamsContext();
+  consola.debug(`Service: ${context.baseUrl}`);
 
-  const { extensionId, commerceInstance } =
-    await findWorkspaceExtension(initialContext);
-  const context = { ...initialContext, commerceInstance };
+  const { extensionId } = await findWorkspaceExtension(context);
   if (!extensionId) {
     consola.error("This workspace is not associated with an app extension.");
     return 1;
@@ -112,13 +107,10 @@ export async function run(options: StatusOptions): Promise<number> {
   }
 
   try {
-    const status = await context.client.pollUpgrade(
-      {
-        extensionId,
-        runId: targetRunId,
-      },
-      { commerceInstance },
-    );
+    const status = await context.client.pollUpgrade({
+      extensionId,
+      runId: targetRunId,
+    });
 
     printStatus(status);
     return status.status === "failed" ? 1 : 0;
