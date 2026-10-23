@@ -17,9 +17,11 @@ import { withTempFiles } from "@aio-commerce-sdk/scripting-utils/filesystem";
 import { stringify } from "yaml";
 
 import {
+  BACKEND_UI_V2_EXTENSION_POINT_ID,
   CONFIGURATION_EXTENSION_POINT_ID,
   EXTENSIBILITY_EXTENSION_POINT_ID,
   getExtensionPointFolderPath,
+  INSTALL_YAML_FILE,
   PACKAGE_NAME,
 } from "#commands/constants";
 import { runGeneration } from "#commands/init/lib";
@@ -125,6 +127,27 @@ export function makeExtConfigFile(
   return {
     [join(getExtensionPointFolderPath(extensionPointId), "ext.config.yaml")]:
       stringify(extConfig),
+  };
+}
+
+/** The extension points in the order install.yaml requires. */
+export const ORDERED_EXTENSION_POINTS = [
+  BACKEND_UI_V2_EXTENSION_POINT_ID,
+  CONFIGURATION_EXTENSION_POINT_ID,
+  EXTENSIBILITY_EXTENSION_POINT_ID,
+];
+
+/**
+ * Creates an entry for an install.yaml listing the given extension points, in the given order.
+ * @param extensionPointIds The extension point IDs to list.
+ */
+export function makeInstallYamlFile(extensionPointIds: string[]) {
+  return {
+    [INSTALL_YAML_FILE]: stringify({
+      extensions: extensionPointIds.map((extensionPointId) => ({
+        extensionPointId,
+      })),
+    }),
   };
 }
 

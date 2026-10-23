@@ -56,12 +56,21 @@ import {
   generatedManifestFile,
   generatedSchemaFile,
   INVALID_PROJECT,
+  makeInstallYamlFile,
   makeProjectFiles,
+  ORDERED_EXTENSION_POINTS,
   withGeneratedProject,
   withTempProject,
 } from "#test/fixtures/project";
 
 import type { InitFlags } from "#commands/init/main";
+
+const INSTALL_YAML_ID_RE = /extensionPointId: (\S+)/g;
+
+async function readInstallYamlIds(tempDir: string) {
+  const content = await readFile(join(tempDir, INSTALL_YAML_FILE), "utf-8");
+  return [...content.matchAll(INSTALL_YAML_ID_RE)].map((match) => match[1]);
+}
 
 describe("commands/init/lib", () => {
   describe("ensureCommerceAppConfig", () => {
@@ -383,6 +392,85 @@ describe("commands/init/lib", () => {
           );
 
           expect(matches).toHaveLength(1);
+        },
+      );
+    });
+
+    test("writes all extension points in the required order", async () => {
+      await withTempFiles(
+        { ...EMPTY_PROJECT, [INSTALL_YAML_FILE]: "" },
+        async (tempDir) => {
+          await ensureInstallYaml(
+            new Set(["businessConfig.schema"]),
+            { ...configWithBusinessConfig, ...configWithAdminUiMenu },
+            tempDir,
+          );
+
+          expect(await readInstallYamlIds(tempDir)).toEqual(
+            ORDERED_EXTENSION_POINTS,
+          );
+        },
+      );
+    });
+
+    test("keeps the relative order for a subset of extension points", async () => {
+      await withTempFiles(
+        { ...EMPTY_PROJECT, [INSTALL_YAML_FILE]: "" },
+        async (tempDir) => {
+          await ensureInstallYaml(
+            new Set(["businessConfig.schema"]),
+            configWithBusinessConfig,
+            tempDir,
+          );
+
+          expect(await readInstallYamlIds(tempDir)).toEqual([
+            CONFIGURATION_EXTENSION_POINT_ID,
+            EXTENSIBILITY_EXTENSION_POINT_ID,
+          ]);
+        },
+      );
+    });
+
+    test("inserts missing extension points in order into an existing file", async () => {
+      await withTempFiles(
+        {
+          ...EMPTY_PROJECT,
+          ...makeInstallYamlFile([EXTENSIBILITY_EXTENSION_POINT_ID]),
+        },
+        async (tempDir) => {
+          await ensureInstallYaml(
+            new Set(["businessConfig.schema"]),
+            { ...configWithBusinessConfig, ...configWithAdminUiMenu },
+            tempDir,
+          );
+
+          expect(await readInstallYamlIds(tempDir)).toEqual(
+            ORDERED_EXTENSION_POINTS,
+          );
+        },
+      );
+    });
+
+    test("reorders extension points that are already in the file", async () => {
+      await withTempFiles(
+        {
+          ...EMPTY_PROJECT,
+          ...makeInstallYamlFile([
+            EXTENSIBILITY_EXTENSION_POINT_ID,
+            CONFIGURATION_EXTENSION_POINT_ID,
+          ]),
+        },
+        async (tempDir) => {
+          await ensureInstallYaml(
+            new Set(["businessConfig.schema"]),
+            configWithBusinessConfig,
+            tempDir,
+          );
+
+          expect(await readInstallYamlIds(tempDir)).toEqual([
+            CONFIGURATION_EXTENSION_POINT_ID,
+            EXTENSIBILITY_EXTENSION_POINT_ID,
+          ]);
         },
       );
     });

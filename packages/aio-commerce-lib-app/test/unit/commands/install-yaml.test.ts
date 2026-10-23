@@ -11,153 +11,169 @@
  */
 
 import { existsSync } from "node:fs";
-import { mkdtemp, readFile, rm, stat, writeFile } from "node:fs/promises";
-import { tmpdir } from "node:os";
+import { readFile, stat } from "node:fs/promises";
 import { join } from "node:path";
 
-import { afterEach, beforeEach, describe, expect, test } from "vitest";
+import { withTempFiles } from "@aio-commerce-sdk/scripting-utils/filesystem";
+import { describe, expect, test } from "vitest";
 
 import {
+  BACKEND_UI_V2_EXTENSION_POINT_ID,
+  CONFIGURATION_EXTENSION_POINT_ID,
+  EXTENSIBILITY_EXTENSION_POINT_ID,
+  INSTALL_YAML_FILE,
+} from "#commands/constants";
+import {
   ensureExtensionPointsOrder,
+  getExtensionPointRank,
   isExtensionPointsOrdered,
 } from "#commands/install-yaml";
+import {
+  makeInstallYamlFile,
+  ORDERED_EXTENSION_POINTS,
+} from "#test/fixtures/project";
 
+const ID_RE = /extensionPointId: (\S+)/g;
 const UI_COMMENT_RE =
   /# ui comment\s+- extensionPointId: commerce\/backend-ui\/2/;
 const EXT_COMMENT_RE =
   /# ext comment\s+- extensionPointId: commerce\/extensibility\/1/;
-const ID_RE = /extensionPointId: (\S+)/g;
 
-const ORDERED = `name: app
-
-extensions:
-  # ui comment
-  - extensionPointId: commerce/backend-ui/2
-
-  # config comment
-  - extensionPointId: commerce/configuration/1
-
-  # ext comment
-  - extensionPointId: commerce/extensibility/1
-`;
-
-const SHUFFLED = `name: app
+const WITH_COMMENTS = {
+  [INSTALL_YAML_FILE]: `name: app
 
 extensions:
   # ext comment
-  - extensionPointId: commerce/extensibility/1
+  - extensionPointId: ${EXTENSIBILITY_EXTENSION_POINT_ID}
 
   # ui comment
-  - extensionPointId: commerce/backend-ui/2
+  - extensionPointId: ${BACKEND_UI_V2_EXTENSION_POINT_ID}
 
   # config comment
-  - extensionPointId: commerce/configuration/1
-`;
+  - extensionPointId: ${CONFIGURATION_EXTENSION_POINT_ID}
+`,
+};
 
-describe("commands/install-yaml", () => {
-  let dir: string;
-  let file: string;
+const readIds = async (tempDir: string) =>
+  [
+    ...(await readFile(join(tempDir, INSTALL_YAML_FILE), "utf-8")).matchAll(
+      ID_RE,
+    ),
+  ].map((match) => match[1]);
 
-  beforeEach(async () => {
-    dir = await mkdtemp(join(tmpdir(), "install-yaml-helper-"));
-    file = join(dir, "install.yaml");
+describe("getExtensionPointRank", () => {
+  test("ranks backend ui, configuration and extensibility in that order", () => {
+    expect(
+      ORDERED_EXTENSION_POINTS.map((id) => getExtensionPointRank(id)),
+    ).toEqual([0, 1, 2]);
   });
 
-  afterEach(async () => {
-    await rm(dir, { force: true, recursive: true });
+  test("ranks unknown ids after every known one", () => {
+    expect(getExtensionPointRank("other/a/1")).toBe(3);
+    expect(getExtensionPointRank(undefined)).toBe(3);
   });
+});
 
-  const ids = async () =>
-    [...(await readFile(file, "utf-8")).matchAll(ID_RE)].map((m) => m[1]);
-
-  describe("isExtensionPointsOrdered", () => {
-    test("is true when the file is missing", async () => {
-      expect(await isExtensionPointsOrdered(dir)).toBe(true);
-    });
-
-    test("is true when the file has no extensions", async () => {
-      await writeFile(file, "name: app\n");
-      expect(await isExtensionPointsOrdered(dir)).toBe(true);
-    });
-
-    test("is true for the required order and false otherwise", async () => {
-      await writeFile(file, ORDERED);
-      expect(await isExtensionPointsOrdered(dir)).toBe(true);
-
-      await writeFile(file, SHUFFLED);
-      expect(await isExtensionPointsOrdered(dir)).toBe(false);
-    });
-
-    test("does not modify the file", async () => {
-      await writeFile(file, SHUFFLED);
-      const before = await stat(file);
-      await isExtensionPointsOrdered(dir);
-
-      expect(await readFile(file, "utf-8")).toBe(SHUFFLED);
-      expect((await stat(file)).mtimeMs).toBe(before.mtimeMs);
+describe("isExtensionPointsOrdered", () => {
+  test("is true when the file is missing", async () => {
+    await withTempFiles({}, async (tempDir) => {
+      expect(await isExtensionPointsOrdered(tempDir)).toBe(true);
     });
   });
 
-  describe("ensureExtensionPointsOrder", () => {
-    test("does not create a missing file", async () => {
-      expect(await ensureExtensionPointsOrder(dir)).toBe(false);
-      expect(existsSync(file)).toBe(false);
+  test("is true when the file has no extensions", async () => {
+    await withTempFiles(
+      { [INSTALL_YAML_FILE]: "name: app\n" },
+      async (tempDir) => {
+        expect(await isExtensionPointsOrdered(tempDir)).toBe(true);
+      },
+    );
+  });
+
+  test("is true for the required order", async () => {
+    await withTempFiles(
+      makeInstallYamlFile(ORDERED_EXTENSION_POINTS),
+      async (tempDir) => {
+        expect(await isExtensionPointsOrdered(tempDir)).toBe(true);
+      },
+    );
+  });
+
+  test("is false for another order and does not modify the file", async () => {
+    const files = makeInstallYamlFile([...ORDERED_EXTENSION_POINTS].reverse());
+    await withTempFiles(files, async (tempDir) => {
+      expect(await isExtensionPointsOrdered(tempDir)).toBe(false);
+      expect(await readFile(join(tempDir, INSTALL_YAML_FILE), "utf-8")).toBe(
+        files[INSTALL_YAML_FILE],
+      );
     });
+  });
+});
 
-    test("does not write when already ordered", async () => {
-      await writeFile(file, ORDERED);
-      const before = await stat(file);
-
-      expect(await ensureExtensionPointsOrder(dir)).toBe(false);
-      expect(await readFile(file, "utf-8")).toBe(ORDERED);
-      expect((await stat(file)).mtimeMs).toBe(before.mtimeMs);
+describe("ensureExtensionPointsOrder", () => {
+  test("does not create a missing file", async () => {
+    await withTempFiles({}, async (tempDir) => {
+      expect(await ensureExtensionPointsOrder(tempDir)).toBe(false);
+      expect(existsSync(join(tempDir, INSTALL_YAML_FILE))).toBe(false);
     });
+  });
 
-    test("reorders a shuffled file and keeps comments and blank lines", async () => {
-      await writeFile(file, SHUFFLED);
+  test("does not write when already ordered", async () => {
+    await withTempFiles(
+      makeInstallYamlFile(ORDERED_EXTENSION_POINTS),
+      async (tempDir) => {
+        const path = join(tempDir, INSTALL_YAML_FILE);
+        const before = await stat(path);
 
-      expect(await ensureExtensionPointsOrder(dir)).toBe(true);
-      expect(await ids()).toEqual([
-        "commerce/backend-ui/2",
-        "commerce/configuration/1",
-        "commerce/extensibility/1",
-      ]);
+        expect(await ensureExtensionPointsOrder(tempDir)).toBe(false);
+        expect((await stat(path)).mtimeMs).toBe(before.mtimeMs);
+      },
+    );
+  });
 
-      const content = await readFile(file, "utf-8");
-      expect(content).toContain("# ui comment");
-      expect(content).toContain("# config comment");
-      expect(content).toContain("# ext comment");
+  test("reorders a shuffled file", async () => {
+    await withTempFiles(
+      makeInstallYamlFile([
+        EXTENSIBILITY_EXTENSION_POINT_ID,
+        BACKEND_UI_V2_EXTENSION_POINT_ID,
+        CONFIGURATION_EXTENSION_POINT_ID,
+      ]),
+      async (tempDir) => {
+        expect(await ensureExtensionPointsOrder(tempDir)).toBe(true);
+        expect(await readIds(tempDir)).toEqual(ORDERED_EXTENSION_POINTS);
+      },
+    );
+  });
+
+  test("keeps comments and blank lines with their extension point", async () => {
+    await withTempFiles(WITH_COMMENTS, async (tempDir) => {
+      await ensureExtensionPointsOrder(tempDir);
+
+      const content = await readFile(join(tempDir, INSTALL_YAML_FILE), "utf-8");
       expect(content).toContain("name: app");
-      expect(await isExtensionPointsOrdered(dir)).toBe(true);
-    });
-
-    test("moves each comment together with its extension point", async () => {
-      await writeFile(file, SHUFFLED);
-      await ensureExtensionPointsOrder(dir);
-
-      const content = await readFile(file, "utf-8");
+      expect(content).toContain("# config comment");
       expect(content).toMatch(UI_COMMENT_RE);
       expect(content).toMatch(EXT_COMMENT_RE);
     });
+  });
 
-    test("puts unknown ids last without throwing and keeps their order", async () => {
-      await writeFile(
-        file,
-        `extensions:
-  - extensionPointId: other/b/1
-  - extensionPointId: commerce/extensibility/1
-  - extensionPointId: other/a/1
-  - extensionPointId: commerce/backend-ui/2
-`,
-      );
-
-      await ensureExtensionPointsOrder(dir);
-      expect(await ids()).toEqual([
-        "commerce/backend-ui/2",
-        "commerce/extensibility/1",
+  test("puts unknown ids last in their original order without throwing", async () => {
+    await withTempFiles(
+      makeInstallYamlFile([
         "other/b/1",
+        EXTENSIBILITY_EXTENSION_POINT_ID,
         "other/a/1",
-      ]);
-    });
+        BACKEND_UI_V2_EXTENSION_POINT_ID,
+      ]),
+      async (tempDir) => {
+        await ensureExtensionPointsOrder(tempDir);
+        expect(await readIds(tempDir)).toEqual([
+          BACKEND_UI_V2_EXTENSION_POINT_ID,
+          EXTENSIBILITY_EXTENSION_POINT_ID,
+          "other/b/1",
+          "other/a/1",
+        ]);
+      },
+    );
   });
 });

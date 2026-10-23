@@ -11,6 +11,7 @@
  */
 
 import { existsSync } from "node:fs";
+import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 
 import { afterEach, describe, expect, test, vi } from "vitest";
@@ -22,6 +23,7 @@ import {
   EXTENSIBILITY_EXTENSION_POINT_ID,
   GENERATED_ACTIONS_PATH,
   getExtensionPointFolderPath,
+  INSTALL_YAML_FILE,
 } from "#commands/constants";
 import { exec, run } from "#commands/hooks/postinstall";
 import { makeTemplateFiles } from "#test/fixtures/commands";
@@ -30,8 +32,12 @@ import {
   BUSINESS_CONFIG_PROJECT,
   EMPTY_PROJECT,
   INVALID_PROJECT,
+  makeInstallYamlFile,
+  ORDERED_EXTENSION_POINTS,
   withTempProject,
 } from "#test/fixtures/project";
+
+const EXTENSION_POINT_ID_RE = /extensionPointId: (\S+)/g;
 
 describe("commands/hooks/postinstall", () => {
   describe("run", () => {
@@ -69,6 +75,63 @@ describe("commands/hooks/postinstall", () => {
           );
 
           expect(existsSync(configSchemaPath)).toBe(true);
+        },
+      );
+    });
+  });
+
+  describe("run install.yaml order", () => {
+    test("reorders out-of-order extension points in install.yaml", async () => {
+      const installYaml = makeInstallYamlFile(
+        [...ORDERED_EXTENSION_POINTS].reverse(),
+      );
+
+      await withTempProject(
+        {
+          ...BUSINESS_CONFIG_PROJECT,
+          ...makeTemplateFiles(),
+          ...installYaml,
+        },
+        async (tempDir) => {
+          await run(configWithBusinessConfig, tempDir, tempDir);
+
+          const content = await readFile(
+            join(tempDir, INSTALL_YAML_FILE),
+            "utf-8",
+          );
+
+          expect(
+            [...content.matchAll(EXTENSION_POINT_ID_RE)].map((m) => m[1]),
+          ).toEqual(ORDERED_EXTENSION_POINTS);
+        },
+      );
+    });
+
+    test("leaves an ordered install.yaml untouched", async () => {
+      const installYaml = makeInstallYamlFile(ORDERED_EXTENSION_POINTS);
+
+      await withTempProject(
+        {
+          ...BUSINESS_CONFIG_PROJECT,
+          ...makeTemplateFiles(),
+          ...installYaml,
+        },
+        async (tempDir) => {
+          await run(configWithBusinessConfig, tempDir, tempDir);
+
+          expect(
+            await readFile(join(tempDir, INSTALL_YAML_FILE), "utf-8"),
+          ).toBe(installYaml[INSTALL_YAML_FILE]);
+        },
+      );
+    });
+
+    test("does not create install.yaml when it is missing", async () => {
+      await withTempProject(
+        { ...BUSINESS_CONFIG_PROJECT, ...makeTemplateFiles() },
+        async (tempDir) => {
+          await run(configWithBusinessConfig, tempDir, tempDir);
+          expect(existsSync(join(tempDir, INSTALL_YAML_FILE))).toBe(false);
         },
       );
     });
