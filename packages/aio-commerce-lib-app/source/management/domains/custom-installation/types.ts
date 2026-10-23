@@ -11,12 +11,12 @@
  */
 
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
+import type { CustomInstallationStep } from "#config/schema/installation";
 import type { DomainPlan } from "#management/common/workflow/resource";
 
 /**
  * Identity of a custom installation step that has run at least once, as persisted across
- * upgrades. `name` is the step's stable identity; `script` records the path that ran, so a step
- * removed from the config can still be resolved and uninstalled later.
+ * upgrades. `name` is the step's stable identity; `script` records the path that ran.
  */
 export type CustomInstallationStepIdentity = {
   /** Matches `installation.customInstallationSteps[].name`. */
@@ -27,27 +27,23 @@ export type CustomInstallationStepIdentity = {
 };
 
 /**
- * Snapshot data persisted for the custom installation steps domain: every step that has ever
- * run, whether or not it's still present in the current config. A step is never removed from this
- * list during an upgrade, so a later unassociate can still resolve and call its `uninstall`.
+ * The plan of a single custom installation step: `add` to run its `install`, or `remove` to run
+ * its `uninstall`. Also carries the baseline configuration, handed to `uninstall`.
  */
-export type CustomInstallationSnapshotData = {
-  executedSteps: CustomInstallationStepIdentity[];
-};
-
-/**
- * The plan the custom installation steps domain proposes: `add` for first-time steps, `remove`
- * (informational) for steps no longer in the target config. Also carries what `apply` needs to
- * converge: the full baseline history and the target config to run new steps against.
- */
-export type CustomInstallationDomainPlan =
+export type CustomScriptDomainPlan =
   DomainPlan<CustomInstallationStepIdentity> & {
-    /** Every step that ever ran, from the baseline snapshot (`[]` when there is no baseline). */
-    baselineExecutedSteps: CustomInstallationStepIdentity[];
-
-    /** The baseline configuration, handed to the `uninstall` of removed steps, or `null` without one. */
+    /** The baseline configuration, handed to the `uninstall` of a removed step, or `null` without one. */
     baselineConfig: CommerceAppConfigOutputModel | null;
-
-    /** The target configuration to converge to, or `null` when none is available. */
-    targetConfig: CommerceAppConfigOutputModel | null;
   };
+
+/** What is known about a custom installation step when the step tree is built. */
+export type CustomScriptRun = {
+  /** The step as the deployed config declares it, or `null` when it no longer does. */
+  declared: CustomInstallationStep | null;
+
+  /** The step as it last ran, or `null` when it has not run. */
+  executed: CustomInstallationStepIdentity | null;
+
+  /** Whether a run history is stored. Without one, whether the step ran is unknown. */
+  isHistoryStored: boolean;
+};

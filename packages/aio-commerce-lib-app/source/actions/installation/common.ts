@@ -15,10 +15,13 @@ import { getHeader } from "@adobe/aio-commerce-lib-core/headers";
 import { conflict } from "@adobe/aio-commerce-lib-core/responses";
 
 import { getAssociationData } from "#management/association/repository";
+import { getAtPath } from "#management/common/workflow/utils";
 import { migrateLegacyInstallationState } from "#management/deprecated/migration";
 import { createInstallationStore } from "#management/deprecated/stores";
+import { readRunHistory } from "#management/domains/custom-installation/index";
 import { createRootInstallationStep } from "#management/installation/root";
 import { createLifecycleBaselineProvider } from "#management/lifecycle/baseline";
+import { CURRENT_STATE_KEY } from "#management/lifecycle/state";
 import {
   createAppStateSnapshotStore,
   createLifecycleAttemptStore,
@@ -31,11 +34,22 @@ import type {
   CommerceAppConfig,
   CommerceAppConfigOutputModel,
 } from "#config/schema/app";
+import type {
+  AppStateSnapshot,
+  OrchestrationState,
+} from "#management/common/orchestration";
 import type { LifecycleRequestContext } from "#management/common/schema";
+import type { CustomInstallationStepIdentity } from "#management/domains/custom-installation/index";
 import type { LifecycleContext } from "#management/index";
 
 /** Action name for async invocation. */
 export const DEFAULT_ACTION_NAME = "app-management/installation";
+
+/** Path of the custom installation steps' data in the lifecycle data. */
+export const CUSTOM_INSTALLATION_STEPS_PATH = [
+  "installation",
+  "customInstallationSteps",
+];
 
 /** Header used to identify the source of an installation action request. */
 export const INSTALLATION_INVOCATION_SOURCE_HEADER =
@@ -189,6 +203,29 @@ export function buildLifecycleContext(
   };
 }
 
+/**
+ * Reads which custom installation steps ran from the data of the latest attempt when it did not
+ * succeed, or from the baseline snapshot otherwise. Returns `null` when neither is stored.
+ */
+export function getExecutedCustomInstallationSteps(
+  state: OrchestrationState | null,
+  baseline: AppStateSnapshot | null,
+): CustomInstallationStepIdentity[] | null {
+  const attempt = state?.latestAttempt;
+  if (!(attempt || baseline)) {
+    return null;
+  }
+
+  // Steps that ran in an attempt that did not succeed are only in its data, not in the baseline.
+  const data =
+    attempt && attempt.status !== "succeeded" ? attempt.data : baseline?.data;
+
+  return readRunHistory(
+    getAtPath(data ?? {}, CUSTOM_INSTALLATION_STEPS_PATH),
+    baseline?.config ?? null,
+  );
+}
+
 /** Creates the shared storage read/write dependencies used by lifecycle orchestration. */
 export async function createLifecyclePersistence() {
   const [
@@ -220,15 +257,35 @@ export async function createLifecyclePersistence() {
   };
 }
 
-/** Creates the shared dependencies used by lifecycle orchestration. */
+/**
+ * Creates the shared dependencies used by lifecycle orchestration. The step tree includes the
+ * custom installation steps that ran, read from the stored state, and a new attempt keeps the
+ * custom installation steps' data of a failed latest attempt.
+ */
 export async function createLifecycleRuntime(
   params: WorkflowRouteParams,
   appConfig: CommerceAppConfigOutputModel,
   logger: LifecycleContext["logger"],
 ) {
+  const persistence = await createLifecyclePersistence();
+  const state = await persistence.stateStore.get(CURRENT_STATE_KEY);
+  const baseline = await persistence.baselineProvider.get(
+    state?.baselineSnapshotId ?? null,
+  );
+
   return {
-    ...(await createLifecyclePersistence()),
+    ...persistence,
+
+    // Custom installation steps have no live state to plan from, so only the failed attempt's
+    // records show which of them ran.
+    failedAttemptDataPaths: [CUSTOM_INSTALLATION_STEPS_PATH],
     lifecycleContext: buildLifecycleContext(params, appConfig, logger),
-    rootStep: createRootInstallationStep(appConfig, { forUpgrade: true }),
+    rootStep: createRootInstallationStep(appConfig, {
+      executedCustomInstallationSteps: getExecutedCustomInstallationSteps(
+        state,
+        baseline,
+      ),
+      forLifecycle: true,
+    }),
   };
 }
