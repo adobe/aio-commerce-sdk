@@ -212,6 +212,12 @@ async function runHook(interrupt: InterruptNotice): Promise<HookResult> {
     return { kind: "planned", plan };
   }
 
+  if (plan.issues?.some((issue) => !issue.blocking)) {
+    consola.warn(
+      `In ${colors.cyan("auto")} mode, all the non-blocking issues of the plan are acknowledged automatically.`,
+    );
+  }
+
   const started = await startUpgrade(client, extensionId, plan);
   interrupt.setRunId(started.id);
 

@@ -99,6 +99,8 @@ const EXTENSIONS = `${SERVICE}/v1/extensions`;
 const WORKSPACE_EXTENSIONS = `${SERVICE}/v1/workspaces/:workspaceId/extensions`;
 const UPGRADES = `${EXTENSIONS}/ext-1/upgrades`;
 const PLAN = { id: "plan-1", operation: "upgrade" };
+const AUTO_ACK_WARNING = /non-blocking issues of the plan are acknowledged/;
+let servedPlan: object = PLAN;
 const NOT_PLANNED = /The upgrade was not planned: .*Refused/;
 const WATCHER_LOG = join(tmpdir(), "aio-commerce-upgrade-run-1.log");
 
@@ -151,7 +153,7 @@ function serveUpgrade(statuses: object[] = [attempt("succeeded")]) {
     http.post(`${UPGRADES}/preview`, ({ request }) => {
       calls.plan += 1;
       recordCommerceHeaders(request);
-      return HttpResponse.json({ plan: PLAN }, { status: 201 });
+      return HttpResponse.json({ plan: servedPlan }, { status: 201 });
     }),
     http.post(UPGRADES, async ({ request }) => {
       calls.start += 1;
@@ -217,6 +219,7 @@ describe("post-app-deploy hook", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.stubEnv(CAMS_URL_ENV_VAR, SERVICE);
+    servedPlan = PLAN;
 
     aio.getAioProjectContext.mockReturnValue({
       namespace: "runtime-namespace",
@@ -269,6 +272,41 @@ describe("post-app-deploy hook", () => {
     expect(consola.success).toHaveBeenLastCalledWith(
       expect.stringContaining("version 2.0.0"),
     );
+  });
+
+  test("warns once that an automatic upgrade acknowledges the non-blocking issues of the plan", async () => {
+    servedPlan = {
+      ...PLAN,
+      issues: [
+        { blocking: false, key: "A" },
+        { blocking: false, key: "B" },
+      ],
+    };
+    serveUpgrade();
+
+    await runHook();
+
+    const warnings = vi
+      .mocked(consola.warn)
+      .mock.calls.filter(([message]) => AUTO_ACK_WARNING.test(String(message)));
+    expect(warnings).toHaveLength(1);
+  });
+
+  test("does not warn about acknowledged issues when the plan has none", async () => {
+    serveUpgrade();
+
+    await runHook();
+
+    expect(consola.warn).not.toHaveBeenCalled();
+  });
+
+  test("does not warn about acknowledged issues in manual mode", async () => {
+    servedPlan = { ...PLAN, issues: [{ blocking: false, key: "A" }] };
+    serveUpgrade();
+
+    await runHook(MANUAL_PROJECT);
+
+    expect(consola.warn).not.toHaveBeenCalled();
   });
 
   test("fails with the outcome when the upgrade fails", async () => {
