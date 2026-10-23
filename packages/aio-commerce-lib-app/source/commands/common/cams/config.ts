@@ -15,6 +15,9 @@ import type { AioCliEnv } from "@aio-commerce-sdk/scripting-utils/aio";
 /** Environment variable that overrides the CAMS base URL. */
 export const CAMS_URL_ENV_VAR = "AIO_COMMERCE_APP_MANAGEMENT_SERVICE_URL";
 
+/** Environment variable that selects the AIO CLI environment. */
+export const AIO_CLI_ENV_VAR = "AIO_CLI_ENV";
+
 /** The CAMS host for the stage environment. */
 export const STAGE_CAMS_URL = "https://commerce-app-management-stage.adobe.io";
 
@@ -27,8 +30,9 @@ const URL_SCHEME_PATTERN = /^https?:\/\//i;
  * Resolves the base URL of the Commerce App Management Service (CAMS).
  *
  * The override variable wins. A value without a scheme is read as an https URL.
+ * Otherwise `AIO_CLI_ENV` (`stage` or `prod`) selects the host, falling back to `env`.
  *
- * @param env - The AIO CLI environment, which selects the default host.
+ * @param env - The configured AIO CLI environment, used when `AIO_CLI_ENV` is unset or unknown.
  * @param variables - The environment variables to read the override from.
  */
 export function resolveCamsBaseUrl(
@@ -40,5 +44,8 @@ export function resolveCamsBaseUrl(
     return URL_SCHEME_PATTERN.test(override) ? override : `https://${override}`;
   }
 
-  return env === "stage" ? STAGE_CAMS_URL : PROD_CAMS_URL;
+  const cliEnv = variables[AIO_CLI_ENV_VAR]?.trim();
+  const effectiveEnv = cliEnv === "stage" || cliEnv === "prod" ? cliEnv : env;
+
+  return effectiveEnv === "stage" ? STAGE_CAMS_URL : PROD_CAMS_URL;
 }
