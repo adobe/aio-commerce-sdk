@@ -147,11 +147,11 @@ extensions:
 
 ```yaml
 extensions:
-  - extensionPointId: commerce/extensibility/1
-  # Only include this if businessConfig is defined in your app.commerce.config.*:
-  - extensionPointId: commerce/configuration/1
   # Only include this if adminUi is defined in your app.commerce.config.*:
   - extensionPointId: commerce/backend-ui/2
+  # Only include this if businessConfig is defined in your app.commerce.config.*:
+  - extensionPointId: commerce/configuration/1
+  - extensionPointId: commerce/extensibility/1
 ```
 
 ### Defining Configuration

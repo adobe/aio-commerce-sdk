@@ -321,19 +321,19 @@ export async function ensureInstallYaml(
   config: CommerceAppConfigOutputModel,
   projectRoot: string,
 ) {
-  if (domains.has("businessConfig.schema")) {
-    await addExtensionPointToInstallYaml(
-      CONFIGURATION_EXTENSION_POINT_ID,
-      projectRoot,
-      " This extension is required for business configuration. Do not remove.",
-    );
-  }
-
   if (hasBackendUiV2Components(config)) {
     await addExtensionPointToInstallYaml(
       BACKEND_UI_V2_EXTENSION_POINT_ID,
       projectRoot,
       " This extension is required for Admin UI. Do not remove.",
+    );
+  }
+
+  if (domains.has("businessConfig.schema")) {
+    await addExtensionPointToInstallYaml(
+      CONFIGURATION_EXTENSION_POINT_ID,
+      projectRoot,
+      " This extension is required for business configuration. Do not remove.",
     );
   }
 
