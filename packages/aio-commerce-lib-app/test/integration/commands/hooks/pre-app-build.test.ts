@@ -11,7 +11,7 @@
  */
 
 import { existsSync, readFileSync } from "node:fs";
-import { readFile } from "node:fs/promises";
+import { readFile, stat } from "node:fs/promises";
 import { join } from "node:path";
 
 import { afterEach, describe, expect, test, vi } from "vitest";
@@ -20,6 +20,7 @@ import {
   BACKEND_UI_V2_EXTENSION_POINT_ID,
   CONFIGURATION_EXTENSION_POINT_ID,
   EXTENSIBILITY_EXTENSION_POINT_ID,
+  INSTALL_YAML_FILE,
 } from "#commands/constants";
 import { exec, run } from "#commands/hooks/pre-app-build";
 import {
@@ -43,7 +44,9 @@ import {
   INVALID_PROJECT,
   MINIMAL_PROJECT,
   makeExtConfigFile,
+  makeInstallYamlFile,
   makeProjectFiles,
+  ORDERED_EXTENSION_POINTS,
   withTempProject,
 } from "#test/fixtures/project";
 
@@ -61,6 +64,9 @@ vi.mock("@aio-commerce-sdk/scripting-utils/env", async (importOriginal) => ({
   >()),
   syncImsCredentials: vi.fn(),
 }));
+
+const ORDER_REWRITTEN_RE =
+  /were reordered \(commerce\/backend-ui\/2, commerce\/configuration\/1, commerce\/extensibility\/1\).*run the build again/s;
 
 describe("commands/hooks/pre-app-build", () => {
   afterEach(() => {
@@ -253,6 +259,57 @@ describe("commands/hooks/pre-app-build", () => {
       });
     });
 
+    test("rewrites an out-of-order install.yaml and fails asking for a new build", async () => {
+      const wrongOrder = makeInstallYamlFile(
+        [...ORDERED_EXTENSION_POINTS].reverse(),
+      );
+
+      await withTempProject(
+        { ...makeProjectFiles(configWithAdminUiSingleGrid), ...wrongOrder },
+        async (tempDir) => {
+          await expect(run("backend-ui/2", tempDir)).rejects.toThrow(
+            ORDER_REWRITTEN_RE,
+          );
+
+          expect(
+            await readFile(join(tempDir, INSTALL_YAML_FILE), "utf-8"),
+          ).toBe(
+            makeInstallYamlFile(ORDERED_EXTENSION_POINTS)[INSTALL_YAML_FILE],
+          );
+        },
+      );
+    });
+
+    test("passes on a second invocation after the rewrite", async () => {
+      const wrongOrder = makeInstallYamlFile(
+        [...ORDERED_EXTENSION_POINTS].reverse(),
+      );
+
+      await withTempProject(
+        { ...makeProjectFiles(configWithAdminUiSingleGrid), ...wrongOrder },
+        async (tempDir) => {
+          await expect(run("backend-ui/2", tempDir)).rejects.toThrow();
+          await expect(run("backend-ui/2", tempDir)).resolves.toBeUndefined();
+        },
+      );
+    });
+
+    test("does not write install.yaml when the order is right", async () => {
+      await withTempProject(
+        {
+          ...makeProjectFiles(configWithAdminUiSingleGrid),
+          ...makeInstallYamlFile(ORDERED_EXTENSION_POINTS),
+        },
+        async (tempDir) => {
+          const path = join(tempDir, INSTALL_YAML_FILE);
+          const before = await stat(path);
+
+          await expect(run("backend-ui/2", tempDir)).resolves.toBeUndefined();
+          expect((await stat(path)).mtimeMs).toBe(before.mtimeMs);
+        },
+      );
+    });
+
     test("throws for unsupported extension", async () => {
       await withTempProject(MINIMAL_PROJECT, async (tempDir) => {
         await expect(
@@ -326,6 +383,22 @@ describe("commands/hooks/pre-app-build", () => {
         async () => {
           await exec();
           expect(exitSpy).not.toHaveBeenCalled();
+        },
+      );
+    });
+
+    test("exits with 1 when install.yaml was out of order and had to be rewritten", async () => {
+      vi.stubEnv("EXTENSION", "backend-ui/2");
+
+      await withTempProject(
+        {
+          ...makeProjectFiles(configWithAdminUiSingleGrid),
+          ...makeTemplateFiles(),
+          ...makeInstallYamlFile([...ORDERED_EXTENSION_POINTS].reverse()),
+        },
+        async () => {
+          await exec();
+          expect(exitSpy).toHaveBeenCalledWith(1);
         },
       );
     });

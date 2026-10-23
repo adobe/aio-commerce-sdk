@@ -23,6 +23,7 @@ import {
 } from "@aio-commerce-sdk/scripting-utils/project";
 import { consola } from "consola";
 
+import { ensureExtensionPointsOrder } from "#commands/common/extension-points";
 import {
   BACKEND_UI_V2_EXTENSION_POINT_ID,
   COMMERCE_APP_CONFIG_FILE,
@@ -258,6 +259,9 @@ export async function ensureAppConfig(
     projectRoot,
     " This extension is required for app management. Do not remove.",
   );
+
+  // Fixes the order of entries that were already present in the file.
+  await ensureExtensionPointsOrder(projectRoot);
 }
 
 /**
@@ -321,19 +325,19 @@ export async function ensureInstallYaml(
   config: CommerceAppConfigOutputModel,
   projectRoot: string,
 ) {
-  if (domains.has("businessConfig.schema")) {
-    await addExtensionPointToInstallYaml(
-      CONFIGURATION_EXTENSION_POINT_ID,
-      projectRoot,
-      " This extension is required for business configuration. Do not remove.",
-    );
-  }
-
   if (hasBackendUiV2Components(config)) {
     await addExtensionPointToInstallYaml(
       BACKEND_UI_V2_EXTENSION_POINT_ID,
       projectRoot,
       " This extension is required for Admin UI. Do not remove.",
+    );
+  }
+
+  if (domains.has("businessConfig.schema")) {
+    await addExtensionPointToInstallYaml(
+      CONFIGURATION_EXTENSION_POINT_ID,
+      projectRoot,
+      " This extension is required for business configuration. Do not remove.",
     );
   }
 
@@ -343,4 +347,7 @@ export async function ensureInstallYaml(
     projectRoot,
     " This extension is required for app management. Do not remove.",
   );
+
+  // Fixes the order of entries that were already present in the file.
+  await ensureExtensionPointsOrder(projectRoot);
 }

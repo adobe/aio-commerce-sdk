@@ -24,6 +24,7 @@ import consola from "consola";
 import { colorize } from "consola/utils";
 import { isMap } from "yaml";
 
+import { getExtensionPointRank } from "#commands/common/extension-points";
 import {
   APP_CONFIG_FILE,
   COMMERCE_APP_CONFIG_FILE,
@@ -242,7 +243,22 @@ export async function addExtensionPointToAppConfig(
 }
 
 /**
- * Add an extension point to the install.yaml file.
+ * Get the index at which an extension point must be inserted so the list keeps the canonical order.
+ * Ids missing from the canonical order are treated as the last rank.
+ * @param ids - The extension point ids already in the list, in list order.
+ * @param extensionPointId - The id to insert.
+ */
+export function getExtensionPointInsertIndex(
+  ids: readonly unknown[],
+  extensionPointId: string,
+) {
+  const target = getExtensionPointRank(extensionPointId);
+  const index = ids.findIndex((id) => getExtensionPointRank(id) > target);
+  return index === -1 ? ids.length : index;
+}
+
+/**
+ * Add an extension point to the install.yaml file, keeping the canonical extension point order.
  * @param extensionPointId - The id of the extension point.
  * @param rootDirectory - The root directory of the project.
  * @param commentBefore - The comment to add before the extension point include pair.
@@ -295,7 +311,16 @@ export async function addExtensionPointToInstallYaml(
   const extension = doc.createPair("extensionPointId", extensionPointId);
   extension.key.spaceBefore = extensions.items.length > 0;
   extension.key.commentBefore = commentBefore;
-  extensions.items.push(extension);
+
+  const ids = extensions.items.map((item) =>
+    isMap(item) ? item.get("extensionPointId") : undefined,
+  );
+
+  extensions.items.splice(
+    getExtensionPointInsertIndex(ids, extensionPointId),
+    0,
+    extension,
+  );
 
   await writeFile(installYamlPath, doc.toString(), "utf-8");
 }
