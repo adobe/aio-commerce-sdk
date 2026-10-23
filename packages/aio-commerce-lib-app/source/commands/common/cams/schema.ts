@@ -45,7 +45,7 @@ export type Extension = v.InferOutput<typeof ExtensionSchema>;
 export const UpgradePlanAnswerSchema = v.object({
   plan: v.looseObject({
     id: v.string(),
-    issues: v.optional(v.array(v.looseObject({ blocking: v.boolean() }))),
+    issues: v.array(v.looseObject({ blocking: v.boolean() })),
     operation: v.string(),
     sourceVersion: v.optional(v.nullable(v.string())),
     targetVersion: v.optional(v.nullable(v.string())),
