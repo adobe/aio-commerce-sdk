@@ -44,11 +44,13 @@ describe("applyCustomInstallationSteps", () => {
     const scriptModule = { install: installFn };
 
     const plan: CustomInstallationDomainPlan = {
+      baselineConfig: null,
       baselineExecutedSteps: [],
       operations: [
         {
           after: { name: "Demo Success", script: "./demo-success.js" },
           id: "add:Demo Success",
+          itemRefs: [],
           kind: "add",
           label: "Run",
           reason: "change",
@@ -76,11 +78,13 @@ describe("applyCustomInstallationSteps", () => {
 
   test("throws when a newly added step's script cannot be resolved", async () => {
     const plan: CustomInstallationDomainPlan = {
+      baselineConfig: null,
       baselineExecutedSteps: [],
       operations: [
         {
           after: { name: "Demo Success", script: "./demo-success.js" },
           id: "add:Demo Success",
+          itemRefs: [],
           kind: "add",
           label: "Run",
           reason: "change",
@@ -102,6 +106,7 @@ describe("applyCustomInstallationSteps", () => {
     const scriptModule = { install };
 
     const plan: CustomInstallationDomainPlan = {
+      baselineConfig: null,
       baselineExecutedSteps: [
         { name: "Demo Success", script: "./demo-success.js" },
         { name: "Demo Error", script: "./demo-error.js" },
@@ -137,6 +142,7 @@ describe("applyCustomInstallationSteps", () => {
       "./demo-success-v2.js";
 
     const plan: CustomInstallationDomainPlan = {
+      baselineConfig: null,
       baselineExecutedSteps: [
         { name: "Demo Success", script: "./demo-success.js" },
       ],
@@ -159,11 +165,13 @@ describe("applyCustomInstallationSteps", () => {
 
   test("carries a removed step's identity forward without running its uninstall", async () => {
     const plan: CustomInstallationDomainPlan = {
+      baselineConfig: null,
       baselineExecutedSteps: [{ name: "Old Step", script: "./old-step.js" }],
       operations: [
         {
           before: { name: "Old Step", script: "./old-step.js" },
           id: "remove:Old Step",
+          itemRefs: [],
           kind: "remove",
           label: "Removed",
           reason: "change",
@@ -181,27 +189,91 @@ describe("applyCustomInstallationSteps", () => {
     );
   });
 
-  test("returns the baseline unchanged when there is no target config", async () => {
-    const plan: CustomInstallationDomainPlan = {
-      baselineExecutedSteps: [{ name: "Old Step", script: "./old-step.js" }],
-      operations: [
-        {
-          before: { name: "Old Step", script: "./old-step.js" },
-          id: "remove:Old Step",
-          kind: "remove",
-          label: "Removed",
-          reason: "change",
+  describe("without a target config", () => {
+    const removeOf = (name: string, script: string) => ({
+      before: { name, script },
+      id: `remove:${name}`,
+      itemRefs: [],
+      kind: "remove" as const,
+      label: "Removed",
+      reason: "change" as const,
+    });
+
+    function uninstallPlan(
+      steps: { name: string; script: string }[],
+    ): CustomInstallationDomainPlan {
+      return {
+        baselineConfig: configWithCustomInstallationSteps,
+        baselineExecutedSteps: steps,
+        operations: steps.map((step) => removeOf(step.name, step.script)),
+        path,
+        targetConfig: null,
+      };
+    }
+
+    test("runs the uninstall of every removed step, newest first, with the baseline config", async () => {
+      const calls: string[] = [];
+      const uninstallFirst = vi.fn(() => {
+        calls.push("first");
+      });
+      const uninstallSecond = vi.fn(() => {
+        calls.push("second");
+      });
+
+      const plan = uninstallPlan([
+        { name: "First", script: "./first.js" },
+        { name: "Second", script: "./second.js" },
+      ]);
+      const context = buildApplyContext({
+        "./first.js": { install: vi.fn(), uninstall: uninstallFirst },
+        "./second.js": { install: vi.fn(), uninstall: uninstallSecond },
+      });
+
+      const result = await applyCustomInstallationSteps(plan, context);
+
+      expect(calls).toEqual(["second", "first"]);
+      expect(uninstallFirst).toHaveBeenCalledWith(
+        configWithCustomInstallationSteps,
+        context,
+      );
+      expect(result.snapshotData?.executedSteps).toEqual([]);
+    });
+
+    test("skips with a warning the steps whose script is not deployed or has no uninstall, keeping them in the history", async () => {
+      const plan = uninstallPlan([
+        { name: "Gone", script: "./gone.js" },
+        { name: "Install only", script: "./install-only.js" },
+      ]);
+      const context = buildApplyContext({
+        "./install-only.js": vi.fn(),
+      });
+
+      const result = await applyCustomInstallationSteps(plan, context);
+      expect(context.logger.warn).toHaveBeenCalledWith(
+        expect.stringContaining('"./gone.js" is not deployed'),
+      );
+
+      expect(context.logger.warn).toHaveBeenCalledWith(
+        expect.stringContaining("exports no uninstall function"),
+      );
+
+      expect(result.snapshotData?.executedSteps).toEqual(
+        plan.baselineExecutedSteps,
+      );
+    });
+
+    test("fails when an uninstall fails", async () => {
+      const plan = uninstallPlan([{ name: "First", script: "./first.js" }]);
+      const context = buildApplyContext({
+        "./first.js": {
+          install: vi.fn(),
+          uninstall: vi.fn().mockRejectedValue(new Error("boom")),
         },
-      ],
-      path,
-      targetConfig: null,
-    };
+      });
 
-    const context = buildApplyContext({}, null);
-    const result = await applyCustomInstallationSteps(plan, context);
-
-    expect(result.snapshotData?.executedSteps).toEqual(
-      plan.baselineExecutedSteps,
-    );
+      await expect(applyCustomInstallationSteps(plan, context)).rejects.toThrow(
+        "boom",
+      );
+    });
   });
 });

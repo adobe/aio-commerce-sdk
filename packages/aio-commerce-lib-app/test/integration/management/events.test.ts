@@ -382,6 +382,60 @@ describe("eventing installation", () => {
       },
     });
   });
+  test("creates every resource of a new Commerce provider through plan and apply", async () => {
+    const { consumerOrgId, projectId, workspaceId } =
+      installationContext.appData;
+
+    let restoredLabel: string | null = null;
+    apiServer.use(
+      http.put(
+        `${IO_EVENTS_BASE_URL}/${consumerOrgId}/${projectId}/${workspaceId}/providers/:providerId/eventmetadata/:code`,
+        async ({ request }) => {
+          restoredLabel = ((await request.json()) as IoEventMetadataRequestBody)
+            .label;
+          return HttpResponse.json(
+            createMockIoEventMetadataHalModel(createMockIoEventMetadata()),
+          );
+        },
+      ),
+    );
+    const lifecycleContext = {
+      ...installationContext,
+      appId: config.metadata.id,
+    };
+    const context = {
+      ...lifecycleContext,
+      ...createEventsStepContext(lifecycleContext),
+    };
+
+    const planned = await planCommerceEvents(
+      {
+        baseline: null,
+        path: ["installation", "eventing", "commerce"],
+        targetConfig: config,
+      } as never,
+      context,
+    );
+
+    expect.assert(planned.kind === "planned");
+    await applyCommerceEvents(planned.plan, {
+      ...context,
+      attemptId: "attempt-1",
+      baseline: null,
+      targetConfig: config,
+    } as never);
+
+    expect(capture.updateConfiguration).toEqual({
+      config: { enabled: true, workspace_configuration: expect.any(String) },
+    });
+    expect(capture.subscribeBody).toEqual({
+      event: expect.objectContaining({
+        provider_id: "io-provider-commerce",
+        rules: commerceEvent.rules,
+      }),
+    });
+    expect(restoredLabel).toBe(commerceEvent.label);
+  });
 });
 
 describe("commerce events upgrade planning integration", () => {

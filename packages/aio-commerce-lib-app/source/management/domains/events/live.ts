@@ -27,6 +27,7 @@ import type {
 } from "@adobe/aio-commerce-lib-events/io-events";
 import type { ValidationExecutionContext } from "#management/common/workflow/step";
 import type { EventsStepContext } from "./context";
+import type { EventingModuleState } from "./types";
 import type { IoEventProviderWithMetadata } from "./utils";
 
 /** An I/O provider of one event kind with the live resources that hang off it. */
@@ -52,6 +53,9 @@ export type LiveEventingState = {
 
   /** Every Commerce subscription by name, for Commerce events. Empty for external events. */
   subscriptions: Map<string, CommerceEventSubscription>;
+
+  /** Whether the Commerce eventing module is configured, for Commerce events. */
+  eventingModule: Omit<EventingModuleState, "instanceId"> | null;
 };
 
 /**
@@ -96,6 +100,13 @@ export async function readLiveEventingState(
     emptyRegistrations: ownRegistrations.filter(
       (registration) => registration.events_of_interest.length === 0,
     ),
+    eventingModule: commerce
+      ? {
+          isDefaultProviderConfigured: commerce.isDefaultProviderConfigured,
+          isDefaultWorkspaceConfigurationEmpty:
+            commerce.isDefaultWorkspaceConfigurationEmpty,
+        }
+      : null,
     providers,
     subscriptions: commerce?.subscriptions ?? new Map(),
   };

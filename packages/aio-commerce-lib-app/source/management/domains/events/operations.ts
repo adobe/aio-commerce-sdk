@@ -12,6 +12,8 @@
 
 import stringify from "safe-stable-stringify";
 
+import { toItemRef } from "#management/common/workflow/resource";
+
 import { getSubscriptionChangeKind } from "./comparison";
 import {
   eventCodeOf,
@@ -25,7 +27,10 @@ import type { CommerceEventSubscription } from "@adobe/aio-commerce-lib-events/c
 import type { EventProviderType } from "@adobe/aio-commerce-lib-events/io-events";
 import type { AppEvent, CommerceEvent } from "#config/schema/eventing";
 import type { ApplicationMetadata } from "#config/schema/metadata";
-import type { ResourceOperation } from "#management/common/workflow/resource";
+import type {
+  ItemRef,
+  ResourceOperation,
+} from "#management/common/workflow/resource";
 import type { LiveEventingProvider, LiveEventingState } from "./live";
 import type {
   EventingOperationValue,
@@ -60,7 +65,7 @@ export type LeafPlanContext = {
 export function providerValue(
   target: EventingProviderSnapshot,
   ctx: LeafPlanContext,
-): EventingOperationValue {
+): Extract<EventingOperationValue, { resourceType: "provider" }> {
   return {
     description: target.provider.description,
     label: target.provider.label,
@@ -73,7 +78,7 @@ export function providerValue(
 /** The desired value of a provider's Commerce provider. */
 export function commerceProviderValue(
   target: EventingProviderSnapshot,
-): EventingOperationValue {
+): Extract<EventingOperationValue, { resourceType: "commerceProvider" }> {
   return {
     description: target.provider.description,
     label: target.provider.label,
@@ -289,10 +294,69 @@ export function declaresSubscription(
   );
 }
 
-export function add(after: EventingOperationValue, reason: Reason): Operation {
+/** The reference of an event, by its namespaced name, with its config when the config declares it. */
+export function eventRef(
+  providerKey: string,
+  namespacedName: string,
+  config?: AppEvent,
+): ItemRef {
+  return toItemRef(`${providerKey}:${namespacedName}`, config);
+}
+
+/**
+ * The references of the given events of a provider. A provider serves every event it has, so its
+ * operations reference all of them, and a provider with no declared event is internal.
+ */
+export function eventRefs(
+  providerKey: string,
+  events: readonly AppEvent[],
+  ctx: LeafPlanContext,
+): ItemRef[] {
+  return events.map((event) =>
+    eventRef(providerKey, getNamespacedEvent(ctx.metadata, event.name), event),
+  );
+}
+
+/**
+ * The references of the events a registration serves: the events of `events` that route to its
+ * runtime action. A registration serving no declared event has none and is internal.
+ */
+export function registrationRefs(
+  providerKey: string,
+  events: readonly AppEvent[],
+  runtimeAction: string,
+  ctx: LeafPlanContext,
+): ItemRef[] {
+  return eventRefs(
+    providerKey,
+    events.filter((event) => event.runtimeActions.includes(runtimeAction)),
+    ctx,
+  );
+}
+
+/** The baseline's config for the event with a namespaced name under a provider. */
+export function findDeclaredEvent(
+  providerKey: string,
+  namespacedName: string,
+  ctx: LeafPlanContext,
+): AppEvent | undefined {
+  return ctx.declared
+    .get(providerKey)
+    ?.events.find(
+      (event) =>
+        getNamespacedEvent(ctx.metadata, event.name) === namespacedName,
+    );
+}
+
+export function add(
+  after: EventingOperationValue,
+  reason: Reason,
+  itemRefs: ItemRef[],
+): Operation {
   return {
     after,
     id: operationId("add", after),
+    itemRefs,
     kind: "add",
     label: operationLabel("add", after),
     reason,
@@ -303,11 +367,13 @@ export function update(
   before: EventingOperationValue,
   after: EventingOperationValue,
   reason: Reason,
+  itemRefs: ItemRef[],
 ): Operation {
   return {
     after,
     before,
     id: operationId("update", after),
+    itemRefs,
     kind: "update",
     label: operationLabel("update", after),
     reason,
@@ -317,10 +383,12 @@ export function update(
 export function remove(
   before: EventingOperationValue,
   reason: Reason,
+  itemRefs: ItemRef[],
 ): Operation {
   return {
     before,
     id: operationId("remove", before),
+    itemRefs,
     kind: "remove",
     label: operationLabel("remove", before),
     reason,

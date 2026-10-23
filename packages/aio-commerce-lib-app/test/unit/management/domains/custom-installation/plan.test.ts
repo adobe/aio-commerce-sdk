@@ -46,6 +46,16 @@ describe("planCustomInstallationSteps", () => {
       {
         after: { name: "Demo Success", script: "./demo-success.js" },
         id: "add:Demo Success",
+        itemRefs: [
+          {
+            config: {
+              description: "Success script",
+              name: "Demo Success",
+              script: "./demo-success.js",
+            },
+            key: "Demo Success",
+          },
+        ],
         kind: "add",
         label: 'Run custom installation step "Demo Success"',
         reason: "change",
@@ -53,6 +63,16 @@ describe("planCustomInstallationSteps", () => {
       {
         after: { name: "Demo Error", script: "./demo-error.js" },
         id: "add:Demo Error",
+        itemRefs: [
+          {
+            config: {
+              description: "Error script",
+              name: "Demo Error",
+              script: "./demo-error.js",
+            },
+            key: "Demo Error",
+          },
+        ],
         kind: "add",
         label: 'Run custom installation step "Demo Error"',
         reason: "change",
@@ -116,20 +136,60 @@ describe("planCustomInstallationSteps", () => {
       {
         before: { name: "Demo Success", script: "./demo-success.js" },
         id: "remove:Demo Success",
+        itemRefs: [
+          {
+            config: {
+              description: "Success script",
+              name: "Demo Success",
+              script: "./demo-success.js",
+            },
+            key: "Demo Success",
+          },
+        ],
         kind: "remove",
-        label:
-          'Custom installation step "Demo Success" no longer in the configuration',
+        label: 'Remove custom installation step "Demo Success"',
         reason: "change",
       },
       {
         before: { name: "Demo Error", script: "./demo-error.js" },
         id: "remove:Demo Error",
+        itemRefs: [
+          {
+            config: {
+              description: "Error script",
+              name: "Demo Error",
+              script: "./demo-error.js",
+            },
+            key: "Demo Error",
+          },
+        ],
         kind: "remove",
-        label:
-          'Custom installation step "Demo Error" no longer in the configuration',
+        label: 'Remove custom installation step "Demo Error"',
         reason: "change",
       },
     ]);
+  });
+
+  test("plans the uninstall of every step that ran when there is no target config", async () => {
+    const result = await planCustomInstallationSteps(
+      {
+        baseline: { config: configWithCustomInstallationSteps, data: null },
+        path,
+        targetConfig: null,
+      } as unknown as PlanningInput<
+        CommerceAppConfigOutputModel,
+        CustomInstallationSnapshotData
+      >,
+      createMockInstallationContext(),
+    );
+
+    expect.assert(result.kind === "planned");
+    expect(result.plan.baselineConfig).toBe(configWithCustomInstallationSteps);
+    expect(result.plan.operations.map((op) => op.id)).toEqual(
+      configWithCustomInstallationSteps.installation.customInstallationSteps.map(
+        (step) => `remove:${step.name}`,
+      ),
+    );
   });
 
   test("seeds baseline history from config when the snapshot predates the reconciliation leaf", async () => {
@@ -187,6 +247,16 @@ describe("planCustomInstallationSteps", () => {
       {
         after: { name: "Demo Error", script: "./demo-error.js" },
         id: "add:Demo Error",
+        itemRefs: [
+          {
+            config: {
+              description: "Error script",
+              name: "Demo Error",
+              script: "./demo-error.js",
+            },
+            key: "Demo Error",
+          },
+        ],
         kind: "add",
         label: 'Run custom installation step "Demo Error"',
         reason: "change",

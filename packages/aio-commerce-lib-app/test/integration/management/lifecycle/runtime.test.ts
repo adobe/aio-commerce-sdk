@@ -87,7 +87,6 @@ describe("lifecycle orchestration error types", () => {
       ...runtime,
       actionVersion,
       operation: "upgrade",
-      targetAppVersion: "2.0.0",
       targetConfig: createConfig("2.0.0"),
     });
   }
@@ -100,6 +99,7 @@ describe("lifecycle orchestration error types", () => {
       startLifecycleAttempt({
         ...runtime,
         actionVersion: "1.0.0",
+        activationId: "activation-start",
         executionDeadline: EXECUTION_DEADLINE,
         planId: "stale-plan",
       }),
@@ -118,6 +118,7 @@ describe("lifecycle orchestration error types", () => {
       startLifecycleAttempt({
         ...runtime,
         actionVersion: "2.0.0",
+        activationId: "activation-start",
         executionDeadline: EXECUTION_DEADLINE,
         planId: planning.plan.id,
       }),
@@ -136,6 +137,7 @@ describe("lifecycle orchestration error types", () => {
           plan: vi.fn().mockResolvedValue({
             issues: [
               {
+                blocking: true,
                 code: "MISSING_CONFIGURATION",
                 domain: "synthetic",
                 message: "Configuration is required",
@@ -152,6 +154,7 @@ describe("lifecycle orchestration error types", () => {
       startLifecycleAttempt({
         ...runtime,
         actionVersion: "1.0.0",
+        activationId: "activation-start",
         executionDeadline: EXECUTION_DEADLINE,
         planId: planning.plan.id,
       }),
@@ -170,6 +173,7 @@ describe("lifecycle orchestration error types", () => {
       startLifecycleAttempt({
         ...runtime,
         actionVersion: "1.0.0",
+        activationId: "activation-start",
         executionDeadline: "not-a-date",
         planId: planning.plan.id,
       }),
@@ -186,6 +190,7 @@ describe("lifecycle orchestration error types", () => {
     await startLifecycleAttempt({
       ...runtime,
       actionVersion: "1.0.0",
+      activationId: "activation-start",
       executionDeadline: EXECUTION_DEADLINE,
       planId: planning.plan.id,
     });
@@ -201,6 +206,7 @@ describe("lifecycle orchestration error types", () => {
     await startLifecycleAttempt({
       ...runtime,
       actionVersion: "1.0.0",
+      activationId: "activation-start",
       executionDeadline: EXECUTION_DEADLINE,
       planId: planning.plan.id,
     });
@@ -209,6 +215,7 @@ describe("lifecycle orchestration error types", () => {
       executeLifecycleAttempt({
         ...runtime,
         actionVersion: "1.0.0",
+        activationId: "activation-execution",
         attemptId: "stale-attempt",
         executionDeadline: EXECUTION_DEADLINE,
       }),
@@ -225,6 +232,7 @@ describe("lifecycle orchestration error types", () => {
     const attempt = await startLifecycleAttempt({
       ...runtime,
       actionVersion: "1.0.0",
+      activationId: "activation-start",
       executionDeadline: EXECUTION_DEADLINE,
       planId: planning.plan.id,
     });
@@ -233,6 +241,7 @@ describe("lifecycle orchestration error types", () => {
       executeLifecycleAttempt({
         ...runtime,
         actionVersion: "2.0.0",
+        activationId: "activation-execution",
         attemptId: attempt.id,
         executionDeadline: EXECUTION_DEADLINE,
       }),
@@ -249,6 +258,7 @@ describe("lifecycle orchestration error types", () => {
     const attempt = await startLifecycleAttempt({
       ...runtime,
       actionVersion: "1.0.0",
+      activationId: "activation-start",
       executionDeadline: EXECUTION_DEADLINE,
       planId: planning.plan.id,
     });
@@ -264,6 +274,7 @@ describe("lifecycle orchestration error types", () => {
       executeLifecycleAttempt({
         ...runtime,
         actionVersion: "1.0.0",
+        activationId: "activation-execution",
         attemptId: attempt.id,
         executionDeadline: EXECUTION_DEADLINE,
       }),
@@ -280,6 +291,7 @@ describe("lifecycle orchestration error types", () => {
     const attempt = await startLifecycleAttempt({
       ...runtime,
       actionVersion: "1.0.0",
+      activationId: "activation-start",
       executionDeadline: EXECUTION_DEADLINE,
       planId: planning.plan.id,
     });
@@ -288,6 +300,7 @@ describe("lifecycle orchestration error types", () => {
       executeLifecycleAttempt({
         ...runtime,
         actionVersion: "1.0.0",
+        activationId: "activation-execution",
         attemptId: attempt.id,
         executionDeadline: "not-a-date",
       }),
@@ -306,6 +319,7 @@ describe("lifecycle orchestration error types", () => {
     const attempt = await startLifecycleAttempt({
       ...runtime,
       actionVersion: "1.0.0",
+      activationId: "activation-start",
       executionDeadline: EXECUTION_DEADLINE,
       planId: planning.plan.id,
     });
@@ -315,6 +329,7 @@ describe("lifecycle orchestration error types", () => {
       executeLifecycleAttempt({
         ...runtime,
         actionVersion: "1.0.0",
+        activationId: "activation-execution",
         attemptId: attempt.id,
         executionDeadline: EXECUTION_DEADLINE,
       }),
@@ -326,13 +341,10 @@ describe("lifecycle orchestration error types", () => {
 });
 
 describe("lifecycle runtime", () => {
-  test("plans, starts, applies, retries, and commits a snapshot", async () => {
-    const apply = vi
-      .fn()
-      .mockRejectedValueOnce(new Error("transient"))
-      .mockResolvedValue({
-        snapshotData: { remoteId: "resource-1" },
-      });
+  test("plans, starts, applies, and commits a snapshot", async () => {
+    const apply = vi.fn().mockResolvedValue({
+      snapshotData: { remoteId: "resource-1" },
+    });
 
     const leaf = createMockLifecycleLeaf({
       apply,
@@ -343,6 +355,7 @@ describe("lifecycle runtime", () => {
             {
               after: { name: "resource" },
               id: "add-resource",
+              itemRefs: [],
               kind: "add",
               label: "Add resource",
               reason: "change",
@@ -365,15 +378,19 @@ describe("lifecycle runtime", () => {
       operation: "upgrade",
       ...runtime,
       actionVersion: "1.0.0",
-      targetAppVersion: "2.0.0",
       targetConfig,
     });
 
     expect.assert(planning.kind === "planned", "Expected an executable plan");
+    expect(planning.plan).toMatchObject({
+      source: { appVersion: "1.0.0" },
+      target: { appVersion: "2.0.0" },
+    });
 
     const started = await startLifecycleAttempt({
       ...runtime,
       actionVersion: "1.0.0",
+      activationId: "activation-start",
       executionDeadline: EXECUTION_DEADLINE,
       planId: planning.plan.id,
     });
@@ -381,12 +398,13 @@ describe("lifecycle runtime", () => {
     const completed = await executeLifecycleAttempt({
       ...runtime,
       actionVersion: "1.0.0",
+      activationId: "activation-execution",
       attemptId: started.id,
       executionDeadline: EXECUTION_DEADLINE,
     });
-    expect(apply).toHaveBeenCalledTimes(2);
+    expect(apply).toHaveBeenCalledOnce();
     expect.assert(
-      completed.status === "succeeded",
+      completed.status === "succeeded" && completed.result,
       "Expected a succeeded lifecycle attempt",
     );
 
@@ -407,11 +425,10 @@ describe("lifecycle runtime", () => {
       operation: "upgrade",
       ...runtime,
       actionVersion: "1.0.1",
-      targetAppVersion: "3.0.0",
       targetConfig: createConfig("3.0.0"),
     });
 
-    expect(nextPlanning.plan.source.appVersion).toBe("2.0.0");
+    expect(nextPlanning.plan.source?.appVersion).toBe("2.0.0");
   });
 
   test("records the execution delivery deadline on the completed attempt", async () => {
@@ -423,7 +440,6 @@ describe("lifecycle runtime", () => {
       operation: "upgrade",
       ...runtime,
       actionVersion: "1.0.0",
-      targetAppVersion: "2.0.0",
       targetConfig: createConfig("2.0.0"),
     });
 
@@ -431,6 +447,7 @@ describe("lifecycle runtime", () => {
     const started = await startLifecycleAttempt({
       ...runtime,
       actionVersion: "1.0.0",
+      activationId: "activation-start",
       executionDeadline: "2098-01-01T00:00:00.000Z",
       planId: planning.plan.id,
     });
@@ -438,6 +455,7 @@ describe("lifecycle runtime", () => {
     const completed = await executeLifecycleAttempt({
       ...runtime,
       actionVersion: "1.0.0",
+      activationId: "activation-execution",
       attemptId: started.id,
       executionDeadline: EXECUTION_DEADLINE,
     });
@@ -460,6 +478,7 @@ describe("lifecycle runtime", () => {
               {
                 after: { name: "resource" },
                 id: "add-resource",
+                itemRefs: [],
                 kind: "add",
                 label: "Add resource",
                 reason: "change",
@@ -480,7 +499,6 @@ describe("lifecycle runtime", () => {
       operation: "upgrade",
       ...runtime,
       actionVersion: "1.0.0",
-      targetAppVersion: "2.0.0",
       targetConfig: createConfig("2.0.0"),
     });
 
@@ -488,6 +506,7 @@ describe("lifecycle runtime", () => {
     const started = await startLifecycleAttempt({
       ...runtime,
       actionVersion: "1.0.0",
+      activationId: "activation-start",
       executionDeadline: EXECUTION_DEADLINE,
       planId: planning.plan.id,
     });
@@ -495,6 +514,7 @@ describe("lifecycle runtime", () => {
     const completed = await executeLifecycleAttempt({
       ...runtime,
       actionVersion: "1.0.0",
+      activationId: "activation-execution",
       attemptId: started.id,
       executionDeadline: EXECUTION_DEADLINE,
     });
@@ -502,6 +522,7 @@ describe("lifecycle runtime", () => {
     const repeated = await executeLifecycleAttempt({
       ...runtime,
       actionVersion: "1.0.0",
+      activationId: "activation-execution",
       attemptId: started.id,
       executionDeadline: EXECUTION_DEADLINE,
     });
@@ -536,6 +557,7 @@ describe("lifecycle runtime", () => {
             {
               after: { id: "resource" },
               id: "add-resource",
+              itemRefs: [],
               kind: "add",
               label: "Add resource",
               reason: "change",
@@ -555,13 +577,13 @@ describe("lifecycle runtime", () => {
       ...runtime,
       actionVersion: "1.0.0",
       operation: "upgrade",
-      targetAppVersion: "2.0.0",
       targetConfig: createConfig("2.0.0"),
     });
 
     const attempt = await startLifecycleAttempt({
       ...runtime,
       actionVersion: "1.0.0",
+      activationId: "activation-start",
       executionDeadline: EXECUTION_DEADLINE,
       planId: planning.plan.id,
     });
@@ -569,6 +591,7 @@ describe("lifecycle runtime", () => {
     const execution = executeLifecycleAttempt({
       ...runtime,
       actionVersion: "1.0.0",
+      activationId: "activation-execution",
       attemptId: attempt.id,
       executionDeadline: EXECUTION_DEADLINE,
     });
@@ -580,6 +603,7 @@ describe("lifecycle runtime", () => {
         executeLifecycleAttempt({
           ...runtime,
           actionVersion: "1.0.0",
+          activationId: "activation-execution",
           attemptId: attempt.id,
           executionDeadline: EXECUTION_DEADLINE,
         }),
@@ -604,6 +628,7 @@ describe("lifecycle runtime", () => {
             {
               after: { id: "resource" },
               id: "add-resource",
+              itemRefs: [],
               kind: "add",
               label: "Add resource",
               reason: "change",
@@ -623,7 +648,6 @@ describe("lifecycle runtime", () => {
       ...runtime,
       actionVersion: "1.0.0",
       operation: "upgrade",
-      targetAppVersion: "2.0.0",
       targetConfig: createConfig("2.0.0"),
     });
 
@@ -631,6 +655,7 @@ describe("lifecycle runtime", () => {
     const attempt = await startLifecycleAttempt({
       ...runtime,
       actionVersion: "1.0.0",
+      activationId: "activation-start",
       executionDeadline: EXECUTION_DEADLINE,
       planId: planning.plan.id,
     });
@@ -640,6 +665,7 @@ describe("lifecycle runtime", () => {
       executeLifecycleAttempt({
         ...runtime,
         actionVersion: "1.0.0",
+        activationId: "activation-execution",
         attemptId: attempt.id,
         executionDeadline: EXECUTION_DEADLINE,
       }),
@@ -657,6 +683,7 @@ describe("lifecycle runtime", () => {
     const plan = vi.fn().mockResolvedValue({
       issues: [
         {
+          blocking: true,
           code: "MISSING_CONFIGURATION",
           domain: "synthetic",
           message: "Configuration is required",
@@ -679,7 +706,6 @@ describe("lifecycle runtime", () => {
       ...runtime,
       actionVersion: "1.0.0",
       operation: "upgrade",
-      targetAppVersion: "2.0.0",
       targetConfig: createConfig("2.0.0"),
     });
 
@@ -696,6 +722,7 @@ describe("lifecycle runtime", () => {
       startLifecycleAttempt({
         ...runtime,
         actionVersion: "1.0.0",
+        activationId: "activation-start",
         executionDeadline: EXECUTION_DEADLINE,
         planId: result.plan.id,
       }),
@@ -705,7 +732,6 @@ describe("lifecycle runtime", () => {
       ...runtime,
       actionVersion: "1.0.0",
       operation: "upgrade",
-      targetAppVersion: "2.0.0",
       targetConfig: createConfig("2.0.0"),
     });
 
@@ -740,7 +766,6 @@ describe("lifecycle runtime", () => {
       ...runtime,
       actionVersion: "1.0.0",
       operation: "upgrade",
-      targetAppVersion: "1.0.0",
       targetConfig: config,
     });
 
@@ -779,7 +804,6 @@ describe("lifecycle runtime", () => {
       operation: "upgrade",
       ...runtime,
       actionVersion: "1.0.0",
-      targetAppVersion: "2.0.0",
       targetConfig: config,
     });
 
@@ -787,6 +811,7 @@ describe("lifecycle runtime", () => {
     const attempt = await startLifecycleAttempt({
       ...runtime,
       actionVersion: "1.0.0",
+      activationId: "activation-start",
       executionDeadline: EXECUTION_DEADLINE,
       planId: planning.plan.id,
     });
@@ -794,13 +819,14 @@ describe("lifecycle runtime", () => {
     const completed = await executeLifecycleAttempt({
       ...runtime,
       actionVersion: "1.0.0",
+      activationId: "activation-execution",
       attemptId: attempt.id,
       executionDeadline: EXECUTION_DEADLINE,
     });
 
     expect(completed.progress.status).toBe("succeeded");
     expect.assert(
-      completed.status === "succeeded",
+      completed.status === "succeeded" && completed.result,
       "Expected a succeeded lifecycle attempt",
     );
 
@@ -831,6 +857,7 @@ describe("lifecycle runtime", () => {
                   {
                     before: leafBaseline.data,
                     id: "remove-old",
+                    itemRefs: [],
                     kind: "remove",
                     label: "Remove old resource",
                     reason: "change",
@@ -870,6 +897,7 @@ describe("lifecycle runtime", () => {
                   {
                     after: { id: "new" },
                     id: "add-new",
+                    itemRefs: [],
                     kind: "add",
                     label: "Add new resource",
                     reason: "change",
@@ -933,7 +961,6 @@ describe("lifecycle runtime", () => {
       operation: "upgrade",
       ...runtime,
       actionVersion: "1.0.0",
-      targetAppVersion: "2.0.0",
       targetConfig,
     });
 
@@ -956,6 +983,7 @@ describe("lifecycle runtime", () => {
     const attempt = await startLifecycleAttempt({
       ...runtime,
       actionVersion: "1.0.0",
+      activationId: "activation-start",
       executionDeadline: EXECUTION_DEADLINE,
       planId: planning.plan.id,
     });
@@ -963,12 +991,13 @@ describe("lifecycle runtime", () => {
     const completed = await executeLifecycleAttempt({
       ...runtime,
       actionVersion: "1.0.0",
+      activationId: "activation-execution",
       attemptId: attempt.id,
       executionDeadline: EXECUTION_DEADLINE,
     });
 
     expect.assert(
-      completed.status === "succeeded",
+      completed.status === "succeeded" && completed.result,
       "Expected a succeeded lifecycle attempt",
     );
 
@@ -996,7 +1025,6 @@ describe("lifecycle runtime", () => {
       operation: "upgrade",
       ...runtime,
       actionVersion: "1.0.0",
-      targetAppVersion: "2.0.0",
       targetConfig: createConfig("2.0.0"),
     });
 
@@ -1005,6 +1033,7 @@ describe("lifecycle runtime", () => {
       startLifecycleAttempt({
         ...runtime,
         actionVersion: "1.0.0",
+        activationId: "activation-start",
         executionDeadline: EXECUTION_DEADLINE,
         planId: "stale-plan",
       }),
@@ -1018,7 +1047,6 @@ describe("lifecycle runtime", () => {
 
     const planOptions = {
       ...runtime,
-      targetAppVersion: "2.0.0",
       targetConfig: createConfig("2.0.0"),
     };
 
@@ -1060,7 +1088,6 @@ describe("lifecycle runtime", () => {
       operation: "upgrade",
       ...runtime,
       actionVersion: "1.0.0",
-      targetAppVersion: "2.0.0",
       targetConfig: createConfig("2.0.0"),
     });
 
@@ -1068,6 +1095,7 @@ describe("lifecycle runtime", () => {
     await startLifecycleAttempt({
       ...runtime,
       actionVersion: "1.0.0",
+      activationId: "activation-start",
       executionDeadline: EXECUTION_DEADLINE,
       planId: planning.plan.id,
     });
@@ -1076,14 +1104,18 @@ describe("lifecycle runtime", () => {
       executeLifecycleAttempt({
         ...runtime,
         actionVersion: "1.0.0",
+        activationId: "activation-execution",
         attemptId: "stale-attempt",
         executionDeadline: EXECUTION_DEADLINE,
       }),
     ).rejects.toThrow("missing or stale");
   });
 
-  test("keeps the prior baseline when both apply attempts fail", async () => {
-    const apply = vi.fn().mockRejectedValue(new Error("permanent"));
+  test("applies a failing plan once, reports its first failure and keeps the prior baseline", async () => {
+    const apply = vi
+      .fn()
+      .mockRejectedValueOnce(new Error("first failure"))
+      .mockRejectedValue(new Error("later failure"));
     const config = createConfig("2.0.0");
     const leaf = createMockLifecycleLeaf({
       apply,
@@ -1094,6 +1126,7 @@ describe("lifecycle runtime", () => {
             {
               after: { id: "resource" },
               id: "add-resource",
+              itemRefs: [],
               kind: "add",
               label: "Add resource",
               reason: "change",
@@ -1119,7 +1152,6 @@ describe("lifecycle runtime", () => {
       operation: "upgrade",
       ...runtime,
       actionVersion: "1.0.0",
-      targetAppVersion: "2.0.0",
       targetConfig: config,
     });
 
@@ -1127,6 +1159,7 @@ describe("lifecycle runtime", () => {
     const attempt = await startLifecycleAttempt({
       ...runtime,
       actionVersion: "1.0.0",
+      activationId: "activation-start",
       executionDeadline: EXECUTION_DEADLINE,
       planId: planning.plan.id,
     });
@@ -1134,12 +1167,16 @@ describe("lifecycle runtime", () => {
     const completed = await executeLifecycleAttempt({
       ...runtime,
       actionVersion: "1.0.0",
+      activationId: "activation-execution",
       attemptId: attempt.id,
       executionDeadline: EXECUTION_DEADLINE,
     });
 
-    expect(completed.status).toBe("failed");
-    expect(apply).toHaveBeenCalledTimes(2);
+    expect(completed).toMatchObject({
+      failure: { message: "first failure" },
+      status: "failed",
+    });
+    expect(apply).toHaveBeenCalledOnce();
     expect((await stateStore.get("current"))?.baselineSnapshotId).toBe(
       "baseline-1",
     );
@@ -1156,6 +1193,7 @@ describe("lifecycle runtime", () => {
             {
               after: { id: "resource" },
               id: "add-resource",
+              itemRefs: [],
               kind: "add",
               label: "Add resource",
               reason: "change",
@@ -1175,7 +1213,6 @@ describe("lifecycle runtime", () => {
       operation: "upgrade",
       ...runtime,
       actionVersion: "1.0.0",
-      targetAppVersion: "2.0.0",
       targetConfig: createConfig("2.0.0"),
     });
 
@@ -1183,6 +1220,7 @@ describe("lifecycle runtime", () => {
     const attempt = await startLifecycleAttempt({
       ...runtime,
       actionVersion: "1.0.0",
+      activationId: "activation-start",
       executionDeadline: EXECUTION_DEADLINE,
       planId: planning.plan.id,
     });
@@ -1190,6 +1228,7 @@ describe("lifecycle runtime", () => {
     const completed = await executeLifecycleAttempt({
       ...runtime,
       actionVersion: "1.0.0",
+      activationId: "activation-execution",
       attemptId: attempt.id,
       executionDeadline: EXECUTION_DEADLINE,
     });
@@ -1197,19 +1236,19 @@ describe("lifecycle runtime", () => {
     const repeated = await executeLifecycleAttempt({
       ...runtime,
       actionVersion: "2.0.0",
+      activationId: "activation-execution",
       attemptId: attempt.id,
       executionDeadline: EXECUTION_DEADLINE,
     });
 
     expect(repeated).toEqual(completed);
-    expect(apply).toHaveBeenCalledTimes(2);
+    expect(apply).toHaveBeenCalledOnce();
   });
 
   test("plans again instead of resuming a failed apply attempt", async () => {
     const apply = vi
       .fn()
       .mockRejectedValueOnce(new Error("first failure"))
-      .mockRejectedValueOnce(new Error("retry failure"))
       .mockResolvedValue({ snapshotData: { id: "resource" } });
 
     const plan = vi.fn().mockResolvedValue({
@@ -1219,6 +1258,7 @@ describe("lifecycle runtime", () => {
           {
             after: { id: "resource" },
             id: "add-resource",
+            itemRefs: [],
             kind: "add",
             label: "Add resource",
             reason: "change",
@@ -1238,7 +1278,6 @@ describe("lifecycle runtime", () => {
       operation: "upgrade",
       ...runtime,
       actionVersion: "1.0.0",
-      targetAppVersion: "2.0.0",
       targetConfig: createConfig("2.0.0"),
     });
 
@@ -1246,6 +1285,7 @@ describe("lifecycle runtime", () => {
     const firstAttempt = await startLifecycleAttempt({
       ...runtime,
       actionVersion: "1.0.0",
+      activationId: "activation-start",
       executionDeadline: EXECUTION_DEADLINE,
       planId: planning.plan.id,
     });
@@ -1254,6 +1294,7 @@ describe("lifecycle runtime", () => {
       executeLifecycleAttempt({
         ...runtime,
         actionVersion: "1.0.0",
+        activationId: "activation-execution",
         attemptId: firstAttempt.id,
         executionDeadline: EXECUTION_DEADLINE,
       }),
@@ -1263,13 +1304,13 @@ describe("lifecycle runtime", () => {
       operation: "upgrade",
       ...runtime,
       actionVersion: "1.0.0",
-      targetAppVersion: "2.0.0",
       targetConfig: createConfig("2.0.0"),
     });
 
     const resumed = await startLifecycleAttempt({
       ...runtime,
       actionVersion: "1.0.0",
+      activationId: "activation-start",
       executionDeadline: EXECUTION_DEADLINE,
       planId: repeatedPlanning.plan.id,
     });
@@ -1277,6 +1318,7 @@ describe("lifecycle runtime", () => {
     const completed = await executeLifecycleAttempt({
       ...runtime,
       actionVersion: "1.0.0",
+      activationId: "activation-execution",
       attemptId: resumed.id,
       executionDeadline: EXECUTION_DEADLINE,
     });
@@ -1331,6 +1373,7 @@ describe("lifecycle runtime", () => {
             {
               after: { id: "resource" },
               id: "add-resource",
+              itemRefs: [],
               kind: "add",
               label: "Add resource",
               reason: "change",
@@ -1351,7 +1394,6 @@ describe("lifecycle runtime", () => {
       operation: "upgrade",
       ...runtime,
       actionVersion: "1.0.0",
-      targetAppVersion: "2.0.0",
       targetConfig: config,
     });
 
@@ -1359,6 +1401,7 @@ describe("lifecycle runtime", () => {
     const attempt = await startLifecycleAttempt({
       ...runtime,
       actionVersion: "1.0.0",
+      activationId: "activation-start",
       executionDeadline: EXECUTION_DEADLINE,
       planId: planning.plan.id,
     });
@@ -1367,6 +1410,7 @@ describe("lifecycle runtime", () => {
       executeLifecycleAttempt({
         ...runtime,
         actionVersion: "1.0.0",
+        activationId: "activation-execution",
         attemptId: attempt.id,
         executionDeadline: EXECUTION_DEADLINE,
       }),
@@ -1395,7 +1439,6 @@ describe("lifecycle runtime", () => {
       operation: "upgrade",
       ...runtime,
       actionVersion: "1.0.0",
-      targetAppVersion: "2.0.0",
       targetConfig: createConfig("2.0.0"),
     });
 
@@ -1403,6 +1446,7 @@ describe("lifecycle runtime", () => {
       startLifecycleAttempt({
         ...runtime,
         actionVersion: "2.0.0",
+        activationId: "activation-start",
         executionDeadline: EXECUTION_DEADLINE,
         planId: planning.plan.id,
       }),
@@ -1420,7 +1464,6 @@ describe("lifecycle runtime", () => {
       operation: "upgrade",
       ...runtime,
       actionVersion: "1.0.0",
-      targetAppVersion: "2.0.0",
       targetConfig: createConfig("2.0.0"),
     });
 
@@ -1428,6 +1471,7 @@ describe("lifecycle runtime", () => {
       startLifecycleAttempt({
         ...runtime,
         actionVersion: "1.0.0",
+        activationId: "activation-start",
         executionDeadline,
         planId: planning.plan.id,
       }),
@@ -1443,13 +1487,13 @@ describe("lifecycle runtime", () => {
       operation: "upgrade",
       ...runtime,
       actionVersion: "1.0.0",
-      targetAppVersion: "2.0.0",
       targetConfig: createConfig("2.0.0"),
     });
 
     await startLifecycleAttempt({
       ...runtime,
       actionVersion: "1.0.0",
+      activationId: "activation-start",
       executionDeadline: EXECUTION_DEADLINE,
       planId: planning.plan.id,
     });
@@ -1459,7 +1503,6 @@ describe("lifecycle runtime", () => {
         operation: "upgrade",
         ...runtime,
         actionVersion: "1.0.1",
-        targetAppVersion: "3.0.0",
         targetConfig: createConfig("3.0.0"),
       }),
     ).rejects.toThrow("already in progress");
@@ -1477,13 +1520,13 @@ describe("lifecycle runtime", () => {
       operation: "upgrade",
       ...runtime,
       actionVersion: "1.0.0",
-      targetAppVersion: "2.0.0",
       targetConfig: createConfig("2.0.0"),
     });
 
     const attempt = await startLifecycleAttempt({
       ...runtime,
       actionVersion: "1.0.0",
+      activationId: "activation-start",
       executionDeadline: EXECUTION_DEADLINE,
       planId: planning.plan.id,
     });
@@ -1492,6 +1535,7 @@ describe("lifecycle runtime", () => {
       executeLifecycleAttempt({
         ...runtime,
         actionVersion: "1.0.0",
+        activationId: "activation-execution",
         attemptId: attempt.id,
         executionDeadline,
       }),
@@ -1517,13 +1561,13 @@ describe("lifecycle runtime", () => {
         operation: "upgrade",
         ...runtime,
         actionVersion: "1.0.0",
-        targetAppVersion: "2.0.0",
         targetConfig: createConfig("2.0.0"),
       });
 
       const active = await startLifecycleAttempt({
         ...runtime,
         actionVersion: "1.0.0",
+        activationId: "activation-start",
         executionDeadline: "2026-08-10T10:01:00.000Z",
         planId: first.plan.id,
       });
@@ -1533,7 +1577,6 @@ describe("lifecycle runtime", () => {
         operation: "upgrade",
         ...runtime,
         actionVersion: "1.0.0",
-        targetAppVersion: "2.0.0",
         targetConfig: createConfig("2.0.0"),
       });
       expect(replanned.kind).toBe("planned");
@@ -1542,6 +1585,7 @@ describe("lifecycle runtime", () => {
       const restartedOnSameVersion = await startLifecycleAttempt({
         ...runtime,
         actionVersion: "1.0.0",
+        activationId: "activation-start",
         executionDeadline: "2026-08-10T10:03:00.000Z",
         planId: replanned.plan.id,
       });
@@ -1553,7 +1597,6 @@ describe("lifecycle runtime", () => {
         operation: "upgrade",
         ...runtime,
         actionVersion: "1.0.1",
-        targetAppVersion: "3.0.0",
         targetConfig: createConfig("3.0.0"),
       });
 
@@ -1568,6 +1611,7 @@ describe("lifecycle runtime", () => {
       const restarted = await startLifecycleAttempt({
         ...runtime,
         actionVersion: "1.0.1",
+        activationId: "activation-start",
         executionDeadline: "2026-08-10T10:05:00.000Z",
         planId: replacement.plan.id,
       });
@@ -1577,16 +1621,312 @@ describe("lifecycle runtime", () => {
     }
   });
 
-  test("requires a compatible baseline", async () => {
-    const { runtime } = createMockLifecycleRuntime({ baseline: null });
-    await expect(
-      planLifecycle({
+  describe("planner issues", () => {
+    function plannedLeaf(
+      overrides: Parameters<typeof createMockLifecycleLeaf>[0] = {},
+    ) {
+      return createMockLifecycleLeaf({
+        apply: vi.fn().mockResolvedValue({ snapshotData: null }),
+        plan: vi.fn().mockResolvedValue({
+          kind: "planned",
+          plan: { operations: [], path: ["root", "synthetic"] },
+        }),
+        ...overrides,
+      });
+    }
+
+    let lastRuntime: ReturnType<typeof createMockLifecycleRuntime>["runtime"];
+
+    async function planWithLeaf(
+      leaf: ReturnType<typeof createMockLifecycleLeaf>,
+    ) {
+      const { runtime } = createMockLifecycleRuntime({
+        baseline: createBaseline("1.0.0"),
+        rootStep: createMockLifecycleRoot([leaf]),
+      });
+
+      lastRuntime = runtime;
+      return await planLifecycle({
         ...runtime,
         actionVersion: "1.0.0",
         operation: "upgrade",
-        targetAppVersion: "2.0.0",
         targetConfig: createConfig("2.0.0"),
+      });
+    }
+
+    const warning = {
+      code: "CONFLICT",
+      message: "Conflict",
+      severity: "warning" as const,
+    };
+
+    test("keeps a planner's issues on a planned result without blocking it", async () => {
+      const planning = await planWithLeaf(
+        plannedLeaf({
+          plan: vi.fn().mockResolvedValue({
+            issues: [{ ...warning, blocking: false, domain: "synthetic" }],
+            kind: "planned",
+            plan: { operations: [], path: ["root", "synthetic"] },
+          }),
+        }),
+      );
+
+      expect(planning.kind).toBe("planned");
+      expect(planning.plan.issues).toEqual([
+        {
+          ...warning,
+          blocking: false,
+          domain: "synthetic",
+          path: ["root", "synthetic"],
+        },
+      ]);
+
+      const attempt = await startLifecycleAttempt({
+        ...lastRuntime,
+        actionVersion: "1.0.0",
+        activationId: "activation-start",
+        executionDeadline: EXECUTION_DEADLINE,
+        planId: planning.plan.id,
+      });
+      expect(attempt.status).toBe("pending");
+    });
+  });
+
+  test("plans an install from no baseline", async () => {
+    const { runtime } = createMockLifecycleRuntime({ baseline: null });
+    const planning = await planLifecycle({
+      ...runtime,
+      actionVersion: "1.0.0",
+      operation: "install",
+      targetConfig: createConfig("2.0.0"),
+    });
+
+    expect(planning.plan).toMatchObject({ operation: "install", source: null });
+  });
+
+  test("installs from no baseline and records the result as the baseline", async () => {
+    const { runtime, stateStore } = createMockLifecycleRuntime({
+      baseline: null,
+    });
+    const planning = await planLifecycle({
+      ...runtime,
+      actionVersion: "1.0.0",
+      operation: "install",
+      targetConfig: createConfig("2.0.0"),
+    });
+
+    const attempt = await startLifecycleAttempt({
+      ...runtime,
+      actionVersion: "1.0.0",
+      activationId: "activation-start",
+      executionDeadline: EXECUTION_DEADLINE,
+      planId: planning.plan.id,
+    });
+    expect(attempt.data).toBeNull();
+
+    const result = await executeLifecycleAttempt({
+      ...runtime,
+      actionVersion: "1.0.0",
+      activationId: "activation-execution",
+      attemptId: attempt.id,
+      executionDeadline: EXECUTION_DEADLINE,
+    });
+
+    expect.assert(result.status === "succeeded" && result.result);
+    expect(result.operation).toBe("install");
+    expect((await stateStore.get("current"))?.baselineSnapshotId).toBe(
+      result.result.snapshotId,
+    );
+  });
+});
+
+describe("lifecycle paper trail", () => {
+  /** A leaf that plans one change and fails to apply it on the first call. */
+  function createFlakyLeaf() {
+    return createMockLifecycleLeaf({
+      apply: vi
+        .fn()
+        .mockRejectedValueOnce(new Error("first failure"))
+        .mockResolvedValue({ snapshotData: null }),
+      plan: vi.fn().mockResolvedValue({
+        kind: "planned",
+        plan: {
+          operations: [
+            {
+              after: { id: "resource" },
+              id: "add-resource",
+              itemRefs: [],
+              kind: "add",
+              label: "Add resource",
+              reason: "change",
+            },
+          ],
+          path: ["root", "synthetic"],
+        },
       }),
-    ).rejects.toThrow("compatible lifecycle baseline");
+    });
+  }
+
+  function createRuntime() {
+    return createMockLifecycleRuntime({
+      baseline: createBaseline("1.0.0"),
+      rootStep: createMockLifecycleRoot([createFlakyLeaf()]),
+    });
+  }
+
+  type Runtime = ReturnType<typeof createRuntime>["runtime"];
+
+  function plan(runtime: Runtime) {
+    return planLifecycle({
+      ...runtime,
+      actionVersion: "1.0.0",
+      operation: "upgrade",
+      targetConfig: createConfig("2.0.0"),
+    });
+  }
+
+  function start(runtime: Runtime, planId: string, activationId: string) {
+    return startLifecycleAttempt({
+      ...runtime,
+      actionVersion: "1.0.0",
+      activationId,
+      executionDeadline: EXECUTION_DEADLINE,
+      planId,
+    });
+  }
+
+  function execute(runtime: Runtime, attemptId: string, activationId: string) {
+    return executeLifecycleAttempt({
+      ...runtime,
+      actionVersion: "1.0.0",
+      activationId,
+      attemptId,
+      executionDeadline: EXECUTION_DEADLINE,
+    });
+  }
+
+  test("archives nothing on the first start and archives the replaced attempt on the next one", async () => {
+    const { attemptStore, runtime } = createRuntime();
+
+    const first = await start(runtime, (await plan(runtime)).plan.id, "a1");
+    expect(first.previousAttemptId).toBeNull();
+    expect(attemptStore.put).not.toHaveBeenCalled();
+
+    const failed = await execute(runtime, first.id, "a1-exec");
+    expect(failed.status).toBe("failed");
+
+    const second = await start(runtime, (await plan(runtime)).plan.id, "a2");
+
+    expect(second.previousAttemptId).toBe(first.id);
+    expect(attemptStore.put).toHaveBeenCalledOnce();
+    expect(await attemptStore.get(first.id)).toEqual(failed);
+  });
+
+  test("leaves the latest attempt in place when archiving it fails", async () => {
+    const { attemptStore, runtime, stateStore } = createRuntime();
+    const first = await start(runtime, (await plan(runtime)).plan.id, "a1");
+    await execute(runtime, first.id, "a1-exec");
+
+    vi.mocked(attemptStore.put).mockRejectedValueOnce(new Error("disk full"));
+    const planned = await plan(runtime);
+
+    await expect(start(runtime, planned.plan.id, "a2")).rejects.toThrow(
+      "disk full",
+    );
+    expect((await stateStore.get("current"))?.latestAttempt?.id).toBe(first.id);
+  });
+
+  test("records the activations that started and executed the attempt", async () => {
+    const { runtime, stateStore } = createRuntime();
+    const attempt = await start(runtime, (await plan(runtime)).plan.id, "a1");
+    expect(attempt.activations).toEqual({ start: "a1" });
+
+    const completed = await execute(runtime, attempt.id, "a1-exec");
+
+    expect(completed.activations).toEqual({
+      execution: "a1-exec",
+      start: "a1",
+    });
+    expect(
+      (await stateStore.get("current"))?.latestAttempt?.activations,
+    ).toEqual({ execution: "a1-exec", start: "a1" });
+  });
+
+  test("records when each executed step started and completed", async () => {
+    const { runtime } = createRuntime();
+    const attempt = await start(runtime, (await plan(runtime)).plan.id, "a1");
+    const completed = await execute(runtime, attempt.id, "a1-exec");
+
+    const [leaf] = completed.progress.children;
+    expect(leaf).toMatchObject({
+      completedAt: expect.any(String),
+      startedAt: expect.any(String),
+      status: "failed",
+    });
+    expect(completed.progress).toMatchObject({
+      completedAt: expect.any(String),
+      startedAt: expect.any(String),
+    });
+  });
+
+  test("stores every plan with the pending plan it replaced", async () => {
+    const { planStore, runtime } = createRuntime();
+
+    const first = await plan(runtime);
+    const second = await plan(runtime);
+    const attempt = await start(runtime, second.plan.id, "a1");
+    await execute(runtime, attempt.id, "a1-exec");
+    const third = await plan(runtime);
+
+    expect(await planStore.get(first.plan.id)).toEqual(first.plan);
+    expect(await planStore.get(second.plan.id)).toEqual(second.plan);
+    expect(first.plan.previousPlanId).toBeNull();
+    expect(second.plan.previousPlanId).toBe(first.plan.id);
+    // The start cleared the pending plan, so the next plan starts a new chain.
+    expect(third.plan.previousPlanId).toBeNull();
+  });
+
+  test("stores blocked plans", async () => {
+    const leaf = createMockLifecycleLeaf({
+      apply: vi.fn(),
+      plan: vi.fn().mockResolvedValue({
+        issues: [
+          {
+            blocking: true,
+            code: "MISSING_CONFIGURATION",
+            domain: "synthetic",
+            message: "Configuration is required",
+          },
+        ],
+        kind: "blocked",
+      }),
+    });
+    const { planStore, runtime } = createMockLifecycleRuntime({
+      baseline: createBaseline("1.0.0"),
+      rootStep: createMockLifecycleRoot([leaf]),
+    });
+
+    const blocked = await plan(runtime);
+    const replanned = await plan(runtime);
+
+    expect(blocked.kind).toBe("blocked");
+    expect(await planStore.get(blocked.plan.id)).toEqual(blocked.plan);
+    expect(await planStore.get(replanned.plan.id)).toMatchObject({
+      previousPlanId: blocked.plan.id,
+    });
+  });
+
+  test("records the attempt that produced a snapshot", async () => {
+    const { runtime, snapshotStore } = createRuntime();
+    const first = await start(runtime, (await plan(runtime)).plan.id, "a1");
+    await execute(runtime, first.id, "a1-exec");
+
+    const second = await start(runtime, (await plan(runtime)).plan.id, "a2");
+    const completed = await execute(runtime, second.id, "a2-exec");
+    expect.assert(completed.status === "succeeded" && completed.result);
+
+    expect(await snapshotStore.get(completed.result.snapshotId)).toMatchObject({
+      attemptId: second.id,
+    });
   });
 });

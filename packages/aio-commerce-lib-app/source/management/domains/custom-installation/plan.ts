@@ -11,6 +11,7 @@
  */
 
 import { hasCustomInstallationSteps } from "#config/schema/installation";
+import { toItemRef } from "#management/common/workflow/resource";
 
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 import type { CustomInstallationStep } from "#config/schema/installation";
@@ -33,6 +34,7 @@ function buildAddOperation(
   return {
     after: { name: step.name, script: step.script },
     id: `add:${step.name}`,
+    itemRefs: [toItemRef(step.name, step)],
     kind: "add",
     label: `Run custom installation step "${step.name}"`,
     reason: "change",
@@ -40,17 +42,19 @@ function buildAddOperation(
 }
 
 /**
- * Builds an informational `remove` operation for a step no longer in the target config. No
- * `uninstall` runs from it; it exists so the plan reflects that the step left the configuration.
+ * Builds a `remove` operation for a step no longer in the target config. Its `uninstall` runs only
+ * when there is no target config; otherwise it is informational.
  */
 function buildRemoveOperation(
   step: CustomInstallationStepIdentity,
+  declared: CustomInstallationStep | undefined,
 ): ResourceOperation<CustomInstallationStepIdentity> {
   return {
     before: { name: step.name, script: step.script },
     id: `remove:${step.name}`,
+    itemRefs: [toItemRef(step.name, declared)],
     kind: "remove",
-    label: `Custom installation step "${step.name}" no longer in the configuration`,
+    label: `Remove custom installation step "${step.name}"`,
     reason: "change",
   };
 }
@@ -106,18 +110,33 @@ export function planCustomInstallationSteps(
   const baselineNames = new Set(baselineExecutedSteps.map((s) => s.name));
   const targetNames = new Set(targetSteps.map((s) => s.name));
 
+  const addOperations = targetSteps
+    .filter((step) => !baselineNames.has(step.name))
+    .map((step) => buildAddOperation(step));
+
+  const baselineSteps =
+    baseline && hasCustomInstallationSteps(baseline.config)
+      ? baseline.config.installation.customInstallationSteps
+      : [];
+
+  const removeOperations = baselineExecutedSteps
+    .filter((step) => !targetNames.has(step.name))
+    .map((step) =>
+      buildRemoveOperation(
+        step,
+        baselineSteps.find((declared) => declared.name === step.name),
+      ),
+    );
+
   const operations: ResourceOperation<CustomInstallationStepIdentity>[] = [
-    ...targetSteps
-      .filter((step) => !baselineNames.has(step.name))
-      .map((step) => buildAddOperation(step)),
-    ...baselineExecutedSteps
-      .filter((step) => !targetNames.has(step.name))
-      .map((step) => buildRemoveOperation(step)),
+    ...addOperations,
+    ...removeOperations,
   ];
 
   return Promise.resolve({
     kind: "planned",
     plan: {
+      baselineConfig: baseline?.config ?? null,
       baselineExecutedSteps,
       operations,
       path,
