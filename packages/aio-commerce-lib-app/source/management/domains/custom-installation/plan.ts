@@ -87,8 +87,8 @@ function isBeingRemoved(
 
 /**
  * Plans a single custom installation step, which never runs twice:
- * - A step the config no longer declares has no operation, since its script is no longer deployed.
- *   An uninstall, or the upgrade that removes it, reports it with a warning.
+ * - A step the config no longer declares has no operation. An uninstall, or the upgrade that
+ *   removes it, reports it with a warning.
  * - Without a target config, a declared step that ran, or may have run because no run history is
  *   stored, gets a `remove`.
  * - With a target config, a declared step that has not run gets an `add`.
@@ -113,6 +113,7 @@ export function planCustomScript(
   const issues: NonBlockingPlanningIssue[] = [];
 
   if (!declared) {
+    // Its script is no longer deployed, so nothing can run for it.
     if (executed && isBeingRemoved(executed, baselineConfig, targetConfig)) {
       issues.push(buildRemovedStepIssue(executed.name));
     }
