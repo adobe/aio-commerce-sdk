@@ -72,7 +72,7 @@ describe("commands/hooks/pre-app-build extension order", () => {
     await writeFile(join(dir, "install.yaml"), WRONG);
     await expect(run("backend-ui/2", dir)).rejects.toThrow();
 
-    await expect(run("extensibility/1", dir)).resolves.not.toThrow();
+    await expect(run("backend-ui/2", dir)).resolves.toBeUndefined();
   });
 
   test("passes when the order is right", async () => {
