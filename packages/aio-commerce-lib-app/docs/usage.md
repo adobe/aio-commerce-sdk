@@ -623,6 +623,7 @@ export default defineCustomInstallationStep(async (config, context) => {
 - Scripts **must** use `export default` to export the main function (named exports like `export { run }` are not supported)
 - Scripts are executed **sequentially** in the order defined in the configuration
 - If any script throws an error, the entire installation fails and subsequent scripts are not executed
+- If you retry a failed installation, upgrade or uninstallation, the scripts that already succeeded don't run again. A script interrupted before it finished, for example by a timeout, runs again.
 - Scripts have access to the complete app configuration and can use it to make decisions
 
 ##### Custom Installation Steps During an Upgrade
@@ -631,12 +632,12 @@ Custom installation steps behave like database migrations across an upgrade: eac
 
 - **Adding a step**: give it a new `name` and its `install` runs on the next upgrade, same as a fresh install.
 - **Editing a step that already ran**: don't. Changing a step's script after it has run does **not** re-run it on upgrade, so the change silently has no effect. To change behavior, add a new step with a different `name` instead. (If you point an existing `name` at a different `script` path, the upgrade logs a warning, but still does not re-run it.)
-- **Removing a step**: taking a step out of `customInstallationSteps` doesn't run its `uninstall` during that upgrade. `uninstall` only runs for every step that ever ran (whether or not it's still configured) when the app is fully uninstalled.
+- **Removing a step**: once a step is no longer in `customInstallationSteps`, its script is no longer deployed, so its `uninstall` can't run, neither during the upgrade that removes it nor when the app is uninstalled. The upgrade plan warns about it, and nothing runs for it.
 
 Two things follow from this:
 
 - Prefer the object form (`{ install, uninstall }`) over the plain function form for any step you may need to clean up later — a step with no `uninstall` can't be cleaned up when the app is uninstalled.
-- Don't delete a step's script file from your project while the step (or an app that ran it) might still need its `uninstall` called at uninstall time.
+- Keep a step in `customInstallationSteps` for as long as its `uninstall` may need to run.
 
 #### Admin UI Configuration
 
