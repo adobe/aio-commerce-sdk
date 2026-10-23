@@ -33,13 +33,6 @@ export const CONFIGURATION_EXTENSION_POINT_ID = "commerce/configuration/1";
 /** The name of the extension point for Admin UI. */
 export const BACKEND_UI_V2_EXTENSION_POINT_ID = "commerce/backend-ui/2";
 
-/** Extension points in the order they must appear in install.yaml. Extensibility must be last. */
-export const EXTENSION_POINT_ORDER: readonly string[] = [
-  BACKEND_UI_V2_EXTENSION_POINT_ID,
-  CONFIGURATION_EXTENSION_POINT_ID,
-  EXTENSIBILITY_EXTENSION_POINT_ID,
-];
-
 /** The name of the configuration schema file */
 export const APP_MANIFEST_FILE = "app.commerce.manifest.json";
 

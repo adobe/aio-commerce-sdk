@@ -14,10 +14,10 @@ import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
 import { getProjectRootDirectory } from "@aio-commerce-sdk/scripting-utils/project";
 import consola from "consola";
 
+import { ensureExtensionPointsOrder } from "#commands/common/extension-points";
 import { run as generateActions } from "#commands/generate/actions/main";
 import { run as generateManifest } from "#commands/generate/manifest/main";
 import { run as generateSchema } from "#commands/generate/schema/main";
-import { ensureExtensionPointsOrder } from "#commands/install-yaml";
 import { loadAppManifest } from "#commands/utils";
 
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";

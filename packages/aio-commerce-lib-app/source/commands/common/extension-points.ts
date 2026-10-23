@@ -17,9 +17,21 @@ import { join } from "node:path";
 import { readYamlFile } from "@aio-commerce-sdk/scripting-utils/yaml/helpers";
 import { isMap, isNode, isSeq } from "yaml";
 
-import { EXTENSION_POINT_ORDER, INSTALL_YAML_FILE } from "#commands/constants";
+import {
+  BACKEND_UI_V2_EXTENSION_POINT_ID,
+  CONFIGURATION_EXTENSION_POINT_ID,
+  EXTENSIBILITY_EXTENSION_POINT_ID,
+  INSTALL_YAML_FILE,
+} from "#commands/constants";
 
 import type { Document, YAMLSeq } from "yaml";
+
+/** Extension points in the order they must appear in install.yaml. Extensibility must be last. */
+export const EXTENSION_POINT_ORDER: readonly string[] = [
+  BACKEND_UI_V2_EXTENSION_POINT_ID,
+  CONFIGURATION_EXTENSION_POINT_ID,
+  EXTENSIBILITY_EXTENSION_POINT_ID,
+];
 
 /**
  * Get the position of an extension point in the required order.

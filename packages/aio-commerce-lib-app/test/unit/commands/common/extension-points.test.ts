@@ -18,16 +18,16 @@ import { withTempFiles } from "@aio-commerce-sdk/scripting-utils/filesystem";
 import { describe, expect, test } from "vitest";
 
 import {
+  ensureExtensionPointsOrder,
+  getExtensionPointRank,
+  isExtensionPointsOrdered,
+} from "#commands/common/extension-points";
+import {
   BACKEND_UI_V2_EXTENSION_POINT_ID,
   CONFIGURATION_EXTENSION_POINT_ID,
   EXTENSIBILITY_EXTENSION_POINT_ID,
   INSTALL_YAML_FILE,
 } from "#commands/constants";
-import {
-  ensureExtensionPointsOrder,
-  getExtensionPointRank,
-  isExtensionPointsOrdered,
-} from "#commands/install-yaml";
 import {
   makeInstallYamlFile,
   ORDERED_EXTENSION_POINTS,

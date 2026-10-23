@@ -24,12 +24,12 @@ import consola from "consola";
 import { colorize } from "consola/utils";
 import { isMap } from "yaml";
 
+import { getExtensionPointRank } from "#commands/common/extension-points";
 import {
   APP_CONFIG_FILE,
   COMMERCE_APP_CONFIG_FILE,
   INSTALL_YAML_FILE,
 } from "#commands/constants";
-import { getExtensionPointRank } from "#commands/install-yaml";
 import { getExtConfigPath } from "#commands/utils";
 
 import { DOMAIN_DEFAULTS } from "./constants";

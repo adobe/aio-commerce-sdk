@@ -19,10 +19,13 @@ import { getProjectRootDirectory } from "@aio-commerce-sdk/scripting-utils/proje
 import consola from "consola";
 
 import {
+  EXTENSION_POINT_ORDER,
+  ensureExtensionPointsOrder,
+} from "#commands/common/extension-points";
+import {
   BACKEND_UI_V2_EXTENSION_POINT_ID,
   CONFIGURATION_EXTENSION_POINT_ID,
   EXTENSIBILITY_EXTENSION_POINT_ID,
-  EXTENSION_POINT_ORDER,
   INSTALL_YAML_FILE,
 } from "#commands/constants";
 import { getRuntimeActions } from "#commands/generate/actions/config";
@@ -39,7 +42,6 @@ import {
   generateWebSrc,
   prepareWebSourceImportAlias,
 } from "#commands/generate/web-src";
-import { ensureExtensionPointsOrder } from "#commands/install-yaml";
 import { loadAppManifest } from "#commands/utils";
 import { hasBackendUiV2Components } from "#config/index";
 
