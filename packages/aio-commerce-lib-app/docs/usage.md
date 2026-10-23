@@ -81,6 +81,8 @@ Add a `postinstall` hook to your `package.json` to ensure that everything keeps 
 }
 ```
 
+The `postinstall` hook also reorders the extension points in `install.yaml` when they are out of order (see step 5 below). As a safety net, the `pre-app-build` hook does the same if the file is still out of order. In that case it rewrites `install.yaml` and fails on purpose, because the build already read the old file. Run the build again and it passes. When the order is already right, the hook writes nothing.
+
 2. Create your app configuration file at your project root. The library supports multiple file formats:
 
 - `app.commerce.config.js` - JavaScript (CommonJS or ESM, depending on `type` in `package.json`)

@@ -22,6 +22,8 @@ import {
   BACKEND_UI_V2_EXTENSION_POINT_ID,
   CONFIGURATION_EXTENSION_POINT_ID,
   EXTENSIBILITY_EXTENSION_POINT_ID,
+  EXTENSION_POINT_ORDER,
+  INSTALL_YAML_FILE,
 } from "#commands/constants";
 import { getRuntimeActions } from "#commands/generate/actions/config";
 import { TEMPLATES_DIR } from "#commands/generate/actions/constants";
@@ -37,6 +39,7 @@ import {
   generateWebSrc,
   prepareWebSourceImportAlias,
 } from "#commands/generate/web-src";
+import { ensureExtensionPointsOrder } from "#commands/install-yaml";
 import { loadAppManifest } from "#commands/utils";
 import { hasBackendUiV2Components } from "#config/index";
 
@@ -55,6 +58,13 @@ export async function run(
   projectRoot: string,
   templatesDir = TEMPLATES_DIR,
 ) {
+  if (await ensureExtensionPointsOrder(projectRoot)) {
+    throw new Error(
+      `The extension points in ${INSTALL_YAML_FILE} were reordered (${EXTENSION_POINT_ORDER.join(", ")}) to ensure an upgrade works reliably. ` +
+        "The build already read the previous file, so run the build again.",
+    );
+  }
+
   const appManifest = await loadAppManifest(projectRoot);
   await prepareRuntimeAppConfigModule(appManifest, projectRoot);
 

@@ -27,9 +27,9 @@ import { isMap } from "yaml";
 import {
   APP_CONFIG_FILE,
   COMMERCE_APP_CONFIG_FILE,
-  EXTENSION_POINT_ORDER,
   INSTALL_YAML_FILE,
 } from "#commands/constants";
+import { getExtensionPointRank } from "#commands/install-yaml";
 import { getExtConfigPath } from "#commands/utils";
 
 import { DOMAIN_DEFAULTS } from "./constants";
@@ -252,13 +252,8 @@ export function getExtensionPointInsertIndex(
   ids: readonly unknown[],
   extensionPointId: string,
 ) {
-  const rank = (id: unknown) => {
-    const index = EXTENSION_POINT_ORDER.indexOf(String(id));
-    return index === -1 ? EXTENSION_POINT_ORDER.length : index;
-  };
-
-  const target = rank(extensionPointId);
-  const index = ids.findIndex((id) => rank(id) > target);
+  const target = getExtensionPointRank(extensionPointId);
+  const index = ids.findIndex((id) => getExtensionPointRank(id) > target);
   return index === -1 ? ids.length : index;
 }
 

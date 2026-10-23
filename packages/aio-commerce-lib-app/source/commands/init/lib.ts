@@ -33,6 +33,7 @@ import {
 import { run as generateActions } from "#commands/generate/actions/main";
 import { run as generateManifest } from "#commands/generate/manifest/main";
 import { run as generateSchema } from "#commands/generate/schema/main";
+import { ensureExtensionPointsOrder } from "#commands/install-yaml";
 import { prettierFormat, runInstall } from "#commands/utils";
 import {
   getConfigDomains,
@@ -258,6 +259,9 @@ export async function ensureAppConfig(
     projectRoot,
     " This extension is required for app management. Do not remove.",
   );
+
+  // Fixes the order of entries that were already present in the file.
+  await ensureExtensionPointsOrder(projectRoot);
 }
 
 /**
@@ -343,4 +347,7 @@ export async function ensureInstallYaml(
     projectRoot,
     " This extension is required for app management. Do not remove.",
   );
+
+  // Fixes the order of entries that were already present in the file.
+  await ensureExtensionPointsOrder(projectRoot);
 }

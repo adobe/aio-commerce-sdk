@@ -17,6 +17,7 @@ import consola from "consola";
 import { run as generateActions } from "#commands/generate/actions/main";
 import { run as generateManifest } from "#commands/generate/manifest/main";
 import { run as generateSchema } from "#commands/generate/schema/main";
+import { ensureExtensionPointsOrder } from "#commands/install-yaml";
 import { loadAppManifest } from "#commands/utils";
 
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
@@ -35,6 +36,7 @@ export async function run(
   await generateActions(appManifest, projectRoot, templatesDir);
   await generateManifest(appManifest, projectRoot);
   await generateSchema(appManifest, projectRoot);
+  await ensureExtensionPointsOrder(projectRoot);
 }
 
 /** Runs the postinstall hook */
