@@ -39,6 +39,14 @@ describe("resolveCamsBaseUrl", () => {
     ],
     ["prod", { [CAMS_URL_ENV_VAR]: "HTTP://localhost" }, "HTTP://localhost"],
     ["prod", { [CAMS_URL_ENV_VAR]: "  " }, PROD_CAMS_URL],
+    ["prod", { AIO_CLI_ENV: "stage" }, STAGE_CAMS_URL],
+    ["stage", { AIO_CLI_ENV: "prod" }, PROD_CAMS_URL],
+    ["stage", { AIO_CLI_ENV: "other" }, STAGE_CAMS_URL],
+    [
+      "prod",
+      { AIO_CLI_ENV: "stage", [CAMS_URL_ENV_VAR]: "https://x.example.com" },
+      "https://x.example.com",
+    ],
   ] as const)(
     "resolves the %s environment with %j to %s",
     (env, variables, expected) => {
