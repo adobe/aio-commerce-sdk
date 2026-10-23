@@ -1186,20 +1186,19 @@ describe("installationRuntimeAction", () => {
           },
         });
       });
+    });
 
-      test("builds the step tree with the custom installation steps the failed attempt ran", async () => {
+    describe("custom installation steps after a failed attempt", () => {
+      const first = { name: "First", script: "./first.js" };
+
+      /** Stores a failed install with the given data, with nothing installed. */
+      function seedFailedInstall(data: LifecycleAttempt["data"]) {
         desiredInstallationStore = createMockInstallationStore();
         desiredStateStore = createMockLifecycleStore<OrchestrationState>({
           initial: createMockOrchestrationState({
             baselineSnapshotId: null,
             latestAttempt: createMockLifecycleAttempt({
-              data: {
-                installation: {
-                  customInstallationSteps: {
-                    first: { name: "First", script: "./first.js" },
-                  },
-                },
-              },
+              data,
               operation: "install",
               plan: createMockLifecyclePlan({
                 operation: "install",
@@ -1213,6 +1212,12 @@ describe("installationRuntimeAction", () => {
             }),
           }),
         });
+      }
+
+      test("builds the step tree with the custom installation steps the failed attempt ran", async () => {
+        seedFailedInstall({
+          installation: { customInstallationSteps: { first } },
+        });
 
         const action = installationRuntimeAction({
           appConfig: configWithAutoUpgrade,
@@ -1223,12 +1228,29 @@ describe("installationRuntimeAction", () => {
         expect(createRootInstallationStepMock).toHaveBeenCalledWith(
           expect.anything(),
           {
-            executedCustomInstallationSteps: [
-              { name: "First", script: "./first.js" },
-            ],
-            forUpgrade: true,
+            executedCustomInstallationSteps: [first],
+            forLifecycle: true,
           },
         );
+      });
+
+      test("starts the next attempt with only the custom installation steps data of the failed attempt", async () => {
+        seedFailedInstall({
+          installation: {
+            customInstallationSteps: { first },
+            webhooks: { subscriptions: { subscribedWebhooks: [] } },
+          },
+        });
+
+        const action = installationRuntimeAction({
+          appConfig: configWithAutoUpgrade,
+        });
+
+        const result = await planAndStart(action, requestBody);
+        expect(result).toMatchObject({ statusCode: 202 });
+        expect(
+          (await desiredStateStore.get("current"))?.latestAttempt?.data,
+        ).toEqual({ installation: { customInstallationSteps: { first } } });
       });
     });
 

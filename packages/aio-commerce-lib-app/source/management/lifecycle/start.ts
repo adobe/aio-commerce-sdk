@@ -11,6 +11,7 @@
  */
 
 import { createInitialPlanExecutionState } from "#management/common/workflow/execute";
+import { getAtPath, setAtPath } from "#management/common/workflow/utils";
 
 import {
   BlockedLifecyclePlanError,
@@ -26,9 +27,11 @@ import {
 } from "./state";
 
 import type {
+  AppStateSnapshot,
   LifecycleAttempt,
   LifecyclePlanDiff,
 } from "#management/common/orchestration";
+import type { WorkflowData } from "#management/common/workflow/types";
 import type { LifecycleRuntime } from "./state";
 
 /** Inputs used to consume a reviewed plan and create an attempt. */
@@ -89,7 +92,11 @@ export async function startLifecycleAttempt(
   const previousAttempt = state.latestAttempt;
   const attempt: LifecycleAttempt = {
     activations: { start: options.activationId },
-    data: baseline?.data ?? null,
+    data: getStartingData(
+      baseline,
+      previousAttempt,
+      options.failedAttemptDataPaths,
+    ),
     executionDeadline: options.executionDeadline,
     id: crypto.randomUUID(),
     operation: plan.operation,
@@ -121,4 +128,35 @@ function assertFutureExecutionDeadline(executionDeadline: string): void {
   if (!Number.isFinite(deadline) || deadline <= Date.now()) {
     throw new InvalidStartDeadlineError(executionDeadline);
   }
+}
+
+/**
+ * The data a new attempt starts with: the baseline's, with the data at `failedAttemptDataPaths`
+ * taken from the latest attempt when it failed.
+ */
+function getStartingData(
+  baseline: AppStateSnapshot | null,
+  latestAttempt: LifecycleAttempt | null,
+  failedAttemptDataPaths: string[][] = [],
+): WorkflowData | null {
+  const failedData =
+    latestAttempt?.status === "failed" ? latestAttempt.data : null;
+
+  const paths = failedData
+    ? failedAttemptDataPaths.filter(
+        (path) => getAtPath(failedData, path) !== undefined,
+      )
+    : [];
+
+  if (!failedData || paths.length === 0) {
+    return baseline?.data ?? null;
+  }
+
+  // Copied, so taking the failed attempt's data does not change the baseline.
+  const data = structuredClone(baseline?.data ?? {});
+  for (const path of paths) {
+    setAtPath(data, path, getAtPath(failedData, path));
+  }
+
+  return data;
 }

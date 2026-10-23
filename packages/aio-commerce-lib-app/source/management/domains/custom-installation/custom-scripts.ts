@@ -145,6 +145,18 @@ export function getScriptModuleOrThrow(
   return scriptModule;
 }
 
+/** The custom installation step the config declares with the given name, if any. */
+export function findDeclaredStep(
+  config: CommerceAppConfigOutputModel,
+  name: string,
+): CustomInstallationStep | undefined {
+  return hasCustomInstallationSteps(config)
+    ? config.installation.customInstallationSteps.find(
+        (step) => step.name === name,
+      )
+    : undefined;
+}
+
 /**
  * The name of the leaf step that runs a custom installation step, which is also the key its run
  * record is stored under.

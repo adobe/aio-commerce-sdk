@@ -15,6 +15,7 @@ import { getHeader } from "@adobe/aio-commerce-lib-core/headers";
 import { conflict } from "@adobe/aio-commerce-lib-core/responses";
 
 import { getAssociationData } from "#management/association/repository";
+import { getAtPath } from "#management/common/workflow/utils";
 import { migrateLegacyInstallationState } from "#management/deprecated/migration";
 import { createInstallationStore } from "#management/deprecated/stores";
 import { readRunHistory } from "#management/domains/custom-installation/index";
@@ -43,6 +44,12 @@ import type { LifecycleContext } from "#management/index";
 
 /** Action name for async invocation. */
 export const DEFAULT_ACTION_NAME = "app-management/installation";
+
+/** Path of the custom installation steps' data in the lifecycle data. */
+export const CUSTOM_INSTALLATION_STEPS_PATH = [
+  "installation",
+  "customInstallationSteps",
+];
 
 /** Header used to identify the source of an installation action request. */
 export const INSTALLATION_INVOCATION_SOURCE_HEADER =
@@ -213,14 +220,10 @@ export function getExecutedCustomInstallationSteps(
   const data =
     attempt && attempt.status !== "succeeded" ? attempt.data : baseline?.data;
 
-  const section = (
-    data as
-      | { installation?: { customInstallationSteps?: unknown } }
-      | null
-      | undefined
-  )?.installation?.customInstallationSteps;
-
-  return readRunHistory(section, baseline?.config ?? null);
+  return readRunHistory(
+    getAtPath(data ?? {}, CUSTOM_INSTALLATION_STEPS_PATH),
+    baseline?.config ?? null,
+  );
 }
 
 /** Creates the shared storage read/write dependencies used by lifecycle orchestration. */
@@ -256,7 +259,8 @@ export async function createLifecyclePersistence() {
 
 /**
  * Creates the shared dependencies used by lifecycle orchestration. The step tree includes the
- * custom installation steps that ran, read from the stored state.
+ * custom installation steps that ran, read from the stored state, and a new attempt keeps the
+ * custom installation steps' data of a failed latest attempt.
  */
 export async function createLifecycleRuntime(
   params: WorkflowRouteParams,
@@ -271,11 +275,17 @@ export async function createLifecycleRuntime(
 
   return {
     ...persistence,
+
+    // Custom installation steps have no live state to plan from, so only the failed attempt's
+    // records show which of them ran.
+    failedAttemptDataPaths: [CUSTOM_INSTALLATION_STEPS_PATH],
     lifecycleContext: buildLifecycleContext(params, appConfig, logger),
     rootStep: createRootInstallationStep(appConfig, {
-      executedCustomInstallationSteps:
-        getExecutedCustomInstallationSteps(state, baseline) ?? [],
-      forUpgrade: true,
+      executedCustomInstallationSteps: getExecutedCustomInstallationSteps(
+        state,
+        baseline,
+      ),
+      forLifecycle: true,
     }),
   };
 }

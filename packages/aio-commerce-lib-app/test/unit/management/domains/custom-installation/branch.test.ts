@@ -12,7 +12,8 @@
 
 import { describe, expect, test } from "vitest";
 
-import { isBranchStep, isLeafStep } from "#management/common/workflow/step";
+import { isBranchStep } from "#management/common/workflow/step";
+import { applyCustomScript } from "#management/domains/custom-installation/apply";
 import { createCustomInstallationStep } from "#management/domains/custom-installation/branch";
 import {
   configWithCustomInstallationSteps,
@@ -21,10 +22,16 @@ import {
 import { createMockInstallationContext } from "#test/fixtures/installation";
 
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
+import type { CustomInstallationStepIdentity } from "#management/domains/custom-installation/types";
 
 describe("createCustomInstallationStep", () => {
   test("is not configured for a config with no custom steps and no history", () => {
     const step = createCustomInstallationStep(minimalValidConfig);
+    expect(step.isConfigured(minimalValidConfig)).toBe(false);
+  });
+
+  test("is not configured when no run history is stored and the config has no custom steps", () => {
+    const step = createCustomInstallationStep(minimalValidConfig, null);
     expect(step.isConfigured(minimalValidConfig)).toBe(false);
   });
 
@@ -80,7 +87,6 @@ describe("createCustomInstallationStep", () => {
       "demoError",
       "oldStep",
       "demoSuccess",
-      "reconciliation",
     ]);
   });
 
@@ -114,58 +120,99 @@ describe("createCustomInstallationStep", () => {
     },
   );
 
-  describe("reconciliation step", () => {
-    function getReconciliationStep(
-      config: CommerceAppConfigOutputModel = configWithCustomInstallationSteps,
+  describe("lifecycle leaves", () => {
+    const config = configWithCustomInstallationSteps;
+    const ran = { name: "Demo Success", script: "./demo-success.js" };
+
+    /** Plans the child with the given name of the lifecycle tree. */
+    function planChild(
+      executedSteps: readonly CustomInstallationStepIdentity[] | null,
+      name: string,
+      configs: {
+        baseline: CommerceAppConfigOutputModel | null;
+        target: CommerceAppConfigOutputModel | null;
+      },
     ) {
-      // The reconciliation leaf is only added to the upgrade tree.
-      const step = createCustomInstallationStep(config, [], true);
-      const reconciliation = step.children.find(
-        (child) => child.name === "reconciliation",
-      );
+      const step = createCustomInstallationStep(config, executedSteps, true);
+      const child = step.children.find((candidate) => candidate.name === name);
+      expect.assert(child?.plan, `Expected a lifecycle leaf named ${name}`);
 
-      expect.assert(reconciliation && isLeafStep(reconciliation));
-      return reconciliation;
-    }
-
-    test("is left out of the tree unless reconciliation is requested", () => {
-      const step = createCustomInstallationStep(
-        configWithCustomInstallationSteps,
-      );
-      const names = step.children.map((child) => child.name);
-      expect(names).not.toContain("reconciliation");
-    });
-
-    test("has plan and apply capabilities for the upgrade path", () => {
-      const reconciliation = getReconciliationStep();
-      expect(reconciliation.plan).toBeDefined();
-      expect(reconciliation.apply).toBeDefined();
-    });
-
-    test("records the configured steps' identities when its install runs", () => {
-      const reconciliation = getReconciliationStep();
-
-      const result = reconciliation.install(
-        configWithCustomInstallationSteps,
+      return child.plan(
+        {
+          baseline: configs.baseline
+            ? { config: configs.baseline, data: null }
+            : null,
+          path: ["installation", "customInstallationSteps", name],
+          targetConfig: configs.target,
+        },
         createMockInstallationContext(),
       );
+    }
 
-      expect(result).toEqual({
-        executedSteps: [
-          { name: "Demo Success", script: "./demo-success.js" },
-          { name: "Demo Error", script: "./demo-error.js" },
-        ],
+    test("apply only their own step", () => {
+      const step = createCustomInstallationStep(config, [ran], true);
+      expect(step.children.map((child) => child.apply)).toEqual([
+        applyCustomScript,
+        applyCustomScript,
+      ]);
+    });
+
+    test("plan an `add` for a configured step that has not run", async () => {
+      const result = await planChild([ran], "demoError", {
+        baseline: config,
+        target: config,
+      });
+
+      expect(result).toMatchObject({
+        plan: { operations: [{ id: "add:Demo Error", kind: "add" }] },
       });
     });
 
-    test("records no executed steps for a config without custom installation steps", () => {
-      const reconciliation = getReconciliationStep(minimalValidConfig);
+    test("plan nothing for a step that ran", async () => {
+      const result = await planChild([ran], "demoSuccess", {
+        baseline: config,
+        target: config,
+      });
 
-      const result = reconciliation.install(
-        minimalValidConfig,
-        createMockInstallationContext(),
+      expect(result).toMatchObject({ plan: { operations: [] } });
+    });
+
+    test("plan a `remove` for a configured step on uninstall when no run history is stored", async () => {
+      const result = await planChild(null, "demoSuccess", {
+        baseline: config,
+        target: null,
+      });
+
+      expect(result).toMatchObject({
+        plan: { operations: [{ before: ran, kind: "remove" }] },
+      });
+    });
+
+    test("plan nothing for a configured step that never ran on uninstall", async () => {
+      const result = await planChild([], "demoSuccess", {
+        baseline: config,
+        target: null,
+      });
+
+      expect(result).toMatchObject({ plan: { operations: [] } });
+    });
+
+    test("warn about a step that ran but is no longer configured on uninstall", async () => {
+      const result = await planChild(
+        [{ name: "Old Step", script: "./old-step.js" }],
+        "oldStep",
+        { baseline: config, target: null },
       );
-      expect(result).toEqual({ executedSteps: [] });
+
+      expect(result).toMatchObject({
+        issues: [{ code: "CUSTOM_INSTALLATION_STEP_REMOVED" }],
+        plan: { operations: [] },
+      });
+    });
+
+    test("are left out of the deprecated trees", () => {
+      const step = createCustomInstallationStep(config, [ran]);
+      expect(step.children.map((child) => child.plan)).toEqual([undefined]);
     });
   });
 });

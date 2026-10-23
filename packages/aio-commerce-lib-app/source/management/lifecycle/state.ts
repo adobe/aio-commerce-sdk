@@ -68,6 +68,12 @@ export type LifecycleRuntime = {
   /** Every plan made, keyed by plan id. */
   planStore: LifecycleStore<LifecyclePlan>;
   baselineProvider: LifecycleBaselineProvider;
+
+  /**
+   * Paths of the data a new attempt takes from the latest attempt when it failed, instead of from
+   * the baseline.
+   */
+  failedAttemptDataPaths?: string[][];
 };
 
 /**

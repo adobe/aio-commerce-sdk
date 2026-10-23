@@ -55,8 +55,8 @@ export function readRunHistory(
   config: CommerceAppConfigOutputModel | null,
 ): CustomInstallationStepIdentity[] {
   if (typeof section !== "object" || section === null) {
-    // Planning from the deployed config when no baseline is stored has no data, but that
-    // config's steps ran.
+    // Data stored without step records still had its config's steps run; taking none as run
+    // would run them again.
     return getConfiguredSteps(config);
   }
 

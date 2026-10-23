@@ -12,6 +12,11 @@
 
 import { describe, expect, test, vi } from "vitest";
 
+import {
+  CUSTOM_INSTALLATION_STEPS_PATH,
+  getExecutedCustomInstallationSteps,
+} from "#actions/installation/common";
+import { getPlanInputs } from "#actions/installation/plan";
 import { createRootInstallationStep } from "#management/installation/root";
 import {
   BlockedLifecyclePlanError,
@@ -29,12 +34,15 @@ import {
 import { executeLifecycleAttempt } from "#management/lifecycle/execution";
 import { planLifecycle } from "#management/lifecycle/planning";
 import { startLifecycleAttempt } from "#management/lifecycle/start";
+import { CURRENT_STATE_KEY } from "#management/lifecycle/state";
 import { createMockConfig } from "#test/fixtures/config";
 import { createMockInstallationContextWithScripts } from "#test/fixtures/installation";
 import {
   createMockAppStateSnapshot,
+  createMockLifecycleAttempt,
   createMockLifecycleRuntime,
   createMockLifecycleStore,
+  createMockOrchestrationState,
 } from "#test/fixtures/lifecycle";
 import {
   createMockBranchStep,
@@ -45,6 +53,8 @@ import {
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 import type {
   AppStateSnapshot,
+  LifecycleAttempt,
+  LifecycleOperation,
   OrchestrationState,
 } from "#management/common/orchestration";
 import type { BranchStep } from "#management/common/workflow/step";
@@ -1740,6 +1750,78 @@ describe("lifecycle runtime", () => {
       result.result.snapshotId,
     );
   });
+
+  describe("starting an attempt after a failed one", () => {
+    const baselineData = { root: { custom: "baseline", other: "baseline" } };
+
+    /** Plans an upgrade and starts it after the given latest attempt. */
+    async function startAfter(latestAttempt: LifecycleAttempt) {
+      const baseline = createBaseline("1.0.0", structuredClone(baselineData));
+      const { runtime } = createMockLifecycleRuntime({
+        baseline,
+        stateStore: createMockLifecycleStore<OrchestrationState>({
+          initial: createMockOrchestrationState({
+            baselineSnapshotId: baseline.id,
+            latestAttempt,
+          }),
+        }),
+      });
+
+      const planning = await planLifecycle({
+        ...runtime,
+        actionVersion: "1.0.0",
+        operation: "upgrade",
+        targetConfig: createConfig("2.0.0"),
+      });
+
+      const attempt = await startLifecycleAttempt({
+        ...runtime,
+        actionVersion: "1.0.0",
+        activationId: "activation-start",
+        executionDeadline: EXECUTION_DEADLINE,
+        failedAttemptDataPaths: [["root", "custom"]],
+        planId: planning.plan.id,
+      });
+
+      return { attempt, baseline };
+    }
+
+    test("takes the data at the failed-attempt data paths from a failed attempt, and the rest from the baseline", async () => {
+      const { attempt, baseline } = await startAfter(
+        createMockLifecycleAttempt({
+          data: { root: { custom: "failed", other: "failed" } },
+          status: "failed",
+        }),
+      );
+
+      expect(attempt.data).toEqual({
+        root: { custom: "failed", other: "baseline" },
+      });
+      expect(baseline.data).toEqual(baselineData);
+    });
+
+    test("takes the baseline's data when the failed attempt has none at the failed-attempt data paths", async () => {
+      const { attempt } = await startAfter(
+        createMockLifecycleAttempt({
+          data: { root: { other: "failed" } },
+          status: "failed",
+        }),
+      );
+
+      expect(attempt.data).toEqual(baselineData);
+    });
+
+    test("takes the baseline's data when the latest attempt succeeded", async () => {
+      const { attempt } = await startAfter(
+        createMockLifecycleAttempt({
+          data: { root: { custom: "succeeded", other: "succeeded" } },
+          status: "succeeded",
+        }),
+      );
+
+      expect(attempt.data).toEqual(baselineData);
+    });
+  });
 });
 
 describe("lifecycle paper trail", () => {
@@ -1934,19 +2016,132 @@ describe("lifecycle paper trail", () => {
 });
 
 describe("lifecycle custom installation steps", () => {
-  const config = createMockConfig({
-    installation: {
-      customInstallationSteps: [
-        { description: "Runs first", name: "First", script: "./first.js" },
-        { description: "Runs second", name: "Second", script: "./second.js" },
-        { description: "Runs third", name: "Third", script: "./third.js" },
-      ],
-    },
-  });
+  /** The script of the custom installation step with the given name. */
+  function scriptOf(name: string) {
+    return `./${name.toLowerCase()}.js`;
+  }
 
-  /** The production installation tree, reduced to its custom installation steps branch. */
-  function createRootStep(): BranchStep {
-    const rootStep = createRootInstallationStep(config, { forUpgrade: true });
+  /** A config at the given version that declares a custom installation step per name. */
+  function createConfigWithSteps(version: string, names: string[]) {
+    return createMockConfig({
+      installation: {
+        customInstallationSteps: names.map((name) => ({
+          description: `Runs ${name}`,
+          name,
+          script: scriptOf(name),
+        })),
+      },
+      metadata: { version },
+    });
+  }
+
+  /**
+   * Scripts that record in `calls` every install and uninstall they run, and fail the first time
+   * they run a call in `failOnce`.
+   */
+  function createScripts(failOnce: string[] = []) {
+    const calls: string[] = [];
+    const failed = new Set<string>();
+
+    const handle = (call: string) => () => {
+      calls.push(call);
+      if (failOnce.includes(call) && !failed.has(call)) {
+        failed.add(call);
+        throw new Error(`${call} failed`);
+      }
+    };
+
+    const scripts = Object.fromEntries(
+      ["First", "Second", "Third", "Fourth"].map((name) => [
+        scriptOf(name),
+        {
+          install: handle(`install:${name}`),
+          uninstall: handle(`uninstall:${name}`),
+        },
+      ]),
+    );
+
+    return { calls, scripts };
+  }
+
+  /** The run history of First and Second, in every format stored so far. */
+  const HISTORY_FORMATS = [
+    {
+      data: {
+        first: { data: null, script: scriptOf("First") },
+        second: { data: null, script: scriptOf("Second") },
+      },
+      format: "legacy runner records",
+    },
+    {
+      data: {
+        reconciliation: {
+          executedSteps: [
+            { name: "First", script: scriptOf("First") },
+            { name: "Second", script: scriptOf("Second") },
+          ],
+        },
+      },
+      format: "the 2.0 upgrade list",
+    },
+    {
+      data: {
+        first: { name: "First", script: scriptOf("First") },
+        second: { name: "Second", script: scriptOf("Second") },
+      },
+      format: "per-step records",
+    },
+  ];
+
+  /** A baseline where First and Second ran, with their run history stored as `data`. */
+  function createInstalledBaseline(data: Record<string, unknown>) {
+    return createMockAppStateSnapshot({
+      config: createConfigWithSteps("1.0.0", ["First", "Second"]),
+
+      // Copied, since the in-memory stores share objects and execution writes into the data it
+      // starts from.
+      data: {
+        installation: { customInstallationSteps: structuredClone(data) },
+      },
+    });
+  }
+
+  /** A lifecycle runtime set up as the installation action sets it up. */
+  function createRuntime(
+    scripts: Record<string, unknown>,
+    baseline: AppStateSnapshot | null = null,
+  ) {
+    const { runtime } = createMockLifecycleRuntime({ baseline });
+
+    return {
+      ...runtime,
+      failedAttemptDataPaths: [CUSTOM_INSTALLATION_STEPS_PATH],
+      lifecycleContext: createMockInstallationContextWithScripts(scripts),
+    };
+  }
+
+  type Runtime = ReturnType<typeof createRuntime>;
+
+  /**
+   * The production installation tree, reduced to its custom installation steps branch, built from
+   * the stored state as every lifecycle request builds it.
+   */
+  async function createRootStep(
+    runtime: Runtime,
+    appConfig: CommerceAppConfigOutputModel,
+  ): Promise<BranchStep> {
+    const state = await runtime.stateStore.get(CURRENT_STATE_KEY);
+    const baseline = await runtime.baselineProvider.get(
+      state?.baselineSnapshotId ?? null,
+    );
+
+    const rootStep = createRootInstallationStep(appConfig, {
+      executedCustomInstallationSteps: getExecutedCustomInstallationSteps(
+        state,
+        baseline,
+      ),
+      forLifecycle: true,
+    });
 
     // The other domains read live Commerce state while planning, which these tests don't serve.
     return {
@@ -1957,81 +2152,208 @@ describe("lifecycle custom installation steps", () => {
     };
   }
 
-  function createRuntime(scripts: Record<string, unknown>) {
-    const { runtime } = createMockLifecycleRuntime({
-      baseline: null,
-      rootStep: createRootStep(),
-    });
-
-    return {
+  /** Plans, starts and executes an operation, each in its own request as the installation action does. */
+  async function run(
+    runtime: Runtime,
+    operation: LifecycleOperation,
+    appConfig: CommerceAppConfigOutputModel,
+    activationId: string,
+  ) {
+    const planning = await planLifecycle({
       ...runtime,
-      lifecycleContext: createMockInstallationContextWithScripts(scripts),
-    };
-  }
-
-  type Runtime = ReturnType<typeof createRuntime>;
-
-  function plan(runtime: Runtime) {
-    return planLifecycle({
-      ...runtime,
+      ...getPlanInputs(operation, appConfig),
       actionVersion: "1.0.0",
-      operation: "install",
-      targetConfig: config,
+      operation,
+      rootStep: await createRootStep(runtime, appConfig),
     });
-  }
 
-  function start(runtime: Runtime, planId: string, activationId: string) {
-    return startLifecycleAttempt({
+    const attempt = await startLifecycleAttempt({
       ...runtime,
       actionVersion: "1.0.0",
       activationId,
       executionDeadline: EXECUTION_DEADLINE,
-      planId,
+      planId: planning.plan.id,
+      rootStep: await createRootStep(runtime, appConfig),
     });
-  }
 
-  function execute(runtime: Runtime, attemptId: string, activationId: string) {
     return executeLifecycleAttempt({
       ...runtime,
       actionVersion: "1.0.0",
-      activationId,
-      attemptId,
+      activationId: `${activationId}-exec`,
+      attemptId: attempt.id,
       executionDeadline: EXECUTION_DEADLINE,
+      rootStep: await createRootStep(runtime, appConfig),
     });
   }
 
   test("skips the scripts that already succeeded when retrying a failed install", async () => {
-    const first = vi.fn();
-    const second = vi.fn();
-    const third = vi
-      .fn()
-      .mockRejectedValueOnce(new Error("third failure"))
-      .mockResolvedValue(undefined);
+    const { calls, scripts } = createScripts(["install:Third"]);
+    const runtime = createRuntime(scripts);
+    const config = createConfigWithSteps("1.0.0", ["First", "Second", "Third"]);
 
-    const runtime = createRuntime({
-      "./first.js": { install: first },
-      "./second.js": { install: second },
-      "./third.js": { install: third },
-    });
-
-    const firstAttempt = await start(
-      runtime,
-      (await plan(runtime)).plan.id,
-      "a1",
+    expect((await run(runtime, "install", config, "a1")).status).toBe("failed");
+    expect((await run(runtime, "install", config, "a2")).status).toBe(
+      "succeeded",
     );
-    const failed = await execute(runtime, firstAttempt.id, "a1-exec");
-    expect(failed.status).toBe("failed");
 
-    const retryAttempt = await start(
-      runtime,
-      (await plan(runtime)).plan.id,
-      "a2",
-    );
-    const retried = await execute(runtime, retryAttempt.id, "a2-exec");
-    expect(retried.status).toBe("succeeded");
-
-    expect(first).toHaveBeenCalledOnce();
-    expect(second).toHaveBeenCalledOnce();
-    expect(third).toHaveBeenCalledTimes(2);
+    expect(calls).toEqual([
+      "install:First",
+      "install:Second",
+      "install:Third",
+      "install:Third",
+    ]);
   });
+
+  test("does not run again on a later upgrade the scripts that succeeded in a failed attempt", async () => {
+    const { calls, scripts } = createScripts(["install:Third"]);
+    const runtime = createRuntime(scripts);
+    const names = ["First", "Second", "Third"];
+
+    await run(runtime, "install", createConfigWithSteps("1.0.0", names), "a1");
+    await run(runtime, "install", createConfigWithSteps("1.0.0", names), "a2");
+    expect(
+      (
+        await run(
+          runtime,
+          "upgrade",
+          createConfigWithSteps("2.0.0", names),
+          "a3",
+        )
+      ).status,
+    ).toBe("succeeded");
+
+    expect(calls).toEqual([
+      "install:First",
+      "install:Second",
+      "install:Third",
+      "install:Third",
+    ]);
+  });
+
+  test.each(HISTORY_FORMATS)(
+    "upgrades without running again the steps that ran, from $format",
+    async ({ data }) => {
+      const { calls, scripts } = createScripts();
+      const runtime = createRuntime(scripts, createInstalledBaseline(data));
+      const names = ["First", "Second", "Third"];
+
+      expect(
+        (
+          await run(
+            runtime,
+            "upgrade",
+            createConfigWithSteps("2.0.0", names),
+            "a1",
+          )
+        ).status,
+      ).toBe("succeeded");
+      expect(
+        (
+          await run(
+            runtime,
+            "upgrade",
+            createConfigWithSteps("3.0.0", names),
+            "a2",
+          )
+        ).status,
+      ).toBe("succeeded");
+
+      expect(calls).toEqual(["install:Third"]);
+    },
+  );
+
+  test.each(HISTORY_FORMATS)(
+    "warns about a step an upgrade removes, without running anything, from $format",
+    async ({ data }) => {
+      const { calls, scripts } = createScripts();
+      const runtime = createRuntime(scripts, createInstalledBaseline(data));
+
+      const upgraded = await run(
+        runtime,
+        "upgrade",
+        createConfigWithSteps("2.0.0", ["First"]),
+        "a1",
+      );
+
+      expect(upgraded.status).toBe("succeeded");
+      expect(upgraded.plan.issues).toMatchObject([
+        {
+          code: "CUSTOM_INSTALLATION_STEP_REMOVED",
+          path: ["installation", "customInstallationSteps", "second"],
+        },
+      ]);
+      expect(upgraded.progress.children).toEqual([]);
+      expect(calls).toEqual([]);
+    },
+  );
+
+  test.each(HISTORY_FORMATS)(
+    "uninstalls the steps that ran, newest first, from $format",
+    async ({ data }) => {
+      const { calls, scripts } = createScripts();
+      const baseline = createInstalledBaseline(data);
+      const runtime = createRuntime(scripts, baseline);
+
+      expect(
+        (await run(runtime, "uninstall", baseline.config, "a1")).status,
+      ).toBe("succeeded");
+
+      expect(calls).toEqual(["uninstall:Second", "uninstall:First"]);
+    },
+  );
+
+  test.each(HISTORY_FORMATS)(
+    "retries a failed upgrade without running again the steps that succeeded, from $format",
+    async ({ data }) => {
+      const { calls, scripts } = createScripts(["install:Fourth"]);
+      const runtime = createRuntime(scripts, createInstalledBaseline(data));
+      const names = ["First", "Second", "Third", "Fourth"];
+      const upgraded = createConfigWithSteps("2.0.0", names);
+
+      expect((await run(runtime, "upgrade", upgraded, "a1")).status).toBe(
+        "failed",
+      );
+      expect((await run(runtime, "upgrade", upgraded, "a2")).status).toBe(
+        "succeeded",
+      );
+      expect(
+        (
+          await run(
+            runtime,
+            "upgrade",
+            createConfigWithSteps("3.0.0", names),
+            "a3",
+          )
+        ).status,
+      ).toBe("succeeded");
+
+      expect(calls).toEqual([
+        "install:Third",
+        "install:Fourth",
+        "install:Fourth",
+      ]);
+    },
+  );
+
+  test.each(HISTORY_FORMATS)(
+    "retries a failed uninstall without uninstalling again the steps already uninstalled, from $format",
+    async ({ data }) => {
+      const { calls, scripts } = createScripts(["uninstall:First"]);
+      const baseline = createInstalledBaseline(data);
+      const runtime = createRuntime(scripts, baseline);
+
+      expect(
+        (await run(runtime, "uninstall", baseline.config, "a1")).status,
+      ).toBe("failed");
+      expect(
+        (await run(runtime, "uninstall", baseline.config, "a2")).status,
+      ).toBe("succeeded");
+
+      expect(calls).toEqual([
+        "uninstall:Second",
+        "uninstall:First",
+        "uninstall:First",
+      ]);
+    },
+  );
 });

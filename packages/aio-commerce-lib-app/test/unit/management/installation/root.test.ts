@@ -63,11 +63,11 @@ describe("createRootInstallationStep", () => {
     ).not.toContain("reconciliation");
   });
 
-  test("includes the reconciliation leaf when built for an upgrade", () => {
+  test("builds a leaf per custom installation step when built for the lifecycle", () => {
     const result = createRootInstallationStep(
       configWithCustomInstallationSteps,
       {
-        forUpgrade: true,
+        forLifecycle: true,
       },
     );
 
@@ -76,7 +76,6 @@ describe("createRootInstallationStep", () => {
     expect(customInstallationStep.children.map((child) => child.name)).toEqual([
       "demoSuccess",
       "demoError",
-      "reconciliation",
     ]);
   });
 
@@ -87,7 +86,7 @@ describe("createRootInstallationStep", () => {
         executedCustomInstallationSteps: [
           { name: "Demo Error", script: "./demo-error.js" },
         ],
-        forUpgrade: true,
+        forLifecycle: true,
       },
     );
 
@@ -96,7 +95,6 @@ describe("createRootInstallationStep", () => {
     expect(customInstallationStep.children.map((child) => child.name)).toEqual([
       "demoError",
       "demoSuccess",
-      "reconciliation",
     ]);
   });
 
@@ -105,7 +103,7 @@ describe("createRootInstallationStep", () => {
     (operation) => {
       const rootStep = createRootInstallationStep(
         configWithCustomInstallationSteps,
-        { forUpgrade: true },
+        { forLifecycle: true },
       );
 
       const missing: string[] = [];

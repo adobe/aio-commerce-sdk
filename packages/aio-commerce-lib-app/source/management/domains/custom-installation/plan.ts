@@ -10,8 +10,9 @@
  * governing permissions and limitations under the License.
  */
 
-import { hasCustomInstallationSteps } from "#config/schema/installation";
 import { toItemRef } from "#management/common/workflow/resource";
+
+import { findDeclaredStep } from "./custom-scripts";
 
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 import type { CustomInstallationStep } from "#config/schema/installation";
@@ -23,10 +24,9 @@ import type {
 } from "#management/common/workflow/resource";
 import type { ValidationExecutionContext } from "#management/common/workflow/step";
 import type {
-  CustomInstallationDomainPlan,
-  CustomInstallationSnapshotData,
   CustomInstallationStepIdentity,
   CustomScriptDomainPlan,
+  CustomScriptRun,
 } from "./types";
 
 /** Builds an `add` operation for a step run for the first time. */
@@ -43,13 +43,10 @@ function buildAddOperation(
   };
 }
 
-/**
- * Builds a `remove` operation for a step no longer in the target config. Its `uninstall` runs only
- * when there is no target config; otherwise it is informational.
- */
+/** Builds a `remove` operation, which runs the `uninstall` of a step that ran. */
 function buildRemoveOperation(
   step: CustomInstallationStepIdentity,
-  declared: CustomInstallationStep | undefined,
+  declared: CustomInstallationStep,
 ): ResourceOperation<CustomInstallationStepIdentity> {
   return {
     before: { name: step.name, script: step.script },
@@ -59,92 +56,6 @@ function buildRemoveOperation(
     label: `Remove custom installation step "${step.name}"`,
     reason: "change",
   };
-}
-
-/**
- * Resolves the executed-step history to diff the target against. Prefers the reconciliation
- * snapshot when present, and otherwise reconstructs it from the baseline config's own steps.
- */
-function resolveBaselineExecutedSteps(
-  baseline: PlanningInput<
-    CommerceAppConfigOutputModel,
-    CustomInstallationSnapshotData
-  >["baseline"],
-): CustomInstallationStepIdentity[] {
-  const recorded = baseline?.data?.executedSteps;
-  if (recorded) {
-    return recorded;
-  }
-
-  // A baseline recorded before the reconciliation leaf shipped has no executed-step history, but
-  // its config's steps did run under the old per-script leaves. Seeding them as already-run
-  // stops the first upgrade under this version from re-running every one of them as a new `add`.
-  if (baseline && hasCustomInstallationSteps(baseline.config)) {
-    return baseline.config.installation.customInstallationSteps.map((step) => ({
-      name: step.name,
-      script: step.script,
-    }));
-  }
-
-  return [];
-}
-
-/**
- * Plans the custom installation steps domain by diffing the baseline's executed-step history
- * against the target config's steps, by `name`: `add` for names not seen before, `remove` for
- * names no longer configured. Steps present in both produce no operation and are never re-run.
- */
-export function planCustomInstallationSteps(
-  input: PlanningInput<
-    CommerceAppConfigOutputModel,
-    CustomInstallationSnapshotData
-  >,
-  _context: ValidationExecutionContext,
-): Promise<PlanningResult<CustomInstallationDomainPlan>> {
-  const { path, baseline, targetConfig } = input;
-
-  const baselineExecutedSteps = resolveBaselineExecutedSteps(baseline);
-  const targetSteps =
-    targetConfig && hasCustomInstallationSteps(targetConfig)
-      ? targetConfig.installation.customInstallationSteps
-      : [];
-
-  const baselineNames = new Set(baselineExecutedSteps.map((s) => s.name));
-  const targetNames = new Set(targetSteps.map((s) => s.name));
-
-  const addOperations = targetSteps
-    .filter((step) => !baselineNames.has(step.name))
-    .map((step) => buildAddOperation(step));
-
-  const baselineSteps =
-    baseline && hasCustomInstallationSteps(baseline.config)
-      ? baseline.config.installation.customInstallationSteps
-      : [];
-
-  const removeOperations = baselineExecutedSteps
-    .filter((step) => !targetNames.has(step.name))
-    .map((step) =>
-      buildRemoveOperation(
-        step,
-        baselineSteps.find((declared) => declared.name === step.name),
-      ),
-    );
-
-  const operations: ResourceOperation<CustomInstallationStepIdentity>[] = [
-    ...addOperations,
-    ...removeOperations,
-  ];
-
-  return Promise.resolve({
-    kind: "planned",
-    plan: {
-      baselineConfig: baseline?.config ?? null,
-      baselineExecutedSteps,
-      operations,
-      path,
-      targetConfig,
-    },
-  });
 }
 
 /** Builds the warning for a step the config no longer declares, whose script is no longer deployed. */
@@ -162,7 +73,7 @@ function buildRemovedStepIssue(name: string): NonBlockingPlanningIssue {
  * Whether a step only the run history knows is being removed: by an uninstall, or by an upgrade
  * whose baseline still declares it.
  */
-function isRemovedNow(
+function isBeingRemoved(
   executed: CustomInstallationStepIdentity,
   baselineConfig: CommerceAppConfigOutputModel | null,
   targetConfig: CommerceAppConfigOutputModel | null,
@@ -170,77 +81,55 @@ function isRemovedNow(
   return (
     targetConfig === null ||
     (baselineConfig !== null &&
-      hasCustomInstallationSteps(baselineConfig) &&
-      baselineConfig.installation.customInstallationSteps.some(
-        (step) => step.name === executed.name,
-      ))
+      findDeclaredStep(baselineConfig, executed.name) !== undefined)
   );
 }
 
-/** Plans the operations of a step the deployed config declares. */
-function planDeclaredScript(
-  declared: CustomInstallationStep,
-  executed: CustomInstallationStepIdentity | null | undefined,
-  targetConfig: CommerceAppConfigOutputModel | null,
-  context: ValidationExecutionContext,
-): ResourceOperation<CustomInstallationStepIdentity>[] {
-  if (!targetConfig) {
-    // Without a stored run history, the deployed config is all that is known about what ran.
-    return executed === null
-      ? []
-      : [buildRemoveOperation(executed ?? declared, declared)];
-  }
-
-  if (!executed) {
-    return [buildAddOperation(declared)];
-  }
-
-  if (executed.script !== declared.script) {
-    context.logger.warn(
-      `Custom installation step "${declared.name}" now points to a different script ` +
-        `("${declared.script}" instead of "${executed.script}"). This does not affect ` +
-        "append-only behavior: its install already ran and will not run again.",
-    );
-  }
-
-  return [];
-}
-
 /**
- * Plans a single custom installation step, which never runs twice. With a target config, plans
- * an `add` when the step is declared and has not run. Without one, plans a `remove` when the step
- * is declared and ran, or no run history is stored. A step that ran but is no longer declared has
- * no operation, since its script is no longer deployed, and is reported with a warning when an
- * uninstall or the upgrade that removes it plans it.
+ * Plans a single custom installation step, which never runs twice:
+ * - A step the config no longer declares has no operation, since its script is no longer deployed.
+ *   An uninstall, or the upgrade that removes it, reports it with a warning.
+ * - Without a target config, a declared step that ran, or may have run because no run history is
+ *   stored, gets a `remove`.
+ * - With a target config, a declared step that has not run gets an `add`.
  *
- * @param declared - The step as the deployed config declares it, or `null` when it does not.
- * @param executed - The step as it last ran, `null` when it has not run, or `undefined` when no
- *   run history is stored.
+ * @param run - What is known about the step.
  * @param input - The planning input of the step's leaf.
  * @param context - The planning context.
  */
 export function planCustomScript(
-  declared: CustomInstallationStep | null,
-  executed: CustomInstallationStepIdentity | null | undefined,
+  run: CustomScriptRun,
   input: PlanningInput<
     CommerceAppConfigOutputModel,
     CustomInstallationStepIdentity
   >,
   context: ValidationExecutionContext,
 ): Promise<PlanningResult<CustomScriptDomainPlan>> {
+  const { declared, executed, isHistoryStored } = run;
   const { path, baseline, targetConfig } = input;
   const baselineConfig = baseline?.config ?? null;
 
-  const operations = declared
-    ? planDeclaredScript(declared, executed, targetConfig, context)
-    : [];
+  const operations: ResourceOperation<CustomInstallationStepIdentity>[] = [];
+  const issues: NonBlockingPlanningIssue[] = [];
 
-  const issues =
-    !declared &&
-    executed &&
-    isRemovedNow(executed, baselineConfig, targetConfig)
-      ? [buildRemovedStepIssue(executed.name)]
-      : [];
+  if (!declared) {
+    if (executed && isBeingRemoved(executed, baselineConfig, targetConfig)) {
+      issues.push(buildRemovedStepIssue(executed.name));
+    }
+  } else if (!targetConfig) {
+    // Without a stored run history, the deployed config is all that is known about what ran.
+    if (executed || !isHistoryStored) {
+      operations.push(buildRemoveOperation(executed ?? declared, declared));
+    }
+  } else if (!executed) {
+    operations.push(buildAddOperation(declared));
+  } else if (executed.script !== declared.script) {
+    context.logger.warn(
+      `Custom installation step "${declared.name}" now points to a different script ` +
+        `("${declared.script}" instead of "${executed.script}"). This does not affect ` +
+        "append-only behavior: its install already ran and will not run again.",
+    );
+  }
 
   return Promise.resolve({
     issues,
