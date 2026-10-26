@@ -224,11 +224,7 @@ export async function addExtensionPointToAppConfig(
     `Adding extension "${extensionPointId}" to ${APP_CONFIG_FILE}...`,
   );
 
-  const extensions = getOrCreateMap(doc, ["extensions"], {
-    onBeforeCreate: (pair) => {
-      pair.key.spaceBefore = true;
-    },
-  });
+  const extensions = getOrCreateMap(doc, ["extensions"]);
 
   const extension = getOrCreateMap(doc, ["extensions", extensionPointId], {
     onBeforeCreate: (pair) => {

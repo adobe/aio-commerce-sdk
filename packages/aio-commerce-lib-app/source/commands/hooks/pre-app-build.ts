@@ -61,9 +61,8 @@ export async function run(
   templatesDir = TEMPLATES_DIR,
 ) {
   if (await ensureExtensionPointsOrder(projectRoot)) {
-    throw new Error(
-      `The extension points in ${APP_CONFIG_FILE} were reordered (${EXTENSION_POINT_ORDER.join(", ")}) to ensure an upgrade works reliably. ` +
-        "The build already read the previous file, so run the build again.",
+    consola.warn(
+      `The extension points in ${APP_CONFIG_FILE} were reordered (${EXTENSION_POINT_ORDER.join(", ")}) to ensure an upgrade works reliably. This is a one-off change.`,
     );
   }
 

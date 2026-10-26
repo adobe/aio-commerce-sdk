@@ -143,7 +143,7 @@ extensions:
     $include: "src/commerce-extensibility-1/ext.config.yaml"
 ```
 
-The `init` command writes the entries in this order, and the `postinstall` hook reorders an existing `app.config.yaml` that is out of order (comments are kept, and extension points not listed above go last). The `pre-app-build` hook does the same as a safety net. In that case it rewrites `app.config.yaml` and fails on purpose, because the build already read the old file. Run the build again and it passes. When the order is already right, the hooks write nothing.
+The `init` command writes the entries in this order, and the `postinstall` hook reorders an existing `app.config.yaml` that is out of order (comments are kept, and extension points not listed above go last). The `pre-app-build` hook does the same as a safety net: it rewrites `app.config.yaml` and logs a one-off warning, then continues with the build. When the order is already right, the hooks write nothing and log nothing.
 
 5. In your `install.yaml`, add the extension point references. If you have multiple extension points, add each as a new entry:
 

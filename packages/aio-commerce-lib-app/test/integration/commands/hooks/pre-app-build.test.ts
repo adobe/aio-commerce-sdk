@@ -14,6 +14,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { readFile, stat } from "node:fs/promises";
 import { join } from "node:path";
 
+import consola from "consola";
 import { afterEach, describe, expect, test, vi } from "vitest";
 
 import {
@@ -66,7 +67,9 @@ vi.mock("@aio-commerce-sdk/scripting-utils/env", async (importOriginal) => ({
 }));
 
 const ORDER_REWRITTEN_RE =
-  /were reordered \(commerce\/backend-ui\/2, commerce\/configuration\/1, commerce\/extensibility\/1\).*run the build again/s;
+  /were reordered \(commerce\/backend-ui\/2, commerce\/configuration\/1, commerce\/extensibility\/1\).*one-off/s;
+
+const warnSpy = vi.spyOn(consola, "warn").mockImplementation(() => undefined);
 
 describe("commands/hooks/pre-app-build", () => {
   afterEach(() => {
@@ -259,7 +262,7 @@ describe("commands/hooks/pre-app-build", () => {
       });
     });
 
-    test("rewrites an out-of-order app.config.yaml and fails asking for a new build", async () => {
+    test("rewrites an out-of-order app.config.yaml, warns once and continues", async () => {
       const wrongOrder = makeAppConfigFile(
         [...ORDERED_EXTENSION_POINTS].reverse(),
       );
@@ -267,18 +270,20 @@ describe("commands/hooks/pre-app-build", () => {
       await withTempProject(
         { ...makeProjectFiles(configWithAdminUiSingleGrid), ...wrongOrder },
         async (tempDir) => {
-          await expect(run("backend-ui/2", tempDir)).rejects.toThrow(
-            ORDER_REWRITTEN_RE,
-          );
+          await expect(run("backend-ui/2", tempDir)).resolves.toBeUndefined();
 
           expect(await readFile(join(tempDir, APP_CONFIG_FILE), "utf-8")).toBe(
             makeAppConfigFile(ORDERED_EXTENSION_POINTS)[APP_CONFIG_FILE],
+          );
+          expect(warnSpy).toHaveBeenCalledOnce();
+          expect(warnSpy).toHaveBeenCalledWith(
+            expect.stringMatching(ORDER_REWRITTEN_RE),
           );
         },
       );
     });
 
-    test("passes on a second invocation after the rewrite", async () => {
+    test("does not warn on a second invocation after the rewrite", async () => {
       const wrongOrder = makeAppConfigFile(
         [...ORDERED_EXTENSION_POINTS].reverse(),
       );
@@ -286,8 +291,11 @@ describe("commands/hooks/pre-app-build", () => {
       await withTempProject(
         { ...makeProjectFiles(configWithAdminUiSingleGrid), ...wrongOrder },
         async (tempDir) => {
-          await expect(run("backend-ui/2", tempDir)).rejects.toThrow();
+          await run("backend-ui/2", tempDir);
+          warnSpy.mockClear();
+
           await expect(run("backend-ui/2", tempDir)).resolves.toBeUndefined();
+          expect(warnSpy).not.toHaveBeenCalled();
         },
       );
     });
@@ -304,6 +312,7 @@ describe("commands/hooks/pre-app-build", () => {
 
           await expect(run("backend-ui/2", tempDir)).resolves.toBeUndefined();
           expect((await stat(path)).mtimeMs).toBe(before.mtimeMs);
+          expect(warnSpy).not.toHaveBeenCalled();
         },
       );
     });
@@ -385,7 +394,7 @@ describe("commands/hooks/pre-app-build", () => {
       );
     });
 
-    test("exits with 1 when app.config.yaml was out of order and had to be rewritten", async () => {
+    test("does not exit when app.config.yaml was out of order and had to be rewritten", async () => {
       vi.stubEnv("EXTENSION", "backend-ui/2");
 
       await withTempProject(
@@ -396,7 +405,8 @@ describe("commands/hooks/pre-app-build", () => {
         },
         async () => {
           await exec();
-          expect(exitSpy).toHaveBeenCalledWith(1);
+          expect(exitSpy).not.toHaveBeenCalled();
+          expect(warnSpy).toHaveBeenCalledOnce();
         },
       );
     });
