@@ -45,7 +45,8 @@ import type { DbRegion } from "@adobe/aio-lib-db";
 const COLLECTION = "held_orders";
 
 function resolveDbRegion(region: unknown): DbRegion {
-  switch (region) {
+  const normalized = typeof region === "string" ? region.toLowerCase() : region;
+  switch (normalized) {
     case undefined:
     case "":
     case "amer":
@@ -53,7 +54,7 @@ function resolveDbRegion(region: unknown): DbRegion {
     case "apac":
     case "emea":
     case "aus":
-      return region;
+      return normalized;
     default:
       throw new Error("DB_REGION must be amer, apac, emea, or aus.");
   }

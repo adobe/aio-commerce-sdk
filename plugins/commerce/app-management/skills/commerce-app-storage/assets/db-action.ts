@@ -33,7 +33,8 @@ type DbClient = Awaited<
 >;
 
 function resolveDbRegion(region: unknown): DbRegion {
-  switch (region) {
+  const normalized = typeof region === "string" ? region.toLowerCase() : region;
+  switch (normalized) {
     case undefined:
     case "":
     case "amer":
@@ -41,7 +42,7 @@ function resolveDbRegion(region: unknown): DbRegion {
     case "apac":
     case "emea":
     case "aus":
-      return region;
+      return normalized;
     default:
       throw new Error("DB_REGION must be amer, apac, emea, or aus.");
   }
@@ -131,7 +132,10 @@ export async function main(params: Record<string, unknown>) {
     if (dbError.name === "DbError") {
       logger.error("Database error", dbError.message ?? "");
     } else {
-      logger.error("Unexpected error", String(error));
+      logger.error(
+        "Unexpected error",
+        error instanceof Error ? error : String(error),
+      );
     }
     return buildErrorResponse(dbError.statusCode ?? 500, {
       body: { message: dbError.message ?? "Unexpected error" },
