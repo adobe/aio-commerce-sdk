@@ -35,8 +35,8 @@
     },
 
     "plugins/commerce/app-management": {
-      // Examples that skills copy into the apps of SDK users.
-      "ignore": ["skills/**/assets/**"]
+      // Assets and compiler fixtures copied into user or temporary projects.
+      "ignore": ["skills/**/assets/**", "test/fixtures/**"]
     },
 
     "turbo/generators": {

@@ -76,6 +76,10 @@ aio app db provision --region <amer|apac|emea|aus>
 npm install @adobe/aio-lib-db
 ```
 
+For TypeScript or checked JavaScript, inspect the installed package's version, type metadata (including `exports`) and declaration files, and check for existing application declarations before the first typecheck or build. Prefer package-provided types. If the package lacks types and no compatible application declaration exists, copy [assets/aio-lib-db.d.ts](assets/aio-lib-db.d.ts) to `src/types/aio-lib-db.d.ts`. Preserve existing declarations; check compatibility before extending them. The SDK-generated TypeScript config includes declarations under `src/` and follows the generated installation action's import into `scripts/setup-database.ts`.
+
+The compatibility declaration targets the stable `@adobe/aio-lib-db` 1.x API subset used by this skill's examples. Its signatures were checked against every published stable version from 1.0.0 through 1.0.4; the supported toolchain is TypeScript 6.0.x and Node.js 22+, with compiler regression coverage using the SDK workspace's TypeScript version. For later 1.x releases without types, verify the used API remains compatible and run the project's strict typecheck and build; do not downgrade just to match the last verified version. Prereleases, new major versions and unlisted APIs require separate API verification and declaration updates as needed. Compiler success does not establish runtime compatibility.
+
 ## Step 3 — Understand intent
 
 Gather from the user:
@@ -352,3 +356,4 @@ A build failure points directly to the offending config field. To exercise the a
 
 - [assets/db-action.ts](assets/db-action.ts) — Full annotated handler: init/connect, CRUD, cursor iteration, and the close lifecycle
 - [assets/setup-database.ts](assets/setup-database.ts) — Full annotated custom installation step: install creates a collection and a unique index, uninstall drops it, with the `context.params` and `createIndex`-on-collection patterns
+- [assets/aio-lib-db.d.ts](assets/aio-lib-db.d.ts) — Narrow compatibility declarations for the DB methods used by this skill's TypeScript examples

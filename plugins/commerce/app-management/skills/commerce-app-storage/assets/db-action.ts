@@ -1,3 +1,15 @@
+/*
+ * Copyright 2026 Adobe. All rights reserved.
+ * This file is licensed to you under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License. You may obtain a copy
+ * of the License at http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under
+ * the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR REPRESENTATIONS
+ * OF ANY KIND, either express or implied. See the License for the specific language
+ * governing permissions and limitations under the License.
+ */
+
 // Full annotated reference for a Commerce app runtime action backed by
 // App Builder Database Storage (@adobe/aio-lib-db).
 //
@@ -25,10 +37,27 @@ import { buildErrorResponse, ok } from "@adobe/aio-commerce-lib-core/responses";
 import AioLogger from "@adobe/aio-lib-core-logging";
 import { init as initDb } from "@adobe/aio-lib-db";
 
+import type { DbRegion } from "@adobe/aio-lib-db";
+
 // The connected client returned by db.connect().
 type DbClient = Awaited<
   ReturnType<Awaited<ReturnType<typeof initDb>>["connect"]>
 >;
+
+function resolveDbRegion(region: unknown): DbRegion {
+  switch (region) {
+    case undefined:
+    case "":
+    case "amer":
+      return "amer";
+    case "apac":
+    case "emea":
+    case "aus":
+      return region;
+    default:
+      throw new Error("DB_REGION must be amer, apac, emea, or aus.");
+  }
+}
 
 export async function main(params: Record<string, unknown>) {
   const logger = AioLogger("commerce-app-storage", {
@@ -46,7 +75,7 @@ export async function main(params: Record<string, unknown>) {
     // 2. Initialize. region MUST match the manifest database.region.
     //    Omit it to use AIO_DB_REGION or the "amer" default.
     const db = await initDb({
-      region: (params.DB_REGION as string) || "amer", // "amer" | "apac" | "emea" | "aus"
+      region: resolveDbRegion(params.DB_REGION),
       token,
     });
 
@@ -112,9 +141,9 @@ export async function main(params: Record<string, unknown>) {
       statusCode?: number;
     };
     if (dbError.name === "DbError") {
-      logger.error("Database error", dbError.message);
+      logger.error("Database error", dbError.message ?? "");
     } else {
-      logger.error("Unexpected error", error);
+      logger.error("Unexpected error", String(error));
     }
     return buildErrorResponse(dbError.statusCode ?? 500, {
       body: { message: dbError.message ?? "Unexpected error" },

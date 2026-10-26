@@ -1,3 +1,15 @@
+/*
+ * Copyright 2026 Adobe. All rights reserved.
+ * This file is licensed to you under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License. You may obtain a copy
+ * of the License at http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under
+ * the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR REPRESENTATIONS
+ * OF ANY KIND, either express or implied. See the License for the specific language
+ * governing permissions and limitations under the License.
+ */
+
 // Full annotated custom installation step for a Commerce App Management app,
 // backed by App Builder Database Storage (@adobe/aio-lib-db).
 //
@@ -40,7 +52,24 @@ import {
 } from "@adobe/aio-commerce-lib-auth";
 import { init as initDb } from "@adobe/aio-lib-db";
 
+import type { DbRegion } from "@adobe/aio-lib-db";
+
 const COLLECTION = "held_orders";
+
+function resolveDbRegion(region: unknown): DbRegion {
+  switch (region) {
+    case undefined:
+    case "":
+    case "amer":
+      return "amer";
+    case "apac":
+    case "emea":
+    case "aus":
+      return region;
+    default:
+      throw new Error("DB_REGION must be amer, apac, emea, or aus.");
+  }
+}
 
 // Open a DB client using the credentials on context.params. The caller is
 // responsible for closing it (see the finally blocks below).
@@ -50,7 +79,7 @@ async function openClient(context: { params: Record<string, unknown> }) {
   const token = await authProvider.getAccessToken();
   const db = await initDb({
     // region MUST match the manifest database.region. Omit to use AIO_DB_REGION.
-    region: (context.params.DB_REGION as string) || "amer", // "amer" | "apac" | "emea" | "aus"
+    region: resolveDbRegion(context.params.DB_REGION),
     token,
   });
   return db.connect();

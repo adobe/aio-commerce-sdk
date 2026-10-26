@@ -3,6 +3,7 @@
   "version": "1.4.0",
   "private": true,
   "scripts": {
+    "test": "vitest run",
     "version": "sdk-sync-plugin-version"
   },
   "devDependencies": {
