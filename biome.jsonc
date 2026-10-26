@@ -25,6 +25,11 @@
 
   "linter": {
     "rules": {
+      "correctness": {
+        // Shared development tools are declared in the workspace root.
+        "noUndeclaredDependencies": "off"
+      },
+
       "performance": {
         "noNamespaceImport": "off"
       },
