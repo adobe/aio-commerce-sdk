@@ -709,6 +709,78 @@ describe("planWebhookSubscriptions", () => {
       expect(result.issues).toEqual([]);
     });
 
+    test.each([
+      ["batch_name", { batch_name: "renamed_batch" }],
+      ["hook_name", { hook_name: "renamed_hook" }],
+    ])(
+      "does not warn when the app changes the %s of a live modification webhook",
+      async (_field, rename) => {
+        const baseline = configWith({ category: "modification" });
+        const target = configWith({
+          category: "modification",
+          webhook: rename,
+        });
+
+        const result = await plan({
+          baseline,
+          live: [liveFrom(baseline)],
+          target,
+        }).result;
+
+        expect.assert(result.kind === "planned");
+        expect(result.plan.operations.map((op) => op.kind)).toEqual([
+          "remove",
+          "add",
+        ]);
+        expect(result.issues).toEqual([]);
+      },
+    );
+
+    test("still warns about a foreign webhook when the app changes a webhook identity", async () => {
+      const baseline = configWith({ category: "modification" });
+      const target = configWith({
+        category: "modification",
+        webhook: { batch_name: "renamed_batch" },
+      });
+
+      const result = await plan({
+        baseline,
+        live: [liveFrom(baseline), FOREIGN_WEBHOOK],
+        target,
+      }).result;
+
+      expect.assert(result.kind === "planned");
+      expect(result.plan.operations.map((op) => op.kind)).toEqual([
+        "remove",
+        "add",
+      ]);
+      expect(result.issues).toEqual([CONFLICT_WARNING]);
+    });
+
+    test("is not affected by an unrelated live webhook on another hook point", async () => {
+      const baseline = configWith({ category: "modification" });
+      const target = configWith({
+        category: "modification",
+        webhook: { batch_name: "renamed_batch" },
+      });
+
+      const result = await plan({
+        baseline,
+        live: [
+          liveFrom(baseline),
+          createMockExistingCommerceWebhook({
+            batch_name: "other_app_batch",
+            hook_name: "other_app_hook",
+            webhook_method: "plugin.customer.api.customer_save",
+          }),
+        ],
+        target,
+      }).result;
+
+      expect.assert(result.kind === "planned");
+      expect(result.issues).toEqual([]);
+    });
+
     test("does not warn about the app's own webhook", async () => {
       const config = configWith({
         category: "modification",

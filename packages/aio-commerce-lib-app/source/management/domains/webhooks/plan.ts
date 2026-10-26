@@ -103,7 +103,7 @@ export async function planWebhookSubscriptions(
 
 /**
  * Warns about the modification webhooks the plan adds or updates when another app already has a
- * webhook on the same hook point.
+ * webhook on the same hook point. Webhooks the plan removes are ignored, since they will not stay live.
  */
 function findConflictIssues(
   targetConfig: WebhooksConfig | null,
@@ -133,7 +133,15 @@ function findConflictIssues(
     return isModification && isChanged;
   });
 
-  const conflicts = findConflictingWebhooks(entries, webhooks, idPrefix);
+  const removed = operations.flatMap((op) =>
+    op.kind === "remove" ? [op.before] : [],
+  );
+
+  const remaining = webhooks.filter(
+    (webhook) => !isWebhookInList(removed, webhook),
+  );
+
+  const conflicts = findConflictingWebhooks(entries, remaining, idPrefix);
   return toWebhookConflictIssues(conflicts).map((issue) => ({
     ...issue,
     blocking: false,
