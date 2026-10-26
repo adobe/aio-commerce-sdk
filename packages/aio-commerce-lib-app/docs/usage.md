@@ -129,19 +129,21 @@ Generated Runtime actions always use `.js`.
 > [!NOTE]
 > Generated actions default to the `nodejs:24` runtime. To pin a different runtime, set the `runtime` field on the action in the generated `ext.config.yaml`. Codegen preserves a `runtime` you set there, so it survives regeneration. Generated app-management and business-configuration packages declare `LOG_LEVEL` at the package level; action-specific inputs remain on their actions.
 
-1. In your `app.config.yaml`, reference the generated extension configurations. If you have multiple extension points, add each as a new entry:
+1. In your `app.config.yaml`, reference the generated extension configurations. If you have multiple extension points, add each as a new entry. Keep this order, with `commerce/extensibility/1` last, so that an upgrade works reliably:
 
 ```yaml
 extensions:
-  commerce/extensibility/1:
-    $include: "src/commerce-extensibility-1/ext.config.yaml"
-  # Only include this if businessConfig is defined in your app.commerce.config.*:
-  commerce/configuration/1:
-    $include: "src/commerce-configuration-1/ext.config.yaml"
   # Only include this if adminUi is defined in your app.commerce.config.*:
   commerce/backend-ui/2:
     $include: "src/commerce-backend-ui-2/ext.config.yaml"
+  # Only include this if businessConfig is defined in your app.commerce.config.*:
+  commerce/configuration/1:
+    $include: "src/commerce-configuration-1/ext.config.yaml"
+  commerce/extensibility/1:
+    $include: "src/commerce-extensibility-1/ext.config.yaml"
 ```
+
+The `init` command writes the entries in this order, and the `postinstall` hook reorders an existing `app.config.yaml` that is out of order (comments are kept, and extension points not listed above go last). The `pre-app-build` hook does the same as a safety net: it rewrites `app.config.yaml` and logs a one-off warning, then continues with the build. When the order is already right, the hooks write nothing and log nothing.
 
 5. In your `install.yaml`, add the extension point references. If you have multiple extension points, add each as a new entry:
 

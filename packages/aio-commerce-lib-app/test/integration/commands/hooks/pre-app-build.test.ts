@@ -11,12 +11,14 @@
  */
 
 import { existsSync, readFileSync } from "node:fs";
-import { readFile } from "node:fs/promises";
+import { readFile, stat } from "node:fs/promises";
 import { join } from "node:path";
 
+import consola from "consola";
 import { afterEach, describe, expect, test, vi } from "vitest";
 
 import {
+  APP_CONFIG_FILE,
   BACKEND_UI_V2_EXTENSION_POINT_ID,
   CONFIGURATION_EXTENSION_POINT_ID,
   EXTENSIBILITY_EXTENSION_POINT_ID,
@@ -42,8 +44,10 @@ import {
   extensibilityActionFile,
   INVALID_PROJECT,
   MINIMAL_PROJECT,
+  makeAppConfigFile,
   makeExtConfigFile,
   makeProjectFiles,
+  ORDERED_EXTENSION_POINTS,
   withTempProject,
 } from "#test/fixtures/project";
 
@@ -61,6 +65,11 @@ vi.mock("@aio-commerce-sdk/scripting-utils/env", async (importOriginal) => ({
   >()),
   syncImsCredentials: vi.fn(),
 }));
+
+const ORDER_REWRITTEN_RE =
+  /were reordered \(commerce\/backend-ui\/2, commerce\/configuration\/1, commerce\/extensibility\/1\).*one-off/s;
+
+const warnSpy = vi.spyOn(consola, "warn").mockImplementation(() => undefined);
 
 describe("commands/hooks/pre-app-build", () => {
   afterEach(() => {
@@ -253,6 +262,61 @@ describe("commands/hooks/pre-app-build", () => {
       });
     });
 
+    test("rewrites an out-of-order app.config.yaml, warns once and continues", async () => {
+      const wrongOrder = makeAppConfigFile(
+        [...ORDERED_EXTENSION_POINTS].reverse(),
+      );
+
+      await withTempProject(
+        { ...makeProjectFiles(configWithAdminUiSingleGrid), ...wrongOrder },
+        async (tempDir) => {
+          await expect(run("backend-ui/2", tempDir)).resolves.toBeUndefined();
+
+          expect(await readFile(join(tempDir, APP_CONFIG_FILE), "utf-8")).toBe(
+            makeAppConfigFile(ORDERED_EXTENSION_POINTS)[APP_CONFIG_FILE],
+          );
+          expect(warnSpy).toHaveBeenCalledOnce();
+          expect(warnSpy).toHaveBeenCalledWith(
+            expect.stringMatching(ORDER_REWRITTEN_RE),
+          );
+        },
+      );
+    });
+
+    test("does not warn on a second invocation after the rewrite", async () => {
+      const wrongOrder = makeAppConfigFile(
+        [...ORDERED_EXTENSION_POINTS].reverse(),
+      );
+
+      await withTempProject(
+        { ...makeProjectFiles(configWithAdminUiSingleGrid), ...wrongOrder },
+        async (tempDir) => {
+          await run("backend-ui/2", tempDir);
+          warnSpy.mockClear();
+
+          await expect(run("backend-ui/2", tempDir)).resolves.toBeUndefined();
+          expect(warnSpy).not.toHaveBeenCalled();
+        },
+      );
+    });
+
+    test("does not write app.config.yaml when the order is right", async () => {
+      await withTempProject(
+        {
+          ...makeProjectFiles(configWithAdminUiSingleGrid),
+          ...makeAppConfigFile(ORDERED_EXTENSION_POINTS),
+        },
+        async (tempDir) => {
+          const path = join(tempDir, APP_CONFIG_FILE);
+          const before = await stat(path);
+
+          await expect(run("backend-ui/2", tempDir)).resolves.toBeUndefined();
+          expect((await stat(path)).mtimeMs).toBe(before.mtimeMs);
+          expect(warnSpy).not.toHaveBeenCalled();
+        },
+      );
+    });
+
     test("throws for unsupported extension", async () => {
       await withTempProject(MINIMAL_PROJECT, async (tempDir) => {
         await expect(
@@ -326,6 +390,23 @@ describe("commands/hooks/pre-app-build", () => {
         async () => {
           await exec();
           expect(exitSpy).not.toHaveBeenCalled();
+        },
+      );
+    });
+
+    test("does not exit when app.config.yaml was out of order and had to be rewritten", async () => {
+      vi.stubEnv("EXTENSION", "backend-ui/2");
+
+      await withTempProject(
+        {
+          ...makeProjectFiles(configWithAdminUiSingleGrid),
+          ...makeTemplateFiles(),
+          ...makeAppConfigFile([...ORDERED_EXTENSION_POINTS].reverse()),
+        },
+        async () => {
+          await exec();
+          expect(exitSpy).not.toHaveBeenCalled();
+          expect(warnSpy).toHaveBeenCalledOnce();
         },
       );
     });

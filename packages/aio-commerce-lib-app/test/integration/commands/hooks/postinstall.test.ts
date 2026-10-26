@@ -11,11 +11,14 @@
  */
 
 import { existsSync } from "node:fs";
+import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 
 import { afterEach, describe, expect, test, vi } from "vitest";
+import { parse } from "yaml";
 
 import {
+  APP_CONFIG_FILE,
   APP_MANIFEST_FILE,
   CONFIG_SCHEMA_FILE_NAME,
   CONFIGURATION_EXTENSION_POINT_ID,
@@ -30,6 +33,8 @@ import {
   BUSINESS_CONFIG_PROJECT,
   EMPTY_PROJECT,
   INVALID_PROJECT,
+  makeAppConfigFile,
+  ORDERED_EXTENSION_POINTS,
   withTempProject,
 } from "#test/fixtures/project";
 
@@ -69,6 +74,63 @@ describe("commands/hooks/postinstall", () => {
           );
 
           expect(existsSync(configSchemaPath)).toBe(true);
+        },
+      );
+    });
+  });
+
+  describe("run app.config.yaml order", () => {
+    test("reorders out-of-order extension points in app.config.yaml", async () => {
+      const appConfig = makeAppConfigFile(
+        [...ORDERED_EXTENSION_POINTS].reverse(),
+      );
+
+      await withTempProject(
+        {
+          ...BUSINESS_CONFIG_PROJECT,
+          ...makeTemplateFiles(),
+          ...appConfig,
+        },
+        async (tempDir) => {
+          await run(configWithBusinessConfig, tempDir, tempDir);
+
+          const content = await readFile(
+            join(tempDir, APP_CONFIG_FILE),
+            "utf-8",
+          );
+
+          expect(Object.keys(parse(content).extensions)).toEqual(
+            ORDERED_EXTENSION_POINTS,
+          );
+        },
+      );
+    });
+
+    test("leaves an ordered app.config.yaml untouched", async () => {
+      const appConfig = makeAppConfigFile(ORDERED_EXTENSION_POINTS);
+
+      await withTempProject(
+        {
+          ...BUSINESS_CONFIG_PROJECT,
+          ...makeTemplateFiles(),
+          ...appConfig,
+        },
+        async (tempDir) => {
+          await run(configWithBusinessConfig, tempDir, tempDir);
+
+          expect(await readFile(join(tempDir, APP_CONFIG_FILE), "utf-8")).toBe(
+            appConfig[APP_CONFIG_FILE],
+          );
+        },
+      );
+    });
+
+    test("does not create app.config.yaml when it is missing", async () => {
+      await withTempProject(
+        { ...BUSINESS_CONFIG_PROJECT, ...makeTemplateFiles() },
+        async (tempDir) => {
+          await run(configWithBusinessConfig, tempDir, tempDir);
+          expect(existsSync(join(tempDir, APP_CONFIG_FILE))).toBe(false);
         },
       );
     });
