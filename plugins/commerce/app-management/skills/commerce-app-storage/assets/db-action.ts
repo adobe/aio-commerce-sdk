@@ -23,30 +23,13 @@ import {
 } from "@adobe/aio-commerce-lib-auth";
 import { buildErrorResponse, ok } from "@adobe/aio-commerce-lib-core/responses";
 import AioLogger from "@adobe/aio-lib-core-logging";
+// @ts-expect-error -- aio-lib-db does not ship TypeScript declarations.
 import { init as initDb } from "@adobe/aio-lib-db";
-
-import type { DbRegion } from "@adobe/aio-lib-db";
 
 // The connected client returned by db.connect().
 type DbClient = Awaited<
   ReturnType<Awaited<ReturnType<typeof initDb>>["connect"]>
 >;
-
-function resolveDbRegion(region: unknown): DbRegion {
-  const normalized = typeof region === "string" ? region.toLowerCase() : region;
-  switch (normalized) {
-    case undefined:
-    case "":
-    case "amer":
-      return "amer";
-    case "apac":
-    case "emea":
-    case "aus":
-      return normalized;
-    default:
-      throw new Error("DB_REGION must be amer, apac, emea, or aus.");
-  }
-}
 
 export async function main(params: Record<string, unknown>) {
   const logger = AioLogger("commerce-app-storage", {
@@ -64,7 +47,7 @@ export async function main(params: Record<string, unknown>) {
     // 2. Initialize. region MUST match the manifest database.region.
     //    Omit it to use AIO_DB_REGION or the "amer" default.
     const db = await initDb({
-      region: resolveDbRegion(params.DB_REGION),
+      region: (params.DB_REGION as string) || "amer", // "amer" | "apac" | "emea" | "aus"
       token,
     });
 

@@ -38,27 +38,10 @@ import {
   getImsAuthProvider,
   resolveImsAuthParams,
 } from "@adobe/aio-commerce-lib-auth";
+// @ts-expect-error -- aio-lib-db does not ship TypeScript declarations.
 import { init as initDb } from "@adobe/aio-lib-db";
 
-import type { DbRegion } from "@adobe/aio-lib-db";
-
 const COLLECTION = "held_orders";
-
-function resolveDbRegion(region: unknown): DbRegion {
-  const normalized = typeof region === "string" ? region.toLowerCase() : region;
-  switch (normalized) {
-    case undefined:
-    case "":
-    case "amer":
-      return "amer";
-    case "apac":
-    case "emea":
-    case "aus":
-      return normalized;
-    default:
-      throw new Error("DB_REGION must be amer, apac, emea, or aus.");
-  }
-}
 
 // Open a DB client using the credentials on context.params. The caller is
 // responsible for closing it (see the finally blocks below).
@@ -68,7 +51,7 @@ async function openClient(context: { params: Record<string, unknown> }) {
   const token = await authProvider.getAccessToken();
   const db = await initDb({
     // region MUST match the manifest database.region. Omit to use AIO_DB_REGION.
-    region: resolveDbRegion(context.params.DB_REGION),
+    region: (context.params.DB_REGION as string) || "amer", // "amer" | "apac" | "emea" | "aus"
     token,
   });
   return db.connect();

@@ -76,9 +76,14 @@ aio app db provision --region <amer|apac|emea|aus>
 npm install @adobe/aio-lib-db
 ```
 
-For TypeScript or checked JavaScript, inspect the installed package's type metadata, `exports` and declaration files. Prefer package-provided types; otherwise preserve and reuse compatible application declarations. If neither exists, verify the installed API against [assets/aio-lib-db.d.ts](assets/aio-lib-db.d.ts) before copying it to `src/types/aio-lib-db.d.ts`. The SDK's TypeScript config includes this location and follows generated installation imports into `scripts/setup-database.ts`.
+For TypeScript or checked JavaScript, check installed package types and existing application declarations. Only when neither resolves TS7016, place this comment immediately above each affected DB import:
 
-The declaration covers only this skill's example APIs. Other APIs, prereleases and new major versions require separate verification and declaration updates as needed. Do not downgrade solely to use it. Run strict typecheck and build; compiler success does not prove runtime compatibility.
+```ts
+// @ts-expect-error -- aio-lib-db does not ship TypeScript declarations.
+import { init as initDb } from "@adobe/aio-lib-db";
+```
+
+This temporarily suppresses TS7016; DB APIs remain untyped. Do not add ambient declarations, disable strict checking, downgrade dependencies, or suppress unrelated errors. Preserve compatible declarations. Remove the comment when types become available: unused directives produce TS2578. Compilation does not prove runtime compatibility.
 
 ## Step 3 — Understand intent
 
@@ -291,6 +296,8 @@ This is what adds the `installation` action to `ext.config.yaml`'s `app-manageme
 
 ## Step 8 — Validate
 
+Run the project's strict typecheck, including the storage runtime action. Verify root `installation.customInstallationSteps` registration produces a generated import of `scripts/setup-database.ts` and that the actual compiler file list includes it. Preserve existing compiler includes and exclusions; do not add `scripts/**/*.ts` to compensate for missing registration.
+
 ```sh
 aio app build
 ```
@@ -356,4 +363,3 @@ A build failure points directly to the offending config field. To exercise the a
 
 - [assets/db-action.ts](assets/db-action.ts) — Full annotated handler: init/connect, CRUD, cursor iteration, and the close lifecycle
 - [assets/setup-database.ts](assets/setup-database.ts) — Full annotated custom installation step: install creates a collection and a unique index, uninstall drops it, with the `context.params` and `createIndex`-on-collection patterns
-- [assets/aio-lib-db.d.ts](assets/aio-lib-db.d.ts) — Narrow compatibility declarations for the DB methods used by this skill's TypeScript examples
