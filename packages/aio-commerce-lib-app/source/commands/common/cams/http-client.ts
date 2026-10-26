@@ -33,7 +33,7 @@ export type CamsAuth = {
 export type CamsHttpClientConfig = {
   /**
    * The base URL to use for CAMS.
-   * @default "https://commerce-app-management.adobe.io"
+   * @default "https://app-management.api.commerce.adobe.com"
    */
   baseUrl?: string;
 
