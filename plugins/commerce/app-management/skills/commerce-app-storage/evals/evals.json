@@ -74,6 +74,33 @@
         "The existing app.commerce.config.ts is not overwritten",
         "Storage work (installing @adobe/aio-lib-db, scaffolding the action) proceeds only after initialization"
       ]
+    },
+    {
+      "id": 7,
+      "prompt": "My initialized TypeScript Commerce app needs a storage web action and a custom installation step that creates a unique held_orders index. The installed @adobe/aio-lib-db package has no declarations. Use the skill's reference assets and validate the SDK-generated installation path with strict TypeScript checks and aio app build. Do not provision a database, deploy, or invoke the actions.",
+      "expected_output": "The agent verifies the installed database API against the compatibility asset, copies the declaration into src/types only when no compatible declarations exist, and uses the runtime and installation reference assets. It registers scripts/setup-database.ts, regenerates the installation action with init, and confirms that the generated JavaScript imports the TypeScript setup script. Strict typecheck and build pass without contacting a database. Temporary compile-only probes demonstrate rejection of a numeric token, an invalid region and a string index direction; probes are removed before the final successful checks.",
+      "assertions": [
+        "The installed package's type metadata and declaration files are inspected and its used API is verified before the compatibility declaration is copied",
+        "The declaration is placed under src/types and no existing application declarations are overwritten",
+        "Both the storage runtime asset and scripts/setup-database.ts are checked by the project's strict TypeScript configuration",
+        "The SDK-generated installation action imports scripts/setup-database.ts after init regenerates it; a standalone script-only compiler invocation is insufficient",
+        "The project's strict typecheck and aio app build complete without errors",
+        "Temporary negative probes with a numeric token, invalid region and string index direction each cause a TypeScript error, rather than using any or suppressing the errors",
+        "Negative probes are removed and the final strict typecheck passes",
+        "No database provisioning, deployment or live database calls are performed"
+      ]
+    },
+    {
+      "id": 8,
+      "prompt": "Add TypeScript storage support to my initialized Commerce app. Before changing files, inspect the installed @adobe/aio-lib-db package and src/types: package-provided types may exist, and we may already have an application declaration. Keep the installed version and preserve our existing declarations.",
+      "expected_output": "The agent inspects package type metadata, exports and declaration files, plus existing application declarations. It prefers package-provided types, otherwise reuses compatible application declarations; it copies the skill's narrow compatibility asset only if neither provides the required types and the installed API is compatible. It does not downgrade the package or blindly replace declarations. It runs strict typecheck and build and distinguishes compiler results from runtime verification.",
+      "assertions": [
+        "Package-provided declarations are preferred when present; a duplicate ambient module declaration is not added",
+        "Existing compatible application declarations are preserved and reused rather than overwritten",
+        "If required types are absent, compatibility with the installed package API is checked before copying or extending declarations",
+        "The database dependency is not downgraded solely to match the asset's verification history",
+        "The project's strict typecheck and build are run, without claiming that their success proves runtime compatibility"
+      ]
     }
   ]
 }

@@ -76,9 +76,9 @@ aio app db provision --region <amer|apac|emea|aus>
 npm install @adobe/aio-lib-db
 ```
 
-For TypeScript or checked JavaScript, inspect the installed package's version, type metadata (including `exports`) and declaration files, and check for existing application declarations before the first typecheck or build. Prefer package-provided types. If the package lacks types and no compatible application declaration exists, copy [assets/aio-lib-db.d.ts](assets/aio-lib-db.d.ts) to `src/types/aio-lib-db.d.ts`. Preserve existing declarations; check compatibility before extending them. The SDK-generated TypeScript config includes declarations under `src/` and follows the generated installation action's import into `scripts/setup-database.ts`.
+For TypeScript or checked JavaScript, inspect the installed package's type metadata, `exports` and declaration files. Prefer package-provided types; otherwise preserve and reuse compatible application declarations. If neither exists, verify the installed API against [assets/aio-lib-db.d.ts](assets/aio-lib-db.d.ts) before copying it to `src/types/aio-lib-db.d.ts`. The SDK's TypeScript config includes this location and follows generated installation imports into `scripts/setup-database.ts`.
 
-For releases without types, verify that the compatibility declaration matches the installed package's API before using it, then run the project's strict typecheck and build. Do not downgrade solely to use this declaration. It covers only the APIs used by this skill's examples; other APIs, prereleases and new major versions require separate verification and declaration updates as needed. Compiler success does not establish runtime compatibility.
+The declaration covers only this skill's example APIs. Other APIs, prereleases and new major versions require separate verification and declaration updates as needed. Do not downgrade solely to use it. Run strict typecheck and build; compiler success does not prove runtime compatibility.
 
 ## Step 3 — Understand intent
 
