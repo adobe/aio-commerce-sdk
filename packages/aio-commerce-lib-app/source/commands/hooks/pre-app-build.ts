@@ -23,10 +23,10 @@ import {
   ensureExtensionPointsOrder,
 } from "#commands/common/extension-points";
 import {
+  APP_CONFIG_FILE,
   BACKEND_UI_V2_EXTENSION_POINT_ID,
   CONFIGURATION_EXTENSION_POINT_ID,
   EXTENSIBILITY_EXTENSION_POINT_ID,
-  INSTALL_YAML_FILE,
 } from "#commands/constants";
 import { getRuntimeActions } from "#commands/generate/actions/config";
 import { TEMPLATES_DIR } from "#commands/generate/actions/constants";
@@ -62,7 +62,7 @@ export async function run(
 ) {
   if (await ensureExtensionPointsOrder(projectRoot)) {
     throw new Error(
-      `The extension points in ${INSTALL_YAML_FILE} were reordered (${EXTENSION_POINT_ORDER.join(", ")}) to ensure an upgrade works reliably. ` +
+      `The extension points in ${APP_CONFIG_FILE} were reordered (${EXTENSION_POINT_ORDER.join(", ")}) to ensure an upgrade works reliably. ` +
         "The build already read the previous file, so run the build again.",
     );
   }

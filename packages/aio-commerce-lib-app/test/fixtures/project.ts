@@ -17,15 +17,20 @@ import { withTempFiles } from "@aio-commerce-sdk/scripting-utils/filesystem";
 import { stringify } from "yaml";
 
 import {
+  APP_CONFIG_FILE,
   BACKEND_UI_V2_EXTENSION_POINT_ID,
   CONFIGURATION_EXTENSION_POINT_ID,
   EXTENSIBILITY_EXTENSION_POINT_ID,
   getExtensionPointFolderPath,
-  INSTALL_YAML_FILE,
   PACKAGE_NAME,
 } from "#commands/constants";
 import { runGeneration } from "#commands/init/lib";
-import { getActionPath, getManifestPath, getSchemaPath } from "#commands/utils";
+import {
+  getActionPath,
+  getExtConfigPath,
+  getManifestPath,
+  getSchemaPath,
+} from "#commands/utils";
 
 import { makeTemplateFiles } from "./commands";
 import { configWithBusinessConfig, minimalValidConfig } from "./config";
@@ -130,7 +135,7 @@ export function makeExtConfigFile(
   };
 }
 
-/** The extension points in the order install.yaml requires. */
+/** The extension points in the order app.config.yaml requires. */
 export const ORDERED_EXTENSION_POINTS = [
   BACKEND_UI_V2_EXTENSION_POINT_ID,
   CONFIGURATION_EXTENSION_POINT_ID,
@@ -138,15 +143,18 @@ export const ORDERED_EXTENSION_POINTS = [
 ];
 
 /**
- * Creates an entry for an install.yaml listing the given extension points, in the given order.
+ * Creates an entry for an app.config.yaml with the given extension points (and their `$include`), in the given order.
  * @param extensionPointIds The extension point IDs to list.
  */
-export function makeInstallYamlFile(extensionPointIds: string[]) {
+export function makeAppConfigFile(extensionPointIds: string[]) {
   return {
-    [INSTALL_YAML_FILE]: stringify({
-      extensions: extensionPointIds.map((extensionPointId) => ({
-        extensionPointId,
-      })),
+    [APP_CONFIG_FILE]: stringify({
+      extensions: Object.fromEntries(
+        extensionPointIds.map((extensionPointId) => [
+          extensionPointId,
+          { $include: getExtConfigPath(extensionPointId) },
+        ]),
+      ),
     }),
   };
 }

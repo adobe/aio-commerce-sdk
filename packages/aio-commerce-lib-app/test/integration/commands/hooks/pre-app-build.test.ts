@@ -17,10 +17,10 @@ import { join } from "node:path";
 import { afterEach, describe, expect, test, vi } from "vitest";
 
 import {
+  APP_CONFIG_FILE,
   BACKEND_UI_V2_EXTENSION_POINT_ID,
   CONFIGURATION_EXTENSION_POINT_ID,
   EXTENSIBILITY_EXTENSION_POINT_ID,
-  INSTALL_YAML_FILE,
 } from "#commands/constants";
 import { exec, run } from "#commands/hooks/pre-app-build";
 import {
@@ -43,8 +43,8 @@ import {
   extensibilityActionFile,
   INVALID_PROJECT,
   MINIMAL_PROJECT,
+  makeAppConfigFile,
   makeExtConfigFile,
-  makeInstallYamlFile,
   makeProjectFiles,
   ORDERED_EXTENSION_POINTS,
   withTempProject,
@@ -259,8 +259,8 @@ describe("commands/hooks/pre-app-build", () => {
       });
     });
 
-    test("rewrites an out-of-order install.yaml and fails asking for a new build", async () => {
-      const wrongOrder = makeInstallYamlFile(
+    test("rewrites an out-of-order app.config.yaml and fails asking for a new build", async () => {
+      const wrongOrder = makeAppConfigFile(
         [...ORDERED_EXTENSION_POINTS].reverse(),
       );
 
@@ -271,17 +271,15 @@ describe("commands/hooks/pre-app-build", () => {
             ORDER_REWRITTEN_RE,
           );
 
-          expect(
-            await readFile(join(tempDir, INSTALL_YAML_FILE), "utf-8"),
-          ).toBe(
-            makeInstallYamlFile(ORDERED_EXTENSION_POINTS)[INSTALL_YAML_FILE],
+          expect(await readFile(join(tempDir, APP_CONFIG_FILE), "utf-8")).toBe(
+            makeAppConfigFile(ORDERED_EXTENSION_POINTS)[APP_CONFIG_FILE],
           );
         },
       );
     });
 
     test("passes on a second invocation after the rewrite", async () => {
-      const wrongOrder = makeInstallYamlFile(
+      const wrongOrder = makeAppConfigFile(
         [...ORDERED_EXTENSION_POINTS].reverse(),
       );
 
@@ -294,14 +292,14 @@ describe("commands/hooks/pre-app-build", () => {
       );
     });
 
-    test("does not write install.yaml when the order is right", async () => {
+    test("does not write app.config.yaml when the order is right", async () => {
       await withTempProject(
         {
           ...makeProjectFiles(configWithAdminUiSingleGrid),
-          ...makeInstallYamlFile(ORDERED_EXTENSION_POINTS),
+          ...makeAppConfigFile(ORDERED_EXTENSION_POINTS),
         },
         async (tempDir) => {
-          const path = join(tempDir, INSTALL_YAML_FILE);
+          const path = join(tempDir, APP_CONFIG_FILE);
           const before = await stat(path);
 
           await expect(run("backend-ui/2", tempDir)).resolves.toBeUndefined();
@@ -387,14 +385,14 @@ describe("commands/hooks/pre-app-build", () => {
       );
     });
 
-    test("exits with 1 when install.yaml was out of order and had to be rewritten", async () => {
+    test("exits with 1 when app.config.yaml was out of order and had to be rewritten", async () => {
       vi.stubEnv("EXTENSION", "backend-ui/2");
 
       await withTempProject(
         {
           ...makeProjectFiles(configWithAdminUiSingleGrid),
           ...makeTemplateFiles(),
-          ...makeInstallYamlFile([...ORDERED_EXTENSION_POINTS].reverse()),
+          ...makeAppConfigFile([...ORDERED_EXTENSION_POINTS].reverse()),
         },
         async () => {
           await exec();

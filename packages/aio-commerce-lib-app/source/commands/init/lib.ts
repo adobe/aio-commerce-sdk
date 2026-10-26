@@ -237,19 +237,19 @@ export async function ensureAppConfig(
   config: CommerceAppConfigOutputModel,
   projectRoot: string,
 ) {
-  if (domains.has("businessConfig.schema")) {
-    await addExtensionPointToAppConfig(
-      CONFIGURATION_EXTENSION_POINT_ID,
-      projectRoot,
-      " This extension is required for business configuration. Do not remove.",
-    );
-  }
-
   if (hasBackendUiV2Components(config)) {
     await addExtensionPointToAppConfig(
       BACKEND_UI_V2_EXTENSION_POINT_ID,
       projectRoot,
       " This extension is required for Admin UI. Do not remove.",
+    );
+  }
+
+  if (domains.has("businessConfig.schema")) {
+    await addExtensionPointToAppConfig(
+      CONFIGURATION_EXTENSION_POINT_ID,
+      projectRoot,
+      " This extension is required for business configuration. Do not remove.",
     );
   }
 
@@ -260,7 +260,7 @@ export async function ensureAppConfig(
     " This extension is required for app management. Do not remove.",
   );
 
-  // Fixes the order of entries that were already present in the file.
+  // Entries that were already in the file keep their place unless we sort them.
   await ensureExtensionPointsOrder(projectRoot);
 }
 
@@ -325,19 +325,19 @@ export async function ensureInstallYaml(
   config: CommerceAppConfigOutputModel,
   projectRoot: string,
 ) {
-  if (hasBackendUiV2Components(config)) {
-    await addExtensionPointToInstallYaml(
-      BACKEND_UI_V2_EXTENSION_POINT_ID,
-      projectRoot,
-      " This extension is required for Admin UI. Do not remove.",
-    );
-  }
-
   if (domains.has("businessConfig.schema")) {
     await addExtensionPointToInstallYaml(
       CONFIGURATION_EXTENSION_POINT_ID,
       projectRoot,
       " This extension is required for business configuration. Do not remove.",
+    );
+  }
+
+  if (hasBackendUiV2Components(config)) {
+    await addExtensionPointToInstallYaml(
+      BACKEND_UI_V2_EXTENSION_POINT_ID,
+      projectRoot,
+      " This extension is required for Admin UI. Do not remove.",
     );
   }
 
@@ -347,7 +347,4 @@ export async function ensureInstallYaml(
     projectRoot,
     " This extension is required for app management. Do not remove.",
   );
-
-  // Fixes the order of entries that were already present in the file.
-  await ensureExtensionPointsOrder(projectRoot);
 }

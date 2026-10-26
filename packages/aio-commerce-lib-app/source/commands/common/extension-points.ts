@@ -15,18 +15,18 @@ import { writeFile } from "node:fs/promises";
 import { join } from "node:path";
 
 import { readYamlFile } from "@aio-commerce-sdk/scripting-utils/yaml/helpers";
-import { isMap, isNode, isSeq } from "yaml";
+import { isMap, isNode, isScalar } from "yaml";
 
 import {
+  APP_CONFIG_FILE,
   BACKEND_UI_V2_EXTENSION_POINT_ID,
   CONFIGURATION_EXTENSION_POINT_ID,
   EXTENSIBILITY_EXTENSION_POINT_ID,
-  INSTALL_YAML_FILE,
 } from "#commands/constants";
 
-import type { Document, YAMLSeq } from "yaml";
+import type { Pair, YAMLMap } from "yaml";
 
-/** Extension points in the order they must appear in install.yaml. Extensibility must be last. */
+/** Extension points in the order they must appear in app.config.yaml. Extensibility must be last. */
 export const EXTENSION_POINT_ORDER: readonly string[] = [
   BACKEND_UI_V2_EXTENSION_POINT_ID,
   CONFIGURATION_EXTENSION_POINT_ID,
@@ -43,73 +43,79 @@ export function getExtensionPointRank(id: unknown) {
   return index === -1 ? EXTENSION_POINT_ORDER.length : index;
 }
 
-function getExtensionsSeq(doc: Document): YAMLSeq | undefined {
-  const extensions = doc.get("extensions", true);
-  return isSeq(extensions) ? extensions : undefined;
+function getExtensionsMap(root: unknown): YAMLMap | undefined {
+  if (!isMap(root)) {
+    return;
+  }
+
+  const extensions = root.get("extensions", true);
+  return isMap(extensions) ? extensions : undefined;
 }
 
-function getItemId(item: unknown) {
-  return isMap(item) ? item.get("extensionPointId") : undefined;
+function getPairRank(item: Pair) {
+  return getExtensionPointRank(isScalar(item.key) ? item.key.value : item.key);
 }
 
-function isSorted(extensions: YAMLSeq) {
-  const ranks = extensions.items.map((item) =>
-    getExtensionPointRank(getItemId(item)),
-  );
-
+function isSorted(extensions: YAMLMap) {
+  const ranks = extensions.items.map(getPairRank);
   return ranks.every((rank, index) => index === 0 || ranks[index - 1] <= rank);
 }
 
 /**
- * Check, without writing, that the extension points in install.yaml follow the required order.
+ * Check, without writing, that the extension points in app.config.yaml follow the required order.
  * Returns true when the file does not exist or has no extension points.
- * @param projectRoot - The project root containing install.yaml.
+ * @param projectRoot - The project root containing app.config.yaml.
  */
 export async function isExtensionPointsOrdered(projectRoot: string) {
-  const path = join(projectRoot, INSTALL_YAML_FILE);
+  const path = join(projectRoot, APP_CONFIG_FILE);
   if (!existsSync(path)) {
     return true;
   }
 
-  const extensions = getExtensionsSeq(await readYamlFile(path));
+  const extensions = getExtensionsMap((await readYamlFile(path)).contents);
   return extensions === undefined || isSorted(extensions);
 }
 
 /**
- * Sort the extension points in install.yaml by the required order, keeping comments.
+ * Sort the extension points (and their `$include` entries) in app.config.yaml by the required order, keeping comments.
  * Writes only when the order changes and never creates the file.
- * @param projectRoot - The project root containing install.yaml.
+ * @param projectRoot - The project root containing app.config.yaml.
  * @returns True if the file was rewritten.
  */
 export async function ensureExtensionPointsOrder(projectRoot: string) {
-  const path = join(projectRoot, INSTALL_YAML_FILE);
+  const path = join(projectRoot, APP_CONFIG_FILE);
   if (!existsSync(path)) {
     return false;
   }
 
   const doc = await readYamlFile(path);
-  const extensions = getExtensionsSeq(doc);
+  const extensions = getExtensionsMap(doc.contents);
   if (extensions === undefined || isSorted(extensions)) {
     return false;
   }
 
-  // The yaml library stores the comment above the first item on the sequence, so it would stay
-  // at the top instead of moving with its item.
-  const [first] = extensions.items;
-  if (extensions.commentBefore && isNode(first)) {
-    first.commentBefore = extensions.commentBefore;
+  const pairs = extensions.items;
+  const [first, second] = pairs;
+
+  // The yaml library stores the comment above the first entry on the map, so it would stay
+  // at the top instead of moving with its entry.
+  if (extensions.commentBefore && isNode(first.key)) {
+    first.key.commentBefore = extensions.commentBefore;
     extensions.commentBefore = undefined;
   }
 
   // Array.prototype.sort is stable, so ids with equal rank keep their relative order.
-  extensions.items.sort(
-    (a, b) =>
-      getExtensionPointRank(getItemId(a)) - getExtensionPointRank(getItemId(b)),
-  );
+  pairs.sort((a, b) => getPairRank(a) - getPairRank(b));
 
-  const [head] = extensions.items;
-  if (isNode(head)) {
-    head.spaceBefore = false;
+  // The first entry has no blank line above it. An entry that was first and moved down
+  // takes the spacing its neighbours use.
+  const spaced = isNode(second?.key) && Boolean(second.key.spaceBefore);
+  if (isNode(first.key) && pairs[0] !== first) {
+    first.key.spaceBefore = spaced;
+  }
+
+  if (isNode(pairs[0].key)) {
+    pairs[0].key.spaceBefore = false;
   }
 
   await writeFile(path, doc.toString(), "utf-8");

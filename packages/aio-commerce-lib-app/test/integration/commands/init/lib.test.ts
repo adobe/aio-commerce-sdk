@@ -17,6 +17,7 @@ import { join } from "node:path";
 import { withTempFiles } from "@aio-commerce-sdk/scripting-utils/filesystem";
 import { getExecCommand } from "@aio-commerce-sdk/scripting-utils/project";
 import { describe, expect, test, vi } from "vitest";
+import { parse } from "yaml";
 
 import {
   APP_CONFIG_FILE,
@@ -56,7 +57,7 @@ import {
   generatedManifestFile,
   generatedSchemaFile,
   INVALID_PROJECT,
-  makeInstallYamlFile,
+  makeAppConfigFile,
   makeProjectFiles,
   ORDERED_EXTENSION_POINTS,
   withGeneratedProject,
@@ -65,11 +66,9 @@ import {
 
 import type { InitFlags } from "#commands/init/main";
 
-const INSTALL_YAML_ID_RE = /extensionPointId: (\S+)/g;
-
-async function readInstallYamlIds(tempDir: string) {
-  const content = await readFile(join(tempDir, INSTALL_YAML_FILE), "utf-8");
-  return [...content.matchAll(INSTALL_YAML_ID_RE)].map((match) => match[1]);
+async function readAppConfigIds(tempDir: string) {
+  const content = await readFile(join(tempDir, APP_CONFIG_FILE), "utf-8");
+  return Object.keys(parse(content).extensions);
 }
 
 describe("commands/init/lib", () => {
@@ -294,6 +293,64 @@ describe("commands/init/lib", () => {
       );
     });
 
+    test("writes all extension points in the required order", async () => {
+      await withTempFiles(
+        { ...EMPTY_PROJECT, [APP_CONFIG_FILE]: "" },
+        async (tempDir) => {
+          await ensureAppConfig(
+            new Set(["businessConfig.schema"]),
+            { ...configWithBusinessConfig, ...configWithAdminUiMenu },
+            tempDir,
+          );
+
+          expect(await readAppConfigIds(tempDir)).toEqual(
+            ORDERED_EXTENSION_POINTS,
+          );
+        },
+      );
+    });
+
+    test("keeps the relative order for a subset of extension points", async () => {
+      await withTempFiles(
+        { ...EMPTY_PROJECT, [APP_CONFIG_FILE]: "" },
+        async (tempDir) => {
+          await ensureAppConfig(
+            new Set(["businessConfig.schema"]),
+            configWithBusinessConfig,
+            tempDir,
+          );
+
+          expect(await readAppConfigIds(tempDir)).toEqual([
+            CONFIGURATION_EXTENSION_POINT_ID,
+            EXTENSIBILITY_EXTENSION_POINT_ID,
+          ]);
+        },
+      );
+    });
+
+    test("reorders extension points that are already in the file", async () => {
+      await withTempFiles(
+        {
+          ...EMPTY_PROJECT,
+          ...makeAppConfigFile([
+            EXTENSIBILITY_EXTENSION_POINT_ID,
+            CONFIGURATION_EXTENSION_POINT_ID,
+          ]),
+        },
+        async (tempDir) => {
+          await ensureAppConfig(
+            new Set(["businessConfig.schema"]),
+            { ...configWithBusinessConfig, ...configWithAdminUiMenu },
+            tempDir,
+          );
+
+          expect(await readAppConfigIds(tempDir)).toEqual(
+            ORDERED_EXTENSION_POINTS,
+          );
+        },
+      );
+    });
+
     test("throws with a manual-fix hint when app.config.yaml is unreadable", async () => {
       // Stage a directory at the app.config.yaml path to force readFile → EISDIR.
       await withTempFiles(
@@ -396,26 +453,9 @@ describe("commands/init/lib", () => {
       );
     });
 
-    test("writes all extension points in the required order", async () => {
+    test("writes no blank line before extensions and keeps blank lines between entries", async () => {
       await withTempFiles(
-        { ...EMPTY_PROJECT, [INSTALL_YAML_FILE]: "" },
-        async (tempDir) => {
-          await ensureInstallYaml(
-            new Set(["businessConfig.schema"]),
-            { ...configWithBusinessConfig, ...configWithAdminUiMenu },
-            tempDir,
-          );
-
-          expect(await readInstallYamlIds(tempDir)).toEqual(
-            ORDERED_EXTENSION_POINTS,
-          );
-        },
-      );
-    });
-
-    test("keeps the relative order for a subset of extension points", async () => {
-      await withTempFiles(
-        { ...EMPTY_PROJECT, [INSTALL_YAML_FILE]: "" },
+        { ...EMPTY_PROJECT, [INSTALL_YAML_FILE]: "name: app\n" },
         async (tempDir) => {
           await ensureInstallYaml(
             new Set(["businessConfig.schema"]),
@@ -423,54 +463,16 @@ describe("commands/init/lib", () => {
             tempDir,
           );
 
-          expect(await readInstallYamlIds(tempDir)).toEqual([
-            CONFIGURATION_EXTENSION_POINT_ID,
-            EXTENSIBILITY_EXTENSION_POINT_ID,
-          ]);
-        },
-      );
-    });
+          expect(
+            await readFile(join(tempDir, INSTALL_YAML_FILE), "utf-8"),
+          ).toBe(`name: app
+extensions:
+  # This extension is required for business configuration. Do not remove.
+  - extensionPointId: commerce/configuration/1
 
-    test("inserts missing extension points in order into an existing file", async () => {
-      await withTempFiles(
-        {
-          ...EMPTY_PROJECT,
-          ...makeInstallYamlFile([EXTENSIBILITY_EXTENSION_POINT_ID]),
-        },
-        async (tempDir) => {
-          await ensureInstallYaml(
-            new Set(["businessConfig.schema"]),
-            { ...configWithBusinessConfig, ...configWithAdminUiMenu },
-            tempDir,
-          );
-
-          expect(await readInstallYamlIds(tempDir)).toEqual(
-            ORDERED_EXTENSION_POINTS,
-          );
-        },
-      );
-    });
-
-    test("reorders extension points that are already in the file", async () => {
-      await withTempFiles(
-        {
-          ...EMPTY_PROJECT,
-          ...makeInstallYamlFile([
-            EXTENSIBILITY_EXTENSION_POINT_ID,
-            CONFIGURATION_EXTENSION_POINT_ID,
-          ]),
-        },
-        async (tempDir) => {
-          await ensureInstallYaml(
-            new Set(["businessConfig.schema"]),
-            configWithBusinessConfig,
-            tempDir,
-          );
-
-          expect(await readInstallYamlIds(tempDir)).toEqual([
-            CONFIGURATION_EXTENSION_POINT_ID,
-            EXTENSIBILITY_EXTENSION_POINT_ID,
-          ]);
+  # This extension is required for app management. Do not remove.
+  - extensionPointId: commerce/extensibility/1
+`);
         },
       );
     });
