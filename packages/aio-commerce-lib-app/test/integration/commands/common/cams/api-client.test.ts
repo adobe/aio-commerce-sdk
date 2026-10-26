@@ -115,7 +115,9 @@ describe("the Commerce instance", () => {
       }),
       http.post(UPGRADE_PREVIEW, ({ request }) => {
         seen.headers = request.headers;
-        return HttpResponse.json({ plan: { id: "p", operation: "upgrade" } });
+        return HttpResponse.json({
+          plan: { id: "p", issues: [], operation: "upgrade" },
+        });
       }),
     );
 
@@ -161,7 +163,7 @@ describe("the Commerce instance", () => {
           requests.push(request);
           return HttpResponse.json(
             new URL(request.url).pathname.endsWith("/preview")
-              ? { plan: { id: "plan-1", operation: "upgrade" } }
+              ? { plan: { id: "plan-1", issues: [], operation: "upgrade" } }
               : RUNNING,
           );
         }),
@@ -226,7 +228,12 @@ describe("the Commerce instance", () => {
 });
 
 describe("planUpgrade", () => {
-  const PLAN = { id: "plan-1", operation: "upgrade", summary: "extra" };
+  const PLAN = {
+    id: "plan-1",
+    issues: [],
+    operation: "upgrade",
+    summary: "extra",
+  };
 
   test("posts without a body and returns the whole plan", async () => {
     let body: string | undefined;
