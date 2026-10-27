@@ -525,6 +525,21 @@ export function makeWorkspaceConfig(context: EventsExecutionContext) {
   };
 }
 
+const PROVIDER_WORKSPACE_PATH = /^\/events\/[^/]+\/[^/]+\/([^/]+)\/providers\//;
+
+/**
+ * The workspace id of an I/O provider, read from its `rel:update` link
+ * (`/events/{org}/{project}/{workspace}/providers/{id}`). Null when the provider has no such link.
+ *
+ * @param links - The HAL links of the provider.
+ */
+export function getProviderWorkspaceId(
+  links: Record<string, { href: string } | undefined> | undefined,
+): string | null {
+  const href = links?.["rel:update"]?.href;
+  return href?.match(PROVIDER_WORKSPACE_PATH)?.[1] ?? null;
+}
+
 /**
  * Retrieves the current existing data and returns it in a normalized way.
  * @param context The execution context.
@@ -562,6 +577,7 @@ export async function getIoEventsExistingData(
     return {
       ...providerData,
       metadata: actualMetadata,
+      workspaceId: getProviderWorkspaceId(_links),
     };
   });
 

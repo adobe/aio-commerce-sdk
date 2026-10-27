@@ -145,10 +145,13 @@ function createExistingIoProvider(
   provider?: EventProvider,
   overrides: Partial<ReturnType<typeof createMockIoEventProvider>> = {},
 ) {
-  return createIoProvider({
-    ...createIoProviderDefaults(context, metadata, provider),
-    ...overrides,
-  });
+  return {
+    ...createIoProvider({
+      ...createIoProviderDefaults(context, metadata, provider),
+      ...overrides,
+    }),
+    workspaceId: context.appData.workspaceId,
+  };
 }
 
 function createIoOnboardingScenario({
@@ -903,6 +906,28 @@ describe("offboardIoEvents", () => {
     expect(context.ioEventsClient.deleteRegistration).toHaveBeenCalled();
   });
 
+  test("keeps a provider under the legacy instance ID that belongs to another workspace", async () => {
+    const { context, params, ioProvider, metadata, provider } =
+      createIoOffboardingScenario();
+
+    await offboardIoEvents(
+      params,
+      createMockExistingIoEventsData({
+        providersWithMetadata: [
+          {
+            ...ioProvider,
+            instance_id: generateInstanceIdDeprecated(metadata, provider),
+            metadata: [],
+            workspaceId: "another-workspace",
+          },
+        ],
+      }),
+    );
+
+    expect(context.ioEventsClient.deleteRegistration).not.toHaveBeenCalled();
+    expect(context.ioEventsClient.deleteEventProvider).not.toHaveBeenCalled();
+  });
+
   test("warns and continues when deleteRegistration fails", async () => {
     const { context, params, ioProvider, registrationName } =
       createIoOffboardingScenario();
@@ -1019,7 +1044,7 @@ describe("offboardIoEvents", () => {
 
 describe("offboardCommerceEventing", () => {
   test("finds provider by deprecated instance ID (without workspaceId)", async () => {
-    const { context, params, metadata, provider, event } =
+    const { context, params, metadata, provider, event, ioProvider } =
       createIoOffboardingScenario();
 
     const deprecatedInstanceId = generateInstanceIdDeprecated(
@@ -1041,12 +1066,59 @@ describe("offboardCommerceEventing", () => {
         providers: [commerceProvider],
         subscriptions: new Map([[eventName, subscription]]),
       }),
+      createMockExistingIoEventsData({
+        providersWithMetadata: [
+          {
+            ...ioProvider,
+            id: commerceProvider.provider_id,
+            instance_id: deprecatedInstanceId,
+            metadata: [],
+          },
+        ],
+      }),
     );
 
     expect(
       context.commerceEventsClient.deleteEventSubscription,
     ).toHaveBeenCalled();
     expect(context.commerceEventsClient.deleteEventProvider).toHaveBeenCalled();
+  });
+
+  test("keeps a legacy provider whose I/O provider belongs to another workspace", async () => {
+    const { context, params, metadata, provider, event, ioProvider } =
+      createIoOffboardingScenario();
+
+    const deprecatedInstanceId = generateInstanceIdDeprecated(
+      metadata,
+      provider,
+    );
+    const commerceProvider = createMockCommerceEventProvider({
+      instance_id: deprecatedInstanceId,
+    });
+
+    await offboardCommerceEventing(
+      params,
+      createMockExistingCommerceEventingData({
+        providers: [commerceProvider],
+        subscriptions: new Map(),
+      }),
+      createMockExistingIoEventsData({
+        providersWithMetadata: [
+          {
+            ...ioProvider,
+            id: commerceProvider.provider_id,
+            instance_id: deprecatedInstanceId,
+            metadata: [],
+            workspaceId: "another-workspace",
+          },
+        ],
+      }),
+    );
+
+    expect(
+      context.commerceEventsClient.deleteEventProvider,
+    ).not.toHaveBeenCalled();
+    expect(event).toBeDefined();
   });
 
   test("warns and continues when deleteEventSubscription fails", async () => {
@@ -1073,6 +1145,7 @@ describe("offboardCommerceEventing", () => {
         createMockExistingCommerceEventingData({
           subscriptions: new Map([[eventName, subscription]]),
         }),
+        createMockExistingIoEventsData(),
       ),
     ).resolves.toBeUndefined();
 
@@ -1118,6 +1191,7 @@ describe("offboardCommerceEventing", () => {
         createMockExistingCommerceEventingData({
           providers: [commerceProvider],
         }),
+        createMockExistingIoEventsData(),
       ),
     ).resolves.toBeUndefined();
 

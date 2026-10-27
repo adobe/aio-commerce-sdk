@@ -193,6 +193,7 @@ export async function removeCommerceEvents(
     await offboardCommerceEventing(
       { context, events, metadata: config.metadata, provider },
       commerceEventingExistingData,
+      existingIoEventsData,
     );
 
     await offboardIoEvents(

@@ -21,7 +21,7 @@ import {
   declaresSubscription,
   eventRef,
   eventRefs,
-  findDeclaredEvent,
+  liveEventRef,
   metadataReason,
   metadataValue,
   providerReason,
@@ -57,23 +57,28 @@ import type { EventingOperationValue, EventingProviderSnapshot } from "./types";
 
 /**
  * Finds the live I/O provider of a config provider: current instance id first, then the legacy
- * one, preferring a provider with metadata over an empty duplicate that shares its instance id.
+ * one when the provider lives in this workspace, preferring a provider with metadata over an empty
+ * duplicate that shares its instance id.
  */
 export function findLiveProvider(
   providers: LiveEventingProvider[],
   provider: EventProvider,
   ctx: LeafPlanContext,
 ): LiveEventingProvider | null {
+  const current = generateInstanceId(ctx.metadata, provider, ctx.workspaceId);
+  const legacy = generateInstanceIdDeprecated(ctx.metadata, provider);
+
+  // The legacy id has no workspace, so another workspace can hold a provider with the same id.
   const candidates = [
-    generateInstanceId(ctx.metadata, provider, ctx.workspaceId),
-    generateInstanceIdDeprecated(ctx.metadata, provider),
+    providers.filter((p) => p.ioProvider.instance_id === current),
+    providers.filter(
+      (p) =>
+        p.ioProvider.instance_id === legacy &&
+        p.ioProvider.workspaceId === ctx.workspaceId,
+    ),
   ];
 
-  for (const candidate of candidates) {
-    const matches = providers.filter(
-      (p) => p.ioProvider.instance_id === candidate,
-    );
-
+  for (const matches of candidates) {
     if (matches.length > 0) {
       return (
         matches.find((p) => p.ioProvider.metadata.length > 0) ?? matches[0]
@@ -82,6 +87,27 @@ export function findLiveProvider(
   }
 
   return null;
+}
+
+/**
+ * Finds the live providers under the legacy instance id of a config provider whose workspace
+ * cannot be read, when no provider has its current instance id.
+ */
+export function findLegacyProvidersOfUnknownWorkspace(
+  providers: LiveEventingProvider[],
+  provider: EventProvider,
+  ctx: LeafPlanContext,
+): LiveEventingProvider[] {
+  const current = generateInstanceId(ctx.metadata, provider, ctx.workspaceId);
+  if (providers.some((p) => p.ioProvider.instance_id === current)) {
+    return [];
+  }
+
+  const legacy = generateInstanceIdDeprecated(ctx.metadata, provider);
+  return providers.filter(
+    (p) =>
+      p.ioProvider.instance_id === legacy && p.ioProvider.workspaceId === null,
+  );
 }
 
 /**
@@ -351,7 +377,7 @@ function planMetadata(
         declaresMetadata(target.key, entry.event_code, ctx)
           ? "change"
           : "drift",
-        [eventRef(target.key, name, findDeclaredEvent(target.key, name, ctx))],
+        [liveEventRef(target.key, name, ctx)],
       );
     });
 
@@ -525,13 +551,7 @@ function planSubscriptions(
         declaresSubscription(target.key, subscription.name, ctx)
           ? "change"
           : "drift",
-        [
-          eventRef(
-            target.key,
-            subscription.name,
-            findDeclaredEvent(target.key, subscription.name, ctx),
-          ),
-        ],
+        [liveEventRef(target.key, subscription.name, ctx)],
       ),
     );
 
@@ -564,13 +584,7 @@ export function planLeftoverProvider(
       remove(
         { name: subscription.name, providerKey, resourceType: "subscription" },
         reason,
-        [
-          eventRef(
-            providerKey,
-            subscription.name,
-            findDeclaredEvent(providerKey, subscription.name, ctx),
-          ),
-        ],
+        [liveEventRef(providerKey, subscription.name, ctx)],
       ),
     );
 
@@ -618,13 +632,7 @@ export function planLeftoverProvider(
           type: ctx.type,
         },
         reason,
-        [
-          eventRef(
-            providerKey,
-            name,
-            findDeclaredEvent(providerKey, name, ctx),
-          ),
-        ],
+        [liveEventRef(providerKey, name, ctx)],
       );
     }),
     ...commerce,

@@ -348,6 +348,25 @@ export function findDeclaredEvent(
     );
 }
 
+/**
+ * The reference of a live event by its live namespaced name. A live name that carries the raw app
+ * id, as events written before the id was sanitized do, resolves to the declared event with the
+ * same name, so it shares that event's key and config. Any other live name keeps its own key.
+ */
+export function liveEventRef(
+  providerKey: string,
+  liveName: string,
+  ctx: LeafPlanContext,
+): ItemRef {
+  const rawPrefix = `${ctx.metadata.id.toLowerCase()}.`;
+  const name = liveName.startsWith(rawPrefix)
+    ? getNamespacedEvent(ctx.metadata, liveName.slice(rawPrefix.length))
+    : liveName;
+
+  const declared = findDeclaredEvent(providerKey, name, ctx);
+  return eventRef(providerKey, declared ? name : liveName, declared);
+}
+
 export function add(
   after: EventingOperationValue,
   reason: Reason,
