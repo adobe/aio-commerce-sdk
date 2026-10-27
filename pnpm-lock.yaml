@@ -180,8 +180,8 @@ catalogs:
       specifier: ^4.1.0
       version: 4.4.0
     camelcase:
-      specifier: ^9.0.0
-      version: 9.0.0
+      specifier: ^10.0.0
+      version: 10.0.0
     consola:
       specifier: ^3.4.2
       version: 3.4.2
@@ -195,8 +195,8 @@ catalogs:
       specifier: ^3.8.1
       version: 3.9.10
     safe-stable-stringify:
-      specifier: ^2.5.0
-      version: 2.5.0
+      specifier: ^3.0.0
+      version: 3.0.0
     type-fest:
       specifier: ^5.0.0
       version: 5.10.0
@@ -552,7 +552,7 @@ importers:
         version: 24.19.2
       camelcase:
         specifier: 'catalog:'
-        version: 9.0.0
+        version: 10.0.0
       consola:
         specifier: 'catalog:'
         version: 3.4.2
@@ -570,7 +570,7 @@ importers:
         version: 3.9.10
       safe-stable-stringify:
         specifier: 'catalog:'
-        version: 2.5.0
+        version: 3.0.0
       ts-loader:
         specifier: ^9.6.2
         version: 9.6.2(typescript@6.0.3)(webpack@5.112.0(esbuild@0.28.2)(lightningcss@1.33.0)(postcss@8.5.30))
@@ -701,7 +701,7 @@ importers:
         version: 3.4.2
       safe-stable-stringify:
         specifier: 'catalog:'
-        version: 2.5.0
+        version: 3.0.0
       type-fest:
         specifier: 'catalog:'
         version: 5.10.0
@@ -750,7 +750,7 @@ importers:
         version: 4.4.0
       camelcase:
         specifier: 'catalog:'
-        version: 9.0.0
+        version: 10.0.0
       type-fest:
         specifier: 'catalog:'
         version: 5.10.0
@@ -2727,9 +2727,9 @@ packages:
     resolution: {integrity: sha512-Sp1ablJ0ivDkSzjcaJdxEunN5/XvksFJ2sMBFfq6x0ryhQV/2b/KwFe21cMpmHtPOSij8K99/wSfoEuTObmuMQ==}
     engines: {node: '>= 0.4'}
 
-  camelcase@9.0.0:
-    resolution: {integrity: sha512-TO9xmyXTZ9HUHI8M1OnvExxYB0eYVS/1e5s7IDMTAoIcwUd+aNcFODs6Xk83mobk0velyHFQgA1yIrvYc6wclw==}
-    engines: {node: '>=20'}
+  camelcase@10.0.0:
+    resolution: {integrity: sha512-p1wew5BGDCONz/5R+xHF6ByqXQM2V+5r4e+FdlFUeROawuMPimdDOFLw5k2QSqp1rm5h2QAglToqJyvnsl3ArQ==}
+    engines: {node: '>=22'}
 
   caniuse-lite@1.0.30001816:
     resolution: {integrity: sha512-+8Yx7BXCoqk6IF8yTicjfUR6D/ldJzdlsodlEOiOSPmhK844WIgk67/zIQaGAOxNkZyyvBlrRFnLvqKIoqbAFw==}
@@ -4017,6 +4017,10 @@ packages:
   safe-stable-stringify@2.5.0:
     resolution: {integrity: sha512-b3rppTKm9T+PsVCBEOUR46GWI7fdOs00VKZ1+9c1EWDaDMvjQc6tUwuFyIprgGgTcWoVHSKrU8H31ZHA2e0RHA==}
     engines: {node: '>=10'}
+
+  safe-stable-stringify@3.0.0:
+    resolution: {integrity: sha512-1z5+QfsSGAtBGJrCw2DP9cwfdvSEMRN4BKKaZxFIKwcwRbshkrtKzzueVFAJ2d1QJm+J3AmpYvI88jFnlEZmyg==}
+    engines: {node: '>=18'}
 
   safer-buffer@2.1.2:
     resolution: {integrity: sha512-YZo3K82SD7Riyi0E1EQPojLz7kpepnSQI9IyPbHHg1XXXevb5dJI7tpyN2ADxGcQbHG7vcyRHk0cbwqcQriUtg==}
@@ -6478,7 +6482,7 @@ snapshots:
       es-errors: 1.3.0
       function-bind: 1.1.2
 
-  camelcase@9.0.0: {}
+  camelcase@10.0.0: {}
 
   caniuse-lite@1.0.30001816: {}
 
@@ -7695,6 +7699,8 @@ snapshots:
       path-name: 1.0.0
 
   safe-stable-stringify@2.5.0: {}
+
+  safe-stable-stringify@3.0.0: {}
 
   safer-buffer@2.1.2: {}
 
