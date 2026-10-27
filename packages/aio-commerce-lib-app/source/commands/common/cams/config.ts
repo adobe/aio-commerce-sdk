@@ -19,10 +19,11 @@ export const CAMS_URL_ENV_VAR = "AIO_COMMERCE_APP_MANAGEMENT_SERVICE_URL";
 export const AIO_CLI_ENV_VAR = "AIO_CLI_ENV";
 
 /** The CAMS host for the stage environment. */
-export const STAGE_CAMS_URL = "https://commerce-app-management-stage.adobe.io";
+export const STAGE_CAMS_URL =
+  "https://app-management-stage.api.commerce.adobe.com";
 
 /** The CAMS host for the production environment. */
-export const PROD_CAMS_URL = "https://commerce-app-management.adobe.io";
+export const PROD_CAMS_URL = "https://app-management.api.commerce.adobe.com";
 
 const URL_SCHEME_PATTERN = /^https?:\/\//i;
 
