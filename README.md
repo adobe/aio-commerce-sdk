@@ -51,7 +51,7 @@ This project uses the following tools, find a detailed explanation/justification
 
 ## Node.js Support
 
-The SDK supports all Active LTS Node.js versions. The current supported range is **Node 22**, **Node 24**, and **Node 26**.
+The SDK supports all Active LTS Node.js versions.
 
 | Version | LTS start    | EOL        |
 | ------- | ------------ | ---------- |
@@ -66,7 +66,9 @@ See [`specs/features/CEXT-6221-node-version-policy.md`](./specs/features/CEXT-62
 
 ### Codegen runtime default
 
-The `runtime` field written to generated `ext.config.yaml` files defaults to `nodejs:26`. Existing action runtime settings are preserved during regeneration. To use a different runtime, set the action's `runtime` field explicitly.
+The `runtime` field written to generated `ext.config.yaml` files defaults to the latest App Builder Runtime version with prewarm support. Prewarms reduce cold-start latency; using a runtime version without prewarm support can degrade production performance. The default is updated when a newer version gains prewarm support in App Builder Runtime.
+
+The current default is `nodejs:26`. Existing action runtime settings are preserved during regeneration. To use a different runtime, set the action's `runtime` field explicitly.
 
 ## Contributing
 
