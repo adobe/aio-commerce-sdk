@@ -112,7 +112,7 @@ function buildActionDefinition(
 
   actionDef.set("function", action.function);
   actionDef.set("web", action.web ?? "yes");
-  actionDef.set("runtime", existingRuntime ?? action.runtime ?? "nodejs:24");
+  actionDef.set("runtime", existingRuntime ?? action.runtime ?? "nodejs:26");
   if (Object.keys(inputs).length > 0) {
     actionDef.set("inputs", buildInputs(inputs));
   }
