@@ -779,7 +779,7 @@ runtimeManifest:
                   actions: {
                     "test-action": {
                       function: "actions/test.js",
-                      runtime: "nodejs:22",
+                      runtime: "nodejs:26",
                     },
                   },
                 },
@@ -791,7 +791,7 @@ runtimeManifest:
           const fileContent = await readFile(configPath, "utf-8");
 
           expect(fileContent).toContain("runtime: nodejs:24");
-          expect(fileContent).not.toContain("runtime: nodejs:22");
+          expect(fileContent).not.toContain("runtime: nodejs:26");
         },
       );
     });
@@ -821,7 +821,7 @@ runtimeManifest:
       });
     });
 
-    test("falls back to nodejs:24 when neither existing nor action runtime is set", async () => {
+    test("falls back to nodejs:26 when neither existing nor action runtime is set", async () => {
       await withTempFiles({}, async (tempDir) => {
         const configPath = join(tempDir, "ext.config.yaml");
         const config = {
@@ -841,7 +841,7 @@ runtimeManifest:
         await createOrUpdateExtConfig(configPath, config);
         const fileContent = await readFile(configPath, "utf-8");
 
-        expect(fileContent).toContain("runtime: nodejs:24");
+        expect(fileContent).toContain("runtime: nodejs:26");
       });
     });
   });
