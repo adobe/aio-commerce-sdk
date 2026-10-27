@@ -42,6 +42,7 @@ import type { ActionResponse } from "@adobe/aio-commerce-lib-core/responses";
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 import type {
   AppStateSnapshot,
+  LifecycleAttempt,
   LifecycleOperation,
   LifecyclePlan,
 } from "#management/common/orchestration";
@@ -111,6 +112,9 @@ export type PreparedRequest = {
 
   /** Whether the state names a baseline snapshot that is no longer stored. */
   isBaselineMissing: boolean;
+
+  /** The latest lifecycle attempt, or `null` when there is none. */
+  latestAttempt: LifecycleAttempt | null;
   params: WorkflowRouteParams;
   runtime: LifecycleRuntime;
 };
@@ -199,6 +203,7 @@ export async function prepareRequest({
       appConfig,
       baseline,
       isBaselineMissing,
+      latestAttempt: state?.latestAttempt ?? null,
       params,
       runtime,
     },
@@ -243,7 +248,13 @@ export async function planRequestedOperation(args: RequestHandlerArgs) {
  * exists and `install` when not. Returns the response that refuses it when it cannot be planned.
  */
 export async function resolveOperation(
-  { appConfig, baseline, isBaselineMissing, runtime }: PreparedRequest,
+  {
+    appConfig,
+    baseline,
+    isBaselineMissing,
+    latestAttempt,
+    runtime,
+  }: PreparedRequest,
   requested?: "uninstall",
 ): Promise<ResolveOperationResult> {
   // An unreadable state reads as missing, which would plan an install over the installed app.
@@ -267,6 +278,23 @@ export async function resolveOperation(
           code: "baseline-missing",
           message:
             "The lifecycle state names a baseline snapshot that no longer exists. Nothing was planned.",
+        },
+      }),
+    );
+  }
+
+  // An uninstall plan has no target, which tells a failed uninstall from a failed install or upgrade.
+  // It leaves the app half removed, so only a retry of the uninstall is allowed.
+  if (
+    requested !== "uninstall" &&
+    latestAttempt?.status === "failed" &&
+    latestAttempt.plan.target === null
+  ) {
+    return rejected(
+      conflict({
+        body: {
+          code: "app-attempt-operation-mismatch",
+          message: `The latest lifecycle attempt with ID "${latestAttempt.id}" is an uninstall that failed. Retry the uninstall before planning anything else.`,
         },
       }),
     );
