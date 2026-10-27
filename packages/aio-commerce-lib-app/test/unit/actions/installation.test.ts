@@ -156,7 +156,7 @@ describe("installationRuntimeAction", () => {
       });
     });
 
-    test("returns the latest upgrade attempt without its plan for post-app-deploy", async () => {
+    test("returns the latest upgrade attempt with its plan preview for post-app-deploy", async () => {
       const attempt = createMockLifecycleAttempt({
         id: "attempt-1",
         status: "in-progress",
@@ -174,15 +174,14 @@ describe("installationRuntimeAction", () => {
       expect(result).toMatchObject({
         body: {
           id: "attempt-1",
+          plan: { id: attempt.plan.id, sourceVersion: "1.0.0" },
           status: "in-progress",
           step: attempt.progress,
         },
         statusCode: 200,
         type: "success",
       });
-      expect(result).not.toMatchObject({
-        body: { plan: expect.anything() },
-      });
+      expect(result).not.toHaveProperty("body.plan.target");
     });
 
     test("returns the latest lifecycle attempt over the legacy installation record", async () => {
@@ -2003,7 +2002,8 @@ describe("installationRuntimeAction", () => {
           body: { operation: "uninstall", result: null, status: "succeeded" },
           statusCode: 200,
         });
-        expect(status).not.toHaveProperty("body.plan");
+        expect(status).toHaveProperty("body.plan.operation", "uninstall");
+        expect(status).not.toHaveProperty("body.plan.target");
       });
 
       test("keeps the baseline and the legacy record when the uninstall fails", async () => {

@@ -3376,6 +3376,9 @@
             "description": "The plan the attempt executed.",
             "type": "string"
           },
+          "plan": {
+            "$ref": "#/components/schemas/PlanPreview"
+          },
           "previousPlanId": {
             "description": "The pending plan the executed plan replaced, or `null` when none was pending.",
             "anyOf": [
@@ -3489,6 +3492,7 @@
           "previousAttemptId",
           "planId",
           "previousPlanId",
+          "plan",
           "activations",
           "operation",
           "status",

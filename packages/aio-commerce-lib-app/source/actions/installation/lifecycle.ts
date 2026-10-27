@@ -43,6 +43,7 @@ import {
   logBlockedPlan,
   logPlan,
 } from "./logging";
+import { toPlanPreview } from "./plan-preview";
 
 import type { ActionResponse } from "@adobe/aio-commerce-lib-core/responses";
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
@@ -318,6 +319,7 @@ export function toAttemptStatus(attempt: LifecycleAttempt) {
     executionDeadline: attempt.executionDeadline,
     id: attempt.id,
     operation: attempt.operation,
+    plan: toPlanPreview(attempt.plan),
     planDiff: attempt.planDiff,
     planId: attempt.plan.id,
     previousAttemptId: attempt.previousAttemptId,

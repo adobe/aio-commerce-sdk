@@ -37,6 +37,7 @@ import {
   resolveWorkflowParams,
 } from "./common";
 import { attemptInProgressConflict, planOperation } from "./lifecycle";
+import { toPlanPreview } from "./plan-preview";
 
 import type { ActionResponse } from "@adobe/aio-commerce-lib-core/responses";
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
@@ -46,63 +47,14 @@ import type {
   LifecycleOperation,
   LifecyclePlan,
 } from "#management/common/orchestration";
-import type {
-  ItemRef,
-  PlanningIssue,
-  ResourceOperation,
-} from "#management/common/workflow/resource";
+import type { PlanningIssue } from "#management/common/workflow/resource";
 import type { AnyStep } from "#management/common/workflow/step";
 import type {
   StepValidationResult,
   ValidationIssue,
-  ValidationIssueSeverity,
 } from "#management/common/workflow/validation";
 import type { RequestHandlerArgs, WorkflowRouteParams } from "./common";
 import type { LifecycleRuntime } from "./lifecycle";
-
-/** An operation listed in a plan preview. */
-type PlanPreviewOperation = {
-  id: string;
-  kind: ResourceOperation<unknown>["kind"];
-  label: string;
-  reason: ResourceOperation<unknown>["reason"];
-
-  /** The items the operation changes. Empty for an operation internal to its domain. */
-  itemRefs: ItemRef[];
-};
-
-/** The operations a plan preview lists for one domain. */
-type PlanPreviewDomain = {
-  path: string[];
-  operations: PlanPreviewOperation[];
-};
-
-/** An issue listed in a plan preview. */
-type PlanPreviewIssue = {
-  domain: string;
-  code: string;
-  message: string;
-  path?: string[];
-  severity: ValidationIssueSeverity;
-  blocking: boolean;
-};
-
-/** The plan `POST /plan` returns for review, without internal or sensitive values. */
-export type PlanPreview = {
-  /** The `planId` to start the plan with. */
-  id: string;
-  operation: LifecycleOperation;
-
-  /** The app version the plan starts from, or `null` when nothing is installed. */
-  sourceVersion: string | null;
-
-  /** The app version the plan ends at, or `null` when the app ends up with nothing installed. */
-  targetVersion: string | null;
-
-  /** The domains with operations to run. A domain without operations is left out. */
-  domains: PlanPreviewDomain[];
-  issues: PlanPreviewIssue[];
-};
 
 /** A request that can plan, with everything it plans with. */
 export type PreparedRequest = {
@@ -440,37 +392,5 @@ function toValidationIssue(issue: PlanningIssue): ValidationIssue {
     details: issue.details,
     message: issue.message,
     severity: issue.severity ?? "error",
-  };
-}
-
-/** The preview of a plan returned for review. */
-function toPlanPreview(plan: LifecyclePlan): PlanPreview {
-  return {
-    domains: plan.domains
-      .filter((domain) => domain.operations.length > 0)
-      .map((domain) => ({
-        operations: domain.operations.map(
-          ({ id, kind, label, reason, itemRefs }) => ({
-            id,
-            itemRefs,
-            kind,
-            label,
-            reason,
-          }),
-        ),
-        path: domain.path,
-      })),
-    id: plan.id,
-    issues: plan.issues.map((issue) => ({
-      blocking: issue.blocking,
-      code: issue.code,
-      domain: issue.domain,
-      message: issue.message,
-      path: issue.path,
-      severity: issue.severity ?? "error",
-    })),
-    operation: plan.operation,
-    sourceVersion: plan.source?.appVersion ?? null,
-    targetVersion: plan.target?.appVersion ?? null,
   };
 }
