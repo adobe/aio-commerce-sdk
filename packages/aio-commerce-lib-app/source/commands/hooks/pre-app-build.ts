@@ -19,6 +19,11 @@ import { getProjectRootDirectory } from "@aio-commerce-sdk/scripting-utils/proje
 import consola from "consola";
 
 import {
+  EXTENSION_POINT_ORDER,
+  ensureExtensionPointsOrder,
+} from "#commands/common/extension-points";
+import {
+  APP_CONFIG_FILE,
   BACKEND_UI_V2_EXTENSION_POINT_ID,
   CONFIGURATION_EXTENSION_POINT_ID,
   EXTENSIBILITY_EXTENSION_POINT_ID,
@@ -55,6 +60,12 @@ export async function run(
   projectRoot: string,
   templatesDir = TEMPLATES_DIR,
 ) {
+  if (await ensureExtensionPointsOrder(projectRoot)) {
+    consola.warn(
+      `The extension points in ${APP_CONFIG_FILE} were reordered (${EXTENSION_POINT_ORDER.join(", ")}) to ensure an upgrade works reliably. This is a one-off change.`,
+    );
+  }
+
   const appManifest = await loadAppManifest(projectRoot);
   await prepareRuntimeAppConfigModule(appManifest, projectRoot);
 
