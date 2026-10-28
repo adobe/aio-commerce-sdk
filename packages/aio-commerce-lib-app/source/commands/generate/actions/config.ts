@@ -59,7 +59,7 @@ function createActionDefinition(
     },
 
     function: `${GENERATED_ACTIONS_PATH}/${actionName}.js`,
-    runtime: "nodejs:24",
+    runtime: "nodejs:26",
     web: options.web ?? "yes",
   };
 

@@ -59,6 +59,32 @@ describe("buildAppManagementExtConfig", () => {
       names: ["config", "scope-tree"],
     },
   ])(
+    "generates Node 26 runtime actions for $names",
+    async ({ build, names }) => {
+      await withTempFiles({}, async (tempDir) => {
+        const doc = await createOrUpdateExtConfig(
+          join(tempDir, "ext.config.yaml"),
+          build(),
+        );
+        const { actions } = doc.toJS().runtimeManifest.packages[PACKAGE_NAME];
+
+        for (const name of names) {
+          expect(actions[name].runtime).toBe("nodejs:26");
+        }
+      });
+    },
+  );
+
+  test.each([
+    {
+      build: () => buildAppManagementExtConfig(minimalValidConfig),
+      names: ["app-config", "association", "installation"],
+    },
+    {
+      build: buildBusinessConfigurationExtConfig,
+      names: ["config", "scope-tree"],
+    },
+  ])(
     "generates package-level LOG_LEVEL for $names",
     async ({ build, names }) => {
       await withTempFiles({}, async (tempDir) => {

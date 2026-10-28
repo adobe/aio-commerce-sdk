@@ -158,7 +158,7 @@ runtimeManifest:
         order-grid:
           function: actions/order-grid/index.js # relative to src/commerce-backend-ui-2/
           web: "yes"
-          runtime: nodejs:24
+          runtime: nodejs:26
           annotations:
             require-adobe-auth: true # Commerce calls the action with an IMS token — validate it
             final: true
