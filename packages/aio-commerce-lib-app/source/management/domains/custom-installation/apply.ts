@@ -92,6 +92,7 @@ export async function applyCustomScript(
   plan: CustomScriptDomainPlan,
   context: ApplyContext,
 ): Promise<ApplyResult<CustomInstallationStepIdentity>> {
+  // Custom installation steps have at most 1 operation.
   const operation = plan.operations.at(0);
 
   if (operation?.kind === "add" && context.targetConfig) {
