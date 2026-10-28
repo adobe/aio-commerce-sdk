@@ -1114,6 +1114,7 @@ Add `operation=install`, `operation=upgrade` or `operation=uninstall` to read on
 Each attempt links to the rest of the trail:
 
 - `previousAttemptId` and `previousPlanId` name the attempt and the plan it replaced.
+- `plan` is the plan the attempt executes, in the same shape `POST /plan` returns for review: its versions, the operations to run per domain, the items each one changes and the planning issues. It is on every answer that carries an attempt, including the `attempt` of a `409` and of a failed run.
 - `plans[0].source.snapshotId` names the snapshot the attempt started from, and `result.snapshotId` the one a successful attempt produced. Snapshots live in the app's file storage under `lifecycle-app-state-snapshot`, and each one records the `attemptId` that produced it.
 - `step` lists every step with its `status`, and `startedAt` and `completedAt` once it ran, so an expired attempt shows which step hung.
 - `activations.start` and `activations.execution` are the OpenWhisk activations that started and executed the attempt.
