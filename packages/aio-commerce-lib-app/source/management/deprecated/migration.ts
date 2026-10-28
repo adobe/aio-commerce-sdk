@@ -43,6 +43,8 @@ function toAppStateSnapshot(
   }
 
   return {
+    // A legacy installation is not a lifecycle attempt.
+    attemptId: null,
     config: state.config,
     createdAt: state.completedAt,
     data: state.data,

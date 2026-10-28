@@ -21,6 +21,7 @@ import {
   getIoEventCode,
   getIoEventsExistingData,
   getNamespacedEvent,
+  getProviderWorkspaceId,
   makeWorkspaceConfig,
   sanitizeEventingIdentifier,
 } from "#management/domains/events/utils";
@@ -329,6 +330,25 @@ describe("getCommerceEventingConfigurationUpdateParams", () => {
   });
 });
 
+describe("getProviderWorkspaceId", () => {
+  test("reads the workspace from the rel:update link", () => {
+    expect(
+      getProviderWorkspaceId({
+        "rel:update": {
+          href: "/events/271530/4566206088344866031/456/providers/abc",
+        },
+      }),
+    ).toBe("456");
+  });
+
+  test("is null without a rel:update link", () => {
+    expect(
+      getProviderWorkspaceId({ self: { href: "/providers/1" } }),
+    ).toBeNull();
+    expect(getProviderWorkspaceId(undefined)).toBeNull();
+  });
+});
+
 describe("existing data normalization", () => {
   test("getIoEventsExistingData normalizes HAL providers and registrations", async () => {
     const ioProviderWithMetadata = createMockIoEventProviderHalModel({
@@ -423,6 +443,7 @@ describe("existing data normalization", () => {
           provider_metadata: "dx_commerce_events",
           publisher: "adobe",
           source: "magento",
+          workspaceId: null,
         },
         {
           description: "A test provider",
@@ -434,6 +455,7 @@ describe("existing data normalization", () => {
           provider_metadata: "dx_commerce_events",
           publisher: "adobe",
           source: "magento",
+          workspaceId: null,
         },
       ],
       registrations: [
@@ -543,7 +565,7 @@ describe("existing data normalization", () => {
   });
 });
 
-describe("pruneStoredEventProviders", () => {
+describe("stored events data", () => {
   async function importUtilsWithConfigMocks() {
     vi.resetModules();
 
@@ -564,6 +586,7 @@ describe("pruneStoredEventProviders", () => {
     return {
       configMocks,
       pruneStoredEventProviders: utilsModule.pruneStoredEventProviders,
+      storeEventProviders: utilsModule.storeEventProviders,
     };
   }
 
@@ -670,5 +693,36 @@ describe("pruneStoredEventProviders", () => {
       "events",
       null,
     );
+  });
+
+  test("stores providers over the stored entries with the same key", async () => {
+    const { storeEventProviders, configMocks } =
+      await importUtilsWithConfigMocks();
+
+    configMocks.getSystemConfigByKey.mockResolvedValue({
+      providers: {
+        kept: { events: {}, id: "io-kept" },
+        orders: { events: {}, id: "io-old" },
+      },
+    });
+
+    await storeEventProviders({ orders: { events: {}, id: "io-orders" } });
+
+    expect(configMocks.setSystemConfigByKey).toHaveBeenCalledWith("events", {
+      providers: {
+        kept: { events: {}, id: "io-kept" },
+        orders: { events: {}, id: "io-orders" },
+      },
+    });
+  });
+
+  test("stores nothing when given no providers", async () => {
+    const { storeEventProviders, configMocks } =
+      await importUtilsWithConfigMocks();
+
+    await storeEventProviders({});
+
+    expect(configMocks.getSystemConfigByKey).not.toHaveBeenCalled();
+    expect(configMocks.setSystemConfigByKey).not.toHaveBeenCalled();
   });
 });

@@ -22,14 +22,16 @@ import type { CustomInstallationStepIdentity } from "#management/domains/custom-
 
 /**
  * Creates the default child steps built-in in the library with dynamic children based on the
- * config. `executedCustomInstallationSteps` is only meaningful for a full uninstall (see
- * `createRootUninstallationStep`). `includeReconciliation` adds the reconciliation leaf,
- * which only runs on upgrade.
+ * config. `executedCustomInstallationSteps` is the custom installation steps that ran, or `null`
+ * when no run history is stored. `forLifecycle` builds the tree the lifecycle plans and applies
+ * (see `createCustomInstallationStep`).
  */
 export function createDefaultChildSteps(
   config: CommerceAppConfigOutputModel,
-  executedCustomInstallationSteps: readonly CustomInstallationStepIdentity[] = [],
-  includeReconciliation = false,
+  executedCustomInstallationSteps:
+    | readonly CustomInstallationStepIdentity[]
+    | null = [],
+  forLifecycle = false,
 ): AnyStep[] {
   return [
     eventingStep,
@@ -38,21 +40,34 @@ export function createDefaultChildSteps(
     createCustomInstallationStep(
       config,
       executedCustomInstallationSteps,
-      includeReconciliation,
+      forLifecycle,
     ),
   ];
 }
 
 /**
- * Creates a root installation step with dynamic children based on the config. `forUpgrade` adds the
- * reconciliation leaf, which only runs on upgrade.
+ * Creates a root installation step with dynamic children based on the config. `forLifecycle`
+ * builds the tree the lifecycle plans and applies, with `executedCustomInstallationSteps` as the
+ * custom installation steps that ran, or `null` when no run history is stored.
  */
 export function createRootInstallationStep(
   config: CommerceAppConfigOutputModel,
-  { forUpgrade = false }: { forUpgrade?: boolean } = {},
+  {
+    executedCustomInstallationSteps = [],
+    forLifecycle = false,
+  }: {
+    executedCustomInstallationSteps?:
+      | readonly CustomInstallationStepIdentity[]
+      | null;
+    forLifecycle?: boolean;
+  } = {},
 ): BranchStep {
   return defineBranchStep({
-    children: createDefaultChildSteps(config, [], forUpgrade),
+    children: createDefaultChildSteps(
+      config,
+      executedCustomInstallationSteps,
+      forLifecycle,
+    ),
     meta: {
       install: {
         description: "App installation workflow",

@@ -16,6 +16,7 @@ import stringify from "safe-stable-stringify";
 import { getInstallCommerceEnv } from "#config/lib/environment";
 
 import {
+  findLegacyProvidersOfUnknownWorkspace,
   findLiveProvider,
   planExistingProvider,
   planLeftoverProvider,
@@ -26,6 +27,7 @@ import { toSubscriptionValues } from "./operations";
 import {
   COMMERCE_PROVIDER_TYPE,
   EXTERNAL_PROVIDER_TYPE,
+  generateInstanceId,
   getNamespacedEvent,
   getProviderSnapshots,
   isIoProviderProvenOwnedByApp,
@@ -41,8 +43,8 @@ import type {
 } from "#config/schema/eventing";
 import type { ApplicationMetadata } from "#config/schema/metadata";
 import type {
+  BlockingPlanningIssue,
   PlanningInput,
-  PlanningIssue,
   PlanningResult,
 } from "#management/common/workflow/resource";
 import type { ValidationExecutionContext } from "#management/common/workflow/step";
@@ -51,6 +53,7 @@ import type { LiveEventingProvider, LiveEventingState } from "./live";
 import type { LeafPlanContext, Operation } from "./operations";
 import type {
   EventingDomainPlan,
+  EventingModuleState,
   EventingProviderSnapshot,
   EventingSnapshotData,
   SubscriptionValues,
@@ -147,6 +150,7 @@ async function planEventingLeaf(
   } catch (error) {
     return blocked([
       {
+        blocking: true,
         code: "EVENTS_LIVE_READ_FAILED",
         domain: "eventing",
         message: `Could not read the live event state to plan against: ${await unwrapHttpError(error)}`,
@@ -161,9 +165,22 @@ async function planEventingLeaf(
   if (foreignSubscriptions.length > 0) {
     return blocked(
       foreignSubscriptions.map((subscription) => ({
+        blocking: true,
         code: "EVENTS_SUBSCRIPTION_NOT_OWNED",
         domain: "eventing",
         message: `Commerce subscription "${subscription.name}" belongs to provider "${subscription.provider_id}", which this app does not own.`,
+      })),
+    );
+  }
+
+  const unknownWorkspace = findUnknownWorkspaceProviders(configs, live, ctx);
+  if (unknownWorkspace.length > 0) {
+    return blocked(
+      unknownWorkspace.map((provider) => ({
+        blocking: true,
+        code: "EVENTS_PROVIDER_IN_OTHER_WORKSPACE",
+        domain: "eventing",
+        message: `Event provider "${provider.ioProvider.instance_id}" has no workspace link, so it cannot be confirmed to belong to workspace "${ctx.workspaceId}".`,
       })),
     );
   }
@@ -173,16 +190,20 @@ async function planEventingLeaf(
     kind: "planned",
     plan: {
       configuredValues: leaf.isCommerce ? ctx.configuredValues : undefined,
+      eventingModule: getEventingModuleState(live, matches, ctx),
       operations: operations.sort(
         (a, b) => KIND_ORDER[a.kind] - KIND_ORDER[b.kind],
       ),
       path,
+      providerIds: getLiveProviderIds(matches),
     },
   };
 }
 
 /** A blocked planning result with the given issues. */
-function blocked(issues: PlanningIssue[]): PlanningResult<EventingDomainPlan> {
+function blocked(
+  issues: BlockingPlanningIssue[],
+): PlanningResult<EventingDomainPlan> {
   return { issues, kind: "blocked" };
 }
 
@@ -279,6 +300,26 @@ function matchProviders(
   return { leftovers, matched };
 }
 
+/**
+ * The live providers that carry the legacy instance id of a target or baseline provider but no
+ * readable workspace. They are neither matched nor ruled out as another workspace's.
+ */
+function findUnknownWorkspaceProviders(
+  configs: LeafConfigs,
+  live: LiveEventingState,
+  ctx: LeafPlanContext,
+): LiveEventingProvider[] {
+  const found = [...configs.target, ...configs.declared].flatMap((snapshot) =>
+    findLegacyProvidersOfUnknownWorkspace(
+      live.providers,
+      snapshot.provider,
+      ctx,
+    ),
+  );
+
+  return [...new Set(found)];
+}
+
 /** The live Commerce subscriptions with a target name under a provider the app does not own. */
 function findForeignSubscriptions(
   configs: LeafConfigs,
@@ -337,6 +378,33 @@ function getTargetSubscriptionNames(
       ),
     ),
   );
+}
+
+/** The I/O provider ids of the target providers that exist live, by provider key. */
+function getLiveProviderIds(matches: ProviderMatches): Record<string, string> {
+  return Object.fromEntries(
+    matches.matched.flatMap(({ target, live }) =>
+      live ? [[target.key, live.ioProvider.id]] : [],
+    ),
+  );
+}
+
+/** The eventing module state for the Commerce leaf, tied to its first target provider. */
+function getEventingModuleState(
+  live: LiveEventingState,
+  matches: ProviderMatches,
+  ctx: LeafPlanContext,
+): EventingModuleState | undefined {
+  const [first] = matches.matched;
+  if (!(live.eventingModule && first)) {
+    return;
+  }
+
+  const instanceId =
+    first.live?.ioProvider.instance_id ??
+    generateInstanceId(ctx.metadata, first.target.provider, ctx.workspaceId);
+
+  return { ...live.eventingModule, instanceId };
 }
 
 /** Adds the subscription values of the given providers' Commerce events, skipping exact duplicates. */

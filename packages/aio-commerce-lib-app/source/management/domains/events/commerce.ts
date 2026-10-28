@@ -16,7 +16,6 @@ import { deprecatedCommerceEventsStep } from "#management/deprecated/domains/eve
 
 import { applyEventingLeaf } from "./apply";
 import { planCommerceEvents } from "./plan";
-import { createCommerceEvents } from "./provisioning";
 import { COMMERCE_PROVIDER_TYPE } from "./utils";
 
 import type {
@@ -52,8 +51,7 @@ export const commerceEventsStep = defineLeafStep({
 });
 
 /**
- * Applies a Commerce eventing domain plan by delegating to the shared leaf convergence, supplying the
- * Commerce install/uninstall handlers it reuses to converge providers.
+ * Applies a Commerce eventing domain plan.
  *
  * @param plan - The eventing domain plan produced by `planCommerceEvents`.
  * @param context - The attempt-scoped execution context (carries the provisioned clients).
@@ -62,9 +60,5 @@ export function applyCommerceEvents(
   plan: EventingDomainPlan,
   context: ApplyContext<EventsStepContext>,
 ): Promise<ApplyResult<EventingSnapshotData>> {
-  return applyEventingLeaf(plan, context, {
-    install: createCommerceEvents,
-    isCommerce: true,
-    type: COMMERCE_PROVIDER_TYPE,
-  });
+  return applyEventingLeaf(plan, context, COMMERCE_PROVIDER_TYPE);
 }

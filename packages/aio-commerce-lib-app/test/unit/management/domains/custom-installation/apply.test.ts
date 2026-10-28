@@ -12,18 +12,16 @@
 
 import { describe, expect, test, vi } from "vitest";
 
-import { applyCustomInstallationSteps } from "#management/domains/custom-installation/apply";
-import {
-  configWithCustomInstallationSteps,
-  minimalValidConfig,
-} from "#test/fixtures/config";
+import { applyCustomScript } from "#management/domains/custom-installation/apply";
+import { configWithCustomInstallationSteps } from "#test/fixtures/config";
 import { createMockInstallationContext } from "#test/fixtures/installation";
 
 import type { ApplyContext } from "#management/common/workflow/resource";
-import type { CustomInstallationDomainPlan } from "#management/domains/custom-installation/types";
+import type { CustomScriptDomainPlan } from "#management/domains/custom-installation/types";
 
-const path = ["installation", "customInstallationSteps", "reconciliation"];
+const path = ["installation", "customInstallationSteps", "demoSuccess"];
 const SCRIPT_NOT_FOUND_PATTERN = /not found in customScripts context/;
+const step = { name: "Demo Success", script: "./demo-success.js" };
 
 /** Builds an `ApplyContext` with the given custom scripts loaded. */
 function buildApplyContext(
@@ -38,170 +36,136 @@ function buildApplyContext(
   };
 }
 
-describe("applyCustomInstallationSteps", () => {
-  test("runs install for a newly added step and persists its identity", async () => {
-    const installFn = vi.fn().mockResolvedValue({ status: "success" });
-    const scriptModule = { install: installFn };
+/** Builds the plan of a step that runs its `install`. */
+function addPlan(): CustomScriptDomainPlan {
+  return {
+    baselineConfig: null,
+    operations: [
+      {
+        after: step,
+        id: "add:Demo Success",
+        itemRefs: [],
+        kind: "add",
+        label: "Run",
+        reason: "change",
+      },
+    ],
+    path,
+  };
+}
 
-    const plan: CustomInstallationDomainPlan = {
-      baselineExecutedSteps: [],
-      operations: [
-        {
-          after: { name: "Demo Success", script: "./demo-success.js" },
-          id: "add:Demo Success",
-          kind: "add",
-          label: "Run",
-          reason: "change",
-        },
-      ],
-      path,
-      targetConfig: configWithCustomInstallationSteps,
-    };
+/** Builds the plan of a step that runs its `uninstall`. */
+function removePlan(
+  baselineConfig: CustomScriptDomainPlan["baselineConfig"] = configWithCustomInstallationSteps,
+): CustomScriptDomainPlan {
+  return {
+    baselineConfig,
+    operations: [
+      {
+        before: step,
+        id: "remove:Demo Success",
+        itemRefs: [],
+        kind: "remove",
+        label: "Remove",
+        reason: "change",
+      },
+    ],
+    path,
+  };
+}
 
+describe("applyCustomScript", () => {
+  test("runs the install of an added step and records it", async () => {
+    const install = vi.fn().mockResolvedValue({ status: "success" });
     const context = buildApplyContext(
-      { "./demo-success.js": scriptModule },
+      { "./demo-success.js": { install } },
       configWithCustomInstallationSteps,
     );
 
-    const result = await applyCustomInstallationSteps(plan, context);
+    const result = await applyCustomScript(addPlan(), context);
 
-    expect(installFn).toHaveBeenCalledWith(
+    expect(install).toHaveBeenCalledWith(
       configWithCustomInstallationSteps,
       context,
     );
-    expect(result.snapshotData?.executedSteps).toEqual([
-      { name: "Demo Success", script: "./demo-success.js" },
-    ]);
+    expect(result).toEqual({ snapshotData: step });
   });
 
-  test("throws when a newly added step's script cannot be resolved", async () => {
-    const plan: CustomInstallationDomainPlan = {
-      baselineExecutedSteps: [],
-      operations: [
-        {
-          after: { name: "Demo Success", script: "./demo-success.js" },
-          id: "add:Demo Success",
-          kind: "add",
-          label: "Run",
-          reason: "change",
-        },
-      ],
-      path,
-      targetConfig: configWithCustomInstallationSteps,
-    };
-
+  test("throws when an added step's script cannot be resolved", async () => {
     const context = buildApplyContext({}, configWithCustomInstallationSteps);
 
-    await expect(applyCustomInstallationSteps(plan, context)).rejects.toThrow(
+    await expect(applyCustomScript(addPlan(), context)).rejects.toThrow(
       SCRIPT_NOT_FOUND_PATTERN,
     );
   });
 
-  test("does not re-run an unmodified retained step", async () => {
-    const install = vi.fn().mockResolvedValue({ status: "success" });
-    const scriptModule = { install };
+  test("runs the uninstall of a removed step with the baseline config and records `null`", async () => {
+    const uninstall = vi.fn();
+    const context = buildApplyContext({
+      "./demo-success.js": { install: vi.fn(), uninstall },
+    });
 
-    const plan: CustomInstallationDomainPlan = {
-      baselineExecutedSteps: [
-        { name: "Demo Success", script: "./demo-success.js" },
-        { name: "Demo Error", script: "./demo-error.js" },
-      ],
-      operations: [],
-      path,
-      targetConfig: configWithCustomInstallationSteps,
-    };
+    const result = await applyCustomScript(removePlan(), context);
 
-    const context = buildApplyContext(
-      {
-        "./demo-error.js": scriptModule,
-        "./demo-success.js": scriptModule,
-      },
+    expect(uninstall).toHaveBeenCalledWith(
       configWithCustomInstallationSteps,
+      context,
     );
-
-    const result = await applyCustomInstallationSteps(plan, context);
-
-    expect(install).not.toHaveBeenCalled();
-    expect(context.logger.warn).not.toHaveBeenCalled();
-    expect(result.snapshotData?.executedSteps).toEqual(
-      plan.baselineExecutedSteps,
-    );
+    expect(result).toEqual({ snapshotData: null });
   });
 
-  test("warns when a retained step's script path changed while its name stayed the same", async () => {
-    const install = vi.fn().mockResolvedValue({ status: "success" });
-    const scriptModule = { install };
+  test("keeps the record of a removed step whose script is not deployed", async () => {
+    const context = buildApplyContext({});
 
-    const targetConfig = structuredClone(configWithCustomInstallationSteps);
-    targetConfig.installation.customInstallationSteps[0].script =
-      "./demo-success-v2.js";
-
-    const plan: CustomInstallationDomainPlan = {
-      baselineExecutedSteps: [
-        { name: "Demo Success", script: "./demo-success.js" },
-      ],
-      operations: [],
-      path,
-      targetConfig,
-    };
-
-    const context = buildApplyContext(
-      { "./demo-success-v2.js": scriptModule },
-      targetConfig,
-    );
-
-    await applyCustomInstallationSteps(plan, context);
+    const result = await applyCustomScript(removePlan(), context);
 
     expect(context.logger.warn).toHaveBeenCalledWith(
-      expect.stringContaining("now points to a different script"),
+      expect.stringContaining('"./demo-success.js" is not deployed'),
+    );
+    expect(result).toEqual({ snapshotData: step });
+  });
+
+  test("keeps the record of a removed step whose script exports no uninstall", async () => {
+    const context = buildApplyContext({ "./demo-success.js": vi.fn() });
+
+    const result = await applyCustomScript(removePlan(), context);
+
+    expect(context.logger.warn).toHaveBeenCalledWith(
+      expect.stringContaining("exports no uninstall function"),
+    );
+    expect(result).toEqual({ snapshotData: step });
+  });
+
+  test("keeps the record of a removed step when the plan has no baseline config", async () => {
+    const uninstall = vi.fn();
+    const context = buildApplyContext({
+      "./demo-success.js": { install: vi.fn(), uninstall },
+    });
+
+    const result = await applyCustomScript(removePlan(null), context);
+
+    expect(uninstall).not.toHaveBeenCalled();
+    expect(result).toEqual({ snapshotData: step });
+  });
+
+  test("fails when an uninstall fails", async () => {
+    const context = buildApplyContext({
+      "./demo-success.js": {
+        install: vi.fn(),
+        uninstall: vi.fn().mockRejectedValue(new Error("boom")),
+      },
+    });
+
+    await expect(applyCustomScript(removePlan(), context)).rejects.toThrow(
+      "boom",
     );
   });
 
-  test("carries a removed step's identity forward without running its uninstall", async () => {
-    const plan: CustomInstallationDomainPlan = {
-      baselineExecutedSteps: [{ name: "Old Step", script: "./old-step.js" }],
-      operations: [
-        {
-          before: { name: "Old Step", script: "./old-step.js" },
-          id: "remove:Old Step",
-          kind: "remove",
-          label: "Removed",
-          reason: "change",
-        },
-      ],
-      path,
-      targetConfig: minimalValidConfig,
-    };
+  test("throws when the plan has nothing to apply", async () => {
+    const context = buildApplyContext({}, configWithCustomInstallationSteps);
 
-    const context = buildApplyContext({}, minimalValidConfig);
-    const result = await applyCustomInstallationSteps(plan, context);
-
-    expect(result.snapshotData?.executedSteps).toEqual(
-      plan.baselineExecutedSteps,
-    );
-  });
-
-  test("returns the baseline unchanged when there is no target config", async () => {
-    const plan: CustomInstallationDomainPlan = {
-      baselineExecutedSteps: [{ name: "Old Step", script: "./old-step.js" }],
-      operations: [
-        {
-          before: { name: "Old Step", script: "./old-step.js" },
-          id: "remove:Old Step",
-          kind: "remove",
-          label: "Removed",
-          reason: "change",
-        },
-      ],
-      path,
-      targetConfig: null,
-    };
-
-    const context = buildApplyContext({}, null);
-    const result = await applyCustomInstallationSteps(plan, context);
-
-    expect(result.snapshotData?.executedSteps).toEqual(
-      plan.baselineExecutedSteps,
-    );
+    await expect(
+      applyCustomScript({ ...addPlan(), operations: [] }, context),
+    ).rejects.toThrow('"demoSuccess" has nothing to apply');
   });
 });
