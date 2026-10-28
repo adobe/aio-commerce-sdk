@@ -115,10 +115,7 @@ export async function main(params: Record<string, unknown>) {
     if (dbError.name === "DbError") {
       logger.error("Database error", dbError.message ?? "");
     } else {
-      logger.error(
-        "Unexpected error",
-        error instanceof Error ? error : stringifyError(error),
-      );
+      logger.error("Unexpected error", stringifyError(error));
     }
     return buildErrorResponse(dbError.statusCode ?? 500, {
       body: { message: dbError.message ?? "Unexpected error" },
