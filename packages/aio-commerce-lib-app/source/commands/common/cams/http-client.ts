@@ -10,7 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
-import { stringifyError } from "@aio-commerce-sdk/scripting-utils/error";
+import { stringifyError } from "@adobe/aio-commerce-lib-core/error";
 import ky, { HTTPError } from "ky";
 
 import { PROD_CAMS_URL } from "#commands/common/cams/config";

@@ -10,10 +10,9 @@
  * governing permissions and limitations under the License.
  */
 
-import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
 import { describe, expect, test } from "vitest";
 
-import { stringifyError } from "#error";
+import { CommerceSdkValidationError, stringifyError } from "#error/index";
 
 describe("stringifyError", () => {
   test("should stringify Error objects", () => {

@@ -4,25 +4,10 @@
 
 This package provides utility functions for Adobe Commerce SDK scripts and build tools. It includes helpers for:
 
-- **[Error Handling](#error-handling)**: Error stringification utilities
 - **[Project Utilities](#project-utilities)**: Package detection, file finding, and project structure helpers
 - **[Filesystem Utilities](#filesystem-utilities)**: Temporary file management
 - **[YAML Utilities](#yaml-utilities)**: YAML document manipulation and code generation
 - **[Process Utilities](#process-utilities)**: Detached background processes that outlive their starter
-
-## Error Handling
-
-Utilities for converting errors to human-readable strings:
-
-```typescript
-import { stringifyError } from "@aio-commerce-sdk/scripting-utils/error";
-
-try {
-  // Some operation that might throw
-} catch (error) {
-  console.error(stringifyError(error));
-}
-```
 
 ## Project Utilities
 

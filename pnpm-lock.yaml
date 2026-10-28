@@ -395,9 +395,6 @@ importers:
 
   packages-private/scripting-utils:
     dependencies:
-      '@adobe/aio-commerce-lib-core':
-        specifier: workspace:*
-        version: link:../../packages/aio-commerce-lib-core
       '@adobe/aio-lib-core-config':
         specifier: ^5.0.1
         version: 5.0.1(supports-color@8.1.1)

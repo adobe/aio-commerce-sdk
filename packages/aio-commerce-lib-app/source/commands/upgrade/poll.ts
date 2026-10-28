@@ -12,7 +12,7 @@
 
 import { setTimeout as sleep } from "node:timers/promises";
 
-import { stringifyError } from "@aio-commerce-sdk/scripting-utils/error";
+import { stringifyError } from "@adobe/aio-commerce-lib-core/error";
 import { colors } from "consola/utils";
 
 import { CamsClientError } from "#commands/common/cams/errors";

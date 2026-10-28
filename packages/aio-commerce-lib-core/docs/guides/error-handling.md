@@ -95,6 +95,20 @@ try {
 }
 ```
 
+## stringifyError
+
+`stringifyError` converts any thrown value to a string. Validation errors use their formatted `display()` output, other errors use their `message`, and any other value goes through `String()`.
+
+```typescript
+import { stringifyError } from "@adobe/aio-commerce-lib-core/error";
+
+try {
+  await doSomething();
+} catch (error) {
+  console.error(stringifyError(error));
+}
+```
+
 ## Best Practices
 
 ### 1. Extend Base Error Class for Custom Errors

@@ -36,7 +36,6 @@
     "typecheck": "tsc --noEmit && echo '✅ No type errors found.'"
   },
   "dependencies": {
-    "@adobe/aio-commerce-lib-core": "workspace:*",
     "@adobe/aio-lib-core-config": "^5.0.1",
     "@adobe/aio-lib-ims": "catalog:",
     "@npmcli/package-json": "^8.0.0",
