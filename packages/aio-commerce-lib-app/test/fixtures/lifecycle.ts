@@ -87,6 +87,7 @@ export function createMockLifecyclePlan(
 
 type LifecycleAttemptOverrides = Partial<{
   activations: LifecycleAttempt["activations"];
+  carriedOperations: LifecycleAttempt["carriedOperations"];
   previousAttemptId: string | null;
   data: LifecycleAttempt["data"];
   executionDeadline: string;
@@ -106,6 +107,7 @@ export function createMockLifecycleAttempt(
 ): LifecycleAttempt {
   const base = {
     activations: overrides.activations ?? { start: "activation-start-1" },
+    carriedOperations: overrides.carriedOperations,
     data: overrides.data ?? null,
     executionDeadline: overrides.executionDeadline ?? DEFAULT_DEADLINE,
     id: overrides.id ?? "attempt-1",

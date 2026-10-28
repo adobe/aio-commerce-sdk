@@ -16,6 +16,7 @@ import {
   CUSTOM_INSTALLATION_STEPS_PATH,
   getExecutedCustomInstallationSteps,
 } from "#actions/installation/common";
+import { toAttemptStatus } from "#actions/installation/lifecycle";
 import { getPlanInputs } from "#actions/installation/plan";
 import { createRootInstallationStep } from "#management/installation/root";
 import {
@@ -1255,6 +1256,162 @@ describe("lifecycle runtime", () => {
 
     expect(repeated).toEqual(completed);
     expect(apply).toHaveBeenCalledOnce();
+  });
+
+  describe("retry after a partial failure", () => {
+    const operationOf = (id: string) => ({
+      after: { id },
+      id,
+      itemRefs: [],
+      kind: "add" as const,
+      label: id,
+      reason: "change" as const,
+    });
+
+    async function runRetry() {
+      const eventsApply = vi
+        .fn()
+        .mockResolvedValue({ snapshotData: { id: "events" } });
+      const webhooksApply = vi
+        .fn()
+        .mockRejectedValueOnce(new Error("first failure"))
+        .mockResolvedValue({ snapshotData: { id: "webhooks" } });
+
+      // The events domain is already live after the first attempt, so the second plan has nothing for it.
+      const eventsPlan = vi
+        .fn()
+        .mockResolvedValueOnce({
+          kind: "planned",
+          plan: {
+            operations: [operationOf("add-events")],
+            path: ["root", "events"],
+          },
+        })
+        .mockResolvedValue({
+          kind: "planned",
+          plan: { operations: [], path: ["root", "events"] },
+        });
+
+      const webhooksPlan = vi.fn().mockResolvedValue({
+        kind: "planned",
+        plan: {
+          operations: [operationOf("add-webhooks")],
+          path: ["root", "webhooks"],
+        },
+      });
+
+      const { runtime } = createMockLifecycleRuntime({
+        baseline: createBaseline("1.0.0"),
+        rootStep: createMockLifecycleRoot([
+          createMockLifecycleLeaf({
+            apply: eventsApply,
+            name: "events",
+            plan: eventsPlan,
+          }),
+          createMockLifecycleLeaf({
+            apply: webhooksApply,
+            name: "webhooks",
+            plan: webhooksPlan,
+          }),
+        ]),
+      });
+
+      const attempts: LifecycleAttempt[] = [];
+      for (const activation of ["first", "second"]) {
+        // biome-ignore lint/performance/noAwaitInLoops: the attempts must run in order
+        const planning = await planLifecycle({
+          operation: "upgrade",
+          ...runtime,
+          actionVersion: "1.0.0",
+          targetConfig: createConfig("2.0.0"),
+        });
+
+        expect.assert(
+          planning.kind === "planned",
+          "Expected an executable plan",
+        );
+        const started = await startLifecycleAttempt({
+          ...runtime,
+          actionVersion: "1.0.0",
+          activationId: `start-${activation}`,
+          executionDeadline: EXECUTION_DEADLINE,
+          planId: planning.plan.id,
+        });
+
+        attempts.push(started);
+        if (activation === "first") {
+          await executeLifecycleAttempt({
+            ...runtime,
+            actionVersion: "1.0.0",
+            activationId: "execution-first",
+            attemptId: started.id,
+            executionDeadline: EXECUTION_DEADLINE,
+          });
+        }
+      }
+
+      const [, retry] = attempts as [LifecycleAttempt, LifecycleAttempt];
+      const completed = await executeLifecycleAttempt({
+        ...runtime,
+        actionVersion: "1.0.0",
+        activationId: "execution-second",
+        attemptId: retry.id,
+        executionDeadline: EXECUTION_DEADLINE,
+      });
+
+      return { completed, eventsApply, retry, runtime, webhooksApply };
+    }
+
+    test("shows the finished leaf as succeeded without running it again", async () => {
+      const { completed, eventsApply, retry, runtime, webhooksApply } =
+        await runRetry();
+
+      expect(retry.progress.children.map((child) => child.name)).toEqual([
+        "events",
+        "webhooks",
+      ]);
+      expect(retry.progress.children[0]).toMatchObject({
+        name: "events",
+        status: "succeeded",
+      });
+      expect(retry.progress.children[1]?.status).toBe("pending");
+      expect(retry.carriedOperations).toEqual([
+        {
+          operations: [
+            {
+              id: "add-events",
+              itemRefs: [],
+              kind: "add",
+              label: "add-events",
+              reason: "change",
+            },
+          ],
+          path: ["root", "events"],
+        },
+      ]);
+
+      expect(toAttemptStatus(retry).plan.domains.map((d) => d.path)).toEqual([
+        ["root", "webhooks"],
+        ["root", "events"],
+      ]);
+
+      expect(eventsApply).toHaveBeenCalledOnce();
+      expect(webhooksApply).toHaveBeenCalledTimes(2);
+      expect(completed.status).toBe("succeeded");
+      expect(completed.progress.children.map((c) => c.status)).toEqual([
+        "succeeded",
+        "succeeded",
+      ]);
+
+      const snapshot = await runtime.snapshotStore.get(
+        (completed as { result: { snapshotId: string } }).result.snapshotId,
+      );
+
+      // The skipped leaf adds nothing to the snapshot, as when the tree has no node for it.
+      expect(snapshot?.data).toEqual({
+        root: { webhooks: { id: "webhooks" } },
+      });
+    });
   });
 
   test("plans again instead of resuming a failed apply attempt", async () => {

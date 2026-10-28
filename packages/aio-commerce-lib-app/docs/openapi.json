@@ -3377,6 +3377,7 @@
             "type": "string"
           },
           "plan": {
+            "description": "The plan the attempt executes. After a failed attempt of the same operation, it also lists the operations of the steps that attempt completed. Those steps show as `succeeded` in `step` and do not run again.",
             "$ref": "#/components/schemas/PlanPreview"
           },
           "previousPlanId": {

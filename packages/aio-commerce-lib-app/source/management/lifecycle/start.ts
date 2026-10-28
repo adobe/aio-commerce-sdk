@@ -13,6 +13,7 @@
 import { createInitialPlanExecutionState } from "#management/common/workflow/execute";
 import { getAtPath, setAtPath } from "#management/common/workflow/utils";
 
+import { carryCompletedSteps } from "./carry";
 import {
   BlockedLifecyclePlanError,
   InvalidStartDeadlineError,
@@ -90,8 +91,16 @@ export async function startLifecycleAttempt(
   });
 
   const previousAttempt = state.latestAttempt;
+  const carried = carryCompletedSteps({
+    operation: plan.operation,
+    previousAttempt,
+    progress: workflow.step,
+    rootStep: options.rootStep,
+  });
+
   const attempt: LifecycleAttempt = {
     activations: { start: options.activationId },
+    carriedOperations: carried.operations,
     data: getStartingData(
       baseline,
       previousAttempt,
@@ -103,7 +112,7 @@ export async function startLifecycleAttempt(
     plan,
     planDiff: options.planDiff,
     previousAttemptId: previousAttempt?.id ?? null,
-    progress: workflow.step,
+    progress: carried.progress,
     startedAt: workflow.startedAt,
     status: "pending",
   };

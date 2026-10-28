@@ -319,7 +319,7 @@ export function toAttemptStatus(attempt: LifecycleAttempt) {
     executionDeadline: attempt.executionDeadline,
     id: attempt.id,
     operation: attempt.operation,
-    plan: toPlanPreview(attempt.plan),
+    plan: toPlanPreview(attempt.plan, attempt.carriedOperations),
     planDiff: attempt.planDiff,
     planId: attempt.plan.id,
     previousAttemptId: attempt.previousAttemptId,

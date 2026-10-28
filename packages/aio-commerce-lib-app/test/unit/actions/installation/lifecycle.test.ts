@@ -112,7 +112,79 @@ describe("toPlanPreview", () => {
   });
 });
 
+describe("toPlanPreview with carried operations", () => {
+  const carried = (id: string) => ({
+    id,
+    itemRefs: [],
+    kind: "add" as const,
+    label: id,
+    reason: "change" as const,
+  });
+
+  test("adds a domain the plan does not list", () => {
+    const preview = toPlanPreview(createPlan(), [
+      { operations: [carried("add-hook")], path: ["root", "webhooks"] },
+    ]);
+
+    expect(preview.domains.map((domain) => domain.path)).toEqual([
+      ["root", "eventing", "commerce"],
+      ["root", "webhooks"],
+    ]);
+    expect(preview.domains[1]?.operations).toEqual([carried("add-hook")]);
+  });
+
+  test("appends operations whose id the domain does not list", () => {
+    const preview = toPlanPreview(createPlan(), [
+      {
+        operations: [carried("add-event"), carried("add-other")],
+        path: ["root", "eventing", "commerce"],
+      },
+    ]);
+
+    expect(preview.domains).toHaveLength(1);
+    expect(
+      preview.domains[0]?.operations.map((operation) => operation.id),
+    ).toEqual(["add-event", "add-other"]);
+  });
+
+  test("skips a carried domain without operations", () => {
+    const preview = toPlanPreview(createPlan(), [
+      { operations: [], path: ["root", "webhooks"] },
+    ]);
+
+    expect(preview.domains).toHaveLength(1);
+  });
+});
+
 describe("toAttemptStatus", () => {
+  test("adds the carried operations to the plan", () => {
+    const body = toAttemptStatus(
+      createMockLifecycleAttempt({
+        carriedOperations: [
+          {
+            operations: [
+              {
+                id: "add-hook",
+                itemRefs: [],
+                kind: "add",
+                label: "Add hook",
+                reason: "change",
+              },
+            ],
+            path: ["root", "webhooks"],
+          },
+        ],
+        plan: createPlan(),
+        status: "in-progress",
+      }),
+    );
+
+    expect(body.plan.domains.map((domain) => domain.path)).toContainEqual([
+      "root",
+      "webhooks",
+    ]);
+  });
+
   test.each(["pending", "in-progress", "succeeded", "failed"] as const)(
     "carries the plan preview of a %s attempt",
     (status) => {

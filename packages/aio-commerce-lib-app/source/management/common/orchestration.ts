@@ -13,7 +13,9 @@
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 import type {
   DomainPlan,
+  ItemRef,
   PlanningIssue,
+  ResourceOperation,
 } from "#management/common/workflow/resource";
 import type {
   StepStatus,
@@ -24,6 +26,23 @@ import type {
 
 /** The kind of lifecycle operation an orchestration run performs. */
 export type LifecycleOperation = "install" | "upgrade" | "uninstall";
+
+/** An operation of an earlier attempt, kept for display. It has no before or after values. */
+export type CarriedOperation = {
+  id: string;
+  kind: ResourceOperation<unknown>["kind"];
+  label: string;
+  reason: ResourceOperation<unknown>["reason"];
+
+  /** The items the operation changes. Empty for an operation internal to its domain. */
+  itemRefs: ItemRef[];
+};
+
+/** The operations of an earlier attempt for one domain. */
+export type CarriedDomainOperations = {
+  path: string[];
+  operations: CarriedOperation[];
+};
 
 /** A persisted plan spanning every participating domain. */
 export type LifecyclePlan = {
@@ -131,6 +150,12 @@ type LifecycleAttemptBase = {
 
   /** Step-tree progress of the attempt. */
   progress: StepStatus;
+
+  /**
+   * The operations of the domains an earlier failed attempt already completed. The attempt shows
+   * them as succeeded but does not run them again.
+   */
+  carriedOperations?: CarriedDomainOperations[];
 
   /** ISO timestamp when the attempt started. */
   startedAt: string;
