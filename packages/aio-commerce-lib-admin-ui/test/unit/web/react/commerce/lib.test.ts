@@ -17,6 +17,7 @@ import {
   isControlFrame,
   isEmbeddedInHost,
   isUiFrame,
+  parseCreditMemoId,
   parseInvoiceId,
   parseOrderId,
 } from "#web/react/commerce/lib";
@@ -41,6 +42,18 @@ describe("parseInvoiceId", () => {
     ["https://host.test/", null],
   ])("parses %j to %j", (href, expected) => {
     expect(parseInvoiceId(href)).toBe(expected);
+  });
+});
+
+describe("parseCreditMemoId", () => {
+  test.each([
+    ["https://host.test/?creditMemoId=000000005", "000000005"],
+    ["https://host.test/#/creditmemo?creditMemoId=7", "7"],
+    ["https://host.test/?creditMemoId=5#/creditmemo?creditMemoId=7", "5"],
+    ["https://host.test/?invoiceId=5", null],
+    ["https://host.test/", null],
+  ])("parses %j to %j", (href, expected) => {
+    expect(parseCreditMemoId(href)).toBe(expected);
   });
 });
 

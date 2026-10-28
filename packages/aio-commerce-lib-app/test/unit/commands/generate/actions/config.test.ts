@@ -33,6 +33,7 @@ import {
   configWithAdminUiNewsletterMassActions,
   configWithAdminUiSingleGrid,
   configWithCommerceEventing,
+  configWithCreditMemoViewButtons,
   configWithCustomInstallationSteps,
   configWithExternalEventing,
   configWithFullAdminUiV2,
@@ -240,6 +241,17 @@ describe("buildAdminUiV2ExtConfig", () => {
     ]);
     expect(result.operations?.workerProcess).toEqual([
       { impl: "invoice/send", type: "action" },
+    ]);
+  });
+
+  test("wires credit memo iframe and worker buttons into the extension manifest", () => {
+    const result = buildAdminUiV2ExtConfig(configWithCreditMemoViewButtons);
+    expect(result.web).toBe("web-src");
+    expect(result.operations?.view).toEqual([
+      { impl: "index.html", type: "web" },
+    ]);
+    expect(result.operations?.workerProcess).toEqual([
+      { impl: "creditmemo/refund-offline", type: "action" },
     ]);
   });
 

@@ -22,6 +22,7 @@ import {
   configWithPaasOnlyWebhook,
 } from "#test/fixtures/app-config-router";
 import {
+  configWithCreditMemoViewButtons,
   configWithDynamicListOptions,
   configWithFullAdminUiV2,
   configWithInvoiceViewButtons,
@@ -191,17 +192,21 @@ describe("appConfigRuntimeAction", () => {
       });
     });
 
-    test("returns invoice view buttons including iframe title and worker settings", async () => {
-      const handler = appConfigRuntimeAction({
-        appConfig: configWithInvoiceViewButtons,
-      });
-      const result = await handler(createRuntimeActionParams());
+    test.each([
+      { appConfig: configWithInvoiceViewButtons, entity: "invoice" },
+      { appConfig: configWithCreditMemoViewButtons, entity: "credit memo" },
+    ])(
+      "returns $entity view buttons including iframe title and worker settings",
+      async ({ appConfig }) => {
+        const handler = appConfigRuntimeAction({ appConfig });
+        const result = await handler(createRuntimeActionParams());
 
-      expect(result).toMatchObject({
-        body: { adminUi: configWithInvoiceViewButtons.adminUi },
-        type: "success",
-      });
-    });
+        expect(result).toMatchObject({
+          body: { adminUi: appConfig.adminUi },
+          type: "success",
+        });
+      },
+    );
   });
 
   describe("GET /openapi.json", () => {

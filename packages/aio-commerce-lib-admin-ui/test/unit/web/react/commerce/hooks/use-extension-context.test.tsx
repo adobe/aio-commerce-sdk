@@ -16,6 +16,7 @@ import { renderHook } from "vitest-browser-react";
 import { createMockGuestConnection } from "#test/fixtures/uix-guest";
 import { sharedContextProvider } from "#test/utils/shared-context.tsx";
 import {
+  useCreditMemoViewButtonContext,
   useInvoiceViewButtonContext,
   useMassActionContext,
   useOrderViewButtonContext,
@@ -152,6 +153,55 @@ describe("useOrderViewButtonContext", () => {
         expect.assert.isNull(result.current.data);
         expect(result.current.error.message).toContain(
           "Could not find an invoice ID",
+        );
+      },
+    );
+  });
+
+  describe("useCreditMemoViewButtonContext", () => {
+    afterEach(() => {
+      history.replaceState(null, "", "/");
+    });
+
+    test("returns the credit memo ID from URL search params and preserves the result", async () => {
+      window.history.replaceState(null, "", "?creditMemoId=000000123");
+
+      const { result, rerender } = await renderHook(() =>
+        useCreditMemoViewButtonContext(),
+      );
+      expect(result.current).toEqual({
+        data: { creditMemoId: "000000123" },
+        error: null,
+      });
+
+      const initialResult = result.current;
+      await rerender();
+      expect(result.current).toBe(initialResult);
+    });
+
+    test("returns the credit memo ID from the URL hash", async () => {
+      window.history.replaceState(null, "", "/#/creditmemo?creditMemoId=7");
+
+      const { result } = await renderHook(() =>
+        useCreditMemoViewButtonContext(),
+      );
+      expect(result.current).toEqual({
+        data: { creditMemoId: "7" },
+        error: null,
+      });
+    });
+
+    test.each(["/", "?invoiceId=5", "?creditMemoId=", "?creditMemoId=%20%20"])(
+      "returns an error for a missing or blank credit memo ID at %s",
+      async (url) => {
+        window.history.replaceState(null, "", url);
+
+        const { result } = await renderHook(() =>
+          useCreditMemoViewButtonContext(),
+        );
+        expect.assert.isNull(result.current.data);
+        expect(result.current.error.message).toContain(
+          "Could not find a credit memo ID",
         );
       },
     );

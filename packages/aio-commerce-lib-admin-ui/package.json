@@ -33,6 +33,7 @@
   },
   "exports": {
     "./api": "./source/api/index.ts",
+    "./credit-memo-view-buttons": "./source/credit-memo-view-buttons/index.ts",
     "./grid-columns": "./source/grid-columns/index.ts",
     "./invoice-view-buttons": "./source/invoice-view-buttons/index.ts",
     "./mass-actions": "./source/mass-actions/index.ts",
@@ -125,6 +126,16 @@
         "require": {
           "types": "./dist/cjs/api/index.d.cts",
           "default": "./dist/cjs/api/index.cjs"
+        }
+      },
+      "./credit-memo-view-buttons": {
+        "import": {
+          "types": "./dist/es/credit-memo-view-buttons/index.d.mts",
+          "default": "./dist/es/credit-memo-view-buttons/index.mjs"
+        },
+        "require": {
+          "types": "./dist/cjs/credit-memo-view-buttons/index.d.cts",
+          "default": "./dist/cjs/credit-memo-view-buttons/index.cjs"
         }
       },
       "./grid-columns": {
