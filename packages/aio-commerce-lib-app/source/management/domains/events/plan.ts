@@ -16,6 +16,7 @@ import stringify from "safe-stable-stringify";
 import { getInstallCommerceEnv } from "#config/lib/environment";
 
 import {
+  findLegacyProvidersOfUnknownWorkspace,
   findLiveProvider,
   planExistingProvider,
   planLeftoverProvider,
@@ -172,6 +173,18 @@ async function planEventingLeaf(
     );
   }
 
+  const unknownWorkspace = findUnknownWorkspaceProviders(configs, live, ctx);
+  if (unknownWorkspace.length > 0) {
+    return blocked(
+      unknownWorkspace.map((provider) => ({
+        blocking: true,
+        code: "EVENTS_PROVIDER_IN_OTHER_WORKSPACE",
+        domain: "eventing",
+        message: `Event provider "${provider.ioProvider.instance_id}" has no workspace link, so it cannot be confirmed to belong to workspace "${ctx.workspaceId}".`,
+      })),
+    );
+  }
+
   const operations = planProviders(configs, matches, context.appId, ctx);
   return {
     kind: "planned",
@@ -285,6 +298,26 @@ function matchProviders(
   });
 
   return { leftovers, matched };
+}
+
+/**
+ * The live providers that carry the legacy instance id of a target or baseline provider but no
+ * readable workspace. They are neither matched nor ruled out as another workspace's.
+ */
+function findUnknownWorkspaceProviders(
+  configs: LeafConfigs,
+  live: LiveEventingState,
+  ctx: LeafPlanContext,
+): LiveEventingProvider[] {
+  const found = [...configs.target, ...configs.declared].flatMap((snapshot) =>
+    findLegacyProvidersOfUnknownWorkspace(
+      live.providers,
+      snapshot.provider,
+      ctx,
+    ),
+  );
+
+  return [...new Set(found)];
 }
 
 /** The live Commerce subscriptions with a target name under a provider the app does not own. */

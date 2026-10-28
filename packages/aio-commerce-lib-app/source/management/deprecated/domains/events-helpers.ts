@@ -926,9 +926,12 @@ export async function offboardIoEvents(
 
   const instanceIdOldVersion = generateInstanceIdDeprecated(metadata, provider);
 
+  // The legacy id has no workspace, so only a provider of this workspace is ours.
   const providerData = existingData.providersWithMetadata.find(
     (p) =>
-      p.instance_id === instanceId || p.instance_id === instanceIdOldVersion,
+      p.instance_id === instanceId ||
+      (p.instance_id === instanceIdOldVersion &&
+        p.workspaceId === appData.workspaceId),
   );
 
   if (!providerData) {
@@ -1007,6 +1010,7 @@ async function deleteCommerceEventProvider(
   metadata: ApplicationMetadata,
   provider: EventProvider,
   existingProviders: CommerceEventProvider[],
+  ioProviders: IoEventProviderWithMetadata[],
   context: EventsExecutionContext,
 ) {
   const { commerceEventsClient, appData, logger } = context;
@@ -1019,9 +1023,17 @@ async function deleteCommerceEventProvider(
 
   const instanceIdOldVersion = generateInstanceIdDeprecated(metadata, provider);
 
+  // The Commerce provider has no workspace, so a legacy id is ours only when its I/O provider is.
+  const isLegacyOfThisWorkspace = (providerId: string) =>
+    ioProviders.some(
+      (p) => p.id === providerId && p.workspaceId === appData.workspaceId,
+    );
+
   const commerceProvider = existingProviders.find(
     (p) =>
-      p.instance_id === instanceId || p.instance_id === instanceIdOldVersion,
+      p.instance_id === instanceId ||
+      (p.instance_id === instanceIdOldVersion &&
+        isLegacyOfThisWorkspace(p.provider_id)),
   );
 
   if (!commerceProvider) {
@@ -1062,10 +1074,12 @@ async function deleteCommerceEventProvider(
  *
  * @param params - Configuration identifying the provider and its events to offboard.
  * @param existingData - Current Commerce eventing data (providers and subscriptions).
+ * @param existingIoData - Current I/O Events data, used to tell which workspace owns a legacy provider.
  */
 export async function offboardCommerceEventing(
   params: OffboardEventsParams,
   existingData: ExistingCommerceEventingData,
+  existingIoData: ExistingIoEventsData,
 ) {
   const { context, metadata, provider, events } = params;
 
@@ -1080,6 +1094,7 @@ export async function offboardCommerceEventing(
     metadata,
     provider,
     existingData.providers,
+    existingIoData.providersWithMetadata,
     context,
   );
 }

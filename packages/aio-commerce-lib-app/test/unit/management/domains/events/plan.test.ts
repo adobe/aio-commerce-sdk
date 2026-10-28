@@ -67,6 +67,7 @@ type LiveProvider = {
   label: string;
   description?: string;
   provider_metadata: string;
+  _links?: Record<string, { href: string }>;
   _embedded: {
     eventmetadata: { event_code: string; label: string; description: string }[];
   };
@@ -81,6 +82,15 @@ type World = {
 };
 
 type Config = CommerceEventsConfig | ExternalEventsConfig;
+
+/** The HAL links of a provider that lives in the given workspace. */
+function workspaceLinks(providerId: string, workspaceId: string) {
+  return {
+    "rel:update": {
+      href: `/events/org/project/${workspaceId}/providers/${providerId}`,
+    },
+  };
+}
 
 /** Builds the live state an install of the given config leaves behind. */
 function deployed(config: Config, type: EventProviderType): World {
@@ -118,6 +128,7 @@ function deployed(config: Config, type: EventProviderType): World {
           label: e.label,
         })),
       },
+      _links: workspaceLinks(id, TEST_WORKSPACE_ID),
       description: provider.description,
       id,
     });
@@ -1040,6 +1051,137 @@ describe("planCommerceEvents", () => {
 
     expect(summary(plan)).toEqual(["update registration drift"]);
     expect(plan.eventingModule?.instanceId).toBe(live.providers[0].instance_id);
+  });
+
+  describe("legacy instance id and workspace", () => {
+    const legacyProviderOf = (workspaceId: string | null) => {
+      const config = oneProvider([commerceEvent()]);
+      const live = deployed(config, COMMERCE_PROVIDER_TYPE);
+      live.providers[0].instance_id = generateInstanceIdDeprecated(
+        metadata,
+        config.eventing.commerce[0].provider,
+      );
+
+      live.providers[0]._links = workspaceId
+        ? workspaceLinks("io-orders", workspaceId)
+        : undefined;
+
+      // Only the provider and its metadata exist, as when another deployment owns it.
+      live.commerceProviders = [];
+      live.registrations = [];
+      live.subscriptions = [];
+      return { config, live };
+    };
+
+    test("does not match a legacy provider of another workspace on install", async () => {
+      const { config, live } = legacyProviderOf("another-workspace");
+      const plan = await planCommerce({ live, target: config });
+
+      expect(summary(plan)).toEqual([
+        "add provider change",
+        "add commerceProvider change",
+        "add metadata change",
+        "add registration change",
+        "add subscription change",
+      ]);
+      expect(plan.providerIds).toEqual({});
+    });
+
+    test("does not remove a legacy provider of another workspace the baseline declares", async () => {
+      const { config, live } = legacyProviderOf("another-workspace");
+      const target = commerceConfig([
+        {
+          events: [commerceEvent({ name: "observer.other" })],
+          provider: { description: "d", key: "other", label: "Other" },
+        },
+      ]);
+
+      const plan = await planCommerce({ baseline: config, live, target });
+
+      expect(plan.operations.filter((op) => op.kind === "remove")).toEqual([]);
+    });
+
+    test("matches a legacy provider of this workspace", async () => {
+      const { config, live } = legacyProviderOf(TEST_WORKSPACE_ID);
+      const plan = await planCommerce({
+        baseline: config,
+        live,
+        target: config,
+      });
+
+      expect(plan.providerIds).toEqual({ orders: "io-orders" });
+    });
+
+    test("blocks on a legacy provider with no workspace link", async () => {
+      const { config, live } = legacyProviderOf(null);
+      const result = await planCommerceEvents(
+        input("commerce", { live, target: config }),
+        contextFor(live),
+      );
+
+      expect(result.kind).toBe("blocked");
+      expect.assert(result.kind === "blocked");
+      expect(result.issues).toEqual([
+        expect.objectContaining({
+          blocking: true,
+          code: "EVENTS_PROVIDER_IN_OTHER_WORKSPACE",
+          message: expect.stringContaining(live.providers[0].instance_id),
+        }),
+      ]);
+      expect(result.issues[0].message).toContain(TEST_WORKSPACE_ID);
+    });
+  });
+
+  test("gives the removal of a legacy hyphenated event the key and config of its declared event", async () => {
+    const config = oneProvider([commerceEvent()]);
+    const live = deployed(config, COMMERCE_PROVIDER_TYPE);
+    const legacyName = `${metadata.id}.observer.order_placed`;
+    live.providers[0]._embedded.eventmetadata[0].event_code = `com.adobe.commerce.${legacyName}`;
+    live.subscriptions[0].name = legacyName;
+
+    const plan = await planCommerce({
+      baseline: config,
+      live,
+      target: commerceConfig([]),
+    });
+
+    const removals = plan.operations.filter(
+      (op) => op.kind === "remove" && op.itemRefs?.length,
+    );
+    const keys = removals.flatMap((op) => op.itemRefs?.map((r) => r.key) ?? []);
+
+    expect(removals.length).toBeGreaterThan(0);
+    expect(new Set(keys)).toEqual(new Set([`orders:${subscriptionName}`]));
+    for (const op of removals) {
+      expect(op.itemRefs?.[0].config).toMatchObject({
+        description: expect.any(String),
+        label: expect.any(String),
+      });
+    }
+
+    const metadataOp = plan.operations.find(
+      (op) => op.kind === "remove" && op.id.startsWith("remove:metadata"),
+    );
+    expect(metadataOp?.itemRefs?.[0].key).toBe(`orders:${subscriptionName}`);
+  });
+
+  test("keeps the live name of a removed event no declared event matches", async () => {
+    const config = oneProvider([commerceEvent()]);
+    const live = deployed(config, COMMERCE_PROVIDER_TYPE);
+    live.providers[0]._embedded.eventmetadata[0].event_code = `com.adobe.commerce.${metadata.id}.observer.unknown`;
+
+    const plan = await planCommerce({
+      baseline: config,
+      live,
+      target: commerceConfig([]),
+    });
+
+    const metadataOp = plan.operations.find(
+      (op) => op.kind === "remove" && op.id.startsWith("remove:metadata"),
+    );
+    expect(metadataOp?.itemRefs).toEqual([
+      { key: `orders:${metadata.id}.observer.unknown` },
+    ]);
   });
 
   test("removes the subscription of an event the target scopes to another environment", async () => {

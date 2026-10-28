@@ -21,6 +21,7 @@ import {
   getIoEventCode,
   getIoEventsExistingData,
   getNamespacedEvent,
+  getProviderWorkspaceId,
   makeWorkspaceConfig,
   sanitizeEventingIdentifier,
 } from "#management/domains/events/utils";
@@ -329,6 +330,25 @@ describe("getCommerceEventingConfigurationUpdateParams", () => {
   });
 });
 
+describe("getProviderWorkspaceId", () => {
+  test("reads the workspace from the rel:update link", () => {
+    expect(
+      getProviderWorkspaceId({
+        "rel:update": {
+          href: "/events/271530/4566206088344866031/456/providers/abc",
+        },
+      }),
+    ).toBe("456");
+  });
+
+  test("is null without a rel:update link", () => {
+    expect(
+      getProviderWorkspaceId({ self: { href: "/providers/1" } }),
+    ).toBeNull();
+    expect(getProviderWorkspaceId(undefined)).toBeNull();
+  });
+});
+
 describe("existing data normalization", () => {
   test("getIoEventsExistingData normalizes HAL providers and registrations", async () => {
     const ioProviderWithMetadata = createMockIoEventProviderHalModel({
@@ -423,6 +443,7 @@ describe("existing data normalization", () => {
           provider_metadata: "dx_commerce_events",
           publisher: "adobe",
           source: "magento",
+          workspaceId: null,
         },
         {
           description: "A test provider",
@@ -434,6 +455,7 @@ describe("existing data normalization", () => {
           provider_metadata: "dx_commerce_events",
           publisher: "adobe",
           source: "magento",
+          workspaceId: null,
         },
       ],
       registrations: [
