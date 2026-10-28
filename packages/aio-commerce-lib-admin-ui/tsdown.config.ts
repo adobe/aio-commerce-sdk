@@ -16,6 +16,7 @@ import { mergeConfig } from "tsdown";
 export default mergeConfig(baseConfig, {
   entry: [
     "./source/api/index.ts",
+    "./source/credit-memo-view-buttons/index.ts",
     "./source/grid-columns/index.ts",
     "./source/invoice-view-buttons/index.ts",
     "./source/mass-actions/index.ts",

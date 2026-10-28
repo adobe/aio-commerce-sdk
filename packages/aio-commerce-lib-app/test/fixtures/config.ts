@@ -521,6 +521,39 @@ export const configWithInvoiceViewButtons = {
   },
 } satisfies CommerceAppConfigOutputModel;
 
+/** Config fixture with credit memo view and worker buttons. */
+export const configWithCreditMemoViewButtons = {
+  ...minimalValidConfig,
+  adminUi: {
+    creditMemo: {
+      viewButtons: [
+        {
+          id: "credit-memo-details",
+          label: "Credit memo details",
+          path: "#/creditmemo",
+          sandboxPermissions: ["allow-modals"],
+          sortOrder: 100,
+          title: "Custom credit memo details",
+          type: "view",
+        },
+        {
+          confirm: { message: "Refund this credit memo offline?" },
+          id: "refund-offline",
+          label: "Refund Offline",
+          notifications: {
+            error: "Unable to refund the credit memo.",
+            success: "Credit memo refunded successfully.",
+          },
+          runtimeAction: "creditmemo/refund-offline",
+          sortOrder: 110,
+          timeout: 15,
+          type: "worker",
+        },
+      ],
+    },
+  },
+} satisfies CommerceAppConfigOutputModel;
+
 /** Config fixture with only newsletter adminUi grid columns configured. */
 export const configWithAdminUiNewsletterGrid = {
   adminUi: {
