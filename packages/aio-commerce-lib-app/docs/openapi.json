@@ -3639,14 +3639,14 @@
                   }
                 },
                 "changes": {
-                  "description": "The items the target config adds, updates or removes compared with the installed config, whatever the live state is. Absent in plans made by older versions.",
+                  "description": "The items the target config adds, updates or removes compared with the installed config, whatever the live state is. Empty for a plan stored by an older version.",
                   "type": "array",
                   "items": {
                     "$ref": "#/components/schemas/ResourceChange"
                   }
                 }
               },
-              "required": ["path", "operations"]
+              "required": ["path", "operations", "changes"]
             }
           },
           "issues": {
@@ -3808,14 +3808,14 @@
                   }
                 },
                 "changes": {
-                  "description": "The items the target config adds, updates or removes compared with the installed config, whatever the live state is. Absent in plans made by older versions.",
+                  "description": "The items the target config adds, updates or removes compared with the installed config, whatever the live state is. Empty for a plan stored by an older version.",
                   "type": "array",
                   "items": {
                     "$ref": "#/components/schemas/ResourceChange"
                   }
                 }
               },
-              "required": ["path", "operations"]
+              "required": ["path", "operations", "changes"]
             }
           },
           "issues": {

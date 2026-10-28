@@ -39,9 +39,9 @@ export type PlanPreviewDomain = {
 
   /**
    * The items the target config adds, updates or removes compared with the installed config,
-   * whatever the live state is. Absent in plans made by older versions.
+   * whatever the live state is. Empty for a plan stored by an older version.
    */
-  changes?: ResourceChange[];
+  changes: ResourceChange[];
 };
 
 /** An issue listed in a plan preview. */
@@ -83,7 +83,7 @@ export function toPlanPreview(plan: LifecyclePlan): PlanPreview {
           domain.operations.length > 0 || (domain.changes?.length ?? 0) > 0,
       )
       .map((domain) => ({
-        ...(domain.changes && { changes: domain.changes }),
+        changes: domain.changes ?? [],
         operations: domain.operations.map(
           ({ id, kind, label, reason, itemRefs }) => ({
             id,

@@ -130,7 +130,7 @@ export type DomainPlan<TBefore = unknown, TAfter = TBefore> = {
 
   /**
    * The config differences between the baseline and the target, whatever the live state is.
-   * Absent in plans made by older versions.
+   * Absent in plans stored by older versions.
    */
   changes?: ResourceChange[];
 };

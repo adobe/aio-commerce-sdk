@@ -70,6 +70,7 @@ describe("toPlanPreview", () => {
     expect(toPlanPreview(createPlan())).toEqual({
       domains: [
         {
+          changes: [],
           operations: [
             {
               id: "add-event",
@@ -128,6 +129,12 @@ describe("toPlanPreview", () => {
     expect(preview.domains).toEqual([
       { changes, operations: [], path: ["root", "eventing", "commerce"] },
     ]);
+  });
+
+  test("defaults the changes of a stored domain that has none to an empty list", () => {
+    const [domain] = toPlanPreview(createPlan()).domains;
+
+    expect(domain?.changes).toEqual([]);
   });
 
   test("lists the changes of a domain with operations", () => {
