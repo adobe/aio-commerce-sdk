@@ -2,4 +2,4 @@
 "@adobe/aio-commerce-plugin-app-management": minor
 ---
 
-Handle missing database package types in storage actions and custom installation steps with targeted, temporary import suppressions while preserving strict checking.
+Use available database declarations in storage actions and custom installation steps, with targeted temporary import suppressions for installations without types and no forced dependency upgrade.

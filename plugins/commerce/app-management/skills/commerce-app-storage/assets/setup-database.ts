@@ -38,7 +38,6 @@ import {
   getImsAuthProvider,
   resolveImsAuthParams,
 } from "@adobe/aio-commerce-lib-auth";
-// @ts-expect-error -- aio-lib-db does not ship TypeScript declarations.
 import { init as initDb } from "@adobe/aio-lib-db";
 
 const COLLECTION = "held_orders";

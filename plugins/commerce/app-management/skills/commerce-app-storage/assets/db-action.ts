@@ -23,7 +23,6 @@ import {
 } from "@adobe/aio-commerce-lib-auth";
 import { buildErrorResponse, ok } from "@adobe/aio-commerce-lib-core/responses";
 import AioLogger from "@adobe/aio-lib-core-logging";
-// @ts-expect-error -- aio-lib-db does not ship TypeScript declarations.
 import { init as initDb } from "@adobe/aio-lib-db";
 
 // The connected client returned by db.connect().

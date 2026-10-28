@@ -76,14 +76,19 @@ aio app db provision --region <amer|apac|emea|aus>
 npm install @adobe/aio-lib-db
 ```
 
-For TypeScript or checked JavaScript, check installed package types and existing application declarations. Only when neither resolves TS7016, place this comment immediately above each affected DB import:
+For existing apps, inspect the dependency, lockfile and installed package before installing; preserve ranges and pins.
+
+For TypeScript or checked JavaScript, check actual declaration resolution, not just the version (package types first appeared in 1.1.0):
+
+- **Types resolve:** prefer package declarations, otherwise reuse compatible application declarations. Remove obsolete DB import suppressions (unused `@ts-expect-error` produces TS2578); do not add new ones. Report conflicts without silently changing application declarations.
+- **No types resolve:** recommend a typed release, but require approval before dependency or lockfile changes. To keep the installed version, add this comment immediately above each DB import reporting TS7016, including copied asset imports:
 
 ```ts
-// @ts-expect-error -- aio-lib-db does not ship TypeScript declarations.
+// @ts-expect-error -- Installed aio-lib-db has no resolvable TypeScript declarations.
 import { init as initDb } from "@adobe/aio-lib-db";
 ```
 
-This temporarily suppresses TS7016; DB APIs remain untyped. Do not add ambient declarations, disable strict checking, downgrade dependencies, or suppress unrelated errors. Preserve compatible declarations. Remove the comment when types become available: unused directives produce TS2578. Compilation does not prove runtime compatibility.
+The fallback leaves DB APIs untyped. Keep strict checking; do not add ambient DB bridges, downgrade dependencies, or suppress unrelated errors. Remove directives when types resolve. Compilation does not prove runtime compatibility.
 
 ## Step 3 — Understand intent
 
@@ -296,7 +301,7 @@ This is what adds the `installation` action to `ext.config.yaml`'s `app-manageme
 
 ## Step 8 — Validate
 
-Run the project's strict typecheck, including the storage runtime action. Verify root `installation.customInstallationSteps` registration produces a generated import of `scripts/setup-database.ts` and that the actual compiler file list includes it. Preserve existing compiler includes and exclusions; do not add `scripts/**/*.ts` to compensate for missing registration.
+Run the project's strict typecheck, including the storage runtime action. If adding a custom installation step, verify its root `installation.customInstallationSteps` registration produces a generated import of the configured script and that the actual compiler file list includes it. Preserve existing compiler includes and exclusions; do not add `scripts/**/*.ts` to compensate for missing registration.
 
 ```sh
 aio app build
