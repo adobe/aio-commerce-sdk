@@ -21,7 +21,7 @@ import * as v from "valibot";
  * Regex for field names according to XSD fieldName pattern.
  * Field name can either contain only [a-zA-Z0-9_\-\.\[\]] or be set to *.
  */
-const FIELD_NAME_REGEX = /^([a-zA-Z0-9_\-.[\]]+|\*)$/;
+const FIELD_NAME_REGEX = /^(?:[a-zA-Z0-9_\-.[\]]+|\*)$/u;
 
 /**
  * Schema for field names.

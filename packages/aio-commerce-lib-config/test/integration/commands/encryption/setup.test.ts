@@ -38,7 +38,7 @@ describe("commands/encryption/setup", () => {
         const contents = await readFile(envPath, "utf-8");
         expect(contents).toContain(`${ENCRYPTION_KEY_ENV_VAR}=`);
         const match = contents.match(
-          new RegExp(`${ENCRYPTION_KEY_ENV_VAR}=([a-f0-9]+)`),
+          new RegExp(`${ENCRYPTION_KEY_ENV_VAR}=([a-f0-9]+)`, "u"),
         );
 
         const value = match?.[1];

@@ -16,7 +16,7 @@ import type * as ChildProcess from "node:child_process";
 
 /** Matches any package-install invocation across the supported package managers. */
 export const INSTALL_COMMAND_RE =
-  /^(npm (i|install)|pnpm add|yarn add|bun add)\b/;
+  /^(?:npm (?:i|install)|pnpm add|yarn add|bun add)\b/u;
 
 /**
  * Creates a `spawnSync` implementation that stubs commands unless their

@@ -10,15 +10,6 @@
  * governing permissions and limitations under the License.
  */
 
-vi.mock("#management/common/workflow/index", async (importOriginal) => {
-  const actual =
-    await importOriginal<typeof import("#management/common/workflow/index")>();
-  return {
-    ...actual,
-    executeWorkflow: vi.fn().mockImplementation(actual.executeWorkflow),
-  };
-});
-
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 import { executeWorkflow } from "#management/common/workflow/index";
@@ -42,6 +33,15 @@ import {
 import { createMockStepStatus } from "#test/fixtures/workflow";
 
 import type { InstallationHooks } from "#management/deprecated/runner";
+
+vi.mock("#management/common/workflow/index", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("#management/common/workflow/index")>();
+  return {
+    ...actual,
+    executeWorkflow: vi.fn().mockImplementation(actual.executeWorkflow),
+  };
+});
 
 describe("createInitialInstallationState", () => {
   beforeEach(() => {

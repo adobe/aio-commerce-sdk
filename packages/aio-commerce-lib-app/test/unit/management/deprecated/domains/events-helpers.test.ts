@@ -68,14 +68,14 @@ const DEFAULT_WORKSPACE_CONFIGURATION = JSON.stringify(
   createMockWorkspaceConfiguration(),
 );
 
-const RE_FAIL_IO_PROVIDER = /^Failed to create I\/O Events provider '/;
-const RE_FAIL_IO_METADATA = /^Failed to register I\/O Events metadata for '/;
-const RE_FAIL_IO_REGISTRATION = /^Failed to create I\/O Events registration '/;
+const RE_FAIL_IO_PROVIDER = /^Failed to create I\/O Events provider '/u;
+const RE_FAIL_IO_METADATA = /^Failed to register I\/O Events metadata for '/u;
+const RE_FAIL_IO_REGISTRATION = /^Failed to create I\/O Events registration '/u;
 const RE_FAIL_COMMERCE_PROVIDER =
-  /^Failed to create Adobe Commerce event provider '/;
+  /^Failed to create Adobe Commerce event provider '/u;
 const RE_FAIL_COMMERCE_SUBSCRIPTION =
-  /^Failed to create Adobe Commerce event subscription for '/;
-const RE_CONTINUING_UNINSTALL = /Continuing uninstall\./;
+  /^Failed to create Adobe Commerce event subscription for '/u;
+const RE_CONTINUING_UNINSTALL = /Continuing uninstall\./u;
 
 function createDefaultEventingContext() {
   return createMockEventingInstallationContext();

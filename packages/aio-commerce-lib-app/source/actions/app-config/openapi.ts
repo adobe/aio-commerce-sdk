@@ -27,7 +27,7 @@ type OpenApiSpec = Awaited<ReturnType<typeof importOpenApi>>["default"];
 type SpecPath = keyof OpenApiSpec["paths"];
 
 /** Matches component schema `$ref` strings, capturing the schema name. */
-const SCHEMA_REF_PATTERN = /"#\/components\/schemas\/(\w+)"/g;
+const SCHEMA_REF_PATTERN = /"#\/components\/schemas\/(?<schema>\w+)"/gu;
 
 /**
  * Collects the names of every component schema referenced via `$ref` in a value

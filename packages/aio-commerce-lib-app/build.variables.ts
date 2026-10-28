@@ -114,18 +114,18 @@ export async function getVariables() {
 }
 
 declare global {
-  var __NODE_TYPES_VERSION__: string;
-  var __REACT_VERSION__: string;
-  var __REACT_DOM_VERSION__: string;
-  var __REACT_DOM_TYPES_VERSION__: string;
-  var __REACT_TYPES_VERSION__: string;
-  var __SPECTRUM_S2_VERSION__: string;
-  var __TSCONFIG_BASES_VERSION__: string;
-  var __TS_LOADER_VERSION__: string;
-  var __TYPESCRIPT_VERSION__: string;
+  const __NODE_TYPES_VERSION__: string;
+  const __REACT_VERSION__: string;
+  const __REACT_DOM_VERSION__: string;
+  const __REACT_DOM_TYPES_VERSION__: string;
+  const __REACT_TYPES_VERSION__: string;
+  const __SPECTRUM_S2_VERSION__: string;
+  const __TSCONFIG_BASES_VERSION__: string;
+  const __TS_LOADER_VERSION__: string;
+  const __TYPESCRIPT_VERSION__: string;
 
-  var __LIB_ADMIN_UI_RANGE__: string;
-  var __LIB_CONFIG_RANGE__: string;
-  var __PKG_VERSION__: string;
-  var __OPENAPI_VERSION__: string;
+  const __LIB_ADMIN_UI_RANGE__: string;
+  const __LIB_CONFIG_RANGE__: string;
+  const __PKG_VERSION__: string;
+  const __OPENAPI_VERSION__: string;
 }

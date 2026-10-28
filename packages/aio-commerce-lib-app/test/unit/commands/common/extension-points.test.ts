@@ -35,9 +35,9 @@ import {
 } from "#test/fixtures/project";
 
 const UI_COMMENT_RE =
-  /# ui comment\s+commerce\/backend-ui\/2:\s+\$include: \S+backend-ui-2\S+/;
+  /# ui comment\s+commerce\/backend-ui\/2:\s+\$include: \S+backend-ui-2\S+/u;
 const EXT_COMMENT_RE =
-  /# ext comment\s+commerce\/extensibility\/1:\s+\$include: \S+extensibility-1\S+/;
+  /# ext comment\s+commerce\/extensibility\/1:\s+\$include: \S+extensibility-1\S+/u;
 
 const WITH_COMMENTS = {
   [APP_CONFIG_FILE]: `name: app

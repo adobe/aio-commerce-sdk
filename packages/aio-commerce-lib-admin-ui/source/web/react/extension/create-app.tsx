@@ -84,7 +84,8 @@ export function createExtensionApp({
     );
   }
 
-  const rootElement = customRoot ?? document.getElementById("root");
+  const rootElement =
+    customRoot ?? document.querySelector<HTMLElement>("#root");
   if (!rootElement) {
     throw new Error('Could not find an element with id "root".');
   }
