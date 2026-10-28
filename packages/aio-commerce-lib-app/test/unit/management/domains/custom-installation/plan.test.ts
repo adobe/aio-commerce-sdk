@@ -80,6 +80,13 @@ describe("planCustomScript", () => {
       kind: "planned",
       plan: {
         baselineConfig: null,
+        changes: [
+          {
+            itemRef: { config: declared, key: "Demo Success" },
+            key: "Demo Success",
+            kind: "add",
+          },
+        ],
         operations: [
           {
             after: executed,
@@ -183,6 +190,13 @@ describe("planCustomScript", () => {
       kind: "planned",
       plan: {
         baselineConfig: configWithCustomInstallationSteps,
+        changes: [
+          {
+            itemRef: { config: declared, key: "Demo Success" },
+            key: "Demo Success",
+            kind: "remove",
+          },
+        ],
         operations: [
           {
             before: executed,

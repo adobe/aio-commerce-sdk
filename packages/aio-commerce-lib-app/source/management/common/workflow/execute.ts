@@ -80,7 +80,10 @@ type PlannedStepExecutionContext = {
   plan: LifecyclePlan;
 };
 
-/** Creates an initial execution state pruned to leaves with planned operations. */
+/**
+ * Creates an initial execution state pruned to leaves with planned operations. A leaf with config
+ * changes but no operations, because its items are already in place, is kept as `succeeded`.
+ */
 export function createInitialPlanExecutionState(
   options: CreateInitialPlanExecutionStateOptions,
 ): InProgressWorkflowState {
@@ -91,22 +94,40 @@ export function createInitialPlanExecutionState(
     id: crypto.randomUUID(),
     startedAt: nowIsoString(),
     status: "in-progress",
-    step: buildInitialPlanExecutionStepStatus(rootStep, [], plan),
+    step: buildInitialPlanExecutionStepStatus(rootStep, [], plan) as StepStatus,
   };
 }
 
-/** Builds pending execution progress for branches and leaves selected by a plan. */
+/**
+ * Builds the execution progress for the branches and leaves a plan selects, or `null` when the
+ * plan selects none under the step. A leaf with operations is `pending`. A leaf with changes only
+ * is `succeeded`, as is a branch whose children all are, so the executor skips them without
+ * calling the branch's `context`. The root stays `pending`, so it always runs as it does with no
+ * operations to run.
+ */
 function buildInitialPlanExecutionStepStatus(
   step: AnyStep,
   parentPath: string[],
   plan: LifecyclePlan,
-): StepStatus {
+): StepStatus | null {
   const path = [...parentPath, step.name];
+  const isRoot = parentPath.length === 0;
   const children = isBranchStep(step)
-    ? step.children
-        .filter((child) => hasPlannedOperations(child, plan, path))
-        .map((child) => buildInitialPlanExecutionStepStatus(child, path, plan))
+    ? step.children.flatMap((child) => {
+        const status = buildInitialPlanExecutionStepStatus(child, path, plan);
+        return status ? [status] : [];
+      })
     : [];
+
+  const domain = isLeafStep(step)
+    ? plan.domains.find((candidate) => pathsEqual(candidate.path, path))
+    : undefined;
+  const hasOperations = (domain?.operations.length ?? 0) > 0;
+  const isSatisfied = !hasOperations && (domain?.changes?.length ?? 0) > 0;
+
+  if (!(isRoot || isSatisfied || hasOperations || children.length > 0)) {
+    return null;
+  }
 
   const meta = step.meta[plan.operation];
 
@@ -116,13 +137,19 @@ function buildInitialPlanExecutionStepStatus(
     );
   }
 
+  const isSucceeded =
+    isSatisfied ||
+    (!isRoot &&
+      children.length > 0 &&
+      children.every((child) => child.status === "succeeded"));
+
   return {
     children,
     id: crypto.randomUUID(),
     meta,
     name: step.name,
     path,
-    status: "pending",
+    status: isSucceeded ? "succeeded" : "pending",
   };
 }
 
@@ -196,25 +223,6 @@ export async function executePlannedWorkflow(
     await callHook(hooks, "onFailure", failed);
     return { state: failed };
   }
-}
-
-/** Returns whether a step or one of its descendants has planned operations. */
-function hasPlannedOperations(
-  step: AnyStep,
-  plan: LifecyclePlan,
-  parentPath: string[],
-): boolean {
-  const path = [...parentPath, step.name];
-
-  if (isBranchStep(step)) {
-    return step.children.some((child) =>
-      hasPlannedOperations(child, plan, path),
-    );
-  }
-
-  return plan.domains.some(
-    (domain) => pathsEqual(domain.path, path) && domain.operations.length > 0,
-  );
 }
 
 /** Creates an in-progress state snapshot from the current planned execution. */

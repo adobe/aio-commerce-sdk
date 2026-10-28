@@ -16,6 +16,7 @@ import {
   CUSTOM_INSTALLATION_STEPS_PATH,
   getExecutedCustomInstallationSteps,
 } from "#actions/installation/common";
+import { toAttemptStatus } from "#actions/installation/lifecycle";
 import { getPlanInputs } from "#actions/installation/plan";
 import { createRootInstallationStep } from "#management/installation/root";
 import {
@@ -57,6 +58,7 @@ import type {
   LifecycleOperation,
   OrchestrationState,
 } from "#management/common/orchestration";
+import type { ResourceOperation } from "#management/common/workflow/resource";
 import type { BranchStep } from "#management/common/workflow/step";
 
 const EXECUTION_DEADLINE = "2099-01-01T00:00:00.000Z";
@@ -2282,7 +2284,19 @@ describe("lifecycle custom installation steps", () => {
           path: ["installation", "customInstallationSteps", "second"],
         },
       ]);
-      expect(upgraded.progress.children).toEqual([]);
+      expect(
+        upgraded.plan.domains.find((domain) => domain.path.at(-1) === "second"),
+      ).toMatchObject({
+        changes: [{ key: "Second", kind: "remove" }],
+        operations: [],
+      });
+      expect(upgraded.progress.children).toMatchObject([
+        {
+          children: [{ name: "second", status: "succeeded" }],
+          name: "customInstallationSteps",
+          status: "succeeded",
+        },
+      ]);
       expect(calls).toEqual([]);
     },
   );
@@ -2356,4 +2370,176 @@ describe("lifecycle custom installation steps", () => {
       ]);
     },
   );
+});
+
+describe("lifecycle config changes", () => {
+  const change = {
+    itemRef: { key: "item" },
+    key: "item",
+    kind: "add",
+  } as const;
+
+  const addOperation = (id: string): ResourceOperation<unknown> => ({
+    after: { id },
+    id: `add-${id}`,
+    itemRefs: [{ key: id }],
+    kind: "add",
+    label: `Add ${id}`,
+    reason: "change",
+  });
+
+  /**
+   * Runs an upgrade whose second leaf fails once and retries it. On the retry the first leaf's
+   * item is live, so its plan lists no operation, and it lists a change when `withChanges`.
+   */
+  async function runRetry(withChanges: boolean) {
+    const applyFirst = vi.fn().mockResolvedValue({ snapshotData: { id: "1" } });
+    const applySecond = vi
+      .fn()
+      .mockRejectedValueOnce(new Error("second failed"))
+      .mockResolvedValue({ snapshotData: { id: "2" } });
+
+    let isLive = false;
+    const first = createMockLifecycleLeaf({
+      apply: applyFirst,
+      name: "first",
+      plan: async () => {
+        const wasLive = isLive;
+        isLive = true;
+        return {
+          kind: "planned",
+          plan: {
+            ...(withChanges && { changes: [change] }),
+            operations: wasLive ? [] : [addOperation("1")],
+            path: ["root", "first"],
+          },
+        };
+      },
+    });
+
+    const second = createMockLifecycleLeaf({
+      apply: applySecond,
+      name: "second",
+      plan: async () => ({
+        kind: "planned",
+        plan: { operations: [addOperation("2")], path: ["root", "second"] },
+      }),
+    });
+
+    const { runtime, snapshotStore } = createMockLifecycleRuntime({
+      baseline: createBaseline("1.0.0"),
+      rootStep: createMockLifecycleRoot([first, second]),
+    });
+
+    const attempt = async (activation: string) => {
+      const planning = await planLifecycle({
+        operation: "upgrade",
+        ...runtime,
+        actionVersion: "1.0.0",
+        targetConfig: createConfig("2.0.0"),
+      });
+
+      const started = await startLifecycleAttempt({
+        ...runtime,
+        actionVersion: "1.0.0",
+        activationId: `${activation}-start`,
+        executionDeadline: EXECUTION_DEADLINE,
+        planId: planning.plan.id,
+      });
+
+      const executed = await executeLifecycleAttempt({
+        ...runtime,
+        actionVersion: "1.0.0",
+        activationId: `${activation}-execute`,
+        attemptId: started.id,
+        executionDeadline: EXECUTION_DEADLINE,
+      });
+
+      return { executed, started };
+    };
+
+    await attempt("a1");
+    const retry = await attempt("a2");
+    expect.assert(
+      retry.executed.status === "succeeded" && retry.executed.result,
+    );
+    return {
+      applyFirst,
+      retry,
+      snapshot: await snapshotStore.get(retry.executed.result.snapshotId),
+    };
+  }
+
+  test("shows the changes and a succeeded node for an item a failed attempt left live", async () => {
+    const { applyFirst, retry } = await runRetry(true);
+    const status = toAttemptStatus(retry.started);
+
+    expect(status.plan.domains).toEqual([
+      { changes: [change], operations: [], path: ["root", "first"] },
+      expect.objectContaining({ path: ["root", "second"] }),
+    ]);
+    expect(status.step.children).toMatchObject([
+      { name: "first", status: "succeeded" },
+      { name: "second", status: "pending" },
+    ]);
+    expect(applyFirst).toHaveBeenCalledTimes(1);
+  });
+
+  test("stores the same snapshot with and without the succeeded nodes", async () => {
+    const withChanges = await runRetry(true);
+    const withoutChanges = await runRetry(false);
+
+    expect(withChanges.snapshot?.data).toEqual(withoutChanges.snapshot?.data);
+    expect(withoutChanges.retry.started.progress.children).toHaveLength(1);
+  });
+
+  test("shows the change and a succeeded node for an item already live on a first install", async () => {
+    const live = createMockLifecycleLeaf({
+      apply: vi.fn(),
+      name: "live",
+      plan: async () => ({
+        kind: "planned",
+        plan: { changes: [change], operations: [], path: ["root", "live"] },
+      }),
+    });
+
+    const { runtime } = createMockLifecycleRuntime({
+      baseline: null,
+      rootStep: createMockLifecycleRoot([live]),
+    });
+
+    const planning = await planLifecycle({
+      ...runtime,
+      actionVersion: "1.0.0",
+      operation: "install",
+      targetConfig: createConfig("1.0.0"),
+    });
+
+    const started = await startLifecycleAttempt({
+      ...runtime,
+      actionVersion: "1.0.0",
+      activationId: "a1-start",
+      executionDeadline: EXECUTION_DEADLINE,
+      planId: planning.plan.id,
+    });
+
+    const status = toAttemptStatus(started);
+    expect(status.plan.domains).toEqual([
+      { changes: [change], operations: [], path: ["root", "live"] },
+    ]);
+    expect(status.step.children).toMatchObject([
+      { name: "live", status: "succeeded" },
+    ]);
+
+    const executed = await executeLifecycleAttempt({
+      ...runtime,
+      actionVersion: "1.0.0",
+      activationId: "a1-execute",
+      attemptId: started.id,
+      executionDeadline: EXECUTION_DEADLINE,
+    });
+
+    expect(executed.status).toBe("succeeded");
+    expect(live.apply).not.toHaveBeenCalled();
+  });
 });

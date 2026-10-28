@@ -12,6 +12,7 @@
 
 import { toItemRef } from "#management/common/workflow/resource";
 
+import { planCustomScriptChanges } from "./changes";
 import { findDeclaredStep } from "./custom-scripts";
 
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
@@ -132,9 +133,14 @@ export function planCustomScript(
     );
   }
 
+  const name = declared?.name ?? executed?.name;
+  const changes = name
+    ? planCustomScriptChanges(name, baselineConfig, targetConfig)
+    : [];
+
   return Promise.resolve({
     issues,
     kind: "planned",
-    plan: { baselineConfig, operations, path },
+    plan: { baselineConfig, changes, operations, path },
   });
 }

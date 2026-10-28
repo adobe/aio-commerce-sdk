@@ -14,6 +14,7 @@ import { unwrapHttpError } from "@adobe/aio-commerce-lib-api/utils";
 
 import { getInstallCommerceEnv } from "#config/lib/environment";
 
+import { planWebhookChanges } from "./changes";
 import { findConflictingWebhooks, toWebhookConflictIssues } from "./comparison";
 import { planAdditions, planRemovals, planUpdates } from "./diff";
 import {
@@ -48,6 +49,11 @@ export async function planWebhookSubscriptions(
 ): Promise<PlanningResult<WebhookDomainPlan>> {
   const { path, baseline, targetConfig, failedAttempt } = input;
   const env = getInstallCommerceEnv(context.params);
+  const changes = planWebhookChanges(
+    baseline?.config ?? null,
+    targetConfig,
+    env,
+  );
 
   let webhooks: CommerceWebhook[];
   try {
@@ -97,7 +103,7 @@ export async function planWebhookSubscriptions(
   return {
     issues: findConflictIssues(targetConfig, operations, webhooks),
     kind: "planned",
-    plan: { configuredValues, operations, path },
+    plan: { changes, configuredValues, operations, path },
   };
 }
 

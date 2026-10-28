@@ -104,6 +104,22 @@ export type ResourceOperation<TBefore, TAfter = TBefore> = {
   | { kind: "remove"; before: TBefore }
 );
 
+/**
+ * A difference between the installed config (the baseline) and the target config, for one item,
+ * classified as the planner classifies an operation with reason `change`. It does not depend on
+ * the live state, so an item that is already live still has its change.
+ */
+export type ResourceChange = {
+  /** Identifies the item within its domain plan. Equals `itemRef.key`. */
+  key: string;
+
+  /** `add` when only the target declares the item, `remove` when only the baseline does, `update` when both do and the planner would update it. */
+  kind: "add" | "update" | "remove";
+
+  /** The item, with the same key and config as the operations that change it. */
+  itemRef: ItemRef;
+};
+
 /** A domain's proposed set of resource operations. */
 export type DomainPlan<TBefore = unknown, TAfter = TBefore> = {
   /** Full workflow path of the step this plan belongs to. */
@@ -111,6 +127,12 @@ export type DomainPlan<TBefore = unknown, TAfter = TBefore> = {
 
   /** The operations the domain proposes to apply. */
   operations: ResourceOperation<TBefore, TAfter>[];
+
+  /**
+   * The config differences between the baseline and the target, whatever the live state is.
+   * Absent in plans made by older versions.
+   */
+  changes?: ResourceChange[];
 };
 
 /** The execution context passed to a step's `apply` handler. */

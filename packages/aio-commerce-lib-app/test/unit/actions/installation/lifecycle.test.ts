@@ -104,6 +104,61 @@ describe("toPlanPreview", () => {
     });
   });
 
+  test("keeps a domain with changes and no operations, and lists its changes", () => {
+    const changes = [
+      {
+        itemRef: {
+          config: { label: "Order placed" } as ItemRef["config"],
+          key: "ev-1",
+        },
+        key: "ev-1",
+        kind: "update" as const,
+      },
+    ];
+    const preview = toPlanPreview(
+      createPlan({
+        domains: [
+          { changes, operations: [], path: ["root", "eventing", "commerce"] },
+          { changes: [], operations: [], path: ["root", "webhooks"] },
+          { operations: [], path: ["root", "admin-ui"] },
+        ],
+      }),
+    );
+
+    expect(preview.domains).toEqual([
+      { changes, operations: [], path: ["root", "eventing", "commerce"] },
+    ]);
+  });
+
+  test("lists the changes of a domain with operations", () => {
+    const changes = [
+      { itemRef: { key: "ev-1" }, key: "ev-1", kind: "add" as const },
+    ];
+    const [domain] = toPlanPreview(
+      createPlan({
+        domains: [
+          {
+            changes,
+            operations: [
+              {
+                after: {},
+                id: "a",
+                itemRefs: [],
+                kind: "add",
+                label: "A",
+                reason: "change",
+              },
+            ],
+            path: ["root", "webhooks"],
+          },
+        ],
+      }),
+    ).domains;
+
+    expect(domain?.changes).toEqual(changes);
+    expect(domain?.operations).toHaveLength(1);
+  });
+
   test("uses null versions when there is no source or target", () => {
     const preview = toPlanPreview(createPlan({ source: null, target: null }));
 
