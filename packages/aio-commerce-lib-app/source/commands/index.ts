@@ -12,7 +12,7 @@
  * governing permissions and limitations under the License.
  */
 
-import { stringifyError } from "@aio-commerce-sdk/scripting-utils/error";
+import { stringifyError } from "@adobe/aio-commerce-lib-core/error";
 import consola from "consola";
 
 import { exec as generateActionsCommand } from "#commands/generate/actions/main";

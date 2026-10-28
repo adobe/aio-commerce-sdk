@@ -12,7 +12,7 @@
 
 import { basename, dirname } from "node:path";
 
-import { stringifyError } from "@aio-commerce-sdk/scripting-utils/error";
+import { stringifyError } from "@adobe/aio-commerce-lib-core/error";
 import {
   findNearestPackageJson,
   findUp,
