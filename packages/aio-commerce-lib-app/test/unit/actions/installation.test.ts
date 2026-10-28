@@ -1188,6 +1188,72 @@ describe("installationRuntimeAction", () => {
       });
     });
 
+    describe("custom installation steps after a failed attempt", () => {
+      const first = { name: "First", script: "./first.js" };
+
+      /** Stores a failed install with the given data, with nothing installed. */
+      function seedFailedInstall(data: LifecycleAttempt["data"]) {
+        desiredInstallationStore = createMockInstallationStore();
+        desiredStateStore = createMockLifecycleStore<OrchestrationState>({
+          initial: createMockOrchestrationState({
+            baselineSnapshotId: null,
+            latestAttempt: createMockLifecycleAttempt({
+              data,
+              operation: "install",
+              plan: createMockLifecyclePlan({
+                operation: "install",
+                source: null,
+                target: {
+                  appVersion: configWithAutoUpgrade.metadata.version,
+                  config: configWithAutoUpgrade,
+                },
+              }),
+              status: "failed",
+            }),
+          }),
+        });
+      }
+
+      test("builds the step tree with the custom installation steps the failed attempt ran", async () => {
+        seedFailedInstall({
+          installation: { customInstallationSteps: { first } },
+        });
+
+        const action = installationRuntimeAction({
+          appConfig: configWithAutoUpgrade,
+        });
+
+        const result = await planRequest(action, requestBody);
+        expect(result).toMatchObject({ statusCode: 200 });
+        expect(createRootInstallationStepMock).toHaveBeenCalledWith(
+          expect.anything(),
+          {
+            executedCustomInstallationSteps: [first],
+            forLifecycle: true,
+          },
+        );
+      });
+
+      test("starts the next attempt with only the custom installation steps data of the failed attempt", async () => {
+        seedFailedInstall({
+          installation: {
+            customInstallationSteps: { first },
+            webhooks: { subscriptions: { subscribedWebhooks: [] } },
+          },
+        });
+
+        const action = installationRuntimeAction({
+          appConfig: configWithAutoUpgrade,
+        });
+
+        const result = await planAndStart(action, requestBody);
+        expect(result).toMatchObject({ statusCode: 202 });
+        expect(
+          (await desiredStateStore.get("current"))?.latestAttempt?.data,
+        ).toEqual({ installation: { customInstallationSteps: { first } } });
+      });
+    });
+
     describe("upgrade branch", () => {
       test("returns 409 when the app is not associated", async () => {
         getAssociationDataMock.mockResolvedValue(null);

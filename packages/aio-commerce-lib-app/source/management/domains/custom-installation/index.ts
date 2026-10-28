@@ -14,6 +14,7 @@
 
 export { createCustomInstallationStep } from "./branch";
 export { defineCustomInstallationStep } from "./define";
+export { readRunHistory } from "./history";
 
 export type {
   CustomInstallationStepDefinition,

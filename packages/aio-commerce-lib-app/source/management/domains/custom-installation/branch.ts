@@ -11,49 +11,20 @@
  */
 
 import { hasCustomInstallationSteps } from "#config/schema/installation";
-import {
-  defineBranchStep,
-  defineLeafStep,
-} from "#management/common/workflow/index";
-import { deprecatedReconciliationStep } from "#management/deprecated/domains/custom-installation";
+import { defineBranchStep } from "#management/common/workflow/index";
 
-import { applyCustomInstallationSteps } from "./apply";
+import { applyCustomScript } from "./apply";
 import {
   createCustomScriptStep,
   createCustomScriptSteps,
+  findDeclaredStep,
 } from "./custom-scripts";
-import { planCustomInstallationSteps } from "./plan";
+import { planCustomScript } from "./plan";
 
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
-import type { CustomInstallationStepIdentity } from "./types";
-
-/**
- * Leaf step that reconciles the custom installation steps domain as a whole via `plan`/`apply`.
- * The per-script leaves only run under the deprecated installation and uninstallation runners.
- */
-const reconciliationStep = defineLeafStep({
-  ...deprecatedReconciliationStep,
-  apply: applyCustomInstallationSteps,
-
-  meta: {
-    install: {
-      description:
-        "Records which custom installation steps ran, so future upgrades can detect additions and removals",
-      label: "Reconcile Custom Installation Steps",
-    },
-    uninstall: {
-      description: "Runs the uninstall of custom installation steps that ran",
-      label: "Reconcile Custom Installation Steps",
-    },
-    upgrade: {
-      description:
-        "Runs custom installation steps added since the last version",
-      label: "Reconcile Custom Installation Steps",
-    },
-  },
-  name: "reconciliation",
-  plan: planCustomInstallationSteps,
-});
+import type { CustomInstallationStep } from "#config/schema/installation";
+import type { AnyStep } from "#management/common/workflow/index";
+import type { CustomInstallationStepIdentity, CustomScriptRun } from "./types";
 
 /** Root custom installation step that executes custom installation scripts. */
 const customInstallationStepBase = defineBranchStep({
@@ -80,49 +51,116 @@ const customInstallationStepBase = defineBranchStep({
   name: "customInstallationSteps",
 });
 
+/** The step to show for a step that ran but the config no longer declares. */
+function toUndeclaredStep(
+  identity: CustomInstallationStepIdentity,
+): CustomInstallationStep {
+  return {
+    description:
+      "Previously executed custom installation step, no longer present in the configuration.",
+    name: identity.name,
+    script: identity.script,
+  };
+}
+
+/**
+ * Creates the leaf the lifecycle plans and applies for a single custom installation step.
+ *
+ * @param step - The step the leaf shows.
+ * @param run - What is known about the step, handed to its planner.
+ */
+function createLifecycleScriptStep(
+  step: CustomInstallationStep,
+  run: CustomScriptRun,
+): AnyStep {
+  return {
+    ...createCustomScriptStep(step),
+    apply: applyCustomScript,
+    plan: (input, context) => planCustomScript(run, input, context),
+  };
+}
+
+/**
+ * Creates the children the deprecated runners execute: a leaf per step that ran, or a leaf per
+ * configured step when none ran.
+ */
+function createDeprecatedChildSteps(
+  config: CommerceAppConfigOutputModel,
+  newestFirst: CustomInstallationStepIdentity[],
+): AnyStep[] {
+  if (newestFirst.length === 0) {
+    return createCustomScriptSteps(config);
+  }
+
+  return newestFirst.map((executed) =>
+    createCustomScriptStep(
+      findDeclaredStep(config, executed.name) ?? toUndeclaredStep(executed),
+    ),
+  );
+}
+
+/**
+ * Creates the children the lifecycle plans and applies: a leaf per step that ran, then a leaf per
+ * configured step that has not run, in config order.
+ */
+function createLifecycleChildSteps(
+  config: CommerceAppConfigOutputModel,
+  newestFirst: CustomInstallationStepIdentity[],
+  isHistoryStored: boolean,
+): AnyStep[] {
+  const ranSteps = newestFirst.map((executed) => {
+    const declared = findDeclaredStep(config, executed.name) ?? null;
+    return createLifecycleScriptStep(declared ?? toUndeclaredStep(executed), {
+      declared,
+      executed,
+      isHistoryStored,
+    });
+  });
+
+  const ranNames = new Set(newestFirst.map((executed) => executed.name));
+  const declaredSteps = hasCustomInstallationSteps(config)
+    ? config.installation.customInstallationSteps
+    : [];
+
+  const notRunSteps = declaredSteps
+    .filter((declared) => !ranNames.has(declared.name))
+    .map((declared) =>
+      createLifecycleScriptStep(declared, {
+        declared,
+        executed: null,
+        isHistoryStored,
+      }),
+    );
+
+  return [...ranSteps, ...notRunSteps];
+}
+
 /**
  * Creates the custom installation step with dynamic children based on config. `executedSteps` is
- * the recorded run history, only passed when building the full-uninstall tree.
- * `includeReconciliation` adds the reconciliation leaf, which the lifecycle plans and applies;
- * the deprecated runners leave it out.
+ * the recorded run history, or `null` when none is stored. `forLifecycle` builds the tree the
+ * lifecycle plans and applies, where each leaf plans and applies only its own step. The
+ * deprecated runners leave it out.
  */
 export function createCustomInstallationStep(
   config: CommerceAppConfigOutputModel,
-  executedSteps: readonly CustomInstallationStepIdentity[] = [],
-  includeReconciliation = false,
+  executedSteps: readonly CustomInstallationStepIdentity[] | null = [],
+  forLifecycle = false,
 ) {
-  const children =
-    executedSteps.length > 0
-      ? // The history is append-only, so its order is the real install order; reverse it to
-        // uninstall the newest step first.
-        [...executedSteps].reverse().map((identity) => {
-          const currentStep = hasCustomInstallationSteps(config)
-            ? config.installation.customInstallationSteps.find(
-                (step) => step.name === identity.name,
-              )
-            : undefined;
+  // The history is append-only, so its order is the real install order; reverse it to
+  // uninstall the newest step first.
+  const newestFirst = [...(executedSteps ?? [])].reverse();
 
-          return createCustomScriptStep(
-            currentStep ?? {
-              description:
-                "Previously executed custom installation step, no longer present in the configuration.",
-              name: identity.name,
-              script: identity.script,
-            },
-          );
-        })
-      : [
-          ...createCustomScriptSteps(config),
-          ...(includeReconciliation ? [reconciliationStep] : []),
-        ];
+  const children = forLifecycle
+    ? createLifecycleChildSteps(config, newestFirst, executedSteps !== null)
+    : createDeprecatedChildSteps(config, newestFirst);
 
   return {
     ...customInstallationStepBase,
     children,
 
-    // Keep the branch "configured" when there's step history to uninstall, even if the current
-    // config has no custom steps; otherwise a full uninstall would never visit these leaves.
+    // Keep the branch "configured" when there's step history, even if the current config has no
+    // custom steps; otherwise planning would never visit these leaves.
     isConfigured: (candidateConfig: CommerceAppConfigOutputModel) =>
-      hasCustomInstallationSteps(candidateConfig) || executedSteps.length > 0,
+      hasCustomInstallationSteps(candidateConfig) || newestFirst.length > 0,
   };
 }

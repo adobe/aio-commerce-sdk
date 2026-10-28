@@ -10,8 +10,6 @@
  * governing permissions and limitations under the License.
  */
 
-import { hasCustomInstallationSteps } from "#config/schema/installation";
-
 import {
   getScriptModule,
   getScriptModuleOrThrow,
@@ -19,20 +17,18 @@ import {
 } from "./custom-scripts";
 
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
-import type { CustomInstallationStep } from "#config/schema/installation";
 import type {
   ApplyContext,
   ApplyResult,
 } from "#management/common/workflow/resource";
 import type {
-  CustomInstallationDomainPlan,
-  CustomInstallationSnapshotData,
   CustomInstallationStepIdentity,
+  CustomScriptDomainPlan,
 } from "./types";
 
 /** Runs a newly-added step's `install` handler and returns its persisted identity. */
 async function runAddedStep(
-  step: CustomInstallationStep,
+  step: CustomInstallationStepIdentity,
   targetConfig: CommerceAppConfigOutputModel,
   context: ApplyContext,
 ): Promise<CustomInstallationStepIdentity> {
@@ -88,92 +84,36 @@ async function runRemovedStep(
 }
 
 /**
- * Runs `uninstall` for every step the plan removes, newest first, and returns the history without
- * the steps whose `uninstall` ran.
+ * Applies the plan of a single custom installation step. An `add` runs its `install` and records
+ * the step. A `remove` runs its `uninstall` and records `null`, or keeps the step's record when its
+ * `uninstall` could not run.
  */
-async function uninstallRemovedSteps(
-  plan: CustomInstallationDomainPlan,
+export async function applyCustomScript(
+  plan: CustomScriptDomainPlan,
   context: ApplyContext,
-): Promise<ApplyResult<CustomInstallationSnapshotData>> {
-  const { baselineConfig, baselineExecutedSteps, operations } = plan;
-  const removed = operations
-    .filter((op) => op.kind === "remove")
-    .map((op) => op.before);
+): Promise<ApplyResult<CustomInstallationStepIdentity>> {
+  // Custom installation steps have at most 1 operation.
+  const operation = plan.operations.at(0);
 
-  const uninstalled = new Set<string>();
-  if (baselineConfig) {
-    for (const step of removed.reverse()) {
-      // biome-ignore lint/performance/noAwaitInLoops: steps are undone in reverse order of installation
-      if (await runRemovedStep(step, baselineConfig, context)) {
-        uninstalled.add(step.name);
-      }
-    }
-  }
-
-  return {
-    snapshotData: {
-      executedSteps: baselineExecutedSteps.filter(
-        (step) => !uninstalled.has(step.name),
+  if (operation?.kind === "add" && context.targetConfig) {
+    return {
+      snapshotData: await runAddedStep(
+        operation.after,
+        context.targetConfig,
+        context,
       ),
-    },
-  };
-}
-
-/**
- * Applies the plan. Without a target config, it runs `uninstall` for the removed steps. Otherwise
- * it runs `install` for first-time steps, warns about retained steps that point to a different
- * script (without re-running them), and ignores steps no longer in the config. Returns the
- * baseline history with the newly-added steps appended.
- */
-export async function applyCustomInstallationSteps(
-  plan: CustomInstallationDomainPlan,
-  context: ApplyContext,
-): Promise<ApplyResult<CustomInstallationSnapshotData>> {
-  const { baselineExecutedSteps, targetConfig, operations } = plan;
-
-  if (!targetConfig) {
-    return await uninstallRemovedSteps(plan, context);
+    };
   }
 
-  const targetSteps = hasCustomInstallationSteps(targetConfig)
-    ? targetConfig.installation.customInstallationSteps
-    : [];
+  if (operation?.kind === "remove") {
+    const uninstalled =
+      plan.baselineConfig !== null &&
+      (await runRemovedStep(operation.before, plan.baselineConfig, context));
 
-  const addedNames = new Set(
-    operations.filter((op) => op.kind === "add").map((op) => op.after.name),
+    return { snapshotData: uninstalled ? null : operation.before };
+  }
+
+  throw new Error(
+    `The plan of custom installation step "${plan.path.at(-1)}" has nothing to apply`,
   );
-
-  // Retained steps: present in both baseline and target, never re-run. Warn if one now points to
-  // a different script than the one that ran, since that change is silently kept.
-  for (const targetStep of targetSteps) {
-    if (addedNames.has(targetStep.name)) {
-      continue;
-    }
-
-    const baselineStep = baselineExecutedSteps.find(
-      (step) => step.name === targetStep.name,
-    );
-
-    if (baselineStep && baselineStep.script !== targetStep.script) {
-      context.logger.warn(
-        `Custom installation step "${targetStep.name}" now points to a different script ` +
-          `("${targetStep.script}" instead of "${baselineStep.script}"). This does not affect ` +
-          "append-only behavior: its install already ran and will not run again.",
-      );
-    }
-  }
-
-  const addedSteps = targetSteps.filter((step) => addedNames.has(step.name));
-  const addedIdentities: CustomInstallationStepIdentity[] = [];
-
-  for (const step of addedSteps) {
-    // biome-ignore lint/performance/noAwaitInLoops: steps run in declared order and may depend on earlier ones
-    addedIdentities.push(await runAddedStep(step, targetConfig, context));
-  }
-
-  return {
-    snapshotData: {
-      executedSteps: [...baselineExecutedSteps, ...addedIdentities],
-    },
-  };
 }

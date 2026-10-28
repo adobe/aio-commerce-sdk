@@ -10,23 +10,17 @@
  * governing permissions and limitations under the License.
  */
 
-import { hasCustomInstallationSteps } from "#config/schema/installation";
 import {
   getScriptModule,
   getScriptModuleOrThrow,
   resolveCustomScriptHandler,
 } from "#management/domains/custom-installation/custom-scripts";
 
-import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 import type {
   ConfigWithInstallationSteps,
   CustomInstallationStep,
 } from "#config/schema/installation";
 import type { ExecutionContext } from "#management/common/workflow/step";
-import type {
-  CustomInstallationSnapshotData,
-  CustomInstallationStepIdentity,
-} from "#management/domains/custom-installation/types";
 
 /** Result of executing a single custom installation script. */
 type ScriptExecutionResult = {
@@ -103,24 +97,3 @@ export function createDeprecatedCustomScriptHandlers(
     },
   };
 }
-
-/** Legacy install handler for the custom installation reconciliation leaf. Deleted in the next major. */
-export const deprecatedReconciliationStep = {
-  // Unused in practice: this leaf only runs on upgrade (via `apply`), but `LeafStep` requires an
-  // `install`.
-  install: (
-    config: CommerceAppConfigOutputModel,
-  ): CustomInstallationSnapshotData => {
-    if (!hasCustomInstallationSteps(config)) {
-      return { executedSteps: [] };
-    }
-
-    const executedSteps: CustomInstallationStepIdentity[] =
-      config.installation.customInstallationSteps.map((step) => ({
-        name: step.name,
-        script: step.script,
-      }));
-
-    return { executedSteps };
-  },
-};
