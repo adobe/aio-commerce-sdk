@@ -80,7 +80,7 @@ For existing apps, inspect the dependency, lockfile and installed package before
 
 For TypeScript or checked JavaScript, check actual declaration resolution, not just the version (package types first appeared in 1.1.0):
 
-- **Types resolve:** prefer package declarations, otherwise reuse compatible application declarations. Remove obsolete DB import suppressions (unused `@ts-expect-error` produces TS2578); do not add new ones. Report conflicts without silently changing application declarations.
+- **Types resolve:** prefer package declarations, otherwise reuse compatible application declarations. Report conflicts without silently changing application declarations.
 - **No types resolve:** recommend a typed release, but require approval before dependency or lockfile changes. To keep the installed version, add this comment immediately above each DB import reporting TS7016, including copied asset imports:
 
 ```ts
@@ -88,7 +88,7 @@ For TypeScript or checked JavaScript, check actual declaration resolution, not j
 import { init as initDb } from "@adobe/aio-lib-db";
 ```
 
-The fallback leaves DB APIs untyped. Keep strict checking; do not add ambient DB bridges, downgrade dependencies, or suppress unrelated errors. Remove directives when types resolve. Compilation does not prove runtime compatibility.
+The fallback leaves DB APIs untyped. Keep strict checking; do not add ambient DB bridges, downgrade dependencies, or suppress unrelated errors. Compilation does not prove runtime compatibility.
 
 ## Step 3 — Understand intent
 

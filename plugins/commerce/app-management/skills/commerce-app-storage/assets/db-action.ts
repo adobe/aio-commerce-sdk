@@ -21,6 +21,7 @@ import {
   getImsAuthProvider,
   resolveImsAuthParams,
 } from "@adobe/aio-commerce-lib-auth";
+import { stringifyError } from "@adobe/aio-commerce-lib-core/error";
 import { buildErrorResponse, ok } from "@adobe/aio-commerce-lib-core/responses";
 import AioLogger from "@adobe/aio-lib-core-logging";
 import { init as initDb } from "@adobe/aio-lib-db";
@@ -116,7 +117,7 @@ export async function main(params: Record<string, unknown>) {
     } else {
       logger.error(
         "Unexpected error",
-        error instanceof Error ? error : String(error),
+        error instanceof Error ? error : stringifyError(error),
       );
     }
     return buildErrorResponse(dbError.statusCode ?? 500, {
