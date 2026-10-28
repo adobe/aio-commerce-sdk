@@ -16,6 +16,7 @@ import type {
 } from "#management/common/orchestration";
 import type {
   ItemRef,
+  ResourceChange,
   ResourceOperation,
 } from "#management/common/workflow/resource";
 import type { ValidationIssueSeverity } from "#management/common/workflow/validation";
@@ -31,10 +32,16 @@ export type PlanPreviewOperation = {
   itemRefs: ItemRef[];
 };
 
-/** The operations a plan preview lists for one domain. */
+/** The operations and config changes a plan preview lists for one domain. */
 export type PlanPreviewDomain = {
   path: string[];
   operations: PlanPreviewOperation[];
+
+  /**
+   * The items the target config adds, updates or removes compared with the installed config,
+   * whatever the live state is. Empty for a plan stored by an older version.
+   */
+  changes: ResourceChange[];
 };
 
 /** An issue listed in a plan preview. */
@@ -59,7 +66,7 @@ export type PlanPreview = {
   /** The app version the plan ends at, or `null` when the app ends up with nothing installed. */
   targetVersion: string | null;
 
-  /** The domains with operations to run. A domain without operations is left out. */
+  /** The domains with operations to run or config changes. A domain with neither is left out. */
   domains: PlanPreviewDomain[];
   issues: PlanPreviewIssue[];
 };
@@ -71,8 +78,12 @@ export type PlanPreview = {
 export function toPlanPreview(plan: LifecyclePlan): PlanPreview {
   return {
     domains: plan.domains
-      .filter((domain) => domain.operations.length > 0)
+      .filter(
+        (domain) =>
+          domain.operations.length > 0 || (domain.changes?.length ?? 0) > 0,
+      )
       .map((domain) => ({
+        changes: domain.changes ?? [],
         operations: domain.operations.map(
           ({ id, kind, label, reason, itemRefs }) => ({
             id,

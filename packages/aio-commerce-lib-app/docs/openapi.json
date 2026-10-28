@@ -3637,9 +3637,16 @@
                     "type": "object",
                     "additionalProperties": true
                   }
+                },
+                "changes": {
+                  "description": "The items the target config adds, updates or removes compared with the installed config, whatever the live state is. Empty for a plan stored by an older version.",
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ResourceChange"
+                  }
                 }
               },
-              "required": ["path", "operations"]
+              "required": ["path", "operations", "changes"]
             }
           },
           "issues": {
@@ -3705,6 +3712,24 @@
         },
         "required": ["key"]
       },
+      "ResourceChange": {
+        "description": "An item the target config adds, updates or removes compared with the installed config. An update is an item the plan would update because its config changed.",
+        "type": "object",
+        "properties": {
+          "key": {
+            "description": "Identifies the item within its domain. Equals `itemRef.key`.",
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": ["add", "update", "remove"]
+          },
+          "itemRef": {
+            "$ref": "#/components/schemas/ItemRef"
+          }
+        },
+        "required": ["key", "kind", "itemRef"]
+      },
       "PlanPreview": {
         "description": "A lifecycle plan for review, without internal or sensitive values.",
         "type": "object",
@@ -3740,7 +3765,7 @@
             ]
           },
           "domains": {
-            "description": "The domains with operations to run. A domain without operations is left out.",
+            "description": "The domains with operations to run or config changes. A domain with neither is left out.",
             "type": "array",
             "items": {
               "type": "object",
@@ -3781,9 +3806,16 @@
                     },
                     "required": ["id", "kind", "label", "reason", "itemRefs"]
                   }
+                },
+                "changes": {
+                  "description": "The items the target config adds, updates or removes compared with the installed config, whatever the live state is. Empty for a plan stored by an older version.",
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ResourceChange"
+                  }
                 }
               },
-              "required": ["path", "operations"]
+              "required": ["path", "operations", "changes"]
             }
           },
           "issues": {

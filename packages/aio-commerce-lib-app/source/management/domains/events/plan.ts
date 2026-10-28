@@ -15,6 +15,7 @@ import stringify from "safe-stable-stringify";
 
 import { getInstallCommerceEnv } from "#config/lib/environment";
 
+import { planEventChanges } from "./changes";
 import {
   findLegacyProvidersOfUnknownWorkspace,
   findLiveProvider,
@@ -140,8 +141,16 @@ async function planEventingLeaf(
 ): Promise<PlanningResult<EventingDomainPlan>> {
   const { path } = input;
   const configs = resolveLeafConfigs(input, context, leaf);
+  const changes = planEventChanges(
+    input.baseline?.config ?? null,
+    input.targetConfig,
+    leaf.type,
+    getInstallCommerceEnv(context.params),
+    context.appId,
+  );
+
   if (!hasEventsToPlan(configs)) {
-    return { kind: "planned", plan: { operations: [], path } };
+    return { kind: "planned", plan: { changes, operations: [], path } };
   }
 
   let live: LiveEventingState;
@@ -189,6 +198,7 @@ async function planEventingLeaf(
   return {
     kind: "planned",
     plan: {
+      changes,
       configuredValues: leaf.isCommerce ? ctx.configuredValues : undefined,
       eventingModule: getEventingModuleState(live, matches, ctx),
       operations: operations.sort(

@@ -18,6 +18,7 @@ import {
 } from "#config/schema/admin-ui";
 import { toItemRef } from "#management/common/workflow/resource";
 
+import { toAdminUiChanges } from "./changes";
 import { hasExtensionName } from "./helpers";
 
 import type {
@@ -41,7 +42,7 @@ import type {
 import type { AdminUiStepContext } from "./utils";
 
 /** A single enumerated Admin UI component with its diff key and display label. */
-type AdminUiComponentDescriptor = {
+export type AdminUiComponentDescriptor = {
   key: string;
   ref: AdminUiComponentRef;
   config: AdminUiComponentConfig;
@@ -54,7 +55,7 @@ type AdminUiComponentDescriptor = {
  * Array-based components (mass actions, view buttons) key on their `id`, which the
  * schema guarantees is unique within each array.
  */
-function enumerateComponents(
+export function enumerateComponents(
   adminUi: AdminUi,
 ): Map<string, AdminUiComponentDescriptor> {
   const components = new Map<string, AdminUiComponentDescriptor>();
@@ -183,7 +184,7 @@ function buildUpdateOperation(
  * A component present on both sides with a changed config is an `update`; the
  * whole-config comparison covers ACL, labels, descriptions, and notifications.
  */
-function diffComponents(
+export function diffComponents(
   baselineComponents: Map<string, AdminUiComponentDescriptor>,
   targetComponents: Map<string, AdminUiComponentDescriptor>,
 ): ResourceOperation<AdminUiOperationValue>[] {
@@ -274,6 +275,7 @@ export function planAdminUi(
     kind: "planned",
     plan: {
       baselineExtensionId: extractBaselineExtensionId(baseline),
+      changes: toAdminUiChanges(operations),
       extensionAction,
       operations,
       path,
