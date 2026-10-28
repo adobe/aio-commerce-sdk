@@ -10,7 +10,14 @@
  * governing permissions and limitations under the License.
  */
 
+import { resolveBusinessConfigSchema } from "@adobe/aio-commerce-lib-config";
 import { beforeEach, describe, expect, test, vi } from "vitest";
+
+import { configRuntimeAction } from "#actions/config/index";
+import { createRuntimeActionParams } from "#test/fixtures/actions";
+
+import type { BusinessConfigSchema } from "@adobe/aio-commerce-lib-config";
+import type { RuntimeActionParams } from "@adobe/aio-commerce-lib-core/params";
 
 const {
   byScopeIdMock,
@@ -37,14 +44,6 @@ vi.mock("@adobe/aio-commerce-lib-config", async () => {
     setConfiguration: setConfigurationMock,
   };
 });
-
-import { resolveBusinessConfigSchema } from "@adobe/aio-commerce-lib-config";
-
-import { configRuntimeAction } from "#actions/config/index";
-import { createRuntimeActionParams } from "#test/fixtures/actions";
-
-import type { BusinessConfigSchema } from "@adobe/aio-commerce-lib-config";
-import type { RuntimeActionParams } from "@adobe/aio-commerce-lib-core/params";
 
 const configSchema = [
   {

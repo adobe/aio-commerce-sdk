@@ -4,24 +4,10 @@
 
 This package provides utility functions for Adobe Commerce SDK scripts and build tools. It includes helpers for:
 
-- **[Error Handling](#error-handling)**: Error stringification utilities
 - **[Project Utilities](#project-utilities)**: Package detection, file finding, and project structure helpers
 - **[Filesystem Utilities](#filesystem-utilities)**: Temporary file management
 - **[YAML Utilities](#yaml-utilities)**: YAML document manipulation and code generation
-
-## Error Handling
-
-Utilities for converting errors to human-readable strings:
-
-```typescript
-import { stringifyError } from "@aio-commerce-sdk/scripting-utils/error";
-
-try {
-  // Some operation that might throw
-} catch (error) {
-  console.error(stringifyError(error));
-}
-```
+- **[Process Utilities](#process-utilities)**: Detached background processes that outlive their starter
 
 ## Project Utilities
 
@@ -192,6 +178,29 @@ await createOrUpdateExtConfig("ext.config.yaml", {
   },
 });
 ```
+
+## Process Utilities
+
+Helpers to run a Node.js script as a background process that outlives the process that started it:
+
+```typescript
+import {
+  getTempLogPath,
+  spawnDetached,
+  waitForOwnerExit,
+} from "@aio-commerce-sdk/scripting-utils/process";
+
+// In the starting process.
+spawnDetached({
+  script: "/path/to/worker.mjs",
+  logPath: getTempLogPath("my-worker"),
+});
+
+// In the background process.
+await waitForOwnerExit();
+```
+
+`spawnDetached` writes the output of the process to a log file and gives it a pipe on file descriptor 3. It also sets the environment variables `__AIO_COMMERCE_SDK_DETACHED_OWNER_PID`, with the pid of the starting process, and `__AIO_COMMERCE_SDK_DETACHED_LIVENESS_FD`, with the file descriptor of the pipe. `waitForOwnerExit` reads both and resolves when the pipe ends or when the owner pid is gone. Without the pipe, it relies on the pid check alone, and it rejects with a `RangeError` if the owner pid is missing or not valid.
 
 ## API Reference
 

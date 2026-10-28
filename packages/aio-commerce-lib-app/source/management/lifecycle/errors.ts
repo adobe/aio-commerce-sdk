@@ -34,18 +34,6 @@ export class LifecycleBaselineNotFoundError extends LifecycleOrchestrationError 
 }
 
 /**
- * Thrown when orchestration state has to be initialized but no baseline that
- * the current app version can start from could be derived.
- *
- * Installing the app so that a baseline is recorded resolves the error.
- */
-export class LifecycleBaselineIncompatibleError extends LifecycleOrchestrationError {
-  public constructor(options?: CommerceSdkErrorBaseOptions) {
-    super("A compatible lifecycle baseline is required", options);
-  }
-}
-
-/**
  * Thrown when an operation requires orchestration state that was never written,
  * which means no lifecycle operation has ever run for this app.
  *

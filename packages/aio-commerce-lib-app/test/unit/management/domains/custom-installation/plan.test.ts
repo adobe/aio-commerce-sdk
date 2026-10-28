@@ -12,185 +12,237 @@
 
 import { describe, expect, test } from "vitest";
 
-import { planCustomInstallationSteps } from "#management/domains/custom-installation/plan";
+import { planCustomScript } from "#management/domains/custom-installation/plan";
 import {
   configWithCustomInstallationSteps,
-  minimalValidConfig,
+  createMockConfig,
 } from "#test/fixtures/config";
 import { createMockInstallationContext } from "#test/fixtures/installation";
 
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
-import type { PlanningInput } from "#management/common/workflow/resource";
-import type { CustomInstallationSnapshotData } from "#management/domains/custom-installation/types";
+import type { CustomScriptRun } from "#management/domains/custom-installation/types";
 
-const path = ["installation", "customInstallationSteps", "reconciliation"];
+describe("planCustomScript", () => {
+  const scriptPath = ["installation", "customInstallationSteps", "demoSuccess"];
+  const declared = {
+    description: "Success script",
+    name: "Demo Success",
+    script: "./demo-success.js",
+  };
 
-describe("planCustomInstallationSteps", () => {
-  test("plans an `add` for every step when there is no baseline", async () => {
-    const input: PlanningInput<
-      CommerceAppConfigOutputModel,
-      CustomInstallationSnapshotData
-    > = {
-      baseline: null,
-      path,
-      targetConfig: configWithCustomInstallationSteps,
-    };
+  const executed = { name: "Demo Success", script: "./demo-success.js" };
+  const removed = { name: "Old Step", script: "./old-step.js" };
+  const configWithOldStep = createMockConfig({
+    installation: {
+      customInstallationSteps: [{ ...removed, description: "Old step" }],
+    },
+  });
 
-    const result = await planCustomInstallationSteps(
-      input,
-      createMockInstallationContext(),
+  const removedIssue = {
+    blocking: false,
+    code: "CUSTOM_INSTALLATION_STEP_REMOVED",
+    domain: "customInstallationSteps",
+    message:
+      'Custom installation step "Old Step" is no longer in the configuration, so nothing will run for it. If its script had an uninstall, it can\'t run, because the script is no longer deployed.',
+    severity: "warning",
+  };
+
+  /** Plans a step's leaf against the given baseline and target configs. */
+  function plan(
+    run: CustomScriptRun,
+    configs: {
+      baseline: CommerceAppConfigOutputModel | null;
+      target: CommerceAppConfigOutputModel | null;
+    },
+    context = createMockInstallationContext(),
+  ) {
+    return planCustomScript(
+      run,
+      {
+        baseline: configs.baseline
+          ? { config: configs.baseline, data: executed }
+          : null,
+        path: scriptPath,
+        targetConfig: configs.target,
+      },
+      context,
+    );
+  }
+
+  test("plans an `add` for a declared step that has not run", async () => {
+    const result = await plan(
+      { declared, executed: null, isHistoryStored: true },
+      { baseline: null, target: configWithCustomInstallationSteps },
+    );
+
+    expect(result).toEqual({
+      issues: [],
+      kind: "planned",
+      plan: {
+        baselineConfig: null,
+        changes: [
+          {
+            itemRef: { config: declared, key: "Demo Success" },
+            key: "Demo Success",
+            kind: "add",
+          },
+        ],
+        operations: [
+          {
+            after: executed,
+            id: "add:Demo Success",
+            itemRefs: [{ config: declared, key: "Demo Success" }],
+            kind: "add",
+            label: 'Run custom installation step "Demo Success"',
+            reason: "change",
+          },
+        ],
+        path: scriptPath,
+      },
+    });
+  });
+
+  test("plans an `add` for a declared step when no run history is stored", async () => {
+    const result = await plan(
+      { declared, executed: null, isHistoryStored: false },
+      { baseline: null, target: configWithCustomInstallationSteps },
     );
 
     expect.assert(result.kind === "planned");
-    expect(result.plan.operations).toEqual([
-      {
-        after: { name: "Demo Success", script: "./demo-success.js" },
-        id: "add:Demo Success",
-        kind: "add",
-        label: 'Run custom installation step "Demo Success"',
-        reason: "change",
-      },
-      {
-        after: { name: "Demo Error", script: "./demo-error.js" },
-        id: "add:Demo Error",
-        kind: "add",
-        label: 'Run custom installation step "Demo Error"',
-        reason: "change",
-      },
-    ]);
-    expect(result.plan.baselineExecutedSteps).toEqual([]);
+    expect(result.plan.operations.map((op) => op.kind)).toEqual(["add"]);
   });
 
-  test("plans no operations for a step present in both baseline and target", async () => {
-    const input: PlanningInput<
-      CommerceAppConfigOutputModel,
-      CustomInstallationSnapshotData
-    > = {
-      baseline: {
-        config: configWithCustomInstallationSteps,
-        data: {
-          executedSteps: [
-            { name: "Demo Success", script: "./demo-success.js" },
-            { name: "Demo Error", script: "./demo-error.js" },
-          ],
-        },
+  test("plans nothing for a declared step that already ran", async () => {
+    const context = createMockInstallationContext();
+    const result = await plan(
+      { declared, executed, isHistoryStored: true },
+      {
+        baseline: configWithCustomInstallationSteps,
+        target: configWithCustomInstallationSteps,
       },
-      path,
-      targetConfig: configWithCustomInstallationSteps,
-    };
-
-    const result = await planCustomInstallationSteps(
-      input,
-      createMockInstallationContext(),
+      context,
     );
 
     expect.assert(result.kind === "planned");
     expect(result.plan.operations).toEqual([]);
+    expect(result.issues).toEqual([]);
+    expect(context.logger.warn).not.toHaveBeenCalled();
   });
 
-  test("plans a `remove` for a step no longer in the target config", async () => {
-    const input: PlanningInput<
-      CommerceAppConfigOutputModel,
-      CustomInstallationSnapshotData
-    > = {
-      baseline: {
-        config: configWithCustomInstallationSteps,
-        data: {
-          executedSteps: [
-            { name: "Demo Success", script: "./demo-success.js" },
-            { name: "Demo Error", script: "./demo-error.js" },
-          ],
-        },
+  test("logs a warning when a step that ran now points to a different script", async () => {
+    const context = createMockInstallationContext();
+    const result = await plan(
+      {
+        declared,
+        executed: { ...executed, script: "./old-path.js" },
+        isHistoryStored: true,
       },
-      path,
-      targetConfig: minimalValidConfig,
-    };
-
-    const result = await planCustomInstallationSteps(
-      input,
-      createMockInstallationContext(),
+      {
+        baseline: configWithCustomInstallationSteps,
+        target: configWithCustomInstallationSteps,
+      },
+      context,
     );
 
     expect.assert(result.kind === "planned");
-    expect(result.plan.operations).toEqual([
-      {
-        before: { name: "Demo Success", script: "./demo-success.js" },
-        id: "remove:Demo Success",
-        kind: "remove",
-        label:
-          'Custom installation step "Demo Success" no longer in the configuration',
-        reason: "change",
-      },
-      {
-        before: { name: "Demo Error", script: "./demo-error.js" },
-        id: "remove:Demo Error",
-        kind: "remove",
-        label:
-          'Custom installation step "Demo Error" no longer in the configuration',
-        reason: "change",
-      },
-    ]);
-  });
-
-  test("seeds baseline history from config when the snapshot predates the reconciliation leaf", async () => {
-    const input: PlanningInput<
-      CommerceAppConfigOutputModel,
-      CustomInstallationSnapshotData
-    > = {
-      baseline: {
-        config: configWithCustomInstallationSteps,
-        // A pre-reconciliation snapshot has no executed-step history at this path.
-        data: undefined as unknown as CustomInstallationSnapshotData,
-      },
-      path,
-      targetConfig: configWithCustomInstallationSteps,
-    };
-
-    const result = await planCustomInstallationSteps(
-      input,
-      createMockInstallationContext(),
-    );
-
-    expect.assert(result.kind === "planned");
-    // Already-installed steps must be treated as retained, never re-added.
     expect(result.plan.operations).toEqual([]);
-    expect(result.plan.baselineExecutedSteps).toEqual([
-      { name: "Demo Success", script: "./demo-success.js" },
-      { name: "Demo Error", script: "./demo-error.js" },
-    ]);
+    expect(context.logger.warn).toHaveBeenCalledWith(
+      expect.stringContaining("now points to a different script"),
+    );
   });
 
-  test("plans an `add` for a new step alongside a retained one", async () => {
-    const input: PlanningInput<
-      CommerceAppConfigOutputModel,
-      CustomInstallationSnapshotData
-    > = {
-      baseline: {
-        config: configWithCustomInstallationSteps,
-        data: {
-          executedSteps: [
-            { name: "Demo Success", script: "./demo-success.js" },
-          ],
-        },
+  test("warns about a step the upgrade removes without planning it", async () => {
+    const result = await plan(
+      { declared: null, executed: removed, isHistoryStored: true },
+      {
+        baseline: configWithOldStep,
+        target: configWithCustomInstallationSteps,
       },
-      path,
-      targetConfig: configWithCustomInstallationSteps,
-    };
-
-    const result = await planCustomInstallationSteps(
-      input,
-      createMockInstallationContext(),
     );
 
     expect.assert(result.kind === "planned");
-    expect(result.plan.operations).toEqual([
+    expect(result.plan.operations).toEqual([]);
+    expect(result.issues).toEqual([removedIssue]);
+  });
+
+  test("does not warn about a step an earlier upgrade removed", async () => {
+    const result = await plan(
+      { declared: null, executed: removed, isHistoryStored: true },
       {
-        after: { name: "Demo Error", script: "./demo-error.js" },
-        id: "add:Demo Error",
-        kind: "add",
-        label: 'Run custom installation step "Demo Error"',
-        reason: "change",
+        baseline: configWithCustomInstallationSteps,
+        target: configWithCustomInstallationSteps,
       },
+    );
+
+    expect.assert(result.kind === "planned");
+    expect(result.plan.operations).toEqual([]);
+    expect(result.issues).toEqual([]);
+  });
+
+  test("plans a `remove` for a declared step that ran when uninstalling", async () => {
+    const result = await plan(
+      { declared, executed, isHistoryStored: true },
+      { baseline: configWithCustomInstallationSteps, target: null },
+    );
+
+    expect(result).toEqual({
+      issues: [],
+      kind: "planned",
+      plan: {
+        baselineConfig: configWithCustomInstallationSteps,
+        changes: [
+          {
+            itemRef: { config: declared, key: "Demo Success" },
+            key: "Demo Success",
+            kind: "remove",
+          },
+        ],
+        operations: [
+          {
+            before: executed,
+            id: "remove:Demo Success",
+            itemRefs: [{ config: declared, key: "Demo Success" }],
+            kind: "remove",
+            label: 'Remove custom installation step "Demo Success"',
+            reason: "change",
+          },
+        ],
+        path: scriptPath,
+      },
+    });
+  });
+
+  test("plans a `remove` for a declared step when uninstalling without a stored run history", async () => {
+    const result = await plan(
+      { declared, executed: null, isHistoryStored: false },
+      { baseline: configWithCustomInstallationSteps, target: null },
+    );
+
+    expect.assert(result.kind === "planned");
+    expect(result.plan.operations).toMatchObject([
+      { before: executed, kind: "remove" },
     ]);
+  });
+
+  test("plans nothing for a declared step that never ran when uninstalling", async () => {
+    const result = await plan(
+      { declared, executed: null, isHistoryStored: true },
+      { baseline: configWithCustomInstallationSteps, target: null },
+    );
+
+    expect.assert(result.kind === "planned");
+    expect(result.plan.operations).toEqual([]);
+    expect(result.issues).toEqual([]);
+  });
+
+  test("warns about a step that ran but is no longer deployed when uninstalling", async () => {
+    const result = await plan(
+      { declared: null, executed: removed, isHistoryStored: true },
+      { baseline: configWithCustomInstallationSteps, target: null },
+    );
+
+    expect.assert(result.kind === "planned");
+    expect(result.plan.operations).toEqual([]);
+    expect(result.issues).toEqual([removedIssue]);
   });
 });

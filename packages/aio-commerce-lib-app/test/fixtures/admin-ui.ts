@@ -14,6 +14,8 @@ import { vi } from "vitest";
 
 import { createMockInstallationContext } from "#test/fixtures/installation";
 
+import type { AdminUiExecutionContext } from "#management/domains/admin-ui/utils";
+
 export const viewButtonViewBase = {
   id: "delete-order",
   label: "Delete",
@@ -27,8 +29,6 @@ export const viewButtonWorkerBase = {
   runtimeAction: "orders/sync-inventory",
   type: "worker" as const,
 };
-
-import type { AdminUiExecutionContext } from "#management/domains/admin-ui/utils";
 
 /** Creates a mock AdminUiExecutionContext with Admin UI client methods. */
 export function createMockAdminUiContext(

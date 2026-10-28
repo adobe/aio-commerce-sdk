@@ -32,7 +32,7 @@ export default mergeConfig(baseConfig, {
   define: {
     ...buildVariables,
   },
-  dts: { eager: true },
+  dts: { tsc: { eager: true } },
   entry: [
     "./source/index.ts",
     "./source/actions/*/index.ts",

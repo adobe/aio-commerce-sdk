@@ -12,12 +12,20 @@
 
 import { describe, expect, test } from "vitest";
 
-import { buildLifecycleContext } from "#actions/installation/common";
+import {
+  buildLifecycleContext,
+  getExecutedCustomInstallationSteps,
+} from "#actions/installation/common";
 import { minimalValidConfig } from "#test/fixtures/config";
 import {
   createMockInstallationContext,
   DEFAULT_INSTALLATION_IMS_PARAMS,
 } from "#test/fixtures/installation";
+import {
+  createMockAppStateSnapshot,
+  createMockLifecycleAttempt,
+  createMockOrchestrationState,
+} from "#test/fixtures/lifecycle";
 
 import type { WorkflowRouteParams } from "#actions/installation/common";
 
@@ -70,5 +78,73 @@ describe("buildLifecycleContext", () => {
     expect(context.params).not.toHaveProperty(
       "AIO_COMMERCE_AUTH_IMS_CLIENT_ID",
     );
+  });
+});
+
+describe("getExecutedCustomInstallationSteps", () => {
+  const FIRST = { name: "First", script: "./first.js" };
+  const SECOND = { name: "Second", script: "./second.js" };
+
+  const baseline = createMockAppStateSnapshot({
+    data: { installation: { customInstallationSteps: { first: FIRST } } },
+  });
+
+  const attemptData = {
+    installation: { customInstallationSteps: { first: FIRST, second: SECOND } },
+  };
+
+  test("returns null when neither an attempt nor a baseline is stored", () => {
+    expect(getExecutedCustomInstallationSteps(null, null)).toBeNull();
+  });
+
+  test("reads the baseline when no attempt is stored", () => {
+    const state = createMockOrchestrationState();
+
+    expect(getExecutedCustomInstallationSteps(state, baseline)).toEqual([
+      FIRST,
+    ]);
+  });
+
+  test("reads the baseline when the latest attempt succeeded", () => {
+    const state = createMockOrchestrationState({
+      latestAttempt: createMockLifecycleAttempt({
+        data: attemptData,
+        status: "succeeded",
+      }),
+    });
+
+    expect(getExecutedCustomInstallationSteps(state, baseline)).toEqual([
+      FIRST,
+    ]);
+  });
+
+  test.each(["failed", "pending", "in-progress"] as const)(
+    "reads the latest attempt when it is %s",
+    (status) => {
+      const state = createMockOrchestrationState({
+        latestAttempt: createMockLifecycleAttempt({
+          data: attemptData,
+          status,
+        }),
+      });
+
+      expect(getExecutedCustomInstallationSteps(state, baseline)).toEqual([
+        FIRST,
+        SECOND,
+      ]);
+    },
+  );
+
+  test("returns no steps after an uninstall succeeded", () => {
+    const state = createMockOrchestrationState({
+      baselineSnapshotId: null,
+      latestAttempt: createMockLifecycleAttempt({
+        data: null,
+        operation: "uninstall",
+        status: "succeeded",
+      }),
+    });
+
+    expect(getExecutedCustomInstallationSteps(state, null)).toEqual([]);
   });
 });

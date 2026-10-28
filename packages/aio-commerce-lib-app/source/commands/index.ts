@@ -12,7 +12,7 @@
  * governing permissions and limitations under the License.
  */
 
-import { stringifyError } from "@aio-commerce-sdk/scripting-utils/error";
+import { stringifyError } from "@adobe/aio-commerce-lib-core/error";
 import consola from "consola";
 
 import { exec as generateActionsCommand } from "#commands/generate/actions/main";
@@ -24,11 +24,13 @@ import { exec as preAppBuildHookCommand } from "#commands/hooks/pre-app-build";
 import { exec as preAppDevHookCommand } from "#commands/hooks/pre-app-dev";
 import { exec as preAppRunHookCommand } from "#commands/hooks/pre-app-run";
 import { exec as initCommand } from "#commands/init/main";
+import { exec as upgradeStatusCommand } from "#commands/upgrade/status/main";
+import { exec as upgradeWatchCommand } from "#commands/upgrade/watcher/main";
 
 const NAMESPACE = "@adobe/aio-commerce-lib-app";
 
 const args = process.argv.slice(2);
-const [command, subcommand] = args;
+const [command, subcommand, ...targetArgs] = args;
 
 const USAGE = `
 Usage: ${NAMESPACE} <command> [target]
@@ -42,6 +44,9 @@ Commands:
     manifest           Generate app manifest only
     schema             Generate configuration schema only
 
+  upgrade <target>     Work with app upgrade runs
+    status [run-id]    Check an upgrade run, or the latest one without a run id
+
   help                 Show this help message
 
 Examples:
@@ -50,6 +55,8 @@ Examples:
   ${NAMESPACE} generate manifest
   ${NAMESPACE} generate actions
   ${NAMESPACE} generate schema
+  ${NAMESPACE} upgrade status
+  ${NAMESPACE} upgrade status <run-id>
 `;
 
 /** Run all generate targets in sequence */
@@ -78,6 +85,10 @@ const COMMANDS = {
     "pre-app-run": preAppRunHookCommand,
   },
   init: initCommand,
+  upgrade: {
+    status: upgradeStatusCommand,
+    watch: upgradeWatchCommand,
+  },
 } as const;
 
 /**
@@ -89,7 +100,8 @@ const COMMANDS = {
 async function handleCommand(
   commandName: string,
   target: string,
-  handlers: Record<string, () => Promise<unknown>>,
+  handlerArgs: string[],
+  handlers: Record<string, (...args: string[]) => Promise<unknown>>,
 ) {
   function invalidTargetError(message: string) {
     consola.error(message);
@@ -108,7 +120,7 @@ async function handleCommand(
     invalidTargetError(`Unknown ${commandName} target: ${target}`);
   }
 
-  await handler();
+  await handler(...handlerArgs);
 }
 
 async function main() {
@@ -139,7 +151,7 @@ async function main() {
     }
 
     // Handle commands with subcommands (like generate)
-    await handleCommand(command, subcommand, handlers);
+    await handleCommand(command, subcommand, targetArgs, handlers);
   } catch (error) {
     consola.error(stringifyError(error));
   }

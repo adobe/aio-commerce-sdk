@@ -137,7 +137,7 @@ export async function getDefaultCommerceAppConfig(
       description:
         "A custom Adobe Commerce application. Fill description for your app.",
       displayName: appName,
-      id: appName.toLowerCase().replace(/ /g, "-"),
+      id: appName.toLowerCase().replace(/ /gu, "-"),
       version: "1.0.0",
     },
   };

@@ -397,12 +397,21 @@ export async function importCommerceEventsStepWithMocks() {
     setSystemConfigByKey: vi.fn().mockResolvedValue(undefined),
   };
 
-  vi.doMock("#management/domains/events/helpers", async () => {
+  const { configureCommerceEventing, ...legacyHelperMocks } = helperMocks;
+  vi.doMock("#management/deprecated/domains/events-helpers", async () => {
     const actual = await vi.importActual<
-      typeof import("#management/domains/events/helpers")
-    >("#management/domains/events/helpers");
+      typeof import("#management/deprecated/domains/events-helpers")
+    >("#management/deprecated/domains/events-helpers");
 
-    return { ...actual, ...helperMocks };
+    return { ...actual, ...legacyHelperMocks };
+  });
+
+  vi.doMock("#management/domains/events/api", async () => {
+    const actual = await vi.importActual<
+      typeof import("#management/domains/events/api")
+    >("#management/domains/events/api");
+
+    return { ...actual, configureCommerceEventing };
   });
 
   vi.doMock("#management/domains/events/utils", async () => {
@@ -435,7 +444,8 @@ export async function importCommerceEventsStepWithMocks() {
 export function cleanupCommerceEventsStepMocks() {
   vi.clearAllMocks();
   vi.resetModules();
-  vi.doUnmock("#management/domains/events/helpers");
+  vi.doUnmock("#management/deprecated/domains/events-helpers");
+  vi.doUnmock("#management/domains/events/api");
   vi.doUnmock("#management/domains/events/utils");
   vi.doUnmock("@adobe/aio-commerce-lib-config");
 }

@@ -41,7 +41,7 @@ const WebhookHeaderSchema = v.object({
 });
 
 /** batch_name and hook_name must contain only letters, numbers, and underscores. */
-const WEBHOOK_IDENTIFIER_REGEX = /^[a-zA-Z0-9_]+$/;
+const WEBHOOK_IDENTIFIER_REGEX = /^[a-zA-Z0-9_]+$/u;
 
 /** Category for conflict detection: validation, append, or modification. */
 const CATEGORIES = ["validation", "append", "modification"] as const;

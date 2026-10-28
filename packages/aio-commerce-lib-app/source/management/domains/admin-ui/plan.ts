@@ -16,7 +16,9 @@ import {
   ADMIN_UI_GRID_COLUMN_ENTITIES,
   ADMIN_UI_MASS_ACTION_ENTITIES,
 } from "#config/schema/admin-ui";
+import { toItemRef } from "#management/common/workflow/resource";
 
+import { toAdminUiChanges } from "./changes";
 import { hasExtensionName } from "./helpers";
 
 import type {
@@ -40,7 +42,7 @@ import type {
 import type { AdminUiStepContext } from "./utils";
 
 /** A single enumerated Admin UI component with its diff key and display label. */
-type AdminUiComponentDescriptor = {
+export type AdminUiComponentDescriptor = {
   key: string;
   ref: AdminUiComponentRef;
   config: AdminUiComponentConfig;
@@ -53,7 +55,7 @@ type AdminUiComponentDescriptor = {
  * Array-based components (mass actions, view buttons) key on their `id`, which the
  * schema guarantees is unique within each array.
  */
-function enumerateComponents(
+export function enumerateComponents(
   adminUi: AdminUi,
 ): Map<string, AdminUiComponentDescriptor> {
   const components = new Map<string, AdminUiComponentDescriptor>();
@@ -123,6 +125,11 @@ function extractBaselineExtensionId(
   return baseline?.data?.extensionId ?? null;
 }
 
+/** The item reference of an Admin UI component, with the label and description of its config. */
+function adminUiItemRef(component: AdminUiComponentDescriptor) {
+  return toItemRef(component.key, component.config);
+}
+
 /** Builds an `add` or `remove` operation for a single enumerated component. */
 function buildComponentOperation(
   kind: "add" | "remove",
@@ -138,6 +145,7 @@ function buildComponentOperation(
     return {
       after: value,
       id: `add:${key}`,
+      itemRefs: [adminUiItemRef(component)],
       kind: "add",
       label: `Add Admin UI ${component.label}`,
       reason: "change",
@@ -147,6 +155,7 @@ function buildComponentOperation(
   return {
     before: value,
     id: `remove:${key}`,
+    itemRefs: [adminUiItemRef(component)],
     kind: "remove",
     label: `Remove Admin UI ${component.label}`,
     reason: "change",
@@ -163,6 +172,7 @@ function buildUpdateOperation(
     after: { component: after.ref, config: after.config },
     before: { component: before.ref, config: before.config },
     id: `update:${key}`,
+    itemRefs: [adminUiItemRef(after)],
     kind: "update",
     label: `Update Admin UI ${after.label}`,
     reason: "change",
@@ -174,7 +184,7 @@ function buildUpdateOperation(
  * A component present on both sides with a changed config is an `update`; the
  * whole-config comparison covers ACL, labels, descriptions, and notifications.
  */
-function diffComponents(
+export function diffComponents(
   baselineComponents: Map<string, AdminUiComponentDescriptor>,
   targetComponents: Map<string, AdminUiComponentDescriptor>,
 ): ResourceOperation<AdminUiOperationValue>[] {
@@ -250,6 +260,7 @@ export function planAdminUi(
     return Promise.resolve({
       issues: [
         {
+          blocking: true,
           code: "admin-ui-namespace-unavailable",
           domain: "admin-ui",
           message:
@@ -264,6 +275,7 @@ export function planAdminUi(
     kind: "planned",
     plan: {
       baselineExtensionId: extractBaselineExtensionId(baseline),
+      changes: toAdminUiChanges(operations),
       extensionAction,
       operations,
       path,

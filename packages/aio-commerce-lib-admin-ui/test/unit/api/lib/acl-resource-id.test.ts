@@ -36,6 +36,12 @@ describe("getAclResourceId", () => {
     );
   });
 
+  it("preserves an underscore for each UTF-16 code unit in Unicode identifiers", () => {
+    expect(getAclResourceId("my\u{1F600}app")).toBe(
+      "Magento_CommerceBackendUix::adminuisdk_app_my__app",
+    );
+  });
+
   it("returns empty string for blank input", () => {
     expect(getAclResourceId("")).toBe("");
     expect(getAclResourceId("   ")).toBe("");

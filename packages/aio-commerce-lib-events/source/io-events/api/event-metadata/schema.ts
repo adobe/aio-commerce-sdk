@@ -13,7 +13,7 @@
 import { stringValueSchema } from "@aio-commerce-sdk/common-utils/valibot";
 import * as v from "valibot";
 
-const BASE64_ENCODED_STRING_REGEX = /^[A-Za-z0-9+/]*={0,2}$/;
+const BASE64_ENCODED_STRING_REGEX = /^[A-Za-z0-9+/]*={0,2}$/u;
 const BASE64_ENCODED_STRING_LENGTH_REMAINDER = 4;
 
 function isBase64EncodedString(value: string) {

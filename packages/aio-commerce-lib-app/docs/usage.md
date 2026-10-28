@@ -625,6 +625,7 @@ export default defineCustomInstallationStep(async (config, context) => {
 - Scripts **must** use `export default` to export the main function (named exports like `export { run }` are not supported)
 - Scripts are executed **sequentially** in the order defined in the configuration
 - If any script throws an error, the entire installation fails and subsequent scripts are not executed
+- If you retry a failed installation, upgrade or uninstallation, the scripts that already succeeded don't run again. A script interrupted before it finished, for example by a timeout, runs again.
 - Scripts have access to the complete app configuration and can use it to make decisions
 
 ##### Custom Installation Steps During an Upgrade
@@ -633,12 +634,12 @@ Custom installation steps behave like database migrations across an upgrade: eac
 
 - **Adding a step**: give it a new `name` and its `install` runs on the next upgrade, same as a fresh install.
 - **Editing a step that already ran**: don't. Changing a step's script after it has run does **not** re-run it on upgrade, so the change silently has no effect. To change behavior, add a new step with a different `name` instead. (If you point an existing `name` at a different `script` path, the upgrade logs a warning, but still does not re-run it.)
-- **Removing a step**: taking a step out of `customInstallationSteps` doesn't run its `uninstall` during that upgrade. `uninstall` only runs for every step that ever ran (whether or not it's still configured) when the app is fully uninstalled.
+- **Removing a step**: once a step is no longer in `customInstallationSteps`, its script is no longer deployed, so its `uninstall` can't run, neither during the upgrade that removes it nor when the app is uninstalled. The upgrade plan warns about it, and nothing runs for it.
 
 Two things follow from this:
 
 - Prefer the object form (`{ install, uninstall }`) over the plain function form for any step you may need to clean up later — a step with no `uninstall` can't be cleaned up when the app is uninstalled.
-- Don't delete a step's script file from your project while the step (or an app that ran it) might still need its `uninstall` called at uninstall time.
+- Keep a step in `customInstallationSteps` for as long as its `uninstall` may need to run.
 
 #### Admin UI Configuration
 
@@ -1040,41 +1041,93 @@ The `#app.commerce.config` package import resolves to a generated JavaScript com
 
 ### Upgrading a Deployed App
 
-After an app is installed, the installation endpoint is **desired-state**. It compares the recorded installation baseline against the app configuration and reconciles the app toward it:
-
-- **No baseline yet**: it installs the app.
-- **A baseline exists**: it upgrades the app from the baseline to the version declared in `metadata.version`.
+Installing, upgrading and uninstalling all plan the operation and validate the plan before anything changes. An installed app upgrades from its installed version to the one declared in `metadata.version`.
 
 > [!IMPORTANT]
-> `metadata.id` identifies the installed application and cannot change during an upgrade. The endpoint rejects a different ID before planning starts. To use a different ID, uninstall the existing app and install it again.
-
-The endpoint derives the operation and returns it as `operation` (`"install"` or `"upgrade"`) in the response.
+> `metadata.id` identifies the installed application and cannot change during an upgrade. The SDK refuses to plan an upgrade that changes it. To use a different ID, uninstall the existing app and install it again.
 
 #### Automatic vs. Manual Upgrades
 
-`metadata.upgradeMode` controls what happens once an upgrade has been planned:
+`metadata.upgradeMode` controls what the `post-app-deploy` hook does with the upgrade it plans:
 
-- **`auto`** (experimental): the plan is created and its execution starts immediately.
-- **`manual`** (default): the plan is created and returned without starting execution.
+- **`auto`** (experimental): the hook starts the plan.
+- **`manual`** (default): the plan stays pending for review.
 
 > [!NOTE]
 > `auto` is experimental and `upgradeMode` currently defaults to `manual` while automatic upgrade execution is stabilizing. This will change back to `auto` in a future release — if you want manual behavior permanently, set `upgradeMode: "manual"` explicitly now.
 
 #### The `post-app-deploy` Hook
 
-The generated `commerce/extensibility/1` extension wires a `post-app-deploy` hook automatically (alongside `pre-app-build`). After every `aio app deploy`, the hook triggers the desired-state reconciliation, so a redeploy of an installed app runs an upgrade check without any manual step:
+The generated `commerce/extensibility/1` extension wires a `post-app-deploy` hook automatically (alongside `pre-app-build`). After every `aio app deploy`, the hook plans an upgrade, so a redeploy of an installed app runs an upgrade check without any manual step. The hook never installs an app that is not installed yet. You must be logged in with `aio login`.
 
-- In `auto` mode it prints the plan and waits for the execution result when progress is available.
+- In `auto` mode the hook prints the plan, starts the upgrade, and shows its status until the upgrade finishes. It prints the run id when the upgrade starts.
 - In `manual` mode it reports that a plan was created but was not executed.
+
+The hook runs after the deploy and cannot undo it, so its exit code only reports what the upgrade did.
+
+If you press Ctrl-C or close the terminal while an upgrade runs, the upgrade keeps running. Check its result with `upgrade status`. On Ctrl-C the hook says whether a background watcher follows the upgrade and prints the command to check the run. The command uses the package manager of the project, for example `pnpm exec aio-commerce-lib-app upgrade status <run-id>` in a pnpm project. Set `DEBUG=1` to also print the path of the watcher log.
+
+##### Exit codes
+
+The hook exits with `0` when the upgrade succeeded, when it was skipped (see the no-op states below), or when the upgrade mode is `manual` and the plan is waiting. It exits with `1` when the upgrade failed, was refused because another operation is running, or could not be checked, for example because the service stayed unreachable.
+
+##### Error output
+
+When the Commerce App Management Service refuses or fails a request, the hook and `upgrade status` print the message and one line with the HTTP status, the code, and the method and path of the request. Set `DEBUG=1` to also print the full chain of causes with the stacks. Any other error is unexpected and prints with its stack.
+
+#### Checking an upgrade run
+
+Use `upgrade status` to check an upgrade run after the hook is gone, from the project directory:
+
+```bash
+# Check the latest upgrade run.
+npx aio-commerce-lib-app upgrade status
+
+# Check a specific run.
+npx aio-commerce-lib-app upgrade status <run-id>
+```
+
+It exits with `0` when the run succeeded or is still running, and with `1` when the run failed or could not be read.
 
 #### No-op Upgrade States
 
-Some states are not actionable upgrades. In these cases the endpoint responds with `409 Conflict` carrying a `reason`, and the `post-app-deploy` hook treats them as a no-op rather than a failure:
+Some states are not actionable upgrades. The `post-app-deploy` hook treats them as a no-op rather than a failure:
 
 - **`not-associated`**: the app is not associated with a Commerce instance.
+- **`not-installed`**: the app is associated but not installed.
 - **`already-current`**: the installed version already matches `metadata.version`.
 
-A `409` **without** a `reason` (for example, when upgrade planning is blocked by configuration issues) is a real failure and surfaces as an error.
+Any other planning failure, for example configuration issues that block the upgrade or another operation that is already running, surfaces as an error.
+
+#### Troubleshooting a Lifecycle Operation
+
+Every install, upgrade and uninstall leaves a trail you can follow back when something goes wrong. Call `GET /installation?history=true` on the `app-management` package. The response is the status of the latest attempt plus three lists:
+
+- `plans`: the plan the latest attempt executed, followed by the plans it replaced before it started, newest first. Because starting a plan plans it again, the reviewed plan (`review.planId`) is usually the second entry.
+- `history`: the earlier attempts, newest first, each with its own `plans`. Add `limit=<n>` to read only the last `n` earlier attempts.
+- `pendingPlans`: plans made after the latest attempt that were never started.
+
+Plans carry the full target configuration, so `GET /installation` returns them only with `history=true`. Without it, the response stays the status of the latest attempt.
+
+Add `operation=install`, `operation=upgrade` or `operation=uninstall` to read only that operation. The status is then the latest attempt that ran it, `history` and `pendingPlans` list only that operation, and the answer is `204` when no attempt ran it. With `attemptId`, the attempt must have run the operation, or the answer is `404`.
+
+Each attempt links to the rest of the trail:
+
+- `previousAttemptId` and `previousPlanId` name the attempt and the plan it replaced.
+- `plan` is the plan the attempt executes, in the same shape `POST /plan` returns for review: its versions, the operations to run per domain, the items each one changes, the `changes` per domain and the planning issues. Every domain has `changes`, empty when there are none. They list the items the target config adds, updates or removes compared with the installed config. They do not depend on the live state, so an item that is already live still appears. It is on every answer that carries an attempt, including the `attempt` of a `409` and of a failed run.
+- `plans[0].source.snapshotId` names the snapshot the attempt started from, and `result.snapshotId` the one a successful attempt produced. Snapshots live in the app's file storage under `lifecycle-app-state-snapshot`, and each one records the `attemptId` that produced it.
+- `step` lists every step with its `status`, and `startedAt` and `completedAt` once it ran, so an expired attempt shows which step hung.
+- `activations.start` and `activations.execution` are the OpenWhisk activations that started and executed the attempt.
+
+To read the logs of a failed attempt, pass its execution activation to the CLI:
+
+```bash
+aio rt activation logs <activations.execution>
+```
+
+The default log level shows each lifecycle transition with its ids, and an `error` line names the step that failed and its message. Set the `LOG_LEVEL` input of the action to `debug` to also log the progress of every step. Logs never include request params or configuration.
+
+When an automatic upgrade fails, the `post-app-deploy` hook prints the run id and, when known, the execution activation id.
 
 ### Using the Configuration API
 

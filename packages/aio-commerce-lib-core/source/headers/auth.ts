@@ -148,7 +148,8 @@ function parseKeyValueParameters(
   // Match key="value" or key=value pairs
   // Quoted values: key="value" (value can contain any character except ")
   // Unquoted values: key=value (value stops at comma, space, or end of string)
-  const paramPattern = /(\w+)=(?:"([^"]*)"|([^,\s]+))/g;
+  const paramPattern =
+    /(?<key>\w+)=(?:"(?<quotedValue>[^"]*)"|(?<unquotedValue>[^,\s]+))/gu;
   let match = paramPattern.exec(parametersString);
 
   while (match !== null) {

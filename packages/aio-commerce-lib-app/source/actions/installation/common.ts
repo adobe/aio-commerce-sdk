@@ -12,13 +12,20 @@
 
 import { resolveImsAuthParams } from "@adobe/aio-commerce-lib-auth";
 import { getHeader } from "@adobe/aio-commerce-lib-core/headers";
+import { conflict } from "@adobe/aio-commerce-lib-core/responses";
 
+import { getAssociationData } from "#management/association/repository";
+import { getAtPath } from "#management/common/workflow/utils";
 import { migrateLegacyInstallationState } from "#management/deprecated/migration";
 import { createInstallationStore } from "#management/deprecated/stores";
+import { readRunHistory } from "#management/domains/custom-installation/index";
 import { createRootInstallationStep } from "#management/installation/root";
 import { createLifecycleBaselineProvider } from "#management/lifecycle/baseline";
+import { CURRENT_STATE_KEY } from "#management/lifecycle/state";
 import {
   createAppStateSnapshotStore,
+  createLifecycleAttemptStore,
+  createLifecyclePlanStore,
   createOrchestrationStateStore,
 } from "#management/lifecycle/storage";
 
@@ -27,19 +34,22 @@ import type {
   CommerceAppConfig,
   CommerceAppConfigOutputModel,
 } from "#config/schema/app";
+import type {
+  AppStateSnapshot,
+  OrchestrationState,
+} from "#management/common/orchestration";
 import type { LifecycleRequestContext } from "#management/common/schema";
-import type {
-  InProgressWorkflowState,
-  WorkflowData,
-} from "#management/common/workflow/types";
-import type {
-  CustomInstallationSnapshotData,
-  CustomInstallationStepIdentity,
-} from "#management/domains/custom-installation/index";
+import type { CustomInstallationStepIdentity } from "#management/domains/custom-installation/index";
 import type { LifecycleContext } from "#management/index";
 
 /** Action name for async invocation. */
 export const DEFAULT_ACTION_NAME = "app-management/installation";
+
+/** Path of the custom installation steps' data in the lifecycle data. */
+export const CUSTOM_INSTALLATION_STEPS_PATH = [
+  "installation",
+  "customInstallationSteps",
+];
 
 /** Header used to identify the source of an installation action request. */
 export const INSTALLATION_INVOCATION_SOURCE_HEADER =
@@ -91,15 +101,7 @@ export type WorkflowRouteParams = RuntimeActionArgs & {
   appData: LifecycleContext["appData"];
 };
 
-/** Params for the installation/uninstallation execution routes. */
-export type ExecutionRouteParams = WorkflowRouteParams & {
-  initialState: InProgressWorkflowState;
-
-  /** Same as {@link getExecutedCustomInstallationSteps}'s return value, passed through from `startUninstallation`. */
-  executedCustomInstallationSteps?: CustomInstallationStepIdentity[];
-};
-
-/** Params for the upgrade execution route. */
+/** Params for the lifecycle execution route. */
 export type LifecycleExecutionRouteParams = WorkflowRouteParams & {
   attemptId: string;
 };
@@ -112,27 +114,42 @@ export type RequestHandlerArgs = {
 };
 
 /** Inputs for the async execution handlers. */
-export type ExecutionHandlerArgs<TParams = ExecutionRouteParams> = {
+export type ExecutionHandlerArgs<TParams = LifecycleExecutionRouteParams> = {
   params: TParams;
   logger: LifecycleContext["logger"];
 };
 
 /**
- * Merges rawParams with body fields, overriding API URLs.
- * Shared by lifecycle start and execution routes.
+ * Merges the runtime params with the request body and the Commerce instance the app is
+ * associated with. Returns `null` when the app is not associated.
  */
-export function buildWorkflowParams(
+export async function resolveWorkflowParams(
   body: LifecycleRequestContext,
   rawParams: RuntimeActionArgs,
-) {
+): Promise<WorkflowRouteParams | null> {
+  const association = await getAssociationData();
+  if (!association) {
+    return null;
+  }
+
   return {
     ...rawParams,
-    AIO_COMMERCE_API_BASE_URL: body.commerceBaseUrl,
-    AIO_COMMERCE_API_FLAVOR: body.commerceEnv,
+    AIO_COMMERCE_API_BASE_URL: association.commerce.baseUrl,
+    AIO_COMMERCE_API_FLAVOR: association.commerce.env,
     AIO_COMMERCE_AUTH_IMS_ENVIRONMENT: body.ioEventsEnv,
     AIO_EVENTS_API_BASE_URL: body.ioEventsUrl,
     appData: body.appData,
   };
+}
+
+/** The response for a request on an app that is not associated with a Commerce instance. */
+export function notAssociatedConflict() {
+  return conflict({
+    body: {
+      code: "not-associated",
+      message: "The app is not associated with a Commerce instance.",
+    },
+  });
 }
 
 /**
@@ -187,33 +204,41 @@ export function buildLifecycleContext(
 }
 
 /**
- * Reads the persisted custom installation step history from a lifecycle snapshot's data. Returns
- * `[]` when there's no snapshot or none was recorded (e.g. an install from before this feature).
+ * Reads which custom installation steps ran from the data of the latest attempt when it did not
+ * succeed, or from the baseline snapshot otherwise. Returns `null` when neither is stored.
  */
 export function getExecutedCustomInstallationSteps(
-  data: WorkflowData | null | undefined,
-): CustomInstallationStepIdentity[] {
-  const snapshot = (
-    data as
-      | {
-          installation?: {
-            customInstallationSteps?: {
-              reconciliation?: CustomInstallationSnapshotData;
-            };
-          };
-        }
-      | null
-      | undefined
-  )?.installation?.customInstallationSteps?.reconciliation;
+  state: OrchestrationState | null,
+  baseline: AppStateSnapshot | null,
+): CustomInstallationStepIdentity[] | null {
+  const attempt = state?.latestAttempt;
+  if (!(attempt || baseline)) {
+    return null;
+  }
 
-  return snapshot?.executedSteps ?? [];
+  // Steps that ran in an attempt that did not succeed are only in its data, not in the baseline.
+  const data =
+    attempt && attempt.status !== "succeeded" ? attempt.data : baseline?.data;
+
+  return readRunHistory(
+    getAtPath(data ?? {}, CUSTOM_INSTALLATION_STEPS_PATH),
+    baseline?.config ?? null,
+  );
 }
 
 /** Creates the shared storage read/write dependencies used by lifecycle orchestration. */
 export async function createLifecyclePersistence() {
-  const [stateStore, snapshotStore, installationStore] = await Promise.all([
+  const [
+    stateStore,
+    snapshotStore,
+    attemptStore,
+    planStore,
+    installationStore,
+  ] = await Promise.all([
     createOrchestrationStateStore(),
     createAppStateSnapshotStore(),
+    createLifecycleAttemptStore(),
+    createLifecyclePlanStore(),
     createInstallationStore(),
   ]);
 
@@ -224,21 +249,43 @@ export async function createLifecyclePersistence() {
   });
 
   return {
+    attemptStore,
     baselineProvider: createLifecycleBaselineProvider(snapshotStore),
+    planStore,
     snapshotStore,
     stateStore,
   };
 }
 
-/** Creates the shared dependencies used by lifecycle orchestration. */
+/**
+ * Creates the shared dependencies used by lifecycle orchestration. The step tree includes the
+ * custom installation steps that ran, read from the stored state, and a new attempt keeps the
+ * custom installation steps' data of a failed latest attempt.
+ */
 export async function createLifecycleRuntime(
   params: WorkflowRouteParams,
   appConfig: CommerceAppConfigOutputModel,
   logger: LifecycleContext["logger"],
 ) {
+  const persistence = await createLifecyclePersistence();
+  const state = await persistence.stateStore.get(CURRENT_STATE_KEY);
+  const baseline = await persistence.baselineProvider.get(
+    state?.baselineSnapshotId ?? null,
+  );
+
   return {
-    ...(await createLifecyclePersistence()),
+    ...persistence,
+
+    // Custom installation steps have no live state to plan from, so only the failed attempt's
+    // records show which of them ran.
+    failedAttemptDataPaths: [CUSTOM_INSTALLATION_STEPS_PATH],
     lifecycleContext: buildLifecycleContext(params, appConfig, logger),
-    rootStep: createRootInstallationStep(appConfig, { forUpgrade: true }),
+    rootStep: createRootInstallationStep(appConfig, {
+      executedCustomInstallationSteps: getExecutedCustomInstallationSteps(
+        state,
+        baseline,
+      ),
+      forLifecycle: true,
+    }),
   };
 }

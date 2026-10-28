@@ -49,6 +49,21 @@ const recordedMultipleDynamicListField = {
 };
 
 describe("SchemaBusinessConfigSchema", () => {
+  test.each([
+    ["https://example.com", true],
+    ["HTTPS://example.com", true],
+    ["http\u017F://example.com", false],
+  ])("validates the ASCII URL scheme in %s", (url, expected) => {
+    const result = v.safeParse(SchemaBusinessConfigSchema, [
+      {
+        description: `[Link](${url})`,
+        name: "example",
+        type: "text",
+      },
+    ]);
+    expect(result.success).toBe(expected);
+  });
+
   test("accepts a dynamicList field with function options and default", () => {
     const result = v.safeParse(SchemaBusinessConfigSchema, [dynamicListField]);
     expect(result.success).toBe(true);

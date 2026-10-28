@@ -13,8 +13,8 @@ module.exports = {
   module: {
     rules: [
       {
-        exclude: /node_modules/,
-        test: /\.[cm]?tsx?$/,
+        exclude: /node_modules/u,
+        test: /\.[cm]?tsx?$/u,
         use: {
           loader: "ts-loader",
           options: {
