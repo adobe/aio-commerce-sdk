@@ -27,7 +27,10 @@ import type { Socket } from "node:net";
  * @param directory - The folder of the file. Defaults to the temp folder of the system.
  */
 export function getTempLogPath(name: string, directory = tmpdir()) {
-  return join(directory, `${name.replaceAll(/[^\w-]/g, "_")}.log`);
+  const filename = name.replaceAll(/[^\w-]/gu, (character) =>
+    "_".repeat(character.length),
+  );
+  return join(directory, `${filename}.log`);
 }
 
 /** Options of {@link spawnDetached}. */

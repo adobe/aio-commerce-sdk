@@ -527,7 +527,8 @@ export function makeWorkspaceConfig(context: EventsExecutionContext) {
   };
 }
 
-const PROVIDER_WORKSPACE_PATH = /^\/events\/[^/]+\/[^/]+\/([^/]+)\/providers\//;
+const PROVIDER_WORKSPACE_PATH =
+  /^\/events\/[^/]+\/[^/]+\/(?<workspace>[^/]+)\/providers\//u;
 
 /**
  * The workspace id of an I/O provider, read from its `rel:update` link

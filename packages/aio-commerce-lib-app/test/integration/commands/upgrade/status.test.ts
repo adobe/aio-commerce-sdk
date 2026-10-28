@@ -16,6 +16,10 @@ import { consola } from "consola";
 import { HttpResponse, http } from "msw";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
+import { CAMS_URL_ENV_VAR } from "#commands/common/cams/config";
+import { exec, run } from "#commands/upgrade/status/main";
+import { apiServer, setupApiTestLifecycle } from "#test/setup/api";
+
 const { getAioCliEnvMock, getAioProjectContextMock, getUserTokenMock } =
   vi.hoisted(() => ({
     getAioCliEnvMock: vi.fn(),
@@ -32,10 +36,6 @@ vi.mock("@aio-commerce-sdk/scripting-utils/aio", () => ({
 vi.mock("consola", () => ({
   consola: { debug: vi.fn(), error: vi.fn(), info: vi.fn(), success: vi.fn() },
 }));
-
-import { CAMS_URL_ENV_VAR } from "#commands/common/cams/config";
-import { exec, run } from "#commands/upgrade/status/main";
-import { apiServer, setupApiTestLifecycle } from "#test/setup/api";
 
 const SERVICE = "https://service.example.com";
 const EXTENSIONS = `${SERVICE}/v1/extensions`;
