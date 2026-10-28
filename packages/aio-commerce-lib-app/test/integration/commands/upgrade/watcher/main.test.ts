@@ -15,6 +15,11 @@ import { stripVTControlCharacters } from "node:util";
 import { HttpResponse, http } from "msw";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
+import { createCamsInstanceClient } from "#commands/common/cams/api-client";
+import { CAMS_URL_ENV_VAR } from "#commands/common/cams/config";
+import { exec, runWatcher } from "#commands/upgrade/watcher/main";
+import { apiServer, setupApiTestLifecycle } from "#test/setup/api";
+
 const { aio, owner } = vi.hoisted(() => ({
   aio: {
     getAioCliEnv: vi.fn(),
@@ -27,11 +32,6 @@ const { aio, owner } = vi.hoisted(() => ({
 vi.mock("@aio-commerce-sdk/scripting-utils/aio", () => aio);
 vi.mock("@aio-commerce-sdk/scripting-utils/process", () => owner);
 
-import { createCamsInstanceClient } from "#commands/common/cams/api-client";
-import { CAMS_URL_ENV_VAR } from "#commands/common/cams/config";
-import { exec, runWatcher } from "#commands/upgrade/watcher/main";
-import { apiServer, setupApiTestLifecycle } from "#test/setup/api";
-
 const SERVICE = "https://service.example.com";
 const TOKEN_TIMEOUT_MS = 30_000;
 const STATUS_URL = `${SERVICE}/v1/extensions/ext-1/upgrades/run-1/sync`;
@@ -40,7 +40,7 @@ const COMMERCE_ID = Buffer.from(
   "https://commerce.example.com/env/saas",
 ).toString("base64url");
 
-const BAD_GATEWAY_RETRY = /HTTP 502.*Trying again\.$/;
+const BAD_GATEWAY_RETRY = /HTTP 502.*Trying again\.$/u;
 const ARGS = { extensionId: "ext-1", runId: "run-1" };
 const RUNNING = { id: "run-1", status: "in-progress" };
 const SUCCEEDED = {

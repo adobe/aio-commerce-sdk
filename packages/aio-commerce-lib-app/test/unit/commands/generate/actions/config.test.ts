@@ -44,9 +44,9 @@ import {
   minimalValidConfig,
 } from "#test/fixtures/config";
 
-const EXTENSIBILITY_EXTENSION_MATCHER = /EXTENSION=extensibility\/1/;
-const CONFIGURATION_EXTENSION_MATCHER = /EXTENSION=configuration\/1/;
-const BACKEND_UI_V2_EXTENSION_MATCHER = /EXTENSION=backend-ui\/2/;
+const EXTENSIBILITY_EXTENSION_MATCHER = /EXTENSION=extensibility\/1/u;
+const CONFIGURATION_EXTENSION_MATCHER = /EXTENSION=configuration\/1/u;
+const BACKEND_UI_V2_EXTENSION_MATCHER = /EXTENSION=backend-ui\/2/u;
 
 describe("buildAppManagementExtConfig", () => {
   test.each([

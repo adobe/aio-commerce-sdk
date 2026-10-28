@@ -17,6 +17,18 @@ import { consola } from "consola";
 import { HttpResponse, http } from "msw";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
+import { CAMS_URL_ENV_VAR } from "#commands/common/cams/config";
+import { CamsConflictError } from "#commands/common/cams/errors";
+import { exec, run } from "#commands/hooks/post-app-deploy/main";
+import { createMockConfig } from "#test/fixtures/config";
+import {
+  INVALID_PROJECT,
+  MINIMAL_PROJECT,
+  makeProjectFiles,
+  withTempProject,
+} from "#test/fixtures/project";
+import { apiServer, setupApiTestLifecycle } from "#test/setup/api";
+
 const { aio, delayMock, detectPackageManagerMock, spawnDetachedMock } =
   vi.hoisted(() => ({
     aio: {
@@ -72,36 +84,24 @@ vi.mock("consola/utils", () => ({
   },
 }));
 
-import { CAMS_URL_ENV_VAR } from "#commands/common/cams/config";
-import { CamsConflictError } from "#commands/common/cams/errors";
-import { exec, run } from "#commands/hooks/post-app-deploy/main";
-import { createMockConfig } from "#test/fixtures/config";
-import {
-  INVALID_PROJECT,
-  MINIMAL_PROJECT,
-  makeProjectFiles,
-  withTempProject,
-} from "#test/fixtures/project";
-import { apiServer, setupApiTestLifecycle } from "#test/setup/api";
-
 const MANUAL_PROJECT = makeProjectFiles(
   createMockConfig({ metadata: { upgradeMode: "manual" } }),
 );
 
 const FORBIDDEN_STATUS =
-  /Forbidden[\s\S]*\nDetails: HTTP 403, POST \/v1\/extensions\/ext-1\/upgrades\/run-1\/sync$/;
+  /Forbidden[\s\S]*\nDetails: HTTP 403, POST \/v1\/extensions\/ext-1\/upgrades\/run-1\/sync$/u;
 
-const STATUS_HINT = /Check (the run|it)|tail -f/;
-const LOG_HINT = /tail -f|\.log/;
+const STATUS_HINT = /Check (?:the run|it)|tail -f/u;
+const LOG_HINT = /tail -f|\.log/u;
 
 const SERVICE = "https://service.example.com";
 const EXTENSIONS = `${SERVICE}/v1/extensions`;
 const WORKSPACE_EXTENSIONS = `${SERVICE}/v1/workspaces/:workspaceId/extensions`;
 const UPGRADES = `${EXTENSIONS}/ext-1/upgrades`;
 const PLAN = { id: "plan-1", issues: [], operation: "upgrade" };
-const AUTO_ACK_WARNING = /non-blocking issues of the plan are acknowledged/;
+const AUTO_ACK_WARNING = /non-blocking issues of the plan are acknowledged/u;
 let servedPlan: object = PLAN;
-const NOT_PLANNED = /The upgrade was not planned: .*Refused/;
+const NOT_PLANNED = /The upgrade was not planned: .*Refused/u;
 const WATCHER_LOG = join(tmpdir(), "aio-commerce-upgrade-run-1.log");
 
 /** The status the service returns for the run. */

@@ -12,6 +12,37 @@
 
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
+import { installationRuntimeAction } from "#actions/installation/index";
+import { createRuntimeActionParams } from "#test/fixtures/actions";
+import { createMockConfig, minimalValidConfig } from "#test/fixtures/config";
+import {
+  createMockCombinedStoreImpl,
+  createMockInProgressState,
+  createMockInstallationContext,
+  createMockInstallationStore,
+  createMockInstallationSucceededState,
+  DEFAULT_INSTALLATION_PARAMS,
+} from "#test/fixtures/installation";
+import {
+  createMockLifecycleAttempt,
+  createMockLifecyclePlan,
+  createMockLifecycleStore,
+  createMockOrchestrationState,
+} from "#test/fixtures/lifecycle";
+import {
+  createMockBranchStep,
+  createMockLifecycleLeaf,
+} from "#test/fixtures/workflow";
+
+import type { CommerceAppConfigOutputModel } from "#config/schema/app";
+import type {
+  AppStateSnapshot,
+  LifecycleAttempt,
+  LifecyclePlan,
+  OrchestrationState,
+} from "#management/common/orchestration";
+import type { AnyStep, LeafStep } from "#management/common/workflow/step";
+
 const {
   invokeMock,
   openwhiskMock,
@@ -49,37 +80,6 @@ vi.mock("#management/association/repository", () => ({
 vi.mock("#management/installation/root", () => ({
   createRootInstallationStep: createRootInstallationStepMock,
 }));
-
-import { installationRuntimeAction } from "#actions/installation/index";
-import { createRuntimeActionParams } from "#test/fixtures/actions";
-import { createMockConfig, minimalValidConfig } from "#test/fixtures/config";
-import {
-  createMockCombinedStoreImpl,
-  createMockInProgressState,
-  createMockInstallationContext,
-  createMockInstallationStore,
-  createMockInstallationSucceededState,
-  DEFAULT_INSTALLATION_PARAMS,
-} from "#test/fixtures/installation";
-import {
-  createMockLifecycleAttempt,
-  createMockLifecyclePlan,
-  createMockLifecycleStore,
-  createMockOrchestrationState,
-} from "#test/fixtures/lifecycle";
-import {
-  createMockBranchStep,
-  createMockLifecycleLeaf,
-} from "#test/fixtures/workflow";
-
-import type { CommerceAppConfigOutputModel } from "#config/schema/app";
-import type {
-  AppStateSnapshot,
-  LifecycleAttempt,
-  LifecyclePlan,
-  OrchestrationState,
-} from "#management/common/orchestration";
-import type { AnyStep, LeafStep } from "#management/common/workflow/step";
 
 const POST_APP_DEPLOY_HEADERS = {
   "x-aio-commerce-installation-invocation-source": "post-app-deploy",

@@ -27,8 +27,8 @@ import { mockScopeTree } from "#test/fixtures/scope-tree";
 
 import type { ConfigValueWithOptionalOrigin } from "#modules/configuration/types";
 
-const INVALID_SCOPE_RE = /INVALID_SCOPE/;
-const INVALID_ARGS_RE = /INVALID_ARGS/;
+const INVALID_SCOPE_RE = /INVALID_SCOPE/u;
+const INVALID_ARGS_RE = /INVALID_ARGS/u;
 
 describe("config-utils", () => {
   describe("sanitizeRequestEntries", () => {

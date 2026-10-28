@@ -12,17 +12,6 @@
 
 import { describe, expect, test, vi } from "vitest";
 
-vi.mock("@adobe/aio-commerce-lib-config", async () => {
-  const actual = await vi.importActual<
-    typeof import("@adobe/aio-commerce-lib-config")
-  >("@adobe/aio-commerce-lib-config");
-  return {
-    ...actual,
-    getSystemConfigByKey: vi.fn().mockResolvedValue(null),
-    setSystemConfigByKey: vi.fn().mockResolvedValue(undefined),
-  };
-});
-
 import { isBranchStep, isLeafStep } from "#management/common/workflow/step";
 import { eventingStep } from "#management/domains/events/branch";
 import { commerceEventsStep } from "#management/domains/events/commerce";
@@ -34,6 +23,17 @@ import {
   minimalValidConfig,
 } from "#test/fixtures/config";
 import { createMockEventingInstallationContext } from "#test/fixtures/eventing";
+
+vi.mock("@adobe/aio-commerce-lib-config", async () => {
+  const actual = await vi.importActual<
+    typeof import("@adobe/aio-commerce-lib-config")
+  >("@adobe/aio-commerce-lib-config");
+  return {
+    ...actual,
+    getSystemConfigByKey: vi.fn().mockResolvedValue(null),
+    setSystemConfigByKey: vi.fn().mockResolvedValue(undefined),
+  };
+});
 
 describe("events installation module", () => {
   describe("eventingStep branch step", () => {

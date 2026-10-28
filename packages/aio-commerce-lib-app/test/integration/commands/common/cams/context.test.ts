@@ -13,6 +13,19 @@
 import { HttpResponse, http } from "msw";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
+import {
+  createCamsInstanceClient,
+  createCamsWorkspaceClient,
+} from "#commands/common/cams/api-client";
+import { CAMS_URL_ENV_VAR } from "#commands/common/cams/config";
+import {
+  createCamsContext,
+  findWorkspaceExtension,
+  requireCommerceInstance,
+} from "#commands/common/cams/context";
+import { CamsClientError } from "#commands/common/cams/errors";
+import { apiServer, setupApiTestLifecycle } from "#test/setup/api";
+
 const aio = vi.hoisted(() => ({
   getAioCliEnv: vi.fn(),
   getAioProjectContext: vi.fn(),
@@ -29,19 +42,6 @@ vi.mock("#commands/common/cams/api-client", async (importOriginal) => {
     createCamsWorkspaceClient: vi.fn(original.createCamsWorkspaceClient),
   };
 });
-
-import {
-  createCamsInstanceClient,
-  createCamsWorkspaceClient,
-} from "#commands/common/cams/api-client";
-import { CAMS_URL_ENV_VAR } from "#commands/common/cams/config";
-import {
-  createCamsContext,
-  findWorkspaceExtension,
-  requireCommerceInstance,
-} from "#commands/common/cams/context";
-import { CamsClientError } from "#commands/common/cams/errors";
-import { apiServer, setupApiTestLifecycle } from "#test/setup/api";
 
 const SERVICE = "https://service.example.com";
 const LOOKUP_URL = `${SERVICE}/v1/workspaces/workspace-id/extensions`;

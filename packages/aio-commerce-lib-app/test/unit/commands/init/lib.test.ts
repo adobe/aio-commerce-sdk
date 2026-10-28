@@ -16,8 +16,8 @@ import { installDependencies } from "#commands/init/lib";
 import { runInstall, runProjectInstall } from "#commands/utils";
 
 const mockSpawnSync = vi.fn<(...args: unknown[]) => unknown>();
-const INSTALL_VERB_RE = /^(i|install)$/;
-const CONFIG_PACKAGE_RE = /^@adobe\/aio-commerce-lib-config@/;
+const INSTALL_VERB_RE = /^(?:i|install)$/u;
+const CONFIG_PACKAGE_RE = /^@adobe\/aio-commerce-lib-config@/u;
 
 vi.mock("node:child_process", () => ({
   spawnSync: (...args: unknown[]) => mockSpawnSync(...args),

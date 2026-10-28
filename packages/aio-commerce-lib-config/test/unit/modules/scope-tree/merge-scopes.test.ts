@@ -24,7 +24,7 @@ import type { CommerceScopeData } from "#types/index";
 const BASE_36 = 36;
 const UUID_SUBSTRING_START = 2;
 const UUID_SUBSTRING_LENGTH = 9;
-const NEW_UUID_REGEX = /^new-uuid-/;
+const NEW_UUID_REGEX = /^new-uuid-/u;
 
 // Mock uuid to have predictable UUIDs in tests
 vi.mock("uuid", () => ({

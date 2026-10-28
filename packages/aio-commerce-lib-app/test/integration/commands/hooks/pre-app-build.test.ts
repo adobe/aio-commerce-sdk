@@ -67,7 +67,7 @@ vi.mock("@aio-commerce-sdk/scripting-utils/env", async (importOriginal) => ({
 }));
 
 const ORDER_REWRITTEN_RE =
-  /were reordered \(commerce\/backend-ui\/2, commerce\/configuration\/1, commerce\/extensibility\/1\).*one-off/s;
+  /were reordered \(commerce\/backend-ui\/2, commerce\/configuration\/1, commerce\/extensibility\/1\).*one-off/su;
 
 const warnSpy = vi.spyOn(consola, "warn").mockImplementation(() => undefined);
 

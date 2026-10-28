@@ -286,7 +286,7 @@ describe("commands/init/lib", () => {
           );
 
           const matches = content.match(
-            new RegExp(EXTENSIBILITY_EXTENSION_POINT_ID, "g"),
+            new RegExp(EXTENSIBILITY_EXTENSION_POINT_ID, "gu"),
           );
           expect(matches).toHaveLength(1);
         },
@@ -451,7 +451,9 @@ extensions:
         async (tempDir) => {
           await expect(
             ensureAppConfig(new Set(), minimalValidConfig, tempDir),
-          ).rejects.toThrow(new RegExp(`Failed to parse ${APP_CONFIG_FILE}`));
+          ).rejects.toThrow(
+            new RegExp(`Failed to parse ${APP_CONFIG_FILE}`, "u"),
+          );
         },
       );
     });
@@ -538,7 +540,7 @@ extensions:
           );
 
           const matches = content.match(
-            new RegExp(EXTENSIBILITY_EXTENSION_POINT_ID, "g"),
+            new RegExp(EXTENSIBILITY_EXTENSION_POINT_ID, "gu"),
           );
 
           expect(matches).toHaveLength(1);
@@ -577,7 +579,9 @@ extensions:
         async (tempDir) => {
           await expect(
             ensureInstallYaml(new Set(), minimalValidConfig, tempDir),
-          ).rejects.toThrow(new RegExp(`Failed to parse ${INSTALL_YAML_FILE}`));
+          ).rejects.toThrow(
+            new RegExp(`Failed to parse ${INSTALL_YAML_FILE}`, "u"),
+          );
         },
       );
     });

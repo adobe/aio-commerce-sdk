@@ -284,7 +284,7 @@ describe("eventing installation", () => {
 
     const sanitizedMetadataId = config.metadata.id
       .toLowerCase()
-      .replace(/[^a-z0-9_]/g, "_");
+      .replace(/[^a-z0-9_]/gu, "_");
 
     expect(result.data).toMatchObject({
       installation: {
