@@ -76,6 +76,20 @@ aio app db provision --region <amer|apac|emea|aus>
 npm install @adobe/aio-lib-db
 ```
 
+For existing apps, inspect the dependency, lockfile and installed package before installing; preserve ranges and pins.
+
+For TypeScript or checked JavaScript, check actual declaration resolution, not just the version (package types first appeared in 1.1.0):
+
+- **Types resolve:** prefer package declarations, otherwise reuse compatible application declarations. Report conflicts without silently changing application declarations.
+- **No types resolve:** recommend a typed release, but require approval before dependency or lockfile changes. To keep the installed version, add this comment immediately above each DB import reporting TS7016, including copied asset imports:
+
+```ts
+// @ts-expect-error -- Installed aio-lib-db has no resolvable TypeScript declarations.
+import { init as initDb } from "@adobe/aio-lib-db";
+```
+
+The fallback leaves DB APIs untyped. Keep strict checking; do not add ambient DB bridges, downgrade dependencies, or suppress unrelated errors. Compilation does not prove runtime compatibility.
+
 ## Step 3 — Understand intent
 
 Gather from the user:
@@ -286,6 +300,8 @@ npx @adobe/aio-commerce-lib-app init
 This is what adds the `installation` action to `ext.config.yaml`'s `app-management` package — `aio app build`/`aio app deploy` only read the existing file, they never regenerate it. Skip this and the script never runs, even though it's registered in code and the DB action is deployed. Safe to re-run even when the action already exists.
 
 ## Step 8 — Validate
+
+Run the project's strict typecheck, including the storage runtime action. If adding a custom installation step, verify its root `installation.customInstallationSteps` registration produces a generated import of the configured script and that the actual compiler file list includes it. Preserve existing compiler includes and exclusions; do not add `scripts/**/*.ts` to compensate for missing registration.
 
 ```sh
 aio app build
