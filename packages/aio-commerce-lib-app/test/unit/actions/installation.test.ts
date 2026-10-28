@@ -1843,12 +1843,17 @@ describe("installationRuntimeAction", () => {
           });
         });
 
-        test("plans an install", async () => {
+        test("refuses to plan an upgrade", async () => {
           const result = await planAfterFailedUninstall(requestBody);
 
           expect(result).toMatchObject({
-            body: { plan: { targetVersion: newVersion } },
-            statusCode: 200,
+            error: {
+              body: {
+                code: "app-attempt-operation-mismatch",
+                message: expect.stringContaining("failed-uninstall-id"),
+              },
+              statusCode: 409,
+            },
           });
         });
       });
