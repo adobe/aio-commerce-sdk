@@ -533,6 +533,9 @@ importers:
       '@aio-commerce-sdk/config-vitest':
         specifier: workspace:*
         version: link:../../configs/vitest
+      '@aio-commerce-sdk/scripts':
+        specifier: workspace:*
+        version: link:../../scripts
       typescript:
         specifier: 'catalog:'
         version: 6.0.3
@@ -792,6 +795,9 @@ importers:
       '@aio-commerce-sdk/config-vitest':
         specifier: workspace:*
         version: link:../../configs/vitest
+      '@aio-commerce-sdk/scripts':
+        specifier: workspace:*
+        version: link:../../scripts
       typescript:
         specifier: 'catalog:'
         version: 6.0.3
@@ -900,6 +906,9 @@ importers:
       '@aio-commerce-sdk/config-typescript':
         specifier: workspace:*
         version: link:../../configs/typescript
+      '@aio-commerce-sdk/scripts':
+        specifier: workspace:*
+        version: link:../../scripts
       '@react-spectrum/s2':
         specifier: catalog:react
         version: 1.8.2(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
