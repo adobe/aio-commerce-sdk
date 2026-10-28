@@ -145,6 +145,12 @@ describe("getNamespacedEvent", () => {
       "plugin.magento.sales.api.order_management.place",
       "purchase_approval.plugin.magento.sales.api.order_management.place",
     ],
+    [
+      "should preserve an underscore for each UTF-16 code unit in Unicode identifiers",
+      "my\u{1F600}app",
+      "observer.order_placed",
+      "my__app.observer.order_placed",
+    ],
   ])("%s", (_desc, id, name, expected) => {
     expect(getNamespacedEvent(createMockMetadata(id), name)).toBe(expected);
   });

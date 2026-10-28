@@ -23,7 +23,7 @@ import {
 
 /** Regex to match the OAuth 1.0a header format. */
 const OAUTH1_REGEX =
-  /^OAuth oauth_consumer_key="[^"]+", oauth_nonce="[^"]+", oauth_signature="[^"]+", oauth_signature_method="HMAC-SHA256", oauth_timestamp="[^"]+", oauth_token="[^"]+", oauth_version="1\.0"$/;
+  /^OAuth oauth_consumer_key="[^"]+", oauth_nonce="[^"]+", oauth_signature="[^"]+", oauth_signature_method="HMAC-SHA256", oauth_timestamp="[^"]+", oauth_token="[^"]+", oauth_version="1\.0"$/u;
 
 describe("aio-commerce-lib-auth/integration-auth", () => {
   describe("getIntegrationAuthProvider", () => {

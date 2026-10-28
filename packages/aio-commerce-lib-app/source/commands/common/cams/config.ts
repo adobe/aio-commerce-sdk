@@ -25,7 +25,7 @@ export const STAGE_CAMS_URL =
 /** The CAMS host for the production environment. */
 export const PROD_CAMS_URL = "https://app-management.api.commerce.adobe.com";
 
-const URL_SCHEME_PATTERN = /^https?:\/\//i;
+const URL_SCHEME_PATTERN = /^[hH][tT][tT][pP][sS]?:\/\//u;
 
 /**
  * Resolves the base URL of the Commerce App Management Service (CAMS).

@@ -20,7 +20,7 @@ import type { ApplyContext } from "#management/common/workflow/resource";
 import type { CustomScriptDomainPlan } from "#management/domains/custom-installation/types";
 
 const path = ["installation", "customInstallationSteps", "demoSuccess"];
-const SCRIPT_NOT_FOUND_PATTERN = /not found in customScripts context/;
+const SCRIPT_NOT_FOUND_PATTERN = /not found in customScripts context/u;
 const step = { name: "Demo Success", script: "./demo-success.js" };
 
 /** Builds an `ApplyContext` with the given custom scripts loaded. */

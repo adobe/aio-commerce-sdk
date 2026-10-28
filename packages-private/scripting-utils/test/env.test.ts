@@ -13,6 +13,9 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
+// @ts-expect-error - The library doesn't export types.
+import config from "@adobe/aio-lib-core-config";
+import aioIms from "@adobe/aio-lib-ims";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
 import { setNodeEnv, syncImsCredentials } from "#env";
@@ -32,10 +35,6 @@ vi.mock("@adobe/aio-lib-ims", () => ({
     },
   },
 }));
-
-// @ts-expect-error - The library doesn't export types.
-import config from "@adobe/aio-lib-core-config";
-import aioIms from "@adobe/aio-lib-ims";
 
 const { context } = aioIms;
 

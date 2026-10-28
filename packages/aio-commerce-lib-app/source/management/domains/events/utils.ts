@@ -124,7 +124,7 @@ export function generateInstanceId(
 ) {
   const appId = metadata.id.slice(0, METADATA_ID_MAX_LENGTH_FOR_INSTANCE_ID);
   const providerKey =
-    provider.key ?? provider.label.toLowerCase().replace(/\s+/g, "-");
+    provider.key ?? provider.label.toLowerCase().replace(/\s+/gu, "-");
   return `${appId}-${providerKey}-${workspaceId}`.toLowerCase();
 }
 
@@ -139,7 +139,7 @@ export function generateInstanceIdDeprecated(
   metadata: Pick<ApplicationMetadata, "id">,
   provider: EventProvider,
 ) {
-  const slugLabel = provider.label.toLowerCase().replace(/\s+/g, "-");
+  const slugLabel = provider.label.toLowerCase().replace(/\s+/gu, "-");
   return `${metadata.id}-${provider.key ?? slugLabel}`.toLowerCase();
 }
 
@@ -241,7 +241,9 @@ export function getNamespacedEvent(
   metadata: Pick<ApplicationMetadata, "id">,
   name: string,
 ) {
-  const sanitizedId = metadata.id.toLowerCase().replace(/[^a-z0-9_]/g, "_");
+  const sanitizedId = metadata.id
+    .toLowerCase()
+    .replace(/[^a-z0-9_]/gu, (character) => "_".repeat(character.length));
   return `${sanitizedId}.${name}`.toLowerCase();
 }
 
@@ -441,8 +443,8 @@ export function getCommerceEventingConfigurationUpdateParams(
 export function sanitizeEventingIdentifier(value: string) {
   return value
     .toLowerCase()
-    .replace(/\s+/g, "_")
-    .replace(/[^a-z0-9_]/g, "");
+    .replace(/\s+/gu, "_")
+    .replace(/[^a-z0-9_]/gu, "");
 }
 
 /**
@@ -525,7 +527,8 @@ export function makeWorkspaceConfig(context: EventsExecutionContext) {
   };
 }
 
-const PROVIDER_WORKSPACE_PATH = /^\/events\/[^/]+\/[^/]+\/([^/]+)\/providers\//;
+const PROVIDER_WORKSPACE_PATH =
+  /^\/events\/[^/]+\/[^/]+\/(?<workspace>[^/]+)\/providers\//u;
 
 /**
  * The workspace id of an I/O provider, read from its `rel:update` link

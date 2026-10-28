@@ -20,7 +20,7 @@ import type {
   HttpHeaders,
 } from "./types";
 
-const LEADING_UNDERSCORES = /^_+/;
+const LEADING_UNDERSCORES = /^_+/u;
 
 /**
  * Converts a header name to a camelCase key aligned with `type-fest`'s `CamelCase` type.

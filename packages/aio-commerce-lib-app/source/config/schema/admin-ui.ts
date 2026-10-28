@@ -215,7 +215,7 @@ const AdminUiGridOnlyEntitySchema = v.object({
 const MenuIdSchema = v.pipe(
   nonEmptyStringValueSchema("menu ID"),
   v.regex(
-    /^[A-Za-z0-9_/:]+$/,
+    /^[A-Za-z0-9_/:]+$/u,
     'Menu ID may contain only letters, digits, "/", ":", and "_"',
   ),
 );
@@ -249,7 +249,7 @@ const MenuSchema = v.object({
 const AclResourceIdSchema = v.pipe(
   nonEmptyStringValueSchema("acl resource ID"),
   v.regex(
-    /^[a-z0-9_]+$/,
+    /^[a-z0-9_]+$/u,
     'ACL resource ID may contain only lowercase letters, digits, and "_"',
   ),
 );

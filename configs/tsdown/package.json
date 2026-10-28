@@ -23,7 +23,7 @@
     "lint:fix": "biome lint --write --no-errors-on-unmatched"
   },
   "devDependencies": {
-    "rolldown": "1.2.14",
+    "rolldown": "1.2.15",
     "type-fest": "catalog:"
   }
 }

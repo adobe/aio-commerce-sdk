@@ -12,6 +12,14 @@
 
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
+import {
+  clearAssociationData,
+  getAssociationData,
+  setAssociationData,
+} from "#management/association/repository";
+
+import type { CommerceEnv } from "@adobe/aio-commerce-lib-core/commerce";
+
 // `aio-lib-state`'s MAX_TTL (one year); the repository caches association data
 // at this value.
 const MAX_TTL = 31_536_000;
@@ -71,14 +79,6 @@ vi.mock("@adobe/aio-lib-state", () => ({
 vi.mock("@adobe/aio-lib-files", () => ({
   init: vi.fn(async () => mockFiles),
 }));
-
-import {
-  clearAssociationData,
-  getAssociationData,
-  setAssociationData,
-} from "#management/association/repository";
-
-import type { CommerceEnv } from "@adobe/aio-commerce-lib-core/commerce";
 
 const makeData = (baseUrl: string, env: CommerceEnv) => ({
   commerce: { baseUrl, env },

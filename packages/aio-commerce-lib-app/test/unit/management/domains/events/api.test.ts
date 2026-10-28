@@ -16,7 +16,7 @@ import { configureCommerceEventing } from "#management/domains/events/api";
 import { createMockEventingInstallationContext } from "#test/fixtures/eventing";
 
 const RE_FAIL_CONFIGURE_EVENTING =
-  /^Failed to configure Adobe Commerce eventing:/;
+  /^Failed to configure Adobe Commerce eventing:/u;
 
 const config = {
   enabled: true,

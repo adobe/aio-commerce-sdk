@@ -27,13 +27,13 @@ import type { WebhooksExecutionContext } from "./context";
 import type { ResolvedWebhookPayload, WebhookIdentity } from "./types";
 
 /** Matches any character that is not a valid identifier character (letter, digit, or underscore). */
-const NON_IDENTIFIER_CHAR_REGEX = /[^a-zA-Z0-9_]/g;
+const NON_IDENTIFIER_CHAR_REGEX = /[^a-zA-Z0-9_]/gu;
 
 /** Matches two or more consecutive underscores. */
-const MULTIPLE_UNDERSCORES_REGEX = /_+/g;
+const MULTIPLE_UNDERSCORES_REGEX = /_+/gu;
 
 /** Matches the `.magento` segment in plugin webhook method names (e.g. `plugin.magento.foo`). */
-const PLUGIN_MAGENTO_REGEX = /^plugin\.magento\./;
+const PLUGIN_MAGENTO_REGEX = /^plugin\.magento\./u;
 
 const ENVIRONMENT_PRODUCTION = "production";
 

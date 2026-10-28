@@ -31,7 +31,7 @@ export function sanitizeSegment(segment: string): string {
   return segment
     .trim()
     .toLowerCase()
-    .replace(/[^a-z0-9_]/g, "_");
+    .replace(/[^a-z0-9_]/gu, (character) => "_".repeat(character.length));
 }
 
 /**
