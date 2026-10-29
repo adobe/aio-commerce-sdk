@@ -10,9 +10,6 @@
  * governing permissions and limitations under the License.
  */
 
-import { existsSync } from "node:fs";
-import { join } from "node:path";
-
 import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
 import {
   setNodeEnv,
@@ -45,7 +42,7 @@ import {
   generateWebSrc,
   prepareWebSourceImportAlias,
 } from "#commands/generate/web-src";
-import { getManifestPath, loadAppManifest } from "#commands/utils";
+import { loadAppManifest } from "#commands/utils";
 import { hasBackendUiV2Components } from "#config/index";
 
 import type { ExtConfig } from "@aio-commerce-sdk/scripting-utils/yaml/types";
@@ -71,17 +68,9 @@ export async function run(
 
   const appManifest = await loadAppManifest(projectRoot);
 
-  // The runtime config module re-exports the manifest generated for extensibility/1.
-  // Extension points are built in a fixed order where extensibility/1 runs last, so the
-  // others generate it first when it is missing. generateManifest is idempotent (it is a
-  // no-op for dynamic configs, and otherwise rewrites the same content).
-  if (
-    extension !== "extensibility/1" &&
-    !existsSync(join(projectRoot, getManifestPath()))
-  ) {
-    await generateManifest(appManifest, projectRoot);
-  }
-
+  // The runtime config module re-exports the manifest, and every extension point reads it.
+  // Extension points can run in any order, so each hook regenerates it to keep it up to date.
+  await generateManifest(appManifest, projectRoot);
   await prepareRuntimeAppConfigModule(appManifest, projectRoot);
 
   if (extension === "extensibility/1") {
@@ -90,7 +79,6 @@ export async function run(
       projectRoot,
     );
 
-    await generateManifest(appManifest, projectRoot);
     await generateActionFiles(
       appManifest,
       getRuntimeActions(

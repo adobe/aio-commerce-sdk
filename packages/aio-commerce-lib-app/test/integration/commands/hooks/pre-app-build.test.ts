@@ -11,8 +11,8 @@
  */
 
 import { existsSync, readFileSync } from "node:fs";
-import { readFile, stat } from "node:fs/promises";
-import { join } from "node:path";
+import { mkdir, readFile, stat, writeFile } from "node:fs/promises";
+import { dirname, join } from "node:path";
 
 import consola from "consola";
 import { afterEach, describe, expect, test, vi } from "vitest";
@@ -108,6 +108,29 @@ describe("commands/hooks/pre-app-build", () => {
         expect(parsed).toEqual(configWithCommerceEventing);
       });
     });
+
+    test.each(["configuration/1", "backend-ui/2"] as const)(
+      "refreshes a stale manifest in %s",
+      async (extension) => {
+        const project = {
+          ...makeProjectFiles(configWithBusinessConfig),
+          ...makeTemplateFiles(),
+          ...makeExtConfigFile(CONFIGURATION_EXTENSION_POINT_ID, ["config"]),
+        };
+
+        await withTempProject(project, async (tempDir) => {
+          const manifestPath = join(tempDir, getManifestPath());
+          await mkdir(dirname(manifestPath), { recursive: true });
+          await writeFile(manifestPath, JSON.stringify({ stale: true }));
+
+          await run(extension, tempDir, tempDir);
+
+          expect(JSON.parse(await readFile(manifestPath, "utf-8"))).toEqual(
+            configWithBusinessConfig,
+          );
+        });
+      },
+    );
 
     test.each(["configuration/1", "backend-ui/2"] as const)(
       "generates the manifest in %s when extensibility/1 has not run yet",
