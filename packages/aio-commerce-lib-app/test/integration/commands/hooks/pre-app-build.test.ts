@@ -80,25 +80,27 @@ const ALL_EXTENSIONS = [
   "backend-ui/2",
 ] as const;
 
-/** The extension point ID and the runtime actions each extension's hook expects. */
-const EXTENSION_FIXTURES = {
-  "backend-ui/2": {
-    actions: [],
-    extensionPointId: BACKEND_UI_V2_EXTENSION_POINT_ID,
-  },
-  "configuration/1": {
-    actions: ["config"],
-    extensionPointId: CONFIGURATION_EXTENSION_POINT_ID,
-  },
-  "extensibility/1": {
-    actions: ["app-config", "installation"],
-    extensionPointId: EXTENSIBILITY_EXTENSION_POINT_ID,
-  },
-} as const;
+/**
+ * A config that exercises every extension point at once: eventing for extensibility/1,
+ * business config for configuration/1 and adminUi for backend-ui/2.
+ */
+const configForAllExtensions = {
+  ...configWithCommerceEventing,
+  ...configWithBusinessConfig,
+  ...configWithFullAdminUiV2,
+};
 
-function makeOwnExtConfig(extension: (typeof ALL_EXTENSIONS)[number]) {
-  const { extensionPointId, actions } = EXTENSION_FIXTURES[extension];
-  return makeExtConfigFile(extensionPointId, [...actions]);
+/** Project files with a config and the ext.config.yaml files that hooks read, for all extension points. */
+function makeProjectForAllExtensions() {
+  return {
+    ...makeProjectFiles(configForAllExtensions),
+    ...makeTemplateFiles(),
+    ...makeExtConfigFile(EXTENSIBILITY_EXTENSION_POINT_ID, [
+      "app-config",
+      "installation",
+    ]),
+    ...makeExtConfigFile(CONFIGURATION_EXTENSION_POINT_ID, ["config"]),
+  };
 }
 
 describe("commands/hooks/pre-app-build", () => {
@@ -139,11 +141,7 @@ describe("commands/hooks/pre-app-build", () => {
     test.each(ALL_EXTENSIONS)(
       "refreshes a stale manifest in %s",
       async (extension) => {
-        const project = {
-          ...makeProjectFiles(configWithBusinessConfig),
-          ...makeTemplateFiles(),
-          ...makeOwnExtConfig(extension),
-        };
+        const project = makeProjectForAllExtensions();
 
         await withTempProject(project, async (tempDir) => {
           const manifestPath = join(tempDir, getManifestPath());
@@ -153,7 +151,7 @@ describe("commands/hooks/pre-app-build", () => {
           await run(extension, tempDir, tempDir);
 
           expect(JSON.parse(await readFile(manifestPath, "utf-8"))).toEqual(
-            configWithBusinessConfig,
+            configForAllExtensions,
           );
         });
       },
@@ -162,11 +160,7 @@ describe("commands/hooks/pre-app-build", () => {
     test.each(ALL_EXTENSIONS)(
       "generates the manifest in %s",
       async (extension) => {
-        const project = {
-          ...makeProjectFiles(configWithBusinessConfig),
-          ...makeTemplateFiles(),
-          ...makeOwnExtConfig(extension),
-        };
+        const project = makeProjectForAllExtensions();
 
         await withTempProject(project, async (tempDir) => {
           const manifestPath = join(tempDir, getManifestPath());
@@ -176,7 +170,7 @@ describe("commands/hooks/pre-app-build", () => {
 
           expect(existsSync(manifestPath)).toBe(true);
           expect(JSON.parse(await readFile(manifestPath, "utf-8"))).toEqual(
-            configWithBusinessConfig,
+            configForAllExtensions,
           );
         });
       },
@@ -185,11 +179,7 @@ describe("commands/hooks/pre-app-build", () => {
     test.each(ALL_EXTENSIONS)(
       "generates a loadable runtime config module and alias in %s",
       async (extension) => {
-        const project = {
-          ...makeProjectFiles(configWithBusinessConfig),
-          ...makeTemplateFiles(),
-          ...makeOwnExtConfig(extension),
-        };
+        const project = makeProjectForAllExtensions();
 
         await withTempProject(project, async (tempDir) => {
           await run(extension, tempDir, tempDir);
@@ -199,7 +189,7 @@ describe("commands/hooks/pre-app-build", () => {
           expect(existsSync(runtimeConfigPath)).toBe(true);
 
           const mod = await import(runtimeConfigPath);
-          expect(mod.default).toEqual(configWithBusinessConfig);
+          expect(mod.default).toEqual(configForAllExtensions);
 
           const pkg = JSON.parse(
             await readFile(join(tempDir, "package.json"), "utf-8"),
@@ -217,7 +207,8 @@ describe("commands/hooks/pre-app-build", () => {
         const project = {
           ...MINIMAL_PROJECT_WITH_NAMED_EXPORT,
           ...makeTemplateFiles(),
-          ...makeOwnExtConfig(extension),
+          ...makeExtConfigFile(EXTENSIBILITY_EXTENSION_POINT_ID, []),
+          ...makeExtConfigFile(CONFIGURATION_EXTENSION_POINT_ID, []),
         };
 
         await withTempProject(project, async (tempDir) => {
