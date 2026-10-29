@@ -67,6 +67,10 @@ export async function run(
   }
 
   const appManifest = await loadAppManifest(projectRoot);
+
+  // The runtime config module re-exports the manifest, and every extension point reads it.
+  // Extension points can run in any order, so each hook regenerates it to keep it up to date.
+  await generateManifest(appManifest, projectRoot);
   await prepareRuntimeAppConfigModule(appManifest, projectRoot);
 
   if (extension === "extensibility/1") {
@@ -75,7 +79,6 @@ export async function run(
       projectRoot,
     );
 
-    await generateManifest(appManifest, projectRoot);
     await generateActionFiles(
       appManifest,
       getRuntimeActions(
