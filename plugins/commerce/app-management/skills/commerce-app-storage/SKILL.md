@@ -313,7 +313,17 @@ A build failure points directly to the offending config field. To exercise the a
 
 - **Always close connections** in a `finally` block — leaked connections exhaust resources.
 - **Match the region** — the manifest `database.region` is the single source of truth; every `init()` call and the install step must use it (see the region callout in Step 1). A mismatch fails the connection silently from the caller's view.
-- **Use projections** (`.project({ field: 1 })`) and **indexes** (`createIndex`) for frequently queried fields; index fields must total ≤ 2048 bytes.
+- **Use projections** (`.project({ field: 1 })`) and **indexes** (`createIndex`) for frequently queried fields; index fields must total ≤ 2048 bytes. For public responses, prefer inclusion projections.
+
+  Filters select documents; projections select fields. Inclusion returns selected fields and `_id` by default; `_id: 0` is the only exclusion allowed alongside included fields. Otherwise, do not mix inclusion and exclusion.
+
+  ```ts
+  const cursor = client
+    .collection("records")
+    .find({ status: "active" })
+    .project({ _id: 0, title: 1, status: 1 });
+  ```
+
 - **Iterate large result sets with cursors** (`for await (const doc of collection.find(...))`) instead of `toArray()` to bound memory.
 - **Don't hardcode the region or secrets** — prefer `AIO_DB_REGION` and the injected IMS token over inline values.
 - **Prefer the most specific Adobe I/O library** in runtime actions over the `@adobe/aio-sdk` umbrella — e.g. `@adobe/aio-commerce-lib-auth` for IMS auth and `@adobe/aio-lib-core-logging` for the logger — to keep action bundles small.

@@ -115,6 +115,17 @@
         "Strict typecheck and aio app build pass; removing directives reproduces TS7016 and an unrelated type error is rejected",
         "Probes are removed before final checks; DB APIs are acknowledged as untyped and no database provisioning, deployment or live calls occur"
       ]
+    },
+    {
+      "id": 10,
+      "prompt": "In my initialized Commerce app, add a web runtime action backed by App Builder Database Storage that queries active records. The public response should contain only title and status; records also contain a private internalMemo field. Explain inclusion and exclusion projections, including the _id exception. Do not provision or call a live database.",
+      "expected_output": "The agent uses an inclusion projection to select title and status, optionally excluding _id as the sole allowed exclusion. It explains that filters select documents while projections select fields, and inclusion and exclusion fields cannot be mixed except for _id. It does not claim that compiler or mocked checks prove live database acceptance.",
+      "assertions": [
+        "Explains inclusion versus exclusion projections and that _id may be excluded alongside included fields",
+        "Distinguishes the query filter, which selects documents, from the projection, which selects returned fields",
+        "Uses explicit public-field inclusion without mixing private-field exclusions",
+        "Does not claim compiler or mocked checks prove live database acceptance or provision/call a live database"
+      ]
     }
   ]
 }
