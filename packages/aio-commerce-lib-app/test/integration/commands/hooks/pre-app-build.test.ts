@@ -74,6 +74,24 @@ const ORDER_REWRITTEN_RE =
 
 const warnSpy = vi.spyOn(consola, "warn").mockImplementation(() => undefined);
 
+const ALL_EXTENSIONS = [
+  "extensibility/1",
+  "configuration/1",
+  "backend-ui/2",
+] as const;
+
+function makeOwnExtConfig(
+  extension: (typeof ALL_EXTENSIONS)[number],
+  actions: string[] = ["config"],
+) {
+  return extension === "extensibility/1"
+    ? makeExtConfigFile(
+        EXTENSIBILITY_EXTENSION_POINT_ID,
+        actions.length > 0 ? ["app-config", "installation"] : [],
+      )
+    : makeExtConfigFile(CONFIGURATION_EXTENSION_POINT_ID, actions);
+}
+
 describe("commands/hooks/pre-app-build", () => {
   afterEach(() => {
     mockSpawnSync.mockClear();
@@ -109,13 +127,13 @@ describe("commands/hooks/pre-app-build", () => {
       });
     });
 
-    test.each(["configuration/1", "backend-ui/2"] as const)(
+    test.each(ALL_EXTENSIONS)(
       "refreshes a stale manifest in %s",
       async (extension) => {
         const project = {
           ...makeProjectFiles(configWithBusinessConfig),
           ...makeTemplateFiles(),
-          ...makeExtConfigFile(CONFIGURATION_EXTENSION_POINT_ID, ["config"]),
+          ...makeOwnExtConfig(extension),
         };
 
         await withTempProject(project, async (tempDir) => {
@@ -132,13 +150,13 @@ describe("commands/hooks/pre-app-build", () => {
       },
     );
 
-    test.each(["configuration/1", "backend-ui/2"] as const)(
-      "generates the manifest in %s when extensibility/1 has not run yet",
+    test.each(ALL_EXTENSIONS)(
+      "generates the manifest in %s",
       async (extension) => {
         const project = {
           ...makeProjectFiles(configWithBusinessConfig),
           ...makeTemplateFiles(),
-          ...makeExtConfigFile(CONFIGURATION_EXTENSION_POINT_ID, ["config"]),
+          ...makeOwnExtConfig(extension),
         };
 
         await withTempProject(project, async (tempDir) => {
@@ -155,13 +173,13 @@ describe("commands/hooks/pre-app-build", () => {
       },
     );
 
-    test.each(["configuration/1", "backend-ui/2"] as const)(
-      "generates a loadable runtime config module and alias in %s when extensibility/1 has not run yet",
+    test.each(ALL_EXTENSIONS)(
+      "generates a loadable runtime config module and alias in %s",
       async (extension) => {
         const project = {
           ...makeProjectFiles(configWithBusinessConfig),
           ...makeTemplateFiles(),
-          ...makeExtConfigFile(CONFIGURATION_EXTENSION_POINT_ID, ["config"]),
+          ...makeOwnExtConfig(extension),
         };
 
         await withTempProject(project, async (tempDir) => {
@@ -184,13 +202,13 @@ describe("commands/hooks/pre-app-build", () => {
       },
     );
 
-    test.each(["configuration/1", "backend-ui/2"] as const)(
+    test.each(ALL_EXTENSIONS)(
       "generates the source config passthrough module in %s for a config with named exports",
       async (extension) => {
         const project = {
           ...MINIMAL_PROJECT_WITH_NAMED_EXPORT,
           ...makeTemplateFiles(),
-          ...makeExtConfigFile(CONFIGURATION_EXTENSION_POINT_ID, []),
+          ...makeOwnExtConfig(extension, []),
         };
 
         await withTempProject(project, async (tempDir) => {
