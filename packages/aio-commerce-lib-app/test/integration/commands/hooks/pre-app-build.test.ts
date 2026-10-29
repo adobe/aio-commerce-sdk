@@ -80,16 +80,25 @@ const ALL_EXTENSIONS = [
   "backend-ui/2",
 ] as const;
 
-function makeOwnExtConfig(
-  extension: (typeof ALL_EXTENSIONS)[number],
-  actions: string[] = ["config"],
-) {
-  return extension === "extensibility/1"
-    ? makeExtConfigFile(
-        EXTENSIBILITY_EXTENSION_POINT_ID,
-        actions.length > 0 ? ["app-config", "installation"] : [],
-      )
-    : makeExtConfigFile(CONFIGURATION_EXTENSION_POINT_ID, actions);
+/** The extension point ID and the runtime actions each extension's hook expects. */
+const EXTENSION_FIXTURES = {
+  "backend-ui/2": {
+    actions: [],
+    extensionPointId: BACKEND_UI_V2_EXTENSION_POINT_ID,
+  },
+  "configuration/1": {
+    actions: ["config"],
+    extensionPointId: CONFIGURATION_EXTENSION_POINT_ID,
+  },
+  "extensibility/1": {
+    actions: ["app-config", "installation"],
+    extensionPointId: EXTENSIBILITY_EXTENSION_POINT_ID,
+  },
+} as const;
+
+function makeOwnExtConfig(extension: (typeof ALL_EXTENSIONS)[number]) {
+  const { extensionPointId, actions } = EXTENSION_FIXTURES[extension];
+  return makeExtConfigFile(extensionPointId, [...actions]);
 }
 
 describe("commands/hooks/pre-app-build", () => {
@@ -208,7 +217,7 @@ describe("commands/hooks/pre-app-build", () => {
         const project = {
           ...MINIMAL_PROJECT_WITH_NAMED_EXPORT,
           ...makeTemplateFiles(),
-          ...makeOwnExtConfig(extension, []),
+          ...makeOwnExtConfig(extension),
         };
 
         await withTempProject(project, async (tempDir) => {
