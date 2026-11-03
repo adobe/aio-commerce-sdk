@@ -1043,6 +1043,8 @@ The `#app.commerce.config` package import resolves to a generated JavaScript com
 
 Installing, upgrading and uninstalling all plan the operation and validate the plan before anything changes. An installed app upgrades from its installed version to the one declared in `metadata.version`.
 
+An app installed with only business configuration never runs the install, so the SDK has no record of what it installed. When such an app adds a feature that needs installation (an event, a webhook, an admin UI or a custom installation step), the Commerce App Management Service sends `installedState: "business-config-only"` and `installedVersion` in the `POST /installation/plan` request. The SDK then plans an upgrade instead of an install. The plan's source version is `installedVersion`, and it compares the target config with the installed config minus the sections that need installation. Planning writes nothing. Starting the plan stores that config as the baseline snapshot, so the run is a normal upgrade and a failed run retries from it. The SDK ignores both fields when a baseline exists, and answers `409` with code `already-current` when `installedVersion` equals `metadata.version`.
+
 > [!IMPORTANT]
 > `metadata.id` identifies the installed application and cannot change during an upgrade. The SDK refuses to plan an upgrade that changes it. To use a different ID, uninstall the existing app and install it again.
 
@@ -1109,7 +1111,7 @@ Each attempt links to the rest of the trail:
 
 - `previousAttemptId` and `previousPlanId` name the attempt and the plan it replaced.
 - `plan` is the plan the attempt executes, in the same shape `POST /plan` returns for review: its versions, the operations to run per domain, the items each one changes, the `changes` per domain and the planning issues. Every domain has `changes`, empty when there are none. They list the items the target config adds, updates or removes compared with the installed config. They do not depend on the live state, so an item that is already live still appears. It is on every answer that carries an attempt, including the `attempt` of a `409` and of a failed run.
-- `plan.source.snapshotId` names the snapshot the attempt started from, and `result.snapshotId` the one a successful attempt produced. Snapshots live in the app's file storage under `lifecycle-app-state-snapshot`, and each one records the `attemptId` that produced it.
+- `plan.source.snapshotId` names the snapshot the attempt started from (for an app installed with only business configuration, the baseline written when the plan started), and `result.snapshotId` the one a successful attempt produced. Snapshots live in the app's file storage under `lifecycle-app-state-snapshot`, and each one records the `attemptId` that produced it.
 - `step` lists every step with its `status`, and `startedAt` and `completedAt` once it ran, so an expired attempt shows which step hung.
 - `activations.start` and `activations.execution` are the OpenWhisk activations that started and executed the attempt.
 
