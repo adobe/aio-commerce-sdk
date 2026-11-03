@@ -8,16 +8,16 @@ function replaceOperation<TValue = unknown>(
 ): ReplaceOperation<TValue>;
 ```
 
-Defined in: [responses/operations/presets.ts:101](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-webhooks/source/responses/operations/presets.ts#L101)
+Defined in: [responses/operations/presets.ts:101](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-webhooks/source/responses/operations/presets.ts#L101)
 
 Creates a replace operation response
 Causes Commerce to replace a value in triggered event arguments for the provided path.
 
 ## Type Parameters
 
-| Type Parameter | Default type | Description                       |
-| -------------- | ------------ | --------------------------------- |
-| `TValue`       | `unknown`    | The type of the replacement value |
+| Type Parameter                              | Default type | Description                       |
+| ------------------------------------------- | ------------ | --------------------------------- |
+| <a id="type-parameter-tvalue"></a> `TValue` | `unknown`    | The type of the replacement value |
 
 ## Parameters
 

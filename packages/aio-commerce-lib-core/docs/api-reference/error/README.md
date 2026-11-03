@@ -15,3 +15,9 @@ This module exports core error utilities for the AIO Commerce SDK.
 | -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
 | [CommerceSdkErrorBaseOptions](type-aliases/CommerceSdkErrorBaseOptions.md) | Defines the base options for [CommerceSdkErrorBase](classes/CommerceSdkErrorBase.md). |
 | [CommerceSdkErrorOptions](type-aliases/CommerceSdkErrorOptions.md)         | Helper type to define custom error options.                                           |
+
+## Functions
+
+| Function                                      | Description                                           |
+| --------------------------------------------- | ----------------------------------------------------- |
+| [stringifyError](functions/stringifyError.md) | Converts any thrown value to a human-friendly string. |

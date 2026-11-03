@@ -10,7 +10,7 @@ type FailedWorkflowState = WorkflowRunStateBase & {
 };
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/common/workflow/types.ts:111](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/management/common/workflow/types.ts#L111)
+Defined in: [aio-commerce-lib-app/source/management/common/workflow/types.ts:117](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-app/source/management/common/workflow/types.ts#L117)
 
 Workflow run state when failed.
 
@@ -35,7 +35,7 @@ Error information about the failure.
 ### metadata?
 
 ```ts
-optional metadata?: WorkflowStateMetadata;
+metadata?: WorkflowStateMetadata;
 ```
 
 Per-run state metadata, present when a retry was attempted.

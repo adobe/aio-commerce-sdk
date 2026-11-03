@@ -9,19 +9,19 @@ function getIntegrationAuthProvider(authParams: {
 }): IntegrationAuthProvider;
 ```
 
-Defined in: [integration-auth/provider.ts:93](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-auth/source/lib/integration-auth/provider.ts#L93)
+Defined in: [integration-auth/provider.ts:93](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-auth/source/lib/integration-auth/provider.ts#L93)
 
 Creates an [IntegrationAuthProvider](../type-aliases/IntegrationAuthProvider.md) based on the provided configuration.
 
 ## Parameters
 
-| Parameter                      | Type                                                                                                               | Description                            |
-| ------------------------------ | ------------------------------------------------------------------------------------------------------------------ | -------------------------------------- |
-| `authParams`                   | \{ `accessToken`: `string`; `accessTokenSecret`: `string`; `consumerKey`: `string`; `consumerSecret`: `string`; \} | The configuration for the integration. |
-| `authParams.accessToken`       | `string`                                                                                                           | -                                      |
-| `authParams.accessTokenSecret` | `string`                                                                                                           | -                                      |
-| `authParams.consumerKey`       | `string`                                                                                                           | -                                      |
-| `authParams.consumerSecret`    | `string`                                                                                                           | -                                      |
+| Parameter                       | Type                                                                                                               | Description                            |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------------ | -------------------------------------- |
+| `authParams`                    | \{ `accessToken`: `string`; `accessTokenSecret`: `string`; `consumerKey`: `string`; `consumerSecret`: `string`; \} | The configuration for the integration. |
+| `authParams.accessToken?`       | `string`                                                                                                           | -                                      |
+| `authParams.accessTokenSecret?` | `string`                                                                                                           | -                                      |
+| `authParams.consumerKey?`       | `string`                                                                                                           | -                                      |
+| `authParams.consumerSecret?`    | `string`                                                                                                           | -                                      |
 
 ## Returns
 

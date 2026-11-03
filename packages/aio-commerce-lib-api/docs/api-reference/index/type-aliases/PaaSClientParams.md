@@ -12,7 +12,7 @@ type PaaSClientParams = {
 };
 ```
 
-Defined in: [aio-commerce-lib-api/source/lib/commerce/types.ts:73](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-api/source/lib/commerce/types.ts#L73)
+Defined in: [aio-commerce-lib-api/source/lib/commerce/types.ts:73](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-api/source/lib/commerce/types.ts#L73)
 
 Defines the configuration required to build an Adobe Commerce HTTP client for PaaS.
 
@@ -28,7 +28,7 @@ auth:
   | ImsAuthParamsWithOptionalScopes;
 ```
 
-Defined in: [aio-commerce-lib-api/source/lib/commerce/types.ts:74](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-api/source/lib/commerce/types.ts#L74)
+Defined in: [aio-commerce-lib-api/source/lib/commerce/types.ts:74](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-api/source/lib/commerce/types.ts#L74)
 
 ---
 
@@ -38,14 +38,14 @@ Defined in: [aio-commerce-lib-api/source/lib/commerce/types.ts:74](https://githu
 config: CommerceHttpClientConfigPaaS;
 ```
 
-Defined in: [aio-commerce-lib-api/source/lib/commerce/types.ts:80](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-api/source/lib/commerce/types.ts#L80)
+Defined in: [aio-commerce-lib-api/source/lib/commerce/types.ts:80](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-api/source/lib/commerce/types.ts#L80)
 
 ---
 
 ### fetchOptions?
 
 ```ts
-optional fetchOptions?: Options;
+fetchOptions?: Options;
 ```
 
-Defined in: [aio-commerce-lib-api/source/lib/commerce/types.ts:81](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-api/source/lib/commerce/types.ts#L81)
+Defined in: [aio-commerce-lib-api/source/lib/commerce/types.ts:81](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-api/source/lib/commerce/types.ts#L81)

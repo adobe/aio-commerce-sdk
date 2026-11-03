@@ -9,9 +9,9 @@ type ValidationIssue = {
 };
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/common/workflow/step.ts:27](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/management/common/workflow/step.ts#L27)
+Defined in: [aio-commerce-lib-app/source/management/common/workflow/validation.ts:19](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-app/source/management/common/workflow/validation.ts#L19)
 
-A single validation issue reported by a step's validate handler.
+A single validation issue reported by a step's validation.
 
 ## Properties
 
@@ -21,7 +21,7 @@ A single validation issue reported by a step's validate handler.
 code: string;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/common/workflow/step.ts:29](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/management/common/workflow/step.ts#L29)
+Defined in: [aio-commerce-lib-app/source/management/common/workflow/validation.ts:21](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-app/source/management/common/workflow/validation.ts#L21)
 
 Machine-readable code identifying the issue type.
 
@@ -30,10 +30,10 @@ Machine-readable code identifying the issue type.
 ### details?
 
 ```ts
-optional details?: Record<string, unknown>;
+details?: Record<string, unknown>;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/common/workflow/step.ts:38](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/management/common/workflow/step.ts#L38)
+Defined in: [aio-commerce-lib-app/source/management/common/workflow/validation.ts:30](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-app/source/management/common/workflow/validation.ts#L30)
 
 Optional additional context about the issue.
 
@@ -45,7 +45,7 @@ Optional additional context about the issue.
 message: string;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/common/workflow/step.ts:32](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/management/common/workflow/step.ts#L32)
+Defined in: [aio-commerce-lib-app/source/management/common/workflow/validation.ts:24](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-app/source/management/common/workflow/validation.ts#L24)
 
 Human-readable description of the issue.
 
@@ -57,6 +57,6 @@ Human-readable description of the issue.
 severity: ValidationIssueSeverity;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/common/workflow/step.ts:35](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/management/common/workflow/step.ts#L35)
+Defined in: [aio-commerce-lib-app/source/management/common/workflow/validation.ts:27](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-app/source/management/common/workflow/validation.ts#L27)
 
 Severity of the issue. Only "error" severity blocks the workflow.

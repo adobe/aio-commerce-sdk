@@ -25,16 +25,27 @@ type LeafStep<
 } & Partial<ResourceCapability<TConfig, TStepCtx, TPlan, TSnapshotData>>;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/common/workflow/step.ts:124](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/management/common/workflow/step.ts#L124)
+Defined in: [aio-commerce-lib-app/source/management/common/workflow/step.ts:119](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-app/source/management/common/workflow/step.ts#L119)
 
 A leaf step that executes work (no children).
 
 May optionally contribute the resource-reconciliation capability; `plan` and
 `apply` are meant to be provided together (plan the changes, then apply them).
 
+## Type Parameters
+
+| Type Parameter                                                                                        | Default type                      |
+| ----------------------------------------------------------------------------------------------------- | --------------------------------- |
+| <a id="type-parameter-tname"></a> `TName` _extends_ `string`                                          | `string`                          |
+| <a id="type-parameter-tconfig"></a> `TConfig` _extends_ `CommerceAppConfigOutputModel`                | `CommerceAppConfigOutputModel`    |
+| <a id="type-parameter-tstepctx"></a> `TStepCtx` _extends_ `Record`\<`string`, `unknown`\>             | `Record`\<`string`, `unknown`\>   |
+| <a id="type-parameter-toutput"></a> `TOutput`                                                         | `unknown`                         |
+| <a id="type-parameter-tplan"></a> `TPlan` _extends_ `DomainPlan`                                      | `DomainPlan`                      |
+| <a id="type-parameter-tsnapshotdata"></a> `TSnapshotData` _extends_ [`WorkflowData`](WorkflowData.md) | [`WorkflowData`](WorkflowData.md) |
+
 ## Type Declaration
 
-### install
+### ~~install~~
 
 ```ts
 install: (config: TConfig, context: ExecutionContext<TStepCtx>) =>
@@ -54,16 +65,20 @@ The execution handler for the step.
 
 `TOutput` \| `Promise`\<`TOutput`\>
 
+#### Deprecated
+
+Use `plan` and `apply`. Installing is a plan with no baseline.
+
 ### type
 
 ```ts
 type: "leaf";
 ```
 
-### uninstall?
+### ~~uninstall?~~
 
 ```ts
-optional uninstall?: (config: TConfig, context: ExecutionContext<TStepCtx>) => void | Promise<void>;
+uninstall?: (config: TConfig, context: ExecutionContext<TStepCtx>) => void | Promise<void>;
 ```
 
 Optional uninstall handler for the step.
@@ -81,10 +96,14 @@ If absent, the step is silently skipped during uninstallation.
 
 `void` \| `Promise`\<`void`\>
 
-### validate?
+#### Deprecated
+
+Use `plan` and `apply`. Uninstalling is a plan with no target.
+
+### ~~validate?~~
 
 ```ts
-optional validate?: (config: TConfig, context: ValidationExecutionContext<TStepCtx>) =>
+validate?: (config: TConfig, context: ValidationExecutionContext<TStepCtx>) =>
   | ValidationIssue[]
 | Promise<ValidationIssue[]>;
 ```
@@ -105,13 +124,6 @@ Returning an empty array means the step has no issues.
 \| [`ValidationIssue`](ValidationIssue.md)[]
 \| `Promise`\<[`ValidationIssue`](ValidationIssue.md)[]\>
 
-## Type Parameters
+#### Deprecated
 
-| Type Parameter                                              | Default type                      |
-| ----------------------------------------------------------- | --------------------------------- |
-| `TName` _extends_ `string`                                  | `string`                          |
-| `TConfig` _extends_ `CommerceAppConfigOutputModel`          | `CommerceAppConfigOutputModel`    |
-| `TStepCtx` _extends_ `Record`\<`string`, `unknown`\>        | `Record`\<`string`, `unknown`\>   |
-| `TOutput`                                                   | `unknown`                         |
-| `TPlan` _extends_ `DomainPlan`                              | `DomainPlan`                      |
-| `TSnapshotData` _extends_ [`WorkflowData`](WorkflowData.md) | [`WorkflowData`](WorkflowData.md) |
+Use `plan`, which reports issues alongside the step's plan.

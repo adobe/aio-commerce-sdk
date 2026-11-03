@@ -8,7 +8,7 @@ type AdminUiPermissionClient = {
 };
 ```
 
-Defined in: [aio-commerce-lib-admin-ui/source/api/lib/permission-client.ts:43](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-admin-ui/source/api/lib/permission-client.ts#L43)
+Defined in: [aio-commerce-lib-admin-ui/source/api/lib/permission-client.ts:43](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-admin-ui/source/api/lib/permission-client.ts#L43)
 
 Client for checking the current user's Admin UI SDK resource permissions.
 
@@ -20,7 +20,7 @@ Client for checking the current user's Admin UI SDK resource permissions.
 check: (resource?: string) => Promise<boolean>;
 ```
 
-Defined in: [aio-commerce-lib-admin-ui/source/api/lib/permission-client.ts:52](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-admin-ui/source/api/lib/permission-client.ts#L52)
+Defined in: [aio-commerce-lib-admin-ui/source/api/lib/permission-client.ts:52](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-admin-ui/source/api/lib/permission-client.ts#L52)
 
 Checks whether the current user has the given ACL resource granted.
 
@@ -49,7 +49,7 @@ Checks whether the current user has the given ACL resource granted.
 invalidate: (resource?: string) => void;
 ```
 
-Defined in: [aio-commerce-lib-admin-ui/source/api/lib/permission-client.ts:59](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-admin-ui/source/api/lib/permission-client.ts#L59)
+Defined in: [aio-commerce-lib-admin-ui/source/api/lib/permission-client.ts:59](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-admin-ui/source/api/lib/permission-client.ts#L59)
 
 Clears cached permission results.
 
@@ -71,7 +71,7 @@ Clears cached permission results.
 require: (resource?: string) => Promise<void>;
 ```
 
-Defined in: [aio-commerce-lib-admin-ui/source/api/lib/permission-client.ts:68](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-admin-ui/source/api/lib/permission-client.ts#L68)
+Defined in: [aio-commerce-lib-admin-ui/source/api/lib/permission-client.ts:68](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-admin-ui/source/api/lib/permission-client.ts#L68)
 
 Resolves when the current user has the given ACL resource granted.
 

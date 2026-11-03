@@ -1,4 +1,4 @@
-# `runInstallation()`
+# ~~`runInstallation()`~~
 
 ```ts
 function runInstallation(
@@ -6,7 +6,7 @@ function runInstallation(
 ): Promise<SucceededWorkflowState | FailedWorkflowState>;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/runner.ts:119](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/management/installation/runner.ts#L119)
+Defined in: [aio-commerce-lib-app/source/management/deprecated/runner.ts:137](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-app/source/management/deprecated/runner.ts#L137)
 
 Runs the full installation workflow. Returns the final state (never throws).
 
@@ -24,3 +24,9 @@ fail; `isRetry: true` is set on the result when the retry succeeds.
 `Promise`\<
 \| [`SucceededWorkflowState`](../type-aliases/SucceededWorkflowState.md)
 \| [`FailedWorkflowState`](../type-aliases/FailedWorkflowState.md)\>
+
+## Deprecated
+
+The pre-lifecycle engine is removed in the next major. Drive installs
+and uninstalls through the installation runtime action, which runs the lifecycle
+plan/apply engine.

@@ -6,7 +6,7 @@
 function initialize(options: InitializeOptions): InitializeResult;
 ```
 
-Defined in: [config-manager.ts:113](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-config/source/config-manager.ts#L113)
+Defined in: [config-manager.ts:113](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-config/source/config-manager.ts#L113)
 
 Initializes the configuration library so that it works as expected.
 
@@ -129,7 +129,7 @@ function initialize(
 ): Promise<InitializeResult>;
 ```
 
-Defined in: [config-manager.ts:114](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-config/source/config-manager.ts#L114)
+Defined in: [config-manager.ts:114](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-config/source/config-manager.ts#L114)
 
 Initializes the configuration library so that it works as expected.
 

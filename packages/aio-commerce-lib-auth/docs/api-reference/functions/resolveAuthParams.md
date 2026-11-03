@@ -10,8 +10,8 @@ function resolveAuthParams(params: Record<string, unknown>):
       imsOrgId: string;
       scopes: string[];
       strategy: "ims";
-      technicalAccountEmail: string;
-      technicalAccountId: string;
+      technicalAccountEmail?: string;
+      technicalAccountId?: string;
     }
   | {
       accessToken: string;
@@ -22,10 +22,15 @@ function resolveAuthParams(params: Record<string, unknown>):
     };
 ```
 
-Defined in: [utils.ts:50](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-auth/source/lib/utils.ts#L50)
+Defined in: [utils.ts:55](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-auth/source/lib/utils.ts#L55)
 
 Automatically detects and resolves authentication parameters from App Builder action inputs.
 Attempts to resolve IMS authentication first, then falls back to Integration authentication.
+
+For OAuth Server-to-Server credentials, use the `include-ims-credentials` action annotation.
+The legacy fallback to manually-wired `AIO_COMMERCE_AUTH_IMS_*` params in
+[resolveImsAuthParams](resolveImsAuthParams.md) is deprecated and will be removed in a future major release.
+Manually configured Commerce Integration credentials are unaffected.
 
 ## Parameters
 
@@ -43,8 +48,8 @@ Attempts to resolve IMS authentication first, then falls back to Integration aut
 `imsOrgId`: `string`;
 `scopes`: `string`[];
 `strategy`: `"ims"`;
-`technicalAccountEmail`: `string`;
-`technicalAccountId`: `string`;
+`technicalAccountEmail?`: `string`;
+`technicalAccountId?`: `string`;
 \}
 \| \{
 `accessToken`: `string`;

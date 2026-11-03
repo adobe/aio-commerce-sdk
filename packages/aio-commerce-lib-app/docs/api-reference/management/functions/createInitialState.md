@@ -6,7 +6,7 @@ function createInitialState(
 ): InProgressWorkflowState;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/common/workflow/runner.ts:91](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/management/common/workflow/runner.ts#L91)
+Defined in: [aio-commerce-lib-app/source/management/deprecated/engine.ts:96](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-app/source/management/deprecated/engine.ts#L96)
 
 Creates an initial workflow run state from a root step and config.
 

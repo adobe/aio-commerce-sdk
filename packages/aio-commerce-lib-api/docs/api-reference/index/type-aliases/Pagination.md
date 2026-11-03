@@ -7,7 +7,7 @@ type Pagination = {
 };
 ```
 
-Defined in: [aio-commerce-lib-api/source/lib/commerce/search-criteria/types.ts:97](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-api/source/lib/commerce/search-criteria/types.ts#L97)
+Defined in: [aio-commerce-lib-api/source/lib/commerce/search-criteria/types.ts:97](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-api/source/lib/commerce/search-criteria/types.ts#L97)
 
 The pagination applied to the search results.
 
@@ -16,10 +16,10 @@ The pagination applied to the search results.
 ### currentPage?
 
 ```ts
-optional currentPage?: number;
+currentPage?: number;
 ```
 
-Defined in: [aio-commerce-lib-api/source/lib/commerce/search-criteria/types.ts:102](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-api/source/lib/commerce/search-criteria/types.ts#L102)
+Defined in: [aio-commerce-lib-api/source/lib/commerce/search-criteria/types.ts:102](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-api/source/lib/commerce/search-criteria/types.ts#L102)
 
 The page to return, 1-based.
 
@@ -28,9 +28,9 @@ The page to return, 1-based.
 ### pageSize?
 
 ```ts
-optional pageSize?: number;
+pageSize?: number;
 ```
 
-Defined in: [aio-commerce-lib-api/source/lib/commerce/search-criteria/types.ts:99](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-api/source/lib/commerce/search-criteria/types.ts#L99)
+Defined in: [aio-commerce-lib-api/source/lib/commerce/search-criteria/types.ts:99](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-api/source/lib/commerce/search-criteria/types.ts#L99)
 
 The number of items to return per page.
