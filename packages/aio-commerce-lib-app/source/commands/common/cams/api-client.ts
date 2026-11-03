@@ -11,8 +11,9 @@
  */
 
 import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
-import { HTTPError } from "ky";
+import { HTTPError, TimeoutError } from "ky";
 
+import { CAMS_REQUEST_TIMEOUT_MS } from "#commands/common/cams/config";
 import * as endpoints from "#commands/common/cams/endpoints";
 import {
   CamsClientError,
@@ -51,6 +52,13 @@ async function toCamsError(error: unknown) {
 
   if (error instanceof HTTPError) {
     return await toCamsResponseError(error);
+  }
+
+  if (error instanceof TimeoutError) {
+    return new CamsClientError(
+      `The Commerce App Management Service did not answer within ${CAMS_REQUEST_TIMEOUT_MS / 1000} seconds`,
+      { cause: error, retryable: true },
+    );
   }
 
   return new CamsClientError(

@@ -11,7 +11,8 @@
  */
 
 import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
-import { HttpResponse, http } from "msw";
+import { TimeoutError } from "ky";
+import { delay, HttpResponse, http } from "msw";
 import { describe, expect, test } from "vitest";
 
 import {
@@ -649,6 +650,36 @@ describe("pollUpgrade", () => {
 
     expect(error).toBeInstanceOf(CamsClientError);
     expect(error.retryable).toBe(true);
+  });
+
+  test("reports a timeout with its own message, keeping the cause", async () => {
+    apiServer.use(
+      http.post(STATUS_URL, async () => {
+        await delay(200);
+        return HttpResponse.json(RUNNING);
+      }),
+    );
+
+    const error = await failureOf(
+      createClient({ retry: 0, timeout: 20 }).pollUpgrade(IDS),
+    );
+
+    expect(error).toBeInstanceOf(CamsClientError);
+    expect(error.message).toBe(
+      "The Commerce App Management Service did not answer within 60 seconds",
+    );
+    expect(error.retryable).toBe(true);
+    expect(error.cause).toBeInstanceOf(TimeoutError);
+  });
+
+  test("keeps the could not be reached message for other network failures", async () => {
+    apiServer.use(http.post(STATUS_URL, () => HttpResponse.error()));
+
+    const error = await failureOf(createClient({ retry: 0 }).pollUpgrade(IDS));
+
+    expect(error.message).toBe(
+      "The Commerce App Management Service could not be reached",
+    );
   });
 
   test("does not retry the sync POST, even when the client retries POST requests", async () => {
