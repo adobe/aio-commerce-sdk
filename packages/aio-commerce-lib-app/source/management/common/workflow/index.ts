@@ -13,16 +13,18 @@
 /** biome-ignore-all lint/performance/noBarrelFile: Convenience entrypoint for the workflow module */
 
 export {
+  createInitialState,
+  executeUninstallWorkflow,
+  executeWorkflow,
+} from "#management/deprecated/engine";
+export { validateStepTree } from "#management/deprecated/validation";
+
+export {
   createInitialPlanExecutionState,
   executePlannedWorkflow,
 } from "./execute";
 export { planWorkflow } from "./plan";
-export {
-  createInitialState,
-  createRetryState,
-  executeUninstallWorkflow,
-  executeWorkflow,
-} from "./runner";
+export { createRetryState } from "./retry";
 export {
   defineBranchStep,
   defineLeafStep,
@@ -35,8 +37,8 @@ export {
   isInProgressState,
   isSucceededState,
 } from "./types";
-export { validateStepTree } from "./validation";
 
+export type { ValidateStepTreeOptions } from "#management/deprecated/validation";
 export type {
   StepEvent,
   StepFailedEvent,
@@ -59,8 +61,6 @@ export type {
   StepMetaInfo,
   ValidationContext,
   ValidationExecutionContext,
-  ValidationIssue,
-  ValidationIssueSeverity,
 } from "./step";
 export type {
   ExecutionStatus,
@@ -75,7 +75,8 @@ export type {
 } from "./types";
 export type {
   StepValidationResult,
-  ValidateStepTreeOptions,
+  ValidationIssue,
+  ValidationIssueSeverity,
   ValidationResult,
   ValidationSummary,
 } from "./validation";

@@ -530,6 +530,7 @@ function mergeCurrentConfigData(
       if (!merged.has(entry.name)) {
         merged.set(entry.name, {
           name: entry.name,
+          // biome-ignore lint/suspicious/noUnnecessaryConditions: configData comes from an external caller and may violate the declared type at runtime.
           origin: entry.origin || {
             // biome-ignore lint/suspicious/noUnnecessaryConditions: configData comes from an external caller and may violate the declared type at runtime.
             code: configData.scope?.code || scopeCode,

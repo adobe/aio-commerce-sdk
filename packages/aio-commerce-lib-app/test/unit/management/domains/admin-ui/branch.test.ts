@@ -10,17 +10,15 @@
  * governing permissions and limitations under the License.
  */
 
-import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { describe, expect, test } from "vitest";
 
 import { isBranchStep, isLeafStep } from "#management/common/workflow/step";
 import { adminUiStep } from "#management/domains/admin-ui/branch";
-import { createMockAdminUiContext } from "#test/fixtures/admin-ui";
 import {
   configWithFullAdminUiV2,
   configWithWebhooks,
   minimalValidConfig,
 } from "#test/fixtures/config";
-import { createMockLogger } from "#test/fixtures/installation";
 
 describe("admin-ui installation module", () => {
   describe("adminUiStep branch step", () => {
@@ -62,89 +60,6 @@ describe("admin-ui installation module", () => {
       expect(adminUiStep.children[1].name).toBe("register-extension");
       expect(isLeafStep(adminUiStep.children[0])).toBe(true);
       expect(isLeafStep(adminUiStep.children[1])).toBe(true);
-    });
-  });
-
-  describe("enableAdminUiSdkStep handlers", () => {
-    const [enableAdminUiSdkStep] = adminUiStep.children;
-
-    test("should have an install handler but no uninstall handler", () => {
-      expect(enableAdminUiSdkStep.install).toBeDefined();
-      expect(enableAdminUiSdkStep.uninstall).toBeUndefined();
-    });
-
-    test("should call enableAdminUiSdk on install", async () => {
-      const context = createMockAdminUiContext();
-
-      await enableAdminUiSdkStep.install(configWithFullAdminUiV2, context);
-      expect(context.adminUiClient.enableAdminUiSdk).toHaveBeenCalledOnce();
-    });
-  });
-
-  describe("registerExtensionStep handlers", () => {
-    const [, registerExtensionStep] = adminUiStep.children;
-
-    beforeEach(() => {
-      vi.stubEnv("__OW_NAMESPACE", "test-namespace");
-    });
-
-    afterEach(() => {
-      vi.unstubAllEnvs();
-    });
-
-    test("should have install and uninstall handlers defined", () => {
-      expect(registerExtensionStep.install).toBeDefined();
-      expect(registerExtensionStep.uninstall).toBeDefined();
-    });
-
-    test("should have meta.uninstall defined", () => {
-      expect(registerExtensionStep.meta.uninstall).toBeDefined();
-    });
-
-    test("should call registerExtension with extensionName, title, and workspace", async () => {
-      const context = createMockAdminUiContext();
-
-      await registerExtensionStep.install(configWithFullAdminUiV2, context);
-      expect(context.adminUiClient.registerExtension).toHaveBeenCalledWith({
-        extensionName: "test-namespace",
-        extensionTitle: context.appData.projectTitle,
-        extensionWorkspace: context.appData.workspaceName,
-      });
-    });
-
-    test("should call unregisterExtension with workspaceName and __OW_NAMESPACE", async () => {
-      const context = createMockAdminUiContext();
-      await registerExtensionStep.uninstall?.(configWithFullAdminUiV2, context);
-
-      expect(context.adminUiClient.unregisterExtension).toHaveBeenCalledWith({
-        extensionName: "test-namespace",
-        workspaceName: context.appData.workspaceName,
-      });
-    });
-
-    test("should not throw when the uninstall call fails (best-effort)", async () => {
-      const context = createMockAdminUiContext({
-        unregisterExtensionImpl: () =>
-          Promise.reject(new Error("Commerce API error")),
-      });
-
-      await expect(
-        registerExtensionStep.uninstall?.(configWithFullAdminUiV2, context),
-      ).resolves.toBeUndefined();
-    });
-
-    test("should log a warning when the uninstall call fails", async () => {
-      const logger = createMockLogger();
-      const context = {
-        ...createMockAdminUiContext({
-          unregisterExtensionImpl: () =>
-            Promise.reject(new Error("Commerce API error")),
-        }),
-        logger,
-      };
-
-      await registerExtensionStep.uninstall?.(configWithFullAdminUiV2, context);
-      expect(logger.warn).toHaveBeenCalled();
     });
   });
 });

@@ -10,21 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
-import type {
-  BusinessConfigSchema,
-  ResolvedBusinessConfigSchema,
-} from "@adobe/aio-commerce-lib-config";
-
-/** Schema with a single list field whose options are a static array. */
-export const schemaWithStaticListOptions = [
-  {
-    default: "braintree",
-    name: "paymentMethod",
-    options: [{ label: "Braintree", value: "braintree" }],
-    selectionMode: "single",
-    type: "list",
-  },
-] satisfies ResolvedBusinessConfigSchema;
+import type { BusinessConfigSchema } from "@adobe/aio-commerce-lib-config";
 
 /** Schema with a single dynamicList field whose options are resolved at runtime. */
 export const schemaWithDynamicListOptions = [

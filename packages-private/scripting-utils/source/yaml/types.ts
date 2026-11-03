@@ -41,6 +41,7 @@ export type ActionDefinition = {
 
 export type Package = {
   license?: string;
+  inputs?: Record<string, string>;
   actions?: Record<string, ActionDefinition>;
 };
 

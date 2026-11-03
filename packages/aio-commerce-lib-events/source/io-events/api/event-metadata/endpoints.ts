@@ -17,6 +17,7 @@ import {
   DeleteEventMetadataForProviderSchema,
   GetAllEventMetadataForProviderSchema,
   GetEventMetadataForEventAndProviderSchema,
+  UpdateEventMetadataForProviderSchema,
 } from "./schema";
 
 import type { AdobeIoEventsHttpClient } from "@adobe/aio-commerce-lib-api";
@@ -27,6 +28,7 @@ import type {
   DeleteEventMetadataForProviderParams,
   GetAllEventMetadataForProviderParams,
   GetEventMetadataForEventAndProviderParams,
+  UpdateEventMetadataForProviderParams,
 } from "./schema";
 import type {
   IoEventMetadataManyResponse,
@@ -112,6 +114,44 @@ export async function createEventMetadataForProvider(
   return httpClient
     .post(
       `${validatedParams.consumerOrgId}/${validatedParams.projectId}/${validatedParams.workspaceId}/providers/${validatedParams.providerId}/eventmetadata`,
+      {
+        ...fetchOptions,
+        json: {
+          description: validatedParams.description,
+          event_code: validatedParams.eventCode,
+          label: validatedParams.label,
+          sample_event_template: validatedParams.sampleEventTemplate,
+        },
+      },
+    )
+    .json<IoEventMetadataOneResponse>();
+}
+
+/**
+ * Updates event metadata of a provider. This replaces the metadata: a `sampleEventTemplate`
+ * that is omitted clears the stored sample event.
+ * @see https://developer.adobe.com/events/docs/api#operation/putEventMetadata
+ *
+ * @param httpClient - The {@link AdobeIoEventsHttpClient} to use to make the request.
+ * @param params - The parameters to update the event metadata with.
+ * @param fetchOptions - The {@link Options} to use to make the request.
+ *
+ * @throws A {@link CommerceSdkValidationError} If the parameters are in the wrong format.
+ * @throws An {@link HTTPError} If the status code is not 2XX.
+ */
+export async function updateEventMetadataForProvider(
+  httpClient: AdobeIoEventsHttpClient,
+  params: UpdateEventMetadataForProviderParams,
+  fetchOptions?: Options,
+) {
+  const validatedParams = parseOrThrow(
+    UpdateEventMetadataForProviderSchema,
+    params,
+  );
+
+  return httpClient
+    .put(
+      `${validatedParams.consumerOrgId}/${validatedParams.projectId}/${validatedParams.workspaceId}/providers/${validatedParams.providerId}/eventmetadata/${validatedParams.eventCode}`,
       {
         ...fetchOptions,
         json: {

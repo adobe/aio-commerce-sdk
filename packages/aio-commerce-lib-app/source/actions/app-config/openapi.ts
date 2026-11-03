@@ -27,7 +27,7 @@ type OpenApiSpec = Awaited<ReturnType<typeof importOpenApi>>["default"];
 type SpecPath = keyof OpenApiSpec["paths"];
 
 /** Matches component schema `$ref` strings, capturing the schema name. */
-const SCHEMA_REF_PATTERN = /"#\/components\/schemas\/(\w+)"/g;
+const SCHEMA_REF_PATTERN = /"#\/components\/schemas\/(?<schema>\w+)"/gu;
 
 /**
  * Collects the names of every component schema referenced via `$ref` in a value
@@ -36,6 +36,7 @@ const SCHEMA_REF_PATTERN = /"#\/components\/schemas\/(\w+)"/g;
  * @param value - Any part of the spec to scan.
  */
 function collectSchemaRefs(value: unknown) {
+  // biome-ignore lint/suspicious/noUnnecessaryConditions: JSON.stringify can return undefined for missing schema references.
   const matches = (JSON.stringify(value) ?? "").matchAll(SCHEMA_REF_PATTERN);
   return [...matches].map((match) => match[1]);
 }
@@ -157,8 +158,7 @@ export async function buildOpenApiSpec(
     );
 
     stripPath("/installation");
-    stripPath("/installation/validation");
-    stripPath("/installation/uninstallation");
+    stripPath("/installation/plan");
   }
 
   pruneUnusedSchemas(spec);

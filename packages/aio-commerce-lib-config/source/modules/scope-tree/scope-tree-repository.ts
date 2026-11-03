@@ -30,6 +30,7 @@ export async function getCachedScopeTree(
   try {
     const state = await getSharedState();
     const cached = await state.get(`${namespace}:scope-tree`);
+    // biome-ignore lint/suspicious/noUnnecessaryConditions: aio-lib-state returns undefined for missing keys despite its non-nullable return type.
     if (cached?.value) {
       const parsed = JSON.parse(cached.value);
       return parsed.data || null;

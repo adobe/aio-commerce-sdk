@@ -10,8 +10,14 @@
  * governing permissions and limitations under the License.
  */
 
+import { requiresInstallation } from "#config/schema/app";
 import { planWorkflow } from "#management/common/workflow/plan";
 
+import {
+  LifecycleAttemptInProgressError,
+  PendingLifecyclePlanNotFoundError,
+} from "./errors";
+import { diffAgainstReviewedPlan } from "./plan-diff";
 import {
   CURRENT_STATE_KEY,
   normalizeExpiredAttempt,
@@ -20,121 +26,180 @@ import {
 
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 import type {
-  AppStateSnapshot,
   LifecycleOperation,
   LifecyclePlan,
+  LifecyclePlanDiff,
   OrchestrationState,
 } from "#management/common/orchestration";
+import type { PlanningIssue } from "#management/common/workflow/resource";
 import type { LifecycleRuntime } from "./state";
+
+/** Warns that a plan without a stored baseline only acts on what the fallback config declares and what can be proven ours. */
+const FALLBACK_BASELINE_ISSUE: PlanningIssue = {
+  blocking: false,
+  code: "PLANNED_WITHOUT_BASELINE",
+  domain: "lifecycle",
+  message:
+    "There is no record of what was installed. The plan only covers what the deployed config declares and what can be proven to belong to the app.",
+  severity: "warning",
+};
 
 /** Inputs used to produce a lifecycle plan. */
 export type PlanLifecycleOptions = LifecycleRuntime & {
   actionVersion: string;
   operation: LifecycleOperation;
-  targetAppVersion: string;
-  targetConfig: CommerceAppConfigOutputModel;
+
+  /** The config to plan to, or `null` when nothing should remain installed. */
+  targetConfig?: CommerceAppConfigOutputModel | null;
+
+  /** The config to plan from when no baseline is stored. It is not stored as a baseline. */
+  fallbackBaselineConfig?: CommerceAppConfigOutputModel;
+
+  /** Identifier of the pending plan a reviewer approved, to compare the new plan against. */
+  reviewedPlanId?: string;
 };
 
 /** Result of a lifecycle planning pass. */
-export type PlanLifecycleResult =
-  | { kind: "blocked"; plan: LifecyclePlan; skipped: boolean }
-  | { kind: "planned"; plan: LifecyclePlan; skipped: boolean };
+export type PlanLifecycleResult = (
+  | { kind: "blocked"; plan: LifecyclePlan }
+  | { kind: "planned"; plan: LifecyclePlan }
+) & {
+  /** How the new plan differs from the reviewed one, when `reviewedPlanId` was given. */
+  planDiff?: LifecyclePlanDiff;
+};
 
-/** Produces and persists a plan from the current baseline to the target config. */
+/**
+ * Produces and persists a plan from the current baseline to the target config, replacing any
+ * pending plan. Every plan is also kept in the plan store. Throws {@link PendingLifecyclePlanNotFoundError} when `reviewedPlanId` is not
+ * the pending plan.
+ */
 export async function planLifecycle(
   options: PlanLifecycleOptions,
 ): Promise<PlanLifecycleResult> {
   const loaded = await readOrInitializeState(options);
-  const state = await normalizeExpiredAttempt(options.stateStore, loaded.state);
+  const state = await normalizeExpiredAttempt(
+    options.stateStore,
+    loaded.state,
+    options.lifecycleContext.logger,
+  );
+
   const { baseline } = loaded;
 
   if (
     state.latestAttempt?.status === "pending" ||
     state.latestAttempt?.status === "in-progress"
   ) {
-    throw new Error("A lifecycle attempt is already in progress");
+    throw new LifecycleAttemptInProgressError();
   }
 
-  const existingPlan = findReusablePlan(
-    state,
-    options.actionVersion,
-    options.operation,
-  );
-  if (existingPlan) {
-    return createPlanningResult(existingPlan, true);
-  }
+  const reviewedPlan = options.reviewedPlanId
+    ? requirePendingPlan(state, options.reviewedPlanId)
+    : null;
+
+  const { fallbackBaselineConfig } = options;
+  const isPlannedFromFallback =
+    !baseline && fallbackBaselineConfig !== undefined;
+
+  const planningBaseline = isPlannedFromFallback
+    ? { config: fallbackBaselineConfig, data: null }
+    : baseline;
+
+  const { targetConfig } = options;
+  const target = targetConfig
+    ? { appVersion: targetConfig.metadata.version, config: targetConfig }
+    : null;
 
   const planning = await planWorkflow({
-    baseline,
+    baseline: planningBaseline,
+    failedAttempt: getFailedAttempt(state),
     lifecycleContext: options.lifecycleContext,
     rootStep: options.rootStep,
-    target: {
-      config: options.targetConfig,
-    },
+    target,
   });
+
+  // An app that declares nothing needing installation has no record to lose, so the warning would mislead.
+  const warnsAboutFallback =
+    isPlannedFromFallback && requiresInstallation(fallbackBaselineConfig);
+
+  const issues = warnsAboutFallback
+    ? [FALLBACK_BASELINE_ISSUE, ...planning.issues]
+    : planning.issues;
+
+  // An upgrade planned from a fallback has no snapshot. Its fallback config carries the installed version.
+  const source = getPlanSource(
+    baseline,
+    isPlannedFromFallback && options.operation === "upgrade"
+      ? fallbackBaselineConfig
+      : undefined,
+  );
 
   const plan: LifecyclePlan = {
     actionVersion: options.actionVersion,
     domains: planning.domains,
     id: crypto.randomUUID(),
-    issues: planning.issues,
+    issues,
     operation: options.operation,
-    source: {
-      appVersion: getBaselineAppVersion(state, baseline),
-      snapshotId: state.baselineSnapshotId ?? baseline.id,
-    },
-    target: {
-      appVersion: options.targetAppVersion,
-      config: options.targetConfig,
-    },
+    previousPlanId: state.pendingPlan?.id ?? null,
+    source,
+    target,
   };
 
+  // Stored first, so a plan that is replaced or never started stays readable.
+  await options.planStore.put(plan.id, plan);
   await options.stateStore.put(CURRENT_STATE_KEY, {
     ...state,
     pendingPlan: plan,
   });
-  return createPlanningResult(plan, false);
+
+  const result = createPlanningResult(plan);
+  return reviewedPlan
+    ? { ...result, planDiff: diffAgainstReviewedPlan(reviewedPlan, plan) }
+    : result;
 }
 
-/** Finds a plan produced by the current action version that can be reused. */
-function findReusablePlan(
-  state: OrchestrationState,
-  actionVersion: string,
-  operation: LifecycleOperation,
-): LifecyclePlan | null {
-  if (
-    state.pendingPlan?.actionVersion === actionVersion &&
-    state.pendingPlan.operation === operation
-  ) {
-    return state.pendingPlan;
+/** The state a plan starts from: the baseline's, a fallback's version without a snapshot, or nothing. */
+function getPlanSource(
+  baseline: { id: string; config: CommerceAppConfigOutputModel } | null,
+  fallbackConfig: CommerceAppConfigOutputModel | undefined,
+): LifecyclePlan["source"] {
+  if (baseline) {
+    return {
+      appVersion: baseline.config.metadata.version,
+      snapshotId: baseline.id,
+    };
   }
-  const latestPlan = state.latestAttempt?.plan;
-  return latestPlan?.actionVersion === actionVersion &&
-    latestPlan.operation === operation
-    ? latestPlan
+
+  return fallbackConfig
+    ? { appVersion: fallbackConfig.metadata.version, snapshotId: null }
     : null;
 }
 
-/** Resolves the version of the app represented by the current baseline. */
-function getBaselineAppVersion(
+/** Returns the pending plan, or throws when it is not the plan with the given id. */
+function requirePendingPlan(
   state: OrchestrationState,
-  baseline: AppStateSnapshot,
-): string {
-  if (state.latestAttempt?.status === "succeeded") {
-    return state.latestAttempt.result.appVersion;
+  planId: string,
+): LifecyclePlan {
+  const plan = state.pendingPlan;
+  if (!plan || plan.id !== planId) {
+    throw new PendingLifecyclePlanNotFoundError(planId);
   }
-  return (
-    (baseline.config as { metadata?: { version?: string } }).metadata
-      ?.version ?? "0.0.0"
-  );
+
+  return plan;
+}
+
+/** The target config and domain plans of the latest attempt, when it failed and had a target. */
+function getFailedAttempt(state: OrchestrationState) {
+  const attempt = state.latestAttempt;
+  if (attempt?.status !== "failed" || !attempt.plan.target) {
+    return;
+  }
+
+  return { config: attempt.plan.target.config, domains: attempt.plan.domains };
 }
 
 /** Converts a persisted plan into its public planning result. */
-function createPlanningResult(
-  plan: LifecyclePlan,
-  skipped: boolean,
-): PlanLifecycleResult {
-  return plan.issues.length > 0
-    ? { kind: "blocked", plan, skipped }
-    : { kind: "planned", plan, skipped };
+function createPlanningResult(plan: LifecyclePlan): PlanLifecycleResult {
+  return plan.issues.some((issue) => issue.blocking)
+    ? { kind: "blocked", plan }
+    : { kind: "planned", plan };
 }

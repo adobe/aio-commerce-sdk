@@ -27,7 +27,7 @@ const MAX_MESSAGE_LENGTH = 1000;
  *   - "./setup.ts"
  *   - "../../scripts/setup.js"
  */
-const SCRIPT_PATH_REGEX = /^(?:\.{0,2}\/)*(?:[\w-]+\/)*[\w-]+\.(?:js|ts)$/;
+const SCRIPT_PATH_REGEX = /^(?:\.{0,2}\/)*(?:[\w-]+\/)*[\w-]+\.(?:js|ts)$/u;
 
 /**
  * Schema for custom installation step configuration
@@ -102,9 +102,6 @@ export const InstallationSchema = v.object({
   ),
   messages: v.optional(MessagesSchema),
 });
-
-/** The installation configuration for an Adobe Commerce application */
-export type InstallationConfiguration = v.InferInput<typeof InstallationSchema>;
 
 /** Custom installation step configuration */
 export type CustomInstallationStep = v.InferInput<

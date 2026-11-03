@@ -17,7 +17,7 @@ export const apiServer = setupServer();
 
 /** Registers the standard MSW lifecycle for API integration tests. */
 export function setupApiTestLifecycle() {
-  beforeAll(() => apiServer.listen({ onUnhandledRequest: "error" }));
+  beforeAll(() => apiServer.listen({ onUnhandledFrame: "error" }));
   afterAll(() => apiServer.close());
   afterEach(() => apiServer.resetHandlers());
 }

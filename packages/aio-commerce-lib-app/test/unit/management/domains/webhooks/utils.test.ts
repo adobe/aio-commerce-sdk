@@ -10,104 +10,14 @@
  * governing permissions and limitations under the License.
  */
 
-import { describe, expect, test, vi } from "vitest";
+import { describe, expect, test } from "vitest";
 
 import {
   buildWebhookIdPrefix,
-  createWebhookSubscription,
   resolveDeveloperConsoleOAuthCredentials,
 } from "#management/domains/webhooks/utils";
-import { makeHttpError } from "#test/fixtures/http-error";
 import { createMockInstallationParams } from "#test/fixtures/installation";
-import {
-  createMockCommerceWebhooksClient,
-  createMockResolvedWebhook,
-} from "#test/fixtures/webhooks";
 
-import type { WebhooksExecutionContext } from "#management/domains/webhooks/context";
-
-function makeWebhookClient(
-  subscribeWebhook = vi.fn().mockResolvedValue(null),
-): WebhooksExecutionContext["commerceWebhooksClient"] {
-  return createMockCommerceWebhooksClient({
-    subscribeWebhook,
-  });
-}
-
-describe("createWebhookSubscription", () => {
-  const resolvedWebhook = createMockResolvedWebhook();
-
-  test("calls subscribeWebhook and returns the resolved webhook", async () => {
-    const subscribeWebhook = vi.fn().mockResolvedValue(null);
-    const client = makeWebhookClient(subscribeWebhook);
-    const result = await createWebhookSubscription(client, resolvedWebhook);
-
-    expect(subscribeWebhook).toHaveBeenCalledWith(resolvedWebhook);
-    expect(result).toBe(resolvedWebhook);
-  });
-
-  test("throws enriched error when HTTPError response body has a string message", async () => {
-    const httpError = makeHttpError(
-      422,
-      "Unprocessable Entity",
-      JSON.stringify({ message: "Duplicate webhook" }),
-    );
-
-    const client = createMockCommerceWebhooksClient({
-      subscribeWebhook: vi.fn().mockRejectedValue(httpError),
-    });
-
-    const error = await createWebhookSubscription(
-      client,
-      resolvedWebhook,
-    ).catch((e: unknown) => e);
-    expect(error).toBeInstanceOf(Error);
-    expect((error as Error).message).toContain(
-      'Failed to create webhook subscription for "',
-    );
-    expect((error as Error).message).toContain("HTTP ");
-  });
-
-  test("throws enriched error when response body has no string message", async () => {
-    const httpError = makeHttpError(
-      422,
-      "Unprocessable Entity",
-      JSON.stringify({ code: 422 }),
-    );
-    const client = createMockCommerceWebhooksClient({
-      subscribeWebhook: vi.fn().mockRejectedValue(httpError),
-    });
-
-    const error = await createWebhookSubscription(
-      client,
-      resolvedWebhook,
-    ).catch((e: unknown) => e);
-    expect(error).toBeInstanceOf(Error);
-    expect((error as Error).message).toContain(
-      'Failed to create webhook subscription for "',
-    );
-    expect((error as Error).message).toContain("HTTP ");
-  });
-
-  test("throws enriched error when response body cannot be parsed as JSON", async () => {
-    const httpError = makeHttpError(400, "Bad Request", "{");
-    const client = createMockCommerceWebhooksClient({
-      subscribeWebhook: vi.fn().mockRejectedValue(httpError),
-    });
-
-    const error = await createWebhookSubscription(
-      client,
-      resolvedWebhook,
-    ).catch((e: unknown) => e);
-    expect(error).toBeInstanceOf(Error);
-    expect((error as Error).message).toContain(
-      'Failed to create webhook subscription for "',
-    );
-    expect((error as Error).message).toContain("HTTP ");
-  });
-});
-
-/** Minimal valid IMS params shared across resolveDeveloperConsoleOAuthCredentials tests. */
 const BASE_IMS_PARAMS = createMockInstallationParams({
   AIO_COMMERCE_AUTH_IMS_CLIENT_ID: "client-id",
   AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS: "client-secret",

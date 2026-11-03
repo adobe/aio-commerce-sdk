@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Adobe. All rights reserved.
+ * Copyright 2026 Adobe. All rights reserved.
  * This file is licensed to you under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License. You may obtain a copy
  * of the License at http://www.apache.org/licenses/LICENSE-2.0
@@ -57,6 +57,33 @@ describe("lib/api-client", () => {
       expect(r3).toBe("ok:value");
       expect(asyncOp).toHaveBeenCalledTimes(1);
       expect(asyncOp).toHaveBeenCalledWith(testClient, "value");
+    });
+
+    it("should bind only own functions", () => {
+      const { testClient } = context;
+      const functions = { sum };
+      Object.setPrototypeOf(functions, { getApiKey });
+
+      const api = ApiClient.create(testClient, functions);
+
+      expect(Object.keys(api)).toEqual(["sum"]);
+      expect(api.sum(2, 3)).toBe(5);
+    });
+
+    it("should bind functions without a prototype", () => {
+      const { testClient } = context;
+      const functions = { sum };
+      Object.setPrototypeOf(functions, null);
+
+      const api = ApiClient.create(testClient, functions);
+
+      expect(api.sum(2, 3)).toBe(5);
+    });
+
+    it("should support an empty function record", () => {
+      const { testClient } = context;
+
+      expect(ApiClient.create(testClient, {})).toEqual({});
     });
   });
 });

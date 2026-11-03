@@ -27,7 +27,7 @@ describe("getGridColumnAclResourceId", () => {
     );
   });
 
-  it("supports product and customer entities", () => {
+  it("supports product, customer, and newsletter entities", () => {
     expect(
       getGridColumnAclResourceId("acme-promotions", "product", "approval-req"),
     ).toBe(
@@ -37,6 +37,33 @@ describe("getGridColumnAclResourceId", () => {
       getGridColumnAclResourceId("acme-promotions", "customer", "Tier"),
     ).toBe(
       "Magento_CommerceBackendUix::adminuisdk_app_acme_promotions_customer_gridcolumns_tier",
+    );
+    expect(
+      getGridColumnAclResourceId("acme-promotions", "newsletter", "source"),
+    ).toBe(
+      "Magento_CommerceBackendUix::adminuisdk_app_acme_promotions_newsletter_gridcolumns_source",
+    );
+  });
+
+  it("supports invoice, creditmemo, and shipment entities", () => {
+    expect(
+      getGridColumnAclResourceId("acme-promotions", "invoice", "paid_status"),
+    ).toBe(
+      "Magento_CommerceBackendUix::adminuisdk_app_acme_promotions_invoice_gridcolumns_paid_status",
+    );
+    expect(
+      getGridColumnAclResourceId(
+        "acme-promotions",
+        "creditmemo",
+        "refund_status",
+      ),
+    ).toBe(
+      "Magento_CommerceBackendUix::adminuisdk_app_acme_promotions_creditmemo_gridcolumns_refund_status",
+    );
+    expect(
+      getGridColumnAclResourceId("acme-promotions", "shipment", "carrier"),
+    ).toBe(
+      "Magento_CommerceBackendUix::adminuisdk_app_acme_promotions_shipment_gridcolumns_carrier",
     );
   });
 

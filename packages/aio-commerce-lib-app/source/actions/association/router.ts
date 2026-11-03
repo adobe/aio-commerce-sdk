@@ -10,7 +10,8 @@
  * governing permissions and limitations under the License.
  */
 
-import { noContent } from "@adobe/aio-commerce-lib-core/responses";
+import { resolveImsAuthParams } from "@adobe/aio-commerce-lib-auth";
+import { noContent, ok } from "@adobe/aio-commerce-lib-core/responses";
 import {
   HttpActionRouter,
   logger as withLogger,
@@ -39,17 +40,13 @@ export const router = new HttpActionRouter<AssociationActionContext>().use(
   withLogger({ name: () => "association" }),
 );
 
-/**
- * POST / - Store association data.
- *
- * Persists the Commerce instance the app is associated with so runtime actions
- * can later retrieve it via `getCommerceInstance` / `getCommerceClient`.
- */
+/** POST / - Store association data and return the app's own `client_id`. */
 router.post("/", {
   body: AssociationRequestBodySchema,
 
-  handler: async (req, { logger }) => {
+  handler: async (req, { logger, rawParams }) => {
     const { commerceBaseUrl, commerceEnv } = req.body;
+
     logger.debug(
       `Storing association data (baseUrl: "${commerceBaseUrl}", env: "${commerceEnv}")`,
     );
@@ -61,7 +58,8 @@ router.post("/", {
       },
     });
 
-    return noContent();
+    const { clientId } = resolveImsAuthParams(rawParams);
+    return ok({ body: { clientId } });
   },
 });
 

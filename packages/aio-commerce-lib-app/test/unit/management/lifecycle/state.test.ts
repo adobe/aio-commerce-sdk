@@ -13,12 +13,19 @@
 import { describe, expect, test, vi } from "vitest";
 
 import {
+  LifecycleBaselineNotFoundError,
+  LifecycleOrchestrationError,
+  LifecycleStateNotInitializedError,
+  StaleLifecycleAttemptError,
+} from "#management/lifecycle/errors";
+import {
   CURRENT_STATE_KEY,
   normalizeExpiredAttempt,
   readOrInitializeState,
   requireCurrentAttempt,
   requireState,
 } from "#management/lifecycle/state";
+import { createMockLogger } from "#test/fixtures/installation";
 import {
   createMockAppStateSnapshot,
   createMockLifecycleAttempt,
@@ -26,6 +33,7 @@ import {
   createMockLifecycleStore,
   createMockOrchestrationState,
 } from "#test/fixtures/lifecycle";
+import { createMockStepStatus } from "#test/fixtures/workflow";
 
 import type {
   AppStateSnapshot,
@@ -70,6 +78,45 @@ function createRuntime(args: {
   return { baselineProvider, runtime, snapshotStore, stateStore };
 }
 
+/** Captures the error rejected by a lifecycle operation. */
+async function captureError(operation: Promise<unknown>) {
+  return await operation.catch((error: unknown) => error);
+}
+
+describe("lifecycle orchestration error types", () => {
+  test("reports a missing baseline snapshot as LifecycleBaselineNotFoundError", async () => {
+    const { runtime } = createRuntime({
+      baselineFor: () => null,
+      state: createMockOrchestrationState(),
+    });
+
+    const error = await captureError(readOrInitializeState(runtime));
+    expect(error).toBeInstanceOf(LifecycleBaselineNotFoundError);
+    expect(error).toBeInstanceOf(LifecycleOrchestrationError);
+  });
+
+  test("reports uninitialized state as LifecycleStateNotInitializedError", async () => {
+    const store = createMockLifecycleStore<OrchestrationState>();
+
+    const error = await captureError(requireState(store));
+    expect(error).toBeInstanceOf(LifecycleStateNotInitializedError);
+    expect(error).toBeInstanceOf(LifecycleOrchestrationError);
+  });
+
+  test("reports a stale attempt as StaleLifecycleAttemptError carrying its id", async () => {
+    const state = createMockOrchestrationState({
+      latestAttempt: pendingAttempt(FUTURE),
+    });
+
+    const store = createMockLifecycleStore({ initial: state });
+    const error = await captureError(requireCurrentAttempt(store, "other"));
+
+    expect(error).toBeInstanceOf(StaleLifecycleAttemptError);
+    expect(error).toBeInstanceOf(LifecycleOrchestrationError);
+    expect(error).toHaveProperty("attemptId", "other");
+  });
+});
+
 describe("readOrInitializeState", () => {
   test("returns the existing state and baseline", async () => {
     const baseline = createSnapshot("snapshot-1");
@@ -92,46 +139,34 @@ describe("readOrInitializeState", () => {
     );
   });
 
-  test("adopts the compatibility baseline when the existing state has no snapshot id", async () => {
-    const baseline = createSnapshot("compat-1");
+  test("returns no baseline for a state without a snapshot id", async () => {
     const state = createMockOrchestrationState({ baselineSnapshotId: null });
-    const { runtime, snapshotStore, stateStore } = createRuntime({
-      baselineFor: () => baseline,
+    const { runtime, baselineProvider } = createRuntime({
+      baselineFor: () => createSnapshot("unused"),
       state,
     });
 
-    const result = await readOrInitializeState(runtime);
-
-    expect(result.baseline).toEqual(baseline);
-    expect(result.state.baselineSnapshotId).toBe("compat-1");
-    expect(await snapshotStore.get("compat-1")).toEqual(baseline);
-    expect(await stateStore.get(CURRENT_STATE_KEY)).toMatchObject({
-      baselineSnapshotId: "compat-1",
+    expect(await readOrInitializeState(runtime)).toEqual({
+      baseline: null,
+      state,
     });
+    expect(baselineProvider.get).not.toHaveBeenCalled();
   });
 
-  test("initializes fresh state from the compatibility baseline when none exists", async () => {
-    const baseline = createSnapshot("compat-1");
-    const { runtime, snapshotStore, stateStore } = createRuntime({
-      baselineFor: (snapshotId) => (snapshotId === null ? baseline : null),
+  test("returns an empty state and no baseline when nothing is stored", async () => {
+    const { runtime, stateStore } = createRuntime({
+      baselineFor: () => createSnapshot("unused"),
     });
 
-    const result = await readOrInitializeState(runtime);
-    expect(result.state).toEqual({
-      baselineSnapshotId: "compat-1",
-      latestAttempt: null,
-      pendingPlan: null,
+    expect(await readOrInitializeState(runtime)).toEqual({
+      baseline: null,
+      state: {
+        baselineSnapshotId: null,
+        latestAttempt: null,
+        pendingPlan: null,
+      },
     });
-
-    expect(await snapshotStore.get("compat-1")).toEqual(baseline);
-    expect(await stateStore.get(CURRENT_STATE_KEY)).toEqual(result.state);
-  });
-
-  test("throws when no compatible baseline exists and no state is recorded", async () => {
-    const { runtime } = createRuntime({ baselineFor: () => null });
-    await expect(readOrInitializeState(runtime)).rejects.toThrow(
-      "compatible lifecycle baseline is required",
-    );
+    expect(await stateStore.get(CURRENT_STATE_KEY)).toBeNull();
   });
 });
 
@@ -174,6 +209,46 @@ describe("normalizeExpiredAttempt", () => {
     });
 
     expect(await store.get(CURRENT_STATE_KEY)).toEqual(normalized);
+  });
+
+  test("warns with the attempt id and the step that was in progress when an attempt expires", async () => {
+    const logger = createMockLogger();
+    const attempt = createMockLifecycleAttempt({
+      executionDeadline: PAST,
+      id: "attempt-expired",
+      progress: createMockStepStatus({
+        children: [
+          createMockStepStatus({
+            path: ["root", "webhooks"],
+            startedAt: "1999-12-31T23:59:00.000Z",
+            status: "in-progress",
+          }),
+        ],
+        status: "in-progress",
+      }),
+      status: "in-progress",
+    });
+
+    await normalizeExpiredAttempt(
+      createMockLifecycleStore<OrchestrationState>(),
+      createMockOrchestrationState({ latestAttempt: attempt }),
+      logger,
+    );
+
+    expect(logger.warn).toHaveBeenCalledWith(
+      `The upgrade attempt attempt-expired expired at its execution deadline ${PAST} while step root/webhooks was in progress since 1999-12-31T23:59:00.000Z.`,
+    );
+  });
+
+  test("does not warn when the attempt has not expired", async () => {
+    const logger = createMockLogger();
+    await normalizeExpiredAttempt(
+      createMockLifecycleStore<OrchestrationState>(),
+      createMockOrchestrationState({ latestAttempt: pendingAttempt() }),
+      logger,
+    );
+
+    expect(logger.warn).not.toHaveBeenCalled();
   });
 });
 

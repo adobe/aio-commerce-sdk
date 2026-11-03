@@ -22,7 +22,6 @@
     "ansis": "catalog:"
   },
   "devDependencies": {
-    "@aio-commerce-sdk/config-typescript": "workspace:*",
-    "node-plop": "^0.32.3"
+    "@aio-commerce-sdk/config-typescript": "workspace:*"
   }
 }

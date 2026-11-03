@@ -85,6 +85,40 @@ describe("getSharedState", () => {
   });
 });
 
+describe("getAllSharedStates", () => {
+  beforeEach(() => {
+    vi.resetModules();
+
+    mockInitState.mockReset();
+    mockInitState.mockImplementation(({ region }: { region: string }) =>
+      Promise.resolve({ region }),
+    );
+  });
+
+  test("initializes a client for every region", async () => {
+    const { getAllSharedStates, ALL_REGIONS } = await import(
+      "#utils/repository"
+    );
+    const states = await getAllSharedStates();
+
+    expect(mockInitState).toHaveBeenCalledTimes(ALL_REGIONS.length);
+    for (const region of ALL_REGIONS) {
+      expect(mockInitState).toHaveBeenCalledWith({ region });
+    }
+    expect(states).toHaveLength(ALL_REGIONS.length);
+  });
+
+  test("memoizes each region's client independently across calls", async () => {
+    const { getAllSharedStates } = await import("#utils/repository");
+
+    const first = await getAllSharedStates();
+    const second = await getAllSharedStates();
+
+    expect(second).toEqual(first);
+    expect(mockInitState).toHaveBeenCalledTimes(4);
+  });
+});
+
 describe("getSharedFiles", () => {
   beforeEach(() => {
     vi.resetModules();

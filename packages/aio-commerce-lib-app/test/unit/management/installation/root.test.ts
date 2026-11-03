@@ -13,20 +13,19 @@
 import { describe, expect, test } from "vitest";
 
 import { createInitialPlanExecutionState } from "#management/common/workflow/execute";
-import { isBranchStep } from "#management/common/workflow/step";
+import { isBranchStep, isLeafStep } from "#management/common/workflow/step";
 import { adminUiStep } from "#management/domains/admin-ui/branch";
 import { eventingStep } from "#management/domains/events/branch";
 import { webhooksStep } from "#management/domains/webhooks/branch";
-import {
-  createRootInstallationStep,
-  createRootUninstallationStep,
-} from "#management/installation/root";
+import { createRootInstallationStep } from "#management/installation/root";
 import {
   configWithCustomInstallationSteps,
   configWithWebhooks,
   minimalValidConfig,
 } from "#test/fixtures/config";
 import { createMockLifecyclePlan } from "#test/fixtures/lifecycle";
+
+import type { AnyStep } from "#management/common/workflow/step";
 
 describe("createRootInstallationStep", () => {
   test("should create installation step with default children", () => {
@@ -64,11 +63,11 @@ describe("createRootInstallationStep", () => {
     ).not.toContain("reconciliation");
   });
 
-  test("includes the reconciliation leaf when built for an upgrade", () => {
+  test("builds a leaf per custom installation step when built for the lifecycle", () => {
     const result = createRootInstallationStep(
       configWithCustomInstallationSteps,
       {
-        forUpgrade: true,
+        forLifecycle: true,
       },
     );
 
@@ -77,9 +76,56 @@ describe("createRootInstallationStep", () => {
     expect(customInstallationStep.children.map((child) => child.name)).toEqual([
       "demoSuccess",
       "demoError",
-      "reconciliation",
     ]);
   });
+
+  test("puts the custom installation steps that ran first when built for the lifecycle", () => {
+    const result = createRootInstallationStep(
+      configWithCustomInstallationSteps,
+      {
+        executedCustomInstallationSteps: [
+          { name: "Demo Error", script: "./demo-error.js" },
+        ],
+        forLifecycle: true,
+      },
+    );
+
+    const [, , , customInstallationStep] = result.children;
+    expect.assert(isBranchStep(customInstallationStep));
+    expect(customInstallationStep.children.map((child) => child.name)).toEqual([
+      "demoError",
+      "demoSuccess",
+    ]);
+  });
+
+  test.each(["install", "uninstall", "upgrade"] as const)(
+    "defines %s metadata on every step the lifecycle can plan",
+    (operation) => {
+      const rootStep = createRootInstallationStep(
+        configWithCustomInstallationSteps,
+        { forLifecycle: true },
+      );
+
+      const missing: string[] = [];
+      const visit = (step: AnyStep, path: string[]) => {
+        // Leaves without a planner never get planned operations, so they never run.
+        const isPlannable =
+          isBranchStep(step) || (isLeafStep(step) && step.plan !== undefined);
+        if (isPlannable && !step.meta[operation]) {
+          missing.push([...path, step.name].join("/"));
+        }
+
+        if (isBranchStep(step)) {
+          for (const child of step.children) {
+            visit(child, [...path, step.name]);
+          }
+        }
+      };
+
+      visit(rootStep, []);
+      expect(missing).toEqual([]);
+    },
+  );
 
   test("creates upgrade progress for a planned webhook operation", () => {
     const rootStep = createRootInstallationStep(configWithWebhooks);
@@ -90,8 +136,10 @@ describe("createRootInstallationStep", () => {
             {
               after: {},
               id: "webhook-add",
+              itemRefs: [],
               kind: "add",
               label: "Add webhook",
+              reason: "change",
             },
           ],
           path: ["installation", "webhooks", "subscriptions"],
@@ -115,64 +163,5 @@ describe("createRootInstallationStep", () => {
     expect(webhooksStatus.children.at(0)?.meta).toEqual(
       webhooksStep.children.at(0)?.meta.upgrade,
     );
-  });
-});
-
-describe("createRootUninstallationStep", () => {
-  test("should create uninstallation step with default children", () => {
-    const result = createRootUninstallationStep(minimalValidConfig);
-
-    expect(result.type).toBe("branch");
-    expect(result.name).toBe("uninstallation");
-
-    expect(result.children.length).toBe(4);
-    expect(result.children[0]).toBe(eventingStep);
-    expect(result.children[1]).toBe(webhooksStep);
-    expect(result.children[2]).toBe(adminUiStep);
-    expect(result.children[3].name).toBe("customInstallationSteps");
-  });
-
-  test("should have correct meta label for uninstallation", () => {
-    const result = createRootUninstallationStep(minimalValidConfig);
-
-    expect(result.meta).toEqual({
-      install: {
-        description: "App uninstallation workflow",
-        label: "Uninstallation",
-      },
-    });
-  });
-
-  test("should create custom uninstallation step with dynamic children when config has custom steps", () => {
-    const result = createRootUninstallationStep(
-      configWithCustomInstallationSteps,
-    );
-
-    expect(result.children.length).toBe(4);
-    const [, , , customInstallationStep] = result.children;
-    expect(customInstallationStep.name).toBe("customInstallationSteps");
-    expect(customInstallationStep.type).toBe("branch");
-
-    expect.assert(isBranchStep(customInstallationStep));
-    expect(customInstallationStep.children.length).toBe(2);
-    expect(customInstallationStep.children[0].name).toBe("demoSuccess");
-    expect(customInstallationStep.children[0].meta.install.label).toBe(
-      "Demo Success",
-    );
-    expect(customInstallationStep.children[0].type).toBe("leaf");
-    expect(
-      customInstallationStep.children.map((child) => child.name),
-    ).not.toContain("reconciliation");
-  });
-
-  test("includes an uninstall-only leaf for a custom installation step no longer in the config", () => {
-    const result = createRootUninstallationStep(minimalValidConfig, [
-      { name: "Old Step", script: "./old-step.js" },
-    ]);
-
-    const [, , , customInstallationStep] = result.children;
-    expect.assert(isBranchStep(customInstallationStep));
-    expect(customInstallationStep.children.length).toBe(1);
-    expect(customInstallationStep.children[0].name).toBe("oldStep");
   });
 });

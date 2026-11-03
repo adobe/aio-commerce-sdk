@@ -10,25 +10,48 @@
  * governing permissions and limitations under the License.
  */
 
+import { nowIsoString } from "#management/common/workflow/utils";
+
+import {
+  LifecycleBaselineNotFoundError,
+  LifecycleStateNotInitializedError,
+  StaleLifecycleAttemptError,
+} from "./errors";
+
 import type { KeyValueStore } from "@aio-commerce-sdk/common-utils/storage";
 import type {
   AppStateSnapshot,
   LifecycleAttempt,
+  LifecyclePlan,
   OrchestrationState,
 } from "#management/common/orchestration";
 import type {
   BranchStep,
   LifecycleContext,
 } from "#management/common/workflow/step";
+import type { StepStatus } from "#management/common/workflow/types";
 
 export const CURRENT_STATE_KEY = "current";
 
 /** Minimal persistence contract required by lifecycle orchestration. */
 export type LifecycleStore<T> = Pick<KeyValueStore<T>, "get" | "put">;
 
-/** Resolves the selected baseline, including any compatibility fallback. */
+/**
+ * Whether the orchestration state is stored but cannot be read, as when its content is not
+ * valid JSON. The store's `get` returns `null` for such a value, as for a missing one.
+ *
+ * @param store - The orchestration state store.
+ */
+export async function isOrchestrationStateUnreadable(
+  store: Pick<KeyValueStore<OrchestrationState>, "get" | "has">,
+): Promise<boolean> {
+  const state = await store.get(CURRENT_STATE_KEY);
+  return state === null && (await store.has(CURRENT_STATE_KEY));
+}
+
+/** Resolves the baseline snapshot selected by orchestration state. */
 export type LifecycleBaselineProvider = {
-  /** Loads a stored snapshot, or resolves the baseline when its ID is `null`. */
+  /** Loads the stored snapshot, or `null` when there is no baseline. */
   get: (snapshotId: string | null) => Promise<AppStateSnapshot | null>;
 };
 
@@ -38,55 +61,66 @@ export type LifecycleRuntime = {
   lifecycleContext: LifecycleContext;
   stateStore: LifecycleStore<OrchestrationState>;
   snapshotStore: LifecycleStore<AppStateSnapshot>;
+
+  /** Attempts that are no longer the latest, keyed by attempt id. */
+  attemptStore: LifecycleStore<LifecycleAttempt>;
+
+  /** Every plan made, keyed by plan id. */
+  planStore: LifecycleStore<LifecyclePlan>;
   baselineProvider: LifecycleBaselineProvider;
+
+  /**
+   * Paths of the data a new attempt takes from the latest attempt when it failed, instead of from
+   * the baseline.
+   */
+  failedAttemptDataPaths?: string[][];
 };
 
-/** Reads orchestration state and initializes its baseline snapshot if needed. */
+/**
+ * Reads the orchestration state and its baseline snapshot. Without stored state, returns an empty
+ * state and a `null` baseline, which means nothing is installed.
+ */
 export async function readOrInitializeState(
   runtime: LifecycleRuntime,
-): Promise<{ state: OrchestrationState; baseline: AppStateSnapshot }> {
+): Promise<{ state: OrchestrationState; baseline: AppStateSnapshot | null }> {
   const existing = await runtime.stateStore.get(CURRENT_STATE_KEY);
-  if (existing) {
-    const baseline = await runtime.baselineProvider.get(
-      existing.baselineSnapshotId,
-    );
-
-    if (!baseline) {
-      throw new Error("The lifecycle baseline snapshot is missing");
-    }
-
-    if (existing.baselineSnapshotId) {
-      return { baseline, state: existing };
-    }
-
-    const initialized = { ...existing, baselineSnapshotId: baseline.id };
-    await runtime.snapshotStore.put(baseline.id, baseline);
-    await runtime.stateStore.put(CURRENT_STATE_KEY, initialized);
-
-    return { baseline, state: initialized };
+  if (!existing) {
+    return {
+      baseline: null,
+      state: {
+        baselineSnapshotId: null,
+        latestAttempt: null,
+        pendingPlan: null,
+      },
+    };
   }
 
-  const baseline = await runtime.baselineProvider.get(null);
+  if (!existing.baselineSnapshotId) {
+    return { baseline: null, state: existing };
+  }
+
+  const baseline = await runtime.baselineProvider.get(
+    existing.baselineSnapshotId,
+  );
 
   if (!baseline) {
-    throw new Error("A compatible lifecycle baseline is required");
+    throw new LifecycleBaselineNotFoundError();
   }
 
-  await runtime.snapshotStore.put(baseline.id, baseline);
-  const state: OrchestrationState = {
-    baselineSnapshotId: baseline.id,
-    latestAttempt: null,
-    pendingPlan: null,
-  };
-
-  await runtime.stateStore.put(CURRENT_STATE_KEY, state);
-  return { baseline, state };
+  return { baseline, state: existing };
 }
 
-/** Persists an expired active attempt as failed before returning state. */
+/**
+ * Persists an expired active attempt as failed before returning state.
+ *
+ * @param store - The orchestration state store.
+ * @param state - The current orchestration state.
+ * @param logger - Receives a warning when the attempt expired.
+ */
 export async function normalizeExpiredAttempt(
   store: LifecycleStore<OrchestrationState>,
   state: OrchestrationState,
+  logger?: LifecycleContext["logger"],
 ): Promise<OrchestrationState> {
   const attempt = state.latestAttempt;
   if (
@@ -99,6 +133,7 @@ export async function normalizeExpiredAttempt(
 
   const failed: LifecycleAttempt = {
     ...attempt,
+    completedAt: nowIsoString(),
     failure: {
       key: "LIFECYCLE_ATTEMPT_EXPIRED",
       message: "The lifecycle attempt exceeded its execution deadline",
@@ -110,7 +145,33 @@ export async function normalizeExpiredAttempt(
   const normalized = { ...state, latestAttempt: failed };
   await store.put(CURRENT_STATE_KEY, normalized);
 
+  const step = findInProgressStep(attempt.progress);
+  const since = step?.startedAt ? ` since ${step.startedAt}` : "";
+  const where = step
+    ? `while step ${step.path.join("/")} was in progress${since}`
+    : "before any step started";
+
+  logger?.warn(
+    `The ${attempt.operation} attempt ${attempt.id} expired at its execution deadline ${attempt.executionDeadline} ${where}.`,
+  );
+
   return normalized;
+}
+
+/** The deepest step that is still in progress, or `null` when none is. */
+function findInProgressStep(step: StepStatus): StepStatus | null {
+  if (step.status !== "in-progress") {
+    return null;
+  }
+
+  for (const child of step.children) {
+    const inProgress = findInProgressStep(child);
+    if (inProgress) {
+      return inProgress;
+    }
+  }
+
+  return step;
 }
 
 /** Loads the current orchestration state or fails when it is uninitialized. */
@@ -119,7 +180,7 @@ export async function requireState(
 ): Promise<OrchestrationState> {
   const state = await store.get(CURRENT_STATE_KEY);
   if (!state) {
-    throw new Error("Lifecycle orchestration state has not been initialized");
+    throw new LifecycleStateNotInitializedError();
   }
 
   return state;
@@ -138,7 +199,7 @@ export async function requireCurrentAttempt(
       state.latestAttempt.status !== "in-progress") ||
     Date.parse(state.latestAttempt.executionDeadline) <= Date.now()
   ) {
-    throw new Error("The lifecycle attempt is stale");
+    throw new StaleLifecycleAttemptError(attemptId);
   }
 
   return state;

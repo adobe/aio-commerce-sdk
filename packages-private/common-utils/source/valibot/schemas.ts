@@ -15,21 +15,21 @@ import * as v from "valibot";
 type Casing = "lowercase" | "uppercase" | "any";
 
 const ALPHANUMERIC_OR_UNDERSCORE_REGEX = {
-  any: /^[a-zA-Z0-9_]+$/,
-  lowercase: /^[a-z0-9_]+$/,
-  uppercase: /^[A-Z0-9_]+$/,
+  any: /^[a-zA-Z0-9_]+$/u,
+  lowercase: /^[a-z0-9_]+$/u,
+  uppercase: /^[A-Z0-9_]+$/u,
 };
 
 const ALPHANUMERIC_OR_UNDERSCORE_OR_HYPHEN_REGEX = {
-  any: /^[a-zA-Z0-9_-]+$/,
-  lowercase: /^[a-z0-9_-]+$/,
-  uppercase: /^[A-Z0-9_-]+$/,
+  any: /^[a-zA-Z0-9_-]+$/u,
+  lowercase: /^[a-z0-9_-]+$/u,
+  uppercase: /^[A-Z0-9_-]+$/u,
 };
 
 const ALPHANUMERIC_OR_HYPHEN_REGEX = {
-  any: /^[a-zA-Z0-9-]+$/,
-  lowercase: /^[a-z0-9-]+$/,
-  uppercase: /^[A-Z0-9-]+$/,
+  any: /^[a-zA-Z0-9-]+$/u,
+  lowercase: /^[a-z0-9-]+$/u,
+  uppercase: /^[A-Z0-9-]+$/u,
 };
 
 /**

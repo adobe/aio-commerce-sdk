@@ -17,6 +17,8 @@ import { createMockStepStatus } from "./workflow";
 
 import type {
   AppStateSnapshot,
+  LifecycleAttempt,
+  LifecyclePlan,
   OrchestrationState,
 } from "#management/common/orchestration";
 import type { LifecycleContext } from "#management/common/workflow/step";
@@ -28,19 +30,10 @@ import type {
   WorkflowError,
   WorkflowRunState,
 } from "#management/common/workflow/types";
-import type {
-  StepValidationResult,
-  ValidationResult,
-  ValidationSummary,
-} from "#management/common/workflow/validation";
 import type { LifecycleStore } from "#management/lifecycle/state";
 
 export const FAKE_SYSTEM_TIME = "2026-01-30T10:00:00.000Z";
 export const FAKE_COMPLETED_TIME = "2026-01-30T10:05:00.000Z";
-
-/** Matches any RFC-4122 UUID string. */
-export const UUID_PATTERN =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 
 /** Creates a mock AioLogger with all methods as vi.fn(). */
 export function createMockLogger(): ReturnType<typeof AioLogger> {
@@ -87,7 +80,7 @@ type InstallationImsParams = Pick<
   | "AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL"
 >;
 
-export const DEFAULT_INSTALLATION_IMS_PARAMS: InstallationImsParams = {
+export const DEFAULT_INSTALLATION_IMS_PARAMS = {
   AIO_COMMERCE_AUTH_IMS_CLIENT_ID: "test-client-id",
   AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS: ["test-secret-1"],
   AIO_COMMERCE_AUTH_IMS_ORG_ID: "test-ims-org-id",
@@ -95,7 +88,7 @@ export const DEFAULT_INSTALLATION_IMS_PARAMS: InstallationImsParams = {
   AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL:
     "test-technical-account@example.com",
   AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID: "test-technical-account-id",
-};
+} satisfies InstallationImsParams;
 
 export const DEFAULT_INSTALLATION_PARAMS = {
   ...DEFAULT_INSTALLATION_IMS_PARAMS,
@@ -138,6 +131,7 @@ export function createMockInstallationContext(
       ...appDataOverrides,
     },
 
+    appId: "test-app",
     ...contextOverrides,
     logger: contextOverrides.logger ?? createMockLogger(),
     params: createMockInstallationParams(paramOverrides),
@@ -190,19 +184,6 @@ export function createMockInProgressState(
   };
 }
 
-/** Creates a default installation in-progress state for runner tests. */
-export function createMockInstallationInProgressState(
-  overrides?: Partial<InProgressWorkflowState>,
-): InProgressWorkflowState {
-  return createMockInProgressState({
-    data: null,
-    id: "installation-id",
-    startedAt: FAKE_SYSTEM_TIME,
-    step: createMockInstallationStepStatus(),
-    ...overrides,
-  });
-}
-
 /** Creates a mock SucceededWorkflowState. */
 export function createMockSucceededState(
   overrides?: Partial<SucceededWorkflowState>,
@@ -242,44 +223,6 @@ export function createMockFailedState(
     startedAt: FAKE_SYSTEM_TIME,
     status: "failed",
     step: createMockStepStatus({ status: "failed" }),
-    ...overrides,
-  };
-}
-
-/** Creates a mock validation result node for tests. */
-export function createMockStepValidationResult(
-  overrides?: Partial<StepValidationResult>,
-): StepValidationResult {
-  return {
-    children: [],
-    issues: [],
-    meta: { label: "Installation" },
-    name: "installation",
-    path: ["installation"],
-    ...overrides,
-  };
-}
-
-/** Creates a mock validation summary for tests. */
-export function createMockValidationSummary(
-  overrides?: Partial<ValidationSummary>,
-): ValidationSummary {
-  return {
-    errors: 0,
-    totalIssues: 0,
-    warnings: 0,
-    ...overrides,
-  };
-}
-
-/** Creates a mock ValidationResult for tests. */
-export function createMockValidationResult(
-  overrides?: Partial<ValidationResult>,
-): ValidationResult {
-  return {
-    result: createMockStepValidationResult(),
-    summary: createMockValidationSummary(),
-    valid: true,
     ...overrides,
   };
 }
@@ -327,6 +270,8 @@ export function createMockCombinedStoreImpl(
   getStores: () => {
     appStateSnapshot?: LifecycleStore<AppStateSnapshot>;
     installation: MockInstallationStore;
+    lifecycleAttempt?: LifecycleStore<LifecycleAttempt>;
+    lifecyclePlan?: LifecycleStore<LifecyclePlan>;
     orchestrationState?: LifecycleStore<OrchestrationState>;
     uninstallation: MockInstallationStore;
   },
@@ -334,26 +279,31 @@ export function createMockCombinedStoreImpl(
   return async (options?: { cache?: { keyPrefix?: string } }) => {
     const prefix = options?.cache?.keyPrefix;
     const stores = getStores();
+    const byPrefix: Record<string, [store: unknown, name: string]> = {
+      installation: [stores.installation, "installation"],
+      "lifecycle-app-state-snapshot": [
+        stores.appStateSnapshot,
+        "lifecycle app-state snapshot",
+      ],
+      "lifecycle-attempt": [stores.lifecycleAttempt, "lifecycle attempt"],
+      "lifecycle-orchestration-state": [
+        stores.orchestrationState,
+        "lifecycle orchestration state",
+      ],
+      "lifecycle-plan": [stores.lifecyclePlan, "lifecycle plan"],
+      uninstallation: [stores.uninstallation, "uninstallation"],
+    };
 
-    if (prefix === "installation") {
-      return stores.installation;
-    }
-    if (prefix === "uninstallation") {
-      return stores.uninstallation;
-    }
-    if (prefix === "lifecycle-orchestration-state") {
-      if (!stores.orchestrationState) {
-        throw new Error("Missing lifecycle orchestration state store");
-      }
-      return stores.orchestrationState;
-    }
-    if (prefix === "lifecycle-app-state-snapshot") {
-      if (!stores.appStateSnapshot) {
-        throw new Error("Missing lifecycle app-state snapshot store");
-      }
-      return stores.appStateSnapshot;
+    const entry = prefix ? byPrefix[prefix] : undefined;
+    if (!entry) {
+      throw new Error(`Unexpected store prefix: ${String(prefix)}`);
     }
 
-    throw new Error(`Unexpected store prefix: ${String(prefix)}`);
+    const [store, name] = entry;
+    if (!store) {
+      throw new Error(`Missing ${name} store`);
+    }
+
+    return store;
   };
 }

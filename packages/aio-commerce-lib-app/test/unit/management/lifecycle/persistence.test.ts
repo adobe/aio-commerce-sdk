@@ -138,14 +138,14 @@ describe("persistSuccess", () => {
     );
 
     expect.assert(
-      succeeded.status === "succeeded",
+      succeeded.status === "succeeded" && succeeded.result,
       "Expected a succeeded attempt",
     );
 
     const { snapshotId } = succeeded.result;
     const snapshot = await snapshotStore.get(snapshotId);
     expect(snapshot).toMatchObject({
-      config: plan.target.config,
+      config: plan.target?.config,
       data: { remoteId: "resource-1" },
     });
 

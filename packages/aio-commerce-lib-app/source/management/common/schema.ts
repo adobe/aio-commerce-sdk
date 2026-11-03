@@ -10,7 +10,6 @@
  * governing permissions and limitations under the License.
  */
 
-import { CommerceEnvSchema } from "@adobe/aio-commerce-lib-core/commerce";
 import { nonEmptyStringValueSchema } from "@aio-commerce-sdk/common-utils/valibot";
 import * as v from "valibot";
 
@@ -36,13 +35,22 @@ export type AppData = v.InferOutput<typeof AppDataSchema>;
 export const LifecycleRequestContextSchema = v.object({
   appData: AppDataSchema,
 
-  // Optional because an upgrade derives the Commerce instance from the existing
-  // association; install and uninstall read these from the body and guard them.
-  commerceBaseUrl: v.optional(v.string()),
-  commerceEnv: v.optional(CommerceEnvSchema),
+  // Set with `installedVersion` when the app is installed with only business configuration, so it
+  // has no lifecycle baseline. Planning then resolves an upgrade instead of an install. Ignored
+  // when a baseline exists.
+  installedState: v.optional(v.literal("business-config-only")),
 
+  // The version the service stored for the installed app. The plan's source version when
+  // `installedState` is set.
+  installedVersion: v.optional(v.string()),
   ioEventsEnv: v.string(),
   ioEventsUrl: v.string(),
+
+  // Plans an uninstall instead of the install or upgrade the installed state calls for.
+  operation: v.optional(v.literal("uninstall")),
+
+  // The id of the pending plan to start. Required to start any operation.
+  planId: v.optional(v.string()),
 });
 
 /** The request context passed to lifecycle runtime actions. */

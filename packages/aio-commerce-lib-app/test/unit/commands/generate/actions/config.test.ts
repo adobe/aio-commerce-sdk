@@ -10,6 +10,10 @@
  * governing permissions and limitations under the License.
  */
 
+import { join } from "node:path";
+
+import { withTempFiles } from "@aio-commerce-sdk/scripting-utils/filesystem";
+import { createOrUpdateExtConfig } from "@aio-commerce-sdk/scripting-utils/yaml";
 import { describe, expect, test } from "vitest";
 
 import { PACKAGE_NAME } from "#commands/constants";
@@ -23,7 +27,9 @@ import {
 } from "#commands/generate/actions/config";
 import {
   configWithAdminUiAllGrids,
+  configWithAdminUiInvoiceCreditMemoShipmentGrids,
   configWithAdminUiMenu,
+  configWithAdminUiNewsletterGrid,
   configWithAdminUiSingleGrid,
   configWithCommerceEventing,
   configWithCustomInstallationSteps,
@@ -38,11 +44,63 @@ import {
   minimalValidConfig,
 } from "#test/fixtures/config";
 
-const EXTENSIBILITY_EXTENSION_MATCHER = /EXTENSION=extensibility\/1/;
-const CONFIGURATION_EXTENSION_MATCHER = /EXTENSION=configuration\/1/;
-const BACKEND_UI_V2_EXTENSION_MATCHER = /EXTENSION=backend-ui\/2/;
+const EXTENSIBILITY_EXTENSION_MATCHER = /EXTENSION=extensibility\/1/u;
+const CONFIGURATION_EXTENSION_MATCHER = /EXTENSION=configuration\/1/u;
+const BACKEND_UI_V2_EXTENSION_MATCHER = /EXTENSION=backend-ui\/2/u;
 
 describe("buildAppManagementExtConfig", () => {
+  test.each([
+    {
+      build: () => buildAppManagementExtConfig(minimalValidConfig),
+      names: ["app-config", "association", "installation"],
+    },
+    {
+      build: buildBusinessConfigurationExtConfig,
+      names: ["config", "scope-tree"],
+    },
+  ])(
+    "generates package-level LOG_LEVEL for $names",
+    async ({ build, names }) => {
+      await withTempFiles({}, async (tempDir) => {
+        const doc = await createOrUpdateExtConfig(
+          join(tempDir, "ext.config.yaml"),
+          build(),
+        );
+        const pkg = doc.toJS().runtimeManifest.packages[PACKAGE_NAME];
+
+        expect(pkg.inputs).toEqual({ LOG_LEVEL: "$LOG_LEVEL" });
+        for (const name of names) {
+          expect(pkg.actions[name].inputs?.LOG_LEVEL).toBeUndefined();
+        }
+      });
+    },
+  );
+
+  test("declares LOG_LEVEL at the package level", () => {
+    const result = buildAppManagementExtConfig(minimalValidConfig);
+    const appManagementPackage =
+      result.runtimeManifest?.packages?.[PACKAGE_NAME];
+
+    expect(appManagementPackage?.inputs).toEqual({
+      LOG_LEVEL: "$LOG_LEVEL",
+    });
+    expect(appManagementPackage?.actions?.["app-config"]).toEqual(
+      expect.objectContaining({
+        function: expect.any(String),
+      }),
+    );
+    expect(
+      appManagementPackage?.actions?.["app-config"]?.inputs,
+    ).toBeUndefined();
+    expect(appManagementPackage?.actions?.association).toEqual(
+      expect.objectContaining({
+        function: expect.any(String),
+      }),
+    );
+    expect(appManagementPackage?.actions?.association?.inputs).toBeUndefined();
+    expect(appManagementPackage?.actions?.installation?.inputs).toBeUndefined();
+  });
+
   test("app-config action is included with minimal config", () => {
     const result = buildAppManagementExtConfig(minimalValidConfig);
 
@@ -90,6 +148,18 @@ describe("buildAppManagementExtConfig", () => {
         result.operations?.workerProcess?.map((worker) => worker.impl) ?? [];
 
       expect(workerImpls).toContain("app-management/installation");
+    },
+  );
+
+  test.each(["association", "installation"])(
+    "%s action includes IMS credentials via annotation",
+    (name) => {
+      const result = buildAppManagementExtConfig(minimalValidConfig);
+      const action =
+        result.runtimeManifest?.packages?.[PACKAGE_NAME]?.actions?.[name];
+
+      expect(action?.annotations?.["include-ims-credentials"]).toBe(true);
+      expect(action?.inputs?.AIO_COMMERCE_AUTH_IMS_CLIENT_ID).toBeUndefined();
     },
   );
 
@@ -457,6 +527,22 @@ describe("collectUniqueRuntimeActions", () => {
     );
     expect(result).toEqual([]);
   });
+
+  test("collects runtimeActions from invoice, creditMemo, and shipment grid columns", () => {
+    const result = collectUniqueRuntimeActions(
+      configWithAdminUiInvoiceCreditMemoShipmentGrids.adminUi,
+    );
+    expect(result).toContain("invoices/fetch-invoice-grid-data");
+    expect(result).toContain("credit-memos/fetch-credit-memo-grid-data");
+    expect(result).toContain("shipments/fetch-shipment-grid-data");
+  });
+
+  test("collects runtimeAction from newsletter grid columns", () => {
+    const result = collectUniqueRuntimeActions(
+      configWithAdminUiNewsletterGrid.adminUi,
+    );
+    expect(result).toContain("newsletter/fetch-subscriber-grid-data");
+  });
 });
 
 describe("requiresWebSource", () => {
@@ -483,9 +569,36 @@ describe("requiresWebSource", () => {
   test("returns false for a grid-only adminUi config", () => {
     expect(requiresWebSource(configWithAdminUiAllGrids.adminUi)).toBe(false);
   });
+
+  test("returns false for a grid-only config on invoice, creditMemo, and shipment", () => {
+    expect(
+      requiresWebSource(
+        configWithAdminUiInvoiceCreditMemoShipmentGrids.adminUi,
+      ),
+    ).toBe(false);
+  });
 });
 
 describe("buildBusinessConfigurationExtConfig", () => {
+  test("declares LOG_LEVEL at the package level", () => {
+    const result = buildBusinessConfigurationExtConfig();
+    const appManagementPackage =
+      result.runtimeManifest?.packages?.[PACKAGE_NAME];
+
+    expect(appManagementPackage?.inputs).toEqual({
+      LOG_LEVEL: "$LOG_LEVEL",
+    });
+    expect(appManagementPackage?.actions?.config?.inputs).toEqual(
+      expect.objectContaining({
+        AIO_COMMERCE_CONFIG_ENCRYPTION_KEY:
+          "$AIO_COMMERCE_CONFIG_ENCRYPTION_KEY",
+      }),
+    );
+    expect(
+      appManagementPackage?.actions?.["scope-tree"]?.inputs,
+    ).toBeUndefined();
+  });
+
   test("config action is included", () => {
     const result = buildBusinessConfigurationExtConfig();
     const actions = result.runtimeManifest?.packages?.[PACKAGE_NAME]?.actions;

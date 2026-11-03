@@ -10,41 +10,31 @@
  * governing permissions and limitations under the License.
  */
 
-import { getInstallCommerceEnv } from "#config/lib/environment";
-
+import { createWebhookSubscription, deleteWebhookSubscription } from "./api";
 import {
-  createWebhookSubscription,
-  deleteWebhookSubscription,
   getWebhookName,
-  isDesiredWebhook,
   isWebhookInList,
-  isWebhookOwnedByApp,
-  resolveDesiredWebhooks,
   resolveDeveloperConsoleOAuthCredentials,
   toIdentity,
   webhookIdentitiesMatch,
 } from "./utils";
 
-import type {
-  CommerceWebhook,
-  WebhookSubscribeParams,
-} from "@adobe/aio-commerce-lib-webhooks/api";
+import type { WebhookSubscribeParams } from "@adobe/aio-commerce-lib-webhooks/api";
 import type { WebhooksConfig } from "#config/schema/webhooks";
 import type {
   ApplyContext,
   ApplyResult,
 } from "#management/common/workflow/resource";
-import type { WebhooksExecutionContext, WebhooksStepContext } from "./context";
+import type { WebhooksStepContext } from "./context";
 import type {
   ResolvedWebhookPayload,
   WebhookDomainPlan,
-  WebhookIdentity,
   WebhookSnapshotData,
 } from "./types";
 
 /**
- * Applies add, update, and remove operations while pruning live app-owned
- * webhooks absent from the target. Aborts on the first failure.
+ * Applies add, update, and remove operations, skipping adds already live and removes
+ * already gone. Aborts on the first failure.
  */
 export async function applyWebhookSubscriptions(
   plan: WebhookDomainPlan,
@@ -56,30 +46,13 @@ export async function applyWebhookSubscriptions(
 ): Promise<ApplyResult<WebhookSnapshotData>> {
   const { logger, commerceWebhooksClient, params } = context;
 
-  const liveWebhooks = await commerceWebhooksClient.getWebhookList();
+  let liveIdentities = (await commerceWebhooksClient.getWebhookList()).map(
+    toIdentity,
+  );
 
   let subscribedWebhooks: WebhookSubscribeParams[] = [
     ...(context.baseline?.data.subscribedWebhooks ?? []),
   ];
-
-  const appConfig = context.targetConfig ?? context.baseline?.config;
-  if (!appConfig) {
-    throw new Error(
-      "Cannot apply webhook subscriptions without a baseline or target config",
-    );
-  }
-
-  const env = getInstallCommerceEnv(params);
-  const desired = context.targetConfig
-    ? resolveDesiredWebhooks(context.targetConfig, env)
-    : [];
-
-  let liveIdentities = await pruneStaleWebhooks(
-    liveWebhooks,
-    desired,
-    appConfig.metadata.id,
-    context,
-  );
 
   for (const operation of plan.operations) {
     if (operation.kind === "add") {
@@ -172,35 +145,6 @@ export async function applyWebhookSubscriptions(
   return {
     snapshotData: { subscribedWebhooks },
   };
-}
-
-/** Removes live webhooks owned by this app that are absent from the target. */
-async function pruneStaleWebhooks(
-  liveWebhooks: CommerceWebhook[],
-  desiredWebhooks: readonly WebhookIdentity[],
-  appId: string,
-  context: WebhooksExecutionContext,
-): Promise<WebhookIdentity[]> {
-  const { commerceWebhooksClient, logger } = context;
-  let liveIdentities = liveWebhooks.map(toIdentity);
-  const staleWebhooks = liveWebhooks.filter(
-    (webhook) =>
-      isWebhookOwnedByApp(webhook, appId) &&
-      !isDesiredWebhook(webhook, desiredWebhooks),
-  );
-
-  for (const stale of staleWebhooks) {
-    const identity = toIdentity(stale);
-
-    // biome-ignore lint/performance/noAwaitInLoops: removals must run sequentially so a failure aborts the remaining work
-    await deleteWebhookSubscription(commerceWebhooksClient, identity, identity);
-
-    logger.info(`Unsubscribed webhook: ${getWebhookName(identity)}`);
-    liveIdentities = liveIdentities.filter(
-      (live) => !webhookIdentitiesMatch(live, identity),
-    );
-  }
-  return liveIdentities;
 }
 
 /** Attaches Developer Console credentials when the webhook requires Adobe authentication. */

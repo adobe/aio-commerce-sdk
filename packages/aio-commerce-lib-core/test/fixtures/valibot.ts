@@ -22,8 +22,6 @@ import {
   string,
 } from "valibot";
 
-import type { InferOutput } from "valibot";
-
 // Mock User Schema
 export const mockUserSchema = object({
   age: pipe(
@@ -52,17 +50,6 @@ export const mockUserSchema = object({
     }),
   ),
 });
-
-// Type for our mock user
-export type MockUser = InferOutput<typeof mockUserSchema>;
-
-// Sample valid user data
-export const mockValidUser: MockUser = {
-  age: 25,
-  email: "test@example.com",
-  id: "123e4567-e89b-12d3-a456-426614174000",
-  name: "John Doe",
-};
 
 // Invalid mock user data that will cause an input error
 export const mockInvalidUserForInputError = {

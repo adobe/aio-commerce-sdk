@@ -53,7 +53,10 @@ export type WebhookOperationValue = WebhookIdentity &
   Partial<Omit<ResolvedWebhookPayload, keyof WebhookIdentity>>;
 
 /** The webhooks domain plan. */
-export type WebhookDomainPlan = DomainPlan<WebhookOperationValue>;
+export type WebhookDomainPlan = DomainPlan<WebhookOperationValue> & {
+  /** Webhooks the baseline and failed attempts declared, keyed by `webhookKey`, to recognize values they left in Commerce. */
+  configuredValues?: Record<string, Partial<ResolvedWebhookPayload>[]>;
+};
 
 /** The snapshot data the webhooks domain persists after applying its plan. */
 export type WebhookSnapshotData = WebhookSubscriptionResult;

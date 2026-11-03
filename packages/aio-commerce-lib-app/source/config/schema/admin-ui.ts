@@ -201,20 +201,21 @@ const AdminUiOrderSchema = v.object({
   ),
 });
 
-const AdminUiProductSchema = v.object({
+const AdminUiGridAndMassActionEntitySchema = v.object({
   gridColumns: v.optional(GridColumnsSchema),
   massActions: v.optional(MassActionsSchema),
 });
 
-const AdminUiCustomerSchema = v.object({
+// Shared by invoice, credit memo, shipment, and newsletter: unlike order/product/customer,
+// these expose grid columns only — no mass actions or view buttons.
+const AdminUiGridOnlyEntitySchema = v.object({
   gridColumns: v.optional(GridColumnsSchema),
-  massActions: v.optional(MassActionsSchema),
 });
 
 const MenuIdSchema = v.pipe(
   nonEmptyStringValueSchema("menu ID"),
   v.regex(
-    /^[A-Za-z0-9_/:]+$/,
+    /^[A-Za-z0-9_/:]+$/u,
     'Menu ID may contain only letters, digits, "/", ":", and "_"',
   ),
 );
@@ -248,7 +249,7 @@ const MenuSchema = v.object({
 const AclResourceIdSchema = v.pipe(
   nonEmptyStringValueSchema("acl resource ID"),
   v.regex(
-    /^[a-z0-9_]+$/,
+    /^[a-z0-9_]+$/u,
     'ACL resource ID may contain only lowercase letters, digits, and "_"',
   ),
 );
@@ -333,10 +334,14 @@ const AdminUiAclSchema = v.pipe(
  */
 export const AdminUiSchema = v.object({
   acl: v.optional(AdminUiAclSchema),
-  customer: v.optional(AdminUiCustomerSchema),
+  creditMemo: v.optional(AdminUiGridOnlyEntitySchema),
+  customer: v.optional(AdminUiGridAndMassActionEntitySchema),
+  invoice: v.optional(AdminUiGridOnlyEntitySchema),
   menu: v.optional(MenuSchema),
+  newsletter: v.optional(AdminUiGridOnlyEntitySchema),
   order: v.optional(AdminUiOrderSchema),
-  product: v.optional(AdminUiProductSchema),
+  product: v.optional(AdminUiGridAndMassActionEntitySchema),
+  shipment: v.optional(AdminUiGridOnlyEntitySchema),
 });
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -351,8 +356,26 @@ export type AdminUiConfiguration = v.InferInput<typeof AdminUiSchema>;
  */
 export type AdminUi = v.InferOutput<typeof AdminUiSchema>;
 
-/** A single custom ACL resource leaf. */
-export type AclResource = v.InferInput<typeof AclResourceLeafSchema>;
+/**
+ * Entities that support grid column extensions, in a stable order. Shared so the
+ * runtime-action collection and the upgrade planner enumerate the same entities.
+ */
+export const ADMIN_UI_GRID_COLUMN_ENTITIES = [
+  "order",
+  "product",
+  "customer",
+  "invoice",
+  "creditMemo",
+  "shipment",
+  "newsletter",
+] as const satisfies readonly Exclude<keyof AdminUi, "acl" | "menu">[];
+
+/** Entities that additionally support mass actions, in a stable order. */
+export const ADMIN_UI_MASS_ACTION_ENTITIES = [
+  "order",
+  "product",
+  "customer",
+] as const satisfies readonly Exclude<keyof AdminUi, "acl" | "menu">[];
 
 /** A custom ACL resource entry: a leaf or a one-level group of leaves. */
 export type AclResourceEntry = v.InferInput<typeof AclResourceEntrySchema>;
@@ -440,7 +463,11 @@ export function hasBackendUiV2Components<T extends AnyCommerceAppConfig>(
       adminUi.product?.gridColumns ||
       adminUi.product?.massActions?.length ||
       adminUi.customer?.gridColumns ||
-      adminUi.customer?.massActions?.length,
+      adminUi.customer?.massActions?.length ||
+      adminUi.invoice?.gridColumns ||
+      adminUi.creditMemo?.gridColumns ||
+      adminUi.shipment?.gridColumns ||
+      adminUi.newsletter?.gridColumns,
   );
 }
 

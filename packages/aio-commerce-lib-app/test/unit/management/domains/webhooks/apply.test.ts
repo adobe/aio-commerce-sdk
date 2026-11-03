@@ -106,8 +106,10 @@ describe("applyWebhookSubscriptions", () => {
         {
           after: addWebhook,
           id: "op-1",
+          itemRefs: [],
           kind: "add" as const,
           label: "Subscribe",
+          reason: "change" as const,
         },
       ],
       path: UPGRADE_PATH,
@@ -129,7 +131,7 @@ describe("applyWebhookSubscriptions", () => {
     expect(result.snapshotData?.subscribedWebhooks).toEqual([retainedWebhook]);
   });
 
-  test("prunes live app-owned webhooks absent from the target", async () => {
+  test("only removes the webhooks the plan lists", async () => {
     const targetConfig = createMockWebhooksConfig();
     const baseline = {
       config: targetConfig,
@@ -168,14 +170,7 @@ describe("applyWebhookSubscriptions", () => {
       context,
     );
 
-    expect(unsubscribeWebhook).toHaveBeenCalledOnce();
-    expect(unsubscribeWebhook).toHaveBeenCalledWith(
-      expect.objectContaining({
-        batch_name: staleAppWebhook.batch_name,
-        hook_name: staleAppWebhook.hook_name,
-      }),
-    );
-
+    expect(unsubscribeWebhook).not.toHaveBeenCalled();
     expect(result.snapshotData?.subscribedWebhooks).toEqual([retainedWebhook]);
   });
 
@@ -188,8 +183,10 @@ describe("applyWebhookSubscriptions", () => {
         {
           after: { ...addWebhook, requiresAdobeAuth: true },
           id: "op-1",
+          itemRefs: [],
           kind: "add" as const,
           label: "Subscribe",
+          reason: "change" as const,
         },
       ],
       path: UPGRADE_PATH,
@@ -230,8 +227,10 @@ describe("applyWebhookSubscriptions", () => {
         {
           after: addWebhook,
           id: "op-1",
+          itemRefs: [],
           kind: "add" as const,
           label: "Subscribe",
+          reason: "change" as const,
         },
       ],
       path: UPGRADE_PATH,
@@ -256,8 +255,10 @@ describe("applyWebhookSubscriptions", () => {
         {
           before: retainedWebhook,
           id: "op-1",
+          itemRefs: [],
           kind: "remove" as const,
           label: "Unsubscribe",
+          reason: "change" as const,
         },
       ],
       path: UPGRADE_PATH,
@@ -284,8 +285,10 @@ describe("applyWebhookSubscriptions", () => {
         {
           before: retainedWebhook,
           id: "op-1",
+          itemRefs: [],
           kind: "remove" as const,
           label: "Unsubscribe",
+          reason: "change" as const,
         },
       ],
       path: UPGRADE_PATH,
@@ -314,14 +317,18 @@ describe("applyWebhookSubscriptions", () => {
         {
           after: addWebhook,
           id: "op-1",
+          itemRefs: [],
           kind: "add" as const,
           label: "Subscribe",
+          reason: "change" as const,
         },
         {
           after: secondAdd,
           id: "op-2",
+          itemRefs: [],
           kind: "add" as const,
           label: "Subscribe",
+          reason: "change" as const,
         },
       ],
       path: UPGRADE_PATH,
@@ -349,14 +356,18 @@ describe("applyWebhookSubscriptions", () => {
         {
           before: retainedWebhook,
           id: "op-1",
+          itemRefs: [],
           kind: "remove" as const,
           label: "Unsubscribe",
+          reason: "change" as const,
         },
         {
           before: addWebhook,
           id: "op-2",
+          itemRefs: [],
           kind: "remove" as const,
           label: "Unsubscribe",
+          reason: "change" as const,
         },
       ],
       path: UPGRADE_PATH,
@@ -390,14 +401,18 @@ describe("applyWebhookSubscriptions", () => {
         {
           before: retainedWebhook,
           id: "op-1",
+          itemRefs: [],
           kind: "remove" as const,
           label: "Unsubscribe",
+          reason: "change" as const,
         },
         {
           after: renamedWebhook,
           id: "op-2",
+          itemRefs: [],
           kind: "add" as const,
           label: "Subscribe",
+          reason: "change" as const,
         },
       ],
       path: UPGRADE_PATH,
@@ -434,8 +449,10 @@ describe("applyWebhookSubscriptions", () => {
           after: updatedWebhook,
           before: retainedWebhook,
           id: "op-1",
+          itemRefs: [],
           kind: "update" as const,
           label: "Update",
+          reason: "change" as const,
         },
       ],
       path: UPGRADE_PATH,
@@ -466,8 +483,10 @@ describe("applyWebhookSubscriptions", () => {
           after: updatedWebhook,
           before: retainedWebhook,
           id: "op-1",
+          itemRefs: [],
           kind: "update" as const,
           label: "Update",
+          reason: "change" as const,
         },
       ],
       path: UPGRADE_PATH,
@@ -503,15 +522,19 @@ describe("applyWebhookSubscriptions", () => {
           after: updatedWebhook,
           before: retainedWebhook,
           id: "op-1",
+          itemRefs: [],
           kind: "update" as const,
           label: "Update",
+          reason: "change" as const,
         },
         {
           after: secondUpdate,
           before: secondUpdate,
           id: "op-2",
+          itemRefs: [],
           kind: "update" as const,
           label: "Update",
+          reason: "change" as const,
         },
       ],
       path: UPGRADE_PATH,

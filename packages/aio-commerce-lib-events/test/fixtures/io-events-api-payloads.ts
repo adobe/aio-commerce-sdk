@@ -378,4 +378,47 @@ export const ADOBE_IO_EVENTS_API_PAYLOADS = [
     pathname:
       "consumer-org-1/project-1/workspace-1/registrations/registration-1",
   },
+  {
+    hasInputValidation: true,
+
+    invoke(client: AdobeIoEventsApiClient, fetchOptions?: Options) {
+      return client.updateEventProvider(
+        {
+          consumerOrgId: "consumer-org-1",
+          description: "Updated description",
+          docsUrl: "https://example.com/docs",
+          label: "Updated label",
+          projectId: "project-1",
+          providerId: "provider-1",
+          workspaceId: "workspace-1",
+        },
+        fetchOptions,
+      );
+    },
+    method: "PUT",
+    name: "updateEventProvider",
+    pathname: "consumer-org-1/project-1/workspace-1/providers/provider-1",
+  },
+  {
+    hasInputValidation: true,
+
+    invoke(client: AdobeIoEventsApiClient, fetchOptions?: Options) {
+      return client.updateEventMetadataForProvider(
+        {
+          consumerOrgId: "consumer-org-1",
+          description: "Updated description",
+          eventCode: "event-1",
+          label: "Updated label",
+          projectId: "project-1",
+          providerId: "provider-1",
+          workspaceId: "workspace-1",
+        },
+        fetchOptions,
+      );
+    },
+    method: "PUT",
+    name: "updateEventMetadataForProvider",
+    pathname:
+      "consumer-org-1/project-1/workspace-1/providers/provider-1/eventmetadata/event-1",
+  },
 ] as const;

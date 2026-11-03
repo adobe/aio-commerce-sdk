@@ -385,7 +385,7 @@ You can test your changes locally without waiting for them to be published. Just
 3. Copy that `.tgz` wherever you want to test it (e.g. a local test project) and run `npm install file.tgz`.
 4. Your project will now use your built artifacts, and you’ll be able to test your changes however you want.
 
-If you want to test changes in multiple packages at the same time you're going to need to repeat the above process for each of them individually. At that point we recommend you to bulk build and pack all the monorepo. You can do this by running the following command from the repo root:
+To test changes across multiple packages, run the following command from the repo root. It builds and packs each package. Each package copies its generated `.tgz` into `.local-testing/` at the repo root (the same happens when you run `pnpm pack` in a single package):
 
 ```bash
 pnpm run clean:tgz && pnpm turbo run build pack

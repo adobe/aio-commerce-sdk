@@ -178,6 +178,7 @@ export function createMockWebhooksContext(
   unsubscribeWebhookFn = vi.fn().mockResolvedValue(null),
 ): WebhooksExecutionContext {
   const mockInstallation = createMockInstallationContext({
+    appId: "test-app-webhooks",
     logger: createMockLogger(),
     params,
   });

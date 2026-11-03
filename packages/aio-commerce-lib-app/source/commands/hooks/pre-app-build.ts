@@ -19,6 +19,11 @@ import { getProjectRootDirectory } from "@aio-commerce-sdk/scripting-utils/proje
 import consola from "consola";
 
 import {
+  EXTENSION_POINT_ORDER,
+  ensureExtensionPointsOrder,
+} from "#commands/common/extension-points";
+import {
+  APP_CONFIG_FILE,
   BACKEND_UI_V2_EXTENSION_POINT_ID,
   CONFIGURATION_EXTENSION_POINT_ID,
   EXTENSIBILITY_EXTENSION_POINT_ID,
@@ -55,7 +60,17 @@ export async function run(
   projectRoot: string,
   templatesDir = TEMPLATES_DIR,
 ) {
+  if (await ensureExtensionPointsOrder(projectRoot)) {
+    consola.warn(
+      `The extension points in ${APP_CONFIG_FILE} were reordered (${EXTENSION_POINT_ORDER.join(", ")}) to ensure an upgrade works reliably. This is a one-off change.`,
+    );
+  }
+
   const appManifest = await loadAppManifest(projectRoot);
+
+  // The runtime config module re-exports the manifest, and every extension point reads it.
+  // Extension points can run in any order, so each hook regenerates it to keep it up to date.
+  await generateManifest(appManifest, projectRoot);
   await prepareRuntimeAppConfigModule(appManifest, projectRoot);
 
   if (extension === "extensibility/1") {
@@ -64,7 +79,6 @@ export async function run(
       projectRoot,
     );
 
-    await generateManifest(appManifest, projectRoot);
     await generateActionFiles(
       appManifest,
       getRuntimeActions(
@@ -77,6 +91,12 @@ export async function run(
     );
 
     consola.info("Syncing IMS credentials...");
+    consola.warn(
+      "Deprecated: if your actions use AIO_COMMERCE_AUTH_IMS_* inputs for OAuth Server-to-Server " +
+        "credentials, replace them with the `include-ims-credentials: true` action annotation. " +
+        "This hook still syncs legacy credentials for compatibility; that sync will be removed " +
+        "in a future major release.",
+    );
     await syncImsCredentials(projectRoot);
 
     return;

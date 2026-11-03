@@ -25,10 +25,10 @@ const VALID_DELIVERY_TYPES = [
 ] as const;
 
 /** Regex pattern for AWS region validation. */
-const AWS_REGION_REGEX = /^(us|ca|eu|af|ap|cn|me|sa|il)-[a-z]+-\d$/;
+const AWS_REGION_REGEX = /^(?:us|ca|eu|af|ap|cn|me|sa|il)-[a-z]+-\d$/u;
 
 /** Regex pattern for AWS account ID validation (12 digits). */
-const AWS_ACCOUNT_ID_REGEX = /^\d{12}$/;
+const AWS_ACCOUNT_ID_REGEX = /^\d{12}$/u;
 
 /** Schema for delivery type validation. */
 export const DeliveryTypeSchema = v.picklist(

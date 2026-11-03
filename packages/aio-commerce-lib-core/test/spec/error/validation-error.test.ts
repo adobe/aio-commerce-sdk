@@ -57,31 +57,35 @@ describe("CommerceSdkValidationError", () => {
   });
 
   describe("display", () => {
-    const BRANCH_PATTERN = /├──/;
-    const LAST_PATTERN = /└──/;
+    const BRANCH_PATTERN = /├──/u;
+    const LAST_PATTERN = /└──/u;
 
     it.each([
       ["tree structure - branch", BRANCH_PATTERN, getMockInputErrorIssues()],
       ["tree structure - last item", LAST_PATTERN, getMockInputErrorIssues()],
-      ["path separator", /→/, getMockInputErrorIssues()],
-      ["input error title", /Input error at/, getMockInputErrorIssues()],
+      ["path separator", /→/u, getMockInputErrorIssues()],
+      ["input error title", /Input error at/u, getMockInputErrorIssues()],
       [
         "schema error title",
-        /Schema validation error at/,
+        /Schema validation error at/u,
         getMockSchemaErrorIssues(),
       ],
       [
         "transformation error title",
-        /Transformation error at/,
+        /Transformation error at/u,
         getMockTransformationErrorIssues(),
       ],
-      ["id field error", /id must not be empty/, getMockInputErrorIssues()],
+      ["id field error", /id must not be empty/u, getMockInputErrorIssues()],
       [
         "email field error",
-        /email must be a valid email/,
+        /email must be a valid email/u,
         getMockInputErrorIssues(),
       ],
-      ["age field error", /age must be 18 or older/, getMockInputErrorIssues()],
+      [
+        "age field error",
+        /age must be 18 or older/u,
+        getMockInputErrorIssues(),
+      ],
     ])("should include %s in output", (_, pattern, issues) => {
       const error = new CommerceSdkValidationError("Validation failed", {
         issues,
@@ -124,9 +128,9 @@ describe("CommerceSdkValidationError", () => {
     });
 
     it.each([
-      ["id", /at id →/],
-      ["email", /at email →/],
-      ["age", /at age →/],
+      ["id", /at id →/u],
+      ["email", /at email →/u],
+      ["age", /at age →/u],
     ])("should include %s path in dot notation", (_, pattern) => {
       const error = new CommerceSdkValidationError("Validation failed", {
         issues: getMockInputErrorIssues(),

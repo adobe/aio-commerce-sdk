@@ -33,7 +33,7 @@ export {
   MassActionRequestSchema,
 } from "./worker/schema";
 
-export type { AdminUiEntity } from "#api/lib/acl-resource-id";
+export type { AdminUiEntity, MassActionEntity } from "#api/lib/acl-resource-id";
 export type {
   MassActionErrorBody,
   MassActionGridType,

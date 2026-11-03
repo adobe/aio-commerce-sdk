@@ -12,7 +12,7 @@
  * governing permissions and limitations under the License.
  */
 
-import { stringifyError } from "@aio-commerce-sdk/scripting-utils/error";
+import { stringifyError } from "@adobe/aio-commerce-lib-core/error";
 import consola from "consola";
 
 import { run as syncImsCredentialsCommand } from "#commands/sync-ims-credentials";
@@ -26,7 +26,8 @@ const USAGE = `
 Usage: ${NAMESPACE} <command> [target]
 
 Commands:
-  sync-ims-credentials                 Syncs the IMS credentials from the current context to the .env file.
+  sync-ims-credentials                 (deprecated) Syncs IMS credentials to .env.
+                                       Use include-ims-credentials instead.
 
   help                                 Show this help message
 

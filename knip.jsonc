@@ -1,0 +1,52 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+
+  // Exports that are only used inside their own file are not reported.
+  "ignoreExportsUsedInFile": true,
+
+  // Hand-written type declarations next to the JS config files in configs/*,
+  // and build output, which Knip picks up from publishConfig.exports.
+  "ignore": ["**/*.d.ts", "**/dist/**"],
+
+  "ignoreIssues": {
+    // UpdateEventMetadataForProviderSchema is a deliberate alias of the create schema.
+    "packages/aio-commerce-lib-events/source/io-events/api/event-metadata/schema.ts": [
+      "duplicates"
+    ]
+  },
+
+  // Referenced from each package's typedoc.json through "extends", which Knip
+  // does not follow.
+  "ignoreDependencies": ["@aio-commerce-sdk/config-typedoc"],
+
+  "workspaces": {
+    ".": {
+      // Referenced by name from configs/typedoc/typedoc.base.json ("plugin").
+      "ignoreDependencies": ["typedoc-plugin-markdown"]
+    },
+
+    "packages/aio-commerce-lib-app": {
+      // Files copied verbatim into the user's project by the CLI. They are
+      // never imported by this package.
+      "ignore": ["source/commands/generate/actions/templates/**"],
+
+      // Only reached through vi.mock("@adobe/aio-lib-files") in the tests.
+      "ignoreDependencies": ["@adobe/aio-lib-files"]
+    },
+
+    "plugins/commerce/app-management": {
+      // Examples that skills copy into the apps of SDK users.
+      "ignore": ["skills/**/assets/**"]
+    },
+
+    "turbo/generators": {
+      // Loaded by `turbo gen`, which resolves config.ts by convention.
+      "entry": ["config.ts"]
+    },
+
+    "scripts": {
+      // Invoked from GitHub workflows and composite actions.
+      "entry": ["source/ci/**/*.ts"]
+    }
+  }
+}

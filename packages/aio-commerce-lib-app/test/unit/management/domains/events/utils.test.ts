@@ -21,7 +21,7 @@ import {
   getIoEventCode,
   getIoEventsExistingData,
   getNamespacedEvent,
-  getSubscriptionChangeKind,
+  getProviderWorkspaceId,
   makeWorkspaceConfig,
   sanitizeEventingIdentifier,
 } from "#management/domains/events/utils";
@@ -44,7 +44,6 @@ import type {
   IoEventProviderManyResponse,
   IoEventRegistrationManyResponse,
 } from "@adobe/aio-commerce-lib-events/io-events";
-import type { CommerceEvent } from "#config/schema/eventing";
 
 const TEST_WORKSPACE_ID = "4567890123456789";
 const TEST_NAMESPACE = "test-namespace";
@@ -146,6 +145,12 @@ describe("getNamespacedEvent", () => {
       "plugin.magento.sales.api.order_management.place",
       "purchase_approval.plugin.magento.sales.api.order_management.place",
     ],
+    [
+      "should preserve an underscore for each UTF-16 code unit in Unicode identifiers",
+      "my\u{1F600}app",
+      "observer.order_placed",
+      "my__app.observer.order_placed",
+    ],
   ])("%s", (_desc, id, name, expected) => {
     expect(getNamespacedEvent(createMockMetadata(id), name)).toBe(expected);
   });
@@ -225,13 +230,36 @@ describe("workspace configuration", () => {
     });
   });
 
+  test("makeWorkspaceConfig defaults technical_account_email/technical_account_id to a namespace-derived value when no technical account is resolved", () => {
+    vi.stubEnv("__OW_NAMESPACE", TEST_NAMESPACE);
+
+    const context = createMockEventingInstallationContext({
+      params: {
+        AIO_COMMERCE_AUTH_IMS_CLIENT_SECRETS: ["secret-1", "secret-2"],
+        AIO_COMMERCE_AUTH_IMS_SCOPES: [" scope-a ", "scope-b "],
+        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_EMAIL: undefined,
+        AIO_COMMERCE_AUTH_IMS_TECHNICAL_ACCOUNT_ID: undefined,
+      },
+    });
+
+    const config = makeWorkspaceConfig(context);
+    const oauthServerToServer =
+      config.project.workspace.details.credentials[0].oauth_server_to_server;
+
+    expect(oauthServerToServer).toEqual({
+      client_id: expect.any(String),
+      client_secrets: ["secret-1", "secret-2"],
+      scopes: ["scope-a", "scope-b"],
+      technical_account_email: `${TEST_NAMESPACE}@techacct.adobe.com`,
+      technical_account_id: `${TEST_NAMESPACE}@techacct.adobe.com`,
+    });
+  });
+
   test("makeWorkspaceConfig throws when runtime action inputs resolve to Integration auth instead of IMS auth", () => {
     const baseContext = createMockEventingInstallationContext();
     const context: typeof baseContext = {
       ...baseContext,
 
-      // @ts-expect-error This test intentionally swaps IMS installation params
-      // for valid Integration auth inputs to assert that IMS auth is required.
       params: {
         AIO_COMMERCE_AUTH_INTEGRATION_ACCESS_TOKEN: "access-token",
         AIO_COMMERCE_AUTH_INTEGRATION_ACCESS_TOKEN_SECRET:
@@ -305,6 +333,25 @@ describe("getCommerceEventingConfigurationUpdateParams", () => {
         }),
       ),
     ).toThrow();
+  });
+});
+
+describe("getProviderWorkspaceId", () => {
+  test("reads the workspace from the rel:update link", () => {
+    expect(
+      getProviderWorkspaceId({
+        "rel:update": {
+          href: "/events/271530/4566206088344866031/456/providers/abc",
+        },
+      }),
+    ).toBe("456");
+  });
+
+  test("is null without a rel:update link", () => {
+    expect(
+      getProviderWorkspaceId({ self: { href: "/providers/1" } }),
+    ).toBeNull();
+    expect(getProviderWorkspaceId(undefined)).toBeNull();
   });
 });
 
@@ -402,6 +449,7 @@ describe("existing data normalization", () => {
           provider_metadata: "dx_commerce_events",
           publisher: "adobe",
           source: "magento",
+          workspaceId: null,
         },
         {
           description: "A test provider",
@@ -413,6 +461,7 @@ describe("existing data normalization", () => {
           provider_metadata: "dx_commerce_events",
           publisher: "adobe",
           source: "magento",
+          workspaceId: null,
         },
       ],
       registrations: [
@@ -522,7 +571,7 @@ describe("existing data normalization", () => {
   });
 });
 
-describe("removeStoredEventProviders", () => {
+describe("stored events data", () => {
   async function importUtilsWithConfigMocks() {
     vi.resetModules();
 
@@ -542,7 +591,8 @@ describe("removeStoredEventProviders", () => {
 
     return {
       configMocks,
-      removeStoredEventProviders: utilsModule.removeStoredEventProviders,
+      pruneStoredEventProviders: utilsModule.pruneStoredEventProviders,
+      storeEventProviders: utilsModule.storeEventProviders,
     };
   }
 
@@ -553,28 +603,28 @@ describe("removeStoredEventProviders", () => {
   });
 
   test("does nothing when given no provider keys", async () => {
-    const { removeStoredEventProviders, configMocks } =
+    const { pruneStoredEventProviders, configMocks } =
       await importUtilsWithConfigMocks();
 
-    await removeStoredEventProviders([]);
+    await pruneStoredEventProviders([]);
 
     expect(configMocks.getSystemConfigByKey).not.toHaveBeenCalled();
     expect(configMocks.setSystemConfigByKey).not.toHaveBeenCalled();
   });
 
   test("does nothing when there is no stored data", async () => {
-    const { removeStoredEventProviders, configMocks } =
+    const { pruneStoredEventProviders, configMocks } =
       await importUtilsWithConfigMocks();
 
     configMocks.getSystemConfigByKey.mockResolvedValue(null);
 
-    await removeStoredEventProviders(["order-events-provider"]);
+    await pruneStoredEventProviders(["order-events-provider"]);
 
     expect(configMocks.setSystemConfigByKey).not.toHaveBeenCalled();
   });
 
   test("does nothing when none of the given keys have a stored entry", async () => {
-    const { removeStoredEventProviders, configMocks } =
+    const { pruneStoredEventProviders, configMocks } =
       await importUtilsWithConfigMocks();
 
     configMocks.getSystemConfigByKey.mockResolvedValue({
@@ -583,13 +633,13 @@ describe("removeStoredEventProviders", () => {
       },
     });
 
-    await removeStoredEventProviders(["order-events-provider"]);
+    await pruneStoredEventProviders(["order-events-provider"]);
 
     expect(configMocks.setSystemConfigByKey).not.toHaveBeenCalled();
   });
 
   test("removes matching provider entries and preserves unrelated ones", async () => {
-    const { removeStoredEventProviders, configMocks } =
+    const { pruneStoredEventProviders, configMocks } =
       await importUtilsWithConfigMocks();
 
     configMocks.getSystemConfigByKey.mockResolvedValue({
@@ -599,7 +649,7 @@ describe("removeStoredEventProviders", () => {
       },
     });
 
-    await removeStoredEventProviders(["order-events-provider"]);
+    await pruneStoredEventProviders(["order-events-provider"]);
 
     expect(configMocks.setSystemConfigByKey).toHaveBeenCalledWith("events", {
       providers: {
@@ -609,7 +659,7 @@ describe("removeStoredEventProviders", () => {
   });
 
   test("removes multiple matching keys in a single call, ignoring keys with no entry", async () => {
-    const { removeStoredEventProviders, configMocks } =
+    const { pruneStoredEventProviders, configMocks } =
       await importUtilsWithConfigMocks();
 
     configMocks.getSystemConfigByKey.mockResolvedValue({
@@ -620,7 +670,7 @@ describe("removeStoredEventProviders", () => {
       },
     });
 
-    await removeStoredEventProviders([
+    await pruneStoredEventProviders([
       "provider-a",
       "provider-b",
       "never-stored",
@@ -634,7 +684,7 @@ describe("removeStoredEventProviders", () => {
   });
 
   test("deletes the entire system config entry when removing the last remaining provider", async () => {
-    const { removeStoredEventProviders, configMocks } =
+    const { pruneStoredEventProviders, configMocks } =
       await importUtilsWithConfigMocks();
 
     configMocks.getSystemConfigByKey.mockResolvedValue({
@@ -643,159 +693,42 @@ describe("removeStoredEventProviders", () => {
       },
     });
 
-    await removeStoredEventProviders(["order-events-provider"]);
+    await pruneStoredEventProviders(["order-events-provider"]);
 
     expect(configMocks.setSystemConfigByKey).toHaveBeenCalledWith(
       "events",
       null,
     );
   });
-});
 
-describe("getSubscriptionChangeKind", () => {
-  function commerceEvent(
-    overrides: Partial<CommerceEvent> = {},
-  ): CommerceEvent {
-    return {
-      description: "An event",
-      fields: [{ name: "field_a" }],
-      label: "Event",
-      name: "observer.order_placed",
-      runtimeActions: ["my-package/my-action"],
-      ...overrides,
-    } as CommerceEvent;
-  }
+  test("stores providers over the stored entries with the same key", async () => {
+    const { storeEventProviders, configMocks } =
+      await importUtilsWithConfigMocks();
 
-  test("returns 'none' for identical config", () => {
-    expect(getSubscriptionChangeKind(commerceEvent(), commerceEvent())).toBe(
-      "none",
-    );
-  });
-
-  test("returns 'none' when fields are only reordered", () => {
-    const baseline = commerceEvent({
-      fields: [{ name: "field_a" }, { name: "field_b" }],
+    configMocks.getSystemConfigByKey.mockResolvedValue({
+      providers: {
+        kept: { events: {}, id: "io-kept" },
+        orders: { events: {}, id: "io-old" },
+      },
     });
-    const target = commerceEvent({
-      fields: [{ name: "field_b" }, { name: "field_a" }],
+
+    await storeEventProviders({ orders: { events: {}, id: "io-orders" } });
+
+    expect(configMocks.setSystemConfigByKey).toHaveBeenCalledWith("events", {
+      providers: {
+        kept: { events: {}, id: "io-kept" },
+        orders: { events: {}, id: "io-orders" },
+      },
     });
-    expect(getSubscriptionChangeKind(baseline, target)).toBe("none");
   });
 
-  test("returns 'none' when rules are only reordered", () => {
-    const baseline = commerceEvent({
-      rules: [
-        { field: "a", operator: "equal", value: "1" },
-        { field: "b", operator: "equal", value: "2" },
-      ],
-    });
-    const target = commerceEvent({
-      rules: [
-        { field: "b", operator: "equal", value: "2" },
-        { field: "a", operator: "equal", value: "1" },
-      ],
-    });
-    expect(getSubscriptionChangeKind(baseline, target)).toBe("none");
-  });
+  test("stores nothing when given no providers", async () => {
+    const { storeEventProviders, configMocks } =
+      await importUtilsWithConfigMocks();
 
-  test("treats an omitted optional flag as its default (no change)", () => {
-    const baseline = commerceEvent();
-    const target = commerceEvent({ priority: false });
-    expect(getSubscriptionChangeKind(baseline, target)).toBe("none");
-  });
+    await storeEventProviders({});
 
-  test("returns 'in-place' when a field is added", () => {
-    const target = commerceEvent({
-      fields: [{ name: "field_a" }, { name: "field_b" }],
-    });
-    expect(getSubscriptionChangeKind(commerceEvent(), target)).toBe("in-place");
-  });
-
-  test("returns 'in-place' when a field's source changes (same name)", () => {
-    const baseline = commerceEvent({ fields: [{ name: "field_a" }] });
-    const target = commerceEvent({
-      fields: [{ name: "field_a", source: "extension_attributes.foo" }],
-    });
-    expect(getSubscriptionChangeKind(baseline, target)).toBe("in-place");
-  });
-
-  test("returns 'in-place' when a rule is added", () => {
-    const target = commerceEvent({
-      rules: [{ field: "state", operator: "equal", value: "new" }],
-    });
-    expect(getSubscriptionChangeKind(commerceEvent(), target)).toBe("in-place");
-  });
-
-  test("returns 'in-place' when a rule value changes (same field:operator)", () => {
-    const baseline = commerceEvent({
-      rules: [{ field: "state", operator: "equal", value: "old" }],
-    });
-    const target = commerceEvent({
-      rules: [{ field: "state", operator: "equal", value: "new" }],
-    });
-    expect(getSubscriptionChangeKind(baseline, target)).toBe("in-place");
-  });
-
-  test("returns 'in-place' when priority is toggled", () => {
-    const target = commerceEvent({ priority: true });
-    expect(getSubscriptionChangeKind(commerceEvent(), target)).toBe("in-place");
-  });
-
-  test("returns 'in-place' when hipaa_audit_required is toggled", () => {
-    const target = commerceEvent({ hipaa_audit_required: true });
-    expect(getSubscriptionChangeKind(commerceEvent(), target)).toBe("in-place");
-  });
-
-  // Disabling a scalar (true -> false) drops no field/rule key, so it classifies as `in-place`
-  // like the enabling direction above. This case is called out separately because the in-place
-  // path relies on the Commerce merge endpoint applying a `false` scalar; if it does not, a
-  // disable would not take effect (see reconcileChangedSubscriptions).
-  test("returns 'in-place' when priority is disabled (true -> false)", () => {
-    const baseline = commerceEvent({ priority: true });
-    const target = commerceEvent({ priority: false });
-    expect(getSubscriptionChangeKind(baseline, target)).toBe("in-place");
-  });
-
-  test("returns 'in-place' when hipaa_audit_required is disabled (true -> false)", () => {
-    const baseline = commerceEvent({ hipaa_audit_required: true });
-    const target = commerceEvent({ hipaa_audit_required: false });
-    expect(getSubscriptionChangeKind(baseline, target)).toBe("in-place");
-  });
-
-  test("returns 'recreate' when a field is removed", () => {
-    const baseline = commerceEvent({
-      fields: [{ name: "field_a" }, { name: "field_b" }],
-    });
-    const target = commerceEvent({ fields: [{ name: "field_a" }] });
-    expect(getSubscriptionChangeKind(baseline, target)).toBe("recreate");
-  });
-
-  test("returns 'recreate' when a field is renamed", () => {
-    const baseline = commerceEvent({ fields: [{ name: "field_a" }] });
-    const target = commerceEvent({ fields: [{ name: "field_b" }] });
-    expect(getSubscriptionChangeKind(baseline, target)).toBe("recreate");
-  });
-
-  test("returns 'recreate' when a rule is removed", () => {
-    const baseline = commerceEvent({
-      rules: [
-        { field: "a", operator: "equal", value: "1" },
-        { field: "b", operator: "equal", value: "2" },
-      ],
-    });
-    const target = commerceEvent({
-      rules: [{ field: "a", operator: "equal", value: "1" }],
-    });
-    expect(getSubscriptionChangeKind(baseline, target)).toBe("recreate");
-  });
-
-  test("returns 'recreate' when a rule operator changes for the same field", () => {
-    const baseline = commerceEvent({
-      rules: [{ field: "state", operator: "equal", value: "1" }],
-    });
-    const target = commerceEvent({
-      rules: [{ field: "state", operator: "greaterThan", value: "1" }],
-    });
-    expect(getSubscriptionChangeKind(baseline, target)).toBe("recreate");
+    expect(configMocks.getSystemConfigByKey).not.toHaveBeenCalled();
+    expect(configMocks.setSystemConfigByKey).not.toHaveBeenCalled();
   });
 });

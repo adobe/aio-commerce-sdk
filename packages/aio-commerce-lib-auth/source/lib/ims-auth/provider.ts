@@ -10,6 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
+import { generateAccessToken } from "@adobe/aio-lib-core-auth";
 import aioLibIms from "@adobe/aio-lib-ims";
 
 import { buildImsHeaders } from "./utils";
@@ -81,6 +82,7 @@ export function isImsAuthProvider(
 
 /**
  * Creates an {@link ImsAuthProvider} based on the provided configuration.
+ *
  * @param authParams An {@link ImsAuthParams} parameter that contains the configuration for the {@link ImsAuthProvider}.
  * @returns An {@link ImsAuthProvider} instance that can be used to get access token and auth headers.
  * @example
@@ -117,6 +119,32 @@ export function isImsAuthProvider(
  * ```
  */
 export function getImsAuthProvider(authParams: ImsAuthParams) {
+  if (!(authParams.technicalAccountId && authParams.technicalAccountEmail)) {
+    const getAccessToken = async () => {
+      const token = await generateAccessToken({
+        credentials: {
+          clientId: authParams.clientId,
+          clientSecret: authParams.clientSecrets[0],
+          orgId: authParams.imsOrgId,
+          scopes: authParams.scopes,
+        },
+        env: authParams.environment ?? "prod",
+      });
+
+      return token.access_token;
+    };
+
+    const getHeaders = async () => {
+      const accessToken = await getAccessToken();
+      return buildImsHeaders(accessToken, authParams.clientId);
+    };
+
+    return {
+      getAccessToken,
+      getHeaders,
+    } satisfies ImsAuthProvider;
+  }
+
   const getAccessToken = async () => {
     const imsAuthConfig = toImsAuthConfig(authParams);
 

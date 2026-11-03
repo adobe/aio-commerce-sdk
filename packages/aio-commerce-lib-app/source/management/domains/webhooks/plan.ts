@@ -10,119 +10,147 @@
  * governing permissions and limitations under the License.
  */
 
+import { unwrapHttpError } from "@adobe/aio-commerce-lib-api/utils";
+
 import { getInstallCommerceEnv } from "#config/lib/environment";
 
+import { planWebhookChanges } from "./changes";
+import { findConflictingWebhooks, toWebhookConflictIssues } from "./comparison";
+import { planAdditions, planRemovals, planUpdates } from "./diff";
 import {
-  getWebhookName,
-  hasWebhookConfigChanged,
-  isDesiredWebhook,
+  buildWebhookIdPrefix,
+  collectConfiguredValues,
+  isWebhookInList,
   resolveDesiredWebhooks,
-  toIdentity,
-  webhookIdentitiesMatch,
-  webhookOperationId,
+  resolveWebhookItemRefs,
+  toResolvedWebhookPayload,
 } from "./utils";
 
+import type { CommerceWebhook } from "@adobe/aio-commerce-lib-webhooks/api";
 import type { WebhooksConfig } from "#config/schema/webhooks";
 import type {
+  NonBlockingPlanningIssue,
   PlanningInput,
   PlanningResult,
-  ResourceOperation,
 } from "#management/common/workflow/resource";
 import type { ValidationExecutionContext } from "#management/common/workflow/step";
 import type { WebhooksStepContext } from "./context";
-import type {
-  WebhookDomainPlan,
-  WebhookOperationValue,
-  WebhookSnapshotData,
-} from "./types";
+import type { WebhookDomainPlan, WebhookSnapshotData } from "./types";
 
 /**
- * Diffs the target config against the baseline into add, update, and remove
- * operations. Pure — no external reads or writes, since an observation made
- * here could be stale by execution time. Blocks with
- * `WEBHOOK_BASELINE_UNRESOLVED` if the baseline data cannot be resolved.
+ * Diffs the live webhooks against the target config into add, update, and remove
+ * operations. Removes cover live webhooks the app owns that the target does not
+ * declare. Blocks with `WEBHOOK_LIVE_READ_FAILED` if the live webhooks cannot be listed, and
+ * warns with `WEBHOOK_CONFLICTS` when another app has a webhook on a hook point the plan changes.
  */
-export function planWebhookSubscriptions(
+export async function planWebhookSubscriptions(
   input: PlanningInput<WebhooksConfig, WebhookSnapshotData>,
   context: ValidationExecutionContext<WebhooksStepContext>,
 ): Promise<PlanningResult<WebhookDomainPlan>> {
-  const { path, baseline, targetConfig } = input;
-  const { params } = context;
+  const { path, baseline, targetConfig, failedAttempt } = input;
+  const env = getInstallCommerceEnv(context.params);
+  const changes = planWebhookChanges(
+    baseline?.config ?? null,
+    targetConfig,
+    env,
+  );
 
-  // An existing baseline with unresolved data isn't "no prior state" — webhooks may
-  // still be live, so don't silently drop their removal.
-  // biome-ignore lint/suspicious/noUnnecessaryConditions: data can still be null/undefined at runtime despite the type
-  if (baseline && !baseline.data?.subscribedWebhooks) {
-    return Promise.resolve({
+  let webhooks: CommerceWebhook[];
+  try {
+    webhooks = await context.commerceWebhooksClient.getWebhookList();
+  } catch (error) {
+    return {
       issues: [
         {
-          code: "WEBHOOK_BASELINE_UNRESOLVED",
+          blocking: true,
+          code: "WEBHOOK_LIVE_READ_FAILED",
           domain: "webhooks",
-          message:
-            "A prior webhooks baseline exists, but its subscribed-webhooks data could not be resolved. Refusing to plan without it, since previously subscribed webhooks could otherwise go unremoved.",
+          message: `Could not list the live webhooks to plan against: ${await unwrapHttpError(error)}`,
         },
       ],
       kind: "blocked",
-    });
+    };
   }
 
-  const env = getInstallCommerceEnv(params);
+  const live = webhooks.map(toResolvedWebhookPayload);
   const desired = targetConfig ? resolveDesiredWebhooks(targetConfig, env) : [];
+  const declaredInBaseline = baseline
+    ? resolveDesiredWebhooks(baseline.config, env)
+    : [];
 
-  const ownedFromBaseline = baseline?.data?.subscribedWebhooks ?? [];
+  const refs = {
+    baseline: resolveWebhookItemRefs(baseline?.config ?? null, env),
+    target: resolveWebhookItemRefs(targetConfig, env),
+  };
 
-  // Removes precede adds (see the concat below) so a rename never briefly double-registers a hook point.
-  const addOperations: ResourceOperation<WebhookOperationValue>[] = [];
-  const updateOperations: ResourceOperation<WebhookOperationValue>[] = [];
-  const removeOperations: ResourceOperation<WebhookOperationValue>[] = [];
+  const failedPlan = failedAttempt?.plan as WebhookDomainPlan | null;
+  const declaredInFailedAttempt = failedAttempt?.targetConfig
+    ? resolveDesiredWebhooks(failedAttempt.targetConfig, env)
+    : [];
 
-  for (const webhook of desired) {
-    const owned = ownedFromBaseline.find((candidate) =>
-      webhookIdentitiesMatch(candidate, webhook),
-    );
-
-    if (owned) {
-      if (hasWebhookConfigChanged(owned, webhook)) {
-        const identity = toIdentity(webhook);
-        updateOperations.push({
-          after: webhook,
-          before: identity,
-          id: webhookOperationId("update", identity),
-          kind: "update",
-          label: `Update webhook: ${getWebhookName(identity)}`,
-        });
-      }
-      continue;
-    }
-
-    const identity = toIdentity(webhook);
-    addOperations.push({
-      after: webhook,
-      id: webhookOperationId("add", identity),
-      kind: "add",
-      label: `Subscribe webhook: ${getWebhookName(identity)}`,
-    });
-  }
-
-  const staleFromBaseline = ownedFromBaseline.filter(
-    (owned) => !isDesiredWebhook(owned, desired),
+  const configuredValues = collectConfiguredValues(
+    [...declaredInBaseline, ...declaredInFailedAttempt],
+    { ...failedPlan?.configuredValues },
   );
 
-  for (const stale of staleFromBaseline) {
-    const identity = toIdentity(stale);
-    removeOperations.push({
-      before: identity,
-      id: webhookOperationId("remove", identity),
-      kind: "remove",
-      label: `Unsubscribe webhook: ${getWebhookName(identity)}`,
-    });
+  const operations = [
+    // Removes precede adds so a rename never briefly double-registers a hook point.
+    ...planRemovals(live, desired, declaredInBaseline, context.appId, refs),
+    ...planUpdates(live, desired, declaredInBaseline, configuredValues, refs),
+    ...planAdditions(live, desired, declaredInBaseline, refs),
+  ];
+
+  return {
+    issues: findConflictIssues(targetConfig, operations, webhooks),
+    kind: "planned",
+    plan: { changes, configuredValues, operations, path },
+  };
+}
+
+/**
+ * Warns about the modification webhooks the plan adds or updates when another app already has a
+ * webhook on the same hook point. Webhooks the plan removes are ignored, since they will not stay live.
+ */
+function findConflictIssues(
+  targetConfig: WebhooksConfig | null,
+  operations: WebhookDomainPlan["operations"],
+  webhooks: CommerceWebhook[],
+): NonBlockingPlanningIssue[] {
+  if (!targetConfig) {
+    return [];
   }
 
-  return Promise.resolve({
-    kind: "planned",
-    plan: {
-      operations: [...removeOperations, ...updateOperations, ...addOperations],
-      path,
-    },
+  const changed = operations
+    .filter((op) => op.kind !== "remove")
+    .map((op) => op.after);
+
+  const idPrefix = buildWebhookIdPrefix(targetConfig.metadata.id);
+  const entries = targetConfig.webhooks.filter((entry) => {
+    const { webhook } = entry;
+
+    const isModification = entry.category === "modification";
+    const isChanged = isWebhookInList(changed, {
+      batch_name: `${idPrefix}${webhook.batch_name}`,
+      hook_name: `${idPrefix}${webhook.hook_name}`,
+      webhook_method: webhook.webhook_method,
+      webhook_type: webhook.webhook_type,
+    });
+
+    return isModification && isChanged;
   });
+
+  const removed = operations.flatMap((op) =>
+    op.kind === "remove" ? [op.before] : [],
+  );
+
+  const remaining = webhooks.filter(
+    (webhook) => !isWebhookInList(removed, webhook),
+  );
+
+  const conflicts = findConflictingWebhooks(entries, remaining, idPrefix);
+  return toWebhookConflictIssues(conflicts).map((issue) => ({
+    ...issue,
+    blocking: false,
+    domain: "webhooks",
+  }));
 }

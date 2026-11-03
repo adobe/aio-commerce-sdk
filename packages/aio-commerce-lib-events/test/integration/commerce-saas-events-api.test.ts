@@ -44,7 +44,7 @@ vi.mock("@adobe/aio-commerce-lib-auth", async () => {
 // See: https://vitest.dev/guide/mocking.html#requests
 const server = setupServer();
 
-beforeAll(() => server.listen({ onUnhandledRequest: "error" }));
+beforeAll(() => server.listen({ onUnhandledFrame: "error" }));
 afterAll(() => server.close());
 afterEach(() => server.resetHandlers());
 
@@ -157,5 +157,43 @@ describe("SaaS Commerce Events API - Integration Tests", () => {
         await expect(invoke()).rejects.toThrow();
       },
     );
+  });
+
+  describe("updateEventProvider body", () => {
+    test("should wrap the provider, including its id", async () => {
+      const capture = { body: null as Record<string, unknown> | null };
+      server.use(
+        http.put(makeUrl("eventing/eventProvider"), async ({ request }) => {
+          capture.body = (await request.json()) as Record<string, unknown>;
+          return HttpResponse.json({});
+        }),
+      );
+
+      await client.updateEventProvider({
+        id: 7,
+        instance_id: "instance-1",
+        label: "New label",
+        provider_id: "provider-1",
+      });
+
+      expect(capture.body).toEqual({
+        eventProvider: {
+          id: 7,
+          instance_id: "instance-1",
+          label: "New label",
+          provider_id: "provider-1",
+        },
+      });
+    });
+
+    test("should require the id", async () => {
+      await expect(
+        // @ts-expect-error - Testing missing id
+        client.updateEventProvider({
+          instance_id: "instance-1",
+          provider_id: "provider-1",
+        }),
+      ).rejects.toThrow();
+    });
   });
 });

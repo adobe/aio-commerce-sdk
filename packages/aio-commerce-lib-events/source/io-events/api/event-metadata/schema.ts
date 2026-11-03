@@ -13,7 +13,7 @@
 import { stringValueSchema } from "@aio-commerce-sdk/common-utils/valibot";
 import * as v from "valibot";
 
-const BASE64_ENCODED_STRING_REGEX = /^[A-Za-z0-9+/]*={0,2}$/;
+const BASE64_ENCODED_STRING_REGEX = /^[A-Za-z0-9+/]*={0,2}$/u;
 const BASE64_ENCODED_STRING_LENGTH_REMAINDER = 4;
 
 function isBase64EncodedString(value: string) {
@@ -97,6 +97,9 @@ export const CreateEventMetadataForProviderSchema = v.object({
  * The schema of the parameters received by the GET `providers/:id/eventmetadata` Adobe I/O Events API endpoint.
  * @see https://developer.adobe.com/events/docs/api#operation/getByProviderId
  */
+export const UpdateEventMetadataForProviderSchema =
+  CreateEventMetadataForProviderSchema;
+
 export type GetAllEventMetadataForProviderParams = v.InferInput<
   typeof GetAllEventMetadataForProviderSchema
 >;
@@ -130,6 +133,10 @@ export type CreateEventMetadataForProviderParams = v.InferInput<
  * The schema of the parameters received by the DELETE `providers/:id/eventmetadata/:code` Adobe I/O Events API endpoint.
  * @see https://developer.adobe.com/events/docs/api#operation/deleteEventMetadata
  */
+export type UpdateEventMetadataForProviderParams = v.InferInput<
+  typeof UpdateEventMetadataForProviderSchema
+>;
+
 export type DeleteEventMetadataForProviderParams = v.InferInput<
   typeof DeleteEventMetadataForProviderSchema
 >;

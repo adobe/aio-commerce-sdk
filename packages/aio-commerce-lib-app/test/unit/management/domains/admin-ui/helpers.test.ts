@@ -16,7 +16,6 @@ import {
   enableAdminUiSdk,
   refreshExtension,
   registerExtension,
-  unregisterExtension,
   unregisterExtensionForUpgrade,
 } from "#management/domains/admin-ui/helpers";
 import { createMockAdminUiContext } from "#test/fixtures/admin-ui";
@@ -24,16 +23,16 @@ import { makeHttpError } from "#test/fixtures/http-error";
 import { createMockLogger } from "#test/fixtures/installation";
 
 const REGISTER_EXTENSION_COMBINED_PATTERN =
-  /Failed to register Admin UI extension.*Insufficient permissions/;
+  /Failed to register Admin UI extension.*Insufficient permissions/u;
 
 const ENABLE_SDK_COMBINED_PATTERN =
-  /Failed to enable Admin UI SDK.*Insufficient permissions/;
+  /Failed to enable Admin UI SDK.*Insufficient permissions/u;
 
 const REFRESH_EXTENSION_COMBINED_PATTERN =
-  /Failed to refresh Admin UI extension.*Insufficient permissions/;
+  /Failed to refresh Admin UI extension.*Insufficient permissions/u;
 
 const UNREGISTER_FAILURE_PATTERN =
-  /Failed to unregister Admin UI extension.*Service unavailable/;
+  /Failed to unregister Admin UI extension.*Service unavailable/u;
 
 describe("enableAdminUiSdk", () => {
   test("calls the client and logs success when it resolves", async () => {
@@ -204,56 +203,6 @@ describe("refreshExtension", () => {
       REFRESH_EXTENSION_COMBINED_PATTERN,
     );
     expect(context.adminUiClient.registerExtension).not.toHaveBeenCalled();
-  });
-});
-
-describe("unregisterExtension", () => {
-  beforeEach(() => {
-    vi.stubEnv("__OW_NAMESPACE", "test-ns");
-  });
-
-  afterEach(() => {
-    vi.unstubAllEnvs();
-  });
-
-  test("warns and returns without calling the client when __OW_NAMESPACE is not set", async () => {
-    vi.unstubAllEnvs();
-    const logger = createMockLogger();
-    const context = { ...createMockAdminUiContext({}), logger };
-
-    await expect(unregisterExtension(context)).resolves.toBeUndefined();
-
-    expect(context.adminUiClient.unregisterExtension).not.toHaveBeenCalled();
-    expect(logger.warn).toHaveBeenCalledWith(
-      expect.stringContaining("Continuing uninstall."),
-    );
-  });
-
-  test("warns with enriched error message when unregisterExtension call fails", async () => {
-    const logger = createMockLogger();
-    const httpError = makeHttpError(
-      500,
-      "Internal Server Error",
-      JSON.stringify({ message: "Service unavailable" }),
-    );
-    const context = {
-      ...createMockAdminUiContext({
-        unregisterExtensionImpl: () => Promise.reject(httpError),
-      }),
-      logger,
-    };
-
-    await unregisterExtension(context);
-
-    expect(logger.warn).toHaveBeenCalledWith(
-      expect.stringContaining("test-ns"),
-    );
-    expect(logger.warn).toHaveBeenCalledWith(
-      expect.stringContaining("Service unavailable"),
-    );
-    expect(logger.warn).toHaveBeenCalledWith(
-      expect.stringContaining("Continuing uninstall."),
-    );
   });
 });
 

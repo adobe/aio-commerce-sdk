@@ -78,6 +78,15 @@ class FilesStore<T> implements KeyValueStore<T> {
     }
   }
 
+  public async has(key: string): Promise<boolean> {
+    try {
+      const files = await this.files.list(this.buildFilePath(key));
+      return files.length > 0;
+    } catch {
+      return false;
+    }
+  }
+
   public async put(key: string, data: T): Promise<void> {
     const filePath = this.buildFilePath(key);
     await this.files.write(filePath, JSON.stringify(data));

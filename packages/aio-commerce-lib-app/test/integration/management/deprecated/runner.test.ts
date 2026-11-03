@@ -1,0 +1,496 @@
+/*
+ * Copyright 2026 Adobe. All rights reserved.
+ * This file is licensed to you under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License. You may obtain a copy
+ * of the License at http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under
+ * the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR REPRESENTATIONS
+ * OF ANY KIND, either express or implied. See the License for the specific language
+ * governing permissions and limitations under the License.
+ */
+
+import { describe, expect, test, vi } from "vitest";
+
+import {
+  isFailedState,
+  isSucceededState,
+} from "#management/common/workflow/types";
+import {
+  createInitialInstallationState,
+  createInitialUninstallationState,
+  runInstallation,
+  runUninstallation,
+  runValidation,
+} from "#management/deprecated/runner";
+import {
+  configWithCustomInstallationSteps,
+  configWithOneScript,
+  minimalValidConfig,
+} from "#test/fixtures/config";
+import {
+  createMockInstallationContext,
+  createMockInstallationContextWithScripts,
+} from "#test/fixtures/installation";
+
+import type { InstallationHooks } from "#management/deprecated/runner";
+
+type StepStatusNode = {
+  name: string;
+  path: string[];
+  status: string;
+  children: StepStatusNode[];
+};
+
+function findStepStatusByPath(
+  step: StepStatusNode,
+  expectedPath: string[],
+): StepStatusNode | undefined {
+  if (step.path.join(".") === expectedPath.join(".")) {
+    return step;
+  }
+
+  for (const child of step.children) {
+    const found = findStepStatusByPath(child, expectedPath);
+    if (found) {
+      return found;
+    }
+  }
+}
+
+describe("createInitialInstallationState", () => {
+  test("minimal config only includes the installation root", () => {
+    const state = createInitialInstallationState({
+      config: minimalValidConfig,
+    });
+
+    expect(state.status).toBe("in-progress");
+    expect(state.step.name).toBe("installation");
+    expect(state.step.path).toEqual(["installation"]);
+    expect(state.step.children).toHaveLength(0);
+  });
+
+  test("custom installation config includes the generated script steps", () => {
+    const state = createInitialInstallationState({
+      config: configWithCustomInstallationSteps,
+    });
+
+    expect(state.step.children).toHaveLength(1);
+
+    const [customBranch] = state.step.children;
+    expect(customBranch.name).toBe("customInstallationSteps");
+    expect(customBranch.path).toEqual([
+      "installation",
+      "customInstallationSteps",
+    ]);
+    expect(customBranch.children.map((child) => child.name)).toEqual([
+      "demoSuccess",
+      "demoError",
+    ]);
+  });
+});
+
+describe("runInstallation - minimal config", () => {
+  test("returns a succeeded state and preserves the initial state id", async () => {
+    const config = minimalValidConfig;
+    const initialState = createInitialInstallationState({ config });
+
+    const result = await runInstallation({
+      config,
+      initialState,
+      installationContext: createMockInstallationContext(),
+    });
+
+    expect(isSucceededState(result)).toBe(true);
+    expect(result.status).toBe("succeeded");
+    expect(result.id).toBe(initialState.id);
+    expect(result.completedAt).toBeDefined();
+    expect(new Date(result.startedAt) <= new Date(result.completedAt)).toBe(
+      true,
+    );
+  });
+});
+
+describe("runInstallation - custom installation scripts", () => {
+  test("stores successful script output at the script step path", async () => {
+    const config = configWithOneScript;
+    const scriptOutput = { payload: "done" };
+    const installationContext = createMockInstallationContextWithScripts({
+      "./my-script.js": { default: vi.fn().mockResolvedValue(scriptOutput) },
+    });
+
+    const initialState = createInitialInstallationState({ config });
+    const result = await runInstallation({
+      config,
+      initialState,
+      installationContext,
+    });
+
+    expect(isSucceededState(result)).toBe(true);
+    expect(result.data).toMatchObject({
+      installation: {
+        customInstallationSteps: {
+          myScript: {
+            data: scriptOutput,
+            script: "./my-script.js",
+          },
+        },
+      },
+    });
+  });
+
+  test("returns a failed state when the script is missing from the execution context", async () => {
+    const config = configWithOneScript;
+    const installationContext = createMockInstallationContextWithScripts({});
+    const initialState = createInitialInstallationState({ config });
+
+    const result = await runInstallation({
+      config,
+      initialState,
+      installationContext,
+    });
+
+    expect.assert(isFailedState(result));
+    expect(result.error.path).toEqual([
+      "installation",
+      "customInstallationSteps",
+      "myScript",
+    ]);
+    expect(result.error.message).toContain(
+      "not found in customScripts context",
+    );
+  });
+
+  test("returns a failed state with the script path when the script throws", async () => {
+    const config = configWithOneScript;
+    const installationContext = createMockInstallationContextWithScripts({
+      "./my-script.js": {
+        default: vi.fn().mockRejectedValue(new Error("script exploded")),
+      },
+    });
+
+    const initialState = createInitialInstallationState({ config });
+    const result = await runInstallation({
+      config,
+      initialState,
+      installationContext,
+    });
+
+    expect.assert(isFailedState(result));
+    expect(result.error.message).toContain("script exploded");
+    expect(result.error.path).toEqual([
+      "installation",
+      "customInstallationSteps",
+      "myScript",
+    ]);
+  });
+
+  test("marks the failing script step as failed in the final state tree", async () => {
+    const config = configWithOneScript;
+    const installationContext = createMockInstallationContextWithScripts({
+      "./my-script.js": {
+        default: vi.fn().mockRejectedValue(new Error("boom")),
+      },
+    });
+
+    const initialState = createInitialInstallationState({ config });
+    const result = await runInstallation({
+      config,
+      initialState,
+      installationContext,
+    });
+
+    const leafStatus = findStepStatusByPath(result.step as StepStatusNode, [
+      "installation",
+      "customInstallationSteps",
+      "myScript",
+    ]);
+
+    expect(leafStatus?.name).toBe("myScript");
+    expect(leafStatus?.status).toBe("failed");
+  });
+
+  test("stops executing later scripts after the first failure", async () => {
+    const config = configWithCustomInstallationSteps;
+    const secondScript = vi.fn().mockResolvedValue({});
+    const installationContext = createMockInstallationContextWithScripts({
+      "./demo-error.js": { default: secondScript },
+      "./demo-success.js": {
+        default: vi.fn().mockRejectedValue(new Error("first fails")),
+      },
+    });
+
+    const initialState = createInitialInstallationState({ config });
+    await runInstallation({ config, initialState, installationContext });
+
+    expect(secondScript).not.toHaveBeenCalled();
+  });
+
+  test("returns a failed state when the script default export is not a function", async () => {
+    const config = configWithOneScript;
+    const installationContext = createMockInstallationContextWithScripts({
+      "./my-script.js": { default: "not-a-function" },
+    });
+
+    const initialState = createInitialInstallationState({ config });
+    const result = await runInstallation({
+      config,
+      initialState,
+      installationContext,
+    });
+
+    expect.assert(isFailedState(result));
+    expect(result.error.message).toContain("Invalid script module format");
+  });
+});
+
+describe("runUninstallation - historical custom installation steps", () => {
+  test("calls uninstall for a step no longer in the config, using its recorded history", async () => {
+    // The current config only has "Demo Success"; "Demo Error" ran in a previous
+    // version and was since removed, but its `uninstall` must still run at
+    // unassociate (see the CEXT-6511 spec's append-only design).
+    const config = {
+      ...configWithCustomInstallationSteps,
+      installation: {
+        customInstallationSteps: [
+          configWithCustomInstallationSteps.installation
+            .customInstallationSteps[0],
+        ],
+      },
+    };
+
+    const install = vi.fn().mockResolvedValue({ status: "success" });
+    const remainingUninstall = vi.fn().mockResolvedValue(undefined);
+    const removedUninstall = vi.fn().mockResolvedValue(undefined);
+    const installationContext = createMockInstallationContextWithScripts({
+      "./demo-error.js": { install, uninstall: removedUninstall },
+      "./demo-success.js": { install, uninstall: remainingUninstall },
+    });
+
+    const executedCustomInstallationSteps = [
+      { name: "Demo Success", script: "./demo-success.js" },
+      { name: "Demo Error", script: "./demo-error.js" },
+    ];
+
+    const initialState = createInitialUninstallationState({
+      config,
+      executedCustomInstallationSteps,
+    });
+
+    const result = await runUninstallation({
+      config,
+      executedCustomInstallationSteps,
+      initialState,
+      installationContext,
+    });
+
+    expect(isSucceededState(result)).toBe(true);
+    expect(remainingUninstall).toHaveBeenCalledWith(config, expect.anything());
+    expect(removedUninstall).toHaveBeenCalledWith(config, expect.anything());
+  });
+
+  test("uninstalls every step newest-first, mirroring migration rollback order", async () => {
+    // "A" and "Demo Success" ran at install; "Demo Error" was added in a later upgrade.
+    // "A" was since removed from the config. A full uninstall must run in the reverse of
+    // that run order: Demo Error, Demo Success, A.
+    const config = configWithCustomInstallationSteps;
+    const callOrder: string[] = [];
+    const installationContext = createMockInstallationContextWithScripts({
+      "./a.js": {
+        install: vi.fn(),
+        uninstall: vi.fn().mockImplementation(() => {
+          callOrder.push("A");
+        }),
+      },
+      "./demo-error.js": {
+        install: vi.fn(),
+        uninstall: vi.fn().mockImplementation(() => {
+          callOrder.push("Demo Error");
+        }),
+      },
+      "./demo-success.js": {
+        install: vi.fn(),
+        uninstall: vi.fn().mockImplementation(() => {
+          callOrder.push("Demo Success");
+        }),
+      },
+    });
+
+    const executedCustomInstallationSteps = [
+      { name: "A", script: "./a.js" },
+      { name: "Demo Success", script: "./demo-success.js" },
+      { name: "Demo Error", script: "./demo-error.js" },
+    ];
+
+    const initialState = createInitialUninstallationState({
+      config,
+      executedCustomInstallationSteps,
+    });
+
+    const result = await runUninstallation({
+      config,
+      executedCustomInstallationSteps,
+      initialState,
+      installationContext,
+    });
+
+    expect(isSucceededState(result)).toBe(true);
+    expect(callOrder).toEqual(["Demo Error", "Demo Success", "A"]);
+  });
+
+  test("skips (without failing) a historical step whose script no longer exists", async () => {
+    const config = minimalValidConfig;
+    const installationContext = createMockInstallationContext();
+
+    const executedCustomInstallationSteps = [
+      { name: "Old Step", script: "./old-step.js" },
+    ];
+
+    const initialState = createInitialUninstallationState({
+      config,
+      executedCustomInstallationSteps,
+    });
+
+    const result = await runUninstallation({
+      config,
+      executedCustomInstallationSteps,
+      initialState,
+      installationContext,
+    });
+
+    expect(isSucceededState(result)).toBe(true);
+  });
+});
+
+describe("runInstallation - lifecycle hooks", () => {
+  test("fires onInstallationStart before the first step starts", async () => {
+    const order: string[] = [];
+    const config = minimalValidConfig;
+    const initialState = createInitialInstallationState({ config });
+
+    const hooks: InstallationHooks = {
+      onInstallationStart: vi.fn(() => {
+        order.push("start");
+      }),
+      onStepStart: vi.fn(() => {
+        order.push("stepStart");
+      }),
+    };
+
+    await runInstallation({
+      config,
+      hooks,
+      initialState,
+      installationContext: createMockInstallationContext(),
+    });
+
+    expect(order.slice(0, 2)).toEqual(["start", "stepStart"]);
+  });
+
+  test("fires onInstallationFailure instead of onInstallationSuccess when a step fails", async () => {
+    const config = configWithOneScript;
+    const installationContext = createMockInstallationContextWithScripts({});
+    const initialState = createInitialInstallationState({ config });
+    const onInstallationSuccess = vi.fn();
+    const onInstallationFailure = vi.fn();
+
+    await runInstallation({
+      config,
+      hooks: { onInstallationFailure, onInstallationSuccess },
+      initialState,
+      installationContext,
+    });
+
+    expect(onInstallationSuccess).not.toHaveBeenCalled();
+    expect(onInstallationFailure).toHaveBeenCalledOnce();
+    expect(onInstallationFailure.mock.calls[0]?.[0]).toMatchObject({
+      status: "failed",
+    });
+  });
+
+  test("fires step start and success hooks for each active installation step", async () => {
+    const config = configWithOneScript;
+    const installationContext = createMockInstallationContextWithScripts({
+      "./my-script.js": { default: vi.fn().mockResolvedValue(null) },
+    });
+
+    const initialState = createInitialInstallationState({ config });
+    const onStepStart = vi.fn();
+    const onStepSuccess = vi.fn();
+
+    await runInstallation({
+      config,
+      hooks: { onStepStart, onStepSuccess },
+      initialState,
+      installationContext,
+    });
+
+    const startedPaths = onStepStart.mock.calls.map(
+      (args: unknown[]) => (args[0] as { path: string[] }).path,
+    );
+    const succeededPaths = onStepSuccess.mock.calls.map(
+      (args: unknown[]) => (args[0] as { path: string[] }).path,
+    );
+
+    const expectedPaths = [
+      ["installation"],
+      ["installation", "customInstallationSteps"],
+      ["installation", "customInstallationSteps", "myScript"],
+    ];
+
+    expect(startedPaths).toEqual(expect.arrayContaining(expectedPaths));
+    expect(succeededPaths).toEqual(expect.arrayContaining(expectedPaths));
+  });
+
+  test("fires step failure hooks for the failing script and its ancestor branches", async () => {
+    const config = configWithOneScript;
+    const installationContext = createMockInstallationContextWithScripts({
+      "./my-script.js": {
+        default: vi.fn().mockRejectedValue(new Error("leaf failure")),
+      },
+    });
+
+    const initialState = createInitialInstallationState({ config });
+    const onStepFailure = vi.fn();
+
+    await runInstallation({
+      config,
+      hooks: { onStepFailure },
+      initialState,
+      installationContext,
+    });
+
+    const failedPaths = onStepFailure.mock.calls.map(
+      (args: unknown[]) => (args[0] as { path: string[] }).path,
+    );
+
+    expect(failedPaths).toEqual(
+      expect.arrayContaining([
+        ["installation"],
+        ["installation", "customInstallationSteps"],
+        ["installation", "customInstallationSteps", "myScript"],
+      ]),
+    );
+    expect(onStepFailure.mock.calls[0]?.[0]).toMatchObject({
+      error: expect.objectContaining({
+        message: expect.stringContaining("leaf failure"),
+      }),
+    });
+  });
+});
+
+describe("runValidation", () => {
+  test("returns a valid result with no issues for the minimal config", async () => {
+    const config = minimalValidConfig;
+    const validationContext = createMockInstallationContext();
+
+    const result = await runValidation({ config, validationContext });
+
+    expect(result.valid).toBe(true);
+    expect(result.summary).toEqual({
+      errors: 0,
+      totalIssues: 0,
+      warnings: 0,
+    });
+  });
+});

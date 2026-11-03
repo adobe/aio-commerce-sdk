@@ -1,10 +1,5 @@
 import { vi } from "vitest";
 
-import {
-  COMMERCE_PROVIDER_TYPE,
-  generateInstanceId,
-} from "#management/domains/events/utils";
-
 import { configWithCommerceEventing } from "./config";
 import { createMockInstallationContext } from "./installation";
 
@@ -14,7 +9,6 @@ import type {
   UpdateEventingConfigurationParams,
 } from "@adobe/aio-commerce-lib-events/commerce";
 import type {
-  EventProviderType,
   IoEventMetadata,
   IoEventMetadataManyResponse,
   IoEventProvider,
@@ -39,7 +33,7 @@ import type {
 
 /** A minimal event source shape (provider + events) for building eventing configs in tests. */
 export type MockEventSource = {
-  provider: { label: string; key?: string };
+  provider: { label: string; key?: string; description?: string };
   events: unknown[];
 };
 
@@ -221,6 +215,11 @@ export function createMockCommerceEventsClient(
     getAllEventProviders: vi.fn(overrides?.getAllEventProviders),
     getAllEventSubscriptions: vi.fn(overrides?.getAllEventSubscriptions),
     updateEventingConfiguration: vi.fn(overrides?.updateEventingConfiguration),
+    updateEventProvider: vi
+      .fn()
+      .mockImplementation(
+        overrides?.updateEventProvider ?? (() => Promise.resolve()),
+      ),
     updateEventSubscription: vi
       .fn()
       .mockImplementation(
@@ -255,6 +254,16 @@ export function createMockIoEventsClient(
       ),
     getAllEventProviders: vi.fn(overrides?.getAllEventProviders),
     getAllRegistrations: vi.fn(overrides?.getAllRegistrations),
+    updateEventMetadataForProvider: vi
+      .fn()
+      .mockImplementation(
+        overrides?.updateEventMetadataForProvider ?? (() => Promise.resolve()),
+      ),
+    updateEventProvider: vi
+      .fn()
+      .mockImplementation(
+        overrides?.updateEventProvider ?? (() => Promise.resolve()),
+      ),
     updateRegistration: vi
       .fn()
       .mockImplementation(
@@ -268,69 +277,6 @@ export const TEST_WORKSPACE_ID = "test-workspace-id";
 
 /** Client id the mock installation context runs as; deployed registrations must carry it to be found. */
 export const TEST_CLIENT_ID = "test-client-id";
-
-/**
- * Builds a live I/O Events provider entry whose `instance_id` matches the given config provider under
- * the shared test metadata, so `resolveDeployedProvider` finds it during an apply. Carries an empty
- * `_embedded.eventmetadata` so it also parses as a provider HAL model in the list endpoints.
- *
- * @param options - The config provider to mirror, the deployed provider id, and its provider type.
- */
-export function createMockDeployedIoProvider(options: {
-  provider: { label: string; key?: string };
-  id: string;
-  type?: EventProviderType;
-}) {
-  const { provider, id, type = COMMERCE_PROVIDER_TYPE } = options;
-  return {
-    ...createMockIoEventProvider({
-      id,
-      instance_id: generateInstanceId(
-        configWithCommerceEventing.metadata,
-        provider as EventProvider,
-        TEST_WORKSPACE_ID,
-      ),
-      label: provider.label,
-      provider_metadata: type,
-    }),
-    _embedded: { eventmetadata: [] },
-  };
-}
-
-/** Builds a deployed I/O Events registration carrying the mock context's client id. */
-export function createMockDeployedRegistration(
-  name: string,
-  registrationId: string,
-) {
-  return createMockIoEventRegistration({
-    client_id: TEST_CLIENT_ID,
-    name,
-    registration_id: registrationId,
-  });
-}
-
-/** A mock io-events client whose list endpoints return the given (defaulted-empty) HAL payloads. */
-export function createMockIoEventsListClient(options?: {
-  providers?: unknown[];
-  registrations?: unknown[];
-  updateRegistration?: (...args: unknown[]) => unknown;
-  createRegistration?: (...args: unknown[]) => unknown;
-  deleteRegistration?: (...args: unknown[]) => unknown;
-  deleteEventMetadataForProvider?: (...args: unknown[]) => unknown;
-}) {
-  return {
-    createRegistration: options?.createRegistration,
-    deleteEventMetadataForProvider: options?.deleteEventMetadataForProvider,
-    deleteRegistration: options?.deleteRegistration,
-    getAllEventProviders: () =>
-      Promise.resolve({ _embedded: { providers: options?.providers ?? [] } }),
-    getAllRegistrations: () =>
-      Promise.resolve({
-        _embedded: { registrations: options?.registrations ?? [] },
-      }),
-    updateRegistration: options?.updateRegistration ?? vi.fn(),
-  };
-}
 
 /** Options for creating a mock {@link EventsExecutionContext}. */
 export type MockEventingInstallationContextOptions = Omit<
@@ -451,12 +397,21 @@ export async function importCommerceEventsStepWithMocks() {
     setSystemConfigByKey: vi.fn().mockResolvedValue(undefined),
   };
 
-  vi.doMock("#management/domains/events/helpers", async () => {
+  const { configureCommerceEventing, ...legacyHelperMocks } = helperMocks;
+  vi.doMock("#management/deprecated/domains/events-helpers", async () => {
     const actual = await vi.importActual<
-      typeof import("#management/domains/events/helpers")
-    >("#management/domains/events/helpers");
+      typeof import("#management/deprecated/domains/events-helpers")
+    >("#management/deprecated/domains/events-helpers");
 
-    return { ...actual, ...helperMocks };
+    return { ...actual, ...legacyHelperMocks };
+  });
+
+  vi.doMock("#management/domains/events/api", async () => {
+    const actual = await vi.importActual<
+      typeof import("#management/domains/events/api")
+    >("#management/domains/events/api");
+
+    return { ...actual, configureCommerceEventing };
   });
 
   vi.doMock("#management/domains/events/utils", async () => {
@@ -489,7 +444,8 @@ export async function importCommerceEventsStepWithMocks() {
 export function cleanupCommerceEventsStepMocks() {
   vi.clearAllMocks();
   vi.resetModules();
-  vi.doUnmock("#management/domains/events/helpers");
+  vi.doUnmock("#management/deprecated/domains/events-helpers");
+  vi.doUnmock("#management/domains/events/api");
   vi.doUnmock("#management/domains/events/utils");
   vi.doUnmock("@adobe/aio-commerce-lib-config");
 }

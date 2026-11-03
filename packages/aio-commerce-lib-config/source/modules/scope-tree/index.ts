@@ -12,8 +12,6 @@
 
 // Main scope tree functionality
 export { getScopeTree } from "./get-scope-tree";
-// Commerce scope merging utilities
-export { buildUpdatedScopeTree, mergeCommerceScopes } from "./merge-scopes";
 // Repository functions
 export {
   getPersistedScopeTree,
@@ -24,9 +22,7 @@ export { setCustomScopeTree } from "./set-custom-scope-tree";
 
 // Types for scope tree operations
 export type {
-  GetScopeTreeOptions,
   GetScopeTreeResult,
   ScopeNode,
   ScopeTree,
-  ScopeTreeContext,
 } from "./types";
