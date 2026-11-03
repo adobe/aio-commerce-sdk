@@ -17,11 +17,12 @@ import type { Runtime } from "@adobe/exc-app";
 
 declare global {
   // Ambient type for typesafe `globalThis` access to `EXC_MR_READY`.
+  // biome-ignore lint/style/useVarsOnTop: Ambient global declarations have no execution order.
   var EXC_MR_READY: (() => void) | undefined;
 }
 
 const EXPERIENCE_CLOUD_RUNTIME_HOST_PATTERN =
-  /^(exc-unifiedcontent\.)?experience(-qa|-stage|-cdn|-cdn-stage)?\.adobe\.(com|net)$/u;
+  /^(?:exc-unifiedcontent\.)?experience(?:-qa|-stage|-cdn|-cdn-stage)?\.adobe\.(?:com|net)$/u;
 
 /** Convenience no-operation function */
 const noop = () => undefined;

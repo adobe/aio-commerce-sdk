@@ -19,16 +19,10 @@ import {
 import { appliesToEnv } from "#config/lib/environment";
 
 import type { CommerceEnv } from "@adobe/aio-commerce-lib-core/commerce";
-import type {
-  CommerceEventProvider,
-  CommerceEventSubscription,
-  UpdateEventingConfigurationParams,
-} from "@adobe/aio-commerce-lib-events/commerce";
+import type { UpdateEventingConfigurationParams } from "@adobe/aio-commerce-lib-events/commerce";
 import type {
   EventProviderType,
-  IoEventMetadata,
   IoEventProvider,
-  IoEventRegistration,
 } from "@adobe/aio-commerce-lib-events/io-events";
 import type { ApplicationMetadata } from "#config/index";
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
@@ -55,6 +49,25 @@ const METADATA_ID_MAX_LENGTH_FOR_INSTANCE_ID = 100;
 
 /** Storage key used for the events installation data in system config. */
 export const EVENTS_STORAGE_KEY = "events";
+
+/**
+ * Adds the given providers to the stored events data, replacing stored entries with the same key.
+ * @param providers - The stored data of each provider, by provider key.
+ */
+export async function storeEventProviders(
+  providers: StoredEventsData["providers"],
+): Promise<void> {
+  if (Object.keys(providers).length === 0) {
+    return;
+  }
+
+  const existing =
+    await getSystemConfigByKey<StoredEventsData>(EVENTS_STORAGE_KEY);
+
+  await setSystemConfigByKey(EVENTS_STORAGE_KEY, {
+    providers: { ...existing?.providers, ...providers },
+  });
+}
 
 /**
  * Prunes the given providers from the stored events data.
@@ -111,7 +124,7 @@ export function generateInstanceId(
 ) {
   const appId = metadata.id.slice(0, METADATA_ID_MAX_LENGTH_FOR_INSTANCE_ID);
   const providerKey =
-    provider.key ?? provider.label.toLowerCase().replace(/\s+/g, "-");
+    provider.key ?? provider.label.toLowerCase().replace(/\s+/gu, "-");
   return `${appId}-${providerKey}-${workspaceId}`.toLowerCase();
 }
 
@@ -126,7 +139,7 @@ export function generateInstanceIdDeprecated(
   metadata: Pick<ApplicationMetadata, "id">,
   provider: EventProvider,
 ) {
-  const slugLabel = provider.label.toLowerCase().replace(/\s+/g, "-");
+  const slugLabel = provider.label.toLowerCase().replace(/\s+/gu, "-");
   return `${metadata.id}-${provider.key ?? slugLabel}`.toLowerCase();
 }
 
@@ -216,49 +229,6 @@ export function getProviderKey(provider: EventProvider) {
 }
 
 /**
- * Find an existing event provider by its instance ID.
- * @param allProviders - The list of all existing event providers.
- * @param instanceId - The instance ID to search for.
- */
-export function findExistingProvider<
-  TProvider extends IoEventProvider | CommerceEventProvider,
->(allProviders: TProvider[], instanceId: string) {
-  return (
-    allProviders.find((provider) => provider.instance_id === instanceId) ?? null
-  );
-}
-
-/**
- * Find existing event metadata by its event name.
- * @param allMetadata - The list of all existing event metadata.
- * @param eventName - The event name to search for.
- */
-export function findExistingProviderMetadata(
-  allMetadata: IoEventMetadata[],
-  eventName: string,
-) {
-  return allMetadata.find((meta) => meta.event_code === eventName) ?? null;
-}
-
-/**
- * Find existing event registrations by client ID and name.
- * @param allRegistrations - The list of all existing event registrations.
- * @param clientId - The client ID of the workspace where the registration was created.
- * @param name - The name of the registration to search for.
- */
-export function findExistingRegistrations(
-  allRegistrations: IoEventRegistration[],
-  clientId: string,
-  name: string,
-) {
-  // We don't have an ID to search for, but names are deterministic and calculated by us so it should be fine.
-  // To be safe, the `allRegistrations` should come from the current installation data.
-  return allRegistrations.find(
-    (reg) => reg.client_id === clientId && reg.name === name,
-  );
-}
-
-/**
  * Generates a namespaced event name by combining the application ID with the event name.
  *
  * The application ID is sanitized to comply with the Commerce Eventing API's event code
@@ -271,7 +241,9 @@ export function getNamespacedEvent(
   metadata: Pick<ApplicationMetadata, "id">,
   name: string,
 ) {
-  const sanitizedId = metadata.id.toLowerCase().replace(/[^a-z0-9_]/g, "_");
+  const sanitizedId = metadata.id
+    .toLowerCase()
+    .replace(/[^a-z0-9_]/gu, (character) => "_".repeat(character.length));
   return `${sanitizedId}.${name}`.toLowerCase();
 }
 
@@ -284,6 +256,19 @@ export function getIoEventCode(name: string, providerType: EventProviderType) {
   return providerType === COMMERCE_PROVIDER_TYPE
     ? `com.adobe.commerce.${name}`
     : name;
+}
+
+/**
+ * The namespaced event name of an I/O Events code, the inverse of {@link getIoEventCode}.
+ * @param code - The I/O Events event code.
+ * @param providerType - The type of the event provider.
+ */
+export function getNamespacedNameOfCode(
+  code: string,
+  providerType: EventProviderType,
+) {
+  const prefix = getIoEventCode("", providerType);
+  return code.startsWith(prefix) ? code.slice(prefix.length) : code;
 }
 
 /**
@@ -404,18 +389,6 @@ export function groupEventsByRuntimeActions(
   return actionEventsMap;
 }
 
-/*
- * Find an existing Commerce event subscription by its event name.
- * @param allSubscriptions - Map of all existing event subscriptions keyed by event name.
- * @param eventName - The namespaced event name to search for.
- */
-export function findExistingSubscription(
-  allSubscriptions: Map<string, CommerceEventSubscription>,
-  eventName: string,
-) {
-  return allSubscriptions.get(eventName) ?? null;
-}
-
 /**
  * Builds the payload to send to Commerce when configuring Eventing.
  * Returns `null` when no update call is needed.
@@ -470,8 +443,8 @@ export function getCommerceEventingConfigurationUpdateParams(
 export function sanitizeEventingIdentifier(value: string) {
   return value
     .toLowerCase()
-    .replace(/\s+/g, "_")
-    .replace(/[^a-z0-9_]/g, "");
+    .replace(/\s+/gu, "_")
+    .replace(/[^a-z0-9_]/gu, "");
 }
 
 /**
@@ -554,6 +527,22 @@ export function makeWorkspaceConfig(context: EventsExecutionContext) {
   };
 }
 
+const PROVIDER_WORKSPACE_PATH =
+  /^\/events\/[^/]+\/[^/]+\/(?<workspace>[^/]+)\/providers\//u;
+
+/**
+ * The workspace id of an I/O provider, read from its `rel:update` link
+ * (`/events/{org}/{project}/{workspace}/providers/{id}`). Null when the provider has no such link.
+ *
+ * @param links - The HAL links of the provider.
+ */
+export function getProviderWorkspaceId(
+  links: Record<string, { href: string } | undefined> | undefined,
+): string | null {
+  const href = links?.["rel:update"]?.href;
+  return href?.match(PROVIDER_WORKSPACE_PATH)?.[1] ?? null;
+}
+
 /**
  * Retrieves the current existing data and returns it in a normalized way.
  * @param context The execution context.
@@ -591,6 +580,7 @@ export async function getIoEventsExistingData(
     return {
       ...providerData,
       metadata: actualMetadata,
+      workspaceId: getProviderWorkspaceId(_links),
     };
   });
 

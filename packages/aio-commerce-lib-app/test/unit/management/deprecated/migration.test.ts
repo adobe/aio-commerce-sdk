@@ -59,6 +59,7 @@ describe("migrateLegacyInstallationState", () => {
     await migrateLegacyInstallationState(stores);
 
     expect(await stores.snapshotStore.get(legacySucceededState.id)).toEqual({
+      attemptId: null,
       config: legacySucceededState.config,
       createdAt: legacySucceededState.completedAt,
       data: legacySucceededState.data,

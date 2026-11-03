@@ -106,6 +106,7 @@ describe("applyWebhookSubscriptions", () => {
         {
           after: addWebhook,
           id: "op-1",
+          itemRefs: [],
           kind: "add" as const,
           label: "Subscribe",
           reason: "change" as const,
@@ -182,6 +183,7 @@ describe("applyWebhookSubscriptions", () => {
         {
           after: { ...addWebhook, requiresAdobeAuth: true },
           id: "op-1",
+          itemRefs: [],
           kind: "add" as const,
           label: "Subscribe",
           reason: "change" as const,
@@ -225,6 +227,7 @@ describe("applyWebhookSubscriptions", () => {
         {
           after: addWebhook,
           id: "op-1",
+          itemRefs: [],
           kind: "add" as const,
           label: "Subscribe",
           reason: "change" as const,
@@ -252,6 +255,7 @@ describe("applyWebhookSubscriptions", () => {
         {
           before: retainedWebhook,
           id: "op-1",
+          itemRefs: [],
           kind: "remove" as const,
           label: "Unsubscribe",
           reason: "change" as const,
@@ -281,6 +285,7 @@ describe("applyWebhookSubscriptions", () => {
         {
           before: retainedWebhook,
           id: "op-1",
+          itemRefs: [],
           kind: "remove" as const,
           label: "Unsubscribe",
           reason: "change" as const,
@@ -312,6 +317,7 @@ describe("applyWebhookSubscriptions", () => {
         {
           after: addWebhook,
           id: "op-1",
+          itemRefs: [],
           kind: "add" as const,
           label: "Subscribe",
           reason: "change" as const,
@@ -319,6 +325,7 @@ describe("applyWebhookSubscriptions", () => {
         {
           after: secondAdd,
           id: "op-2",
+          itemRefs: [],
           kind: "add" as const,
           label: "Subscribe",
           reason: "change" as const,
@@ -349,6 +356,7 @@ describe("applyWebhookSubscriptions", () => {
         {
           before: retainedWebhook,
           id: "op-1",
+          itemRefs: [],
           kind: "remove" as const,
           label: "Unsubscribe",
           reason: "change" as const,
@@ -356,6 +364,7 @@ describe("applyWebhookSubscriptions", () => {
         {
           before: addWebhook,
           id: "op-2",
+          itemRefs: [],
           kind: "remove" as const,
           label: "Unsubscribe",
           reason: "change" as const,
@@ -392,6 +401,7 @@ describe("applyWebhookSubscriptions", () => {
         {
           before: retainedWebhook,
           id: "op-1",
+          itemRefs: [],
           kind: "remove" as const,
           label: "Unsubscribe",
           reason: "change" as const,
@@ -399,6 +409,7 @@ describe("applyWebhookSubscriptions", () => {
         {
           after: renamedWebhook,
           id: "op-2",
+          itemRefs: [],
           kind: "add" as const,
           label: "Subscribe",
           reason: "change" as const,
@@ -438,6 +449,7 @@ describe("applyWebhookSubscriptions", () => {
           after: updatedWebhook,
           before: retainedWebhook,
           id: "op-1",
+          itemRefs: [],
           kind: "update" as const,
           label: "Update",
           reason: "change" as const,
@@ -471,6 +483,7 @@ describe("applyWebhookSubscriptions", () => {
           after: updatedWebhook,
           before: retainedWebhook,
           id: "op-1",
+          itemRefs: [],
           kind: "update" as const,
           label: "Update",
           reason: "change" as const,
@@ -509,6 +522,7 @@ describe("applyWebhookSubscriptions", () => {
           after: updatedWebhook,
           before: retainedWebhook,
           id: "op-1",
+          itemRefs: [],
           kind: "update" as const,
           label: "Update",
           reason: "change" as const,
@@ -517,6 +531,7 @@ describe("applyWebhookSubscriptions", () => {
           after: secondUpdate,
           before: secondUpdate,
           id: "op-2",
+          itemRefs: [],
           kind: "update" as const,
           label: "Update",
           reason: "change" as const,

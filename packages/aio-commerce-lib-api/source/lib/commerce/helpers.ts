@@ -32,11 +32,6 @@ import type {
   IntegrationAuthProvider,
 } from "@adobe/aio-commerce-lib-auth";
 import type { ImsAuthParamsWithOptionalScopes } from "#utils/auth/ims-scopes";
-
-/** A regex matching a regular SaaS API URL, with a tenant ID and optional trailing slash. */
-const COMMERCE_API_URL_REGEX =
-  /^([a-zA-Z0-9-]+\.)?api\.commerce\.adobe\.com\/[a-zA-Z0-9-]+\/?$/;
-
 import type {
   CommerceHttpClientParamsWithRequiredConfig,
   PaaSClientParamsWithRequiredConfig,
@@ -50,6 +45,10 @@ import type {
   ResolveCommerceHttpClientParamsOptions,
   SaaSClientParams,
 } from "./types";
+
+/** A regex matching a regular SaaS API URL, with a tenant ID and optional trailing slash. */
+const COMMERCE_API_URL_REGEX =
+  /^(?:[a-zA-Z0-9-]+\.)?api\.commerce\.adobe\.com\/[a-zA-Z0-9-]+\/?$/u;
 
 const COMMERCE_IMS_REQUIRED_SCOPES = [
   "openid",

@@ -226,7 +226,8 @@ const AdminUiInvoiceSchema = v.object({
   ),
 });
 
-// Credit memo and shipment expose grid columns only.
+// Shared by invoice, credit memo, shipment, and newsletter: unlike order/product/customer,
+// these expose grid columns only — no mass actions or view buttons.
 const AdminUiGridOnlyEntitySchema = v.object({
   gridColumns: v.optional(GridColumnsSchema),
 });
@@ -234,7 +235,7 @@ const AdminUiGridOnlyEntitySchema = v.object({
 const MenuIdSchema = v.pipe(
   nonEmptyStringValueSchema("menu ID"),
   v.regex(
-    /^[A-Za-z0-9_/:]+$/,
+    /^[A-Za-z0-9_/:]+$/u,
     'Menu ID may contain only letters, digits, "/", ":", and "_"',
   ),
 );
@@ -268,7 +269,7 @@ const MenuSchema = v.object({
 const AclResourceIdSchema = v.pipe(
   nonEmptyStringValueSchema("acl resource ID"),
   v.regex(
-    /^[a-z0-9_]+$/,
+    /^[a-z0-9_]+$/u,
     'ACL resource ID may contain only lowercase letters, digits, and "_"',
   ),
 );
@@ -357,7 +358,7 @@ export const AdminUiSchema = v.object({
   customer: v.optional(AdminUiGridAndMassActionEntitySchema),
   invoice: v.optional(AdminUiInvoiceSchema),
   menu: v.optional(MenuSchema),
-  newsletter: v.optional(AdminUiGridAndMassActionEntitySchema),
+  newsletter: v.optional(AdminUiGridOnlyEntitySchema),
   order: v.optional(AdminUiOrderSchema),
   product: v.optional(AdminUiGridAndMassActionEntitySchema),
   shipment: v.optional(AdminUiGridOnlyEntitySchema),
@@ -394,7 +395,6 @@ export const ADMIN_UI_MASS_ACTION_ENTITIES = [
   "order",
   "product",
   "customer",
-  "newsletter",
 ] as const satisfies readonly Exclude<keyof AdminUi, "acl" | "menu">[];
 
 /** Entities that support view buttons, in a stable order. */
@@ -498,8 +498,7 @@ export function hasBackendUiV2Components<T extends AnyCommerceAppConfig>(
       adminUi.invoice?.viewButtons?.length ||
       adminUi.creditMemo?.gridColumns ||
       adminUi.shipment?.gridColumns ||
-      adminUi.newsletter?.gridColumns ||
-      adminUi.newsletter?.massActions?.length,
+      adminUi.newsletter?.gridColumns,
   );
 }
 

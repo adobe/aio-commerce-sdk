@@ -71,4 +71,23 @@ describe("postpack.ts", () => {
       },
     );
   });
+
+  test("copies the generated tarball to the destination folder", async () => {
+    await withTempFiles(
+      {
+        "adobe-some-lib-1.2.3.tgz": "tarball",
+        "package.json": '{"name":"@adobe/some-lib","version":"1.2.3"}',
+      },
+      (tempDir) => {
+        withChdir(tempDir, () => {
+          const destination = join(tempDir, "out");
+          postpack(destination);
+
+          expect(
+            readTextFile(join(destination, "adobe-some-lib-1.2.3.tgz")),
+          ).toBe("tarball");
+        });
+      },
+    );
+  });
 });

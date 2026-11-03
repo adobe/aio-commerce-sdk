@@ -20,7 +20,7 @@ import {
 
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 
-const MISSING_OR_UNKNOWN_ENV = /Missing or unknown/;
+const MISSING_OR_UNKNOWN_ENV = /Missing or unknown/u;
 
 describe("appliesToEnv", () => {
   test("keeps an item without env on any environment", () => {

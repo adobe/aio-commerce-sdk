@@ -33,27 +33,27 @@ const MAX_EVENT_NAME_LENGTH = 180;
  * Examples: "observer.order_placed", "plugin.sales.api.order_management.place"
  */
 const COMMERCE_EVENT_NAME_REGEX =
-  /^(?:plugin|observer)\.[a-z_]+(?:\.[a-z_]+)*$/;
+  /^(?:plugin|observer)\.[a-z_]+(?:\.[a-z_]+)*$/u;
 
 /**
  * Regex for external event names.
  * Allows word characters (letters, digits, underscore), hyphens, underscores, and dots.
  * Examples: "external_event", "webhook.received", "my-event_123"
  */
-const EXTERNAL_EVENT_NAME_REGEX = /^[\w\-_.]+$/;
+const EXTERNAL_EVENT_NAME_REGEX = /^[\w\-_.]+$/u;
 
 /**
  * Regex for field names according to XSD fieldName pattern.
  * Field name can either contain only [a-zA-Z0-9_\-\.\[\]] or be set to *.
  */
-const FIELD_NAME_REGEX = /^([a-zA-Z0-9_\-.[\]]+|\*)$/;
+const FIELD_NAME_REGEX = /^(?:[a-zA-Z0-9_\-.[\]]+|\*)$/u;
 
 /**
  * Regex for Adobe I/O Events API text fields (label, description).
  * Valid characters per API: letters, numbers, spaces, underscores, hyphens,
  * dots, colons, parentheses, commas, @, and /.
  */
-const IO_EVENTS_TEXT_REGEX = /^[a-zA-Z0-9 _.:()\-,@/]+$/;
+const IO_EVENTS_TEXT_REGEX = /^[a-zA-Z0-9 _.:()\-,@/]+$/u;
 
 /**
  * Schema for Commerce event names.
@@ -182,7 +182,7 @@ const BaseEventSchema = v.object({
     v.pipe(
       nonEmptyStringValueSchema("runtime action"),
       v.regex(
-        /^[a-z0-9-]+\/[a-z0-9-]+$/i,
+        /^[a-zA-Z0-9-]+\/[a-zA-Z0-9-]+$/u,
         'Runtime action must be in the format "<package>/<action>" (e.g., "my-package/my-action")',
       ),
     ),

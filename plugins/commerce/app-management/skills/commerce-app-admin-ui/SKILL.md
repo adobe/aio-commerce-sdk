@@ -37,14 +37,14 @@ Other extensibility domains (webhooks, events, business config) are added separa
 
 ## Extension points at a glance
 
-| Extension point      | Entities                                                            | Variants      | Server handler | Reference                                                  |
-| -------------------- | ------------------------------------------------------------------- | ------------- | -------------- | ---------------------------------------------------------- |
-| Grid columns         | order, product, customer, invoice, creditMemo, shipment, newsletter | worker only   | yes            | [grid-columns](references/grid-columns.md)                 |
-| Mass actions         | order, product, customer, newsletter                                | view / worker | worker only    | [mass-actions](references/mass-actions.md)                 |
-| Order view buttons   | order only                                                          | view / worker | worker only    | [order-view-buttons](references/order-view-buttons.md)     |
+| Extension point    | Entities                                                            | Variants      | Server handler | Reference                                              |
+| ------------------ | ------------------------------------------------------------------- | ------------- | -------------- | ------------------------------------------------------ |
+| Grid columns       | order, product, customer, invoice, creditMemo, shipment, newsletter | worker only   | yes            | [grid-columns](references/grid-columns.md)             |
+| Mass actions       | order, product, customer                                            | view / worker | worker only    | [mass-actions](references/mass-actions.md)             |
+| Order view buttons | order only                                                          | view / worker | worker only    | [order-view-buttons](references/order-view-buttons.md) |
 | Invoice view buttons | invoice only                                                        | view / worker | worker only    | [invoice-view-buttons](references/invoice-view-buttons.md) |
-| Menu                 | single entry (`adminUi.menu`)                                       | view (iframe) | no             | [menu](references/menu.md)                                 |
-| Custom ACL           | list (`adminUi.acl`)                                                | none          | no             | [custom-acl](references/custom-acl.md)                     |
+| Menu               | single entry (`adminUi.menu`)                                       | view (iframe) | no             | [menu](references/menu.md)                             |
+| Custom ACL         | list (`adminUi.acl`)                                                | none          | no             | [custom-acl](references/custom-acl.md)                 |
 
 `view` renders an iframe into the app's web UI (`web-src`) at the entry's `path`; `worker` invokes a runtime action server-side.
 Custom ACL resources have no variant and no handler: they are standalone permissions Commerce renders in the User Roles tree, and the app checks them itself (see [custom-acl](references/custom-acl.md)).
