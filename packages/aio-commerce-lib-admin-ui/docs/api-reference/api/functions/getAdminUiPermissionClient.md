@@ -6,7 +6,7 @@ function getAdminUiPermissionClient(
 ): AdminUiPermissionClient;
 ```
 
-Defined in: [aio-commerce-lib-admin-ui/source/api/lib/permission-client.ts:101](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-admin-ui/source/api/lib/permission-client.ts#L101)
+Defined in: [aio-commerce-lib-admin-ui/source/api/lib/permission-client.ts:101](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-admin-ui/source/api/lib/permission-client.ts#L101)
 
 Creates a client for checking Admin UI SDK ACL resources.
 

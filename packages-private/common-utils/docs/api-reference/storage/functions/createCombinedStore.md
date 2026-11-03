@@ -6,7 +6,7 @@ function createCombinedStore<T>(
 ): Promise<KeyValueStore<T>>;
 ```
 
-Defined in: [storage/combined-store.ts:57](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages-private/common-utils/source/storage/combined-store.ts#L57)
+Defined in: [storage/combined-store.ts:57](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages-private/common-utils/source/storage/combined-store.ts#L57)
 
 Creates a combined key-value store that uses:
 
@@ -16,20 +16,20 @@ Creates a combined key-value store that uses:
 Read strategy: cache first, then persistent storage
 Write strategy:
 
-- Always write to cache for fast reads
-- Write to persistent storage based on shouldPersist predicate
+- Write to persistent storage first, based on the shouldPersist predicate. A failed write leaves both stores unchanged.
+- Then write to cache for fast reads, dropping the cached value if that write fails
 
 ## Type Parameters
 
-| Type Parameter | Description                |
-| -------------- | -------------------------- |
-| `T`            | The type of data to store. |
+| Type Parameter                    | Description                |
+| --------------------------------- | -------------------------- |
+| <a id="type-parameter-t"></a> `T` | The type of data to store. |
 
 ## Parameters
 
-| Parameter | Type                                                                     | Description                           |
-| --------- | ------------------------------------------------------------------------ | ------------------------------------- |
-| `options` | [`CombinedStoreOptions`](../type-aliases/CombinedStoreOptions.md)\<`T`\> | Configuration options for the stores. |
+| Parameter  | Type                                                                     | Description                           |
+| ---------- | ------------------------------------------------------------------------ | ------------------------------------- |
+| `options?` | [`CombinedStoreOptions`](../type-aliases/CombinedStoreOptions.md)\<`T`\> | Configuration options for the stores. |
 
 ## Returns
 

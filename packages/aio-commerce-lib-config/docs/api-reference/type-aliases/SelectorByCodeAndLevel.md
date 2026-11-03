@@ -10,7 +10,7 @@ type SelectorByCodeAndLevel = {
 };
 ```
 
-Defined in: [config-utils.ts:634](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-config/source/config-utils.ts#L634)
+Defined in: [config-utils.ts:635](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-config/source/config-utils.ts#L635)
 
 Selector type for identifying a scope by its code and level.
 
@@ -26,7 +26,7 @@ by: {
 }
 ```
 
-Defined in: [config-utils.ts:635](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-config/source/config-utils.ts#L635)
+Defined in: [config-utils.ts:636](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-config/source/config-utils.ts#L636)
 
 #### \_tag
 

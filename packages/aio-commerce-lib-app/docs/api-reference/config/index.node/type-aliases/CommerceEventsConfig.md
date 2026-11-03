@@ -10,9 +10,15 @@ type CommerceEventsConfig<
 };
 ```
 
-Defined in: [aio-commerce-lib-app/source/config/schema/eventing.ts:348](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/config/schema/eventing.ts#L348)
+Defined in: [aio-commerce-lib-app/source/config/schema/eventing.ts:348](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-app/source/config/schema/eventing.ts#L348)
 
 Config type when commerce event sources are present.
+
+## Type Parameters
+
+| Type Parameter                                                     | Default type                   |
+| ------------------------------------------------------------------ | ------------------------------ |
+| <a id="type-parameter-t"></a> `T` _extends_ `AnyCommerceAppConfig` | `CommerceAppConfigOutputModel` |
 
 ## Type Declaration
 
@@ -31,9 +37,3 @@ eventing: EventsConfig<T>["eventing"] & {
 ```ts
 commerce: NonNullable<EventsConfig<T>["eventing"]["commerce"]>;
 ```
-
-## Type Parameters
-
-| Type Parameter                       | Default type                   |
-| ------------------------------------ | ------------------------------ |
-| `T` _extends_ `AnyCommerceAppConfig` | `CommerceAppConfigOutputModel` |

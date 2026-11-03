@@ -21,19 +21,19 @@ function defineRoute<
 ): RouteConfig<string, TParamsSchema, TBodySchema, TQuerySchema, TContext>;
 ```
 
-Defined in: [actions/http/router.ts:476](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages-private/common-utils/source/actions/http/router.ts#L476)
+Defined in: [actions/http/router.ts:472](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages-private/common-utils/source/actions/http/router.ts#L472)
 
 Define a route handler separately from registration.
 Pass a router to infer context type from middleware.
 
 ## Type Parameters
 
-| Type Parameter                                                                      | Default type |
-| ----------------------------------------------------------------------------------- | ------------ |
-| `TContext` _extends_ [`BaseContext`](../type-aliases/BaseContext.md)                | -            |
-| `TParamsSchema` _extends_ `StandardSchemaV1`\<`unknown`, `unknown`\> \| `undefined` | `undefined`  |
-| `TBodySchema` _extends_ `StandardSchemaV1`\<`unknown`, `unknown`\> \| `undefined`   | `undefined`  |
-| `TQuerySchema` _extends_ `StandardSchemaV1`\<`unknown`, `unknown`\> \| `undefined`  | `undefined`  |
+| Type Parameter                                                                                                                | Default type |
+| ----------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| <a id="type-parameter-tcontext"></a> `TContext` _extends_ [`BaseContext`](../type-aliases/BaseContext.md)                     | -            |
+| <a id="type-parameter-tparamsschema"></a> `TParamsSchema` _extends_ `StandardSchemaV1`\<`unknown`, `unknown`\> \| `undefined` | `undefined`  |
+| <a id="type-parameter-tbodyschema"></a> `TBodySchema` _extends_ `StandardSchemaV1`\<`unknown`, `unknown`\> \| `undefined`     | `undefined`  |
+| <a id="type-parameter-tqueryschema"></a> `TQuerySchema` _extends_ `StandardSchemaV1`\<`unknown`, `unknown`\> \| `undefined`   | `undefined`  |
 
 ## Parameters
 

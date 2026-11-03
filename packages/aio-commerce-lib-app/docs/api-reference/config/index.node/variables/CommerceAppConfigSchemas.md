@@ -20,6 +20,14 @@ const CommerceAppConfigSchemas: {
         id: string;
         label: string;
      }[], "Custom ACL resource ids must stay unique after Commerce derivation: a top-level resource id must not equal a group's \"<group>_<child>\" combination.">]>, undefined>;
+     creditMemo: OptionalSchema<ObjectSchema<{
+        gridColumns: OptionalSchema<ObjectSchema<{
+           columns: SchemaWithPipe<readonly [..., ..., ...]>;
+           description: SchemaWithPipe<readonly [..., ...]>;
+           label: SchemaWithPipe<readonly [..., ...]>;
+           runtimeAction: SchemaWithPipe<readonly [..., ...]>;
+        }, undefined>, undefined>;
+     }, undefined>, undefined>;
      customer: OptionalSchema<ObjectSchema<{
         gridColumns: OptionalSchema<ObjectSchema<{
            columns: SchemaWithPipe<readonly [..., ..., ...]>;
@@ -29,6 +37,14 @@ const CommerceAppConfigSchemas: {
         }, undefined>, undefined>;
         massActions: OptionalSchema<SchemaWithPipe<readonly [ArraySchema<VariantSchema<..., ..., ...>, undefined>, CheckAction<...[], "Mass action ids must be unique after Commerce id sanitization.">]>, undefined>;
      }, undefined>, undefined>;
+     invoice: OptionalSchema<ObjectSchema<{
+        gridColumns: OptionalSchema<ObjectSchema<{
+           columns: SchemaWithPipe<readonly [..., ..., ...]>;
+           description: SchemaWithPipe<readonly [..., ...]>;
+           label: SchemaWithPipe<readonly [..., ...]>;
+           runtimeAction: SchemaWithPipe<readonly [..., ...]>;
+        }, undefined>, undefined>;
+     }, undefined>, undefined>;
      menu: OptionalSchema<ObjectSchema<{
         aclProtected: OptionalSchema<BooleanSchema<undefined>, undefined>;
         description: SchemaWithPipe<readonly [StringSchema<`Expected a string value for '${string}'`>, NonEmptyAction<string, `The value of "${string}" must not be empty`>]>;
@@ -37,6 +53,14 @@ const CommerceAppConfigSchemas: {
         pageTitle: OptionalSchema<SchemaWithPipe<readonly [StringSchema<`Expected a string value for '${(...)}'`>, NonEmptyAction<string, `The value of "${(...)}" must not be empty`>]>, undefined>;
         parentMenu: OptionalSchema<PicklistSchema<readonly ["sales", "catalog", "customers", "marketing", "content", "reports", "stores", "system"], "parentMenu must be a known Commerce Admin menu ID">, undefined>;
         sandboxPermissions: OptionalSchema<SchemaWithPipe<readonly [ArraySchema<PicklistSchema<..., ...>, undefined>, MinLengthAction<...[], 1, "sandboxPermissions must contain at least one permission when it's defined">, CheckAction<...[], "Duplicate permissions are not allowed in sandboxPermissions">]>, undefined>;
+     }, undefined>, undefined>;
+     newsletter: OptionalSchema<ObjectSchema<{
+        gridColumns: OptionalSchema<ObjectSchema<{
+           columns: SchemaWithPipe<readonly [..., ..., ...]>;
+           description: SchemaWithPipe<readonly [..., ...]>;
+           label: SchemaWithPipe<readonly [..., ...]>;
+           runtimeAction: SchemaWithPipe<readonly [..., ...]>;
+        }, undefined>, undefined>;
      }, undefined>, undefined>;
      order: OptionalSchema<ObjectSchema<{
         gridColumns: OptionalSchema<ObjectSchema<{
@@ -56,6 +80,14 @@ const CommerceAppConfigSchemas: {
            runtimeAction: SchemaWithPipe<readonly [..., ...]>;
         }, undefined>, undefined>;
         massActions: OptionalSchema<SchemaWithPipe<readonly [ArraySchema<VariantSchema<..., ..., ...>, undefined>, CheckAction<...[], "Mass action ids must be unique after Commerce id sanitization.">]>, undefined>;
+     }, undefined>, undefined>;
+     shipment: OptionalSchema<ObjectSchema<{
+        gridColumns: OptionalSchema<ObjectSchema<{
+           columns: SchemaWithPipe<readonly [..., ..., ...]>;
+           description: SchemaWithPipe<readonly [..., ...]>;
+           label: SchemaWithPipe<readonly [..., ...]>;
+           runtimeAction: SchemaWithPipe<readonly [..., ...]>;
+        }, undefined>, undefined>;
      }, undefined>, undefined>;
   }, undefined>;
   businessConfig: ObjectSchema<{
@@ -156,7 +188,7 @@ const CommerceAppConfigSchemas: {
         type: "boolean";
      })[], 1, "At least one configuration parameter is required">]>, readonly []>;
   }, undefined>;
-  businessConfig.schema: SchemaWithPipe<readonly [ArraySchema<VariantSchema<"type", [VariantSchema<"selectionMode", [ObjectSchema<{
+  "businessConfig.schema": SchemaWithPipe<readonly [ArraySchema<VariantSchema<"type", [VariantSchema<"selectionMode", [ObjectSchema<{
      default: SchemaWithPipe<...>;
      description: OptionalSchema<..., ...>;
      env: OptionalSchema<..., ...>;
@@ -345,7 +377,7 @@ const CommerceAppConfigSchemas: {
         };
      }[], "External provider labels must be unique">]>, undefined>;
   }, undefined>;
-  eventing.commerce: SchemaWithPipe<readonly [ArraySchema<ObjectSchema<{
+  "eventing.commerce": SchemaWithPipe<readonly [ArraySchema<ObjectSchema<{
      events: SchemaWithPipe<readonly [ArraySchema<ObjectSchema<{
         description: ...;
         destination: ...;
@@ -415,7 +447,7 @@ const CommerceAppConfigSchemas: {
         label: string;
      };
   }[], "Commerce provider labels must be unique">]>;
-  eventing.external: SchemaWithPipe<readonly [ArraySchema<ObjectSchema<{
+  "eventing.external": SchemaWithPipe<readonly [ArraySchema<ObjectSchema<{
      events: SchemaWithPipe<readonly [ArraySchema<ObjectSchema<{
         description: ...;
         env: ...;
@@ -475,7 +507,7 @@ const CommerceAppConfigSchemas: {
         preInstallation: OptionalSchema<SchemaWithPipe<readonly [SchemaWithPipe<readonly [..., ...]>, MaxLengthAction<string, 1000, "The preInstallation message must not be longer than 1000 characters">]>, undefined>;
      }, undefined>, undefined>;
   }, undefined>;
-  installation.customInstallationSteps: ArraySchema<ObjectSchema<{
+  "installation.customInstallationSteps": ArraySchema<ObjectSchema<{
      description: SchemaWithPipe<readonly [SchemaWithPipe<readonly [StringSchema<`Expected a string value for '${string}'`>, NonEmptyAction<string, `The value of "${string}" must not be empty`>]>, MaxLengthAction<string, 255, "The step description must not be longer than 255 characters">]>;
      name: SchemaWithPipe<readonly [SchemaWithPipe<readonly [StringSchema<`Expected a string value for '${string}'`>, NonEmptyAction<string, `The value of "${string}" must not be empty`>]>, MaxLengthAction<string, 255, "The step name must not be longer than 255 characters">]>;
      script: SchemaWithPipe<readonly [SchemaWithPipe<readonly [StringSchema<`Expected a string value for '${string}'`>, NonEmptyAction<string, `The value of "${string}" must not be empty`>]>, RegexAction<string, "Script path must end with .js or .ts (e.g., \"./setup.js\", \"./scripts/setup.ts\", or \"../../scripts/setup.js\")">]>;
@@ -587,7 +619,7 @@ const CommerceAppConfigSchemas: {
 };
 ```
 
-Defined in: [aio-commerce-lib-app/source/config/schema/domains.ts:37](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/config/schema/domains.ts#L37)
+Defined in: [aio-commerce-lib-app/source/config/schema/domains.ts:37](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-app/source/config/schema/domains.ts#L37)
 
 The individual validatable domains of the app config.
 
@@ -614,6 +646,14 @@ readonly adminUi: ObjectSchema<{
      id: string;
      label: string;
   }[], "Custom ACL resource ids must stay unique after Commerce derivation: a top-level resource id must not equal a group's \"<group>_<child>\" combination.">]>, undefined>;
+  creditMemo: OptionalSchema<ObjectSchema<{
+     gridColumns: OptionalSchema<ObjectSchema<{
+        columns: SchemaWithPipe<readonly [..., ..., ...]>;
+        description: SchemaWithPipe<readonly [..., ...]>;
+        label: SchemaWithPipe<readonly [..., ...]>;
+        runtimeAction: SchemaWithPipe<readonly [..., ...]>;
+     }, undefined>, undefined>;
+  }, undefined>, undefined>;
   customer: OptionalSchema<ObjectSchema<{
      gridColumns: OptionalSchema<ObjectSchema<{
         columns: SchemaWithPipe<readonly [..., ..., ...]>;
@@ -623,6 +663,14 @@ readonly adminUi: ObjectSchema<{
      }, undefined>, undefined>;
      massActions: OptionalSchema<SchemaWithPipe<readonly [ArraySchema<VariantSchema<..., ..., ...>, undefined>, CheckAction<...[], "Mass action ids must be unique after Commerce id sanitization.">]>, undefined>;
   }, undefined>, undefined>;
+  invoice: OptionalSchema<ObjectSchema<{
+     gridColumns: OptionalSchema<ObjectSchema<{
+        columns: SchemaWithPipe<readonly [..., ..., ...]>;
+        description: SchemaWithPipe<readonly [..., ...]>;
+        label: SchemaWithPipe<readonly [..., ...]>;
+        runtimeAction: SchemaWithPipe<readonly [..., ...]>;
+     }, undefined>, undefined>;
+  }, undefined>, undefined>;
   menu: OptionalSchema<ObjectSchema<{
      aclProtected: OptionalSchema<BooleanSchema<undefined>, undefined>;
      description: SchemaWithPipe<readonly [StringSchema<`Expected a string value for '${string}'`>, NonEmptyAction<string, `The value of "${string}" must not be empty`>]>;
@@ -631,6 +679,14 @@ readonly adminUi: ObjectSchema<{
      pageTitle: OptionalSchema<SchemaWithPipe<readonly [StringSchema<`Expected a string value for '${(...)}'`>, NonEmptyAction<string, `The value of "${(...)}" must not be empty`>]>, undefined>;
      parentMenu: OptionalSchema<PicklistSchema<readonly ["sales", "catalog", "customers", "marketing", "content", "reports", "stores", "system"], "parentMenu must be a known Commerce Admin menu ID">, undefined>;
      sandboxPermissions: OptionalSchema<SchemaWithPipe<readonly [ArraySchema<PicklistSchema<..., ...>, undefined>, MinLengthAction<...[], 1, "sandboxPermissions must contain at least one permission when it's defined">, CheckAction<...[], "Duplicate permissions are not allowed in sandboxPermissions">]>, undefined>;
+  }, undefined>, undefined>;
+  newsletter: OptionalSchema<ObjectSchema<{
+     gridColumns: OptionalSchema<ObjectSchema<{
+        columns: SchemaWithPipe<readonly [..., ..., ...]>;
+        description: SchemaWithPipe<readonly [..., ...]>;
+        label: SchemaWithPipe<readonly [..., ...]>;
+        runtimeAction: SchemaWithPipe<readonly [..., ...]>;
+     }, undefined>, undefined>;
   }, undefined>, undefined>;
   order: OptionalSchema<ObjectSchema<{
      gridColumns: OptionalSchema<ObjectSchema<{
@@ -650,6 +706,14 @@ readonly adminUi: ObjectSchema<{
         runtimeAction: SchemaWithPipe<readonly [..., ...]>;
      }, undefined>, undefined>;
      massActions: OptionalSchema<SchemaWithPipe<readonly [ArraySchema<VariantSchema<..., ..., ...>, undefined>, CheckAction<...[], "Mass action ids must be unique after Commerce id sanitization.">]>, undefined>;
+  }, undefined>, undefined>;
+  shipment: OptionalSchema<ObjectSchema<{
+     gridColumns: OptionalSchema<ObjectSchema<{
+        columns: SchemaWithPipe<readonly [..., ..., ...]>;
+        description: SchemaWithPipe<readonly [..., ...]>;
+        label: SchemaWithPipe<readonly [..., ...]>;
+        runtimeAction: SchemaWithPipe<readonly [..., ...]>;
+     }, undefined>, undefined>;
   }, undefined>, undefined>;
 }, undefined> = AdminUiSchema;
 ```
@@ -760,7 +824,7 @@ readonly businessConfig: ObjectSchema<{
 #### businessConfig.schema
 
 ```ts
-readonly businessConfig.schema: SchemaWithPipe<readonly [ArraySchema<VariantSchema<"type", [VariantSchema<"selectionMode", [ObjectSchema<{
+readonly "businessConfig.schema": SchemaWithPipe<readonly [ArraySchema<VariantSchema<"type", [VariantSchema<"selectionMode", [ObjectSchema<{
   default: SchemaWithPipe<...>;
   description: OptionalSchema<..., ...>;
   env: OptionalSchema<..., ...>;
@@ -959,7 +1023,7 @@ readonly eventing: ObjectSchema<{
 #### eventing.commerce
 
 ```ts
-readonly eventing.commerce: SchemaWithPipe<readonly [ArraySchema<ObjectSchema<{
+readonly "eventing.commerce": SchemaWithPipe<readonly [ArraySchema<ObjectSchema<{
   events: SchemaWithPipe<readonly [ArraySchema<ObjectSchema<{
      description: ...;
      destination: ...;
@@ -1034,7 +1098,7 @@ readonly eventing.commerce: SchemaWithPipe<readonly [ArraySchema<ObjectSchema<{
 #### eventing.external
 
 ```ts
-readonly eventing.external: SchemaWithPipe<readonly [ArraySchema<ObjectSchema<{
+readonly "eventing.external": SchemaWithPipe<readonly [ArraySchema<ObjectSchema<{
   events: SchemaWithPipe<readonly [ArraySchema<ObjectSchema<{
      description: ...;
      env: ...;
@@ -1104,7 +1168,7 @@ readonly installation: ObjectSchema<{
 #### installation.customInstallationSteps
 
 ```ts
-readonly installation.customInstallationSteps: ArraySchema<ObjectSchema<{
+readonly "installation.customInstallationSteps": ArraySchema<ObjectSchema<{
   description: SchemaWithPipe<readonly [SchemaWithPipe<readonly [StringSchema<`Expected a string value for '${string}'`>, NonEmptyAction<string, `The value of "${string}" must not be empty`>]>, MaxLengthAction<string, 255, "The step description must not be longer than 255 characters">]>;
   name: SchemaWithPipe<readonly [SchemaWithPipe<readonly [StringSchema<`Expected a string value for '${string}'`>, NonEmptyAction<string, `The value of "${string}" must not be empty`>]>, MaxLengthAction<string, 255, "The step name must not be longer than 255 characters">]>;
   script: SchemaWithPipe<readonly [SchemaWithPipe<readonly [StringSchema<`Expected a string value for '${string}'`>, NonEmptyAction<string, `The value of "${string}" must not be empty`>]>, RegexAction<string, "Script path must end with .js or .ts (e.g., \"./setup.js\", \"./scripts/setup.ts\", or \"../../scripts/setup.js\")">]>;

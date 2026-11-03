@@ -6,7 +6,7 @@ type ConfigOptions = OperationOptions & {
 };
 ```
 
-Defined in: [types/index.ts:23](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-config/source/types/index.ts#L23)
+Defined in: [types/index.ts:23](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-config/source/types/index.ts#L23)
 
 Options for controlling configuration operations.
 
@@ -15,7 +15,7 @@ Options for controlling configuration operations.
 ### encryptionKey?
 
 ```ts
-optional encryptionKey?: string;
+encryptionKey?: string;
 ```
 
 Optional encryption key for encrypting/decrypting password fields.

@@ -1,4 +1,4 @@
-# `InstallationHooks`
+# ~~`InstallationHooks`~~
 
 ```ts
 type InstallationHooks = {
@@ -20,19 +20,23 @@ type InstallationHooks = {
 };
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/runner.ts:43](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/management/installation/runner.ts#L43)
+Defined in: [aio-commerce-lib-app/source/management/deprecated/runner.ts:45](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-app/source/management/deprecated/runner.ts#L45)
 
 Lifecycle hooks for an installation or uninstallation run.
 
+## Deprecated
+
+Removed in the next major together with [runInstallation](../functions/runInstallation.md).
+
 ## Properties
 
-### onInstallationFailure?
+### ~~onInstallationFailure?~~
 
 ```ts
-optional onInstallationFailure?: (state: WorkflowRunState) => void | Promise<void>;
+onInstallationFailure?: (state: WorkflowRunState) => void | Promise<void>;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/runner.ts:46](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/management/installation/runner.ts#L46)
+Defined in: [aio-commerce-lib-app/source/management/deprecated/runner.ts:48](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-app/source/management/deprecated/runner.ts#L48)
 
 #### Parameters
 
@@ -46,13 +50,13 @@ Defined in: [aio-commerce-lib-app/source/management/installation/runner.ts:46](h
 
 ---
 
-### onInstallationStart?
+### ~~onInstallationStart?~~
 
 ```ts
-optional onInstallationStart?: (state: WorkflowRunState) => void | Promise<void>;
+onInstallationStart?: (state: WorkflowRunState) => void | Promise<void>;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/runner.ts:44](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/management/installation/runner.ts#L44)
+Defined in: [aio-commerce-lib-app/source/management/deprecated/runner.ts:46](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-app/source/management/deprecated/runner.ts#L46)
 
 #### Parameters
 
@@ -66,13 +70,13 @@ Defined in: [aio-commerce-lib-app/source/management/installation/runner.ts:44](h
 
 ---
 
-### onInstallationSuccess?
+### ~~onInstallationSuccess?~~
 
 ```ts
-optional onInstallationSuccess?: (state: WorkflowRunState) => void | Promise<void>;
+onInstallationSuccess?: (state: WorkflowRunState) => void | Promise<void>;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/runner.ts:45](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/management/installation/runner.ts#L45)
+Defined in: [aio-commerce-lib-app/source/management/deprecated/runner.ts:47](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-app/source/management/deprecated/runner.ts#L47)
 
 #### Parameters
 
@@ -86,13 +90,13 @@ Defined in: [aio-commerce-lib-app/source/management/installation/runner.ts:45](h
 
 ---
 
-### onStepFailure?
+### ~~onStepFailure?~~
 
 ```ts
-optional onStepFailure?: (event: StepFailedEvent, state: WorkflowRunState) => void | Promise<void>;
+onStepFailure?: (event: StepFailedEvent, state: WorkflowRunState) => void | Promise<void>;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/runner.ts:56](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/management/installation/runner.ts#L56)
+Defined in: [aio-commerce-lib-app/source/management/deprecated/runner.ts:58](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-app/source/management/deprecated/runner.ts#L58)
 
 #### Parameters
 
@@ -107,13 +111,13 @@ Defined in: [aio-commerce-lib-app/source/management/installation/runner.ts:56](h
 
 ---
 
-### onStepStart?
+### ~~onStepStart?~~
 
 ```ts
-optional onStepStart?: (event: StepStartedEvent, state: WorkflowRunState) => void | Promise<void>;
+onStepStart?: (event: StepStartedEvent, state: WorkflowRunState) => void | Promise<void>;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/runner.ts:48](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/management/installation/runner.ts#L48)
+Defined in: [aio-commerce-lib-app/source/management/deprecated/runner.ts:50](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-app/source/management/deprecated/runner.ts#L50)
 
 #### Parameters
 
@@ -128,13 +132,13 @@ Defined in: [aio-commerce-lib-app/source/management/installation/runner.ts:48](h
 
 ---
 
-### onStepSuccess?
+### ~~onStepSuccess?~~
 
 ```ts
-optional onStepSuccess?: (event: StepSucceededEvent, state: WorkflowRunState) => void | Promise<void>;
+onStepSuccess?: (event: StepSucceededEvent, state: WorkflowRunState) => void | Promise<void>;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/runner.ts:52](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/management/installation/runner.ts#L52)
+Defined in: [aio-commerce-lib-app/source/management/deprecated/runner.ts:54](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-app/source/management/deprecated/runner.ts#L54)
 
 #### Parameters
 

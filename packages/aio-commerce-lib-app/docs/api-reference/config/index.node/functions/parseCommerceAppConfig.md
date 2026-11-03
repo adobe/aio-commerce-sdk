@@ -11,6 +11,20 @@ function parseCommerceAppConfig(cwd?: string): Promise<{
         id: string;
         label: string;
      }[];
+     creditMemo?: {
+        gridColumns?: {
+           columns: {
+              aclProtected?: ...;
+              align: ...;
+              id: ...;
+              label: ...;
+              type: ...;
+           }[];
+           description: string;
+           label: string;
+           runtimeAction: string;
+        };
+     };
      customer?: {
         gridColumns?: {
            columns: {
@@ -52,6 +66,20 @@ function parseCommerceAppConfig(cwd?: string): Promise<{
            type: ...;
         })[];
      };
+     invoice?: {
+        gridColumns?: {
+           columns: {
+              aclProtected?: ...;
+              align: ...;
+              id: ...;
+              label: ...;
+              type: ...;
+           }[];
+           description: string;
+           label: string;
+           runtimeAction: string;
+        };
+     };
      menu?: {
         aclProtected?: boolean;
         description: string;
@@ -67,6 +95,20 @@ function parseCommerceAppConfig(cwd?: string): Promise<{
            | "stores"
            | "system";
         sandboxPermissions?: ("allow-downloads" | "allow-modals" | "allow-popups")[];
+     };
+     newsletter?: {
+        gridColumns?: {
+           columns: {
+              aclProtected?: ...;
+              align: ...;
+              id: ...;
+              label: ...;
+              type: ...;
+           }[];
+           description: string;
+           label: string;
+           runtimeAction: string;
+        };
      };
      order?: {
         gridColumns?: {
@@ -176,6 +218,20 @@ function parseCommerceAppConfig(cwd?: string): Promise<{
            title?: ...;
            type: ...;
         })[];
+     };
+     shipment?: {
+        gridColumns?: {
+           columns: {
+              aclProtected?: ...;
+              align: ...;
+              id: ...;
+              label: ...;
+              type: ...;
+           }[];
+           description: string;
+           label: string;
+           runtimeAction: string;
+        };
      };
   };
   businessConfig?: {
@@ -405,7 +461,7 @@ function parseCommerceAppConfig(cwd?: string): Promise<{
 }>;
 ```
 
-Defined in: [aio-commerce-lib-app/source/config/lib/parser.ts:168](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/config/lib/parser.ts#L168)
+Defined in: [aio-commerce-lib-app/source/config/lib/parser.ts:168](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-app/source/config/lib/parser.ts#L168)
 
 Read the commerce app config file and parse its contents into its schema.
 
@@ -416,7 +472,7 @@ The config file must export a default export with the configuration object.
 
 | Parameter | Type     | Description                   |
 | --------- | -------- | ----------------------------- |
-| `cwd`     | `string` | The current working directory |
+| `cwd?`    | `string` | The current working directory |
 
 ## Returns
 
@@ -430,6 +486,20 @@ The config file must export a default export with the configuration object.
 `id`: `string`;
 `label`: `string`;
 \}[];
+`creditMemo?`: \{
+`gridColumns?`: \{
+`columns`: \{
+`aclProtected?`: ...;
+`align`: ...;
+`id`: ...;
+`label`: ...;
+`type`: ...;
+\}[];
+`description`: `string`;
+`label`: `string`;
+`runtimeAction`: `string`;
+\};
+\};
 `customer?`: \{
 `gridColumns?`: \{
 `columns`: \{
@@ -471,6 +541,20 @@ The config file must export a default export with the configuration object.
 `type`: ...;
 \})[];
 \};
+`invoice?`: \{
+`gridColumns?`: \{
+`columns`: \{
+`aclProtected?`: ...;
+`align`: ...;
+`id`: ...;
+`label`: ...;
+`type`: ...;
+\}[];
+`description`: `string`;
+`label`: `string`;
+`runtimeAction`: `string`;
+\};
+\};
 `menu?`: \{
 `aclProtected?`: `boolean`;
 `description`: `string`;
@@ -486,6 +570,20 @@ The config file must export a default export with the configuration object.
 \| `"stores"`
 \| `"system"`;
 `sandboxPermissions?`: (`"allow-downloads"` \| `"allow-modals"` \| `"allow-popups"`)[];
+\};
+`newsletter?`: \{
+`gridColumns?`: \{
+`columns`: \{
+`aclProtected?`: ...;
+`align`: ...;
+`id`: ...;
+`label`: ...;
+`type`: ...;
+\}[];
+`description`: `string`;
+`label`: `string`;
+`runtimeAction`: `string`;
+\};
 \};
 `order?`: \{
 `gridColumns?`: \{
@@ -595,6 +693,20 @@ The config file must export a default export with the configuration object.
 `title?`: ...;
 `type`: ...;
 \})[];
+\};
+`shipment?`: \{
+`gridColumns?`: \{
+`columns`: \{
+`aclProtected?`: ...;
+`align`: ...;
+`id`: ...;
+`label`: ...;
+`type`: ...;
+\}[];
+`description`: `string`;
+`label`: `string`;
+`runtimeAction`: `string`;
+\};
 \};
 \};
 `businessConfig?`: \{

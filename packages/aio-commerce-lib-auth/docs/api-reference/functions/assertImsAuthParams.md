@@ -10,12 +10,12 @@ function assertImsAuthParams(
   environment?: "prod" | "stage";
   imsOrgId: string;
   scopes: string[];
-  technicalAccountEmail: string;
-  technicalAccountId: string;
+  technicalAccountEmail?: string;
+  technicalAccountId?: string;
 };
 ```
 
-Defined in: [ims-auth/utils.ts:104](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-auth/source/lib/ims-auth/utils.ts#L104)
+Defined in: [ims-auth/utils.ts:105](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-auth/source/lib/ims-auth/utils.ts#L105)
 
 Asserts the provided configuration for an [ImsAuthProvider](../type-aliases/ImsAuthProvider.md).
 
@@ -27,7 +27,7 @@ Asserts the provided configuration for an [ImsAuthProvider](../type-aliases/ImsA
 
 ## Returns
 
-asserts config is \{ clientId: string; clientSecrets: string\[\]; context?: string; environment?: "prod" \| "stage"; imsOrgId: string; scopes: string\[\]; technicalAccountEmail: string; technicalAccountId: string \}
+asserts config is \{ clientId: string; clientSecrets: string\[\]; context?: string; environment?: "prod" \| "stage"; imsOrgId: string; scopes: string\[\]; technicalAccountEmail?: string; technicalAccountId?: string \}
 
 ## Throws
 

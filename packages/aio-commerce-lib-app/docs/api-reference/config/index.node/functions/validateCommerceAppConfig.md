@@ -11,6 +11,20 @@ function validateCommerceAppConfig(config: unknown): {
         id: string;
         label: string;
      }[];
+     creditMemo?: {
+        gridColumns?: {
+           columns: {
+              aclProtected?: ... | ... | ...;
+              align: ... | ... | ...;
+              id: string;
+              label: string;
+              type: ... | ... | ... | ... | ... | ...;
+           }[];
+           description: string;
+           label: string;
+           runtimeAction: string;
+        };
+     };
      customer?: {
         gridColumns?: {
            columns: {
@@ -52,6 +66,20 @@ function validateCommerceAppConfig(config: unknown): {
            type: "worker";
         })[];
      };
+     invoice?: {
+        gridColumns?: {
+           columns: {
+              aclProtected?: ... | ... | ...;
+              align: ... | ... | ...;
+              id: string;
+              label: string;
+              type: ... | ... | ... | ... | ... | ...;
+           }[];
+           description: string;
+           label: string;
+           runtimeAction: string;
+        };
+     };
      menu?: {
         aclProtected?: boolean;
         description: string;
@@ -67,6 +95,20 @@ function validateCommerceAppConfig(config: unknown): {
            | "stores"
            | "system";
         sandboxPermissions?: ("allow-downloads" | "allow-modals" | "allow-popups")[];
+     };
+     newsletter?: {
+        gridColumns?: {
+           columns: {
+              aclProtected?: ... | ... | ...;
+              align: ... | ... | ...;
+              id: string;
+              label: string;
+              type: ... | ... | ... | ... | ... | ...;
+           }[];
+           description: string;
+           label: string;
+           runtimeAction: string;
+        };
      };
      order?: {
         gridColumns?: {
@@ -176,6 +218,20 @@ function validateCommerceAppConfig(config: unknown): {
            title?: ... | ...;
            type: "worker";
         })[];
+     };
+     shipment?: {
+        gridColumns?: {
+           columns: {
+              aclProtected?: ... | ... | ...;
+              align: ... | ... | ...;
+              id: string;
+              label: string;
+              type: ... | ... | ... | ... | ... | ...;
+           }[];
+           description: string;
+           label: string;
+           runtimeAction: string;
+        };
      };
   };
   businessConfig?: {
@@ -408,7 +464,7 @@ function validateCommerceAppConfig(config: unknown): {
 };
 ```
 
-Defined in: [aio-commerce-lib-app/source/config/lib/validate.ts:57](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/config/lib/validate.ts#L57)
+Defined in: [aio-commerce-lib-app/source/config/lib/validate.ts:57](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-app/source/config/lib/validate.ts#L57)
 
 Validates a complete commerce app configuration object against the schema.
 
@@ -430,6 +486,20 @@ Validates a complete commerce app configuration object against the schema.
 `id`: `string`;
 `label`: `string`;
 \}[];
+`creditMemo?`: \{
+`gridColumns?`: \{
+`columns`: \{
+`aclProtected?`: ... \| ... \| ...;
+`align`: ... \| ... \| ...;
+`id`: `string`;
+`label`: `string`;
+`type`: ... \| ... \| ... \| ... \| ... \| ...;
+\}[];
+`description`: `string`;
+`label`: `string`;
+`runtimeAction`: `string`;
+\};
+\};
 `customer?`: \{
 `gridColumns?`: \{
 `columns`: \{
@@ -471,6 +541,20 @@ Validates a complete commerce app configuration object against the schema.
 `type`: `"worker"`;
 \})[];
 \};
+`invoice?`: \{
+`gridColumns?`: \{
+`columns`: \{
+`aclProtected?`: ... \| ... \| ...;
+`align`: ... \| ... \| ...;
+`id`: `string`;
+`label`: `string`;
+`type`: ... \| ... \| ... \| ... \| ... \| ...;
+\}[];
+`description`: `string`;
+`label`: `string`;
+`runtimeAction`: `string`;
+\};
+\};
 `menu?`: \{
 `aclProtected?`: `boolean`;
 `description`: `string`;
@@ -486,6 +570,20 @@ Validates a complete commerce app configuration object against the schema.
 \| `"stores"`
 \| `"system"`;
 `sandboxPermissions?`: (`"allow-downloads"` \| `"allow-modals"` \| `"allow-popups"`)[];
+\};
+`newsletter?`: \{
+`gridColumns?`: \{
+`columns`: \{
+`aclProtected?`: ... \| ... \| ...;
+`align`: ... \| ... \| ...;
+`id`: `string`;
+`label`: `string`;
+`type`: ... \| ... \| ... \| ... \| ... \| ...;
+\}[];
+`description`: `string`;
+`label`: `string`;
+`runtimeAction`: `string`;
+\};
 \};
 `order?`: \{
 `gridColumns?`: \{
@@ -595,6 +693,20 @@ Validates a complete commerce app configuration object against the schema.
 `title?`: ... \| ...;
 `type`: `"worker"`;
 \})[];
+\};
+`shipment?`: \{
+`gridColumns?`: \{
+`columns`: \{
+`aclProtected?`: ... \| ... \| ...;
+`align`: ... \| ... \| ...;
+`id`: `string`;
+`label`: `string`;
+`type`: ... \| ... \| ... \| ... \| ... \| ...;
+\}[];
+`description`: `string`;
+`label`: `string`;
+`runtimeAction`: `string`;
+\};
 \};
 \};
 `businessConfig?`: \{

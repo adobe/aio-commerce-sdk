@@ -9,15 +9,15 @@ type BranchStepOptions<
 > = Omit<BranchStep<TName, TConfig, TStepCtx, TChildren>, "type">;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/common/workflow/step.ts:246](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/management/common/workflow/step.ts#L246)
+Defined in: [aio-commerce-lib-app/source/management/common/workflow/step.ts:250](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-app/source/management/common/workflow/step.ts#L250)
 
 Options for defining a branch step.
 
 ## Type Parameters
 
-| Type Parameter                                       | Default type                    |
-| ---------------------------------------------------- | ------------------------------- |
-| `TName` _extends_ `string`                           | -                               |
-| `TConfig` _extends_ `CommerceAppConfigOutputModel`   | -                               |
-| `TStepCtx` _extends_ `Record`\<`string`, `unknown`\> | `Record`\<`string`, `unknown`\> |
-| `TChildren` _extends_ [`AnyStep`](AnyStep.md)[]      | [`AnyStep`](AnyStep.md)[]       |
+| Type Parameter                                                                            | Default type                    |
+| ----------------------------------------------------------------------------------------- | ------------------------------- |
+| <a id="type-parameter-tname"></a> `TName` _extends_ `string`                              | -                               |
+| <a id="type-parameter-tconfig"></a> `TConfig` _extends_ `CommerceAppConfigOutputModel`    | -                               |
+| <a id="type-parameter-tstepctx"></a> `TStepCtx` _extends_ `Record`\<`string`, `unknown`\> | `Record`\<`string`, `unknown`\> |
+| <a id="type-parameter-tchildren"></a> `TChildren` _extends_ [`AnyStep`](AnyStep.md)[]     | [`AnyStep`](AnyStep.md)[]       |
