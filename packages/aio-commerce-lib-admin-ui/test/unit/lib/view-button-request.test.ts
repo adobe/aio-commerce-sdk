@@ -13,9 +13,9 @@
 import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
 import { describe, expect, it } from "vitest";
 
-import { parseCreditMemoViewButtonRequest } from "../../../source/credit-memo-view-buttons";
-import { parseInvoiceViewButtonRequest } from "../../../source/invoice-view-buttons";
-import { parseOrderViewButtonRequest } from "../../../source/order-view-buttons";
+import { parseCreditMemoViewButtonRequest } from "#credit-memo-view-buttons/index";
+import { parseInvoiceViewButtonRequest } from "#invoice-view-buttons/index";
+import { parseOrderViewButtonRequest } from "#order-view-buttons/index";
 
 const REQUEST_ID = "88a9d305-b58a-4aa7-aa42-e60d55d5a95c";
 

@@ -819,15 +819,11 @@ buttons in installation and upgrade planning. Button ids must be unique after
 Commerce sanitization. Common fields and variant restrictions match order
 buttons below, with `title` supported only on invoice and credit memo `view` buttons.
 
-Use `@adobe/aio-commerce-sdk/admin-ui/invoice-view-buttons` for invoice worker
-request/response and ACL helpers. Iframe pages use
-`useInvoiceViewButtonContext` from `@adobe/aio-commerce-lib-admin-ui/web`.
+Use `@adobe/aio-commerce-lib-admin-ui/invoice-view-buttons` for invoice worker request/response and ACL helpers. Iframe pages use `useInvoiceViewButtonContext` from `@adobe/aio-commerce-lib-admin-ui/web`.
 
 ##### Credit Memo View Buttons
 
-`adminUi.creditMemo.viewButtons` declares buttons on the credit memo detail page
-in Commerce Admin. They follow the same rules as invoice buttons, including the
-optional `title` on `view` buttons.
+`adminUi.creditMemo.viewButtons` declares buttons on the credit memo detail page in Commerce Admin. They follow the same rules as invoice buttons, including the optional `title` on `view` buttons.
 
 ```typescript
 adminUi: {
@@ -856,9 +852,7 @@ adminUi: {
 }
 ```
 
-Use `@adobe/aio-commerce-sdk/admin-ui/credit-memo-view-buttons` for credit memo
-worker request/response and ACL helpers. Iframe pages use
-`useCreditMemoViewButtonContext` from `@adobe/aio-commerce-lib-admin-ui/web`.
+Use `@adobe/aio-commerce-lib-admin-ui/credit-memo-view-buttons` for credit memo worker request/response and ACL helpers. Iframe pages use `useCreditMemoViewButtonContext` from `@adobe/aio-commerce-lib-admin-ui/web`.
 
 ##### Order View Buttons
 

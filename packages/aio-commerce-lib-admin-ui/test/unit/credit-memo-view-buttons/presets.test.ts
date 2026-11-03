@@ -18,9 +18,9 @@ import {
   creditMemoViewButtonErrorResponse,
   okCreditMemoViewButtonResponse,
   parseCreditMemoViewButtonRequest,
-} from "../../../source/credit-memo-view-buttons";
+} from "#credit-memo-view-buttons/index";
 
-import type { CreditMemoViewButtonRequest } from "../../../source/credit-memo-view-buttons";
+import type { CreditMemoViewButtonRequest } from "#credit-memo-view-buttons/index";
 
 const VALID_REQUEST = {
   creditMemoId: "000000001",

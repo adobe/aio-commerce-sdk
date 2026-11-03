@@ -132,7 +132,7 @@ When Commerce POSTs to the app's runtime action handler, this package provides t
 
 ##### Parsing the incoming request
 
-Commerce POSTs `{ orderId, buttonId }` to the handler and sends the request ID in the `X-Request-ID` header. Pass the raw runtime action `params` to `parseOrderViewButtonRequest`; it maps `buttonId` to `id` and `__ow_headers["x-request-id"]` to `requestId`, then validates and narrows the result to `{ requestId, id, orderId }`:
+Commerce POSTs `{ orderId, buttonId }` to the handler and sends the request ID in the `X-Request-ID` header. Pass the raw runtime action `params` to `parseOrderViewButtonRequest`; it maps `buttonId` to `id` and the `X-Request-ID` header (from `__ow_headers`) to `requestId`, then validates and narrows the result to `{ requestId, id, orderId }`:
 
 ```typescript
 import { parseOrderViewButtonRequest } from "@adobe/aio-commerce-lib-admin-ui/order-view-buttons";
@@ -197,9 +197,7 @@ Use `useHostConnection().actions.close()` to complete the iframe flow, or
 each field a non-empty string. `id` identifies the clicked button and `invoiceId`
 identifies the invoice being viewed; an `orderId` cannot substitute for it.
 Extra runtime parameters are stripped from the parsed result.
-Commerce POSTs `{ invoiceId, buttonId }` and sends the request ID in the `X-Request-ID`
-header; pass the raw runtime action `params` and the parser maps `buttonId` to
-`id` and `__ow_headers["x-request-id"]` to `requestId`.
+Commerce POSTs `{ invoiceId, buttonId }` and sends the request ID in the `X-Request-ID` header; pass the raw runtime action `params` and the parser maps `buttonId` to `id` and the `X-Request-ID` header (from `__ow_headers`) to `requestId`.
 
 ```typescript
 import {
@@ -232,35 +230,23 @@ view-button contract.
 
 ### Credit Memo View Button Wire Contract
 
-Credit memo view buttons registered under `adminUi.creditMemo.viewButtons` have
-iframe (`type: "view"`) and runtime action (`type: "worker"`) variants.
-Registration is configured through `@adobe/aio-commerce-lib-app`; these helpers
-cover the handler and browser sides.
+Credit memo view buttons registered under `adminUi.creditMemo.viewButtons` have iframe (`type: "view"`) and runtime action (`type: "worker"`) variants. Registration is configured through `@adobe/aio-commerce-lib-app`; these helpers cover the handler and browser sides.
 
 #### Iframe buttons (`view`)
 
-The credit memo context is `{ creditMemoId: string }`. Use
-`useCreditMemoViewButtonContext` from the `./web` entrypoint to read
-`creditMemoId` from the page URL, either in the search parameters or a
-hash-route query:
+The credit memo context is `{ creditMemoId: string }`. Use `useCreditMemoViewButtonContext` from the `./web` entrypoint to read `creditMemoId` from the page URL, either in the search parameters or a hash-route query:
 
 ```text
 https://<extension-host>/index.html<path>?creditMemoId=<creditMemoId>
 ```
 
-Use `useHostConnection().actions.close()` to complete the iframe flow, or
-`actions.closeWithError()` to signal failure, just as with order view buttons.
+Use `useHostConnection().actions.close()` to complete the iframe flow, or `actions.closeWithError()` to signal failure, just as with order view buttons.
 
 #### Runtime action buttons (`worker`)
 
-`parseCreditMemoViewButtonRequest` validates `{ requestId, id, creditMemoId }`,
-with each field a non-empty string. `id` identifies the clicked button and
-`creditMemoId` identifies the credit memo being viewed; an `orderId` or
-`invoiceId` cannot substitute for it. Extra runtime parameters are stripped from
-the parsed result.
-Commerce POSTs `{ creditMemoId, buttonId }` and sends the request ID in the `X-Request-ID`
-header; pass the raw runtime action `params` and the parser maps `buttonId` to
-`id` and `__ow_headers["x-request-id"]` to `requestId`.
+`parseCreditMemoViewButtonRequest` validates `{ requestId, id, creditMemoId }`, with each field a non-empty string. `id` identifies the clicked button and `creditMemoId` identifies the credit memo being viewed; an `orderId` or `invoiceId` cannot substitute for it. Extra runtime parameters are stripped from the parsed result.
+
+Commerce POSTs `{ creditMemoId, buttonId }` and sends the request ID in the `X-Request-ID` header; pass the raw runtime action `params` and the parser maps `buttonId` to `id` and the `X-Request-ID` header (from `__ow_headers`) to `requestId`.
 
 ```typescript
 import {
@@ -283,14 +269,9 @@ export async function main(params: unknown) {
 }
 ```
 
-Malformed requests throw `CommerceSdkValidationError`. The success helper returns
-HTTP 200 with an empty `{}` body. The error helper preserves the supplied status
-code and returns a `{ message }` body. These response envelopes follow the order
-view-button contract.
+Malformed requests throw `CommerceSdkValidationError`. The success helper returns HTTP 200 with an empty `{}` body. The error helper preserves the supplied status code and returns a `{ message }` body. These response envelopes follow the order view-button contract.
 
-Use `getCreditMemoViewButtonAclResourceId(metadataId, buttonId)` to derive the
-ACL resource ID (`…_creditmemo_viewbuttons_<buttonId>`) for an `aclProtected`
-button.
+Use `getCreditMemoViewButtonAclResourceId(metadataId, buttonId)` to derive the ACL resource ID (`…_creditmemo_viewbuttons_<buttonId>`) for an `aclProtected` button.
 
 ### Mass Action Worker Contract
 

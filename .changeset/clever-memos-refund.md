@@ -1,9 +1,5 @@
 ---
 "@adobe/aio-commerce-lib-app": minor
-"@adobe/aio-commerce-lib-admin-ui": minor
-"@adobe/aio-commerce-sdk": minor
-"@adobe/aio-commerce-plugin-app-management": minor
-"@adobe/aio-commerce-plugin-app-migration": patch
 ---
 
-Add credit memo detail-page view and worker buttons, with configuration validation, generated operations, runtime and React helpers, and installation and upgrade support.
+Add `adminUi.creditMemo.viewButtons` to the app config schema, with generated `view` and `workerProcess` operations and installation and upgrade support.
