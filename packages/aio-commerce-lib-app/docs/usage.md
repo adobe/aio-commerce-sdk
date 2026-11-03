@@ -1111,7 +1111,7 @@ Each attempt links to the rest of the trail:
 
 - `previousAttemptId` and `previousPlanId` name the attempt and the plan it replaced.
 - `plan` is the plan the attempt executes, in the same shape `POST /plan` returns for review: its versions, the operations to run per domain, the items each one changes, the `changes` per domain and the planning issues. Every domain has `changes`, empty when there are none. They list the items the target config adds, updates or removes compared with the installed config. They do not depend on the live state, so an item that is already live still appears. It is on every answer that carries an attempt, including the `attempt` of a `409` and of a failed run.
-- `plan.source.snapshotId` names the snapshot the attempt started from (for an app installed with only business configuration, the baseline written when the plan started), and `result.snapshotId` the one a successful attempt produced. Snapshots live in the app's file storage under `lifecycle-app-state-snapshot`, and each one records the `attemptId` that produced it.
+- `plan.source.snapshotId` names the snapshot the attempt started from (for an app installed with only business configuration, the baseline the app writes when the upgrade starts), and `result.snapshotId` the one a successful attempt produced. Snapshots live in the app's file storage under `lifecycle-app-state-snapshot`, and each one records the `attemptId` that produced it.
 - `step` lists every step with its `status`, and `startedAt` and `completedAt` once it ran, so an expired attempt shows which step hung.
 - `activations.start` and `activations.execution` are the OpenWhisk activations that started and executed the attempt.
 
