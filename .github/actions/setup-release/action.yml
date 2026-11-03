@@ -15,7 +15,7 @@ runs:
     # No registry-url/scope/token — install always resolves packages from public npm.
     - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
       with:
-        node-version: lts/*
+        node-version: 24
         cache: "pnpm"
 
     - run: pnpm install --frozen-lockfile
