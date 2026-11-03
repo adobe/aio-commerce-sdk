@@ -1254,16 +1254,6 @@
             "schema": {
               "type": "string"
             }
-          },
-          {
-            "name": "x-aio-commerce-installation-invocation-source",
-            "in": "header",
-            "description": "Identifies the source of the request. When set to `post-app-deploy` and no lifecycle attempt exists, returns `204` instead of an older library version's installation record.",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "enum": ["post-app-deploy"]
-            }
           }
         ],
         "responses": {
@@ -1344,16 +1334,6 @@
             "required": true,
             "schema": {
               "type": "string"
-            }
-          },
-          {
-            "name": "x-aio-commerce-installation-invocation-source",
-            "in": "header",
-            "description": "Identifies the source of the request. The generated post-deploy hook sends `post-app-deploy`; when that source is present and the app is not installed, reconciliation returns `409 not-installed` instead of starting a first-time installation.",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "enum": ["post-app-deploy"]
             }
           }
         ],
