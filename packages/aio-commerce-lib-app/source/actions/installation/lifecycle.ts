@@ -50,7 +50,6 @@ import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 import type {
   LifecycleAttempt,
   LifecycleOperation,
-  LifecyclePlan,
   OrchestrationState,
 } from "#management/common/orchestration";
 import type { PlanLifecycleResult } from "#management/lifecycle/planning";
@@ -378,85 +377,6 @@ export async function findLatestAttemptOf(
   }
 
   return attempt ?? undefined;
-}
-
-/** The stores the lifecycle history is read from. */
-type LifecycleHistoryStores = {
-  attemptStore: LifecycleStore<LifecycleAttempt>;
-  planStore: LifecycleStore<LifecyclePlan>;
-};
-
-/**
- * The status of the latest attempt with the plans it ran and replaced, every earlier attempt
- * (newest first, each with its own plans) and the plans made since it.
- *
- * @param attempt - The latest attempt.
- * @param pendingPlan - The pending plan, or `null` when none is pending.
- * @param stores - The attempt and plan stores.
- * @param limit - How many earlier attempts to read at most. Reads all of them when absent.
- * @param operation - Lists only the earlier attempts and pending plans of this operation.
- */
-export async function toAttemptHistory(
-  attempt: LifecycleAttempt,
-  pendingPlan: LifecyclePlan | null,
-  stores: LifecycleHistoryStores,
-  limit?: number,
-  operation?: LifecycleOperation,
-) {
-  const history: (ReturnType<typeof toAttemptStatus> & {
-    plans: LifecyclePlan[];
-  })[] = [];
-
-  let previousId = attempt.previousAttemptId;
-  while (previousId && (limit === undefined || history.length < limit)) {
-    // biome-ignore lint/performance/noAwaitInLoops: each attempt names the one before it
-    const previous = await stores.attemptStore.get(previousId);
-    if (!previous) {
-      break;
-    }
-
-    if (!operation || previous.operation === operation) {
-      history.push({
-        ...toAttemptStatus(previous),
-        plans: await readPlanChain(previous.plan, stores.planStore),
-      });
-    }
-
-    previousId = previous.previousAttemptId;
-  }
-
-  return {
-    ...toAttemptStatus(attempt),
-    history,
-    pendingPlans: pendingPlan
-      ? (await readPlanChain(pendingPlan, stores.planStore)).filter(
-          (plan) => !operation || plan.operation === operation,
-        )
-      : [],
-    plans: await readPlanChain(attempt.plan, stores.planStore),
-  };
-}
-
-/** The given plan followed by the stored plans it replaced, newest first, up to the first missing one. */
-async function readPlanChain(
-  plan: LifecyclePlan,
-  planStore: LifecycleStore<LifecyclePlan>,
-) {
-  const plans = [plan];
-  let previousId = plan.previousPlanId;
-
-  while (previousId) {
-    // biome-ignore lint/performance/noAwaitInLoops: each plan names the one before it
-    const previous = await planStore.get(previousId);
-    if (!previous) {
-      break;
-    }
-
-    plans.push(previous);
-    previousId = previous.previousPlanId;
-  }
-
-  return plans;
 }
 
 /**

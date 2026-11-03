@@ -23,31 +23,13 @@ const OPERATIONS = [
 
 const OperationSchema = v.optional(v.picklist(OPERATIONS));
 
-/** Query params that read the latest attempt or its history. */
-const HistoryQuerySchema = v.object({
-  attemptId: v.optional(v.never()),
-  history: v.optional(v.picklist(["true", "false"]), "false"),
-  limit: v.optional(
-    v.pipe(v.string(), v.toNumber(), v.integer(), v.minValue(1)),
-  ),
-  operation: OperationSchema,
-});
-
-/** Query params that read one attempt by id. */
-const AttemptQuerySchema = v.object({
-  attemptId: v.pipe(v.string(), v.minLength(1)),
-  history: v.optional(v.never()),
-  limit: v.optional(v.never()),
-  operation: OperationSchema,
-});
-
 /**
  * Query params of `GET /`. Query values arrive as strings.
  *
  * Unknown keys are accepted: with an empty query string the router falls back to every other
  * action param, such as `appConfig`.
  */
-export const StatusQuerySchema = v.union([
-  AttemptQuerySchema,
-  HistoryQuerySchema,
-]);
+export const StatusQuerySchema = v.object({
+  attemptId: v.optional(v.pipe(v.string(), v.minLength(1))),
+  operation: OperationSchema,
+});
