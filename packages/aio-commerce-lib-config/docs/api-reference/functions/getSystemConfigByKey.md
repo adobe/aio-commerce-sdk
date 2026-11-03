@@ -7,7 +7,7 @@ function getSystemConfigByKey<T = unknown>(
 ): Promise<T | null>;
 ```
 
-Defined in: [modules/configuration/system-config.ts:74](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-config/source/modules/configuration/system-config.ts#L74)
+Defined in: [modules/configuration/system-config.ts:74](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-config/source/modules/configuration/system-config.ts#L74)
 
 Retrieves a system configuration value by key.
 
@@ -16,16 +16,16 @@ and re-caching. Returns `null` when the key is not found in either layer.
 
 ## Type Parameters
 
-| Type Parameter | Default type |
-| -------------- | ------------ |
-| `T`            | `unknown`    |
+| Type Parameter                    | Default type |
+| --------------------------------- | ------------ |
+| <a id="type-parameter-t"></a> `T` | `unknown`    |
 
 ## Parameters
 
-| Parameter    | Type     | Default value                     | Description                                                                                                                                            |
-| ------------ | -------- | --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `key`        | `string` | `undefined`                       | The system configuration key (e.g. `"system.association"`).                                                                                            |
-| `ttlSeconds` | `number` | `SYSTEM_CONFIG_CACHE_TTL_SECONDS` | Cache TTL in seconds applied when re-caching a value read from `aio-lib-files`. Defaults to 24 hours; `aio-lib-state` caps it at one year (31536000s). |
+| Parameter     | Type     | Default value                     | Description                                                                                                                                            |
+| ------------- | -------- | --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `key`         | `string` | `undefined`                       | The system configuration key (e.g. `"system.association"`).                                                                                            |
+| `ttlSeconds?` | `number` | `SYSTEM_CONFIG_CACHE_TTL_SECONDS` | Cache TTL in seconds applied when re-caching a value read from `aio-lib-files`. Defaults to 24 hours; `aio-lib-state` caps it at one year (31536000s). |
 
 ## Returns
 

@@ -6,7 +6,7 @@ type ResolveCommerceHttpClientParamsOptions = {
 };
 ```
 
-Defined in: [aio-commerce-lib-api/source/lib/commerce/types.ts:88](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-api/source/lib/commerce/types.ts#L88)
+Defined in: [aio-commerce-lib-api/source/lib/commerce/types.ts:88](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-api/source/lib/commerce/types.ts#L88)
 
 Custom options to be taken into account when resolving Commerce HTTP client parameters.
 
@@ -15,10 +15,10 @@ Custom options to be taken into account when resolving Commerce HTTP client para
 ### tryForwardAuthProvider?
 
 ```ts
-optional tryForwardAuthProvider?: boolean;
+tryForwardAuthProvider?: boolean;
 ```
 
-Defined in: [aio-commerce-lib-api/source/lib/commerce/types.ts:93](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-api/source/lib/commerce/types.ts#L93)
+Defined in: [aio-commerce-lib-api/source/lib/commerce/types.ts:93](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-api/source/lib/commerce/types.ts#L93)
 
 Whether to attempt to forward the IMS auth provider from a pre-existing token or an auth header.
 

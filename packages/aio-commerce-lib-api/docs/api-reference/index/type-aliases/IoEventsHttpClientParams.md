@@ -8,7 +8,7 @@ type IoEventsHttpClientParams = {
 };
 ```
 
-Defined in: [aio-commerce-lib-api/source/lib/io-events/types.ts:33](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-api/source/lib/io-events/types.ts#L33)
+Defined in: [aio-commerce-lib-api/source/lib/io-events/types.ts:33](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-api/source/lib/io-events/types.ts#L33)
 
 Defines the parameters required to build an HTTP client for the Adobe I/O Events API.
 
@@ -22,7 +22,7 @@ auth:
   | ImsAuthParamsWithOptionalScopes;
 ```
 
-Defined in: [aio-commerce-lib-api/source/lib/io-events/types.ts:35](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-api/source/lib/io-events/types.ts#L35)
+Defined in: [aio-commerce-lib-api/source/lib/io-events/types.ts:35](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-api/source/lib/io-events/types.ts#L35)
 
 The IMS authentication parameters.
 
@@ -31,10 +31,10 @@ The IMS authentication parameters.
 ### config?
 
 ```ts
-optional config?: IoEventsHttpClientConfig;
+config?: IoEventsHttpClientConfig;
 ```
 
-Defined in: [aio-commerce-lib-api/source/lib/io-events/types.ts:40](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-api/source/lib/io-events/types.ts#L40)
+Defined in: [aio-commerce-lib-api/source/lib/io-events/types.ts:40](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-api/source/lib/io-events/types.ts#L40)
 
 The configuration for the I/O Events HTTP client.
 
@@ -43,9 +43,9 @@ The configuration for the I/O Events HTTP client.
 ### fetchOptions?
 
 ```ts
-optional fetchOptions?: Options;
+fetchOptions?: Options;
 ```
 
-Defined in: [aio-commerce-lib-api/source/lib/io-events/types.ts:43](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-api/source/lib/io-events/types.ts#L43)
+Defined in: [aio-commerce-lib-api/source/lib/io-events/types.ts:43](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-api/source/lib/io-events/types.ts#L43)
 
 Additional fetch options to use for the I/O Events HTTP requests.

@@ -20,11 +20,13 @@ function createAdobeIoEventsApiClient(params: IoEventsHttpClientParams): ApiClie
   getEventProviderById: ;
   getRegistrationById: ;
   publishEvent: ;
+  updateEventMetadataForProvider: ;
+  updateEventProvider: ;
   updateRegistration: ;
 }>;
 ```
 
-Defined in: [io-events/lib/api-client.ts:33](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-events/source/io-events/lib/api-client.ts#L33)
+Defined in: [io-events/lib/api-client.ts:33](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-events/source/io-events/lib/api-client.ts#L33)
 
 Creates a new API client for the Adobe I/O Events API client.
 
@@ -55,5 +57,7 @@ Creates a new API client for the Adobe I/O Events API client.
 `getEventProviderById`: ;
 `getRegistrationById`: ;
 `publishEvent`: ;
+`updateEventMetadataForProvider`: ;
+`updateEventProvider`: ;
 `updateRegistration`: ;
 \}\>

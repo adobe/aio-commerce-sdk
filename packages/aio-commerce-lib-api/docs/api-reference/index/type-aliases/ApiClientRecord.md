@@ -15,13 +15,13 @@ type ApiClientRecord<
 };
 ```
 
-Defined in: [aio-commerce-lib-api/source/lib/api-client.ts:23](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-api/source/lib/api-client.ts#L23)
+Defined in: [aio-commerce-lib-api/source/lib/api-client.ts:23](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-api/source/lib/api-client.ts#L23)
 
 A client that bounds a set of [ApiFunction](ApiFunction.md) to their HTTP clients.
 
 ## Type Parameters
 
-| Type Parameter                                                                                                    |
-| ----------------------------------------------------------------------------------------------------------------- |
-| `TClient` _extends_ `HttpClientBase`\<`unknown`\>                                                                 |
-| `TFunctions` _extends_ `Record`\<`string`, [`ApiFunction`](ApiFunction.md)\<`TClient`, `unknown`[], `unknown`\>\> |
+| Type Parameter                                                                                                                                           |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| <a id="type-parameter-tclient"></a> `TClient` _extends_ `HttpClientBase`\<`unknown`\>                                                                    |
+| <a id="type-parameter-tfunctions"></a> `TFunctions` _extends_ `Record`\<`string`, [`ApiFunction`](ApiFunction.md)\<`TClient`, `unknown`[], `unknown`\>\> |

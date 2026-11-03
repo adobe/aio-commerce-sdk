@@ -7,7 +7,7 @@ function appendCommand(
 ): string;
 ```
 
-Defined in: [project.ts:305](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages-private/scripting-utils/source/project.ts#L305)
+Defined in: [project.ts:305](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages-private/scripting-utils/source/project.ts#L305)
 
 Append a command to an existing `&&` command chain without duplicating it.
 

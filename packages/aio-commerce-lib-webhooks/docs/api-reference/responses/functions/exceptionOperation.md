@@ -7,7 +7,7 @@ function exceptionOperation(
 ): ExceptionOperation;
 ```
 
-Defined in: [responses/operations/presets.ts:49](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-webhooks/source/responses/operations/presets.ts#L49)
+Defined in: [responses/operations/presets.ts:49](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-webhooks/source/responses/operations/presets.ts#L49)
 
 Creates an exception operation response with a message
 Causes Commerce to terminate the process that triggered the original event.

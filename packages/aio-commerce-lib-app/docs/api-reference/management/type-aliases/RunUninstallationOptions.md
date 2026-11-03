@@ -1,4 +1,4 @@
-# `RunUninstallationOptions`
+# ~~`RunUninstallationOptions`~~
 
 ```ts
 type RunUninstallationOptions = {
@@ -10,66 +10,70 @@ type RunUninstallationOptions = {
 };
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/runner.ts:186](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/management/installation/runner.ts#L186)
+Defined in: [aio-commerce-lib-app/source/management/deprecated/runner.ts:212](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-app/source/management/deprecated/runner.ts#L212)
 
 Options for running an uninstallation.
 
+## Deprecated
+
+Removed in the next major together with [runUninstallation](../functions/runUninstallation.md).
+
 ## Properties
 
-### config
+### ~~config~~
 
 ```ts
 config: CommerceAppConfigOutputModel;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/runner.ts:190](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/management/installation/runner.ts#L190)
+Defined in: [aio-commerce-lib-app/source/management/deprecated/runner.ts:216](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-app/source/management/deprecated/runner.ts#L216)
 
 The app configuration.
 
 ---
 
-### executedCustomInstallationSteps?
+### ~~executedCustomInstallationSteps?~~
 
 ```ts
-optional executedCustomInstallationSteps?: readonly CustomInstallationStepIdentity[];
+executedCustomInstallationSteps?: readonly CustomInstallationStepIdentity[];
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/runner.ts:197](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/management/installation/runner.ts#L197)
+Defined in: [aio-commerce-lib-app/source/management/deprecated/runner.ts:223](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-app/source/management/deprecated/runner.ts#L223)
 
 Same as [CreateInitialUninstallationStateOptions.executedCustomInstallationSteps](CreateInitialUninstallationStateOptions.md#executedcustominstallationsteps).
 
 ---
 
-### hooks?
+### ~~hooks?~~
 
 ```ts
-optional hooks?: InstallationHooks;
+hooks?: InstallationHooks;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/runner.ts:194](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/management/installation/runner.ts#L194)
+Defined in: [aio-commerce-lib-app/source/management/deprecated/runner.ts:220](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-app/source/management/deprecated/runner.ts#L220)
 
 Lifecycle hooks for status change notifications.
 
 ---
 
-### initialState
+### ~~initialState~~
 
 ```ts
 initialState: InProgressWorkflowState;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/runner.ts:192](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/management/installation/runner.ts#L192)
+Defined in: [aio-commerce-lib-app/source/management/deprecated/runner.ts:218](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-app/source/management/deprecated/runner.ts#L218)
 
 The initial uninstallation state (with all steps pending).
 
 ---
 
-### installationContext
+### ~~installationContext~~
 
 ```ts
 installationContext: LifecycleContext;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/runner.ts:188](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/management/installation/runner.ts#L188)
+Defined in: [aio-commerce-lib-app/source/management/deprecated/runner.ts:214](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-app/source/management/deprecated/runner.ts#L214)
 
 Shared installation context (params, logger, etc.).

@@ -1,6 +1,6 @@
 # `RouteContext`
 
-Defined in: [actions/http/types.ts:38](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages-private/common-utils/source/actions/http/types.ts#L38)
+Defined in: [actions/http/types.ts:38](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages-private/common-utils/source/actions/http/types.ts#L38)
 
 Base context interface for route handlers.
 This interface can be extended via declaration merging to add custom context properties.

@@ -9,7 +9,7 @@ function getScopeTree(
 ): Promise<GetScopeTreeResult>;
 ```
 
-Defined in: [config-manager.ts:212](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-config/source/config-manager.ts#L212)
+Defined in: [config-manager.ts:212](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-config/source/config-manager.ts#L212)
 
 Gets the scope tree from cache or Commerce API.
 
@@ -53,7 +53,7 @@ const commerceConfig: CommerceHttpClientParams = {
 
 const result = await getScopeTree(
   { refreshData: true, commerceConfig },
-  { cacheTimeout: 600000 },
+  { cacheTimeout: 600 }, // 10 minutes
 );
 console.log(result.scopeTree); // Fresh data from Commerce API
 console.log(result.isCachedData); // false
@@ -66,7 +66,7 @@ if (result.fallbackError) {
 import { getScopeTree } from "@adobe/aio-commerce-lib-config";
 
 // Get scope tree with custom cache timeout
-const result = await getScopeTree(undefined, { cacheTimeout: 600000 });
+const result = await getScopeTree(undefined, { cacheTimeout: 600 }); // 10 minutes
 ```
 
 ## Call Signature
@@ -78,7 +78,7 @@ function getScopeTree(
 ): Promise<GetScopeTreeResult>;
 ```
 
-Defined in: [config-manager.ts:218](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-config/source/config-manager.ts#L218)
+Defined in: [config-manager.ts:218](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-config/source/config-manager.ts#L218)
 
 Gets the scope tree from cache or Commerce API.
 
@@ -122,7 +122,7 @@ const commerceConfig: CommerceHttpClientParams = {
 
 const result = await getScopeTree(
   { refreshData: true, commerceConfig },
-  { cacheTimeout: 600000 },
+  { cacheTimeout: 600 }, // 10 minutes
 );
 console.log(result.scopeTree); // Fresh data from Commerce API
 console.log(result.isCachedData); // false
@@ -135,5 +135,5 @@ if (result.fallbackError) {
 import { getScopeTree } from "@adobe/aio-commerce-lib-config";
 
 // Get scope tree with custom cache timeout
-const result = await getScopeTree(undefined, { cacheTimeout: 600000 });
+const result = await getScopeTree(undefined, { cacheTimeout: 600 }); // 10 minutes
 ```
