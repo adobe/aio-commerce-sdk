@@ -1544,6 +1544,261 @@ describe("installationRuntimeAction", () => {
       });
     });
 
+    describe("app installed with only business configuration", () => {
+      const businessConfigOnlyBody = {
+        ...upgradeRequestBody,
+        installedState: "business-config-only" as const,
+        installedVersion: "0.9.0",
+      };
+
+      function createAction() {
+        desiredInstallationStore = createMockInstallationStore();
+        return installationRuntimeAction({ appConfig: configWithAutoUpgrade });
+      }
+
+      /** The input the leaf planned with. */
+      function getPlannedWith(leaf: AnyStep) {
+        const { mock } = (leaf as LeafStep).plan as unknown as {
+          mock: { calls: unknown[][] };
+        };
+        const input = mock.calls[0]?.[0] as
+          | { baseline: AppStateSnapshot }
+          | undefined;
+
+        expect.assert(input, "Expected the leaf to plan");
+        return input;
+      }
+
+      async function getLatestAttempt() {
+        const attempt = (await desiredStateStore.get("current"))?.latestAttempt;
+        expect.assert(attempt, "Expected an attempt");
+        return attempt;
+      }
+
+      test("plans an upgrade from the installed version without a baseline or warning", async () => {
+        const leaf = createUpgradeLeaf();
+        createRootInstallationStepMock.mockReturnValue(createUpgradeRoot(leaf));
+        const action = createAction();
+
+        const result = await planRequest(action, businessConfigOnlyBody);
+
+        expect(result).toMatchObject({
+          body: {
+            plan: {
+              issues: [],
+              operation: "upgrade",
+              sourceVersion: "0.9.0",
+              targetVersion: configWithAutoUpgrade.metadata.version,
+            },
+          },
+          statusCode: 200,
+        });
+
+        const state = await desiredStateStore.get("current");
+        expect(state?.pendingPlan).toMatchObject({
+          operation: "upgrade",
+          source: { appVersion: "0.9.0", snapshotId: null },
+        });
+        expect(state?.baselineSnapshotId).toBeNull();
+        expect(desiredSnapshotStore.put).not.toHaveBeenCalled();
+
+        const { baseline } = getPlannedWith(leaf);
+        expect(baseline.config.metadata.version).toBe("0.9.0");
+        expect(baseline.config.webhooks).toBeUndefined();
+        expect(baseline.config.eventing).toBeUndefined();
+        expect(baseline.config.adminUi).toBeUndefined();
+        expect(baseline.config.installation).toBeUndefined();
+      });
+
+      test("keeps the business configuration in the synthetic baseline", async () => {
+        const leaf = createUpgradeLeaf();
+        createRootInstallationStepMock.mockReturnValue(createUpgradeRoot(leaf));
+        desiredInstallationStore = createMockInstallationStore();
+        const target = createMockConfig({
+          businessConfig: configWithBusinessConfig.businessConfig,
+          metadata: { upgradeMode: "auto" },
+          webhooks: configWithWebhooks.webhooks,
+        });
+
+        await planRequest(
+          installationRuntimeAction({ appConfig: target }),
+          businessConfigOnlyBody,
+        );
+
+        const { baseline } = getPlannedWith(leaf);
+        expect(baseline.config.businessConfig).toEqual(target.businessConfig);
+      });
+
+      test("ignores the hint when a baseline exists", async () => {
+        seedInstalledBaseline("0.8.0");
+        const action = installationRuntimeAction({
+          appConfig: configWithAutoUpgrade,
+        });
+
+        const result = await planRequest(action, businessConfigOnlyBody);
+
+        expect(result).toMatchObject({
+          body: { plan: { operation: "upgrade", sourceVersion: "0.8.0" } },
+          statusCode: 200,
+        });
+        expect(
+          (await desiredStateStore.get("current"))?.pendingPlan?.source
+            ?.snapshotId,
+        ).toEqual(expect.any(String));
+      });
+
+      test("still plans an install without the hint", async () => {
+        const action = createAction();
+        const result = await planRequest(action, upgradeRequestBody);
+
+        expect(result).toMatchObject({
+          body: { plan: { operation: "install", sourceVersion: null } },
+        });
+      });
+
+      test("returns 409 when an older version is installing the app", async () => {
+        desiredInstallationStore = createMockInstallationStore(
+          createMockInProgressState(),
+        );
+        const action = installationRuntimeAction({
+          appConfig: configWithAutoUpgrade,
+        });
+        const result = await planRequest(action, businessConfigOnlyBody);
+
+        expect(result).toMatchObject({
+          error: { body: { code: "in-progress" }, statusCode: 409 },
+        });
+      });
+
+      test("returns 409 already-current when the installed version is the target", async () => {
+        const action = createAction();
+        const result = await planRequest(action, {
+          ...businessConfigOnlyBody,
+          installedVersion: configWithAutoUpgrade.metadata.version,
+        });
+
+        expect(result).toMatchObject({
+          error: { body: { code: "already-current" }, statusCode: 409 },
+        });
+      });
+
+      test("writes the baseline when it starts and runs as an upgrade", async () => {
+        const action = createAction();
+        const result = await planAndStart(action, businessConfigOnlyBody);
+
+        expect(result).toMatchObject({
+          body: { operation: "upgrade" },
+          statusCode: 202,
+        });
+
+        const state = await desiredStateStore.get("current");
+        const snapshotId = state?.baselineSnapshotId;
+        expect.assert(snapshotId, "Expected a baseline snapshot");
+        expect(await desiredSnapshotStore.get(snapshotId)).toMatchObject({
+          attemptId: null,
+          config: { metadata: { version: "0.9.0" } },
+          data: null,
+        });
+        expect(
+          (await desiredSnapshotStore.get(snapshotId))?.config.webhooks,
+        ).toBeUndefined();
+        expect(state?.latestAttempt).toMatchObject({
+          operation: "upgrade",
+          plan: { source: { appVersion: "0.9.0", snapshotId } },
+          status: "pending",
+        });
+        expect(invokeMock).toHaveBeenCalledTimes(1);
+      });
+
+      test("starts from the pending plan when the start request has no hint", async () => {
+        const action = createAction();
+        const planned = await planRequest(action, businessConfigOnlyBody);
+        expect.assert(planned.type === "success", "Expected a plan");
+        const { plan } = planned.body as { plan: { id: string } };
+
+        const result = await startPlan(action, plan.id, upgradeRequestBody);
+
+        expect(result).toMatchObject({ statusCode: 202 });
+      });
+
+      test("plans a normal upgrade after the first one succeeds", async () => {
+        const action = createAction();
+        await planAndStart(action, businessConfigOnlyBody);
+        const attempt = await getLatestAttempt();
+        const executed = await action(
+          createRuntimeActionParams({
+            appData,
+            attemptId: attempt.id,
+            method: "post",
+            path: "/execution",
+            ...DEFAULT_INSTALLATION_PARAMS,
+          }),
+        );
+        expect(executed).toMatchObject({ statusCode: 200 });
+
+        const nextAction = installationRuntimeAction({
+          appConfig: createMockConfig({
+            metadata: { upgradeMode: "auto", version: "2.0.0" },
+            webhooks: configWithWebhooks.webhooks,
+          }),
+        });
+        const result = await planRequest(nextAction, businessConfigOnlyBody);
+
+        expect(result).toMatchObject({
+          body: {
+            plan: {
+              operation: "upgrade",
+              sourceVersion: configWithAutoUpgrade.metadata.version,
+              targetVersion: "2.0.0",
+            },
+          },
+        });
+        expect(
+          (await desiredStateStore.get("current"))?.pendingPlan?.source
+            ?.snapshotId,
+        ).toEqual(expect.any(String));
+      });
+
+      test("retries a failed first attempt from the written baseline", async () => {
+        createRootInstallationStepMock.mockReturnValue(
+          createUpgradeRoot(
+            createUpgradeLeaf({
+              apply: vi.fn().mockRejectedValue(new Error("boom")),
+            }),
+          ),
+        );
+        const action = createAction();
+        await planAndStart(action, businessConfigOnlyBody);
+        const first = await getLatestAttempt();
+        await action(
+          createRuntimeActionParams({
+            appData,
+            attemptId: first.id,
+            method: "post",
+            path: "/execution",
+            ...DEFAULT_INSTALLATION_PARAMS,
+          }),
+        );
+        expect(await getLatestAttempt()).toMatchObject({ status: "failed" });
+        const baselineId = (await desiredStateStore.get("current"))
+          ?.baselineSnapshotId;
+        expect(baselineId).toEqual(expect.any(String));
+
+        const retried = await planAndStart(action, businessConfigOnlyBody);
+
+        expect(retried).toMatchObject({
+          body: { operation: "upgrade" },
+          statusCode: 202,
+        });
+        const retry = await getLatestAttempt();
+        expect(retry.id).not.toBe(first.id);
+        expect(retry.plan.source).toEqual({
+          appVersion: "0.9.0",
+          snapshotId: baselineId,
+        });
+      });
+    });
+
     describe("uninstall", () => {
       const removeLeafPlan = {
         kind: "planned",

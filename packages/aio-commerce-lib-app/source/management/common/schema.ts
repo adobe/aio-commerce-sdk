@@ -34,6 +34,15 @@ export type AppData = v.InferOutput<typeof AppDataSchema>;
  */
 export const LifecycleRequestContextSchema = v.object({
   appData: AppDataSchema,
+
+  // Set with `installedVersion` when the app is installed with only business configuration, so it
+  // has no lifecycle baseline. Planning then resolves an upgrade instead of an install. Ignored
+  // when a baseline exists.
+  installedState: v.optional(v.literal("business-config-only")),
+
+  // The version the service stored for the installed app. The plan's source version when
+  // `installedState` is set.
+  installedVersion: v.optional(v.string()),
   ioEventsEnv: v.string(),
   ioEventsUrl: v.string(),
 
