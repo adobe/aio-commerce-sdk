@@ -62,6 +62,12 @@ export type PreparedRequest = {
   appConfig: CommerceAppConfigOutputModel;
   baseline: AppStateSnapshot | null;
 
+  /**
+   * The installed version of an app installed with only business configuration, when the request
+   * says so. It is only used when there is no baseline.
+   */
+  businessConfigOnlyVersion: string | null;
+
   /** Whether the state names a baseline snapshot that is no longer stored. */
   isBaselineMissing: boolean;
 
@@ -154,6 +160,10 @@ export async function prepareRequest({
       actionVersion,
       appConfig,
       baseline,
+      businessConfigOnlyVersion:
+        body.installedState === "business-config-only" && body.installedVersion
+          ? body.installedVersion
+          : null,
       isBaselineMissing,
       latestAttempt: state?.latestAttempt ?? null,
       params,
@@ -180,7 +190,11 @@ export async function planRequestedOperation(args: RequestHandlerArgs) {
 
   const { operation } = resolved;
   const planned = await planOperation({
-    ...getPlanInputs(operation, request.appConfig),
+    ...getPlanInputs(
+      operation,
+      request.appConfig,
+      request.businessConfigOnlyVersion,
+    ),
     actionVersion: request.actionVersion,
     operation,
     runtime: request.runtime,
@@ -197,12 +211,14 @@ export async function planRequestedOperation(args: RequestHandlerArgs) {
 
 /**
  * Resolves the operation to plan: `uninstall` when asked for, otherwise `upgrade` when a baseline
- * exists and `install` when not. Returns the response that refuses it when it cannot be planned.
+ * exists and `install` when not. An app installed with only business configuration has no baseline
+ * but is installed, so it resolves `upgrade`. Returns the response that refuses it when it cannot be planned.
  */
 export async function resolveOperation(
   {
     appConfig,
     baseline,
+    businessConfigOnlyVersion,
     isBaselineMissing,
     latestAttempt,
     runtime,
@@ -257,7 +273,15 @@ export async function resolveOperation(
   }
 
   if (!baseline) {
-    return resolvedUnlessRefused("install", await refuseLegacyInstall());
+    const refusal = await refuseLegacyInstall();
+    if (!businessConfigOnlyVersion) {
+      return resolvedUnlessRefused("install", refusal);
+    }
+
+    return resolvedUnlessRefused(
+      "upgrade",
+      refusal ?? refuseRepeatedVersion(businessConfigOnlyVersion, appConfig),
+    );
   }
 
   return resolvedUnlessRefused("upgrade", refuseUpgrade(baseline, appConfig));
@@ -275,10 +299,37 @@ function resolvedUnlessRefused(
 export function getPlanInputs(
   operation: LifecycleOperation,
   appConfig: CommerceAppConfigOutputModel,
+  businessConfigOnlyVersion: string | null = null,
 ) {
-  return operation === "uninstall"
-    ? { fallbackBaselineConfig: appConfig, targetConfig: null }
+  if (operation === "uninstall") {
+    return { fallbackBaselineConfig: appConfig, targetConfig: null };
+  }
+
+  // Only used without a baseline, which is when the app has only business configuration.
+  return operation === "upgrade" && businessConfigOnlyVersion
+    ? {
+        fallbackBaselineConfig: toBusinessConfigOnlyConfig(
+          appConfig,
+          businessConfigOnlyVersion,
+        ),
+        targetConfig: appConfig,
+      }
     : { targetConfig: appConfig };
+}
+
+/**
+ * The config an app installed with only business configuration has: the target config at the
+ * installed version, without the sections that need installation.
+ */
+export function toBusinessConfigOnlyConfig(
+  appConfig: CommerceAppConfigOutputModel,
+  installedVersion: string,
+): CommerceAppConfigOutputModel {
+  const { adminUi, eventing, installation, webhooks, ...kept } = appConfig;
+  return {
+    ...kept,
+    metadata: { ...appConfig.metadata, version: installedVersion },
+  };
 }
 
 /** Refuses an uninstall while an older library version is uninstalling the app. */
@@ -324,7 +375,15 @@ function refuseUpgrade(
     });
   }
 
-  if (baseline.config.metadata.version === appConfig.metadata.version) {
+  return refuseRepeatedVersion(baseline.config.metadata.version, appConfig);
+}
+
+/** Refuses an upgrade to the version that is already installed. */
+function refuseRepeatedVersion(
+  installedVersion: string,
+  appConfig: CommerceAppConfigOutputModel,
+) {
+  if (installedVersion === appConfig.metadata.version) {
     return conflict({
       body: {
         code: "already-current",

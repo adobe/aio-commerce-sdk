@@ -125,9 +125,13 @@ export async function planLifecycle(
     ? [FALLBACK_BASELINE_ISSUE, ...planning.issues]
     : planning.issues;
 
-  const source = baseline
-    ? { appVersion: baseline.config.metadata.version, snapshotId: baseline.id }
-    : null;
+  // An upgrade planned from a fallback has no snapshot. Its fallback config carries the installed version.
+  const source = getPlanSource(
+    baseline,
+    isPlannedFromFallback && options.operation === "upgrade"
+      ? fallbackBaselineConfig
+      : undefined,
+  );
 
   const plan: LifecyclePlan = {
     actionVersion: options.actionVersion,
@@ -151,6 +155,23 @@ export async function planLifecycle(
   return reviewedPlan
     ? { ...result, planDiff: diffAgainstReviewedPlan(reviewedPlan, plan) }
     : result;
+}
+
+/** The state a plan starts from: the baseline's, a fallback's version without a snapshot, or nothing. */
+function getPlanSource(
+  baseline: { id: string; config: CommerceAppConfigOutputModel } | null,
+  fallbackConfig: CommerceAppConfigOutputModel | undefined,
+): LifecyclePlan["source"] {
+  if (baseline) {
+    return {
+      appVersion: baseline.config.metadata.version,
+      snapshotId: baseline.id,
+    };
+  }
+
+  return fallbackConfig
+    ? { appVersion: fallbackConfig.metadata.version, snapshotId: null }
+    : null;
 }
 
 /** Returns the pending plan, or throws when it is not the plan with the given id. */

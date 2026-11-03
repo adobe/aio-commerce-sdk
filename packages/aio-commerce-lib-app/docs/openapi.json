@@ -1437,7 +1437,7 @@
       "post": {
         "operationId": "planLifecycleOperation",
         "summary": "Plan a Lifecycle Operation",
-        "description": "Plans the install or upgrade the installed state calls for, or an uninstallation when `operation` is `uninstall`. Stores it as the pending plan and returns it for review, together with its issues as a validation result. Start it with `POST /installation` and its `id` as `planId`.",
+        "description": "Plans the install or upgrade the installed state calls for, or an uninstallation when `operation` is `uninstall`. An app installed with only business configuration has no baseline, so it plans an upgrade when `installedState` and `installedVersion` are set. Stores it as the pending plan and returns it for review, together with its issues as a validation result. Start it with `POST /installation` and its `id` as `planId`.",
         "parameters": [
           {
             "name": "x-gw-ims-org-id",
@@ -3302,6 +3302,14 @@
           "operation": {
             "description": "Set to `uninstall` to plan an uninstallation. Without it, `POST /installation/plan` plans the install or upgrade the installed state calls for.",
             "const": "uninstall"
+          },
+          "installedState": {
+            "description": "Set to `business-config-only` with `installedVersion` when the app is installed with only business configuration, so it has no lifecycle baseline. `POST /installation/plan` then plans an upgrade instead of an install, and `sourceVersion` is `installedVersion`. Ignored when the app has a baseline.",
+            "const": "business-config-only"
+          },
+          "installedVersion": {
+            "description": "The version stored for the installed app. Used with `installedState`. The plan answers `409` with code `already-current` when it equals `metadata.version`.",
+            "type": "string"
           },
           "planId": {
             "description": "The id of the pending plan to start. Required by `POST /installation`.",
