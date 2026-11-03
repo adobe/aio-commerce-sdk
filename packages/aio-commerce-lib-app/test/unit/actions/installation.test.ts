@@ -246,7 +246,7 @@ describe("installationRuntimeAction", () => {
       });
     });
 
-    describe("history", () => {
+    describe("latest attempt", () => {
       const plan = (id: string, previousPlanId: string | null = null) =>
         createMockLifecyclePlan({ id, previousPlanId });
 
@@ -302,110 +302,6 @@ describe("installationRuntimeAction", () => {
         return await handler(createRuntimeActionParams({ query }));
       }
 
-      const ids = (items: { id: string }[]) => items.map(({ id }) => id);
-
-      test("returns the latest attempt with every earlier attempt and the plans of each", async () => {
-        seedChain();
-        const result = await getStatus("history=true");
-
-        expect.assert(result.type === "success", "Expected a status");
-        const body = result.body as {
-          history: { id: string; plans: { id: string }[] }[];
-          pendingPlans: unknown[];
-          plans: { id: string }[];
-        };
-
-        expect(body).toMatchObject({
-          activations: { execution: "exec-3", start: "start-3" },
-          id: "attempt-3",
-          planId: "plan-3b",
-          previousAttemptId: "attempt-2",
-          previousPlanId: "plan-3a",
-        });
-        expect(ids(body.plans)).toEqual(["plan-3b", "plan-3a"]);
-        expect(ids(body.history)).toEqual(["attempt-2", "attempt-1"]);
-        expect(ids(body.history[0].plans)).toEqual(["plan-2"]);
-        expect(ids(body.history[1].plans)).toEqual(["plan-1b", "plan-1a"]);
-        expect(body.history[1]).toMatchObject({
-          operation: "install",
-          previousAttemptId: null,
-          status: "succeeded",
-        });
-        expect(body.pendingPlans).toEqual([]);
-      });
-
-      test("reads at most `limit` earlier attempts", async () => {
-        seedChain();
-        const result = await getStatus("history=true&limit=1");
-
-        expect.assert(result.type === "success", "Expected a status");
-        const body = result.body as { history: { id: string }[] };
-        expect(ids(body.history)).toEqual(["attempt-2"]);
-      });
-
-      test("lists the plans made since the latest attempt", async () => {
-        seedChain(plan("plan-4b", "plan-4a"));
-        const result = await getStatus("history=true");
-
-        expect.assert(result.type === "success", "Expected a status");
-        const body = result.body as { pendingPlans: { id: string }[] };
-        expect(ids(body.pendingPlans)).toEqual(["plan-4b", "plan-4a"]);
-      });
-
-      test("stops at an archived attempt that is missing", async () => {
-        seedChain();
-        attemptStore.values.delete("attempt-1");
-        const result = await getStatus("history=true");
-
-        expect.assert(result.type === "success", "Expected a status");
-        const body = result.body as { history: { id: string }[] };
-        expect(ids(body.history)).toEqual(["attempt-2"]);
-      });
-
-      test("stops at a stored plan that is missing", async () => {
-        seedChain();
-        planStore.values.delete("plan-3a");
-        const result = await getStatus("history=true");
-
-        expect.assert(result.type === "success", "Expected a status");
-        const body = result.body as { plans: { id: string }[] };
-        expect(ids(body.plans)).toEqual(["plan-3b"]);
-      });
-
-      test.each([
-        ["without history", undefined],
-        ["with history=false", "history=false"],
-        ["with history=false and a limit", "history=false&limit=2"],
-      ])("returns only the latest attempt's status %s", async (_, query) => {
-        seedChain(plan("plan-4b", "plan-4a"));
-        const result = await getStatus(query);
-
-        expect.assert(result.type === "success", "Expected a status");
-        expect(attemptStore.get).not.toHaveBeenCalled();
-        expect(planStore.get).not.toHaveBeenCalled();
-      });
-
-      test.each([
-        "history=yes",
-        "history=true&limit=0",
-        "history=true&limit=abc",
-        "history=true&limit=1.5",
-      ])("returns 400 for the query %s", async (query) => {
-        seedChain();
-        const result = await getStatus(query);
-
-        expect(result).toMatchObject({
-          error: { statusCode: 400 },
-          type: "error",
-        });
-      });
-
-      test("ignores history when no attempt exists", async () => {
-        const result = await getStatus("history=true");
-
-        expect(result).toMatchObject({ statusCode: 204, type: "success" });
-      });
-
       describe("operation", () => {
         test.each([
           ["upgrade", "attempt-3"],
@@ -420,20 +316,12 @@ describe("installationRuntimeAction", () => {
               body: { id, operation },
               statusCode: 200,
             });
-            expect(result).not.toHaveProperty("body.history");
           },
         );
 
         test("answers 204 when no attempt ran the operation", async () => {
           seedChain();
           const result = await getStatus("operation=uninstall");
-
-          expect(result).toMatchObject({ statusCode: 204, type: "success" });
-        });
-
-        test("answers 204 with the history too when no attempt ran the operation", async () => {
-          seedChain();
-          const result = await getStatus("history=true&operation=uninstall");
 
           expect(result).toMatchObject({ statusCode: 204, type: "success" });
         });
@@ -482,63 +370,6 @@ describe("installationRuntimeAction", () => {
           });
         });
 
-        test("still answers 400 when the attemptId comes with the history", async () => {
-          seedChain();
-          const result = await getStatus(
-            "attemptId=attempt-2&operation=upgrade&history=true",
-          );
-
-          expect(result).toMatchObject({
-            error: { statusCode: 400 },
-            type: "error",
-          });
-        });
-
-        test("lists only the earlier attempts that ran the operation", async () => {
-          seedChain();
-          const upgrades = await getStatus("history=true&operation=upgrade");
-          const installs = await getStatus("history=true&operation=install");
-
-          expect.assert(
-            upgrades.type === "success" && installs.type === "success",
-            "Expected statuses",
-          );
-          expect(
-            ids((upgrades.body as { history: { id: string }[] }).history),
-          ).toEqual(["attempt-2"]);
-          expect(installs.body).toMatchObject({ history: [], id: "attempt-1" });
-        });
-
-        test("applies the limit to the attempts of the operation", async () => {
-          seedChain();
-          attemptStore.values.set("attempt-2", {
-            ...attempt2,
-            operation: "install",
-          });
-          const result = await getStatus(
-            "history=true&operation=upgrade&limit=1",
-          );
-
-          expect.assert(result.type === "success", "Expected a status");
-          const body = result.body as { history: { id: string }[] };
-          expect(body.history).toEqual([]);
-        });
-
-        test("lists only the plans made since the latest attempt for the operation", async () => {
-          seedChain(plan("plan-4b", "plan-4a"));
-          const upgrades = await getStatus("history=true&operation=upgrade");
-          const installs = await getStatus("history=true&operation=install");
-
-          expect.assert(
-            upgrades.type === "success" && installs.type === "success",
-            "Expected statuses",
-          );
-          const pending = (body: unknown) =>
-            ids((body as { pendingPlans: { id: string }[] }).pendingPlans);
-          expect(pending(upgrades.body)).toEqual(["plan-4b", "plan-4a"]);
-          expect(pending(installs.body)).toEqual([]);
-        });
-
         test.each(["operation=reinstall", "operation="])(
           "returns 400 for the query %s",
           async (query) => {
@@ -583,12 +414,11 @@ describe("installationRuntimeAction", () => {
       test.each([
         ["the latest attempt", "attempt-2", "in-progress"],
         ["an archived attempt", "attempt-1", "failed"],
-      ])("returns %s without the history", async (_, id, status) => {
+      ])("returns %s", async (_, id, status) => {
         seedAttempts();
         const result = await getStatus(`attemptId=${id}`);
 
         expect(result).toMatchObject({ body: { id, status }, statusCode: 200 });
-        expect(result).not.toHaveProperty("body.history");
       });
 
       test("reports the latest attempt as expired once its deadline passed", async () => {
@@ -632,19 +462,18 @@ describe("installationRuntimeAction", () => {
         });
       });
 
-      test.each([
-        "attemptId=attempt-2&history=true",
-        "attemptId=attempt-2&limit=1",
-        "attemptId=",
-      ])("returns 400 for the query %s", async (query) => {
-        seedAttempts();
-        const result = await getStatus(query);
+      test.each(["attemptId="])(
+        "returns 400 for the query %s",
+        async (query) => {
+          seedAttempts();
+          const result = await getStatus(query);
 
-        expect(result).toMatchObject({
-          error: { statusCode: 400 },
-          type: "error",
-        });
-      });
+          expect(result).toMatchObject({
+            error: { statusCode: 400 },
+            type: "error",
+          });
+        },
+      );
 
       test("accepts unknown keys next to an attemptId", async () => {
         seedAttempts();
@@ -2097,7 +1926,7 @@ describe("installationRuntimeAction", () => {
         });
       });
 
-      test("records the activations and links the attempts and plans for GET /?history=true", async () => {
+      test("records the activations and links the attempts for GET /", async () => {
         createRootInstallationStepMock.mockReturnValue(
           createUpgradeRoot(
             createUpgradeLeaf({
@@ -2133,21 +1962,10 @@ describe("installationRuntimeAction", () => {
         const pending = await planRequest(second.action);
         expect.assert(pending.type === "success", "Expected a plan");
 
-        const result = await second.action(
-          createRuntimeActionParams({ query: "history=true" }),
-        );
+        const result = await second.action(createRuntimeActionParams({}));
         expect.assert(result.type === "success", "Expected a status");
 
-        const planIdOf = (response: typeof pending) =>
-          (response.body as { plan: { id: string } }).plan.id;
-        const ids = (items: { id: string }[]) => items.map(({ id }) => id);
-        const body = result.body as {
-          history: { id: string; plans: { id: string }[] }[];
-          pendingPlans: { id: string }[];
-          plans: { id: string }[];
-        };
-
-        expect(body).toMatchObject({
+        expect(result.body).toMatchObject({
           activations: {
             execution: `exec-${second.attemptId}`,
             start: "activation-start",
@@ -2156,19 +1974,20 @@ describe("installationRuntimeAction", () => {
           previousAttemptId: first.attemptId,
           status: "failed",
         });
-        expect(ids(body.history)).toEqual([first.attemptId]);
-        expect(body.history[0]).toMatchObject({
-          activations: {
-            execution: `exec-${first.attemptId}`,
-            start: "activation-start",
+
+        const earlier = await second.action(
+          createRuntimeActionParams({ query: `attemptId=${first.attemptId}` }),
+        );
+        expect(earlier).toMatchObject({
+          body: {
+            activations: {
+              execution: `exec-${first.attemptId}`,
+              start: "activation-start",
+            },
+            previousAttemptId: null,
           },
-          previousAttemptId: null,
+          statusCode: 200,
         });
-        // Each start plans again, so an attempt runs a plan that replaced the reviewed one.
-        expect(ids(body.history[0].plans)).toHaveLength(2);
-        expect(ids(body.plans)).toHaveLength(3);
-        expect(ids(body.plans)).toContain(planIdOf(replaced));
-        expect(ids(body.pendingPlans)).toEqual([planIdOf(pending)]);
       });
 
       test("returns 500 when the attempt fails", async () => {
