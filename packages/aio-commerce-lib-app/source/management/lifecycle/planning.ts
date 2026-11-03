@@ -10,6 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
+import { requiresInstallation } from "#config/schema/app";
 import { planWorkflow } from "#management/common/workflow/plan";
 
 import {
@@ -116,7 +117,11 @@ export async function planLifecycle(
     target,
   });
 
-  const issues = isPlannedFromFallback
+  // An app that declares nothing needing installation has no record to lose, so the warning would mislead.
+  const warnsAboutFallback =
+    isPlannedFromFallback && requiresInstallation(fallbackBaselineConfig);
+
+  const issues = warnsAboutFallback
     ? [FALLBACK_BASELINE_ISSUE, ...planning.issues]
     : planning.issues;
 

@@ -14,7 +14,12 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 
 import { installationRuntimeAction } from "#actions/installation/index";
 import { createRuntimeActionParams } from "#test/fixtures/actions";
-import { createMockConfig, minimalValidConfig } from "#test/fixtures/config";
+import {
+  configWithBusinessConfig,
+  configWithWebhooks,
+  createMockConfig,
+  minimalValidConfig,
+} from "#test/fixtures/config";
 import {
   createMockCombinedStoreImpl,
   createMockInProgressState,
@@ -661,6 +666,7 @@ describe("installationRuntimeAction", () => {
 
   const configWithAutoUpgrade = createMockConfig({
     metadata: { upgradeMode: "auto" },
+    webhooks: configWithWebhooks.webhooks,
   });
 
   let desiredInstallationStore = createMockInstallationStore();
@@ -1759,10 +1765,10 @@ describe("installationRuntimeAction", () => {
         });
       });
 
-      async function startUninstall() {
-        const action = installationRuntimeAction({
-          appConfig: configWithAutoUpgrade,
-        });
+      async function startUninstall(
+        appConfig: CommerceAppConfigOutputModel = configWithAutoUpgrade,
+      ) {
+        const action = installationRuntimeAction({ appConfig });
         const result = await planAndStart(action, {
           ...requestBody,
           operation: "uninstall",
@@ -1859,6 +1865,19 @@ describe("installationRuntimeAction", () => {
           }),
           expect.anything(),
         );
+      });
+
+      test("does not warn about a missing record when the config needs no installation", async () => {
+        desiredInstallationStore = createMockInstallationStore();
+        useUninstallLeaf();
+        const { result } = await startUninstall(configWithBusinessConfig);
+
+        expect(result).toMatchObject({ statusCode: 202 });
+        expect(await getAttemptPlan()).toMatchObject({
+          issues: [],
+          source: null,
+          target: null,
+        });
       });
 
       describe("after a failed uninstall", () => {
