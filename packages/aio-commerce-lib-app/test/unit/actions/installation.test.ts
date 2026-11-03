@@ -86,10 +86,6 @@ vi.mock("#management/installation/root", () => ({
   createRootInstallationStep: createRootInstallationStepMock,
 }));
 
-const POST_APP_DEPLOY_HEADERS = {
-  "x-aio-commerce-installation-invocation-source": "post-app-deploy",
-};
-
 const { appData } = createMockInstallationContext();
 const requestBody = {
   appData,
@@ -146,22 +142,24 @@ describe("installationRuntimeAction", () => {
       });
     });
 
-    test("returns 204 when there is no upgrade state for post-app-deploy", async () => {
+    test("falls back to the legacy installation record when no attempt exists", async () => {
+      installationStore = createMockInstallationStore(
+        createMockInstallationSucceededState(),
+      );
       const handler = installationRuntimeAction({
         appConfig: minimalValidConfig,
       });
 
-      const result = await handler(
-        createRuntimeActionParams({ headers: POST_APP_DEPLOY_HEADERS }),
-      );
+      const result = await handler(createRuntimeActionParams());
 
       expect(result).toMatchObject({
-        statusCode: 204,
+        body: { status: "succeeded" },
+        statusCode: 200,
         type: "success",
       });
     });
 
-    test("returns the latest upgrade attempt with its plan preview for post-app-deploy", async () => {
+    test("returns the latest upgrade attempt with its plan preview", async () => {
       const attempt = createMockLifecycleAttempt({
         id: "attempt-1",
         status: "in-progress",
@@ -173,9 +171,7 @@ describe("installationRuntimeAction", () => {
         appConfig: minimalValidConfig,
       });
 
-      const result = await handler(
-        createRuntimeActionParams({ headers: POST_APP_DEPLOY_HEADERS }),
-      );
+      const result = await handler(createRuntimeActionParams());
       expect(result).toMatchObject({
         body: {
           id: "attempt-1",
@@ -213,7 +209,7 @@ describe("installationRuntimeAction", () => {
       });
     });
 
-    test("returns an upgrade failure for post-app-deploy", async () => {
+    test("returns the failure of the latest attempt", async () => {
       const attempt = createMockLifecycleAttempt({
         failure: {
           key: "WEBHOOK_RECONCILIATION_FAILED",
@@ -229,9 +225,7 @@ describe("installationRuntimeAction", () => {
         appConfig: minimalValidConfig,
       });
 
-      const result = await handler(
-        createRuntimeActionParams({ headers: POST_APP_DEPLOY_HEADERS }),
-      );
+      const result = await handler(createRuntimeActionParams());
 
       expect(result).toMatchObject({
         body: {
@@ -450,7 +444,7 @@ describe("installationRuntimeAction", () => {
               createMockInstallationSucceededState(),
             );
           },
-          { headers: POST_APP_DEPLOY_HEADERS },
+          {},
         ],
       ])("returns 404 for %s", async (_, seed, params) => {
         seed();

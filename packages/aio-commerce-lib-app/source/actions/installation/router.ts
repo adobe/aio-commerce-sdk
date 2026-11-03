@@ -30,10 +30,7 @@ import {
   normalizeExpiredAttempt,
 } from "#management/lifecycle/state";
 
-import {
-  createLifecyclePersistence,
-  isPostAppDeployInvocation,
-} from "./common";
+import { createLifecyclePersistence } from "./common";
 import {
   executeLifecycle,
   findAttempt,
@@ -119,11 +116,6 @@ router.get("/", {
 
     if (operation) {
       logger.debug(`No ${operation} attempt found`);
-      return noContent();
-    }
-
-    if (isPostAppDeployInvocation(req.headers)) {
-      logger.debug("No lifecycle attempt found");
       return noContent();
     }
 

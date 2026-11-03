@@ -11,7 +11,6 @@
  */
 
 import { resolveImsAuthParams } from "@adobe/aio-commerce-lib-auth";
-import { getHeader } from "@adobe/aio-commerce-lib-core/headers";
 import { conflict } from "@adobe/aio-commerce-lib-core/responses";
 
 import { getAssociationData } from "#management/association/repository";
@@ -50,30 +49,6 @@ export const CUSTOM_INSTALLATION_STEPS_PATH = [
   "installation",
   "customInstallationSteps",
 ];
-
-/** Header used to identify the source of an installation action request. */
-export const INSTALLATION_INVOCATION_SOURCE_HEADER =
-  "x-aio-commerce-installation-invocation-source";
-
-/** Invocation source used by the generated post-deploy hook. */
-export const POST_APP_DEPLOY_INVOCATION_SOURCE = "post-app-deploy";
-
-/** Returns the declared installation action invocation source, if present. */
-export function getInstallationInvocationSource(
-  headers: Record<string, string | undefined>,
-) {
-  return getHeader(headers, INSTALLATION_INVOCATION_SOURCE_HEADER);
-}
-
-/** Returns whether the request originated from the generated post-deploy hook. */
-export function isPostAppDeployInvocation(
-  headers: Record<string, string | undefined>,
-) {
-  return (
-    getInstallationInvocationSource(headers) ===
-    POST_APP_DEPLOY_INVOCATION_SOURCE
-  );
-}
 
 /** Loads generated custom installation script modules. */
 export type CustomScriptsLoader = (
