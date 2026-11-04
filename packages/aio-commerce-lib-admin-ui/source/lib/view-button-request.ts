@@ -10,17 +10,15 @@
  * governing permissions and limitations under the License.
  */
 
-import { getHeader } from "@adobe/aio-commerce-lib-core/headers";
+import {
+  getHeader,
+  getHeadersFromParams,
+} from "@adobe/aio-commerce-lib-core/headers";
 import * as v from "valibot";
 
 const REQUEST_ID_HEADER = "x-request-id";
 
-/** Runtime action params that may carry the OpenWhisk HTTP headers. */
-const ViewButtonWorkerParamsSchema = v.looseObject({
-  __ow_headers: v.optional(
-    v.record(v.string(), v.union([v.string(), v.undefined()])),
-  ),
-});
+const RuntimeParamsSchema = v.record(v.string(), v.unknown());
 
 /**
  * Maps the params Commerce sends to a view-button worker onto the documented request shape.
@@ -31,11 +29,12 @@ const ViewButtonWorkerParamsSchema = v.looseObject({
  * runtime params are returned as-is so the entity schema reports the validation error.
  */
 export function normalizeViewButtonWorkerParams(input: unknown): unknown {
-  if (!v.is(ViewButtonWorkerParamsSchema, input)) {
+  if (!v.is(RuntimeParamsSchema, input)) {
     return input;
   }
 
-  const { __ow_headers: headers = {} } = input;
+  const headers =
+    input.__ow_headers === undefined ? {} : getHeadersFromParams(input);
   return {
     ...input,
     id: input.id ?? input.buttonId,

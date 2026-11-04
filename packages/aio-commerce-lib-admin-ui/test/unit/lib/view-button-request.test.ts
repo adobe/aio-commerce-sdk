@@ -51,4 +51,10 @@ describe.each([
       parse({ ...commerceParams, __ow_headers: { authorization: "Bearer" } }),
     ).toThrow(CommerceSdkValidationError);
   });
+
+  it("rejects malformed __ow_headers", () => {
+    expect(() =>
+      parse({ ...commerceParams, __ow_headers: "not-an-object" }),
+    ).toThrow(CommerceSdkValidationError);
+  });
 });
