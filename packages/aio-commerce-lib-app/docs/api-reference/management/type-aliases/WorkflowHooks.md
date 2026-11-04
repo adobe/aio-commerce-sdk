@@ -11,7 +11,7 @@ type WorkflowHooks = {
 };
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/common/workflow/hooks.ts:52](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/management/common/workflow/hooks.ts#L52)
+Defined in: [aio-commerce-lib-app/source/management/common/workflow/hooks.ts:52](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-app/source/management/common/workflow/hooks.ts#L52)
 
 Lifecycle hooks for workflow execution.
 
@@ -20,57 +20,57 @@ Lifecycle hooks for workflow execution.
 ### onFailure?
 
 ```ts
-optional onFailure?: WorkflowHook;
+onFailure?: WorkflowHook;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/common/workflow/hooks.ts:55](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/management/common/workflow/hooks.ts#L55)
+Defined in: [aio-commerce-lib-app/source/management/common/workflow/hooks.ts:55](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-app/source/management/common/workflow/hooks.ts#L55)
 
 ---
 
 ### onStart?
 
 ```ts
-optional onStart?: WorkflowHook;
+onStart?: WorkflowHook;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/common/workflow/hooks.ts:53](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/management/common/workflow/hooks.ts#L53)
+Defined in: [aio-commerce-lib-app/source/management/common/workflow/hooks.ts:53](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-app/source/management/common/workflow/hooks.ts#L53)
 
 ---
 
 ### onStepFailure?
 
 ```ts
-optional onStepFailure?: HookFunction<StepFailedEvent>;
+onStepFailure?: HookFunction<StepFailedEvent>;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/common/workflow/hooks.ts:59](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/management/common/workflow/hooks.ts#L59)
+Defined in: [aio-commerce-lib-app/source/management/common/workflow/hooks.ts:59](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-app/source/management/common/workflow/hooks.ts#L59)
 
 ---
 
 ### onStepStart?
 
 ```ts
-optional onStepStart?: HookFunction<StepStartedEvent>;
+onStepStart?: HookFunction<StepStartedEvent>;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/common/workflow/hooks.ts:57](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/management/common/workflow/hooks.ts#L57)
+Defined in: [aio-commerce-lib-app/source/management/common/workflow/hooks.ts:57](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-app/source/management/common/workflow/hooks.ts#L57)
 
 ---
 
 ### onStepSuccess?
 
 ```ts
-optional onStepSuccess?: HookFunction<StepSucceededEvent>;
+onStepSuccess?: HookFunction<StepSucceededEvent>;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/common/workflow/hooks.ts:58](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/management/common/workflow/hooks.ts#L58)
+Defined in: [aio-commerce-lib-app/source/management/common/workflow/hooks.ts:58](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-app/source/management/common/workflow/hooks.ts#L58)
 
 ---
 
 ### onSuccess?
 
 ```ts
-optional onSuccess?: WorkflowHook;
+onSuccess?: WorkflowHook;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/common/workflow/hooks.ts:54](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/management/common/workflow/hooks.ts#L54)
+Defined in: [aio-commerce-lib-app/source/management/common/workflow/hooks.ts:54](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-app/source/management/common/workflow/hooks.ts#L54)

@@ -1,4 +1,4 @@
-# `runValidation()`
+# ~~`runValidation()`~~
 
 ```ts
 function runValidation(
@@ -6,7 +6,7 @@ function runValidation(
 ): Promise<ValidationResult>;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/runner.ts:258](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/management/installation/runner.ts#L258)
+Defined in: [aio-commerce-lib-app/source/management/deprecated/runner.ts:299](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-app/source/management/deprecated/runner.ts#L299)
 
 Runs pre-installation validation over the full step tree.
 
@@ -24,3 +24,8 @@ issues and an aggregated summary.
 ## Returns
 
 `Promise`\<[`ValidationResult`](../type-aliases/ValidationResult.md)\>
+
+## Deprecated
+
+The pre-lifecycle engine is removed in the next major. The lifecycle
+has no equivalent step-tree validation pass yet.

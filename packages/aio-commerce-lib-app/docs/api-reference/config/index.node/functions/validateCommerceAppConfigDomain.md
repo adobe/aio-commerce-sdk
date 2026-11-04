@@ -18,6 +18,14 @@ function validateCommerceAppConfigDomain<T extends
         id: string;
         label: string;
      }[];
+     creditMemo?: {
+        gridColumns?: {
+           columns: ...[];
+           description: string;
+           label: string;
+           runtimeAction: string;
+        };
+     };
      customer?: {
         gridColumns?: {
            columns: ...[];
@@ -26,6 +34,14 @@ function validateCommerceAppConfigDomain<T extends
            runtimeAction: string;
         };
         massActions?: (... | ...)[];
+     };
+     invoice?: {
+        gridColumns?: {
+           columns: ...[];
+           description: string;
+           label: string;
+           runtimeAction: string;
+        };
      };
      menu?: {
         aclProtected?: boolean;
@@ -42,6 +58,14 @@ function validateCommerceAppConfigDomain<T extends
            | "stores"
            | "system";
         sandboxPermissions?: (... | ... | ...)[];
+     };
+     newsletter?: {
+        gridColumns?: {
+           columns: ...[];
+           description: string;
+           label: string;
+           runtimeAction: string;
+        };
      };
      order?: {
         gridColumns?: {
@@ -61,6 +85,14 @@ function validateCommerceAppConfigDomain<T extends
            runtimeAction: string;
         };
         massActions?: (... | ...)[];
+     };
+     shipment?: {
+        gridColumns?: {
+           columns: ...[];
+           description: string;
+           label: string;
+           runtimeAction: string;
+        };
      };
   };
   businessConfig?: {
@@ -270,7 +302,7 @@ function validateCommerceAppConfigDomain<T extends
 }, T>>;
 ```
 
-Defined in: [aio-commerce-lib-app/source/config/lib/validate.ts:140](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/config/lib/validate.ts#L140)
+Defined in: [aio-commerce-lib-app/source/config/lib/validate.ts:140](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-app/source/config/lib/validate.ts#L140)
 
 Validates a specific domain configuration within the commerce app config.
 
@@ -281,9 +313,9 @@ schema for that specific domain.
 
 ## Type Parameters
 
-| Type Parameter                                                                                                                                                                                                                                    | Description                                                |
-| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
-| `T` _extends_ \| `"metadata"` \| `"adminUi"` \| `"businessConfig"` \| `"eventing"` \| `"installation"` \| `"webhooks"` \| `"businessConfig.schema"` \| `"eventing.commerce"` \| `"eventing.external"` \| `"installation.customInstallationSteps"` | The type of the domain, constrained to valid domain names. |
+| Type Parameter                                                                                                                                                                                                                                                                  | Description                                                |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
+| <a id="type-parameter-t"></a> `T` _extends_ \| `"metadata"` \| `"adminUi"` \| `"businessConfig"` \| `"eventing"` \| `"installation"` \| `"webhooks"` \| `"businessConfig.schema"` \| `"eventing.commerce"` \| `"eventing.external"` \| `"installation.customInstallationSteps"` | The type of the domain, constrained to valid domain names. |
 
 ## Parameters
 
@@ -301,6 +333,14 @@ schema for that specific domain.
 `id`: `string`;
 `label`: `string`;
 \}[];
+`creditMemo?`: \{
+`gridColumns?`: \{
+`columns`: ...[];
+`description`: `string`;
+`label`: `string`;
+`runtimeAction`: `string`;
+\};
+\};
 `customer?`: \{
 `gridColumns?`: \{
 `columns`: ...[];
@@ -309,6 +349,14 @@ schema for that specific domain.
 `runtimeAction`: `string`;
 \};
 `massActions?`: (... \| ...)[];
+\};
+`invoice?`: \{
+`gridColumns?`: \{
+`columns`: ...[];
+`description`: `string`;
+`label`: `string`;
+`runtimeAction`: `string`;
+\};
 \};
 `menu?`: \{
 `aclProtected?`: `boolean`;
@@ -325,6 +373,14 @@ schema for that specific domain.
 \| `"stores"`
 \| `"system"`;
 `sandboxPermissions?`: (... \| ... \| ...)[];
+\};
+`newsletter?`: \{
+`gridColumns?`: \{
+`columns`: ...[];
+`description`: `string`;
+`label`: `string`;
+`runtimeAction`: `string`;
+\};
 \};
 `order?`: \{
 `gridColumns?`: \{
@@ -344,6 +400,14 @@ schema for that specific domain.
 `runtimeAction`: `string`;
 \};
 `massActions?`: (... \| ...)[];
+\};
+`shipment?`: \{
+`gridColumns?`: \{
+`columns`: ...[];
+`description`: `string`;
+`label`: `string`;
+`runtimeAction`: `string`;
+\};
 \};
 \};
 `businessConfig?`: \{

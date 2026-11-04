@@ -7,7 +7,7 @@ type SearchCriteria = Pagination & {
 };
 ```
 
-Defined in: [aio-commerce-lib-api/source/lib/commerce/search-criteria/types.ts:110](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-api/source/lib/commerce/search-criteria/types.ts#L110)
+Defined in: [aio-commerce-lib-api/source/lib/commerce/search-criteria/types.ts:110](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-api/source/lib/commerce/search-criteria/types.ts#L110)
 
 A declarative description of an Adobe Commerce REST search query.
 
@@ -18,7 +18,7 @@ Serialize it with [buildSearchCriteria](../functions/buildSearchCriteria.md).
 ### filterGroups?
 
 ```ts
-optional filterGroups?: SearchFilter[][];
+filterGroups?: SearchFilter[][];
 ```
 
 The filters to apply. The outer array is AND-ed together, while the filters in each inner array are OR-ed.
@@ -26,7 +26,7 @@ The filters to apply. The outer array is AND-ed together, while the filters in e
 ### sortOrders?
 
 ```ts
-optional sortOrders?: SortOrder[];
+sortOrders?: SortOrder[];
 ```
 
 The sorts to apply, in order of precedence.

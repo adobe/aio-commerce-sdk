@@ -14,7 +14,12 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 
 import { installationRuntimeAction } from "#actions/installation/index";
 import { createRuntimeActionParams } from "#test/fixtures/actions";
-import { createMockConfig, minimalValidConfig } from "#test/fixtures/config";
+import {
+  configWithBusinessConfig,
+  configWithWebhooks,
+  createMockConfig,
+  minimalValidConfig,
+} from "#test/fixtures/config";
 import {
   createMockCombinedStoreImpl,
   createMockInProgressState,
@@ -81,10 +86,6 @@ vi.mock("#management/installation/root", () => ({
   createRootInstallationStep: createRootInstallationStepMock,
 }));
 
-const POST_APP_DEPLOY_HEADERS = {
-  "x-aio-commerce-installation-invocation-source": "post-app-deploy",
-};
-
 const { appData } = createMockInstallationContext();
 const requestBody = {
   appData,
@@ -141,22 +142,24 @@ describe("installationRuntimeAction", () => {
       });
     });
 
-    test("returns 204 when there is no upgrade state for post-app-deploy", async () => {
+    test("falls back to the legacy installation record when no attempt exists", async () => {
+      installationStore = createMockInstallationStore(
+        createMockInstallationSucceededState(),
+      );
       const handler = installationRuntimeAction({
         appConfig: minimalValidConfig,
       });
 
-      const result = await handler(
-        createRuntimeActionParams({ headers: POST_APP_DEPLOY_HEADERS }),
-      );
+      const result = await handler(createRuntimeActionParams());
 
       expect(result).toMatchObject({
-        statusCode: 204,
+        body: { status: "succeeded" },
+        statusCode: 200,
         type: "success",
       });
     });
 
-    test("returns the latest upgrade attempt with its plan preview for post-app-deploy", async () => {
+    test("returns the latest upgrade attempt with its plan preview", async () => {
       const attempt = createMockLifecycleAttempt({
         id: "attempt-1",
         status: "in-progress",
@@ -168,9 +171,7 @@ describe("installationRuntimeAction", () => {
         appConfig: minimalValidConfig,
       });
 
-      const result = await handler(
-        createRuntimeActionParams({ headers: POST_APP_DEPLOY_HEADERS }),
-      );
+      const result = await handler(createRuntimeActionParams());
       expect(result).toMatchObject({
         body: {
           id: "attempt-1",
@@ -208,7 +209,7 @@ describe("installationRuntimeAction", () => {
       });
     });
 
-    test("returns an upgrade failure for post-app-deploy", async () => {
+    test("returns the failure of the latest attempt", async () => {
       const attempt = createMockLifecycleAttempt({
         failure: {
           key: "WEBHOOK_RECONCILIATION_FAILED",
@@ -224,9 +225,7 @@ describe("installationRuntimeAction", () => {
         appConfig: minimalValidConfig,
       });
 
-      const result = await handler(
-        createRuntimeActionParams({ headers: POST_APP_DEPLOY_HEADERS }),
-      );
+      const result = await handler(createRuntimeActionParams());
 
       expect(result).toMatchObject({
         body: {
@@ -241,7 +240,7 @@ describe("installationRuntimeAction", () => {
       });
     });
 
-    describe("history", () => {
+    describe("latest attempt", () => {
       const plan = (id: string, previousPlanId: string | null = null) =>
         createMockLifecyclePlan({ id, previousPlanId });
 
@@ -297,110 +296,6 @@ describe("installationRuntimeAction", () => {
         return await handler(createRuntimeActionParams({ query }));
       }
 
-      const ids = (items: { id: string }[]) => items.map(({ id }) => id);
-
-      test("returns the latest attempt with every earlier attempt and the plans of each", async () => {
-        seedChain();
-        const result = await getStatus("history=true");
-
-        expect.assert(result.type === "success", "Expected a status");
-        const body = result.body as {
-          history: { id: string; plans: { id: string }[] }[];
-          pendingPlans: unknown[];
-          plans: { id: string }[];
-        };
-
-        expect(body).toMatchObject({
-          activations: { execution: "exec-3", start: "start-3" },
-          id: "attempt-3",
-          planId: "plan-3b",
-          previousAttemptId: "attempt-2",
-          previousPlanId: "plan-3a",
-        });
-        expect(ids(body.plans)).toEqual(["plan-3b", "plan-3a"]);
-        expect(ids(body.history)).toEqual(["attempt-2", "attempt-1"]);
-        expect(ids(body.history[0].plans)).toEqual(["plan-2"]);
-        expect(ids(body.history[1].plans)).toEqual(["plan-1b", "plan-1a"]);
-        expect(body.history[1]).toMatchObject({
-          operation: "install",
-          previousAttemptId: null,
-          status: "succeeded",
-        });
-        expect(body.pendingPlans).toEqual([]);
-      });
-
-      test("reads at most `limit` earlier attempts", async () => {
-        seedChain();
-        const result = await getStatus("history=true&limit=1");
-
-        expect.assert(result.type === "success", "Expected a status");
-        const body = result.body as { history: { id: string }[] };
-        expect(ids(body.history)).toEqual(["attempt-2"]);
-      });
-
-      test("lists the plans made since the latest attempt", async () => {
-        seedChain(plan("plan-4b", "plan-4a"));
-        const result = await getStatus("history=true");
-
-        expect.assert(result.type === "success", "Expected a status");
-        const body = result.body as { pendingPlans: { id: string }[] };
-        expect(ids(body.pendingPlans)).toEqual(["plan-4b", "plan-4a"]);
-      });
-
-      test("stops at an archived attempt that is missing", async () => {
-        seedChain();
-        attemptStore.values.delete("attempt-1");
-        const result = await getStatus("history=true");
-
-        expect.assert(result.type === "success", "Expected a status");
-        const body = result.body as { history: { id: string }[] };
-        expect(ids(body.history)).toEqual(["attempt-2"]);
-      });
-
-      test("stops at a stored plan that is missing", async () => {
-        seedChain();
-        planStore.values.delete("plan-3a");
-        const result = await getStatus("history=true");
-
-        expect.assert(result.type === "success", "Expected a status");
-        const body = result.body as { plans: { id: string }[] };
-        expect(ids(body.plans)).toEqual(["plan-3b"]);
-      });
-
-      test.each([
-        ["without history", undefined],
-        ["with history=false", "history=false"],
-        ["with history=false and a limit", "history=false&limit=2"],
-      ])("returns only the latest attempt's status %s", async (_, query) => {
-        seedChain(plan("plan-4b", "plan-4a"));
-        const result = await getStatus(query);
-
-        expect.assert(result.type === "success", "Expected a status");
-        expect(attemptStore.get).not.toHaveBeenCalled();
-        expect(planStore.get).not.toHaveBeenCalled();
-      });
-
-      test.each([
-        "history=yes",
-        "history=true&limit=0",
-        "history=true&limit=abc",
-        "history=true&limit=1.5",
-      ])("returns 400 for the query %s", async (query) => {
-        seedChain();
-        const result = await getStatus(query);
-
-        expect(result).toMatchObject({
-          error: { statusCode: 400 },
-          type: "error",
-        });
-      });
-
-      test("ignores history when no attempt exists", async () => {
-        const result = await getStatus("history=true");
-
-        expect(result).toMatchObject({ statusCode: 204, type: "success" });
-      });
-
       describe("operation", () => {
         test.each([
           ["upgrade", "attempt-3"],
@@ -415,20 +310,12 @@ describe("installationRuntimeAction", () => {
               body: { id, operation },
               statusCode: 200,
             });
-            expect(result).not.toHaveProperty("body.history");
           },
         );
 
         test("answers 204 when no attempt ran the operation", async () => {
           seedChain();
           const result = await getStatus("operation=uninstall");
-
-          expect(result).toMatchObject({ statusCode: 204, type: "success" });
-        });
-
-        test("answers 204 with the history too when no attempt ran the operation", async () => {
-          seedChain();
-          const result = await getStatus("history=true&operation=uninstall");
 
           expect(result).toMatchObject({ statusCode: 204, type: "success" });
         });
@@ -477,63 +364,6 @@ describe("installationRuntimeAction", () => {
           });
         });
 
-        test("still answers 400 when the attemptId comes with the history", async () => {
-          seedChain();
-          const result = await getStatus(
-            "attemptId=attempt-2&operation=upgrade&history=true",
-          );
-
-          expect(result).toMatchObject({
-            error: { statusCode: 400 },
-            type: "error",
-          });
-        });
-
-        test("lists only the earlier attempts that ran the operation", async () => {
-          seedChain();
-          const upgrades = await getStatus("history=true&operation=upgrade");
-          const installs = await getStatus("history=true&operation=install");
-
-          expect.assert(
-            upgrades.type === "success" && installs.type === "success",
-            "Expected statuses",
-          );
-          expect(
-            ids((upgrades.body as { history: { id: string }[] }).history),
-          ).toEqual(["attempt-2"]);
-          expect(installs.body).toMatchObject({ history: [], id: "attempt-1" });
-        });
-
-        test("applies the limit to the attempts of the operation", async () => {
-          seedChain();
-          attemptStore.values.set("attempt-2", {
-            ...attempt2,
-            operation: "install",
-          });
-          const result = await getStatus(
-            "history=true&operation=upgrade&limit=1",
-          );
-
-          expect.assert(result.type === "success", "Expected a status");
-          const body = result.body as { history: { id: string }[] };
-          expect(body.history).toEqual([]);
-        });
-
-        test("lists only the plans made since the latest attempt for the operation", async () => {
-          seedChain(plan("plan-4b", "plan-4a"));
-          const upgrades = await getStatus("history=true&operation=upgrade");
-          const installs = await getStatus("history=true&operation=install");
-
-          expect.assert(
-            upgrades.type === "success" && installs.type === "success",
-            "Expected statuses",
-          );
-          const pending = (body: unknown) =>
-            ids((body as { pendingPlans: { id: string }[] }).pendingPlans);
-          expect(pending(upgrades.body)).toEqual(["plan-4b", "plan-4a"]);
-          expect(pending(installs.body)).toEqual([]);
-        });
-
         test.each(["operation=reinstall", "operation="])(
           "returns 400 for the query %s",
           async (query) => {
@@ -578,12 +408,11 @@ describe("installationRuntimeAction", () => {
       test.each([
         ["the latest attempt", "attempt-2", "in-progress"],
         ["an archived attempt", "attempt-1", "failed"],
-      ])("returns %s without the history", async (_, id, status) => {
+      ])("returns %s", async (_, id, status) => {
         seedAttempts();
         const result = await getStatus(`attemptId=${id}`);
 
         expect(result).toMatchObject({ body: { id, status }, statusCode: 200 });
-        expect(result).not.toHaveProperty("body.history");
       });
 
       test("reports the latest attempt as expired once its deadline passed", async () => {
@@ -615,7 +444,7 @@ describe("installationRuntimeAction", () => {
               createMockInstallationSucceededState(),
             );
           },
-          { headers: POST_APP_DEPLOY_HEADERS },
+          {},
         ],
       ])("returns 404 for %s", async (_, seed, params) => {
         seed();
@@ -627,19 +456,18 @@ describe("installationRuntimeAction", () => {
         });
       });
 
-      test.each([
-        "attemptId=attempt-2&history=true",
-        "attemptId=attempt-2&limit=1",
-        "attemptId=",
-      ])("returns 400 for the query %s", async (query) => {
-        seedAttempts();
-        const result = await getStatus(query);
+      test.each(["attemptId="])(
+        "returns 400 for the query %s",
+        async (query) => {
+          seedAttempts();
+          const result = await getStatus(query);
 
-        expect(result).toMatchObject({
-          error: { statusCode: 400 },
-          type: "error",
-        });
-      });
+          expect(result).toMatchObject({
+            error: { statusCode: 400 },
+            type: "error",
+          });
+        },
+      );
 
       test("accepts unknown keys next to an attemptId", async () => {
         seedAttempts();
@@ -661,6 +489,7 @@ describe("installationRuntimeAction", () => {
 
   const configWithAutoUpgrade = createMockConfig({
     metadata: { upgradeMode: "auto" },
+    webhooks: configWithWebhooks.webhooks,
   });
 
   let desiredInstallationStore = createMockInstallationStore();
@@ -1709,6 +1538,261 @@ describe("installationRuntimeAction", () => {
       });
     });
 
+    describe("app installed with only business configuration", () => {
+      const businessConfigOnlyBody = {
+        ...upgradeRequestBody,
+        installedState: "business-config-only" as const,
+        installedVersion: "0.9.0",
+      };
+
+      function createAction() {
+        desiredInstallationStore = createMockInstallationStore();
+        return installationRuntimeAction({ appConfig: configWithAutoUpgrade });
+      }
+
+      /** The input the leaf planned with. */
+      function getPlannedWith(leaf: AnyStep) {
+        const { mock } = (leaf as LeafStep).plan as unknown as {
+          mock: { calls: unknown[][] };
+        };
+        const input = mock.calls[0]?.[0] as
+          | { baseline: AppStateSnapshot }
+          | undefined;
+
+        expect.assert(input, "Expected the leaf to plan");
+        return input;
+      }
+
+      async function getLatestAttempt() {
+        const attempt = (await desiredStateStore.get("current"))?.latestAttempt;
+        expect.assert(attempt, "Expected an attempt");
+        return attempt;
+      }
+
+      test("plans an upgrade from the installed version without a baseline or warning", async () => {
+        const leaf = createUpgradeLeaf();
+        createRootInstallationStepMock.mockReturnValue(createUpgradeRoot(leaf));
+        const action = createAction();
+
+        const result = await planRequest(action, businessConfigOnlyBody);
+
+        expect(result).toMatchObject({
+          body: {
+            plan: {
+              issues: [],
+              operation: "upgrade",
+              sourceVersion: "0.9.0",
+              targetVersion: configWithAutoUpgrade.metadata.version,
+            },
+          },
+          statusCode: 200,
+        });
+
+        const state = await desiredStateStore.get("current");
+        expect(state?.pendingPlan).toMatchObject({
+          operation: "upgrade",
+          source: { appVersion: "0.9.0", snapshotId: null },
+        });
+        expect(state?.baselineSnapshotId).toBeNull();
+        expect(desiredSnapshotStore.put).not.toHaveBeenCalled();
+
+        const { baseline } = getPlannedWith(leaf);
+        expect(baseline.config.metadata.version).toBe("0.9.0");
+        expect(baseline.config.webhooks).toBeUndefined();
+        expect(baseline.config.eventing).toBeUndefined();
+        expect(baseline.config.adminUi).toBeUndefined();
+        expect(baseline.config.installation).toBeUndefined();
+      });
+
+      test("keeps the business configuration in the synthetic baseline", async () => {
+        const leaf = createUpgradeLeaf();
+        createRootInstallationStepMock.mockReturnValue(createUpgradeRoot(leaf));
+        desiredInstallationStore = createMockInstallationStore();
+        const target = createMockConfig({
+          businessConfig: configWithBusinessConfig.businessConfig,
+          metadata: { upgradeMode: "auto" },
+          webhooks: configWithWebhooks.webhooks,
+        });
+
+        await planRequest(
+          installationRuntimeAction({ appConfig: target }),
+          businessConfigOnlyBody,
+        );
+
+        const { baseline } = getPlannedWith(leaf);
+        expect(baseline.config.businessConfig).toEqual(target.businessConfig);
+      });
+
+      test("ignores the hint when a baseline exists", async () => {
+        seedInstalledBaseline("0.8.0");
+        const action = installationRuntimeAction({
+          appConfig: configWithAutoUpgrade,
+        });
+
+        const result = await planRequest(action, businessConfigOnlyBody);
+
+        expect(result).toMatchObject({
+          body: { plan: { operation: "upgrade", sourceVersion: "0.8.0" } },
+          statusCode: 200,
+        });
+        expect(
+          (await desiredStateStore.get("current"))?.pendingPlan?.source
+            ?.snapshotId,
+        ).toEqual(expect.any(String));
+      });
+
+      test("still plans an install without the hint", async () => {
+        const action = createAction();
+        const result = await planRequest(action, upgradeRequestBody);
+
+        expect(result).toMatchObject({
+          body: { plan: { operation: "install", sourceVersion: null } },
+        });
+      });
+
+      test("returns 409 when an older version is installing the app", async () => {
+        desiredInstallationStore = createMockInstallationStore(
+          createMockInProgressState(),
+        );
+        const action = installationRuntimeAction({
+          appConfig: configWithAutoUpgrade,
+        });
+        const result = await planRequest(action, businessConfigOnlyBody);
+
+        expect(result).toMatchObject({
+          error: { body: { code: "in-progress" }, statusCode: 409 },
+        });
+      });
+
+      test("returns 409 already-current when the installed version is the target", async () => {
+        const action = createAction();
+        const result = await planRequest(action, {
+          ...businessConfigOnlyBody,
+          installedVersion: configWithAutoUpgrade.metadata.version,
+        });
+
+        expect(result).toMatchObject({
+          error: { body: { code: "already-current" }, statusCode: 409 },
+        });
+      });
+
+      test("writes the baseline when it starts and runs as an upgrade", async () => {
+        const action = createAction();
+        const result = await planAndStart(action, businessConfigOnlyBody);
+
+        expect(result).toMatchObject({
+          body: { operation: "upgrade" },
+          statusCode: 202,
+        });
+
+        const state = await desiredStateStore.get("current");
+        const snapshotId = state?.baselineSnapshotId;
+        expect.assert(snapshotId, "Expected a baseline snapshot");
+        expect(await desiredSnapshotStore.get(snapshotId)).toMatchObject({
+          attemptId: null,
+          config: { metadata: { version: "0.9.0" } },
+          data: null,
+        });
+        expect(
+          (await desiredSnapshotStore.get(snapshotId))?.config.webhooks,
+        ).toBeUndefined();
+        expect(state?.latestAttempt).toMatchObject({
+          operation: "upgrade",
+          plan: { source: { appVersion: "0.9.0", snapshotId } },
+          status: "pending",
+        });
+        expect(invokeMock).toHaveBeenCalledTimes(1);
+      });
+
+      test("starts from the pending plan when the start request has no hint", async () => {
+        const action = createAction();
+        const planned = await planRequest(action, businessConfigOnlyBody);
+        expect.assert(planned.type === "success", "Expected a plan");
+        const { plan } = planned.body as { plan: { id: string } };
+
+        const result = await startPlan(action, plan.id, upgradeRequestBody);
+
+        expect(result).toMatchObject({ statusCode: 202 });
+      });
+
+      test("plans a normal upgrade after the first one succeeds", async () => {
+        const action = createAction();
+        await planAndStart(action, businessConfigOnlyBody);
+        const attempt = await getLatestAttempt();
+        const executed = await action(
+          createRuntimeActionParams({
+            appData,
+            attemptId: attempt.id,
+            method: "post",
+            path: "/execution",
+            ...DEFAULT_INSTALLATION_PARAMS,
+          }),
+        );
+        expect(executed).toMatchObject({ statusCode: 200 });
+
+        const nextAction = installationRuntimeAction({
+          appConfig: createMockConfig({
+            metadata: { upgradeMode: "auto", version: "2.0.0" },
+            webhooks: configWithWebhooks.webhooks,
+          }),
+        });
+        const result = await planRequest(nextAction, businessConfigOnlyBody);
+
+        expect(result).toMatchObject({
+          body: {
+            plan: {
+              operation: "upgrade",
+              sourceVersion: configWithAutoUpgrade.metadata.version,
+              targetVersion: "2.0.0",
+            },
+          },
+        });
+        expect(
+          (await desiredStateStore.get("current"))?.pendingPlan?.source
+            ?.snapshotId,
+        ).toEqual(expect.any(String));
+      });
+
+      test("retries a failed first attempt from the written baseline", async () => {
+        createRootInstallationStepMock.mockReturnValue(
+          createUpgradeRoot(
+            createUpgradeLeaf({
+              apply: vi.fn().mockRejectedValue(new Error("boom")),
+            }),
+          ),
+        );
+        const action = createAction();
+        await planAndStart(action, businessConfigOnlyBody);
+        const first = await getLatestAttempt();
+        await action(
+          createRuntimeActionParams({
+            appData,
+            attemptId: first.id,
+            method: "post",
+            path: "/execution",
+            ...DEFAULT_INSTALLATION_PARAMS,
+          }),
+        );
+        expect(await getLatestAttempt()).toMatchObject({ status: "failed" });
+        const baselineId = (await desiredStateStore.get("current"))
+          ?.baselineSnapshotId;
+        expect(baselineId).toEqual(expect.any(String));
+
+        const retried = await planAndStart(action, businessConfigOnlyBody);
+
+        expect(retried).toMatchObject({
+          body: { operation: "upgrade" },
+          statusCode: 202,
+        });
+        const retry = await getLatestAttempt();
+        expect(retry.id).not.toBe(first.id);
+        expect(retry.plan.source).toEqual({
+          appVersion: "0.9.0",
+          snapshotId: baselineId,
+        });
+      });
+    });
+
     describe("uninstall", () => {
       const removeLeafPlan = {
         kind: "planned",
@@ -1759,10 +1843,10 @@ describe("installationRuntimeAction", () => {
         });
       });
 
-      async function startUninstall() {
-        const action = installationRuntimeAction({
-          appConfig: configWithAutoUpgrade,
-        });
+      async function startUninstall(
+        appConfig: CommerceAppConfigOutputModel = configWithAutoUpgrade,
+      ) {
+        const action = installationRuntimeAction({ appConfig });
         const result = await planAndStart(action, {
           ...requestBody,
           operation: "uninstall",
@@ -1859,6 +1943,19 @@ describe("installationRuntimeAction", () => {
           }),
           expect.anything(),
         );
+      });
+
+      test("does not warn about a missing record when the config needs no installation", async () => {
+        desiredInstallationStore = createMockInstallationStore();
+        useUninstallLeaf();
+        const { result } = await startUninstall(configWithBusinessConfig);
+
+        expect(result).toMatchObject({ statusCode: 202 });
+        expect(await getAttemptPlan()).toMatchObject({
+          issues: [],
+          source: null,
+          target: null,
+        });
       });
 
       describe("after a failed uninstall", () => {
@@ -2078,7 +2175,7 @@ describe("installationRuntimeAction", () => {
         });
       });
 
-      test("records the activations and links the attempts and plans for GET /?history=true", async () => {
+      test("records the activations and links the attempts for GET /", async () => {
         createRootInstallationStepMock.mockReturnValue(
           createUpgradeRoot(
             createUpgradeLeaf({
@@ -2114,21 +2211,10 @@ describe("installationRuntimeAction", () => {
         const pending = await planRequest(second.action);
         expect.assert(pending.type === "success", "Expected a plan");
 
-        const result = await second.action(
-          createRuntimeActionParams({ query: "history=true" }),
-        );
+        const result = await second.action(createRuntimeActionParams({}));
         expect.assert(result.type === "success", "Expected a status");
 
-        const planIdOf = (response: typeof pending) =>
-          (response.body as { plan: { id: string } }).plan.id;
-        const ids = (items: { id: string }[]) => items.map(({ id }) => id);
-        const body = result.body as {
-          history: { id: string; plans: { id: string }[] }[];
-          pendingPlans: { id: string }[];
-          plans: { id: string }[];
-        };
-
-        expect(body).toMatchObject({
+        expect(result.body).toMatchObject({
           activations: {
             execution: `exec-${second.attemptId}`,
             start: "activation-start",
@@ -2137,19 +2223,20 @@ describe("installationRuntimeAction", () => {
           previousAttemptId: first.attemptId,
           status: "failed",
         });
-        expect(ids(body.history)).toEqual([first.attemptId]);
-        expect(body.history[0]).toMatchObject({
-          activations: {
-            execution: `exec-${first.attemptId}`,
-            start: "activation-start",
+
+        const earlier = await second.action(
+          createRuntimeActionParams({ query: `attemptId=${first.attemptId}` }),
+        );
+        expect(earlier).toMatchObject({
+          body: {
+            activations: {
+              execution: `exec-${first.attemptId}`,
+              start: "activation-start",
+            },
+            previousAttemptId: null,
           },
-          previousAttemptId: null,
+          statusCode: 200,
         });
-        // Each start plans again, so an attempt runs a plan that replaced the reviewed one.
-        expect(ids(body.history[0].plans)).toHaveLength(2);
-        expect(ids(body.plans)).toHaveLength(3);
-        expect(ids(body.plans)).toContain(planIdOf(replaced));
-        expect(ids(body.pendingPlans)).toEqual([planIdOf(pending)]);
       });
 
       test("returns 500 when the attempt fails", async () => {

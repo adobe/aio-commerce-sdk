@@ -38,8 +38,11 @@ export type LifecyclePlan = {
 
   /** The state the plan transitions from, or `null` when nothing is installed. */
   source: {
-    /** Identifier of the baseline snapshot. */
-    snapshotId: string;
+    /**
+     * Identifier of the baseline snapshot, or `null` when the app was installed with only business
+     * configuration and has no baseline yet. Starting the plan writes one.
+     */
+    snapshotId: string | null;
 
     /** App version of the baseline. */
     appVersion: string;

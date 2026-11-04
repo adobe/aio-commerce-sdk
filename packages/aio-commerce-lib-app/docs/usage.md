@@ -1082,6 +1082,8 @@ The `#app.commerce.config` package import resolves to a generated JavaScript com
 
 Installing, upgrading and uninstalling all plan the operation and validate the plan before anything changes. An installed app upgrades from its installed version to the one declared in `metadata.version`.
 
+An app installed with only business configuration never runs the install, so the SDK has no record of what it installed. When such an app adds a feature that needs installation (an event, a webhook, an admin UI or a custom installation step), the Commerce App Management Service sends `installedState: "business-config-only"` and `installedVersion` in the `POST /installation/plan` request. The SDK then plans an upgrade instead of an install. The plan's source version is `installedVersion`, and it compares the target config with the installed config minus the sections that need installation. Planning writes nothing. Starting the plan stores that config as the baseline snapshot, so the run is a normal upgrade and a failed run retries from it. The SDK ignores both fields when a baseline exists, and answers `409` with code `already-current` when `installedVersion` equals `metadata.version`.
+
 > [!IMPORTANT]
 > `metadata.id` identifies the installed application and cannot change during an upgrade. The SDK refuses to plan an upgrade that changes it. To use a different ID, uninstall the existing app and install it again.
 
@@ -1140,21 +1142,15 @@ Any other planning failure, for example configuration issues that block the upgr
 
 #### Troubleshooting a Lifecycle Operation
 
-Every install, upgrade and uninstall leaves a trail you can follow back when something goes wrong. Call `GET /installation?history=true` on the `app-management` package. The response is the status of the latest attempt plus three lists:
+Every install, upgrade and uninstall leaves a trail you can follow back when something goes wrong. Call `GET /installation` on the `app-management` package to read the status of the latest attempt, or add `attemptId=<id>` to read an earlier one.
 
-- `plans`: the plan the latest attempt executed, followed by the plans it replaced before it started, newest first. Because starting a plan plans it again, the reviewed plan (`review.planId`) is usually the second entry.
-- `history`: the earlier attempts, newest first, each with its own `plans`. Add `limit=<n>` to read only the last `n` earlier attempts.
-- `pendingPlans`: plans made after the latest attempt that were never started.
-
-Plans carry the full target configuration, so `GET /installation` returns them only with `history=true`. Without it, the response stays the status of the latest attempt.
-
-Add `operation=install`, `operation=upgrade` or `operation=uninstall` to read only that operation. The status is then the latest attempt that ran it, `history` and `pendingPlans` list only that operation, and the answer is `204` when no attempt ran it. With `attemptId`, the attempt must have run the operation, or the answer is `404`.
+Add `operation=install`, `operation=upgrade` or `operation=uninstall` to read only that operation. The status is then the latest attempt that ran it, and the answer is `204` when no attempt ran it. With `attemptId`, the attempt must have run the operation, or the answer is `404`.
 
 Each attempt links to the rest of the trail:
 
 - `previousAttemptId` and `previousPlanId` name the attempt and the plan it replaced.
 - `plan` is the plan the attempt executes, in the same shape `POST /plan` returns for review: its versions, the operations to run per domain, the items each one changes, the `changes` per domain and the planning issues. Every domain has `changes`, empty when there are none. They list the items the target config adds, updates or removes compared with the installed config. They do not depend on the live state, so an item that is already live still appears. It is on every answer that carries an attempt, including the `attempt` of a `409` and of a failed run.
-- `plans[0].source.snapshotId` names the snapshot the attempt started from, and `result.snapshotId` the one a successful attempt produced. Snapshots live in the app's file storage under `lifecycle-app-state-snapshot`, and each one records the `attemptId` that produced it.
+- `plan.source.snapshotId` names the snapshot the attempt started from (for an app installed with only business configuration, the baseline the app writes when the upgrade starts), and `result.snapshotId` the one a successful attempt produced. Snapshots live in the app's file storage under `lifecycle-app-state-snapshot`, and each one records the `attemptId` that produced it.
 - `step` lists every step with its `status`, and `startedAt` and `completedAt` once it ran, so an expired attempt shows which step hung.
 - `activations.start` and `activations.execution` are the OpenWhisk activations that started and executed the attempt.
 

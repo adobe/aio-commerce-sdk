@@ -7,7 +7,7 @@ type ExtensionRoute = {
 };
 ```
 
-Defined in: [aio-commerce-lib-admin-ui/source/web/react/routing/types.ts:25](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-admin-ui/source/web/react/routing/types.ts#L25)
+Defined in: [aio-commerce-lib-admin-ui/source/web/react/routing/types.ts:25](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-admin-ui/source/web/react/routing/types.ts#L25)
 
 Defines a route that exists at a given path.
 
@@ -19,7 +19,7 @@ Defines a route that exists at a given path.
 element: ReactNode;
 ```
 
-Defined in: [aio-commerce-lib-admin-ui/source/web/react/routing/types.ts:30](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-admin-ui/source/web/react/routing/types.ts#L30)
+Defined in: [aio-commerce-lib-admin-ui/source/web/react/routing/types.ts:30](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-admin-ui/source/web/react/routing/types.ts#L30)
 
 The React element to render for the route.
 
@@ -31,6 +31,6 @@ The React element to render for the route.
 path: string;
 ```
 
-Defined in: [aio-commerce-lib-admin-ui/source/web/react/routing/types.ts:27](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-admin-ui/source/web/react/routing/types.ts#L27)
+Defined in: [aio-commerce-lib-admin-ui/source/web/react/routing/types.ts:27](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-admin-ui/source/web/react/routing/types.ts#L27)
 
 The path for the route.

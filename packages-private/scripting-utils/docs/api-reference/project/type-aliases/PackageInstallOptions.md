@@ -6,16 +6,16 @@ type PackageInstallOptions = {
 };
 ```
 
-Defined in: [project.ts:41](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages-private/scripting-utils/source/project.ts#L41)
+Defined in: [project.ts:41](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages-private/scripting-utils/source/project.ts#L41)
 
 ## Properties
 
 ### dev?
 
 ```ts
-optional dev?: boolean;
+dev?: boolean;
 ```
 
-Defined in: [project.ts:43](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages-private/scripting-utils/source/project.ts#L43)
+Defined in: [project.ts:43](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages-private/scripting-utils/source/project.ts#L43)
 
 Install packages as development dependencies.

@@ -1,5 +1,17 @@
 # @adobe/aio-commerce-lib-auth
 
+## 1.2.0
+
+### Minor Changes
+
+- [#689](https://github.com/adobe/aio-commerce-sdk/pull/689) [`194db8d`](https://github.com/adobe/aio-commerce-sdk/commit/194db8d382edf49f7976ea9aeffad54acb8e3da1) Thanks [@obarcelonap](https://github.com/obarcelonap)! - `resolveImsAuthParams` resolves OAuth Server-to-Server credentials from the `include-ims-credentials` action annotation. Its fallback to manually wired `AIO_COMMERCE_AUTH_IMS_*` parameters is deprecated; use the annotation for new actions. `technicalAccountId` and `technicalAccountEmail` are now optional on IMS auth params.
+
+### Patch Changes
+
+- [#728](https://github.com/adobe/aio-commerce-sdk/pull/728) [`395eb22`](https://github.com/adobe/aio-commerce-sdk/commit/395eb22da7646944d5e5f02e1517dc23cc3ebfe6) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Remove unused dependencies.
+- Updated dependencies [[`9145e82`](https://github.com/adobe/aio-commerce-sdk/commit/9145e822b17b99465bfee649fae69d61c11bc0ab)]:
+  - @adobe/aio-commerce-lib-core@1.3.0
+
 ## 1.1.3
 
 ### Patch Changes

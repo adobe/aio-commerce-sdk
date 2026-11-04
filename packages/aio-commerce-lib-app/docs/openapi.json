@@ -10,7 +10,7 @@
       "name": "Apache-2.0"
     },
     "x-meta": {
-      "packageVersion": "2.0.0"
+      "packageVersion": "2.1.0"
     }
   },
   "servers": [
@@ -1224,12 +1224,12 @@
       "get": {
         "operationId": "getInstallationState",
         "summary": "Get Installation State",
-        "description": "Returns the status of the latest lifecycle attempt, whatever its operation. With `attemptId`, returns the status of that attempt instead, whether it is the latest or an earlier one. With `attemptId` and `operation`, returns that attempt only when it ran that operation. With `operation` alone, returns the latest attempt that ran that operation instead, and `history` lists only the earlier attempts and pending plans of that operation. With `history=true`, also returns the plans of that attempt, the earlier attempts with their plans, and the plans made since the latest attempt. Without a lifecycle attempt, returns the installation record of an older library version, if any, and ignores `history` and `limit`. With `operation` alone, it answers `204` instead when no attempt ran the operation.",
+        "description": "Returns the status of the latest lifecycle attempt, whatever its operation. With `attemptId`, returns the status of that attempt instead, whether it is the latest or an earlier one. With `attemptId` and `operation`, returns that attempt only when it ran that operation. With `operation` alone, returns the latest attempt that ran that operation instead. Without a lifecycle attempt, returns the installation record of an older library version, if any. With `operation` alone, it answers `204` instead when no attempt ran the operation.",
         "parameters": [
           {
             "name": "attemptId",
             "in": "query",
-            "description": "The attempt to read. With `operation`, the attempt must have run that operation, or the answer is `404`. Cannot be combined with `history` or `limit`.",
+            "description": "The attempt to read. With `operation`, the attempt must have run that operation, or the answer is `404`.",
             "required": false,
             "schema": {
               "type": "string",
@@ -1239,32 +1239,11 @@
           {
             "name": "operation",
             "in": "query",
-            "description": "Reads the latest attempt that ran this operation, which can be an earlier attempt than the latest one. With `history=true`, `history` and `pendingPlans` list only this operation. With `attemptId`, it only checks that the attempt ran this operation.",
+            "description": "Reads the latest attempt that ran this operation, which can be an earlier attempt than the latest one. With `attemptId`, it only checks that the attempt ran this operation.",
             "required": false,
             "schema": {
               "type": "string",
               "enum": ["install", "upgrade", "uninstall"]
-            }
-          },
-          {
-            "name": "history",
-            "in": "query",
-            "description": "When `true`, the body also carries `plans`, `history` and `pendingPlans`. Plans carry the full target configuration.",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "default": "false",
-              "enum": ["true", "false"]
-            }
-          },
-          {
-            "name": "limit",
-            "in": "query",
-            "description": "How many earlier attempts `history` lists at most. Applies only with `history=true`. When omitted, `history` lists every earlier attempt.",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "minimum": 1
             }
           },
           {
@@ -1275,30 +1254,17 @@
             "schema": {
               "type": "string"
             }
-          },
-          {
-            "name": "x-aio-commerce-installation-invocation-source",
-            "in": "header",
-            "description": "Identifies the source of the request. When set to `post-app-deploy` and no lifecycle attempt exists, returns `204` instead of an older library version's installation record.",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "enum": ["post-app-deploy"]
-            }
           }
         ],
         "responses": {
           "200": {
-            "description": "The latest lifecycle attempt, the latest one that ran `operation`, or the one named by `attemptId`, with its history on `history=true`, or the installation record of an older library version.",
+            "description": "The latest lifecycle attempt, the latest one that ran `operation`, or the one named by `attemptId`, or the installation record of an older library version.",
             "content": {
               "application/json": {
                 "schema": {
                   "oneOf": [
                     {
                       "$ref": "#/components/schemas/LifecycleAttemptStatus"
-                    },
-                    {
-                      "$ref": "#/components/schemas/LifecycleAttemptHistory"
                     },
                     {
                       "$ref": "#/components/schemas/InProgressWorkflowState"
@@ -1318,7 +1284,7 @@
             "description": "No installation workflow state or lifecycle attempt has been stored yet, or no attempt ran the requested `operation`."
           },
           "400": {
-            "description": "The `attemptId`, `history`, `limit` or `operation` query parameter is invalid, or `attemptId` is combined with `history` or `limit`.",
+            "description": "The `attemptId` or `operation` query parameter is invalid.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1368,16 +1334,6 @@
             "required": true,
             "schema": {
               "type": "string"
-            }
-          },
-          {
-            "name": "x-aio-commerce-installation-invocation-source",
-            "in": "header",
-            "description": "Identifies the source of the request. The generated post-deploy hook sends `post-app-deploy`; when that source is present and the app is not installed, reconciliation returns `409 not-installed` instead of starting a first-time installation.",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "enum": ["post-app-deploy"]
             }
           }
         ],
@@ -1481,7 +1437,7 @@
       "post": {
         "operationId": "planLifecycleOperation",
         "summary": "Plan a Lifecycle Operation",
-        "description": "Plans the install or upgrade the installed state calls for, or an uninstallation when `operation` is `uninstall`. Stores it as the pending plan and returns it for review, together with its issues as a validation result. Start it with `POST /installation` and its `id` as `planId`.",
+        "description": "Plans the install or upgrade the installed state calls for, or an uninstallation when `operation` is `uninstall`. An app installed with only business configuration has no baseline, so it plans an upgrade when `installedState` and `installedVersion` are set. Stores it as the pending plan and returns it for review, together with its issues as a validation result. Start it with `POST /installation` and its `id` as `planId`.",
         "parameters": [
           {
             "name": "x-gw-ims-org-id",
@@ -3469,6 +3425,14 @@
             "description": "Set to `uninstall` to plan an uninstallation. Without it, `POST /installation/plan` plans the install or upgrade the installed state calls for.",
             "const": "uninstall"
           },
+          "installedState": {
+            "description": "Set to `business-config-only` with `installedVersion` when the app is installed with only business configuration, so it has no lifecycle baseline. `POST /installation/plan` then plans an upgrade instead of an install, and `sourceVersion` is `installedVersion`. Ignored when the app has a baseline.",
+            "const": "business-config-only"
+          },
+          "installedVersion": {
+            "description": "The version stored for the installed app. Used with `installedState`. The plan answers `409` with code `already-current` when it equals `metadata.version`.",
+            "type": "string"
+          },
           "planId": {
             "description": "The id of the pending plan to start. Required by `POST /installation`.",
             "type": "string"
@@ -3621,172 +3585,6 @@
           "startedAt",
           "step",
           "data"
-        ]
-      },
-      "LifecycleAttemptHistory": {
-        "description": "The status of the latest lifecycle attempt with the trail that led to it.",
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/LifecycleAttemptStatus"
-          },
-          {
-            "type": "object",
-            "properties": {
-              "plans": {
-                "description": "The plan the attempt executed, followed by the stored plans it replaced, newest first.",
-                "type": "array",
-                "items": {
-                  "$ref": "#/components/schemas/LifecyclePlan"
-                }
-              },
-              "history": {
-                "description": "Earlier attempts, newest first, each with its own plans. Stops at `limit` attempts or at the first attempt that is no longer stored.",
-                "type": "array",
-                "items": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/LifecycleAttemptStatus"
-                    },
-                    {
-                      "type": "object",
-                      "properties": {
-                        "plans": {
-                          "description": "The plan the attempt executed, followed by the stored plans it replaced, newest first.",
-                          "type": "array",
-                          "items": {
-                            "$ref": "#/components/schemas/LifecyclePlan"
-                          }
-                        }
-                      },
-                      "required": ["plans"]
-                    }
-                  ]
-                }
-              },
-              "pendingPlans": {
-                "description": "The pending plan followed by the plans it replaced, newest first. Empty when no plan is pending.",
-                "type": "array",
-                "items": {
-                  "$ref": "#/components/schemas/LifecyclePlan"
-                }
-              }
-            },
-            "required": ["plans", "history", "pendingPlans"]
-          }
-        ]
-      },
-      "LifecyclePlan": {
-        "description": "A lifecycle plan as stored, with the full target configuration.",
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "previousPlanId": {
-            "description": "The pending plan this plan replaced, or `null` when none was pending.",
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "operation": {
-            "type": "string",
-            "enum": ["install", "upgrade", "uninstall"]
-          },
-          "actionVersion": {
-            "description": "Version of the action that made the plan.",
-            "type": "string"
-          },
-          "source": {
-            "description": "The state the plan starts from, or `null` when nothing is installed.",
-            "anyOf": [
-              {
-                "type": "object",
-                "properties": {
-                  "snapshotId": {
-                    "type": "string"
-                  },
-                  "appVersion": {
-                    "type": "string"
-                  }
-                },
-                "required": ["snapshotId", "appVersion"]
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "target": {
-            "description": "The state the plan leads to, or `null` when the app ends up with nothing installed.",
-            "anyOf": [
-              {
-                "type": "object",
-                "properties": {
-                  "appVersion": {
-                    "type": "string"
-                  },
-                  "config": {
-                    "type": "object",
-                    "additionalProperties": true
-                  }
-                },
-                "required": ["appVersion", "config"]
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "domains": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "path": {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  }
-                },
-                "operations": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "additionalProperties": true
-                  }
-                },
-                "changes": {
-                  "description": "The items the target config adds, updates or removes compared with the installed config, whatever the live state is. Empty for a plan stored by an older version.",
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ResourceChange"
-                  }
-                }
-              },
-              "required": ["path", "operations", "changes"]
-            }
-          },
-          "issues": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/PlanningIssue"
-            }
-          }
-        },
-        "required": [
-          "id",
-          "previousPlanId",
-          "operation",
-          "actionVersion",
-          "source",
-          "target",
-          "domains",
-          "issues"
         ]
       },
       "PlanningIssue": {

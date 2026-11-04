@@ -25,6 +25,14 @@ export const STAGE_CAMS_URL =
 /** The CAMS host for the production environment. */
 export const PROD_CAMS_URL = "https://app-management.api.commerce.adobe.com";
 
+/**
+ * The time in milliseconds a CAMS request may take before it fails with a timeout.
+ *
+ * CAMS calls the app on Adobe I/O Runtime for some requests, for example to plan an upgrade, and a
+ * cold start after a deploy can take longer than ky's 10 second default.
+ */
+export const CAMS_REQUEST_TIMEOUT_MS = 60_000;
+
 const URL_SCHEME_PATTERN = /^[hH][tT][tT][pP][sS]?:\/\//u;
 
 /**

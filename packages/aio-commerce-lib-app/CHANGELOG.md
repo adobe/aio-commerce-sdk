@@ -1,5 +1,73 @@
 # @adobe/aio-commerce-lib-app
 
+## 2.1.0
+
+### Minor Changes
+
+- [#692](https://github.com/adobe/aio-commerce-sdk/pull/692) [`264539a`](https://github.com/adobe/aio-commerce-sdk/commit/264539a13371b11b637eb01fd1c0aa185f4349cc) Thanks [@asalloum5](https://github.com/asalloum5)! - Add `invoice`, `creditMemo`, and `shipment` entities to `adminUi`, so grid column extensions can now target those grids in addition to order, product, and customer.
+
+- [#702](https://github.com/adobe/aio-commerce-sdk/pull/702) [`e6604ab`](https://github.com/adobe/aio-commerce-sdk/commit/e6604ab023e5f929e6e0279a36e06ec4c17f0906) Thanks [@oshmyheliuk](https://github.com/oshmyheliuk)! - The association action now returns the app's IMS client ID in its response.
+
+- [#712](https://github.com/adobe/aio-commerce-sdk/pull/712) [`d78221e`](https://github.com/adobe/aio-commerce-sdk/commit/d78221e01894d2209b7864aca6a5fbfab93c7192) Thanks [@obarcelonap](https://github.com/obarcelonap)! - Generated `association` and `installation` actions now receive OAuth Server-to-Server credentials through the `include-ims-credentials` annotation instead of `AIO_COMMERCE_AUTH_IMS_*` inputs. Re-run `generate actions` to add the annotation and drop the legacy inputs from existing projects. The `AIO_COMMERCE_AUTH_IMS_*` fields of `LifecycleContext["params"]` are deprecated; custom installation scripts should use `resolveImsAuthParams(context.params)` from `@adobe/aio-commerce-lib-auth` instead.
+
+- [#699](https://github.com/adobe/aio-commerce-sdk/pull/699) [`53f1f8b`](https://github.com/adobe/aio-commerce-sdk/commit/53f1f8be4428862015294f1edc2816972e501a9e) Thanks [@mariam21arauj](https://github.com/mariam21arauj)! - Add a `newsletter` entity to the v2 `adminUi` config so apps can declare Newsletter Subscriber grid columns on `commerce/backend-ui/2`.
+
+- [#744](https://github.com/adobe/aio-commerce-sdk/pull/744) [`8f28544`](https://github.com/adobe/aio-commerce-sdk/commit/8f2854444cba44b3a41e6572b2f388487f2872c5) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Trace failed lifecycle operations. `GET /installation` reads the latest attempt. `attemptId` reads one attempt, and `operation` (`install`, `upgrade` or `uninstall`) reads only the attempts of that operation, with `204` when none ran it. Attempt statuses now include the OpenWhisk activations that started and executed them and, once an attempt succeeds, the snapshot and app version it left installed. Steps record when they started and completed, the default logs show each lifecycle transition with its ids, and the `post-app-deploy` hook prints the run id and the execution activation id when an automatic upgrade fails.
+
+- [#777](https://github.com/adobe/aio-commerce-sdk/pull/777) [`130e26b`](https://github.com/adobe/aio-commerce-sdk/commit/130e26b521b32a168a5a73ac8390cafb8d39d36a) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Plans and attempt statuses now list the configuration changes of each domain in a `changes` array, which is empty when there are none. It names the items the new configuration adds, updates or removes compared with the installed one. It does not depend on the live state, so an item that is already live still appears. The step of an attempt now shows a domain whose items are already in place as succeeded.
+
+- [#716](https://github.com/adobe/aio-commerce-sdk/pull/716) [`a643c80`](https://github.com/adobe/aio-commerce-sdk/commit/a643c80fc480483918dc17d4b718225ffbdae24b) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Start a reviewed upgrade plan by sending its `planId` to the installation endpoint. The upgrade runs a fresh plan and reports how it differs from the reviewed one in `review`.
+
+- [#744](https://github.com/adobe/aio-commerce-sdk/pull/744) [`8f28544`](https://github.com/adobe/aio-commerce-sdk/commit/8f2854444cba44b3a41e6572b2f388487f2872c5) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - The `post-app-deploy` hook now plans and starts the upgrade through the Commerce App Management Service, and keeps following it in the background if you interrupt the hook. The new `upgrade status [run-id]` command checks an upgrade run later.
+
+### Patch Changes
+
+- [#725](https://github.com/adobe/aio-commerce-sdk/pull/725) [`897e45b`](https://github.com/adobe/aio-commerce-sdk/commit/897e45b86a69422e9cb814f6e732e53be9f582da) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Upgrades now fix event providers, event metadata, registrations and Commerce subscriptions that a failed upgrade or a manual edit left missing, different or no longer declared. Provider and event label or description changes are now applied too. Commerce events keep their configured label and description in Adobe I/O Events after they are subscribed. An upgrade now stops with an issue instead of taking over a Commerce subscription that belongs to another provider.
+
+- [#716](https://github.com/adobe/aio-commerce-sdk/pull/716) [`a643c80`](https://github.com/adobe/aio-commerce-sdk/commit/a643c80fc480483918dc17d4b718225ffbdae24b) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Retrying a failed upgrade now plans again from the current state instead of resuming from where the failed attempt stopped. Each planned operation now has a `reason`: `change` when the new configuration causes it, `drift` when only the deployed state differs from the configuration.
+
+- [#788](https://github.com/adobe/aio-commerce-sdk/pull/788) [`fb08604`](https://github.com/adobe/aio-commerce-sdk/commit/fb08604f4ce27775fe827c47366f56410b49e8e5) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - The installation action no longer reads the `x-aio-commerce-installation-invocation-source` header. `GET /` with no lifecycle attempt and no `operation` now always falls back to the legacy installation record, and the OpenAPI document no longer lists the header.
+
+- [#763](https://github.com/adobe/aio-commerce-sdk/pull/763) [`b5bb479`](https://github.com/adobe/aio-commerce-sdk/commit/b5bb4797d7361e1e64b1c5daf1c674b076f3b22c) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Keep the extension points in `app.config.yaml` in a fixed order (backend UI, configuration, then extensibility) so an upgrade works reliably. `init` and the `postinstall` hook write and reorder the file. If it is still out of order, the `pre-app-build` hook reorders it and logs a one-off warning. Also stop `init` from adding a blank line before the `extensions` key in `app.config.yaml` and `install.yaml`.
+
+- [#716](https://github.com/adobe/aio-commerce-sdk/pull/716) [`a643c80`](https://github.com/adobe/aio-commerce-sdk/commit/a643c80fc480483918dc17d4b718225ffbdae24b) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Upgrades now use the Adobe I/O Events URL and IMS environment from the request, like installs and uninstalls do.
+
+- [#744](https://github.com/adobe/aio-commerce-sdk/pull/744) [`8f28544`](https://github.com/adobe/aio-commerce-sdk/commit/8f2854444cba44b3a41e6572b2f388487f2872c5) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Each custom installation step now runs as its own step, with its own progress during installs, upgrades and uninstalls. Retrying a failed operation no longer runs again the custom installation steps that already succeeded. An upgrade that removes a custom installation step now warns that its uninstall can't run, since its script is no longer deployed.
+
+- [#717](https://github.com/adobe/aio-commerce-sdk/pull/717) [`fe9135b`](https://github.com/adobe/aio-commerce-sdk/commit/fe9135b4d1a88f65cee94fe03f8bbe167bb0e1bc) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Upgrades now fix webhooks that a failed upgrade or a manual edit left missing, different or no longer declared.
+
+- [#724](https://github.com/adobe/aio-commerce-sdk/pull/724) [`36cd90a`](https://github.com/adobe/aio-commerce-sdk/commit/36cd90acde5e8713a289ad2d9470525a708cdb8d) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Several issues fixed:
+
+  - An upgrade request that runs into another one in progress, or whose plan another request replaced, now gets a `409` with code `in-progress` or `stale-plan` instead of a `500`.
+
+  - An upgrade that cannot start, for example because the app was deployed again after planning, is recorded as failed right away instead of blocking new upgrades until its deadline.
+
+  - A request whose stored upgrade state cannot be read now gets a `409` with code `unreadable-state` instead of installing the app again.
+
+  - When saving installation or upgrade state fails, the cached copy no longer keeps the unsaved value.
+
+- [#744](https://github.com/adobe/aio-commerce-sdk/pull/744) [`8f28544`](https://github.com/adobe/aio-commerce-sdk/commit/8f2854444cba44b3a41e6572b2f388487f2872c5) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Install, upgrade and uninstall now plan the operation and validate the plan before anything changes. Uninstalling removes what the app installed and what it can prove it owns, even without an installation record, and runs the uninstall of every custom installation step that ran and is still configured. Every lifecycle operation uses the Commerce instance stored at association.
+
+- [#700](https://github.com/adobe/aio-commerce-sdk/pull/700) [`6d23ffe`](https://github.com/adobe/aio-commerce-sdk/commit/6d23ffeef28b41d4c62801af5618a165a9349359) Thanks [@asalloum5](https://github.com/asalloum5)! - Fix the generated `association` and `installation` runtime actions declaring `LOG_LEVEL` twice, once at the package level and once at the action level.
+
+- [#700](https://github.com/adobe/aio-commerce-sdk/pull/700) [`6d23ffe`](https://github.com/adobe/aio-commerce-sdk/commit/6d23ffeef28b41d4c62801af5618a165a9349359) Thanks [@asalloum5](https://github.com/asalloum5)! - Declare `LOG_LEVEL` once at the app-management and commerce-configuration runtime package levels instead of repeating it on generated actions.
+
+- [#706](https://github.com/adobe/aio-commerce-sdk/pull/706) [`89cf9ab`](https://github.com/adobe/aio-commerce-sdk/commit/89cf9ab935e8715a48397e5b81484d6e9041bb71) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Deprecates the pre-lifecycle installation engine (`runInstallation`, `runUninstallation`, `runValidation` and their helpers) ahead of its removal in the next major. Drive installs and uninstalls through the installation runtime action instead. An installed app's lifecycle baseline is now migrated once from the legacy installation record rather than re-read on every request, so a lifecycle snapshot keeps resolving after that record is gone.
+
+- [#744](https://github.com/adobe/aio-commerce-sdk/pull/744) [`8f28544`](https://github.com/adobe/aio-commerce-sdk/commit/8f2854444cba44b3a41e6572b2f388487f2872c5) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Upgrades now create each missing event provider, event metadata, registration and Commerce subscription on its own, and stop at the first one that fails instead of reusing whatever already exists.
+
+- [#688](https://github.com/adobe/aio-commerce-sdk/pull/688) [`b27c143`](https://github.com/adobe/aio-commerce-sdk/commit/b27c143b3d4c62de5a43a7184c55942b50e34618) Thanks [@gpl-php](https://github.com/gpl-php)! - Create Commerce event subscriptions sequentially to prevent concurrent configuration writes from dropping events during App Management installation.
+
+- [#689](https://github.com/adobe/aio-commerce-sdk/pull/689) [`194db8d`](https://github.com/adobe/aio-commerce-sdk/commit/194db8d382edf49f7976ea9aeffad54acb8e3da1) Thanks [@obarcelonap](https://github.com/obarcelonap)! - Commerce Eventing setup now provides a default technical account when your app authenticates with OAuth Server-to-Server credentials that don't have one, such as those provided via the `include-ims-credentials` annotation, so Commerce can still consume the workspace configuration. The pre-build hook also warns that manually wired `AIO_COMMERCE_AUTH_IMS_*` credentials are deprecated.
+- Updated dependencies [[`264539a`](https://github.com/adobe/aio-commerce-sdk/commit/264539a13371b11b637eb01fd1c0aa185f4349cc), [`cda4f20`](https://github.com/adobe/aio-commerce-sdk/commit/cda4f206c9cd1877046f5a2196fa60478d35dfb9), [`d78221e`](https://github.com/adobe/aio-commerce-sdk/commit/d78221e01894d2209b7864aca6a5fbfab93c7192), [`f513024`](https://github.com/adobe/aio-commerce-sdk/commit/f5130248fb5033cb019ad561358a9d436be7c0f7), [`194db8d`](https://github.com/adobe/aio-commerce-sdk/commit/194db8d382edf49f7976ea9aeffad54acb8e3da1), [`53f1f8b`](https://github.com/adobe/aio-commerce-sdk/commit/53f1f8be4428862015294f1edc2816972e501a9e), [`395eb22`](https://github.com/adobe/aio-commerce-sdk/commit/395eb22da7646944d5e5f02e1517dc23cc3ebfe6), [`9145e82`](https://github.com/adobe/aio-commerce-sdk/commit/9145e822b17b99465bfee649fae69d61c11bc0ab)]:
+  - @adobe/aio-commerce-lib-admin-ui@1.2.0
+  - @adobe/aio-commerce-lib-config@1.8.1
+  - @adobe/aio-commerce-lib-api@1.4.1
+  - @adobe/aio-commerce-lib-events@1.5.0
+  - @adobe/aio-commerce-lib-auth@1.2.0
+  - @adobe/aio-commerce-lib-core@1.3.0
+  - @adobe/aio-commerce-lib-webhooks@1.2.3
+
 ## 2.0.0
 
 ### Major Changes

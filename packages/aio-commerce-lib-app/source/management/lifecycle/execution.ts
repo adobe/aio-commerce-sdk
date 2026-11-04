@@ -109,11 +109,11 @@ export async function executeLifecycleAttempt(
   }
 
   const { source } = currentAttempt.plan;
-  const baseline = source
+  const baseline = source?.snapshotId
     ? await options.snapshotStore.get(source.snapshotId)
     : null;
 
-  if (source && !baseline) {
+  if (source?.snapshotId && !baseline) {
     return await failPendingAttempt(
       options,
       state,

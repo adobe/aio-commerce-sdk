@@ -8,7 +8,7 @@ function mergePackageJsonDependencies(
 ): WritablePackageJsonDependencies;
 ```
 
-Defined in: [project.ts:225](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages-private/scripting-utils/source/project.ts#L225)
+Defined in: [project.ts:225](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages-private/scripting-utils/source/project.ts#L225)
 
 Merge required dependencies into a package.json dependency map when they are missing.
 
@@ -18,7 +18,7 @@ Merge required dependencies into a package.json dependency map when they are mis
 | ---------------------- | ---------------------------------------------------------------------- | ------------------------------------------- |
 | `dependencies`         | `PackageJsonDependencies`                                              | Dependency map to update.                   |
 | `requiredDependencies` | readonly [`PackageDependency`](../type-aliases/PackageDependency.md)[] | Dependencies that should exist.             |
-| `dependencyMaps`       | readonly `Partial`\<`Record`\<`string`, `string`\>\>[]                 | Package dependency maps to compare against. |
+| `dependencyMaps?`      | readonly `Partial`\<`Record`\<`string`, `string`\>\>[]                 | Package dependency maps to compare against. |
 
 ## Returns
 

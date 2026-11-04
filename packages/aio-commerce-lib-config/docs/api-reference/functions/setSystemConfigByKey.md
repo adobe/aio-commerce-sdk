@@ -8,7 +8,7 @@ function setSystemConfigByKey(
 ): Promise<void>;
 ```
 
-Defined in: [modules/configuration/system-config.ts:49](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-config/source/modules/configuration/system-config.ts#L49)
+Defined in: [modules/configuration/system-config.ts:49](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-config/source/modules/configuration/system-config.ts#L49)
 
 Stores or clears a system configuration value by key.
 
@@ -19,11 +19,11 @@ separate from scope-keyed Business Configuration.
 
 ## Parameters
 
-| Parameter    | Type      | Default value                     | Description                                                                                                                |
-| ------------ | --------- | --------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| `key`        | `string`  | `undefined`                       | The system configuration key (e.g. `"system.association"`).                                                                |
-| `value`      | `unknown` | `undefined`                       | The value to store, or `null`/`undefined` to clear the entry.                                                              |
-| `ttlSeconds` | `number`  | `SYSTEM_CONFIG_CACHE_TTL_SECONDS` | Cache TTL in seconds for the `aio-lib-state` entry. Defaults to 24 hours; `aio-lib-state` caps it at one year (31536000s). |
+| Parameter     | Type      | Default value                     | Description                                                                                                                |
+| ------------- | --------- | --------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `key`         | `string`  | `undefined`                       | The system configuration key (e.g. `"system.association"`).                                                                |
+| `value`       | `unknown` | `undefined`                       | The value to store, or `null`/`undefined` to clear the entry.                                                              |
+| `ttlSeconds?` | `number`  | `SYSTEM_CONFIG_CACHE_TTL_SECONDS` | Cache TTL in seconds for the `aio-lib-state` entry. Defaults to 24 hours; `aio-lib-state` caps it at one year (31536000s). |
 
 ## Returns
 

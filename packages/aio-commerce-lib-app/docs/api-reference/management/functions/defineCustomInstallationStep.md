@@ -10,7 +10,7 @@ function defineCustomInstallationStep<TResult = unknown>(
   | CustomInstallationStepDefinition<TResult>;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/domains/custom-installation/define.ts:74](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/management/domains/custom-installation/define.ts#L74)
+Defined in: [aio-commerce-lib-app/source/management/domains/custom-installation/define.ts:74](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-app/source/management/domains/custom-installation/define.ts#L74)
 
 Define a custom installation step with type-safe parameters.
 
@@ -20,9 +20,9 @@ Accepts either a plain function (install only) or an object with `install` and o
 
 ## Type Parameters
 
-| Type Parameter | Default type |
-| -------------- | ------------ |
-| `TResult`      | `unknown`    |
+| Type Parameter                                | Default type |
+| --------------------------------------------- | ------------ |
+| <a id="type-parameter-tresult"></a> `TResult` | `unknown`    |
 
 ## Parameters
 

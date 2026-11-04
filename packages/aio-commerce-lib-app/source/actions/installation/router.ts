@@ -30,15 +30,11 @@ import {
   normalizeExpiredAttempt,
 } from "#management/lifecycle/state";
 
-import {
-  createLifecyclePersistence,
-  isPostAppDeployInvocation,
-} from "./common";
+import { createLifecyclePersistence } from "./common";
 import {
   executeLifecycle,
   findAttempt,
   findLatestAttemptOf,
-  toAttemptHistory,
   toAttemptStatus,
 } from "./lifecycle";
 import { planRequestedOperation } from "./plan";
@@ -57,7 +53,7 @@ export type { CustomScriptsLoader, RuntimeActionFactoryArgs } from "./common";
  * Installation action router.
  *
  * Routes:
- * - GET /                            Get the status of the latest lifecycle operation, with its history on `history=true`, or of one attempt on `attemptId`
+ * - GET /                            Get the status of the latest lifecycle operation or of one attempt on `attemptId`
  * - POST /                           Start the pending plan named by `planId`
  * - POST /plan                       Plan an install, upgrade or uninstall for review
  * - POST /execution                  Execute a started lifecycle attempt (internal, called async)
@@ -74,11 +70,8 @@ export const router = new HttpActionRouter<InstallationActionContext>().use(
  * and answers 404 when no such attempt exists. With `operation` too, the attempt must have run that
  * operation, or the answer is 404.
  *
- * With `history=true`, the body also lists the plans of the latest attempt, the earlier attempts
- * (at most `limit` of them) and the plans made since the latest attempt.
- *
- * With `operation`, the latest attempt is the most recent one that ran that operation, the history
- * and the plans made since only list that operation, and the answer is 204 when no attempt ran it.
+ * With `operation`, the latest attempt is the most recent one that ran that operation, and the
+ * answer is 204 when no attempt ran it.
  */
 router.get("/", {
   handler: async (req, { logger }) => {
@@ -118,28 +111,11 @@ router.get("/", {
         `Found the ${attempt.operation} attempt ${attempt.id} with status ${attempt.status}.`,
       );
 
-      if (req.query.history === "true") {
-        return ok({
-          body: await toAttemptHistory(
-            attempt,
-            state.pendingPlan,
-            persistence,
-            req.query.limit,
-            operation,
-          ),
-        });
-      }
-
       return ok({ body: toAttemptStatus(attempt) });
     }
 
     if (operation) {
       logger.debug(`No ${operation} attempt found`);
-      return noContent();
-    }
-
-    if (isPostAppDeployInvocation(req.headers)) {
-      logger.debug("No lifecycle attempt found");
       return noContent();
     }
 

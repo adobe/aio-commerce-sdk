@@ -9,6 +9,6 @@ type BusinessConfigSchemaField = Exclude<
 >;
 ```
 
-Defined in: [modules/schema/types.ts:31](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-config/source/modules/schema/types.ts#L31)
+Defined in: [modules/schema/types.ts:22](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-config/source/modules/schema/types.ts#L22)
 
 A single static configuration field (one of: list, text, password, email, url, phone, boolean).

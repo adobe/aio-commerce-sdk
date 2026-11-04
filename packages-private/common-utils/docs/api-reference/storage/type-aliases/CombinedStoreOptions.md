@@ -9,25 +9,25 @@ type CombinedStoreOptions<T> = {
 };
 ```
 
-Defined in: [storage/types.ts:75](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages-private/common-utils/source/storage/types.ts#L75)
+Defined in: [storage/types.ts:83](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages-private/common-utils/source/storage/types.ts#L83)
 
 Options for creating a combined store.
 
 ## Type Parameters
 
-| Type Parameter |
-| -------------- |
-| `T`            |
+| Type Parameter                    |
+| --------------------------------- |
+| <a id="type-parameter-t"></a> `T` |
 
 ## Properties
 
 ### cache?
 
 ```ts
-optional cache?: StateStoreOptions;
+cache?: StateStoreOptions;
 ```
 
-Defined in: [storage/types.ts:77](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages-private/common-utils/source/storage/types.ts#L77)
+Defined in: [storage/types.ts:85](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages-private/common-utils/source/storage/types.ts#L85)
 
 Options for the cache (lib-state) store.
 
@@ -36,12 +36,12 @@ Options for the cache (lib-state) store.
 ### persistent?
 
 ```ts
-optional persistent?: FilesStoreOptions & {
+persistent?: FilesStoreOptions & {
   shouldPersist?: PersistPredicate<T>;
 };
 ```
 
-Defined in: [storage/types.ts:80](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages-private/common-utils/source/storage/types.ts#L80)
+Defined in: [storage/types.ts:88](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages-private/common-utils/source/storage/types.ts#L88)
 
 Options for the persistent (lib-files) store.
 
@@ -50,7 +50,7 @@ Options for the persistent (lib-files) store.
 ##### shouldPersist?
 
 ```ts
-optional shouldPersist?: PersistPredicate<T>;
+shouldPersist?: PersistPredicate<T>;
 ```
 
 Predicate to determine if data should be persisted.

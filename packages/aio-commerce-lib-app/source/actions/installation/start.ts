@@ -12,6 +12,7 @@
 
 import { badRequest } from "@adobe/aio-commerce-lib-core/responses";
 
+import { nowIsoString } from "#management/common/workflow/utils";
 import {
   CURRENT_STATE_KEY,
   normalizeExpiredAttempt,
@@ -24,9 +25,16 @@ import {
   startPlannedOperation,
 } from "./lifecycle";
 import { describeActiveAttempt } from "./logging";
-import { getPlanInputs, prepareRequest, resolveOperation } from "./plan";
+import {
+  getPlanInputs,
+  prepareRequest,
+  resolveOperation,
+  toBusinessConfigOnlyConfig,
+} from "./plan";
 
+import type { OrchestrationState } from "#management/common/orchestration";
 import type { RequestHandlerArgs } from "./common";
+import type { PreparedRequest } from "./plan";
 
 /**
  * Starts the pending plan named by `body.planId`, whatever its operation. Plans it again first,
@@ -74,8 +82,15 @@ export async function startPlannedRequest(args: RequestHandlerArgs) {
     );
   }
 
+  // Start derives everything from the pending plan, not from what the request says is installed.
+  const businessConfigOnlyVersion =
+    pendingPlan.operation === "upgrade" &&
+    pendingPlan.source?.snapshotId === null
+      ? pendingPlan.source.appVersion
+      : null;
+
   const resolved = await resolveOperation(
-    request,
+    { ...request, businessConfigOnlyVersion },
     pendingPlan.operation === "uninstall" ? "uninstall" : undefined,
   );
 
@@ -96,8 +111,17 @@ export async function startPlannedRequest(args: RequestHandlerArgs) {
     );
   }
 
+  // Written before running, so the attempt is a normal upgrade and a failure retries from a real baseline.
+  if (businessConfigOnlyVersion && !request.baseline && state) {
+    await writeBusinessConfigOnlyBaseline(
+      request,
+      state,
+      businessConfigOnlyVersion,
+    );
+  }
+
   const planned = await planOperation({
-    ...getPlanInputs(operation, request.appConfig),
+    ...getPlanInputs(operation, request.appConfig, businessConfigOnlyVersion),
     actionVersion: request.actionVersion,
     operation,
     reviewedPlanId: planId,
@@ -114,5 +138,29 @@ export async function startPlannedRequest(args: RequestHandlerArgs) {
     params: request.params,
     planning: planned.planning,
     runtime: request.runtime,
+  });
+}
+
+/**
+ * Stores the baseline of an app installed with only business configuration: the target config
+ * without what needs installation, at the installed version, with no installed data.
+ */
+async function writeBusinessConfigOnlyBaseline(
+  { appConfig, runtime }: PreparedRequest,
+  state: OrchestrationState,
+  installedVersion: string,
+) {
+  const snapshot = {
+    attemptId: null,
+    config: toBusinessConfigOnlyConfig(appConfig, installedVersion),
+    createdAt: nowIsoString(),
+    data: null,
+    id: crypto.randomUUID(),
+  };
+
+  await runtime.snapshotStore.put(snapshot.id, snapshot);
+  await runtime.stateStore.put(CURRENT_STATE_KEY, {
+    ...state,
+    baselineSnapshotId: snapshot.id,
   });
 }

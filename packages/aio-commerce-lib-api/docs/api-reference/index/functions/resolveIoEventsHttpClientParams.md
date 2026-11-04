@@ -7,16 +7,16 @@ function resolveIoEventsHttpClientParams(
 ): IoEventsHttpClientParams;
 ```
 
-Defined in: [aio-commerce-lib-api/source/lib/io-events/helpers.ts:81](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-api/source/lib/io-events/helpers.ts#L81)
+Defined in: [aio-commerce-lib-api/source/lib/io-events/helpers.ts:81](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-api/source/lib/io-events/helpers.ts#L81)
 
 Resolves the [IoEventsHttpClientParams](../type-aliases/IoEventsHttpClientParams.md) from the given App Builder action inputs.
 
 ## Parameters
 
-| Parameter | Type                                                                                                  | Description                                                                                                                |
-| --------- | ----------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| `params`  | `Record`\<`string`, `unknown`\>                                                                       | The App Builder action inputs to resolve the [IoEventsHttpClientParams](../type-aliases/IoEventsHttpClientParams.md) from. |
-| `options` | [`ResolveIoEventsHttpClientParamsOptions`](../type-aliases/ResolveIoEventsHttpClientParamsOptions.md) | -                                                                                                                          |
+| Parameter  | Type                                                                                                  | Description                                                                                                                |
+| ---------- | ----------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `params`   | `Record`\<`string`, `unknown`\>                                                                       | The App Builder action inputs to resolve the [IoEventsHttpClientParams](../type-aliases/IoEventsHttpClientParams.md) from. |
+| `options?` | [`ResolveIoEventsHttpClientParamsOptions`](../type-aliases/ResolveIoEventsHttpClientParamsOptions.md) | -                                                                                                                          |
 
 ## Returns
 

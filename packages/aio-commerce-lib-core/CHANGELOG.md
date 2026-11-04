@@ -1,5 +1,11 @@
 # @adobe/aio-commerce-lib-core
 
+## 1.3.0
+
+### Minor Changes
+
+- [#778](https://github.com/adobe/aio-commerce-sdk/pull/778) [`9145e82`](https://github.com/adobe/aio-commerce-sdk/commit/9145e822b17b99465bfee649fae69d61c11bc0ab) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Add a `stringifyError` helper to the `error` subpath, which converts any thrown value to a readable string.
+
 ## 1.2.0
 
 ### Minor Changes

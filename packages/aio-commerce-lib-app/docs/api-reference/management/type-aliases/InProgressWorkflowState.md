@@ -7,7 +7,7 @@ type InProgressWorkflowState = WorkflowRunStateBase & {
 };
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/common/workflow/types.ts:83](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/management/common/workflow/types.ts#L83)
+Defined in: [aio-commerce-lib-app/source/management/common/workflow/types.ts:89](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-app/source/management/common/workflow/types.ts#L89)
 
 Workflow run state when in progress.
 

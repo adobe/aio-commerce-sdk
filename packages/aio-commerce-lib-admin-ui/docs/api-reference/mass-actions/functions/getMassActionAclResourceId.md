@@ -3,12 +3,12 @@
 ```ts
 function getMassActionAclResourceId(
   metadataId: string,
-  entity: AdminUiEntity,
+  entity: "order" | "product" | "customer",
   actionId: string,
 ): string;
 ```
 
-Defined in: [aio-commerce-lib-admin-ui/source/mass-actions/acl-resource-id.ts:40](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-admin-ui/source/mass-actions/acl-resource-id.ts#L40)
+Defined in: [aio-commerce-lib-admin-ui/source/mass-actions/acl-resource-id.ts:40](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-admin-ui/source/mass-actions/acl-resource-id.ts#L40)
 
 Derives the deterministic Commerce ACL resource id for a mass action.
 
@@ -20,11 +20,11 @@ literal keyword separator for this component:
 
 ## Parameters
 
-| Parameter    | Type                                                       | Description                                                              |
-| ------------ | ---------------------------------------------------------- | ------------------------------------------------------------------------ |
-| `metadataId` | `string`                                                   | The application's `metadata.id` value (e.g. `"approval-dashboard-app"`). |
-| `entity`     | [`AdminUiEntity`](../../api/type-aliases/AdminUiEntity.md) | The grid's Commerce entity (`"order"`, `"product"`, or `"customer"`).    |
-| `actionId`   | `string`                                                   | The action's `id` value from `adminUi.<entity>.massActions[].id`.        |
+| Parameter    | Type                                     | Description                                                              |
+| ------------ | ---------------------------------------- | ------------------------------------------------------------------------ |
+| `metadataId` | `string`                                 | The application's `metadata.id` value (e.g. `"approval-dashboard-app"`). |
+| `entity`     | `"order"` \| `"product"` \| `"customer"` | The grid's Commerce entity (`"order"`, `"product"`, or `"customer"`).    |
+| `actionId`   | `string`                                 | The action's `id` value from `adminUi.<entity>.massActions[].id`.        |
 
 ## Returns
 

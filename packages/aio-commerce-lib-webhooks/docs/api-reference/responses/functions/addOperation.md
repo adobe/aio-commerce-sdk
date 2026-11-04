@@ -8,16 +8,16 @@ function addOperation<TValue = unknown>(
 ): AddOperation<TValue>;
 ```
 
-Defined in: [responses/operations/presets.ts:76](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-webhooks/source/responses/operations/presets.ts#L76)
+Defined in: [responses/operations/presets.ts:76](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-webhooks/source/responses/operations/presets.ts#L76)
 
 Creates an add operation response
 Causes Commerce to add the provided value to the provided path in the triggered event arguments.
 
 ## Type Parameters
 
-| Type Parameter | Default type | Description                       |
-| -------------- | ------------ | --------------------------------- |
-| `TValue`       | `unknown`    | The type of the value to be added |
+| Type Parameter                              | Default type | Description                       |
+| ------------------------------------------- | ------------ | --------------------------------- |
+| <a id="type-parameter-tvalue"></a> `TValue` | `unknown`    | The type of the value to be added |
 
 ## Parameters
 
