@@ -105,11 +105,7 @@ await commerceWebhooksClient.subscribeWebhook({
 });
 ```
 
-Invoice view-button helpers are available from `@adobe/aio-commerce-sdk/admin-ui/invoice-view-buttons`.
-The matching `useInvoiceViewButtonContext` hook is available from
-`@adobe/aio-commerce-sdk/admin-ui/web`. See the
-[Admin UI usage guide](../aio-commerce-lib-admin-ui/docs/usage.md#invoice-view-button-wire-contract)
-for iframe (`view`) and runtime action (`worker`) examples.
+Invoice view-button helpers are available from `@adobe/aio-commerce-sdk/admin-ui/invoice-view-buttons`. The matching `useInvoiceViewButtonContext` hook is available from `@adobe/aio-commerce-sdk/admin-ui/web`. See the [Admin UI usage guide](../aio-commerce-lib-admin-ui/docs/usage.md#invoice-view-button-wire-contract) for iframe (`view`) and runtime action (`worker`) examples.
 
 ## Benefits
 

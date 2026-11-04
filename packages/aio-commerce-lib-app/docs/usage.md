@@ -781,10 +781,7 @@ Each of `order`, `product`, `customer`, `invoice`, `creditMemo`, `shipment`, and
 
 ##### Invoice View Buttons
 
-`adminUi.invoice.viewButtons` declares buttons on the invoice detail page in
-Commerce Admin. Like order buttons, `type: "view"` opens an iframe and
-`type: "worker"` invokes a registered runtime action. Invoice view buttons may
-also set an optional `title` for the iframe page.
+`adminUi.invoice.viewButtons` declares buttons on the invoice detail page in Commerce Admin. Like order buttons, `type: "view"` opens an iframe and `type: "worker"` invokes a registered runtime action. Invoice view buttons may also set an optional `title` for the iframe page.
 
 ```typescript
 adminUi: {
@@ -817,14 +814,9 @@ adminUi: {
 }
 ```
 
-The SDK generates the required web and worker operations, and includes invoice
-buttons in installation and upgrade planning. Button ids must be unique after
-Commerce sanitization. Common fields and variant restrictions match order
-buttons below, with `title` supported only on invoice `view` buttons.
+The SDK generates the required web and worker operations, and includes invoice buttons in installation and upgrade planning. Button ids must be unique after Commerce sanitization. Common fields and variant restrictions match order buttons below, with `title` supported only on invoice `view` buttons.
 
-Use `@adobe/aio-commerce-sdk/admin-ui/invoice-view-buttons` for invoice worker
-request/response and ACL helpers. Iframe pages use
-`useInvoiceViewButtonContext` from `@adobe/aio-commerce-lib-admin-ui/web`.
+Use `@adobe/aio-commerce-sdk/admin-ui/invoice-view-buttons` for invoice worker request/response and ACL helpers. Iframe pages use `useInvoiceViewButtonContext` from `@adobe/aio-commerce-lib-admin-ui/web`.
 
 ##### Order View Buttons
 
