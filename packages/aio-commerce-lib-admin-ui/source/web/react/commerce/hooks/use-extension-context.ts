@@ -11,6 +11,7 @@
  */
 
 import { useMemo } from "react";
+import { finite, is, nullish, number, pipe, string, union } from "valibot";
 
 import { useSharedContext } from "#web/react/commerce/context/shared-context.tsx";
 import { parseInvoiceId, parseOrderId } from "#web/react/commerce/lib";
@@ -24,16 +25,9 @@ import type {
 } from "#web/react/commerce/types";
 import type { Result } from "#web/react/result";
 
-function isOptionalContextId(
-  value: unknown,
-): value is string | number | null | undefined {
-  return (
-    value === undefined ||
-    value === null ||
-    typeof value === "string" ||
-    (typeof value === "number" && Number.isFinite(value))
-  );
-}
+const OptionalContextIdSchema = nullish(
+  union([string(), pipe(number(), finite())]),
+);
 
 /**
  * Returns the context for a mass-action extension point: the selected row IDs the action was
@@ -109,12 +103,12 @@ export function useNativeUiContext(): Result<NativeUiContext> {
 
     const customerId = data.sharedContext.get("customerId");
     const storeId = data.sharedContext.get("storeId");
-    if (!isOptionalContextId(customerId)) {
+    if (!is(OptionalContextIdSchema, customerId)) {
       return error(
         'The Commerce shared context value "customerId" must be a string or finite number when provided.',
       );
     }
-    if (!isOptionalContextId(storeId)) {
+    if (!is(OptionalContextIdSchema, storeId)) {
       return error(
         'The Commerce shared context value "storeId" must be a string or finite number when provided.',
       );

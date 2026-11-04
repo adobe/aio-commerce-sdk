@@ -204,18 +204,23 @@ describe("useNativeUiContext", () => {
     });
   });
 
-  test("omits identifiers that are not provided", async () => {
-    const { result } = await renderHook(() => useNativeUiContext(), {
-      wrapper: provide({}),
-    });
+  test.each([{}, { customerId: null, storeId: null }])(
+    "omits identifiers that are not provided: %j",
+    async (values) => {
+      const { result } = await renderHook(() => useNativeUiContext(), {
+        wrapper: provide(values),
+      });
 
-    expect(result.current).toEqual({ data: {}, error: null });
-  });
+      expect(result.current).toEqual({ data: {}, error: null });
+    },
+  );
 
   test.each([
     { customerId: true },
     { storeId: {} },
     { customerId: Number.NaN },
+    { customerId: Number.POSITIVE_INFINITY },
+    { storeId: Number.NEGATIVE_INFINITY },
   ])(
     "returns an error when a provided identifier is invalid",
     async (values) => {

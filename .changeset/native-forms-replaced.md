@@ -1,6 +1,5 @@
 ---
 "@adobe/aio-commerce-lib-app": minor
-"@adobe/aio-commerce-plugin-app-management": minor
 ---
 
-Support replacing the native order creation form with an app page.
+Add `adminUi.nativeUi.replacedPages` configuration to replace the native order creation form with an app page, including validation, web generation, and installation planning.

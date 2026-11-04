@@ -2,4 +2,4 @@
 "@adobe/aio-commerce-lib-admin-ui": minor
 ---
 
-Expose customer and store identifiers from native UI replacement shared context.
+Add the `useNativeUiContext` React hook to read optional customer and store identifiers from Commerce shared context in native UI replacement pages.
