@@ -11,6 +11,7 @@
  */
 
 import { useMemo } from "react";
+import { finite, is, number, pipe, string, union } from "valibot";
 
 import { useSharedContext } from "#web/react/commerce/context/shared-context.tsx";
 import {
@@ -22,11 +23,15 @@ import { error, ok } from "#web/react/result";
 
 import type {
   CreditMemoViewButtonContext,
+  CustomerContext,
   InvoiceViewButtonContext,
   MassActionContext,
   OrderViewButtonContext,
+  StoreContext,
 } from "#web/react/commerce/types";
 import type { Result } from "#web/react/result";
+
+const ContextIdSchema = union([string(), pipe(number(), finite())]);
 
 /**
  * Returns the context for a mass-action extension point: the selected row IDs the action was
@@ -84,6 +89,58 @@ export function useOrderViewButtonContext(): Result<OrderViewButtonContext> {
 
     return ok({ orderId });
   }, []);
+}
+
+/**
+ * Returns the customer identifier from the Commerce shared context as a string.
+ * Numeric identifiers are converted to strings; existing strings retain leading zeros.
+ *
+ * Returns an error outside the Commerce shared context or when the customer identifier is
+ * missing, null, or not a string or finite number. The store identifier is not required.
+ */
+export function useCustomerContext(): Result<CustomerContext> {
+  const { data, error: contextError } = useSharedContext();
+
+  return useMemo<Result<CustomerContext>>(() => {
+    if (contextError) {
+      return error(contextError.message, { cause: contextError });
+    }
+
+    const customerId = data.sharedContext.get("customerId");
+    if (!is(ContextIdSchema, customerId)) {
+      return error(
+        'The Commerce shared context value "customerId" must be a string or finite number.',
+      );
+    }
+
+    return ok({ customerId: String(customerId) });
+  }, [data, contextError]);
+}
+
+/**
+ * Returns the store identifier from the Commerce shared context as a string.
+ * Numeric identifiers are converted to strings; existing strings retain leading zeros.
+ *
+ * Returns an error outside the Commerce shared context or when the store identifier is
+ * missing, null, or not a string or finite number. The customer identifier is not required.
+ */
+export function useStoreContext(): Result<StoreContext> {
+  const { data, error: contextError } = useSharedContext();
+
+  return useMemo<Result<StoreContext>>(() => {
+    if (contextError) {
+      return error(contextError.message, { cause: contextError });
+    }
+
+    const storeId = data.sharedContext.get("storeId");
+    if (!is(ContextIdSchema, storeId)) {
+      return error(
+        'The Commerce shared context value "storeId" must be a string or finite number.',
+      );
+    }
+
+    return ok({ storeId: String(storeId) });
+  }, [data, contextError]);
 }
 
 /**

@@ -59,6 +59,7 @@ export type {
   InvoiceViewButton,
   MassAction,
   Menu,
+  NativeUiReplacedPage,
   Notifications,
   OrderViewButton,
   ViewMassAction,

@@ -49,6 +49,23 @@ const backendUiV2ComponentCases = [
     config: configWithAdminUiNewsletterGrid,
     label: "newsletter grid columns only",
   },
+  {
+    config: {
+      ...minimalValidConfig,
+      adminUi: {
+        nativeUi: {
+          replacedPages: [
+            {
+              path: "#/create-order",
+              target: "order.create" as const,
+              title: "Create Order (App)",
+            },
+          ],
+        },
+      },
+    },
+    label: "native UI replaced pages",
+  },
   { config: configWithAdminUiMenu, label: "menu only" },
   { config: configWithViewMassActions, label: "view mass actions" },
   { config: configWithWorkerMassActions, label: "worker mass actions" },
@@ -95,6 +112,13 @@ describe("hasBackendUiV2Components", () => {
     {
       config: configWithAdminUiAclOnly,
       label: "only custom ACL resources",
+    },
+    {
+      config: {
+        ...minimalValidConfig,
+        adminUi: { nativeUi: { replacedPages: [] } },
+      },
+      label: "an empty native UI replaced pages list",
     },
   ])("returns false when config has $label", ({ config }) => {
     expect(hasBackendUiV2Components(config)).toBe(false);
@@ -207,6 +231,62 @@ describe("AdminUiSchema", () => {
         });
         expect(result.success, `type "${type}" should be valid`).toBe(true);
       }
+    });
+
+    test.each(["order.create"] as const)(
+      "native UI replaced page target %s is accepted",
+      (target) => {
+        const result = v.safeParse(AdminUiSchema, {
+          nativeUi: {
+            replacedPages: [
+              {
+                path: "#/create-form",
+                sandboxPermissions: ["allow-modals"],
+                target,
+                title: "Create Form",
+              },
+            ],
+          },
+        });
+        expect(result.success).toBe(true);
+      },
+    );
+
+    test.each([
+      "invoice.create",
+      "rma.create",
+      "shipment.create",
+      "creditmemo.create",
+      "product.edit",
+      "product.create",
+      "customer.create",
+      "customer.edit",
+      "order.edit",
+    ])("rejects unsupported native UI replaced page target %s", (target) => {
+      const result = v.safeParse(AdminUiSchema, {
+        nativeUi: {
+          replacedPages: [
+            {
+              path: "#/edit-order",
+              target,
+              title: "Edit Order",
+            },
+          ],
+        },
+      });
+      expect(result.success).toBe(false);
+    });
+
+    test("rejects duplicate native UI replaced page targets", () => {
+      const page = {
+        path: "#/create-order",
+        target: "order.create",
+        title: "Create Order (App)",
+      };
+      const result = v.safeParse(AdminUiSchema, {
+        nativeUi: { replacedPages: [page, page] },
+      });
+      expect(result.success).toBe(false);
     });
 
     test("all three grids configured", () => {

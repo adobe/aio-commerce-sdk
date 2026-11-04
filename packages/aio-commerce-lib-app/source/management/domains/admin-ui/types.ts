@@ -13,8 +13,14 @@
 import type { AdminUi, AdminUiComponentConfig } from "#config/schema/admin-ui";
 import type { DomainPlan } from "#management/common/workflow/resource";
 
-/** The Commerce entity an Admin UI component attaches to (absent for the menu and acl). */
-export type AdminUiComponentEntity = Exclude<keyof AdminUi, "menu" | "acl">;
+/**
+ * The Commerce entity an Admin UI component attaches to; absent for menu, ACL,
+ * and native UI replacements.
+ */
+export type AdminUiComponentEntity = Exclude<
+  keyof AdminUi,
+  "menu" | "acl" | "nativeUi"
+>;
 
 /**
  * The addressable kinds of Admin UI component an upgrade operation can target,
@@ -23,16 +29,17 @@ export type AdminUiComponentEntity = Exclude<keyof AdminUi, "menu" | "acl">;
 export type AdminUiComponentKind =
   | "acl"
   | "menu"
-  | keyof NonNullable<AdminUi["order"]>;
+  | keyof NonNullable<AdminUi["order"]>
+  | keyof NonNullable<AdminUi["nativeUi"]>;
 
 /** Locates a single Admin UI component within the `adminUi` block. */
 export type AdminUiComponentRef = {
   kind: AdminUiComponentKind;
 
-  /** The entity the component attaches to; absent for the top-level menu. */
+  /** The entity this component attaches to; absent for menu, ACL, and native UI replacements. */
   entity?: AdminUiComponentEntity;
 
-  /** Item id for array-based components (mass actions, view buttons). */
+  /** Item id for array-based components (mass actions, view buttons, and native UI replacements). */
   id?: string;
 };
 

@@ -62,6 +62,16 @@ export type OrderViewButtonContext = {
   orderId: string;
 };
 
+/** The customer identifier provided by the Commerce shared context. */
+export type CustomerContext = {
+  customerId: string;
+};
+
+/** The store identifier provided by the Commerce shared context. */
+export type StoreContext = {
+  storeId: string;
+};
+
 /** The context shared with invoice view-button extension points. */
 export type InvoiceViewButtonContext = {
   invoiceId: string;

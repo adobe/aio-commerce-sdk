@@ -240,6 +240,9 @@ export function requiresWebSource(adminUi: AdminUi | undefined): boolean {
   if (adminUi?.menu !== undefined) {
     return true;
   }
+  if (adminUi?.nativeUi?.replacedPages.length) {
+    return true;
+  }
   if (
     ADMIN_UI_VIEW_BUTTON_ENTITIES.flatMap(
       (key) => adminUi?.[key]?.viewButtons ?? [],
@@ -255,7 +258,7 @@ export function requiresWebSource(adminUi: AdminUi | undefined): boolean {
 /**
  * Builds the ext.config.yaml for the Admin UI v2 extension (`commerce/backend-ui/2`).
  * Derives `workerProcess` and `view` operation declarations from `adminUi` config.
- * Adds a `view` operation and `web` source when view-type entries or `adminUi.menu` is configured.
+ * Adds a `view` operation and `web` source when view-type entries, native UI replaced pages, or `adminUi.menu` is configured.
  * @param appConfig - Parsed app configuration.
  */
 export function buildAdminUiV2ExtConfig(
