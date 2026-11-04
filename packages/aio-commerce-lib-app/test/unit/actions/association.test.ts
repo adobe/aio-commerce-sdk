@@ -12,6 +12,9 @@
 
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
+import { associationRuntimeAction } from "#actions/association/index";
+import { createRuntimeActionParams } from "#test/fixtures/actions";
+
 const { mockSetAssociationData, mockClearAssociationData } = vi.hoisted(() => ({
   mockClearAssociationData: vi.fn(),
   mockSetAssociationData: vi.fn(),
@@ -32,9 +35,6 @@ vi.mock("@adobe/aio-commerce-lib-auth", () => ({
     technicalAccountId: "tech-1",
   })),
 }));
-
-import { associationRuntimeAction } from "#actions/association/index";
-import { createRuntimeActionParams } from "#test/fixtures/actions";
 
 const VALID_BODY = {
   commerceBaseUrl: "https://example.com",

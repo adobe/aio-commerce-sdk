@@ -59,6 +59,7 @@ export async function run(
     return;
   }
 
+  consola.log("");
   consola.info("Generating app manifest...");
 
   const contents = stringify(appConfig, null, 2);

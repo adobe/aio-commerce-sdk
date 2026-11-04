@@ -14,6 +14,7 @@ import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
 import { getProjectRootDirectory } from "@aio-commerce-sdk/scripting-utils/project";
 import consola from "consola";
 
+import { ensureExtensionPointsOrder } from "#commands/common/extension-points";
 import { run as generateActions } from "#commands/generate/actions/main";
 import { run as generateManifest } from "#commands/generate/manifest/main";
 import { run as generateSchema } from "#commands/generate/schema/main";
@@ -35,6 +36,7 @@ export async function run(
   await generateActions(appManifest, projectRoot, templatesDir);
   await generateManifest(appManifest, projectRoot);
   await generateSchema(appManifest, projectRoot);
+  await ensureExtensionPointsOrder(projectRoot);
 }
 
 /** Runs the postinstall hook */

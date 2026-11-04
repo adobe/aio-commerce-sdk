@@ -18,7 +18,7 @@ import { createCommerceEventsApiClient } from "#commerce/index";
 import { COMMERCE_EVENTS_API_PAYLOADS } from "#test/fixtures/commerce-events-api-payloads";
 import { TEST_ADOBE_COMMERCE_HTTP_CLIENT_PARAMS_PAAS } from "#test/fixtures/http-client-params";
 
-const REGEX_OAUTH_TOKEN = /^OAuth/;
+const REGEX_OAUTH_TOKEN = /^OAuth/u;
 
 // See: https://vitest.dev/guide/mocking.html#requests
 const server = setupServer();

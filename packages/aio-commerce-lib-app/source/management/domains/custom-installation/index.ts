@@ -14,12 +14,10 @@
 
 export { createCustomInstallationStep } from "./branch";
 export { defineCustomInstallationStep } from "./define";
+export { readRunHistory } from "./history";
 
 export type {
   CustomInstallationStepDefinition,
   CustomInstallationStepHandler,
 } from "./define";
-export type {
-  CustomInstallationSnapshotData,
-  CustomInstallationStepIdentity,
-} from "./types";
+export type { CustomInstallationStepIdentity } from "./types";

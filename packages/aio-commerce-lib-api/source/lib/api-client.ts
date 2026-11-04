@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Adobe. All rights reserved.
+ * Copyright 2026 Adobe. All rights reserved.
  * This file is licensed to you under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License. You may obtain a copy
  * of the License at http://www.apache.org/licenses/LICENSE-2.0
@@ -46,16 +46,11 @@ export class ApiClient {
     // biome-ignore lint/suspicious/noExplicitAny: We can't know the type of the argument/return type.
     TFunctions extends Record<string, ApiFunction<TClient, any[], any>>,
   >(client: TClient, functions: TFunctions) {
-    const wrapped = {} as ApiClientRecord<TClient, TFunctions>;
-
-    for (const key in functions) {
-      if (Object.hasOwn(functions, key)) {
-        const fn = functions[key];
-        // biome-ignore lint/suspicious/noExplicitAny: We can't know the type of the argument/return type.
-        wrapped[key] = ((...args: unknown[]) => fn(client, ...args)) as any;
-      }
-    }
-
-    return wrapped;
+    return Object.fromEntries(
+      Object.entries(functions).map(([key, fn]) => [
+        key,
+        (...args: unknown[]) => fn(client, ...args),
+      ]),
+    ) as ApiClientRecord<TClient, TFunctions>;
   }
 }

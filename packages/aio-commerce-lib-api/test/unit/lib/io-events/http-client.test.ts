@@ -21,7 +21,7 @@ import { setupTestContext } from "#test/setup";
 import type { ImsAuthParams } from "@adobe/aio-commerce-lib-auth";
 import type { IoEventsHttpClientParams } from "#index";
 
-const DOUBLE_SLASH_REGEX = /(?<!:)\/\//;
+const DOUBLE_SLASH_REGEX = /(?<!:)\/\//u;
 
 vi.mock("@adobe/aio-commerce-lib-auth", async () => {
   const original = await vi.importActual("@adobe/aio-commerce-lib-auth");

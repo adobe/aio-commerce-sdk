@@ -41,7 +41,7 @@ Other extensibility domains (webhooks, events, business config) are added separa
 | Extension point          | Entities                                                            | Variants      | Server handler | Reference                                                          |
 | ------------------------ | ------------------------------------------------------------------- | ------------- | -------------- | ------------------------------------------------------------------ |
 | Grid columns             | order, product, customer, invoice, creditMemo, shipment, newsletter | worker only   | yes            | [grid-columns](references/grid-columns.md)                         |
-| Mass actions             | order, product, customer, newsletter                                | view / worker | worker only    | [mass-actions](references/mass-actions.md)                         |
+| Mass actions             | order, product, customer                                            | view / worker | worker only    | [mass-actions](references/mass-actions.md)                         |
 | Order view buttons       | order only                                                          | view / worker | worker only    | [order-view-buttons](references/order-view-buttons.md)             |
 | Invoice view buttons     | invoice only                                                        | view / worker | worker only    | [invoice-view-buttons](references/invoice-view-buttons.md)         |
 | Credit memo view buttons | creditMemo only                                                     | view / worker | worker only    | [credit-memo-view-buttons](references/credit-memo-view-buttons.md) |

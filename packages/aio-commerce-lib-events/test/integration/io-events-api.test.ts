@@ -29,7 +29,7 @@ import { ADOBE_IO_EVENTS_API_PAYLOADS } from "#test/fixtures/io-events-api-paylo
 import type { ImsAuthParams } from "@adobe/aio-commerce-lib-auth";
 
 // Regex for validating base64 encoded strings
-const BASE64_REGEX = /^[A-Za-z0-9+/]*={0,2}$/;
+const BASE64_REGEX = /^[A-Za-z0-9+/]*={0,2}$/u;
 
 vi.mock("@adobe/aio-commerce-lib-auth", async () => {
   const original = await vi.importActual("@adobe/aio-commerce-lib-auth");

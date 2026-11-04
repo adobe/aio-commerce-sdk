@@ -12,14 +12,6 @@
 
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
-const { mockGetSystemConfigByKey } = vi.hoisted(() => ({
-  mockGetSystemConfigByKey: vi.fn(),
-}));
-
-vi.mock("@adobe/aio-commerce-lib-config", () => ({
-  getSystemConfigByKey: mockGetSystemConfigByKey,
-}));
-
 import {
   EventNotFoundError,
   EventsDataNotInitializedError,
@@ -28,6 +20,14 @@ import {
 import { publishEvent, resolveIoEventCode } from "#lib/events";
 
 import type { AdobeIoEventsApiClient } from "@adobe/aio-commerce-lib-events/io-events";
+
+const { mockGetSystemConfigByKey } = vi.hoisted(() => ({
+  mockGetSystemConfigByKey: vi.fn(),
+}));
+
+vi.mock("@adobe/aio-commerce-lib-config", () => ({
+  getSystemConfigByKey: mockGetSystemConfigByKey,
+}));
 
 function createMockClient() {
   return {

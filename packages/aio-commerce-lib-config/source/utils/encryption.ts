@@ -17,7 +17,7 @@ const IV_LENGTH = 12;
 export const KEY_LENGTH_BYTES = 32;
 export const KEY_LENGTH_HEX = KEY_LENGTH_BYTES * 2;
 export const ENCRYPTED_PREFIX = "enc:";
-export const HEX_PATTERN = /^[\da-f]+$/i;
+export const HEX_PATTERN = /^[\da-f]+$/iu;
 
 const ENCRYPTED_PARTS_COUNT = 3;
 

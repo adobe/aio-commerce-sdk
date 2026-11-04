@@ -285,7 +285,7 @@ export class HttpActionRouter<TContext extends BaseContext = BaseContext> {
   /**
    * Validates and extracts route parameters.
    */
-  private async validateParams(
+  private static async validateParams(
     route: CompiledRoute,
     params: Record<string, string>,
   ) {
@@ -304,7 +304,7 @@ export class HttpActionRouter<TContext extends BaseContext = BaseContext> {
   /**
    * Validates request body.
    */
-  private async validateBody(route: CompiledRoute, body: unknown) {
+  private static async validateBody(route: CompiledRoute, body: unknown) {
     if (!route.body) {
       return { data: body, success: true };
     }
@@ -320,7 +320,7 @@ export class HttpActionRouter<TContext extends BaseContext = BaseContext> {
   /**
    * Validates query parameters.
    */
-  private async validateQuery(
+  private static async validateQuery(
     route: CompiledRoute,
     query: Record<string, string>,
   ) {
@@ -337,7 +337,7 @@ export class HttpActionRouter<TContext extends BaseContext = BaseContext> {
   }
 
   /** Handles a matched route by validating inputs and calling the handler. */
-  private async handleRoute(
+  private static async handleRoute(
     route: CompiledRoute,
     match: RegExpExecArray,
     body: unknown,
@@ -352,7 +352,7 @@ export class HttpActionRouter<TContext extends BaseContext = BaseContext> {
       params[key] = decodeURIComponent(match[i + 1] || "");
     });
 
-    const paramsResult = await this.validateParams(route, params);
+    const paramsResult = await HttpActionRouter.validateParams(route, params);
     if (!paramsResult.success) {
       return badRequest({
         body: {
@@ -362,7 +362,7 @@ export class HttpActionRouter<TContext extends BaseContext = BaseContext> {
       });
     }
 
-    const bodyResult = await this.validateBody(route, body);
+    const bodyResult = await HttpActionRouter.validateBody(route, body);
     if (!bodyResult.success) {
       return badRequest({
         body: {
@@ -372,7 +372,7 @@ export class HttpActionRouter<TContext extends BaseContext = BaseContext> {
       });
     }
 
-    const queryResult = await this.validateQuery(route, query);
+    const queryResult = await HttpActionRouter.validateQuery(route, query);
     if (!queryResult.success) {
       return badRequest({
         body: {
@@ -443,7 +443,7 @@ export class HttpActionRouter<TContext extends BaseContext = BaseContext> {
         }
 
         // biome-ignore lint/performance/noAwaitInLoops: must stop at the first matching route
-        return await this.handleRoute(
+        return await HttpActionRouter.handleRoute(
           route,
           match,
           body,

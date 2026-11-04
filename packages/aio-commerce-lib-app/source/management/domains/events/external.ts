@@ -16,7 +16,6 @@ import { deprecatedExternalEventsStep } from "#management/deprecated/domains/eve
 
 import { applyEventingLeaf } from "./apply";
 import { planExternalEvents } from "./plan";
-import { createExternalEvents } from "./provisioning";
 import { EXTERNAL_PROVIDER_TYPE } from "./utils";
 
 import type {
@@ -52,8 +51,7 @@ export const externalEventsStep = defineLeafStep({
 });
 
 /**
- * Applies an external eventing domain plan by delegating to the shared leaf convergence, supplying the
- * external install/uninstall handlers it reuses to converge providers.
+ * Applies an external eventing domain plan.
  *
  * @param plan - The eventing domain plan produced by `planExternalEvents`.
  * @param context - The attempt-scoped execution context.
@@ -62,9 +60,5 @@ export function applyExternalEvents(
   plan: EventingDomainPlan,
   context: ApplyContext<EventsStepContext>,
 ): Promise<ApplyResult<EventingSnapshotData>> {
-  return applyEventingLeaf(plan, context, {
-    install: createExternalEvents,
-    isCommerce: false,
-    type: EXTERNAL_PROVIDER_TYPE,
-  });
+  return applyEventingLeaf(plan, context, EXTERNAL_PROVIDER_TYPE);
 }

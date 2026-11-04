@@ -145,6 +145,28 @@ export function getScriptModuleOrThrow(
   return scriptModule;
 }
 
+/** The custom installation step the config declares with the given name, if any. */
+export function findDeclaredStep(
+  config: CommerceAppConfigOutputModel,
+  name: string,
+): CustomInstallationStep | undefined {
+  return hasCustomInstallationSteps(config)
+    ? config.installation.customInstallationSteps.find(
+        (step) => step.name === name,
+      )
+    : undefined;
+}
+
+/**
+ * The name of the leaf step that runs a custom installation step, which is also the key its run
+ * record is stored under.
+ *
+ * @param name - The `name` of the custom installation step.
+ */
+export function getCustomScriptStepName(name: string): string {
+  return camelcase(name);
+}
+
 /**
  * Creates a leaf step for executing a single custom installation script.
  */
@@ -159,8 +181,16 @@ export function createCustomScriptStep(
         description,
         label: name,
       },
+      uninstall: {
+        description,
+        label: name,
+      },
+      upgrade: {
+        description,
+        label: name,
+      },
     },
-    name: camelcase(name),
+    name: getCustomScriptStepName(name),
   });
 }
 

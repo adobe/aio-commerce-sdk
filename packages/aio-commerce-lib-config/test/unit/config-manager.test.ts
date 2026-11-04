@@ -44,7 +44,7 @@ import type { RuntimeActionParams } from "@adobe/aio-commerce-lib-core/params";
 import type { BusinessConfigSchema, ConfigValue } from "#index";
 import type { ScopeTree } from "#modules/scope-tree/types";
 
-const INVALID_SCOPE_RE = /INVALID_SCOPE/;
+const INVALID_SCOPE_RE = /INVALID_SCOPE/u;
 
 const MockState = createMockLibState();
 const MockFiles = createMockLibFiles();
