@@ -9,6 +9,7 @@ This package provides utilities for interacting with the Admin UI SDK API and th
 - **[Menu Constants](#menu-constants)**: Named constants and type guards for Commerce Admin menu IDs
 - **[Order View Button Wire Contract](#order-view-button-wire-contract)**: Request and response builders for runtime actions handling `commerce/backend-ui/2` order view button extensions
 - **[Invoice View Button Wire Contract](#invoice-view-button-wire-contract)**: Request and response builders and browser context for invoice view button extensions
+- **[Credit Memo View Button Wire Contract](#credit-memo-view-button-wire-contract)**: Request and response builders and browser context for credit memo view button extensions
 - **[Permission Client](#permission-client)**: Check whether the current Commerce admin user has been granted a per-app ACL resource
 - **[Web Extension App](#web-extension-app)**: Mount a `commerce/backend-ui/2` iframe app in the browser and read host-provided context through React hooks
 
@@ -131,7 +132,7 @@ When Commerce POSTs to the app's runtime action handler, this package provides t
 
 ##### Parsing the incoming request
 
-Commerce POSTs a body of the shape `{ requestId, id, orderId }` to the handler. Use `parseOrderViewButtonRequest` to validate and narrow it:
+Commerce POSTs `{ orderId, buttonId }` to the handler and sends the request ID in the `X-Request-ID` header. Pass the raw runtime action `params` to `parseOrderViewButtonRequest`; it maps `buttonId` to `id` and the `X-Request-ID` header (from `__ow_headers`) to `requestId`, then validates and narrows the result to `{ requestId, id, orderId }`:
 
 ```typescript
 import { parseOrderViewButtonRequest } from "@adobe/aio-commerce-lib-admin-ui/order-view-buttons";
@@ -186,7 +187,7 @@ Use `useHostConnection().actions.close()` to complete the iframe flow, or `actio
 
 #### Runtime action buttons (`worker`)
 
-`parseInvoiceViewButtonRequest` validates `{ requestId, id, invoiceId }`, with each field a non-empty string. `id` identifies the clicked button and `invoiceId` identifies the invoice being viewed; an `orderId` cannot substitute for it. Extra runtime parameters are stripped from the parsed result.
+`parseInvoiceViewButtonRequest` validates `{ requestId, id, invoiceId }`, with each field a non-empty string. `id` identifies the clicked button and `invoiceId` identifies the invoice being viewed; an `orderId` cannot substitute for it. Extra runtime parameters are stripped from the parsed result. Commerce POSTs `{ invoiceId, buttonId }` and sends the request ID in the `X-Request-ID` header; pass the raw runtime action `params` and the parser maps `buttonId` to `id` and the `X-Request-ID` header (from `__ow_headers`) to `requestId`.
 
 ```typescript
 import {
@@ -210,6 +211,51 @@ Malformed requests throw `CommerceSdkValidationError`. The success helper return
 
 > [!NOTE]
 > The invoice-specific contract uses `invoiceId` by analogy with the order view-button contract. Confirm that your Commerce Admin UI host version supplies this field and URL parameter before deployment. These helpers do not infer a related order ID or any other invoice fields.
+
+### Credit Memo View Button Wire Contract
+
+Credit memo view buttons registered under `adminUi.creditMemo.viewButtons` have iframe (`type: "view"`) and runtime action (`type: "worker"`) variants. Registration is configured through `@adobe/aio-commerce-lib-app`; these helpers cover the handler and browser sides.
+
+#### Iframe buttons (`view`)
+
+The credit memo context is `{ creditMemoId: string }`. Use `useCreditMemoViewButtonContext` from the `./web` entrypoint to read `creditMemoId` from the page URL, either in the search parameters or a hash-route query:
+
+```text
+https://<extension-host>/index.html<path>?creditMemoId=<creditMemoId>
+```
+
+Use `useHostConnection().actions.close()` to complete the iframe flow, or `actions.closeWithError()` to signal failure, just as with order view buttons.
+
+#### Runtime action buttons (`worker`)
+
+`parseCreditMemoViewButtonRequest` validates `{ requestId, id, creditMemoId }`, with each field a non-empty string. `id` identifies the clicked button and `creditMemoId` identifies the credit memo being viewed; an `orderId` or `invoiceId` cannot substitute for it. Extra runtime parameters are stripped from the parsed result.
+
+Commerce POSTs `{ creditMemoId, buttonId }` and sends the request ID in the `X-Request-ID` header; pass the raw runtime action `params` and the parser maps `buttonId` to `id` and the `X-Request-ID` header (from `__ow_headers`) to `requestId`.
+
+```typescript
+import {
+  creditMemoViewButtonErrorResponse,
+  okCreditMemoViewButtonResponse,
+  parseCreditMemoViewButtonRequest,
+} from "@adobe/aio-commerce-lib-admin-ui/credit-memo-view-buttons";
+
+export async function main(params: unknown) {
+  try {
+    const { creditMemoId } = parseCreditMemoViewButtonRequest(params);
+    await refundOffline(creditMemoId);
+    return okCreditMemoViewButtonResponse();
+  } catch {
+    return creditMemoViewButtonErrorResponse(
+      500,
+      "Could not refund the credit memo",
+    );
+  }
+}
+```
+
+Malformed requests throw `CommerceSdkValidationError`. The success helper returns HTTP 200 with an empty `{}` body. The error helper preserves the supplied status code and returns a `{ message }` body. These response envelopes follow the order view-button contract.
+
+Use `getCreditMemoViewButtonAclResourceId(metadataId, buttonId)` to derive the ACL resource ID (`…_creditmemo_viewbuttons_<buttonId>`) for an `aclProtected` button.
 
 ### Mass Action Worker Contract
 
@@ -430,12 +476,14 @@ The same hierarchical scheme extends to the other Admin UI components. Each help
 - `getMassActionAclResourceId(metadataId, entity, actionId)` — a mass action, where `entity` is `order`, `product`, or `customer` (mass actions are not supported on `invoice`, `creditMemo`, `shipment`, or `newsletter`), and `actionId` is its `adminUi.<entity>.massActions[].id`.
 - `getOrderViewButtonAclResourceId(metadataId, buttonId)` — an order view button (view buttons exist only on the order entity), where `buttonId` is its `adminUi.order.viewButtons[].id`.
 - `getInvoiceViewButtonAclResourceId(metadataId, buttonId)` — an invoice view button, where `buttonId` is its `adminUi.invoice.viewButtons[].id`.
+- `getCreditMemoViewButtonAclResourceId(metadataId, buttonId)` — a credit memo view button, where `buttonId` is its `adminUi.creditMemo.viewButtons[].id`.
 
 ```typescript
 import { getGridColumnAclResourceId } from "@adobe/aio-commerce-lib-admin-ui/grid-columns";
 import { getMassActionAclResourceId } from "@adobe/aio-commerce-lib-admin-ui/mass-actions";
 import { getOrderViewButtonAclResourceId } from "@adobe/aio-commerce-lib-admin-ui/order-view-buttons";
 import { getInvoiceViewButtonAclResourceId } from "@adobe/aio-commerce-lib-admin-ui/invoice-view-buttons";
+import { getCreditMemoViewButtonAclResourceId } from "@adobe/aio-commerce-lib-admin-ui/credit-memo-view-buttons";
 
 getGridColumnAclResourceId("approval-dashboard-app", "order", "order_status");
 // → "Magento_CommerceBackendUix::adminuisdk_app_approval_dashboard_app_order_gridcolumns_order_status"
@@ -448,6 +496,9 @@ getOrderViewButtonAclResourceId("approval-dashboard-app", "approve-order");
 
 getInvoiceViewButtonAclResourceId("billing-app", "export-invoice");
 // → "Magento_CommerceBackendUix::adminuisdk_app_billing_app_invoice_viewbuttons_export_invoice"
+
+getCreditMemoViewButtonAclResourceId("refund-app", "refund-offline");
+// → "Magento_CommerceBackendUix::adminuisdk_app_refund_app_creditmemo_viewbuttons_refund_offline"
 ```
 
 Like the menu helper, each segment is sanitized independently and a blank `metadataId` yields an empty string. Pass any of these ids to `check()` or `require()`.
@@ -526,8 +577,9 @@ The same shape applies to the other components — swap in the matching trio of 
 - **Grid columns**: `parseGridRequest` → `getGridColumnAclResourceId(appId, gridType, columnId)` → `okGridResponse` / `errorGridResponse`.
 - **Order view buttons**: `parseOrderViewButtonRequest` → `getOrderViewButtonAclResourceId(appId, buttonId)` → `okOrderViewButtonResponse` / `orderViewButtonErrorResponse`.
 - **Invoice view buttons**: `parseInvoiceViewButtonRequest` → `getInvoiceViewButtonAclResourceId(appId, buttonId)` → `okInvoiceViewButtonResponse` / `invoiceViewButtonErrorResponse`.
+- **Credit memo view buttons**: `parseCreditMemoViewButtonRequest` → `getCreditMemoViewButtonAclResourceId(appId, buttonId)` → `okCreditMemoViewButtonResponse` / `creditMemoViewButtonErrorResponse`.
 
-For grid columns, gate the work per the request's `gridType`; each view-button helper fixes its entity to `order` or `invoice`, so only the `appId` and `buttonId` segments vary.
+For grid columns, gate the work per the request's `gridType`; each view-button helper fixes its entity to `order`, `invoice`, or `creditmemo`, so only the `appId` and `buttonId` segments vary.
 
 #### Custom ACL Resources
 

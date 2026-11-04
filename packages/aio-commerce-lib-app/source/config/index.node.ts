@@ -53,6 +53,7 @@ export { hasWebhooks } from "./schema/webhooks";
 export type {
   AdminUiConfig,
   AdminUiConfiguration,
+  CreditMemoViewButton,
   GridColumn,
   GridColumns,
   InvoiceViewButton,

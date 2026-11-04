@@ -14,10 +14,15 @@ import { useMemo } from "react";
 import { finite, is, number, pipe, string, union } from "valibot";
 
 import { useSharedContext } from "#web/react/commerce/context/shared-context.tsx";
-import { parseInvoiceId, parseOrderId } from "#web/react/commerce/lib";
+import {
+  parseCreditMemoId,
+  parseInvoiceId,
+  parseOrderId,
+} from "#web/react/commerce/lib";
 import { error, ok } from "#web/react/result";
 
 import type {
+  CreditMemoViewButtonContext,
   CustomerContext,
   InvoiceViewButtonContext,
   MassActionContext,
@@ -159,5 +164,29 @@ export function useInvoiceViewButtonContext(): Result<InvoiceViewButtonContext> 
     }
 
     return ok({ invoiceId });
+  }, []);
+}
+
+/**
+ * Returns the credit memo ID for a credit memo view-button extension point.
+ * Reads `creditMemoId` from the page URL search parameters or hash-route query.
+ * Returns an error when the credit memo ID is missing or blank.
+ * @example
+ * ```tsx
+ * const { data, error } = useCreditMemoViewButtonContext();
+ * if (error) throw error;
+ * return <span>{data.creditMemoId}</span>;
+ * ```
+ */
+export function useCreditMemoViewButtonContext(): Result<CreditMemoViewButtonContext> {
+  return useMemo<Result<CreditMemoViewButtonContext>>(() => {
+    const creditMemoId = parseCreditMemoId(globalThis.location.href);
+    if (creditMemoId === null || creditMemoId.trim() === "") {
+      return error(
+        "Could not find a credit memo ID. Is this frame running as a credit memo view-button extension point?",
+      );
+    }
+
+    return ok({ creditMemoId });
   }, []);
 }

@@ -26,6 +26,14 @@ export function parseInvoiceId(href: string): string | null {
   return parseViewButtonId(href, "invoiceId");
 }
 
+/**
+ * Extracts the credit memo ID from the given absolute URL.
+ * @param href - The URL to read the credit memo ID from (typically `window.location.href`).
+ */
+export function parseCreditMemoId(href: string): string | null {
+  return parseViewButtonId(href, "creditMemoId");
+}
+
 /** Reads a view-button identifier from the URL search parameters or hash-route query. */
 function parseViewButtonId(href: string, key: string): string | null {
   const urlObj = new URL(href);

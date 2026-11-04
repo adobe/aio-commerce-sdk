@@ -184,6 +184,14 @@ const InvoiceViewButtonSchema = v.variant("type", [
   ViewButtonWorkerSchema,
 ]);
 
+const CreditMemoViewButtonSchema = v.variant("type", [
+  v.strictObject({
+    ...ViewButtonViewSchema.entries,
+    title: v.optional(nonEmptyStringValueSchema("view button page title")),
+  }),
+  ViewButtonWorkerSchema,
+]);
+
 // ─── Entity extension points ──────────────────────────────────────────────────
 
 const MassActionsSchema = v.pipe(
@@ -226,8 +234,20 @@ const AdminUiInvoiceSchema = v.object({
   ),
 });
 
-// Shared by invoice, credit memo, shipment, and newsletter: unlike order/product/customer,
-// these expose grid columns only — no mass actions or view buttons.
+const AdminUiCreditMemoSchema = v.object({
+  gridColumns: v.optional(GridColumnsSchema),
+  viewButtons: v.optional(
+    v.pipe(
+      v.array(CreditMemoViewButtonSchema),
+      v.check(
+        (items) => hasUniqueSanitizedIds(items),
+        "Credit memo view button ids must be unique after Commerce id sanitization.",
+      ),
+    ),
+  ),
+});
+
+// Shared by shipment and newsletter: these expose grid columns only — no mass actions or view buttons.
 const AdminUiGridOnlyEntitySchema = v.object({
   gridColumns: v.optional(GridColumnsSchema),
 });
@@ -375,11 +395,11 @@ const AdminUiAclSchema = v.pipe(
 
 /**
  * Schema for the `adminUi` config section.
- * Supports grid column extensions, mass actions, order and invoice view buttons, menu, native UI replaced pages, and custom ACL resources on `commerce/backend-ui/2`.
+ * Supports grid column extensions, mass actions, order, invoice, and credit memo view buttons, menu, native UI replaced pages, and custom ACL resources on `commerce/backend-ui/2`.
  */
 export const AdminUiSchema = v.object({
   acl: v.optional(AdminUiAclSchema),
-  creditMemo: v.optional(AdminUiGridOnlyEntitySchema),
+  creditMemo: v.optional(AdminUiCreditMemoSchema),
   customer: v.optional(AdminUiGridAndMassActionEntitySchema),
   invoice: v.optional(AdminUiInvoiceSchema),
   menu: v.optional(MenuSchema),
@@ -427,6 +447,7 @@ export const ADMIN_UI_MASS_ACTION_ENTITIES = [
 export const ADMIN_UI_VIEW_BUTTON_ENTITIES = [
   "order",
   "invoice",
+  "creditMemo",
 ] as const satisfies readonly Exclude<keyof AdminUi, "acl" | "menu">[];
 
 /** A custom ACL resource entry: a leaf or a one-level group of leaves. */
@@ -444,6 +465,7 @@ export type AdminUiComponentConfig =
   | v.InferOutput<typeof OrderViewButtonSchema>
   | v.InferOutput<typeof NativeUiReplacedPageSchema>
   | v.InferOutput<typeof InvoiceViewButtonSchema>
+  | v.InferOutput<typeof CreditMemoViewButtonSchema>
   | AclResourceEntry;
 
 /**
@@ -478,6 +500,11 @@ export type OrderViewButton = v.InferInput<typeof OrderViewButtonSchema>;
 
 /** An invoice view button registration entry (view or worker variant). */
 export type InvoiceViewButton = v.InferInput<typeof InvoiceViewButtonSchema>;
+
+/** A credit memo view button registration entry (view or worker variant). */
+export type CreditMemoViewButton = v.InferInput<
+  typeof CreditMemoViewButtonSchema
+>;
 
 /**
  * Inlined notification strings on an `adminUi` registration entry.
@@ -533,6 +560,7 @@ export function hasBackendUiV2Components<T extends AnyCommerceAppConfig>(
       adminUi.invoice?.gridColumns ||
       adminUi.invoice?.viewButtons?.length ||
       adminUi.creditMemo?.gridColumns ||
+      adminUi.creditMemo?.viewButtons?.length ||
       adminUi.shipment?.gridColumns ||
       adminUi.nativeUi?.replacedPages?.length ||
       adminUi.newsletter?.gridColumns,

@@ -2,6 +2,22 @@
   "skill_name": "commerce-app-admin-ui",
   "evals": [
     {
+      "id": 10,
+      "name": "credit-memo-view-and-worker-buttons",
+      "prompt": "In my initialized Commerce app, add a Credit memo details iframe button on the credit memo detail page with title 'Custom credit memo details' and a Refund Offline worker button using creditmemo/refund-offline. Include a confirmation, success/error notifications, and the matching iframe context and runtime helpers.",
+      "expected_output": "Declares adminUi.creditMemo.viewButtons with a view entry using path, title, and sandboxPermissions and a worker entry using runtimeAction, timeout, confirm, and notifications. Uses useCreditMemoViewButtonContext plus useHostConnection for the iframe, and credit memo-specific request/response helpers for the worker. Regenerates backend-ui/2 operations without placing credit memo buttons under order or invoice or introducing credit memo mass actions.",
+      "files": [],
+      "assertions": [
+        "Declares both buttons under adminUi.creditMemo.viewButtons",
+        "View entry includes path and title but no runtimeAction or timeout",
+        "Worker entry includes runtimeAction creditmemo/refund-offline and notifications but no path or sandboxPermissions",
+        "Worker imports parseCreditMemoViewButtonRequest and credit memo response helpers from @adobe/aio-commerce-sdk/admin-ui/credit-memo-view-buttons",
+        "Iframe reads data.creditMemoId using useCreditMemoViewButtonContext after handling hook errors",
+        "Iframe uses useHostConnection actions to close on success or failure",
+        "Registers the worker action and runs generation to wire workerProcess and view operations"
+      ]
+    },
+    {
       "id": 9,
       "name": "invoice-view-and-worker-buttons",
       "prompt": "In my initialized Commerce app, add an Invoice details iframe button on the invoice detail page with title 'Custom invoice details' and a Send invoice worker button using invoice/send. Include a confirmation, success/error notifications, and the matching iframe context and runtime helpers.",
@@ -133,7 +149,7 @@
         "Iframe/web-src code either throws the useHostConnection error during render or renders local fallback UI before calling actions.close() or actions.closeWithError()",
         "View button does NOT include worker-only fields (no runtimeAction, no timeout)",
         "Does not scaffold or register a backend worker action for the view button",
-        "Does not declare viewButtons under product or customer; view buttons support only order and invoice",
+        "Does not declare viewButtons under product or customer; view buttons support only order, invoice, and creditMemo",
         "Uses the v2 adminUi shape (no commerce/backend-ui/1 or adminUiSdk.registration legacy API)",
         "Notes mention running npx @adobe/aio-commerce-lib-app init and aio app build"
       ]

@@ -76,3 +76,8 @@ export type StoreContext = {
 export type InvoiceViewButtonContext = {
   invoiceId: string;
 };
+
+/** The context shared with credit memo view-button extension points. */
+export type CreditMemoViewButtonContext = {
+  creditMemoId: string;
+};

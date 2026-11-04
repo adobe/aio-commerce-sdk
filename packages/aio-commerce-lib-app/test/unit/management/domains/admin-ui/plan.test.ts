@@ -19,6 +19,7 @@ import {
   configWithAdminUiEmptyBlock,
   configWithAdminUiInvoiceCreditMemoShipmentGrids,
   configWithAdminUiSingleGrid,
+  configWithCreditMemoViewButtons,
   configWithInvoiceViewButtons,
 } from "#test/fixtures/config";
 
@@ -422,6 +423,15 @@ describe("planAdminUi", () => {
     expect(plan.operations.map((op) => op.id)).toEqual([
       "add:invoice.view-button.invoice-details",
       "add:invoice.view-button.send-invoice",
+    ]);
+  });
+
+  test("registers credit memo buttons as separate components", async () => {
+    const { plan } = await planned(null, configWithCreditMemoViewButtons);
+    expect(plan.extensionAction).toBe("register");
+    expect(plan.operations.map((op) => op.id)).toEqual([
+      "add:creditMemo.view-button.credit-memo-details",
+      "add:creditMemo.view-button.refund-offline",
     ]);
   });
 
