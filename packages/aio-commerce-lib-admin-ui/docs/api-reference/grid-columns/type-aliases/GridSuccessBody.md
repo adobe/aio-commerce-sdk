@@ -3,12 +3,12 @@
 ```ts
 type GridSuccessBody = {
   data: Record<string, GridRow> & {
-     *?: GridRow;
+    "*"?: GridRow;
   };
 };
 ```
 
-Defined in: [aio-commerce-lib-admin-ui/source/grid-columns/responses/types.ts:23](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-admin-ui/source/grid-columns/responses/types.ts#L23)
+Defined in: [aio-commerce-lib-admin-ui/source/grid-columns/responses/types.ts:23](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-admin-ui/source/grid-columns/responses/types.ts#L23)
 
 Success body returned to Commerce.
 
@@ -22,16 +22,16 @@ declared `type` on the registration.
 
 ```ts
 data: Record<string, GridRow> & {
-  *?: GridRow;
+  "*"?: GridRow;
 };
 ```
 
-Defined in: [aio-commerce-lib-admin-ui/source/grid-columns/responses/types.ts:24](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-admin-ui/source/grid-columns/responses/types.ts#L24)
+Defined in: [aio-commerce-lib-admin-ui/source/grid-columns/responses/types.ts:24](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-admin-ui/source/grid-columns/responses/types.ts#L24)
 
 #### Type Declaration
 
 ##### \*?
 
 ```ts
-optional *?: GridRow;
+"*"?: GridRow;
 ```

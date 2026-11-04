@@ -1,5 +1,19 @@
 # @adobe/aio-commerce-lib-admin-ui
 
+## 1.2.0
+
+### Minor Changes
+
+- [#692](https://github.com/adobe/aio-commerce-sdk/pull/692) [`264539a`](https://github.com/adobe/aio-commerce-sdk/commit/264539a13371b11b637eb01fd1c0aa185f4349cc) Thanks [@asalloum5](https://github.com/asalloum5)! - Add `invoice`, `creditmemo`, and `shipment` grid types to the grid column wire contract, so runtime action handlers and `getGridColumnAclResourceId` can target those grids in addition to order, product, and customer. Export a `MassActionEntity` type that reflects the entities mass actions actually support (order, product, customer); `getMassActionAclResourceId` now accepts it instead of the wider grid entity type.
+
+- [#699](https://github.com/adobe/aio-commerce-sdk/pull/699) [`53f1f8b`](https://github.com/adobe/aio-commerce-sdk/commit/53f1f8be4428862015294f1edc2816972e501a9e) Thanks [@mariam21arauj](https://github.com/mariam21arauj)! - Support the `newsletter` entity in grid-column request parsing and ACL resource id helpers, so handlers can serve Newsletter Subscriber grids.
+
+### Patch Changes
+
+- Updated dependencies [[`d78221e`](https://github.com/adobe/aio-commerce-sdk/commit/d78221e01894d2209b7864aca6a5fbfab93c7192), [`395eb22`](https://github.com/adobe/aio-commerce-sdk/commit/395eb22da7646944d5e5f02e1517dc23cc3ebfe6), [`9145e82`](https://github.com/adobe/aio-commerce-sdk/commit/9145e822b17b99465bfee649fae69d61c11bc0ab)]:
+  - @adobe/aio-commerce-lib-api@1.4.1
+  - @adobe/aio-commerce-lib-core@1.3.0
+
 ## 1.1.0
 
 ### Minor Changes

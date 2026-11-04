@@ -18,9 +18,9 @@ import {
   invoiceViewButtonErrorResponse,
   okInvoiceViewButtonResponse,
   parseInvoiceViewButtonRequest,
-} from "../../../source/invoice-view-buttons";
+} from "#invoice-view-buttons/index";
 
-import type { InvoiceViewButtonRequest } from "../../../source/invoice-view-buttons";
+import type { InvoiceViewButtonRequest } from "#invoice-view-buttons/index";
 
 const VALID_REQUEST = {
   id: "export-invoice",

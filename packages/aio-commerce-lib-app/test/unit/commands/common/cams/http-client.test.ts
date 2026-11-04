@@ -10,10 +10,28 @@
  * governing permissions and limitations under the License.
  */
 
-import { describe, expect, test } from "vitest";
+import ky from "ky";
+import { describe, expect, test, vi } from "vitest";
 
-import { PROD_CAMS_URL } from "#commands/common/cams/config";
+import {
+  CAMS_REQUEST_TIMEOUT_MS,
+  PROD_CAMS_URL,
+} from "#commands/common/cams/config";
 import { CamsHttpClient } from "#commands/common/cams/http-client";
+
+vi.mock("ky", async (importOriginal) => {
+  const original = await importOriginal<typeof import("ky")>();
+  return {
+    ...original,
+    default: Object.assign(
+      vi.fn((...args: unknown[]) =>
+        Reflect.apply(original.default, undefined, args),
+      ),
+      original.default,
+      { create: vi.fn(original.default.create) },
+    ),
+  };
+});
 
 const ORG = { id: "org-id", ims_org_id: "ims-org-id", name: "org-name" };
 
@@ -24,5 +42,17 @@ describe("CamsHttpClient", () => {
     });
 
     expect(client.config.baseUrl).toBe(PROD_CAMS_URL);
+  });
+
+  test("creates the HTTP client with a 60 second timeout", () => {
+    const client = new CamsHttpClient({
+      auth: { getToken: async () => "token", org: ORG },
+    });
+
+    expect(client).toBeDefined();
+    expect(CAMS_REQUEST_TIMEOUT_MS).toBe(60_000);
+    expect(ky.create).toHaveBeenCalledWith(
+      expect.objectContaining({ timeout: 60_000 }),
+    );
   });
 });

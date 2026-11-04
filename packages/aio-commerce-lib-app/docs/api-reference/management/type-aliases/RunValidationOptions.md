@@ -1,4 +1,4 @@
-# `RunValidationOptions`
+# ~~`RunValidationOptions`~~
 
 ```ts
 type RunValidationOptions = {
@@ -7,30 +7,34 @@ type RunValidationOptions = {
 };
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/runner.ts:242](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/management/installation/runner.ts#L242)
+Defined in: [aio-commerce-lib-app/source/management/deprecated/runner.ts:280](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-app/source/management/deprecated/runner.ts#L280)
 
 Options for running pre-installation validation.
 
+## Deprecated
+
+Removed in the next major together with [runValidation](../functions/runValidation.md).
+
 ## Properties
 
-### config
+### ~~config~~
 
 ```ts
 config: CommerceAppConfigOutputModel;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/runner.ts:247](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/management/installation/runner.ts#L247)
+Defined in: [aio-commerce-lib-app/source/management/deprecated/runner.ts:285](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-app/source/management/deprecated/runner.ts#L285)
 
 The app configuration.
 
 ---
 
-### validationContext
+### ~~validationContext~~
 
 ```ts
 validationContext: ValidationContext;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/installation/runner.ts:244](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/management/installation/runner.ts#L244)
+Defined in: [aio-commerce-lib-app/source/management/deprecated/runner.ts:282](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-app/source/management/deprecated/runner.ts#L282)
 
 Validation context (params, logger, appData — no customScripts).

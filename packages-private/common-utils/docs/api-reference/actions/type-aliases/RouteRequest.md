@@ -11,17 +11,17 @@ type RouteRequest<TParams, TBody, TQuery> = {
 };
 ```
 
-Defined in: [actions/http/types.ts:96](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages-private/common-utils/source/actions/http/types.ts#L96)
+Defined in: [actions/http/types.ts:96](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages-private/common-utils/source/actions/http/types.ts#L96)
 
 Represents an incoming route request with typed parameters, body, and query.
 
 ## Type Parameters
 
-| Type Parameter | Description                                    |
-| -------------- | ---------------------------------------------- |
-| `TParams`      | Type of route parameters (extracted from path) |
-| `TBody`        | Type of request body                           |
-| `TQuery`       | Type of query parameters                       |
+| Type Parameter                                | Description                                    |
+| --------------------------------------------- | ---------------------------------------------- |
+| <a id="type-parameter-tparams"></a> `TParams` | Type of route parameters (extracted from path) |
+| <a id="type-parameter-tbody"></a> `TBody`     | Type of request body                           |
+| <a id="type-parameter-tquery"></a> `TQuery`   | Type of query parameters                       |
 
 ## Properties
 
@@ -31,7 +31,7 @@ Represents an incoming route request with typed parameters, body, and query.
 body: TBody;
 ```
 
-Defined in: [actions/http/types.ts:98](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages-private/common-utils/source/actions/http/types.ts#L98)
+Defined in: [actions/http/types.ts:98](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages-private/common-utils/source/actions/http/types.ts#L98)
 
 Parsed request body
 
@@ -43,7 +43,7 @@ Parsed request body
 headers: Record<string, string>;
 ```
 
-Defined in: [actions/http/types.ts:101](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages-private/common-utils/source/actions/http/types.ts#L101)
+Defined in: [actions/http/types.ts:101](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages-private/common-utils/source/actions/http/types.ts#L101)
 
 HTTP headers from the request
 
@@ -55,7 +55,7 @@ HTTP headers from the request
 method: HttpMethod;
 ```
 
-Defined in: [actions/http/types.ts:104](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages-private/common-utils/source/actions/http/types.ts#L104)
+Defined in: [actions/http/types.ts:104](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages-private/common-utils/source/actions/http/types.ts#L104)
 
 HTTP method used for the request
 
@@ -67,7 +67,7 @@ HTTP method used for the request
 params: TParams;
 ```
 
-Defined in: [actions/http/types.ts:106](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages-private/common-utils/source/actions/http/types.ts#L106)
+Defined in: [actions/http/types.ts:106](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages-private/common-utils/source/actions/http/types.ts#L106)
 
 Route parameters extracted from the URL path
 
@@ -79,7 +79,7 @@ Route parameters extracted from the URL path
 path: string;
 ```
 
-Defined in: [actions/http/types.ts:109](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages-private/common-utils/source/actions/http/types.ts#L109)
+Defined in: [actions/http/types.ts:109](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages-private/common-utils/source/actions/http/types.ts#L109)
 
 The matched path
 
@@ -91,6 +91,6 @@ The matched path
 query: TQuery;
 ```
 
-Defined in: [actions/http/types.ts:112](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages-private/common-utils/source/actions/http/types.ts#L112)
+Defined in: [actions/http/types.ts:112](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages-private/common-utils/source/actions/http/types.ts#L112)
 
 Query string parameters

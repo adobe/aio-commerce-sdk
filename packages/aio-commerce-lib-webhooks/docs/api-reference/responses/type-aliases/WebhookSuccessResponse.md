@@ -7,7 +7,7 @@ type WebhookSuccessResponse = Omit<SuccessResponse, "body" | "statusCode"> & {
 };
 ```
 
-Defined in: [responses/types.ts:26](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-webhooks/source/responses/types.ts#L26)
+Defined in: [responses/types.ts:26](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-webhooks/source/responses/types.ts#L26)
 
 Successful SDK response containing webhook operation response body data.
 
@@ -16,7 +16,7 @@ Successful SDK response containing webhook operation response body data.
 ### body?
 
 ```ts
-optional body?:
+body?:
   | WebhookOperationResponse
   | WebhookOperationResponse[];
 ```

@@ -6,10 +6,4 @@ type EventProviderDeleteParams = v.InferInput<
 >;
 ```
 
-Defined in: [commerce/api/event-providers/schema.ts:57](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-events/source/commerce/api/event-providers/schema.ts#L57)
-
-The schema of the parameters received by the DELETE `eventing/eventProvider/:provider_id` Commerce API endpoint.
-
-## See
-
-https://developer.adobe.com/commerce/extensibility/events/api/#delete-event-provider
+Defined in: [commerce/api/event-providers/schema.ts:76](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-events/source/commerce/api/event-providers/schema.ts#L76)

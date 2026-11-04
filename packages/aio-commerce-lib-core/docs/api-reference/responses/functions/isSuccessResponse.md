@@ -6,7 +6,7 @@ function isSuccessResponse(
 ): response is SuccessResponse<BodyRecord, HeadersRecord>;
 ```
 
-Defined in: [responses/helpers.ts:108](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-core/source/responses/helpers.ts#L108)
+Defined in: [responses/helpers.ts:108](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-core/source/responses/helpers.ts#L108)
 
 Determines whether a value is a standardized SDK success response.
 

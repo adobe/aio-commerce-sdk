@@ -16,7 +16,7 @@ type IoEventRegistrationPaginatedResponse = {
 };
 ```
 
-Defined in: [io-events/api/event-registrations/types.ts:93](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-events/source/io-events/api/event-registrations/types.ts#L93)
+Defined in: [io-events/api/event-registrations/types.ts:93](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-events/source/io-events/api/event-registrations/types.ts#L93)
 
 Defines the fields of paginated I/O event registration entities returned by the Adobe I/O Events API (consumer org-level).
 
@@ -30,7 +30,7 @@ _embedded: {
 };
 ```
 
-Defined in: [io-events/api/event-registrations/types.ts:95](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-events/source/io-events/api/event-registrations/types.ts#L95)
+Defined in: [io-events/api/event-registrations/types.ts:95](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-events/source/io-events/api/event-registrations/types.ts#L95)
 
 #### registrations
 
@@ -52,30 +52,30 @@ _links: {
 };
 ```
 
-Defined in: [io-events/api/event-registrations/types.ts:98](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-events/source/io-events/api/event-registrations/types.ts#L98)
+Defined in: [io-events/api/event-registrations/types.ts:98](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-events/source/io-events/api/event-registrations/types.ts#L98)
 
 #### first?
 
 ```ts
-optional first?: HALLink;
+first?: HALLink;
 ```
 
 #### last?
 
 ```ts
-optional last?: HALLink;
+last?: HALLink;
 ```
 
 #### next?
 
 ```ts
-optional next?: HALLink;
+next?: HALLink;
 ```
 
 #### prev?
 
 ```ts
-optional prev?: HALLink;
+prev?: HALLink;
 ```
 
 #### self
@@ -92,4 +92,4 @@ self: HALLink;
 page: PageMetadata;
 ```
 
-Defined in: [io-events/api/event-registrations/types.ts:94](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-events/source/io-events/api/event-registrations/types.ts#L94)
+Defined in: [io-events/api/event-registrations/types.ts:94](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-events/source/io-events/api/event-registrations/types.ts#L94)

@@ -13,7 +13,7 @@ function getPackageExecutionCommand(
 };
 ```
 
-Defined in: [project.ts:387](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages-private/scripting-utils/source/project.ts#L387)
+Defined in: [project.ts:387](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages-private/scripting-utils/source/project.ts#L387)
 
 Get the command that executes a package without adding it to the project.
 
@@ -23,7 +23,7 @@ Get the command that executes a package without adding it to the project.
 | --------------------- | ------------------------------------------ | ------------------------------------------------------- |
 | `packageManager`      | `"npm"` \| `"pnpm"` \| `"yarn"` \| `"bun"` | The detected package manager.                           |
 | `args`                | `string`[]                                 | Package specifier followed by arguments for its binary. |
-| `options`             | \{ `allowBuild?`: `string`; \}             | Package execution options.                              |
+| `options?`            | \{ `allowBuild?`: `string`; \}             | Package execution options.                              |
 | `options.allowBuild?` | `string`                                   | Package whose build script pnpm may execute.            |
 
 ## Returns

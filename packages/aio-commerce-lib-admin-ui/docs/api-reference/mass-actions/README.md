@@ -4,6 +4,7 @@
 
 | Type Alias                                                       | Description                                                              |
 | ---------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| [MassActionEntity](type-aliases/MassActionEntity.md)             | Commerce entity a mass action is attached to.                            |
 | [MassActionErrorBody](type-aliases/MassActionErrorBody.md)       | Error body returned to Commerce when a worker mass action fails.         |
 | [MassActionGridType](type-aliases/MassActionGridType.md)         | Grid identifier sent on the wire by a worker mass action request.        |
 | [MassActionRequest](type-aliases/MassActionRequest.md)           | Parsed request body sent by Commerce to a worker mass action handler.    |

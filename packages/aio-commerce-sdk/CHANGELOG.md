@@ -1,5 +1,18 @@
 # @adobe/aio-commerce-sdk
 
+## 2.0.1
+
+### Patch Changes
+
+- [#728](https://github.com/adobe/aio-commerce-sdk/pull/728) [`395eb22`](https://github.com/adobe/aio-commerce-sdk/commit/395eb22da7646944d5e5f02e1517dc23cc3ebfe6) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Remove unused dependencies.
+- Updated dependencies [[`264539a`](https://github.com/adobe/aio-commerce-sdk/commit/264539a13371b11b637eb01fd1c0aa185f4349cc), [`d78221e`](https://github.com/adobe/aio-commerce-sdk/commit/d78221e01894d2209b7864aca6a5fbfab93c7192), [`f513024`](https://github.com/adobe/aio-commerce-sdk/commit/f5130248fb5033cb019ad561358a9d436be7c0f7), [`194db8d`](https://github.com/adobe/aio-commerce-sdk/commit/194db8d382edf49f7976ea9aeffad54acb8e3da1), [`53f1f8b`](https://github.com/adobe/aio-commerce-sdk/commit/53f1f8be4428862015294f1edc2816972e501a9e), [`395eb22`](https://github.com/adobe/aio-commerce-sdk/commit/395eb22da7646944d5e5f02e1517dc23cc3ebfe6), [`9145e82`](https://github.com/adobe/aio-commerce-sdk/commit/9145e822b17b99465bfee649fae69d61c11bc0ab)]:
+  - @adobe/aio-commerce-lib-admin-ui@1.2.0
+  - @adobe/aio-commerce-lib-api@1.4.1
+  - @adobe/aio-commerce-lib-events@1.5.0
+  - @adobe/aio-commerce-lib-auth@1.2.0
+  - @adobe/aio-commerce-lib-core@1.3.0
+  - @adobe/aio-commerce-lib-webhooks@1.2.3
+
 ## 2.0.0
 
 ### Major Changes

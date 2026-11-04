@@ -173,31 +173,21 @@ return orderViewButtonErrorResponse(500, "Could not reach inventory service");
 
 ### Invoice View Button Wire Contract
 
-Invoice view buttons registered under `adminUi.invoice.viewButtons` have iframe
-(`type: "view"`) and runtime action (`type: "worker"`) variants. Registration is
-configured through `@adobe/aio-commerce-lib-app`; these helpers cover the handler
-and browser sides.
+Invoice view buttons registered under `adminUi.invoice.viewButtons` have iframe (`type: "view"`) and runtime action (`type: "worker"`) variants. Registration is configured through `@adobe/aio-commerce-lib-app`; these helpers cover the handler and browser sides.
 
 #### Iframe buttons (`view`)
 
-The invoice context is `{ invoiceId: string }`. Use
-`useInvoiceViewButtonContext` from the `./web` entrypoint to read `invoiceId` from
-the page URL, either in the search parameters or a hash-route query:
+The invoice context is `{ invoiceId: string }`. Use `useInvoiceViewButtonContext` from the `./web` entrypoint to read `invoiceId` from the page URL, either in the search parameters or a hash-route query:
 
 ```text
 https://<extension-host>/index.html<path>?invoiceId=<invoiceId>
 ```
 
-Use `useHostConnection().actions.close()` to complete the iframe flow, or
-`actions.closeWithError()` to signal failure, just as with order view buttons.
+Use `useHostConnection().actions.close()` to complete the iframe flow, or `actions.closeWithError()` to signal failure, just as with order view buttons.
 
 #### Runtime action buttons (`worker`)
 
-`parseInvoiceViewButtonRequest` validates `{ requestId, id, invoiceId }`, with
-each field a non-empty string. `id` identifies the clicked button and `invoiceId`
-identifies the invoice being viewed; an `orderId` cannot substitute for it.
-Extra runtime parameters are stripped from the parsed result.
-Commerce POSTs `{ invoiceId, buttonId }` and sends the request ID in the `X-Request-ID` header; pass the raw runtime action `params` and the parser maps `buttonId` to `id` and the `X-Request-ID` header (from `__ow_headers`) to `requestId`.
+`parseInvoiceViewButtonRequest` validates `{ requestId, id, invoiceId }`, with each field a non-empty string. `id` identifies the clicked button and `invoiceId` identifies the invoice being viewed; an `orderId` cannot substitute for it. Extra runtime parameters are stripped from the parsed result. Commerce POSTs `{ invoiceId, buttonId }` and sends the request ID in the `X-Request-ID` header; pass the raw runtime action `params` and the parser maps `buttonId` to `id` and the `X-Request-ID` header (from `__ow_headers`) to `requestId`.
 
 ```typescript
 import {
@@ -217,16 +207,10 @@ export async function main(params: unknown) {
 }
 ```
 
-Malformed requests throw `CommerceSdkValidationError`. The success helper returns
-HTTP 200 with an empty `{}` body. The error helper preserves the supplied status
-code and returns a `{ message }` body. These response envelopes follow the order
-view-button contract.
+Malformed requests throw `CommerceSdkValidationError`. The success helper returns HTTP 200 with an empty `{}` body. The error helper preserves the supplied status code and returns a `{ message }` body. These response envelopes follow the order view-button contract.
 
 > [!NOTE]
-> The invoice-specific contract uses `invoiceId` by analogy with the order
-> view-button contract. Confirm that your Commerce Admin UI host version supplies
-> this field and URL parameter before deployment. These helpers do not infer a
-> related order ID or any other invoice fields.
+> The invoice-specific contract uses `invoiceId` by analogy with the order view-button contract. Confirm that your Commerce Admin UI host version supplies this field and URL parameter before deployment. These helpers do not infer a related order ID or any other invoice fields.
 
 ### Credit Memo View Button Wire Contract
 
@@ -756,10 +740,7 @@ function OrderViewButtonPage() {
 
 #### Reading the invoice view-button context
 
-`useInvoiceViewButtonContext` returns the invoice ID from the page URL's
-`invoiceId` search parameter, falling back to the hash-route query. It returns
-an error when that ID is missing or blank. Like the order hook, it reads the
-context once when the component mounts and does not require a shared-context provider:
+`useInvoiceViewButtonContext` returns the invoice ID from the page URL's `invoiceId` search parameter, falling back to the hash-route query. It returns an error when that ID is missing or blank. Like the order hook, it reads the context once when the component mounts and does not require a shared-context provider:
 
 ```jsx
 import { useInvoiceViewButtonContext } from "@adobe/aio-commerce-lib-admin-ui/web";

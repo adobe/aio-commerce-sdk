@@ -23,7 +23,7 @@ type ConditionType =
   | "notnull";
 ```
 
-Defined in: [aio-commerce-lib-api/source/lib/commerce/search-criteria/types.ts:43](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-api/source/lib/commerce/search-criteria/types.ts#L43)
+Defined in: [aio-commerce-lib-api/source/lib/commerce/search-criteria/types.ts:43](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-api/source/lib/commerce/search-criteria/types.ts#L43)
 
 The condition applied by a [SearchFilter](SearchFilter.md). Defaults to `eq` when omitted.
 

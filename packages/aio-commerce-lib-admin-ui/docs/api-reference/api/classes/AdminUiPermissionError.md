@@ -1,6 +1,6 @@
 # `AdminUiPermissionError`
 
-Defined in: [aio-commerce-lib-admin-ui/source/errors.ts:18](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-admin-ui/source/errors.ts#L18)
+Defined in: [aio-commerce-lib-admin-ui/source/errors.ts:18](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-admin-ui/source/errors.ts#L18)
 
 Base error for Admin UI SDK permission helper failures.
 
@@ -20,7 +20,7 @@ Base error for Admin UI SDK permission helper failures.
 new AdminUiPermissionError(message: string, options?: CommerceSdkErrorBaseOptions): AdminUiPermissionError;
 ```
 
-Defined in: [aio-commerce-lib-core/source/error/base-error.ts:63](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-core/source/error/base-error.ts#L63)
+Defined in: [aio-commerce-lib-core/source/error/base-error.ts:63](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-core/source/error/base-error.ts#L63)
 
 Constructs a new CommerceSdkErrorBase instance. This is an abstract class so you
 should not instantiate it directly. Only invoke this constructor from a subclass.
@@ -38,25 +38,21 @@ should not instantiate it directly. Only invoke this constructor from a subclass
 
 #### Inherited from
 
-```ts
-CommerceSdkErrorBase.constructor;
-```
+`CommerceSdkErrorBase.constructor`
 
 ## Properties
 
 ### traceId?
 
 ```ts
-readonly optional traceId?: string;
+readonly traceId?: string;
 ```
 
-Defined in: [aio-commerce-lib-core/source/error/base-error.ts:54](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-core/source/error/base-error.ts#L54)
+Defined in: [aio-commerce-lib-core/source/error/base-error.ts:54](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-core/source/error/base-error.ts#L54)
 
 #### Inherited from
 
-```ts
-CommerceSdkErrorBase.traceId;
-```
+`CommerceSdkErrorBase.traceId`
 
 ## Accessors
 
@@ -68,7 +64,7 @@ CommerceSdkErrorBase.traceId;
 get fullStack(): string;
 ```
 
-Defined in: [aio-commerce-lib-core/source/error/base-error.ts:96](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-core/source/error/base-error.ts#L96)
+Defined in: [aio-commerce-lib-core/source/error/base-error.ts:96](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-core/source/error/base-error.ts#L96)
 
 Returns the full stack trace of the error and its causes.
 
@@ -78,9 +74,7 @@ Returns the full stack trace of the error and its causes.
 
 #### Inherited from
 
-```ts
-CommerceSdkErrorBase.fullStack;
-```
+`CommerceSdkErrorBase.fullStack`
 
 ---
 
@@ -92,7 +86,7 @@ CommerceSdkErrorBase.fullStack;
 get rootCause(): unknown;
 ```
 
-Defined in: [aio-commerce-lib-core/source/error/base-error.ts:109](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-core/source/error/base-error.ts#L109)
+Defined in: [aio-commerce-lib-core/source/error/base-error.ts:109](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-core/source/error/base-error.ts#L109)
 
 Returns the root cause of the error.
 
@@ -102,9 +96,7 @@ Returns the root cause of the error.
 
 #### Inherited from
 
-```ts
-CommerceSdkErrorBase.rootCause;
-```
+`CommerceSdkErrorBase.rootCause`
 
 ## Methods
 
@@ -120,7 +112,7 @@ toJSON(): {
 };
 ```
 
-Defined in: [aio-commerce-lib-core/source/error/base-error.ts:124](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-core/source/error/base-error.ts#L124)
+Defined in: [aio-commerce-lib-core/source/error/base-error.ts:124](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-core/source/error/base-error.ts#L124)
 
 Converts the error to a JSON-like representation.
 
@@ -168,9 +160,7 @@ traceId: string | undefined;
 
 #### Inherited from
 
-```ts
-CommerceSdkErrorBase.toJSON;
-```
+`CommerceSdkErrorBase.toJSON`
 
 ---
 
@@ -180,15 +170,15 @@ CommerceSdkErrorBase.toJSON;
 toString(inspect?: boolean): string;
 ```
 
-Defined in: [aio-commerce-lib-core/source/error/base-error.ts:139](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-core/source/error/base-error.ts#L139)
+Defined in: [aio-commerce-lib-core/source/error/base-error.ts:139](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-core/source/error/base-error.ts#L139)
 
 Returns a pretty string representation of the error.
 
 #### Parameters
 
-| Parameter | Type      | Default value | Description                                                                          |
-| --------- | --------- | ------------- | ------------------------------------------------------------------------------------ |
-| `inspect` | `boolean` | `true`        | Whether to inspect the error (returns a more detailed string, useful for debugging). |
+| Parameter  | Type      | Default value | Description                                                                          |
+| ---------- | --------- | ------------- | ------------------------------------------------------------------------------------ |
+| `inspect?` | `boolean` | `true`        | Whether to inspect the error (returns a more detailed string, useful for debugging). |
 
 #### Returns
 
@@ -196,9 +186,7 @@ Returns a pretty string representation of the error.
 
 #### Inherited from
 
-```ts
-CommerceSdkErrorBase.toString;
-```
+`CommerceSdkErrorBase.toString`
 
 ---
 
@@ -208,7 +196,7 @@ CommerceSdkErrorBase.toString;
 static isSdkError(error: unknown): error is CommerceSdkErrorBase;
 ```
 
-Defined in: [aio-commerce-lib-core/source/error/base-error.ts:91](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-core/source/error/base-error.ts#L91)
+Defined in: [aio-commerce-lib-core/source/error/base-error.ts:91](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-core/source/error/base-error.ts#L91)
 
 Checks if the error is any CommerceSdkErrorBase instance.
 
@@ -235,6 +223,4 @@ CommerceSdkErrorBase.isSdkError(new Error("Regular")); // false
 
 #### Inherited from
 
-```ts
-CommerceSdkErrorBase.isSdkError;
-```
+`CommerceSdkErrorBase.isSdkError`

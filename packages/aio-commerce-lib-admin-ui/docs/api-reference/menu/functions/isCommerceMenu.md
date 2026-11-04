@@ -14,7 +14,7 @@ function isCommerceMenu(
   | "system";
 ```
 
-Defined in: [aio-commerce-lib-admin-ui/source/menu/paths.ts:53](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-admin-ui/source/menu/paths.ts#L53)
+Defined in: [aio-commerce-lib-admin-ui/source/menu/paths.ts:53](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-admin-ui/source/menu/paths.ts#L53)
 
 Returns true if the given string is a known Commerce Admin menu ID.
 

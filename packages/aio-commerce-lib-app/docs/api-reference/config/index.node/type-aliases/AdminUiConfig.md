@@ -8,9 +8,15 @@ type AdminUiConfig<
 };
 ```
 
-Defined in: [aio-commerce-lib-app/source/config/schema/admin-ui.ts:414](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/config/schema/admin-ui.ts#L414)
+Defined in: [aio-commerce-lib-app/source/config/schema/admin-ui.ts:437](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-app/source/config/schema/admin-ui.ts#L437)
 
 Config type when `adminUi` configuration is present.
+
+## Type Parameters
+
+| Type Parameter                                                     | Default type                   |
+| ------------------------------------------------------------------ | ------------------------------ |
+| <a id="type-parameter-t"></a> `T` _extends_ `AnyCommerceAppConfig` | `CommerceAppConfigOutputModel` |
 
 ## Type Declaration
 
@@ -19,9 +25,3 @@ Config type when `adminUi` configuration is present.
 ```ts
 adminUi: NonNullable<T["adminUi"]>;
 ```
-
-## Type Parameters
-
-| Type Parameter                       | Default type                   |
-| ------------------------------------ | ------------------------------ |
-| `T` _extends_ `AnyCommerceAppConfig` | `CommerceAppConfigOutputModel` |

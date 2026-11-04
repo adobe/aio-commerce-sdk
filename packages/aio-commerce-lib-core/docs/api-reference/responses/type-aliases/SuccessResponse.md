@@ -9,9 +9,16 @@ type SuccessResponse<
 };
 ```
 
-Defined in: [responses/helpers.ts:49](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-core/source/responses/helpers.ts#L49)
+Defined in: [responses/helpers.ts:49](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-core/source/responses/helpers.ts#L49)
 
 Represents a successful response from a runtime action
+
+## Type Parameters
+
+| Type Parameter                                                            | Default type    | Description              |
+| ------------------------------------------------------------------------- | --------------- | ------------------------ |
+| <a id="type-parameter-tbody"></a> `TBody` _extends_ `BodyRecord`          | `BodyRecord`    | Response body properties |
+| <a id="type-parameter-theaders"></a> `THeaders` _extends_ `HeadersRecord` | `HeadersRecord` | Custom response headers  |
 
 ## Type Declaration
 
@@ -20,10 +27,3 @@ Represents a successful response from a runtime action
 ```ts
 type: "success";
 ```
-
-## Type Parameters
-
-| Type Parameter                       | Default type    | Description              |
-| ------------------------------------ | --------------- | ------------------------ |
-| `TBody` _extends_ `BodyRecord`       | `BodyRecord`    | Response body properties |
-| `THeaders` _extends_ `HeadersRecord` | `HeadersRecord` | Custom response headers  |

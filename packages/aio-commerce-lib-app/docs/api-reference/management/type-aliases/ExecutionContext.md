@@ -6,12 +6,12 @@ type ExecutionContext<
 > = LifecycleContext & TStepCtx;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/common/workflow/step.ts:69](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/management/common/workflow/step.ts#L69)
+Defined in: [aio-commerce-lib-app/source/management/common/workflow/step.ts:64](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-app/source/management/common/workflow/step.ts#L64)
 
 The execution context passed to leaf step run handlers.
 
 ## Type Parameters
 
-| Type Parameter                                       | Default type                    |
-| ---------------------------------------------------- | ------------------------------- |
-| `TStepCtx` _extends_ `Record`\<`string`, `unknown`\> | `Record`\<`string`, `unknown`\> |
+| Type Parameter                                                                            | Default type                    |
+| ----------------------------------------------------------------------------------------- | ------------------------------- |
+| <a id="type-parameter-tstepctx"></a> `TStepCtx` _extends_ `Record`\<`string`, `unknown`\> | `Record`\<`string`, `unknown`\> |

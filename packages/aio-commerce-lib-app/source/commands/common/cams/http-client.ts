@@ -13,7 +13,10 @@
 import { stringifyError } from "@adobe/aio-commerce-lib-core/error";
 import ky, { HTTPError } from "ky";
 
-import { PROD_CAMS_URL } from "#commands/common/cams/config";
+import {
+  CAMS_REQUEST_TIMEOUT_MS,
+  PROD_CAMS_URL,
+} from "#commands/common/cams/config";
 import { CamsClientError } from "#commands/common/cams/errors";
 
 import type { AioProjectConfig } from "@aio-commerce-sdk/scripting-utils/aio";
@@ -164,6 +167,7 @@ export class CamsHttpClient implements KyHttpClient {
           return isRetryable(error);
         },
       },
+      timeout: CAMS_REQUEST_TIMEOUT_MS,
     });
 
     this.httpClient = Object.freeze(

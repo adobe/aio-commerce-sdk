@@ -10,7 +10,7 @@ function deleteEventSubscription(
 ): Promise<void>;
 ```
 
-Defined in: [commerce/api/event-subscriptions/endpoints.ts:134](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-events/source/commerce/api/event-subscriptions/endpoints.ts#L134)
+Defined in: [commerce/api/event-subscriptions/endpoints.ts:134](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-events/source/commerce/api/event-subscriptions/endpoints.ts#L134)
 
 Unsubscribes from an event in the Commerce instance bound to the given [AdobeCommerceHttpClient](https://github.com/adobe/aio-commerce-sdk/blob/main/packages/aio-commerce-lib-api/docs/api-reference/classes/AdobeCommerceHttpClient.md).
 
@@ -20,7 +20,7 @@ Unsubscribes from an event in the Commerce instance bound to the given [AdobeCom
 | --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `httpClient`    | [`AdobeCommerceHttpClient`](https://github.com/adobe/aio-commerce-sdk/blob/main/packages/aio-commerce-lib-api/docs/api-reference/classes/AdobeCommerceHttpClient.md) | The [AdobeCommerceHttpClient](https://github.com/adobe/aio-commerce-sdk/blob/main/packages/aio-commerce-lib-api/docs/api-reference/classes/AdobeCommerceHttpClient.md) to use to make the request. |
 | `params`        | \{ `name`: `string`; \}                                                                                                                                              | The parameters to delete the event subscription with.                                                                                                                                              |
-| `params.name`   | `string`                                                                                                                                                             | -                                                                                                                                                                                                  |
+| `params.name?`  | `string`                                                                                                                                                             | -                                                                                                                                                                                                  |
 | `fetchOptions?` | [`Options`](https://github.com/sindresorhus/ky?tab=readme-ov-file#options)                                                                                           | The [Options](https://github.com/sindresorhus/ky?tab=readme-ov-file#options) to use to make the request.                                                                                           |
 
 ## Returns
