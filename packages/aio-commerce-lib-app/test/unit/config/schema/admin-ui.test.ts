@@ -30,6 +30,7 @@ import {
   configWithAdminUiMenu,
   configWithAdminUiNewsletterGrid,
   configWithFullAdminUiV2,
+  configWithInvoiceViewButtons,
   configWithViewMassActions,
   configWithWorkerMassActions,
   minimalValidConfig,
@@ -67,6 +68,7 @@ const backendUiV2ComponentCases = [
   { config: configWithAdminUiMenu, label: "menu only" },
   { config: configWithViewMassActions, label: "view mass actions" },
   { config: configWithWorkerMassActions, label: "worker mass actions" },
+  { config: configWithInvoiceViewButtons, label: "invoice view buttons only" },
 ];
 
 describe("hasAdminUi", () => {
@@ -819,6 +821,44 @@ describe("AdminUiSchema", () => {
 });
 
 describe("adminUi.invoice / adminUi.creditMemo / adminUi.shipment", () => {
+  test("accepts invoice view and worker buttons including the view title", () => {
+    const result = v.parse(AdminUiSchema, configWithInvoiceViewButtons.adminUi);
+    expect(result.invoice?.viewButtons).toEqual(
+      configWithInvoiceViewButtons.adminUi.invoice.viewButtons,
+    );
+  });
+
+  test.each([
+    { id: "missing-path", label: "Missing path", type: "view" },
+    { id: "missing-action", label: "Missing action", type: "worker" },
+    { ...viewButtonViewBase, timeout: 15 },
+    { ...viewButtonViewBase, runtimeAction: "invoice/send" },
+    { ...viewButtonViewBase, title: "" },
+    { ...viewButtonWorkerBase, title: "Unsupported worker title" },
+    { ...viewButtonWorkerBase, path: "#/invoice" },
+    { ...viewButtonWorkerBase, sandboxPermissions: ["allow-modals"] },
+    { ...viewButtonWorkerBase, timeout: -1 },
+    { ...viewButtonWorkerBase, sortOrder: -1 },
+  ])("rejects invalid invoice button $id", (button) => {
+    expect(
+      v.safeParse(AdminUiSchema, { invoice: { viewButtons: [button] } })
+        .success,
+    ).toBe(false);
+  });
+
+  test("rejects invoice button ids that collide after sanitization", () => {
+    expect(
+      v.safeParse(AdminUiSchema, {
+        invoice: {
+          viewButtons: [
+            { ...viewButtonViewBase, id: "invoice-details" },
+            { ...viewButtonWorkerBase, id: "INVOICE-DETAILS" },
+          ],
+        },
+      }).success,
+    ).toBe(false);
+  });
+
   test.each(["invoice", "creditMemo", "shipment"] as const)(
     "accepts gridColumns on %s",
     (entity) => {
