@@ -13,10 +13,11 @@
 import { useMemo } from "react";
 
 import { useSharedContext } from "#web/react/commerce/context/shared-context.tsx";
-import { parseOrderId } from "#web/react/commerce/lib";
+import { parseInvoiceId, parseOrderId } from "#web/react/commerce/lib";
 import { error, ok } from "#web/react/result";
 
 import type {
+  InvoiceViewButtonContext,
   MassActionContext,
   OrderViewButtonContext,
 } from "#web/react/commerce/types";
@@ -77,5 +78,29 @@ export function useOrderViewButtonContext(): Result<OrderViewButtonContext> {
     }
 
     return ok({ orderId });
+  }, []);
+}
+
+/**
+ * Returns the invoice ID for an invoice view-button extension point.
+ * Reads `invoiceId` from the page URL search parameters or hash-route query.
+ * Returns an error when the invoice ID is missing or blank.
+ * @example
+ * ```tsx
+ * const { data, error } = useInvoiceViewButtonContext();
+ * if (error) throw error;
+ * return <span>{data.invoiceId}</span>;
+ * ```
+ */
+export function useInvoiceViewButtonContext(): Result<InvoiceViewButtonContext> {
+  return useMemo<Result<InvoiceViewButtonContext>>(() => {
+    const invoiceId = parseInvoiceId(globalThis.location.href);
+    if (invoiceId === null || invoiceId.trim() === "") {
+      return error(
+        "Could not find an invoice ID. Is this frame running as an invoice view-button extension point?",
+      );
+    }
+
+    return ok({ invoiceId });
   }, []);
 }

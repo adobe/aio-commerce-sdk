@@ -5,6 +5,7 @@
   "entryPoints": [
     "./source/api/index.ts",
     "./source/grid-columns/index.ts",
+    "./source/invoice-view-buttons/index.ts",
     "./source/mass-actions/index.ts",
     "./source/menu/index.ts",
     "./source/order-view-buttons/index.ts",

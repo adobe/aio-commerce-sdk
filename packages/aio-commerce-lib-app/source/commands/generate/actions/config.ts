@@ -16,6 +16,7 @@ import { GENERATED_ACTIONS_PATH, PACKAGE_NAME } from "#commands/constants";
 import {
   ADMIN_UI_GRID_COLUMN_ENTITIES,
   ADMIN_UI_MASS_ACTION_ENTITIES,
+  ADMIN_UI_VIEW_BUTTON_ENTITIES,
 } from "#config/schema/admin-ui";
 import { hasBusinessConfigSchema } from "#config/schema/business-configuration";
 
@@ -220,7 +221,9 @@ export function collectUniqueRuntimeActions(
   )
     .filter((action) => action.type === "worker")
     .map((action) => action.runtimeAction);
-  const viewButtonRuntimeActions = (adminUi?.order?.viewButtons ?? [])
+  const viewButtonRuntimeActions = ADMIN_UI_VIEW_BUTTON_ENTITIES.flatMap(
+    (key) => adminUi?.[key]?.viewButtons ?? [],
+  )
     .filter((button) => button.type === "worker")
     .map((button) => button.runtimeAction);
   return [
@@ -238,7 +241,9 @@ export function requiresWebSource(adminUi: AdminUi | undefined): boolean {
     return true;
   }
   if (
-    (adminUi?.order?.viewButtons ?? []).some((button) => button.type === "view")
+    ADMIN_UI_VIEW_BUTTON_ENTITIES.flatMap(
+      (key) => adminUi?.[key]?.viewButtons ?? [],
+    ).some((button) => button.type === "view")
   ) {
     return true;
   }

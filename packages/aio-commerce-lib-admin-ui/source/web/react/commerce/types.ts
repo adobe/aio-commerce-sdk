@@ -45,7 +45,7 @@ export type SharedContext = {
 
 /** Actions for closing the extension iframe and returning control to the Commerce Admin. */
 export type HostConnection = {
-  /** Closes the iframe and navigates back to the originating grid or order. */
+  /** Closes the iframe and navigates back to the originating grid or detail page. */
   close: () => Promise<void>;
 
   /** Closes the iframe and navigates back, flagging the originating page that an error occurred. */
@@ -60,4 +60,9 @@ export type MassActionContext = {
 /** The context shared with order view-button extension points. */
 export type OrderViewButtonContext = {
   orderId: string;
+};
+
+/** The context shared with invoice view-button extension points. */
+export type InvoiceViewButtonContext = {
+  invoiceId: string;
 };
