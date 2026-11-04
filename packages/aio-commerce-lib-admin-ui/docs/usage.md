@@ -688,25 +688,28 @@ function OrderViewButtonPage() {
 
 #### Reading native UI form replacement context
 
-`useNativeUiContext` returns optional `customerId` and `storeId` values from the Commerce shared context. Either value may be absent when the host does not provide it; IDs may be strings or numbers:
+`useCustomerContext` and `useStoreContext` read `customerId` and `storeId` independently from the Commerce shared context. Each hook guarantees its identifier in successful `data` and returns an error when that identifier is missing, null, or not a string or finite number. A missing or invalid identifier does not affect the other hook:
 
 ```jsx
-import { useNativeUiContext } from "@adobe/aio-commerce-lib-admin-ui/web";
+import {
+  useCustomerContext,
+  useStoreContext,
+} from "@adobe/aio-commerce-lib-admin-ui/web";
 
 function CreateOrderPage() {
-  const { data, error } = useNativeUiContext();
-  if (error) return <span>{error.message}</span>;
+  const customer = useCustomerContext();
+  const store = useStoreContext();
 
   return (
     <span>
-      Customer: {data.customerId ?? "not selected"}; Store:{" "}
-      {data.storeId ?? "default"}
+      Customer: {customer.error ? "not selected" : customer.data.customerId};
+      Store: {store.error ? "default" : store.data.storeId}
     </span>
   );
 }
 ```
 
-The hook returns an error when used outside a Commerce shared context or when a provided ID is not a string or finite number.
+Both hooks return an error when used outside a Commerce shared context. IDs are preserved as strings or numbers without conversion.
 
 #### Reading the invoice view-button context
 

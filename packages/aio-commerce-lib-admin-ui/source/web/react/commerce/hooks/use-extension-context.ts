@@ -11,23 +11,22 @@
  */
 
 import { useMemo } from "react";
-import { finite, is, nullish, number, pipe, string, union } from "valibot";
+import { finite, is, number, pipe, string, union } from "valibot";
 
 import { useSharedContext } from "#web/react/commerce/context/shared-context.tsx";
 import { parseInvoiceId, parseOrderId } from "#web/react/commerce/lib";
 import { error, ok } from "#web/react/result";
 
 import type {
+  CustomerContext,
   InvoiceViewButtonContext,
   MassActionContext,
-  NativeUiContext,
   OrderViewButtonContext,
+  StoreContext,
 } from "#web/react/commerce/types";
 import type { Result } from "#web/react/result";
 
-const OptionalContextIdSchema = nullish(
-  union([string(), pipe(number(), finite())]),
-);
+const ContextIdSchema = union([string(), pipe(number(), finite())]);
 
 /**
  * Returns the context for a mass-action extension point: the selected row IDs the action was
@@ -88,36 +87,52 @@ export function useOrderViewButtonContext(): Result<OrderViewButtonContext> {
 }
 
 /**
- * Returns optional customer and store identifiers shared by a native UI form replacement.
+ * Returns the customer identifier from the Commerce shared context.
  *
- * Missing identifiers are omitted. Returns an error outside the Commerce shared context or when
- * either identifier is not a string or finite number.
+ * Returns an error outside the Commerce shared context or when the customer identifier is
+ * missing, null, or not a string or finite number. The store identifier is not required.
  */
-export function useNativeUiContext(): Result<NativeUiContext> {
+export function useCustomerContext(): Result<CustomerContext> {
   const { data, error: contextError } = useSharedContext();
 
-  return useMemo<Result<NativeUiContext>>(() => {
+  return useMemo<Result<CustomerContext>>(() => {
     if (contextError) {
       return error(contextError.message, { cause: contextError });
     }
 
     const customerId = data.sharedContext.get("customerId");
-    const storeId = data.sharedContext.get("storeId");
-    if (!is(OptionalContextIdSchema, customerId)) {
+    if (!is(ContextIdSchema, customerId)) {
       return error(
-        'The Commerce shared context value "customerId" must be a string or finite number when provided.',
-      );
-    }
-    if (!is(OptionalContextIdSchema, storeId)) {
-      return error(
-        'The Commerce shared context value "storeId" must be a string or finite number when provided.',
+        'The Commerce shared context value "customerId" must be a string or finite number.',
       );
     }
 
-    return ok({
-      ...(customerId !== undefined && customerId !== null && { customerId }),
-      ...(storeId !== undefined && storeId !== null && { storeId }),
-    });
+    return ok({ customerId });
+  }, [data, contextError]);
+}
+
+/**
+ * Returns the store identifier from the Commerce shared context.
+ *
+ * Returns an error outside the Commerce shared context or when the store identifier is
+ * missing, null, or not a string or finite number. The customer identifier is not required.
+ */
+export function useStoreContext(): Result<StoreContext> {
+  const { data, error: contextError } = useSharedContext();
+
+  return useMemo<Result<StoreContext>>(() => {
+    if (contextError) {
+      return error(contextError.message, { cause: contextError });
+    }
+
+    const storeId = data.sharedContext.get("storeId");
+    if (!is(ContextIdSchema, storeId)) {
+      return error(
+        'The Commerce shared context value "storeId" must be a string or finite number.',
+      );
+    }
+
+    return ok({ storeId });
   }, [data, contextError]);
 }
 

@@ -16,10 +16,11 @@ import { renderHook } from "vitest-browser-react";
 import { createMockGuestConnection } from "#test/fixtures/uix-guest";
 import { sharedContextProvider } from "#test/utils/shared-context.tsx";
 import {
+  useCustomerContext,
   useInvoiceViewButtonContext,
   useMassActionContext,
-  useNativeUiContext,
   useOrderViewButtonContext,
+  useStoreContext,
 } from "#web/react/commerce/hooks/use-extension-context";
 
 afterEach(() => {
@@ -192,51 +193,73 @@ describe("useOrderViewButtonContext", () => {
   });
 });
 
-describe("useNativeUiContext", () => {
-  test("returns customerId and storeId when they are provided", async () => {
-    const { result } = await renderHook(() => useNativeUiContext(), {
-      wrapper: provide({ customerId: 123, storeId: "2" }),
+describe.each([
+  {
+    key: "customerId",
+    name: "useCustomerContext",
+    otherKey: "storeId",
+    useContext: useCustomerContext,
+  },
+  {
+    key: "storeId",
+    name: "useStoreContext",
+    otherKey: "customerId",
+    useContext: useStoreContext,
+  },
+])("$name", ({ useContext, key, otherKey }) => {
+  test.each(["123", 123, 0])(
+    "returns the identifier %j without requiring the other identifier",
+    async (value) => {
+      const { result, rerender } = await renderHook(() => useContext(), {
+        wrapper: provide({ [key]: value }),
+      });
+
+      expect(result.current).toEqual({
+        data: { [key]: value },
+        error: null,
+      });
+      const initialResult = result.current;
+      await rerender();
+      expect(result.current).toBe(initialResult);
+    },
+  );
+
+  test("ignores an invalid identifier for the other hook", async () => {
+    const { result } = await renderHook(() => useContext(), {
+      wrapper: provide({ [key]: "123", [otherKey]: {} }),
     });
 
     expect(result.current).toEqual({
-      data: { customerId: 123, storeId: "2" },
+      data: { [key]: "123" },
       error: null,
     });
   });
 
-  test.each([{}, { customerId: null, storeId: null }])(
-    "omits identifiers that are not provided: %j",
-    async (values) => {
-      const { result } = await renderHook(() => useNativeUiContext(), {
-        wrapper: provide(values),
-      });
-
-      expect(result.current).toEqual({ data: {}, error: null });
-    },
-  );
-
   test.each([
-    { customerId: true },
-    { storeId: {} },
-    { customerId: Number.NaN },
-    { customerId: Number.POSITIVE_INFINITY },
-    { storeId: Number.NEGATIVE_INFINITY },
+    undefined,
+    null,
+    true,
+    {},
+    [],
+    Number.NaN,
+    Number.POSITIVE_INFINITY,
+    Number.NEGATIVE_INFINITY,
   ])(
-    "returns an error when a provided identifier is invalid",
-    async (values) => {
-      const { result } = await renderHook(() => useNativeUiContext(), {
-        wrapper: provide(values),
+    "returns an error for a missing or invalid identifier %j",
+    async (value) => {
+      const { result } = await renderHook(() => useContext(), {
+        wrapper: provide({ [key]: value, [otherKey]: "2" }),
       });
 
       expect.assert.isNull(result.current.data);
       expect(result.current.error.message).toContain(
-        "must be a string or finite number",
+        `"${key}" must be a string or finite number`,
       );
     },
   );
 
   test("returns an error outside the Commerce shared context", async () => {
-    const { result } = await renderHook(() => useNativeUiContext());
+    const { result } = await renderHook(() => useContext());
 
     expect.assert.isNull(result.current.data);
     expect(result.current.error.message).toContain(

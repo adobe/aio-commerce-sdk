@@ -10,7 +10,7 @@ Add a new Admin UI SDK extension point, `adminUi.nativeUi.replacedPages`, that
 lets an app replace a native Commerce Admin form with a page served from the
 app's `web-src`. The first release supports a single target, `order.create`, and
 the replacement page can read the optional `customerId` and `storeId` from the
-Commerce shared context through a new `useNativeUiContext()` hook.
+Commerce shared context through separate `useCustomerContext()` and `useStoreContext()` hooks.
 
 ## Motivation
 
@@ -56,24 +56,30 @@ adminUi: {
 ```
 
 Render a route matching `path` in the app's `web-src`, and read the host
-context with the hook from `@adobe/aio-commerce-lib-admin-ui/web`:
+context with the hooks from `@adobe/aio-commerce-lib-admin-ui/web`:
 
 ```tsx
-import { useNativeUiContext } from "@adobe/aio-commerce-lib-admin-ui/web";
+import {
+  useCustomerContext,
+  useStoreContext,
+} from "@adobe/aio-commerce-lib-admin-ui/web";
 
 function CreateOrder() {
-  const { data, error } = useNativeUiContext();
-  if (error) {
-    return <ErrorState error={error} />;
-  }
+  const customer = useCustomerContext();
+  const store = useStoreContext();
 
-  return <OrderForm customerId={data.customerId} storeId={data.storeId} />;
+  return (
+    <OrderForm
+      customerId={customer.error ? undefined : customer.data.customerId}
+      storeId={store.error ? undefined : store.data.storeId}
+    />
+  );
 }
 ```
 
 `customerId` and `storeId` are optional and may be absent (for example, when
 creating an order without a preselected customer). IDs are preserved as sent,
-either strings or numbers.
+either strings or numbers. Each hook returns an error when its identifier is missing, null, or invalid; successful data always contains that identifier. The hooks are independent, so a missing customer does not prevent reading a valid store.
 
 Configuring an unsupported target fails validation with the list of allowed
 values. Declaring the same target twice in one app also fails.
@@ -101,11 +107,9 @@ Admin UI skill.
 
 ### lib-admin-ui
 
-- `useNativeUiContext()` reads `customerId` and `storeId` from the live Commerce
-  shared context and returns a `Result<NativeUiContext>`.
-- Absent or `null` values are omitted from `data`. Values that are neither a
-  string nor a finite number produce an error result, as does calling the hook
-  outside a Commerce host, consistent with the other Commerce hooks.
+- `useCustomerContext()` reads `customerId` from the live Commerce shared context and returns a `Result<CustomerContext>` with a required `customerId`.
+- `useStoreContext()` reads `storeId` independently and returns a `Result<StoreContext>` with a required `storeId`.
+- Missing, `null`, or invalid values produce an error result for the corresponding hook. IDs must be strings or finite numbers. Calling either hook outside a Commerce host also returns an error, consistent with the other Commerce hooks.
 
 ### Edge cases
 

@@ -920,7 +920,7 @@ adminUi: {
 }
 ```
 
-The first release supports only the `"order.create"` target. Targets must be unique within `replacedPages`. Only one app can replace a given native UI target at a time, so apps that register `order.create` cannot be installed together on the same Commerce instance. Add a matching route and page for each `path` in the generated web source, following the same conventions as other view-based Admin UI extensions. The `useNativeUiContext` hook from `@adobe/aio-commerce-lib-admin-ui/web` exposes `customerId` and `storeId` from Commerce shared context when the host provides them.
+The first release supports only the `"order.create"` target. Targets must be unique within `replacedPages`. Only one app can replace a given native UI target at a time, so apps that register `order.create` cannot be installed together on the same Commerce instance. Add a matching route and page for each `path` in the generated web source, following the same conventions as other view-based Admin UI extensions. The `useCustomerContext` and `useStoreContext` hooks from `@adobe/aio-commerce-lib-admin-ui/web` independently expose `customerId` and `storeId` from Commerce shared context. Each hook returns an error when its identifier is missing, null, or invalid, and guarantees its identifier on success.
 
 ##### Mass Actions
 

@@ -21,22 +21,24 @@ export { useIms } from "#web/react/auth/context/ims-context.tsx";
 export { useSharedContext } from "#web/react/commerce/context/shared-context.tsx";
 export { useCommerce } from "#web/react/commerce/hooks/use-commerce";
 export {
+  useCustomerContext,
   useInvoiceViewButtonContext,
   useMassActionContext,
-  useNativeUiContext,
   useOrderViewButtonContext,
+  useStoreContext,
 } from "#web/react/commerce/hooks/use-extension-context";
 export { useHostConnection } from "#web/react/commerce/hooks/use-host-connection";
 export { createExtensionApp } from "#web/react/extension/create-app.tsx";
 
 export type { ImsContext } from "#web/react/auth/types";
 export type {
+  CustomerContext,
   HostConnection,
   InvoiceViewButtonContext,
   MassActionContext,
-  NativeUiContext,
   OrderViewButtonContext,
   SharedContext,
+  StoreContext,
 } from "#web/react/commerce/types";
 export type { CreateExtensionAppOptions } from "#web/react/extension/create-app.tsx";
 export type { ExtensionRoute } from "#web/react/routing/types";

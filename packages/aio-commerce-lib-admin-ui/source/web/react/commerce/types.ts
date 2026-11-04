@@ -62,10 +62,14 @@ export type OrderViewButtonContext = {
   orderId: string;
 };
 
-/** Context values provided when a native Commerce Admin form is replaced. */
-export type NativeUiContext = {
-  customerId?: string | number;
-  storeId?: string | number;
+/** The customer identifier provided by the Commerce shared context. */
+export type CustomerContext = {
+  customerId: string | number;
+};
+
+/** The store identifier provided by the Commerce shared context. */
+export type StoreContext = {
+  storeId: string | number;
 };
 
 /** The context shared with invoice view-button extension points. */
