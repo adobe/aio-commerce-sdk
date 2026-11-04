@@ -11,12 +11,14 @@
  */
 
 import { existsSync, readFileSync } from "node:fs";
-import { readFile } from "node:fs/promises";
-import { join } from "node:path";
+import { mkdir, readFile, stat, writeFile } from "node:fs/promises";
+import { dirname, join } from "node:path";
 
+import consola from "consola";
 import { afterEach, describe, expect, test, vi } from "vitest";
 
 import {
+  APP_CONFIG_FILE,
   BACKEND_UI_V2_EXTENSION_POINT_ID,
   CONFIGURATION_EXTENSION_POINT_ID,
   EXTENSIBILITY_EXTENSION_POINT_ID,
@@ -25,6 +27,7 @@ import { exec, run } from "#commands/hooks/pre-app-build";
 import {
   getExtConfigPath,
   getManifestPath,
+  getRuntimeAppConfigPath,
   getSchemaPath,
 } from "#commands/utils";
 import { makeTemplateFiles } from "#test/fixtures/commands";
@@ -35,6 +38,7 @@ import {
   configWithCommerceEventing,
   configWithFullAdminUiV2,
   configWithWorkerMassActions,
+  minimalValidConfig,
 } from "#test/fixtures/config";
 import {
   businessConfigActionFile,
@@ -42,8 +46,11 @@ import {
   extensibilityActionFile,
   INVALID_PROJECT,
   MINIMAL_PROJECT,
+  MINIMAL_PROJECT_WITH_NAMED_EXPORT,
+  makeAppConfigFile,
   makeExtConfigFile,
   makeProjectFiles,
+  ORDERED_EXTENSION_POINTS,
   withTempProject,
 } from "#test/fixtures/project";
 
@@ -61,6 +68,40 @@ vi.mock("@aio-commerce-sdk/scripting-utils/env", async (importOriginal) => ({
   >()),
   syncImsCredentials: vi.fn(),
 }));
+
+const ORDER_REWRITTEN_RE =
+  /were reordered \(commerce\/backend-ui\/2, commerce\/configuration\/1, commerce\/extensibility\/1\).*one-off/su;
+
+const warnSpy = vi.spyOn(consola, "warn").mockImplementation(() => undefined);
+
+const ALL_EXTENSIONS = [
+  "extensibility/1",
+  "configuration/1",
+  "backend-ui/2",
+] as const;
+
+/**
+ * A config that exercises every extension point at once: eventing for extensibility/1,
+ * business config for configuration/1 and adminUi for backend-ui/2.
+ */
+const configForAllExtensions = {
+  ...configWithCommerceEventing,
+  ...configWithBusinessConfig,
+  ...configWithFullAdminUiV2,
+};
+
+/** Project files with a config and the ext.config.yaml files that hooks read, for all extension points. */
+function makeProjectForAllExtensions() {
+  return {
+    ...makeProjectFiles(configForAllExtensions),
+    ...makeTemplateFiles(),
+    ...makeExtConfigFile(EXTENSIBILITY_EXTENSION_POINT_ID, [
+      "app-config",
+      "installation",
+    ]),
+    ...makeExtConfigFile(CONFIGURATION_EXTENSION_POINT_ID, ["config"]),
+  };
+}
 
 describe("commands/hooks/pre-app-build", () => {
   afterEach(() => {
@@ -96,6 +137,92 @@ describe("commands/hooks/pre-app-build", () => {
         expect(parsed).toEqual(configWithCommerceEventing);
       });
     });
+
+    test.each(ALL_EXTENSIONS)(
+      "refreshes a stale manifest in %s",
+      async (extension) => {
+        const project = makeProjectForAllExtensions();
+
+        await withTempProject(project, async (tempDir) => {
+          const manifestPath = join(tempDir, getManifestPath());
+          await mkdir(dirname(manifestPath), { recursive: true });
+          await writeFile(manifestPath, JSON.stringify({ stale: true }));
+
+          await run(extension, tempDir, tempDir);
+
+          expect(JSON.parse(await readFile(manifestPath, "utf-8"))).toEqual(
+            configForAllExtensions,
+          );
+        });
+      },
+    );
+
+    test.each(ALL_EXTENSIONS)(
+      "generates the manifest in %s",
+      async (extension) => {
+        const project = makeProjectForAllExtensions();
+
+        await withTempProject(project, async (tempDir) => {
+          const manifestPath = join(tempDir, getManifestPath());
+          expect(existsSync(manifestPath)).toBe(false);
+
+          await run(extension, tempDir, tempDir);
+
+          expect(existsSync(manifestPath)).toBe(true);
+          expect(JSON.parse(await readFile(manifestPath, "utf-8"))).toEqual(
+            configForAllExtensions,
+          );
+        });
+      },
+    );
+
+    test.each(ALL_EXTENSIONS)(
+      "generates a loadable runtime config module and alias in %s",
+      async (extension) => {
+        const project = makeProjectForAllExtensions();
+
+        await withTempProject(project, async (tempDir) => {
+          await run(extension, tempDir, tempDir);
+
+          // The static runtime module re-exports the manifest, so it must load.
+          const runtimeConfigPath = join(tempDir, getRuntimeAppConfigPath());
+          expect(existsSync(runtimeConfigPath)).toBe(true);
+
+          const mod = await import(runtimeConfigPath);
+          expect(mod.default).toEqual(configForAllExtensions);
+
+          const pkg = JSON.parse(
+            await readFile(join(tempDir, "package.json"), "utf-8"),
+          );
+          expect(pkg.imports["#app.commerce.config"]).toBe(
+            "./src/commerce-extensibility-1/.generated/app.commerce.config.js",
+          );
+        });
+      },
+    );
+
+    test.each(ALL_EXTENSIONS)(
+      "generates the source config passthrough module in %s for a config with named exports",
+      async (extension) => {
+        const project = {
+          ...MINIMAL_PROJECT_WITH_NAMED_EXPORT,
+          ...makeTemplateFiles(),
+          ...makeExtConfigFile(EXTENSIBILITY_EXTENSION_POINT_ID, []),
+          ...makeExtConfigFile(CONFIGURATION_EXTENSION_POINT_ID, []),
+        };
+
+        await withTempProject(project, async (tempDir) => {
+          await run(extension, tempDir, tempDir);
+
+          // No static manifest is emitted when the config needs the JS module.
+          expect(existsSync(join(tempDir, getManifestPath()))).toBe(false);
+
+          const mod = await import(join(tempDir, getRuntimeAppConfigPath()));
+          expect(mod.appConfigVersion).toBe("v1");
+          expect(mod.default).toEqual(minimalValidConfig);
+        });
+      },
+    );
 
     test("generates schema and actions for configuration/1", async () => {
       const actions = ["config", "scope-tree"];
@@ -253,6 +380,61 @@ describe("commands/hooks/pre-app-build", () => {
       });
     });
 
+    test("rewrites an out-of-order app.config.yaml, warns once and continues", async () => {
+      const wrongOrder = makeAppConfigFile(
+        [...ORDERED_EXTENSION_POINTS].reverse(),
+      );
+
+      await withTempProject(
+        { ...makeProjectFiles(configWithAdminUiSingleGrid), ...wrongOrder },
+        async (tempDir) => {
+          await expect(run("backend-ui/2", tempDir)).resolves.toBeUndefined();
+
+          expect(await readFile(join(tempDir, APP_CONFIG_FILE), "utf-8")).toBe(
+            makeAppConfigFile(ORDERED_EXTENSION_POINTS)[APP_CONFIG_FILE],
+          );
+          expect(warnSpy).toHaveBeenCalledOnce();
+          expect(warnSpy).toHaveBeenCalledWith(
+            expect.stringMatching(ORDER_REWRITTEN_RE),
+          );
+        },
+      );
+    });
+
+    test("does not warn on a second invocation after the rewrite", async () => {
+      const wrongOrder = makeAppConfigFile(
+        [...ORDERED_EXTENSION_POINTS].reverse(),
+      );
+
+      await withTempProject(
+        { ...makeProjectFiles(configWithAdminUiSingleGrid), ...wrongOrder },
+        async (tempDir) => {
+          await run("backend-ui/2", tempDir);
+          warnSpy.mockClear();
+
+          await expect(run("backend-ui/2", tempDir)).resolves.toBeUndefined();
+          expect(warnSpy).not.toHaveBeenCalled();
+        },
+      );
+    });
+
+    test("does not write app.config.yaml when the order is right", async () => {
+      await withTempProject(
+        {
+          ...makeProjectFiles(configWithAdminUiSingleGrid),
+          ...makeAppConfigFile(ORDERED_EXTENSION_POINTS),
+        },
+        async (tempDir) => {
+          const path = join(tempDir, APP_CONFIG_FILE);
+          const before = await stat(path);
+
+          await expect(run("backend-ui/2", tempDir)).resolves.toBeUndefined();
+          expect((await stat(path)).mtimeMs).toBe(before.mtimeMs);
+          expect(warnSpy).not.toHaveBeenCalled();
+        },
+      );
+    });
+
     test("throws for unsupported extension", async () => {
       await withTempProject(MINIMAL_PROJECT, async (tempDir) => {
         await expect(
@@ -326,6 +508,23 @@ describe("commands/hooks/pre-app-build", () => {
         async () => {
           await exec();
           expect(exitSpy).not.toHaveBeenCalled();
+        },
+      );
+    });
+
+    test("does not exit when app.config.yaml was out of order and had to be rewritten", async () => {
+      vi.stubEnv("EXTENSION", "backend-ui/2");
+
+      await withTempProject(
+        {
+          ...makeProjectFiles(configWithAdminUiSingleGrid),
+          ...makeTemplateFiles(),
+          ...makeAppConfigFile([...ORDERED_EXTENSION_POINTS].reverse()),
+        },
+        async () => {
+          await exec();
+          expect(exitSpy).not.toHaveBeenCalled();
+          expect(warnSpy).toHaveBeenCalledOnce();
         },
       );
     });

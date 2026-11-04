@@ -206,7 +206,7 @@ const AdminUiGridAndMassActionEntitySchema = v.object({
   massActions: v.optional(MassActionsSchema),
 });
 
-// Shared by invoice, credit memo, and shipment: unlike order/product/customer,
+// Shared by invoice, credit memo, shipment, and newsletter: unlike order/product/customer,
 // these expose grid columns only — no mass actions or view buttons.
 const AdminUiGridOnlyEntitySchema = v.object({
   gridColumns: v.optional(GridColumnsSchema),
@@ -215,7 +215,7 @@ const AdminUiGridOnlyEntitySchema = v.object({
 const MenuIdSchema = v.pipe(
   nonEmptyStringValueSchema("menu ID"),
   v.regex(
-    /^[A-Za-z0-9_/:]+$/,
+    /^[A-Za-z0-9_/:]+$/u,
     'Menu ID may contain only letters, digits, "/", ":", and "_"',
   ),
 );
@@ -274,7 +274,7 @@ const NativeUiSchema = v.object({
 const AclResourceIdSchema = v.pipe(
   nonEmptyStringValueSchema("acl resource ID"),
   v.regex(
-    /^[a-z0-9_]+$/,
+    /^[a-z0-9_]+$/u,
     'ACL resource ID may contain only lowercase letters, digits, and "_"',
   ),
 );
@@ -364,7 +364,7 @@ export const AdminUiSchema = v.object({
   invoice: v.optional(AdminUiGridOnlyEntitySchema),
   menu: v.optional(MenuSchema),
   nativeUi: v.optional(NativeUiSchema),
-  newsletter: v.optional(AdminUiGridAndMassActionEntitySchema),
+  newsletter: v.optional(AdminUiGridOnlyEntitySchema),
   order: v.optional(AdminUiOrderSchema),
   product: v.optional(AdminUiGridAndMassActionEntitySchema),
   shipment: v.optional(AdminUiGridOnlyEntitySchema),
@@ -401,7 +401,6 @@ export const ADMIN_UI_MASS_ACTION_ENTITIES = [
   "order",
   "product",
   "customer",
-  "newsletter",
 ] as const satisfies readonly Exclude<keyof AdminUi, "acl" | "menu">[];
 
 /** A custom ACL resource entry: a leaf or a one-level group of leaves. */
@@ -505,8 +504,7 @@ export function hasBackendUiV2Components<T extends AnyCommerceAppConfig>(
       adminUi.creditMemo?.gridColumns ||
       adminUi.shipment?.gridColumns ||
       adminUi.nativeUi?.replacedPages?.length ||
-      adminUi.newsletter?.gridColumns ||
-      adminUi.newsletter?.massActions?.length,
+      adminUi.newsletter?.gridColumns,
   );
 }
 

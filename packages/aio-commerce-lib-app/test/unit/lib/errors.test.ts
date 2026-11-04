@@ -15,8 +15,8 @@ import { describe, expect, test } from "vitest";
 
 import { AssociationRecordNotFoundError } from "#lib/errors";
 
-const ASSOCIATION_RECORD_REGEX = /association record/i;
-const RE_ASSOCIATE_REGEX = /re-associate/i;
+const ASSOCIATION_RECORD_REGEX = /association record/iu;
+const RE_ASSOCIATE_REGEX = /re-associate/iu;
 
 describe("AssociationRecordNotFoundError", () => {
   test("extends CommerceSdkErrorBase", () => {

@@ -1,6 +1,6 @@
 # `HttpActionRouter\<TContext *extends* [`BaseContext`](../type-aliases/BaseContext.md) = [`BaseContext`](../type-aliases/BaseContext.md)\>`
 
-Defined in: [actions/http/router.ts:56](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages-private/common-utils/source/actions/http/router.ts#L56)
+Defined in: [actions/http/router.ts:56](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages-private/common-utils/source/actions/http/router.ts#L56)
 
 HTTP router for Adobe I/O Runtime actions.
 Provides type-safe routing with schema validation and OpenWhisk integration.
@@ -24,9 +24,9 @@ export const main = router.handler();
 
 ## Type Parameters
 
-| Type Parameter                                                       | Default type                                    |
-| -------------------------------------------------------------------- | ----------------------------------------------- |
-| `TContext` _extends_ [`BaseContext`](../type-aliases/BaseContext.md) | [`BaseContext`](../type-aliases/BaseContext.md) |
+| Type Parameter                                                                                            | Default type                                    |
+| --------------------------------------------------------------------------------------------------------- | ----------------------------------------------- |
+| <a id="type-parameter-tcontext"></a> `TContext` _extends_ [`BaseContext`](../type-aliases/BaseContext.md) | [`BaseContext`](../type-aliases/BaseContext.md) |
 
 ## Constructors
 
@@ -48,17 +48,17 @@ new HttpActionRouter<TContext extends BaseContext = BaseContext>(): HttpActionRo
 delete<TPattern extends string, TParamsSchema extends StandardSchemaV1<unknown, unknown> | undefined = undefined, TQuerySchema extends StandardSchemaV1<unknown, unknown> | undefined = undefined>(path: TPattern, config: RouteConfig<TPattern, TParamsSchema, undefined, TQuerySchema, TContext>): this;
 ```
 
-Defined in: [actions/http/router.ts:218](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages-private/common-utils/source/actions/http/router.ts#L218)
+Defined in: [actions/http/router.ts:218](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages-private/common-utils/source/actions/http/router.ts#L218)
 
 Register a DELETE route.
 
 #### Type Parameters
 
-| Type Parameter                                                                      | Default type |
-| ----------------------------------------------------------------------------------- | ------------ |
-| `TPattern` _extends_ `string`                                                       | -            |
-| `TParamsSchema` _extends_ `StandardSchemaV1`\<`unknown`, `unknown`\> \| `undefined` | `undefined`  |
-| `TQuerySchema` _extends_ `StandardSchemaV1`\<`unknown`, `unknown`\> \| `undefined`  | `undefined`  |
+| Type Parameter                                                                                                                | Default type |
+| ----------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| <a id="type-parameter-tpattern"></a> `TPattern` _extends_ `string`                                                            | -            |
+| <a id="type-parameter-tparamsschema"></a> `TParamsSchema` _extends_ `StandardSchemaV1`\<`unknown`, `unknown`\> \| `undefined` | `undefined`  |
+| <a id="type-parameter-tqueryschema"></a> `TQuerySchema` _extends_ `StandardSchemaV1`\<`unknown`, `unknown`\> \| `undefined`   | `undefined`  |
 
 #### Parameters
 
@@ -87,17 +87,17 @@ router.delete("/users/:id", {
 get<TPattern extends string, TParamsSchema extends StandardSchemaV1<unknown, unknown> | undefined = undefined, TQuerySchema extends StandardSchemaV1<unknown, unknown> | undefined = undefined>(path: TPattern, config: RouteConfig<TPattern, TParamsSchema, undefined, TQuerySchema, TContext>): this;
 ```
 
-Defined in: [actions/http/router.ts:104](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages-private/common-utils/source/actions/http/router.ts#L104)
+Defined in: [actions/http/router.ts:104](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages-private/common-utils/source/actions/http/router.ts#L104)
 
 Register a GET route.
 
 #### Type Parameters
 
-| Type Parameter                                                                      | Default type |
-| ----------------------------------------------------------------------------------- | ------------ |
-| `TPattern` _extends_ `string`                                                       | -            |
-| `TParamsSchema` _extends_ `StandardSchemaV1`\<`unknown`, `unknown`\> \| `undefined` | `undefined`  |
-| `TQuerySchema` _extends_ `StandardSchemaV1`\<`unknown`, `unknown`\> \| `undefined`  | `undefined`  |
+| Type Parameter                                                                                                                  | Default type |
+| ------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| <a id="type-parameter-tpattern-1"></a> `TPattern` _extends_ `string`                                                            | -            |
+| <a id="type-parameter-tparamsschema-1"></a> `TParamsSchema` _extends_ `StandardSchemaV1`\<`unknown`, `unknown`\> \| `undefined` | `undefined`  |
+| <a id="type-parameter-tqueryschema-1"></a> `TQuerySchema` _extends_ `StandardSchemaV1`\<`unknown`, `unknown`\> \| `undefined`   | `undefined`  |
 
 #### Parameters
 
@@ -126,7 +126,7 @@ router.get("/users/:id", {
 handler(): (args: RuntimeActionParams) => Promise<ActionResponse>;
 ```
 
-Defined in: [actions/http/router.ts:419](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages-private/common-utils/source/actions/http/router.ts#L419)
+Defined in: [actions/http/router.ts:419](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages-private/common-utils/source/actions/http/router.ts#L419)
 
 Creates an OpenWhisk/Runtime action handler from the registered routes.
 
@@ -151,18 +151,18 @@ export const main = router.handler();
 patch<TPattern extends string, TParamsSchema extends StandardSchemaV1<unknown, unknown> | undefined = undefined, TBodySchema extends StandardSchemaV1<unknown, unknown> | undefined = undefined, TQuerySchema extends StandardSchemaV1<unknown, unknown> | undefined = undefined>(path: TPattern, config: RouteConfig<TPattern, TParamsSchema, TBodySchema, TQuerySchema, TContext>): this;
 ```
 
-Defined in: [actions/http/router.ts:190](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages-private/common-utils/source/actions/http/router.ts#L190)
+Defined in: [actions/http/router.ts:190](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages-private/common-utils/source/actions/http/router.ts#L190)
 
 Register a PATCH route.
 
 #### Type Parameters
 
-| Type Parameter                                                                      | Default type |
-| ----------------------------------------------------------------------------------- | ------------ |
-| `TPattern` _extends_ `string`                                                       | -            |
-| `TParamsSchema` _extends_ `StandardSchemaV1`\<`unknown`, `unknown`\> \| `undefined` | `undefined`  |
-| `TBodySchema` _extends_ `StandardSchemaV1`\<`unknown`, `unknown`\> \| `undefined`   | `undefined`  |
-| `TQuerySchema` _extends_ `StandardSchemaV1`\<`unknown`, `unknown`\> \| `undefined`  | `undefined`  |
+| Type Parameter                                                                                                                  | Default type |
+| ------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| <a id="type-parameter-tpattern-2"></a> `TPattern` _extends_ `string`                                                            | -            |
+| <a id="type-parameter-tparamsschema-2"></a> `TParamsSchema` _extends_ `StandardSchemaV1`\<`unknown`, `unknown`\> \| `undefined` | `undefined`  |
+| <a id="type-parameter-tbodyschema"></a> `TBodySchema` _extends_ `StandardSchemaV1`\<`unknown`, `unknown`\> \| `undefined`       | `undefined`  |
+| <a id="type-parameter-tqueryschema-2"></a> `TQuerySchema` _extends_ `StandardSchemaV1`\<`unknown`, `unknown`\> \| `undefined`   | `undefined`  |
 
 #### Parameters
 
@@ -192,18 +192,18 @@ router.patch("/users/:id", {
 post<TPattern extends string, TParamsSchema extends StandardSchemaV1<unknown, unknown> | undefined = undefined, TBodySchema extends StandardSchemaV1<unknown, unknown> | undefined = undefined, TQuerySchema extends StandardSchemaV1<unknown, unknown> | undefined = undefined>(path: TPattern, config: RouteConfig<TPattern, TParamsSchema, TBodySchema, TQuerySchema, TContext>): this;
 ```
 
-Defined in: [actions/http/router.ts:132](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages-private/common-utils/source/actions/http/router.ts#L132)
+Defined in: [actions/http/router.ts:132](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages-private/common-utils/source/actions/http/router.ts#L132)
 
 Register a POST route.
 
 #### Type Parameters
 
-| Type Parameter                                                                      | Default type |
-| ----------------------------------------------------------------------------------- | ------------ |
-| `TPattern` _extends_ `string`                                                       | -            |
-| `TParamsSchema` _extends_ `StandardSchemaV1`\<`unknown`, `unknown`\> \| `undefined` | `undefined`  |
-| `TBodySchema` _extends_ `StandardSchemaV1`\<`unknown`, `unknown`\> \| `undefined`   | `undefined`  |
-| `TQuerySchema` _extends_ `StandardSchemaV1`\<`unknown`, `unknown`\> \| `undefined`  | `undefined`  |
+| Type Parameter                                                                                                                  | Default type |
+| ------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| <a id="type-parameter-tpattern-3"></a> `TPattern` _extends_ `string`                                                            | -            |
+| <a id="type-parameter-tparamsschema-3"></a> `TParamsSchema` _extends_ `StandardSchemaV1`\<`unknown`, `unknown`\> \| `undefined` | `undefined`  |
+| <a id="type-parameter-tbodyschema-1"></a> `TBodySchema` _extends_ `StandardSchemaV1`\<`unknown`, `unknown`\> \| `undefined`     | `undefined`  |
+| <a id="type-parameter-tqueryschema-3"></a> `TQuerySchema` _extends_ `StandardSchemaV1`\<`unknown`, `unknown`\> \| `undefined`   | `undefined`  |
 
 #### Parameters
 
@@ -233,18 +233,18 @@ router.post("/users", {
 put<TPattern extends string, TParamsSchema extends StandardSchemaV1<unknown, unknown> | undefined = undefined, TBodySchema extends StandardSchemaV1<unknown, unknown> | undefined = undefined, TQuerySchema extends StandardSchemaV1<unknown, unknown> | undefined = undefined>(path: TPattern, config: RouteConfig<TPattern, TParamsSchema, TBodySchema, TQuerySchema, TContext>): this;
 ```
 
-Defined in: [actions/http/router.ts:161](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages-private/common-utils/source/actions/http/router.ts#L161)
+Defined in: [actions/http/router.ts:161](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages-private/common-utils/source/actions/http/router.ts#L161)
 
 Register a PUT route.
 
 #### Type Parameters
 
-| Type Parameter                                                                      | Default type |
-| ----------------------------------------------------------------------------------- | ------------ |
-| `TPattern` _extends_ `string`                                                       | -            |
-| `TParamsSchema` _extends_ `StandardSchemaV1`\<`unknown`, `unknown`\> \| `undefined` | `undefined`  |
-| `TBodySchema` _extends_ `StandardSchemaV1`\<`unknown`, `unknown`\> \| `undefined`   | `undefined`  |
-| `TQuerySchema` _extends_ `StandardSchemaV1`\<`unknown`, `unknown`\> \| `undefined`  | `undefined`  |
+| Type Parameter                                                                                                                  | Default type |
+| ------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| <a id="type-parameter-tpattern-4"></a> `TPattern` _extends_ `string`                                                            | -            |
+| <a id="type-parameter-tparamsschema-4"></a> `TParamsSchema` _extends_ `StandardSchemaV1`\<`unknown`, `unknown`\> \| `undefined` | `undefined`  |
+| <a id="type-parameter-tbodyschema-2"></a> `TBodySchema` _extends_ `StandardSchemaV1`\<`unknown`, `unknown`\> \| `undefined`     | `undefined`  |
+| <a id="type-parameter-tqueryschema-4"></a> `TQuerySchema` _extends_ `StandardSchemaV1`\<`unknown`, `unknown`\> \| `undefined`   | `undefined`  |
 
 #### Parameters
 
@@ -274,7 +274,7 @@ router.put("/users/:id", {
 use<TNew extends Record<string, unknown>>(builder: ContextBuilder<TContext, TNew>): HttpActionRouter<TContext & TNew>;
 ```
 
-Defined in: [actions/http/router.ts:260](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages-private/common-utils/source/actions/http/router.ts#L260)
+Defined in: [actions/http/router.ts:260](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages-private/common-utils/source/actions/http/router.ts#L260)
 
 Register a context builder that runs before route handlers.
 Context builders can add properties to the request context.
@@ -285,9 +285,9 @@ enabling type-safe access in route handlers.
 
 #### Type Parameters
 
-| Type Parameter                                   |
-| ------------------------------------------------ |
-| `TNew` _extends_ `Record`\<`string`, `unknown`\> |
+| Type Parameter                                                                    |
+| --------------------------------------------------------------------------------- |
+| <a id="type-parameter-tnew"></a> `TNew` _extends_ `Record`\<`string`, `unknown`\> |
 
 #### Parameters
 

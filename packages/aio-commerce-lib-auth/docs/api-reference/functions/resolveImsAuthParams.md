@@ -8,14 +8,18 @@ function resolveImsAuthParams(params: Record<string, unknown>): {
   environment?: "prod" | "stage";
   imsOrgId: string;
   scopes: string[];
-  technicalAccountEmail: string;
-  technicalAccountId: string;
+  technicalAccountEmail?: string;
+  technicalAccountId?: string;
 };
 ```
 
-Defined in: [ims-auth/utils.ts:131](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-auth/source/lib/ims-auth/utils.ts#L131)
+Defined in: [ims-auth/utils.ts:138](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-auth/source/lib/ims-auth/utils.ts#L138)
 
 Resolves an [ImsAuthParams](../type-aliases/ImsAuthParams.md) from the given App Builder action inputs.
+
+For OAuth Server-to-Server credentials, use the `include-ims-credentials: true` action
+annotation. The legacy fallback to manually-wired `AIO_COMMERCE_AUTH_IMS_*` params is
+deprecated and will be removed in a future major release.
 
 ## Parameters
 
@@ -33,8 +37,8 @@ Resolves an [ImsAuthParams](../type-aliases/ImsAuthParams.md) from the given App
   environment?: "prod" | "stage";
   imsOrgId: string;
   scopes: string[];
-  technicalAccountEmail: string;
-  technicalAccountId: string;
+  technicalAccountEmail?: string;
+  technicalAccountId?: string;
 }
 ```
 
@@ -53,13 +57,13 @@ clientSecrets: string[];
 ### context?
 
 ```ts
-optional context?: string;
+context?: string;
 ```
 
 ### environment?
 
 ```ts
-optional environment?: "prod" | "stage";
+environment?: "prod" | "stage";
 ```
 
 ### imsOrgId
@@ -74,16 +78,16 @@ imsOrgId: string;
 scopes: string[];
 ```
 
-### technicalAccountEmail
+### technicalAccountEmail?
 
 ```ts
-technicalAccountEmail: string;
+technicalAccountEmail?: string;
 ```
 
-### technicalAccountId
+### technicalAccountId?
 
 ```ts
-technicalAccountId: string;
+technicalAccountId?: string;
 ```
 
 ## Throws
@@ -94,13 +98,14 @@ If the parameters are invalid and cannot be resolved.
 
 ```typescript
 // Some App Builder runtime action that needs IMS authentication
-export function main(params) {
-  const imsAuthProvider = getImsAuthProvider(resolveImsAuthParams(params));
+export async function main(params) {
+  const authProvider = getImsAuthProvider(resolveImsAuthParams(params));
 
   // Get headers for API requests
   const headers = await authProvider.getHeaders();
   const response = await fetch("https://api.adobe.io/some-endpoint", {
-    headers: await authProvider.getHeaders(),
+    headers,
   });
+  return { statusCode: response.status };
 }
 ```

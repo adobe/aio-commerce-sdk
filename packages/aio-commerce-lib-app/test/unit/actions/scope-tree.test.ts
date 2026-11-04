@@ -12,6 +12,9 @@
 
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
+import { scopeTreeRuntimeAction } from "#actions/scope-tree/index";
+import { createRuntimeActionParams } from "#test/fixtures/actions";
+
 const {
   resolveCommerceHttpClientParamsMock,
   getScopeTreeMock,
@@ -36,9 +39,6 @@ vi.mock("@adobe/aio-commerce-lib-config", () => ({
   syncCommerceScopes: syncCommerceScopesMock,
   unsyncCommerceScopes: unsyncCommerceScopesMock,
 }));
-
-import { scopeTreeRuntimeAction } from "#actions/scope-tree/index";
-import { createRuntimeActionParams } from "#test/fixtures/actions";
 
 const scopeTree = [{ id: "default", name: "Default Website" }];
 

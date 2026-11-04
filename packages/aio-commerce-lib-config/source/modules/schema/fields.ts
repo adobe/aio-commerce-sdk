@@ -16,8 +16,9 @@ import * as v from "valibot";
 import type { RuntimeActionParams } from "@adobe/aio-commerce-lib-core/params";
 
 // Supports one level of nested parens in URLs (e.g. Wikipedia-style links).
-const MARKDOWN_LINK_REGEX = /\[([^\]]*)\]\(((?:[^)(]|\([^)]*\))*)\)/g;
-const SAFE_URL_REGEX = /^https?:\/\//i;
+const MARKDOWN_LINK_REGEX =
+  /\[(?<label>[^\]]*)\]\((?<url>(?:[^)(]|\([^)]*\))*)\)/gu;
+const SAFE_URL_REGEX = /^[hH][tT][tT][pP][sS]?:\/\//u;
 
 /**
  * Returns true if every Markdown link in `text` is well-formed and uses an http(s) URL.
@@ -176,7 +177,7 @@ const PhoneSchema = v.object({
       v.pipe(
         v.string("Expected a string for the default phone number value"),
         v.regex(
-          /^\+?[0-9\s\-()]+$/,
+          /^\+?[0-9\s\-()]+$/u,
           "The phone number must contain only numbers and/or country codes",
         ),
       ),

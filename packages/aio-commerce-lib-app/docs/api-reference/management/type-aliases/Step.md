@@ -11,15 +11,15 @@ type Step<
   | BranchStep<TName, TConfig, TStepCtx>;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/common/workflow/step.ts:188](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/management/common/workflow/step.ts#L188)
+Defined in: [aio-commerce-lib-app/source/management/common/workflow/step.ts:192](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-app/source/management/common/workflow/step.ts#L192)
 
 A step in the workflow tree (discriminated union by `type`).
 
 ## Type Parameters
 
-| Type Parameter                                       | Default type                    |
-| ---------------------------------------------------- | ------------------------------- |
-| `TName` _extends_ `string`                           | `string`                        |
-| `TConfig` _extends_ `CommerceAppConfigOutputModel`   | `CommerceAppConfigOutputModel`  |
-| `TStepCtx` _extends_ `Record`\<`string`, `unknown`\> | `Record`\<`string`, `unknown`\> |
-| `TOutput`                                            | `unknown`                       |
+| Type Parameter                                                                            | Default type                    |
+| ----------------------------------------------------------------------------------------- | ------------------------------- |
+| <a id="type-parameter-tname"></a> `TName` _extends_ `string`                              | `string`                        |
+| <a id="type-parameter-tconfig"></a> `TConfig` _extends_ `CommerceAppConfigOutputModel`    | `CommerceAppConfigOutputModel`  |
+| <a id="type-parameter-tstepctx"></a> `TStepCtx` _extends_ `Record`\<`string`, `unknown`\> | `Record`\<`string`, `unknown`\> |
+| <a id="type-parameter-toutput"></a> `TOutput`                                             | `unknown`                       |

@@ -31,7 +31,7 @@ export function sanitizeSegment(segment: string): string {
   return segment
     .trim()
     .toLowerCase()
-    .replace(/[^a-z0-9_]/g, "_");
+    .replace(/[^a-z0-9_]/gu, (character) => "_".repeat(character.length));
 }
 
 /**
@@ -117,14 +117,13 @@ export type AdminUiEntity = (typeof ADMIN_UI_GRID_ENTITIES)[number];
 
 /**
  * Entities that support mass actions — a subset of `ADMIN_UI_GRID_ENTITIES`. Mass actions, unlike
- * grid columns, are not available on the invoice, credit memo, or shipment grids.
+ * grid columns, are not available on the invoice, credit memo, shipment, or newsletter grids.
  * `MassActionGridTypeSchema` derives its picklist from it.
  */
 export const MASS_ACTION_ENTITIES = [
   "order",
   "product",
   "customer",
-  "newsletter",
 ] as const satisfies readonly AdminUiEntity[];
 
 /** Commerce entity a mass action is attached to. */

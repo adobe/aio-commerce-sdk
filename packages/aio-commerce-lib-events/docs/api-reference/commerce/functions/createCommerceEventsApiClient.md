@@ -20,11 +20,12 @@ function createCommerceEventsApiClient(params: CommerceHttpClientParams): ApiCli
   getAllEventProviders: ;
   getAllEventSubscriptions: ;
   getEventProviderById: ;
+  updateEventProvider: ;
   updateEventSubscription: ;
 }>;
 ```
 
-Defined in: [commerce/lib/api-client.ts:31](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-events/source/commerce/lib/api-client.ts#L31)
+Defined in: [commerce/lib/api-client.ts:31](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-events/source/commerce/lib/api-client.ts#L31)
 
 Creates a new API client for the Commerce Events API client.
 
@@ -55,5 +56,6 @@ Creates a new API client for the Commerce Events API client.
 `getAllEventProviders`: ;
 `getAllEventSubscriptions`: ;
 `getEventProviderById`: ;
+`updateEventProvider`: ;
 `updateEventSubscription`: ;
 \}\>

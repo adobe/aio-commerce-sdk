@@ -10,8 +10,8 @@
  * governing permissions and limitations under the License.
  */
 
+import { stringifyError } from "@adobe/aio-commerce-lib-core/error";
 import { syncImsCredentials } from "@aio-commerce-sdk/scripting-utils/env";
-import { stringifyError } from "@aio-commerce-sdk/scripting-utils/error";
 import { getProjectRootDirectory } from "@aio-commerce-sdk/scripting-utils/project";
 import consola from "consola";
 

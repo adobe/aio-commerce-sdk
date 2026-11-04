@@ -30,7 +30,7 @@ type RouteConfig<
 };
 ```
 
-Defined in: [actions/http/types.ts:185](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages-private/common-utils/source/actions/http/types.ts#L185)
+Defined in: [actions/http/types.ts:185](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages-private/common-utils/source/actions/http/types.ts#L185)
 
 Route configuration with type inference from schemas and context.
 If schemas are provided, they're used for both validation AND type inference.
@@ -38,23 +38,23 @@ Otherwise, types are inferred from the path pattern.
 
 ## Type Parameters
 
-| Type Parameter                                              | Default type                    | Description                                |
-| ----------------------------------------------------------- | ------------------------------- | ------------------------------------------ |
-| `TPattern` _extends_ `string`                               | `string`                        | The route path pattern string              |
-| `TParamsSchema` _extends_ `StandardSchemaV1` \| `undefined` | `undefined`                     | Optional schema for route parameters       |
-| `TBodySchema` _extends_ `StandardSchemaV1` \| `undefined`   | `undefined`                     | Optional schema for request body           |
-| `TQuerySchema` _extends_ `StandardSchemaV1` \| `undefined`  | `undefined`                     | Optional schema for query parameters       |
-| `TContext` _extends_ [`BaseContext`](BaseContext.md)        | [`BaseContext`](BaseContext.md) | The context type (defaults to BaseContext) |
+| Type Parameter                                                                                        | Default type                    | Description                                |
+| ----------------------------------------------------------------------------------------------------- | ------------------------------- | ------------------------------------------ |
+| <a id="type-parameter-tpattern"></a> `TPattern` _extends_ `string`                                    | `string`                        | The route path pattern string              |
+| <a id="type-parameter-tparamsschema"></a> `TParamsSchema` _extends_ `StandardSchemaV1` \| `undefined` | `undefined`                     | Optional schema for route parameters       |
+| <a id="type-parameter-tbodyschema"></a> `TBodySchema` _extends_ `StandardSchemaV1` \| `undefined`     | `undefined`                     | Optional schema for request body           |
+| <a id="type-parameter-tqueryschema"></a> `TQuerySchema` _extends_ `StandardSchemaV1` \| `undefined`   | `undefined`                     | Optional schema for query parameters       |
+| <a id="type-parameter-tcontext"></a> `TContext` _extends_ [`BaseContext`](BaseContext.md)             | [`BaseContext`](BaseContext.md) | The context type (defaults to BaseContext) |
 
 ## Properties
 
 ### body?
 
 ```ts
-optional body?: TBodySchema;
+body?: TBodySchema;
 ```
 
-Defined in: [actions/http/types.ts:201](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages-private/common-utils/source/actions/http/types.ts#L201)
+Defined in: [actions/http/types.ts:201](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages-private/common-utils/source/actions/http/types.ts#L201)
 
 Optional schema for validating and typing request body
 
@@ -79,7 +79,7 @@ handler: (
 ) => Promisable<ActionResponse>;
 ```
 
-Defined in: [actions/http/types.ts:207](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages-private/common-utils/source/actions/http/types.ts#L207)
+Defined in: [actions/http/types.ts:207](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages-private/common-utils/source/actions/http/types.ts#L207)
 
 Route handler with properly typed request and context
 
@@ -99,10 +99,10 @@ Route handler with properly typed request and context
 ### params?
 
 ```ts
-optional params?: TParamsSchema extends StandardSchemaV1 ? ValidParamsSchema<TPattern, TParamsSchema> : undefined;
+params?: TParamsSchema extends StandardSchemaV1 ? ValidParamsSchema<TPattern, TParamsSchema> : undefined;
 ```
 
-Defined in: [actions/http/types.ts:196](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages-private/common-utils/source/actions/http/types.ts#L196)
+Defined in: [actions/http/types.ts:196](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages-private/common-utils/source/actions/http/types.ts#L196)
 
 Optional schema for validating and typing route parameters.
 If provided, must include all parameters from the path pattern.
@@ -112,9 +112,9 @@ If provided, must include all parameters from the path pattern.
 ### query?
 
 ```ts
-optional query?: TQuerySchema;
+query?: TQuerySchema;
 ```
 
-Defined in: [actions/http/types.ts:204](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages-private/common-utils/source/actions/http/types.ts#L204)
+Defined in: [actions/http/types.ts:204](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages-private/common-utils/source/actions/http/types.ts#L204)
 
 Optional schema for validating and typing query parameters

@@ -1,5 +1,18 @@
 # @adobe/aio-commerce-lib-events
 
+## 1.5.0
+
+### Minor Changes
+
+- [#719](https://github.com/adobe/aio-commerce-sdk/pull/719) [`f513024`](https://github.com/adobe/aio-commerce-sdk/commit/f5130248fb5033cb019ad561358a9d436be7c0f7) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Add functions to update I/O event providers, event metadata and Commerce event providers.
+
+### Patch Changes
+
+- Updated dependencies [[`d78221e`](https://github.com/adobe/aio-commerce-sdk/commit/d78221e01894d2209b7864aca6a5fbfab93c7192), [`194db8d`](https://github.com/adobe/aio-commerce-sdk/commit/194db8d382edf49f7976ea9aeffad54acb8e3da1), [`395eb22`](https://github.com/adobe/aio-commerce-sdk/commit/395eb22da7646944d5e5f02e1517dc23cc3ebfe6), [`9145e82`](https://github.com/adobe/aio-commerce-sdk/commit/9145e822b17b99465bfee649fae69d61c11bc0ab)]:
+  - @adobe/aio-commerce-lib-api@1.4.1
+  - @adobe/aio-commerce-lib-auth@1.2.0
+  - @adobe/aio-commerce-lib-core@1.3.0
+
 ## 1.4.0
 
 ### Minor Changes

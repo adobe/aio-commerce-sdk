@@ -9,7 +9,7 @@ function getProjectInstallCommand(
 };
 ```
 
-Defined in: [project.ts:433](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages-private/scripting-utils/source/project.ts#L433)
+Defined in: [project.ts:433](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages-private/scripting-utils/source/project.ts#L433)
 
 Get the command that installs a project's declared dependencies.
 

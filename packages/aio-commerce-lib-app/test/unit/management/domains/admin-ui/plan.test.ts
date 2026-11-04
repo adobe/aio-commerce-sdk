@@ -18,7 +18,6 @@ import {
   configWithAdminUiAllGrids,
   configWithAdminUiEmptyBlock,
   configWithAdminUiInvoiceCreditMemoShipmentGrids,
-  configWithAdminUiNewsletterMassActions,
   configWithAdminUiSingleGrid,
 } from "#test/fixtures/config";
 
@@ -73,20 +72,6 @@ describe("planAdminUi", () => {
     expect(plan.operations).toHaveLength(1);
     expect(plan.operations[0]?.kind).toBe("add");
     expect(plan.operations[0]?.id).toBe("add:order.grid-columns");
-  });
-
-  test("registers a newsletter mass action as its own component", async () => {
-    const { plan } = await planned(
-      null,
-      configWithAdminUiNewsletterMassActions as AdminUiConfig,
-    );
-
-    expect(plan.extensionAction).toBe("register");
-    expect(plan.operations).toHaveLength(1);
-    expect(plan.operations[0]?.kind).toBe("add");
-    expect(plan.operations[0]?.id).toBe(
-      "add:newsletter.mass-action.unsubscribe-subscribers",
-    );
   });
 
   test("registers each native UI replaced page as its own component", async () => {
@@ -199,6 +184,41 @@ describe("planAdminUi", () => {
     expect(plan.operations).toHaveLength(1);
     expect(plan.operations[0]?.kind).toBe("update");
     expect(plan.operations[0]?.id).toBe("update:order.grid-columns");
+  });
+
+  test("references the component as an item, with the target text for an add or update and the baseline text for a remove", async () => {
+    const config = configWithAdminUiSingleGrid as AdminUiConfig;
+    const { gridColumns } = configWithAdminUiSingleGrid.adminUi.order;
+    const ref = {
+      config: gridColumns,
+      key: "order.grid-columns",
+    };
+
+    const [added] = (await planned(null, config)).plan.operations;
+    const [removed] = (await planned(config, null)).plan.operations;
+    expect(added?.id).toBe("add:order.grid-columns");
+    expect(added?.itemRefs).toEqual([ref]);
+    expect(removed?.itemRefs).toEqual([ref]);
+
+    const renamed = {
+      ...configWithAdminUiSingleGrid,
+      adminUi: {
+        order: {
+          gridColumns: {
+            ...gridColumns,
+            description: "New text",
+            label: "New",
+          },
+        },
+      },
+    } as AdminUiConfig;
+    const [updated] = (await planned(config, renamed)).plan.operations;
+    expect(updated?.itemRefs).toEqual([
+      {
+        ...ref,
+        config: { ...gridColumns, description: "New text", label: "New" },
+      },
+    ]);
   });
 
   test("detects a modification nested inside a grid-columns component (column-level change)", async () => {

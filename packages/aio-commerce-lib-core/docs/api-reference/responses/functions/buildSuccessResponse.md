@@ -13,16 +13,16 @@ function buildSuccessResponse<
 ): SuccessResponse<TBody, THeaders>;
 ```
 
-Defined in: [responses/helpers.ts:243](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-core/source/responses/helpers.ts#L243)
+Defined in: [responses/helpers.ts:243](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-core/source/responses/helpers.ts#L243)
 
 Creates a standardized success response for runtime actions
 
 ## Type Parameters
 
-| Type Parameter                       | Default type    | Description              |
-| ------------------------------------ | --------------- | ------------------------ |
-| `TBody` _extends_ `BodyRecord`       | `BodyRecord`    | Response body properties |
-| `THeaders` _extends_ `HeadersRecord` | `HeadersRecord` | Custom response headers  |
+| Type Parameter                                                            | Default type    | Description              |
+| ------------------------------------------------------------------------- | --------------- | ------------------------ |
+| <a id="type-parameter-tbody"></a> `TBody` _extends_ `BodyRecord`          | `BodyRecord`    | Response body properties |
+| <a id="type-parameter-theaders"></a> `THeaders` _extends_ `HeadersRecord` | `HeadersRecord` | Custom response headers  |
 
 ## Parameters
 

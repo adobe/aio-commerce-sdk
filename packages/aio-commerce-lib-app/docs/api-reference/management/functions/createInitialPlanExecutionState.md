@@ -6,9 +6,10 @@ function createInitialPlanExecutionState(
 ): InProgressWorkflowState;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/common/workflow/execute.ts:84](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-app/source/management/common/workflow/execute.ts#L84)
+Defined in: [aio-commerce-lib-app/source/management/common/workflow/execute.ts:87](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-app/source/management/common/workflow/execute.ts#L87)
 
-Creates an initial execution state pruned to leaves with planned operations.
+Creates an initial execution state pruned to leaves with planned operations. A leaf with config
+changes but no operations, because its items are already in place, is kept as `succeeded`.
 
 ## Parameters
 

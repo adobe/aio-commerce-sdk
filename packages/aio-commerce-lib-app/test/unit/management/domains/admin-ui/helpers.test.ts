@@ -23,16 +23,16 @@ import { makeHttpError } from "#test/fixtures/http-error";
 import { createMockLogger } from "#test/fixtures/installation";
 
 const REGISTER_EXTENSION_COMBINED_PATTERN =
-  /Failed to register Admin UI extension.*Insufficient permissions/;
+  /Failed to register Admin UI extension.*Insufficient permissions/u;
 
 const ENABLE_SDK_COMBINED_PATTERN =
-  /Failed to enable Admin UI SDK.*Insufficient permissions/;
+  /Failed to enable Admin UI SDK.*Insufficient permissions/u;
 
 const REFRESH_EXTENSION_COMBINED_PATTERN =
-  /Failed to refresh Admin UI extension.*Insufficient permissions/;
+  /Failed to refresh Admin UI extension.*Insufficient permissions/u;
 
 const UNREGISTER_FAILURE_PATTERN =
-  /Failed to unregister Admin UI extension.*Service unavailable/;
+  /Failed to unregister Admin UI extension.*Service unavailable/u;
 
 describe("enableAdminUiSdk", () => {
   test("calls the client and logs success when it resolves", async () => {

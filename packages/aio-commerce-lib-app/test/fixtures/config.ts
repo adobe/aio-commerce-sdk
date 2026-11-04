@@ -511,26 +511,6 @@ export const configWithAdminUiNewsletterGrid = {
   metadata: { ...mockMetadata, id: "test-app-admin-ui-newsletter-grid" },
 } satisfies CommerceAppConfigOutputModel;
 
-/** Config fixture with only a worker newsletter mass action configured. */
-export const configWithAdminUiNewsletterMassActions = {
-  adminUi: {
-    newsletter: {
-      massActions: [
-        {
-          id: "unsubscribe-subscribers",
-          label: "Unsubscribe",
-          runtimeAction: "newsletter/unsubscribe-subscribers",
-          type: "worker" as const,
-        },
-      ],
-    },
-  },
-  metadata: {
-    ...mockMetadata,
-    id: "test-app-admin-ui-newsletter-mass-actions",
-  },
-} satisfies CommerceAppConfigOutputModel;
-
 /** Minimal valid adminUi menu object (required fields only). */
 const adminUiMenuMinimalPart = {
   description: "Review and approve purchase requests from Commerce Admin.",

@@ -12,15 +12,15 @@ function createCustomCommerceWebhooksApiClient<
 ): ApiClientRecord<AdobeCommerceHttpClient, TFunctions>;
 ```
 
-Defined in: [lib/api-client.ts:58](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-webhooks/source/lib/api-client.ts#L58)
+Defined in: [lib/api-client.ts:58](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-webhooks/source/lib/api-client.ts#L58)
 
 Creates a customized Commerce Webhooks API client with a user-specified set of endpoint functions.
 
 ## Type Parameters
 
-| Type Parameter                                                                                                                                                                                                                                                                                                                                                                                     |
-| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `TFunctions` _extends_ `Record`\<`string`, [`ApiFunction`](https://github.com/adobe/aio-commerce-sdk/blob/main/packages/aio-commerce-lib-api/docs/api-reference/index/type-aliases/ApiFunction.md)\<[`AdobeCommerceHttpClient`](https://github.com/adobe/aio-commerce-sdk/blob/main/packages/aio-commerce-lib-api/docs/api-reference/index/classes/AdobeCommerceHttpClient.md), `any`[], `any`\>\> |
+| Type Parameter                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| <a id="type-parameter-tfunctions"></a> `TFunctions` _extends_ `Record`\<`string`, [`ApiFunction`](https://github.com/adobe/aio-commerce-sdk/blob/main/packages/aio-commerce-lib-api/docs/api-reference/index/type-aliases/ApiFunction.md)\<[`AdobeCommerceHttpClient`](https://github.com/adobe/aio-commerce-sdk/blob/main/packages/aio-commerce-lib-api/docs/api-reference/index/classes/AdobeCommerceHttpClient.md), `any`[], `any`\>\> |
 
 ## Parameters
 

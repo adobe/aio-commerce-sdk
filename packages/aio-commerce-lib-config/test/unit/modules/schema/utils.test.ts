@@ -33,7 +33,7 @@ const mockParams: RuntimeActionParams = {
   LOG_LEVEL: "info",
 };
 
-const BOOM_FIELD_NAME_RE = /"boom"/;
+const BOOM_FIELD_NAME_RE = /"boom"/u;
 
 describe("schema/utils", () => {
   describe("validateBusinessConfigSchema", () => {

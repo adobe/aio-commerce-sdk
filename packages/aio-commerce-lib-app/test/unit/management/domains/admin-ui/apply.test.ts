@@ -22,10 +22,10 @@ import type {
 } from "#management/domains/admin-ui/types";
 
 const UNREGISTER_FAILURE_PATTERN =
-  /Failed to unregister Admin UI extension.*Service unavailable/;
+  /Failed to unregister Admin UI extension.*Service unavailable/u;
 
 const REFRESH_FAILURE_PATTERN =
-  /Failed to refresh Admin UI extension.*Service unavailable/;
+  /Failed to refresh Admin UI extension.*Service unavailable/u;
 
 const OPERATION_PATH = ["admin-ui", "register-extension"];
 

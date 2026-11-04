@@ -11,7 +11,7 @@ function getEventProviderById(
 ): Promise<IoEventProviderHalModel>;
 ```
 
-Defined in: [io-events/api/event-providers/endpoints.ts:86](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-events/source/io-events/api/event-providers/endpoints.ts#L86)
+Defined in: [io-events/api/event-providers/endpoints.ts:88](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-events/source/io-events/api/event-providers/endpoints.ts#L88)
 
 Gets an event provider by ID.
 
@@ -21,7 +21,7 @@ Gets an event provider by ID.
 | --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `httpClient`                | [`AdobeIoEventsHttpClient`](https://github.com/adobe/aio-commerce-sdk/blob/main/packages/aio-commerce-lib-api/docs/api-reference/classes/AdobeIoEventsHttpClient.md) | The [AdobeIoEventsHttpClient](https://github.com/adobe/aio-commerce-sdk/blob/main/packages/aio-commerce-lib-api/docs/api-reference/classes/AdobeIoEventsHttpClient.md) to use to make the request. |
 | `params`                    | \{ `providerId`: `string`; `withEventMetadata?`: `boolean`; \}                                                                                                       | The parameters to get the event provider by.                                                                                                                                                       |
-| `params.providerId`         | `string`                                                                                                                                                             | -                                                                                                                                                                                                  |
+| `params.providerId?`        | `string`                                                                                                                                                             | -                                                                                                                                                                                                  |
 | `params.withEventMetadata?` | `boolean`                                                                                                                                                            | -                                                                                                                                                                                                  |
 | `fetchOptions?`             | [`Options`](https://github.com/sindresorhus/ky?tab=readme-ov-file#options)                                                                                           | The [Options](https://github.com/sindresorhus/ky?tab=readme-ov-file#options) to use to make the request.                                                                                           |
 

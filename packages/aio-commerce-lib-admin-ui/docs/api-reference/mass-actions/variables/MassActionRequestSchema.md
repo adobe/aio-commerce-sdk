@@ -3,7 +3,10 @@
 ```ts
 const MassActionRequestSchema: ObjectSchema<
   {
-    gridType: PicklistSchema<["order", "product", "customer"], undefined>;
+    gridType: PicklistSchema<
+      readonly ["order", "product", "customer"],
+      undefined
+    >;
     requestId: SchemaWithPipe<
       readonly [
         StringSchema<`Expected a string value for '${string}'`>,
@@ -36,7 +39,7 @@ const MassActionRequestSchema: ObjectSchema<
 >;
 ```
 
-Defined in: [aio-commerce-lib-admin-ui/source/mass-actions/worker/schema.ts:33](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-admin-ui/source/mass-actions/worker/schema.ts#L33)
+Defined in: [aio-commerce-lib-admin-ui/source/mass-actions/worker/schema.ts:31](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-admin-ui/source/mass-actions/worker/schema.ts#L31)
 
 Schema for the JSON body Commerce POSTs to a worker mass action handler.
 

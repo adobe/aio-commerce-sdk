@@ -7,7 +7,7 @@ type StateStoreOptions = {
 };
 ```
 
-Defined in: [storage/types.ts:57](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages-private/common-utils/source/storage/types.ts#L57)
+Defined in: [storage/types.ts:65](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages-private/common-utils/source/storage/types.ts#L65)
 
 Options for creating a lib-state based store.
 
@@ -16,10 +16,10 @@ Options for creating a lib-state based store.
 ### keyPrefix?
 
 ```ts
-optional keyPrefix?: string;
+keyPrefix?: string;
 ```
 
-Defined in: [storage/types.ts:59](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages-private/common-utils/source/storage/types.ts#L59)
+Defined in: [storage/types.ts:67](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages-private/common-utils/source/storage/types.ts#L67)
 
 Key prefix for all entries.
 
@@ -28,9 +28,9 @@ Key prefix for all entries.
 ### ttlSeconds?
 
 ```ts
-optional ttlSeconds?: number;
+ttlSeconds?: number;
 ```
 
-Defined in: [storage/types.ts:61](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages-private/common-utils/source/storage/types.ts#L61)
+Defined in: [storage/types.ts:69](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages-private/common-utils/source/storage/types.ts#L69)
 
 TTL in seconds for cached entries.

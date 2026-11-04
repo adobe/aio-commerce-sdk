@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Adobe. All rights reserved.
+ * Copyright 2026 Adobe. All rights reserved.
  * This file is licensed to you under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License. You may obtain a copy
  * of the License at http://www.apache.org/licenses/LICENSE-2.0
@@ -53,6 +53,23 @@ describe("headers/helpers", () => {
 
     test("should return undefined for empty headers object", () => {
       expect(getHeader({}, "x-api-key")).toBeUndefined();
+    });
+
+    test("should ignore inherited headers", () => {
+      const headers = { "x-api-key": "test-key" };
+      Object.setPrototypeOf(headers, { Authorization: "inherited" });
+
+      expect(getHeader(headers, "Authorization")).toBeUndefined();
+      expect(getHeader(headers, "AUTHORIZATION")).toBeUndefined();
+      expect(getHeader(headers, "X-API-KEY")).toBe("test-key");
+    });
+
+    test("should handle headers without a prototype", () => {
+      const headers = { authorization: "test-token" };
+      Object.setPrototypeOf(headers, null);
+
+      expect(getHeader(headers, "authorization")).toBe("test-token");
+      expect(getHeader(headers, "Authorization")).toBe("test-token");
     });
 
     test("should handle headers with undefined values", () => {

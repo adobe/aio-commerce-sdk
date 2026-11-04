@@ -6,7 +6,7 @@ function ok<TValue = unknown>(
 ): SuccessResponse;
 ```
 
-Defined in: [responses/presets.ts:43](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-webhooks/source/responses/presets.ts#L43)
+Defined in: [responses/presets.ts:43](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-webhooks/source/responses/presets.ts#L43)
 
 Creates an HTTP 200 OK response with webhook operation(s)
 Webhook-optimized version of ok() that automatically wraps operations in the response body.
@@ -16,9 +16,9 @@ Instead of `ok({ body: operation })`, you can simply use `ok(operation)`.
 
 ## Type Parameters
 
-| Type Parameter | Default type | Description                                                            |
-| -------------- | ------------ | ---------------------------------------------------------------------- |
-| `TValue`       | `unknown`    | The type of the value for add/replace operations (defaults to unknown) |
+| Type Parameter                              | Default type | Description                                                            |
+| ------------------------------------------- | ------------ | ---------------------------------------------------------------------- |
+| <a id="type-parameter-tvalue"></a> `TValue` | `unknown`    | The type of the value for add/replace operations (defaults to unknown) |
 
 ## Parameters
 

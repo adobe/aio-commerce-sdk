@@ -17,6 +17,7 @@ import { join } from "node:path";
 import { withTempFiles } from "@aio-commerce-sdk/scripting-utils/filesystem";
 import { getExecCommand } from "@aio-commerce-sdk/scripting-utils/project";
 import { describe, expect, test, vi } from "vitest";
+import { parse } from "yaml";
 
 import {
   APP_CONFIG_FILE,
@@ -56,12 +57,19 @@ import {
   generatedManifestFile,
   generatedSchemaFile,
   INVALID_PROJECT,
+  makeAppConfigFile,
   makeProjectFiles,
+  ORDERED_EXTENSION_POINTS,
   withGeneratedProject,
   withTempProject,
 } from "#test/fixtures/project";
 
 import type { InitFlags } from "#commands/init/main";
+
+async function readAppConfigIds(tempDir: string) {
+  const content = await readFile(join(tempDir, APP_CONFIG_FILE), "utf-8");
+  return Object.keys(parse(content).extensions);
+}
 
 describe("commands/init/lib", () => {
   describe("ensureCommerceAppConfig", () => {
@@ -278,9 +286,160 @@ describe("commands/init/lib", () => {
           );
 
           const matches = content.match(
-            new RegExp(EXTENSIBILITY_EXTENSION_POINT_ID, "g"),
+            new RegExp(EXTENSIBILITY_EXTENSION_POINT_ID, "gu"),
           );
           expect(matches).toHaveLength(1);
+        },
+      );
+    });
+
+    test("writes no blank line before extensions and keeps blank lines between entries", async () => {
+      await withTempFiles(
+        { ...EMPTY_PROJECT, [APP_CONFIG_FILE]: "name: app\n" },
+        async (tempDir) => {
+          await ensureAppConfig(
+            new Set(["businessConfig.schema"]),
+            configWithBusinessConfig,
+            tempDir,
+          );
+
+          expect(
+            await readFile(join(tempDir, APP_CONFIG_FILE), "utf-8"),
+          ).toBe(`name: app
+extensions:
+  # This extension is required for business configuration. Do not remove.
+  commerce/configuration/1:
+    $include: src/commerce-configuration-1/ext.config.yaml
+
+  # This extension is required for app management. Do not remove.
+  commerce/extensibility/1:
+    $include: src/commerce-extensibility-1/ext.config.yaml
+`);
+        },
+      );
+    });
+
+    test("writes the exact output into an empty app.config.yaml", async () => {
+      await withTempFiles(
+        { ...EMPTY_PROJECT, [APP_CONFIG_FILE]: "" },
+        async (tempDir) => {
+          await ensureAppConfig(
+            new Set(["businessConfig.schema"]),
+            { ...configWithBusinessConfig, ...configWithAdminUiMenu },
+            tempDir,
+          );
+
+          expect(
+            await readFile(join(tempDir, APP_CONFIG_FILE), "utf-8"),
+          ).toBe(`extensions:
+  # This extension is required for Admin UI. Do not remove.
+  commerce/backend-ui/2:
+    $include: src/commerce-backend-ui-2/ext.config.yaml
+
+  # This extension is required for business configuration. Do not remove.
+  commerce/configuration/1:
+    $include: src/commerce-configuration-1/ext.config.yaml
+
+  # This extension is required for app management. Do not remove.
+  commerce/extensibility/1:
+    $include: src/commerce-extensibility-1/ext.config.yaml
+`);
+        },
+      );
+    });
+
+    test("does not add a blank line before extensions or lose entry spacing when reordering", async () => {
+      await withTempFiles(
+        {
+          ...EMPTY_PROJECT,
+          [APP_CONFIG_FILE]: `name: app
+extensions:
+  # This extension is required for app management. Do not remove.
+  commerce/extensibility/1:
+    $include: src/commerce-extensibility-1/ext.config.yaml
+
+  # This extension is required for business configuration. Do not remove.
+  commerce/configuration/1:
+    $include: src/commerce-configuration-1/ext.config.yaml
+`,
+        },
+        async (tempDir) => {
+          await ensureAppConfig(
+            new Set(["businessConfig.schema"]),
+            configWithBusinessConfig,
+            tempDir,
+          );
+
+          expect(
+            await readFile(join(tempDir, APP_CONFIG_FILE), "utf-8"),
+          ).toBe(`name: app
+extensions:
+  # This extension is required for business configuration. Do not remove.
+  commerce/configuration/1:
+    $include: src/commerce-configuration-1/ext.config.yaml
+
+  # This extension is required for app management. Do not remove.
+  commerce/extensibility/1:
+    $include: src/commerce-extensibility-1/ext.config.yaml
+`);
+        },
+      );
+    });
+
+    test("writes all extension points in the required order", async () => {
+      await withTempFiles(
+        { ...EMPTY_PROJECT, [APP_CONFIG_FILE]: "" },
+        async (tempDir) => {
+          await ensureAppConfig(
+            new Set(["businessConfig.schema"]),
+            { ...configWithBusinessConfig, ...configWithAdminUiMenu },
+            tempDir,
+          );
+
+          expect(await readAppConfigIds(tempDir)).toEqual(
+            ORDERED_EXTENSION_POINTS,
+          );
+        },
+      );
+    });
+
+    test("keeps the relative order for a subset of extension points", async () => {
+      await withTempFiles(
+        { ...EMPTY_PROJECT, [APP_CONFIG_FILE]: "" },
+        async (tempDir) => {
+          await ensureAppConfig(
+            new Set(["businessConfig.schema"]),
+            configWithBusinessConfig,
+            tempDir,
+          );
+
+          expect(await readAppConfigIds(tempDir)).toEqual([
+            CONFIGURATION_EXTENSION_POINT_ID,
+            EXTENSIBILITY_EXTENSION_POINT_ID,
+          ]);
+        },
+      );
+    });
+
+    test("reorders extension points that are already in the file", async () => {
+      await withTempFiles(
+        {
+          ...EMPTY_PROJECT,
+          ...makeAppConfigFile([
+            EXTENSIBILITY_EXTENSION_POINT_ID,
+            CONFIGURATION_EXTENSION_POINT_ID,
+          ]),
+        },
+        async (tempDir) => {
+          await ensureAppConfig(
+            new Set(["businessConfig.schema"]),
+            { ...configWithBusinessConfig, ...configWithAdminUiMenu },
+            tempDir,
+          );
+
+          expect(await readAppConfigIds(tempDir)).toEqual(
+            ORDERED_EXTENSION_POINTS,
+          );
         },
       );
     });
@@ -292,7 +451,9 @@ describe("commands/init/lib", () => {
         async (tempDir) => {
           await expect(
             ensureAppConfig(new Set(), minimalValidConfig, tempDir),
-          ).rejects.toThrow(new RegExp(`Failed to parse ${APP_CONFIG_FILE}`));
+          ).rejects.toThrow(
+            new RegExp(`Failed to parse ${APP_CONFIG_FILE}`, "u"),
+          );
         },
       );
     });
@@ -379,10 +540,34 @@ describe("commands/init/lib", () => {
           );
 
           const matches = content.match(
-            new RegExp(EXTENSIBILITY_EXTENSION_POINT_ID, "g"),
+            new RegExp(EXTENSIBILITY_EXTENSION_POINT_ID, "gu"),
           );
 
           expect(matches).toHaveLength(1);
+        },
+      );
+    });
+
+    test("writes no blank line before extensions and keeps blank lines between entries", async () => {
+      await withTempFiles(
+        { ...EMPTY_PROJECT, [INSTALL_YAML_FILE]: "name: app\n" },
+        async (tempDir) => {
+          await ensureInstallYaml(
+            new Set(["businessConfig.schema"]),
+            configWithBusinessConfig,
+            tempDir,
+          );
+
+          expect(
+            await readFile(join(tempDir, INSTALL_YAML_FILE), "utf-8"),
+          ).toBe(`name: app
+extensions:
+  # This extension is required for business configuration. Do not remove.
+  - extensionPointId: commerce/configuration/1
+
+  # This extension is required for app management. Do not remove.
+  - extensionPointId: commerce/extensibility/1
+`);
         },
       );
     });
@@ -394,7 +579,9 @@ describe("commands/init/lib", () => {
         async (tempDir) => {
           await expect(
             ensureInstallYaml(new Set(), minimalValidConfig, tempDir),
-          ).rejects.toThrow(new RegExp(`Failed to parse ${INSTALL_YAML_FILE}`));
+          ).rejects.toThrow(
+            new RegExp(`Failed to parse ${INSTALL_YAML_FILE}`, "u"),
+          );
         },
       );
     });

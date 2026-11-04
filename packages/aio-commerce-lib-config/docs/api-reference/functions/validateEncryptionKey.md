@@ -4,7 +4,7 @@
 function validateEncryptionKey(key: string): void;
 ```
 
-Defined in: [utils/encryption.ts:38](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-config/source/utils/encryption.ts#L38)
+Defined in: [utils/encryption.ts:38](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-config/source/utils/encryption.ts#L38)
 
 Validates the encryption key.
 

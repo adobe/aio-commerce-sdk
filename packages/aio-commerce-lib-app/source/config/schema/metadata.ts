@@ -25,6 +25,7 @@ const MAX_DISPLAY_NAME_LENGTH = 50;
 const NUMERIC_IDENTIFIER = "(0|[1-9]\\d*)";
 const SEMVER_REGEX = new RegExp(
   `^${NUMERIC_IDENTIFIER}\\.${NUMERIC_IDENTIFIER}\\.${NUMERIC_IDENTIFIER}$`,
+  "u",
 );
 
 function nonEmptyString(fieldName: string) {

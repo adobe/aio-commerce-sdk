@@ -24,10 +24,13 @@ export type PlanWorkflowOptions = {
   rootStep: BranchStep;
   lifecycleContext: LifecycleContext;
 
-  baseline: AppStateSnapshot;
+  /** The state to plan from, or `null` when nothing is installed. */
+  baseline: Pick<AppStateSnapshot, "config" | "data"> | null;
+
+  /** The state to plan towards, or `null` when nothing should remain installed. */
   target: {
     config: CommerceAppConfigOutputModel;
-  };
+  } | null;
 
   /** The latest attempt, when it failed after the baseline was saved. */
   failedAttempt?: {
@@ -56,8 +59,8 @@ export async function planWorkflow(
     options.rootStep,
     [],
     {},
-    isStepConfigured(options.rootStep, options.baseline.config),
-    isStepConfigured(options.rootStep, options.target.config),
+    isConfiguredIn(options.rootStep, options.baseline),
+    isConfiguredIn(options.rootStep, options.target),
     options.failedAttempt
       ? isStepConfigured(options.rootStep, options.failedAttempt.config)
       : false,
@@ -102,12 +105,11 @@ async function planStep(
     for (const child of step.children) {
       // A child only counts as configured in the baseline when its parent is configured.
       const childConfiguredInBaseline =
-        configuredInBaseline &&
-        isStepConfigured(child, options.baseline.config);
+        configuredInBaseline && isConfiguredIn(child, options.baseline);
 
       // A child only counts as configured in the target when its parent is configured.
       const childConfiguredInTarget =
-        configuredInTarget && isStepConfigured(child, options.target.config);
+        configuredInTarget && isConfiguredIn(child, options.target);
 
       // A child only counts as configured in the failed attempt when its parent is configured.
       // Domains use the failed attempt's config to recognize values it may have left behind.
@@ -137,14 +139,8 @@ async function planStep(
     return;
   }
 
-  const domainBaseline = configuredInBaseline
-    ? {
-        config: options.baseline.config,
-        data: getAtPath(options.baseline.data ?? {}, path) as WorkflowData,
-      }
-    : null;
-
-  const domainTargetConfig = configuredInTarget ? options.target.config : null;
+  const domainTargetConfig =
+    configuredInTarget && options.target ? options.target.config : null;
   const domainContext = {
     ...options.lifecycleContext,
     ...accumulatedContext,
@@ -156,7 +152,9 @@ async function planStep(
   );
 
   const planningInput = {
-    baseline: domainBaseline,
+    baseline: configuredInBaseline
+      ? getDomainBaseline(options.baseline, path)
+      : null,
     failedAttempt: failedAttempt && {
       plan: domainPlan ?? null,
       targetConfig: configuredInFailedAttempt ? failedAttempt.config : null,
@@ -168,9 +166,29 @@ async function planStep(
   const result = await step.plan(planningInput, domainContext);
 
   // Accumulate in-place (for recursive traversal)
-  if (result.kind === "blocked") {
-    issues.push(...result.issues);
-  } else {
+  issues.push(...(result.issues ?? []).map((issue) => ({ path, ...issue })));
+  if (result.kind === "planned") {
     domains.push(result.plan);
   }
+}
+
+/** The baseline config and the slice of its data at the given path, or `null` without a baseline. */
+function getDomainBaseline(
+  baseline: PlanWorkflowOptions["baseline"],
+  path: string[],
+) {
+  return baseline
+    ? {
+        config: baseline.config,
+        data: getAtPath(baseline.data ?? {}, path) as WorkflowData,
+      }
+    : null;
+}
+
+/** Whether a step is configured in a snapshot's config. Always `false` without a snapshot. */
+function isConfiguredIn(
+  step: AnyStep,
+  state: Pick<AppStateSnapshot, "config"> | null,
+) {
+  return state !== null && isStepConfigured(step, state.config);
 }

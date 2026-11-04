@@ -17,7 +17,6 @@ import { isCompletedState } from "#management/index";
 
 import type { ActionResponse } from "@adobe/aio-commerce-lib-core/responses";
 import type { KeyValueStore } from "@aio-commerce-sdk/common-utils/storage";
-import type { StepFailedEvent } from "#management/common/workflow/hooks";
 import type { WorkflowRunState } from "#management/common/workflow/types";
 
 /** Creates a workflow state store with the given prefix. */
@@ -63,38 +62,4 @@ export async function readStateFromStore(
   }
   logFn("No state found");
   return noContent();
-}
-
-/** Creates hooks to sync installation state to storage. */
-export function createInstallationHooks(
-  store: KeyValueStore<WorkflowRunState>,
-  logFn: (message: string) => void,
-) {
-  const logAndSave = async (message: string, data: WorkflowRunState) => {
-    logFn(message);
-    await store.put(getStorageKey(), data);
-  };
-
-  return {
-    onInstallationFailure: (state: WorkflowRunState) =>
-      logAndSave("Installation failed", state),
-    onInstallationStart: (state: WorkflowRunState) =>
-      logAndSave("Installation started", state),
-    onInstallationSuccess: (state: WorkflowRunState) =>
-      logAndSave(
-        state.status === "succeeded" && state.metadata?.isRetry
-          ? "Installation succeeded on retry"
-          : "Installation succeeded",
-        state,
-      ),
-    onStepFailure: (event: StepFailedEvent, state: WorkflowRunState) =>
-      logAndSave(
-        `Step failed: ${event.stepName} — ${event.error.message ?? `(key: ${event.error.key})`}`,
-        state,
-      ),
-    onStepStart: (event: { stepName: string }, state: WorkflowRunState) =>
-      logAndSave(`Step started: ${event.stepName}`, state),
-    onStepSuccess: (event: { stepName: string }, state: WorkflowRunState) =>
-      logAndSave(`Step succeeded: ${event.stepName}`, state),
-  };
 }

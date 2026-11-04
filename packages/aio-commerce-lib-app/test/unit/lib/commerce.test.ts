@@ -12,6 +12,9 @@
 
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
+import { getCommerceClient, getCommerceInstance } from "#lib/commerce";
+import { AssociationRecordNotFoundError } from "#lib/errors";
+
 const { mockGetAssociationData, MockAdobeCommerceHttpClient } = vi.hoisted(
   () => ({
     MockAdobeCommerceHttpClient: vi.fn(),
@@ -26,9 +29,6 @@ vi.mock("#management/association/repository", () => ({
 vi.mock("@adobe/aio-commerce-lib-api", () => ({
   AdobeCommerceHttpClient: MockAdobeCommerceHttpClient,
 }));
-
-import { getCommerceClient, getCommerceInstance } from "#lib/commerce";
-import { AssociationRecordNotFoundError } from "#lib/errors";
 
 const auth = { strategy: "ims" } as never;
 

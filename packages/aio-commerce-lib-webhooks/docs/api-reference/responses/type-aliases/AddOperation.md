@@ -9,26 +9,26 @@ type AddOperation<TValue = unknown> = {
 };
 ```
 
-Defined in: [responses/operations/types.ts:38](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-webhooks/source/responses/operations/types.ts#L38)
+Defined in: [responses/operations/types.ts:38](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-webhooks/source/responses/operations/types.ts#L38)
 
 Add operation response
 Causes Commerce to add the provided value to the provided path in the triggered event arguments.
 
 ## Type Parameters
 
-| Type Parameter | Default type | Description                                             |
-| -------------- | ------------ | ------------------------------------------------------- |
-| `TValue`       | `unknown`    | The type of the value to be added (defaults to unknown) |
+| Type Parameter                              | Default type | Description                                             |
+| ------------------------------------------- | ------------ | ------------------------------------------------------- |
+| <a id="type-parameter-tvalue"></a> `TValue` | `unknown`    | The type of the value to be added (defaults to unknown) |
 
 ## Properties
 
 ### instance?
 
 ```ts
-optional instance?: string;
+instance?: string;
 ```
 
-Defined in: [responses/operations/types.ts:45](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-webhooks/source/responses/operations/types.ts#L45)
+Defined in: [responses/operations/types.ts:45](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-webhooks/source/responses/operations/types.ts#L45)
 
 Specifies the DataObject class name to create, based on the value and added to the provided path.
 
@@ -40,7 +40,7 @@ Specifies the DataObject class name to create, based on the value and added to t
 op: "add";
 ```
 
-Defined in: [responses/operations/types.ts:39](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-webhooks/source/responses/operations/types.ts#L39)
+Defined in: [responses/operations/types.ts:39](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-webhooks/source/responses/operations/types.ts#L39)
 
 ---
 
@@ -50,7 +50,7 @@ Defined in: [responses/operations/types.ts:39](https://github.com/adobe/aio-comm
 path: string;
 ```
 
-Defined in: [responses/operations/types.ts:41](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-webhooks/source/responses/operations/types.ts#L41)
+Defined in: [responses/operations/types.ts:41](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-webhooks/source/responses/operations/types.ts#L41)
 
 Specifies the path at which the value should be added to the triggered event arguments.
 
@@ -62,6 +62,6 @@ Specifies the path at which the value should be added to the triggered event arg
 value: TValue;
 ```
 
-Defined in: [responses/operations/types.ts:43](https://github.com/adobe/aio-commerce-sdk/blob/c4d8d960809a7ee71cdf5efeed1e53485edd3792/packages/aio-commerce-lib-webhooks/source/responses/operations/types.ts#L43)
+Defined in: [responses/operations/types.ts:43](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-webhooks/source/responses/operations/types.ts#L43)
 
 Specifies the value to be added. This can be a single value or in an array format.

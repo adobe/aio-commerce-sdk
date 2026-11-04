@@ -25,9 +25,10 @@ import type {
 import type {
   ApplyContext,
   ApplyResult,
+  BlockingPlanningIssue,
   DomainPlan,
+  NonBlockingPlanningIssue,
   PlanningInput,
-  PlanningIssue,
   PlanningResult,
   ResourceOperation,
 } from "#management/common/workflow/resource";
@@ -73,6 +74,7 @@ describe("lifecycle type surface", () => {
     const add: ResourceOperation<Partial<WebhookEntry>> = {
       after: { name: "orders" },
       id: "op-1",
+      itemRefs: [],
       kind: "add",
       label: "Add order webhook",
       reason: "change",
@@ -84,6 +86,7 @@ describe("lifecycle type surface", () => {
       after: { name: "orders", url: "https://example.test" },
       before: { name: "orders" },
       id: "op-2",
+      itemRefs: [],
       kind: "update",
       label: "Update order webhook",
       reason: "change",
@@ -97,6 +100,7 @@ describe("lifecycle type surface", () => {
       // @ts-expect-error - "add" operations do not carry a `before` value.
       before: { name: "orders" },
       id: "op-3",
+      itemRefs: [],
       kind: "add",
       label: "Invalid",
       reason: "change",
@@ -154,7 +158,7 @@ describe("lifecycle type surface", () => {
     // failure (reusing the engine WorkflowError). Neither leaks onto the other.
     expectTypeOf<
       Extract<LifecycleAttempt, { status: "succeeded" }>["result"]
-    >().toEqualTypeOf<SuccessfulResult>();
+    >().toEqualTypeOf<SuccessfulResult | null>();
     expectTypeOf<
       Extract<LifecycleAttempt, { status: "failed" }>["failure"]
     >().toEqualTypeOf<WorkflowError<{ operationId?: string }>>();
@@ -178,8 +182,11 @@ describe("lifecycle type surface", () => {
       Extract<Result, { kind: "planned" }>["plan"]
     >().toEqualTypeOf<WebhookPlan>();
     expectTypeOf<
+      Extract<Result, { kind: "planned" }>["issues"]
+    >().toEqualTypeOf<NonBlockingPlanningIssue[] | undefined>();
+    expectTypeOf<
       Extract<Result, { kind: "blocked" }>["issues"]
-    >().toEqualTypeOf<PlanningIssue[]>();
+    >().toEqualTypeOf<BlockingPlanningIssue[]>();
   });
 
   test("defineLeafStep infers the resource generics from the handlers", () => {
