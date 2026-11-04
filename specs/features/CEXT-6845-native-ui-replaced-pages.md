@@ -78,8 +78,7 @@ function CreateOrder() {
 ```
 
 `customerId` and `storeId` are optional and may be absent (for example, when
-creating an order without a preselected customer). IDs are preserved as sent,
-either strings or numbers. Each hook returns an error when its identifier is missing, null, or invalid; successful data always contains that identifier. The hooks are independent, so a missing customer does not prevent reading a valid store.
+creating an order without a preselected customer). Successful identifiers are always strings: finite numeric host values are converted to strings, while existing strings retain leading zeros. Leading zeros already lost in numeric host values cannot be recovered. Each hook returns an error when its identifier is missing, null, or invalid; successful data always contains that identifier. The hooks are independent, so a missing customer does not prevent reading a valid store.
 
 Configuring an unsupported target fails validation with the list of allowed
 values. Declaring the same target twice in one app also fails.
@@ -107,8 +106,8 @@ Admin UI skill.
 
 ### lib-admin-ui
 
-- `useCustomerContext()` reads `customerId` from the live Commerce shared context and returns a `Result<CustomerContext>` with a required `customerId`.
-- `useStoreContext()` reads `storeId` independently and returns a `Result<StoreContext>` with a required `storeId`.
+- `useCustomerContext()` reads `customerId` from the live Commerce shared context and returns a `Result<CustomerContext>` with a required string `customerId`.
+- `useStoreContext()` reads `storeId` independently and returns a `Result<StoreContext>` with a required string `storeId`.
 - Missing, `null`, or invalid values produce an error result for the corresponding hook. IDs must be strings or finite numbers. Calling either hook outside a Commerce host also returns an error, consistent with the other Commerce hooks.
 
 ### Edge cases

@@ -709,7 +709,7 @@ function CreateOrderPage() {
 }
 ```
 
-Both hooks return an error when used outside a Commerce shared context. IDs are preserved as strings or numbers without conversion.
+Both hooks return an error when used outside a Commerce shared context. Successful identifiers are always strings: numeric host values are converted to strings, while existing strings retain leading zeros. Leading zeros already lost in a numeric host value cannot be recovered.
 
 #### Reading the invoice view-button context
 

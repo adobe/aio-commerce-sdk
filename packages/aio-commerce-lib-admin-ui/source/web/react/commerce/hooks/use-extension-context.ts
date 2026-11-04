@@ -87,7 +87,8 @@ export function useOrderViewButtonContext(): Result<OrderViewButtonContext> {
 }
 
 /**
- * Returns the customer identifier from the Commerce shared context.
+ * Returns the customer identifier from the Commerce shared context as a string.
+ * Numeric identifiers are converted to strings; existing strings retain leading zeros.
  *
  * Returns an error outside the Commerce shared context or when the customer identifier is
  * missing, null, or not a string or finite number. The store identifier is not required.
@@ -107,12 +108,13 @@ export function useCustomerContext(): Result<CustomerContext> {
       );
     }
 
-    return ok({ customerId });
+    return ok({ customerId: String(customerId) });
   }, [data, contextError]);
 }
 
 /**
- * Returns the store identifier from the Commerce shared context.
+ * Returns the store identifier from the Commerce shared context as a string.
+ * Numeric identifiers are converted to strings; existing strings retain leading zeros.
  *
  * Returns an error outside the Commerce shared context or when the store identifier is
  * missing, null, or not a string or finite number. The customer identifier is not required.
@@ -132,7 +134,7 @@ export function useStoreContext(): Result<StoreContext> {
       );
     }
 
-    return ok({ storeId });
+    return ok({ storeId: String(storeId) });
   }, [data, contextError]);
 }
 

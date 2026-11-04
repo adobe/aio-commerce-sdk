@@ -207,15 +207,19 @@ describe.each([
     useContext: useStoreContext,
   },
 ])("$name", ({ useContext, key, otherKey }) => {
-  test.each(["123", 123, 0])(
-    "returns the identifier %j without requiring the other identifier",
-    async (value) => {
+  test.each([
+    { expected: "000123", value: "000123" },
+    { expected: "123", value: 123 },
+    { expected: "0", value: 0 },
+  ])(
+    "returns identifier $value as string $expected without requiring the other identifier",
+    async ({ value, expected }) => {
       const { result, rerender } = await renderHook(() => useContext(), {
         wrapper: provide({ [key]: value }),
       });
 
       expect(result.current).toEqual({
-        data: { [key]: value },
+        data: { [key]: expected },
         error: null,
       });
       const initialResult = result.current;
