@@ -42,16 +42,22 @@ import type { InterruptNotice } from "#commands/hooks/post-app-deploy/interrupt"
 
 /** The codes that end the hook without an upgrade and without an error. */
 type SkipCode =
-  | "already-current"
-  | "not-associated"
-  | "not-installed"
-  | "hook-disabled";
+  "already-current" | "not-associated" | "not-installed" | "hook-disabled";
 
 /** How the hook ended when it did not fail. */
 type HookResult =
   | { kind: "skipped"; code: SkipCode }
   | { kind: "planned"; plan: UpgradePlan }
   | { kind: "upgraded"; runId: string };
+
+const SKIP_MESSAGES: Record<string, string> = {
+  "already-current": "The app is already up to date.",
+  "in-progress": "An upgrade is already in progress.",
+  "not-associated":
+    "The app is not associated with a Commerce instance. Nothing to upgrade.",
+  "not-installed":
+    "The app is not installed on the Commerce instance. Nothing to upgrade.",
+};
 
 function isSkipCode(code: unknown): code is SkipCode {
   return (
@@ -175,14 +181,16 @@ async function runHook(interrupt: InterruptNotice): Promise<HookResult> {
   const { upgradeMode } = appConfig.metadata;
 
   console.log(""); // Leave a bit of whitespace before the output to make it more readable.
-  consola.start("Checking for app upgrades...");
+  consola.start("Checking the status of the app...");
 
   const context = createCamsContext();
   consola.debug(`Service: ${context.baseUrl}`);
 
   const extension = await findWorkspaceExtension(context);
   if (!extension) {
-    consola.info("No upgrade was run: not-associated.\n");
+    consola.info(
+      "The app is not associated with a Commerce instance. Nothing to upgrade.\n",
+    );
     return { code: "not-associated", kind: "skipped" };
   }
 
@@ -190,9 +198,11 @@ async function runHook(interrupt: InterruptNotice): Promise<HookResult> {
   const client = context.createInstanceClient(
     requireCommerceInstance(extension),
   );
+  consola.start("Checking if the app needs an upgrade...");
+
   const plan = await planUpgrade(client, extensionId);
   if (typeof plan === "string") {
-    consola.info(`No upgrade was run: ${plan}.\n`);
+    consola.info(`${SKIP_MESSAGES[plan]}\n`);
     return { code: plan, kind: "skipped" };
   }
 
