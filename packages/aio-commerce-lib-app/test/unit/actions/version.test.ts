@@ -55,7 +55,7 @@ describe("app version header", () => {
 
     test("adds the header to the 405 response", async () => {
       const result = await router.handler()(
-        createRuntimeActionParams({ method: "trace", path: "/" }),
+        createRuntimeActionParams({ method: "head", path: "/" }),
       );
 
       expect(result).toMatchObject({
