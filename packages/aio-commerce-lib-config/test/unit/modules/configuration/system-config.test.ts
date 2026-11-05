@@ -97,6 +97,24 @@ describe("system-config", () => {
       );
     });
 
+    test("clears the cache and resolves when files throws ERROR_FILE_NOT_EXISTS", async () => {
+      // Mirrors aio-lib-files when the file vanishes between its lookup and delete.
+      mockFiles.delete.mockRejectedValueOnce(
+        Object.assign(
+          new Error(
+            `[FilesLib:ERROR_FILE_NOT_EXISTS] file \`${FILE_PATH}\` does not exist`,
+          ),
+          { code: "ERROR_FILE_NOT_EXISTS" },
+        ),
+      );
+      const { setSystemConfigByKey } = await import(
+        "#modules/configuration/system-config"
+      );
+
+      await expect(setSystemConfigByKey(KEY, null)).resolves.toBeUndefined();
+      expect(mockState.delete).toHaveBeenCalledWith(KEY);
+    });
+
     test("invalidates the cache entry without throwing when the cache write fails", async () => {
       mockState.put.mockRejectedValueOnce(new Error("cache write failed"));
       const { setSystemConfigByKey } = await import(

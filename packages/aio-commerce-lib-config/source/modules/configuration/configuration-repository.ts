@@ -184,8 +184,11 @@ export async function saveConfig(
 
 /**
  * Removes a configuration entry's file from storage. Clearing an entry that was
- * never persisted is a no-op since `aio-lib-files` delete is idempotent; any
- * real failure surfaces to the caller, since files are the source of truth.
+ * never persisted is a no-op. `aio-lib-files` delete is idempotent for a file
+ * that is already missing, but it still throws `ERROR_FILE_NOT_EXISTS` when the
+ * file disappears between its internal lookup and the delete (for example, two
+ * concurrent or retried clears), so that error is ignored here. Any other
+ * failure surfaces to the caller, since files are the source of truth.
  *
  * @param scopeCode - Scope code identifier.
  * @param namespace - Storage namespace to delete from.
@@ -195,7 +198,14 @@ async function deletePersistedConfig(
   namespace: RepositoryNamespace = CONFIGURATION_NAMESPACE,
 ) {
   const files = await getSharedFiles();
-  await files.delete(namespace.filePath(scopeCode));
+
+  try {
+    await files.delete(namespace.filePath(scopeCode));
+  } catch (err) {
+    if (!isFileNotExistsError(err)) {
+      throw err;
+    }
+  }
 }
 
 /**
@@ -368,5 +378,20 @@ function isNotFoundError(err: unknown): boolean {
     err !== null &&
     (("statusCode" in err && err.statusCode === statusNotFound) ||
       ("code" in err && err.code === "ENOENT"))
+  );
+}
+
+/**
+ * Checks if error is the `aio-lib-files` "file does not exist" error.
+ *
+ * @param err - Error to check.
+ * @returns True if the error code is `ERROR_FILE_NOT_EXISTS`, false otherwise.
+ */
+function isFileNotExistsError(err: unknown): boolean {
+  return (
+    typeof err === "object" &&
+    err !== null &&
+    "code" in err &&
+    err.code === "ERROR_FILE_NOT_EXISTS"
   );
 }
