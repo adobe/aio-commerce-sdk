@@ -191,9 +191,7 @@ async function runHook(interrupt: InterruptNotice): Promise<HookResult> {
 
   const extension = await findWorkspaceExtension(context);
   if (!extension) {
-    consola.info(
-      "The app is not associated with a Commerce instance. Nothing to upgrade.\n",
-    );
+    consola.info(`${SKIP_MESSAGES["not-associated"]}\n`);
     return { code: "not-associated", kind: "skipped" };
   }
 
