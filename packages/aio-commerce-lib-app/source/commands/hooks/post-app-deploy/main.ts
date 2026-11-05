@@ -249,7 +249,7 @@ export async function run(): Promise<HookResult> {
     process.env.AIO_COMMERCE_APP_SKIP_POST_DEPLOY_HOOK
   ) {
     consola.warn(
-      `The post-app-deploy hook was skipped because ${colors.cyan("AIO_COMMERCE_APP_SKIP_POST_DEPLOY_HOOK")} is set. No upgrade check or upgrade was run.\n`,
+      `The post-app-deploy hook was skipped because ${colors.cyan("AIO_COMMERCE_APP_SKIP_POST_DEPLOY_HOOK")} is set.\n`,
     );
     return { code: "hook-disabled", kind: "skipped" };
   }
