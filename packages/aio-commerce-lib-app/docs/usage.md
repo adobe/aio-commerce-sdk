@@ -1194,6 +1194,10 @@ Some states are not actionable upgrades. The `post-app-deploy` hook treats them 
 
 Any other planning failure, for example configuration issues that block the upgrade or another operation that is already running, surfaces as an error.
 
+#### Version Header
+
+Every response from the `app-management` endpoints (installation, association, app-config, config and scope-tree), including errors and 404/405 answers, carries an `x-sdk-lib-app-version` header. Its value is the version of the `@adobe/aio-commerce-lib-app` SDK library the action was built with, or `unknown` when the build did not inject it. It is not the version of your app (`metadata.version`). Use it to tell which SDK version served a request when reading logs.
+
 #### Troubleshooting a Lifecycle Operation
 
 Every install, upgrade and uninstall leaves a trail you can follow back when something goes wrong. Call `GET /installation` on the `app-management` package to read the status of the latest attempt, or add `attemptId=<id>` to read an earlier one.

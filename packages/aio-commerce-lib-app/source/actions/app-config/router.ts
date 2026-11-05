@@ -22,6 +22,7 @@ import {
 } from "@aio-commerce-sdk/common-utils/actions";
 import * as v from "valibot";
 
+import { SDK_LIB_APP_VERSION_HEADERS } from "#actions/version";
 import { filterAppConfigByEnv } from "#config/lib/environment";
 import { validateCommerceAppConfig } from "#config/lib/validate";
 import { hasBusinessConfigSchema } from "#config/schema/business-configuration";
@@ -53,9 +54,9 @@ interface AppConfigActionContext extends BaseContext {
  * - GET /               Retrieve the Commerce App configuration.
  * - GET /openapi.json   Returns the OpenAPI spec for all SDK actions
  */
-export const router = new HttpActionRouter<AppConfigActionContext>().use(
-  withLogger({ name: () => "app-config" }),
-);
+export const router = new HttpActionRouter<AppConfigActionContext>({
+  headers: SDK_LIB_APP_VERSION_HEADERS,
+}).use(withLogger({ name: () => "app-config" }));
 
 /** GET / - Get app config */
 router.get("/", {

@@ -22,6 +22,7 @@ import {
   logger as withLogger,
 } from "@aio-commerce-sdk/common-utils/actions";
 
+import { SDK_LIB_APP_VERSION_HEADERS } from "#actions/version";
 import { filterSchemaByEnv } from "#config/lib/environment";
 
 import { GetConfigurationQuerySchema, PatchConfigBodySchema } from "./schema";
@@ -80,7 +81,9 @@ function filterPasswordFields<T extends Omit<ConfigValue, "origin">>(
  * - GET /     Get current configuration values for a given scope
  * - PATCH /   Partially update configuration (only updates provided fields, allows unsetting)
  */
-export const router = new HttpActionRouter<ConfigActionContext>().use(
+export const router = new HttpActionRouter<ConfigActionContext>({
+  headers: SDK_LIB_APP_VERSION_HEADERS,
+}).use(
   withLogger({
     name: () => "config",
   }),
