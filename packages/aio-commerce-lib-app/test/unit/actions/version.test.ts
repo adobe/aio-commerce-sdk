@@ -38,10 +38,10 @@ const ROUTERS = {
 };
 
 describe("app version header", () => {
-  test("uses the lowercase x-sdk-lib-versions name", () => {
-    expect(SDK_LIB_VERSIONS_HEADER).toBe("x-sdk-lib-versions");
+  test("uses the lowercase x-ac-sdk-lib-versions name", () => {
+    expect(SDK_LIB_VERSIONS_HEADER).toBe("x-ac-sdk-lib-versions");
     expect(SDK_LIB_VERSIONS_HEADERS).toEqual({
-      "x-sdk-lib-versions": SDK_LIB_VERSIONS,
+      "x-ac-sdk-lib-versions": SDK_LIB_VERSIONS,
     });
   });
 
