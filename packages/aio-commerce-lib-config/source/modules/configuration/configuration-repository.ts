@@ -189,12 +189,8 @@ export async function saveConfig(
 }
 
 /**
- * Removes a configuration entry's file from storage. Clearing an entry that was
- * never persisted is a no-op. `aio-lib-files` delete is idempotent for a file
- * that is already missing, but it still throws `ERROR_FILE_NOT_EXISTS` when the
- * file disappears between its internal lookup and the delete (for example, two
- * concurrent or retried clears), so that error is ignored here. Any other
- * failure surfaces to the caller, since files are the source of truth.
+ * Removes a configuration entry's file from storage. A file that is already
+ * gone counts as removed, and any other error is thrown.
  *
  * @param scopeCode - Scope code identifier.
  * @param namespace - Storage namespace to delete from.
