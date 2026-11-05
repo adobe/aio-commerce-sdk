@@ -41,13 +41,26 @@ import type { AttemptStatus, UpgradePlan } from "#commands/common/cams/schema";
 import type { InterruptNotice } from "#commands/hooks/post-app-deploy/interrupt";
 
 /** The codes that end the hook without an upgrade and without an error. */
-type SkipCode = "already-current" | "not-associated" | "not-installed";
+type SkipCode =
+  | "already-current"
+  | "not-associated"
+  | "not-installed"
+  | "hook-disabled";
 
 /** How the hook ended when it did not fail. */
 type HookResult =
   | { kind: "skipped"; code: SkipCode }
   | { kind: "planned"; plan: UpgradePlan }
   | { kind: "upgraded"; runId: string };
+
+const SKIP_MESSAGES: Record<string, string> = {
+  "already-current": "The app is already up to date.",
+  "in-progress": "An upgrade is already in progress.",
+  "not-associated":
+    "The app is not associated with a Commerce instance. Nothing to upgrade.",
+  "not-installed":
+    "The app is not installed on the Commerce instance. Nothing to upgrade.",
+};
 
 function isSkipCode(code: unknown): code is SkipCode {
   return (
@@ -171,14 +184,14 @@ async function runHook(interrupt: InterruptNotice): Promise<HookResult> {
   const { upgradeMode } = appConfig.metadata;
 
   console.log(""); // Leave a bit of whitespace before the output to make it more readable.
-  consola.start("Checking for app upgrades...");
+  consola.start("Checking the status of the app...");
 
   const context = createCamsContext();
   consola.debug(`Service: ${context.baseUrl}`);
 
   const extension = await findWorkspaceExtension(context);
   if (!extension) {
-    consola.info("No upgrade was run: not-associated.\n");
+    consola.info(`${SKIP_MESSAGES["not-associated"]}\n`);
     return { code: "not-associated", kind: "skipped" };
   }
 
@@ -186,9 +199,11 @@ async function runHook(interrupt: InterruptNotice): Promise<HookResult> {
   const client = context.createInstanceClient(
     requireCommerceInstance(extension),
   );
+  consola.start("Checking if the app needs an upgrade...");
+
   const plan = await planUpgrade(client, extensionId);
   if (typeof plan === "string") {
-    consola.info(`No upgrade was run: ${plan}.\n`);
+    consola.info(`${SKIP_MESSAGES[plan]}\n`);
     return { code: plan, kind: "skipped" };
   }
 
@@ -240,6 +255,16 @@ async function runHook(interrupt: InterruptNotice): Promise<HookResult> {
  * @throws When the upgrade is refused, fails or does not finish in time.
  */
 export async function run(): Promise<HookResult> {
+  if (
+    process.env.AIO_CLI_ENV === "stage" &&
+    process.env.AIO_COMMERCE_APP_SKIP_POST_DEPLOY_HOOK
+  ) {
+    consola.warn(
+      `The post-app-deploy hook was skipped because ${colors.cyan("AIO_COMMERCE_APP_SKIP_POST_DEPLOY_HOOK")} is set.\n`,
+    );
+    return { code: "hook-disabled", kind: "skipped" };
+  }
+
   const statusCommand = await getStatusCommand();
   const interrupt = noticeInterrupt(statusCommand);
 
