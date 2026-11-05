@@ -26,6 +26,12 @@ router.post("/users", {
 export const main = router.handler();
 ```
 
+To add headers to every response, including 404 and 405, pass them at creation. Handler headers win on conflict.
+
+```typescript
+const router = new HttpActionRouter({ headers: { "x-lib-version": "1.2.3" } });
+```
+
 [Read the HTTP Action Router Guide →](./guides/http-action-router.md)
 
 ## Valibot Utilities

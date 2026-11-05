@@ -19,4 +19,5 @@
 export * from "./http/middleware";
 export { defineRoute, HttpActionRouter } from "./http/router";
 
+export type { HttpActionRouterOptions } from "./http/router";
 export type * from "./http/types";

@@ -299,6 +299,18 @@ export const router = new HttpActionRouter().use(logger());
 router.get("/users/:id", getUser);
 ```
 
+## Default Response Headers
+
+Pass `headers` when creating the router to add them to every response it produces. This covers handler responses, validation errors, handler errors, and the router's own 404 and 405 responses.
+
+```typescript
+const router = new HttpActionRouter({
+  headers: { "x-lib-version": "1.2.3" },
+});
+```
+
+A header set by a handler wins over the default with the same name. Names are compared case-insensitively. The option is optional, and a router without it leaves responses unchanged.
+
 ## Error Handling
 
 The router automatically catches errors in handlers and returns 500 responses:
