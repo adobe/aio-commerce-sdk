@@ -42,7 +42,10 @@ import type { InterruptNotice } from "#commands/hooks/post-app-deploy/interrupt"
 
 /** The codes that end the hook without an upgrade and without an error. */
 type SkipCode =
-  "already-current" | "not-associated" | "not-installed" | "hook-disabled";
+  | "already-current"
+  | "not-associated"
+  | "not-installed"
+  | "hook-disabled";
 
 /** How the hook ended when it did not fail. */
 type HookResult =
