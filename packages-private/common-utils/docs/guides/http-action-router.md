@@ -305,7 +305,7 @@ Pass `headers` when creating the router to add them to every response it produce
 
 ```typescript
 const router = new HttpActionRouter({
-  headers: { "x-lib-version": "1.2.3" },
+  headers: { "x-content-type-options": "nosniff" },
 });
 ```
 

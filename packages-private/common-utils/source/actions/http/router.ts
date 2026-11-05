@@ -74,7 +74,7 @@ export class HttpActionRouter<TContext extends BaseContext = BaseContext> {
    *
    * @example
    * ```typescript
-   * const router = new HttpActionRouter({ headers: { "x-lib-version": "1.2.3" } });
+   * const router = new HttpActionRouter({ headers: { "x-content-type-options": "nosniff" } });
    * ```
    */
   public constructor(options: HttpActionRouterOptions = {}) {
