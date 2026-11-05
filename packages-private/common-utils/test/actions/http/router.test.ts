@@ -12,7 +12,7 @@
 
 import { ok } from "@adobe/aio-commerce-lib-core/responses";
 import { minLength, object, optional, pipe, string } from "valibot";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { HttpActionRouter } from "#actions/http/router";
 
@@ -452,6 +452,113 @@ describe("actions/http/router", () => {
         statusCode: 200,
         type: "success",
       });
+    });
+  });
+
+  describe("default response headers", () => {
+    const call = (
+      router: HttpActionRouter,
+      method: string,
+      path: string,
+      extra: Record<string, unknown> = {},
+    ) =>
+      router.handler()({
+        __ow_method: method,
+        __ow_path: path,
+        ...extra,
+      } as RuntimeActionParams);
+
+    it("adds the headers to success responses", async () => {
+      const router = new HttpActionRouter({ headers: { "x-test": "1" } });
+      router.get("/a", { handler: () => ok({ headers: { "x-own": "2" } }) });
+
+      const result = await call(router, "get", "/a");
+      expect(result).toMatchObject({
+        headers: { "x-own": "2", "x-test": "1" },
+        statusCode: 200,
+      });
+    });
+
+    it("adds the headers to responses without headers", async () => {
+      const router = new HttpActionRouter({ headers: { "x-test": "1" } });
+      router.get("/a", { handler: () => ok() });
+
+      expect(await call(router, "get", "/a")).toMatchObject({
+        headers: { "x-test": "1" },
+      });
+    });
+
+    it("adds the headers to validation errors", async () => {
+      const router = new HttpActionRouter({ headers: { "x-test": "1" } });
+      router.post("/a", {
+        body: object({ name: string() }),
+        handler: () => ok(),
+      });
+
+      const result = await call(router, "post", "/a", { __ow_body: {} });
+      expect(result).toMatchObject({
+        error: { headers: { "x-test": "1" }, statusCode: 400 },
+        type: "error",
+      });
+    });
+
+    it("adds the headers to handler errors", async () => {
+      const spy = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => undefined);
+      const router = new HttpActionRouter({ headers: { "x-test": "1" } });
+      router.get("/a", {
+        handler: () => {
+          throw new Error("boom");
+        },
+      });
+
+      expect(await call(router, "get", "/a")).toMatchObject({
+        error: { headers: { "x-test": "1" }, statusCode: 500 },
+        type: "error",
+      });
+      spy.mockRestore();
+    });
+
+    it("adds the headers to 404 responses", async () => {
+      const router = new HttpActionRouter({ headers: { "x-test": "1" } });
+
+      expect(await call(router, "get", "/missing")).toMatchObject({
+        error: { headers: { "x-test": "1" }, statusCode: 404 },
+        type: "error",
+      });
+    });
+
+    it("adds the headers to 405 responses", async () => {
+      const router = new HttpActionRouter({ headers: { "x-test": "1" } });
+      router.get("/a", { handler: () => ok() });
+
+      expect(await call(router, "post", "/a")).toMatchObject({
+        error: { headers: { "x-test": "1" }, statusCode: 405 },
+        type: "error",
+      });
+    });
+
+    it("lets handler headers win, ignoring name case", async () => {
+      const router = new HttpActionRouter({
+        headers: { "X-Test": "default", "x-other": "default" },
+      });
+      router.get("/a", { handler: () => ok({ headers: { "x-test": "own" } }) });
+
+      const result = await call(router, "get", "/a");
+      expect(result).toMatchObject({
+        headers: { "x-other": "default", "x-test": "own" },
+      });
+      expect(
+        (result as { headers: Record<string, string> }).headers["X-Test"],
+      ).toBeUndefined();
+    });
+
+    it("leaves responses untouched when no headers are configured", async () => {
+      const router = new HttpActionRouter();
+      router.get("/a", { handler: () => ok() });
+
+      expect(await call(router, "get", "/a")).not.toHaveProperty("headers");
     });
   });
 });

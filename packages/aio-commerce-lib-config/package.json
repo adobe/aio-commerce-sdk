@@ -108,7 +108,8 @@
           "types": "./dist/cjs/index.d.cts",
           "default": "./dist/cjs/index.cjs"
         }
-      }
+      },
+      "./package.json": "./package.json"
     },
     "registry": "https://registry.npmjs.org"
   }

@@ -217,7 +217,9 @@ describe("appConfigRuntimeAction", () => {
       );
 
       expect.assert(result.type === "success");
-      expect(result.headers).toBeUndefined();
+      expect(
+        Object.keys(result.headers ?? {}).map((name) => name.toLowerCase()),
+      ).not.toContain("cache-control");
     });
 
     test("returns the spec without Cache-Control when the cache key does not match", async () => {
@@ -230,7 +232,9 @@ describe("appConfigRuntimeAction", () => {
       );
 
       expect.assert(result.type === "success");
-      expect(result.headers).toBeUndefined();
+      expect(
+        Object.keys(result.headers ?? {}).map((name) => name.toLowerCase()),
+      ).not.toContain("cache-control");
     });
 
     test("returns the spec with immutable Cache-Control when the cache key matches", async () => {
