@@ -45,7 +45,7 @@ describe("app version header", () => {
     });
   });
 
-  test("lists the exact lib-app and lib-config versions injected at build time", () => {
+  test("lists the lib-app build version and the lib-config version it loads", () => {
     expect(SDK_LIB_VERSIONS).toBe(
       `lib-app="${pkg.version}", lib-config="${libConfigPkg.version}"`,
     );

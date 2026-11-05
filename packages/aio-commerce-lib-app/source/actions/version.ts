@@ -10,6 +10,10 @@
  * governing permissions and limitations under the License.
  */
 
+import libConfigPkg from "@adobe/aio-commerce-lib-config/package.json" with {
+  type: "json",
+};
+
 /**
  * Name of the response header that carries the versions of the SDK libraries the app-management
  * endpoints were built with. These are not the app's own version.
@@ -20,20 +24,17 @@ const UNKNOWN_VERSION = "unknown";
 
 /**
  * Value of {@link SDK_LIB_VERSIONS_HEADER}, an RFC 8941 dictionary with string values, e.g.
- * `lib-app="2.2.0", lib-config="1.4.1"`. TSDown and Vitest replace `__PKG_VERSION__` and
- * `__LIB_CONFIG_VERSION__` at build time. An entry is "unknown" when its variable is not defined.
+ * `lib-app="2.2.0", lib-config="1.4.1"`. TSDown and Vitest replace `__PKG_VERSION__` for
+ * `lib-app`, which is "unknown" when the variable is not defined. `lib-config` is the version
+ * in the `package.json` of the copy of lib-config that lib-app loads, which the app's bundler
+ * resolves when it builds the action.
  */
 export const SDK_LIB_VERSIONS: string = [
   [
     "lib-app",
     typeof __PKG_VERSION__ === "string" ? __PKG_VERSION__ : UNKNOWN_VERSION,
   ],
-  [
-    "lib-config",
-    typeof __LIB_CONFIG_VERSION__ === "string"
-      ? __LIB_CONFIG_VERSION__
-      : UNKNOWN_VERSION,
-  ],
+  ["lib-config", libConfigPkg.version ?? UNKNOWN_VERSION],
 ]
   .map(([name, version]) => `${name}="${version}"`)
   .join(", ");

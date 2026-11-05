@@ -1198,7 +1198,7 @@ Any other planning failure, for example configuration issues that block the upgr
 
 Every response from the `app-management` endpoints (installation, association, app-config, config and scope-tree), including errors and 404/405 answers, carries an `x-sdk-lib-versions` header. Its value is an [RFC 8941](https://www.rfc-editor.org/rfc/rfc8941) dictionary with string values, for example `lib-app="2.2.0", lib-config="1.4.1"`. The keys are the package names without the `@adobe/aio-commerce-` prefix.
 
-The values are the SDK library versions `@adobe/aio-commerce-lib-app` was built and published with. Workspace dependencies publish as exact pins, so `lib-config` is the version installed with that `lib-app`. They are not the version of your app (`metadata.version`). An entry is `unknown` when the build did not inject it. Use the header to tell which SDK versions served a request when reading logs.
+The values are SDK library versions, not the version of your app (`metadata.version`). `lib-app` is the version of `@adobe/aio-commerce-lib-app` the action was built with. `lib-config` is the installed copy of `@adobe/aio-commerce-lib-config` that lib-app loads, resolved when your app bundles the action. It follows an override of lib-config in your package manager. Overriding lib-config to a version older than the first one that exports `package.json` fails the build. `lib-app` is `unknown` when the build did not inject it. Use the header to tell which SDK versions served a request when reading logs.
 
 #### Troubleshooting a Lifecycle Operation
 
