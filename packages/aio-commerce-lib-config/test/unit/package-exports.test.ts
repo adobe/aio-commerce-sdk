@@ -10,13 +10,22 @@
  * governing permissions and limitations under the License.
  */
 
+import { createRequire } from "node:module";
+
 import { describe, expect, test } from "vitest";
 
 import pkg from "../../package.json" with { type: "json" };
 
 describe("package.json exports", () => {
-  test("exports package.json in both the source and published maps", () => {
-    expect(pkg.exports["./package.json"]).toBe("./package.json");
+  test("resolves @adobe/aio-commerce-lib-config/package.json to this package", () => {
+    const resolved = createRequire(import.meta.url)(
+      "@adobe/aio-commerce-lib-config/package.json",
+    ) as { name: string; version: string };
+
+    expect(resolved).toMatchObject({ name: pkg.name, version: pkg.version });
+  });
+
+  test("keeps ./package.json in the published exports", () => {
     expect(pkg.publishConfig.exports).toHaveProperty("./package.json");
   });
 });

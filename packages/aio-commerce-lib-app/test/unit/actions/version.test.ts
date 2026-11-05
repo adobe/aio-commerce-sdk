@@ -20,11 +20,7 @@ import { router as associationRouter } from "#actions/association/router";
 import { router as configRouter } from "#actions/config/router";
 import { router as installationRouter } from "#actions/installation/router";
 import { router as scopeTreeRouter } from "#actions/scope-tree/router";
-import {
-  SDK_LIB_VERSIONS,
-  SDK_LIB_VERSIONS_HEADER,
-  SDK_LIB_VERSIONS_HEADERS,
-} from "#actions/version";
+import { SDK_LIB_VERSIONS } from "#actions/version";
 import { createRuntimeActionParams } from "#test/fixtures/actions";
 
 import pkg from "../../../package.json" with { type: "json" };
@@ -37,18 +33,12 @@ const ROUTERS = {
   "scope-tree": scopeTreeRouter,
 };
 
-describe("app version header", () => {
-  test("uses the lowercase x-ac-sdk-lib-versions name", () => {
-    expect(SDK_LIB_VERSIONS_HEADER).toBe("x-ac-sdk-lib-versions");
-    expect(SDK_LIB_VERSIONS_HEADERS).toEqual({
-      "x-ac-sdk-lib-versions": SDK_LIB_VERSIONS,
-    });
-  });
+const EXPECTED_VERSIONS = `lib-app="${pkg.version}", lib-config="${libConfigPkg.version}"`;
+const EXPECTED_HEADERS = { "x-ac-sdk-lib-versions": EXPECTED_VERSIONS };
 
+describe("app version header", () => {
   test("lists the lib-app build version and the lib-config version it loads", () => {
-    expect(SDK_LIB_VERSIONS).toBe(
-      `lib-app="${pkg.version}", lib-config="${libConfigPkg.version}"`,
-    );
+    expect(SDK_LIB_VERSIONS).toBe(EXPECTED_VERSIONS);
   });
 
   describe.each(Object.entries(ROUTERS))("%s router", (_name, router) => {
@@ -58,9 +48,18 @@ describe("app version header", () => {
       );
 
       expect(result).toMatchObject({
-        error: {
-          headers: { [SDK_LIB_VERSIONS_HEADER]: SDK_LIB_VERSIONS },
-        },
+        error: { headers: EXPECTED_HEADERS, statusCode: 404 },
+        type: "error",
+      });
+    });
+
+    test("adds the header to the 405 response", async () => {
+      const result = await router.handler()(
+        createRuntimeActionParams({ method: "trace", path: "/" }),
+      );
+
+      expect(result).toMatchObject({
+        error: { headers: EXPECTED_HEADERS, statusCode: 405 },
         type: "error",
       });
     });
@@ -82,7 +81,8 @@ describe("app version header", () => {
     );
 
     expect(result).toMatchObject({
-      headers: { [SDK_LIB_VERSIONS_HEADER]: SDK_LIB_VERSIONS },
+      headers: EXPECTED_HEADERS,
+      statusCode: 200,
       type: "success",
     });
   });
@@ -93,10 +93,22 @@ describe("app version header", () => {
     );
 
     expect(result).toMatchObject({
-      error: {
-        headers: { [SDK_LIB_VERSIONS_HEADER]: SDK_LIB_VERSIONS },
-        statusCode: 500,
-      },
+      error: { headers: EXPECTED_HEADERS, statusCode: 500 },
+      type: "error",
+    });
+  });
+
+  test("adds the header to a validation error", async () => {
+    const result = await configRouter.handler()(
+      createRuntimeActionParams({
+        body: { notAValidBody: true },
+        method: "patch",
+        path: "/",
+      }),
+    );
+
+    expect(result).toMatchObject({
+      error: { headers: EXPECTED_HEADERS, statusCode: 400 },
       type: "error",
     });
   });
