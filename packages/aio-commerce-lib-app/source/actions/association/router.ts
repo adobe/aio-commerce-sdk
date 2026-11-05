@@ -17,7 +17,7 @@ import {
   logger as withLogger,
 } from "@aio-commerce-sdk/common-utils/actions";
 
-import { SDK_LIB_APP_VERSION_HEADERS } from "#actions/version";
+import { SDK_LIB_VERSIONS_HEADERS } from "#actions/version";
 import {
   clearAssociationData,
   setAssociationData,
@@ -38,7 +38,7 @@ type AssociationActionContext = BaseContext;
  * - DELETE / Clear stored Commerce instance details
  */
 export const router = new HttpActionRouter<AssociationActionContext>({
-  headers: SDK_LIB_APP_VERSION_HEADERS,
+  headers: SDK_LIB_VERSIONS_HEADERS,
 }).use(withLogger({ name: () => "association" }));
 
 /** POST / - Store association data and return the app's own `client_id`. */

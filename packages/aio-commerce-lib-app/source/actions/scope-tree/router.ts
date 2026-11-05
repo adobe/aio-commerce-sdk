@@ -29,7 +29,7 @@ import {
 } from "@aio-commerce-sdk/common-utils/actions";
 import { inspect } from "@aio-commerce-sdk/common-utils/logging";
 
-import { SDK_LIB_APP_VERSION_HEADERS } from "#actions/version";
+import { SDK_LIB_VERSIONS_HEADERS } from "#actions/version";
 import { LIFECYCLE_HTTP_CLIENT_TIMEOUT_MS } from "#management/common/constants";
 
 import {
@@ -49,7 +49,7 @@ import type { SetCustomScopeTreeRequest } from "@adobe/aio-commerce-lib-config";
  * - DELETE /commerce   Unsync commerce scopes
  */
 export const router = new HttpActionRouter({
-  headers: SDK_LIB_APP_VERSION_HEADERS,
+  headers: SDK_LIB_VERSIONS_HEADERS,
 }).use(
   withLogger({
     name: () => "scope-tree",

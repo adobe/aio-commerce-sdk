@@ -20,7 +20,7 @@ import {
   logger as withLogger,
 } from "@aio-commerce-sdk/common-utils/actions";
 
-import { SDK_LIB_APP_VERSION_HEADERS } from "#actions/version";
+import { SDK_LIB_VERSIONS_HEADERS } from "#actions/version";
 import { LifecycleRequestContextSchema } from "#management/common/schema";
 import {
   createInstallationStore,
@@ -60,7 +60,7 @@ export type { CustomScriptsLoader, RuntimeActionFactoryArgs } from "./common";
  * - POST /execution                  Execute a started lifecycle attempt (internal, called async)
  */
 export const router = new HttpActionRouter<InstallationActionContext>({
-  headers: SDK_LIB_APP_VERSION_HEADERS,
+  headers: SDK_LIB_VERSIONS_HEADERS,
 }).use(withLogger({ name: () => "installation" }));
 
 /**

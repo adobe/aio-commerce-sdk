@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "App Management API",
-    "description": "REST API for managing Adobe Commerce App Builder apps: resolving app configuration, managing configuration values, running the installation, upgrade, and uninstallation lifecycle, and managing the scope tree. Every response carries an `x-sdk-lib-app-version` header with the version of the `@adobe/aio-commerce-lib-app` SDK library that serves it. It is not the version of the app.",
+    "description": "REST API for managing Adobe Commerce App Builder apps: resolving app configuration, managing configuration values, running the installation, upgrade, and uninstallation lifecycle, and managing the scope tree. Every response carries an `x-sdk-lib-versions` header, a structured-field dictionary such as `lib-app=\"2.2.0\", lib-config=\"1.4.1\"` with the versions of the SDK libraries that serve it. These are not the version of the app.",
     "version": "4.2.0",
     "contact": {},
     "license": {

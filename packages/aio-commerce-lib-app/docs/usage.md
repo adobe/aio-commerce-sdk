@@ -1194,9 +1194,11 @@ Some states are not actionable upgrades. The `post-app-deploy` hook treats them 
 
 Any other planning failure, for example configuration issues that block the upgrade or another operation that is already running, surfaces as an error.
 
-#### Version Header
+#### SDK Versions Header
 
-Every response from the `app-management` endpoints (installation, association, app-config, config and scope-tree), including errors and 404/405 answers, carries an `x-sdk-lib-app-version` header. Its value is the version of the `@adobe/aio-commerce-lib-app` SDK library the action was built with, or `unknown` when the build did not inject it. It is not the version of your app (`metadata.version`). Use it to tell which SDK version served a request when reading logs.
+Every response from the `app-management` endpoints (installation, association, app-config, config and scope-tree), including errors and 404/405 answers, carries an `x-sdk-lib-versions` header. Its value is an [RFC 8941](https://www.rfc-editor.org/rfc/rfc8941) dictionary with string values, for example `lib-app="2.2.0", lib-config="1.4.1"`. The keys are the package names without the `@adobe/aio-commerce-` prefix.
+
+The values are the SDK library versions `@adobe/aio-commerce-lib-app` was built and published with. Workspace dependencies publish as exact pins, so `lib-config` is the version installed with that `lib-app`. They are not the version of your app (`metadata.version`). An entry is `unknown` when the build did not inject it. Use the header to tell which SDK versions served a request when reading logs.
 
 #### Troubleshooting a Lifecycle Operation
 

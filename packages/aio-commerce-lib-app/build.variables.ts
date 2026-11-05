@@ -99,6 +99,7 @@ export async function getVariables() {
   return {
     __LIB_ADMIN_UI_RANGE__: defineString(`^${adminUiPkg.version}`),
     __LIB_CONFIG_RANGE__: defineString(`^${libConfigPkg.version}`),
+    __LIB_CONFIG_VERSION__: defineString(libConfigPkg.version),
     __NODE_TYPES_VERSION__: getPeerDependencySpecifier("@types/node"),
     __OPENAPI_VERSION__: defineString(spec.info.version),
     __PKG_VERSION__: defineString(pkg.version),
@@ -126,6 +127,7 @@ declare global {
 
   const __LIB_ADMIN_UI_RANGE__: string;
   const __LIB_CONFIG_RANGE__: string;
+  const __LIB_CONFIG_VERSION__: string;
   const __PKG_VERSION__: string;
   const __OPENAPI_VERSION__: string;
 }

@@ -10,6 +10,9 @@
  * governing permissions and limitations under the License.
  */
 
+import libConfigPkg from "@adobe/aio-commerce-lib-config/package.json" with {
+  type: "json",
+};
 import { describe, expect, test } from "vitest";
 
 import { router as appConfigRouter } from "#actions/app-config/router";
@@ -18,9 +21,9 @@ import { router as configRouter } from "#actions/config/router";
 import { router as installationRouter } from "#actions/installation/router";
 import { router as scopeTreeRouter } from "#actions/scope-tree/router";
 import {
-  SDK_LIB_APP_VERSION,
-  SDK_LIB_APP_VERSION_HEADER,
-  SDK_LIB_APP_VERSION_HEADERS,
+  SDK_LIB_VERSIONS,
+  SDK_LIB_VERSIONS_HEADER,
+  SDK_LIB_VERSIONS_HEADERS,
 } from "#actions/version";
 import { createRuntimeActionParams } from "#test/fixtures/actions";
 
@@ -35,15 +38,17 @@ const ROUTERS = {
 };
 
 describe("app version header", () => {
-  test("uses the lowercase x-sdk-lib-app-version name", () => {
-    expect(SDK_LIB_APP_VERSION_HEADER).toBe("x-sdk-lib-app-version");
-    expect(SDK_LIB_APP_VERSION_HEADERS).toEqual({
-      "x-sdk-lib-app-version": SDK_LIB_APP_VERSION,
+  test("uses the lowercase x-sdk-lib-versions name", () => {
+    expect(SDK_LIB_VERSIONS_HEADER).toBe("x-sdk-lib-versions");
+    expect(SDK_LIB_VERSIONS_HEADERS).toEqual({
+      "x-sdk-lib-versions": SDK_LIB_VERSIONS,
     });
   });
 
-  test("is the package version injected at build time", () => {
-    expect(SDK_LIB_APP_VERSION).toBe(pkg.version);
+  test("lists the exact lib-app and lib-config versions injected at build time", () => {
+    expect(SDK_LIB_VERSIONS).toBe(
+      `lib-app="${pkg.version}", lib-config="${libConfigPkg.version}"`,
+    );
   });
 
   describe.each(Object.entries(ROUTERS))("%s router", (_name, router) => {
@@ -54,7 +59,7 @@ describe("app version header", () => {
 
       expect(result).toMatchObject({
         error: {
-          headers: { [SDK_LIB_APP_VERSION_HEADER]: SDK_LIB_APP_VERSION },
+          headers: { [SDK_LIB_VERSIONS_HEADER]: SDK_LIB_VERSIONS },
         },
         type: "error",
       });
@@ -77,7 +82,7 @@ describe("app version header", () => {
     );
 
     expect(result).toMatchObject({
-      headers: { [SDK_LIB_APP_VERSION_HEADER]: SDK_LIB_APP_VERSION },
+      headers: { [SDK_LIB_VERSIONS_HEADER]: SDK_LIB_VERSIONS },
       type: "success",
     });
   });
@@ -89,7 +94,7 @@ describe("app version header", () => {
 
     expect(result).toMatchObject({
       error: {
-        headers: { [SDK_LIB_APP_VERSION_HEADER]: SDK_LIB_APP_VERSION },
+        headers: { [SDK_LIB_VERSIONS_HEADER]: SDK_LIB_VERSIONS },
         statusCode: 500,
       },
       type: "error",

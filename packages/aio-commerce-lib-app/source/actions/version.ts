@@ -10,17 +10,35 @@
  * governing permissions and limitations under the License.
  */
 
-/** Name of the response header that carries the version of the `@adobe/aio-commerce-lib-app` SDK library, not the app's own version. */
-export const SDK_LIB_APP_VERSION_HEADER = "x-sdk-lib-app-version";
+/**
+ * Name of the response header that carries the versions of the SDK libraries the app-management
+ * endpoints were built with. These are not the app's own version.
+ */
+export const SDK_LIB_VERSIONS_HEADER = "x-sdk-lib-versions";
+
+const UNKNOWN_VERSION = "unknown";
 
 /**
- * Version sent in {@link SDK_LIB_APP_VERSION_HEADER}. TSDown and Vitest replace `__PKG_VERSION__` at
- * build time. It is "unknown" when the variable is not defined.
+ * Value of {@link SDK_LIB_VERSIONS_HEADER}, an RFC 8941 dictionary with string values, e.g.
+ * `lib-app="2.2.0", lib-config="1.4.1"`. TSDown and Vitest replace `__PKG_VERSION__` and
+ * `__LIB_CONFIG_VERSION__` at build time. An entry is "unknown" when its variable is not defined.
  */
-export const SDK_LIB_APP_VERSION: string =
-  typeof __PKG_VERSION__ === "string" ? __PKG_VERSION__ : "unknown";
+export const SDK_LIB_VERSIONS: string = [
+  [
+    "lib-app",
+    typeof __PKG_VERSION__ === "string" ? __PKG_VERSION__ : UNKNOWN_VERSION,
+  ],
+  [
+    "lib-config",
+    typeof __LIB_CONFIG_VERSION__ === "string"
+      ? __LIB_CONFIG_VERSION__
+      : UNKNOWN_VERSION,
+  ],
+]
+  .map(([name, version]) => `${name}="${version}"`)
+  .join(", ");
 
 /** Headers every app-management router adds to its responses. */
-export const SDK_LIB_APP_VERSION_HEADERS = {
-  [SDK_LIB_APP_VERSION_HEADER]: SDK_LIB_APP_VERSION,
+export const SDK_LIB_VERSIONS_HEADERS = {
+  [SDK_LIB_VERSIONS_HEADER]: SDK_LIB_VERSIONS,
 };
