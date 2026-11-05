@@ -41,7 +41,11 @@ import type { AttemptStatus, UpgradePlan } from "#commands/common/cams/schema";
 import type { InterruptNotice } from "#commands/hooks/post-app-deploy/interrupt";
 
 /** The codes that end the hook without an upgrade and without an error. */
-type SkipCode = "already-current" | "not-associated" | "not-installed";
+type SkipCode =
+  | "already-current"
+  | "not-associated"
+  | "not-installed"
+  | "hook-disabled";
 
 /** How the hook ended when it did not fail. */
 type HookResult =
@@ -240,6 +244,16 @@ async function runHook(interrupt: InterruptNotice): Promise<HookResult> {
  * @throws When the upgrade is refused, fails or does not finish in time.
  */
 export async function run(): Promise<HookResult> {
+  if (
+    process.env.AIO_CLI_ENV === "stage" &&
+    process.env.AIO_COMMERCE_APP_SKIP_POST_DEPLOY_HOOK
+  ) {
+    consola.warn(
+      `The post-app-deploy hook was skipped because ${colors.cyan("AIO_COMMERCE_APP_SKIP_POST_DEPLOY_HOOK")} is set. No upgrade check or upgrade was run.\n`,
+    );
+    return { code: "hook-disabled", kind: "skipped" };
+  }
+
   const statusCommand = await getStatusCommand();
   const interrupt = noticeInterrupt(statusCommand);
 
