@@ -11,6 +11,7 @@
  */
 
 import stringify from "safe-stable-stringify";
+import * as v from "valibot";
 
 import { getLogger } from "#utils/logger";
 import {
@@ -18,6 +19,11 @@ import {
   getSharedFiles,
   getSharedState,
 } from "#utils/repository";
+
+/** Matches the `aio-lib-files` error thrown when a file does not exist. */
+const FileNotExistsErrorSchema = v.object({
+  code: v.literal("ERROR_FILE_NOT_EXISTS"),
+});
 
 /**
  * Describes where a record lives in the two-layer store: how an id maps to its
@@ -183,9 +189,8 @@ export async function saveConfig(
 }
 
 /**
- * Removes a configuration entry's file from storage. Clearing an entry that was
- * never persisted is a no-op since `aio-lib-files` delete is idempotent; any
- * real failure surfaces to the caller, since files are the source of truth.
+ * Removes a configuration entry's file from storage. A file that is already
+ * gone counts as removed, and any other error is thrown.
  *
  * @param scopeCode - Scope code identifier.
  * @param namespace - Storage namespace to delete from.
@@ -195,7 +200,14 @@ async function deletePersistedConfig(
   namespace: RepositoryNamespace = CONFIGURATION_NAMESPACE,
 ) {
   const files = await getSharedFiles();
-  await files.delete(namespace.filePath(scopeCode));
+
+  try {
+    await files.delete(namespace.filePath(scopeCode));
+  } catch (err) {
+    if (!v.is(FileNotExistsErrorSchema, err)) {
+      throw err;
+    }
+  }
 }
 
 /**
