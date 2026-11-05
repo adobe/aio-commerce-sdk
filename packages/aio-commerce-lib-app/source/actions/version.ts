@@ -18,7 +18,7 @@ import libConfigPkg from "@adobe/aio-commerce-lib-config/package.json" with {
  * Name of the response header that carries the versions of the SDK libraries the app-management
  * endpoints were built with. These are not the app's own version.
  */
-export const SDK_LIB_VERSIONS_HEADER = "x-ac-sdk-lib-versions";
+const SDK_LIB_VERSIONS_HEADER = "x-ac-sdk-lib-versions";
 
 const UNKNOWN_VERSION = "unknown";
 
