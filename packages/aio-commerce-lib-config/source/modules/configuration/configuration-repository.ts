@@ -11,6 +11,7 @@
  */
 
 import stringify from "safe-stable-stringify";
+import * as v from "valibot";
 
 import { getLogger } from "#utils/logger";
 import {
@@ -18,6 +19,11 @@ import {
   getSharedFiles,
   getSharedState,
 } from "#utils/repository";
+
+/** Matches the `aio-lib-files` error thrown when a file does not exist. */
+const FileNotExistsErrorSchema = v.object({
+  code: v.literal("ERROR_FILE_NOT_EXISTS"),
+});
 
 /**
  * Describes where a record lives in the two-layer store: how an id maps to its
@@ -202,7 +208,7 @@ async function deletePersistedConfig(
   try {
     await files.delete(namespace.filePath(scopeCode));
   } catch (err) {
-    if (!isFileNotExistsError(err)) {
+    if (!v.is(FileNotExistsErrorSchema, err)) {
       throw err;
     }
   }
@@ -378,20 +384,5 @@ function isNotFoundError(err: unknown): boolean {
     err !== null &&
     (("statusCode" in err && err.statusCode === statusNotFound) ||
       ("code" in err && err.code === "ENOENT"))
-  );
-}
-
-/**
- * Checks if error is the `aio-lib-files` "file does not exist" error.
- *
- * @param err - Error to check.
- * @returns True if the error code is `ERROR_FILE_NOT_EXISTS`, false otherwise.
- */
-function isFileNotExistsError(err: unknown): boolean {
-  return (
-    typeof err === "object" &&
-    err !== null &&
-    "code" in err &&
-    err.code === "ERROR_FILE_NOT_EXISTS"
   );
 }

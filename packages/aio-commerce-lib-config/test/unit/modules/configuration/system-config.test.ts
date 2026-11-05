@@ -115,6 +115,21 @@ describe("system-config", () => {
       expect(mockState.delete).toHaveBeenCalledWith(KEY);
     });
 
+    test("rethrows non-object errors and errors with a different code", async () => {
+      const { setSystemConfigByKey } = await import(
+        "#modules/configuration/system-config"
+      );
+
+      mockFiles.delete.mockRejectedValueOnce("boom");
+      await expect(setSystemConfigByKey(KEY, null)).rejects.toBe("boom");
+
+      const other = Object.assign(new Error("nope"), {
+        code: "ERROR_BAD_CREDENTIALS",
+      });
+      mockFiles.delete.mockRejectedValueOnce(other);
+      await expect(setSystemConfigByKey(KEY, null)).rejects.toBe(other);
+    });
+
     test("invalidates the cache entry without throwing when the cache write fails", async () => {
       mockState.put.mockRejectedValueOnce(new Error("cache write failed"));
       const { setSystemConfigByKey } = await import(
