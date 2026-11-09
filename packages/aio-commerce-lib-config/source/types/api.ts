@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Adobe. All rights reserved.
+ * Copyright 2026 Adobe. All rights reserved.
  * This file is licensed to you under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License. You may obtain a copy
  * of the License at http://www.apache.org/licenses/LICENSE-2.0
@@ -10,6 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
+import type { AuditActor } from "#modules/audit/types";
 import type { ConfigValue, SetConfigValue } from "#modules/configuration/types";
 import type {
   BusinessConfigSchema,
@@ -60,6 +61,8 @@ export type GetConfigurationByKeyResponse = {
 export type SetConfigurationRequest = {
   /** Array of configuration name-value pairs to set. */
   config: SetConfigValue[];
+  /** Application-supplied actor metadata; not proof of the caller's identity. */
+  metadata?: { actor?: AuditActor };
 };
 
 /**
@@ -81,6 +84,13 @@ export type SetConfigurationResponse = {
     name: string;
     value: BusinessConfigSchemaValue;
   }>;
+  /** Version created after the live configuration was saved. */
+  versionInfo?: {
+    /** Unique version identifier. */
+    versionId: string;
+    /** Increasing per-scope sequence under serialized writes. */
+    versionNumber: number;
+  };
 };
 
 /**

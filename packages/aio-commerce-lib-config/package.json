@@ -90,6 +90,7 @@
     "@aio-commerce-sdk/config-vitest": "workspace:*",
     "@aio-commerce-sdk/scripting-utils": "workspace:*",
     "@aio-commerce-sdk/scripts": "workspace:*",
+    "fast-check": "^4.0.0",
     "msw": "catalog:",
     "typescript": "catalog:"
   },

@@ -14,6 +14,10 @@ pnpm add @adobe/aio-commerce-lib-config
 
 See the [Usage Guide](./docs/usage.md) for more information.
 
+Configuration writes also record redacted version history and a per-scope audit hash chain.
+See [Versioning and audit](./docs/versioning-and-audit.md) for comparisons, rollback,
+retention, archiving, and the integrity and consistency limits.
+
 ## Contributing
 
 This package is part of the Adobe Commerce SDK monorepo. Refer to the [Contributing Guide](https://github.com/adobe/aio-commerce-sdk/blob/main/.github/CONTRIBUTING.md) and [Development Guide](https://github.com/adobe/aio-commerce-sdk/blob/main/.github/DEVELOPMENT.md) for information on development setup and guidelines.

@@ -221,6 +221,13 @@ businessConfig: {
 
 For detailed information about available field types and their usage, see the [`@adobe/aio-commerce-lib-config` documentation](../../aio-commerce-lib-config/docs/usage.md#field-types).
 
+Configuration PATCH requests now record redacted version history and audit entries, and return
+`versionInfo` alongside the existing response fields. History is stored in Adobe Files, separately
+from live configuration, and failures can be reported after live values have changed.
+History queries and rollback are library APIs, not additional generated HTTP routes.
+See [Versioning and audit](../../aio-commerce-lib-config/docs/versioning-and-audit.md) for secret
+preservation, retention settings, authenticated action integration, and consistency limits.
+
 #### Eventing Configuration
 
 The `eventing` field allows you to configure event sources for your application. There are two types of event sources: **commerce** (for Adobe Commerce events) and **external** (for third-party events).

@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Adobe. All rights reserved.
+ * Copyright 2026 Adobe. All rights reserved.
  * This file is licensed to you under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License. You may obtain a copy
  * of the License at http://www.apache.org/licenses/LICENSE-2.0
@@ -15,13 +15,24 @@ import {
   mergeScopes,
   sanitizeRequestEntries,
 } from "#config-utils";
+import { prepareAuditEntry } from "#modules/audit/audit-logger";
+import { saveAuditEntry } from "#modules/audit/audit-repository";
 import { requireGlobalSchema } from "#modules/schema/config-schema-repository";
 import { getPasswordFields } from "#modules/schema/utils";
 import * as scopeTreeRepository from "#modules/scope-tree/scope-tree-repository";
+import {
+  getMaxVersions,
+  prepareVersion,
+} from "#modules/versioning/version-manager";
+import {
+  deleteVersion,
+  saveVersion,
+} from "#modules/versioning/version-repository";
 import { encrypt } from "#utils/encryption";
 
 import * as configRepository from "./configuration-repository";
 
+import type { AuditEntry } from "#modules/audit/types";
 import type {
   SetConfigurationRequest,
   SetConfigurationResponse,
@@ -46,6 +57,16 @@ import type { ConfigContext, SetConfigValue } from "./types";
 export async function setConfiguration(
   context: ConfigContext,
   request: SetConfigurationRequest,
+  ...args: unknown[]
+): Promise<SetConfigurationResponse> {
+  return await setConfigurationWithAudit(context, request, undefined, ...args);
+}
+
+/** Performs a configuration write with an application-independent rollback action marker. */
+export async function setConfigurationWithAudit(
+  context: ConfigContext,
+  request: SetConfigurationRequest,
+  action: AuditEntry["action"] | undefined,
   ...args: unknown[]
 ): Promise<SetConfigurationResponse> {
   const schema = requireGlobalSchema();
@@ -86,17 +107,55 @@ export async function setConfiguration(
     scope: { code: scopeCode, id: scopeId, level: scopeLevel },
   };
 
+  const { version, expired } = await prepareVersion(
+    { maxVersions: getMaxVersions(), namespace: context.namespace },
+    {
+      actor: request.metadata?.actor,
+      newConfig: mergedScopeConfig,
+      oldConfig: existingEntries,
+      scope: payload.scope,
+    },
+  );
+  const audit = await prepareAuditEntry(context, {
+    action:
+      action ??
+      (existingEntries.length === 0 && version.previousVersionId === null
+        ? "create"
+        : "update"),
+    actor: request.metadata?.actor ?? {},
+    changes: version.diff,
+    scope: version.scope,
+    versionId: version.id,
+  });
+
   await configRepository.persistConfig(
     scopeCode,
     payload,
     context.cacheTimeout,
   );
 
+  try {
+    await saveVersion(context.namespace, scopeCode, version);
+    await saveAuditEntry(context.namespace, audit);
+    await Promise.all(
+      expired.map((old) => deleteVersion(context.namespace, scopeCode, old.id)),
+    );
+  } catch (error) {
+    throw new Error(
+      "CONFIGURATION_SAVED_WITHOUT_COMPLETE_HISTORY: live configuration was saved, but history, audit, or retention failed",
+      { cause: error },
+    );
+  }
+
   return {
     config: mergedScopeConfig.map(({ name, value }) => ({ name, value })),
     message: "Configuration values updated successfully",
     scope: { code: scopeCode, id: String(scopeId), level: scopeLevel },
     timestamp: new Date().toISOString(),
+    versionInfo: {
+      versionId: version.id,
+      versionNumber: version.versionNumber,
+    },
   };
 }
 

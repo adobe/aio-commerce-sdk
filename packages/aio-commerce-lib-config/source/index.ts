@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Adobe. All rights reserved.
+ * Copyright 2026 Adobe. All rights reserved.
  * This file is licensed to you under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License. You may obtain a copy
  * of the License at http://www.apache.org/licenses/LICENSE-2.0
@@ -29,6 +29,7 @@ export {
   type SelectorByCommerceScopeId,
   type SelectorByScopeId,
 } from "./config-utils";
+export * from "./history-manager";
 export {
   getSystemConfigByKey,
   setSystemConfigByKey,
@@ -41,10 +42,30 @@ export {
 } from "./modules/schema";
 export * from "./types";
 export {
+  type ArchiveReference,
+  archiveOldVersions,
+  archiveVersion,
+  getStorageStats,
+  restoreFromArchive,
+  shouldArchive,
+} from "./utils/archive";
+export {
   generateEncryptionKey,
   validateEncryptionKey,
 } from "./utils/encryption";
+export {
+  getValueSize,
+  isWithinStateSizeLimit,
+  StorageLimitExceededError,
+} from "./utils/storage-limits";
 
+export type {
+  AuditActor,
+  AuditEntry,
+  AuditVerificationResult,
+  GetAuditLogRequest,
+  GetAuditLogResponse,
+} from "./modules/audit/types";
 export type { ConfigOrigin, ConfigValue } from "./modules/configuration";
 export type {
   BusinessConfig,
@@ -56,3 +77,10 @@ export type {
   ResolvedBusinessConfigSchema,
 } from "./modules/schema";
 export type { ScopeNode, ScopeTree } from "./modules/scope-tree";
+export type {
+  ConfigDiff,
+  ConfigVersion,
+  GetVersionHistoryResponse,
+  TwoVersionComparison,
+  VersionComparison,
+} from "./modules/versioning/types";
