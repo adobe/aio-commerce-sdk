@@ -3,7 +3,7 @@
   "info": {
     "title": "App Management API",
     "description": "REST API for managing Adobe Commerce App Builder apps: resolving app configuration, managing configuration values, running the installation, upgrade, and uninstallation lifecycle, and managing the scope tree.",
-    "version": "4.2.0",
+    "version": "4.3.0",
     "contact": {},
     "license": {
       "identifier": "Apache-2.0",
@@ -1728,6 +1728,189 @@
         "tags": ["Management"]
       }
     },
+    "/config/versions": {
+      "get": {
+        "operationId": "getConfigurationVersions",
+        "summary": "List Configuration History",
+        "description": "Returns immutable scope-local configuration versions, newest first. Password snapshot and change values are masked. History begins with writes made after upgrading; existing configuration is not backfilled.",
+        "parameters": [
+          {
+            "name": "scopeId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 0,
+              "maximum": 9007199254740991,
+              "minimum": 0
+            }
+          },
+          {
+            "name": "x-gw-ims-org-id",
+            "in": "header",
+            "description": "Adobe IMS organization ID that identifies the organization for the request.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Configuration history with password values masked.",
+            "headers": {
+              "x-ac-sdk-lib-versions": {
+                "$ref": "#/components/headers/SdkLibVersions"
+              },
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "const": "no-store"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConfigurationVersionHistory"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid scope selector or pagination.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Storage is unavailable or a version record is corrupt.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Business Configuration"]
+      }
+    },
+    "/config/versions/restore": {
+      "post": {
+        "operationId": "restoreConfigurationVersion",
+        "summary": "Restore Configuration Fields",
+        "description": "Reapplies fields from a historical version and records a new version. By default, only keys changed by the source version are restored; fields absent from its snapshot are unset. Unselected overrides remain unchanged. The optional latest-version precondition is checked before writing, but does not serialize concurrent writers. Configuration and history writes are not transactional: a history write failure returns a server error after configuration has been saved.",
+        "parameters": [
+          {
+            "name": "x-gw-ims-org-id",
+            "in": "header",
+            "description": "Adobe IMS organization ID that identifies the organization for the request.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RestoreConfigurationVersionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Restored fields, with password values masked.",
+            "headers": {
+              "x-ac-sdk-lib-versions": {
+                "$ref": "#/components/headers/SdkLibVersions"
+              },
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "const": "no-store"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RestoreConfigurationVersionResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid restore request or unknown field.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Version not found for the selected scope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The latest recorded version does not match expectedLatestVersionId.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Storage or snapshot failure. If history recording failed, configuration has already been saved.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Business Configuration"]
+      }
+    },
     "/scope-tree": {
       "get": {
         "operationId": "getScopeTree",
@@ -2447,6 +2630,241 @@
           }
         },
         "required": ["id", "code", "level"]
+      },
+      "ConfigurationVersionValue": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "value": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            ]
+          }
+        },
+        "required": ["name", "value"]
+      },
+      "VersionChangeEntry": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "before": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            ]
+          },
+          "after": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            ]
+          }
+        },
+        "required": ["name"]
+      },
+      "ConfigurationVersion": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "scope": {
+            "$ref": "#/components/schemas/ConfigScope"
+          },
+          "reason": {
+            "type": "string",
+            "enum": ["set", "restore"]
+          },
+          "restoredFromVersionId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "change": {
+            "type": "object",
+            "properties": {
+              "added": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "updated": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "removed": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": ["added", "updated", "removed"]
+          },
+          "config": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ConfigurationVersionValue"
+            }
+          },
+          "changes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VersionChangeEntry"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "timestamp",
+          "scope",
+          "reason",
+          "change",
+          "config",
+          "changes"
+        ]
+      },
+      "ConfigurationVersionHistory": {
+        "type": "object",
+        "properties": {
+          "scope": {
+            "$ref": "#/components/schemas/ConfigScope"
+          },
+          "versions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ConfigurationVersion"
+            }
+          },
+          "pagination": {
+            "type": "object",
+            "properties": {
+              "total": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "limit": {
+                "type": "integer",
+                "maximum": 200,
+                "minimum": 1
+              },
+              "offset": {
+                "type": "integer",
+                "maximum": 9007199254740991,
+                "minimum": 0
+              }
+            },
+            "required": ["total", "limit", "offset"]
+          }
+        },
+        "required": ["scope", "versions", "pagination"]
+      },
+      "RestoreConfigurationVersionRequest": {
+        "type": "object",
+        "properties": {
+          "scopeId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "versionId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "expectedLatestVersionId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "fields": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "minItems": 1
+          }
+        },
+        "required": ["scopeId", "versionId"]
+      },
+      "RestoreConfigurationVersionResponse": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "scope": {
+            "$ref": "#/components/schemas/ConfigScope"
+          },
+          "restoredFromVersionId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "config": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ConfigurationVersionValue"
+            }
+          },
+          "removed": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "message",
+          "timestamp",
+          "scope",
+          "restoredFromVersionId",
+          "config",
+          "removed"
+        ]
       },
       "ConfigOrigin": {
         "type": "object",

@@ -13,10 +13,17 @@
 import {
   byScopeId,
   getConfiguration,
+  getConfigurationVersions,
   initialize,
+  restoreConfigurationVersion,
   setConfiguration,
 } from "@adobe/aio-commerce-lib-config";
-import { ok } from "@adobe/aio-commerce-lib-core/responses";
+import {
+  badRequest,
+  conflict,
+  notFound,
+  ok,
+} from "@adobe/aio-commerce-lib-core/responses";
 import {
   HttpActionRouter,
   logger as withLogger,
@@ -25,7 +32,12 @@ import {
 import { SDK_LIB_VERSIONS_HEADERS } from "#actions/version";
 import { filterSchemaByEnv } from "#config/lib/environment";
 
-import { GetConfigurationQuerySchema, PatchConfigBodySchema } from "./schema";
+import {
+  GetConfigurationQuerySchema,
+  GetConfigurationVersionsQuerySchema,
+  PatchConfigBodySchema,
+  RestoreConfigurationVersionBodySchema,
+} from "./schema";
 
 import type {
   BusinessConfigSchema,
@@ -80,6 +92,8 @@ function filterPasswordFields<T extends Omit<ConfigValue, "origin">>(
  * Routes:
  * - GET /     Get current configuration values for a given scope
  * - PATCH /   Partially update configuration (only updates provided fields, allows unsetting)
+ * - GET /versions   List configuration history
+ * - POST /versions/restore   Reapply selected historical changes
  */
 export const router = new HttpActionRouter<ConfigActionContext>({
   headers: SDK_LIB_VERSIONS_HEADERS,
@@ -148,5 +162,82 @@ router.patch("/", {
       body: result,
       headers: { "Cache-Control": "no-store" },
     });
+  },
+});
+
+/** Maps expected versioning failures to client errors; storage failures remain server errors. */
+function versionErrorResponse(error: unknown) {
+  if (error instanceof Error) {
+    if (error.message.startsWith("VERSION_NOT_FOUND:")) {
+      return notFound({
+        body: {
+          code: "VERSION_NOT_FOUND",
+          message: "Version not found for the selected scope",
+        },
+      });
+    }
+    if (error.message.startsWith("VERSION_CONFLICT:")) {
+      return conflict({
+        body: {
+          code: "VERSION_CONFLICT",
+          message: "The latest version does not match expectedLatestVersionId",
+        },
+      });
+    }
+    if (
+      error.message.startsWith("INVALID_PARAMS:") ||
+      error.message.startsWith("INVALID_SCOPE_ID:") ||
+      error.message.startsWith("INVALID_SCOPE:")
+    ) {
+      return badRequest({
+        body: { code: error.message.split(":").at(0), message: error.message },
+      });
+    }
+  }
+  throw error;
+}
+
+/** GET /versions - Retrieve masked, scope-local history. */
+router.get("/versions", {
+  handler: async (req, ctx) => {
+    const { rawParams } = ctx;
+    await initialize({ params: rawParams, schema: rawParams.configSchema });
+    try {
+      const { scopeId, limit, offset } = req.query;
+      const result = await getConfigurationVersions(byScopeId(scopeId), {
+        limit,
+        offset,
+      });
+      return ok({ body: result, headers: { "Cache-Control": "no-store" } });
+    } catch (error) {
+      return versionErrorResponse(error);
+    }
+  },
+  query: GetConfigurationVersionsQuerySchema,
+});
+
+/** POST /versions/restore - Restore selected fields without overwriting other overrides. */
+router.post("/versions/restore", {
+  body: RestoreConfigurationVersionBodySchema,
+  handler: async (req, ctx) => {
+    const { rawParams } = ctx;
+    const { configSchema } = await initialize({
+      params: rawParams,
+      schema: rawParams.configSchema,
+    });
+    try {
+      const { scopeId, ...request } = req.body;
+      const result = await restoreConfigurationVersion(
+        byScopeId(scopeId),
+        request,
+        {
+          encryptionKey: rawParams.AIO_COMMERCE_CONFIG_ENCRYPTION_KEY,
+        },
+      );
+      result.config = filterPasswordFields(configSchema, result.config);
+      return ok({ body: result, headers: { "Cache-Control": "no-store" } });
+    } catch (error) {
+      return versionErrorResponse(error);
+    }
   },
 });

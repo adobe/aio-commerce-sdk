@@ -22,12 +22,16 @@ import type { RuntimeActionParams } from "@adobe/aio-commerce-lib-core/params";
 const {
   byScopeIdMock,
   getConfigurationMock,
+  getConfigurationVersionsMock,
   initializeMock,
+  restoreConfigurationVersionMock,
   setConfigurationMock,
 } = vi.hoisted(() => ({
   byScopeIdMock: vi.fn((scopeId: string) => ({ scopeId })),
   getConfigurationMock: vi.fn(),
+  getConfigurationVersionsMock: vi.fn(),
   initializeMock: vi.fn(),
+  restoreConfigurationVersionMock: vi.fn(),
   setConfigurationMock: vi.fn(),
 }));
 
@@ -40,7 +44,9 @@ vi.mock("@adobe/aio-commerce-lib-config", async () => {
     ...actual,
     byScopeId: byScopeIdMock,
     getConfiguration: getConfigurationMock,
+    getConfigurationVersions: getConfigurationVersionsMock,
     initialize: initializeMock,
+    restoreConfigurationVersion: restoreConfigurationVersionMock,
     setConfiguration: setConfigurationMock,
   };
 });
@@ -67,6 +73,130 @@ const envScopedSchema = [
   { env: ["paas"], label: "PaaS", name: "paasOnly", type: "text" },
   { env: ["saas"], label: "SaaS", name: "saasOnly", type: "text" },
 ] satisfies BusinessConfigSchema;
+
+const versionId = "019a6129-0000-7000-8000-000000000001";
+
+describe("configuration history routes", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    initializeMock.mockResolvedValue({ configSchema });
+  });
+
+  test("validates and transforms paging before calling the library", async () => {
+    getConfigurationVersionsMock.mockResolvedValue({
+      pagination: { limit: 20, offset: 0, total: 0 },
+      versions: [],
+    });
+    const handler = configRuntimeAction({ configSchema });
+    const result = await handler(
+      createRuntimeActionParams({
+        path: "/versions",
+        query: "scopeId=store-1&limit=20&offset=0",
+      }),
+    );
+    expect(result).toMatchObject({
+      headers: { "Cache-Control": "no-store" },
+      statusCode: 200,
+    });
+    expect(getConfigurationVersionsMock).toHaveBeenCalledWith(
+      { scopeId: "store-1" },
+      { limit: 20, offset: 0 },
+    );
+    expect(initializeMock).toHaveBeenCalledWith({
+      params: expect.anything(),
+      schema: configSchema,
+    });
+  });
+
+  test.each([
+    "limit=0",
+    "limit=201",
+    "limit=1.5",
+    "limit=foo",
+    "limit=",
+    "offset=-1",
+    "offset=9007199254740992",
+  ])("rejects invalid pagination %s", async (query) => {
+    const handler = configRuntimeAction({ configSchema });
+    const result = await handler(
+      createRuntimeActionParams({
+        path: "/versions",
+        query: `scopeId=store-1&${query}`,
+      }),
+    );
+    expect(result).toMatchObject({ error: { statusCode: 400 }, type: "error" });
+    expect(getConfigurationVersionsMock).not.toHaveBeenCalled();
+  });
+
+  test("parses restore JSON and masks passwords in the response", async () => {
+    restoreConfigurationVersionMock.mockResolvedValue({
+      config: [{ name: "apiKey", value: "private" }],
+      restoredFromVersionId: versionId,
+    });
+    const handler = configRuntimeAction({ configSchema });
+    const result = await handler(
+      createRuntimeActionParams({
+        AIO_COMMERCE_CONFIG_ENCRYPTION_KEY: "encryption-key",
+        body: {
+          expectedLatestVersionId: versionId,
+          fields: ["apiKey"],
+          scopeId: "store-1",
+          versionId,
+        },
+        method: "post",
+        path: "/versions/restore",
+      }),
+    );
+    expect(result).toMatchObject({
+      body: { config: [{ name: "apiKey", value: "*****" }] },
+      headers: { "Cache-Control": "no-store" },
+      statusCode: 200,
+    });
+    expect(restoreConfigurationVersionMock).toHaveBeenCalledWith(
+      { scopeId: "store-1" },
+      { expectedLatestVersionId: versionId, fields: ["apiKey"], versionId },
+      { encryptionKey: "encryption-key" },
+    );
+  });
+
+  test.each(["", 1, null])(
+    "rejects an invalid expectedLatestVersionId %j",
+    async (expectedLatestVersionId) => {
+      const handler = configRuntimeAction({ configSchema });
+      const result = await handler(
+        createRuntimeActionParams({
+          body: { expectedLatestVersionId, scopeId: "store-1", versionId },
+          method: "post",
+          path: "/versions/restore",
+        }),
+      );
+      expect(result).toMatchObject({
+        error: { statusCode: 400 },
+        type: "error",
+      });
+      expect(restoreConfigurationVersionMock).not.toHaveBeenCalled();
+    },
+  );
+
+  test.each([
+    ["VERSION_NOT_FOUND: missing", 404],
+    ["VERSION_CONFLICT: stale", 409],
+    ["INVALID_PARAMS: unknown field", 400],
+    ["INVALID_SCOPE_ID: missing scope", 400],
+    ["VERSION_WRITE_FAILED: configuration was saved", 500],
+  ])("maps %s to HTTP %i", async (message, statusCode) => {
+    restoreConfigurationVersionMock.mockRejectedValueOnce(new Error(message));
+    const handler = configRuntimeAction({ configSchema });
+    const result = await handler(
+      createRuntimeActionParams({
+        body: { scopeId: "store-1", versionId },
+        method: "post",
+        path: "/versions/restore",
+      }),
+    );
+    expect(result).toMatchObject({ error: { statusCode }, type: "error" });
+  });
+});
 
 describe("configRuntimeAction", () => {
   beforeEach(() => {

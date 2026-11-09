@@ -189,6 +189,39 @@ inputs:
 
 With the option and the input in place, password values are returned as plaintext.
 
+## Configuration history and restore
+
+Business configuration writes automatically record scope-local versions.
+After initialization, use `getConfigurationVersions(selector, { limit, offset })`
+and `restoreConfigurationVersion(selector, { versionId, fields, expectedLatestVersionId }, options)`
+from `@adobe/aio-commerce-lib-config`. The generated action exposes
+`GET /config/versions?scopeId=...` and `POST /config/versions/restore`.
+No audit-enabled input is needed.
+
+```typescript
+const history = await getConfigurationVersions(byScopeId(scopeId), {
+  limit: 20,
+});
+await restoreConfigurationVersion(
+  byScopeId(scopeId),
+  {
+    versionId,
+    fields: ["debug_mode"],
+    expectedLatestVersionId: history.versions[0].id,
+  },
+  { encryptionKey: params.AIO_COMMERCE_CONFIG_ENCRYPTION_KEY },
+);
+```
+
+Without `fields`, restore reapplies only the source version's changed keys, not
+the entire historical state. Missing fields are unset to restore inheritance.
+Password history and restore responses are masked. The latest-version check is
+not a distributed lock, and history recording can fail after configuration has
+been saved; inspect current configuration before retrying a failed write.
+Pagination requires an integer limit of 1-200 and non-negative integer offset.
+See the [configuration history guide](https://github.com/adobe/aio-commerce-sdk/blob/main/packages/aio-commerce-lib-config/docs/usage.md#configuration-history-and-restore)
+for error handling and storage limitations.
+
 ## Common Issues
 
 - **`list/single` default missing**: Single-select list fields require a `default` — it can't be omitted. It must exactly match one of the option `value` strings.

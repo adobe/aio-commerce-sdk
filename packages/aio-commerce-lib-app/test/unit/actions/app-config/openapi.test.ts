@@ -59,6 +59,8 @@ describe("buildOpenApiSpec", () => {
 
     expect(paths).toContain("/app-config");
     expect(paths).not.toContain("/config");
+    expect(paths).not.toContain("/config/versions");
+    expect(paths).not.toContain("/config/versions/restore");
     expect(paths).not.toContain("/scope-tree");
     expect(paths).not.toContain("/scope-tree/commerce");
     expect(paths).not.toContain("/installation");
@@ -74,6 +76,12 @@ describe("buildOpenApiSpec", () => {
     // schemas are all left unreferenced and pruned.
     for (const orphaned of [
       "ConfigScope",
+      "ConfigurationVersion",
+      "ConfigurationVersionValue",
+      "VersionChangeEntry",
+      "ConfigurationVersionHistory",
+      "RestoreConfigurationVersionRequest",
+      "RestoreConfigurationVersionResponse",
       "ConfigOrigin",
       "ConfigValue",
       "ConfigUpdateEntry",

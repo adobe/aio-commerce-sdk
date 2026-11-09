@@ -4,6 +4,8 @@ App configuration management library for Adobe Commerce applications.
 
 This library provides tools for defining, validating, and managing configurations for Adobe Commerce applications. It defines the configuration schema, provides validation, and can scaffold App Builder projects with TypeScript configuration support, build configuration, and type checking.
 
+Generated configuration actions expose scope-local version history and selective restore through the App Management API.
+
 ## Installation
 
 ```shell

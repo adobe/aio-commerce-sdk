@@ -1220,6 +1220,33 @@ When an automatic upgrade fails, the `post-app-deploy` hook prints the run id an
 
 ### Using the Configuration API
 
+#### Business configuration history
+
+Generated business-configuration actions expose `GET /config/versions` and
+`POST /config/versions/restore` alongside the existing read and patch routes.
+No additional action templates or audit flag are required.
+
+History requires the `scopeId` query parameter and accepts `limit` (integer
+1-200, default 50) and `offset` (non-negative safe integer, default 0).
+Both history and restore responses include `Cache-Control: no-store`; password
+values are masked.
+
+Restore accepts JSON with `scopeId`, a UUID `versionId`, optional
+`expectedLatestVersionId`, and an optional non-empty `fields` array. Without
+`fields`, it reapplies only the source version's changed fields, leaving other
+overrides intact. Fields absent from the source snapshot are unset. Missing
+versions return 404, stale latest-version preconditions return 409, and invalid
+requests return 400.
+
+The latest-version precondition does not serialize concurrent writers.
+Configuration and history are separate writes: a history write failure returns
+500 after configuration has already been saved. Inspect current values before
+retrying. See the [configuration history guide](../../aio-commerce-lib-config/docs/usage.md#configuration-history-and-restore)
+for SDK examples and limitations, and the [OpenAPI contract](./openapi.json)
+for request and response schemas.
+
+#### Build-time configuration
+
 The library provides functions for reading, parsing, and validating app configurations. These are primarily used in build scripts and CLI tools.
 
 Use `isTypeScriptConfig` to identify whether a resolved Commerce configuration path uses a supported TypeScript format:

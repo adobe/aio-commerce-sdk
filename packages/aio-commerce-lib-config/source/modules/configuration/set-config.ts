@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Adobe. All rights reserved.
+ * Copyright 2026 Adobe. All rights reserved.
  * This file is licensed to you under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License. You may obtain a copy
  * of the License at http://www.apache.org/licenses/LICENSE-2.0
@@ -18,9 +18,11 @@ import {
 import { requireGlobalSchema } from "#modules/schema/config-schema-repository";
 import { getPasswordFields } from "#modules/schema/utils";
 import * as scopeTreeRepository from "#modules/scope-tree/scope-tree-repository";
+import {
+  persistVersionedConfig,
+  readCurrentSnapshot,
+} from "#modules/versioning/version-repository";
 import { encrypt } from "#utils/encryption";
-
-import * as configRepository from "./configuration-repository";
 
 import type {
   SetConfigurationRequest,
@@ -66,13 +68,9 @@ export async function setConfiguration(
     context.encryptionKey,
   );
 
-  const existingPersisted = await configRepository.loadConfig(
-    scopeCode,
-    context.cacheTimeout,
-  );
-  const existingEntries = Array.isArray(existingPersisted?.config)
-    ? (existingPersisted?.config ?? [])
-    : [];
+  const scope = { code: scopeCode, id: scopeId, level: scopeLevel };
+  const previous = await readCurrentSnapshot(scope);
+  const existingEntries = previous.config;
 
   const mergedScopeConfig = mergeScopes(
     existingEntries,
@@ -86,11 +84,7 @@ export async function setConfiguration(
     scope: { code: scopeCode, id: scopeId, level: scopeLevel },
   };
 
-  await configRepository.persistConfig(
-    scopeCode,
-    payload,
-    context.cacheTimeout,
-  );
+  await persistVersionedConfig(context, previous, payload, { reason: "set" });
 
   return {
     config: mergedScopeConfig.map(({ name, value }) => ({ name, value })),

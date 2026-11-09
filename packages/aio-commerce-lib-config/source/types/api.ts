@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Adobe. All rights reserved.
+ * Copyright 2026 Adobe. All rights reserved.
  * This file is licensed to you under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License. You may obtain a copy
  * of the License at http://www.apache.org/licenses/LICENSE-2.0
@@ -81,6 +81,85 @@ export type SetConfigurationResponse = {
     name: string;
     value: BusinessConfigSchemaValue;
   }>;
+};
+
+/** Fields added, updated, or removed by a configuration write. */
+export type ConfigurationVersionChange = {
+  /** Newly overridden field names. */
+  added: string[];
+  /** Changed field names. */
+  updated: string[];
+  /** Overrides removed to restore inheritance. */
+  removed: string[];
+};
+
+/** A stored configuration value; password values are masked in history responses. */
+export type ConfigurationVersionValue = Pick<ConfigValue, "name" | "value">;
+
+/** Before and after values for a changed field. */
+export type VersionChangeEntry = {
+  /** Configuration field name. */
+  name: string;
+  /** Previous value; omitted for added fields. */
+  before?: BusinessConfigSchemaValue;
+  /** New value; omitted for removed fields. */
+  after?: BusinessConfigSchemaValue;
+};
+
+/** Configuration version metadata and scope-local values. */
+export type ConfigurationVersion = {
+  /** Unique immutable version identifier. */
+  id: string;
+  /** ISO timestamp of the write. */
+  timestamp: string;
+  /** Scope whose explicit overrides were recorded. */
+  scope: GetConfigurationResponse["scope"];
+  /** Operation that created this version. */
+  reason: "set" | "restore";
+  /** Source version when created by a restore. */
+  restoredFromVersionId?: string;
+  /** Summary of changed field names. */
+  change: ConfigurationVersionChange;
+  /** Scope-local values, without inherited values or defaults. */
+  config: ConfigurationVersionValue[];
+  /** Changed fields with before and after values. */
+  changes: VersionChangeEntry[];
+};
+
+/** Pagination for configuration history. */
+export type GetConfigurationVersionsParams = {
+  /** Page size, from 1 to 200. Defaults to 50. */
+  limit?: number;
+  /** Non-negative number of versions to skip. Defaults to 0. */
+  offset?: number;
+};
+
+/** Configuration history, newest first. */
+export type GetConfigurationVersionsResponse = {
+  /** Selected scope. */
+  scope: GetConfigurationResponse["scope"];
+  /** Versions in the requested page. */
+  versions: ConfigurationVersion[];
+  /** Total version count and effective pagination. */
+  pagination: Required<GetConfigurationVersionsParams> & { total: number };
+};
+
+/** Selects a historical change to reapply to the current scope. */
+export type RestoreConfigurationVersionRequest = {
+  /** Source version identifier. */
+  versionId: string;
+  /** Checks the latest recorded version before writing; not a distributed lock. */
+  expectedLatestVersionId?: string;
+  /** Fields to restore; defaults to the source version's changed fields. */
+  fields?: string[];
+};
+
+/** Result of selectively restoring a configuration version. */
+export type RestoreConfigurationVersionResponse = SetConfigurationResponse & {
+  /** Version used as the restore source. */
+  restoredFromVersionId: string;
+  /** Overrides removed from the selected scope. */
+  removed: string[];
 };
 
 /**

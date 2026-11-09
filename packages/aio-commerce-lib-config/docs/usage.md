@@ -9,10 +9,74 @@ The `@adobe/aio-commerce-lib-config` library provides:
 - **Inheritance Model**: Automatic configuration inheritance from parent scopes
 - **Schema Validation**: Validate configuration schemas with in-memory schema storage
 - **Persistent Storage**: Uses `@adobe/aio-lib-state` and `@adobe/aio-lib-files` for configuration data caching and storage
+- **Version History**: Records explicit scope overrides on writes and supports selective restoration of historical field values
 
 ## Reference
 
 See the [API Reference](./api-reference/README.md) for a full list of classes, interfaces, and functions exported by the library.
+
+## Configuration history and restore
+
+After initialization, each successful configuration write records an immutable,
+scope-local snapshot. History starts with writes made after upgrading; existing
+configuration is not backfilled. System configuration is not versioned.
+
+```typescript
+import {
+  byScopeId,
+  getConfigurationVersions,
+  restoreConfigurationVersion,
+} from "@adobe/aio-commerce-lib-config";
+
+const selector = byScopeId(scopeId);
+const history = await getConfigurationVersions(selector, {
+  limit: 20,
+  offset: 0,
+});
+
+await restoreConfigurationVersion(
+  selector,
+  {
+    versionId: sourceVersionId,
+    expectedLatestVersionId: history.versions[0].id,
+    fields: ["enabled", "region"],
+  },
+  { encryptionKey },
+);
+```
+
+`limit` must be an integer from 1 to 200 (default 50); `offset` must be a
+non-negative safe integer (default 0). Invalid paging throws `INVALID_PARAMS`.
+Versions are returned newest first, with `config`, before/after `changes`, and
+an added/updated/removed field-name summary. Password values in history and
+restore responses are masked, including fields previously defined as passwords.
+Snapshots retain encrypted password values; restoring them requires the same
+encryption key. History storage must be protected like live configuration.
+
+Restore reapplies a historical change; it is not an undo operation. Without
+`fields`, only keys changed by the source version are restored. An explicit
+`fields` array selects values from that snapshot; an absent field is unset,
+restoring inheritance. Other current overrides remain unchanged. Booleans,
+arrays, and empty strings retain their types and meanings. Unknown fields,
+changed field types, and list values no longer allowed by the current schema
+are rejected. Each restore records a new version.
+
+All scope selectors are supported. For history and restore, `byCode` must match
+exactly one scope across all levels; otherwise it throws `AMBIGUOUS_SCOPE_CODE`.
+Use `byScopeId` or `byCodeAndLevel` to disambiguate. Existing configuration
+read/write selector behavior is unchanged.
+
+A missing source throws `VERSION_NOT_FOUND`. An `expectedLatestVersionId`
+mismatch throws `VERSION_CONFLICT` before writing. This precondition is not a
+distributed lock: concurrent writers can still race. Configuration and history
+are separate writes, not an atomic transaction. If history recording fails,
+`VERSION_WRITE_FAILED` explicitly indicates that configuration was saved and
+the cache updated but history was not recorded. Inspect current state before
+retrying. Storage read failures and invalid snapshots are surfaced instead of
+being treated as missing configuration.
+
+History has no automatic retention policy. Large histories require listing all
+version identifiers even when requesting a small page.
 
 ## How to use
 

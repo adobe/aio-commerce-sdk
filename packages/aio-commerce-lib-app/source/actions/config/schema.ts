@@ -38,3 +38,27 @@ export const PatchConfigBodySchema = v.object({
   ),
   scopeId: nonEmptyStringValueSchema("scopeId"),
 });
+
+const IntegerQuerySchema = v.pipe(
+  v.string(),
+  v.regex(/^\d+$/u),
+  v.transform(Number),
+  v.safeInteger(),
+);
+
+/** Query parameters for GET /versions. */
+export const GetConfigurationVersionsQuerySchema = v.object({
+  limit: v.optional(v.pipe(IntegerQuerySchema, v.minValue(1), v.maxValue(200))),
+  offset: v.optional(v.pipe(IntegerQuerySchema, v.minValue(0))),
+  scopeId: nonEmptyStringValueSchema("scopeId"),
+});
+
+/** Request body for POST /versions/restore. */
+export const RestoreConfigurationVersionBodySchema = v.object({
+  expectedLatestVersionId: v.optional(v.pipe(v.string(), v.uuid())),
+  fields: v.optional(
+    v.pipe(v.array(nonEmptyStringValueSchema("fields[i]")), v.minLength(1)),
+  ),
+  scopeId: nonEmptyStringValueSchema("scopeId"),
+  versionId: v.pipe(v.string(), v.uuid()),
+});

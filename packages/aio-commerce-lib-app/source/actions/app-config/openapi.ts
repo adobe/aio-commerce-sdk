@@ -148,6 +148,8 @@ export async function buildOpenApiSpec(
     );
 
     stripPath("/config");
+    stripPath("/config/versions");
+    stripPath("/config/versions/restore");
     stripPath("/scope-tree");
     stripPath("/scope-tree/commerce");
   }
