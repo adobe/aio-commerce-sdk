@@ -51,7 +51,7 @@ export type AuditEntry = {
   /** Previous audit entry hash (for chain) */
   previousHash: string | null;
   /** Action performed */
-  action: "create" | "update" | "rollback";
+  action: "create" | "update";
 };
 
 /**
@@ -71,7 +71,7 @@ export type CreateAuditEntryRequest = {
   /** Changes made */
   changes: ConfigDiff[];
   /** Action performed */
-  action: "create" | "update" | "rollback";
+  action: "create" | "update";
 };
 
 /**
@@ -83,7 +83,7 @@ export type GetAuditLogRequest = {
   /** Filter by user ID */
   userId?: string;
   /** Filter by action type */
-  action?: "create" | "update" | "rollback";
+  action?: "create" | "update";
   /** Start date for filtering */
   startDate?: string;
   /** End date for filtering */

@@ -224,9 +224,10 @@ For detailed information about available field types and their usage, see the [`
 Configuration PATCH requests now record redacted version history and audit entries, and return
 `versionInfo` alongside the existing response fields. History is stored in Adobe Files, separately
 from live configuration, and failures can be reported after live values have changed.
-History queries and rollback are library APIs, not additional generated HTTP routes.
+History queries are read-only library APIs, not additional generated HTTP routes. Configuration
+rollback is not supported.
 See [Versioning and audit](../../aio-commerce-lib-config/docs/versioning-and-audit.md) for secret
-preservation, retention settings, authenticated action integration, and consistency limits.
+redaction, retention settings, authenticated action integration, and consistency limits.
 
 #### Eventing Configuration
 

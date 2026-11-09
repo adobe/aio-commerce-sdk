@@ -15,7 +15,7 @@ pnpm add @adobe/aio-commerce-lib-config
 See the [Usage Guide](./docs/usage.md) for more information.
 
 Configuration writes also record redacted version history and a per-scope audit hash chain.
-See [Versioning and audit](./docs/versioning-and-audit.md) for comparisons, rollback,
+See [Versioning and audit](./docs/versioning-and-audit.md) for read-only comparisons,
 retention, archiving, and the integrity and consistency limits.
 
 ## Contributing

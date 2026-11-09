@@ -10,34 +10,20 @@
  * governing permissions and limitations under the License.
  */
 
-import * as v from "valibot";
-
-import { deriveScopeFromId } from "#config-utils";
 import {
   getAuditLog as queryAuditLog,
   verifyAuditChain as verifyChain,
 } from "#modules/audit/audit-logger";
-import { loadConfig } from "#modules/configuration/configuration-repository";
-import { setConfigurationWithAudit } from "#modules/configuration/set-config";
-import { requireGlobalSchema } from "#modules/schema/config-schema-repository";
-import { getPasswordFields } from "#modules/schema/utils";
-import { getPersistedScopeTree } from "#modules/scope-tree/scope-tree-repository";
-import {
-  isSensitiveField,
-  REDACTED_VALUE,
-} from "#modules/versioning/secret-redaction";
 import {
   compareTwoVersions,
   getVersionComparison as compareVersion,
 } from "#modules/versioning/version-comparison";
 import { getVersionHistory } from "#modules/versioning/version-manager";
 import { getVersion } from "#modules/versioning/version-repository";
-import { DEFAULT_CACHE_TIMEOUT, DEFAULT_NAMESPACE } from "#utils/constants";
-import { ConfigValuesSchema } from "#utils/history-storage";
+import { DEFAULT_NAMESPACE } from "#utils/constants";
 
-import type { AuditActor, GetAuditLogRequest } from "#modules/audit/types";
+import type { GetAuditLogRequest } from "#modules/audit/types";
 import type { GetVersionHistoryRequest } from "#modules/versioning/types";
-import type { ConfigOptions } from "#types/index";
 
 function versionContext() {
   return { namespace: DEFAULT_NAMESPACE };
@@ -113,96 +99,5 @@ export async function verifyAuditChain(
     { namespace: DEFAULT_NAMESPACE },
     scopeCode,
     expectedHeadHash,
-  );
-}
-
-/**
- * Restores a retained snapshot's non-sensitive scope-local overrides as a new audited version.
- * Removes non-sensitive overrides absent from the target, restoring inheritance.
- * Current secrets are preserved; redaction markers are never written to live configuration.
- *
- * @param scopeCode - Scope code, not a scope ID.
- * @param versionId - Retained version to restore.
- * @param metadata - Optional application-supplied actor.
- * @param options - Current configuration cache and encryption options.
- *
- * @example
- * ```typescript
- * const { versions } = await getConfigurationHistory("global");
- * if (versions.length > 1) {
- *   await rollbackConfiguration("global", versions[1].id, {
- *     actor: { userId: "operator-123", source: "support-tool" },
- *   });
- * }
- * ```
- */
-export async function rollbackConfiguration(
-  scopeCode: string,
-  versionId: string,
-  metadata?: { actor?: AuditActor },
-  options?: ConfigOptions,
-) {
-  const version = await getVersion(DEFAULT_NAMESPACE, scopeCode, versionId);
-  if (!version) {
-    throw new Error("VERSION_NOT_FOUND: requested version is not retained");
-  }
-  const tree = await getPersistedScopeTree(DEFAULT_NAMESPACE);
-  const scope = deriveScopeFromId(version.scope.id, tree);
-  if (
-    scope.scopeCode !== version.scope.code ||
-    scope.scopeLevel !== version.scope.level
-  ) {
-    throw new Error(
-      "INVALID_ROLLBACK_SCOPE: the version's scope identity has changed",
-    );
-  }
-  const context = {
-    cacheTimeout: options?.cacheTimeout ?? DEFAULT_CACHE_TIMEOUT,
-    encryptionKey: options?.encryptionKey,
-    namespace: DEFAULT_NAMESPACE,
-  };
-  const rawCurrent: unknown = await loadConfig(
-    scope.scopeCode,
-    context.cacheTimeout,
-  );
-  const current = v.parse(
-    v.nullable(
-      v.object({
-        config: v.optional(ConfigValuesSchema, []),
-      }),
-    ),
-    rawCurrent,
-  );
-  const passwordFields = getPasswordFields(requireGlobalSchema());
-  const redactedNames = new Set([
-    ...version.snapshot
-      .filter((item) => item.value === REDACTED_VALUE)
-      .map((item) => item.name),
-    ...version.diff
-      .filter(
-        (diff) =>
-          diff.oldValue === REDACTED_VALUE || diff.newValue === REDACTED_VALUE,
-      )
-      .map((diff) => diff.name),
-  ]);
-  const protectedField = (name: string) =>
-    isSensitiveField(name, passwordFields) || redactedNames.has(name);
-  const targetNames = new Set(version.snapshot.map((item) => item.name));
-  const config = [
-    ...version.snapshot
-      .filter((item) => !protectedField(item.name))
-      .map(({ name, value }) => ({ name, value })),
-    ...(current?.config ?? [])
-      .filter(
-        (item) => !(targetNames.has(item.name) || protectedField(item.name)),
-      )
-      .map(({ name }) => ({ name, value: null })),
-  ];
-  return setConfigurationWithAudit(
-    context,
-    { config, metadata },
-    "rollback",
-    scope.scopeCode,
-    scope.scopeLevel,
   );
 }

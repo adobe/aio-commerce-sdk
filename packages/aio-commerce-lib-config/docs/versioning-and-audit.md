@@ -2,8 +2,8 @@
 
 Configuration writes record scope-local snapshots and linked audit records in Adobe Files.
 For example, a support operator can inspect which configuration changed before a storefront
-integration stopped working, compare the affected versions, and restore an earlier non-sensitive
-configuration without rotating or overwriting its current credentials.
+integration stopped working and compare the affected versions. History inspection is read-only:
+the library does not provide configuration rollback or apply historical snapshots to live settings.
 
 This is configuration history for low-volume application settings, not a transactional ledger
 or a compliance certification. Queries and verification scan stored records; pagination limits
@@ -94,26 +94,6 @@ all supplied fields; version snapshots keep only `userId` and `source`. Applicat
 actor data from a trusted, authenticated context rather than trusting client-supplied identity.
 Actor metadata can contain personal information: collect only necessary data and define your
 own access, retention, and deletion policies. Redaction alone does not establish regulatory compliance.
-
-## Rollback
-
-```typescript
-import { rollbackConfiguration } from "@adobe/aio-commerce-lib-config";
-
-await rollbackConfiguration("global", retainedVersionId, {
-  actor: { userId: "operator-123", source: "support-tool" },
-});
-```
-
-Rollback restores the target's non-sensitive local overrides and unsets non-sensitive overrides
-that were added later, restoring inheritance. It creates a new version with action `rollback`;
-it never rewinds the sequence or deletes the intervening audit trail.
-
-Current secrets are preserved, including secrets created after the target version. Redaction
-markers are never written back into live configuration. Consequently, this is **not** a
-full credential rollback. Removed or changed scope identities are rejected, and an unavailable
-version throws `VERSION_NOT_FOUND`. Cache/encryption options can be passed as the fourth argument.
-All existing scope types are supported, including global, website, and store view.
 
 ## Integrity verification
 
@@ -207,7 +187,7 @@ or automatic repair mechanism.
 
 The generated configuration action continues to expose its existing GET/PATCH routes.
 PATCH responses include `versionInfo`; passwords remain masked and mutation responses use
-`Cache-Control: no-store`. No history, audit, archive, or rollback HTTP routes or Admin UI
+`Cache-Control: no-store`. No history, audit, or archive HTTP routes or Admin UI
 are installed automatically. Expose library APIs only through application-owned authenticated
 actions with appropriate authorization and no-store response headers. Existing SDK runtime
 actions do not populate actor metadata automatically.

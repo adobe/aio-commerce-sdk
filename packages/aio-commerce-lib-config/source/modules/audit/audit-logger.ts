@@ -121,11 +121,9 @@ export async function getAuditLog(
   paginate([], request, 50);
   if (
     request.action !== undefined &&
-    !["create", "update", "rollback"].includes(request.action)
+    !["create", "update"].includes(request.action)
   ) {
-    throw new Error(
-      "INVALID_AUDIT_ACTION: expected create, update, or rollback",
-    );
+    throw new Error("INVALID_AUDIT_ACTION: expected create or update");
   }
   const start =
     request.startDate === undefined

@@ -32,7 +32,6 @@ import { encrypt } from "#utils/encryption";
 
 import * as configRepository from "./configuration-repository";
 
-import type { AuditEntry } from "#modules/audit/types";
 import type {
   SetConfigurationRequest,
   SetConfigurationResponse,
@@ -57,16 +56,6 @@ import type { ConfigContext, SetConfigValue } from "./types";
 export async function setConfiguration(
   context: ConfigContext,
   request: SetConfigurationRequest,
-  ...args: unknown[]
-): Promise<SetConfigurationResponse> {
-  return await setConfigurationWithAudit(context, request, undefined, ...args);
-}
-
-/** Performs a configuration write with an application-independent rollback action marker. */
-export async function setConfigurationWithAudit(
-  context: ConfigContext,
-  request: SetConfigurationRequest,
-  action: AuditEntry["action"] | undefined,
   ...args: unknown[]
 ): Promise<SetConfigurationResponse> {
   const schema = requireGlobalSchema();
@@ -118,10 +107,9 @@ export async function setConfigurationWithAudit(
   );
   const audit = await prepareAuditEntry(context, {
     action:
-      action ??
-      (existingEntries.length === 0 && version.previousVersionId === null
+      existingEntries.length === 0 && version.previousVersionId === null
         ? "create"
-        : "update"),
+        : "update",
     actor: request.metadata?.actor ?? {},
     changes: version.diff,
     scope: version.scope,

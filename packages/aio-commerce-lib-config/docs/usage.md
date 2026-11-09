@@ -9,7 +9,7 @@ The `@adobe/aio-commerce-lib-config` library provides:
 - **Inheritance Model**: Automatic configuration inheritance from parent scopes
 - **Schema Validation**: Validate configuration schemas with in-memory schema storage
 - **Persistent Storage**: Uses `@adobe/aio-lib-state` and `@adobe/aio-lib-files` for configuration data caching and storage
-- **Versioning and Audit**: Records redacted configuration snapshots and audit hash chains, with comparisons, rollback, retention, and archiving
+- **Versioning and Audit**: Records redacted configuration snapshots and audit hash chains, with read-only comparisons, retention, and archiving
 
 ## Reference
 
@@ -23,8 +23,8 @@ Every successful `setConfiguration` call creates a redacted scope-local version 
 The response includes `versionInfo.versionId` and `versionInfo.versionNumber`.
 Use `getConfigurationHistory`, `getVersionById`, `getVersionComparison`, and `compareVersions`
 to inspect retained snapshots; `getAuditLog` to query changes; and `verifyAuditChain` to check
-one scope's audit hashes and links. `rollbackConfiguration` restores non-sensitive overrides
-as a new version while preserving current secrets.
+one scope's audit hashes and links. History inspection is read-only and cannot restore
+historical settings to live configuration.
 
 History and audit use durable Adobe Files storage, not expiring State entries. Live configuration
 and history are not one atomic transaction. Callers must serialize writes to the same scope;

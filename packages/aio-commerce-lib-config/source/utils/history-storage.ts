@@ -87,7 +87,7 @@ export const VersionRecordSchema = v.union([
   ArchiveReferenceSchema,
 ]);
 export const AuditEntrySchema = v.strictObject({
-  action: v.picklist(["create", "update", "rollback"]),
+  action: v.picklist(["create", "update"]),
   actor: ActorSchema,
   changes: v.array(DiffSchema),
   id: v.string(),

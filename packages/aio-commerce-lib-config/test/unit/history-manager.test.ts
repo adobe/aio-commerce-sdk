@@ -30,7 +30,6 @@ import {
   getVersionComparison,
   initialize,
   restoreFromArchive,
-  rollbackConfiguration,
   setConfiguration,
   setSystemConfigByKey,
   shouldArchive,
@@ -213,7 +212,9 @@ describe("durable configuration history and audit", () => {
     ).toEqual(version.snapshot);
   });
 
-  it("rolls back global overrides, removes later fields and preserves the current encrypted secret", async () => {
+  it("inspects history, comparisons and audit without changing live configuration", async () => {
+    const configurationApi = await import("#index");
+    expect(configurationApi).not.toHaveProperty("rollbackConfiguration");
     await setConfiguration(
       {
         config: [
@@ -236,83 +237,65 @@ describe("durable configuration history and audit", () => {
       byScopeId("id-global"),
       { encryptionKey },
     );
-    const response = await rollbackConfiguration(
-      "global",
-      first.id,
-      { actor: { userId: "operator" } },
-      { encryptionKey },
+    const second = await latest();
+    files.write.mockClear();
+    files.delete.mockClear();
+    expect((await getConfigurationHistory("global")).versions).toHaveLength(2);
+    expect(await getVersionById("global", first.id)).toEqual(first);
+    expect(
+      await restoreFromArchive(DEFAULT_NAMESPACE, "global", first.id),
+    ).toEqual(first);
+    expect((await getVersionComparison("global", first.id))?.after).toEqual(
+      first.snapshot,
     );
-    expect(response.versionInfo?.versionNumber).toBe(3);
+    expect(
+      (await compareVersions("global", first.id, second.id))?.changes,
+    ).toContainEqual(
+      expect.objectContaining({
+        name: "setting",
+        newValue: "second",
+        oldValue: "first",
+      }),
+    );
+    const audit = await getAuditLog({ scopeCode: "global" });
+    expect(audit.entries.map((entry) => entry.action)).toEqual([
+      "update",
+      "create",
+    ]);
+    expect(await verifyAuditChain("global")).toMatchObject({
+      entriesChecked: 2,
+      valid: true,
+    });
     const current = await getConfiguration(byScopeId("id-global"), {
       encryptionKey,
     });
     expect(
       current.config.find((entry) => entry.name === "setting")?.value,
-    ).toBe("first");
+    ).toBe("second");
     expect(current.config.find((entry) => entry.name === "pin")?.value).toBe(
       "current-sensitive",
     );
-    const restored = await latest();
     expect(
-      restored.snapshot.find((entry) => entry.name === "enabled"),
-    ).toBeUndefined();
-    expect(
-      (await getAuditLog({ action: "rollback" })).entries.at(0)?.actor.userId,
-    ).toBe("operator");
+      current.config.find((entry) => entry.name === "enabled")?.value,
+    ).toBe(true);
+    expect((await latest()).id).toBe(second.id);
+    expect(files.write).not.toHaveBeenCalled();
+    expect(files.delete).not.toHaveBeenCalled();
   });
 
-  it("rolls back website and store-view scopes without using the default scope level", async () => {
-    await setConfiguration(
-      { config: [{ name: "setting", value: "website-old" }] },
-      byWebsiteId(1),
-    );
-    const website = await latest("base");
-    await setConfiguration(
-      { config: [{ name: "setting", value: "website-new" }] },
-      byWebsiteId(1),
-    );
-    await rollbackConfiguration("base", website.id);
+  it("rejects unsupported audit actions", async () => {
+    await write("first");
+    const { entries } = await getAuditLog();
     expect(
-      (await getConfiguration(byWebsiteId(1))).config.find(
-        (entry) => entry.name === "setting",
-      )?.value,
-    ).toBe("website-old");
-    await setConfiguration(
-      { config: [{ name: "setting", value: "store-old" }] },
-      byStoreViewId(1),
-    );
-    const store = await latest("default");
-    await setConfiguration(
-      { config: [{ name: "setting", value: "store-new" }] },
-      byStoreViewId(1),
-    );
-    await rollbackConfiguration("default", store.id);
-    expect(
-      (await getConfiguration(byStoreViewId(1))).config.find(
-        (entry) => entry.name === "setting",
-      )?.value,
-    ).toBe("store-old");
-  });
-
-  it("restores inheritance when the target has no local override", async () => {
-    await write("inherited");
-    await setConfiguration(
-      { config: [{ name: "enabled", value: true }] },
-      byWebsiteId(1),
-    );
-    const target = await latest("base");
-    await setConfiguration(
-      { config: [{ name: "setting", value: "override" }] },
-      byWebsiteId(1),
-    );
-    await rollbackConfiguration("base", target.id);
-    const current = await getConfiguration(byWebsiteId(1));
-    expect(
-      current.config.find((entry) => entry.name === "setting"),
-    ).toMatchObject({
-      origin: { code: "global", level: "global" },
-      value: "inherited",
-    });
+      v.safeParse(AuditEntrySchema, {
+        ...entries.at(0),
+        action: "rollback",
+      }).success,
+    ).toBe(false);
+    await expect(
+      // @ts-expect-error Rollback is not a supported audit action.
+      getAuditLog({ action: "rollback" }),
+    ).rejects.toThrow("INVALID_AUDIT_ACTION");
   });
 
   it("compares retained versions and reconstructs removed fields from a retained diff", async () => {
@@ -330,9 +313,7 @@ describe("durable configuration history and audit", () => {
       (await compareVersions("global", first.id, second.id))?.changes,
     ).toMatchObject([{ name: "setting", oldValue: "first", type: "removed" }]);
     expect(await getVersionById("base", first.id)).toBeNull();
-    await expect(rollbackConfiguration("global", "missing")).rejects.toThrow(
-      "VERSION_NOT_FOUND",
-    );
+    expect(await getVersionById("global", "missing")).toBeNull();
   });
 
   it("keeps increasing version numbers after retention and deletes archived payloads", async () => {
@@ -368,18 +349,30 @@ describe("durable configuration history and audit", () => {
     });
   });
 
-  it("automatically archives large snapshots and can compare and roll them back", async () => {
+  it("reads and compares archived snapshots without changing live configuration", async () => {
     await write("x".repeat(ARCHIVE_SIZE_THRESHOLD));
     const first = await latest();
     expect(
       await getVersionRecord(DEFAULT_NAMESPACE, "global", first.id),
     ).toMatchObject({ archived: true, reason: "size" });
     await write("small");
+    const second = await latest();
     expect((await getVersionById("global", first.id))?.snapshot).toEqual(
       first.snapshot,
     );
-    await rollbackConfiguration("global", first.id);
-    expect((await latest()).snapshot).toEqual(first.snapshot);
+    expect((await getVersionComparison("global", first.id))?.after).toEqual(
+      first.snapshot,
+    );
+    expect(
+      (await compareVersions("global", first.id, second.id))?.toConfig,
+    ).toEqual(second.snapshot);
+    expect((await latest()).id).toBe(second.id);
+    expect(
+      (await getConfiguration(byScopeId("id-global"))).config.find(
+        (entry) => entry.name === "setting",
+      )?.value,
+    ).toBe("small");
+    expect((await getAuditLog()).pagination.total).toBe(2);
   });
 
   it("archives old records once, isolates namespaces, and counts only existing distinct records", async () => {

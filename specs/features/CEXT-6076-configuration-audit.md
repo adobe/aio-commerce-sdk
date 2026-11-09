@@ -7,7 +7,7 @@
 ## Summary
 
 Port the configuration versioning and audit feature from PR #180 onto the current SDK:
-redacted scope-local snapshots, diffs, comparisons, rollback, retention, archives, and
+redacted scope-local snapshots, diffs, read-only comparisons, retention, archives, and
 per-scope audit hash verification. This local implementation accompanies the proposal;
 it does not indicate that a separate spec review or release approval has occurred.
 
@@ -15,13 +15,13 @@ it does not indicate that a separate spec review or release approval has occurre
 
 A merchant changes an integration setting and storefront requests begin failing. Today a
 support operator can read the current value but cannot identify its previous value, determine
-which application actor changed it, or safely restore the earlier settings without also
-overwriting credentials. Operators need a bounded history for comparison and non-sensitive
-rollback, plus a durable account of configuration writes.
+which application actor changed it. Operators need a bounded, read-only history for comparison
+and a durable account of configuration writes.
 
 Goals: preserve typed values, origins, scope selection, encryption, inheritance, and current
 cache invalidation; retain redacted history; make integrity failures and partial writes explicit.
-Non-goals: credential backups, regulatory certification, atomic distributed transactions,
+Non-goals: configuration rollback, applying historical snapshots across application or schema
+versions, credential backups, regulatory certification, atomic distributed transactions,
 distributed locking, automatic audit deletion, new generated HTTP routes, or an Admin UI.
 
 ## Developer experience
@@ -34,23 +34,27 @@ filters actor, action, dates, and pagination.
 ```typescript
 const history = await getConfigurationHistory("global", { limit: 10 });
 if (history.versions.length > 1) {
-  await rollbackConfiguration("global", history.versions[1].id, {
-    actor: { userId: authenticatedOperatorId, source: "support-tool" },
-  });
+  const comparison = await compareVersions(
+    "global",
+    history.versions[1].id,
+    history.versions[0].id,
+  );
 }
+const audit = await getAuditLog({ scopeCode: "global" });
 const verification = await verifyAuditChain("global", externallyStoredHeadHash);
 ```
 
-Rollback preserves current secrets, restores non-sensitive local overrides, and unsets later
-overrides so inheritance resumes. A rollback is a new write, not a deletion of history.
+History APIs inspect snapshots and diffs without changing live configuration. Audit actions are
+limited to `create` and `update`. Applying old values across application or schema versions is
+outside this feature's scope.
 `CONFIGURATION_SAVED_WITHOUT_COMPLETE_HISTORY` explicitly distinguishes a partial persistence
 failure from a completed write: the operator must inspect live values before retrying.
 
 ## Design
 
 Adobe Files is the durable source of truth for snapshots, archive references, and immutable
-audit records. The user explicitly selected Files over the old PR's State-backed persistence,
-and preserving current secrets rather than encrypted historical credential rollback.
+audit records. Files replaces the old PR's State-backed persistence. Historical secrets are
+redacted rather than retained as encrypted credential backups.
 Namespaces, scope codes, and IDs are hashed into path-safe private collection paths.
 Record paths form hash partitions that can be listed recursively without losing entries at
 the Files client's 1000-result cap. Independent per-scope registration records support global
@@ -99,8 +103,9 @@ The library detects a broken chain and blocks normal writes; repair remains oper
 
 - Permanent State entries were rejected: State TTL and independent regional stores do not
   provide the durable, workspace-wide history intended by the feature.
-- Encrypted historical credentials were rejected for this port: the user selected redacted
-  history and preservation of current secrets.
+- Encrypted historical credentials were rejected for this port in favor of redacted history.
+- Configuration rollback is deferred because restoring old values across application and schema
+  versions requires compatibility and migration policies beyond audit inspection.
 - Hash chains provide limited tamper evidence without introducing signing/key management.
   A writable unkeyed chain is not tamper-proof; trusted checkpoints must be stored externally.
 - A transactional database, WORM store, or external audit service could provide stronger

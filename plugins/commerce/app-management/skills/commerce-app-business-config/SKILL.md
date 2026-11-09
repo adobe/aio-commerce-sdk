@@ -193,7 +193,7 @@ With the option and the input in place, password values are returned as plaintex
 
 Successful `setConfiguration` calls, including the generated PATCH action, record redacted
 scope-local versions and audit entries in Adobe Files. PATCH returns `versionInfo`;
-history/rollback HTTP routes and Admin UI are not generated automatically.
+history HTTP routes and Admin UI are not generated automatically.
 
 ```typescript
 import {
@@ -208,8 +208,8 @@ const verification = await verifyAuditChain("global");
 ```
 
 These APIs use scope **codes**, not Commerce numeric IDs. Initialize with the current schema
-on each action invocation. Password fields and sensitive names are redacted; rollback preserves
-current secrets and restores non-sensitive overrides as a new version. Derive optional actor
+on each action invocation. Password fields and sensitive names are redacted. History inspection
+is read-only; configuration rollback is not supported. Derive optional actor
 metadata from authenticated context; the generated action does not add it automatically.
 
 The default retention is 25 snapshots per scope; configure `MAX_CONFIG_VERSIONS` (1-1000)
