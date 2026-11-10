@@ -2,4 +2,4 @@
 "@adobe/aio-commerce-lib-app": patch
 ---
 
-Fix the uninstall of an app that was installed before the `association` action existed. It stopped working in 2.1.0 and answered `409 not-associated`. The uninstall now plans with the Commerce instance sent with the request and, when it starts, stores that instance as the app's association record.
+Fix the uninstall of apps installed with a lib-app version before 1.8.0, which stopped working in 2.1.0. This includes apps installed with 1.0.x and 1.1.0.
