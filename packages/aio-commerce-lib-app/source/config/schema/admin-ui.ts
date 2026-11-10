@@ -282,6 +282,7 @@ const MenuSchema = v.object({
 
 const NATIVE_UI_REPLACED_PAGE_TARGETS = [
   "order.create",
+  "return.create",
 ] as const satisfies readonly string[];
 
 const NativeUiReplacedPageSchema = v.strictObject({
