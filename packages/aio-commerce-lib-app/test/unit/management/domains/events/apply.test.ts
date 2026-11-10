@@ -486,6 +486,49 @@ describe("applyCommerceEvents", () => {
     );
   });
 
+  describe("removing stored event data", () => {
+    const storedEventsOp = op("remove", {
+      providerKey: "gone",
+      resourceType: "storedEvents",
+    });
+
+    test("prunes the stored data of the provider, and calls no client", async () => {
+      const ctx = context({
+        commerceEventsClient: { deleteEventProvider: vi.fn() },
+        ioEventsClient: { deleteEventProvider: vi.fn() },
+      });
+
+      await applyCommerceEvents(plan([storedEventsOp]), ctx);
+
+      expect(pruneStoredEventProviders).toHaveBeenCalledWith(["gone"]);
+      expect(ctx.ioEventsClient.deleteEventProvider).not.toHaveBeenCalled();
+    });
+
+    test("fails when the stored data cannot be pruned", async () => {
+      vi.mocked(pruneStoredEventProviders).mockRejectedValueOnce(
+        new Error("boom"),
+      );
+
+      await expect(
+        applyCommerceEvents(plan([storedEventsOp]), context()),
+      ).rejects.toThrow("boom");
+    });
+
+    test("keeps the stored data of a target provider with the same key", async () => {
+      await applyCommerceEvents(
+        plan([
+          op("remove", {
+            providerKey: "orders",
+            resourceType: "storedEvents",
+          }),
+        ]),
+        context(),
+      );
+
+      expect(pruneStoredEventProviders).toHaveBeenCalledWith([]);
+    });
+  });
+
   test("updates providers, metadata and registrations with their target values", async () => {
     const ctx = context();
     await applyCommerceEvents(

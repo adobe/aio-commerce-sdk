@@ -10,7 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
-import { describe, expect, test } from "vitest";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 
 import {
   planCommerceEvents,
@@ -26,6 +26,7 @@ import {
   getProviderKey,
   getRegistrationDescription,
   getRegistrationName,
+  getStoredEventProviderKeys,
   groupEventsByRuntimeActions,
 } from "#management/domains/events/utils";
 import { configWithCommerceEventing } from "#test/fixtures/config";
@@ -58,6 +59,17 @@ import type {
   EventingOperationValue,
   EventingSnapshotData,
 } from "#management/domains/events/types";
+
+vi.mock("#management/domains/events/utils", async (importOriginal) => ({
+  ...(await importOriginal<
+    typeof import("#management/domains/events/utils")
+  >()),
+  getStoredEventProviderKeys: vi.fn(),
+}));
+
+beforeEach(() => {
+  vi.mocked(getStoredEventProviderKeys).mockReset().mockResolvedValue([]);
+});
 
 const { metadata } = configWithCommerceEventing;
 
@@ -1391,6 +1403,101 @@ describe("planExternalEvents", () => {
       );
       expect(removedIds.sort()).toEqual(["io-dup", "io-ext"]);
       expect(plan.providerIds).toEqual({});
+    });
+  });
+});
+
+describe("stored event data of a dropped provider", () => {
+  const config = externalConfig([
+    {
+      events: [event("ext.created", ["pkg/a"])],
+      provider: { description: "d", key: "ext", label: "External" },
+    },
+  ]);
+
+  const gone: World = {
+    commerceProviders: [],
+    providers: [],
+    registrations: [],
+    subscriptions: [],
+  };
+
+  const stored = (...keys: string[]) =>
+    vi.mocked(getStoredEventProviderKeys).mockResolvedValue(keys);
+
+  test("plans a removal when the provider is already gone and its data is stored", async () => {
+    stored("ext");
+
+    const plan = await planExternal({ baseline: config, live: gone });
+
+    expect(summary(plan)).toEqual(["remove storedEvents change"]);
+    expect(plan.operations[0]).toMatchObject({
+      before: { providerKey: "ext", resourceType: "storedEvents" },
+      id: "remove:stored-events:ext",
+      kind: "remove",
+      label: 'Remove stored event data of provider "ext"',
+      reason: "change",
+    });
+    expect(plan.operations[0].itemRefs.map((ref) => ref.key)).toEqual([
+      `ext:${getNamespacedEvent(metadata, "ext.created")}`,
+    ]);
+  });
+
+  test("plans nothing when no data is stored under the key", async () => {
+    stored("other");
+
+    const plan = await planExternal({ baseline: config, live: gone });
+
+    expect(plan.operations).toEqual([]);
+  });
+
+  test("plans nothing extra when the provider is live, because removing it prunes the data", async () => {
+    stored("ext");
+
+    const plan = await planExternal({
+      baseline: config,
+      live: deployed(config, EXTERNAL_PROVIDER_TYPE),
+    });
+
+    expect(summary(plan)).not.toContain("remove storedEvents change");
+    expect(summary(plan)).toContain("remove provider change");
+  });
+
+  test("plans nothing when the target keeps the provider", async () => {
+    stored("ext");
+
+    const plan = await planExternal({
+      baseline: config,
+      live: gone,
+      target: config,
+    });
+
+    expect(summary(plan)).not.toContain("remove storedEvents change");
+  });
+
+  test("does not read the stored data when the target keeps every provider", async () => {
+    await planExternal({ baseline: config, live: gone, target: config });
+
+    expect(getStoredEventProviderKeys).not.toHaveBeenCalled();
+  });
+
+  test("blocks the plan when the stored data cannot be read", async () => {
+    vi.mocked(getStoredEventProviderKeys).mockRejectedValue(new Error("boom"));
+
+    const result = await planExternalEvents(
+      input("external", { baseline: config, live: gone }),
+      contextFor(gone),
+    );
+
+    expect(result).toMatchObject({
+      issues: [
+        {
+          blocking: true,
+          code: "EVENTS_STORED_READ_FAILED",
+          message: expect.stringContaining("boom"),
+        },
+      ],
+      kind: "blocked",
     });
   });
 });

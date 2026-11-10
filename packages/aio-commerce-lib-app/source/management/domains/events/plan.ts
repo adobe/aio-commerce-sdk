@@ -24,13 +24,19 @@ import {
   planNewProvider,
 } from "./diff";
 import { readLiveEventingState } from "./live";
-import { toSubscriptionValues } from "./operations";
+import {
+  eventRefs,
+  remove,
+  storedEventsValue,
+  toSubscriptionValues,
+} from "./operations";
 import {
   COMMERCE_PROVIDER_TYPE,
   EXTERNAL_PROVIDER_TYPE,
   generateInstanceId,
   getNamespacedEvent,
   getProviderSnapshots,
+  getStoredEventProviderKeys,
   isIoProviderProvenOwnedByApp,
 } from "./utils";
 
@@ -195,6 +201,23 @@ async function planEventingLeaf(
   }
 
   const operations = planProviders(configs, matches, context.appId, ctx);
+
+  let storedOperations: Operation[];
+  try {
+    storedOperations = await planStoredEvents(configs, operations, ctx);
+  } catch (error) {
+    // Without the stored data the plan could leave it behind, so it blocks like an unreadable live state.
+    return blocked([
+      {
+        blocking: true,
+        code: "EVENTS_STORED_READ_FAILED",
+        domain: "eventing",
+        message: `Could not read the stored event data to plan against: ${await unwrapHttpError(error)}`,
+      },
+    ]);
+  }
+
+  operations.push(...storedOperations);
   return {
     kind: "planned",
     plan: {
@@ -397,6 +420,40 @@ function getLiveProviderIds(matches: ProviderMatches): Record<string, string> {
       live ? [[target.key, live.ioProvider.id]] : [],
     ),
   );
+}
+
+/**
+ * Plans the removal of the stored event data of each baseline provider the target drops, when no
+ * operation removes that provider yet the data is still stored. A live provider's removal already
+ * prunes its data. One that is already gone has no operation, so its data would stay.
+ */
+async function planStoredEvents(
+  configs: LeafConfigs,
+  operations: Operation[],
+  ctx: LeafPlanContext,
+): Promise<Operation[]> {
+  const targetKeys = new Set(configs.target.map(({ key }) => key));
+  const dropped = configs.declared.filter(({ key }) => !targetKeys.has(key));
+
+  // Planning an install or an upgrade that keeps its providers should not depend on this read.
+  if (dropped.length === 0) {
+    return [];
+  }
+
+  const stored = new Set(await getStoredEventProviderKeys());
+  const removedKeys = new Set(
+    operations.flatMap((op) =>
+      op.kind === "remove" && op.before.resourceType === "provider"
+        ? [op.before.providerKey]
+        : [],
+    ),
+  );
+
+  return dropped
+    .filter(({ key }) => stored.has(key) && !removedKeys.has(key))
+    .map(({ key, events }) =>
+      remove(storedEventsValue(key), "change", eventRefs(key, events, ctx)),
+    );
 }
 
 /** The eventing module state for the Commerce leaf, tied to its first target provider. */

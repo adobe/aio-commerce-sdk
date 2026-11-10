@@ -392,10 +392,12 @@ function getStoredProviders(
   );
 }
 
-/** The keys of the providers the plan removes. */
+/** The keys of the providers the plan removes, and of those whose stored data it removes. */
 function getRemovedProviderKeys(operations: Operation[]) {
   return operations.flatMap((op) =>
-    op.kind === "remove" && op.before.resourceType === "provider"
+    op.kind === "remove" &&
+    (op.before.resourceType === "provider" ||
+      op.before.resourceType === "storedEvents")
       ? [op.before.providerKey]
       : [],
   );

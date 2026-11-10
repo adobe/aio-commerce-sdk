@@ -69,6 +69,14 @@ export async function storeEventProviders(
   });
 }
 
+/** The keys of the providers that have stored events data. Empty when nothing is stored. */
+export async function getStoredEventProviderKeys(): Promise<string[]> {
+  const existing =
+    await getSystemConfigByKey<StoredEventsData>(EVENTS_STORAGE_KEY);
+
+  return Object.keys(existing?.providers ?? {});
+}
+
 /**
  * Prunes the given providers from the stored events data.
  * @param providerKeys - The keys of the providers to prune.
