@@ -527,24 +527,9 @@ export function makeWorkspaceConfig(context: EventsExecutionContext) {
   };
 }
 
+// The API returns the link as an absolute URL. The origin is optional so a relative path works too.
 const PROVIDER_WORKSPACE_PATH =
-  /^\/events\/[^/]+\/[^/]+\/(?<workspace>[^/]+)\/providers\//u;
-
-// Only used to resolve a relative href. The host never takes part in the match.
-const LINK_BASE_URL = "https://placeholder.invalid";
-
-/** The pathname of a relative or absolute href, or null when the href cannot be parsed. */
-function getLinkPathname(href: string): string | null {
-  try {
-    // The API may return the link as an absolute URL. Matching the pathname alone keeps the
-    // anchored regex, so a query string, a fragment or a path under another prefix cannot fake a
-    // workspace.
-    const { pathname } = new URL(href, LINK_BASE_URL);
-    return pathname;
-  } catch {
-    return null;
-  }
-}
+  /^(?:https?:\/\/[^/?#]+)?\/events\/[^/]+\/[^/]+\/(?<workspace>[^/]+)\/providers\//u;
 
 /**
  * The workspace id of an I/O provider, read from its `rel:update` link
@@ -557,16 +542,9 @@ export function getProviderWorkspaceId(
   links: Record<string, { href: string } | undefined> | undefined,
 ): string | null {
   const href = links?.["rel:update"]?.href;
-  if (typeof href !== "string") {
-    return null;
-  }
-
-  const pathname = getLinkPathname(href);
-  if (pathname === null) {
-    return null;
-  }
-
-  return pathname.match(PROVIDER_WORKSPACE_PATH)?.groups?.workspace ?? null;
+  return typeof href === "string"
+    ? (href.match(PROVIDER_WORKSPACE_PATH)?.groups?.workspace ?? null)
+    : null;
 }
 
 /**
