@@ -3171,6 +3171,17 @@
               }
             }
           },
+          "rma": {
+            "type": "object",
+            "properties": {
+              "viewButtons": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/AdminUiRmaViewButton"
+                }
+              }
+            }
+          },
           "shipment": {
             "type": "object",
             "properties": {
@@ -3444,6 +3455,122 @@
         "required": ["type", "id", "label", "path"]
       },
       "AdminUiCreditMemoViewWorkerButton": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "worker"
+          },
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "label": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1
+          },
+          "runtimeAction": {
+            "type": "string",
+            "minLength": 1
+          },
+          "aclProtected": {
+            "type": "boolean"
+          },
+          "level": {
+            "type": "number",
+            "enum": [-1, 0, 1]
+          },
+          "sortOrder": {
+            "type": "number",
+            "minimum": 0
+          },
+          "confirm": {
+            "$ref": "#/components/schemas/AdminUiConfirm"
+          },
+          "timeout": {
+            "type": "number",
+            "minimum": 0
+          },
+          "notifications": {
+            "$ref": "#/components/schemas/AdminUiNotifications"
+          }
+        },
+        "additionalProperties": false,
+        "required": ["type", "id", "label", "runtimeAction"]
+      },
+      "AdminUiRmaViewButton": {
+        "discriminator": {
+          "propertyName": "type",
+          "mapping": {
+            "view": "#/components/schemas/AdminUiRmaViewNavigationButton",
+            "worker": "#/components/schemas/AdminUiRmaViewWorkerButton"
+          }
+        },
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/AdminUiRmaViewNavigationButton"
+          },
+          {
+            "$ref": "#/components/schemas/AdminUiRmaViewWorkerButton"
+          }
+        ]
+      },
+      "AdminUiRmaViewNavigationButton": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "view"
+          },
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "label": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1
+          },
+          "path": {
+            "type": "string",
+            "minLength": 1
+          },
+          "aclProtected": {
+            "type": "boolean"
+          },
+          "level": {
+            "type": "number",
+            "enum": [-1, 0, 1]
+          },
+          "sortOrder": {
+            "type": "number",
+            "minimum": 0
+          },
+          "confirm": {
+            "$ref": "#/components/schemas/AdminUiConfirm"
+          },
+          "sandboxPermissions": {
+            "$ref": "#/components/schemas/AdminUiSandboxPermissions"
+          },
+          "notifications": {
+            "$ref": "#/components/schemas/AdminUiNotifications"
+          }
+        },
+        "additionalProperties": false,
+        "required": ["type", "id", "label", "path"]
+      },
+      "AdminUiRmaViewWorkerButton": {
         "type": "object",
         "properties": {
           "type": {

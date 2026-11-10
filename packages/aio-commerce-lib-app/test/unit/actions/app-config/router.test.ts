@@ -26,6 +26,7 @@ import {
   configWithDynamicListOptions,
   configWithFullAdminUiV2,
   configWithInvoiceViewButtons,
+  configWithRmaViewButtons,
   minimalValidConfig,
 } from "#test/fixtures/config";
 
@@ -195,6 +196,7 @@ describe("appConfigRuntimeAction", () => {
     test.each([
       { appConfig: configWithInvoiceViewButtons, entity: "invoice" },
       { appConfig: configWithCreditMemoViewButtons, entity: "credit memo" },
+      { appConfig: configWithRmaViewButtons, entity: "return" },
     ])(
       "returns $entity view buttons including iframe title and worker settings",
       async ({ appConfig }) => {

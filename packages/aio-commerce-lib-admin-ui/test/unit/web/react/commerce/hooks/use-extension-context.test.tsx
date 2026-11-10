@@ -21,6 +21,7 @@ import {
   useInvoiceViewButtonContext,
   useMassActionContext,
   useOrderViewButtonContext,
+  useRmaViewButtonContext,
   useStoreContext,
 } from "#web/react/commerce/hooks/use-extension-context";
 
@@ -204,6 +205,51 @@ describe("useOrderViewButtonContext", () => {
         expect.assert.isNull(result.current.data);
         expect(result.current.error.message).toContain(
           "Could not find a credit memo ID",
+        );
+      },
+    );
+  });
+
+  describe("useRmaViewButtonContext", () => {
+    afterEach(() => {
+      history.replaceState(null, "", "/");
+    });
+
+    test("returns the return ID from URL search params and preserves the result", async () => {
+      window.history.replaceState(null, "", "?rmaId=000000123");
+
+      const { result, rerender } = await renderHook(() =>
+        useRmaViewButtonContext(),
+      );
+      expect(result.current).toEqual({
+        data: { rmaId: "000000123" },
+        error: null,
+      });
+
+      const initialResult = result.current;
+      await rerender();
+      expect(result.current).toBe(initialResult);
+    });
+
+    test("returns the return ID from the URL hash", async () => {
+      window.history.replaceState(null, "", "/#/rma?rmaId=7");
+
+      const { result } = await renderHook(() => useRmaViewButtonContext());
+      expect(result.current).toEqual({
+        data: { rmaId: "7" },
+        error: null,
+      });
+    });
+
+    test.each(["/", "?creditMemoId=5", "?rmaId=", "?rmaId=%20%20"])(
+      "returns an error for a missing or blank return ID at %s",
+      async (url) => {
+        window.history.replaceState(null, "", url);
+
+        const { result } = await renderHook(() => useRmaViewButtonContext());
+        expect.assert.isNull(result.current.data);
+        expect(result.current.error.message).toContain(
+          "Could not find a return ID",
         );
       },
     );

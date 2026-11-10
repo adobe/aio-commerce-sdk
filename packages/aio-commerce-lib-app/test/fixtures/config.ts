@@ -554,6 +554,39 @@ export const configWithCreditMemoViewButtons = {
   },
 } satisfies CommerceAppConfigOutputModel;
 
+/** Config fixture with return (RMA) view and worker buttons. */
+export const configWithRmaViewButtons = {
+  ...minimalValidConfig,
+  adminUi: {
+    rma: {
+      viewButtons: [
+        {
+          id: "return-details",
+          label: "Return details",
+          path: "#/return",
+          sandboxPermissions: ["allow-modals"],
+          sortOrder: 100,
+          title: "Custom return details",
+          type: "view",
+        },
+        {
+          confirm: { message: "Run the custom return flow?" },
+          id: "custom-return-flow",
+          label: "Custom Return Flow",
+          notifications: {
+            error: "Unable to run the custom return flow.",
+            success: "Custom return flow completed.",
+          },
+          runtimeAction: "rma/custom-flow",
+          sortOrder: 110,
+          timeout: 15,
+          type: "worker",
+        },
+      ],
+    },
+  },
+} satisfies CommerceAppConfigOutputModel;
+
 /** Config fixture with only newsletter adminUi grid columns configured. */
 export const configWithAdminUiNewsletterGrid = {
   adminUi: {

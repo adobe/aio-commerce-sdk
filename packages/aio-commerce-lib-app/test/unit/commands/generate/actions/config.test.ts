@@ -41,6 +41,7 @@ import {
   configWithOrderViewButtons,
   configWithOrderViewTypeButtons,
   configWithOrderWorkerTypeButtons,
+  configWithRmaViewButtons,
   configWithViewMassActions,
   configWithWebhooks,
   minimalValidConfig,
@@ -251,6 +252,17 @@ describe("buildAdminUiV2ExtConfig", () => {
     ]);
     expect(result.operations?.workerProcess).toEqual([
       { impl: "creditmemo/refund-offline", type: "action" },
+    ]);
+  });
+
+  test("wires return iframe and worker buttons into the extension manifest", () => {
+    const result = buildAdminUiV2ExtConfig(configWithRmaViewButtons);
+    expect(result.web).toBe("web-src");
+    expect(result.operations?.view).toEqual([
+      { impl: "index.html", type: "web" },
+    ]);
+    expect(result.operations?.workerProcess).toEqual([
+      { impl: "rma/custom-flow", type: "action" },
     ]);
   });
 

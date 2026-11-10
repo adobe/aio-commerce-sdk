@@ -10,6 +10,7 @@ This package provides utilities for interacting with the Admin UI SDK API and th
 - **[Order View Button Wire Contract](#order-view-button-wire-contract)**: Request and response builders for runtime actions handling `commerce/backend-ui/2` order view button extensions
 - **[Invoice View Button Wire Contract](#invoice-view-button-wire-contract)**: Request and response builders and browser context for invoice view button extensions
 - **[Credit Memo View Button Wire Contract](#credit-memo-view-button-wire-contract)**: Request and response builders and browser context for credit memo view button extensions
+- **[Return View Button Wire Contract](#return-view-button-wire-contract)**: Request and response builders and browser context for return (RMA) view button extensions
 - **[Permission Client](#permission-client)**: Check whether the current Commerce admin user has been granted a per-app ACL resource
 - **[Web Extension App](#web-extension-app)**: Mount a `commerce/backend-ui/2` iframe app in the browser and read host-provided context through React hooks
 
@@ -257,6 +258,48 @@ Malformed requests throw `CommerceSdkValidationError`. The success helper return
 
 Use `getCreditMemoViewButtonAclResourceId(metadataId, buttonId)` to derive the ACL resource ID (`…_creditmemo_viewbuttons_<buttonId>`) for an `aclProtected` button.
 
+### Return View Button Wire Contract
+
+Return (RMA) view buttons registered under `adminUi.rma.viewButtons` have iframe (`type: "view"`) and runtime action (`type: "worker"`) variants. Registration is configured through `@adobe/aio-commerce-lib-app`; these helpers cover the handler and browser sides.
+
+#### Iframe buttons (`view`)
+
+The return context is `{ rmaId: string }`. Use `useRmaViewButtonContext` from the `./web` entrypoint to read `rmaId` from the page URL, either in the search parameters or a hash-route query:
+
+```text
+https://<extension-host>/index.html<path>?rmaId=<rmaId>
+```
+
+Use `useHostConnection().actions.close()` to complete the iframe flow, or `actions.closeWithError()` to signal failure, just as with order view buttons.
+
+#### Runtime action buttons (`worker`)
+
+`parseRmaViewButtonRequest` validates `{ requestId, id, rmaId }`, with each field a non-empty string. `id` identifies the clicked button and `rmaId` identifies the return being viewed; an `orderId` cannot substitute for it. Extra runtime parameters are stripped from the parsed result.
+
+Commerce POSTs `{ rmaId, buttonId }` and sends the request ID in the `X-Request-ID` header; pass the raw runtime action `params` and the parser maps `buttonId` to `id` and the `X-Request-ID` header (from `__ow_headers`) to `requestId`.
+
+```typescript
+import {
+  okRmaViewButtonResponse,
+  parseRmaViewButtonRequest,
+  rmaViewButtonErrorResponse,
+} from "@adobe/aio-commerce-lib-admin-ui/rma-view-buttons";
+
+export async function main(params: unknown) {
+  try {
+    const { rmaId } = parseRmaViewButtonRequest(params);
+    await approveReturn(rmaId);
+    return okRmaViewButtonResponse();
+  } catch {
+    return rmaViewButtonErrorResponse(500, "Could not approve the return");
+  }
+}
+```
+
+Malformed requests throw `CommerceSdkValidationError`. The success helper returns HTTP 200 with an empty `{}` body. The error helper preserves the supplied status code and returns a `{ message }` body. These response envelopes follow the order view-button contract.
+
+Use `getRmaViewButtonAclResourceId(metadataId, buttonId)` to derive the ACL resource ID (`…_rma_viewbuttons_<buttonId>`) for an `aclProtected` button.
+
 ### Mass Action Worker Contract
 
 Apps that declare `adminUi.<entity>.massActions` with `type: "worker"` expose a runtime
@@ -473,10 +516,11 @@ const allowed = await permissionClient.check(
 The same hierarchical scheme extends to the other Admin UI components. Each helper returns the **leaf** id for a single protected item, nested under its entity and item-type group in the Commerce ACL tree:
 
 - `getGridColumnAclResourceId(metadataId, entity, columnId)` — a grid column, where `entity` is `order`, `product`, `customer`, `invoice`, `creditmemo`, `shipment`, or `newsletter`, and `columnId` is its `adminUi.<entity>.gridColumns.columns[].id`.
-- `getMassActionAclResourceId(metadataId, entity, actionId)` — a mass action, where `entity` is `order`, `product`, or `customer` (mass actions are not supported on `invoice`, `creditMemo`, `shipment`, or `newsletter`), and `actionId` is its `adminUi.<entity>.massActions[].id`.
+- `getMassActionAclResourceId(metadataId, entity, actionId)` — a mass action, where `entity` is `order`, `product`, or `customer` (mass actions are not supported on `invoice`, `creditMemo`, `rma`, `shipment`, or `newsletter`), and `actionId` is its `adminUi.<entity>.massActions[].id`.
 - `getOrderViewButtonAclResourceId(metadataId, buttonId)` — an order view button (view buttons exist only on the order entity), where `buttonId` is its `adminUi.order.viewButtons[].id`.
 - `getInvoiceViewButtonAclResourceId(metadataId, buttonId)` — an invoice view button, where `buttonId` is its `adminUi.invoice.viewButtons[].id`.
 - `getCreditMemoViewButtonAclResourceId(metadataId, buttonId)` — a credit memo view button, where `buttonId` is its `adminUi.creditMemo.viewButtons[].id`.
+- `getRmaViewButtonAclResourceId(metadataId, buttonId)` — a return (RMA) view button, where `buttonId` is its `adminUi.rma.viewButtons[].id`.
 
 ```typescript
 import { getGridColumnAclResourceId } from "@adobe/aio-commerce-lib-admin-ui/grid-columns";
@@ -484,6 +528,7 @@ import { getMassActionAclResourceId } from "@adobe/aio-commerce-lib-admin-ui/mas
 import { getOrderViewButtonAclResourceId } from "@adobe/aio-commerce-lib-admin-ui/order-view-buttons";
 import { getInvoiceViewButtonAclResourceId } from "@adobe/aio-commerce-lib-admin-ui/invoice-view-buttons";
 import { getCreditMemoViewButtonAclResourceId } from "@adobe/aio-commerce-lib-admin-ui/credit-memo-view-buttons";
+import { getRmaViewButtonAclResourceId } from "@adobe/aio-commerce-lib-admin-ui/rma-view-buttons";
 
 getGridColumnAclResourceId("approval-dashboard-app", "order", "order_status");
 // → "Magento_CommerceBackendUix::adminuisdk_app_approval_dashboard_app_order_gridcolumns_order_status"
@@ -499,6 +544,9 @@ getInvoiceViewButtonAclResourceId("billing-app", "export-invoice");
 
 getCreditMemoViewButtonAclResourceId("refund-app", "refund-offline");
 // → "Magento_CommerceBackendUix::adminuisdk_app_refund_app_creditmemo_viewbuttons_refund_offline"
+
+getRmaViewButtonAclResourceId("returns-app", "approve-return");
+// → "Magento_CommerceBackendUix::adminuisdk_app_returns_app_rma_viewbuttons_approve_return"
 ```
 
 Like the menu helper, each segment is sanitized independently and a blank `metadataId` yields an empty string. Pass any of these ids to `check()` or `require()`.
@@ -578,8 +626,9 @@ The same shape applies to the other components — swap in the matching trio of 
 - **Order view buttons**: `parseOrderViewButtonRequest` → `getOrderViewButtonAclResourceId(appId, buttonId)` → `okOrderViewButtonResponse` / `orderViewButtonErrorResponse`.
 - **Invoice view buttons**: `parseInvoiceViewButtonRequest` → `getInvoiceViewButtonAclResourceId(appId, buttonId)` → `okInvoiceViewButtonResponse` / `invoiceViewButtonErrorResponse`.
 - **Credit memo view buttons**: `parseCreditMemoViewButtonRequest` → `getCreditMemoViewButtonAclResourceId(appId, buttonId)` → `okCreditMemoViewButtonResponse` / `creditMemoViewButtonErrorResponse`.
+- **Return view buttons**: `parseRmaViewButtonRequest` → `getRmaViewButtonAclResourceId(appId, buttonId)` → `okRmaViewButtonResponse` / `rmaViewButtonErrorResponse`.
 
-For grid columns, gate the work per the request's `gridType`; each view-button helper fixes its entity to `order`, `invoice`, or `creditmemo`, so only the `appId` and `buttonId` segments vary.
+For grid columns, gate the work per the request's `gridType`; each view-button helper fixes its entity to `order`, `invoice`, `creditmemo`, or `rma`, so only the `appId` and `buttonId` segments vary.
 
 #### Custom ACL Resources
 
