@@ -135,8 +135,15 @@ export async function applyEventingLeaf(
     phases.renamedRegistrationRemoves.map((op) => op.before),
     context,
   );
-  await storeEventProviders(getStoredProviders(target, context));
-  await pruneStoredEventProviders(getRemovedProviderKeys(plan.operations));
+  const stored = getStoredProviders(target, context);
+  await storeEventProviders(stored);
+
+  // A removed duplicate of a target provider has its key, and pruning it would undo the store.
+  await pruneStoredEventProviders(
+    getRemovedProviderKeys(plan.operations).filter(
+      (key) => !Object.hasOwn(stored, key),
+    ),
+  );
 
   return { snapshotData: { providers: target.providers } };
 }

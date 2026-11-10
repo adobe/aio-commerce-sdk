@@ -461,6 +461,31 @@ describe("applyCommerceEvents", () => {
     expect(pruneStoredEventProviders).toHaveBeenCalledWith(["old"]);
   });
 
+  test("keeps the stored data of a target provider when a duplicate under its key is removed", async () => {
+    await applyCommerceEvents(
+      plan([
+        op("remove", {
+          label: "Orders",
+          providerId: "io-duplicate",
+          providerKey: "orders",
+          resourceType: "provider",
+          type: COMMERCE_PROVIDER_TYPE,
+        }),
+      ]),
+      context({
+        commerceEventsClient: { deleteEventProvider: vi.fn() },
+        ioEventsClient: { deleteEventProvider: vi.fn() },
+      }),
+    );
+
+    expect(storeEventProviders).toHaveBeenCalledWith({
+      orders: expect.objectContaining({ id: "io-orders" }),
+    });
+    expect(pruneStoredEventProviders).not.toHaveBeenCalledWith(
+      expect.arrayContaining(["orders"]),
+    );
+  });
+
   test("updates providers, metadata and registrations with their target values", async () => {
     const ctx = context();
     await applyCommerceEvents(

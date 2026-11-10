@@ -1313,4 +1313,84 @@ describe("planExternalEvents", () => {
       "add metadata change",
     ]);
   });
+  describe("two live providers sharing an instance id", () => {
+    const config = external([event("ext.created", ["pkg/a"])]);
+
+    /** The deployed provider, plus an empty one under the same instance id with a registration. */
+    const withDuplicate = () => {
+      const live = deployed(config, EXTERNAL_PROVIDER_TYPE);
+      const [picked] = live.providers;
+      live.providers.push({
+        ...picked,
+        _embedded: { eventmetadata: [] },
+        _links: workspaceLinks("io-dup", TEST_WORKSPACE_ID),
+        id: "io-dup",
+      });
+
+      live.registrations.push({
+        ...live.registrations[0],
+        events_of_interest: [{ event_code: "x", provider_id: "io-dup" }],
+        id: "reg-dup",
+        name: "Dup registration",
+        registration_id: "reg-dup",
+        runtime_action: "pkg/dup",
+      } as IoEventRegistration);
+
+      return live;
+    };
+
+    test("keeps the provider with metadata and removes the other one with its registration", async () => {
+      const plan = await planExternal({
+        baseline: config,
+        live: withDuplicate(),
+        target: config,
+      });
+
+      expect(plan.providerIds).toEqual({ ext: "io-ext" });
+      expect(summary(plan)).toEqual([
+        "remove registration change",
+        "remove provider change",
+      ]);
+
+      const removed = plan.operations.flatMap((op) =>
+        op.kind === "remove" && op.before.resourceType === "provider"
+          ? [op.before]
+          : [],
+      );
+      expect(removed).toMatchObject([
+        { providerId: "io-dup", providerKey: "ext" },
+      ]);
+    });
+
+    test("removes the other provider under the key of the kept one without a baseline", async () => {
+      const plan = await planExternal({
+        live: withDuplicate(),
+        target: config,
+      });
+
+      expect(plan.providerIds).toEqual({ ext: "io-ext" });
+      expect(summary(plan)).toEqual([
+        "remove registration drift",
+        "remove provider drift",
+      ]);
+      expect(plan.operations.at(-1)).toMatchObject({
+        before: { providerId: "io-dup", providerKey: "ext" },
+      });
+    });
+
+    test("removes both providers on an uninstall", async () => {
+      const plan = await planExternal({
+        baseline: config,
+        live: withDuplicate(),
+      });
+
+      const removedIds = plan.operations.flatMap((op) =>
+        op.kind === "remove" && op.before.resourceType === "provider"
+          ? [op.before.providerId]
+          : [],
+      );
+      expect(removedIds.sort()).toEqual(["io-dup", "io-ext"]);
+      expect(plan.providerIds).toEqual({});
+    });
+  });
 });
