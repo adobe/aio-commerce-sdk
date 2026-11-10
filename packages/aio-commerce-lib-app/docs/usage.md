@@ -953,16 +953,9 @@ adminUi: {
 }
 ```
 
-Supported targets are `"order.create"` and `"return.create"`. The Commerce instance must have an Admin UI SDK
-version whose native form catalog includes the chosen target. Return creation passes any available `order_id`
-and `customer_id` to the app route. Targets must be unique within `replacedPages`, and only one app can replace
-a given target on a Commerce instance.
+Supported targets are `"order.create"` and `"return.create"`. The Commerce instance must have an Admin UI SDK version whose native form catalog includes the chosen target. Return creation passes any available `order_id` and `customer_id` to the app route. Targets must be unique within `replacedPages`, and only one app can replace a given target on a Commerce instance.
 
-Add a matching route and page for each `path` in the generated web source, following the same conventions as
-other view-based Admin UI extensions. The `useCustomerContext` and `useStoreContext` hooks from
-`@adobe/aio-commerce-lib-admin-ui/web` independently expose `customerId` and `storeId` from Commerce shared
-context. Each hook returns an error when its identifier is missing, null, or invalid, and guarantees a string
-identifier on success. Numeric host values are converted to strings; existing strings retain leading zeros.
+Add a matching route and page for each `path` in the generated web source, following the same conventions as other view-based Admin UI extensions. The `useCustomerContext` and `useStoreContext` hooks from `@adobe/aio-commerce-lib-admin-ui/web` independently expose `customerId` and `storeId` from Commerce shared context. Each hook returns an error when its identifier is missing, null, or invalid, and guarantees a string identifier on success. Numeric host values are converted to strings; existing strings retain leading zeros.
 
 ##### Mass Actions
 
