@@ -1140,6 +1140,8 @@ Installing, upgrading and uninstalling all plan the operation and validate the p
 
 An app installed with only business configuration never runs the install, so the SDK has no record of what it installed. When such an app adds a feature that needs installation (an event, a webhook, an admin UI or a custom installation step), the Commerce App Management Service sends `installedState: "business-config-only"` and `installedVersion` in the `POST /installation/plan` request. The SDK then plans an upgrade instead of an install. The plan's source version is `installedVersion`, and it compares the target config with the installed config minus the sections that need installation. Planning writes nothing. Starting the plan stores that config as the baseline snapshot, so the run is a normal upgrade and a failed run retries from it. The SDK ignores both fields when a baseline exists, and answers `409` with code `already-current` when `installedVersion` equals `metadata.version`.
 
+An app installed before the `association` action existed has no association record. The service sends `commerceBaseUrl` and `commerceEnv` in every lifecycle request. The SDK uses them to plan an uninstall of such an app, and stores them as the association record when the uninstall starts. A stored record always wins over the request. Installing and upgrading without a record still answer `409` with code `not-associated`.
+
 > [!IMPORTANT]
 > `metadata.id` identifies the installed application and cannot change during an upgrade. The SDK refuses to plan an upgrade that changes it. To use a different ID, uninstall the existing app and install it again.
 

@@ -54,6 +54,7 @@ const {
   createCombinedStoreMock,
   createRootInstallationStepMock,
   getAssociationDataMock,
+  setAssociationDataMock,
 } = vi.hoisted(() => {
   const actionInvokeMock = vi.fn();
 
@@ -67,6 +68,7 @@ const {
         invoke: actionInvokeMock,
       },
     })),
+    setAssociationDataMock: vi.fn(),
   };
 });
 
@@ -80,6 +82,7 @@ vi.mock("openwhisk", () => ({
 
 vi.mock("#management/association/repository", () => ({
   getAssociationData: getAssociationDataMock,
+  setAssociationData: setAssociationDataMock,
 }));
 
 vi.mock("#management/installation/root", () => ({
@@ -123,6 +126,8 @@ describe("installationRuntimeAction", () => {
     );
 
     invokeMock.mockResolvedValue({ activationId: "activation-123" });
+    setAssociationDataMock.mockReset();
+    setAssociationDataMock.mockResolvedValue(undefined);
     getAssociationDataMock.mockResolvedValue({
       commerce: { baseUrl: "https://associated.example.com", env: "saas" },
     });
@@ -577,6 +582,8 @@ describe("installationRuntimeAction", () => {
         commerce: { baseUrl: "https://commerce.example.com", env: "paas" },
       });
       invokeMock.mockResolvedValue({ activationId: "activation-123" });
+      setAssociationDataMock.mockReset();
+      setAssociationDataMock.mockResolvedValue(undefined);
     });
 
     type Action = ReturnType<typeof installationRuntimeAction>;
@@ -2068,6 +2075,399 @@ describe("installationRuntimeAction", () => {
         expect(invokeMock).not.toHaveBeenCalled();
         expect(result).toMatchObject({
           error: { body: { code: "not-associated" }, statusCode: 409 },
+        });
+      });
+
+      describe("without an association record", () => {
+        const commerceBody = {
+          commerceBaseUrl: "https://body.example.com",
+          commerceEnv: "saas" as const,
+        };
+
+        const uninstallBody = {
+          ...requestBody,
+          ...commerceBody,
+          operation: "uninstall" as const,
+        };
+
+        beforeEach(() => {
+          getAssociationDataMock.mockResolvedValue(null);
+        });
+
+        test("plans an uninstall with the Commerce instance of the request and stores nothing", async () => {
+          const leaf = useUninstallLeaf();
+          const action = installationRuntimeAction({
+            appConfig: configWithAutoUpgrade,
+          });
+          const result = await planRequest(action, uninstallBody);
+
+          expect(result).toMatchObject({
+            body: { plan: { operation: "uninstall", sourceVersion: "0.9.0" } },
+            statusCode: 200,
+          });
+          expect(leaf.plan).toHaveBeenCalledWith(
+            expect.anything(),
+            expect.objectContaining({
+              params: expect.objectContaining({
+                AIO_COMMERCE_API_BASE_URL: "https://body.example.com",
+                AIO_COMMERCE_API_FLAVOR: "saas",
+              }),
+            }),
+          );
+          expect(setAssociationDataMock).not.toHaveBeenCalled();
+        });
+
+        test("starts the planned uninstall and runs it with the Commerce instance of the request", async () => {
+          useUninstallLeaf();
+          const action = installationRuntimeAction({
+            appConfig: configWithAutoUpgrade,
+          });
+          const result = await planAndStart(action, uninstallBody);
+
+          expect(result).toMatchObject({
+            body: { operation: "uninstall", status: "pending" },
+            statusCode: 202,
+          });
+          expect(invokeMock).toHaveBeenCalledWith(
+            expect.objectContaining({
+              params: expect.objectContaining({
+                __ow_path: "/execution",
+                AIO_COMMERCE_API_BASE_URL: "https://body.example.com",
+                AIO_COMMERCE_API_FLAVOR: "saas",
+              }),
+            }),
+          );
+        });
+
+        test("stores the Commerce instance of the request as the association record when the uninstall starts", async () => {
+          useUninstallLeaf();
+          const action = installationRuntimeAction({
+            appConfig: configWithAutoUpgrade,
+          });
+          await planAndStart(action, uninstallBody);
+
+          expect(setAssociationDataMock).toHaveBeenCalledTimes(1);
+          expect(setAssociationDataMock).toHaveBeenCalledWith({
+            commerce: { baseUrl: "https://body.example.com", env: "saas" },
+          });
+          expect(
+            setAssociationDataMock.mock.invocationCallOrder[0],
+          ).toBeLessThan(invokeMock.mock.invocationCallOrder[0] ?? 0);
+        });
+
+        test("does not overwrite a record that another request stored after the first read", async () => {
+          useUninstallLeaf();
+          const action = installationRuntimeAction({
+            appConfig: configWithAutoUpgrade,
+          });
+          const planned = await planRequest(action, uninstallBody);
+          expect.assert(planned.type === "success", "Expected a plan");
+
+          // The first read in the start request sees no record, the second one sees the new record.
+          getAssociationDataMock.mockResolvedValueOnce(null).mockResolvedValue({
+            commerce: { baseUrl: "https://other.example.com", env: "paas" },
+          });
+
+          const { plan } = planned.body as { plan: { id: string } };
+          const result = await startPlan(action, plan.id, uninstallBody);
+
+          expect(result).toMatchObject({ statusCode: 202 });
+          expect(setAssociationDataMock).not.toHaveBeenCalled();
+        });
+
+        test("starts nothing and needs a new plan when storing the record fails", async () => {
+          useUninstallLeaf();
+          setAssociationDataMock.mockRejectedValue(new Error("files down"));
+
+          const action = installationRuntimeAction({
+            appConfig: configWithAutoUpgrade,
+          });
+          const planned = await planRequest(action, uninstallBody);
+          expect.assert(planned.type === "success", "Expected a plan");
+
+          const { plan } = planned.body as { plan: { id: string } };
+          const result = await startPlan(action, plan.id, uninstallBody);
+
+          expect(result).toMatchObject({
+            error: { statusCode: 500 },
+            type: "error",
+          });
+          expect(invokeMock).not.toHaveBeenCalled();
+          expect(await desiredStateStore.get("current")).toMatchObject({
+            latestAttempt: null,
+          });
+
+          // Starting planned the uninstall again, so the reviewed plan is no longer the pending one
+          // and its id does not unlock the Commerce instance of the request any more.
+          setAssociationDataMock.mockResolvedValue(undefined);
+          expect(await startPlan(action, plan.id, uninstallBody)).toMatchObject(
+            { error: { body: { code: "not-associated" }, statusCode: 409 } },
+          );
+
+          expect(await planAndStart(action, uninstallBody)).toMatchObject({
+            statusCode: 202,
+          });
+          expect(setAssociationDataMock).toHaveBeenCalledTimes(2);
+        });
+
+        test("stores no record when the start is refused", async () => {
+          useUninstallLeaf();
+          const action = installationRuntimeAction({
+            appConfig: configWithAutoUpgrade,
+          });
+          const planned = await planRequest(action, uninstallBody);
+          expect.assert(planned.type === "success", "Expected a plan");
+
+          desiredUninstallationStore = createMockInstallationStore(
+            createMockInProgressState(),
+          );
+
+          const { plan } = planned.body as { plan: { id: string } };
+          const result = await startPlan(action, plan.id, uninstallBody);
+
+          expect(result).toMatchObject({
+            error: { body: { code: "in-progress" }, statusCode: 409 },
+          });
+          expect(setAssociationDataMock).not.toHaveBeenCalled();
+        });
+
+        test("stores no record to start a plan that is not the pending plan", async () => {
+          useUninstallLeaf();
+          const action = installationRuntimeAction({
+            appConfig: configWithAutoUpgrade,
+          });
+          const result = await startPlan(action, "unknown-plan", uninstallBody);
+
+          expect(result).toMatchObject({
+            error: { body: { code: "not-associated" }, statusCode: 409 },
+          });
+          expect(setAssociationDataMock).not.toHaveBeenCalled();
+        });
+
+        test("keeps refusing an upgrade after an uninstall preview, which stores nothing", async () => {
+          desiredInstallationStore = createMockInstallationStore(
+            createMockInstallationSucceededState(),
+          );
+          useUninstallLeaf();
+          const action = installationRuntimeAction({
+            appConfig: configWithAutoUpgrade,
+          });
+
+          expect(await planRequest(action, uninstallBody)).toMatchObject({
+            statusCode: 200,
+          });
+          expect(
+            await planRequest(action, { ...requestBody, ...commerceBody }),
+          ).toMatchObject({
+            error: { body: { code: "not-associated" }, statusCode: 409 },
+          });
+        });
+
+        test("refuses to plan an install or upgrade over a record stored by the uninstall start, because the legacy record has no config", async () => {
+          desiredInstallationStore = createMockInstallationStore(
+            createMockInstallationSucceededState(),
+          );
+          useUninstallLeaf();
+
+          // What the uninstall start leaves when it stores the record and the attempt then fails to start.
+          getAssociationDataMock.mockResolvedValue({
+            commerce: { baseUrl: "https://body.example.com", env: "saas" },
+          });
+
+          const action = installationRuntimeAction({
+            appConfig: configWithAutoUpgrade,
+          });
+          const result = await planRequest(action, {
+            ...requestBody,
+            installedState: "business-config-only",
+            installedVersion: "0.1.0",
+          });
+
+          expect(result).toMatchObject({
+            error: {
+              body: { code: "installed-without-config" },
+              statusCode: 409,
+            },
+          });
+          expect(await planRequest(action, requestBody)).toMatchObject({
+            error: {
+              body: { code: "installed-without-config" },
+              statusCode: 409,
+            },
+          });
+        });
+
+        test("starts an uninstall whose start request does not repeat the operation", async () => {
+          useUninstallLeaf();
+          const action = installationRuntimeAction({
+            appConfig: configWithAutoUpgrade,
+          });
+          const planned = await planRequest(action, uninstallBody);
+          expect.assert(planned.type === "success", "Expected a plan");
+
+          const { plan } = planned.body as { plan: { id: string } };
+          const { operation: _, ...startBody } = uninstallBody;
+          const result = await startPlan(action, plan.id, startBody);
+
+          expect(result).toMatchObject({ statusCode: 202 });
+        });
+
+        test.each([
+          ["both values", requestBody],
+          ["the env", { ...requestBody, commerceBaseUrl: "https://a.test" }],
+          ["the base URL", { ...requestBody, commerceEnv: "saas" }],
+        ])(
+          "returns 409 not-associated to plan an uninstall without %s",
+          async (_, body) => {
+            useUninstallLeaf();
+            const action = installationRuntimeAction({
+              appConfig: configWithAutoUpgrade,
+            });
+            const result = await planRequest(action, {
+              ...body,
+              operation: "uninstall",
+            });
+
+            expect(result).toMatchObject({
+              error: { body: { code: "not-associated" }, statusCode: 409 },
+              type: "error",
+            });
+          },
+        );
+
+        test("returns 409 not-associated to start an uninstall whose start request has no Commerce instance", async () => {
+          useUninstallLeaf();
+          const action = installationRuntimeAction({
+            appConfig: configWithAutoUpgrade,
+          });
+          const planned = await planRequest(action, uninstallBody);
+          expect.assert(planned.type === "success", "Expected a plan");
+
+          const { plan } = planned.body as { plan: { id: string } };
+          const result = await startPlan(action, plan.id, requestBody);
+
+          expect(invokeMock).not.toHaveBeenCalled();
+          expect(result).toMatchObject({
+            error: { body: { code: "not-associated" }, statusCode: 409 },
+          });
+        });
+
+        test("returns 409 not-associated to plan an upgrade, even with the Commerce instance in the request", async () => {
+          const leaf = useUninstallLeaf();
+          const action = installationRuntimeAction({
+            appConfig: createMockConfig({
+              ...configWithAutoUpgrade,
+              metadata: { upgradeMode: "auto", version: "9.9.9" },
+            }),
+          });
+
+          const result = await planRequest(action, {
+            ...requestBody,
+            ...commerceBody,
+          });
+
+          expect(leaf.plan).not.toHaveBeenCalled();
+          expect(setAssociationDataMock).not.toHaveBeenCalled();
+          expect(result).toMatchObject({
+            error: { body: { code: "not-associated" }, statusCode: 409 },
+          });
+        });
+
+        test("returns 409 not-associated to plan an install, even with the Commerce instance in the request", async () => {
+          desiredInstallationStore = createMockInstallationStore();
+          const leaf = useUninstallLeaf();
+          const action = installationRuntimeAction({
+            appConfig: configWithAutoUpgrade,
+          });
+
+          const result = await planRequest(action, {
+            ...requestBody,
+            ...commerceBody,
+          });
+
+          expect(leaf.plan).not.toHaveBeenCalled();
+          expect(result).toMatchObject({
+            error: { body: { code: "not-associated" }, statusCode: 409 },
+          });
+        });
+
+        test("returns 409 not-associated to start a planned upgrade, even when the start request says uninstall", async () => {
+          useUninstallLeaf();
+          getAssociationDataMock.mockResolvedValue({
+            commerce: { baseUrl: "https://record.example.com", env: "paas" },
+          });
+
+          const action = installationRuntimeAction({
+            appConfig: createMockConfig({
+              ...configWithAutoUpgrade,
+              metadata: { upgradeMode: "auto", version: "9.9.9" },
+            }),
+          });
+          const planned = await planRequest(action);
+          expect.assert(planned.type === "success", "Expected a plan");
+
+          const { plan } = planned.body as {
+            plan: { id: string; operation: string };
+          };
+          expect(plan.operation).toBe("upgrade");
+
+          getAssociationDataMock.mockResolvedValue(null);
+          const result = await startPlan(action, plan.id, uninstallBody);
+
+          expect(invokeMock).not.toHaveBeenCalled();
+          expect(setAssociationDataMock).not.toHaveBeenCalled();
+          expect(result).toMatchObject({
+            error: { body: { code: "not-associated" }, statusCode: 409 },
+          });
+        });
+      });
+
+      describe("with an association record", () => {
+        test("uses the Commerce instance of the record, not the one of the request", async () => {
+          const leaf = useUninstallLeaf();
+          const action = installationRuntimeAction({
+            appConfig: configWithAutoUpgrade,
+          });
+
+          const result = await planAndStart(action, {
+            ...requestBody,
+            commerceBaseUrl: "https://body.example.com",
+            commerceEnv: "saas",
+            operation: "uninstall",
+          });
+
+          expect(result).toMatchObject({ statusCode: 202 });
+          expect(setAssociationDataMock).not.toHaveBeenCalled();
+          expect(leaf.plan).toHaveBeenCalledWith(
+            expect.anything(),
+            expect.objectContaining({
+              params: expect.objectContaining({
+                AIO_COMMERCE_API_BASE_URL: "https://commerce.example.com",
+                AIO_COMMERCE_API_FLAVOR: "paas",
+              }),
+            }),
+          );
+        });
+
+        test.each([
+          ["a base URL that is not a URL", "commerceBaseUrl", "not a url"],
+          ["an env that is not saas or paas", "commerceEnv", "staging"],
+        ])("returns 400 for %s", async (_, field, value) => {
+          useUninstallLeaf();
+          const action = installationRuntimeAction({
+            appConfig: configWithAutoUpgrade,
+          });
+
+          const result = await planRequest(action, {
+            ...requestBody,
+            [field]: value,
+            operation: "uninstall",
+          });
+
+          expect(result).toMatchObject({
+            error: { statusCode: 400 },
+            type: "error",
+          });
         });
       });
 

@@ -3845,6 +3845,16 @@
           "ioEventsEnv": {
             "type": "string"
           },
+          "commerceBaseUrl": {
+            "description": "The base URL of the Commerce instance. Used only to plan and start an uninstallation of an app that has no association record. Starting the uninstallation stores it as the association record. Ignored when the app has one.",
+            "type": ["string", "null"],
+            "format": "uri"
+          },
+          "commerceEnv": {
+            "description": "The deployment type of the Commerce instance. Used with `commerceBaseUrl`.",
+            "type": ["string", "null"],
+            "enum": ["saas", "paas", null]
+          },
           "operation": {
             "description": "Set to `uninstall` to plan an uninstallation. Without it, `POST /installation/plan` plans the install or upgrade the installed state calls for.",
             "const": "uninstall"
