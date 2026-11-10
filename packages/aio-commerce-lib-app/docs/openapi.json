@@ -3846,12 +3846,12 @@
             "type": "string"
           },
           "commerceBaseUrl": {
-            "description": "The base URL of the Commerce instance. Used only to plan and start an uninstallation of an app that has no association record. Starting the uninstallation stores it as the association record. Ignored when the app has one.",
+            "description": "The base URL of the Commerce instance.",
             "type": ["string", "null"],
             "format": "uri"
           },
           "commerceEnv": {
-            "description": "The deployment type of the Commerce instance. Used with `commerceBaseUrl`.",
+            "description": "The deployment type of the Commerce instance.",
             "type": ["string", "null"],
             "enum": ["saas", "paas", null]
           },
