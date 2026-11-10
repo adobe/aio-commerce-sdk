@@ -2231,16 +2231,23 @@ describe("installationRuntimeAction", () => {
           expect(setAssociationDataMock).not.toHaveBeenCalled();
         });
 
-        test("stores no record to start a plan that is not the pending plan", async () => {
+        test("returns 409 not-associated and stores no record to start a plan that is not the pending plan", async () => {
           useUninstallLeaf();
           const action = installationRuntimeAction({
             appConfig: configWithAutoUpgrade,
           });
+
+          // A pending plan exists, so only the id tells the start request apart from a valid one.
+          expect(await planRequest(action, uninstallBody)).toMatchObject({
+            statusCode: 200,
+          });
+
           const result = await startPlan(action, "unknown-plan", uninstallBody);
 
           expect(result).toMatchObject({
             error: { body: { code: "not-associated" }, statusCode: 409 },
           });
+          expect(invokeMock).not.toHaveBeenCalled();
           expect(setAssociationDataMock).not.toHaveBeenCalled();
         });
 
@@ -2316,6 +2323,10 @@ describe("installationRuntimeAction", () => {
           ["both values", requestBody],
           ["the env", { ...requestBody, commerceBaseUrl: "https://a.test" }],
           ["the base URL", { ...requestBody, commerceEnv: "saas" }],
+          [
+            "both values, which are null",
+            { ...requestBody, commerceBaseUrl: null, commerceEnv: null },
+          ],
         ])(
           "returns 409 not-associated to plan an uninstall without %s",
           async (_, body) => {

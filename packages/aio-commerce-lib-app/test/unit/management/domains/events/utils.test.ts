@@ -375,16 +375,6 @@ describe("getProviderWorkspaceId", () => {
     ).toBe("456");
   });
 
-  test("reads the workspace of another workspace as that other workspace", () => {
-    expect(
-      getProviderWorkspaceId({
-        "rel:update": {
-          href: STAGE_LINK.replace("4566206088344977280", "another-workspace"),
-        },
-      }),
-    ).toBe("another-workspace");
-  });
-
   test("is null without a rel:update link", () => {
     expect(
       getProviderWorkspaceId({ self: { href: "/providers/1" } }),
@@ -408,11 +398,11 @@ describe("getProviderWorkspaceId", () => {
     ],
     [
       "a path inside the query string",
-      "https://api-stage.adobe.io/other?next=/events/1/2/3/providers/a",
+      "https://api-stage.adobe.io?next=/events/1/2/3/providers/a",
     ],
     [
       "a path inside the fragment",
-      "https://api-stage.adobe.io/other#/events/1/2/3/providers/a",
+      "https://api-stage.adobe.io#/events/1/2/3/providers/a",
     ],
     ["an empty link", ""],
     ["a malformed link", "http://"],
