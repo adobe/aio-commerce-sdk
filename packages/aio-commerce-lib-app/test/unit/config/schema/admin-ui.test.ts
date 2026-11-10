@@ -233,7 +233,7 @@ describe("AdminUiSchema", () => {
       }
     });
 
-    test.each(["order.create"] as const)(
+    test.each(["order.create", "return.create"] as const)(
       "native UI replaced page target %s is accepted",
       (target) => {
         const result = v.safeParse(AdminUiSchema, {
@@ -277,17 +277,20 @@ describe("AdminUiSchema", () => {
       expect(result.success).toBe(false);
     });
 
-    test("rejects duplicate native UI replaced page targets", () => {
-      const page = {
-        path: "#/create-order",
-        target: "order.create",
-        title: "Create Order (App)",
-      };
-      const result = v.safeParse(AdminUiSchema, {
-        nativeUi: { replacedPages: [page, page] },
-      });
-      expect(result.success).toBe(false);
-    });
+    test.each(["order.create", "return.create"] as const)(
+      "rejects duplicate native UI replaced page target %s",
+      (target) => {
+        const page = {
+          path: "#/create-order",
+          target,
+          title: "Create Order (App)",
+        };
+        const result = v.safeParse(AdminUiSchema, {
+          nativeUi: { replacedPages: [page, page] },
+        });
+        expect(result.success).toBe(false);
+      },
+    );
 
     test("all three grids configured", () => {
       const result = v.safeParse(

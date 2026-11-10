@@ -19,11 +19,14 @@ adminUi: {
 
 ### Supported target
 
-| Target         | Native form  |
-| -------------- | ------------ |
-| `order.create` | Create order |
+| Target          | Native form   |
+| --------------- | ------------- |
+| `order.create`  | Create order  |
+| `return.create` | Create return |
 
-The first release supports only `order.create`; other targets are rejected during app-config validation. A native target can be replaced by only one app at a time. Apps registering `order.create` therefore cannot be installed together on the same Commerce instance.
+Other targets are rejected during app-config validation. The Commerce instance must have an Admin UI SDK
+version whose native form catalog includes the chosen target. Return creation passes any available
+`order_id` and `customer_id` to the app route. A native target can be replaced by only one app at a time.
 
 | Field                | Constraint                                                                                                       |
 | -------------------- | ---------------------------------------------------------------------------------------------------------------- |
