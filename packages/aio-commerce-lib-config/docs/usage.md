@@ -9,7 +9,7 @@ The `@adobe/aio-commerce-lib-config` library provides:
 - **Inheritance Model**: Automatic configuration inheritance from parent scopes
 - **Schema Validation**: Validate configuration schemas with in-memory schema storage
 - **Persistent Storage**: Uses `@adobe/aio-lib-state` and `@adobe/aio-lib-files` for configuration data caching and storage
-- **Versioning and Audit**: Records redacted configuration snapshots and audit hash chains, with read-only comparisons, retention, and archiving
+- **Business Configuration Audit**: Read-only records of changed fields and supplied actor metadata, with sensitive values redacted
 
 ## Reference
 
@@ -17,21 +17,16 @@ See the [API Reference](./api-reference/README.md) for a full list of classes, i
 
 ## How to use
 
-### Version history and audit
+### Business configuration audit
 
-Every successful `setConfiguration` call creates a redacted scope-local version and audit record.
-The response includes `versionInfo.versionId` and `versionInfo.versionNumber`.
-Use `getConfigurationHistory`, `getVersionById`, `getVersionComparison`, and `compareVersions`
-to inspect retained snapshots; `getAuditLog` to query changes; and `verifyAuditChain` to check
-one scope's audit hashes and links. History inspection is read-only and cannot restore
-historical settings to live configuration.
+`setConfiguration` records changed fields, their non-sensitive before/after values, and optional
+`metadata.actor` (`userId` and `source`). Use `getAuditLog` to query by scope code, actor, date,
+and pagination. Passwords, sensitive field names, and unknown-schema values are redacted.
 
-History and audit use durable Adobe Files storage, not expiring State entries. Live configuration
-and history are not one atomic transaction. Callers must serialize writes to the same scope;
-the hash chain detects forks but does not prevent concurrent writes.
+Audit queries are read-only and cannot restore historical settings. Live configuration and audit
+use separate writes; an audit failure can be reported after live values have changed.
 
-See [Versioning and audit](./versioning-and-audit.md) for examples, archive management,
-retention settings, error handling, and integrity guarantees.
+See [Business configuration audit](./audit.md) for attribution, redaction, and persistence limits.
 
 ### Setup
 

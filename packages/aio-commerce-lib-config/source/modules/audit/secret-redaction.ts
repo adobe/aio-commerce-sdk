@@ -10,7 +10,8 @@
  * governing permissions and limitations under the License.
  */
 
-import type { ConfigValue } from "#modules/configuration/types";
+import { ENCRYPTED_PREFIX } from "#utils/encryption";
+
 import type { ConfigDiff } from "./types";
 
 /**
@@ -29,6 +30,7 @@ const SENSITIVE_FIELD_PATTERNS = [
   /bearer/iu,
   /encryption[_-]?key/iu,
   /client[_-]?secret/iu,
+  /token/iu,
 ];
 
 /**
@@ -53,23 +55,6 @@ export function isSensitiveField(
 }
 
 /**
- * Redacts sensitive values in configuration.
- *
- * @param config - Array of configuration values.
- * @returns Array with sensitive values redacted.
- */
-export function redactSensitiveConfig(
-  config: ConfigValue[],
-  passwordFields?: ReadonlySet<string>,
-): ConfigValue[] {
-  return config.map((item) =>
-    isSensitiveField(item.name, passwordFields)
-      ? { ...item, value: REDACTED_VALUE }
-      : item,
-  );
-}
-
-/**
  * Redacts sensitive values in configuration diffs.
  *
  * @param diffs - Array of configuration diffs.
@@ -80,7 +65,11 @@ export function redactSensitiveDiffs(
   passwordFields?: ReadonlySet<string>,
 ): ConfigDiff[] {
   return diffs.map((diff) =>
-    isSensitiveField(diff.name, passwordFields)
+    isSensitiveField(diff.name, passwordFields) ||
+    (typeof diff.oldValue === "string" &&
+      diff.oldValue.startsWith(ENCRYPTED_PREFIX)) ||
+    (typeof diff.newValue === "string" &&
+      diff.newValue.startsWith(ENCRYPTED_PREFIX))
       ? {
           ...diff,
           newValue: diff.newValue === undefined ? undefined : REDACTED_VALUE,

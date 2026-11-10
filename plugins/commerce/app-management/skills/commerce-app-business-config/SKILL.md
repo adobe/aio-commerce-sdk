@@ -189,37 +189,33 @@ inputs:
 
 With the option and the input in place, password values are returned as plaintext.
 
-## Configuration history and audit
+## Business configuration audit
 
-Successful `setConfiguration` calls, including the generated PATCH action, record redacted
-scope-local versions and audit entries in Adobe Files. PATCH returns `versionInfo`;
-history HTTP routes and Admin UI are not generated automatically.
+`setConfiguration` records changed business configuration fields in Adobe Files. Use `getAuditLog`
+to inspect non-sensitive before/after values and the supplied actor. No snapshots, rollback,
+archives, integrity chains, or additional HTTP routes/UI are provided.
 
 ```typescript
-import {
-  getConfigurationHistory,
-  getAuditLog,
-  verifyAuditChain,
-} from "@adobe/aio-commerce-lib-config";
+import { getAuditLog } from "@adobe/aio-commerce-lib-config";
 
-const history = await getConfigurationHistory("global", { limit: 10 });
-const audit = await getAuditLog({ scopeCode: "global" });
-const verification = await verifyAuditChain("global");
+const audit = await getAuditLog({
+  scopeCode: "global",
+  userId: "operator-123",
+});
 ```
 
-These APIs use scope **codes**, not Commerce numeric IDs. Initialize with the current schema
-on each action invocation. Password fields and sensitive names are redacted. History inspection
-is read-only; configuration rollback is not supported. Derive optional actor
-metadata from authenticated context; the generated action does not add it automatically.
+Queries use scope **codes**, not Commerce numeric IDs. Initialize with the current schema on
+each invocation. Password fields, sensitive names, and unknown-schema values are redacted.
+Declare all confidential fields as `password`; arbitrary sensitive content in text fields cannot
+be identified automatically. Pass only a stable `metadata.actor.userId` and optional `source`
+derived from authenticated context, never tokens or credentials. The generated PATCH action
+does not add actor identity automatically.
 
-The default retention is 25 snapshots per scope; configure `MAX_CONFIG_VERSIONS` (1-1000)
-consistently on writing actions. Audit records are not automatically pruned. Writes across
-invocations must be serialized: hash verification detects forks but is not a distributed lock,
-and an external trusted head hash is needed to detect suffix deletion or a rewritten chain.
-A `CONFIGURATION_SAVED_WITHOUT_COMPLETE_HISTORY` error means live values may already be saved;
-do not blindly retry it.
+Audit records are not automatically pruned. Queries scan records and writes to each scope must
+be serialized for accurate before/after values. `CONFIGURATION_SAVED_WITHOUT_AUDIT` means live
+values were saved but audit persistence failed; inspect them rather than blindly retrying.
 
-See the [versioning and audit guide](https://github.com/adobe/aio-commerce-sdk/blob/main/packages/aio-commerce-lib-config/docs/versioning-and-audit.md)
+See the [business configuration audit guide](https://github.com/adobe/aio-commerce-sdk/blob/main/packages/aio-commerce-lib-config/docs/audit.md)
 before exposing these APIs through custom authenticated runtime actions.
 
 ## Common Issues

@@ -3,7 +3,7 @@
   "info": {
     "title": "App Management API",
     "description": "REST API for managing Adobe Commerce App Builder apps: resolving app configuration, managing configuration values, running the installation, upgrade, and uninstallation lifecycle, and managing the scope tree.",
-    "version": "4.3.0",
+    "version": "4.2.1",
     "contact": {},
     "license": {
       "identifier": "Apache-2.0",
@@ -1131,7 +1131,7 @@
       "patch": {
         "operationId": "patchConfiguration",
         "summary": "Patch Configuration Values",
-        "description": "Partially updates configuration values for a scope. Unsets those values that are sent with a null value. Successful writes create a redacted configuration version and audit record. Live configuration and history are not one atomic transaction: a history failure can return an error after configuration was saved.",
+        "description": "Partially updates configuration values for a scope. Unsets those values that are sent with a null value. Changed business configuration fields are audited with sensitive values redacted. Live configuration and audit persistence are not atomic: an audit failure can return an error after configuration was saved.",
         "parameters": [
           {
             "name": "x-gw-ims-org-id",
@@ -1213,7 +1213,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Configuration values updated for the given scope, with the recorded version identifier",
+                  "description": "Configuration values updated for the given scope",
                   "type": "object",
                   "properties": {
                     "message": {
@@ -1225,20 +1225,6 @@
                     },
                     "scope": {
                       "$ref": "#/components/schemas/ConfigScope"
-                    },
-                    "versionInfo": {
-                      "description": "Version created for this configuration update.",
-                      "type": "object",
-                      "properties": {
-                        "versionId": {
-                          "type": "string"
-                        },
-                        "versionNumber": {
-                          "type": "integer",
-                          "minimum": 1
-                        }
-                      },
-                      "required": ["versionId", "versionNumber"]
                     },
                     "config": {
                       "type": "array",

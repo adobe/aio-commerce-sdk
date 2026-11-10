@@ -10,123 +10,71 @@
  * governing permissions and limitations under the License.
  */
 
-import type { ConfigDiff } from "#modules/versioning/types";
+import type { ConfigOrigin, ConfigValue } from "#modules/configuration/types";
 
-/**
- * Actor information for audit logs.
- */
+/** Application-supplied attribution, not an authenticated identity assertion. */
 export type AuditActor = {
-  /** User identifier */
+  /** Stable user identifier supplied by the application's authenticated context. */
   userId?: string;
-  /** Source system or application */
+  /** Application or system responsible for the change. */
   source?: string;
-  /** IP address (if available) */
-  ipAddress?: string;
-  /** User agent (if available) */
-  userAgent?: string;
 };
 
-/**
- * Audit log entry for a configuration change.
- */
+/** A scope-local configuration change, with sensitive values redacted. */
+export type ConfigDiff = {
+  /** Configuration field name. */
+  name: string;
+  /** Previous value, absent for added fields. */
+  oldValue?: ConfigValue["value"];
+  /** New value, absent for removed fields. */
+  newValue?: ConfigValue["value"];
+  /** Origin before the change, absent for added fields. */
+  oldOrigin?: ConfigOrigin;
+  /** Origin after the change, absent for removed fields. */
+  newOrigin?: ConfigOrigin;
+  /** Whether the local override was added, modified, or removed. */
+  type: "added" | "modified" | "removed";
+};
+
+/** Read-only record of a business configuration change. */
 export type AuditEntry = {
-  /** Unique audit entry identifier */
+  /** Unique record identifier. */
   id: string;
-  /** Timestamp of the change */
+  /** ISO timestamp of the change. */
   timestamp: string;
-  /** Scope that was changed */
-  scope: {
-    id: string;
-    code: string;
-    level: string;
-  };
-  /** Version ID that was created */
-  versionId: string;
-  /** Actor who made the change */
+  /** Scope whose local overrides changed. */
+  scope: { id: string; code: string; level: string };
+  /** Supplied attribution; empty when the application did not provide it. */
   actor: AuditActor;
-  /** Changes made, with sensitive values redacted. */
+  /** Changed fields only; no configuration snapshot or historical credentials. */
   changes: ConfigDiff[];
-  /** Integrity hash for chain verification */
-  integrityHash: string;
-  /** Previous audit entry hash (for chain) */
-  previousHash: string | null;
-  /** Action performed */
-  action: "create" | "update";
 };
 
-/**
- * Request to create an audit log entry.
- */
-export type CreateAuditEntryRequest = {
-  /** Scope information */
-  scope: {
-    id: string;
-    code: string;
-    level: string;
-  };
-  /** Version ID */
-  versionId: string;
-  /** Actor information */
-  actor: AuditActor;
-  /** Changes made */
-  changes: ConfigDiff[];
-  /** Action performed */
-  action: "create" | "update";
-};
-
-/**
- * Request to query audit logs.
- */
+/** Filters for querying business configuration audit records. */
 export type GetAuditLogRequest = {
-  /** Filter by scope code */
+  /** Scope code, compared case-insensitively; omit to query all scopes. */
   scopeCode?: string;
-  /** Filter by user ID */
+  /** Exact actor identifier. */
   userId?: string;
-  /** Filter by action type */
-  action?: "create" | "update";
-  /** Start date for filtering */
+  /** Inclusive lower timestamp bound. */
   startDate?: string;
-  /** End date for filtering */
+  /** Inclusive upper timestamp bound. */
   endDate?: string;
-  /** Maximum number of entries to return */
+  /** Maximum records to return, from 1 to 1000; defaults to 50. */
   limit?: number;
-  /** Offset for pagination */
+  /** Zero-based record offset; defaults to 0. */
   offset?: number;
 };
 
-/**
- * Response containing audit log entries.
- */
+/** Audit records ordered newest first, with pagination metadata. */
 export type GetAuditLogResponse = {
-  /** Array of audit entries */
+  /** Matching records in the requested page. */
   entries: AuditEntry[];
-  /** Pagination metadata */
+  /** Pagination over matching records, not storage-level pagination. */
   pagination: {
     total: number;
     limit: number;
     offset: number;
     hasMore: boolean;
   };
-};
-
-/**
- * Context for audit operations.
- */
-export type AuditContext = {
-  /** Namespace for audit storage */
-  namespace: string;
-};
-
-/** Result of verifying one scope's audit hash chain. */
-export type AuditVerificationResult = {
-  /** Whether the records form one valid chain and match the optional trusted head. */
-  valid: boolean;
-  /** Number of records examined. */
-  entriesChecked: number;
-  /** Last hash in the chain, or null for an empty or invalid chain. */
-  headHash: string | null;
-  /** ID of a record at which verification failed, when available. */
-  brokenAt?: string;
-  /** Description of the failed integrity check. */
-  reason?: string;
 };

@@ -13,11 +13,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { createMockLibFiles } from "#test/mocks/lib-files";
-import {
-  historyPath,
-  historyPrefix,
-  listHistoryPaths,
-} from "#utils/history-storage";
+import { auditPath, auditPrefix, listAuditPaths } from "#utils/audit-storage";
 
 const MockFiles = createMockLibFiles();
 let files = new MockFiles();
@@ -25,7 +21,7 @@ vi.mock("#utils/repository", () => ({
   getSharedFiles: vi.fn(async () => files),
 }));
 
-describe("Files history listings", () => {
+describe("Files audit listings", () => {
   beforeEach(() => {
     files = new MockFiles();
   });
@@ -34,7 +30,7 @@ describe("Files history listings", () => {
     "lists every record when Files caps each result at 1000 (%i records)",
     async (count) => {
       const paths = Array.from({ length: count }, (_, index) =>
-        historyPath("namespace", "audit", "global", `record-${index}`),
+        auditPath("namespace", `record-${index}`),
       );
       await Promise.all(paths.map((path) => files.write(path, "{}")));
       const originalList = files.list.getMockImplementation();
@@ -44,9 +40,7 @@ describe("Files history listings", () => {
       files.list.mockImplementation(async (prefix) =>
         (await originalList(prefix)).slice(0, 1000),
       );
-      const result = await listHistoryPaths(
-        historyPrefix("namespace", "audit", "global"),
-      );
+      const result = await listAuditPaths(auditPrefix("namespace"));
       expect(new Set(result)).toEqual(new Set(paths));
       expect(result).toHaveLength(count);
       expect(
@@ -56,34 +50,22 @@ describe("Files history listings", () => {
     },
   );
 
-  it("isolates collections and namespaces and encodes caller-controlled paths", async () => {
-    const path = historyPath(
-      "../namespace",
-      "versions",
-      "../scope",
-      "../../id",
-    );
-    const prefix = historyPrefix("../namespace", "versions", "../scope");
+  it("isolates namespaces and encodes caller-controlled paths", async () => {
+    const path = auditPath("../namespace", "../../id");
+    const prefix = auditPrefix("../namespace");
     await files.write(path, "{}");
     expect(path).not.toContain("..");
-    expect(await listHistoryPaths(prefix)).toEqual([path]);
-    expect(
-      await listHistoryPaths(historyPrefix("other", "versions", "../scope")),
-    ).toEqual([]);
-    expect(
-      await listHistoryPaths(
-        historyPrefix("../namespace", "audit", "../scope"),
-      ),
-    ).toEqual([]);
+    expect(await listAuditPaths(prefix)).toEqual([path]);
+    expect(await listAuditPaths(auditPrefix("other"))).toEqual([]);
   });
 
   it("rejects unexpected listed paths before reading arbitrary data", async () => {
     files.list.mockResolvedValueOnce([
       { name: "scope/global/configuration.json" },
     ]);
-    await expect(
-      listHistoryPaths(historyPrefix("namespace", "versions", "global")),
-    ).rejects.toThrow("CORRUPT_HISTORY");
+    await expect(listAuditPaths(auditPrefix("namespace"))).rejects.toThrow(
+      "CORRUPT_AUDIT",
+    );
     expect(files.read).not.toHaveBeenCalled();
   });
 });

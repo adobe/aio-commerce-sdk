@@ -84,13 +84,6 @@ export type SetConfigurationResponse = {
     name: string;
     value: BusinessConfigSchemaValue;
   }>;
-  /** Version created after the live configuration was saved. */
-  versionInfo?: {
-    /** Unique version identifier. */
-    versionId: string;
-    /** Increasing per-scope sequence under serialized writes. */
-    versionNumber: number;
-  };
 };
 
 /**

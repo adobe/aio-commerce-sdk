@@ -15,13 +15,7 @@ import { isDeepStrictEqual } from "node:util";
 import type { ConfigValue } from "#modules/configuration/types";
 import type { ConfigDiff } from "./types";
 
-const inverseTypes = {
-  added: "removed",
-  modified: "modified",
-  removed: "added",
-} as const;
-
-/** Calculates value and origin changes between scope-local snapshots. */
+/** Calculates value and origin changes between scope-local overrides. */
 export function calculateDiff(
   before: ConfigValue[],
   after: ConfigValue[],
@@ -61,37 +55,4 @@ export function calculateDiff(
     }
   }
   return changes;
-}
-
-/** Applies changes, preserving origins captured in the diff. */
-export function applyDiff(base: ConfigValue[], changes: ConfigDiff[]) {
-  const items = new Map(base.map((item) => [item.name, item]));
-  for (const change of changes) {
-    if (change.type === "removed") {
-      items.delete(change.name);
-    } else {
-      items.set(change.name, {
-        name: change.name,
-        origin: change.newOrigin ??
-          items.get(change.name)?.origin ?? {
-            code: "unknown",
-            level: "unknown",
-          },
-        value: change.newValue,
-      });
-    }
-  }
-  return [...items.values()];
-}
-
-/** Reverses changes, including origin changes and removed entries. */
-export function invertDiff(changes: ConfigDiff[]): ConfigDiff[] {
-  return changes.map((change) => ({
-    name: change.name,
-    newOrigin: change.oldOrigin,
-    newValue: change.oldValue,
-    oldOrigin: change.newOrigin,
-    oldValue: change.newValue,
-    type: inverseTypes[change.type],
-  }));
 }

@@ -15,6 +15,7 @@
  * @packageDocumentation
  */
 
+export { getAuditLog } from "./audit-manager";
 export * from "./config-manager";
 export {
   byCode,
@@ -29,7 +30,6 @@ export {
   type SelectorByCommerceScopeId,
   type SelectorByScopeId,
 } from "./config-utils";
-export * from "./history-manager";
 export {
   getSystemConfigByKey,
   setSystemConfigByKey,
@@ -42,27 +42,14 @@ export {
 } from "./modules/schema";
 export * from "./types";
 export {
-  type ArchiveReference,
-  archiveOldVersions,
-  archiveVersion,
-  getStorageStats,
-  restoreFromArchive,
-  shouldArchive,
-} from "./utils/archive";
-export {
   generateEncryptionKey,
   validateEncryptionKey,
 } from "./utils/encryption";
-export {
-  getValueSize,
-  isWithinStateSizeLimit,
-  StorageLimitExceededError,
-} from "./utils/storage-limits";
 
 export type {
   AuditActor,
   AuditEntry,
-  AuditVerificationResult,
+  ConfigDiff,
   GetAuditLogRequest,
   GetAuditLogResponse,
 } from "./modules/audit/types";
@@ -77,10 +64,3 @@ export type {
   ResolvedBusinessConfigSchema,
 } from "./modules/schema";
 export type { ScopeNode, ScopeTree } from "./modules/scope-tree";
-export type {
-  ConfigDiff,
-  ConfigVersion,
-  GetVersionHistoryResponse,
-  TwoVersionComparison,
-  VersionComparison,
-} from "./modules/versioning/types";

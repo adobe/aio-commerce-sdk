@@ -10,120 +10,61 @@
  * governing permissions and limitations under the License.
  */
 
-import { createHash } from "node:crypto";
-
-import stringify from "safe-stable-stringify";
 import { v7 as generateUUID } from "uuid";
 import * as v from "valibot";
 
-import {
-  AuditEntrySchema,
-  paginate,
-  serializeHistory,
-} from "#utils/history-storage";
+import { AuditEntrySchema, serializeAudit } from "#utils/audit-storage";
 
-import { ensureAuditScope, listAuditEntries } from "./audit-repository";
+import { listAuditEntries } from "./audit-repository";
+import { calculateDiff } from "./diff-calculator";
+import { redactSensitiveDiffs } from "./secret-redaction";
 
-import type {
-  AuditContext,
-  AuditEntry,
-  AuditVerificationResult,
-  CreateAuditEntryRequest,
-  GetAuditLogRequest,
-} from "./types";
+import type { ConfigValue } from "#modules/configuration/types";
+import type { AuditActor, AuditEntry, GetAuditLogRequest } from "./types";
 
-/** Hashes all record fields except the stored digest, with stable object key ordering. */
-function generateHash(entry: Omit<AuditEntry, "integrityHash">) {
-  const serialized = stringify(entry);
-  if (serialized === undefined) {
-    throw new Error("INVALID_AUDIT_ENTRY: record cannot be serialized");
-  }
-  return createHash("sha256").update(serialized).digest("hex");
-}
-
-/** Validates the record hashes and topology independently of listing or timestamp order. */
-export function verifyEntries(entries: AuditEntry[]): AuditVerificationResult {
-  const children = new Map<string | null, AuditEntry>();
-  const hashes = new Set<string>();
-  for (const entry of entries) {
-    const { integrityHash, ...content } = entry;
-    if (generateHash(content) !== integrityHash || hashes.has(integrityHash)) {
-      return invalid(
-        entries.length,
-        "Record hash mismatch or duplicate hash",
-        entry.id,
-      );
-    }
-    if (children.has(entry.previousHash)) {
-      return invalid(
-        entries.length,
-        "Audit chain has multiple roots or a concurrent-write fork",
-        entry.id,
-      );
-    }
-    children.set(entry.previousHash, entry);
-    hashes.add(integrityHash);
-  }
-  let headHash: string | null = null;
-  let visited = 0;
-  let entry = children.get(null);
-  while (entry && visited < entries.length) {
-    headHash = entry.integrityHash;
-    visited += 1;
-    entry = children.get(headHash);
-  }
-  if (visited !== entries.length || entry) {
-    return invalid(
-      entries.length,
-      "Audit chain is disconnected, cyclic, or missing a record",
-    );
-  }
-  return { entriesChecked: entries.length, headHash, valid: true };
-}
-
-function invalid(
-  entriesChecked: number,
-  reason: string,
-  brokenAt?: string,
-): AuditVerificationResult {
-  return { brokenAt, entriesChecked, headHash: null, reason, valid: false };
-}
-
-/** Prepares a linked, validated audit record before persisting a configuration change. */
-export async function prepareAuditEntry(
-  context: AuditContext,
-  request: CreateAuditEntryRequest,
+/** Prepares only changed fields and permitted actor metadata before live persistence. */
+export function prepareAuditEntry(
+  scope: AuditEntry["scope"],
+  before: ConfigValue[],
+  after: ConfigValue[],
+  passwordFields: ReadonlySet<string>,
+  actor?: AuditActor,
 ) {
-  const chain = await verifyAuditChain(context, request.scope.code);
-  if (!chain.valid) {
-    throw new Error(`INVALID_AUDIT_CHAIN: ${chain.reason}`);
+  const changes = redactSensitiveDiffs(
+    calculateDiff(before, after),
+    passwordFields,
+  );
+  if (changes.length === 0) {
+    return null;
   }
-  const content = {
-    ...request,
-    id: generateUUID(),
-    previousHash: chain.headHash,
-    timestamp: new Date().toISOString(),
-  };
   const entry = v.parse(AuditEntrySchema, {
-    ...content,
-    integrityHash: generateHash(content),
+    actor: { source: actor?.source, userId: actor?.userId },
+    changes,
+    id: generateUUID(),
+    scope,
+    timestamp: new Date().toISOString(),
   });
-  serializeHistory(entry);
-  await ensureAuditScope(context.namespace, request.scope);
+  serializeAudit(entry);
   return entry;
 }
 
-/** Filters entries in one pass, then sorts and paginates without repeated ID lookups. */
-export async function getAuditLog(
-  context: AuditContext,
+/** Filters, sorts, and paginates audit records without modifying live configuration. */
+export async function queryAuditLog(
+  namespace: string,
   request: GetAuditLogRequest = {},
 ) {
-  paginate([], request, 50);
+  const limit = request.limit ?? 50;
+  const offset = request.offset ?? 0;
   if (
-    request.action !== undefined &&
-    !["create", "update"].includes(request.action)
+    !Number.isSafeInteger(limit) ||
+    limit < 1 ||
+    limit > 1000 ||
+    !Number.isSafeInteger(offset) ||
+    offset < 0
   ) {
-    throw new Error("INVALID_AUDIT_ACTION: expected create or update");
+    throw new Error(
+      "INVALID_PAGINATION: limit must be 1-1000 and offset must be a non-negative safe integer",
+    );
   }
   const start =
     request.startDate === undefined
@@ -138,11 +79,12 @@ export async function getAuditLog(
       "INVALID_AUDIT_DATES: startDate and endDate must be valid dates in ascending order",
     );
   }
-  const all = await listAuditEntries(context.namespace, request.scopeCode);
+  const all = await listAuditEntries(namespace);
   const entries = all.filter(
     (entry) =>
+      (request.scopeCode === undefined ||
+        entry.scope.code.toLowerCase() === request.scopeCode.toLowerCase()) &&
       (request.userId === undefined || entry.actor.userId === request.userId) &&
-      (request.action === undefined || entry.action === request.action) &&
       Date.parse(entry.timestamp) >= start &&
       Date.parse(entry.timestamp) <= end,
   );
@@ -151,28 +93,13 @@ export async function getAuditLog(
       Date.parse(b.timestamp) - Date.parse(a.timestamp) ||
       b.id.localeCompare(a.id),
   );
-  const page = paginate(entries, request, 50);
-  return { entries: page.items, pagination: page.pagination };
-}
-
-/** Verifies one chain and optionally checks a head hash stored outside the history store. */
-export async function verifyAuditChain(
-  context: AuditContext,
-  scopeCode: string,
-  expectedHeadHash?: string,
-) {
-  const result = verifyEntries(
-    await listAuditEntries(context.namespace, scopeCode),
-  );
-  if (
-    result.valid &&
-    expectedHeadHash !== undefined &&
-    result.headHash !== expectedHeadHash
-  ) {
-    return invalid(
-      result.entriesChecked,
-      "Audit chain does not match the trusted head hash",
-    );
-  }
-  return result;
+  return {
+    entries: entries.slice(offset, offset + limit),
+    pagination: {
+      hasMore: offset + limit < entries.length,
+      limit,
+      offset,
+      total: entries.length,
+    },
+  };
 }

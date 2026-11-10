@@ -497,9 +497,9 @@ export async function getConfigurationByKey(
  * @param request - Configuration set request containing the config values to set.
  * @param selector - Scope selector specifying how to identify the scope.
  * @param options - Optional library configuration options for cache timeout.
- * @returns Updated scope and values, with the recorded version identifier and sequence.
- * @throws {Error} If history is unavailable or invalid before the write, or if persistence fails.
- * A `CONFIGURATION_SAVED_WITHOUT_COMPLETE_HISTORY` error means live values were already saved.
+ * @returns Updated scope and configuration values.
+ * @throws {Error} If audit preparation or persistence fails.
+ * A `CONFIGURATION_SAVED_WITHOUT_AUDIT` error means live values were already saved.
  *
  * @example
  * ```typescript

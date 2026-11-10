@@ -221,13 +221,11 @@ businessConfig: {
 
 For detailed information about available field types and their usage, see the [`@adobe/aio-commerce-lib-config` documentation](../../aio-commerce-lib-config/docs/usage.md#field-types).
 
-Configuration PATCH requests now record redacted version history and audit entries, and return
-`versionInfo` alongside the existing response fields. History is stored in Adobe Files, separately
-from live configuration, and failures can be reported after live values have changed.
-History queries are read-only library APIs, not additional generated HTTP routes. Configuration
-rollback is not supported.
-See [Versioning and audit](../../aio-commerce-lib-config/docs/versioning-and-audit.md) for secret
-redaction, retention settings, authenticated action integration, and consistency limits.
+Configuration PATCH requests audit changed business fields with sensitive values redacted, without
+changing response fields. Audit queries are read-only library APIs, not generated HTTP routes.
+The generated action does not supply actor identity; application-owned authenticated actions can
+pass `metadata.actor` to `setConfiguration`. Audit failures can occur after live values are saved.
+See [Business configuration audit](../../aio-commerce-lib-config/docs/audit.md).
 
 #### Eventing Configuration
 

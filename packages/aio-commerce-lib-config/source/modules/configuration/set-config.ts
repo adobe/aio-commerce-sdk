@@ -20,14 +20,6 @@ import { saveAuditEntry } from "#modules/audit/audit-repository";
 import { requireGlobalSchema } from "#modules/schema/config-schema-repository";
 import { getPasswordFields } from "#modules/schema/utils";
 import * as scopeTreeRepository from "#modules/scope-tree/scope-tree-repository";
-import {
-  getMaxVersions,
-  prepareVersion,
-} from "#modules/versioning/version-manager";
-import {
-  deleteVersion,
-  saveVersion,
-} from "#modules/versioning/version-repository";
 import { encrypt } from "#utils/encryption";
 
 import * as configRepository from "./configuration-repository";
@@ -96,25 +88,20 @@ export async function setConfiguration(
     scope: { code: scopeCode, id: scopeId, level: scopeLevel },
   };
 
-  const { version, expired } = await prepareVersion(
-    { maxVersions: getMaxVersions(), namespace: context.namespace },
-    {
-      actor: request.metadata?.actor,
-      newConfig: mergedScopeConfig,
-      oldConfig: existingEntries,
-      scope: payload.scope,
-    },
+  const knownFields = new Set(schema.map((field) => field.name));
+  const redactedFields = new Set([
+    ...passwordFields,
+    ...[...existingEntries, ...mergedScopeConfig]
+      .filter((entry) => !knownFields.has(entry.name))
+      .map((entry) => entry.name),
+  ]);
+  const audit = prepareAuditEntry(
+    payload.scope,
+    existingEntries,
+    mergedScopeConfig,
+    redactedFields,
+    request.metadata?.actor,
   );
-  const audit = await prepareAuditEntry(context, {
-    action:
-      existingEntries.length === 0 && version.previousVersionId === null
-        ? "create"
-        : "update",
-    actor: request.metadata?.actor ?? {},
-    changes: version.diff,
-    scope: version.scope,
-    versionId: version.id,
-  });
 
   await configRepository.persistConfig(
     scopeCode,
@@ -122,17 +109,15 @@ export async function setConfiguration(
     context.cacheTimeout,
   );
 
-  try {
-    await saveVersion(context.namespace, scopeCode, version);
-    await saveAuditEntry(context.namespace, audit);
-    await Promise.all(
-      expired.map((old) => deleteVersion(context.namespace, scopeCode, old.id)),
-    );
-  } catch (error) {
-    throw new Error(
-      "CONFIGURATION_SAVED_WITHOUT_COMPLETE_HISTORY: live configuration was saved, but history, audit, or retention failed",
-      { cause: error },
-    );
+  if (audit) {
+    try {
+      await saveAuditEntry(context.namespace, audit);
+    } catch (error) {
+      throw new Error(
+        "CONFIGURATION_SAVED_WITHOUT_AUDIT: live configuration was saved, but its audit record could not be stored",
+        { cause: error },
+      );
+    }
   }
 
   return {
@@ -140,10 +125,6 @@ export async function setConfiguration(
     message: "Configuration values updated successfully",
     scope: { code: scopeCode, id: String(scopeId), level: scopeLevel },
     timestamp: new Date().toISOString(),
-    versionInfo: {
-      versionId: version.id,
-      versionNumber: version.versionNumber,
-    },
   };
 }
 

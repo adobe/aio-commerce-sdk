@@ -1,5 +1,5 @@
 ---
-"@adobe/aio-commerce-lib-app": minor
+"@adobe/aio-commerce-lib-app": patch
 ---
 
-Include configuration version metadata in PATCH responses and document the history APIs and partial-persistence errors.
+Document redacted business configuration auditing, actor attribution, and partial-persistence errors for configuration updates.
