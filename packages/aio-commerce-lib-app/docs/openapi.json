@@ -3845,6 +3845,16 @@
           "ioEventsEnv": {
             "type": "string"
           },
+          "commerceBaseUrl": {
+            "description": "The base URL of the Commerce instance.",
+            "type": ["string", "null"],
+            "format": "uri"
+          },
+          "commerceEnv": {
+            "description": "The deployment type of the Commerce instance.",
+            "type": ["string", "null"],
+            "enum": ["saas", "paas", null]
+          },
           "operation": {
             "description": "Set to `uninstall` to plan an uninstallation. Without it, `POST /installation/plan` plans the install or upgrade the installed state calls for.",
             "const": "uninstall"

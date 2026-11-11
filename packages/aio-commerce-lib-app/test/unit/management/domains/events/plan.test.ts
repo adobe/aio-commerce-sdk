@@ -10,8 +10,10 @@
  * governing permissions and limitations under the License.
  */
 
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 
+import { defineBranchStep } from "#management/common/workflow/index";
+import { eventingStep } from "#management/domains/events/index";
 import {
   planCommerceEvents,
   planExternalEvents,
@@ -28,6 +30,7 @@ import {
   getRegistrationName,
   groupEventsByRuntimeActions,
 } from "#management/domains/events/utils";
+import { planLifecycle } from "#management/lifecycle/planning";
 import { configWithCommerceEventing } from "#test/fixtures/config";
 import {
   createMockCommerceEventsConfig as commerceConfig,
@@ -37,6 +40,7 @@ import {
   TEST_CLIENT_ID,
   TEST_WORKSPACE_ID,
 } from "#test/fixtures/eventing";
+import { createMockLifecycleRuntime } from "#test/fixtures/lifecycle";
 
 import type {
   CommerceEventProvider,
@@ -58,6 +62,16 @@ import type {
   EventingOperationValue,
   EventingSnapshotData,
 } from "#management/domains/events/types";
+
+// The lifecycle tests at the end plan through the real steps, which build their own API clients.
+// They get the mocked clients of the world a test sets up instead.
+const stepContext = vi.hoisted(() => ({ current: null as unknown }));
+vi.mock("#management/domains/events/context", async (importOriginal) => ({
+  ...(await importOriginal<
+    typeof import("#management/domains/events/context")
+  >()),
+  createEventsStepContext: () => stepContext.current,
+}));
 
 const { metadata } = configWithCommerceEventing;
 
@@ -83,12 +97,26 @@ type World = {
 
 type Config = CommerceEventsConfig | ExternalEventsConfig;
 
-/** The HAL links of a provider that lives in the given workspace. */
-function workspaceLinks(providerId: string, workspaceId: string) {
+/** The host of the I/O Events API on stage. */
+const IO_EVENTS_HOST = "https://api-stage.adobe.io";
+
+/**
+ * The HAL links of a provider that lives in the given workspace, in the shape the I/O Events API
+ * returns (measured on stage): three links, all absolute. Pass an empty `host` for relative links.
+ */
+function workspaceLinks(
+  providerId: string,
+  workspaceId: string,
+  host = IO_EVENTS_HOST,
+) {
   return {
-    "rel:update": {
-      href: `/events/org/project/${workspaceId}/providers/${providerId}`,
+    "rel:eventmetadata": {
+      href: `${host}/events/providers/${providerId}/eventmetadata`,
     },
+    "rel:update": {
+      href: `${host}/events/271530/4566206088344952457/${workspaceId}/providers/${providerId}`,
+    },
+    self: { href: `${host}/events/providers/${providerId}` },
   };
 }
 
@@ -1054,7 +1082,7 @@ describe("planCommerceEvents", () => {
   });
 
   describe("legacy instance id and workspace", () => {
-    const legacyProviderOf = (workspaceId: string | null) => {
+    const legacyProviderOf = (workspaceId: string | null, host?: string) => {
       const config = oneProvider([commerceEvent()]);
       const live = deployed(config, COMMERCE_PROVIDER_TYPE);
       live.providers[0].instance_id = generateInstanceIdDeprecated(
@@ -1063,7 +1091,7 @@ describe("planCommerceEvents", () => {
       );
 
       live.providers[0]._links = workspaceId
-        ? workspaceLinks("io-orders", workspaceId)
+        ? workspaceLinks("io-orders", workspaceId, host)
         : undefined;
 
       // Only the provider and its metadata exist, as when another deployment owns it.
@@ -1112,6 +1140,17 @@ describe("planCommerceEvents", () => {
       expect(plan.providerIds).toEqual({ orders: "io-orders" });
     });
 
+    test("matches a legacy provider whose relative link names this workspace", async () => {
+      const { config, live } = legacyProviderOf(TEST_WORKSPACE_ID, "");
+      const plan = await planCommerce({
+        baseline: config,
+        live,
+        target: config,
+      });
+
+      expect(plan.providerIds).toEqual({ orders: "io-orders" });
+    });
+
     test("blocks on a legacy provider with no workspace link", async () => {
       const { config, live } = legacyProviderOf(null);
       const result = await planCommerceEvents(
@@ -1129,6 +1168,100 @@ describe("planCommerceEvents", () => {
         }),
       ]);
       expect(result.issues[0].message).toContain(TEST_WORKSPACE_ID);
+    });
+  });
+
+  describe("uninstall of an app installed under the legacy instance id", () => {
+    // An app installed by lib-app 1.0.x or 1.1.0: the instance id has no workspace, and the plan
+    // has no stored baseline, so it plans from the deployed config (baseline set, no target).
+    const legacyApp = (links: Record<string, { href: string }> | undefined) => {
+      const config = oneProvider([commerceEvent()]);
+      const live = deployed(config, COMMERCE_PROVIDER_TYPE);
+      const instanceId = generateInstanceIdDeprecated(
+        metadata,
+        config.eventing.commerce[0].provider,
+      );
+
+      live.providers[0].instance_id = instanceId;
+      live.providers[0]._links = links;
+      live.commerceProviders[0].instance_id = instanceId;
+      return { config, live };
+    };
+
+    const uninstall = (config: CommerceEventsConfig, live: World) =>
+      planCommerceEvents(
+        input("commerce", { baseline: config, live }),
+        contextFor(live),
+      );
+
+    const removals = [
+      "remove subscription change",
+      "remove registration change",
+      "remove metadata change",
+      "remove commerceProvider change",
+      "remove provider change",
+    ];
+
+    test("removes the provider whose absolute link names this workspace", async () => {
+      const { config, live } = legacyApp(
+        workspaceLinks("io-orders", TEST_WORKSPACE_ID),
+      );
+      const result = await uninstall(config, live);
+
+      expect.assert(result.kind === "planned");
+      expect(summary(result.plan)).toEqual(removals);
+    });
+
+    test("removes the provider whose relative link names this workspace", async () => {
+      const { config, live } = legacyApp(
+        workspaceLinks("io-orders", TEST_WORKSPACE_ID, ""),
+      );
+      const result = await uninstall(config, live);
+
+      expect.assert(result.kind === "planned");
+      expect(summary(result.plan)).toEqual(removals);
+    });
+
+    test("leaves alone the provider whose absolute link names another workspace", async () => {
+      const { config, live } = legacyApp(
+        workspaceLinks("io-orders", "another-workspace"),
+      );
+      const result = await uninstall(config, live);
+
+      expect.assert(result.kind === "planned");
+      expect(result.plan.operations).toEqual([]);
+    });
+
+    test("blocks on the provider with no readable workspace link", async () => {
+      const { config, live } = legacyApp(undefined);
+      const result = await uninstall(config, live);
+
+      expect.assert(result.kind === "blocked");
+      expect(result.issues).toEqual([
+        expect.objectContaining({
+          blocking: true,
+          code: "EVENTS_PROVIDER_IN_OTHER_WORKSPACE",
+        }),
+      ]);
+    });
+
+    test("blocks on a link of another shape", async () => {
+      const { config, live } = legacyApp({
+        "rel:update": { href: `${IO_EVENTS_HOST}/events/providers/io-orders` },
+      });
+      const result = await uninstall(config, live);
+
+      expect(result.kind).toBe("blocked");
+    });
+
+    test("removes the provider of a current instance id without reading its link", async () => {
+      const config = oneProvider([commerceEvent()]);
+      const live = deployed(config, COMMERCE_PROVIDER_TYPE);
+      live.providers[0]._links = undefined;
+      const result = await uninstall(config, live);
+
+      expect.assert(result.kind === "planned");
+      expect(summary(result.plan)).toEqual(removals);
     });
   });
 
@@ -1312,5 +1445,89 @@ describe("planExternalEvents", () => {
       "update registration change",
       "add metadata change",
     ]);
+  });
+});
+
+describe("uninstall plan without a stored baseline", () => {
+  // The uninstall of an app with no stored baseline plans from the deployed config, as the
+  // /plan route does for an app installed before the association action existed.
+  const plan = async (
+    links: Record<string, { href: string }> | undefined,
+    isLegacy = true,
+  ) => {
+    const config = oneProvider([commerceEvent()]);
+    const live = deployed(config, COMMERCE_PROVIDER_TYPE);
+    if (isLegacy) {
+      live.providers[0].instance_id = generateInstanceIdDeprecated(
+        metadata,
+        config.eventing.commerce[0].provider,
+      );
+    }
+
+    live.providers[0]._links = links;
+    stepContext.current = contextFor(live);
+
+    // Only the eventing step, as the other steps read other live state.
+    const { runtime } = createMockLifecycleRuntime({
+      baseline: null,
+      rootStep: defineBranchStep({
+        children: [eventingStep],
+        meta: {
+          install: { description: "d", label: "Installation" },
+          uninstall: { description: "d", label: "Uninstallation" },
+          upgrade: { description: "d", label: "Upgrade" },
+        },
+        name: "installation",
+      }),
+    });
+
+    return planLifecycle({
+      ...runtime,
+      actionVersion: "1.0.0",
+      fallbackBaselineConfig: config as never,
+      operation: "uninstall",
+      targetConfig: null,
+    });
+  };
+
+  test("plans the removal of a legacy provider of this workspace with the baseline warning", async () => {
+    const result = await plan(workspaceLinks("io-orders", TEST_WORKSPACE_ID));
+
+    expect(result.kind).toBe("planned");
+    expect(result.plan.issues.map((issue) => issue.code)).toEqual([
+      "PLANNED_WITHOUT_BASELINE",
+    ]);
+    expect(result.plan.issues.some((issue) => issue.blocking)).toBe(false);
+    expect(
+      result.plan.domains.flatMap((domain) =>
+        domain.operations.map((op) => op.id),
+      ),
+    ).toContain("remove:provider:orders");
+  });
+
+  test("plans the removal of a provider with the current instance id as before", async () => {
+    const result = await plan(
+      workspaceLinks("io-orders", TEST_WORKSPACE_ID),
+      false,
+    );
+
+    expect(result.kind).toBe("planned");
+    expect(result.plan.issues.map((issue) => issue.code)).toEqual([
+      "PLANNED_WITHOUT_BASELINE",
+    ]);
+    expect(
+      result.plan.domains.flatMap((domain) =>
+        domain.operations.map((op) => op.id),
+      ),
+    ).toContain("remove:provider:orders");
+  });
+
+  test("blocks on a legacy provider with no workspace link", async () => {
+    const result = await plan(undefined);
+
+    expect(result.kind).toBe("blocked");
+    expect(result.plan.issues.map((issue) => issue.code)).toContain(
+      "EVENTS_PROVIDER_IN_OTHER_WORKSPACE",
+    );
   });
 });
