@@ -29,6 +29,7 @@ import {
   EXTENSIBILITY_EXTENSION_POINT_ID,
   INSTALL_YAML_FILE,
 } from "#commands/constants";
+import { cleanupRemovedExtensions } from "#commands/generate/actions/cleanup";
 import { getRuntimeActions } from "#commands/generate/actions/config";
 import { TEMPLATES_DIR } from "#commands/generate/actions/constants";
 import {
@@ -85,6 +86,15 @@ export async function run(
     consola.warn(
       `Missing extension entries were added to ${addedTo.join(" and ")}. This build may not use them, so run the build again. This is a one-off change.`,
     );
+  }
+
+  // Only the extensibility/1 hook cleans up. It is always declared, so the cleanup always runs
+  // once per build, and it is the last hook, so removing another extension's files cannot
+  // affect a build that is still running. Cleaning up from any other hook could not guarantee either.
+  if (extension === "extensibility/1") {
+    await cleanupRemovedExtensions(domains, appManifest, projectRoot, {
+      quiet: true,
+    });
   }
 
   // The runtime config module re-exports the manifest, and every extension point reads it.

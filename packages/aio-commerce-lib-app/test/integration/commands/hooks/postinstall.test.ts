@@ -20,6 +20,7 @@ import { parse } from "yaml";
 import {
   APP_CONFIG_FILE,
   APP_MANIFEST_FILE,
+  BACKEND_UI_V2_EXTENSION_POINT_ID,
   CONFIG_SCHEMA_FILE_NAME,
   CONFIGURATION_EXTENSION_POINT_ID,
   EXTENSIBILITY_EXTENSION_POINT_ID,
@@ -37,6 +38,11 @@ import {
   ORDERED_EXTENSION_POINTS,
   withTempProject,
 } from "#test/fixtures/project";
+
+// The business config project does not need backend-ui/2, and the hook removes its entry.
+const NEEDED_EXTENSION_POINTS = ORDERED_EXTENSION_POINTS.filter(
+  (id) => id !== BACKEND_UI_V2_EXTENSION_POINT_ID,
+);
 
 describe("commands/hooks/postinstall", () => {
   describe("run", () => {
@@ -82,7 +88,7 @@ describe("commands/hooks/postinstall", () => {
   describe("run app.config.yaml order", () => {
     test("reorders out-of-order extension points in app.config.yaml", async () => {
       const appConfig = makeAppConfigFile(
-        [...ORDERED_EXTENSION_POINTS].reverse(),
+        [...NEEDED_EXTENSION_POINTS].reverse(),
       );
 
       await withTempProject(
@@ -100,14 +106,14 @@ describe("commands/hooks/postinstall", () => {
           );
 
           expect(Object.keys(parse(content).extensions)).toEqual(
-            ORDERED_EXTENSION_POINTS,
+            NEEDED_EXTENSION_POINTS,
           );
         },
       );
     });
 
     test("leaves an ordered app.config.yaml untouched", async () => {
-      const appConfig = makeAppConfigFile(ORDERED_EXTENSION_POINTS);
+      const appConfig = makeAppConfigFile(NEEDED_EXTENSION_POINTS);
 
       await withTempProject(
         {

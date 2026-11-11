@@ -145,6 +145,14 @@ extensions:
 
 The `init` command writes the entries in this order, and the `postinstall` hook reorders an existing `app.config.yaml` that is out of order (comments are kept, and extension points not listed above go last). The `pre-app-build` hook does the same as a safety net: it rewrites `app.config.yaml` and logs a one-off warning, then continues with the build. It also adds any missing extension entries to `app.config.yaml` and `install.yaml`. Because the build already started, it may not use the new entries, so the warning asks you to run the build again. When the order and the entries are already right, the hooks write nothing and log nothing.
 
+When a domain is removed from `app.commerce.config.*`, `generate actions` (and so `generate all`, `init` and the `postinstall` hook) cleans up what lib-app generated for it. Today this applies to `commerce/configuration/1` once `businessConfig.schema` is gone:
+
+- It deletes the generated actions and the configuration schema file, then removes the generated folders that end up empty. Other files in those folders, and `.env`, stay.
+- It deletes `ext.config.yaml` only if it matches what lib-app generates today, ignoring comments and formatting. If you changed it, it stays with a warning, and the extension entries in `app.config.yaml` and `install.yaml` stay too. Otherwise it removes those entries.
+- For `commerce/backend-ui/2` it only removes the entries. The `ext.config.yaml` and `web-src` files stay with a warning, because they may contain your own code.
+
+The `pre-app-build` hook of `commerce/extensibility/1` runs the same cleanup. It runs last in a build, so it does not affect other extensions' builds, and the removal takes effect from the next build. It logs nothing for what it deletes and warns only about what it had to keep.
+
 5. In your `install.yaml`, add the extension point references. If you have multiple extension points, add each as a new entry:
 
 ```yaml

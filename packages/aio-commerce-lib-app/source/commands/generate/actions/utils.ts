@@ -10,6 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
+import { existsSync } from "node:fs";
 import { writeFile } from "node:fs/promises";
 import { join, relative } from "node:path";
 
@@ -19,7 +20,7 @@ import {
   readYamlFile,
 } from "@aio-commerce-sdk/scripting-utils/yaml/helpers";
 import consola from "consola";
-import { isMap } from "yaml";
+import { isMap, isSeq } from "yaml";
 
 import { APP_CONFIG_FILE, INSTALL_YAML_FILE } from "#commands/constants";
 import { getExtConfigPath } from "#commands/utils";
@@ -137,6 +138,64 @@ export async function addExtensionPointToInstallYaml(
   extension.key.commentBefore = commentBefore;
   extensions.items.push(extension);
 
+  await writeFile(installYamlPath, doc.toString(), "utf-8");
+  return true;
+}
+
+/**
+ * Remove an extension point from the app config file.
+ * @param extensionPointId - The id of the extension point.
+ * @param rootDirectory - The root directory of the project.
+ * @returns True if the extension point was removed, false if it was not there.
+ */
+export async function removeExtensionPointFromAppConfig(
+  extensionPointId: string,
+  rootDirectory: string,
+) {
+  const appConfigPath = join(rootDirectory, APP_CONFIG_FILE);
+  if (!existsSync(appConfigPath)) {
+    return false;
+  }
+
+  const doc = await readYamlFile(appConfigPath);
+  if (!doc.deleteIn(["extensions", extensionPointId])) {
+    return false;
+  }
+
+  await writeFile(appConfigPath, doc.toString(), "utf-8");
+  return true;
+}
+
+/**
+ * Remove an extension point from the install.yaml file.
+ * @param extensionPointId - The id of the extension point.
+ * @param rootDirectory - The root directory of the project.
+ * @returns True if the extension point was removed, false if it was not there.
+ */
+export async function removeExtensionPointFromInstallYaml(
+  extensionPointId: string,
+  rootDirectory: string,
+) {
+  const installYamlPath = join(rootDirectory, INSTALL_YAML_FILE);
+  if (!existsSync(installYamlPath)) {
+    return false;
+  }
+
+  const doc = await readYamlFile(installYamlPath);
+  const extensions = doc.get("extensions");
+  if (!isSeq(extensions)) {
+    return false;
+  }
+
+  const index = extensions.items.findIndex(
+    (item) => isMap(item) && item.get("extensionPointId") === extensionPointId,
+  );
+
+  if (index === -1) {
+    return false;
+  }
+
+  extensions.items.splice(index, 1);
   await writeFile(installYamlPath, doc.toString(), "utf-8");
   return true;
 }

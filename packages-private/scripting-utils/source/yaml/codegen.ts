@@ -35,15 +35,15 @@ import type {
 } from "#yaml/types";
 
 /**
- * Create an ext.config.yaml file
- * @param path - The path to the ext.config.yaml file
+ * Build the ext.config.yaml document for a config without writing it.
  * @param config - The config to build
  * @param doc - The document to modify (a new one is created if not provided)
+ * @param projectRoot - Project root used to detect the package manager for hook commands.
  */
-export async function createOrUpdateExtConfig(
-  path: string,
+export async function buildExtConfigDocument(
   config: ExtConfig,
   doc?: Document,
+  projectRoot?: string,
 ) {
   const extConfigDoc = doc ?? new Document({});
 
@@ -54,13 +54,29 @@ export async function createOrUpdateExtConfig(
 
   config.hooks ??= {};
 
-  await buildHooks(extConfigDoc, config.hooks);
+  await buildHooks(extConfigDoc, config.hooks, projectRoot);
   if (config.operations !== undefined) {
     buildOperations(extConfigDoc, config.operations);
   }
   if (config.runtimeManifest !== undefined) {
     buildRuntimeManifest(extConfigDoc, config.runtimeManifest);
   }
+
+  return extConfigDoc;
+}
+
+/**
+ * Create an ext.config.yaml file
+ * @param path - The path to the ext.config.yaml file
+ * @param config - The config to build
+ * @param doc - The document to modify (a new one is created if not provided)
+ */
+export async function createOrUpdateExtConfig(
+  path: string,
+  config: ExtConfig,
+  doc?: Document,
+) {
+  const extConfigDoc = await buildExtConfigDocument(config, doc);
 
   await writeExtConfig(path, extConfigDoc);
   return extConfigDoc;
@@ -276,7 +292,11 @@ function buildRuntimeManifest(extConfig: Document, manifest: RuntimeManifest) {
  * @param extConfig - The ext.config.yaml file
  * @param hooks - The hooks to build
  */
-async function buildHooks(extConfig: Document, hooks: Record<string, string>) {
+async function buildHooks(
+  extConfig: Document,
+  hooks: Record<string, string>,
+  rootDirectory?: string,
+) {
   const generatedHooks = `[${Object.keys(hooks).join(", ")}]`;
   const hooksMap = getOrCreateMap(extConfig, ["hooks"], {
     onBeforeCreate: (pair) => {
@@ -285,7 +305,7 @@ async function buildHooks(extConfig: Document, hooks: Record<string, string>) {
     },
   });
 
-  const projectRoot = await getProjectRootDirectory();
+  const projectRoot = rootDirectory ?? (await getProjectRootDirectory());
   const packageManager = await detectPackageManager(projectRoot);
   const execCommand = getExecCommand(packageManager);
 

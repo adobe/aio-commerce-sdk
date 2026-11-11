@@ -11,19 +11,23 @@
  */
 
 import { existsSync, readFileSync } from "node:fs";
-import { mkdir, readFile, stat, writeFile } from "node:fs/promises";
+import { appendFile, mkdir, readFile, stat, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 
 import consola from "consola";
 import { afterEach, describe, expect, test, vi } from "vitest";
+import { parse } from "yaml";
 
 import {
   APP_CONFIG_FILE,
   BACKEND_UI_V2_EXTENSION_POINT_ID,
   CONFIGURATION_EXTENSION_POINT_ID,
   EXTENSIBILITY_EXTENSION_POINT_ID,
+  getExtensionPointFolderPath,
   INSTALL_YAML_FILE,
 } from "#commands/constants";
+import { run as generateActions } from "#commands/generate/actions/main";
+import { run as generateSchema } from "#commands/generate/schema/main";
 import { exec, run } from "#commands/hooks/pre-app-build";
 import {
   getExtConfigPath,
@@ -77,6 +81,12 @@ const ENTRIES_ADDED_RE =
   /extension entries were added to (?<files>.+?)\. This build may not use them, so run the build again/su;
 
 const INSTALL_YAML_WITH_ALL_ENTRIES = `extensions:\n${ORDERED_EXTENSION_POINTS.map((id) => `  - extensionPointId: ${id}`).join("\n")}\n`;
+
+const KEPT_EXT_CONFIG_RE = /has changes that lib-app did not generate/u;
+
+const REMOVED_RE = /^Removed/u;
+
+const infoSpy = vi.spyOn(consola, "info").mockImplementation(() => undefined);
 
 const warnSpy = vi.spyOn(consola, "warn").mockImplementation(() => undefined);
 
@@ -504,6 +514,118 @@ describe("commands/hooks/pre-app-build", () => {
           expect(warnSpy).not.toHaveBeenCalledWith(
             expect.stringMatching(ENTRIES_ADDED_RE),
           );
+        },
+      );
+    });
+
+    describe("cleanup of a removed configuration/1", () => {
+      /** Generates artifacts for a businessConfig while the config on disk no longer has it. */
+      async function withRemovedBusinessConfig(
+        callback: (tempDir: string) => Promise<void>,
+      ) {
+        await withTempProject(
+          {
+            ...makeProjectFiles(minimalValidConfig),
+            ...makeTemplateFiles(),
+          },
+          async (tempDir) => {
+            await generateActions(configWithBusinessConfig, tempDir, tempDir);
+            await generateSchema(configWithBusinessConfig, tempDir);
+
+            warnSpy.mockClear();
+            await callback(tempDir);
+          },
+        );
+      }
+
+      function unrelatedWarnings() {
+        return warnSpy.mock.calls.filter(
+          ([message]) => !String(message).startsWith("Deprecated"),
+        );
+      }
+
+      async function listedExtensionPoints(tempDir: string) {
+        const [appConfig, installYaml] = await Promise.all([
+          readFile(join(tempDir, APP_CONFIG_FILE), "utf-8"),
+          readFile(join(tempDir, INSTALL_YAML_FILE), "utf-8"),
+        ]);
+
+        return {
+          appConfig: Object.keys(parse(appConfig).extensions),
+          install: parse(installYaml).extensions.map(
+            (entry: { extensionPointId: string }) => entry.extensionPointId,
+          ),
+        };
+      }
+
+      test("extensibility/1 deletes the removed artifacts and entries without logging", async () => {
+        await withRemovedBusinessConfig(async (tempDir) => {
+          await run("extensibility/1", tempDir, tempDir);
+
+          expect(
+            existsSync(
+              join(
+                tempDir,
+                getExtensionPointFolderPath(CONFIGURATION_EXTENSION_POINT_ID),
+              ),
+            ),
+          ).toBe(false);
+          expect(await listedExtensionPoints(tempDir)).toEqual({
+            appConfig: [EXTENSIBILITY_EXTENSION_POINT_ID],
+            install: [EXTENSIBILITY_EXTENSION_POINT_ID],
+          });
+          expect(unrelatedWarnings()).toHaveLength(0);
+          expect(infoSpy).not.toHaveBeenCalledWith(
+            expect.stringMatching(REMOVED_RE),
+          );
+        });
+      });
+
+      test("extensibility/1 keeps a modified ext.config.yaml and warns once", async () => {
+        await withRemovedBusinessConfig(async (tempDir) => {
+          const extConfigPath = join(
+            tempDir,
+            getExtConfigPath(CONFIGURATION_EXTENSION_POINT_ID),
+          );
+
+          await appendFile(extConfigPath, "\nmyCustomKey: true\n");
+          await run("extensibility/1", tempDir, tempDir);
+
+          expect(await readFile(extConfigPath, "utf-8")).toContain(
+            "myCustomKey",
+          );
+          expect((await listedExtensionPoints(tempDir)).appConfig).toContain(
+            CONFIGURATION_EXTENSION_POINT_ID,
+          );
+          expect(unrelatedWarnings()).toHaveLength(1);
+          expect(unrelatedWarnings()[0]?.[0]).toMatch(KEPT_EXT_CONFIG_RE);
+        });
+      });
+
+      test.each(["configuration/1", "backend-ui/2"] as const)(
+        "%s does not run the cleanup",
+        async (extension) => {
+          await withRemovedBusinessConfig(async (tempDir) => {
+            await run(extension, tempDir, tempDir);
+
+            expect(
+              existsSync(
+                join(
+                  tempDir,
+                  getExtConfigPath(CONFIGURATION_EXTENSION_POINT_ID),
+                ),
+              ),
+            ).toBe(true);
+            expect(await listedExtensionPoints(tempDir)).toEqual({
+              appConfig: [
+                CONFIGURATION_EXTENSION_POINT_ID,
+                EXTENSIBILITY_EXTENSION_POINT_ID,
+              ],
+              install: expect.arrayContaining([
+                CONFIGURATION_EXTENSION_POINT_ID,
+              ]),
+            });
+          });
         },
       );
     });
