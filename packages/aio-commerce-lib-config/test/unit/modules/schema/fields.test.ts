@@ -49,6 +49,37 @@ const recordedMultipleDynamicListField = {
 };
 
 describe("SchemaBusinessConfigSchema", () => {
+  test.each([true, false])("preserves required: %s", (required) => {
+    const result = v.parse(SchemaBusinessConfigSchema, [
+      { name: "example", required, type: "text" },
+    ]);
+    expect(result[0].required).toBe(required);
+  });
+
+  test("rejects a non-boolean required flag", () => {
+    expect(
+      v.safeParse(SchemaBusinessConfigSchema, [
+        { name: "example", required: "true", type: "text" },
+      ]).success,
+    ).toBe(false);
+  });
+
+  test("preserves lifecycle requirements and rejects unknown operations", () => {
+    const field = {
+      name: "example",
+      requiredFor: ["installation", "upgrade"],
+      type: "text",
+    };
+    expect(v.parse(SchemaBusinessConfigSchema, [field])[0].requiredFor).toEqual(
+      ["installation", "upgrade"],
+    );
+    expect(
+      v.safeParse(SchemaBusinessConfigSchema, [
+        { ...field, requiredFor: ["install"] },
+      ]).success,
+    ).toBe(false);
+  });
+
   test.each([
     ["https://example.com", true],
     ["HTTPS://example.com", true],
@@ -85,6 +116,13 @@ describe("SchemaBusinessConfigSchema", () => {
 });
 
 describe("RecordedSchemaBusinessConfigSchema", () => {
+  test("preserves required on recorded dynamic lists", () => {
+    const result = v.parse(RecordedSchemaBusinessConfigSchema, [
+      { ...recordedDynamicListField, required: true },
+    ]);
+    expect(result[0].required).toBe(true);
+  });
+
   test("accepts a dynamicList field with function options and default", () => {
     const result = v.safeParse(RecordedSchemaBusinessConfigSchema, [
       dynamicListField,

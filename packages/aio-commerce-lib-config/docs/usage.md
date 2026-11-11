@@ -240,6 +240,23 @@ const schema = await getConfigSchema();
 console.log(schema); // Array of field definitions
 ```
 
+#### Required configuration fields
+
+Set `required: true` on any business configuration field to require a non-empty effective value when that field is updated. `required` is optional and defaults to `false` when omitted.
+
+```typescript
+const schema = [
+  { name: "apiKey", type: "password", required: true },
+  { name: "enabled", type: "boolean", required: true, default: false },
+];
+```
+
+Only fields included in a partial update are checked. Empty strings and empty lists do not satisfy the requirement; `false` is a valid boolean value. Passing `null` removes the scope override and succeeds only if the resulting inherited value or schema default is non-empty. An explicit empty override is rejected even when a parent has a value. Failed updates throw `CommerceSdkValidationError` before saving any changes. Fields not marked required retain their existing behavior.
+
+Use `requiredFor: ["installation", "upgrade"]` to independently require a field before those lifecycle operations start. Each operation checks the effective **global** value, including defaults; `false` is valid and empty strings and arrays are missing. Scope-specific overrides do not satisfy this global requirement. `requiredFor` does not imply `required` for partial updates.
+
+After initializing with the applicable environment-filtered schema, `getMissingRequiredFor("installation")` or `getMissingRequiredFor("upgrade")` returns the names of missing global fields without exposing password values.
+
 ### Using Configuration in Runtime Actions
 
 This example demonstrates a typical use case: retrieving scope-specific configuration values within a runtime action. The action receives scope information (store code and level) from the incoming request parameters and uses it to fetch the appropriate configuration values. This pattern ensures that each request is processed with the correct settings for that particular scope.
