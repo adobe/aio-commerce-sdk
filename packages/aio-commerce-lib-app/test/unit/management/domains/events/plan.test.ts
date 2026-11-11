@@ -10,7 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
-import { describe, expect, test, vi } from "vitest";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 
 import { defineBranchStep } from "#management/common/workflow/index";
 import { eventingStep } from "#management/domains/events/index";
@@ -28,6 +28,7 @@ import {
   getProviderKey,
   getRegistrationDescription,
   getRegistrationName,
+  getStoredEventProviderKeys,
   groupEventsByRuntimeActions,
 } from "#management/domains/events/utils";
 import { planLifecycle } from "#management/lifecycle/planning";
@@ -63,6 +64,13 @@ import type {
   EventingSnapshotData,
 } from "#management/domains/events/types";
 
+vi.mock("#management/domains/events/utils", async (importOriginal) => ({
+  ...(await importOriginal<
+    typeof import("#management/domains/events/utils")
+  >()),
+  getStoredEventProviderKeys: vi.fn(),
+}));
+
 // The lifecycle tests at the end plan through the real steps, which build their own API clients.
 // They get the mocked clients of the world a test sets up instead.
 const stepContext = vi.hoisted(() => ({ current: null as unknown }));
@@ -72,6 +80,10 @@ vi.mock("#management/domains/events/context", async (importOriginal) => ({
   >()),
   createEventsStepContext: () => stepContext.current,
 }));
+
+beforeEach(() => {
+  vi.mocked(getStoredEventProviderKeys).mockReset().mockResolvedValue([]);
+});
 
 const { metadata } = configWithCommerceEventing;
 
@@ -1445,6 +1457,181 @@ describe("planExternalEvents", () => {
       "update registration change",
       "add metadata change",
     ]);
+  });
+  describe("two live providers sharing an instance id", () => {
+    const config = external([event("ext.created", ["pkg/a"])]);
+
+    /** The deployed provider, plus an empty one under the same instance id with a registration. */
+    const withDuplicate = () => {
+      const live = deployed(config, EXTERNAL_PROVIDER_TYPE);
+      const [picked] = live.providers;
+      live.providers.push({
+        ...picked,
+        _embedded: { eventmetadata: [] },
+        _links: workspaceLinks("io-dup", TEST_WORKSPACE_ID),
+        id: "io-dup",
+      });
+
+      live.registrations.push({
+        ...live.registrations[0],
+        events_of_interest: [{ event_code: "x", provider_id: "io-dup" }],
+        id: "reg-dup",
+        name: "Dup registration",
+        registration_id: "reg-dup",
+        runtime_action: "pkg/dup",
+      } as IoEventRegistration);
+
+      return live;
+    };
+
+    test("keeps the provider with metadata and removes the other one with its registration", async () => {
+      const plan = await planExternal({
+        baseline: config,
+        live: withDuplicate(),
+        target: config,
+      });
+
+      expect(plan.providerIds).toEqual({ ext: "io-ext" });
+      expect(summary(plan)).toEqual([
+        "remove registration change",
+        "remove provider change",
+      ]);
+
+      const removed = plan.operations.flatMap((op) =>
+        op.kind === "remove" && op.before.resourceType === "provider"
+          ? [op.before]
+          : [],
+      );
+      expect(removed).toMatchObject([
+        { providerId: "io-dup", providerKey: "ext" },
+      ]);
+    });
+
+    test("removes the other provider under the key of the kept one without a baseline", async () => {
+      const plan = await planExternal({
+        live: withDuplicate(),
+        target: config,
+      });
+
+      expect(plan.providerIds).toEqual({ ext: "io-ext" });
+      expect(summary(plan)).toEqual([
+        "remove registration drift",
+        "remove provider drift",
+      ]);
+      expect(plan.operations.at(-1)).toMatchObject({
+        before: { providerId: "io-dup", providerKey: "ext" },
+      });
+    });
+
+    test("removes both providers on an uninstall", async () => {
+      const plan = await planExternal({
+        baseline: config,
+        live: withDuplicate(),
+      });
+
+      const removedIds = plan.operations.flatMap((op) =>
+        op.kind === "remove" && op.before.resourceType === "provider"
+          ? [op.before.providerId]
+          : [],
+      );
+      expect(removedIds.sort()).toEqual(["io-dup", "io-ext"]);
+      expect(plan.providerIds).toEqual({});
+    });
+  });
+});
+
+describe("stored event data of a dropped provider", () => {
+  const config = externalConfig([
+    {
+      events: [event("ext.created", ["pkg/a"])],
+      provider: { description: "d", key: "ext", label: "External" },
+    },
+  ]);
+
+  const gone: World = {
+    commerceProviders: [],
+    providers: [],
+    registrations: [],
+    subscriptions: [],
+  };
+
+  const stored = (...keys: string[]) =>
+    vi.mocked(getStoredEventProviderKeys).mockResolvedValue(keys);
+
+  test("plans a removal when the provider is already gone and its data is stored", async () => {
+    stored("ext");
+
+    const plan = await planExternal({ baseline: config, live: gone });
+
+    expect(summary(plan)).toEqual(["remove storedEvents change"]);
+    expect(plan.operations[0]).toMatchObject({
+      before: { providerKey: "ext", resourceType: "storedEvents" },
+      id: "remove:stored-events:ext",
+      kind: "remove",
+      label: 'Remove stored event data of provider "ext"',
+      reason: "change",
+    });
+    expect(plan.operations[0].itemRefs.map((ref) => ref.key)).toEqual([
+      `ext:${getNamespacedEvent(metadata, "ext.created")}`,
+    ]);
+  });
+
+  test("plans nothing when no data is stored under the key", async () => {
+    stored("other");
+
+    const plan = await planExternal({ baseline: config, live: gone });
+
+    expect(plan.operations).toEqual([]);
+  });
+
+  test("plans nothing extra when the provider is live, because removing it prunes the data", async () => {
+    stored("ext");
+
+    const plan = await planExternal({
+      baseline: config,
+      live: deployed(config, EXTERNAL_PROVIDER_TYPE),
+    });
+
+    expect(summary(plan)).not.toContain("remove storedEvents change");
+    expect(summary(plan)).toContain("remove provider change");
+  });
+
+  test("plans nothing when the target keeps the provider", async () => {
+    stored("ext");
+
+    const plan = await planExternal({
+      baseline: config,
+      live: gone,
+      target: config,
+    });
+
+    expect(summary(plan)).not.toContain("remove storedEvents change");
+  });
+
+  test("does not read the stored data when the target keeps every provider", async () => {
+    await planExternal({ baseline: config, live: gone, target: config });
+
+    expect(getStoredEventProviderKeys).not.toHaveBeenCalled();
+  });
+
+  test("blocks the plan when the stored data cannot be read", async () => {
+    vi.mocked(getStoredEventProviderKeys).mockRejectedValue(new Error("boom"));
+
+    const result = await planExternalEvents(
+      input("external", { baseline: config, live: gone }),
+      contextFor(gone),
+    );
+
+    expect(result).toMatchObject({
+      issues: [
+        {
+          blocking: true,
+          code: "EVENTS_STORED_READ_FAILED",
+          message: expect.stringContaining("boom"),
+        },
+      ],
+      kind: "blocked",
+    });
   });
 });
 
