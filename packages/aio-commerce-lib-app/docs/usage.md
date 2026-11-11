@@ -1127,6 +1127,7 @@ When you run `generate actions`, the CLI automatically:
 1. Reads your `app.commerce.config.*` file
 2. Finds all custom installation scripts defined in `installation.customInstallationSteps`
 3. Appends them to the generated `installation` action.
+4. Adds any missing extension entries to `app.config.yaml` and `install.yaml`, keeping existing ones.
 
 This ensures your installation action includes the latest script imports and configuration.
 

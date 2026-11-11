@@ -125,12 +125,20 @@ describe("commands/hooks/postinstall", () => {
       );
     });
 
-    test("does not create app.config.yaml when it is missing", async () => {
+    test("creates the app.config.yaml extension entries when it is missing", async () => {
       await withTempProject(
         { ...BUSINESS_CONFIG_PROJECT, ...makeTemplateFiles() },
         async (tempDir) => {
           await run(configWithBusinessConfig, tempDir, tempDir);
-          expect(existsSync(join(tempDir, APP_CONFIG_FILE))).toBe(false);
+          const content = await readFile(
+            join(tempDir, APP_CONFIG_FILE),
+            "utf-8",
+          );
+
+          expect(Object.keys(parse(content).extensions)).toEqual([
+            CONFIGURATION_EXTENSION_POINT_ID,
+            EXTENSIBILITY_EXTENSION_POINT_ID,
+          ]);
         },
       );
     });
