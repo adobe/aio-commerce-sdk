@@ -10,6 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
+import { CommerceEnvSchema } from "@adobe/aio-commerce-lib-core/commerce";
 import { nonEmptyStringValueSchema } from "@aio-commerce-sdk/common-utils/valibot";
 import * as v from "valibot";
 
@@ -34,6 +35,19 @@ export type AppData = v.InferOutput<typeof AppDataSchema>;
  */
 export const LifecycleRequestContextSchema = v.object({
   appData: AppDataSchema,
+
+  // The Commerce instance the service sends on every lifecycle call. Nullish because the service
+  // may serialize a missing value as null. Only used to uninstall an app that has no association
+  // record.
+  commerceBaseUrl: v.nullish(
+    v.pipe(
+      v.string(),
+      v.url(
+        "The 'commerceBaseUrl' field must be a valid absolute URL (e.g., 'https://my-store.example.com')",
+      ),
+    ),
+  ),
+  commerceEnv: v.nullish(CommerceEnvSchema),
 
   // Set with `installedVersion` when the app is installed with only business configuration, so it
   // has no lifecycle baseline. Planning then resolves an upgrade instead of an install. Ignored

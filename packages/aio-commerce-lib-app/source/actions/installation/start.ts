@@ -12,11 +12,16 @@
 
 import { badRequest } from "@adobe/aio-commerce-lib-core/responses";
 
+import {
+  getAssociationData,
+  setAssociationData,
+} from "#management/association/repository";
 import { nowIsoString } from "#management/common/workflow/utils";
 import {
   CURRENT_STATE_KEY,
   normalizeExpiredAttempt,
 } from "#management/lifecycle/state";
+import { createOrchestrationStateStore } from "#management/lifecycle/storage";
 
 import {
   attemptInProgressConflict,
@@ -32,6 +37,7 @@ import {
   toBusinessConfigOnlyConfig,
 } from "./plan";
 
+import type { AssociatedCommerceData } from "#management/association/types";
 import type { OrchestrationState } from "#management/common/orchestration";
 import type { RequestHandlerArgs } from "./common";
 import type { PreparedRequest } from "./plan";
@@ -48,8 +54,11 @@ export async function startPlannedRequest(args: RequestHandlerArgs) {
     );
   }
 
-  const prepared = await prepareRequest(args);
   const { logger } = args;
+  const prepared = await prepareRequest(
+    args,
+    await getPendingPlanOperation(planId),
+  );
 
   if (prepared.kind === "rejected") {
     return prepared.response;
@@ -132,6 +141,10 @@ export async function startPlannedRequest(args: RequestHandlerArgs) {
     return planned.response;
   }
 
+  // Stored only after every check that can refuse the start. A record makes later install and
+  // upgrade requests pass the association check, so a preview or a refused start must not leave one.
+  await backfillAssociation(request.commerceFromBody, logger);
+
   return startPlannedOperation({
     actionVersion: request.actionVersion,
     logger,
@@ -139,6 +152,42 @@ export async function startPlannedRequest(args: RequestHandlerArgs) {
     planning: planned.planning,
     runtime: request.runtime,
   });
+}
+
+/**
+ * Stores the Commerce instance of the request as the association record, unless a record exists.
+ * Does nothing when the request did not supply the instance.
+ */
+async function backfillAssociation(
+  commerce: AssociatedCommerceData | null,
+  logger: RequestHandlerArgs["logger"],
+) {
+  if (!commerce) {
+    return;
+  }
+
+  // Another request may have stored the record since this one read it, and that one is the
+  // authoritative one.
+  if (await getAssociationData()) {
+    return;
+  }
+
+  await setAssociationData({ commerce });
+  logger.info(
+    `Stored the Commerce instance "${commerce.baseUrl}" of the request as the association record.`,
+  );
+}
+
+/**
+ * Reads the operation of the pending plan, or `undefined` when `planId` is not the pending plan.
+ */
+async function getPendingPlanOperation(planId: string) {
+  // The request params are resolved before the runtime reads the state, and the Commerce instance
+  // they carry depends on the operation. The start request does not say which operation it starts.
+  const stateStore = await createOrchestrationStateStore();
+  const pendingPlan = (await stateStore.get(CURRENT_STATE_KEY))?.pendingPlan;
+
+  return pendingPlan?.id === planId ? pendingPlan.operation : undefined;
 }
 
 /**

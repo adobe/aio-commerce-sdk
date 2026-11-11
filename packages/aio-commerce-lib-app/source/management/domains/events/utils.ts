@@ -535,12 +535,14 @@ export function makeWorkspaceConfig(context: EventsExecutionContext) {
   };
 }
 
+// The API returns the link as an absolute URL. The origin is optional so a relative path works too.
 const PROVIDER_WORKSPACE_PATH =
-  /^\/events\/[^/]+\/[^/]+\/(?<workspace>[^/]+)\/providers\//u;
+  /^(?:https?:\/\/[^/?#]+)?\/events\/[^/]+\/[^/]+\/(?<workspace>[^/]+)\/providers\//u;
 
 /**
  * The workspace id of an I/O provider, read from its `rel:update` link
- * (`/events/{org}/{project}/{workspace}/providers/{id}`). Null when the provider has no such link.
+ * (`/events/{org}/{project}/{workspace}/providers/{id}`), relative or absolute. Null when the
+ * provider has no such link or the link has another shape.
  *
  * @param links - The HAL links of the provider.
  */
@@ -548,7 +550,9 @@ export function getProviderWorkspaceId(
   links: Record<string, { href: string } | undefined> | undefined,
 ): string | null {
   const href = links?.["rel:update"]?.href;
-  return href?.match(PROVIDER_WORKSPACE_PATH)?.[1] ?? null;
+  return typeof href === "string"
+    ? (href.match(PROVIDER_WORKSPACE_PATH)?.groups?.workspace ?? null)
+    : null;
 }
 
 /**
