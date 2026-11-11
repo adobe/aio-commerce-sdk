@@ -31,6 +31,7 @@ import type { Document, YAMLSeq } from "yaml";
  * @param extensionPointId - The id of the extension point.
  * @param rootDirectory - The root directory of the project.
  * @param commentBefore - The comment to add before the extension point include pair.
+ * @returns True if the extension point was added, false if it was already configured.
  */
 export async function addExtensionPointToAppConfig(
   extensionPointId: string,
@@ -62,7 +63,7 @@ export async function addExtensionPointToAppConfig(
       `Extension "${extensionPointId}" already configured in ${APP_CONFIG_FILE}`,
     );
 
-    return;
+    return false;
   }
 
   consola.info(
@@ -80,6 +81,7 @@ export async function addExtensionPointToAppConfig(
 
   extension.set("$include", includePath);
   await writeFile(appConfigPath, doc.toString(), "utf-8");
+  return true;
 }
 
 /**
@@ -87,6 +89,7 @@ export async function addExtensionPointToAppConfig(
  * @param extensionPointId - The id of the extension point.
  * @param rootDirectory - The root directory of the project.
  * @param commentBefore - The comment to add before the extension point include pair.
+ * @returns True if the extension point was added, false if it was already configured.
  */
 export async function addExtensionPointToInstallYaml(
   extensionPointId: string,
@@ -122,7 +125,7 @@ export async function addExtensionPointToInstallYaml(
       `Extension "${extensionPointId}" already configured in ${INSTALL_YAML_FILE}`,
     );
 
-    return;
+    return false;
   }
 
   consola.info(
@@ -135,4 +138,5 @@ export async function addExtensionPointToInstallYaml(
   extensions.items.push(extension);
 
   await writeFile(installYamlPath, doc.toString(), "utf-8");
+  return true;
 }

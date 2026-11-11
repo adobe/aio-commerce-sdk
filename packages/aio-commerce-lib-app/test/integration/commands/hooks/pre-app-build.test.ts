@@ -22,6 +22,7 @@ import {
   BACKEND_UI_V2_EXTENSION_POINT_ID,
   CONFIGURATION_EXTENSION_POINT_ID,
   EXTENSIBILITY_EXTENSION_POINT_ID,
+  INSTALL_YAML_FILE,
 } from "#commands/constants";
 import { exec, run } from "#commands/hooks/pre-app-build";
 import {
@@ -71,6 +72,11 @@ vi.mock("@aio-commerce-sdk/scripting-utils/env", async (importOriginal) => ({
 
 const ORDER_REWRITTEN_RE =
   /were reordered \(commerce\/backend-ui\/2, commerce\/configuration\/1, commerce\/extensibility\/1\).*one-off/su;
+
+const ENTRIES_ADDED_RE =
+  /extension entries were added to (?<files>.+?)\. This build may not use them, so run the build again/su;
+
+const INSTALL_YAML_WITH_ALL_ENTRIES = `extensions:\n${ORDERED_EXTENSION_POINTS.map((id) => `  - extensionPointId: ${id}`).join("\n")}\n`;
 
 const warnSpy = vi.spyOn(consola, "warn").mockImplementation(() => undefined);
 
@@ -386,7 +392,11 @@ describe("commands/hooks/pre-app-build", () => {
       );
 
       await withTempProject(
-        { ...makeProjectFiles(configWithAdminUiSingleGrid), ...wrongOrder },
+        {
+          ...makeProjectFiles(configWithAdminUiSingleGrid),
+          ...wrongOrder,
+          [INSTALL_YAML_FILE]: INSTALL_YAML_WITH_ALL_ENTRIES,
+        },
         async (tempDir) => {
           await expect(run("backend-ui/2", tempDir)).resolves.toBeUndefined();
 
@@ -407,7 +417,11 @@ describe("commands/hooks/pre-app-build", () => {
       );
 
       await withTempProject(
-        { ...makeProjectFiles(configWithAdminUiSingleGrid), ...wrongOrder },
+        {
+          ...makeProjectFiles(configWithAdminUiSingleGrid),
+          ...wrongOrder,
+          [INSTALL_YAML_FILE]: INSTALL_YAML_WITH_ALL_ENTRIES,
+        },
         async (tempDir) => {
           await run("backend-ui/2", tempDir);
           warnSpy.mockClear();
@@ -423,6 +437,7 @@ describe("commands/hooks/pre-app-build", () => {
         {
           ...makeProjectFiles(configWithAdminUiSingleGrid),
           ...makeAppConfigFile(ORDERED_EXTENSION_POINTS),
+          [INSTALL_YAML_FILE]: INSTALL_YAML_WITH_ALL_ENTRIES,
         },
         async (tempDir) => {
           const path = join(tempDir, APP_CONFIG_FILE);
@@ -431,6 +446,64 @@ describe("commands/hooks/pre-app-build", () => {
           await expect(run("backend-ui/2", tempDir)).resolves.toBeUndefined();
           expect((await stat(path)).mtimeMs).toBe(before.mtimeMs);
           expect(warnSpy).not.toHaveBeenCalled();
+        },
+      );
+    });
+
+    test("adds missing entries to app.config.yaml and install.yaml and warns once", async () => {
+      await withTempProject(
+        makeProjectFiles(minimalValidConfig),
+        async (tempDir) => {
+          await run("backend-ui/2", tempDir, tempDir);
+
+          const contents = await Promise.all(
+            [APP_CONFIG_FILE, INSTALL_YAML_FILE].map((file) =>
+              readFile(join(tempDir, file), "utf-8"),
+            ),
+          );
+
+          for (const content of contents) {
+            expect(content).toContain(EXTENSIBILITY_EXTENSION_POINT_ID);
+          }
+
+          expect(warnSpy).toHaveBeenCalledOnce();
+          expect(warnSpy.mock.calls[0]?.[0]).toMatch(ENTRIES_ADDED_RE);
+          expect(warnSpy.mock.calls[0]?.[0]).toContain(
+            `${APP_CONFIG_FILE} and ${INSTALL_YAML_FILE}`,
+          );
+        },
+      );
+    });
+
+    test("names only install.yaml when only it lacked entries", async () => {
+      await withTempProject(
+        {
+          ...makeProjectFiles(minimalValidConfig),
+          ...makeAppConfigFile([EXTENSIBILITY_EXTENSION_POINT_ID]),
+        },
+        async (tempDir) => {
+          await run("backend-ui/2", tempDir, tempDir);
+
+          expect(warnSpy).toHaveBeenCalledOnce();
+          expect(warnSpy.mock.calls[0]?.[0]).toMatch(ENTRIES_ADDED_RE);
+          expect(warnSpy.mock.calls[0]?.[0]).not.toContain(APP_CONFIG_FILE);
+        },
+      );
+    });
+
+    test("does not warn about entries when both files already have them", async () => {
+      await withTempProject(
+        {
+          ...makeProjectFiles(minimalValidConfig),
+          ...makeAppConfigFile([EXTENSIBILITY_EXTENSION_POINT_ID]),
+          [INSTALL_YAML_FILE]: `extensions:\n  - extensionPointId: ${EXTENSIBILITY_EXTENSION_POINT_ID}\n`,
+        },
+        async (tempDir) => {
+          await run("backend-ui/2", tempDir, tempDir);
+
+          expect(warnSpy).not.toHaveBeenCalledWith(
+            expect.stringMatching(ENTRIES_ADDED_RE),
+          );
         },
       );
     });
@@ -520,6 +593,7 @@ describe("commands/hooks/pre-app-build", () => {
           ...makeProjectFiles(configWithAdminUiSingleGrid),
           ...makeTemplateFiles(),
           ...makeAppConfigFile([...ORDERED_EXTENSION_POINTS].reverse()),
+          [INSTALL_YAML_FILE]: INSTALL_YAML_WITH_ALL_ENTRIES,
         },
         async () => {
           await exec();

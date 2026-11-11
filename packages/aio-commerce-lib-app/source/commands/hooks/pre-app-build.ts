@@ -27,10 +27,13 @@ import {
   BACKEND_UI_V2_EXTENSION_POINT_ID,
   CONFIGURATION_EXTENSION_POINT_ID,
   EXTENSIBILITY_EXTENSION_POINT_ID,
+  INSTALL_YAML_FILE,
 } from "#commands/constants";
 import { getRuntimeActions } from "#commands/generate/actions/config";
 import { TEMPLATES_DIR } from "#commands/generate/actions/constants";
 import {
+  ensureAppConfig,
+  ensureInstallYaml,
   generateActionFiles,
   prepareRuntimeAppConfigModule,
   readExtConfig,
@@ -43,7 +46,7 @@ import {
   prepareWebSourceImportAlias,
 } from "#commands/generate/web-src";
 import { loadAppManifest } from "#commands/utils";
-import { hasBackendUiV2Components } from "#config/index";
+import { getConfigDomains, hasBackendUiV2Components } from "#config/index";
 
 import type { ExtConfig } from "@aio-commerce-sdk/scripting-utils/yaml/types";
 
@@ -67,6 +70,22 @@ export async function run(
   }
 
   const appManifest = await loadAppManifest(projectRoot);
+  const domains = getConfigDomains(appManifest);
+
+  const addedTo: string[] = [];
+  if (await ensureAppConfig(domains, appManifest, projectRoot)) {
+    addedTo.push(APP_CONFIG_FILE);
+  }
+
+  if (await ensureInstallYaml(domains, appManifest, projectRoot)) {
+    addedTo.push(INSTALL_YAML_FILE);
+  }
+
+  if (addedTo.length > 0) {
+    consola.warn(
+      `Missing extension entries were added to ${addedTo.join(" and ")}. This build may not use them, so run the build again. This is a one-off change.`,
+    );
+  }
 
   // The runtime config module re-exports the manifest, and every extension point reads it.
   // Extension points can run in any order, so each hook regenerates it to keep it up to date.

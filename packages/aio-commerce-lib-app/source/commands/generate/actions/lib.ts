@@ -573,37 +573,44 @@ export async function generateCustomScriptsTemplate(
  * @param domains - Domains enabled in the app configuration.
  * @param config - The validated app configuration.
  * @param projectRoot - Resolved project root containing app.config.yaml.
+ * @returns True if at least one extension entry was added.
  */
 export async function ensureAppConfig(
   domains: Set<CommerceAppConfigDomain>,
   config: CommerceAppConfigOutputModel,
   projectRoot: string,
 ) {
+  let added = false;
+
   if (hasBackendUiV2Components(config)) {
-    await addExtensionPointToAppConfig(
-      BACKEND_UI_V2_EXTENSION_POINT_ID,
-      projectRoot,
-      " This extension is required for Admin UI. Do not remove.",
-    );
+    added =
+      (await addExtensionPointToAppConfig(
+        BACKEND_UI_V2_EXTENSION_POINT_ID,
+        projectRoot,
+        " This extension is required for Admin UI. Do not remove.",
+      )) || added;
   }
 
   if (domains.has("businessConfig.schema")) {
-    await addExtensionPointToAppConfig(
-      CONFIGURATION_EXTENSION_POINT_ID,
-      projectRoot,
-      " This extension is required for business configuration. Do not remove.",
-    );
+    added =
+      (await addExtensionPointToAppConfig(
+        CONFIGURATION_EXTENSION_POINT_ID,
+        projectRoot,
+        " This extension is required for business configuration. Do not remove.",
+      )) || added;
   }
 
   // This is always needed (to get the app config at least)
-  await addExtensionPointToAppConfig(
-    EXTENSIBILITY_EXTENSION_POINT_ID,
-    projectRoot,
-    " This extension is required for app management. Do not remove.",
-  );
+  added =
+    (await addExtensionPointToAppConfig(
+      EXTENSIBILITY_EXTENSION_POINT_ID,
+      projectRoot,
+      " This extension is required for app management. Do not remove.",
+    )) || added;
 
   // Entries that were already in the file keep their place unless we sort them.
   await ensureExtensionPointsOrder(projectRoot);
+  return added;
 }
 
 /**
@@ -611,32 +618,40 @@ export async function ensureAppConfig(
  * @param domains - Domains enabled in the app configuration.
  * @param config - The validated app configuration.
  * @param projectRoot - Resolved project root containing install.yaml.
+ * @returns True if at least one extension entry was added.
  */
 export async function ensureInstallYaml(
   domains: Set<CommerceAppConfigDomain>,
   config: CommerceAppConfigOutputModel,
   projectRoot: string,
 ) {
+  let added = false;
+
   if (domains.has("businessConfig.schema")) {
-    await addExtensionPointToInstallYaml(
-      CONFIGURATION_EXTENSION_POINT_ID,
-      projectRoot,
-      " This extension is required for business configuration. Do not remove.",
-    );
+    added =
+      (await addExtensionPointToInstallYaml(
+        CONFIGURATION_EXTENSION_POINT_ID,
+        projectRoot,
+        " This extension is required for business configuration. Do not remove.",
+      )) || added;
   }
 
   if (hasBackendUiV2Components(config)) {
-    await addExtensionPointToInstallYaml(
-      BACKEND_UI_V2_EXTENSION_POINT_ID,
-      projectRoot,
-      " This extension is required for Admin UI. Do not remove.",
-    );
+    added =
+      (await addExtensionPointToInstallYaml(
+        BACKEND_UI_V2_EXTENSION_POINT_ID,
+        projectRoot,
+        " This extension is required for Admin UI. Do not remove.",
+      )) || added;
   }
 
   // This is always needed (to get the app config at least)
-  await addExtensionPointToInstallYaml(
-    EXTENSIBILITY_EXTENSION_POINT_ID,
-    projectRoot,
-    " This extension is required for app management. Do not remove.",
-  );
+  added =
+    (await addExtensionPointToInstallYaml(
+      EXTENSIBILITY_EXTENSION_POINT_ID,
+      projectRoot,
+      " This extension is required for app management. Do not remove.",
+    )) || added;
+
+  return added;
 }
