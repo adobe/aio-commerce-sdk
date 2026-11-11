@@ -1974,6 +1974,7 @@ describe("installationRuntimeAction", () => {
           businessConfig: {
             schema: [
               {
+                default: "",
                 name: "secret",
                 requiredFor: ["installation", "upgrade"],
                 type: "password",
