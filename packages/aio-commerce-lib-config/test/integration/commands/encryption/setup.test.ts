@@ -33,7 +33,7 @@ describe("commands/encryption/setup", () => {
     test("generates and writes an encryption key when none exists", async () => {
       await withTempFiles({ ".env": "" }, async (tempDir) => {
         const envPath = join(tempDir, ".env");
-        run(envPath);
+        await run(envPath);
 
         const contents = await readFile(envPath, "utf-8");
         expect(contents).toContain(`${ENCRYPTION_KEY_ENV_VAR}=`);
@@ -53,7 +53,7 @@ describe("commands/encryption/setup", () => {
         { ".env": `${ENCRYPTION_KEY_ENV_VAR}=${existingKey}` },
         async (tempDir) => {
           const envPath = join(tempDir, ".env");
-          run(envPath);
+          await run(envPath);
 
           const contents = await readFile(envPath, "utf-8");
           expect(contents).toContain(

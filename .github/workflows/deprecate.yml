@@ -4,24 +4,24 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version to deprecate (e.g., 1.0.0 or @adobe/aio-commerce-lib-config@1.0.0)'
+        description: "Version to deprecate (e.g., 1.0.0 or @adobe/aio-commerce-lib-config@1.0.0)"
         required: true
         type: string
 
       message:
-        description: 'Deprecation message'
+        description: "Deprecation message"
         required: true
         type: string
-        default: 'This version has been deprecated. Please upgrade to the latest version.'
+        default: "This version has been deprecated. Please upgrade to the latest version."
 
       unpublish:
-        description: 'Also unpublish the version (WARNING: Irreversible and discouraged by npm)'
+        description: "Also unpublish the version (WARNING: Irreversible and discouraged by npm)"
         required: false
         type: boolean
         default: false
 
       dry_run:
-        description: 'Dry run (simulate without making actual changes)'
+        description: "Dry run (simulate without making actual changes)"
         required: false
         type: boolean
         default: false
@@ -41,8 +41,8 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: 24
-          registry-url: 'https://registry.npmjs.org'
+          node-version: 26
+          registry-url: "https://registry.npmjs.org"
 
       - name: Validate and normalize version
         id: version
