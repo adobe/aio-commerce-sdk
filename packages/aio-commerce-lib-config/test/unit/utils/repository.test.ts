@@ -117,6 +117,26 @@ describe("getAllSharedStates", () => {
     expect(second).toEqual(first);
     expect(mockInitState).toHaveBeenCalledTimes(4);
   });
+
+  test("returns only the regions that initialize when others reject", async () => {
+    // `aio-lib-state` rejects every region but `amer` when AIO_CLI_ENV is `stage`.
+    mockInitState.mockImplementation(({ region }: { region: string }) =>
+      region === "amer"
+        ? Promise.resolve({ region })
+        : Promise.reject(new Error(`stage does not support ${region}`)),
+    );
+
+    const { getAllSharedStates } = await import("#utils/repository");
+
+    await expect(getAllSharedStates()).resolves.toEqual([{ region: "amer" }]);
+  });
+
+  test("returns no clients when no region initializes", async () => {
+    mockInitState.mockRejectedValue(new Error("unavailable"));
+    const { getAllSharedStates } = await import("#utils/repository");
+
+    await expect(getAllSharedStates()).resolves.toEqual([]);
+  });
 });
 
 describe("getSharedFiles", () => {

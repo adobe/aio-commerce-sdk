@@ -30,6 +30,8 @@ vi.mock("#utils/repository", () => ({
 const SCOPE_CODE = "website_1";
 const FILE_PATH = "scope/website_1/configuration.json";
 const CACHE_KEY = `configuration.${SCOPE_CODE}`;
+const UNCLEARED_CACHE_ERROR =
+  /could not be cleared in 1 region.*region unavailable/u;
 
 /** Reads back the payload a region's state client actually holds for the scope, or null. */
 async function readCachedPayload(state: InstanceType<typeof MockState>) {
@@ -69,7 +71,7 @@ describe("configuration-repository", () => {
       );
     });
 
-    test("still invalidates the other regions when one region's delete rejects", async () => {
+    test("clears the other regions, then fails, when one region's delete rejects", async () => {
       mockStatesByRegion[1].delete.mockRejectedValueOnce(
         new Error("region unavailable"),
       );
@@ -77,8 +79,12 @@ describe("configuration-repository", () => {
         "#modules/configuration/configuration-repository"
       );
 
-      await expect(deleteConfig(SCOPE_CODE)).resolves.toBeUndefined();
+      await expect(deleteConfig(SCOPE_CODE)).rejects.toThrow(
+        UNCLEARED_CACHE_ERROR,
+      );
 
+      // The file is gone, so the failure only concerns the cached entry.
+      await expect(mockFiles.read(FILE_PATH)).rejects.toThrow("ENOENT");
       await expect(
         readCachedPayload(mockStatesByRegion[0]),
       ).resolves.toBeNull();
@@ -90,6 +96,22 @@ describe("configuration-repository", () => {
       await expect(readCachedPayload(mockStatesByRegion[1])).resolves.toBe(
         "stale",
       );
+    });
+
+    test("can be retried after a failed cache clear", async () => {
+      mockStatesByRegion[1].delete.mockRejectedValueOnce(
+        new Error("region unavailable"),
+      );
+      const { deleteConfig } = await import(
+        "#modules/configuration/configuration-repository"
+      );
+
+      await expect(deleteConfig(SCOPE_CODE)).rejects.toThrow();
+      await expect(deleteConfig(SCOPE_CODE)).resolves.toBeUndefined();
+
+      await expect(
+        readCachedPayload(mockStatesByRegion[1]),
+      ).resolves.toBeNull();
     });
   });
 
@@ -115,6 +137,24 @@ describe("configuration-repository", () => {
         mockStatesByRegion
           .slice(1)
           .map((state) => expect(readCachedPayload(state)).resolves.toBeNull()),
+      );
+    });
+
+    test("still stores the value when another region's cache cannot be cleared", async () => {
+      mockStatesByRegion[1].delete.mockRejectedValueOnce(
+        new Error("region unavailable"),
+      );
+      const { persistConfig } = await import(
+        "#modules/configuration/configuration-repository"
+      );
+
+      await expect(
+        persistConfig(SCOPE_CODE, { name: "value" }, 3600),
+      ).resolves.toBeUndefined();
+
+      const fileContent = await mockFiles.read(FILE_PATH);
+      expect(fileContent.toString("utf8")).toBe(
+        JSON.stringify({ name: "value" }),
       );
     });
 

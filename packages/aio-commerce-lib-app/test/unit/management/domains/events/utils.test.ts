@@ -337,7 +337,35 @@ describe("getCommerceEventingConfigurationUpdateParams", () => {
 });
 
 describe("getProviderWorkspaceId", () => {
-  test("reads the workspace from the rel:update link", () => {
+  // The I/O Events API sends every link as an absolute URL (measured on stage).
+  const STAGE_LINK =
+    "https://api-stage.adobe.io/events/271530/4566206088344952457/4566206088344977280/providers/33be8204-9a97-47bb-b0d7-58703f72e67e";
+
+  test("reads the workspace from the absolute rel:update link of the API", () => {
+    expect(
+      getProviderWorkspaceId({
+        "rel:eventmetadata": {
+          href: "https://api-stage.adobe.io/events/providers/33be8204-9a97-47bb-b0d7-58703f72e67e/eventmetadata",
+        },
+        "rel:update": { href: STAGE_LINK },
+        self: {
+          href: "https://api-stage.adobe.io/events/providers/33be8204-9a97-47bb-b0d7-58703f72e67e",
+        },
+      }),
+    ).toBe("4566206088344977280");
+  });
+
+  test("reads the workspace from the link of another host", () => {
+    expect(
+      getProviderWorkspaceId({
+        "rel:update": {
+          href: STAGE_LINK.replace("api-stage.adobe.io", "api.adobe.io"),
+        },
+      }),
+    ).toBe("4566206088344977280");
+  });
+
+  test("reads the workspace from a relative rel:update link", () => {
     expect(
       getProviderWorkspaceId({
         "rel:update": {
@@ -351,7 +379,51 @@ describe("getProviderWorkspaceId", () => {
     expect(
       getProviderWorkspaceId({ self: { href: "/providers/1" } }),
     ).toBeNull();
+    expect(getProviderWorkspaceId({})).toBeNull();
     expect(getProviderWorkspaceId(undefined)).toBeNull();
+  });
+
+  test.each([
+    [
+      "a link without the providers path",
+      "https://api-stage.adobe.io/events/1/2/3",
+    ],
+    ["a self link", "https://api-stage.adobe.io/events/providers/abc"],
+    ["a path with too few segments", "/events/1/2/providers/abc"],
+    ["a path with an empty segment", "/events/1//3/providers/abc"],
+    ["a path that does not start with /events", "/x/events/1/2/3/providers/a"],
+    [
+      "a path under another prefix on an absolute link",
+      "https://api-stage.adobe.io/x/events/1/2/3/providers/a",
+    ],
+    [
+      "a path inside the query string",
+      "https://api-stage.adobe.io?next=/events/1/2/3/providers/a",
+    ],
+    [
+      "a path inside the fragment",
+      "https://api-stage.adobe.io#/events/1/2/3/providers/a",
+    ],
+    ["an empty link", ""],
+    ["a malformed link", "http://"],
+  ])("is null for %s", (_, href) => {
+    expect(getProviderWorkspaceId({ "rel:update": { href } })).toBeNull();
+  });
+
+  test("is null for a link whose href is not a string", () => {
+    expect(
+      getProviderWorkspaceId({
+        "rel:update": { href: 42 as unknown as string },
+      }),
+    ).toBeNull();
+    expect(
+      getProviderWorkspaceId({
+        "rel:update": { href: null as unknown as string },
+      }),
+    ).toBeNull();
+    expect(
+      getProviderWorkspaceId({ "rel:update": {} as { href: string } }),
+    ).toBeNull();
   });
 });
 
