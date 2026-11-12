@@ -23,5 +23,6 @@ export default mergeConfig(baseConfig, {
     "./source/menu/index.ts",
     "./source/web/index.ts",
     "./source/order-view-buttons/index.ts",
+    "./source/rma-view-buttons/index.ts",
   ],
 });

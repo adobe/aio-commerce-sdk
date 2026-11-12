@@ -20,6 +20,7 @@ import {
   parseCreditMemoId,
   parseInvoiceId,
   parseOrderId,
+  parseRmaId,
 } from "#web/react/commerce/lib";
 
 describe("parseOrderId", () => {
@@ -54,6 +55,18 @@ describe("parseCreditMemoId", () => {
     ["https://host.test/", null],
   ])("parses %j to %j", (href, expected) => {
     expect(parseCreditMemoId(href)).toBe(expected);
+  });
+});
+
+describe("parseRmaId", () => {
+  test.each([
+    ["https://host.test/?rmaId=000000005", "000000005"],
+    ["https://host.test/#/rma?rmaId=7", "7"],
+    ["https://host.test/?rmaId=5#/rma?rmaId=7", "5"],
+    ["https://host.test/?creditMemoId=5", null],
+    ["https://host.test/", null],
+  ])("parses %j to %j", (href, expected) => {
+    expect(parseRmaId(href)).toBe(expected);
   });
 });
 

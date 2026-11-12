@@ -26,6 +26,7 @@ export {
   useInvoiceViewButtonContext,
   useMassActionContext,
   useOrderViewButtonContext,
+  useRmaViewButtonContext,
   useStoreContext,
 } from "#web/react/commerce/hooks/use-extension-context";
 export { useHostConnection } from "#web/react/commerce/hooks/use-host-connection";
@@ -39,6 +40,7 @@ export type {
   InvoiceViewButtonContext,
   MassActionContext,
   OrderViewButtonContext,
+  RmaViewButtonContext,
   SharedContext,
   StoreContext,
 } from "#web/react/commerce/types";

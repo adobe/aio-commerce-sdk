@@ -21,6 +21,7 @@ import {
   configWithAdminUiSingleGrid,
   configWithCreditMemoViewButtons,
   configWithInvoiceViewButtons,
+  configWithRmaViewButtons,
 } from "#test/fixtures/config";
 
 import type { AdminUiConfig } from "#config/schema/admin-ui";
@@ -432,6 +433,15 @@ describe("planAdminUi", () => {
     expect(plan.operations.map((op) => op.id)).toEqual([
       "add:creditMemo.view-button.credit-memo-details",
       "add:creditMemo.view-button.refund-offline",
+    ]);
+  });
+
+  test("registers return buttons as separate components", async () => {
+    const { plan } = await planned(null, configWithRmaViewButtons);
+    expect(plan.extensionAction).toBe("register");
+    expect(plan.operations.map((op) => op.id)).toEqual([
+      "add:rma.view-button.return-details",
+      "add:rma.view-button.custom-return-flow",
     ]);
   });
 

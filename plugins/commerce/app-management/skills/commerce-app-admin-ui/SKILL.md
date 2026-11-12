@@ -3,7 +3,7 @@ name: commerce-app-admin-ui
 description: >
   Add or modify Adobe Commerce Admin UI extensions on the
   commerce/backend-ui/2 extension point: custom grid columns, mass actions,
-  order, invoice, and credit memo view buttons, native UI form replacements, a custom Admin menu entry,
+  order, invoice, credit memo, and return view buttons, native UI form replacements, a custom Admin menu entry,
   and custom ACL resources. Use
   whenever the user wants to extend the Commerce Admin — add a column to the
   order, product, customer, invoice, credit memo, shipment, or newsletter grid, add a
@@ -25,7 +25,7 @@ metadata:
 # Configure Commerce App Admin UI
 
 Adds or modifies the `adminUi` block in an existing `app.commerce.config.ts`.
-The Admin UI extension point (`commerce/backend-ui/2`) lets a Commerce app extend the Commerce Admin with custom grid columns, mass actions, order, invoice, and credit memo view buttons, native UI form replacements, a menu entry, and custom ACL resources.
+The Admin UI extension point (`commerce/backend-ui/2`) lets a Commerce app extend the Commerce Admin with custom grid columns, mass actions, order, invoice, credit memo, and return view buttons, native UI form replacements, a menu entry, and custom ACL resources.
 Other extensibility domains (webhooks, events, business config) are added separately via their own skills.
 
 ## Prerequisites
@@ -46,6 +46,7 @@ Other extensibility domains (webhooks, events, business config) are added separa
 | Order view buttons       | order only                                                          | view / worker | worker only    | [order-view-buttons](references/order-view-buttons.md)             |
 | Invoice view buttons     | invoice only                                                        | view / worker | worker only    | [invoice-view-buttons](references/invoice-view-buttons.md)         |
 | Credit memo view buttons | creditMemo only                                                     | view / worker | worker only    | [credit-memo-view-buttons](references/credit-memo-view-buttons.md) |
+| Return view buttons      | rma only                                                            | view / worker | worker only    | [rma-view-buttons](references/rma-view-buttons.md)                 |
 | Native UI forms          | supported form targets (`adminUi.nativeUi.replacedPages`)           | view (iframe) | no             | [native-ui-replaced-pages](references/native-ui-replaced-pages.md) |
 | Menu                     | single entry (`adminUi.menu`)                                       | view (iframe) | no             | [menu](references/menu.md)                                         |
 | Custom ACL               | list (`adminUi.acl`)                                                | none          | no             | [custom-acl](references/custom-acl.md)                             |
@@ -58,8 +59,8 @@ Grid columns are always worker; native UI form replacements and the menu are alw
 
 For each thing the user wants to add, gather:
 
-- **Which extension point** — grid columns, mass actions, order, invoice, or credit memo view buttons, menu, native UI form replacements, or custom ACL resources
-- **Which entity** — grid columns support `order`, `product`, `customer`, `invoice`, `creditMemo`, `shipment`, or `newsletter`; mass actions support only `order`, `product`, `customer`, or `newsletter`; view buttons support `order`, `invoice`, and `creditMemo`; native UI replacement targets are listed in [native-ui-replaced-pages](references/native-ui-replaced-pages.md); menu and custom ACL resources have no entity
+- **Which extension point** — grid columns, mass actions, order, invoice, credit memo, or return view buttons, menu, native UI form replacements, or custom ACL resources
+- **Which entity** — grid columns support `order`, `product`, `customer`, `invoice`, `creditMemo`, `shipment`, or `newsletter`; mass actions support only `order`, `product`, `customer`, or `newsletter`; view buttons support `order`, `invoice`, `creditMemo`, and `rma`; native UI replacement targets are listed in [native-ui-replaced-pages](references/native-ui-replaced-pages.md); menu and custom ACL resources have no entity
 - **For mass actions and view buttons, the variant** — `worker` (runtime action) or `view` (iframe into `web-src`)
 - The fields for that extension point (column definitions, button labels, menu parent, etc.) — see the reference file in the table above for the full field set
 
@@ -230,7 +231,7 @@ Just as the worker variants wire a `runtimeAction` to an action, each `view` ent
 
 The **menu** has no `path`: it renders at the index route (`src/pages/main-page.jsx`), which the scaffold already created as a plain page. There is nothing to scaffold for the menu — leave `main-page.jsx` in place (customize its content if you like). It needs only the `MENU_*` constant for `parentMenu` in the config (see [menu](references/menu.md)).
 
-For each `view`-type **mass action** and **order, invoice, or credit memo view button**, and **native UI form replacement** (all carry a `path`):
+For each `view`-type **mass action** and **order, invoice, credit memo, or return view button**, and **native UI form replacement** (all carry a `path`):
 
 1. **Check for the route.** Look in `src/app.jsx` for a `routes` entry whose `path` equals the entry's config `path`, and in `web-src/src/pages/` for its page file. If a route for that `path` already exists, leave it and its page untouched and move on.
 
@@ -246,6 +247,7 @@ Pre-wire the hook by view type — all from `@adobe/aio-commerce-lib-admin-ui/we
 | Order view button       | `useOrderViewButtonContext()` → `{ data, error }`; use `data.orderId`           | `useHostConnection()` → `{ actions, error }`; use `actions.close()` | [order-view-buttons](references/order-view-buttons.md)             |
 | Invoice view button     | `useInvoiceViewButtonContext()` → `{ data, error }`; use `data.invoiceId`       | `useHostConnection()` → `{ actions, error }`; use `actions.close()` | [invoice-view-buttons](references/invoice-view-buttons.md)         |
 | Credit memo view button | `useCreditMemoViewButtonContext()` → `{ data, error }`; use `data.creditMemoId` | `useHostConnection()` → `{ actions, error }`; use `actions.close()` | [credit-memo-view-buttons](references/credit-memo-view-buttons.md) |
+| Return view button      | `useRmaViewButtonContext()` → `{ data, error }`; use `data.rmaId`               | `useHostConnection()` → `{ actions, error }`; use `actions.close()` | [rma-view-buttons](references/rma-view-buttons.md)                 |
 | Native UI form          | none                                                                            | none                                                                | [native-ui-replaced-pages](references/native-ui-replaced-pages.md) |
 | Menu                    | none (plain index page)                                                         | —                                                                   | [menu](references/menu.md)                                         |
 
@@ -342,7 +344,7 @@ A build failure with a validation error points directly to the offending `adminU
 ## Common Issues
 
 - **`view` vs `worker` mismatch**: each variant is a strict object — a `worker` entry requires `runtimeAction` (and rejects `path`/`sandboxPermissions`); a `view` entry requires `path` (and rejects `runtimeAction`/`timeout`). They are discriminated by `type`.
-- **Grid columns are worker-only**: there is no `view` grid column. `order`, `product`, `customer`, `invoice`, `creditMemo`, `shipment`, and `newsletter` support `gridColumns`; only `order`, `product`, `customer`, and `newsletter` support `massActions`; only `order`, `invoice`, and `creditMemo` support `viewButtons`.
+- **Grid columns are worker-only**: there is no `view` grid column. `order`, `product`, `customer`, `invoice`, `creditMemo`, `shipment`, and `newsletter` support `gridColumns`; only `order`, `product`, `customer`, and `newsletter` support `massActions`; only `order`, `invoice`, `creditMemo`, and `rma` support `viewButtons` (`rma` supports `viewButtons` only).
 - **`runtimeAction` with no handler**: a worker entry whose `<package>/<action>` is not declared under `runtimeManifest` in `src/commerce-backend-ui-2/ext.config.yaml` leaves the generated `workerProcess` reference unresolved at deploy.
 - **Wrong action location**: handler sources and their `runtimeManifest` entry belong in the Admin UI extension folder `src/commerce-backend-ui-2/` — not `src/commerce-extensibility-1/` (where webhook and event handlers live). The `function` path is relative to `src/commerce-backend-ui-2/`.
 - **Grid row keys must match column ids**: keys in the `okGridResponse` rows must equal the `id`s in `gridColumns.columns`, or cells render empty (or fall back to the defaults bag).
@@ -373,5 +375,6 @@ After `aio app build` passes:
 - [references/native-ui-replaced-pages.md](references/native-ui-replaced-pages.md) — Native UI form replacement targets and page configuration
 - [references/invoice-view-buttons.md](references/invoice-view-buttons.md) — Invoice view button config (view and worker) and handler contract
 - [references/credit-memo-view-buttons.md](references/credit-memo-view-buttons.md) — Credit memo view button config (view and worker) and handler contract
+- [references/rma-view-buttons.md](references/rma-view-buttons.md) — Return (RMA) view button config (view and worker) and handler contract
 - [references/menu.md](references/menu.md) — Menu config and parent-menu constants
 - [references/custom-acl.md](references/custom-acl.md) — Custom ACL resource config and runtime permission checks

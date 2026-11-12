@@ -16,6 +16,7 @@ import { describe, expect, it } from "vitest";
 import { parseCreditMemoViewButtonRequest } from "#credit-memo-view-buttons/index";
 import { parseInvoiceViewButtonRequest } from "#invoice-view-buttons/index";
 import { parseOrderViewButtonRequest } from "#order-view-buttons/index";
+import { parseRmaViewButtonRequest } from "#rma-view-buttons/index";
 
 const REQUEST_ID = "88a9d305-b58a-4aa7-aa42-e60d55d5a95c";
 
@@ -23,6 +24,7 @@ describe.each([
   { entityKey: "orderId", parse: parseOrderViewButtonRequest },
   { entityKey: "invoiceId", parse: parseInvoiceViewButtonRequest },
   { entityKey: "creditMemoId", parse: parseCreditMemoViewButtonRequest },
+  { entityKey: "rmaId", parse: parseRmaViewButtonRequest },
 ])("view-button worker params ($entityKey)", ({ entityKey, parse }) => {
   // Shape of the params an App Builder web action receives from Commerce's ViewButton controller.
   const commerceParams = {

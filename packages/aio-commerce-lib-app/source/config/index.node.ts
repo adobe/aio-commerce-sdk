@@ -62,6 +62,7 @@ export type {
   NativeUiReplacedPage,
   Notifications,
   OrderViewButton,
+  RmaViewButton,
   ViewMassAction,
   WorkerMassAction,
 } from "./schema/admin-ui";

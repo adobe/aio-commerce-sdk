@@ -39,6 +39,7 @@
     "./mass-actions": "./source/mass-actions/index.ts",
     "./menu": "./source/menu/index.ts",
     "./order-view-buttons": "./source/order-view-buttons/index.ts",
+    "./rma-view-buttons": "./source/rma-view-buttons/index.ts",
     "./web": {
       "browser": "./source/web/index.ts",
       "import": "./source/web/index.ts"
@@ -186,6 +187,16 @@
         "require": {
           "types": "./dist/cjs/order-view-buttons/index.d.cts",
           "default": "./dist/cjs/order-view-buttons/index.cjs"
+        }
+      },
+      "./rma-view-buttons": {
+        "import": {
+          "types": "./dist/es/rma-view-buttons/index.d.mts",
+          "default": "./dist/es/rma-view-buttons/index.mjs"
+        },
+        "require": {
+          "types": "./dist/cjs/rma-view-buttons/index.d.cts",
+          "default": "./dist/cjs/rma-view-buttons/index.cjs"
         }
       },
       "./web": {

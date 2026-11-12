@@ -32,6 +32,7 @@ import {
   configWithCreditMemoViewButtons,
   configWithFullAdminUiV2,
   configWithInvoiceViewButtons,
+  configWithRmaViewButtons,
   configWithViewMassActions,
   configWithWorkerMassActions,
   minimalValidConfig,
@@ -74,6 +75,7 @@ const backendUiV2ComponentCases = [
     config: configWithCreditMemoViewButtons,
     label: "credit memo view buttons only",
   },
+  { config: configWithRmaViewButtons, label: "return view buttons only" },
 ];
 
 describe("hasAdminUi", () => {
@@ -828,7 +830,7 @@ describe("AdminUiSchema", () => {
   });
 });
 
-describe("adminUi.invoice / adminUi.creditMemo / adminUi.shipment", () => {
+describe("adminUi.invoice / adminUi.creditMemo / adminUi.rma / adminUi.shipment", () => {
   test("accepts invoice view and worker buttons including the view title", () => {
     const result = v.parse(AdminUiSchema, configWithInvoiceViewButtons.adminUi);
     expect(result.invoice?.viewButtons).toEqual(
@@ -846,7 +848,28 @@ describe("adminUi.invoice / adminUi.creditMemo / adminUi.shipment", () => {
     );
   });
 
-  describe.each(["invoice", "creditMemo"] as const)(
+  test("accepts return view and worker buttons including the view title", () => {
+    const result = v.parse(AdminUiSchema, configWithRmaViewButtons.adminUi);
+    expect(result.rma?.viewButtons).toEqual(
+      configWithRmaViewButtons.adminUi.rma.viewButtons,
+    );
+  });
+
+  test("does not register grid columns on rma", () => {
+    const result = v.parse(AdminUiSchema, {
+      rma: {
+        gridColumns: {
+          columns: [{ align: "left", id: "col", label: "Col", type: "string" }],
+          description: "Adds a column",
+          label: "rma grid",
+          runtimeAction: "rma/fetch",
+        },
+      },
+    });
+    expect(result.rma).toEqual({});
+  });
+
+  describe.each(["invoice", "creditMemo", "rma"] as const)(
     "%s view buttons",
     (entity) => {
       test.each([
