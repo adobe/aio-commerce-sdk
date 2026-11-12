@@ -492,7 +492,7 @@ handlers in Step 5. Apply in order — first match wins:
    Format as `nodejs:<major>`.
 3. Read `package.json engines.node`. Extract the minimum major version from the semver range.
    Format as `nodejs:<major>`.
-4. Default: `nodejs:24`
+4. Default: `nodejs:26`
 
 Store as `detectedNodeRuntime`. Used only in Step 5.
 
