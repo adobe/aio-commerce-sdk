@@ -24,6 +24,7 @@ Orchestrates the full migration workflow: project detection → domain analysis 
 2. **Analyze** — detects starter kit type, auth mode, action packages, eventing, webhooks, Admin UI SDK usage, and business config
 3. **Domain agents** — runs specialized agents in parallel for each detected domain (events, webhooks, Admin UI SDK, business config)
 4. **Q&A** — asks targeted questions for anything that cannot be inferred automatically
+   - **Env vars to Business Configurations:** variables still read through `params` by runtime actions (excluding auth, workspace, event, webhook and platform keys) are proposed as `businessConfig.schema` fields, with secrets as `password`. For each accepted variable, the action code is rewritten to read it with `@adobe/aio-commerce-lib-config` and the matching action `inputs` are removed. `--auto` accepts all candidates.
 5. **Config assembly** — generates `app.commerce.config.ts` with `defineConfig(...)` from `@adobe/aio-commerce-lib-app/config`
 6. **Execute** — writes the config file, installs dependencies, generates extension scaffolding, and updates `app.config.yaml` and `install.yaml`
 7. **Documentation recommendations** — scans `README.md` and `env.dist` for content that is no longer needed after migration and explains why each item is obsolete; this analysis runs before `npm install` so recommendations are always produced even if the install step fails or is blocked
