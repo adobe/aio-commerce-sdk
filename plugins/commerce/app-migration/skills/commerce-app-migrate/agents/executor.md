@@ -1321,6 +1321,11 @@ constraints, Next steps) when in doc-scan-only mode.
             <KEY1>, <KEY2>, <KEY3>
             └─ These are managed by App Management for deployed instances.
                They may still be needed in .env for local development.
+            [  <KEY>  (Commerce base URL)
+                    └─ Stored by App Management when the app is associated with a Commerce
+                       instance. Actions read it with getCommerceInstance() or
+                       getCommerceClient() from @adobe/aio-commerce-lib-app.  ]
+               ← one entry per Rule 3a key in Bucket A; omit if none →
 
       For each unique file in Bucket B (sorted by file path):
 
