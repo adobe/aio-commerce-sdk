@@ -164,6 +164,23 @@ instead. Runtime actions can receive the credentials through the
 
     const imsAuthParams = resolveImsAuthParams(params);
 
+If the body reads the Commerce base URL directly (`COMMERCE_BASE_URL`, `AIO_COMMERCE_API_BASE_URL`),
+do not keep that read: App Management no longer injects it. Once the app is associated with a
+Commerce instance, the SDK stores the base URL and deployment type. Replace the direct client
+construction with:
+
+    import { getCommerceClient } from "@adobe/aio-commerce-lib-app";
+
+    const client = await getCommerceClient(resolveImsAuthParams(params));
+
+or, when only the URL is needed, `const { baseUrl, env } = await getCommerceInstance();`.
+Both throw `AssociationRecordNotFoundError` if the app is not associated.
+
+The starter kit's own `getAdobeCommerceClient(...)` helper (`lib/adobe-commerce`) is a project
+wrapper that reads the base URL from its input. Keep calling it as shown in the table, but
+record every helper file that reads `COMMERCE_BASE_URL` for the "Commerce base URL" section
+of Step 8 — do not rewrite the helper automatically.
+
 **5. Handle external data files (YAML, JSON, config)**
 
 Deployed App Builder actions are bundled by webpack. Only files that are statically
@@ -914,7 +931,7 @@ Keys matching any of: `IO_MANAGEMENT_BASE_URL`, `IO_CONSUMER_ID`, `IO_PROJECT_ID
 
 **Rule 3a — Commerce instance URL:**
 Keys matching any of: `COMMERCE_BASE_URL`, `AIO_COMMERCE_API_BASE_URL`
-→ reason: `"Commerce base URL is stored by App Management when the app is associated with a Commerce instance"`
+→ reason: `"Commerce base URL is stored by App Management when the app is associated with a Commerce instance (see https://experienceleague.adobe.com/en/docs/commerce/app-management/manage-app/manage-app)"`
 
 **Rule 4 — Only referenced in removable scripts (Category A):**
 Read the content of each file in the Category A removable list. If the KEY string appears in any of those files AND does NOT appear in any file under `actions/`, `actions-src/`, `src/`, or `lib/` (search with grep across all four directories):
@@ -987,7 +1004,7 @@ Read `README.md`. Build migration context from pre-computed results (stored in S
 - `automatedScriptPaths` — `script` values from `installation.customInstallationSteps` in the assembled config
 - `eventsDeclarative` — assembled config contains an `eventing` section
 - `webhooksDeclarative` — assembled config has a top-level `webhooks` section
-- `redundantEnvKeys` — keys flagged by Category D Rules 1–7 only (obsolete after migration). Exclude Rule 8 (duplicate-only) findings — duplicates are a structural issue, not migration obsolescence, and must not trigger Pattern 4
+- `redundantEnvKeys` — keys flagged by Category D Rules 1–3, 3a, 6 and 7 only (obsolete after migration). Exclude Rule 8 (duplicate-only) findings — duplicates are a structural issue, not migration obsolescence, and must not trigger Pattern 4
 
 Scan README.md for content matching these patterns. For each match, record:
 
@@ -1224,6 +1241,24 @@ constraints, Next steps) when in doc-scan-only mode.
       file-path field with individual fields matching your app's actual configuration keys.
     ← end conditional →
 
+    ← include only if envDistKeys contains COMMERCE_BASE_URL or AIO_COMMERCE_API_BASE_URL, OR
+       `grep -rlF` for either key finds files under actions/, actions-src/, src/, lib/ or scripts/ →
+    ── Commerce base URL ──────────────────────────────────────────────
+      The Commerce base URL is no longer configured through environment variables.
+      When the app is associated with a Commerce instance in App Management, the base
+      URL and deployment type (saas/paas) are stored and available to every runtime
+      action and installation script:
+        import { getCommerceClient } from "@adobe/aio-commerce-lib-app";
+        const client = await getCommerceClient(resolveImsAuthParams(params));
+      Associating and installing the app (Apps > App Management > Associate App, then
+      Install) is required for these calls to work; before that they throw
+      AssociationRecordNotFoundError.
+      Reference: https://experienceleague.adobe.com/en/docs/commerce/app-management/manage-app/manage-app
+
+      [  <relative path>  still reads <KEY> — switch it to getCommerceClient() or getCommerceInstance()  ]
+         ← one line per file found by the grep above (excluding scripts already converted in Step 3) →
+    ← end conditional →
+
     ← include only if envMigrations is non-empty →
     ── Business Configurations (migrated env vars) ────────────────────
       [  <KEY>  →  businessConfig field "<name>" (<type>)
@@ -1324,7 +1359,8 @@ constraints, Next steps) when in doc-scan-only mode.
             [  <KEY>  (Commerce base URL)
                     └─ Stored by App Management when the app is associated with a Commerce
                        instance. Actions read it with getCommerceInstance() or
-                       getCommerceClient() from @adobe/aio-commerce-lib-app.  ]
+                       getCommerceClient() from @adobe/aio-commerce-lib-app.
+                       How association works: https://experienceleague.adobe.com/en/docs/commerce/app-management/manage-app/manage-app  ]
                ← one entry per Rule 3a key in Bucket A; omit if none →
 
       For each unique file in Bucket B (sorted by file path):
@@ -1366,7 +1402,10 @@ constraints, Next steps) when in doc-scan-only mode.
       [1. npx --yes @adobe/aio-commerce-lib-app@latest init]   ← include ONLY if Step 4 failed
        2. Review src/commerce-extensibility-1/.generated/ before deploying
        3. aio app deploy
-       4. If metadata.upgradeMode is "manual", note that the generated upgrade plan was not executed
+       4. In Commerce Admin, go to Apps > App Management, associate the deployed app
+          (select Project and Workspace), then install it. Association is also what
+          provides the Commerce base URL to your actions. Guide: https://experienceleague.adobe.com/en/docs/commerce/app-management/manage-app/manage-app
+       5. If metadata.upgradeMode is "manual", note that the generated upgrade plan was not executed
 
 If no customInstallationSteps were defined, omit the "Installation steps" section.
 If no scripts were migrated in Step 3, omit the migrated-scripts line from "Files written".

@@ -38,6 +38,8 @@ Orchestrates the full migration workflow: project detection → domain analysis 
 - Duplicate `env.dist` keys flagged explicitly (e.g. a key that appears twice in the file)
 - An annotated README removal guide (inline `<!-- ✂ REMOVE -->` comments) for projects with 5 or more flagged sections
 
+**Commerce base URL:** `COMMERCE_BASE_URL` and similar variables are no longer needed. App Management stores the Commerce base URL and deployment type when the app is associated with a Commerce instance, and runtime actions read them with `getCommerceClient()` or `getCommerceInstance()` from `@adobe/aio-commerce-lib-app`. The migration report flags files that still read the variable and links to the [App Management guide](https://experienceleague.adobe.com/en/docs/commerce/app-management/manage-app/manage-app) for associating and installing the app.
+
 **Supported source projects:** Integration Starter Kit, Checkout Starter Kit, Admin UI SDK extensions.
 
 **Output:** A ready-to-deploy `app.commerce.config.ts` in the project root, with all detected domains mapped to the App Management configuration schema, plus a documentation cleanup report printed in the terminal.
