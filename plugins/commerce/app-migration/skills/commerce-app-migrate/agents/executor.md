@@ -912,6 +912,10 @@ Keys matching any of: `OAUTH_BASE_URL`, `OAUTH_CLIENT_ID`, `OAUTH_CLIENT_SECRETS
 Keys matching any of: `IO_MANAGEMENT_BASE_URL`, `IO_CONSUMER_ID`, `IO_PROJECT_ID`, `IO_WORKSPACE_ID`, `IO_MANAGEMENT_API_KEY`, `AIO_RUNTIME_NAMESPACE`, `AIO_RUNTIME_AUTH`
 → reason: `"Adobe I/O workspace credentials used by onboarding scripts; App Management handles workspace setup"`
 
+**Rule 3a — Commerce instance URL:**
+Keys matching any of: `COMMERCE_BASE_URL`, `AIO_COMMERCE_API_BASE_URL`
+→ reason: `"Commerce base URL is stored by App Management when the app is associated with a Commerce instance"`
+
 **Rule 4 — Only referenced in removable scripts (Category A):**
 Read the content of each file in the Category A removable list. If the KEY string appears in any of those files AND does NOT appear in any file under `actions/`, `actions-src/`, `src/`, or `lib/` (search with grep across all four directories):
 → reason: `"only referenced in <script-filename>, which is no longer needed after migration"`
@@ -930,12 +934,15 @@ Keys matching any of: `AIO_EVENTS_PROVIDER_ID`, `AIO_EVENTS_REGISTRATION_ID`, `A
 Keys matching `COMMERCE_WEBHOOKS_PUBLIC_KEY` or any key matching `*_WEBHOOKS_*`
 → reason: `"webhook registration is now declared in app.commerce.config.ts"`
 
-**Runtime reference override (applies to Rules 1–3, 6, and 7):**
+**Runtime reference override (applies to Rules 1–3, 3a, 6, and 7):**
 After a key matches one of these rules, run:
 `grep -rlF "<KEY>" actions/ actions-src/ src/ lib/ 2>/dev/null | head -1`
 If any matching file is found, downgrade the flag — replace the rule's default reason with:
 `"review manually: still referenced in <relative path> — ensure App Management injects this value before removing"`
 This check does not apply to Rule 4 or Rule 5 (which already check runtime references), or Rule 8.
+
+For Rule 3a keys, use this reason instead:
+`"review manually: still referenced in <relative path> — read the Commerce instance with getCommerceClient or getCommerceInstance from @adobe/aio-commerce-lib-app instead of this variable"`
 
 For Rule 2 keys, use this reason instead:
 `"review manually: still referenced in <relative path> — add include-ims-credentials: true to the action annotations and resolve credentials with resolveImsAuthParams(params) instead of wiring this input"`
@@ -965,7 +972,7 @@ Note: This rule fires last. A key already matched by Rules 1–8 is excluded fro
 if it also has no runtime references (Rules 1–8 provide the more specific, actionable reason).
 
 **Never flag these keys as obsolete (Rules 1–9 only):**
-`COMMERCE_BASE_URL`, `LOG_LEVEL`, `ENABLE_TELEMETRY`, `NEW_RELIC_LICENSE_KEY`, `ENABLE_EXTRA_LOGGING`, `ENCRYPTION_KEY`, `ENCRYPTION_IV`, `APPBUILDER_ENCRYPTION_KEY`.
+`LOG_LEVEL`, `ENABLE_TELEMETRY`, `NEW_RELIC_LICENSE_KEY`, `ENABLE_EXTRA_LOGGING`, `ENCRYPTION_KEY`, `ENCRYPTION_IV`, `APPBUILDER_ENCRYPTION_KEY`.
 Also never flag any key that is clearly a third-party service credential (Klaviyo, NetSuite, Salesforce, Adyen, OpenSearch, etc.) — recognisable by vendor-specific prefixes that do not match the patterns above.
 
 ---
@@ -1291,11 +1298,11 @@ constraints, Next steps) when in doc-scan-only mode.
       First, sort all Rule 1–7 and Rule 9 findings (excluding Rule 8 duplicates) into four buckets:
 
       **Bucket A — "App Management managed" (safe to remove after deployment):**
-      Entries from Rules 1–3, 6, 7 where the runtime reference check found NO match in
+      Entries from Rules 1–3, 3a, 6, 7 where the runtime reference check found NO match in
       action/src/lib files (i.e. the runtime reference override did NOT apply).
 
       **Bucket B — "Review manually" groups:**
-      Entries where the runtime reference override applied (Rules 1–3, 6, 7), plus all
+      Entries where the runtime reference override applied (Rules 1–3, 3a, 6, 7), plus all
       Rule 5 findings. Group ALL entries that reference the SAME file together.
       For each unique referenced file, emit one group block.
 
