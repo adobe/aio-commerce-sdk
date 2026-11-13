@@ -19,6 +19,7 @@ import {
   configWithAdminUiSingleGrid,
   configWithBusinessConfig,
   configWithCommerceEventing,
+  configWithCustomAttributeGridColumns,
   configWithCustomInstallationSteps,
   configWithEventingAndWebhooks,
   configWithExternalEventing,
@@ -85,6 +86,10 @@ describe.concurrent("domains schema helpers", () => {
 
     test.each([
       { config: configWithAdminUiSingleGrid, label: "grid columns" },
+      {
+        config: configWithCustomAttributeGridColumns,
+        label: "custom-attribute grid columns only",
+      },
       {
         config: configWithAdminUiAllGrids,
         label: "grid columns for all entities",

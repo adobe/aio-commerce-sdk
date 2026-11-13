@@ -23,6 +23,7 @@ import {
 } from "#test/fixtures/app-config-router";
 import {
   configWithCreditMemoViewButtons,
+  configWithCustomAttributeGridColumns,
   configWithDynamicListOptions,
   configWithFullAdminUiV2,
   configWithInvoiceViewButtons,
@@ -37,6 +38,17 @@ describe("appConfigRuntimeAction", () => {
   });
 
   describe("GET /", () => {
+    test("preserves custom-attribute columns in the app-config payload", async () => {
+      const handler = appConfigRuntimeAction({
+        appConfig: configWithCustomAttributeGridColumns,
+      });
+
+      expect(await handler(createRuntimeActionParams())).toMatchObject({
+        body: configWithCustomAttributeGridColumns,
+        type: "success",
+      });
+    });
+
     test("returns the validated app config", async () => {
       const handler = appConfigRuntimeAction({
         appConfig: minimalValidConfig,

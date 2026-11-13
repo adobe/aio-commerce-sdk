@@ -93,6 +93,18 @@ export function enumerateComponents(
     }
   }
 
+  const customAttributeGridColumns =
+    adminUi.creditMemo?.customAttributeGridColumns;
+  if (customAttributeGridColumns) {
+    const key = "creditMemo.custom-attribute-grid-columns";
+    components.set(key, {
+      config: customAttributeGridColumns,
+      key,
+      label: "creditMemo custom-attribute grid columns",
+      ref: { entity: "creditMemo", kind: "customAttributeGridColumns" },
+    });
+  }
+
   for (const entity of ADMIN_UI_MASS_ACTION_ENTITIES) {
     const entityConfig = adminUi[entity];
     for (const massAction of entityConfig?.massActions ?? []) {

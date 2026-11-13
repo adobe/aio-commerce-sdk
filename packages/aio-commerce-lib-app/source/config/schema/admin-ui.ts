@@ -100,6 +100,57 @@ const GridColumnsSchema = v.object({
   runtimeAction: nonEmptyStringValueSchema("runtime action"),
 });
 
+// ─── Custom-attribute grid columns ────────────────────────────────────────────
+
+const INVALID_ATTRIBUTE_CODE_PATTERN = /[^A-Za-z0-9_]/u;
+
+const CustomAttributeFilterSchema = v.variant("type", [
+  v.strictObject({ type: v.literal("boolean") }),
+  v.strictObject({
+    conditions: v.pipe(
+      v.array(v.picklist(["eq", "neq", "contains"])),
+      v.minLength(1, "Text filters require at least one condition"),
+    ),
+    type: v.literal("text"),
+  }),
+]);
+
+const CustomAttributeGridColumnSchema = v.strictObject({
+  aclProtected: v.optional(v.boolean()),
+  align: ColumnAlignSchema,
+  attribute_code: v.pipe(
+    nonEmptyStringValueSchema("custom attribute code"),
+    v.maxLength(255, "Custom attribute codes must not exceed 255 characters"),
+    v.check(
+      (code) => !INVALID_ATTRIBUTE_CODE_PATTERN.test(code),
+      'Custom attribute codes may contain only ASCII letters, digits, and "_"',
+    ),
+  ),
+  filter: v.optional(CustomAttributeFilterSchema),
+  id: v.pipe(
+    nonEmptyStringValueSchema("column ID"),
+    v.check((id) => id.trim().length > 0, "Column IDs must not be blank"),
+  ),
+  label: v.pipe(
+    nonEmptyStringValueSchema("column label"),
+    v.check(
+      (label) => label.trim().length > 0,
+      "Column labels must not be blank",
+    ),
+  ),
+});
+
+const CustomAttributeGridColumnsSchema = v.strictObject({
+  columns: v.pipe(
+    v.array(CustomAttributeGridColumnSchema),
+    v.minLength(1, "At least one custom-attribute grid column is required"),
+    v.check(
+      (items) => hasUniqueSanitizedIds(items),
+      "Grid column ids must be unique after Commerce id sanitization.",
+    ),
+  ),
+});
+
 // ─── Mass actions ─────────────────────────────────────────────────────────────
 
 /** Fields shared by both mass-action variants. `description` is flat — no `installation` nesting. */
@@ -231,18 +282,33 @@ const AdminUiInvoiceSchema = v.object({
   ),
 });
 
-const AdminUiCreditMemoSchema = v.object({
-  gridColumns: v.optional(GridColumnsSchema),
-  viewButtons: v.optional(
-    v.pipe(
-      v.array(CreditMemoViewButtonSchema),
-      v.check(
-        (items) => hasUniqueSanitizedIds(items),
-        "Credit memo view button ids must be unique after Commerce id sanitization.",
+const AdminUiCreditMemoSchema = v.pipe(
+  v.object({
+    customAttributeGridColumns: v.optional(CustomAttributeGridColumnsSchema),
+    gridColumns: v.optional(GridColumnsSchema),
+    viewButtons: v.optional(
+      v.pipe(
+        v.array(CreditMemoViewButtonSchema),
+        v.check(
+          (items) => hasUniqueSanitizedIds(items),
+          "Credit memo view button ids must be unique after Commerce id sanitization.",
+        ),
       ),
     ),
+  }),
+  v.forward(
+    v.check(
+      ({ customAttributeGridColumns, gridColumns }) =>
+        !customAttributeGridColumns ||
+        hasUniqueSanitizedIds([
+          ...(gridColumns?.columns ?? []),
+          ...customAttributeGridColumns.columns,
+        ]),
+      "Runtime and custom-attribute grid column ids must be unique after Commerce id sanitization.",
+    ),
+    ["customAttributeGridColumns", "columns"],
   ),
-});
+);
 
 // Returns (RMA) expose view buttons only — no grid columns or mass actions.
 const AdminUiRmaSchema = v.object({
@@ -404,11 +470,7 @@ const AdminUiAclSchema = v.pipe(
 
 // ─── Top-level schema ─────────────────────────────────────────────────────────
 
-/**
- * Schema for the `adminUi` config section.
- * Supports grid column extensions, mass actions, order, invoice, credit memo, and return view buttons, menu, native UI replaced pages, and custom ACL resources on `commerce/backend-ui/2`.
- */
-export const AdminUiSchema = v.object({
+const AdminUiObjectSchema = v.object({
   acl: v.optional(AdminUiAclSchema),
   creditMemo: v.optional(AdminUiCreditMemoSchema),
   customer: v.optional(AdminUiGridAndMassActionEntitySchema),
@@ -421,6 +483,27 @@ export const AdminUiSchema = v.object({
   rma: v.optional(AdminUiRmaSchema),
   shipment: v.optional(AdminUiGridOnlyEntitySchema),
 });
+
+/**
+ * Schema for Admin UI components, including Credit Memo custom-attribute columns.
+ * Custom-attribute columns and custom ACL resources require no backend-ui/2 workers or views.
+ */
+export const AdminUiSchema = v.pipe(
+  v.custom<v.InferInput<typeof AdminUiObjectSchema>>((input) => {
+    if (typeof input !== "object" || input === null) {
+      return true;
+    }
+    return Object.entries(input).every(
+      ([entity, config]) =>
+        entity !== "customAttributeGridColumns" &&
+        (entity === "creditMemo" ||
+          typeof config !== "object" ||
+          config === null ||
+          !("customAttributeGridColumns" in config)),
+    );
+  }, "customAttributeGridColumns is supported only under adminUi.creditMemo."),
+  AdminUiObjectSchema,
+);
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -468,12 +551,13 @@ export type AclResourceEntry = v.InferInput<typeof AclResourceEntrySchema>;
 
 /**
  * The validated config of a single Admin UI component: the menu, an entity's
- * grid columns, a mass action, a view button, a native UI page replacement, or a
- * custom ACL resource entry.
+ * runtime or custom-attribute grid columns, a mass action, a view button,
+ * a native UI page replacement, or a custom ACL resource entry.
  */
 export type AdminUiComponentConfig =
   | v.InferOutput<typeof MenuSchema>
   | v.InferOutput<typeof GridColumnsSchema>
+  | v.InferOutput<typeof CustomAttributeGridColumnsSchema>
   | v.InferOutput<typeof MassActionSchema>
   | v.InferOutput<typeof OrderViewButtonSchema>
   | v.InferOutput<typeof NativeUiReplacedPageSchema>
@@ -491,6 +575,21 @@ export type GridColumns = v.InferInput<typeof GridColumnsSchema>;
  * A single grid column definition.
  */
 export type GridColumn = v.InferInput<typeof GridColumnSchema>;
+
+/** A Credit Memo column read directly from a serialized Commerce custom attribute. */
+export type CustomAttributeGridColumn = v.InferInput<
+  typeof CustomAttributeGridColumnSchema
+>;
+
+/** Custom-attribute columns declared without a Runtime action. */
+export type CustomAttributeGridColumns = v.InferInput<
+  typeof CustomAttributeGridColumnsSchema
+>;
+
+/** Boolean filtering or an explicit allowlist of text comparisons. */
+export type CustomAttributeFilter = v.InferInput<
+  typeof CustomAttributeFilterSchema
+>;
 
 /**
  * A mass action registration entry (view or worker variant).
@@ -554,8 +653,8 @@ export type AdminUiConfig<
  * `commerce/backend-ui/2` extension point — a menu, grid columns, mass actions,
  * view buttons, or native UI replaced pages. Custom ACL resources are
  * deliberately excluded: they reach Commerce through the `extensibility/1`
- * app-config payload, not backend-ui/2, so an acl-only config needs no
- * backend-ui/2 registration.
+ * app-config payload, not backend-ui/2. Custom-attribute grid columns also need
+ * no backend-ui/2 registration because Commerce reads their values locally.
  */
 export function hasBackendUiV2Components<T extends AnyCommerceAppConfig>(
   config: T,
@@ -587,14 +686,18 @@ export function hasBackendUiV2Components<T extends AnyCommerceAppConfig>(
 
 /**
  * Check whether the config declares at least one Admin UI component (menu, grid
- * columns, mass actions, view buttons, native UI replaced pages, or custom ACL
- * resources). A component-less `adminUi` block is treated as absent — it
- * registers nothing.
+ * columns, custom-attribute columns, mass actions, view buttons, native UI
+ * replaced pages, or custom ACL resources). A component-less `adminUi` block
+ * is treated as absent — it registers nothing.
  */
 export function hasAdminUi<T extends AnyCommerceAppConfig>(
   config: T,
 ): config is AdminUiConfig<T> {
   return (
-    hasBackendUiV2Components(config) || Boolean(config.adminUi?.acl?.length)
+    hasBackendUiV2Components(config) ||
+    Boolean(
+      config.adminUi?.acl?.length ||
+        config.adminUi?.creditMemo?.customAttributeGridColumns,
+    )
   );
 }
