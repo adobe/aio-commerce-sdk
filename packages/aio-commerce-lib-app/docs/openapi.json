@@ -3209,6 +3209,16 @@
         "description": "Credit Memo columns read locally by a compatible Commerce provider, without Runtime bindings.",
         "type": "object",
         "properties": {
+          "label": {
+            "description": "Optional display label used in App Management lifecycle summaries.",
+            "type": "string",
+            "minLength": 1
+          },
+          "description": {
+            "description": "Optional description used in App Management lifecycle summaries.",
+            "type": "string",
+            "minLength": 1
+          },
           "columns": {
             "description": "IDs must be unique after Commerce sanitization, including across sibling Runtime columns.",
             "type": "array",

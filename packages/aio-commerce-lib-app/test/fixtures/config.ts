@@ -127,6 +127,21 @@ export const configWithCustomAttributeGridColumns = {
   },
 } satisfies CommerceAppConfigOutputModel;
 
+/** Custom-attribute columns with display metadata for lifecycle summaries. */
+export const configWithCustomAttributeGridColumnsMetadata = {
+  ...configWithCustomAttributeGridColumns,
+  adminUi: {
+    creditMemo: {
+      customAttributeGridColumns: {
+        ...configWithCustomAttributeGridColumns.adminUi.creditMemo
+          .customAttributeGridColumns,
+        description: "Displays serialized Credit Memo attributes.",
+        label: "Credit Memo details",
+      },
+    },
+  },
+} satisfies CommerceAppConfigOutputModel;
+
 type MockConfigOverrides = Omit<
   Partial<CommerceAppConfigOutputModel>,
   "metadata"

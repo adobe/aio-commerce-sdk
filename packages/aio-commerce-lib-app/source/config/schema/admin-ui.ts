@@ -149,6 +149,12 @@ const CustomAttributeGridColumnsSchema = v.strictObject({
       "Grid column ids must be unique after Commerce id sanitization.",
     ),
   ),
+  description: v.optional(
+    nonEmptyStringValueSchema("custom-attribute grid columns description"),
+  ),
+  label: v.optional(
+    nonEmptyStringValueSchema("custom-attribute grid columns label"),
+  ),
 });
 
 // ─── Mass actions ─────────────────────────────────────────────────────────────

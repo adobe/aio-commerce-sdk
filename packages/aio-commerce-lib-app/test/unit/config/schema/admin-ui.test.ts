@@ -35,6 +35,7 @@ import {
   configWithAdminUiNewsletterGrid,
   configWithCreditMemoViewButtons,
   configWithCustomAttributeGridColumns,
+  configWithCustomAttributeGridColumnsMetadata,
   configWithFullAdminUiV2,
   configWithInvoiceViewButtons,
   configWithRmaViewButtons,
@@ -159,12 +160,41 @@ describe("AdminUiSchema custom-attribute grid columns", () => {
     expect(v.parse(AdminUiSchema, adminUi)).toEqual(adminUi);
   });
 
+  test.each([
+    { label: "Credit Memo details" },
+    { description: "Displays serialized Credit Memo attributes." },
+    {
+      description: "Displays serialized Credit Memo attributes.",
+      label: "Credit Memo details",
+    },
+  ])("preserves optional section display metadata: %j", (metadata) => {
+    const adminUi = {
+      creditMemo: { customAttributeGridColumns: { columns, ...metadata } },
+    };
+    expect(v.parse(AdminUiSchema, adminUi)).toEqual(adminUi);
+  });
+
+  test.each([
+    { label: "" },
+    { label: null },
+    { label: 123 },
+    { description: "" },
+    { description: null },
+    { description: 123 },
+  ])("rejects invalid section display metadata: %j", (metadata) => {
+    expect(
+      v.safeParse(AdminUiSchema, {
+        creditMemo: { customAttributeGridColumns: { columns, ...metadata } },
+      }).success,
+    ).toBe(false);
+  });
+
   test("preserves custom-attribute columns in a recorded lifecycle snapshot", () => {
     const snapshot: unknown = JSON.parse(
-      JSON.stringify(configWithCustomAttributeGridColumns),
+      JSON.stringify(configWithCustomAttributeGridColumnsMetadata),
     );
     expect(validateRecordedCommerceAppConfig(snapshot)).toEqual(
-      configWithCustomAttributeGridColumns,
+      configWithCustomAttributeGridColumnsMetadata,
     );
   });
 

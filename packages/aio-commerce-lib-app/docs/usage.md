@@ -650,13 +650,16 @@ View-based features also get a minimal `web-src/` scaffold when the resolved `vi
 ##### Custom-Attribute Grid Columns
 
 Declare `adminUi.creditMemo.customAttributeGridColumns` to display serialized Credit Memo custom attributes.
-Unlike Runtime-backed `gridColumns`, this section needs only `columns`: no `runtimeAction`, section `label`,
-section `description`, or column `type`. It can coexist with `creditMemo.gridColumns`.
+Unlike Runtime-backed `gridColumns`, this section requires only `columns`: no `runtimeAction` or column `type`.
+Section `label` and `description` are optional, nonempty strings used in App Management lifecycle summaries.
+It can coexist with `creditMemo.gridColumns`.
 
 ```ts
 adminUi: {
   creditMemo: {
     customAttributeGridColumns: {
+      label: "Credit Memo details",
+      description: "Displays serialized Credit Memo attributes.",
       columns: [
         {
           id: "refund_reason",

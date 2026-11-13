@@ -24,6 +24,7 @@ import {
 import {
   configWithCreditMemoViewButtons,
   configWithCustomAttributeGridColumns,
+  configWithCustomAttributeGridColumnsMetadata,
   configWithDynamicListOptions,
   configWithFullAdminUiV2,
   configWithInvoiceViewButtons,
@@ -38,16 +39,20 @@ describe("appConfigRuntimeAction", () => {
   });
 
   describe("GET /", () => {
-    test("preserves custom-attribute columns in the app-config payload", async () => {
-      const handler = appConfigRuntimeAction({
-        appConfig: configWithCustomAttributeGridColumns,
-      });
+    test.each([
+      configWithCustomAttributeGridColumns,
+      configWithCustomAttributeGridColumnsMetadata,
+    ])(
+      "preserves custom-attribute columns and optional metadata in the app-config payload",
+      async (appConfig) => {
+        const handler = appConfigRuntimeAction({ appConfig });
 
-      expect(await handler(createRuntimeActionParams())).toMatchObject({
-        body: configWithCustomAttributeGridColumns,
-        type: "success",
-      });
-    });
+        expect(await handler(createRuntimeActionParams())).toMatchObject({
+          body: appConfig,
+          type: "success",
+        });
+      },
+    );
 
     test("returns the validated app config", async () => {
       const handler = appConfigRuntimeAction({

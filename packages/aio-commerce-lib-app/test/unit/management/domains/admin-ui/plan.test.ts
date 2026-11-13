@@ -21,6 +21,7 @@ import {
   configWithAdminUiSingleGrid,
   configWithCreditMemoViewButtons,
   configWithCustomAttributeGridColumns,
+  configWithCustomAttributeGridColumnsMetadata,
   configWithInvoiceViewButtons,
   configWithRmaViewButtons,
 } from "#test/fixtures/config";
@@ -79,7 +80,10 @@ describe("planAdminUi", () => {
   });
 
   test("registers custom-attribute columns as an independent component", async () => {
-    const { plan } = await planned(null, configWithCustomAttributeGridColumns);
+    const { plan } = await planned(
+      null,
+      configWithCustomAttributeGridColumnsMetadata,
+    );
     expect(plan.extensionAction).toBe("register");
     expect(plan.operations).toMatchObject([
       {
@@ -90,6 +94,34 @@ describe("planAdminUi", () => {
           },
         },
         id: "add:creditMemo.custom-attribute-grid-columns",
+        itemRefs: [
+          {
+            config:
+              configWithCustomAttributeGridColumnsMetadata.adminUi.creditMemo
+                .customAttributeGridColumns,
+          },
+        ],
+      },
+    ]);
+  });
+
+  test("refreshes when custom-attribute display metadata is added", async () => {
+    const { plan } = await planned(
+      configWithCustomAttributeGridColumns,
+      configWithCustomAttributeGridColumnsMetadata,
+    );
+    expect(plan.extensionAction).toBe("refresh");
+    expect(plan.operations).toMatchObject([
+      {
+        id: "update:creditMemo.custom-attribute-grid-columns",
+        itemRefs: [
+          {
+            config:
+              configWithCustomAttributeGridColumnsMetadata.adminUi.creditMemo
+                .customAttributeGridColumns,
+          },
+        ],
+        kind: "update",
       },
     ]);
   });

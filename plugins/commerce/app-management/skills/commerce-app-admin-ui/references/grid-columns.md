@@ -45,6 +45,8 @@ Use `adminUi.creditMemo.customAttributeGridColumns` when Commerce should read se
 ```ts
 creditMemo: {
   customAttributeGridColumns: {
+    label: "Credit Memo details",
+    description: "Displays serialized Credit Memo attributes.",
     columns: [
       {
         id: "refund_reason",
@@ -59,7 +61,8 @@ creditMemo: {
 }
 ```
 
-The section requires only a nonempty `columns` array, without section labels, descriptions, or Runtime bindings.
+The section requires only a nonempty `columns` array, without Runtime bindings.
+Optional, nonempty section `label` and `description` provide display text for App Management lifecycle summaries.
 Each column requires nonblank `id` and `label`, `align` (`left`, `center`, `right`), and `attribute_code`
 (1–255 ASCII letters, digits, or underscores). `aclProtected` is optional and boolean. IDs must be unique after
 Commerce sanitization, including across sibling `gridColumns` and `customAttributeGridColumns` declarations.
