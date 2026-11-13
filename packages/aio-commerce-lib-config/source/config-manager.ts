@@ -27,6 +27,7 @@ import {
   getConfiguration as getConfigModule,
   setConfiguration as setConfigModule,
 } from "./modules/configuration";
+import { getMissingLifecycleConfiguration } from "./modules/configuration/lifecycle-validation";
 import {
   getPersistedScopeTree,
   getScopeTree as getScopeTreeModule,
@@ -90,6 +91,27 @@ export type InitializeResult = {
   /** The concrete schema stored in global memory. */
   configSchema: ResolvedBusinessConfigSchema;
 };
+
+/**
+ * Returns the names of fields required for a lifecycle operation that have no effective
+ * value in the global scope. Password values are checked without being returned.
+ *
+ * Initialize the library with the environment-filtered schema before calling this function.
+ * @param operation - Lifecycle operation being started.
+ * @param options - Optional cache settings.
+ */
+export async function getMissingRequiredFor(
+  operation: "installation" | "upgrade",
+  options?: OperationOptions,
+): Promise<string[]> {
+  return getMissingLifecycleConfiguration(
+    {
+      cacheTimeout: options?.cacheTimeout ?? DEFAULT_CACHE_TIMEOUT,
+      namespace: DEFAULT_NAMESPACE,
+    },
+    operation,
+  );
+}
 
 function initializeStatic(configSchema: ResolvedBusinessConfigSchema) {
   setGlobalSchema(configSchema);
@@ -493,11 +515,14 @@ export async function getConfigurationByKey(
  * This function updates configuration values for a specific scope. The provided values
  * are merged with existing configuration, and the origin is set to the current scope.
  * Configuration values are inherited from parent scopes unless explicitly overridden.
+ * Updated fields marked with `requiredFor: ["save"]` must resolve to a non-empty value after the update.
+ * Unsetting such a field is allowed when an inherited value or default is present.
  *
  * @param request - Configuration set request containing the config values to set.
  * @param selector - Scope selector specifying how to identify the scope.
  * @param options - Optional library configuration options for cache timeout.
  * @returns Promise resolving to configuration response with updated scope and config values.
+ * @throws {CommerceSdkValidationError} If an updated field required for save has no effective value.
  *
  * @example
  * ```typescript

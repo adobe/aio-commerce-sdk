@@ -11,6 +11,7 @@
  */
 
 import { resolveBusinessConfigSchema } from "@adobe/aio-commerce-lib-config";
+import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
 import { configRuntimeAction } from "#actions/config/index";
@@ -291,6 +292,33 @@ describe("configRuntimeAction", () => {
   });
 
   describe("PATCH /", () => {
+    test("returns a 400 for save requirement validation errors", async () => {
+      setConfigurationMock.mockRejectedValue(
+        new CommerceSdkValidationError(
+          'Field "mode" required for save must have a value',
+          {
+            issues: [],
+          },
+        ),
+      );
+      const handler = configRuntimeAction({ configSchema });
+      const result = await handler(
+        createRuntimeActionParams({
+          body: {
+            config: [{ name: "mode", value: "" }],
+            scopeId: "store-1",
+          },
+          method: "patch",
+        }),
+      );
+      expect(result).toMatchObject({
+        error: {
+          body: { message: 'Field "mode" required for save must have a value' },
+          statusCode: 400,
+        },
+      });
+    });
+
     test("accepts null values as unsets", async () => {
       setConfigurationMock.mockResolvedValue({
         config: [],

@@ -39,8 +39,9 @@ const DEFAULT_MULTIPLE_LIST_VALUE = [] as const;
 
 /**
  * Base schema for configuration field options with name, optional label,
- * optional description, and optional `env` to scope the field to specific
- * Commerce environments (when omitted, the field applies to all environments).
+ * optional description, optional `requiredFor` operations, and optional `env`
+ * to scope the field to specific Commerce environments (when omitted, the
+ * field applies to all environments).
  */
 const BaseOptionSchema = v.object({
   description: v.optional(
@@ -57,6 +58,9 @@ const BaseOptionSchema = v.object({
   name: v.pipe(
     v.string("Expected a string for the field name"),
     v.nonEmpty("The field name must not be empty"),
+  ),
+  requiredFor: v.optional(
+    v.array(v.picklist(["save", "installation", "upgrade"])),
   ),
 });
 

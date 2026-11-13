@@ -12,7 +12,11 @@
 
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
-import { getConfiguration, setConfiguration } from "#config-manager";
+import {
+  getConfiguration,
+  getMissingRequiredFor,
+  setConfiguration,
+} from "#config-manager";
 import { byScopeId } from "#config-utils";
 import { setGlobalSchema } from "#modules/schema/config-schema-repository";
 import { getPersistedScopeTree } from "#modules/scope-tree/scope-tree-repository";
@@ -65,6 +69,218 @@ describe("setConfiguration — null/unset semantics", () => {
     setGlobalSchema(schema);
     vi.clearAllMocks();
     vi.mocked(getPersistedScopeTree).mockResolvedValue(mockScopeTree);
+  });
+
+  describe("lifecycle configuration requirements", () => {
+    beforeEach(() => {
+      mockStateInstance = new MockState();
+      mockFilesInstance = new MockFiles();
+      setGlobalSchema([
+        {
+          default: "",
+          name: "credential",
+          requiredFor: ["installation", "upgrade"],
+          type: "password",
+        },
+        {
+          default: false,
+          name: "enabled",
+          requiredFor: ["installation"],
+          type: "boolean",
+        },
+        {
+          default: "fallback",
+          name: "region",
+          requiredFor: ["upgrade"],
+          type: "text",
+        },
+        { default: "", name: "optional", type: "text" },
+      ]);
+      vi.clearAllMocks();
+      vi.mocked(getPersistedScopeTree).mockResolvedValue(mockScopeTree);
+    });
+
+    test("checks only fields for the requested operation and accepts defaults", async () => {
+      expect(await getMissingRequiredFor("installation")).toEqual([
+        "credential",
+      ]);
+      expect(await getMissingRequiredFor("upgrade")).toEqual(["credential"]);
+    });
+
+    test("uses global values, not other scopes, and does not decrypt secrets", async () => {
+      await setConfiguration(
+        { config: [{ name: "credential", value: "site" }] },
+        byScopeId(WEBSITE_ID),
+        { encryptionKey: "a".repeat(64) },
+      );
+      expect(await getMissingRequiredFor("installation")).toEqual([
+        "credential",
+      ]);
+      await setConfiguration(
+        { config: [{ name: "credential", value: "global" }] },
+        byScopeId(GLOBAL_ID),
+        { encryptionKey: "a".repeat(64) },
+      );
+      expect(await getMissingRequiredFor("installation")).toEqual([]);
+      expect(await getMissingRequiredFor("upgrade")).toEqual([]);
+    });
+  });
+
+  describe("setConfiguration — fields required for save", () => {
+    beforeEach(() => {
+      mockStateInstance = new MockState();
+      mockFilesInstance = new MockFiles();
+      setGlobalSchema([
+        {
+          default: "",
+          name: "currency",
+          requiredFor: ["save"],
+          type: "text",
+        },
+        { default: "", name: "locale", requiredFor: ["save"], type: "text" },
+        {
+          default: false,
+          name: "enabled",
+          requiredFor: ["save"],
+          type: "boolean",
+        },
+        {
+          default: [],
+          name: "methods",
+          options: [{ label: "One", value: "one" }],
+          requiredFor: ["save"],
+          selectionMode: "multiple",
+          type: "list",
+        },
+        {
+          default: "",
+          name: "optional",
+          requiredFor: ["installation"],
+          type: "text",
+        },
+      ]);
+      vi.clearAllMocks();
+      vi.mocked(getPersistedScopeTree).mockResolvedValue(mockScopeTree);
+    });
+
+    test.each([
+      { name: "currency", value: "" },
+      { name: "currency", value: null },
+      { name: "methods", value: [] },
+      { name: "methods", value: null },
+    ])("rejects a missing save-required value for $name", async (entry) => {
+      await expect(
+        setConfiguration({ config: [entry] }, byScopeId(GLOBAL_ID)),
+      ).rejects.toThrow(
+        `Field "${entry.name}" required for save must have a value`,
+      );
+    });
+
+    test("rejects a required entry with an omitted value", async () => {
+      await expect(
+        setConfiguration(
+          // @ts-expect-error Check malformed JavaScript callers at runtime.
+          { config: [{ name: "currency" }] },
+          byScopeId(GLOBAL_ID),
+        ),
+      ).rejects.toThrow(
+        'Field "currency" required for save must have a valid value',
+      );
+    });
+
+    test("accepts false and leaves omitted save-required fields unvalidated", async () => {
+      await expect(
+        setConfiguration(
+          { config: [{ name: "enabled", value: false }] },
+          byScopeId(GLOBAL_ID),
+        ),
+      ).resolves.toMatchObject({ config: [{ name: "enabled", value: false }] });
+    });
+
+    test("allows unsetting a required field when it inherits a value", async () => {
+      await setConfiguration(
+        { config: [{ name: "currency", value: "USD" }] },
+        byScopeId(GLOBAL_ID),
+      );
+      await setConfiguration(
+        { config: [{ name: "currency", value: "EUR" }] },
+        byScopeId(WEBSITE_ID),
+      );
+      await setConfiguration(
+        { config: [{ name: "currency", value: null }] },
+        byScopeId(WEBSITE_ID),
+      );
+      const result = await getConfiguration(byScopeId(WEBSITE_ID));
+      expect(
+        result.config.find((entry) => entry.name === "currency")?.value,
+      ).toBe("USD");
+    });
+
+    test("rejects an empty override even when the parent has a value", async () => {
+      await setConfiguration(
+        { config: [{ name: "currency", value: "USD" }] },
+        byScopeId(GLOBAL_ID),
+      );
+      await expect(
+        setConfiguration(
+          { config: [{ name: "currency", value: "" }] },
+          byScopeId(WEBSITE_ID),
+        ),
+      ).rejects.toThrow('Field "currency" required for save');
+    });
+
+    test("allows unsetting a required field when its default is present", async () => {
+      await expect(
+        setConfiguration(
+          { config: [{ name: "enabled", value: null }] },
+          byScopeId(GLOBAL_ID),
+        ),
+      ).resolves.toBeDefined();
+    });
+
+    test("rejects unsetting a required override when no inherited value exists", async () => {
+      await setConfiguration(
+        { config: [{ name: "currency", value: "EUR" }] },
+        byScopeId(WEBSITE_ID),
+      );
+      await expect(
+        setConfiguration(
+          { config: [{ name: "currency", value: null }] },
+          byScopeId(WEBSITE_ID),
+        ),
+      ).rejects.toThrow('Field "currency" required for save');
+      const result = await getConfiguration(byScopeId(WEBSITE_ID));
+      expect(
+        result.config.find((entry) => entry.name === "currency")?.value,
+      ).toBe("EUR");
+    });
+
+    test("rejects the entire update before persisting when one field is invalid", async () => {
+      await expect(
+        setConfiguration(
+          {
+            config: [
+              { name: "optional", value: "saved" },
+              { name: "currency", value: "" },
+            ],
+          },
+          byScopeId(GLOBAL_ID),
+        ),
+      ).rejects.toThrow('Field "currency" required for save');
+      const result = await getConfiguration(byScopeId(GLOBAL_ID));
+      expect(
+        result.config.find((entry) => entry.name === "optional")?.value,
+      ).toBe("");
+    });
+
+    test("permits empty values for fields not required for save", async () => {
+      await expect(
+        setConfiguration(
+          { config: [{ name: "optional", value: "" }] },
+          byScopeId(GLOBAL_ID),
+        ),
+      ).resolves.toBeDefined();
+    });
   });
 
   test("null value removes the explicit override from a scope", async () => {

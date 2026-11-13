@@ -186,6 +186,20 @@ describe("schema/utils", () => {
   });
 
   describe("resolveBusinessConfigSchema", () => {
+    test("preserves requiredFor when resolving a dynamic list", async () => {
+      const schema: BusinessConfigSchema = [
+        {
+          name: "methods",
+          options: () => [{ label: "One", value: "one" }],
+          requiredFor: ["save", "installation"],
+          selectionMode: "multiple",
+          type: "dynamicList",
+        },
+      ];
+      const resolved = await resolveBusinessConfigSchema(schema, mockParams);
+      expect(resolved[0].requiredFor).toEqual(["save", "installation"]);
+    });
+
     const SINGLE_OPTION = [{ label: "A", value: "a" }];
     const pickFirstOption = (opts: BusinessConfigSchemaListOption[]) =>
       opts[0].value;

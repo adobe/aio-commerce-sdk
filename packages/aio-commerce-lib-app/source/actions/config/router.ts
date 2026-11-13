@@ -16,7 +16,8 @@ import {
   initialize,
   setConfiguration,
 } from "@adobe/aio-commerce-lib-config";
-import { ok } from "@adobe/aio-commerce-lib-core/responses";
+import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
+import { badRequest, ok } from "@adobe/aio-commerce-lib-core/responses";
 import {
   HttpActionRouter,
   logger as withLogger,
@@ -139,9 +140,19 @@ router.patch("/", {
       schema: rawParams.configSchema,
     });
 
-    const result = await setConfiguration({ config }, byScopeId(scopeId), {
-      encryptionKey: rawParams.AIO_COMMERCE_CONFIG_ENCRYPTION_KEY,
-    });
+    let result: Awaited<ReturnType<typeof setConfiguration>>;
+    try {
+      result = await setConfiguration({ config }, byScopeId(scopeId), {
+        encryptionKey: rawParams.AIO_COMMERCE_CONFIG_ENCRYPTION_KEY,
+      });
+    } catch (error) {
+      if (error instanceof CommerceSdkValidationError) {
+        return badRequest({
+          body: { issues: error.issues, message: error.message },
+        });
+      }
+      throw error;
+    }
 
     result.config = filterPasswordFields(configSchema, result.config);
     return ok({

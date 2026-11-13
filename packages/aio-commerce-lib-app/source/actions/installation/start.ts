@@ -10,8 +10,16 @@
  * governing permissions and limitations under the License.
  */
 
-import { badRequest } from "@adobe/aio-commerce-lib-core/responses";
+import {
+  getMissingRequiredFor,
+  initialize,
+} from "@adobe/aio-commerce-lib-config";
+import { badRequest, conflict } from "@adobe/aio-commerce-lib-core/responses";
 
+import {
+  filterSchemaByEnv,
+  getInstallCommerceEnv,
+} from "#config/lib/environment";
 import {
   getAssociationData,
   setAssociationData,
@@ -120,6 +128,11 @@ export async function startPlannedRequest(args: RequestHandlerArgs) {
     );
   }
 
+  const validation = await validateLifecycleConfiguration(request, operation);
+  if (validation) {
+    return validation;
+  }
+
   // Written before running, so the attempt is a normal upgrade and a failure retries from a real baseline.
   if (businessConfigOnlyVersion && !request.baseline && state) {
     await writeBusinessConfigOnlyBaseline(
@@ -151,6 +164,46 @@ export async function startPlannedRequest(args: RequestHandlerArgs) {
     params: request.params,
     planning: planned.planning,
     runtime: request.runtime,
+  });
+}
+
+/** Refuses a start when global configuration required by the operation is missing. */
+async function validateLifecycleConfiguration(
+  request: PreparedRequest,
+  operation: "install" | "upgrade" | "uninstall",
+) {
+  if (operation === "uninstall" || !request.appConfig.businessConfig?.schema) {
+    return null;
+  }
+  const lifecycleOperation =
+    operation === "install" ? "installation" : "upgrade";
+  if (
+    !request.appConfig.businessConfig.schema.some((field) =>
+      field.requiredFor?.includes(lifecycleOperation),
+    )
+  ) {
+    return null;
+  }
+  const schema = filterSchemaByEnv(
+    request.appConfig.businessConfig.schema,
+    getInstallCommerceEnv(request.params),
+  );
+  if (
+    !schema.some((field) => field.requiredFor?.includes(lifecycleOperation))
+  ) {
+    return null;
+  }
+  await initialize({ params: request.params, schema });
+  const missing = await getMissingRequiredFor(lifecycleOperation);
+  if (missing.length === 0) {
+    return null;
+  }
+  return conflict({
+    body: {
+      code: "missing-required-configuration",
+      fields: missing,
+      message: `Required global configuration is missing for ${lifecycleOperation}: ${missing.join(", ")}.`,
+    },
   });
 }
 

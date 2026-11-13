@@ -49,6 +49,22 @@ const recordedMultipleDynamicListField = {
 };
 
 describe("SchemaBusinessConfigSchema", () => {
+  test("preserves requiredFor operations and rejects unknown operations", () => {
+    const field = {
+      name: "example",
+      requiredFor: ["save", "installation", "upgrade"],
+      type: "text",
+    };
+    expect(v.parse(SchemaBusinessConfigSchema, [field])[0].requiredFor).toEqual(
+      ["save", "installation", "upgrade"],
+    );
+    expect(
+      v.safeParse(SchemaBusinessConfigSchema, [
+        { ...field, requiredFor: ["install"] },
+      ]).success,
+    ).toBe(false);
+  });
+
   test.each([
     ["https://example.com", true],
     ["HTTPS://example.com", true],
@@ -85,6 +101,13 @@ describe("SchemaBusinessConfigSchema", () => {
 });
 
 describe("RecordedSchemaBusinessConfigSchema", () => {
+  test("preserves requiredFor on recorded dynamic lists", () => {
+    const result = v.parse(RecordedSchemaBusinessConfigSchema, [
+      { ...recordedDynamicListField, requiredFor: ["save", "installation"] },
+    ]);
+    expect(result[0].requiredFor).toEqual(["save", "installation"]);
+  });
+
   test("accepts a dynamicList field with function options and default", () => {
     const result = v.safeParse(RecordedSchemaBusinessConfigSchema, [
       dynamicListField,

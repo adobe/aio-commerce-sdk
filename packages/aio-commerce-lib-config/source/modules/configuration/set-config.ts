@@ -10,9 +10,14 @@
  * governing permissions and limitations under the License.
  */
 
+import { parseOrThrow } from "@aio-commerce-sdk/common-utils/valibot";
+import * as v from "valibot";
+
 import {
   deriveScopeFromArgs,
+  hasRequiredValue,
   mergeScopes,
+  mergeWithSchemaDefaults,
   sanitizeRequestEntries,
 } from "#config-utils";
 import { requireGlobalSchema } from "#modules/schema/config-schema-repository";
@@ -27,6 +32,10 @@ import type {
   SetConfigurationResponse,
 } from "#types/index";
 import type { ConfigContext, SetConfigValue } from "./types";
+
+const RequiredSaveValueSchema = v.nullable(
+  v.union([v.string(), v.boolean(), v.array(v.string())]),
+);
 
 /**
  * Sets configuration values for a scope identified by code and level or id.
@@ -53,18 +62,30 @@ export async function setConfiguration(
     context.namespace,
   );
 
-  const { scopeCode, scopeLevel, scopeId } = deriveScopeFromArgs(
+  const { scopeCode, scopeLevel, scopeId, scopePath } = deriveScopeFromArgs(
     args,
     scopeTree,
   );
 
+  const requiredForSave = new Set(
+    schema
+      .filter((field) => field.requiredFor?.includes("save"))
+      .map((field) => field.name),
+  );
+  for (const entry of request.config) {
+    if (
+      typeof entry.name === "string" &&
+      requiredForSave.has(entry.name.trim())
+    ) {
+      parseOrThrow(
+        RequiredSaveValueSchema,
+        entry.value,
+        `Field "${entry.name.trim()}" required for save must have a valid value`,
+      );
+    }
+  }
   const sanitizedEntries = sanitizeRequestEntries(request.config);
   const passwordFields = getPasswordFields(schema);
-  const encryptedEntries = encryptPasswordFields(
-    sanitizedEntries,
-    passwordFields,
-    context.encryptionKey,
-  );
 
   const existingPersisted = await configRepository.loadConfig(
     scopeCode,
@@ -74,6 +95,60 @@ export async function setConfiguration(
     ? (existingPersisted?.config ?? [])
     : [];
 
+  const pendingScopeConfig = mergeScopes(
+    existingEntries,
+    sanitizedEntries,
+    scopeCode,
+    scopeLevel,
+  );
+
+  const touchedRequiredForSave = sanitizedEntries.filter((entry) =>
+    requiredForSave.has(entry.name),
+  );
+  if (touchedRequiredForSave.length > 0) {
+    const scope = scopePath.find(
+      (node) => node.code === scopeCode && node.level === scopeLevel,
+    );
+    if (!scope) {
+      throw new Error(`INVALID_SCOPE: Unknown scope id='${scopeId}'`);
+    }
+
+    const pending = { config: pendingScopeConfig, scope };
+    const effective = await mergeWithSchemaDefaults({
+      configData: pending,
+      getSchemaFn: async () => schema,
+      loadScopeConfigFn: (code) =>
+        code === scopeCode
+          ? Promise.resolve(pending)
+          : configRepository.loadConfig(code, context.cacheTimeout),
+      scopeCode,
+      scopeLevel,
+      scopePath,
+    });
+
+    for (const { name } of touchedRequiredForSave) {
+      const value = effective.config.find(
+        (entry) => entry.name === name,
+      )?.value;
+      parseOrThrow(
+        v.pipe(
+          v.unknown(),
+          v.check(
+            hasRequiredValue,
+            `Field "${name}" required for save must have a value`,
+          ),
+        ),
+        value,
+        `Field "${name}" required for save must have a value`,
+      );
+    }
+  }
+
+  const encryptedEntries = encryptPasswordFields(
+    sanitizedEntries,
+    passwordFields,
+    context.encryptionKey,
+  );
   const mergedScopeConfig = mergeScopes(
     existingEntries,
     encryptedEntries,

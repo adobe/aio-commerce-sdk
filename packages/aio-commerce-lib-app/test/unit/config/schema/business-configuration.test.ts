@@ -10,17 +10,32 @@
  * governing permissions and limitations under the License.
  */
 
+import * as v from "valibot";
 import { describe, expect, test } from "vitest";
 
 import {
   hasBusinessConfig,
   hasBusinessConfigSchema,
+  SchemaBusinessConfig,
 } from "#config/schema/business-configuration";
 import { minimalValidConfig } from "#test/fixtures/config";
 
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 
 describe("business-configuration schema helpers", () => {
+  test("preserves requiredFor operations while parsing business configuration", () => {
+    const config = v.parse(SchemaBusinessConfig, {
+      schema: [
+        { name: "apiKey", requiredFor: ["installation"], type: "password" },
+        { name: "enabled", requiredFor: ["save", "upgrade"], type: "boolean" },
+      ],
+    });
+    expect(config.schema.map((field) => field.requiredFor)).toEqual([
+      ["installation"],
+      ["save", "upgrade"],
+    ]);
+  });
+
   describe("hasBusinessConfig", () => {
     test("should return true when businessConfig is defined", () => {
       const config: CommerceAppConfigOutputModel = {
