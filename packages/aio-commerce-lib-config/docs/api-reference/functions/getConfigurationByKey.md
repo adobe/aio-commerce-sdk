@@ -15,7 +15,7 @@ function getConfigurationByKey(
 }>;
 ```
 
-Defined in: [config-manager.ts:454](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-config/source/config-manager.ts#L454)
+Defined in: [config-manager.ts:454](https://github.com/adobe/aio-commerce-sdk/blob/6e9704065e17b124069637c99898c47981974e20/packages/aio-commerce-lib-config/source/config-manager.ts#L454)
 
 Gets a specific configuration value by key for a scope.
 

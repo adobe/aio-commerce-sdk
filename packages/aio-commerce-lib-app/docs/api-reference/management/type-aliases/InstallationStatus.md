@@ -4,7 +4,7 @@
 type InstallationStatus = ExecutionStatus;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/deprecated/compat.ts:42](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-app/source/management/deprecated/compat.ts#L42)
+Defined in: [aio-commerce-lib-app/source/management/deprecated/compat.ts:42](https://github.com/adobe/aio-commerce-sdk/blob/6e9704065e17b124069637c99898c47981974e20/packages/aio-commerce-lib-app/source/management/deprecated/compat.ts#L42)
 
 ## Deprecated
 

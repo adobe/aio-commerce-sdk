@@ -6,7 +6,7 @@ function createFilesStore<T>(
 ): Promise<KeyValueStore<T>>;
 ```
 
-Defined in: [storage/files-store.ts:45](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages-private/common-utils/source/storage/files-store.ts#L45)
+Defined in: [storage/files-store.ts:45](https://github.com/adobe/aio-commerce-sdk/blob/6e9704065e17b124069637c99898c47981974e20/packages-private/common-utils/source/storage/files-store.ts#L45)
 
 Creates a generic key-value store backed by @adobe/aio-lib-files.
 Provides persistent storage that survives beyond TTL.

@@ -10,7 +10,7 @@ function hasCommerceEvents<T extends AnyCommerceAppConfig>(
 };
 ```
 
-Defined in: [aio-commerce-lib-app/source/config/schema/eventing.ts:369](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-app/source/config/schema/eventing.ts#L369)
+Defined in: [aio-commerce-lib-app/source/config/schema/eventing.ts:369](https://github.com/adobe/aio-commerce-sdk/blob/6e9704065e17b124069637c99898c47981974e20/packages/aio-commerce-lib-app/source/config/schema/eventing.ts#L369)
 
 Check if config has commerce event sources.
 
