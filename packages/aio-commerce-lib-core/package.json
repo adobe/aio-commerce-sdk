@@ -1,6 +1,6 @@
 {
   "name": "@adobe/aio-commerce-lib-core",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "private": false,
   "description": "Core utilities for Adobe Commerce SDK libraries",
   "keywords": [

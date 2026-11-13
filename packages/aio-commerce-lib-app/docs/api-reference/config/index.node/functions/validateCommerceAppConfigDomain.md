@@ -25,6 +25,7 @@ function validateCommerceAppConfigDomain<T extends
            label: string;
            runtimeAction: string;
         };
+        viewButtons?: (... | ...)[];
      };
      customer?: {
         gridColumns?: {
@@ -42,6 +43,7 @@ function validateCommerceAppConfigDomain<T extends
            label: string;
            runtimeAction: string;
         };
+        viewButtons?: (... | ...)[];
      };
      menu?: {
         aclProtected?: boolean;
@@ -58,6 +60,14 @@ function validateCommerceAppConfigDomain<T extends
            | "stores"
            | "system";
         sandboxPermissions?: (... | ... | ...)[];
+     };
+     nativeUi?: {
+        replacedPages: {
+           path: string;
+           sandboxPermissions?: ... | ...;
+           target: ... | ...;
+           title: string;
+        }[];
      };
      newsletter?: {
         gridColumns?: {
@@ -85,6 +95,9 @@ function validateCommerceAppConfigDomain<T extends
            runtimeAction: string;
         };
         massActions?: (... | ...)[];
+     };
+     rma?: {
+        viewButtons?: (... | ...)[];
      };
      shipment?: {
         gridColumns?: {
@@ -302,7 +315,7 @@ function validateCommerceAppConfigDomain<T extends
 }, T>>;
 ```
 
-Defined in: [aio-commerce-lib-app/source/config/lib/validate.ts:140](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-app/source/config/lib/validate.ts#L140)
+Defined in: [aio-commerce-lib-app/source/config/lib/validate.ts:140](https://github.com/adobe/aio-commerce-sdk/blob/6e9704065e17b124069637c99898c47981974e20/packages/aio-commerce-lib-app/source/config/lib/validate.ts#L140)
 
 Validates a specific domain configuration within the commerce app config.
 
@@ -340,6 +353,7 @@ schema for that specific domain.
 `label`: `string`;
 `runtimeAction`: `string`;
 \};
+`viewButtons?`: (... \| ...)[];
 \};
 `customer?`: \{
 `gridColumns?`: \{
@@ -357,6 +371,7 @@ schema for that specific domain.
 `label`: `string`;
 `runtimeAction`: `string`;
 \};
+`viewButtons?`: (... \| ...)[];
 \};
 `menu?`: \{
 `aclProtected?`: `boolean`;
@@ -373,6 +388,14 @@ schema for that specific domain.
 \| `"stores"`
 \| `"system"`;
 `sandboxPermissions?`: (... \| ... \| ...)[];
+\};
+`nativeUi?`: \{
+`replacedPages`: \{
+`path`: `string`;
+`sandboxPermissions?`: ... \| ...;
+`target`: ... \| ...;
+`title`: `string`;
+\}[];
 \};
 `newsletter?`: \{
 `gridColumns?`: \{
@@ -400,6 +423,9 @@ schema for that specific domain.
 `runtimeAction`: `string`;
 \};
 `massActions?`: (... \| ...)[];
+\};
+`rma?`: \{
+`viewButtons?`: (... \| ...)[];
 \};
 `shipment?`: \{
 `gridColumns?`: \{

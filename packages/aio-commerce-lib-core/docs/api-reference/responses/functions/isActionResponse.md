@@ -6,7 +6,7 @@ function isActionResponse(
 ): response is ActionResponse<BodyRecord, BodyRecordWithMessage, HeadersRecord>;
 ```
 
-Defined in: [responses/helpers.ts:154](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-core/source/responses/helpers.ts#L154)
+Defined in: [responses/helpers.ts:154](https://github.com/adobe/aio-commerce-sdk/blob/6e9704065e17b124069637c99898c47981974e20/packages/aio-commerce-lib-core/source/responses/helpers.ts#L154)
 
 Determines whether a value is a standardized SDK action response.
 

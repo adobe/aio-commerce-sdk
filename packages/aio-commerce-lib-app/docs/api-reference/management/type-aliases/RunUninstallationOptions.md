@@ -10,7 +10,7 @@ type RunUninstallationOptions = {
 };
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/deprecated/runner.ts:212](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-app/source/management/deprecated/runner.ts#L212)
+Defined in: [aio-commerce-lib-app/source/management/deprecated/runner.ts:212](https://github.com/adobe/aio-commerce-sdk/blob/6e9704065e17b124069637c99898c47981974e20/packages/aio-commerce-lib-app/source/management/deprecated/runner.ts#L212)
 
 Options for running an uninstallation.
 
@@ -26,7 +26,7 @@ Removed in the next major together with [runUninstallation](../functions/runUnin
 config: CommerceAppConfigOutputModel;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/deprecated/runner.ts:216](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-app/source/management/deprecated/runner.ts#L216)
+Defined in: [aio-commerce-lib-app/source/management/deprecated/runner.ts:216](https://github.com/adobe/aio-commerce-sdk/blob/6e9704065e17b124069637c99898c47981974e20/packages/aio-commerce-lib-app/source/management/deprecated/runner.ts#L216)
 
 The app configuration.
 
@@ -38,7 +38,7 @@ The app configuration.
 executedCustomInstallationSteps?: readonly CustomInstallationStepIdentity[];
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/deprecated/runner.ts:223](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-app/source/management/deprecated/runner.ts#L223)
+Defined in: [aio-commerce-lib-app/source/management/deprecated/runner.ts:223](https://github.com/adobe/aio-commerce-sdk/blob/6e9704065e17b124069637c99898c47981974e20/packages/aio-commerce-lib-app/source/management/deprecated/runner.ts#L223)
 
 Same as [CreateInitialUninstallationStateOptions.executedCustomInstallationSteps](CreateInitialUninstallationStateOptions.md#executedcustominstallationsteps).
 
@@ -50,7 +50,7 @@ Same as [CreateInitialUninstallationStateOptions.executedCustomInstallationSteps
 hooks?: InstallationHooks;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/deprecated/runner.ts:220](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-app/source/management/deprecated/runner.ts#L220)
+Defined in: [aio-commerce-lib-app/source/management/deprecated/runner.ts:220](https://github.com/adobe/aio-commerce-sdk/blob/6e9704065e17b124069637c99898c47981974e20/packages/aio-commerce-lib-app/source/management/deprecated/runner.ts#L220)
 
 Lifecycle hooks for status change notifications.
 
@@ -62,7 +62,7 @@ Lifecycle hooks for status change notifications.
 initialState: InProgressWorkflowState;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/deprecated/runner.ts:218](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-app/source/management/deprecated/runner.ts#L218)
+Defined in: [aio-commerce-lib-app/source/management/deprecated/runner.ts:218](https://github.com/adobe/aio-commerce-sdk/blob/6e9704065e17b124069637c99898c47981974e20/packages/aio-commerce-lib-app/source/management/deprecated/runner.ts#L218)
 
 The initial uninstallation state (with all steps pending).
 
@@ -74,6 +74,6 @@ The initial uninstallation state (with all steps pending).
 installationContext: LifecycleContext;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/deprecated/runner.ts:214](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-app/source/management/deprecated/runner.ts#L214)
+Defined in: [aio-commerce-lib-app/source/management/deprecated/runner.ts:214](https://github.com/adobe/aio-commerce-sdk/blob/6e9704065e17b124069637c99898c47981974e20/packages/aio-commerce-lib-app/source/management/deprecated/runner.ts#L214)
 
 Shared installation context (params, logger, etc.).

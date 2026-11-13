@@ -20,4 +20,4 @@ const EventSubscriptionUpdateParamsSchema: ObjectSchema<{
 }, undefined>;
 ```
 
-Defined in: [commerce/api/event-subscriptions/schema.ts:93](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-events/source/commerce/api/event-subscriptions/schema.ts#L93)
+Defined in: [commerce/api/event-subscriptions/schema.ts:93](https://github.com/adobe/aio-commerce-sdk/blob/6e9704065e17b124069637c99898c47981974e20/packages/aio-commerce-lib-events/source/commerce/api/event-subscriptions/schema.ts#L93)

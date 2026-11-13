@@ -4,7 +4,7 @@
 function useCommerce(): Result<CommerceData>;
 ```
 
-Defined in: [aio-commerce-lib-admin-ui/source/web/react/commerce/hooks/use-commerce.ts:76](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-admin-ui/source/web/react/commerce/hooks/use-commerce.ts#L76)
+Defined in: [aio-commerce-lib-admin-ui/source/web/react/commerce/hooks/use-commerce.ts:76](https://github.com/adobe/aio-commerce-sdk/blob/6e9704065e17b124069637c99898c47981974e20/packages/aio-commerce-lib-admin-ui/source/web/react/commerce/hooks/use-commerce.ts#L76)
 
 Returns the host (domain) of the Commerce Admin the extension is embedded in, resolving it over
 the guest connection.

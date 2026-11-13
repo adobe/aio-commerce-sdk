@@ -15,7 +15,7 @@ type CompiledRoute = {
 };
 ```
 
-Defined in: [actions/http/types.ts:116](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages-private/common-utils/source/actions/http/types.ts#L116)
+Defined in: [actions/http/types.ts:116](https://github.com/adobe/aio-commerce-sdk/blob/6e9704065e17b124069637c99898c47981974e20/packages-private/common-utils/source/actions/http/types.ts#L116)
 
 Internal compiled route representation used by the router.
 
@@ -27,7 +27,7 @@ Internal compiled route representation used by the router.
 body?: StandardSchemaV1;
 ```
 
-Defined in: [actions/http/types.ts:118](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages-private/common-utils/source/actions/http/types.ts#L118)
+Defined in: [actions/http/types.ts:118](https://github.com/adobe/aio-commerce-sdk/blob/6e9704065e17b124069637c99898c47981974e20/packages-private/common-utils/source/actions/http/types.ts#L118)
 
 Optional schema for validating request body
 
@@ -40,7 +40,7 @@ handler: (req: RouteRequest<any, any, any>, ctx: any) =>
   Promisable<ActionResponse>;
 ```
 
-Defined in: [actions/http/types.ts:121](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages-private/common-utils/source/actions/http/types.ts#L121)
+Defined in: [actions/http/types.ts:121](https://github.com/adobe/aio-commerce-sdk/blob/6e9704065e17b124069637c99898c47981974e20/packages-private/common-utils/source/actions/http/types.ts#L121)
 
 Route handler function
 
@@ -63,7 +63,7 @@ Route handler function
 keys: string[];
 ```
 
-Defined in: [actions/http/types.ts:129](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages-private/common-utils/source/actions/http/types.ts#L129)
+Defined in: [actions/http/types.ts:129](https://github.com/adobe/aio-commerce-sdk/blob/6e9704065e17b124069637c99898c47981974e20/packages-private/common-utils/source/actions/http/types.ts#L129)
 
 Extracted parameter names from the path
 
@@ -75,7 +75,7 @@ Extracted parameter names from the path
 method: HttpMethod;
 ```
 
-Defined in: [actions/http/types.ts:131](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages-private/common-utils/source/actions/http/types.ts#L131)
+Defined in: [actions/http/types.ts:131](https://github.com/adobe/aio-commerce-sdk/blob/6e9704065e17b124069637c99898c47981974e20/packages-private/common-utils/source/actions/http/types.ts#L131)
 
 HTTP method for this route
 
@@ -87,7 +87,7 @@ HTTP method for this route
 params?: StandardSchemaV1;
 ```
 
-Defined in: [actions/http/types.ts:134](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages-private/common-utils/source/actions/http/types.ts#L134)
+Defined in: [actions/http/types.ts:134](https://github.com/adobe/aio-commerce-sdk/blob/6e9704065e17b124069637c99898c47981974e20/packages-private/common-utils/source/actions/http/types.ts#L134)
 
 Optional schema for validating route parameters
 
@@ -99,7 +99,7 @@ Optional schema for validating route parameters
 pattern: RegExp;
 ```
 
-Defined in: [actions/http/types.ts:137](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages-private/common-utils/source/actions/http/types.ts#L137)
+Defined in: [actions/http/types.ts:137](https://github.com/adobe/aio-commerce-sdk/blob/6e9704065e17b124069637c99898c47981974e20/packages-private/common-utils/source/actions/http/types.ts#L137)
 
 Compiled regex pattern for path matching
 
@@ -111,6 +111,6 @@ Compiled regex pattern for path matching
 query?: StandardSchemaV1;
 ```
 
-Defined in: [actions/http/types.ts:140](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages-private/common-utils/source/actions/http/types.ts#L140)
+Defined in: [actions/http/types.ts:140](https://github.com/adobe/aio-commerce-sdk/blob/6e9704065e17b124069637c99898c47981974e20/packages-private/common-utils/source/actions/http/types.ts#L140)
 
 Optional schema for validating query parameters
