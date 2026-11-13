@@ -515,14 +515,14 @@ export async function getConfigurationByKey(
  * This function updates configuration values for a specific scope. The provided values
  * are merged with existing configuration, and the origin is set to the current scope.
  * Configuration values are inherited from parent scopes unless explicitly overridden.
- * Updated fields marked `required` must resolve to a non-empty value after the update.
+ * Updated fields marked with `requiredFor: ["save"]` must resolve to a non-empty value after the update.
  * Unsetting such a field is allowed when an inherited value or default is present.
  *
  * @param request - Configuration set request containing the config values to set.
  * @param selector - Scope selector specifying how to identify the scope.
  * @param options - Optional library configuration options for cache timeout.
  * @returns Promise resolving to configuration response with updated scope and config values.
- * @throws {CommerceSdkValidationError} If an updated required field has no effective value.
+ * @throws {CommerceSdkValidationError} If an updated field required for save has no effective value.
  *
  * @example
  * ```typescript

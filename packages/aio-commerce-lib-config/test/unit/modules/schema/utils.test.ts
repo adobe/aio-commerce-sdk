@@ -186,20 +186,18 @@ describe("schema/utils", () => {
   });
 
   describe("resolveBusinessConfigSchema", () => {
-    test("preserves required when resolving a dynamic list", async () => {
+    test("preserves requiredFor when resolving a dynamic list", async () => {
       const schema: BusinessConfigSchema = [
         {
           name: "methods",
           options: () => [{ label: "One", value: "one" }],
-          required: true,
-          requiredFor: ["installation"],
+          requiredFor: ["save", "installation"],
           selectionMode: "multiple",
           type: "dynamicList",
         },
       ];
       const resolved = await resolveBusinessConfigSchema(schema, mockParams);
-      expect(resolved[0].required).toBe(true);
-      expect(resolved[0].requiredFor).toEqual(["installation"]);
+      expect(resolved[0].requiredFor).toEqual(["save", "installation"]);
     });
 
     const SINGLE_OPTION = [{ label: "A", value: "a" }];

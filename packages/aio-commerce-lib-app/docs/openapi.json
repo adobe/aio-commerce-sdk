@@ -151,16 +151,16 @@
                                         "type": "string",
                                         "minLength": 1
                                       },
-                                      "required": {
-                                        "description": "Whether the field requires a non-empty effective value when updated.",
-                                        "type": "boolean"
-                                      },
                                       "requiredFor": {
-                                        "description": "Lifecycle operations that require a non-empty effective global value before starting.",
+                                        "description": "Operations that require a non-empty effective value when saving or starting.",
                                         "type": "array",
                                         "items": {
                                           "type": "string",
-                                          "enum": ["installation", "upgrade"]
+                                          "enum": [
+                                            "save",
+                                            "installation",
+                                            "upgrade"
+                                          ]
                                         }
                                       }
                                     },
@@ -221,16 +221,16 @@
                                           "minLength": 1
                                         }
                                       },
-                                      "required": {
-                                        "description": "Whether the field requires a non-empty effective value when updated.",
-                                        "type": "boolean"
-                                      },
                                       "requiredFor": {
-                                        "description": "Lifecycle operations that require a non-empty effective global value before starting.",
+                                        "description": "Operations that require a non-empty effective value when saving or starting.",
                                         "type": "array",
                                         "items": {
                                           "type": "string",
-                                          "enum": ["installation", "upgrade"]
+                                          "enum": [
+                                            "save",
+                                            "installation",
+                                            "upgrade"
+                                          ]
                                         }
                                       }
                                     },
@@ -271,16 +271,16 @@
                                   "default": {
                                     "type": "string"
                                   },
-                                  "required": {
-                                    "description": "Whether the field requires a non-empty effective value when updated.",
-                                    "type": "boolean"
-                                  },
                                   "requiredFor": {
-                                    "description": "Lifecycle operations that require a non-empty effective global value before starting.",
+                                    "description": "Operations that require a non-empty effective value when saving or starting.",
                                     "type": "array",
                                     "items": {
                                       "type": "string",
-                                      "enum": ["installation", "upgrade"]
+                                      "enum": [
+                                        "save",
+                                        "installation",
+                                        "upgrade"
+                                      ]
                                     }
                                   }
                                 },
@@ -313,16 +313,16 @@
                                   "default": {
                                     "const": ""
                                   },
-                                  "required": {
-                                    "description": "Whether the field requires a non-empty effective value when updated.",
-                                    "type": "boolean"
-                                  },
                                   "requiredFor": {
-                                    "description": "Lifecycle operations that require a non-empty effective global value before starting.",
+                                    "description": "Operations that require a non-empty effective value when saving or starting.",
                                     "type": "array",
                                     "items": {
                                       "type": "string",
-                                      "enum": ["installation", "upgrade"]
+                                      "enum": [
+                                        "save",
+                                        "installation",
+                                        "upgrade"
+                                      ]
                                     }
                                   }
                                 },
@@ -363,16 +363,16 @@
                                       }
                                     ]
                                   },
-                                  "required": {
-                                    "description": "Whether the field requires a non-empty effective value when updated.",
-                                    "type": "boolean"
-                                  },
                                   "requiredFor": {
-                                    "description": "Lifecycle operations that require a non-empty effective global value before starting.",
+                                    "description": "Operations that require a non-empty effective value when saving or starting.",
                                     "type": "array",
                                     "items": {
                                       "type": "string",
-                                      "enum": ["installation", "upgrade"]
+                                      "enum": [
+                                        "save",
+                                        "installation",
+                                        "upgrade"
+                                      ]
                                     }
                                   }
                                 },
@@ -413,16 +413,16 @@
                                       }
                                     ]
                                   },
-                                  "required": {
-                                    "description": "Whether the field requires a non-empty effective value when updated.",
-                                    "type": "boolean"
-                                  },
                                   "requiredFor": {
-                                    "description": "Lifecycle operations that require a non-empty effective global value before starting.",
+                                    "description": "Operations that require a non-empty effective value when saving or starting.",
                                     "type": "array",
                                     "items": {
                                       "type": "string",
-                                      "enum": ["installation", "upgrade"]
+                                      "enum": [
+                                        "save",
+                                        "installation",
+                                        "upgrade"
+                                      ]
                                     }
                                   }
                                 },
@@ -463,16 +463,16 @@
                                       }
                                     ]
                                   },
-                                  "required": {
-                                    "description": "Whether the field requires a non-empty effective value when updated.",
-                                    "type": "boolean"
-                                  },
                                   "requiredFor": {
-                                    "description": "Lifecycle operations that require a non-empty effective global value before starting.",
+                                    "description": "Operations that require a non-empty effective value when saving or starting.",
                                     "type": "array",
                                     "items": {
                                       "type": "string",
-                                      "enum": ["installation", "upgrade"]
+                                      "enum": [
+                                        "save",
+                                        "installation",
+                                        "upgrade"
+                                      ]
                                     }
                                   }
                                 },
@@ -505,16 +505,16 @@
                                   "default": {
                                     "type": "boolean"
                                   },
-                                  "required": {
-                                    "description": "Whether the field requires a non-empty effective value when updated.",
-                                    "type": "boolean"
-                                  },
                                   "requiredFor": {
-                                    "description": "Lifecycle operations that require a non-empty effective global value before starting.",
+                                    "description": "Operations that require a non-empty effective value when saving or starting.",
                                     "type": "array",
                                     "items": {
                                       "type": "string",
-                                      "enum": ["installation", "upgrade"]
+                                      "enum": [
+                                        "save",
+                                        "installation",
+                                        "upgrade"
+                                      ]
                                     }
                                   }
                                 },
@@ -878,16 +878,16 @@
                                     "type": "string",
                                     "minLength": 1
                                   },
-                                  "required": {
-                                    "description": "Whether the field requires a non-empty effective value when updated.",
-                                    "type": "boolean"
-                                  },
                                   "requiredFor": {
-                                    "description": "Lifecycle operations that require a non-empty effective global value before starting.",
+                                    "description": "Operations that require a non-empty effective value when saving or starting.",
                                     "type": "array",
                                     "items": {
                                       "type": "string",
-                                      "enum": ["installation", "upgrade"]
+                                      "enum": [
+                                        "save",
+                                        "installation",
+                                        "upgrade"
+                                      ]
                                     }
                                   }
                                 },
@@ -948,16 +948,16 @@
                                       "minLength": 1
                                     }
                                   },
-                                  "required": {
-                                    "description": "Whether the field requires a non-empty effective value when updated.",
-                                    "type": "boolean"
-                                  },
                                   "requiredFor": {
-                                    "description": "Lifecycle operations that require a non-empty effective global value before starting.",
+                                    "description": "Operations that require a non-empty effective value when saving or starting.",
                                     "type": "array",
                                     "items": {
                                       "type": "string",
-                                      "enum": ["installation", "upgrade"]
+                                      "enum": [
+                                        "save",
+                                        "installation",
+                                        "upgrade"
+                                      ]
                                     }
                                   }
                                 },
@@ -998,16 +998,12 @@
                               "default": {
                                 "type": "string"
                               },
-                              "required": {
-                                "description": "Whether the field requires a non-empty effective value when updated.",
-                                "type": "boolean"
-                              },
                               "requiredFor": {
-                                "description": "Lifecycle operations that require a non-empty effective global value before starting.",
+                                "description": "Operations that require a non-empty effective value when saving or starting.",
                                 "type": "array",
                                 "items": {
                                   "type": "string",
-                                  "enum": ["installation", "upgrade"]
+                                  "enum": ["save", "installation", "upgrade"]
                                 }
                               }
                             },
@@ -1040,16 +1036,12 @@
                               "default": {
                                 "const": ""
                               },
-                              "required": {
-                                "description": "Whether the field requires a non-empty effective value when updated.",
-                                "type": "boolean"
-                              },
                               "requiredFor": {
-                                "description": "Lifecycle operations that require a non-empty effective global value before starting.",
+                                "description": "Operations that require a non-empty effective value when saving or starting.",
                                 "type": "array",
                                 "items": {
                                   "type": "string",
-                                  "enum": ["installation", "upgrade"]
+                                  "enum": ["save", "installation", "upgrade"]
                                 }
                               }
                             },
@@ -1090,16 +1082,12 @@
                                   }
                                 ]
                               },
-                              "required": {
-                                "description": "Whether the field requires a non-empty effective value when updated.",
-                                "type": "boolean"
-                              },
                               "requiredFor": {
-                                "description": "Lifecycle operations that require a non-empty effective global value before starting.",
+                                "description": "Operations that require a non-empty effective value when saving or starting.",
                                 "type": "array",
                                 "items": {
                                   "type": "string",
-                                  "enum": ["installation", "upgrade"]
+                                  "enum": ["save", "installation", "upgrade"]
                                 }
                               }
                             },
@@ -1140,16 +1128,12 @@
                                   }
                                 ]
                               },
-                              "required": {
-                                "description": "Whether the field requires a non-empty effective value when updated.",
-                                "type": "boolean"
-                              },
                               "requiredFor": {
-                                "description": "Lifecycle operations that require a non-empty effective global value before starting.",
+                                "description": "Operations that require a non-empty effective value when saving or starting.",
                                 "type": "array",
                                 "items": {
                                   "type": "string",
-                                  "enum": ["installation", "upgrade"]
+                                  "enum": ["save", "installation", "upgrade"]
                                 }
                               }
                             },
@@ -1190,16 +1174,12 @@
                                   }
                                 ]
                               },
-                              "required": {
-                                "description": "Whether the field requires a non-empty effective value when updated.",
-                                "type": "boolean"
-                              },
                               "requiredFor": {
-                                "description": "Lifecycle operations that require a non-empty effective global value before starting.",
+                                "description": "Operations that require a non-empty effective value when saving or starting.",
                                 "type": "array",
                                 "items": {
                                   "type": "string",
-                                  "enum": ["installation", "upgrade"]
+                                  "enum": ["save", "installation", "upgrade"]
                                 }
                               }
                             },
@@ -1232,16 +1212,12 @@
                               "default": {
                                 "type": "boolean"
                               },
-                              "required": {
-                                "description": "Whether the field requires a non-empty effective value when updated.",
-                                "type": "boolean"
-                              },
                               "requiredFor": {
-                                "description": "Lifecycle operations that require a non-empty effective global value before starting.",
+                                "description": "Operations that require a non-empty effective value when saving or starting.",
                                 "type": "array",
                                 "items": {
                                   "type": "string",
-                                  "enum": ["installation", "upgrade"]
+                                  "enum": ["save", "installation", "upgrade"]
                                 }
                               }
                             },
@@ -1323,7 +1299,7 @@
       "patch": {
         "operationId": "patchConfiguration",
         "summary": "Patch Configuration Values",
-        "description": "Partially updates configuration values for a scope. A null value unsets the scope override and restores inheritance. Updated required fields must have a non-empty effective value after the update.",
+        "description": "Partially updates configuration values for a scope. A null value unsets the scope override and restores inheritance. Updated fields marked with requiredFor: [save] must have a non-empty effective value after the update.",
         "parameters": [
           {
             "name": "x-gw-ims-org-id",

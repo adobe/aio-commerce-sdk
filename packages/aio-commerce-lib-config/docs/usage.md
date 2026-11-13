@@ -240,20 +240,20 @@ const schema = await getConfigSchema();
 console.log(schema); // Array of field definitions
 ```
 
-#### Required configuration fields
+#### Required configuration values
 
-Set `required: true` on any business configuration field to require a non-empty effective value when that field is updated. `required` is optional and defaults to `false` when omitted.
+Use the optional `requiredFor` array to validate a field when its value is saved or before a lifecycle operation starts. `"save"` validates only fields included in a scope update.
 
 ```typescript
 const schema = [
-  { name: "apiKey", type: "password", required: true },
-  { name: "enabled", type: "boolean", required: true, default: false },
+  { name: "apiKey", type: "password", requiredFor: ["save", "installation"] },
+  { name: "enabled", type: "boolean", requiredFor: ["save"], default: false },
 ];
 ```
 
-Only fields included in a partial update are checked. Empty strings and empty lists do not satisfy the requirement; `false` is a valid boolean value. Passing `null` removes the scope override and succeeds only if the resulting inherited value or schema default is non-empty. An explicit empty override is rejected even when a parent has a value. Failed updates throw `CommerceSdkValidationError` before saving any changes. Fields not marked required retain their existing behavior.
+For `"save"`, only fields included in a partial update are checked. Empty strings and empty lists do not satisfy the requirement; `false` is a valid boolean value. Passing `null` removes the scope override and succeeds only if the resulting inherited value or schema default is non-empty. An explicit empty override is rejected even when a parent has a value. Failed updates throw `CommerceSdkValidationError` before saving any changes. Fields not marked `"save"` retain their existing behavior.
 
-Use `requiredFor: ["installation", "upgrade"]` to independently require a field before those lifecycle operations start. Each operation checks the effective **global** value, including defaults; `false` is valid and empty strings and arrays are missing. Scope-specific overrides do not satisfy this global requirement. `requiredFor` does not imply `required` for partial updates.
+Use `"installation"` and/or `"upgrade"` to require a field before those lifecycle operations start. Each operation checks the effective **global** value, including defaults; `false` is valid and empty strings and arrays are missing. Scope-specific overrides do not satisfy this global requirement.
 
 After initializing with the applicable environment-filtered schema, `getMissingRequiredFor("installation")` or `getMissingRequiredFor("upgrade")` returns the names of missing global fields without exposing password values.
 

@@ -126,23 +126,38 @@ describe("setConfiguration — null/unset semantics", () => {
     });
   });
 
-  describe("setConfiguration — required fields", () => {
+  describe("setConfiguration — fields required for save", () => {
     beforeEach(() => {
       mockStateInstance = new MockState();
       mockFilesInstance = new MockFiles();
       setGlobalSchema([
-        { default: "", name: "currency", required: true, type: "text" },
-        { default: "", name: "locale", required: true, type: "text" },
-        { default: false, name: "enabled", required: true, type: "boolean" },
+        {
+          default: "",
+          name: "currency",
+          requiredFor: ["save"],
+          type: "text",
+        },
+        { default: "", name: "locale", requiredFor: ["save"], type: "text" },
+        {
+          default: false,
+          name: "enabled",
+          requiredFor: ["save"],
+          type: "boolean",
+        },
         {
           default: [],
           name: "methods",
           options: [{ label: "One", value: "one" }],
-          required: true,
+          requiredFor: ["save"],
           selectionMode: "multiple",
           type: "list",
         },
-        { default: "", name: "optional", required: false, type: "text" },
+        {
+          default: "",
+          name: "optional",
+          requiredFor: ["installation"],
+          type: "text",
+        },
       ]);
       vi.clearAllMocks();
       vi.mocked(getPersistedScopeTree).mockResolvedValue(mockScopeTree);
@@ -153,10 +168,12 @@ describe("setConfiguration — null/unset semantics", () => {
       { name: "currency", value: null },
       { name: "methods", value: [] },
       { name: "methods", value: null },
-    ])("rejects a missing required value for $name", async (entry) => {
+    ])("rejects a missing save-required value for $name", async (entry) => {
       await expect(
         setConfiguration({ config: [entry] }, byScopeId(GLOBAL_ID)),
-      ).rejects.toThrow(`Required field "${entry.name}" must have a value`);
+      ).rejects.toThrow(
+        `Field "${entry.name}" required for save must have a value`,
+      );
     });
 
     test("rejects a required entry with an omitted value", async () => {
@@ -166,10 +183,12 @@ describe("setConfiguration — null/unset semantics", () => {
           { config: [{ name: "currency" }] },
           byScopeId(GLOBAL_ID),
         ),
-      ).rejects.toThrow('Required field "currency" must have a valid value');
+      ).rejects.toThrow(
+        'Field "currency" required for save must have a valid value',
+      );
     });
 
-    test("accepts false and leaves omitted required fields unvalidated", async () => {
+    test("accepts false and leaves omitted save-required fields unvalidated", async () => {
       await expect(
         setConfiguration(
           { config: [{ name: "enabled", value: false }] },
@@ -207,7 +226,7 @@ describe("setConfiguration — null/unset semantics", () => {
           { config: [{ name: "currency", value: "" }] },
           byScopeId(WEBSITE_ID),
         ),
-      ).rejects.toThrow('Required field "currency"');
+      ).rejects.toThrow('Field "currency" required for save');
     });
 
     test("allows unsetting a required field when its default is present", async () => {
@@ -229,7 +248,7 @@ describe("setConfiguration — null/unset semantics", () => {
           { config: [{ name: "currency", value: null }] },
           byScopeId(WEBSITE_ID),
         ),
-      ).rejects.toThrow('Required field "currency"');
+      ).rejects.toThrow('Field "currency" required for save');
       const result = await getConfiguration(byScopeId(WEBSITE_ID));
       expect(
         result.config.find((entry) => entry.name === "currency")?.value,
@@ -247,14 +266,14 @@ describe("setConfiguration — null/unset semantics", () => {
           },
           byScopeId(GLOBAL_ID),
         ),
-      ).rejects.toThrow('Required field "currency"');
+      ).rejects.toThrow('Field "currency" required for save');
       const result = await getConfiguration(byScopeId(GLOBAL_ID));
       expect(
         result.config.find((entry) => entry.name === "optional")?.value,
       ).toBe("");
     });
 
-    test("permits empty values for non-required fields", async () => {
+    test("permits empty values for fields not required for save", async () => {
       await expect(
         setConfiguration(
           { config: [{ name: "optional", value: "" }] },

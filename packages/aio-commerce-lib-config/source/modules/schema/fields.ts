@@ -39,9 +39,9 @@ const DEFAULT_MULTIPLE_LIST_VALUE = [] as const;
 
 /**
  * Base schema for configuration field options with name, optional label,
- * optional description, optional `required` flag, and optional `env` to scope
- * the field to specific Commerce environments (when omitted, the field
- * applies to all environments).
+ * optional description, optional `requiredFor` operations, and optional `env`
+ * to scope the field to specific Commerce environments (when omitted, the
+ * field applies to all environments).
  */
 const BaseOptionSchema = v.object({
   description: v.optional(
@@ -59,8 +59,9 @@ const BaseOptionSchema = v.object({
     v.string("Expected a string for the field name"),
     v.nonEmpty("The field name must not be empty"),
   ),
-  required: v.optional(v.boolean("Expected a boolean for required")),
-  requiredFor: v.optional(v.array(v.picklist(["installation", "upgrade"]))),
+  requiredFor: v.optional(
+    v.array(v.picklist(["save", "installation", "upgrade"])),
+  ),
 });
 
 /** Schema for a single option in a list field, containing a display label and a value */

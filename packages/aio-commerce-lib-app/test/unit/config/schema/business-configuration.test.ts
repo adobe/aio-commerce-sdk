@@ -23,14 +23,17 @@ import { minimalValidConfig } from "#test/fixtures/config";
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 
 describe("business-configuration schema helpers", () => {
-  test("preserves required flags while parsing business configuration", () => {
+  test("preserves requiredFor operations while parsing business configuration", () => {
     const config = v.parse(SchemaBusinessConfig, {
       schema: [
-        { name: "apiKey", required: true, type: "password" },
-        { name: "enabled", required: false, type: "boolean" },
+        { name: "apiKey", requiredFor: ["installation"], type: "password" },
+        { name: "enabled", requiredFor: ["save", "upgrade"], type: "boolean" },
       ],
     });
-    expect(config.schema.map((field) => field.required)).toEqual([true, false]);
+    expect(config.schema.map((field) => field.requiredFor)).toEqual([
+      ["installation"],
+      ["save", "upgrade"],
+    ]);
   });
 
   describe("hasBusinessConfig", () => {

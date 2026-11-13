@@ -203,7 +203,7 @@ businessConfig: {
       type: 'text',
       label: 'API Key',
       description: 'Your API key for the service',
-      required: true,
+      requiredFor: ['save', 'installation'],
     },
     {
       name: 'environment',
@@ -220,9 +220,9 @@ businessConfig: {
 }
 ```
 
-The optional boolean `required` flag applies to every field type. When a required field is included in a scope update, its resulting effective value must not be an empty string or empty list. A `null` update removes the override and is accepted only if a non-empty inherited value or default remains; `false` is a valid value. Other fields omitted from the partial update are not checked. Invalid updates return HTTP 400 without saving any changes.
+The optional `requiredFor` array applies to every field type. Include `"save"` to require an updated field's effective value to be non-empty before saving. Only fields present in the partial update are checked. A `null` update removes the override and is accepted only if a non-empty inherited value or default remains; `false` is a valid value. Invalid updates return HTTP 400 without saving any changes.
 
-Use `requiredFor: ["installation", "upgrade"]` to require a non-empty effective global value before the selected operations start. The list may contain either operation or both and is independent of `required`. Defaults count, and boolean `false` is valid; values saved only on other scopes do not satisfy the global requirement. Only fields applicable to the associated Commerce environment are checked. If values are missing, the start request returns HTTP 409 with code `missing-required-configuration` and a `fields` array; set the values and retry the pending plan. Planning and uninstall are unaffected.
+Include `"installation"` and/or `"upgrade"` to require a non-empty effective global value before those operations start. Defaults count, and boolean `false` is valid; values saved only on other scopes do not satisfy the global requirement. Only fields applicable to the associated Commerce environment are checked. If values are missing, the start request returns HTTP 409 with code `missing-required-configuration` and a `fields` array; set the values and retry the pending plan. Planning and uninstall are unaffected.
 
 For detailed information about available field types and their usage, see the [`@adobe/aio-commerce-lib-config` documentation](../../aio-commerce-lib-config/docs/usage.md#field-types).
 

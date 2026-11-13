@@ -45,30 +45,29 @@ For each setting the user wants to expose, gather:
 
 Apply the following per-type validation rules before writing. Surface any issues to the user before proceeding.
 
-| Field                   | Constraint                                                                                            |
-| ----------------------- | ----------------------------------------------------------------------------------------------------- |
-| `name`                  | Required, non-empty string                                                                            |
-| `type`                  | Required; one of `list`, `text`, `password`, `email`, `url`, `tel`, `boolean`                         |
-| `label`                 | Optional string                                                                                       |
-| `description`           | Optional string                                                                                       |
-| `required`              | Optional boolean; `true` validates updated fields against their effective scope value                 |
-| `requiredFor`           | Optional array of `"installation"` and/or `"upgrade"`; checks the effective global value before start |
-| `list.selectionMode`    | Required for list fields: `"single"` or `"multiple"`                                                  |
-| `list.options`          | Required for list fields; each option needs both `label` and `value` strings                          |
-| `list/single` default   | Required; must match one of the option `value` strings (non-empty)                                    |
-| `list/multiple` default | Optional array of strings (defaults to `[]`); each element must match an option value                 |
-| `text` default          | Optional string (defaults to `""`)                                                                    |
-| `password` default      | Must be `""` — any non-empty default is rejected to prevent secrets in config                         |
-| `email` default         | Optional; `""` or a fully valid email address                                                         |
-| `url` default           | Optional; `""` or a fully valid absolute URL                                                          |
-| `tel` default           | Optional; `""` or matches `/^\+?[0-9\s\-()]+$/` (digits, spaces, hyphens, parens, optional `+`)       |
-| `boolean` default       | Optional boolean (defaults to `false`)                                                                |
+| Field                   | Constraint                                                                                                       |
+| ----------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `name`                  | Required, non-empty string                                                                                       |
+| `type`                  | Required; one of `list`, `text`, `password`, `email`, `url`, `tel`, `boolean`                                    |
+| `label`                 | Optional string                                                                                                  |
+| `description`           | Optional string                                                                                                  |
+| `requiredFor`           | Optional array of `"save"`, `"installation"`, and/or `"upgrade"`; checks saved values or lifecycle prerequisites |
+| `list.selectionMode`    | Required for list fields: `"single"` or `"multiple"`                                                             |
+| `list.options`          | Required for list fields; each option needs both `label` and `value` strings                                     |
+| `list/single` default   | Required; must match one of the option `value` strings (non-empty)                                               |
+| `list/multiple` default | Optional array of strings (defaults to `[]`); each element must match an option value                            |
+| `text` default          | Optional string (defaults to `""`)                                                                               |
+| `password` default      | Must be `""` — any non-empty default is rejected to prevent secrets in config                                    |
+| `email` default         | Optional; `""` or a fully valid email address                                                                    |
+| `url` default           | Optional; `""` or a fully valid absolute URL                                                                     |
+| `tel` default           | Optional; `""` or matches `/^\+?[0-9\s\-()]+$/` (digits, spaces, hyphens, parens, optional `+`)                  |
+| `boolean` default       | Optional boolean (defaults to `false`)                                                                           |
 
 `businessConfig.schema` must contain at least one field — an empty array is rejected at build time.
 
-For `required: true`, reject empty strings and empty lists when the field is included in an update. Boolean `false` is valid. A `null` update removes the override and succeeds only when a non-empty inherited value or default remains. Omitted fields in partial updates are not validated.
+For `requiredFor: ["save"]`, reject empty strings and empty lists when the field is included in an update. Boolean `false` is valid. A `null` update removes the override and succeeds only when a non-empty inherited value or default remains. Omitted fields in partial updates are not validated.
 
-`requiredFor` is independent of `required`. For each selected operation, installation or upgrade checks the effective global value, including defaults, before starting. Empty strings and lists fail, `false` succeeds, and values set only on other scopes do not satisfy the check. If start returns `missing-required-configuration`, set the listed fields in global configuration and retry the pending plan.
+For `"installation"` and/or `"upgrade"`, check the effective global value, including defaults, before starting. Empty strings and lists fail, `false` succeeds, and values set only on other scopes do not satisfy the check. If start returns `missing-required-configuration`, set the listed fields in global configuration and retry the pending plan.
 
 ## Step 3 — Update `app.commerce.config.ts`
 
@@ -80,7 +79,7 @@ Minimal examples:
 businessConfig: {
   schema: [
     // Password (masked input — API keys, secrets)
-    { name: "api_key", type: "password", label: "API Key", default: "", required: true, requiredFor: ["installation"] },
+    { name: "api_key", type: "password", label: "API Key", default: "", requiredFor: ["save", "installation"] },
 
     // Single-select list
     {

@@ -292,10 +292,10 @@ describe("configRuntimeAction", () => {
   });
 
   describe("PATCH /", () => {
-    test("returns a 400 for required-field validation errors", async () => {
+    test("returns a 400 for save requirement validation errors", async () => {
       setConfigurationMock.mockRejectedValue(
         new CommerceSdkValidationError(
-          'Required field "mode" must have a value',
+          'Field "mode" required for save must have a value',
           {
             issues: [],
           },
@@ -313,7 +313,7 @@ describe("configRuntimeAction", () => {
       );
       expect(result).toMatchObject({
         error: {
-          body: { message: 'Required field "mode" must have a value' },
+          body: { message: 'Field "mode" required for save must have a value' },
           statusCode: 400,
         },
       });

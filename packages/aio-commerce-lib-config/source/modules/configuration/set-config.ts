@@ -33,7 +33,7 @@ import type {
 } from "#types/index";
 import type { ConfigContext, SetConfigValue } from "./types";
 
-const RequiredUpdateValueSchema = v.nullable(
+const RequiredSaveValueSchema = v.nullable(
   v.union([v.string(), v.boolean(), v.array(v.string())]),
 );
 
@@ -67,18 +67,20 @@ export async function setConfiguration(
     scopeTree,
   );
 
-  const requiredNames = new Set(
-    schema.filter((field) => field.required).map((field) => field.name),
+  const requiredForSave = new Set(
+    schema
+      .filter((field) => field.requiredFor?.includes("save"))
+      .map((field) => field.name),
   );
   for (const entry of request.config) {
     if (
       typeof entry.name === "string" &&
-      requiredNames.has(entry.name.trim())
+      requiredForSave.has(entry.name.trim())
     ) {
       parseOrThrow(
-        RequiredUpdateValueSchema,
+        RequiredSaveValueSchema,
         entry.value,
-        `Required field "${entry.name.trim()}" must have a valid value`,
+        `Field "${entry.name.trim()}" required for save must have a valid value`,
       );
     }
   }
@@ -100,10 +102,10 @@ export async function setConfiguration(
     scopeLevel,
   );
 
-  const touchedRequired = sanitizedEntries.filter((entry) =>
-    requiredNames.has(entry.name),
+  const touchedRequiredForSave = sanitizedEntries.filter((entry) =>
+    requiredForSave.has(entry.name),
   );
-  if (touchedRequired.length > 0) {
+  if (touchedRequiredForSave.length > 0) {
     const scope = scopePath.find(
       (node) => node.code === scopeCode && node.level === scopeLevel,
     );
@@ -124,7 +126,7 @@ export async function setConfiguration(
       scopePath,
     });
 
-    for (const { name } of touchedRequired) {
+    for (const { name } of touchedRequiredForSave) {
       const value = effective.config.find(
         (entry) => entry.name === name,
       )?.value;
@@ -133,11 +135,11 @@ export async function setConfiguration(
           v.unknown(),
           v.check(
             hasRequiredValue,
-            `Required field "${name}" must have a value`,
+            `Field "${name}" required for save must have a value`,
           ),
         ),
         value,
-        `Required field "${name}" must have a value`,
+        `Field "${name}" required for save must have a value`,
       );
     }
   }

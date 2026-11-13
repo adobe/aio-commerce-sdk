@@ -49,29 +49,14 @@ const recordedMultipleDynamicListField = {
 };
 
 describe("SchemaBusinessConfigSchema", () => {
-  test.each([true, false])("preserves required: %s", (required) => {
-    const result = v.parse(SchemaBusinessConfigSchema, [
-      { name: "example", required, type: "text" },
-    ]);
-    expect(result[0].required).toBe(required);
-  });
-
-  test("rejects a non-boolean required flag", () => {
-    expect(
-      v.safeParse(SchemaBusinessConfigSchema, [
-        { name: "example", required: "true", type: "text" },
-      ]).success,
-    ).toBe(false);
-  });
-
-  test("preserves lifecycle requirements and rejects unknown operations", () => {
+  test("preserves requiredFor operations and rejects unknown operations", () => {
     const field = {
       name: "example",
-      requiredFor: ["installation", "upgrade"],
+      requiredFor: ["save", "installation", "upgrade"],
       type: "text",
     };
     expect(v.parse(SchemaBusinessConfigSchema, [field])[0].requiredFor).toEqual(
-      ["installation", "upgrade"],
+      ["save", "installation", "upgrade"],
     );
     expect(
       v.safeParse(SchemaBusinessConfigSchema, [
@@ -116,11 +101,11 @@ describe("SchemaBusinessConfigSchema", () => {
 });
 
 describe("RecordedSchemaBusinessConfigSchema", () => {
-  test("preserves required on recorded dynamic lists", () => {
+  test("preserves requiredFor on recorded dynamic lists", () => {
     const result = v.parse(RecordedSchemaBusinessConfigSchema, [
-      { ...recordedDynamicListField, required: true },
+      { ...recordedDynamicListField, requiredFor: ["save", "installation"] },
     ]);
-    expect(result[0].required).toBe(true);
+    expect(result[0].requiredFor).toEqual(["save", "installation"]);
   });
 
   test("accepts a dynamicList field with function options and default", () => {

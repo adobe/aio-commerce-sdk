@@ -6,7 +6,7 @@
 
 ## Summary
 
-Allow business configuration fields to declare `required: true` for scope updates and `requiredFor` for installation or upgrade prerequisites.
+Allow business configuration fields to declare `requiredFor` operations for scope saves, installation, and upgrade prerequisites.
 
 ## Motivation
 
@@ -19,25 +19,23 @@ Goals: expose the flag for all field types, preserve it through parsing and dyna
 ```typescript
 businessConfig: {
   schema: [
-    { name: "apiKey", type: "password", required: true, requiredFor: ["installation", "upgrade"] },
-    { name: "enabled", type: "boolean", required: true, default: false },
+    { name: "apiKey", type: "password", requiredFor: ["save", "installation", "upgrade"] },
+    { name: "enabled", type: "boolean", requiredFor: ["save"], default: false },
   ],
 }
 ```
 
-`required` is optional and accepts a boolean; omission or `false` leaves the field optional. An updated required field must resolve to a non-empty value at the selected scope. `false` is a valid boolean value. Empty strings and empty arrays are missing.
+`requiredFor` is an optional array containing any of `"save"`, `"installation"`, and `"upgrade"`. For `"save"`, only fields included in a partial update are validated against their effective value at the selected scope. Empty strings and empty arrays are missing; `false` is valid. A `null` value removes the scope override and is accepted if the resulting inherited value or schema default is non-empty. An explicit empty override is rejected even when a parent has a value. A rejected update saves none of its changes; the configuration API returns HTTP 400 with a validation error.
 
-Partial updates validate only included fields. A `null` value removes the scope override and is accepted if the resulting inherited value or schema default is non-empty. An explicit empty override is rejected even when a parent has a value. A rejected update saves none of its changes; the configuration API returns HTTP 400 with a validation error.
-
-`requiredFor` is an optional array containing `"installation"`, `"upgrade"`, or both. It is independent of `required`. Before starting an install or upgrade, the app checks all fields marked for that operation that apply to the associated Commerce environment. Each must have a non-empty effective global value; defaults count, `false` is valid, and values set only in other scopes do not count. Missing values cause a 409 `missing-required-configuration` response listing field names. The pending plan can be retried after correcting the values; planning and uninstall are unaffected.
+Before starting an install or upgrade, the app checks all fields marked for that operation that apply to the associated Commerce environment. Each must have a non-empty effective global value; defaults count, `false` is valid, and values set only in other scopes do not count. Missing values cause a 409 `missing-required-configuration` response listing field names. The pending plan can be retried after correcting the values; planning and uninstall are unaffected.
 
 ## Design
 
-Add both flags to the shared business field schema, including recorded and dynamically resolved fields, so app configuration parsing and the configuration API expose them. The configuration library computes the effective value after applying the requested scope changes and checks each included required field before persisting. Parent values and defaults participate in resolution; password values remain encrypted in storage. The configuration library also checks global values for a lifecycle operation without exposing secrets. The installation action runs this check on start before writing an attempt or dispatching work. The runtime action translates validation failures into a client error. Documentation, OpenAPI, and business configuration skill guidance describe the contract.
+Add the `requiredFor` values to the shared business field schema, including recorded and dynamically resolved fields, so app configuration parsing and the configuration API expose them. The configuration library computes the effective value after applying the requested scope changes and checks each included save-required field before persisting. Parent values and defaults participate in resolution; password values remain encrypted in storage. The configuration library also checks global values for a lifecycle operation without exposing secrets. The installation action runs this check on start before writing an attempt or dispatching work. The runtime action translates validation failures into a client error. Documentation, OpenAPI, and business configuration skill guidance describe the contract.
 
 ## Drawbacks
 
-Required validation adds schema and scope-resolution work to updates containing required fields. Empty values previously accepted for a field become invalid once its developer opts into `required: true`.
+Save validation adds schema and scope-resolution work to updates containing fields marked with `requiredFor: ["save"]`. Empty values previously accepted for a field become invalid once its developer opts into this operation.
 
 ## Rationale and alternatives
 
