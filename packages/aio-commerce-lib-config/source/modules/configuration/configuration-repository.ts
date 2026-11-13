@@ -11,6 +11,7 @@
  */
 
 import stringify from "safe-stable-stringify";
+import * as v from "valibot";
 
 import { getLogger } from "#utils/logger";
 import {
@@ -18,6 +19,11 @@ import {
   getSharedFiles,
   getSharedState,
 } from "#utils/repository";
+
+/** Matches the `aio-lib-files` error thrown when a file does not exist. */
+const FileNotExistsErrorSchema = v.object({
+  code: v.literal("ERROR_FILE_NOT_EXISTS"),
+});
 
 /**
  * Describes where a record lives in the two-layer store: how an id maps to its
@@ -101,48 +107,47 @@ export async function setCachedConfig(
 }
 
 /**
- * Removes a configuration entry from the state cache in every `aio-lib-state` region.
- * Regions are independent stores with no cross-region replication, so a stale entry
- * left behind in a region other than the one that made this change would keep being
- * served to action instances routed there until its TTL expires. Failures are
- * swallowed per-region (logged at debug) since `aio-lib-files` remains the source
- * of truth.
+ * Removes a configuration entry from the state cache in every `aio-lib-state` region that can be
+ * initialized. Regions are independent stores with no cross-region replication, so a stale entry
+ * left behind in a region other than the one that made this change would keep being served to
+ * action instances routed there until its TTL expires. Every region is tried even when another
+ * one fails, and each failure is logged as a warning.
  *
  * @param scopeCode - Scope code identifier.
  * @param namespace - Storage namespace to delete from.
+ * @returns The messages of the failed deletes, empty when every region was cleared.
  */
 async function deleteCachedConfig(
   scopeCode: string,
   namespace: RepositoryNamespace = CONFIGURATION_NAMESPACE,
-) {
+): Promise<string[]> {
   const logger = getLogger(
     "@adobe/aio-commerce-lib-config:configuration-repository",
   );
   const key = namespace.stateKey(scopeCode);
 
-  try {
-    const states = await getAllSharedStates();
-    const results = await Promise.allSettled(
-      states.map((state) => state.delete(key)),
-    );
+  const states = await getAllSharedStates();
+  const results = await Promise.allSettled(
+    states.map((state) => state.delete(key)),
+  );
 
-    for (const result of results) {
-      if (result.status === "rejected") {
-        logger.debug(
-          "Failed to clear cached configuration in a region:",
+  const failures = results.flatMap((result) =>
+    result.status === "rejected"
+      ? [
           result.reason instanceof Error
             ? result.reason.message
             : String(result.reason),
-        );
-      }
-    }
-  } catch (error) {
-    logger.debug(
-      "Failed to clear cached configuration:",
-      error instanceof Error ? error.message : String(error),
+        ]
+      : [],
+  );
+
+  for (const message of failures) {
+    logger.warn(
+      `Failed to clear the cached configuration "${key}" in a region: ${message}`,
     );
-    // Don't throw - caching failure shouldn't break functionality
   }
+
+  return failures;
 }
 
 /**
@@ -183,9 +188,8 @@ export async function saveConfig(
 }
 
 /**
- * Removes a configuration entry's file from storage. Clearing an entry that was
- * never persisted is a no-op since `aio-lib-files` delete is idempotent; any
- * real failure surfaces to the caller, since files are the source of truth.
+ * Removes a configuration entry's file from storage. A file that is already
+ * gone counts as removed, and any other error is thrown.
  *
  * @param scopeCode - Scope code identifier.
  * @param namespace - Storage namespace to delete from.
@@ -195,7 +199,14 @@ async function deletePersistedConfig(
   namespace: RepositoryNamespace = CONFIGURATION_NAMESPACE,
 ) {
   const files = await getSharedFiles();
-  await files.delete(namespace.filePath(scopeCode));
+
+  try {
+    await files.delete(namespace.filePath(scopeCode));
+  } catch (err) {
+    if (!v.is(FileNotExistsErrorSchema, err)) {
+      throw err;
+    }
+  }
 }
 
 /**
@@ -246,7 +257,14 @@ export async function deleteConfig(
   namespace: RepositoryNamespace = CONFIGURATION_NAMESPACE,
 ) {
   await deletePersistedConfig(scopeCode, namespace);
-  await deleteCachedConfig(scopeCode, namespace);
+
+  // The state cache is read before the files, so an entry left behind would still be served.
+  const failures = await deleteCachedConfig(scopeCode, namespace);
+  if (failures.length > 0) {
+    throw new Error(
+      `The configuration was deleted, but its cached entry could not be cleared in ${failures.length} region(s) and may still be served until it expires: ${failures.join("; ")}`,
+    );
+  }
 }
 
 /**

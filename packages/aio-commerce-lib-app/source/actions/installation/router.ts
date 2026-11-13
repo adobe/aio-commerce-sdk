@@ -20,6 +20,7 @@ import {
   logger as withLogger,
 } from "@aio-commerce-sdk/common-utils/actions";
 
+import { SDK_LIB_VERSIONS_HEADERS } from "#actions/version";
 import { LifecycleRequestContextSchema } from "#management/common/schema";
 import {
   createInstallationStore,
@@ -58,9 +59,9 @@ export type { CustomScriptsLoader, RuntimeActionFactoryArgs } from "./common";
  * - POST /plan                       Plan an install, upgrade or uninstall for review
  * - POST /execution                  Execute a started lifecycle attempt (internal, called async)
  */
-export const router = new HttpActionRouter<InstallationActionContext>().use(
-  withLogger({ name: () => "installation" }),
-);
+export const router = new HttpActionRouter<InstallationActionContext>({
+  headers: SDK_LIB_VERSIONS_HEADERS,
+}).use(withLogger({ name: () => "installation" }));
 
 /**
  * GET / - Get the status of the latest lifecycle operation. Falls back to the record of an

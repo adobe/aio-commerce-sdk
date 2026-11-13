@@ -16,6 +16,7 @@ import { GENERATED_ACTIONS_PATH, PACKAGE_NAME } from "#commands/constants";
 import {
   ADMIN_UI_GRID_COLUMN_ENTITIES,
   ADMIN_UI_MASS_ACTION_ENTITIES,
+  ADMIN_UI_VIEW_BUTTON_ENTITIES,
 } from "#config/schema/admin-ui";
 import { hasBusinessConfigSchema } from "#config/schema/business-configuration";
 
@@ -59,7 +60,7 @@ function createActionDefinition(
     },
 
     function: `${GENERATED_ACTIONS_PATH}/${actionName}.js`,
-    runtime: "nodejs:24",
+    runtime: "nodejs:26",
     web: options.web ?? "yes",
   };
 
@@ -220,7 +221,9 @@ export function collectUniqueRuntimeActions(
   )
     .filter((action) => action.type === "worker")
     .map((action) => action.runtimeAction);
-  const viewButtonRuntimeActions = (adminUi?.order?.viewButtons ?? [])
+  const viewButtonRuntimeActions = ADMIN_UI_VIEW_BUTTON_ENTITIES.flatMap(
+    (key) => adminUi?.[key]?.viewButtons ?? [],
+  )
     .filter((button) => button.type === "worker")
     .map((button) => button.runtimeAction);
   return [
@@ -237,8 +240,13 @@ export function requiresWebSource(adminUi: AdminUi | undefined): boolean {
   if (adminUi?.menu !== undefined) {
     return true;
   }
+  if (adminUi?.nativeUi?.replacedPages.length) {
+    return true;
+  }
   if (
-    (adminUi?.order?.viewButtons ?? []).some((button) => button.type === "view")
+    ADMIN_UI_VIEW_BUTTON_ENTITIES.flatMap(
+      (key) => adminUi?.[key]?.viewButtons ?? [],
+    ).some((button) => button.type === "view")
   ) {
     return true;
   }
@@ -250,7 +258,7 @@ export function requiresWebSource(adminUi: AdminUi | undefined): boolean {
 /**
  * Builds the ext.config.yaml for the Admin UI v2 extension (`commerce/backend-ui/2`).
  * Derives `workerProcess` and `view` operation declarations from `adminUi` config.
- * Adds a `view` operation and `web` source when view-type entries or `adminUi.menu` is configured.
+ * Adds a `view` operation and `web` source when view-type entries, native UI replaced pages, or `adminUi.menu` is configured.
  * @param appConfig - Parsed app configuration.
  */
 export function buildAdminUiV2ExtConfig(

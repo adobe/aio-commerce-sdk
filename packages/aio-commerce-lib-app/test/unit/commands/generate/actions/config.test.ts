@@ -32,13 +32,16 @@ import {
   configWithAdminUiNewsletterGrid,
   configWithAdminUiSingleGrid,
   configWithCommerceEventing,
+  configWithCreditMemoViewButtons,
   configWithCustomInstallationSteps,
   configWithExternalEventing,
   configWithFullAdminUiV2,
+  configWithInvoiceViewButtons,
   configWithMultipleWorkerMassActions,
   configWithOrderViewButtons,
   configWithOrderViewTypeButtons,
   configWithOrderWorkerTypeButtons,
+  configWithRmaViewButtons,
   configWithViewMassActions,
   configWithWebhooks,
   minimalValidConfig,
@@ -49,6 +52,32 @@ const CONFIGURATION_EXTENSION_MATCHER = /EXTENSION=configuration\/1/u;
 const BACKEND_UI_V2_EXTENSION_MATCHER = /EXTENSION=backend-ui\/2/u;
 
 describe("buildAppManagementExtConfig", () => {
+  test.each([
+    {
+      build: () => buildAppManagementExtConfig(minimalValidConfig),
+      names: ["app-config", "association", "installation"],
+    },
+    {
+      build: buildBusinessConfigurationExtConfig,
+      names: ["config", "scope-tree"],
+    },
+  ])(
+    "generates Node 26 runtime actions for $names",
+    async ({ build, names }) => {
+      await withTempFiles({}, async (tempDir) => {
+        const doc = await createOrUpdateExtConfig(
+          join(tempDir, "ext.config.yaml"),
+          build(),
+        );
+        const { actions } = doc.toJS().runtimeManifest.packages[PACKAGE_NAME];
+
+        for (const name of names) {
+          expect(actions[name].runtime).toBe("nodejs:26");
+        }
+      });
+    },
+  );
+
   test.each([
     {
       build: () => buildAppManagementExtConfig(minimalValidConfig),
@@ -230,6 +259,68 @@ describe("buildAppManagementExtConfig", () => {
 });
 
 describe("buildAdminUiV2ExtConfig", () => {
+  test("wires invoice iframe and worker buttons into the extension manifest", () => {
+    const result = buildAdminUiV2ExtConfig(configWithInvoiceViewButtons);
+    expect(result.web).toBe("web-src");
+    expect(result.operations?.view).toEqual([
+      { impl: "index.html", type: "web" },
+    ]);
+    expect(result.operations?.workerProcess).toEqual([
+      { impl: "invoice/send", type: "action" },
+    ]);
+  });
+
+  test("wires credit memo iframe and worker buttons into the extension manifest", () => {
+    const result = buildAdminUiV2ExtConfig(configWithCreditMemoViewButtons);
+    expect(result.web).toBe("web-src");
+    expect(result.operations?.view).toEqual([
+      { impl: "index.html", type: "web" },
+    ]);
+    expect(result.operations?.workerProcess).toEqual([
+      { impl: "creditmemo/refund-offline", type: "action" },
+    ]);
+  });
+
+  test("wires return iframe and worker buttons into the extension manifest", () => {
+    const result = buildAdminUiV2ExtConfig(configWithRmaViewButtons);
+    expect(result.web).toBe("web-src");
+    expect(result.operations?.view).toEqual([
+      { impl: "index.html", type: "web" },
+    ]);
+    expect(result.operations?.workerProcess).toEqual([
+      { impl: "rma/custom-flow", type: "action" },
+    ]);
+  });
+
+  test("invoice worker-only buttons do not require a web source", () => {
+    const worker =
+      configWithInvoiceViewButtons.adminUi.invoice.viewButtons.find(
+        (button) => button.type === "worker",
+      );
+    if (!worker) {
+      throw new Error("Missing invoice worker fixture");
+    }
+    const adminUi = { invoice: { viewButtons: [worker] } };
+    expect(requiresWebSource(adminUi)).toBe(false);
+    expect(collectUniqueRuntimeActions(adminUi)).toEqual(["invoice/send"]);
+  });
+
+  test("deduplicates actions shared by invoice and order buttons", () => {
+    const worker =
+      configWithInvoiceViewButtons.adminUi.invoice.viewButtons.find(
+        (button) => button.type === "worker",
+      );
+    if (!worker) {
+      throw new Error("Missing invoice worker fixture");
+    }
+    expect(
+      collectUniqueRuntimeActions({
+        invoice: { viewButtons: [worker] },
+        order: { viewButtons: [worker] },
+      }),
+    ).toEqual(["invoice/send"]);
+  });
+
   test("pre-app-build hook uses backend-ui/2", () => {
     const config = buildAdminUiV2ExtConfig(configWithFullAdminUiV2);
     const preBuildHook = config.hooks?.["pre-app-build"] ?? "";
@@ -304,6 +395,29 @@ describe("buildAdminUiV2ExtConfig", () => {
     expect(config.operations?.view).toEqual([
       { impl: "index.html", type: "web" },
     ]);
+  });
+
+  test("native UI replaced pages add the web view operation", () => {
+    const config = buildAdminUiV2ExtConfig({
+      ...minimalValidConfig,
+      adminUi: {
+        nativeUi: {
+          replacedPages: [
+            {
+              path: "#/create-order",
+              target: "order.create" as const,
+              title: "Create Order (App)",
+            },
+          ],
+        },
+      },
+    });
+
+    expect(config.operations?.view).toEqual([
+      { impl: "index.html", type: "web" },
+    ]);
+    expect(config.web).toBe("web-src");
+    expect(config.operations?.workerProcess).toBeUndefined();
   });
 
   test("worker view buttons do not add operations.view", () => {
@@ -552,6 +666,22 @@ describe("requiresWebSource", () => {
 
   test("returns true when adminUi has a menu", () => {
     expect(requiresWebSource(configWithAdminUiMenu.adminUi)).toBe(true);
+  });
+
+  test("returns true when adminUi replaces native UI pages", () => {
+    expect(
+      requiresWebSource({
+        nativeUi: {
+          replacedPages: [
+            {
+              path: "#/create-order",
+              target: "order.create",
+              title: "Create Order (App)",
+            },
+          ],
+        },
+      }),
+    ).toBe(true);
   });
 
   test("returns true for a realistic adminUi config with view type buttons", () => {

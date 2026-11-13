@@ -29,7 +29,10 @@ import {
   configWithAdminUiInvoiceCreditMemoShipmentGrids,
   configWithAdminUiMenu,
   configWithAdminUiNewsletterGrid,
+  configWithCreditMemoViewButtons,
   configWithFullAdminUiV2,
+  configWithInvoiceViewButtons,
+  configWithRmaViewButtons,
   configWithViewMassActions,
   configWithWorkerMassActions,
   minimalValidConfig,
@@ -47,9 +50,32 @@ const backendUiV2ComponentCases = [
     config: configWithAdminUiNewsletterGrid,
     label: "newsletter grid columns only",
   },
+  {
+    config: {
+      ...minimalValidConfig,
+      adminUi: {
+        nativeUi: {
+          replacedPages: [
+            {
+              path: "#/create-order",
+              target: "order.create" as const,
+              title: "Create Order (App)",
+            },
+          ],
+        },
+      },
+    },
+    label: "native UI replaced pages",
+  },
   { config: configWithAdminUiMenu, label: "menu only" },
   { config: configWithViewMassActions, label: "view mass actions" },
   { config: configWithWorkerMassActions, label: "worker mass actions" },
+  { config: configWithInvoiceViewButtons, label: "invoice view buttons only" },
+  {
+    config: configWithCreditMemoViewButtons,
+    label: "credit memo view buttons only",
+  },
+  { config: configWithRmaViewButtons, label: "return view buttons only" },
 ];
 
 describe("hasAdminUi", () => {
@@ -88,6 +114,13 @@ describe("hasBackendUiV2Components", () => {
     {
       config: configWithAdminUiAclOnly,
       label: "only custom ACL resources",
+    },
+    {
+      config: {
+        ...minimalValidConfig,
+        adminUi: { nativeUi: { replacedPages: [] } },
+      },
+      label: "an empty native UI replaced pages list",
     },
   ])("returns false when config has $label", ({ config }) => {
     expect(hasBackendUiV2Components(config)).toBe(false);
@@ -201,6 +234,65 @@ describe("AdminUiSchema", () => {
         expect(result.success, `type "${type}" should be valid`).toBe(true);
       }
     });
+
+    test.each(["order.create", "return.create"] as const)(
+      "native UI replaced page target %s is accepted",
+      (target) => {
+        const result = v.safeParse(AdminUiSchema, {
+          nativeUi: {
+            replacedPages: [
+              {
+                path: "#/create-form",
+                sandboxPermissions: ["allow-modals"],
+                target,
+                title: "Create Form",
+              },
+            ],
+          },
+        });
+        expect(result.success).toBe(true);
+      },
+    );
+
+    test.each([
+      "invoice.create",
+      "rma.create",
+      "shipment.create",
+      "creditmemo.create",
+      "product.edit",
+      "product.create",
+      "customer.create",
+      "customer.edit",
+      "order.edit",
+    ])("rejects unsupported native UI replaced page target %s", (target) => {
+      const result = v.safeParse(AdminUiSchema, {
+        nativeUi: {
+          replacedPages: [
+            {
+              path: "#/edit-order",
+              target,
+              title: "Edit Order",
+            },
+          ],
+        },
+      });
+      expect(result.success).toBe(false);
+    });
+
+    test.each(["order.create", "return.create"] as const)(
+      "rejects duplicate native UI replaced page target %s",
+      (target) => {
+        const page = {
+          path: "#/create-order",
+          target,
+          title: "Create Order (App)",
+        };
+        const result = v.safeParse(AdminUiSchema, {
+          nativeUi: { replacedPages: [page, page] },
+        });
+        expect(result.success).toBe(false);
+      },
+    );
 
     test("all three grids configured", () => {
       const result = v.safeParse(
@@ -738,7 +830,81 @@ describe("AdminUiSchema", () => {
   });
 });
 
-describe("adminUi.invoice / adminUi.creditMemo / adminUi.shipment", () => {
+describe("adminUi.invoice / adminUi.creditMemo / adminUi.rma / adminUi.shipment", () => {
+  test("accepts invoice view and worker buttons including the view title", () => {
+    const result = v.parse(AdminUiSchema, configWithInvoiceViewButtons.adminUi);
+    expect(result.invoice?.viewButtons).toEqual(
+      configWithInvoiceViewButtons.adminUi.invoice.viewButtons,
+    );
+  });
+
+  test("accepts credit memo view and worker buttons including the view title", () => {
+    const result = v.parse(
+      AdminUiSchema,
+      configWithCreditMemoViewButtons.adminUi,
+    );
+    expect(result.creditMemo?.viewButtons).toEqual(
+      configWithCreditMemoViewButtons.adminUi.creditMemo.viewButtons,
+    );
+  });
+
+  test("accepts return view and worker buttons including the view title", () => {
+    const result = v.parse(AdminUiSchema, configWithRmaViewButtons.adminUi);
+    expect(result.rma?.viewButtons).toEqual(
+      configWithRmaViewButtons.adminUi.rma.viewButtons,
+    );
+  });
+
+  test("does not register grid columns on rma", () => {
+    const result = v.parse(AdminUiSchema, {
+      rma: {
+        gridColumns: {
+          columns: [{ align: "left", id: "col", label: "Col", type: "string" }],
+          description: "Adds a column",
+          label: "rma grid",
+          runtimeAction: "rma/fetch",
+        },
+      },
+    });
+    expect(result.rma).toEqual({});
+  });
+
+  describe.each(["invoice", "creditMemo", "rma"] as const)(
+    "%s view buttons",
+    (entity) => {
+      test.each([
+        { id: "missing-path", label: "Missing path", type: "view" },
+        { id: "missing-action", label: "Missing action", type: "worker" },
+        { ...viewButtonViewBase, timeout: 15 },
+        { ...viewButtonViewBase, runtimeAction: "invoice/send" },
+        { ...viewButtonViewBase, title: "" },
+        { ...viewButtonWorkerBase, title: "Unsupported worker title" },
+        { ...viewButtonWorkerBase, path: "#/invoice" },
+        { ...viewButtonWorkerBase, sandboxPermissions: ["allow-modals"] },
+        { ...viewButtonWorkerBase, timeout: -1 },
+        { ...viewButtonWorkerBase, sortOrder: -1 },
+      ])("rejects invalid button $id", (button) => {
+        expect(
+          v.safeParse(AdminUiSchema, { [entity]: { viewButtons: [button] } })
+            .success,
+        ).toBe(false);
+      });
+
+      test("rejects button ids that collide after sanitization", () => {
+        expect(
+          v.safeParse(AdminUiSchema, {
+            [entity]: {
+              viewButtons: [
+                { ...viewButtonViewBase, id: "button-details" },
+                { ...viewButtonWorkerBase, id: "BUTTON-DETAILS" },
+              ],
+            },
+          }).success,
+        ).toBe(false);
+      });
+    },
+  );
+
   test.each(["invoice", "creditMemo", "shipment"] as const)(
     "accepts gridColumns on %s",
     (entity) => {

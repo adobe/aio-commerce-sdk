@@ -265,7 +265,8 @@ describe("post-app-deploy hook", () => {
     expect(delayMock).toHaveBeenCalledTimes(3);
     expect(delayMock).toHaveBeenCalledWith(2000);
     expect(vi.mocked(consola.start).mock.calls).toEqual([
-      ["Checking for app upgrades..."],
+      ["Checking the status of the app..."],
+      ["Checking if the app needs an upgrade..."],
       ["App upgrade is pending."],
       ["App upgrade is in-progress."],
     ]);

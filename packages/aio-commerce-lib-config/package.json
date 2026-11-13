@@ -94,7 +94,7 @@
     "typescript": "catalog:"
   },
   "engines": {
-    "node": ">=22 <=24"
+    "node": ">=22 <=26"
   },
   "publishConfig": {
     "access": "public",
@@ -108,7 +108,8 @@
           "types": "./dist/cjs/index.d.cts",
           "default": "./dist/cjs/index.cjs"
         }
-      }
+      },
+      "./package.json": "./package.json"
     },
     "registry": "https://registry.npmjs.org"
   }

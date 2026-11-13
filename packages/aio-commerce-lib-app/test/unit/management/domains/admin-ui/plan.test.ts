@@ -19,6 +19,9 @@ import {
   configWithAdminUiEmptyBlock,
   configWithAdminUiInvoiceCreditMemoShipmentGrids,
   configWithAdminUiSingleGrid,
+  configWithCreditMemoViewButtons,
+  configWithInvoiceViewButtons,
+  configWithRmaViewButtons,
 } from "#test/fixtures/config";
 
 import type { AdminUiConfig } from "#config/schema/admin-ui";
@@ -72,6 +75,42 @@ describe("planAdminUi", () => {
     expect(plan.operations).toHaveLength(1);
     expect(plan.operations[0]?.kind).toBe("add");
     expect(plan.operations[0]?.id).toBe("add:order.grid-columns");
+  });
+
+  test("registers each native UI replaced page as its own component", async () => {
+    const config = {
+      adminUi: {
+        nativeUi: {
+          replacedPages: [
+            {
+              path: "#/create-order",
+              target: "order.create",
+              title: "Create Order (App)",
+            },
+            {
+              path: "#/edit-product",
+              target: "product.edit",
+              title: "Edit Product (App)",
+            },
+          ],
+        },
+      },
+    } as AdminUiConfig;
+    const { plan } = await planned(null, config);
+
+    expect(plan.extensionAction).toBe("register");
+    expect(plan.operations.map((operation) => operation.id)).toEqual([
+      "add:nativeUi.replacedPages.order.create",
+      "add:nativeUi.replacedPages.product.edit",
+    ]);
+    expect(
+      plan.operations.map((operation) =>
+        operation.kind === "add" ? operation.after.component : null,
+      ),
+    ).toEqual([
+      { id: "order.create", kind: "replacedPages" },
+      { id: "product.edit", kind: "replacedPages" },
+    ]);
   });
 
   test("unregisters with one remove per component when the target dropped Admin UI", async () => {
@@ -376,6 +415,79 @@ describe("planAdminUi", () => {
       "add:creditMemo.grid-columns",
       "add:invoice.grid-columns",
       "add:shipment.grid-columns",
+    ]);
+  });
+
+  test("registers invoice buttons as separate components", async () => {
+    const { plan } = await planned(null, configWithInvoiceViewButtons);
+    expect(plan.extensionAction).toBe("register");
+    expect(plan.operations.map((op) => op.id)).toEqual([
+      "add:invoice.view-button.invoice-details",
+      "add:invoice.view-button.send-invoice",
+    ]);
+  });
+
+  test("registers credit memo buttons as separate components", async () => {
+    const { plan } = await planned(null, configWithCreditMemoViewButtons);
+    expect(plan.extensionAction).toBe("register");
+    expect(plan.operations.map((op) => op.id)).toEqual([
+      "add:creditMemo.view-button.credit-memo-details",
+      "add:creditMemo.view-button.refund-offline",
+    ]);
+  });
+
+  test("registers return buttons as separate components", async () => {
+    const { plan } = await planned(null, configWithRmaViewButtons);
+    expect(plan.extensionAction).toBe("register");
+    expect(plan.operations.map((op) => op.id)).toEqual([
+      "add:rma.view-button.return-details",
+      "add:rma.view-button.custom-return-flow",
+    ]);
+  });
+
+  test("keeps order and invoice buttons with the same ids distinct", async () => {
+    const config = {
+      ...configWithInvoiceViewButtons,
+      adminUi: {
+        ...configWithInvoiceViewButtons.adminUi,
+        order: {
+          viewButtons:
+            configWithInvoiceViewButtons.adminUi.invoice.viewButtons.filter(
+              (button) => button.type === "worker",
+            ),
+        },
+      },
+    };
+    const { plan } = await planned(null, config);
+    expect(plan.operations.map((op) => op.id)).toEqual([
+      "add:order.view-button.send-invoice",
+      "add:invoice.view-button.invoice-details",
+      "add:invoice.view-button.send-invoice",
+    ]);
+  });
+
+  test("refreshes changed invoice buttons and unregisters removed ones", async () => {
+    const changed = {
+      ...configWithInvoiceViewButtons,
+      adminUi: {
+        invoice: {
+          viewButtons:
+            configWithInvoiceViewButtons.adminUi.invoice.viewButtons.map(
+              (button) => ({ ...button, label: "Updated invoice button" }),
+            ),
+        },
+      },
+    };
+    const { plan } = await planned(configWithInvoiceViewButtons, changed);
+    expect(plan.extensionAction).toBe("refresh");
+    expect(plan.operations).toHaveLength(2);
+    expect(plan.operations.every((op) => op.kind === "update")).toBe(true);
+
+    const removed = await planned(configWithInvoiceViewButtons, null);
+    expect(removed.plan.extensionAction).toBe("unregister");
+    expect(removed.plan.operations.map((op) => op.id)).toEqual([
+      "remove:invoice.view-button.invoice-details",
+      "remove:invoice.view-button.send-invoice",
     ]);
   });
 });

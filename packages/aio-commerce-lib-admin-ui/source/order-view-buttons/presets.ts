@@ -13,6 +13,7 @@
 import { buildErrorResponse, ok } from "@adobe/aio-commerce-lib-core/responses";
 import { parseOrThrow } from "@aio-commerce-sdk/common-utils/valibot";
 
+import { normalizeViewButtonWorkerParams } from "../lib/view-button-request";
 import { OrderViewButtonRequestSchema } from "./schema";
 
 import type {
@@ -47,7 +48,7 @@ export function parseOrderViewButtonRequest(
 ): OrderViewButtonRequest {
   return parseOrThrow(
     OrderViewButtonRequestSchema,
-    input,
+    normalizeViewButtonWorkerParams(input),
     "Invalid order view button request",
   );
 }

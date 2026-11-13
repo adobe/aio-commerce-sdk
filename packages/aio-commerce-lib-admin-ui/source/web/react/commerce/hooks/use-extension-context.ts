@@ -11,16 +11,29 @@
  */
 
 import { useMemo } from "react";
+import { finite, is, number, pipe, string, union } from "valibot";
 
 import { useSharedContext } from "#web/react/commerce/context/shared-context.tsx";
-import { parseOrderId } from "#web/react/commerce/lib";
+import {
+  parseCreditMemoId,
+  parseInvoiceId,
+  parseOrderId,
+  parseRmaId,
+} from "#web/react/commerce/lib";
 import { error, ok } from "#web/react/result";
 
 import type {
+  CreditMemoViewButtonContext,
+  CustomerContext,
+  InvoiceViewButtonContext,
   MassActionContext,
   OrderViewButtonContext,
+  RmaViewButtonContext,
+  StoreContext,
 } from "#web/react/commerce/types";
 import type { Result } from "#web/react/result";
+
+const ContextIdSchema = union([string(), pipe(number(), finite())]);
 
 /**
  * Returns the context for a mass-action extension point: the selected row IDs the action was
@@ -77,5 +90,129 @@ export function useOrderViewButtonContext(): Result<OrderViewButtonContext> {
     }
 
     return ok({ orderId });
+  }, []);
+}
+
+/**
+ * Returns the customer identifier from the Commerce shared context as a string.
+ * Numeric identifiers are converted to strings; existing strings retain leading zeros.
+ *
+ * Returns an error outside the Commerce shared context or when the customer identifier is
+ * missing, null, or not a string or finite number. The store identifier is not required.
+ */
+export function useCustomerContext(): Result<CustomerContext> {
+  const { data, error: contextError } = useSharedContext();
+
+  return useMemo<Result<CustomerContext>>(() => {
+    if (contextError) {
+      return error(contextError.message, { cause: contextError });
+    }
+
+    const customerId = data.sharedContext.get("customerId");
+    if (!is(ContextIdSchema, customerId)) {
+      return error(
+        'The Commerce shared context value "customerId" must be a string or finite number.',
+      );
+    }
+
+    return ok({ customerId: String(customerId) });
+  }, [data, contextError]);
+}
+
+/**
+ * Returns the store identifier from the Commerce shared context as a string.
+ * Numeric identifiers are converted to strings; existing strings retain leading zeros.
+ *
+ * Returns an error outside the Commerce shared context or when the store identifier is
+ * missing, null, or not a string or finite number. The customer identifier is not required.
+ */
+export function useStoreContext(): Result<StoreContext> {
+  const { data, error: contextError } = useSharedContext();
+
+  return useMemo<Result<StoreContext>>(() => {
+    if (contextError) {
+      return error(contextError.message, { cause: contextError });
+    }
+
+    const storeId = data.sharedContext.get("storeId");
+    if (!is(ContextIdSchema, storeId)) {
+      return error(
+        'The Commerce shared context value "storeId" must be a string or finite number.',
+      );
+    }
+
+    return ok({ storeId: String(storeId) });
+  }, [data, contextError]);
+}
+
+/**
+ * Returns the invoice ID for an invoice view-button extension point.
+ * Reads `invoiceId` from the page URL search parameters or hash-route query.
+ * Returns an error when the invoice ID is missing or blank.
+ * @example
+ * ```tsx
+ * const { data, error } = useInvoiceViewButtonContext();
+ * if (error) throw error;
+ * return <span>{data.invoiceId}</span>;
+ * ```
+ */
+export function useInvoiceViewButtonContext(): Result<InvoiceViewButtonContext> {
+  return useMemo<Result<InvoiceViewButtonContext>>(() => {
+    const invoiceId = parseInvoiceId(globalThis.location.href);
+    if (invoiceId === null || invoiceId.trim() === "") {
+      return error(
+        "Could not find an invoice ID. Is this frame running as an invoice view-button extension point?",
+      );
+    }
+
+    return ok({ invoiceId });
+  }, []);
+}
+
+/**
+ * Returns the credit memo ID for a credit memo view-button extension point.
+ * Reads `creditMemoId` from the page URL search parameters or hash-route query.
+ * Returns an error when the credit memo ID is missing or blank.
+ * @example
+ * ```tsx
+ * const { data, error } = useCreditMemoViewButtonContext();
+ * if (error) throw error;
+ * return <span>{data.creditMemoId}</span>;
+ * ```
+ */
+export function useCreditMemoViewButtonContext(): Result<CreditMemoViewButtonContext> {
+  return useMemo<Result<CreditMemoViewButtonContext>>(() => {
+    const creditMemoId = parseCreditMemoId(globalThis.location.href);
+    if (creditMemoId === null || creditMemoId.trim() === "") {
+      return error(
+        "Could not find a credit memo ID. Is this frame running as a credit memo view-button extension point?",
+      );
+    }
+
+    return ok({ creditMemoId });
+  }, []);
+}
+
+/**
+ * Returns the return (RMA) ID for a return view-button extension point.
+ * Reads `rmaId` from the page URL search parameters or hash-route query.
+ * Returns an error when the return ID is missing or blank.
+ * @example
+ * ```tsx
+ * const { data, error } = useRmaViewButtonContext();
+ * if (error) throw error;
+ * return <span>{data.rmaId}</span>;
+ * ```
+ */
+export function useRmaViewButtonContext(): Result<RmaViewButtonContext> {
+  return useMemo<Result<RmaViewButtonContext>>(() => {
+    const rmaId = parseRmaId(globalThis.location.href);
+    if (rmaId === null || rmaId.trim() === "") {
+      return error(
+        "Could not find a return ID. Is this frame running as a return view-button extension point?",
+      );
+    }
+
+    return ok({ rmaId });
   }, []);
 }

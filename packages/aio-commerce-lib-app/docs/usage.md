@@ -7,7 +7,7 @@ The `@adobe/aio-commerce-lib-app` library provides:
 - **App Configuration**: Define, validate and read/parse configurations for Adobe Commerce App Builder applications
 - **Business Configuration**: Generate and manage the runtime actions that power the `commerce/configuration/1` extension point.
 - **Installation Management**: Generate and manage the runtime action that powers the app installation and upgrade flow.
-- **Admin UI Configuration** (`commerce/backend-ui/2`): Generate and manage the runtime action and `workerProcess` declarations for Admin UI extensions on `commerce/backend-ui/2`. Currently supports grid column extensions, mass actions, order view buttons, and menu declarations.
+- **Admin UI Configuration** (`commerce/backend-ui/2`): Generate and manage the runtime action and `workerProcess` declarations for Admin UI extensions on `commerce/backend-ui/2`. Currently supports grid column extensions, mass actions, order, invoice, credit memo, and return view buttons, native UI form replacements, and menu declarations.
 - **Association Helpers**: Retrieve the Commerce instance the app is associated with from any runtime action via `getCommerceClient` and `getCommerceInstance`.
 - **Event Emission**: Publish a configured I/O Event from any runtime action by provider key and event name via `publishEvent`.
 - **Event Code Resolution**: Compute the I/O Events event code for a declared event via `resolveIoEventCode`, matching the prefixing rules used at installation time.
@@ -127,7 +127,7 @@ Generated Runtime actions always use `.js`.
 - `src/commerce-backend-ui-2/web-src/`: browser scaffold generated when iframe-based Admin UI features require a `view` operation. Existing `web-src/index.html` files are never overwritten. A separate required-file phase runs on every generation to ensure support files are present without replacing existing versions (e.g. a `.babelrc` file).
 
 > [!NOTE]
-> Generated actions default to the `nodejs:24` runtime. To pin a different runtime, set the `runtime` field on the action in the generated `ext.config.yaml`. Codegen preserves a `runtime` you set there, so it survives regeneration. Generated app-management and business-configuration packages declare `LOG_LEVEL` at the package level; action-specific inputs remain on their actions.
+> Generated actions default to the `nodejs:26` runtime. To pin a different runtime, set the `runtime` field on the action in the generated `ext.config.yaml`. Codegen preserves a `runtime` you set there, so it survives regeneration. Generated app-management and business-configuration packages declare `LOG_LEVEL` at the package level; action-specific inputs remain on their actions.
 
 1. In your `app.config.yaml`, reference the generated extension configurations. If you have multiple extension points, add each as a new entry. Keep this order, with `commerce/extensibility/1` last, so that an upgrade works reliably:
 
@@ -645,7 +645,7 @@ Two things follow from this:
 
 The `adminUi` field declares Admin UI registrations for the `commerce/backend-ui/2` extension point. Unlike `commerce/backend-ui/1`, which required a dedicated registration action, V2 reads the registration directly from the `app-config` endpoint — no separate registration action is generated. Every field of `adminUi` is optional — configure only the extension points your application needs. When defined, `init` and `generate all` automatically wire up the extension, including the `pre-app-build` hook and the `workerProcess` declarations in `ext.config.yaml`.
 
-View-based features also get a minimal `web-src/` scaffold when the resolved `view` entrypoint does not exist yet. The scaffold uses `.tsx` files when the Commerce config uses a TypeScript extension and `.jsx` files otherwise, independently of Runtime action TypeScript enablement. A TypeScript `web-src/tsconfig.json` checks only the Admin UI source and remains independent from the root config. Generation also runs a required-file phase that ensures a set of web source support files is present even when the source scaffold already exists, without replacing existing versions. The current set includes `web-src/.babelrc`, which selects React's automatic JSX transform for each environment so development builds retain JSX diagnostics while production builds do not emit `jsxDEV` calls. If `BABEL_ENV` is set, keep it synchronized with `NODE_ENV`, because Babel gives `BABEL_ENV` precedence when selecting the configuration environment. The scaffold imports app metadata from `#app.commerce.config`, so custom Admin UI code should use the same alias instead of importing generated files by path. Currently supported: grid column extensions, mass actions, order view buttons, and menu declarations. For details on each extension point, see the [Admin UI SDK Extension Points documentation](https://developer.adobe.com/commerce/extensibility/admin-ui-sdk/extension-points/).
+View-based features also get a minimal `web-src/` scaffold when the resolved `view` entrypoint does not exist yet. The scaffold uses `.tsx` files when the Commerce config uses a TypeScript extension and `.jsx` files otherwise, independently of Runtime action TypeScript enablement. A TypeScript `web-src/tsconfig.json` checks only the Admin UI source and remains independent from the root config. Generation also runs a required-file phase that ensures a set of web source support files is present even when the source scaffold already exists, without replacing existing versions. The current set includes `web-src/.babelrc`, which selects React's automatic JSX transform for each environment so development builds retain JSX diagnostics while production builds do not emit `jsxDEV` calls. If `BABEL_ENV` is set, keep it synchronized with `NODE_ENV`, because Babel gives `BABEL_ENV` precedence when selecting the configuration environment. The scaffold imports app metadata from `#app.commerce.config`, so custom Admin UI code should use the same alias instead of importing generated files by path. Currently supported: grid column extensions, mass actions, order, invoice, credit memo, and return view buttons, native UI form replacements, and menu declarations. For details on each extension point, see the [Admin UI SDK Extension Points documentation](https://developer.adobe.com/commerce/extensibility/admin-ui-sdk/extension-points/).
 
 ##### Grid Columns
 
@@ -777,7 +777,114 @@ export default defineConfig({
   - **align**: one of `"left"`, `"center"`, `"right"`
   - **aclProtected** (optional): boolean — when `true`, Commerce generates a per-app nested ACL resource for this column in the Adobe Commerce User Roles tree, so admins can grant or deny it per role; roles without the resource don't see the column. Derive the id with `getGridColumnAclResourceId` from `@adobe/aio-commerce-lib-admin-ui/api`. See the [`@adobe/aio-commerce-lib-admin-ui` Permission Client documentation](../../aio-commerce-lib-admin-ui/docs/usage.md#permission-client).
 
-Each of `order`, `product`, `customer`, `invoice`, `creditMemo`, `shipment`, and `newsletter` is optional — configure only the grids your application extends. Only `order`, `product`, and `customer` also support `massActions`; `invoice`, `creditMemo`, `shipment`, and `newsletter` support `gridColumns` only.
+Each of `order`, `product`, `customer`, `invoice`, `creditMemo`, `shipment`, and `newsletter` is optional — configure only the grids your application extends. Only `order`, `product`, and `customer` also support `massActions`. Order, invoice, and credit memo support `viewButtons`; shipment and newsletter support `gridColumns` only. Returns (`rma`) support `viewButtons` only, with no grid columns or mass actions.
+
+##### Invoice View Buttons
+
+`adminUi.invoice.viewButtons` declares buttons on the invoice detail page in Commerce Admin. Like order buttons, `type: "view"` opens an iframe and `type: "worker"` invokes a registered runtime action. Invoice view buttons may also set an optional `title` for the iframe page.
+
+```typescript
+adminUi: {
+  invoice: {
+    viewButtons: [
+      {
+        id: "invoice-details",
+        label: "Invoice details",
+        type: "view",
+        path: "#/invoice-details",
+        title: "Custom invoice details",
+        sortOrder: 100,
+        sandboxPermissions: ["allow-modals"],
+      },
+      {
+        id: "send-invoice",
+        label: "Send invoice",
+        type: "worker",
+        runtimeAction: "invoice/send",
+        timeout: 15,
+        sortOrder: 110,
+        confirm: { message: "Send this invoice?" },
+        notifications: {
+          success: "Invoice sent successfully.",
+          error: "Unable to send the invoice.",
+        },
+      },
+    ],
+  },
+}
+```
+
+The SDK generates the required web and worker operations, and includes invoice buttons in installation and upgrade planning. Button ids must be unique after Commerce sanitization. Common fields and variant restrictions match order buttons below, with `title` supported only on invoice, credit memo, and return `view` buttons.
+
+Use `@adobe/aio-commerce-lib-admin-ui/invoice-view-buttons` for invoice worker request/response and ACL helpers. Iframe pages use `useInvoiceViewButtonContext` from `@adobe/aio-commerce-lib-admin-ui/web`.
+
+##### Credit Memo View Buttons
+
+`adminUi.creditMemo.viewButtons` declares buttons on the credit memo detail page in Commerce Admin. They follow the same rules as invoice buttons, including the optional `title` on `view` buttons.
+
+```typescript
+adminUi: {
+  creditMemo: {
+    viewButtons: [
+      {
+        id: "credit-memo-details",
+        label: "Credit memo details",
+        type: "view",
+        path: "#/creditmemo",
+        title: "Custom credit memo details",
+      },
+      {
+        id: "refund-offline",
+        label: "Refund Offline",
+        type: "worker",
+        runtimeAction: "creditmemo/refund-offline",
+        confirm: { message: "Refund this credit memo offline?" },
+        notifications: {
+          success: "Credit memo refunded successfully.",
+          error: "Unable to refund the credit memo.",
+        },
+      },
+    ],
+  },
+}
+```
+
+Use `@adobe/aio-commerce-lib-admin-ui/credit-memo-view-buttons` for credit memo worker request/response and ACL helpers. Iframe pages use `useCreditMemoViewButtonContext` from `@adobe/aio-commerce-lib-admin-ui/web`.
+
+##### Return View Buttons
+
+`adminUi.rma.viewButtons` declares buttons on the return (RMA) detail page in Commerce Admin. They follow the same rules as invoice buttons, including the optional `title` on `view` buttons. Returns do not support `gridColumns` or `massActions`.
+
+```typescript
+adminUi: {
+  rma: {
+    viewButtons: [
+      {
+        id: "return-details",
+        label: "Return details",
+        type: "view",
+        path: "#/return",
+        title: "Custom return details",
+      },
+      {
+        id: "custom-return-flow",
+        label: "Custom Return Flow",
+        type: "worker",
+        runtimeAction: "rma/custom-flow",
+        confirm: { message: "Run the custom return flow?" },
+        notifications: {
+          success: "Custom return flow completed.",
+          error: "Unable to run the custom return flow.",
+        },
+      },
+    ],
+  },
+}
+```
+
+The SDK generates the required web and worker operations, and includes return buttons in installation and upgrade planning. Return view button ids must be unique after Commerce sanitization.
+
+Use `@adobe/aio-commerce-lib-admin-ui/rma-view-buttons` for return worker request/response and ACL helpers. Commerce POSTs `{ rmaId, buttonId }` to the worker with the request ID in the `X-Request-ID` header. Iframe pages use `useRmaViewButtonContext` from `@adobe/aio-commerce-lib-admin-ui/web`, which reads `rmaId` from the iframe URL.
 
 ##### Order View Buttons
 
@@ -861,6 +968,29 @@ Shared fields (both types):
 - **timeout**: Optional — positive number (seconds)
 
 For the handler wire contract (request/response shapes), see `@adobe/aio-commerce-lib-admin-ui/order-view-buttons`.
+
+##### Native UI Form Replacements
+
+`adminUi.nativeUi.replacedPages` replaces supported native Commerce Admin forms with pages from the app's `web-src`. Each replacement requires a supported `target`, an app route in `path`, and a `title`. `sandboxPermissions` is optional and uses the same values as other iframe-based extension points. The SDK enables the `view` operation and web source when at least one page replacement is configured.
+
+```ts
+adminUi: {
+  nativeUi: {
+    replacedPages: [
+      {
+        target: "order.create",
+        path: "#/create-order",
+        title: "Create Order (App)",
+        sandboxPermissions: ["allow-modals"],
+      },
+    ],
+  },
+}
+```
+
+Supported targets are `"order.create"` and `"return.create"`. The Commerce instance must have an Admin UI SDK version whose native form catalog includes the chosen target. Return creation passes any available `order_id` and `customer_id` to the app route. Targets must be unique within `replacedPages`, and only one app can replace a given target on a Commerce instance.
+
+Add a matching route and page for each `path` in the generated web source, following the same conventions as other view-based Admin UI extensions. The `useCustomerContext` and `useStoreContext` hooks from `@adobe/aio-commerce-lib-admin-ui/web` independently expose `customerId` and `storeId` from Commerce shared context. Each hook returns an error when its identifier is missing, null, or invalid, and guarantees a string identifier on success. Numeric host values are converted to strings; existing strings retain leading zeros.
 
 ##### Mass Actions
 

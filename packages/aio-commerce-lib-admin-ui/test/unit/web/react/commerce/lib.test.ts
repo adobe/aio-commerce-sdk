@@ -17,7 +17,10 @@ import {
   isControlFrame,
   isEmbeddedInHost,
   isUiFrame,
+  parseCreditMemoId,
+  parseInvoiceId,
   parseOrderId,
+  parseRmaId,
 } from "#web/react/commerce/lib";
 
 describe("parseOrderId", () => {
@@ -28,6 +31,42 @@ describe("parseOrderId", () => {
     ["https://host.test/", null],
   ])("parses %j to %j", (href, expected) => {
     expect(parseOrderId(href)).toBe(expected);
+  });
+});
+
+describe("parseInvoiceId", () => {
+  test.each([
+    ["https://host.test/?invoiceId=000000005", "000000005"],
+    ["https://host.test/#/view?invoiceId=7", "7"],
+    ["https://host.test/?invoiceId=5#/view?invoiceId=7", "5"],
+    ["https://host.test/?orderId=5", null],
+    ["https://host.test/", null],
+  ])("parses %j to %j", (href, expected) => {
+    expect(parseInvoiceId(href)).toBe(expected);
+  });
+});
+
+describe("parseCreditMemoId", () => {
+  test.each([
+    ["https://host.test/?creditMemoId=000000005", "000000005"],
+    ["https://host.test/#/creditmemo?creditMemoId=7", "7"],
+    ["https://host.test/?creditMemoId=5#/creditmemo?creditMemoId=7", "5"],
+    ["https://host.test/?invoiceId=5", null],
+    ["https://host.test/", null],
+  ])("parses %j to %j", (href, expected) => {
+    expect(parseCreditMemoId(href)).toBe(expected);
+  });
+});
+
+describe("parseRmaId", () => {
+  test.each([
+    ["https://host.test/?rmaId=000000005", "000000005"],
+    ["https://host.test/#/rma?rmaId=7", "7"],
+    ["https://host.test/?rmaId=5#/rma?rmaId=7", "5"],
+    ["https://host.test/?creditMemoId=5", null],
+    ["https://host.test/", null],
+  ])("parses %j to %j", (href, expected) => {
+    expect(parseRmaId(href)).toBe(expected);
   });
 });
 

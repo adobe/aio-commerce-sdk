@@ -33,6 +33,17 @@ import type {
   RouteConfig,
 } from "./types";
 
+/** Options for creating an {@link HttpActionRouter}. */
+export type HttpActionRouterOptions = {
+  /**
+   * Headers added to every response the router produces: handler responses, validation
+   * and handler errors, and the router's own 404 and 405 responses.
+   *
+   * Headers set by a handler win over these defaults. Names are compared case-insensitively.
+   */
+  headers?: Record<string, string>;
+};
+
 /**
  * HTTP router for Adobe I/O Runtime actions.
  * Provides type-safe routing with schema validation and OpenWhisk integration.
@@ -56,6 +67,44 @@ import type {
 export class HttpActionRouter<TContext extends BaseContext = BaseContext> {
   private readonly routes: CompiledRoute[] = [];
   private readonly contextBuilders: ContextBuilder[] = [];
+  private readonly defaultHeaders: Record<string, string>;
+
+  /**
+   * @param options - Router options.
+   *
+   * @example
+   * ```typescript
+   * const router = new HttpActionRouter({ headers: { "x-content-type-options": "nosniff" } });
+   * ```
+   */
+  public constructor(options: HttpActionRouterOptions = {}) {
+    this.defaultHeaders = { ...options.headers };
+  }
+
+  /** Adds the default headers to a response. Headers already on the response win. */
+  private withDefaultHeaders(response: ActionResponse): ActionResponse {
+    const defaults = Object.entries(this.defaultHeaders);
+    if (defaults.length === 0) {
+      return response;
+    }
+
+    // Error responses nest their status code, body and headers under `error`.
+    const target = response.type === "error" ? response.error : response;
+    const headers: Record<string, string> = {
+      ...(target.headers as Record<string, string> | undefined),
+    };
+    const present = new Set(Object.keys(headers).map((k) => k.toLowerCase()));
+
+    for (const [name, value] of defaults) {
+      if (!present.has(name.toLowerCase())) {
+        headers[name] = value;
+      }
+    }
+
+    return response.type === "error"
+      ? { ...response, error: { ...response.error, headers } }
+      : { ...response, headers };
+  }
 
   /**
    * Internal method to add a route to the router.
@@ -417,51 +466,55 @@ export class HttpActionRouter<TContext extends BaseContext = BaseContext> {
    * ```
    */
   public handler() {
-    return async (args: RuntimeActionParams): Promise<ActionResponse> => {
-      const method = (args.__ow_method ?? "get").toUpperCase() as HttpMethod;
-      const rawPath = args.__ow_path ?? "/";
+    return async (args: RuntimeActionParams): Promise<ActionResponse> =>
+      this.withDefaultHeaders(await this.dispatch(args));
+  }
 
-      const path = rawPath.startsWith("/") ? rawPath : `/${rawPath}`;
-      const headers =
-        (args.__ow_headers as Record<string, string> | undefined) ?? {};
-      const body = parseRequestBody(args.__ow_body, args);
-      const query = parseQueryParams(args.__ow_query, args);
+  /** Matches the request to a route and runs it. */
+  private async dispatch(args: RuntimeActionParams): Promise<ActionResponse> {
+    const method = (args.__ow_method ?? "get").toUpperCase() as HttpMethod;
+    const rawPath = args.__ow_path ?? "/";
 
-      // Build context from all registered context builders
-      const context = await this.buildContext(args);
-      const matchedMethods: HttpMethod[] = [];
+    const path = rawPath.startsWith("/") ? rawPath : `/${rawPath}`;
+    const headers =
+      (args.__ow_headers as Record<string, string> | undefined) ?? {};
+    const body = parseRequestBody(args.__ow_body, args);
+    const query = parseQueryParams(args.__ow_query, args);
 
-      for (const route of this.routes) {
-        const match = route.pattern.exec(path);
-        if (!match) {
-          continue;
-        }
+    // Build context from all registered context builders
+    const context = await this.buildContext(args);
+    const matchedMethods: HttpMethod[] = [];
 
-        matchedMethods.push(route.method);
-        if (route.method !== method) {
-          continue;
-        }
-
-        // biome-ignore lint/performance/noAwaitInLoops: must stop at the first matching route
-        return await HttpActionRouter.handleRoute(
-          route,
-          match,
-          body,
-          query,
-          headers,
-          method,
-          path,
-          context,
-        );
+    for (const route of this.routes) {
+      const match = route.pattern.exec(path);
+      if (!match) {
+        continue;
       }
 
-      // If path matched but method didn't, return 405
-      if (matchedMethods.length > 0) {
-        return methodNotAllowed(`Method ${method} not allowed`);
+      matchedMethods.push(route.method);
+      if (route.method !== method) {
+        continue;
       }
 
-      return notFound(`No route matches ${path}`);
-    };
+      // biome-ignore lint/performance/noAwaitInLoops: must stop at the first matching route
+      return await HttpActionRouter.handleRoute(
+        route,
+        match,
+        body,
+        query,
+        headers,
+        method,
+        path,
+        context,
+      );
+    }
+
+    // If path matched but method didn't, return 405
+    if (matchedMethods.length > 0) {
+      return methodNotAllowed(`Method ${method} not allowed`);
+    }
+
+    return notFound(`No route matches ${path}`);
   }
 }
 

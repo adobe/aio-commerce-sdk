@@ -16,8 +16,13 @@ import { renderHook } from "vitest-browser-react";
 import { createMockGuestConnection } from "#test/fixtures/uix-guest";
 import { sharedContextProvider } from "#test/utils/shared-context.tsx";
 import {
+  useCreditMemoViewButtonContext,
+  useCustomerContext,
+  useInvoiceViewButtonContext,
   useMassActionContext,
   useOrderViewButtonContext,
+  useRmaViewButtonContext,
+  useStoreContext,
 } from "#web/react/commerce/hooks/use-extension-context";
 
 afterEach(() => {
@@ -105,6 +110,151 @@ describe("useOrderViewButtonContext", () => {
     history.replaceState(null, "", "/");
   });
 
+  describe("useInvoiceViewButtonContext", () => {
+    afterEach(() => {
+      history.replaceState(null, "", "/");
+    });
+
+    test("returns the invoice ID from URL search params and preserves the result", async () => {
+      window.history.replaceState(null, "", "?invoiceId=000000123");
+
+      const { result, rerender } = await renderHook(() =>
+        useInvoiceViewButtonContext(),
+      );
+      expect(result.current).toEqual({
+        data: { invoiceId: "000000123" },
+        error: null,
+      });
+
+      const initialResult = result.current;
+      await rerender();
+      expect(result.current).toBe(initialResult);
+    });
+
+    test("returns the invoice ID from the URL hash", async () => {
+      window.history.replaceState(null, "", "/#/view?invoiceId=7");
+
+      const { result } = await renderHook(() => useInvoiceViewButtonContext());
+      expect(result.current).toEqual({ data: { invoiceId: "7" }, error: null });
+    });
+
+    test("prefers the search parameter over the hash", async () => {
+      window.history.replaceState(null, "", "?invoiceId=5#/view?invoiceId=7");
+
+      const { result } = await renderHook(() => useInvoiceViewButtonContext());
+      expect(result.current).toEqual({ data: { invoiceId: "5" }, error: null });
+    });
+
+    test.each(["/", "?orderId=5", "?invoiceId=", "?invoiceId=%20%20"])(
+      "returns an error for a missing or blank invoice ID at %s",
+      async (url) => {
+        window.history.replaceState(null, "", url);
+
+        const { result } = await renderHook(() =>
+          useInvoiceViewButtonContext(),
+        );
+        expect.assert.isNull(result.current.data);
+        expect(result.current.error.message).toContain(
+          "Could not find an invoice ID",
+        );
+      },
+    );
+  });
+
+  describe("useCreditMemoViewButtonContext", () => {
+    afterEach(() => {
+      history.replaceState(null, "", "/");
+    });
+
+    test("returns the credit memo ID from URL search params and preserves the result", async () => {
+      window.history.replaceState(null, "", "?creditMemoId=000000123");
+
+      const { result, rerender } = await renderHook(() =>
+        useCreditMemoViewButtonContext(),
+      );
+      expect(result.current).toEqual({
+        data: { creditMemoId: "000000123" },
+        error: null,
+      });
+
+      const initialResult = result.current;
+      await rerender();
+      expect(result.current).toBe(initialResult);
+    });
+
+    test("returns the credit memo ID from the URL hash", async () => {
+      window.history.replaceState(null, "", "/#/creditmemo?creditMemoId=7");
+
+      const { result } = await renderHook(() =>
+        useCreditMemoViewButtonContext(),
+      );
+      expect(result.current).toEqual({
+        data: { creditMemoId: "7" },
+        error: null,
+      });
+    });
+
+    test.each(["/", "?invoiceId=5", "?creditMemoId=", "?creditMemoId=%20%20"])(
+      "returns an error for a missing or blank credit memo ID at %s",
+      async (url) => {
+        window.history.replaceState(null, "", url);
+
+        const { result } = await renderHook(() =>
+          useCreditMemoViewButtonContext(),
+        );
+        expect.assert.isNull(result.current.data);
+        expect(result.current.error.message).toContain(
+          "Could not find a credit memo ID",
+        );
+      },
+    );
+  });
+
+  describe("useRmaViewButtonContext", () => {
+    afterEach(() => {
+      history.replaceState(null, "", "/");
+    });
+
+    test("returns the return ID from URL search params and preserves the result", async () => {
+      window.history.replaceState(null, "", "?rmaId=000000123");
+
+      const { result, rerender } = await renderHook(() =>
+        useRmaViewButtonContext(),
+      );
+      expect(result.current).toEqual({
+        data: { rmaId: "000000123" },
+        error: null,
+      });
+
+      const initialResult = result.current;
+      await rerender();
+      expect(result.current).toBe(initialResult);
+    });
+
+    test("returns the return ID from the URL hash", async () => {
+      window.history.replaceState(null, "", "/#/rma?rmaId=7");
+
+      const { result } = await renderHook(() => useRmaViewButtonContext());
+      expect(result.current).toEqual({
+        data: { rmaId: "7" },
+        error: null,
+      });
+    });
+
+    test.each(["/", "?creditMemoId=5", "?rmaId=", "?rmaId=%20%20"])(
+      "returns an error for a missing or blank return ID at %s",
+      async (url) => {
+        window.history.replaceState(null, "", url);
+
+        const { result } = await renderHook(() => useRmaViewButtonContext());
+        expect.assert.isNull(result.current.data);
+        expect(result.current.error.message).toContain(
+          "Could not find a return ID",
+        );
+      },
+    );
+  });
+
   test("returns the order ID from the URL search params", async () => {
     window.history.replaceState(null, "", "?orderId=000000123");
 
@@ -135,6 +285,85 @@ describe("useOrderViewButtonContext", () => {
     expect.assert.isNull(result.current.data);
     expect(result.current.error.message).toContain(
       "Could not find an order ID",
+    );
+  });
+});
+
+describe.each([
+  {
+    key: "customerId",
+    name: "useCustomerContext",
+    otherKey: "storeId",
+    useContext: useCustomerContext,
+  },
+  {
+    key: "storeId",
+    name: "useStoreContext",
+    otherKey: "customerId",
+    useContext: useStoreContext,
+  },
+])("$name", ({ useContext, key, otherKey }) => {
+  test.each([
+    { expected: "000123", value: "000123" },
+    { expected: "123", value: 123 },
+    { expected: "0", value: 0 },
+  ])(
+    "returns identifier $value as string $expected without requiring the other identifier",
+    async ({ value, expected }) => {
+      const { result, rerender } = await renderHook(() => useContext(), {
+        wrapper: provide({ [key]: value }),
+      });
+
+      expect(result.current).toEqual({
+        data: { [key]: expected },
+        error: null,
+      });
+      const initialResult = result.current;
+      await rerender();
+      expect(result.current).toBe(initialResult);
+    },
+  );
+
+  test("ignores an invalid identifier for the other hook", async () => {
+    const { result } = await renderHook(() => useContext(), {
+      wrapper: provide({ [key]: "123", [otherKey]: {} }),
+    });
+
+    expect(result.current).toEqual({
+      data: { [key]: "123" },
+      error: null,
+    });
+  });
+
+  test.each([
+    undefined,
+    null,
+    true,
+    {},
+    [],
+    Number.NaN,
+    Number.POSITIVE_INFINITY,
+    Number.NEGATIVE_INFINITY,
+  ])(
+    "returns an error for a missing or invalid identifier %j",
+    async (value) => {
+      const { result } = await renderHook(() => useContext(), {
+        wrapper: provide({ [key]: value, [otherKey]: "2" }),
+      });
+
+      expect.assert.isNull(result.current.data);
+      expect(result.current.error.message).toContain(
+        `"${key}" must be a string or finite number`,
+      );
+    },
+  );
+
+  test("returns an error outside the Commerce shared context", async () => {
+    const { result } = await renderHook(() => useContext());
+
+    expect.assert.isNull(result.current.data);
+    expect(result.current.error.message).toContain(
+      "useSharedContext must be used inside a SharedContextProvider",
     );
   });
 });

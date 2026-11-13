@@ -140,42 +140,54 @@ const MassActionSchema = v.variant(
   'mass action "type" must be either "view" or "worker"',
 );
 
-// ─── Order view buttons ───────────────────────────────────────────────────────
+// ─── View buttons ─────────────────────────────────────────────────────────────
 
 const ViewButtonLevelSchema = v.picklist([-1, 0, 1]);
 
+const ViewButtonViewSchema = v.strictObject({
+  aclProtected: v.optional(v.boolean()),
+  confirm: v.optional(ConfirmSchema),
+  description: v.optional(nonEmptyStringValueSchema("view button description")),
+  id: nonEmptyStringValueSchema("view button ID"),
+  label: nonEmptyStringValueSchema("view button label"),
+  level: v.optional(ViewButtonLevelSchema),
+  notifications: v.optional(NotificationsSchema),
+  path: nonEmptyStringValueSchema("view button path"),
+  sandboxPermissions: v.optional(SandboxPermissionsSchema),
+  sortOrder: v.optional(positiveNumberValueSchema("sortOrder")),
+  type: v.literal("view"),
+});
+const ViewButtonWorkerSchema = v.strictObject({
+  aclProtected: v.optional(v.boolean()),
+  confirm: v.optional(ConfirmSchema),
+  description: v.optional(nonEmptyStringValueSchema("view button description")),
+  id: nonEmptyStringValueSchema("view button ID"),
+  label: nonEmptyStringValueSchema("view button label"),
+  level: v.optional(ViewButtonLevelSchema),
+  notifications: v.optional(NotificationsSchema),
+  runtimeAction: nonEmptyStringValueSchema("runtime action"),
+  sortOrder: v.optional(positiveNumberValueSchema("sortOrder")),
+  timeout: v.optional(positiveNumberValueSchema("timeout")),
+  type: v.literal("worker"),
+});
+
 const OrderViewButtonSchema = v.variant("type", [
-  v.strictObject({
-    aclProtected: v.optional(v.boolean()),
-    confirm: v.optional(ConfirmSchema),
-    description: v.optional(
-      nonEmptyStringValueSchema("view button description"),
-    ),
-    id: nonEmptyStringValueSchema("view button ID"),
-    label: nonEmptyStringValueSchema("view button label"),
-    level: v.optional(ViewButtonLevelSchema),
-    notifications: v.optional(NotificationsSchema),
-    path: nonEmptyStringValueSchema("view button path"),
-    sandboxPermissions: v.optional(SandboxPermissionsSchema),
-    sortOrder: v.optional(positiveNumberValueSchema("sortOrder")),
-    type: v.literal("view"),
-  }),
-  v.strictObject({
-    aclProtected: v.optional(v.boolean()),
-    confirm: v.optional(ConfirmSchema),
-    description: v.optional(
-      nonEmptyStringValueSchema("view button description"),
-    ),
-    id: nonEmptyStringValueSchema("view button ID"),
-    label: nonEmptyStringValueSchema("view button label"),
-    level: v.optional(ViewButtonLevelSchema),
-    notifications: v.optional(NotificationsSchema),
-    runtimeAction: nonEmptyStringValueSchema("runtime action"),
-    sortOrder: v.optional(positiveNumberValueSchema("sortOrder")),
-    timeout: v.optional(positiveNumberValueSchema("timeout")),
-    type: v.literal("worker"),
-  }),
+  ViewButtonViewSchema,
+  ViewButtonWorkerSchema,
 ]);
+
+// Shared by invoice, credit memo, and return view buttons: view variants accept an optional page title.
+const TitledViewButtonSchema = v.variant("type", [
+  v.strictObject({
+    ...ViewButtonViewSchema.entries,
+    title: v.optional(nonEmptyStringValueSchema("view button page title")),
+  }),
+  ViewButtonWorkerSchema,
+]);
+
+const InvoiceViewButtonSchema = TitledViewButtonSchema;
+const CreditMemoViewButtonSchema = TitledViewButtonSchema;
+const RmaViewButtonSchema = TitledViewButtonSchema;
 
 // ─── Entity extension points ──────────────────────────────────────────────────
 
@@ -206,8 +218,46 @@ const AdminUiGridAndMassActionEntitySchema = v.object({
   massActions: v.optional(MassActionsSchema),
 });
 
-// Shared by invoice, credit memo, shipment, and newsletter: unlike order/product/customer,
-// these expose grid columns only — no mass actions or view buttons.
+const AdminUiInvoiceSchema = v.object({
+  gridColumns: v.optional(GridColumnsSchema),
+  viewButtons: v.optional(
+    v.pipe(
+      v.array(InvoiceViewButtonSchema),
+      v.check(
+        (items) => hasUniqueSanitizedIds(items),
+        "Invoice view button ids must be unique after Commerce id sanitization.",
+      ),
+    ),
+  ),
+});
+
+const AdminUiCreditMemoSchema = v.object({
+  gridColumns: v.optional(GridColumnsSchema),
+  viewButtons: v.optional(
+    v.pipe(
+      v.array(CreditMemoViewButtonSchema),
+      v.check(
+        (items) => hasUniqueSanitizedIds(items),
+        "Credit memo view button ids must be unique after Commerce id sanitization.",
+      ),
+    ),
+  ),
+});
+
+// Returns (RMA) expose view buttons only — no grid columns or mass actions.
+const AdminUiRmaSchema = v.object({
+  viewButtons: v.optional(
+    v.pipe(
+      v.array(RmaViewButtonSchema),
+      v.check(
+        (items) => hasUniqueSanitizedIds(items),
+        "Return view button ids must be unique after Commerce id sanitization.",
+      ),
+    ),
+  ),
+});
+
+// Shared by shipment and newsletter: these expose grid columns only — no mass actions or view buttons.
 const AdminUiGridOnlyEntitySchema = v.object({
   gridColumns: v.optional(GridColumnsSchema),
 });
@@ -238,6 +288,32 @@ const MenuSchema = v.object({
     ),
   ),
   sandboxPermissions: v.optional(SandboxPermissionsSchema),
+});
+
+const NATIVE_UI_REPLACED_PAGE_TARGETS = [
+  "order.create",
+  "return.create",
+] as const satisfies readonly string[];
+
+const NativeUiReplacedPageSchema = v.strictObject({
+  path: nonEmptyStringValueSchema("replaced page path"),
+  sandboxPermissions: v.optional(SandboxPermissionsSchema),
+  target: v.picklist(
+    NATIVE_UI_REPLACED_PAGE_TARGETS,
+    `Invalid native UI replaced page target. Accepted values are: ${NATIVE_UI_REPLACED_PAGE_TARGETS.join(", ")}`,
+  ),
+  title: nonEmptyStringValueSchema("replaced page title"),
+});
+
+const NativeUiSchema = v.object({
+  replacedPages: v.pipe(
+    v.array(NativeUiReplacedPageSchema),
+    v.check(
+      (pages) =>
+        new Set(pages.map((page) => page.target)).size === pages.length,
+      "Native UI replaced page targets must be unique.",
+    ),
+  ),
 });
 
 // ─── Custom ACL resources ──────────────────────────────────────────────────────
@@ -330,17 +406,19 @@ const AdminUiAclSchema = v.pipe(
 
 /**
  * Schema for the `adminUi` config section.
- * Supports grid column extensions, mass actions, order view buttons, menu, and custom ACL resources on `commerce/backend-ui/2`.
+ * Supports grid column extensions, mass actions, order, invoice, credit memo, and return view buttons, menu, native UI replaced pages, and custom ACL resources on `commerce/backend-ui/2`.
  */
 export const AdminUiSchema = v.object({
   acl: v.optional(AdminUiAclSchema),
-  creditMemo: v.optional(AdminUiGridOnlyEntitySchema),
+  creditMemo: v.optional(AdminUiCreditMemoSchema),
   customer: v.optional(AdminUiGridAndMassActionEntitySchema),
-  invoice: v.optional(AdminUiGridOnlyEntitySchema),
+  invoice: v.optional(AdminUiInvoiceSchema),
   menu: v.optional(MenuSchema),
+  nativeUi: v.optional(NativeUiSchema),
   newsletter: v.optional(AdminUiGridOnlyEntitySchema),
   order: v.optional(AdminUiOrderSchema),
   product: v.optional(AdminUiGridAndMassActionEntitySchema),
+  rma: v.optional(AdminUiRmaSchema),
   shipment: v.optional(AdminUiGridOnlyEntitySchema),
 });
 
@@ -377,18 +455,31 @@ export const ADMIN_UI_MASS_ACTION_ENTITIES = [
   "customer",
 ] as const satisfies readonly Exclude<keyof AdminUi, "acl" | "menu">[];
 
+/** Entities that support view buttons, in a stable order. */
+export const ADMIN_UI_VIEW_BUTTON_ENTITIES = [
+  "order",
+  "invoice",
+  "creditMemo",
+  "rma",
+] as const satisfies readonly Exclude<keyof AdminUi, "acl" | "menu">[];
+
 /** A custom ACL resource entry: a leaf or a one-level group of leaves. */
 export type AclResourceEntry = v.InferInput<typeof AclResourceEntrySchema>;
 
 /**
  * The validated config of a single Admin UI component: the menu, an entity's
- * grid columns, a single mass action, a single view button, or a custom ACL resource entry.
+ * grid columns, a mass action, a view button, a native UI page replacement, or a
+ * custom ACL resource entry.
  */
 export type AdminUiComponentConfig =
   | v.InferOutput<typeof MenuSchema>
   | v.InferOutput<typeof GridColumnsSchema>
   | v.InferOutput<typeof MassActionSchema>
   | v.InferOutput<typeof OrderViewButtonSchema>
+  | v.InferOutput<typeof NativeUiReplacedPageSchema>
+  | v.InferOutput<typeof InvoiceViewButtonSchema>
+  | v.InferOutput<typeof CreditMemoViewButtonSchema>
+  | v.InferOutput<typeof RmaViewButtonSchema>
   | AclResourceEntry;
 
 /**
@@ -421,6 +512,17 @@ export type WorkerMassAction = v.InferInput<typeof WorkerMassActionSchema>;
  */
 export type OrderViewButton = v.InferInput<typeof OrderViewButtonSchema>;
 
+/** An invoice view button registration entry (view or worker variant). */
+export type InvoiceViewButton = v.InferInput<typeof InvoiceViewButtonSchema>;
+
+/** A credit memo view button registration entry (view or worker variant). */
+export type CreditMemoViewButton = v.InferInput<
+  typeof CreditMemoViewButtonSchema
+>;
+
+/** A return (RMA) view button registration entry (view or worker variant). */
+export type RmaViewButton = v.InferInput<typeof RmaViewButtonSchema>;
+
 /**
  * Inlined notification strings on an `adminUi` registration entry.
  */
@@ -433,6 +535,13 @@ export type Notifications = v.InferInput<typeof NotificationsSchema>;
  */
 export type Menu = v.InferInput<typeof MenuSchema>;
 
+/**
+ * A native Commerce Admin form replaced by an application page.
+ */
+export type NativeUiReplacedPage = v.InferInput<
+  typeof NativeUiReplacedPageSchema
+>;
+
 /** Config type when `adminUi` configuration is present. */
 export type AdminUiConfig<
   T extends AnyCommerceAppConfig = CommerceAppConfigOutputModel,
@@ -443,9 +552,10 @@ export type AdminUiConfig<
 /**
  * Check whether the config declares an Admin UI component that requires the
  * `commerce/backend-ui/2` extension point — a menu, grid columns, mass actions,
- * or view buttons. Custom ACL resources are deliberately excluded: they reach
- * Commerce through the `extensibility/1` app-config payload, not backend-ui/2,
- * so an acl-only config needs no backend-ui/2 registration.
+ * view buttons, or native UI replaced pages. Custom ACL resources are
+ * deliberately excluded: they reach Commerce through the `extensibility/1`
+ * app-config payload, not backend-ui/2, so an acl-only config needs no
+ * backend-ui/2 registration.
  */
 export function hasBackendUiV2Components<T extends AnyCommerceAppConfig>(
   config: T,
@@ -465,16 +575,21 @@ export function hasBackendUiV2Components<T extends AnyCommerceAppConfig>(
       adminUi.customer?.gridColumns ||
       adminUi.customer?.massActions?.length ||
       adminUi.invoice?.gridColumns ||
+      adminUi.invoice?.viewButtons?.length ||
       adminUi.creditMemo?.gridColumns ||
+      adminUi.creditMemo?.viewButtons?.length ||
+      adminUi.rma?.viewButtons?.length ||
       adminUi.shipment?.gridColumns ||
+      adminUi.nativeUi?.replacedPages?.length ||
       adminUi.newsletter?.gridColumns,
   );
 }
 
 /**
  * Check whether the config declares at least one Admin UI component (menu, grid
- * columns, mass actions, view buttons, or custom ACL resources). A component-less `adminUi` block is
- * treated as absent — it registers nothing.
+ * columns, mass actions, view buttons, native UI replaced pages, or custom ACL
+ * resources). A component-less `adminUi` block is treated as absent — it
+ * registers nothing.
  */
 export function hasAdminUi<T extends AnyCommerceAppConfig>(
   config: T,

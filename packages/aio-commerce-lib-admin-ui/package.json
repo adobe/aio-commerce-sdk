@@ -33,10 +33,13 @@
   },
   "exports": {
     "./api": "./source/api/index.ts",
+    "./credit-memo-view-buttons": "./source/credit-memo-view-buttons/index.ts",
     "./grid-columns": "./source/grid-columns/index.ts",
+    "./invoice-view-buttons": "./source/invoice-view-buttons/index.ts",
     "./mass-actions": "./source/mass-actions/index.ts",
     "./menu": "./source/menu/index.ts",
     "./order-view-buttons": "./source/order-view-buttons/index.ts",
+    "./rma-view-buttons": "./source/rma-view-buttons/index.ts",
     "./web": {
       "browser": "./source/web/index.ts",
       "import": "./source/web/index.ts"
@@ -111,7 +114,7 @@
     }
   },
   "engines": {
-    "node": ">=22 <=24"
+    "node": ">=22 <=26"
   },
   "publishConfig": {
     "access": "public",
@@ -126,6 +129,16 @@
           "default": "./dist/cjs/api/index.cjs"
         }
       },
+      "./credit-memo-view-buttons": {
+        "import": {
+          "types": "./dist/es/credit-memo-view-buttons/index.d.mts",
+          "default": "./dist/es/credit-memo-view-buttons/index.mjs"
+        },
+        "require": {
+          "types": "./dist/cjs/credit-memo-view-buttons/index.d.cts",
+          "default": "./dist/cjs/credit-memo-view-buttons/index.cjs"
+        }
+      },
       "./grid-columns": {
         "import": {
           "types": "./dist/es/grid-columns/index.d.mts",
@@ -134,6 +147,16 @@
         "require": {
           "types": "./dist/cjs/grid-columns/index.d.cts",
           "default": "./dist/cjs/grid-columns/index.cjs"
+        }
+      },
+      "./invoice-view-buttons": {
+        "import": {
+          "types": "./dist/es/invoice-view-buttons/index.d.mts",
+          "default": "./dist/es/invoice-view-buttons/index.mjs"
+        },
+        "require": {
+          "types": "./dist/cjs/invoice-view-buttons/index.d.cts",
+          "default": "./dist/cjs/invoice-view-buttons/index.cjs"
         }
       },
       "./mass-actions": {
@@ -164,6 +187,16 @@
         "require": {
           "types": "./dist/cjs/order-view-buttons/index.d.cts",
           "default": "./dist/cjs/order-view-buttons/index.cjs"
+        }
+      },
+      "./rma-view-buttons": {
+        "import": {
+          "types": "./dist/es/rma-view-buttons/index.d.mts",
+          "default": "./dist/es/rma-view-buttons/index.mjs"
+        },
+        "require": {
+          "types": "./dist/cjs/rma-view-buttons/index.d.cts",
+          "default": "./dist/cjs/rma-view-buttons/index.cjs"
         }
       },
       "./web": {

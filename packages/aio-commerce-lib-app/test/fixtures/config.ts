@@ -488,6 +488,105 @@ export const configWithAdminUiInvoiceCreditMemoShipmentGrids = {
   },
 } satisfies CommerceAppConfigOutputModel;
 
+/** Config fixture with invoice view and worker buttons. */
+export const configWithInvoiceViewButtons = {
+  ...minimalValidConfig,
+  adminUi: {
+    invoice: {
+      viewButtons: [
+        {
+          id: "invoice-details",
+          label: "Invoice details",
+          path: "#/invoice-details",
+          sandboxPermissions: ["allow-modals"],
+          sortOrder: 100,
+          title: "Custom invoice details",
+          type: "view",
+        },
+        {
+          confirm: { message: "Send this invoice?" },
+          id: "send-invoice",
+          label: "Send invoice",
+          notifications: {
+            error: "Unable to send the invoice.",
+            success: "Invoice sent successfully.",
+          },
+          runtimeAction: "invoice/send",
+          sortOrder: 110,
+          timeout: 15,
+          type: "worker",
+        },
+      ],
+    },
+  },
+} satisfies CommerceAppConfigOutputModel;
+
+/** Config fixture with credit memo view and worker buttons. */
+export const configWithCreditMemoViewButtons = {
+  ...minimalValidConfig,
+  adminUi: {
+    creditMemo: {
+      viewButtons: [
+        {
+          id: "credit-memo-details",
+          label: "Credit memo details",
+          path: "#/creditmemo",
+          sandboxPermissions: ["allow-modals"],
+          sortOrder: 100,
+          title: "Custom credit memo details",
+          type: "view",
+        },
+        {
+          confirm: { message: "Refund this credit memo offline?" },
+          id: "refund-offline",
+          label: "Refund Offline",
+          notifications: {
+            error: "Unable to refund the credit memo.",
+            success: "Credit memo refunded successfully.",
+          },
+          runtimeAction: "creditmemo/refund-offline",
+          sortOrder: 110,
+          timeout: 15,
+          type: "worker",
+        },
+      ],
+    },
+  },
+} satisfies CommerceAppConfigOutputModel;
+
+/** Config fixture with return (RMA) view and worker buttons. */
+export const configWithRmaViewButtons = {
+  ...minimalValidConfig,
+  adminUi: {
+    rma: {
+      viewButtons: [
+        {
+          id: "return-details",
+          label: "Return details",
+          path: "#/return",
+          sandboxPermissions: ["allow-modals"],
+          sortOrder: 100,
+          title: "Custom return details",
+          type: "view",
+        },
+        {
+          confirm: { message: "Run the custom return flow?" },
+          id: "custom-return-flow",
+          label: "Custom Return Flow",
+          notifications: {
+            error: "Unable to run the custom return flow.",
+            success: "Custom return flow completed.",
+          },
+          runtimeAction: "rma/custom-flow",
+          sortOrder: 110,
+          timeout: 15,
+          type: "worker",
+        },
+      ],
+    },
+  },
+} satisfies CommerceAppConfigOutputModel;
+
 /** Config fixture with only newsletter adminUi grid columns configured. */
 export const configWithAdminUiNewsletterGrid = {
   adminUi: {
