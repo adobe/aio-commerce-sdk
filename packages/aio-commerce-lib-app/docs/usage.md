@@ -221,6 +221,12 @@ businessConfig: {
 
 For detailed information about available field types and their usage, see the [`@adobe/aio-commerce-lib-config` documentation](../../aio-commerce-lib-config/docs/usage.md#field-types).
 
+Configuration PATCH requests audit changed business fields with sensitive values redacted, without
+changing response fields. Audit queries are read-only library APIs, not generated HTTP routes.
+The generated action does not supply actor identity; application-owned authenticated actions can
+pass `metadata.actor` to `setConfiguration`. Audit failures can occur after live values are saved.
+See [Business configuration audit](../../aio-commerce-lib-config/docs/audit.md).
+
 #### Eventing Configuration
 
 The `eventing` field allows you to configure event sources for your application. There are two types of event sources: **commerce** (for Adobe Commerce events) and **external** (for third-party events).

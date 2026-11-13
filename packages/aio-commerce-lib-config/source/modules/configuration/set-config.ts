@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Adobe. All rights reserved.
+ * Copyright 2026 Adobe. All rights reserved.
  * This file is licensed to you under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License. You may obtain a copy
  * of the License at http://www.apache.org/licenses/LICENSE-2.0
@@ -15,6 +15,8 @@ import {
   mergeScopes,
   sanitizeRequestEntries,
 } from "#config-utils";
+import { prepareAuditEntry } from "#modules/audit/audit-logger";
+import { saveAuditEntry } from "#modules/audit/audit-repository";
 import { requireGlobalSchema } from "#modules/schema/config-schema-repository";
 import { getPasswordFields } from "#modules/schema/utils";
 import * as scopeTreeRepository from "#modules/scope-tree/scope-tree-repository";
@@ -86,11 +88,37 @@ export async function setConfiguration(
     scope: { code: scopeCode, id: scopeId, level: scopeLevel },
   };
 
+  const knownFields = new Set(schema.map((field) => field.name));
+  const redactedFields = new Set([
+    ...passwordFields,
+    ...[...existingEntries, ...mergedScopeConfig]
+      .filter((entry) => !knownFields.has(entry.name))
+      .map((entry) => entry.name),
+  ]);
+  const audit = prepareAuditEntry(
+    payload.scope,
+    existingEntries,
+    mergedScopeConfig,
+    redactedFields,
+    request.metadata?.actor,
+  );
+
   await configRepository.persistConfig(
     scopeCode,
     payload,
     context.cacheTimeout,
   );
+
+  if (audit) {
+    try {
+      await saveAuditEntry(context.namespace, audit);
+    } catch (error) {
+      throw new Error(
+        "CONFIGURATION_SAVED_WITHOUT_AUDIT: live configuration was saved, but its audit record could not be stored",
+        { cause: error },
+      );
+    }
+  }
 
   return {
     config: mergedScopeConfig.map(({ name, value }) => ({ name, value })),

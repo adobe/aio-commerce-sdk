@@ -189,6 +189,35 @@ inputs:
 
 With the option and the input in place, password values are returned as plaintext.
 
+## Business configuration audit
+
+`setConfiguration` records changed business configuration fields in Adobe Files. Use `getAuditLog`
+to inspect non-sensitive before/after values and the supplied actor. No snapshots, rollback,
+archives, integrity chains, or additional HTTP routes/UI are provided.
+
+```typescript
+import { getAuditLog } from "@adobe/aio-commerce-lib-config";
+
+const audit = await getAuditLog({
+  scopeCode: "global",
+  userId: "operator-123",
+});
+```
+
+Queries use scope **codes**, not Commerce numeric IDs. Initialize with the current schema on
+each invocation. Password fields, sensitive names, and unknown-schema values are redacted.
+Declare all confidential fields as `password`; arbitrary sensitive content in text fields cannot
+be identified automatically. Pass only a stable `metadata.actor.userId` and optional `source`
+derived from authenticated context, never tokens or credentials. The generated PATCH action
+does not add actor identity automatically.
+
+Audit records are not automatically pruned. Queries scan records and writes to each scope must
+be serialized for accurate before/after values. `CONFIGURATION_SAVED_WITHOUT_AUDIT` means live
+values were saved but audit persistence failed; inspect them rather than blindly retrying.
+
+See the [business configuration audit guide](https://github.com/adobe/aio-commerce-sdk/blob/main/packages/aio-commerce-lib-config/docs/audit.md)
+before exposing these APIs through custom authenticated runtime actions.
+
 ## Common Issues
 
 - **`list/single` default missing**: Single-select list fields require a `default` — it can't be omitted. It must exactly match one of the option `value` strings.
