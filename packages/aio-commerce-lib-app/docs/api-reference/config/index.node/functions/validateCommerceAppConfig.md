@@ -24,6 +24,34 @@ function validateCommerceAppConfig(config: unknown): {
            label: string;
            runtimeAction: string;
         };
+        viewButtons?: (
+           | {
+           aclProtected?: ... | ... | ...;
+           confirm?: ... | ...;
+           description?: ... | ...;
+           id: string;
+           label: string;
+           level?: ... | ... | ... | ...;
+           notifications?: ... | ...;
+           runtimeAction: string;
+           sortOrder?: ... | ...;
+           timeout?: ... | ...;
+           type: "worker";
+         }
+           | {
+           aclProtected?: ... | ... | ...;
+           confirm?: ... | ...;
+           description?: ... | ...;
+           id: string;
+           label: string;
+           level?: ... | ... | ... | ...;
+           notifications?: ... | ...;
+           path: string;
+           sandboxPermissions?: ... | ...;
+           sortOrder?: ... | ...;
+           title?: ... | ...;
+           type: "view";
+        })[];
      };
      customer?: {
         gridColumns?: {
@@ -79,6 +107,34 @@ function validateCommerceAppConfig(config: unknown): {
            label: string;
            runtimeAction: string;
         };
+        viewButtons?: (
+           | {
+           aclProtected?: ... | ... | ...;
+           confirm?: ... | ...;
+           description?: ... | ...;
+           id: string;
+           label: string;
+           level?: ... | ... | ... | ...;
+           notifications?: ... | ...;
+           runtimeAction: string;
+           sortOrder?: ... | ...;
+           timeout?: ... | ...;
+           type: "worker";
+         }
+           | {
+           aclProtected?: ... | ... | ...;
+           confirm?: ... | ...;
+           description?: ... | ...;
+           id: string;
+           label: string;
+           level?: ... | ... | ... | ...;
+           notifications?: ... | ...;
+           path: string;
+           sandboxPermissions?: ... | ...;
+           sortOrder?: ... | ...;
+           title?: ... | ...;
+           type: "view";
+        })[];
      };
      menu?: {
         aclProtected?: boolean;
@@ -95,6 +151,14 @@ function validateCommerceAppConfig(config: unknown): {
            | "stores"
            | "system";
         sandboxPermissions?: ("allow-downloads" | "allow-modals" | "allow-popups")[];
+     };
+     nativeUi?: {
+        replacedPages: {
+           path: string;
+           sandboxPermissions?: (... | ... | ...)[];
+           target: "order.create" | "return.create";
+           title: string;
+        }[];
      };
      newsletter?: {
         gridColumns?: {
@@ -217,6 +281,36 @@ function validateCommerceAppConfig(config: unknown): {
            timeout?: ... | ...;
            title?: ... | ...;
            type: "worker";
+        })[];
+     };
+     rma?: {
+        viewButtons?: (
+           | {
+           aclProtected?: ... | ... | ...;
+           confirm?: ... | ...;
+           description?: ... | ...;
+           id: string;
+           label: string;
+           level?: ... | ... | ... | ...;
+           notifications?: ... | ...;
+           runtimeAction: string;
+           sortOrder?: ... | ...;
+           timeout?: ... | ...;
+           type: "worker";
+         }
+           | {
+           aclProtected?: ... | ... | ...;
+           confirm?: ... | ...;
+           description?: ... | ...;
+           id: string;
+           label: string;
+           level?: ... | ... | ... | ...;
+           notifications?: ... | ...;
+           path: string;
+           sandboxPermissions?: ... | ...;
+           sortOrder?: ... | ...;
+           title?: ... | ...;
+           type: "view";
         })[];
      };
      shipment?: {
@@ -464,7 +558,7 @@ function validateCommerceAppConfig(config: unknown): {
 };
 ```
 
-Defined in: [aio-commerce-lib-app/source/config/lib/validate.ts:57](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-app/source/config/lib/validate.ts#L57)
+Defined in: [aio-commerce-lib-app/source/config/lib/validate.ts:57](https://github.com/adobe/aio-commerce-sdk/blob/6e9704065e17b124069637c99898c47981974e20/packages/aio-commerce-lib-app/source/config/lib/validate.ts#L57)
 
 Validates a complete commerce app configuration object against the schema.
 
@@ -499,6 +593,34 @@ Validates a complete commerce app configuration object against the schema.
 `label`: `string`;
 `runtimeAction`: `string`;
 \};
+`viewButtons?`: (
+\| \{
+`aclProtected?`: ... \| ... \| ...;
+`confirm?`: ... \| ...;
+`description?`: ... \| ...;
+`id`: `string`;
+`label`: `string`;
+`level?`: ... \| ... \| ... \| ...;
+`notifications?`: ... \| ...;
+`runtimeAction`: `string`;
+`sortOrder?`: ... \| ...;
+`timeout?`: ... \| ...;
+`type`: `"worker"`;
+\}
+\| \{
+`aclProtected?`: ... \| ... \| ...;
+`confirm?`: ... \| ...;
+`description?`: ... \| ...;
+`id`: `string`;
+`label`: `string`;
+`level?`: ... \| ... \| ... \| ...;
+`notifications?`: ... \| ...;
+`path`: `string`;
+`sandboxPermissions?`: ... \| ...;
+`sortOrder?`: ... \| ...;
+`title?`: ... \| ...;
+`type`: `"view"`;
+\})[];
 \};
 `customer?`: \{
 `gridColumns?`: \{
@@ -554,6 +676,34 @@ Validates a complete commerce app configuration object against the schema.
 `label`: `string`;
 `runtimeAction`: `string`;
 \};
+`viewButtons?`: (
+\| \{
+`aclProtected?`: ... \| ... \| ...;
+`confirm?`: ... \| ...;
+`description?`: ... \| ...;
+`id`: `string`;
+`label`: `string`;
+`level?`: ... \| ... \| ... \| ...;
+`notifications?`: ... \| ...;
+`runtimeAction`: `string`;
+`sortOrder?`: ... \| ...;
+`timeout?`: ... \| ...;
+`type`: `"worker"`;
+\}
+\| \{
+`aclProtected?`: ... \| ... \| ...;
+`confirm?`: ... \| ...;
+`description?`: ... \| ...;
+`id`: `string`;
+`label`: `string`;
+`level?`: ... \| ... \| ... \| ...;
+`notifications?`: ... \| ...;
+`path`: `string`;
+`sandboxPermissions?`: ... \| ...;
+`sortOrder?`: ... \| ...;
+`title?`: ... \| ...;
+`type`: `"view"`;
+\})[];
 \};
 `menu?`: \{
 `aclProtected?`: `boolean`;
@@ -570,6 +720,14 @@ Validates a complete commerce app configuration object against the schema.
 \| `"stores"`
 \| `"system"`;
 `sandboxPermissions?`: (`"allow-downloads"` \| `"allow-modals"` \| `"allow-popups"`)[];
+\};
+`nativeUi?`: \{
+`replacedPages`: \{
+`path`: `string`;
+`sandboxPermissions?`: (... \| ... \| ...)[];
+`target`: `"order.create"` \| `"return.create"`;
+`title`: `string`;
+\}[];
 \};
 `newsletter?`: \{
 `gridColumns?`: \{
@@ -692,6 +850,36 @@ Validates a complete commerce app configuration object against the schema.
 `timeout?`: ... \| ...;
 `title?`: ... \| ...;
 `type`: `"worker"`;
+\})[];
+\};
+`rma?`: \{
+`viewButtons?`: (
+\| \{
+`aclProtected?`: ... \| ... \| ...;
+`confirm?`: ... \| ...;
+`description?`: ... \| ...;
+`id`: `string`;
+`label`: `string`;
+`level?`: ... \| ... \| ... \| ...;
+`notifications?`: ... \| ...;
+`runtimeAction`: `string`;
+`sortOrder?`: ... \| ...;
+`timeout?`: ... \| ...;
+`type`: `"worker"`;
+\}
+\| \{
+`aclProtected?`: ... \| ... \| ...;
+`confirm?`: ... \| ...;
+`description?`: ... \| ...;
+`id`: `string`;
+`label`: `string`;
+`level?`: ... \| ... \| ... \| ...;
+`notifications?`: ... \| ...;
+`path`: `string`;
+`sandboxPermissions?`: ... \| ...;
+`sortOrder?`: ... \| ...;
+`title?`: ... \| ...;
+`type`: `"view"`;
 \})[];
 \};
 `shipment?`: \{

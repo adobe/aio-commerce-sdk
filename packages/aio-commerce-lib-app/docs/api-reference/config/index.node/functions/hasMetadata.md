@@ -6,7 +6,7 @@ function hasMetadata<T extends AnyCommerceAppConfig>(
 ): config is T & { metadata: NonNullable<T["metadata"]> };
 ```
 
-Defined in: [aio-commerce-lib-app/source/config/schema/metadata.ts:86](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-app/source/config/schema/metadata.ts#L86)
+Defined in: [aio-commerce-lib-app/source/config/schema/metadata.ts:86](https://github.com/adobe/aio-commerce-sdk/blob/6e9704065e17b124069637c99898c47981974e20/packages/aio-commerce-lib-app/source/config/schema/metadata.ts#L86)
 
 Check if config has metadata.
 

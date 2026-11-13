@@ -27,6 +27,7 @@ const CommerceAppConfigSchemas: {
            label: SchemaWithPipe<readonly [..., ...]>;
            runtimeAction: SchemaWithPipe<readonly [..., ...]>;
         }, undefined>, undefined>;
+        viewButtons: OptionalSchema<SchemaWithPipe<readonly [ArraySchema<VariantSchema<..., ..., ...>, undefined>, CheckAction<...[], "Credit memo view button ids must be unique after Commerce id sanitization.">]>, undefined>;
      }, undefined>, undefined>;
      customer: OptionalSchema<ObjectSchema<{
         gridColumns: OptionalSchema<ObjectSchema<{
@@ -44,6 +45,7 @@ const CommerceAppConfigSchemas: {
            label: SchemaWithPipe<readonly [..., ...]>;
            runtimeAction: SchemaWithPipe<readonly [..., ...]>;
         }, undefined>, undefined>;
+        viewButtons: OptionalSchema<SchemaWithPipe<readonly [ArraySchema<VariantSchema<..., ..., ...>, undefined>, CheckAction<...[], "Invoice view button ids must be unique after Commerce id sanitization.">]>, undefined>;
      }, undefined>, undefined>;
      menu: OptionalSchema<ObjectSchema<{
         aclProtected: OptionalSchema<BooleanSchema<undefined>, undefined>;
@@ -53,6 +55,19 @@ const CommerceAppConfigSchemas: {
         pageTitle: OptionalSchema<SchemaWithPipe<readonly [StringSchema<`Expected a string value for '${(...)}'`>, NonEmptyAction<string, `The value of "${(...)}" must not be empty`>]>, undefined>;
         parentMenu: OptionalSchema<PicklistSchema<readonly ["sales", "catalog", "customers", "marketing", "content", "reports", "stores", "system"], "parentMenu must be a known Commerce Admin menu ID">, undefined>;
         sandboxPermissions: OptionalSchema<SchemaWithPipe<readonly [ArraySchema<PicklistSchema<..., ...>, undefined>, MinLengthAction<...[], 1, "sandboxPermissions must contain at least one permission when it's defined">, CheckAction<...[], "Duplicate permissions are not allowed in sandboxPermissions">]>, undefined>;
+     }, undefined>, undefined>;
+     nativeUi: OptionalSchema<ObjectSchema<{
+        replacedPages: SchemaWithPipe<readonly [ArraySchema<StrictObjectSchema<{
+           path: ...;
+           sandboxPermissions: ...;
+           target: ...;
+           title: ...;
+         }, undefined>, undefined>, CheckAction<{
+           path: ...;
+           sandboxPermissions?: ...;
+           target: ...;
+           title: ...;
+        }[], "Native UI replaced page targets must be unique.">]>;
      }, undefined>, undefined>;
      newsletter: OptionalSchema<ObjectSchema<{
         gridColumns: OptionalSchema<ObjectSchema<{
@@ -80,6 +95,9 @@ const CommerceAppConfigSchemas: {
            runtimeAction: SchemaWithPipe<readonly [..., ...]>;
         }, undefined>, undefined>;
         massActions: OptionalSchema<SchemaWithPipe<readonly [ArraySchema<VariantSchema<..., ..., ...>, undefined>, CheckAction<...[], "Mass action ids must be unique after Commerce id sanitization.">]>, undefined>;
+     }, undefined>, undefined>;
+     rma: OptionalSchema<ObjectSchema<{
+        viewButtons: OptionalSchema<SchemaWithPipe<readonly [ArraySchema<VariantSchema<..., ..., ...>, undefined>, CheckAction<...[], "Return view button ids must be unique after Commerce id sanitization.">]>, undefined>;
      }, undefined>, undefined>;
      shipment: OptionalSchema<ObjectSchema<{
         gridColumns: OptionalSchema<ObjectSchema<{
@@ -619,7 +637,7 @@ const CommerceAppConfigSchemas: {
 };
 ```
 
-Defined in: [aio-commerce-lib-app/source/config/schema/domains.ts:37](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-app/source/config/schema/domains.ts#L37)
+Defined in: [aio-commerce-lib-app/source/config/schema/domains.ts:37](https://github.com/adobe/aio-commerce-sdk/blob/6e9704065e17b124069637c99898c47981974e20/packages/aio-commerce-lib-app/source/config/schema/domains.ts#L37)
 
 The individual validatable domains of the app config.
 
@@ -653,6 +671,7 @@ readonly adminUi: ObjectSchema<{
         label: SchemaWithPipe<readonly [..., ...]>;
         runtimeAction: SchemaWithPipe<readonly [..., ...]>;
      }, undefined>, undefined>;
+     viewButtons: OptionalSchema<SchemaWithPipe<readonly [ArraySchema<VariantSchema<..., ..., ...>, undefined>, CheckAction<...[], "Credit memo view button ids must be unique after Commerce id sanitization.">]>, undefined>;
   }, undefined>, undefined>;
   customer: OptionalSchema<ObjectSchema<{
      gridColumns: OptionalSchema<ObjectSchema<{
@@ -670,6 +689,7 @@ readonly adminUi: ObjectSchema<{
         label: SchemaWithPipe<readonly [..., ...]>;
         runtimeAction: SchemaWithPipe<readonly [..., ...]>;
      }, undefined>, undefined>;
+     viewButtons: OptionalSchema<SchemaWithPipe<readonly [ArraySchema<VariantSchema<..., ..., ...>, undefined>, CheckAction<...[], "Invoice view button ids must be unique after Commerce id sanitization.">]>, undefined>;
   }, undefined>, undefined>;
   menu: OptionalSchema<ObjectSchema<{
      aclProtected: OptionalSchema<BooleanSchema<undefined>, undefined>;
@@ -679,6 +699,19 @@ readonly adminUi: ObjectSchema<{
      pageTitle: OptionalSchema<SchemaWithPipe<readonly [StringSchema<`Expected a string value for '${(...)}'`>, NonEmptyAction<string, `The value of "${(...)}" must not be empty`>]>, undefined>;
      parentMenu: OptionalSchema<PicklistSchema<readonly ["sales", "catalog", "customers", "marketing", "content", "reports", "stores", "system"], "parentMenu must be a known Commerce Admin menu ID">, undefined>;
      sandboxPermissions: OptionalSchema<SchemaWithPipe<readonly [ArraySchema<PicklistSchema<..., ...>, undefined>, MinLengthAction<...[], 1, "sandboxPermissions must contain at least one permission when it's defined">, CheckAction<...[], "Duplicate permissions are not allowed in sandboxPermissions">]>, undefined>;
+  }, undefined>, undefined>;
+  nativeUi: OptionalSchema<ObjectSchema<{
+     replacedPages: SchemaWithPipe<readonly [ArraySchema<StrictObjectSchema<{
+        path: ...;
+        sandboxPermissions: ...;
+        target: ...;
+        title: ...;
+      }, undefined>, undefined>, CheckAction<{
+        path: ...;
+        sandboxPermissions?: ...;
+        target: ...;
+        title: ...;
+     }[], "Native UI replaced page targets must be unique.">]>;
   }, undefined>, undefined>;
   newsletter: OptionalSchema<ObjectSchema<{
      gridColumns: OptionalSchema<ObjectSchema<{
@@ -706,6 +739,9 @@ readonly adminUi: ObjectSchema<{
         runtimeAction: SchemaWithPipe<readonly [..., ...]>;
      }, undefined>, undefined>;
      massActions: OptionalSchema<SchemaWithPipe<readonly [ArraySchema<VariantSchema<..., ..., ...>, undefined>, CheckAction<...[], "Mass action ids must be unique after Commerce id sanitization.">]>, undefined>;
+  }, undefined>, undefined>;
+  rma: OptionalSchema<ObjectSchema<{
+     viewButtons: OptionalSchema<SchemaWithPipe<readonly [ArraySchema<VariantSchema<..., ..., ...>, undefined>, CheckAction<...[], "Return view button ids must be unique after Commerce id sanitization.">]>, undefined>;
   }, undefined>, undefined>;
   shipment: OptionalSchema<ObjectSchema<{
      gridColumns: OptionalSchema<ObjectSchema<{

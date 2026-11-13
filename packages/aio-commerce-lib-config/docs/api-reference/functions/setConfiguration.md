@@ -8,7 +8,7 @@ function setConfiguration(
 ): Promise<SetConfigurationResponse>;
 ```
 
-Defined in: [config-manager.ts:533](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-config/source/config-manager.ts#L533)
+Defined in: [config-manager.ts:533](https://github.com/adobe/aio-commerce-sdk/blob/6e9704065e17b124069637c99898c47981974e20/packages/aio-commerce-lib-config/source/config-manager.ts#L533)
 
 Sets configuration values for a scope.
 

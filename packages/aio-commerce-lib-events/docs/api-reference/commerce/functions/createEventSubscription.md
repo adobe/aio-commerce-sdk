@@ -26,7 +26,7 @@ function createEventSubscription(
 ): Promise<void>;
 ```
 
-Defined in: [commerce/api/event-subscriptions/endpoints.ts:58](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-events/source/commerce/api/event-subscriptions/endpoints.ts#L58)
+Defined in: [commerce/api/event-subscriptions/endpoints.ts:58](https://github.com/adobe/aio-commerce-sdk/blob/6e9704065e17b124069637c99898c47981974e20/packages/aio-commerce-lib-events/source/commerce/api/event-subscriptions/endpoints.ts#L58)
 
 Creates an event subscription in the Commerce instance bound to the given [AdobeCommerceHttpClient](https://github.com/adobe/aio-commerce-sdk/blob/main/packages/aio-commerce-lib-api/docs/api-reference/classes/AdobeCommerceHttpClient.md).
 

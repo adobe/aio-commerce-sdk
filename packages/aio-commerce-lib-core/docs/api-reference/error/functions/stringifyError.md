@@ -4,7 +4,7 @@
 function stringifyError(error: unknown): string;
 ```
 
-Defined in: [error/stringify-error.ts:30](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-core/source/error/stringify-error.ts#L30)
+Defined in: [error/stringify-error.ts:30](https://github.com/adobe/aio-commerce-sdk/blob/6e9704065e17b124069637c99898c47981974e20/packages/aio-commerce-lib-core/source/error/stringify-error.ts#L30)
 
 Converts any thrown value to a human-friendly string.
 

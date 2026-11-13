@@ -1,6 +1,6 @@
 {
   "name": "@aio-commerce-sdk/common-utils",
-  "version": "0.2.7",
+  "version": "0.3.0",
   "private": true,
   "description": "Description for @aio-commerce-sdk/common-utils",
   "license": "Apache-2.0",

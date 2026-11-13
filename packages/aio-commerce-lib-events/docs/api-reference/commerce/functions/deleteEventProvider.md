@@ -10,7 +10,7 @@ function deleteEventProvider(
 ): Promise<void>;
 ```
 
-Defined in: [commerce/api/event-providers/endpoints.ts:148](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-events/source/commerce/api/event-providers/endpoints.ts#L148)
+Defined in: [commerce/api/event-providers/endpoints.ts:148](https://github.com/adobe/aio-commerce-sdk/blob/6e9704065e17b124069637c99898c47981974e20/packages/aio-commerce-lib-events/source/commerce/api/event-providers/endpoints.ts#L148)
 
 Deletes the event provider with the given ID from the Commerce instance.
 All event subscriptions that use this provider must be deleted first.

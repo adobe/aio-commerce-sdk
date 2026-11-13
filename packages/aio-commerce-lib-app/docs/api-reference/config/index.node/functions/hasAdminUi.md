@@ -6,11 +6,12 @@ function hasAdminUi<T extends AnyCommerceAppConfig>(
 ): config is AdminUiConfig<T>;
 ```
 
-Defined in: [aio-commerce-lib-app/source/config/schema/admin-ui.ts:479](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-app/source/config/schema/admin-ui.ts#L479)
+Defined in: [aio-commerce-lib-app/source/config/schema/admin-ui.ts:594](https://github.com/adobe/aio-commerce-sdk/blob/6e9704065e17b124069637c99898c47981974e20/packages/aio-commerce-lib-app/source/config/schema/admin-ui.ts#L594)
 
 Check whether the config declares at least one Admin UI component (menu, grid
-columns, mass actions, view buttons, or custom ACL resources). A component-less `adminUi` block is
-treated as absent — it registers nothing.
+columns, mass actions, view buttons, native UI replaced pages, or custom ACL
+resources). A component-less `adminUi` block is treated as absent — it
+registers nothing.
 
 ## Type Parameters
 

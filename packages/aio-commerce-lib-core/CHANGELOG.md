@@ -1,5 +1,11 @@
 # @adobe/aio-commerce-lib-core
 
+## 1.4.0
+
+### Minor Changes
+
+- [#770](https://github.com/adobe/aio-commerce-sdk/pull/770) [`9b6e61c`](https://github.com/adobe/aio-commerce-sdk/commit/9b6e61ceed9c45ae415c37b401272f09d4c75759) Thanks [@obarcelonap](https://github.com/obarcelonap)! - Add support for Node.js 26.
+
 ## 1.3.0
 
 ### Minor Changes

@@ -9,7 +9,7 @@ type KeyValueStore<T> = {
 };
 ```
 
-Defined in: [storage/types.ts:17](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages-private/common-utils/source/storage/types.ts#L17)
+Defined in: [storage/types.ts:17](https://github.com/adobe/aio-commerce-sdk/blob/6e9704065e17b124069637c99898c47981974e20/packages-private/common-utils/source/storage/types.ts#L17)
 
 Generic key-value store interface.
 
@@ -27,7 +27,7 @@ Generic key-value store interface.
 delete: (key: string) => Promise<boolean>;
 ```
 
-Defined in: [storage/types.ts:24](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages-private/common-utils/source/storage/types.ts#L24)
+Defined in: [storage/types.ts:24](https://github.com/adobe/aio-commerce-sdk/blob/6e9704065e17b124069637c99898c47981974e20/packages-private/common-utils/source/storage/types.ts#L24)
 
 Deletes data by key.
 
@@ -51,7 +51,7 @@ True if the key existed and was deleted.
 get: (key: string) => Promise<T | null>;
 ```
 
-Defined in: [storage/types.ts:31](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages-private/common-utils/source/storage/types.ts#L31)
+Defined in: [storage/types.ts:31](https://github.com/adobe/aio-commerce-sdk/blob/6e9704065e17b124069637c99898c47981974e20/packages-private/common-utils/source/storage/types.ts#L31)
 
 Retrieves data by key.
 
@@ -75,7 +75,7 @@ The data or null if not found.
 has: (key: string) => Promise<boolean>;
 ```
 
-Defined in: [storage/types.ts:39](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages-private/common-utils/source/storage/types.ts#L39)
+Defined in: [storage/types.ts:39](https://github.com/adobe/aio-commerce-sdk/blob/6e9704065e17b124069637c99898c47981974e20/packages-private/common-utils/source/storage/types.ts#L39)
 
 Checks whether a value is stored under the key, even one `get` cannot read.
 
@@ -99,7 +99,7 @@ True if a value is stored under the key.
 put: (key: string, data: T) => Promise<void>;
 ```
 
-Defined in: [storage/types.ts:47](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages-private/common-utils/source/storage/types.ts#L47)
+Defined in: [storage/types.ts:47](https://github.com/adobe/aio-commerce-sdk/blob/6e9704065e17b124069637c99898c47981974e20/packages-private/common-utils/source/storage/types.ts#L47)
 
 Saves data with the given key.
 

@@ -6,7 +6,7 @@ type BaseContext = {
 };
 ```
 
-Defined in: [actions/http/types.ts:43](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages-private/common-utils/source/actions/http/types.ts#L43)
+Defined in: [actions/http/types.ts:43](https://github.com/adobe/aio-commerce-sdk/blob/6e9704065e17b124069637c99898c47981974e20/packages-private/common-utils/source/actions/http/types.ts#L43)
 
 Internal context with raw action params, always available.
 
@@ -18,6 +18,6 @@ Internal context with raw action params, always available.
 rawParams: RuntimeActionParams;
 ```
 
-Defined in: [actions/http/types.ts:45](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages-private/common-utils/source/actions/http/types.ts#L45)
+Defined in: [actions/http/types.ts:45](https://github.com/adobe/aio-commerce-sdk/blob/6e9704065e17b124069637c99898c47981974e20/packages-private/common-utils/source/actions/http/types.ts#L45)
 
 Raw OpenWhisk/Runtime action parameters
