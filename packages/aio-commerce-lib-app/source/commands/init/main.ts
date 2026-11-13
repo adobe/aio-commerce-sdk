@@ -21,9 +21,7 @@ import {
 import { runInstall } from "#commands/utils";
 
 import {
-  ensureAppConfig,
   ensureCommerceAppConfig,
-  ensureInstallYaml,
   ensurePackageJson,
   installDependencies,
   runGeneration,
@@ -101,8 +99,6 @@ export async function run(flags?: InitFlags, extraOptions?: InitExtraOptions) {
   }
 
   await runGeneration(config, execCommand, projectRoot);
-  await ensureAppConfig(domains, config, projectRoot);
-  await ensureInstallYaml(domains, config, projectRoot);
 
   // Register the postinstall hook last so future installs run after init has
   // created the files the hook depends on.

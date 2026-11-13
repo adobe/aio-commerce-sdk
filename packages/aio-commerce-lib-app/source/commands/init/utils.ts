@@ -10,30 +10,15 @@
  * governing permissions and limitations under the License.
  */
 
-import { writeFile } from "node:fs/promises";
-import { join, relative } from "node:path";
-
 import { inspect } from "@aio-commerce-sdk/common-utils/logging";
 import { isESM } from "@aio-commerce-sdk/scripting-utils/project";
-import {
-  getOrCreateMap,
-  getOrCreateSeq,
-  readYamlFile,
-} from "@aio-commerce-sdk/scripting-utils/yaml/helpers";
 import consola from "consola";
 import { colorize } from "consola/utils";
-import { isMap } from "yaml";
 
-import {
-  APP_CONFIG_FILE,
-  COMMERCE_APP_CONFIG_FILE,
-  INSTALL_YAML_FILE,
-} from "#commands/constants";
-import { getExtConfigPath } from "#commands/utils";
+import { COMMERCE_APP_CONFIG_FILE } from "#commands/constants";
 
 import { DOMAIN_DEFAULTS } from "./constants";
 
-import type { Document, YAMLSeq } from "yaml";
 import type { CommerceAppConfig, CommerceAppConfigDomain } from "#config/index";
 import type { InitFlags } from "./main";
 
@@ -179,115 +164,4 @@ export async function getDefaultCommerceAppConfig(
     "",
     `${exportKeyword} defineConfig(${configContent})`,
   ].join("\n");
-}
-
-/**
- * Add an extension point to the app config file.
- * @param extensionPointId - The id of the extension point.
- * @param rootDirectory - The root directory of the project.
- * @param commentBefore - The comment to add before the extension point include pair.
- */
-export async function addExtensionPointToAppConfig(
-  extensionPointId: string,
-  rootDirectory: string,
-  commentBefore: string,
-) {
-  const appConfigPath = join(rootDirectory, APP_CONFIG_FILE);
-
-  let doc: Document;
-  const includePath = relative(
-    rootDirectory,
-    join(rootDirectory, getExtConfigPath(extensionPointId)),
-  );
-
-  try {
-    doc = await readYamlFile(appConfigPath);
-  } catch (error) {
-    const fallbackContent = `extensions:\n  ${extensionPointId}:\n    $include: "${includePath}"`;
-    throw new Error(
-      `Failed to parse ${APP_CONFIG_FILE}. \nPlease add manually: \n\n${fallbackContent}`,
-      {
-        cause: error,
-      },
-    );
-  }
-
-  if (doc.getIn(["extensions", extensionPointId, "$include"]) === includePath) {
-    consola.success(
-      `Extension "${extensionPointId}" already configured in ${APP_CONFIG_FILE}`,
-    );
-
-    return;
-  }
-
-  consola.info(
-    `Adding extension "${extensionPointId}" to ${APP_CONFIG_FILE}...`,
-  );
-
-  const extensions = getOrCreateMap(doc, ["extensions"]);
-
-  const extension = getOrCreateMap(doc, ["extensions", extensionPointId], {
-    onBeforeCreate: (pair) => {
-      pair.key.spaceBefore = extensions.items.length > 0;
-      pair.key.commentBefore = commentBefore;
-    },
-  });
-
-  extension.set("$include", includePath);
-  await writeFile(appConfigPath, doc.toString(), "utf-8");
-}
-
-/**
- * Add an extension point to the install.yaml file.
- * @param extensionPointId - The id of the extension point.
- * @param rootDirectory - The root directory of the project.
- * @param commentBefore - The comment to add before the extension point include pair.
- */
-export async function addExtensionPointToInstallYaml(
-  extensionPointId: string,
-  rootDirectory: string,
-  commentBefore: string,
-) {
-  const installYamlPath = join(rootDirectory, INSTALL_YAML_FILE);
-
-  let doc: Document;
-  let extensions: YAMLSeq;
-
-  try {
-    doc = await readYamlFile(installYamlPath);
-    extensions = getOrCreateSeq(doc, ["extensions"]);
-  } catch (error) {
-    const fallbackContent = `\nextensions:\n  - extensionPointId: ${extensionPointId}`;
-    throw new Error(
-      `Failed to parse ${INSTALL_YAML_FILE}. \nPlease add manually: \n\n${fallbackContent}`,
-      {
-        cause: error,
-      },
-    );
-  }
-
-  // Check if the extension is already configured
-  if (
-    extensions.items.some(
-      (item) =>
-        isMap(item) && item.get("extensionPointId") === extensionPointId,
-    )
-  ) {
-    consola.success(
-      `Extension "${extensionPointId}" already configured in ${INSTALL_YAML_FILE}`,
-    );
-
-    return;
-  }
-
-  consola.info(
-    `Adding extension "${extensionPointId}" to ${INSTALL_YAML_FILE}...`,
-  );
-
-  const extension = doc.createPair("extensionPointId", extensionPointId);
-  extension.key.spaceBefore = extensions.items.length > 0;
-  extension.key.commentBefore = commentBefore;
-  extensions.items.push(extension);
-
-  await writeFile(installYamlPath, doc.toString(), "utf-8");
 }
