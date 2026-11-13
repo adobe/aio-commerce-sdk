@@ -20,6 +20,8 @@ import {
   configWithAdminUiInvoiceCreditMemoShipmentGrids,
   configWithAdminUiSingleGrid,
   configWithCreditMemoViewButtons,
+  configWithCustomAttributeGridColumns,
+  configWithCustomAttributeGridColumnsMetadata,
   configWithInvoiceViewButtons,
   configWithRmaViewButtons,
 } from "#test/fixtures/config";
@@ -75,6 +77,108 @@ describe("planAdminUi", () => {
     expect(plan.operations).toHaveLength(1);
     expect(plan.operations[0]?.kind).toBe("add");
     expect(plan.operations[0]?.id).toBe("add:order.grid-columns");
+  });
+
+  test("registers custom-attribute columns as an independent component", async () => {
+    const { plan } = await planned(
+      null,
+      configWithCustomAttributeGridColumnsMetadata,
+    );
+    expect(plan.extensionAction).toBe("register");
+    expect(plan.operations).toMatchObject([
+      {
+        after: {
+          component: {
+            entity: "creditMemo",
+            kind: "customAttributeGridColumns",
+          },
+        },
+        id: "add:creditMemo.custom-attribute-grid-columns",
+        itemRefs: [
+          {
+            config:
+              configWithCustomAttributeGridColumnsMetadata.adminUi.creditMemo
+                .customAttributeGridColumns,
+          },
+        ],
+      },
+    ]);
+  });
+
+  test("refreshes when custom-attribute display metadata is added", async () => {
+    const { plan } = await planned(
+      configWithCustomAttributeGridColumns,
+      configWithCustomAttributeGridColumnsMetadata,
+    );
+    expect(plan.extensionAction).toBe("refresh");
+    expect(plan.operations).toMatchObject([
+      {
+        id: "update:creditMemo.custom-attribute-grid-columns",
+        itemRefs: [
+          {
+            config:
+              configWithCustomAttributeGridColumnsMetadata.adminUi.creditMemo
+                .customAttributeGridColumns,
+          },
+        ],
+        kind: "update",
+      },
+    ]);
+  });
+
+  test("refreshes when a custom-attribute binding changes", async () => {
+    const baseline = configWithCustomAttributeGridColumns;
+    const target = {
+      ...baseline,
+      adminUi: {
+        creditMemo: {
+          customAttributeGridColumns: {
+            columns:
+              baseline.adminUi.creditMemo.customAttributeGridColumns.columns.map(
+                (column) => ({ ...column, attribute_code: "updated_reason" }),
+              ),
+          },
+        },
+      },
+    };
+    const { plan } = await planned(baseline, target);
+    expect(plan.extensionAction).toBe("refresh");
+    expect(plan.operations).toMatchObject([
+      { id: "update:creditMemo.custom-attribute-grid-columns", kind: "update" },
+    ]);
+  });
+
+  test("unregisters when the last custom-attribute component is removed", async () => {
+    const { plan } = await planned(configWithCustomAttributeGridColumns, null);
+    expect(plan.extensionAction).toBe("unregister");
+    expect(plan.operations).toMatchObject([
+      { id: "remove:creditMemo.custom-attribute-grid-columns", kind: "remove" },
+    ]);
+  });
+
+  test("does not refresh identical custom-attribute declarations", async () => {
+    const { plan } = await planned(
+      configWithCustomAttributeGridColumns,
+      configWithCustomAttributeGridColumns,
+    );
+    expect(plan.extensionAction).toBeNull();
+    expect(plan.operations).toEqual([]);
+  });
+
+  test("preserves Runtime columns when custom-attribute columns are removed", async () => {
+    const target = configWithAdminUiSingleGrid;
+    const baseline = {
+      ...target,
+      adminUi: {
+        ...target.adminUi,
+        ...configWithCustomAttributeGridColumns.adminUi,
+      },
+    };
+    const { plan } = await planned(baseline, target);
+    expect(plan.extensionAction).toBe("refresh");
+    expect(plan.operations).toMatchObject([
+      { id: "remove:creditMemo.custom-attribute-grid-columns", kind: "remove" },
+    ]);
   });
 
   test("registers each native UI replaced page as its own component", async () => {

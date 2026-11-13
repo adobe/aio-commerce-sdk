@@ -14,6 +14,10 @@ import * as v from "valibot";
 import { describe, expect, test } from "vitest";
 
 import {
+  validateCommerceAppConfigDomain,
+  validateRecordedCommerceAppConfig,
+} from "#config/lib/validate";
+import {
   AdminUiSchema,
   hasAdminUi,
   hasBackendUiV2Components,
@@ -30,6 +34,8 @@ import {
   configWithAdminUiMenu,
   configWithAdminUiNewsletterGrid,
   configWithCreditMemoViewButtons,
+  configWithCustomAttributeGridColumns,
+  configWithCustomAttributeGridColumnsMetadata,
   configWithFullAdminUiV2,
   configWithInvoiceViewButtons,
   configWithRmaViewButtons,
@@ -79,6 +85,10 @@ const backendUiV2ComponentCases = [
 ];
 
 describe("hasAdminUi", () => {
+  test("recognizes custom-attribute columns without Runtime components", () => {
+    expect(hasAdminUi(configWithCustomAttributeGridColumns)).toBe(true);
+  });
+
   test.each(backendUiV2ComponentCases)(
     "returns true when adminUi has $label",
     ({ config }) => {
@@ -116,6 +126,10 @@ describe("hasBackendUiV2Components", () => {
       label: "only custom ACL resources",
     },
     {
+      config: configWithCustomAttributeGridColumns,
+      label: "only custom-attribute grid columns",
+    },
+    {
       config: {
         ...minimalValidConfig,
         adminUi: { nativeUi: { replacedPages: [] } },
@@ -124,6 +138,220 @@ describe("hasBackendUiV2Components", () => {
     },
   ])("returns false when config has $label", ({ config }) => {
     expect(hasBackendUiV2Components(config)).toBe(false);
+  });
+});
+
+describe("AdminUiSchema custom-attribute grid columns", () => {
+  const { columns } =
+    configWithCustomAttributeGridColumns.adminUi.creditMemo
+      .customAttributeGridColumns;
+  const [column] = columns;
+  const parseColumn = (changes: Record<string, unknown>) =>
+    v.safeParse(AdminUiSchema, {
+      creditMemo: {
+        customAttributeGridColumns: {
+          columns: [{ ...column, ...changes }],
+        },
+      },
+    });
+
+  test("preserves the section without requiring Runtime metadata", () => {
+    const { adminUi } = configWithCustomAttributeGridColumns;
+    expect(v.parse(AdminUiSchema, adminUi)).toEqual(adminUi);
+  });
+
+  test.each([
+    { label: "Credit Memo details" },
+    { description: "Displays serialized Credit Memo attributes." },
+    {
+      description: "Displays serialized Credit Memo attributes.",
+      label: "Credit Memo details",
+    },
+  ])("preserves optional section display metadata: %j", (metadata) => {
+    const adminUi = {
+      creditMemo: { customAttributeGridColumns: { columns, ...metadata } },
+    };
+    expect(v.parse(AdminUiSchema, adminUi)).toEqual(adminUi);
+  });
+
+  test.each([
+    { label: "" },
+    { label: null },
+    { label: 123 },
+    { description: "" },
+    { description: null },
+    { description: 123 },
+  ])("rejects invalid section display metadata: %j", (metadata) => {
+    expect(
+      v.safeParse(AdminUiSchema, {
+        creditMemo: { customAttributeGridColumns: { columns, ...metadata } },
+      }).success,
+    ).toBe(false);
+  });
+
+  test("preserves custom-attribute columns in a recorded lifecycle snapshot", () => {
+    const snapshot: unknown = JSON.parse(
+      JSON.stringify(configWithCustomAttributeGridColumnsMetadata),
+    );
+    expect(validateRecordedCommerceAppConfig(snapshot)).toEqual(
+      configWithCustomAttributeGridColumnsMetadata,
+    );
+  });
+
+  test("validates the Admin UI domain independently", () => {
+    const { adminUi } = configWithCustomAttributeGridColumns;
+    expect(validateCommerceAppConfigDomain(adminUi, "adminUi")).toEqual(
+      adminUi,
+    );
+  });
+
+  test("rejects placing the section directly under adminUi", () => {
+    expect(
+      v.safeParse(AdminUiSchema, {
+        customAttributeGridColumns: { columns },
+      }).success,
+    ).toBe(false);
+  });
+
+  test.each([
+    undefined,
+    { type: "boolean" },
+    { conditions: ["neq", "eq", "contains"], type: "text" },
+  ])("accepts a supported filter: %j", (filter) => {
+    expect(parseColumn({ filter }).success).toBe(true);
+  });
+
+  test.each([1, 255])("accepts an attribute code of length %i", (length) => {
+    expect(parseColumn({ attribute_code: "a".repeat(length) }).success).toBe(
+      true,
+    );
+  });
+
+  test.each([
+    { attribute_code: "" },
+    { attribute_code: "a".repeat(256) },
+    { attribute_code: "custom.attribute" },
+    { attribute_code: " reason" },
+    { attribute_code: "reason\n" },
+    { attribute_code: "\u00e9" },
+    { attribute_code: null },
+    { attribute_code: 1 },
+    { id: "" },
+    { id: "   " },
+    { label: "" },
+    { label: " \t " },
+    { align: "justify" },
+    { aclProtected: "true" },
+    { filter: null },
+    { filter: "boolean" },
+    { filter: {} },
+    { filter: { type: "string" } },
+    { filter: { conditions: [], type: "boolean" } },
+    { filter: { type: "text" } },
+    { filter: { conditions: [], type: "text" } },
+    { filter: { conditions: "eq", type: "text" } },
+    { filter: { conditions: ["like"], type: "text" } },
+  ])("rejects malformed column fields: %j", (changes) => {
+    expect(parseColumn(changes).success).toBe(false);
+  });
+
+  test.each([
+    "override",
+    "source",
+    "attributeCode",
+    "customAttributeCode",
+    "filterable",
+    "type",
+    "runtimeAction",
+    "runtimeActionUrl",
+    "meshId",
+    "columnId",
+    "columnType",
+    "uid",
+    "resource",
+    "aclResource",
+  ])("rejects unsupported column field %s", (field) => {
+    expect(parseColumn({ [field]: "untrusted" }).success).toBe(false);
+  });
+
+  test.each([
+    null,
+    [],
+    {},
+    { columns: null },
+    { columns: [] },
+    { columns: [null] },
+    { columns: [column], runtimeAction: "creditmemo/fetch" },
+  ])("rejects malformed sections: %j", (section) => {
+    expect(
+      v.safeParse(AdminUiSchema, {
+        creditMemo: { customAttributeGridColumns: section },
+      }).success,
+    ).toBe(false);
+  });
+
+  test.each([
+    "order",
+    "product",
+    "customer",
+    "invoice",
+    "shipment",
+    "newsletter",
+    "rma",
+    "creditmemo",
+    "unknown",
+  ])("rejects custom-attribute columns on %s", (entity) => {
+    const result = v.safeParse(AdminUiSchema, {
+      [entity]: { customAttributeGridColumns: { columns } },
+    });
+    expect(result.success).toBe(false);
+  });
+
+  test.each(["refund_reason", "Refund_Reason", "refund-reason"])(
+    "rejects colliding custom-attribute column id %s",
+    (id) => {
+      expect(
+        v.safeParse(AdminUiSchema, {
+          creditMemo: {
+            customAttributeGridColumns: {
+              columns: [column, { ...column, id }],
+            },
+          },
+        }).success,
+      ).toBe(false);
+    },
+  );
+
+  test.each([
+    { id: "Refund_Reason", valid: false },
+    { id: "external_status", valid: true },
+  ])("checks ids across Runtime and custom columns: $id", ({ id, valid }) => {
+    expect(
+      v.safeParse(AdminUiSchema, {
+        ...configWithCustomAttributeGridColumns.adminUi,
+        creditMemo: {
+          ...configWithCustomAttributeGridColumns.adminUi.creditMemo,
+          gridColumns: {
+            columns: [{ align: "left", id, label: "Status", type: "string" }],
+            description: "External status",
+            label: "Status",
+            runtimeAction: "creditmemo/fetch",
+          },
+        },
+      }).success,
+    ).toBe(valid);
+  });
+
+  test("allows distinct columns reading the same attribute", () => {
+    expect(
+      v.safeParse(AdminUiSchema, {
+        creditMemo: {
+          customAttributeGridColumns: {
+            columns: [column, { ...column, id: "other_reason" }],
+          },
+        },
+      }).success,
+    ).toBe(true);
   });
 });
 

@@ -106,6 +106,42 @@ export const minimalValidConfig = {
   metadata: mockMetadata,
 } satisfies CommerceAppConfigOutputModel;
 
+/** Credit Memo custom-attribute columns without workers or views. */
+export const configWithCustomAttributeGridColumns = {
+  ...minimalValidConfig,
+  adminUi: {
+    creditMemo: {
+      customAttributeGridColumns: {
+        columns: [
+          {
+            aclProtected: true,
+            align: "left",
+            attribute_code: "reason",
+            filter: { conditions: ["eq", "contains"], type: "text" },
+            id: "refund_reason",
+            label: "Refund reason",
+          },
+        ],
+      },
+    },
+  },
+} satisfies CommerceAppConfigOutputModel;
+
+/** Custom-attribute columns with display metadata for lifecycle summaries. */
+export const configWithCustomAttributeGridColumnsMetadata = {
+  ...configWithCustomAttributeGridColumns,
+  adminUi: {
+    creditMemo: {
+      customAttributeGridColumns: {
+        ...configWithCustomAttributeGridColumns.adminUi.creditMemo
+          .customAttributeGridColumns,
+        description: "Displays serialized Credit Memo attributes.",
+        label: "Credit Memo details",
+      },
+    },
+  },
+} satisfies CommerceAppConfigOutputModel;
+
 type MockConfigOverrides = Omit<
   Partial<CommerceAppConfigOutputModel>,
   "metadata"

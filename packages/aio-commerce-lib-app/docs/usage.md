@@ -647,7 +647,64 @@ The `adminUi` field declares Admin UI registrations for the `commerce/backend-ui
 
 View-based features also get a minimal `web-src/` scaffold when the resolved `view` entrypoint does not exist yet. The scaffold uses `.tsx` files when the Commerce config uses a TypeScript extension and `.jsx` files otherwise, independently of Runtime action TypeScript enablement. A TypeScript `web-src/tsconfig.json` checks only the Admin UI source and remains independent from the root config. Generation also runs a required-file phase that ensures a set of web source support files is present even when the source scaffold already exists, without replacing existing versions. The current set includes `web-src/.babelrc`, which selects React's automatic JSX transform for each environment so development builds retain JSX diagnostics while production builds do not emit `jsxDEV` calls. If `BABEL_ENV` is set, keep it synchronized with `NODE_ENV`, because Babel gives `BABEL_ENV` precedence when selecting the configuration environment. The scaffold imports app metadata from `#app.commerce.config`, so custom Admin UI code should use the same alias instead of importing generated files by path. Currently supported: grid column extensions, mass actions, order, invoice, credit memo, and return view buttons, native UI form replacements, and menu declarations. For details on each extension point, see the [Admin UI SDK Extension Points documentation](https://developer.adobe.com/commerce/extensibility/admin-ui-sdk/extension-points/).
 
+##### Custom-Attribute Grid Columns
+
+Declare `adminUi.creditMemo.customAttributeGridColumns` to display serialized Credit Memo custom attributes.
+Unlike Runtime-backed `gridColumns`, this section requires only `columns`: no `runtimeAction` or column `type`.
+Section `label` and `description` are optional, nonempty strings used in App Management lifecycle summaries.
+It can coexist with `creditMemo.gridColumns`.
+
+```ts
+adminUi: {
+  creditMemo: {
+    customAttributeGridColumns: {
+      label: "Credit Memo details",
+      description: "Displays serialized Credit Memo attributes.",
+      columns: [
+        {
+          id: "refund_reason",
+          label: "Refund reason",
+          align: "left",
+          attribute_code: "reason",
+          aclProtected: true,
+          filter: { type: "text", conditions: ["eq", "contains"] },
+        },
+        {
+          id: "appeasement",
+          label: "Appeasement",
+          align: "center",
+          attribute_code: "is_appeasement",
+          filter: { type: "boolean" },
+        },
+      ],
+    },
+  },
+}
+```
+
+Only `creditMemo` is supported. `columns` must be a nonempty array. Each column requires nonblank `id` and `label`,
+`align` (`left`, `center`, or `right`), and an `attribute_code` of 1–255 ASCII letters, digits, or underscores.
+The `id` identifies the UI column independently of its storage `attribute_code`. Column IDs must remain unique
+after Commerce sanitization, including across Runtime and custom-attribute columns for the same grid.
+`aclProtected` is an optional boolean.
+
+Omit `filter` for display-only text cells. A boolean filter accepts only `{ type: "boolean" }`, without `conditions`.
+A text filter requires a nonempty `conditions` array containing only `eq`, `neq`, or `contains`; their order is
+preserved. `null`, `type: "string"`, legacy `override`/`source` bindings, Runtime bindings, and host-owned identity
+or ACL fields are rejected.
+
+An app with only custom-attribute columns still registers its Admin UI configuration through `app-config` on
+`commerce/extensibility/1`. It does not need `commerce/backend-ui/2`, worker handlers, or a web frontend unless
+another component requires them. Column changes participate in installation and upgrade planning.
+
+Commerce must have a compatible custom-attribute column provider installed. Filtering also requires its Search
+provider and the corresponding feature/index configuration. These deployment requirements are checked by Commerce,
+not inferred from the TypeScript configuration; declaring a filter does not enable a flag or rebuild an index.
+
 ##### Grid Columns
+
+Runtime-backed columns use `gridColumns`. Columns read directly from serialized Commerce custom attributes use
+[`customAttributeGridColumns`](#custom-attribute-grid-columns) instead; these do not need a Runtime action.
 
 The `workerProcess` entries are derived automatically from the `runtimeAction` values — you only need to provide the handler implementations.
 
