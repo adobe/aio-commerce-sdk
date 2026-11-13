@@ -22,7 +22,7 @@ type CommerceWebhook = {
 };
 ```
 
-Defined in: [api/webhooks/types.ts:41](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-webhooks/source/api/webhooks/types.ts#L41)
+Defined in: [api/webhooks/types.ts:41](https://github.com/adobe/aio-commerce-sdk/blob/6e9704065e17b124069637c99898c47981974e20/packages/aio-commerce-lib-webhooks/source/api/webhooks/types.ts#L41)
 
 A single Commerce webhook subscription as returned by GET /webhooks/list.
 
@@ -34,7 +34,7 @@ A single Commerce webhook subscription as returned by GET /webhooks/list.
 batch_name: string;
 ```
 
-Defined in: [api/webhooks/types.ts:44](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-webhooks/source/api/webhooks/types.ts#L44)
+Defined in: [api/webhooks/types.ts:44](https://github.com/adobe/aio-commerce-sdk/blob/6e9704065e17b124069637c99898c47981974e20/packages/aio-commerce-lib-webhooks/source/api/webhooks/types.ts#L44)
 
 ---
 
@@ -44,7 +44,7 @@ Defined in: [api/webhooks/types.ts:44](https://github.com/adobe/aio-commerce-sdk
 batch_order?: number;
 ```
 
-Defined in: [api/webhooks/types.ts:45](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-webhooks/source/api/webhooks/types.ts#L45)
+Defined in: [api/webhooks/types.ts:45](https://github.com/adobe/aio-commerce-sdk/blob/6e9704065e17b124069637c99898c47981974e20/packages/aio-commerce-lib-webhooks/source/api/webhooks/types.ts#L45)
 
 ---
 
@@ -54,7 +54,7 @@ Defined in: [api/webhooks/types.ts:45](https://github.com/adobe/aio-commerce-sdk
 developer_console_oauth?: CommerceWebhookDeveloperConsoleOAuth;
 ```
 
-Defined in: [api/webhooks/types.ts:58](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-webhooks/source/api/webhooks/types.ts#L58)
+Defined in: [api/webhooks/types.ts:58](https://github.com/adobe/aio-commerce-sdk/blob/6e9704065e17b124069637c99898c47981974e20/packages/aio-commerce-lib-webhooks/source/api/webhooks/types.ts#L58)
 
 ---
 
@@ -64,7 +64,7 @@ Defined in: [api/webhooks/types.ts:58](https://github.com/adobe/aio-commerce-sdk
 fallback_error_message?: string;
 ```
 
-Defined in: [api/webhooks/types.ts:53](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-webhooks/source/api/webhooks/types.ts#L53)
+Defined in: [api/webhooks/types.ts:53](https://github.com/adobe/aio-commerce-sdk/blob/6e9704065e17b124069637c99898c47981974e20/packages/aio-commerce-lib-webhooks/source/api/webhooks/types.ts#L53)
 
 ---
 
@@ -74,7 +74,7 @@ Defined in: [api/webhooks/types.ts:53](https://github.com/adobe/aio-commerce-sdk
 fields?: CommerceWebhookField[];
 ```
 
-Defined in: [api/webhooks/types.ts:55](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-webhooks/source/api/webhooks/types.ts#L55)
+Defined in: [api/webhooks/types.ts:55](https://github.com/adobe/aio-commerce-sdk/blob/6e9704065e17b124069637c99898c47981974e20/packages/aio-commerce-lib-webhooks/source/api/webhooks/types.ts#L55)
 
 ---
 
@@ -84,7 +84,7 @@ Defined in: [api/webhooks/types.ts:55](https://github.com/adobe/aio-commerce-sdk
 headers?: CommerceWebhookHeader[];
 ```
 
-Defined in: [api/webhooks/types.ts:57](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-webhooks/source/api/webhooks/types.ts#L57)
+Defined in: [api/webhooks/types.ts:57](https://github.com/adobe/aio-commerce-sdk/blob/6e9704065e17b124069637c99898c47981974e20/packages/aio-commerce-lib-webhooks/source/api/webhooks/types.ts#L57)
 
 ---
 
@@ -94,7 +94,7 @@ Defined in: [api/webhooks/types.ts:57](https://github.com/adobe/aio-commerce-sdk
 hook_name: string;
 ```
 
-Defined in: [api/webhooks/types.ts:46](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-webhooks/source/api/webhooks/types.ts#L46)
+Defined in: [api/webhooks/types.ts:46](https://github.com/adobe/aio-commerce-sdk/blob/6e9704065e17b124069637c99898c47981974e20/packages/aio-commerce-lib-webhooks/source/api/webhooks/types.ts#L46)
 
 ---
 
@@ -104,7 +104,7 @@ Defined in: [api/webhooks/types.ts:46](https://github.com/adobe/aio-commerce-sdk
 method?: string;
 ```
 
-Defined in: [api/webhooks/types.ts:52](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-webhooks/source/api/webhooks/types.ts#L52)
+Defined in: [api/webhooks/types.ts:52](https://github.com/adobe/aio-commerce-sdk/blob/6e9704065e17b124069637c99898c47981974e20/packages/aio-commerce-lib-webhooks/source/api/webhooks/types.ts#L52)
 
 ---
 
@@ -114,7 +114,7 @@ Defined in: [api/webhooks/types.ts:52](https://github.com/adobe/aio-commerce-sdk
 priority?: number;
 ```
 
-Defined in: [api/webhooks/types.ts:48](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-webhooks/source/api/webhooks/types.ts#L48)
+Defined in: [api/webhooks/types.ts:48](https://github.com/adobe/aio-commerce-sdk/blob/6e9704065e17b124069637c99898c47981974e20/packages/aio-commerce-lib-webhooks/source/api/webhooks/types.ts#L48)
 
 ---
 
@@ -124,7 +124,7 @@ Defined in: [api/webhooks/types.ts:48](https://github.com/adobe/aio-commerce-sdk
 required?: boolean;
 ```
 
-Defined in: [api/webhooks/types.ts:49](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-webhooks/source/api/webhooks/types.ts#L49)
+Defined in: [api/webhooks/types.ts:49](https://github.com/adobe/aio-commerce-sdk/blob/6e9704065e17b124069637c99898c47981974e20/packages/aio-commerce-lib-webhooks/source/api/webhooks/types.ts#L49)
 
 ---
 
@@ -134,7 +134,7 @@ Defined in: [api/webhooks/types.ts:49](https://github.com/adobe/aio-commerce-sdk
 rules?: CommerceWebhookRule[];
 ```
 
-Defined in: [api/webhooks/types.ts:56](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-webhooks/source/api/webhooks/types.ts#L56)
+Defined in: [api/webhooks/types.ts:56](https://github.com/adobe/aio-commerce-sdk/blob/6e9704065e17b124069637c99898c47981974e20/packages/aio-commerce-lib-webhooks/source/api/webhooks/types.ts#L56)
 
 ---
 
@@ -144,7 +144,7 @@ Defined in: [api/webhooks/types.ts:56](https://github.com/adobe/aio-commerce-sdk
 soft_timeout?: number;
 ```
 
-Defined in: [api/webhooks/types.ts:50](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-webhooks/source/api/webhooks/types.ts#L50)
+Defined in: [api/webhooks/types.ts:50](https://github.com/adobe/aio-commerce-sdk/blob/6e9704065e17b124069637c99898c47981974e20/packages/aio-commerce-lib-webhooks/source/api/webhooks/types.ts#L50)
 
 ---
 
@@ -154,7 +154,7 @@ Defined in: [api/webhooks/types.ts:50](https://github.com/adobe/aio-commerce-sdk
 timeout?: number;
 ```
 
-Defined in: [api/webhooks/types.ts:51](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-webhooks/source/api/webhooks/types.ts#L51)
+Defined in: [api/webhooks/types.ts:51](https://github.com/adobe/aio-commerce-sdk/blob/6e9704065e17b124069637c99898c47981974e20/packages/aio-commerce-lib-webhooks/source/api/webhooks/types.ts#L51)
 
 ---
 
@@ -164,7 +164,7 @@ Defined in: [api/webhooks/types.ts:51](https://github.com/adobe/aio-commerce-sdk
 ttl?: number;
 ```
 
-Defined in: [api/webhooks/types.ts:54](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-webhooks/source/api/webhooks/types.ts#L54)
+Defined in: [api/webhooks/types.ts:54](https://github.com/adobe/aio-commerce-sdk/blob/6e9704065e17b124069637c99898c47981974e20/packages/aio-commerce-lib-webhooks/source/api/webhooks/types.ts#L54)
 
 ---
 
@@ -174,7 +174,7 @@ Defined in: [api/webhooks/types.ts:54](https://github.com/adobe/aio-commerce-sdk
 url: string;
 ```
 
-Defined in: [api/webhooks/types.ts:47](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-webhooks/source/api/webhooks/types.ts#L47)
+Defined in: [api/webhooks/types.ts:47](https://github.com/adobe/aio-commerce-sdk/blob/6e9704065e17b124069637c99898c47981974e20/packages/aio-commerce-lib-webhooks/source/api/webhooks/types.ts#L47)
 
 ---
 
@@ -184,7 +184,7 @@ Defined in: [api/webhooks/types.ts:47](https://github.com/adobe/aio-commerce-sdk
 webhook_method: string;
 ```
 
-Defined in: [api/webhooks/types.ts:42](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-webhooks/source/api/webhooks/types.ts#L42)
+Defined in: [api/webhooks/types.ts:42](https://github.com/adobe/aio-commerce-sdk/blob/6e9704065e17b124069637c99898c47981974e20/packages/aio-commerce-lib-webhooks/source/api/webhooks/types.ts#L42)
 
 ---
 
@@ -194,4 +194,4 @@ Defined in: [api/webhooks/types.ts:42](https://github.com/adobe/aio-commerce-sdk
 webhook_type: string;
 ```
 
-Defined in: [api/webhooks/types.ts:43](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-webhooks/source/api/webhooks/types.ts#L43)
+Defined in: [api/webhooks/types.ts:43](https://github.com/adobe/aio-commerce-sdk/blob/6e9704065e17b124069637c99898c47981974e20/packages/aio-commerce-lib-webhooks/source/api/webhooks/types.ts#L43)

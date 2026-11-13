@@ -1,6 +1,6 @@
 {
   "name": "@adobe/aio-commerce-lib-webhooks",
-  "version": "1.2.3",
+  "version": "1.3.0",
   "private": false,
   "description": "A library to interact with the Adobe Commerce Webhooks API",
   "keywords": [

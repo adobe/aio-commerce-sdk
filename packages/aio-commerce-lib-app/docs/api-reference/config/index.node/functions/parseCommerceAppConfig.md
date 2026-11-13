@@ -24,6 +24,34 @@ function parseCommerceAppConfig(cwd?: string): Promise<{
            label: string;
            runtimeAction: string;
         };
+        viewButtons?: (
+           | {
+           aclProtected?: ...;
+           confirm?: ...;
+           description?: ...;
+           id: ...;
+           label: ...;
+           level?: ...;
+           notifications?: ...;
+           runtimeAction: ...;
+           sortOrder?: ...;
+           timeout?: ...;
+           type: ...;
+         }
+           | {
+           aclProtected?: ...;
+           confirm?: ...;
+           description?: ...;
+           id: ...;
+           label: ...;
+           level?: ...;
+           notifications?: ...;
+           path: ...;
+           sandboxPermissions?: ...;
+           sortOrder?: ...;
+           title?: ...;
+           type: ...;
+        })[];
      };
      customer?: {
         gridColumns?: {
@@ -79,6 +107,34 @@ function parseCommerceAppConfig(cwd?: string): Promise<{
            label: string;
            runtimeAction: string;
         };
+        viewButtons?: (
+           | {
+           aclProtected?: ...;
+           confirm?: ...;
+           description?: ...;
+           id: ...;
+           label: ...;
+           level?: ...;
+           notifications?: ...;
+           runtimeAction: ...;
+           sortOrder?: ...;
+           timeout?: ...;
+           type: ...;
+         }
+           | {
+           aclProtected?: ...;
+           confirm?: ...;
+           description?: ...;
+           id: ...;
+           label: ...;
+           level?: ...;
+           notifications?: ...;
+           path: ...;
+           sandboxPermissions?: ...;
+           sortOrder?: ...;
+           title?: ...;
+           type: ...;
+        })[];
      };
      menu?: {
         aclProtected?: boolean;
@@ -95,6 +151,14 @@ function parseCommerceAppConfig(cwd?: string): Promise<{
            | "stores"
            | "system";
         sandboxPermissions?: ("allow-downloads" | "allow-modals" | "allow-popups")[];
+     };
+     nativeUi?: {
+        replacedPages: {
+           path: string;
+           sandboxPermissions?: ...[];
+           target: "order.create" | "return.create";
+           title: string;
+        }[];
      };
      newsletter?: {
         gridColumns?: {
@@ -215,6 +279,36 @@ function parseCommerceAppConfig(cwd?: string): Promise<{
            runtimeAction: ...;
            selectionLimit?: ...;
            timeout?: ...;
+           title?: ...;
+           type: ...;
+        })[];
+     };
+     rma?: {
+        viewButtons?: (
+           | {
+           aclProtected?: ...;
+           confirm?: ...;
+           description?: ...;
+           id: ...;
+           label: ...;
+           level?: ...;
+           notifications?: ...;
+           runtimeAction: ...;
+           sortOrder?: ...;
+           timeout?: ...;
+           type: ...;
+         }
+           | {
+           aclProtected?: ...;
+           confirm?: ...;
+           description?: ...;
+           id: ...;
+           label: ...;
+           level?: ...;
+           notifications?: ...;
+           path: ...;
+           sandboxPermissions?: ...;
+           sortOrder?: ...;
            title?: ...;
            type: ...;
         })[];
@@ -461,7 +555,7 @@ function parseCommerceAppConfig(cwd?: string): Promise<{
 }>;
 ```
 
-Defined in: [aio-commerce-lib-app/source/config/lib/parser.ts:168](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-app/source/config/lib/parser.ts#L168)
+Defined in: [aio-commerce-lib-app/source/config/lib/parser.ts:168](https://github.com/adobe/aio-commerce-sdk/blob/6e9704065e17b124069637c99898c47981974e20/packages/aio-commerce-lib-app/source/config/lib/parser.ts#L168)
 
 Read the commerce app config file and parse its contents into its schema.
 
@@ -499,6 +593,34 @@ The config file must export a default export with the configuration object.
 `label`: `string`;
 `runtimeAction`: `string`;
 \};
+`viewButtons?`: (
+\| \{
+`aclProtected?`: ...;
+`confirm?`: ...;
+`description?`: ...;
+`id`: ...;
+`label`: ...;
+`level?`: ...;
+`notifications?`: ...;
+`runtimeAction`: ...;
+`sortOrder?`: ...;
+`timeout?`: ...;
+`type`: ...;
+\}
+\| \{
+`aclProtected?`: ...;
+`confirm?`: ...;
+`description?`: ...;
+`id`: ...;
+`label`: ...;
+`level?`: ...;
+`notifications?`: ...;
+`path`: ...;
+`sandboxPermissions?`: ...;
+`sortOrder?`: ...;
+`title?`: ...;
+`type`: ...;
+\})[];
 \};
 `customer?`: \{
 `gridColumns?`: \{
@@ -554,6 +676,34 @@ The config file must export a default export with the configuration object.
 `label`: `string`;
 `runtimeAction`: `string`;
 \};
+`viewButtons?`: (
+\| \{
+`aclProtected?`: ...;
+`confirm?`: ...;
+`description?`: ...;
+`id`: ...;
+`label`: ...;
+`level?`: ...;
+`notifications?`: ...;
+`runtimeAction`: ...;
+`sortOrder?`: ...;
+`timeout?`: ...;
+`type`: ...;
+\}
+\| \{
+`aclProtected?`: ...;
+`confirm?`: ...;
+`description?`: ...;
+`id`: ...;
+`label`: ...;
+`level?`: ...;
+`notifications?`: ...;
+`path`: ...;
+`sandboxPermissions?`: ...;
+`sortOrder?`: ...;
+`title?`: ...;
+`type`: ...;
+\})[];
 \};
 `menu?`: \{
 `aclProtected?`: `boolean`;
@@ -570,6 +720,14 @@ The config file must export a default export with the configuration object.
 \| `"stores"`
 \| `"system"`;
 `sandboxPermissions?`: (`"allow-downloads"` \| `"allow-modals"` \| `"allow-popups"`)[];
+\};
+`nativeUi?`: \{
+`replacedPages`: \{
+`path`: `string`;
+`sandboxPermissions?`: ...[];
+`target`: `"order.create"` \| `"return.create"`;
+`title`: `string`;
+\}[];
 \};
 `newsletter?`: \{
 `gridColumns?`: \{
@@ -690,6 +848,36 @@ The config file must export a default export with the configuration object.
 `runtimeAction`: ...;
 `selectionLimit?`: ...;
 `timeout?`: ...;
+`title?`: ...;
+`type`: ...;
+\})[];
+\};
+`rma?`: \{
+`viewButtons?`: (
+\| \{
+`aclProtected?`: ...;
+`confirm?`: ...;
+`description?`: ...;
+`id`: ...;
+`label`: ...;
+`level?`: ...;
+`notifications?`: ...;
+`runtimeAction`: ...;
+`sortOrder?`: ...;
+`timeout?`: ...;
+`type`: ...;
+\}
+\| \{
+`aclProtected?`: ...;
+`confirm?`: ...;
+`description?`: ...;
+`id`: ...;
+`label`: ...;
+`level?`: ...;
+`notifications?`: ...;
+`path`: ...;
+`sandboxPermissions?`: ...;
+`sortOrder?`: ...;
 `title?`: ...;
 `type`: ...;
 \})[];

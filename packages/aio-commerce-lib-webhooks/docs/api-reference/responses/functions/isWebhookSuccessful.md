@@ -4,7 +4,7 @@
 function isWebhookSuccessful(result: unknown): boolean;
 ```
 
-Defined in: [responses/helpers.ts:32](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-webhooks/source/responses/helpers.ts#L32)
+Defined in: [responses/helpers.ts:32](https://github.com/adobe/aio-commerce-sdk/blob/6e9704065e17b124069637c99898c47981974e20/packages/aio-commerce-lib-webhooks/source/responses/helpers.ts#L32)
 
 Determines whether a webhook action's result represents a successful outcome.
 Adobe Commerce webhooks always respond with HTTP 200, even when the handler

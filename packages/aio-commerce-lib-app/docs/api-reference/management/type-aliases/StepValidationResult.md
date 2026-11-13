@@ -10,7 +10,7 @@ type StepValidationResult = {
 };
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/common/workflow/validation.ts:34](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-app/source/management/common/workflow/validation.ts#L34)
+Defined in: [aio-commerce-lib-app/source/management/common/workflow/validation.ts:34](https://github.com/adobe/aio-commerce-sdk/blob/6e9704065e17b124069637c99898c47981974e20/packages/aio-commerce-lib-app/source/management/common/workflow/validation.ts#L34)
 
 Validation result for a single step, mirroring the step hierarchy.
 
@@ -22,7 +22,7 @@ Validation result for a single step, mirroring the step hierarchy.
 children: StepValidationResult[];
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/common/workflow/validation.ts:48](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-app/source/management/common/workflow/validation.ts#L48)
+Defined in: [aio-commerce-lib-app/source/management/common/workflow/validation.ts:48](https://github.com/adobe/aio-commerce-sdk/blob/6e9704065e17b124069637c99898c47981974e20/packages/aio-commerce-lib-app/source/management/common/workflow/validation.ts#L48)
 
 Validation results for child steps (empty for leaf steps).
 
@@ -34,7 +34,7 @@ Validation results for child steps (empty for leaf steps).
 issues: ValidationIssue[];
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/common/workflow/validation.ts:45](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-app/source/management/common/workflow/validation.ts#L45)
+Defined in: [aio-commerce-lib-app/source/management/common/workflow/validation.ts:45](https://github.com/adobe/aio-commerce-sdk/blob/6e9704065e17b124069637c99898c47981974e20/packages/aio-commerce-lib-app/source/management/common/workflow/validation.ts#L45)
 
 Issues found for this specific step (not including children).
 
@@ -46,7 +46,7 @@ Issues found for this specific step (not including children).
 meta: StepMetaInfo;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/common/workflow/validation.ts:42](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-app/source/management/common/workflow/validation.ts#L42)
+Defined in: [aio-commerce-lib-app/source/management/common/workflow/validation.ts:42](https://github.com/adobe/aio-commerce-sdk/blob/6e9704065e17b124069637c99898c47981974e20/packages/aio-commerce-lib-app/source/management/common/workflow/validation.ts#L42)
 
 Step metadata (for display purposes).
 
@@ -58,7 +58,7 @@ Step metadata (for display purposes).
 name: string;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/common/workflow/validation.ts:36](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-app/source/management/common/workflow/validation.ts#L36)
+Defined in: [aio-commerce-lib-app/source/management/common/workflow/validation.ts:36](https://github.com/adobe/aio-commerce-sdk/blob/6e9704065e17b124069637c99898c47981974e20/packages/aio-commerce-lib-app/source/management/common/workflow/validation.ts#L36)
 
 Step name (unique among siblings).
 
@@ -70,6 +70,6 @@ Step name (unique among siblings).
 path: string[];
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/common/workflow/validation.ts:39](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-app/source/management/common/workflow/validation.ts#L39)
+Defined in: [aio-commerce-lib-app/source/management/common/workflow/validation.ts:39](https://github.com/adobe/aio-commerce-sdk/blob/6e9704065e17b124069637c99898c47981974e20/packages/aio-commerce-lib-app/source/management/common/workflow/validation.ts#L39)
 
 Full path from root to this step.

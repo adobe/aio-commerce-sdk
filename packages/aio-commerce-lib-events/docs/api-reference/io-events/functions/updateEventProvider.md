@@ -16,7 +16,7 @@ function updateEventProvider(
 ): Promise<IoEventProviderHalModel>;
 ```
 
-Defined in: [io-events/api/event-providers/endpoints.ts:161](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-events/source/io-events/api/event-providers/endpoints.ts#L161)
+Defined in: [io-events/api/event-providers/endpoints.ts:161](https://github.com/adobe/aio-commerce-sdk/blob/6e9704065e17b124069637c99898c47981974e20/packages/aio-commerce-lib-events/source/io-events/api/event-providers/endpoints.ts#L161)
 
 Updates an event provider. This replaces the provider: a `description` or `docsUrl` that is
 omitted is reset to the default of the provider type, not kept.
