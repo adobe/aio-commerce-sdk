@@ -29,17 +29,14 @@ export function calculateDiff(
     if (!old) {
       changes.push({
         name,
-        newOrigin: item.origin,
-        newValue: item.value,
+        new: { origin: item.origin, value: item.value },
         type: "added",
       });
     } else if (!isDeepStrictEqual(old, item)) {
       changes.push({
         name,
-        newOrigin: item.origin,
-        newValue: item.value,
-        oldOrigin: old.origin,
-        oldValue: old.value,
+        new: { origin: item.origin, value: item.value },
+        old: { origin: old.origin, value: old.value },
         type: "modified",
       });
     }
@@ -48,8 +45,7 @@ export function calculateDiff(
     if (!current.has(name)) {
       changes.push({
         name,
-        oldOrigin: item.origin,
-        oldValue: item.value,
+        old: { origin: item.origin, value: item.value },
         type: "removed",
       });
     }

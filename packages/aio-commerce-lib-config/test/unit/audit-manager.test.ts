@@ -13,7 +13,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
+  byCode,
+  byCodeAndLevel,
   byScopeId,
+  byStoreId,
   byStoreViewId,
   byWebsiteId,
   generateEncryptionKey,
@@ -62,7 +65,7 @@ describe("business configuration audit", () => {
       schema: [
         { default: "default", name: "setting", type: "text" },
         { default: "", name: "pin", type: "password" },
-        { default: "", name: "api_key", type: "text" },
+        { default: "", name: "api_key", type: "password" },
         { default: false, name: "enabled", type: "boolean" },
         {
           default: [],
@@ -76,21 +79,52 @@ describe("business configuration audit", () => {
   });
   afterEach(() => vi.restoreAllMocks());
 
+  it.each([
+    ["scope ID", byScopeId("id-global")],
+    ["code and level", byCodeAndLevel("base", "website")],
+    ["code", byCode("base_region")],
+    ["website ID", byWebsiteId(1)],
+    ["store ID", byStoreId(1)],
+    ["store-view ID", byStoreViewId(1)],
+  ])("queries using the existing %s selector", async (_name, selector) => {
+    await write("other");
+    await setConfiguration(
+      {
+        config: [{ name: "setting", value: "selected" }],
+        metadata: { actor: { userId: "selected-operator" } },
+      },
+      selector,
+    );
+    const audit = await getAuditLog(selector, { userId: "selected-operator" });
+    expect(audit.entries).toHaveLength(1);
+    expect(audit.entries.at(0)?.changes.at(0)?.new?.value).toBe("selected");
+    expect(
+      (await getAuditLog(byScopeId("id-global"), { userId: "missing" }))
+        .entries,
+    ).toEqual([]);
+  });
+
+  it("rejects unknown scopes instead of returning an unscoped audit", async () => {
+    await write("value");
+    await expect(getAuditLog(byScopeId("missing"))).rejects.toThrow(
+      "INVALID_SCOPE",
+    );
+    expect(files.list).not.toHaveBeenCalled();
+  });
+
   it("records who changed each field with typed before/after values and origins", async () => {
     const response = await write("first", "operator-1");
     expect(response).not.toHaveProperty("versionInfo");
     await write("second", "operator-2");
-    const audit = await getAuditLog({ scopeCode: "GLOBAL" });
+    const audit = await getAuditLog(byScopeId("id-global"));
     expect(audit.entries).toHaveLength(2);
     expect(audit.entries.at(0)).toMatchObject({
       actor: { source: "support-tool", userId: "operator-2" },
       changes: [
         {
           name: "setting",
-          newOrigin: { code: "global", level: "global" },
-          newValue: "second",
-          oldOrigin: { code: "global", level: "global" },
-          oldValue: "first",
+          new: { origin: { code: "global", level: "global" }, value: "second" },
+          old: { origin: { code: "global", level: "global" }, value: "first" },
           type: "modified",
         },
       ],
@@ -99,8 +133,7 @@ describe("business configuration audit", () => {
     expect(audit.entries.at(1)?.changes).toEqual([
       {
         name: "setting",
-        newOrigin: { code: "global", level: "global" },
-        newValue: "first",
+        new: { origin: { code: "global", level: "global" }, value: "first" },
         type: "added",
       },
     ]);
@@ -132,23 +165,23 @@ describe("business configuration audit", () => {
       { config: [{ name: "setting", value: "store" }] },
       byStoreViewId(1),
     );
-    const { entries } = await getAuditLog({ scopeCode: "base" });
+    const { entries } = await getAuditLog(byWebsiteId(1));
     expect(entries.at(0)?.changes).toEqual([
       expect.objectContaining({
         name: "enabled",
-        newValue: false,
-        oldValue: true,
+        new: { origin: { code: "base", level: "website" }, value: false },
+        old: { origin: { code: "base", level: "website" }, value: true },
         type: "modified",
       }),
       expect.objectContaining({
         name: "choices",
-        oldValue: ["one"],
+        old: { origin: { code: "base", level: "website" }, value: ["one"] },
         type: "removed",
       }),
     ]);
-    expect(entries.at(0)?.changes.at(1)).not.toHaveProperty("newValue");
+    expect(entries.at(0)?.changes.at(1)).not.toHaveProperty("new");
     expect(
-      (await getAuditLog({ scopeCode: "default" })).entries.at(0)?.scope.level,
+      (await getAuditLog(byStoreViewId(1))).entries.at(0)?.scope.level,
     ).toBe("store_view");
     expect((await getAuditLog()).pagination.total).toBe(3);
   });
@@ -183,10 +216,12 @@ describe("business configuration audit", () => {
     for (const entry of entries) {
       for (const change of entry.changes) {
         expect(
-          change.oldValue === undefined || change.oldValue === "***REDACTED***",
+          change.old?.value === undefined ||
+            change.old.value === "***REDACTED***",
         ).toBe(true);
         expect(
-          change.newValue === undefined || change.newValue === "***REDACTED***",
+          change.new?.value === undefined ||
+            change.new.value === "***REDACTED***",
         ).toBe(true);
       }
     }
@@ -223,6 +258,29 @@ describe("business configuration audit", () => {
       current.config.find((entry) => entry.name === "refreshToken")?.value,
     ).toBe("token-second");
   });
+
+  it.each(["api_key", "secret", "token", "password"])(
+    "does not infer sensitivity from the declared text field name %s",
+    async (name) => {
+      initialize({ schema: [{ default: "", name, type: "text" }] });
+      await setConfiguration(
+        { config: [{ name, value: "public-before" }] },
+        byScopeId("id-global"),
+      );
+      await setConfiguration(
+        { config: [{ name, value: "public-after" }] },
+        byScopeId("id-global"),
+      );
+      const { entries } = await getAuditLog();
+      expect(entries.at(0)?.changes).toMatchObject([
+        {
+          name,
+          new: { value: "public-after" },
+          old: { value: "public-before" },
+        },
+      ]);
+    },
+  );
 
   it("only keeps userId and source and does not invent an identity when absent", async () => {
     const actor = {
@@ -270,7 +328,11 @@ describe("business configuration audit", () => {
     );
     const { entries } = await getAuditLog();
     expect(entries.at(0)?.changes).toMatchObject([
-      { name: "pin", newValue: "***REDACTED***", oldValue: "***REDACTED***" },
+      {
+        name: "pin",
+        new: { value: "***REDACTED***" },
+        old: { value: "***REDACTED***" },
+      },
     ]);
     const persisted = JSON.stringify(
       files.write.mock.calls.filter(([path]) => path.startsWith("audit/")),
@@ -290,22 +352,24 @@ describe("business configuration audit", () => {
   it("queries by actor and dates, paginates newest first and never changes configuration", async () => {
     await write("one", "first");
     await write("two", "second");
-    const audit = await getAuditLog({ userId: "second" });
+    const audit = await getAuditLog(undefined, { userId: "second" });
     const timestamp = audit.entries.at(0)?.timestamp;
     expect(timestamp).toBeDefined();
     expect(
       (
-        await getAuditLog({
+        await getAuditLog(undefined, {
           endDate: timestamp,
           startDate: timestamp,
           userId: "second",
         })
       ).entries,
     ).toEqual(audit.entries);
-    expect((await getAuditLog({ userId: "absent" })).entries).toEqual([]);
+    expect(
+      (await getAuditLog(undefined, { userId: "absent" })).entries,
+    ).toEqual([]);
     files.write.mockClear();
     files.delete.mockClear();
-    const page = await getAuditLog({ limit: 1 });
+    const page = await getAuditLog(undefined, { limit: 1 });
     expect(page.entries.at(0)?.actor.userId).toBe("second");
     expect(page.pagination).toEqual({
       hasMore: true,
@@ -314,7 +378,8 @@ describe("business configuration audit", () => {
       total: 2,
     });
     expect(
-      (await getAuditLog({ limit: 1, offset: 1 })).entries.at(0)?.actor.userId,
+      (await getAuditLog(undefined, { limit: 1, offset: 1 })).entries.at(0)
+        ?.actor.userId,
     ).toBe("first");
     expect(
       (await getConfiguration(byScopeId("id-global"))).config.find(
@@ -328,21 +393,81 @@ describe("business configuration audit", () => {
   });
 
   it("rejects invalid pagination and date filters", async () => {
-    await expect(getAuditLog({ limit: 0 })).rejects.toThrow(
+    await expect(getAuditLog(undefined, { limit: 0 })).rejects.toThrow(
       "INVALID_PAGINATION",
     );
-    await expect(getAuditLog({ limit: 1001 })).rejects.toThrow(
+    await expect(getAuditLog(undefined, { limit: 1001 })).rejects.toThrow(
       "INVALID_PAGINATION",
     );
-    await expect(getAuditLog({ offset: -1 })).rejects.toThrow(
+    await expect(getAuditLog(undefined, { offset: -1 })).rejects.toThrow(
       "INVALID_PAGINATION",
-    );
-    await expect(getAuditLog({ startDate: "invalid" })).rejects.toThrow(
-      "INVALID_AUDIT_DATES",
     );
     await expect(
-      getAuditLog({ endDate: "2026-01-01", startDate: "2026-02-01" }),
+      getAuditLog(undefined, { startDate: "invalid" }),
     ).rejects.toThrow("INVALID_AUDIT_DATES");
+    await expect(
+      getAuditLog(undefined, {
+        endDate: "2026-01-01",
+        startDate: "2026-02-01",
+      }),
+    ).rejects.toThrow("INVALID_AUDIT_DATES");
+    expect(files.list).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    { limit: 1.5 },
+    { limit: Number.NaN },
+    { limit: Number.POSITIVE_INFINITY },
+    { offset: 0.5 },
+    { offset: Number.MAX_SAFE_INTEGER + 1 },
+  ])(
+    "rejects unsafe pagination before reading storage: %o",
+    async (filters) => {
+      await expect(getAuditLog(undefined, filters)).rejects.toThrow(
+        "INVALID_PAGINATION",
+      );
+      expect(files.list).not.toHaveBeenCalled();
+    },
+  );
+
+  it("accepts pagination boundaries and compares date filters as instants", async () => {
+    await write("value");
+    const audit = await getAuditLog();
+    const timestamp = audit.entries.at(0)?.timestamp;
+    if (!timestamp) {
+      throw new Error("Expected an audit timestamp");
+    }
+    expect(
+      (
+        await getAuditLog(undefined, {
+          endDate: timestamp,
+          limit: 1000,
+          startDate: timestamp.replace("Z", "+00:00"),
+        })
+      ).entries,
+    ).toEqual(audit.entries);
+    expect(
+      (
+        await getAuditLog(undefined, {
+          offset: Number.MAX_SAFE_INTEGER,
+        })
+      ).entries,
+    ).toEqual([]);
+  });
+
+  it("rejects malformed filter types at runtime", async () => {
+    await expect(
+      // @ts-expect-error Runtime callers can provide invalid filter values.
+      getAuditLog(undefined, { limit: "50" }),
+    ).rejects.toThrow("INVALID_PAGINATION");
+    await expect(
+      // @ts-expect-error Runtime callers can provide invalid filter values.
+      getAuditLog(undefined, { startDate: 0 }),
+    ).rejects.toThrow("INVALID_AUDIT_DATES");
+    await expect(
+      // @ts-expect-error Runtime callers can provide invalid filter values.
+      getAuditLog(undefined, { userId: 123 }),
+    ).rejects.toThrow();
     expect(files.list).not.toHaveBeenCalled();
   });
 

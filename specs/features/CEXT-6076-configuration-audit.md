@@ -2,7 +2,7 @@
 
 - **Ticket:** [CEXT-6076](https://jira.corp.adobe.com/browse/CEXT-6076)
 - **Created:** 2026-11-09
-- [ ] **Implemented**
+- [x] **Implemented**
 
 ## Summary
 
@@ -20,7 +20,8 @@ integrity chains, and historical credentials are outside this ticket's scope.
 ## Developer experience
 
 Pass `metadata: { actor: { userId, source } }` to the existing `setConfiguration` API.
-`getAuditLog({ scopeCode, userId, startDate, endDate, limit, offset })` returns changed fields,
+`getAuditLog(selector?, { userId, startDate, endDate, limit, offset })` uses the existing `by`
+scope selectors and returns changed fields,
 newest first, and pagination metadata. Values retain their types and scope-local origins.
 Unchanged writes and system configuration do not create audit records. The configuration write
 response is unchanged.
@@ -29,8 +30,9 @@ response is unchanged.
 
 Calculate additions, modifications, and removals using the existing persisted and merged
 scope-local overrides. Replace both sides of sensitive changes with `***REDACTED***` before
-serializing. Schema password fields, sensitive names, and fields absent from the current schema
-are redacted. Only `userId` and `source` are retained from actor metadata.
+serializing. Schema password fields and fields absent from the current schema are redacted.
+Field names are not used to infer sensitivity; confidential values must be declared with
+`type: "password"`. Only `userId` and `source` are retained from actor metadata.
 
 Prepare and size-check the record before the live write. After live persistence, append the
 record privately to Adobe Files under a namespace-isolated, uniquely named path. Queries list

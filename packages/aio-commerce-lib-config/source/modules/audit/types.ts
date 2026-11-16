@@ -10,7 +10,13 @@
  * governing permissions and limitations under the License.
  */
 
-import type { ConfigOrigin, ConfigValue } from "#modules/configuration/types";
+import type { ConfigValue } from "#modules/configuration/types";
+
+/** Value and origin on one side of an audit change. */
+type ConfigChangeState = {
+  value?: ConfigValue["value"];
+  origin: ConfigValue["origin"];
+};
 
 /** Application-supplied attribution, not an authenticated identity assertion. */
 export type AuditActor = {
@@ -24,14 +30,10 @@ export type AuditActor = {
 export type ConfigDiff = {
   /** Configuration field name. */
   name: string;
-  /** Previous value, absent for added fields. */
-  oldValue?: ConfigValue["value"];
-  /** New value, absent for removed fields. */
-  newValue?: ConfigValue["value"];
-  /** Origin before the change, absent for added fields. */
-  oldOrigin?: ConfigOrigin;
-  /** Origin after the change, absent for removed fields. */
-  newOrigin?: ConfigOrigin;
+  /** Previous value and origin, absent for added fields. */
+  old?: ConfigChangeState;
+  /** New value and origin, absent for removed fields. */
+  new?: ConfigChangeState;
   /** Whether the local override was added, modified, or removed. */
   type: "added" | "modified" | "removed";
 };
@@ -52,8 +54,6 @@ export type AuditEntry = {
 
 /** Filters for querying business configuration audit records. */
 export type GetAuditLogRequest = {
-  /** Scope code, compared case-insensitively; omit to query all scopes. */
-  scopeCode?: string;
   /** Exact actor identifier. */
   userId?: string;
   /** Inclusive lower timestamp bound. */

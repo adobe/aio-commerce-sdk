@@ -196,16 +196,17 @@ to inspect non-sensitive before/after values and the supplied actor. No snapshot
 archives, integrity chains, or additional HTTP routes/UI are provided.
 
 ```typescript
-import { getAuditLog } from "@adobe/aio-commerce-lib-config";
+import { byCodeAndLevel, getAuditLog } from "@adobe/aio-commerce-lib-config";
 
-const audit = await getAuditLog({
-  scopeCode: "global",
+const audit = await getAuditLog(byCodeAndLevel("global", "global"), {
   userId: "operator-123",
 });
 ```
 
-Queries use scope **codes**, not Commerce numeric IDs. Initialize with the current schema on
-each invocation. Password fields, sensitive names, and unknown-schema values are redacted.
+Queries accept the same `by` scope selectors as other configuration helpers; omit the selector
+to query all scopes. Initialize with the current schema on
+each invocation. Schema password fields and unknown-schema values are redacted; field names
+are not used to infer sensitivity.
 Declare all confidential fields as `password`; arbitrary sensitive content in text fields cannot
 be identified automatically. Pass only a stable `metadata.actor.userId` and optional `source`
 derived from authenticated context, never tokens or credentials. The generated PATCH action

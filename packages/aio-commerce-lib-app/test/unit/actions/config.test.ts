@@ -316,9 +316,9 @@ describe("configRuntimeAction", () => {
       );
     });
 
-    test("masks passwords and sets Cache-Control: no-store", async () => {
+    test("sets Cache-Control: no-store on the response", async () => {
       setConfigurationMock.mockResolvedValue({
-        config: [{ name: "apiKey", value: "sensitive" }],
+        config: [],
         scopeId: "store-1",
       });
 
@@ -335,9 +335,6 @@ describe("configRuntimeAction", () => {
       );
 
       expect(result).toMatchObject({
-        body: {
-          config: [{ name: "apiKey", value: "*****" }],
-        },
         headers: { "Cache-Control": "no-store" },
       });
     });

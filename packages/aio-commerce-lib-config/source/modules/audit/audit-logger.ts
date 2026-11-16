@@ -22,6 +22,46 @@ import { redactSensitiveDiffs } from "./secret-redaction";
 import type { ConfigValue } from "#modules/configuration/types";
 import type { AuditActor, AuditEntry, GetAuditLogRequest } from "./types";
 
+const paginationMessage =
+  "INVALID_PAGINATION: limit must be 1-1000 and offset must be a non-negative safe integer";
+const dateMessage =
+  "INVALID_AUDIT_DATES: startDate and endDate must be valid dates in ascending order";
+const AuditDateSchema = v.pipe(
+  v.string(dateMessage),
+  v.transform((value) => Date.parse(value)),
+  v.finite(dateMessage),
+);
+const AuditQuerySchema = v.pipe(
+  v.object({
+    endDate: v.optional(AuditDateSchema),
+    limit: v.optional(
+      v.pipe(
+        v.number(paginationMessage),
+        v.safeInteger(paginationMessage),
+        v.minValue(1, paginationMessage),
+        v.maxValue(1000, paginationMessage),
+      ),
+      50,
+    ),
+    offset: v.optional(
+      v.pipe(
+        v.number(paginationMessage),
+        v.safeInteger(paginationMessage),
+        v.minValue(0, paginationMessage),
+      ),
+      0,
+    ),
+    startDate: v.optional(AuditDateSchema),
+    userId: v.optional(v.string()),
+  }),
+  v.check(
+    ({ startDate, endDate }) =>
+      (startDate ?? Number.NEGATIVE_INFINITY) <=
+      (endDate ?? Number.POSITIVE_INFINITY),
+    dateMessage,
+  ),
+);
+
 /** Prepares only changed fields and permitted actor metadata before live persistence. */
 export function prepareAuditEntry(
   scope: AuditEntry["scope"],
@@ -52,39 +92,19 @@ export function prepareAuditEntry(
 export async function queryAuditLog(
   namespace: string,
   request: GetAuditLogRequest = {},
+  scopeId?: string,
 ) {
-  const limit = request.limit ?? 50;
-  const offset = request.offset ?? 0;
-  if (
-    !Number.isSafeInteger(limit) ||
-    limit < 1 ||
-    limit > 1000 ||
-    !Number.isSafeInteger(offset) ||
-    offset < 0
-  ) {
-    throw new Error(
-      "INVALID_PAGINATION: limit must be 1-1000 and offset must be a non-negative safe integer",
-    );
-  }
-  const start =
-    request.startDate === undefined
-      ? Number.NEGATIVE_INFINITY
-      : Date.parse(request.startDate);
-  const end =
-    request.endDate === undefined
-      ? Number.POSITIVE_INFINITY
-      : Date.parse(request.endDate);
-  if (Number.isNaN(start) || Number.isNaN(end) || start > end) {
-    throw new Error(
-      "INVALID_AUDIT_DATES: startDate and endDate must be valid dates in ascending order",
-    );
-  }
+  const { limit, offset, startDate, endDate, userId } = v.parse(
+    AuditQuerySchema,
+    request,
+  );
+  const start = startDate ?? Number.NEGATIVE_INFINITY;
+  const end = endDate ?? Number.POSITIVE_INFINITY;
   const all = await listAuditEntries(namespace);
   const entries = all.filter(
     (entry) =>
-      (request.scopeCode === undefined ||
-        entry.scope.code.toLowerCase() === request.scopeCode.toLowerCase()) &&
-      (request.userId === undefined || entry.actor.userId === request.userId) &&
+      (scopeId === undefined || entry.scope.id === scopeId) &&
+      (userId === undefined || entry.actor.userId === userId) &&
       Date.parse(entry.timestamp) >= start &&
       Date.parse(entry.timestamp) <= end,
   );

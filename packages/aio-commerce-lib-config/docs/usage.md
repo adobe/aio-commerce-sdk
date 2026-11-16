@@ -20,8 +20,8 @@ See the [API Reference](./api-reference/README.md) for a full list of classes, i
 ### Business configuration audit
 
 `setConfiguration` records changed fields, their non-sensitive before/after values, and optional
-`metadata.actor` (`userId` and `source`). Use `getAuditLog` to query by scope code, actor, date,
-and pagination. Passwords, sensitive field names, and unknown-schema values are redacted.
+`metadata.actor` (`userId` and `source`). Use `getAuditLog(selector?, filters?)` to query by scope selector, actor, date,
+and pagination. Fields declared as `type: "password"` and unknown-schema values are redacted. Sensitivity is not inferred from field names.
 
 Audit queries are read-only and cannot restore historical settings. Live configuration and audit
 use separate writes; an audit failure can be reported after live values have changed.

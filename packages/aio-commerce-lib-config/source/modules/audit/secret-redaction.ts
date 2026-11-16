@@ -15,65 +15,43 @@ import { ENCRYPTED_PREFIX } from "#utils/encryption";
 import type { ConfigDiff } from "./types";
 
 /**
- * Sensitive field name patterns (case-insensitive).
- * Name-based redaction supplements schema-declared password fields.
- */
-const SENSITIVE_FIELD_PATTERNS = [
-  /password/iu,
-  /secret/iu,
-  /api[_-]?key/iu,
-  /access[_-]?token/iu,
-  /auth[_-]?token/iu,
-  /private[_-]?key/iu,
-  /credential/iu,
-  /oauth/iu,
-  /bearer/iu,
-  /encryption[_-]?key/iu,
-  /client[_-]?secret/iu,
-  /token/iu,
-];
-
-/**
  * Redacted value indicator.
  */
 export const REDACTED_VALUE = "***REDACTED***";
 
 /**
- * Checks if a field name indicates sensitive data.
- *
- * @param fieldName - The configuration field name to check.
- * @returns True if the field should be redacted.
- */
-export function isSensitiveField(
-  fieldName: string,
-  passwordFields: ReadonlySet<string> = new Set(),
-) {
-  return (
-    passwordFields.has(fieldName) ||
-    SENSITIVE_FIELD_PATTERNS.some((pattern) => pattern.test(fieldName))
-  );
-}
-
-/**
  * Redacts sensitive values in configuration diffs.
  *
  * @param diffs - Array of configuration diffs.
+ * @param redactedFields - Schema password fields and fields absent from the schema.
  * @returns Array with sensitive values redacted.
  */
 export function redactSensitiveDiffs(
   diffs: ConfigDiff[],
-  passwordFields?: ReadonlySet<string>,
+  redactedFields: ReadonlySet<string>,
 ): ConfigDiff[] {
   return diffs.map((diff) =>
-    isSensitiveField(diff.name, passwordFields) ||
-    (typeof diff.oldValue === "string" &&
-      diff.oldValue.startsWith(ENCRYPTED_PREFIX)) ||
-    (typeof diff.newValue === "string" &&
-      diff.newValue.startsWith(ENCRYPTED_PREFIX))
+    redactedFields.has(diff.name) ||
+    (typeof diff.old?.value === "string" &&
+      diff.old.value.startsWith(ENCRYPTED_PREFIX)) ||
+    (typeof diff.new?.value === "string" &&
+      diff.new.value.startsWith(ENCRYPTED_PREFIX))
       ? {
           ...diff,
-          newValue: diff.newValue === undefined ? undefined : REDACTED_VALUE,
-          oldValue: diff.oldValue === undefined ? undefined : REDACTED_VALUE,
+          new: diff.new
+            ? {
+                ...diff.new,
+                value:
+                  diff.new.value === undefined ? undefined : REDACTED_VALUE,
+              }
+            : undefined,
+          old: diff.old
+            ? {
+                ...diff.old,
+                value:
+                  diff.old.value === undefined ? undefined : REDACTED_VALUE,
+              }
+            : undefined,
         }
       : diff,
   );

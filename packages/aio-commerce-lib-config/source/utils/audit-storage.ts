@@ -12,6 +12,7 @@
 
 import { createHash } from "node:crypto";
 
+import stringify from "safe-stable-stringify";
 import * as v from "valibot";
 
 import { getSharedFiles } from "./repository";
@@ -23,6 +24,10 @@ const ValueSchema = v.optional(
   v.union([v.string(), v.boolean(), v.array(v.string())]),
 );
 const OriginSchema = v.strictObject({ code: v.string(), level: v.string() });
+const ChangeStateSchema = v.strictObject({
+  origin: OriginSchema,
+  value: ValueSchema,
+});
 export const AuditEntrySchema = v.strictObject({
   actor: v.strictObject({
     source: v.optional(v.string()),
@@ -31,10 +36,8 @@ export const AuditEntrySchema = v.strictObject({
   changes: v.array(
     v.strictObject({
       name: v.string(),
-      newOrigin: v.optional(OriginSchema),
-      newValue: ValueSchema,
-      oldOrigin: v.optional(OriginSchema),
-      oldValue: ValueSchema,
+      new: v.optional(ChangeStateSchema),
+      old: v.optional(ChangeStateSchema),
       type: v.picklist(["added", "modified", "removed"]),
     }),
   ),
@@ -64,7 +67,10 @@ export function auditPath(namespace: string, id: string) {
 
 /** Serializes a validated record and rejects oversized audit payloads before live writes. */
 export function serializeAudit(value: v.InferOutput<typeof AuditEntrySchema>) {
-  const serialized = JSON.stringify(value);
+  const serialized = stringify(value);
+  if (serialized === undefined) {
+    throw new Error("INVALID_AUDIT: audit record could not be serialized");
+  }
   if (Buffer.byteLength(serialized, "utf8") > MAX_AUDIT_SIZE) {
     throw new Error("AUDIT_SIZE_LIMIT: audit records must not exceed 10 MiB");
   }
