@@ -33,6 +33,7 @@ import {
   configWithAdminUiSingleGrid,
   configWithCommerceEventing,
   configWithCreditMemoViewButtons,
+  configWithCustomAttributeGridColumns,
   configWithCustomInstallationSteps,
   configWithExternalEventing,
   configWithFullAdminUiV2,
@@ -259,6 +260,15 @@ describe("buildAppManagementExtConfig", () => {
 });
 
 describe("buildAdminUiV2ExtConfig", () => {
+  test("custom-attribute-only columns require no workers or web source", () => {
+    const { adminUi } = configWithCustomAttributeGridColumns;
+    expect(collectUniqueRuntimeActions(adminUi)).toEqual([]);
+    expect(requiresWebSource(adminUi)).toBe(false);
+    expect(
+      buildAdminUiV2ExtConfig(configWithCustomAttributeGridColumns).operations,
+    ).toEqual({});
+  });
+
   test("wires invoice iframe and worker buttons into the extension manifest", () => {
     const result = buildAdminUiV2ExtConfig(configWithInvoiceViewButtons);
     expect(result.web).toBe("web-src");

@@ -3,7 +3,7 @@
   "info": {
     "title": "App Management API",
     "description": "REST API for managing Adobe Commerce App Builder apps: resolving app configuration, managing configuration values, running the installation, upgrade, and uninstallation lifecycle, and managing the scope tree.",
-    "version": "4.2.0",
+    "version": "4.3.0",
     "contact": {},
     "license": {
       "identifier": "Apache-2.0",
@@ -3160,6 +3160,9 @@
           "creditMemo": {
             "type": "object",
             "properties": {
+              "customAttributeGridColumns": {
+                "$ref": "#/components/schemas/AdminUiCustomAttributeGridColumns"
+              },
               "gridColumns": {
                 "$ref": "#/components/schemas/AdminUiGridColumns"
               },
@@ -3201,6 +3204,99 @@
         },
         "additionalProperties": false,
         "required": []
+      },
+      "AdminUiCustomAttributeGridColumns": {
+        "description": "Credit Memo columns read locally by a compatible Commerce provider, without Runtime bindings.",
+        "type": "object",
+        "properties": {
+          "label": {
+            "description": "Optional display label used in App Management lifecycle summaries.",
+            "type": "string",
+            "minLength": 1
+          },
+          "description": {
+            "description": "Optional description used in App Management lifecycle summaries.",
+            "type": "string",
+            "minLength": 1
+          },
+          "columns": {
+            "description": "IDs must be unique after Commerce sanitization, including across sibling Runtime columns.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminUiCustomAttributeGridColumn"
+            },
+            "minItems": 1
+          }
+        },
+        "additionalProperties": false,
+        "required": ["columns"]
+      },
+      "AdminUiCustomAttributeGridColumn": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          },
+          "label": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          },
+          "align": {
+            "type": "string",
+            "enum": ["left", "right", "center"]
+          },
+          "attribute_code": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9_]+$(?![\\s\\S])"
+          },
+          "aclProtected": {
+            "type": "boolean"
+          },
+          "filter": {
+            "$ref": "#/components/schemas/AdminUiCustomAttributeFilter"
+          }
+        },
+        "additionalProperties": false,
+        "required": ["id", "label", "align", "attribute_code"]
+      },
+      "AdminUiCustomAttributeFilter": {
+        "oneOf": [
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "type": {
+                "type": "string",
+                "const": "boolean"
+              }
+            },
+            "required": ["type"]
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "type": {
+                "type": "string",
+                "const": "text"
+              },
+              "conditions": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": ["eq", "neq", "contains"]
+                },
+                "minItems": 1
+              }
+            },
+            "required": ["type", "conditions"]
+          }
+        ]
       },
       "AdminUiGridColumns": {
         "type": "object",

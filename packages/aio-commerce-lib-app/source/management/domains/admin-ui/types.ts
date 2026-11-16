@@ -30,6 +30,7 @@ export type AdminUiComponentKind =
   | "acl"
   | "menu"
   | keyof NonNullable<AdminUi["order"]>
+  | keyof NonNullable<AdminUi["creditMemo"]>
   | keyof NonNullable<AdminUi["nativeUi"]>;
 
 /** Locates a single Admin UI component within the `adminUi` block. */

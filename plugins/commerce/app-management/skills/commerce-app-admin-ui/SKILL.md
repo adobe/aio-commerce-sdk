@@ -39,21 +39,23 @@ Other extensibility domains (webhooks, events, business config) are added separa
 
 ## Extension points at a glance
 
-| Extension point          | Entities                                                            | Variants      | Server handler | Reference                                                          |
-| ------------------------ | ------------------------------------------------------------------- | ------------- | -------------- | ------------------------------------------------------------------ |
-| Grid columns             | order, product, customer, invoice, creditMemo, shipment, newsletter | worker only   | yes            | [grid-columns](references/grid-columns.md)                         |
-| Mass actions             | order, product, customer                                            | view / worker | worker only    | [mass-actions](references/mass-actions.md)                         |
-| Order view buttons       | order only                                                          | view / worker | worker only    | [order-view-buttons](references/order-view-buttons.md)             |
-| Invoice view buttons     | invoice only                                                        | view / worker | worker only    | [invoice-view-buttons](references/invoice-view-buttons.md)         |
-| Credit memo view buttons | creditMemo only                                                     | view / worker | worker only    | [credit-memo-view-buttons](references/credit-memo-view-buttons.md) |
-| Return view buttons      | rma only                                                            | view / worker | worker only    | [rma-view-buttons](references/rma-view-buttons.md)                 |
-| Native UI forms          | supported form targets (`adminUi.nativeUi.replacedPages`)           | view (iframe) | no             | [native-ui-replaced-pages](references/native-ui-replaced-pages.md) |
-| Menu                     | single entry (`adminUi.menu`)                                       | view (iframe) | no             | [menu](references/menu.md)                                         |
-| Custom ACL               | list (`adminUi.acl`)                                                | none          | no             | [custom-acl](references/custom-acl.md)                             |
+| Extension point          | Entities                                                            | Variants      | Server handler | Reference                                                                            |
+| ------------------------ | ------------------------------------------------------------------- | ------------- | -------------- | ------------------------------------------------------------------------------------ |
+| Grid columns             | order, product, customer, invoice, creditMemo, shipment, newsletter | worker only   | yes            | [grid-columns](references/grid-columns.md)                                           |
+| Custom-attribute columns | creditMemo only                                                     | none          | no             | [grid-columns](references/grid-columns.md#custom-attribute-columns-credit-memo-only) |
+| Mass actions             | order, product, customer                                            | view / worker | worker only    | [mass-actions](references/mass-actions.md)                                           |
+| Order view buttons       | order only                                                          | view / worker | worker only    | [order-view-buttons](references/order-view-buttons.md)                               |
+| Invoice view buttons     | invoice only                                                        | view / worker | worker only    | [invoice-view-buttons](references/invoice-view-buttons.md)                           |
+| Credit memo view buttons | creditMemo only                                                     | view / worker | worker only    | [credit-memo-view-buttons](references/credit-memo-view-buttons.md)                   |
+| Return view buttons      | rma only                                                            | view / worker | worker only    | [rma-view-buttons](references/rma-view-buttons.md)                                   |
+| Native UI forms          | supported form targets (`adminUi.nativeUi.replacedPages`)           | view (iframe) | no             | [native-ui-replaced-pages](references/native-ui-replaced-pages.md)                   |
+| Menu                     | single entry (`adminUi.menu`)                                       | view (iframe) | no             | [menu](references/menu.md)                                                           |
+| Custom ACL               | list (`adminUi.acl`)                                                | none          | no             | [custom-acl](references/custom-acl.md)                                               |
 
 `view` renders an iframe into the app's web UI (`web-src`) at the entry's `path`; `worker` invokes a runtime action server-side. Native UI form replacement pages also render in an iframe at their `path`.
 Custom ACL resources have no variant and no handler: they are standalone permissions Commerce renders in the User Roles tree, and the app checks them itself (see [custom-acl](references/custom-acl.md)).
-Grid columns are always worker; native UI form replacements and the menu are always iframes.
+Runtime-backed grid columns are always worker; custom-attribute columns need no handler.
+Native UI form replacements and the menu are always iframes.
 
 ## Step 1 — Understand intent
 
@@ -135,6 +137,11 @@ adminUi: {
 For the `view` variants (iframe) and the complete field set and constraints of each extension point, read the matching reference file under [References](#references) before writing.
 
 ## Step 3 — Register the extension point
+
+For an app declaring only `customAttributeGridColumns` and/or custom ACL resources, init uses the existing
+`commerce/extensibility/1` app-config flow. Do not add an empty `commerce/backend-ui/2` extension or worker handler.
+Custom-attribute columns are currently supported only under `adminUi.creditMemo`; see the grid-columns reference
+for their schema and required Commerce provider capabilities.
 
 Run init so that `commerce/backend-ui/2` is added to `app.config.yaml` and `install.yaml`, and the `src/commerce-backend-ui-2/` extension folder is generated. This is idempotent — safe to run even if the extension is already registered.
 
