@@ -100,7 +100,7 @@ export function enumerateComponents(
     components.set(key, {
       config: customAttributeGridColumns,
       key,
-      label: "creditMemo custom-attribute grid columns",
+      label: "Credit Memo custom attribute grid columns",
       ref: { entity: "creditMemo", kind: "customAttributeGridColumns" },
     });
   }

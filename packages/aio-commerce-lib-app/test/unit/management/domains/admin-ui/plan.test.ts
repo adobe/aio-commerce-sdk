@@ -101,6 +101,7 @@ describe("planAdminUi", () => {
                 .customAttributeGridColumns,
           },
         ],
+        label: "Add Admin UI Credit Memo custom attribute grid columns",
       },
     ]);
   });
@@ -122,6 +123,7 @@ describe("planAdminUi", () => {
           },
         ],
         kind: "update",
+        label: "Update Admin UI Credit Memo custom attribute grid columns",
       },
     ]);
   });
@@ -152,7 +154,11 @@ describe("planAdminUi", () => {
     const { plan } = await planned(configWithCustomAttributeGridColumns, null);
     expect(plan.extensionAction).toBe("unregister");
     expect(plan.operations).toMatchObject([
-      { id: "remove:creditMemo.custom-attribute-grid-columns", kind: "remove" },
+      {
+        id: "remove:creditMemo.custom-attribute-grid-columns",
+        kind: "remove",
+        label: "Remove Admin UI Credit Memo custom attribute grid columns",
+      },
     ]);
   });
 
