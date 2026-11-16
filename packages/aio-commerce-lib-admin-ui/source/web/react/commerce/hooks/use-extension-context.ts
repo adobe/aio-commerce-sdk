@@ -18,6 +18,7 @@ import {
   parseCreditMemoId,
   parseInvoiceId,
   parseOrderId,
+  parseRmaId,
 } from "#web/react/commerce/lib";
 import { error, ok } from "#web/react/result";
 
@@ -27,6 +28,7 @@ import type {
   InvoiceViewButtonContext,
   MassActionContext,
   OrderViewButtonContext,
+  RmaViewButtonContext,
   StoreContext,
 } from "#web/react/commerce/types";
 import type { Result } from "#web/react/result";
@@ -188,5 +190,29 @@ export function useCreditMemoViewButtonContext(): Result<CreditMemoViewButtonCon
     }
 
     return ok({ creditMemoId });
+  }, []);
+}
+
+/**
+ * Returns the return (RMA) ID for a return view-button extension point.
+ * Reads `rmaId` from the page URL search parameters or hash-route query.
+ * Returns an error when the return ID is missing or blank.
+ * @example
+ * ```tsx
+ * const { data, error } = useRmaViewButtonContext();
+ * if (error) throw error;
+ * return <span>{data.rmaId}</span>;
+ * ```
+ */
+export function useRmaViewButtonContext(): Result<RmaViewButtonContext> {
+  return useMemo<Result<RmaViewButtonContext>>(() => {
+    const rmaId = parseRmaId(globalThis.location.href);
+    if (rmaId === null || rmaId.trim() === "") {
+      return error(
+        "Could not find a return ID. Is this frame running as a return view-button extension point?",
+      );
+    }
+
+    return ok({ rmaId });
   }, []);
 }

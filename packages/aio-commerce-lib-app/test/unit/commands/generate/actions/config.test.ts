@@ -33,6 +33,7 @@ import {
   configWithAdminUiSingleGrid,
   configWithCommerceEventing,
   configWithCreditMemoViewButtons,
+  configWithCustomAttributeGridColumns,
   configWithCustomInstallationSteps,
   configWithExternalEventing,
   configWithFullAdminUiV2,
@@ -41,6 +42,7 @@ import {
   configWithOrderViewButtons,
   configWithOrderViewTypeButtons,
   configWithOrderWorkerTypeButtons,
+  configWithRmaViewButtons,
   configWithViewMassActions,
   configWithWebhooks,
   minimalValidConfig,
@@ -51,6 +53,32 @@ const CONFIGURATION_EXTENSION_MATCHER = /EXTENSION=configuration\/1/u;
 const BACKEND_UI_V2_EXTENSION_MATCHER = /EXTENSION=backend-ui\/2/u;
 
 describe("buildAppManagementExtConfig", () => {
+  test.each([
+    {
+      build: () => buildAppManagementExtConfig(minimalValidConfig),
+      names: ["app-config", "association", "installation"],
+    },
+    {
+      build: buildBusinessConfigurationExtConfig,
+      names: ["config", "scope-tree"],
+    },
+  ])(
+    "generates Node 26 runtime actions for $names",
+    async ({ build, names }) => {
+      await withTempFiles({}, async (tempDir) => {
+        const doc = await createOrUpdateExtConfig(
+          join(tempDir, "ext.config.yaml"),
+          build(),
+        );
+        const { actions } = doc.toJS().runtimeManifest.packages[PACKAGE_NAME];
+
+        for (const name of names) {
+          expect(actions[name].runtime).toBe("nodejs:26");
+        }
+      });
+    },
+  );
+
   test.each([
     {
       build: () => buildAppManagementExtConfig(minimalValidConfig),
@@ -232,6 +260,15 @@ describe("buildAppManagementExtConfig", () => {
 });
 
 describe("buildAdminUiV2ExtConfig", () => {
+  test("custom-attribute-only columns require no workers or web source", () => {
+    const { adminUi } = configWithCustomAttributeGridColumns;
+    expect(collectUniqueRuntimeActions(adminUi)).toEqual([]);
+    expect(requiresWebSource(adminUi)).toBe(false);
+    expect(
+      buildAdminUiV2ExtConfig(configWithCustomAttributeGridColumns).operations,
+    ).toEqual({});
+  });
+
   test("wires invoice iframe and worker buttons into the extension manifest", () => {
     const result = buildAdminUiV2ExtConfig(configWithInvoiceViewButtons);
     expect(result.web).toBe("web-src");
@@ -251,6 +288,17 @@ describe("buildAdminUiV2ExtConfig", () => {
     ]);
     expect(result.operations?.workerProcess).toEqual([
       { impl: "creditmemo/refund-offline", type: "action" },
+    ]);
+  });
+
+  test("wires return iframe and worker buttons into the extension manifest", () => {
+    const result = buildAdminUiV2ExtConfig(configWithRmaViewButtons);
+    expect(result.web).toBe("web-src");
+    expect(result.operations?.view).toEqual([
+      { impl: "index.html", type: "web" },
+    ]);
+    expect(result.operations?.workerProcess).toEqual([
+      { impl: "rma/custom-flow", type: "action" },
     ]);
   });
 

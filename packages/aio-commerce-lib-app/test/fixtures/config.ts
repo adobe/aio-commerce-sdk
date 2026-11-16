@@ -106,6 +106,42 @@ export const minimalValidConfig = {
   metadata: mockMetadata,
 } satisfies CommerceAppConfigOutputModel;
 
+/** Credit Memo custom-attribute columns without workers or views. */
+export const configWithCustomAttributeGridColumns = {
+  ...minimalValidConfig,
+  adminUi: {
+    creditMemo: {
+      customAttributeGridColumns: {
+        columns: [
+          {
+            aclProtected: true,
+            align: "left",
+            attribute_code: "reason",
+            filter: { conditions: ["eq", "contains"], type: "text" },
+            id: "refund_reason",
+            label: "Refund reason",
+          },
+        ],
+      },
+    },
+  },
+} satisfies CommerceAppConfigOutputModel;
+
+/** Custom-attribute columns with display metadata for lifecycle summaries. */
+export const configWithCustomAttributeGridColumnsMetadata = {
+  ...configWithCustomAttributeGridColumns,
+  adminUi: {
+    creditMemo: {
+      customAttributeGridColumns: {
+        ...configWithCustomAttributeGridColumns.adminUi.creditMemo
+          .customAttributeGridColumns,
+        description: "Displays serialized Credit Memo attributes.",
+        label: "Credit Memo details",
+      },
+    },
+  },
+} satisfies CommerceAppConfigOutputModel;
+
 type MockConfigOverrides = Omit<
   Partial<CommerceAppConfigOutputModel>,
   "metadata"
@@ -545,6 +581,39 @@ export const configWithCreditMemoViewButtons = {
             success: "Credit memo refunded successfully.",
           },
           runtimeAction: "creditmemo/refund-offline",
+          sortOrder: 110,
+          timeout: 15,
+          type: "worker",
+        },
+      ],
+    },
+  },
+} satisfies CommerceAppConfigOutputModel;
+
+/** Config fixture with return (RMA) view and worker buttons. */
+export const configWithRmaViewButtons = {
+  ...minimalValidConfig,
+  adminUi: {
+    rma: {
+      viewButtons: [
+        {
+          id: "return-details",
+          label: "Return details",
+          path: "#/return",
+          sandboxPermissions: ["allow-modals"],
+          sortOrder: 100,
+          title: "Custom return details",
+          type: "view",
+        },
+        {
+          confirm: { message: "Run the custom return flow?" },
+          id: "custom-return-flow",
+          label: "Custom Return Flow",
+          notifications: {
+            error: "Unable to run the custom return flow.",
+            success: "Custom return flow completed.",
+          },
+          runtimeAction: "rma/custom-flow",
           sortOrder: 110,
           timeout: 15,
           type: "worker",

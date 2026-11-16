@@ -3,14 +3,14 @@
   "info": {
     "title": "App Management API",
     "description": "REST API for managing Adobe Commerce App Builder apps: resolving app configuration, managing configuration values, running the installation, upgrade, and uninstallation lifecycle, and managing the scope tree.",
-    "version": "4.2.0",
+    "version": "4.3.0",
     "contact": {},
     "license": {
       "identifier": "Apache-2.0",
       "name": "Apache-2.0"
     },
     "x-meta": {
-      "packageVersion": "2.1.0"
+      "packageVersion": "2.2.0"
     }
   },
   "servers": [
@@ -3160,6 +3160,9 @@
           "creditMemo": {
             "type": "object",
             "properties": {
+              "customAttributeGridColumns": {
+                "$ref": "#/components/schemas/AdminUiCustomAttributeGridColumns"
+              },
               "gridColumns": {
                 "$ref": "#/components/schemas/AdminUiGridColumns"
               },
@@ -3167,6 +3170,17 @@
                 "type": "array",
                 "items": {
                   "$ref": "#/components/schemas/AdminUiCreditMemoViewButton"
+                }
+              }
+            }
+          },
+          "rma": {
+            "type": "object",
+            "properties": {
+              "viewButtons": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/AdminUiRmaViewButton"
                 }
               }
             }
@@ -3190,6 +3204,99 @@
         },
         "additionalProperties": false,
         "required": []
+      },
+      "AdminUiCustomAttributeGridColumns": {
+        "description": "Credit Memo columns read locally by a compatible Commerce provider, without Runtime bindings.",
+        "type": "object",
+        "properties": {
+          "label": {
+            "description": "Optional display label used in App Management lifecycle summaries.",
+            "type": "string",
+            "minLength": 1
+          },
+          "description": {
+            "description": "Optional description used in App Management lifecycle summaries.",
+            "type": "string",
+            "minLength": 1
+          },
+          "columns": {
+            "description": "IDs must be unique after Commerce sanitization, including across sibling Runtime columns.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminUiCustomAttributeGridColumn"
+            },
+            "minItems": 1
+          }
+        },
+        "additionalProperties": false,
+        "required": ["columns"]
+      },
+      "AdminUiCustomAttributeGridColumn": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          },
+          "label": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          },
+          "align": {
+            "type": "string",
+            "enum": ["left", "right", "center"]
+          },
+          "attribute_code": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9_]+$(?![\\s\\S])"
+          },
+          "aclProtected": {
+            "type": "boolean"
+          },
+          "filter": {
+            "$ref": "#/components/schemas/AdminUiCustomAttributeFilter"
+          }
+        },
+        "additionalProperties": false,
+        "required": ["id", "label", "align", "attribute_code"]
+      },
+      "AdminUiCustomAttributeFilter": {
+        "oneOf": [
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "type": {
+                "type": "string",
+                "const": "boolean"
+              }
+            },
+            "required": ["type"]
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "type": {
+                "type": "string",
+                "const": "text"
+              },
+              "conditions": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": ["eq", "neq", "contains"]
+                },
+                "minItems": 1
+              }
+            },
+            "required": ["type", "conditions"]
+          }
+        ]
       },
       "AdminUiGridColumns": {
         "type": "object",
@@ -3444,6 +3551,122 @@
         "required": ["type", "id", "label", "path"]
       },
       "AdminUiCreditMemoViewWorkerButton": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "worker"
+          },
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "label": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1
+          },
+          "runtimeAction": {
+            "type": "string",
+            "minLength": 1
+          },
+          "aclProtected": {
+            "type": "boolean"
+          },
+          "level": {
+            "type": "number",
+            "enum": [-1, 0, 1]
+          },
+          "sortOrder": {
+            "type": "number",
+            "minimum": 0
+          },
+          "confirm": {
+            "$ref": "#/components/schemas/AdminUiConfirm"
+          },
+          "timeout": {
+            "type": "number",
+            "minimum": 0
+          },
+          "notifications": {
+            "$ref": "#/components/schemas/AdminUiNotifications"
+          }
+        },
+        "additionalProperties": false,
+        "required": ["type", "id", "label", "runtimeAction"]
+      },
+      "AdminUiRmaViewButton": {
+        "discriminator": {
+          "propertyName": "type",
+          "mapping": {
+            "view": "#/components/schemas/AdminUiRmaViewNavigationButton",
+            "worker": "#/components/schemas/AdminUiRmaViewWorkerButton"
+          }
+        },
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/AdminUiRmaViewNavigationButton"
+          },
+          {
+            "$ref": "#/components/schemas/AdminUiRmaViewWorkerButton"
+          }
+        ]
+      },
+      "AdminUiRmaViewNavigationButton": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "view"
+          },
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "label": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1
+          },
+          "path": {
+            "type": "string",
+            "minLength": 1
+          },
+          "aclProtected": {
+            "type": "boolean"
+          },
+          "level": {
+            "type": "number",
+            "enum": [-1, 0, 1]
+          },
+          "sortOrder": {
+            "type": "number",
+            "minimum": 0
+          },
+          "confirm": {
+            "$ref": "#/components/schemas/AdminUiConfirm"
+          },
+          "sandboxPermissions": {
+            "$ref": "#/components/schemas/AdminUiSandboxPermissions"
+          },
+          "notifications": {
+            "$ref": "#/components/schemas/AdminUiNotifications"
+          }
+        },
+        "additionalProperties": false,
+        "required": ["type", "id", "label", "path"]
+      },
+      "AdminUiRmaViewWorkerButton": {
         "type": "object",
         "properties": {
           "type": {
@@ -3844,6 +4067,16 @@
           },
           "ioEventsEnv": {
             "type": "string"
+          },
+          "commerceBaseUrl": {
+            "description": "The base URL of the Commerce instance.",
+            "type": ["string", "null"],
+            "format": "uri"
+          },
+          "commerceEnv": {
+            "description": "The deployment type of the Commerce instance.",
+            "type": ["string", "null"],
+            "enum": ["saas", "paas", null]
           },
           "operation": {
             "description": "Set to `uninstall` to plan an uninstallation. Without it, `POST /installation/plan` plans the install or upgrade the installed state calls for.",

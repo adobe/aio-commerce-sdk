@@ -6,7 +6,7 @@ function isIntegrationAuthProvider(
 ): provider is IntegrationAuthProvider;
 ```
 
-Defined in: [integration-auth/provider.ts:58](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-auth/source/lib/integration-auth/provider.ts#L58)
+Defined in: [integration-auth/provider.ts:58](https://github.com/adobe/aio-commerce-sdk/blob/6e9704065e17b124069637c99898c47981974e20/packages/aio-commerce-lib-auth/source/lib/integration-auth/provider.ts#L58)
 
 Type guard to check if a value is an IntegrationAuthProvider instance.
 

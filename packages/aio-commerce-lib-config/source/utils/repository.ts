@@ -88,13 +88,21 @@ function resolveCurrentRegion(): Region {
 }
 
 /**
- * Get the shared state instances for every supported region. Used to fan out cache
- * invalidation on config writes/deletes, since `aio-lib-state` regions are independent
- * stores with no cross-region replication.
- * @returns Promise resolving to an array of shared AdobeState instances, one per region.
+ * Get the shared state instances for every supported region that can be initialized. Used to
+ * fan out cache invalidation on config writes/deletes, since `aio-lib-state` regions are
+ * independent stores with no cross-region replication.
+ * @returns Promise resolving to an array of shared AdobeState instances, one per usable region.
  */
-export function getAllSharedStates(): Promise<AdobeState[]> {
-  return Promise.all(ALL_REGIONS.map((region) => getSharedState(region)));
+export async function getAllSharedStates(): Promise<AdobeState[]> {
+  // `aio-lib-state` only accepts the `amer` region in the stage environment. A region that
+  // cannot initialize must not stop the others from being invalidated.
+  const results = await Promise.allSettled(
+    ALL_REGIONS.map((region) => getSharedState(region)),
+  );
+
+  return results.flatMap((result) =>
+    result.status === "fulfilled" ? [result.value] : [],
+  );
 }
 
 /**

@@ -6,7 +6,7 @@ function isWebhookSuccessResponse(
 ): response is WebhookSuccessResponse;
 ```
 
-Defined in: [responses/types.ts:44](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-webhooks/source/responses/types.ts#L44)
+Defined in: [responses/types.ts:44](https://github.com/adobe/aio-commerce-sdk/blob/6e9704065e17b124069637c99898c47981974e20/packages/aio-commerce-lib-webhooks/source/responses/types.ts#L44)
 
 Determines whether a value is a successful SDK response containing webhook operation response body data.
 

@@ -17,7 +17,7 @@ type LifecycleContext = {
 };
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/common/workflow/step.ts:22](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-app/source/management/common/workflow/step.ts#L22)
+Defined in: [aio-commerce-lib-app/source/management/common/workflow/step.ts:22](https://github.com/adobe/aio-commerce-sdk/blob/6e9704065e17b124069637c99898c47981974e20/packages/aio-commerce-lib-app/source/management/common/workflow/step.ts#L22)
 
 Shared context available to all steps during a lifecycle workflow.
 
@@ -29,7 +29,7 @@ Shared context available to all steps during a lifecycle workflow.
 appData: AppData;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/common/workflow/step.ts:27](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-app/source/management/common/workflow/step.ts#L27)
+Defined in: [aio-commerce-lib-app/source/management/common/workflow/step.ts:27](https://github.com/adobe/aio-commerce-sdk/blob/6e9704065e17b124069637c99898c47981974e20/packages/aio-commerce-lib-app/source/management/common/workflow/step.ts#L27)
 
 The credentials of the app being managed.
 
@@ -41,7 +41,7 @@ The credentials of the app being managed.
 appId: string;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/common/workflow/step.ts:24](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-app/source/management/common/workflow/step.ts#L24)
+Defined in: [aio-commerce-lib-app/source/management/common/workflow/step.ts:24](https://github.com/adobe/aio-commerce-sdk/blob/6e9704065e17b124069637c99898c47981974e20/packages/aio-commerce-lib-app/source/management/common/workflow/step.ts#L24)
 
 The `metadata.id` of the app being managed.
 
@@ -53,7 +53,7 @@ The `metadata.id` of the app being managed.
 customScripts?: Record<string, unknown>;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/common/workflow/step.ts:55](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-app/source/management/common/workflow/step.ts#L55)
+Defined in: [aio-commerce-lib-app/source/management/common/workflow/step.ts:55](https://github.com/adobe/aio-commerce-sdk/blob/6e9704065e17b124069637c99898c47981974e20/packages/aio-commerce-lib-app/source/management/common/workflow/step.ts#L55)
 
 Custom scripts defined in the configuration (if any).
 
@@ -65,7 +65,7 @@ Custom scripts defined in the configuration (if any).
 logger: ReturnType<typeof AioLogger>;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/common/workflow/step.ts:52](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-app/source/management/common/workflow/step.ts#L52)
+Defined in: [aio-commerce-lib-app/source/management/common/workflow/step.ts:52](https://github.com/adobe/aio-commerce-sdk/blob/6e9704065e17b124069637c99898c47981974e20/packages/aio-commerce-lib-app/source/management/common/workflow/step.ts#L52)
 
 Logger instance for workflow logging.
 
@@ -84,7 +84,7 @@ params: RuntimeActionParams & {
 };
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/common/workflow/step.ts:36](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-app/source/management/common/workflow/step.ts#L36)
+Defined in: [aio-commerce-lib-app/source/management/common/workflow/step.ts:36](https://github.com/adobe/aio-commerce-sdk/blob/6e9704065e17b124069637c99898c47981974e20/packages/aio-commerce-lib-app/source/management/common/workflow/step.ts#L36)
 
 The raw action parameters from the App Builder runtime action.
 

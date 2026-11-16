@@ -8,7 +8,7 @@ function parseOrderViewButtonRequest(input: unknown): {
 };
 ```
 
-Defined in: [aio-commerce-lib-admin-ui/source/order-view-buttons/presets.ts:45](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-admin-ui/source/order-view-buttons/presets.ts#L45)
+Defined in: [aio-commerce-lib-admin-ui/source/order-view-buttons/presets.ts:46](https://github.com/adobe/aio-commerce-sdk/blob/6e9704065e17b124069637c99898c47981974e20/packages/aio-commerce-lib-admin-ui/source/order-view-buttons/presets.ts#L46)
 
 Parses and validates the JSON body Commerce POSTs to an order view button handler.
 

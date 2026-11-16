@@ -176,6 +176,8 @@ registrations, not inferred from legacy order buttons. Use credit memo-specific
 runtime helpers from `@adobe/aio-commerce-sdk/admin-ui/credit-memo-view-buttons`
 and `useCreditMemoViewButtonContext` for iframe pages.
 
+V2 also supports return (RMA) detail-page buttons under `adminUi.rma.viewButtons`, with view and worker variants. These are new registrations, not inferred from legacy order buttons. Use return-specific runtime helpers from `@adobe/aio-commerce-sdk/admin-ui/rma-view-buttons` and `useRmaViewButtonContext` for iframe pages.
+
 V1 order view buttons (`order.viewButtons`) are now supported in v2. Like mass actions, the v1
 `displayIframe` boolean is replaced by an explicit `type` discriminator.
 

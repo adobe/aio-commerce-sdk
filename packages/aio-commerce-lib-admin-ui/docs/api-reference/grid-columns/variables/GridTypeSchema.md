@@ -15,7 +15,7 @@ const GridTypeSchema: PicklistSchema<
 >;
 ```
 
-Defined in: [aio-commerce-lib-admin-ui/source/grid-columns/requests/schema.ts:26](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-admin-ui/source/grid-columns/requests/schema.ts#L26)
+Defined in: [aio-commerce-lib-admin-ui/source/grid-columns/requests/schema.ts:26](https://github.com/adobe/aio-commerce-sdk/blob/6e9704065e17b124069637c99898c47981974e20/packages/aio-commerce-lib-admin-ui/source/grid-columns/requests/schema.ts#L26)
 
 Grid identifier sent by Commerce on the `commerce/backend-ui/2` wire contract.
 

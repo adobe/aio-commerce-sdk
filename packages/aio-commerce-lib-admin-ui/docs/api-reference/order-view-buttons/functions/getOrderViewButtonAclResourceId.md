@@ -7,11 +7,11 @@ function getOrderViewButtonAclResourceId(
 ): string;
 ```
 
-Defined in: [aio-commerce-lib-admin-ui/source/order-view-buttons/acl-resource-id.ts:37](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-admin-ui/source/order-view-buttons/acl-resource-id.ts#L37)
+Defined in: [aio-commerce-lib-admin-ui/source/order-view-buttons/acl-resource-id.ts:37](https://github.com/adobe/aio-commerce-sdk/blob/6e9704065e17b124069637c99898c47981974e20/packages/aio-commerce-lib-admin-ui/source/order-view-buttons/acl-resource-id.ts#L37)
 
 Derives the deterministic Commerce ACL resource id for an order view button.
 
-View buttons exist only on the order entity, so no entity discriminator is needed.
+This helper is scoped to the order entity, so no entity discriminator is needed.
 The id is assembled as: `getAclResourceId(metadataId)` + `"_order_viewbuttons_"` +
 sanitized `buttonId`. The `buttonId` is sanitized (trimmed, lowercased, non-`[a-z0-9_]` → `_`).
 `"Magento_CommerceBackendUix::adminuisdk_app_"` in the example is the fixed constant prefix

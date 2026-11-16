@@ -34,6 +34,14 @@ export function parseCreditMemoId(href: string): string | null {
   return parseViewButtonId(href, "creditMemoId");
 }
 
+/**
+ * Extracts the return (RMA) ID from the given absolute URL.
+ * @param href - The URL to read the return ID from (typically `window.location.href`).
+ */
+export function parseRmaId(href: string): string | null {
+  return parseViewButtonId(href, "rmaId");
+}
+
 /** Reads a view-button identifier from the URL search parameters or hash-route query. */
 function parseViewButtonId(href: string, key: string): string | null {
   const urlObj = new URL(href);

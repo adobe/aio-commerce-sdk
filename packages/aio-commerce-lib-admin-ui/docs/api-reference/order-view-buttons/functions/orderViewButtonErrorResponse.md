@@ -7,7 +7,7 @@ function orderViewButtonErrorResponse(
 ): ErrorResponse<OrderViewButtonErrorBody>;
 ```
 
-Defined in: [aio-commerce-lib-admin-ui/source/order-view-buttons/presets.ts:83](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-admin-ui/source/order-view-buttons/presets.ts#L83)
+Defined in: [aio-commerce-lib-admin-ui/source/order-view-buttons/presets.ts:84](https://github.com/adobe/aio-commerce-sdk/blob/6e9704065e17b124069637c99898c47981974e20/packages/aio-commerce-lib-admin-ui/source/order-view-buttons/presets.ts#L84)
 
 Builds an error response for a worker order view button handler with the given HTTP status code.
 

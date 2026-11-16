@@ -8,7 +8,7 @@ function getMassActionAclResourceId(
 ): string;
 ```
 
-Defined in: [aio-commerce-lib-admin-ui/source/mass-actions/acl-resource-id.ts:40](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-admin-ui/source/mass-actions/acl-resource-id.ts#L40)
+Defined in: [aio-commerce-lib-admin-ui/source/mass-actions/acl-resource-id.ts:40](https://github.com/adobe/aio-commerce-sdk/blob/6e9704065e17b124069637c99898c47981974e20/packages/aio-commerce-lib-admin-ui/source/mass-actions/acl-resource-id.ts#L40)
 
 Derives the deterministic Commerce ACL resource id for a mass action.
 

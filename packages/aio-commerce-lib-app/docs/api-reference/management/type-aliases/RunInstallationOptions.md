@@ -9,7 +9,7 @@ type RunInstallationOptions = {
 };
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/deprecated/runner.ts:95](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-app/source/management/deprecated/runner.ts#L95)
+Defined in: [aio-commerce-lib-app/source/management/deprecated/runner.ts:95](https://github.com/adobe/aio-commerce-sdk/blob/6e9704065e17b124069637c99898c47981974e20/packages/aio-commerce-lib-app/source/management/deprecated/runner.ts#L95)
 
 Options for running an installation.
 
@@ -25,7 +25,7 @@ Removed in the next major together with [runInstallation](../functions/runInstal
 config: CommerceAppConfigOutputModel;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/deprecated/runner.ts:100](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-app/source/management/deprecated/runner.ts#L100)
+Defined in: [aio-commerce-lib-app/source/management/deprecated/runner.ts:100](https://github.com/adobe/aio-commerce-sdk/blob/6e9704065e17b124069637c99898c47981974e20/packages/aio-commerce-lib-app/source/management/deprecated/runner.ts#L100)
 
 The app configuration.
 
@@ -37,7 +37,7 @@ The app configuration.
 hooks?: InstallationHooks;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/deprecated/runner.ts:106](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-app/source/management/deprecated/runner.ts#L106)
+Defined in: [aio-commerce-lib-app/source/management/deprecated/runner.ts:106](https://github.com/adobe/aio-commerce-sdk/blob/6e9704065e17b124069637c99898c47981974e20/packages/aio-commerce-lib-app/source/management/deprecated/runner.ts#L106)
 
 Lifecycle hooks for status change notifications.
 
@@ -49,7 +49,7 @@ Lifecycle hooks for status change notifications.
 initialState: InProgressWorkflowState;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/deprecated/runner.ts:103](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-app/source/management/deprecated/runner.ts#L103)
+Defined in: [aio-commerce-lib-app/source/management/deprecated/runner.ts:103](https://github.com/adobe/aio-commerce-sdk/blob/6e9704065e17b124069637c99898c47981974e20/packages/aio-commerce-lib-app/source/management/deprecated/runner.ts#L103)
 
 The initial installation state (with all steps pending).
 
@@ -61,6 +61,6 @@ The initial installation state (with all steps pending).
 installationContext: LifecycleContext;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/deprecated/runner.ts:97](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-app/source/management/deprecated/runner.ts#L97)
+Defined in: [aio-commerce-lib-app/source/management/deprecated/runner.ts:97](https://github.com/adobe/aio-commerce-sdk/blob/6e9704065e17b124069637c99898c47981974e20/packages/aio-commerce-lib-app/source/management/deprecated/runner.ts#L97)
 
 Shared installation context (params, logger, etc.).

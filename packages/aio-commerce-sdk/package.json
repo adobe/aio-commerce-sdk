@@ -1,6 +1,6 @@
 {
   "name": "@adobe/aio-commerce-sdk",
-  "version": "2.0.1",
+  "version": "2.1.0",
   "private": false,
   "description": "Meta-package re-exporting Adobe Commerce SDK libraries for Adobe App Builder applications.",
   "keywords": [
@@ -164,7 +164,7 @@
     }
   },
   "engines": {
-    "node": ">=22 <=24"
+    "node": ">=22 <=26"
   },
   "publishConfig": {
     "access": "public",

@@ -1,5 +1,22 @@
 # @adobe/aio-commerce-lib-config
 
+## 1.9.0
+
+### Minor Changes
+
+- [#770](https://github.com/adobe/aio-commerce-sdk/pull/770) [`9b6e61c`](https://github.com/adobe/aio-commerce-sdk/commit/9b6e61ceed9c45ae415c37b401272f09d4c75759) Thanks [@obarcelonap](https://github.com/obarcelonap)! - Add support for Node.js 26.
+
+### Patch Changes
+
+- [#793](https://github.com/adobe/aio-commerce-sdk/pull/793) [`a066916`](https://github.com/adobe/aio-commerce-sdk/commit/a066916918f9d3ff66affc7783c743c34a02f263) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Make clearing a config entry (including `setSystemConfigByKey(key, null)`) succeed when `aio-lib-files` throws `ERROR_FILE_NOT_EXISTS`.
+
+- [#803](https://github.com/adobe/aio-commerce-sdk/pull/803) [`e56dd61`](https://github.com/adobe/aio-commerce-sdk/commit/e56dd614586f4a335d0fbc373a5cd2e07fa3db48) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Clear cached configuration in every `aio-lib-state` region that is available, so a region that cannot be initialized (such as any region but `amer` on stage) no longer leaves stale entries behind. Clearing a config entry, including `setSystemConfigByKey(key, null)`, now throws when a region's cached entry cannot be removed, instead of logging at debug level and succeeding. Writes still succeed and log a warning.
+
+- [#792](https://github.com/adobe/aio-commerce-sdk/pull/792) [`6dbdf71`](https://github.com/adobe/aio-commerce-sdk/commit/6dbdf711a6fdf6f38794dc74a0a9e16146c5d771) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Export `package.json` so `@adobe/aio-commerce-lib-config/package.json` can be imported.
+- Updated dependencies [[`9b6e61c`](https://github.com/adobe/aio-commerce-sdk/commit/9b6e61ceed9c45ae415c37b401272f09d4c75759)]:
+  - @adobe/aio-commerce-lib-api@1.5.0
+  - @adobe/aio-commerce-lib-core@1.4.0
+
 ## 1.8.1
 
 ### Patch Changes

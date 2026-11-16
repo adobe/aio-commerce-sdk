@@ -61,6 +61,13 @@ export type LeafPlanContext = {
   configuredValues: Record<string, Partial<SubscriptionValues>[]>;
 };
 
+/** The stored event data of a provider, which `publishEvent` reads. */
+export function storedEventsValue(
+  providerKey: string,
+): Extract<EventingOperationValue, { resourceType: "storedEvents" }> {
+  return { providerKey, resourceType: "storedEvents" };
+}
+
 /** The desired value of a provider. */
 export function providerValue(
   target: EventingProviderSnapshot,
@@ -430,6 +437,8 @@ function operationId(
       return `${kind}:registration:${value.providerKey}:${value.runtimeAction}`;
     case "subscription":
       return `${kind}:subscription:${value.name}`;
+    case "storedEvents":
+      return `${kind}:stored-events:${value.providerKey}`;
     default:
       return kind;
   }
@@ -460,6 +469,8 @@ function operationLabel(
       return value.changeMode === "replace"
         ? `Replace Commerce subscription: ${value.name}`
         : `${verb} Commerce subscription: ${value.name}`;
+    case "storedEvents":
+      return `${verb} stored event data of provider "${value.providerKey}"`;
     default:
       return verb;
   }

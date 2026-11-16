@@ -41,6 +41,7 @@ import { toPlanPreview } from "./plan-preview";
 
 import type { ActionResponse } from "@adobe/aio-commerce-lib-core/responses";
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
+import type { AssociatedCommerceData } from "#management/association/types";
 import type {
   AppStateSnapshot,
   LifecycleAttempt,
@@ -68,6 +69,9 @@ export type PreparedRequest = {
    */
   businessConfigOnlyVersion: string | null;
 
+  /** The Commerce instance the request body supplied because the app has no association record, or `null`. */
+  commerceFromBody: AssociatedCommerceData | null;
+
   /** Whether the state names a baseline snapshot that is no longer stored. */
   isBaselineMissing: boolean;
 
@@ -91,14 +95,14 @@ type ResolveOperationResult =
   | RejectedRequest;
 
 /**
- * Checks what every planning request needs (the action version, the app config and an
- * association) and creates the lifecycle runtime.
+ * Checks what every planning request needs (the action version, the app config and a Commerce
+ * instance) and creates the lifecycle runtime. `operation` is the operation the request is for,
+ * when it is known before the state is read.
  */
-export async function prepareRequest({
-  body,
-  logger,
-  rawParams,
-}: RequestHandlerArgs): Promise<PrepareRequestResult> {
+export async function prepareRequest(
+  { body, logger, rawParams }: RequestHandlerArgs,
+  operation?: LifecycleOperation,
+): Promise<PrepareRequestResult> {
   const actionVersion = process.env.__OW_ACTION_VERSION;
   if (!actionVersion) {
     return rejected(
@@ -117,10 +121,12 @@ export async function prepareRequest({
     );
   }
 
-  const params = await resolveWorkflowParams(body, rawParams);
-  if (!params) {
+  const resolved = await resolveWorkflowParams(body, rawParams, operation);
+  if (!resolved) {
     return rejected(notAssociatedConflict());
   }
+
+  const { commerceFromBody, params } = resolved;
 
   logger.debug(
     `Lifecycle request for app "${body.appData.projectName}" (workspace: "${body.appData.workspaceName}", commerce: "${params.AIO_COMMERCE_API_BASE_URL}")`,
@@ -164,6 +170,7 @@ export async function prepareRequest({
         body.installedState === "business-config-only" && body.installedVersion
           ? body.installedVersion
           : null,
+      commerceFromBody,
       isBaselineMissing,
       latestAttempt: state?.latestAttempt ?? null,
       params,
@@ -177,7 +184,7 @@ export async function prepareRequest({
  * the plan's issues as a validation result, and the plan, whose `id` starts it.
  */
 export async function planRequestedOperation(args: RequestHandlerArgs) {
-  const prepared = await prepareRequest(args);
+  const prepared = await prepareRequest(args, args.body.operation);
   if (prepared.kind === "rejected") {
     return prepared.response;
   }

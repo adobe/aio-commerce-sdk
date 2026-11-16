@@ -7,7 +7,7 @@ type HostConnection = {
 };
 ```
 
-Defined in: [aio-commerce-lib-admin-ui/source/web/react/commerce/types.ts:47](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-admin-ui/source/web/react/commerce/types.ts#L47)
+Defined in: [aio-commerce-lib-admin-ui/source/web/react/commerce/types.ts:47](https://github.com/adobe/aio-commerce-sdk/blob/6e9704065e17b124069637c99898c47981974e20/packages/aio-commerce-lib-admin-ui/source/web/react/commerce/types.ts#L47)
 
 Actions for closing the extension iframe and returning control to the Commerce Admin.
 
@@ -19,9 +19,9 @@ Actions for closing the extension iframe and returning control to the Commerce A
 close: () => Promise<void>;
 ```
 
-Defined in: [aio-commerce-lib-admin-ui/source/web/react/commerce/types.ts:49](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-admin-ui/source/web/react/commerce/types.ts#L49)
+Defined in: [aio-commerce-lib-admin-ui/source/web/react/commerce/types.ts:49](https://github.com/adobe/aio-commerce-sdk/blob/6e9704065e17b124069637c99898c47981974e20/packages/aio-commerce-lib-admin-ui/source/web/react/commerce/types.ts#L49)
 
-Closes the iframe and navigates back to the originating grid or order.
+Closes the iframe and navigates back to the originating grid or detail page.
 
 #### Returns
 
@@ -35,7 +35,7 @@ Closes the iframe and navigates back to the originating grid or order.
 closeWithError: () => Promise<void>;
 ```
 
-Defined in: [aio-commerce-lib-admin-ui/source/web/react/commerce/types.ts:52](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-admin-ui/source/web/react/commerce/types.ts#L52)
+Defined in: [aio-commerce-lib-admin-ui/source/web/react/commerce/types.ts:52](https://github.com/adobe/aio-commerce-sdk/blob/6e9704065e17b124069637c99898c47981974e20/packages/aio-commerce-lib-admin-ui/source/web/react/commerce/types.ts#L52)
 
 Closes the iframe and navigates back, flagging the originating page that an error occurred.
 

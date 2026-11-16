@@ -4,7 +4,7 @@
 function buildSearchCriteria(criteria: SearchCriteria): URLSearchParams;
 ```
 
-Defined in: [aio-commerce-lib-api/source/lib/commerce/search-criteria/serialize.ts:120](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-api/source/lib/commerce/search-criteria/serialize.ts#L120)
+Defined in: [aio-commerce-lib-api/source/lib/commerce/search-criteria/serialize.ts:120](https://github.com/adobe/aio-commerce-sdk/blob/6e9704065e17b124069637c99898c47981974e20/packages/aio-commerce-lib-api/source/lib/commerce/search-criteria/serialize.ts#L120)
 
 Serializes [SearchCriteria](../type-aliases/SearchCriteria.md) into the `searchCriteria[...]` query parameters that
 Adobe Commerce REST search endpoints expect.

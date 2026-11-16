@@ -14,7 +14,7 @@ function deleteEventMetadataForProvider(
 ): Promise<void>;
 ```
 
-Defined in: [io-events/api/event-metadata/endpoints.ts:179](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-events/source/io-events/api/event-metadata/endpoints.ts#L179)
+Defined in: [io-events/api/event-metadata/endpoints.ts:179](https://github.com/adobe/aio-commerce-sdk/blob/6e9704065e17b124069637c99898c47981974e20/packages/aio-commerce-lib-events/source/io-events/api/event-metadata/endpoints.ts#L179)
 
 Deletes event metadata for a specific event code and provider.
 

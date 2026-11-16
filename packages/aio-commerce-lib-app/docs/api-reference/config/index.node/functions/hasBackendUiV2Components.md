@@ -6,13 +6,14 @@ function hasBackendUiV2Components<T extends AnyCommerceAppConfig>(
 ): config is AdminUiConfig<T>;
 ```
 
-Defined in: [aio-commerce-lib-app/source/config/schema/admin-ui.ts:450](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-app/source/config/schema/admin-ui.ts#L450)
+Defined in: [aio-commerce-lib-app/source/config/schema/admin-ui.ts:560](https://github.com/adobe/aio-commerce-sdk/blob/6e9704065e17b124069637c99898c47981974e20/packages/aio-commerce-lib-app/source/config/schema/admin-ui.ts#L560)
 
 Check whether the config declares an Admin UI component that requires the
 `commerce/backend-ui/2` extension point — a menu, grid columns, mass actions,
-or view buttons. Custom ACL resources are deliberately excluded: they reach
-Commerce through the `extensibility/1` app-config payload, not backend-ui/2,
-so an acl-only config needs no backend-ui/2 registration.
+view buttons, or native UI replaced pages. Custom ACL resources are
+deliberately excluded: they reach Commerce through the `extensibility/1`
+app-config payload, not backend-ui/2, so an acl-only config needs no
+backend-ui/2 registration.
 
 ## Type Parameters
 

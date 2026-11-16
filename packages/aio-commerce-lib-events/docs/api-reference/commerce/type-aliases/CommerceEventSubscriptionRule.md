@@ -8,7 +8,7 @@ type CommerceEventSubscriptionRule = {
 };
 ```
 
-Defined in: [commerce/api/event-subscriptions/types.ts:20](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-events/source/commerce/api/event-subscriptions/types.ts#L20)
+Defined in: [commerce/api/event-subscriptions/types.ts:20](https://github.com/adobe/aio-commerce-sdk/blob/6e9704065e17b124069637c99898c47981974e20/packages/aio-commerce-lib-events/source/commerce/api/event-subscriptions/types.ts#L20)
 
 Defines the structure of a filtering rule in a Commerce event subscription.
 
@@ -20,7 +20,7 @@ Defines the structure of a filtering rule in a Commerce event subscription.
 field: string;
 ```
 
-Defined in: [commerce/api/event-subscriptions/types.ts:21](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-events/source/commerce/api/event-subscriptions/types.ts#L21)
+Defined in: [commerce/api/event-subscriptions/types.ts:21](https://github.com/adobe/aio-commerce-sdk/blob/6e9704065e17b124069637c99898c47981974e20/packages/aio-commerce-lib-events/source/commerce/api/event-subscriptions/types.ts#L21)
 
 ---
 
@@ -30,7 +30,7 @@ Defined in: [commerce/api/event-subscriptions/types.ts:21](https://github.com/ad
 operator: string;
 ```
 
-Defined in: [commerce/api/event-subscriptions/types.ts:23](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-events/source/commerce/api/event-subscriptions/types.ts#L23)
+Defined in: [commerce/api/event-subscriptions/types.ts:23](https://github.com/adobe/aio-commerce-sdk/blob/6e9704065e17b124069637c99898c47981974e20/packages/aio-commerce-lib-events/source/commerce/api/event-subscriptions/types.ts#L23)
 
 ---
 
@@ -40,4 +40,4 @@ Defined in: [commerce/api/event-subscriptions/types.ts:23](https://github.com/ad
 value: string;
 ```
 
-Defined in: [commerce/api/event-subscriptions/types.ts:22](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-events/source/commerce/api/event-subscriptions/types.ts#L22)
+Defined in: [commerce/api/event-subscriptions/types.ts:22](https://github.com/adobe/aio-commerce-sdk/blob/6e9704065e17b124069637c99898c47981974e20/packages/aio-commerce-lib-events/source/commerce/api/event-subscriptions/types.ts#L22)

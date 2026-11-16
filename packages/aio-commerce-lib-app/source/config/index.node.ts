@@ -54,6 +54,9 @@ export type {
   AdminUiConfig,
   AdminUiConfiguration,
   CreditMemoViewButton,
+  CustomAttributeFilter,
+  CustomAttributeGridColumn,
+  CustomAttributeGridColumns,
   GridColumn,
   GridColumns,
   InvoiceViewButton,
@@ -62,6 +65,7 @@ export type {
   NativeUiReplacedPage,
   Notifications,
   OrderViewButton,
+  RmaViewButton,
   ViewMassAction,
   WorkerMassAction,
 } from "./schema/admin-ui";

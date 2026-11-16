@@ -6,7 +6,7 @@ type StepContextFactory<
 > = (context: LifecycleContext) => TStepCtx | Promise<TStepCtx>;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/common/workflow/step.ts:59](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-app/source/management/common/workflow/step.ts#L59)
+Defined in: [aio-commerce-lib-app/source/management/common/workflow/step.ts:59](https://github.com/adobe/aio-commerce-sdk/blob/6e9704065e17b124069637c99898c47981974e20/packages/aio-commerce-lib-app/source/management/common/workflow/step.ts#L59)
 
 Factory function type for creating step-specific context.
 

@@ -1,5 +1,26 @@
 # @adobe/aio-commerce-lib-admin-ui
 
+## 1.3.0
+
+### Minor Changes
+
+- [#776](https://github.com/adobe/aio-commerce-sdk/pull/776) [`32988bb`](https://github.com/adobe/aio-commerce-sdk/commit/32988bbda397d9a34f788aee721f4dca9abc362a) Thanks [@aminakhyat](https://github.com/aminakhyat)! - Add the `credit-memo-view-buttons` entrypoint with worker request/response and ACL helpers, and the `useCreditMemoViewButtonContext` hook in `./web`.
+
+- [#802](https://github.com/adobe/aio-commerce-sdk/pull/802) [`a03c546`](https://github.com/adobe/aio-commerce-sdk/commit/a03c546f8b6a54c8c1aa1352d89b6a0efef00d9e) Thanks [@aminakhyat](https://github.com/aminakhyat)! - Add the `rma-view-buttons` entrypoint with worker request/response and ACL helpers for return (RMA) view buttons, and the `useRmaViewButtonContext` hook in `./web`.
+
+- [#732](https://github.com/adobe/aio-commerce-sdk/pull/732) [`f124cf4`](https://github.com/adobe/aio-commerce-sdk/commit/f124cf49208d930ca0f151e948a7597317365697) Thanks [@asalloum5](https://github.com/asalloum5)! - Add invoice view-button runtime request/response and ACL helpers, plus a React hook for invoice iframe context.
+
+- [#746](https://github.com/adobe/aio-commerce-sdk/pull/746) [`ca065be`](https://github.com/adobe/aio-commerce-sdk/commit/ca065bec387cf90ce21309420851bef408ca194e) Thanks [@asalloum5](https://github.com/asalloum5)! - Add the `useCustomerContext` and `useStoreContext` React hooks to independently read customer and store identifiers from Commerce shared context in native UI replacement pages, with guaranteed string identifiers on success, preserved leading zeros in string IDs, and errors for missing or invalid values.
+
+- [#770](https://github.com/adobe/aio-commerce-sdk/pull/770) [`9b6e61c`](https://github.com/adobe/aio-commerce-sdk/commit/9b6e61ceed9c45ae415c37b401272f09d4c75759) Thanks [@obarcelonap](https://github.com/obarcelonap)! - Add support for Node.js 26.
+
+### Patch Changes
+
+- [#776](https://github.com/adobe/aio-commerce-sdk/pull/776) [`32988bb`](https://github.com/adobe/aio-commerce-sdk/commit/32988bbda397d9a34f788aee721f4dca9abc362a) Thanks [@aminakhyat](https://github.com/aminakhyat)! - Fix the order, invoice and credit memo view button request parsers rejecting real Commerce requests: map the `buttonId` body field to `id` and the `X-Request-ID` header to `requestId`.
+- Updated dependencies [[`9b6e61c`](https://github.com/adobe/aio-commerce-sdk/commit/9b6e61ceed9c45ae415c37b401272f09d4c75759)]:
+  - @adobe/aio-commerce-lib-api@1.5.0
+  - @adobe/aio-commerce-lib-core@1.4.0
+
 ## 1.2.0
 
 ### Minor Changes

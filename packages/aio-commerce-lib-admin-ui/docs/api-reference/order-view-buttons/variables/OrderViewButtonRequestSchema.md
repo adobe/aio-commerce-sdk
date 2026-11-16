@@ -26,7 +26,7 @@ const OrderViewButtonRequestSchema: ObjectSchema<
 >;
 ```
 
-Defined in: [aio-commerce-lib-admin-ui/source/order-view-buttons/schema.ts:23](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-admin-ui/source/order-view-buttons/schema.ts#L23)
+Defined in: [aio-commerce-lib-admin-ui/source/order-view-buttons/schema.ts:23](https://github.com/adobe/aio-commerce-sdk/blob/6e9704065e17b124069637c99898c47981974e20/packages/aio-commerce-lib-admin-ui/source/order-view-buttons/schema.ts#L23)
 
 Schema for the JSON body Commerce POSTs to an order view button handler.
 

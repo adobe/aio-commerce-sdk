@@ -7,7 +7,7 @@ function setNodeEnv(
 ): void;
 ```
 
-Defined in: [env.ts:87](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages-private/scripting-utils/source/env.ts#L87)
+Defined in: [env.ts:87](https://github.com/adobe/aio-commerce-sdk/blob/6e9704065e17b124069637c99898c47981974e20/packages-private/scripting-utils/source/env.ts#L87)
 
 Sets the `NODE_ENV` environment variable in the app `.env` file, so the web
 bundler (Parcel) ships the matching React build. Creates the `.env` if absent.

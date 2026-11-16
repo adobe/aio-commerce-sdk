@@ -33,8 +33,10 @@ import type {
   CommerceAppConfig,
   CommerceAppConfigOutputModel,
 } from "#config/schema/app";
+import type { AssociatedCommerceData } from "#management/association/types";
 import type {
   AppStateSnapshot,
+  LifecycleOperation,
   OrchestrationState,
 } from "#management/common/orchestration";
 import type { LifecycleRequestContext } from "#management/common/schema";
@@ -94,27 +96,59 @@ export type ExecutionHandlerArgs<TParams = LifecycleExecutionRouteParams> = {
   logger: LifecycleContext["logger"];
 };
 
+/** The params of a lifecycle request, and the Commerce instance the request supplied for an app with no record. */
+export type ResolvedWorkflowParams = {
+  params: WorkflowRouteParams;
+
+  /** The Commerce instance taken from the request body because the app has no record, or `null`. */
+  commerceFromBody: AssociatedCommerceData | null;
+};
+
 /**
  * Merges the runtime params with the request body and the Commerce instance the app is
- * associated with. Returns `null` when the app is not associated.
+ * associated with. Returns `null` when the app has no Commerce instance to use.
+ *
+ * An uninstall without an association record uses the Commerce instance of the request body and
+ * returns it as `commerceFromBody`. Any other operation needs the record.
  */
 export async function resolveWorkflowParams(
   body: LifecycleRequestContext,
   rawParams: RuntimeActionArgs,
-): Promise<WorkflowRouteParams | null> {
+  operation?: LifecycleOperation,
+): Promise<ResolvedWorkflowParams | null> {
   const association = await getAssociationData();
-  if (!association) {
+
+  // The record wins. An app installed before the association action existed has no record, and
+  // its uninstall must still work, so the request body stands in for it. Any other operation
+  // keeps requiring the record, because the checks after it would plan an install over an
+  // installed app that has no baseline.
+  const commerceFromBody =
+    !association && operation === "uninstall" ? getBodyCommerce(body) : null;
+
+  const commerce = association?.commerce ?? commerceFromBody;
+  if (!commerce) {
     return null;
   }
 
   return {
-    ...rawParams,
-    AIO_COMMERCE_API_BASE_URL: association.commerce.baseUrl,
-    AIO_COMMERCE_API_FLAVOR: association.commerce.env,
-    AIO_COMMERCE_AUTH_IMS_ENVIRONMENT: body.ioEventsEnv,
-    AIO_EVENTS_API_BASE_URL: body.ioEventsUrl,
-    appData: body.appData,
+    commerceFromBody,
+    params: {
+      ...rawParams,
+      AIO_COMMERCE_API_BASE_URL: commerce.baseUrl,
+      AIO_COMMERCE_API_FLAVOR: commerce.env,
+      AIO_COMMERCE_AUTH_IMS_ENVIRONMENT: body.ioEventsEnv,
+      AIO_EVENTS_API_BASE_URL: body.ioEventsUrl,
+      appData: body.appData,
+    },
   };
+}
+
+/** The Commerce instance the request body names, or `null` when it lacks the URL or the env. */
+function getBodyCommerce(body: LifecycleRequestContext) {
+  const { commerceBaseUrl, commerceEnv } = body;
+  return commerceBaseUrl && commerceEnv
+    ? { baseUrl: commerceBaseUrl, env: commerceEnv }
+    : null;
 }
 
 /** The response for a request on an app that is not associated with a Commerce instance. */

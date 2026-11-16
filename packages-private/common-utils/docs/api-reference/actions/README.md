@@ -18,14 +18,15 @@ This module exports core action utilities for the AIO Commerce SDK.
 
 ## Type Aliases
 
-| Type Alias                                       | Description                                                                                                                                                                                          |
-| ------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [BaseContext](type-aliases/BaseContext.md)       | Internal context with raw action params, always available.                                                                                                                                           |
-| [CompiledRoute](type-aliases/CompiledRoute.md)   | Internal compiled route representation used by the router.                                                                                                                                           |
-| [ContextBuilder](type-aliases/ContextBuilder.md) | Context builder function type. Receives current context and returns additional context properties (sync or async).                                                                                   |
-| [ExtractParams](type-aliases/ExtractParams.md)   | Extracts all route parameters from a path string, including both named parameters and wildcard segments.                                                                                             |
-| [RouteConfig](type-aliases/RouteConfig.md)       | Route configuration with type inference from schemas and context. If schemas are provided, they're used for both validation AND type inference. Otherwise, types are inferred from the path pattern. |
-| [RouteRequest](type-aliases/RouteRequest.md)     | Represents an incoming route request with typed parameters, body, and query.                                                                                                                         |
+| Type Alias                                                         | Description                                                                                                                                                                                          |
+| ------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [BaseContext](type-aliases/BaseContext.md)                         | Internal context with raw action params, always available.                                                                                                                                           |
+| [CompiledRoute](type-aliases/CompiledRoute.md)                     | Internal compiled route representation used by the router.                                                                                                                                           |
+| [ContextBuilder](type-aliases/ContextBuilder.md)                   | Context builder function type. Receives current context and returns additional context properties (sync or async).                                                                                   |
+| [ExtractParams](type-aliases/ExtractParams.md)                     | Extracts all route parameters from a path string, including both named parameters and wildcard segments.                                                                                             |
+| [HttpActionRouterOptions](type-aliases/HttpActionRouterOptions.md) | Options for creating an [HttpActionRouter](classes/HttpActionRouter.md).                                                                                                                             |
+| [RouteConfig](type-aliases/RouteConfig.md)                         | Route configuration with type inference from schemas and context. If schemas are provided, they're used for both validation AND type inference. Otherwise, types are inferred from the path pattern. |
+| [RouteRequest](type-aliases/RouteRequest.md)                       | Represents an incoming route request with typed parameters, body, and query.                                                                                                                         |
 
 ## Functions
 

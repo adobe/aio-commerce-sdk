@@ -9,7 +9,7 @@ type AdminUiPermissionClientOptions = {
 };
 ```
 
-Defined in: [aio-commerce-lib-admin-ui/source/api/lib/permission-client.ts:27](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-admin-ui/source/api/lib/permission-client.ts#L27)
+Defined in: [aio-commerce-lib-admin-ui/source/api/lib/permission-client.ts:27](https://github.com/adobe/aio-commerce-sdk/blob/6e9704065e17b124069637c99898c47981974e20/packages/aio-commerce-lib-admin-ui/source/api/lib/permission-client.ts#L27)
 
 Options used to create an Admin UI SDK permission client.
 
@@ -21,7 +21,7 @@ Options used to create an Admin UI SDK permission client.
 appId?: string;
 ```
 
-Defined in: [aio-commerce-lib-admin-ui/source/api/lib/permission-client.ts:29](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-admin-ui/source/api/lib/permission-client.ts#L29)
+Defined in: [aio-commerce-lib-admin-ui/source/api/lib/permission-client.ts:29](https://github.com/adobe/aio-commerce-sdk/blob/6e9704065e17b124069637c99898c47981974e20/packages/aio-commerce-lib-admin-ui/source/api/lib/permission-client.ts#L29)
 
 The application's `metadata.id` value. When provided, `check()` and `require()` can be called with no resource argument.
 
@@ -33,7 +33,7 @@ The application's `metadata.id` value. When provided, `check()` and `require()` 
 cacheTtlMs?: number;
 ```
 
-Defined in: [aio-commerce-lib-admin-ui/source/api/lib/permission-client.ts:35](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-admin-ui/source/api/lib/permission-client.ts#L35)
+Defined in: [aio-commerce-lib-admin-ui/source/api/lib/permission-client.ts:35](https://github.com/adobe/aio-commerce-sdk/blob/6e9704065e17b124069637c99898c47981974e20/packages/aio-commerce-lib-admin-ui/source/api/lib/permission-client.ts#L35)
 
 Milliseconds to cache a permission result. Default: 300_000 (5 minutes).
 Set to 0 to disable result caching. Note: in-flight deduplication of concurrent identical
@@ -47,7 +47,7 @@ requests is independent of this setting and remains active even when caching is 
 denyOnError?: boolean;
 ```
 
-Defined in: [aio-commerce-lib-admin-ui/source/api/lib/permission-client.ts:37](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-admin-ui/source/api/lib/permission-client.ts#L37)
+Defined in: [aio-commerce-lib-admin-ui/source/api/lib/permission-client.ts:37](https://github.com/adobe/aio-commerce-sdk/blob/6e9704065e17b124069637c99898c47981974e20/packages/aio-commerce-lib-admin-ui/source/api/lib/permission-client.ts#L37)
 
 Return false instead of throwing when a network or parse error occurs. Default: true.
 
@@ -59,6 +59,6 @@ Return false instead of throwing when a network or parse error occurs. Default: 
 httpClient: AdobeCommerceHttpClient;
 ```
 
-Defined in: [aio-commerce-lib-admin-ui/source/api/lib/permission-client.ts:39](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-admin-ui/source/api/lib/permission-client.ts#L39)
+Defined in: [aio-commerce-lib-admin-ui/source/api/lib/permission-client.ts:39](https://github.com/adobe/aio-commerce-sdk/blob/6e9704065e17b124069637c99898c47981974e20/packages/aio-commerce-lib-admin-ui/source/api/lib/permission-client.ts#L39)
 
 Commerce HTTP client used to call the Admin UI SDK permission endpoint.

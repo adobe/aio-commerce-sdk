@@ -81,3 +81,8 @@ export type InvoiceViewButtonContext = {
 export type CreditMemoViewButtonContext = {
   creditMemoId: string;
 };
+
+/** The context shared with return (RMA) view-button extension points. */
+export type RmaViewButtonContext = {
+  rmaId: string;
+};

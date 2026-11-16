@@ -10,6 +10,7 @@
     "./source/mass-actions/index.ts",
     "./source/menu/index.ts",
     "./source/order-view-buttons/index.ts",
+    "./source/rma-view-buttons/index.ts",
     "./source/web/index.ts"
   ],
   "out": "docs/api-reference",

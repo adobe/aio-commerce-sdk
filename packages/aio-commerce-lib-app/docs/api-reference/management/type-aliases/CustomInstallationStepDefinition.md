@@ -7,7 +7,7 @@ type CustomInstallationStepDefinition<TResult = unknown> = {
 };
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/domains/custom-installation/define.ts:33](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-app/source/management/domains/custom-installation/define.ts#L33)
+Defined in: [aio-commerce-lib-app/source/management/domains/custom-installation/define.ts:33](https://github.com/adobe/aio-commerce-sdk/blob/6e9704065e17b124069637c99898c47981974e20/packages/aio-commerce-lib-app/source/management/domains/custom-installation/define.ts#L33)
 
 Object form for defining a custom installation step with both install and uninstall handlers.
 
@@ -25,7 +25,7 @@ Object form for defining a custom installation step with both install and uninst
 install: CustomInstallationStepHandler<TResult>;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/domains/custom-installation/define.ts:35](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-app/source/management/domains/custom-installation/define.ts#L35)
+Defined in: [aio-commerce-lib-app/source/management/domains/custom-installation/define.ts:35](https://github.com/adobe/aio-commerce-sdk/blob/6e9704065e17b124069637c99898c47981974e20/packages/aio-commerce-lib-app/source/management/domains/custom-installation/define.ts#L35)
 
 The installation handler, called when the app is installed.
 
@@ -37,6 +37,6 @@ The installation handler, called when the app is installed.
 uninstall?: CustomInstallationStepHandler<void>;
 ```
 
-Defined in: [aio-commerce-lib-app/source/management/domains/custom-installation/define.ts:38](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-app/source/management/domains/custom-installation/define.ts#L38)
+Defined in: [aio-commerce-lib-app/source/management/domains/custom-installation/define.ts:38](https://github.com/adobe/aio-commerce-sdk/blob/6e9704065e17b124069637c99898c47981974e20/packages/aio-commerce-lib-app/source/management/domains/custom-installation/define.ts#L38)
 
 The optional uninstall handler, called when the app is uninstalled.

@@ -4,7 +4,7 @@
 function okOrderViewButtonResponse(): SuccessResponse<OrderViewButtonSuccessBody>;
 ```
 
-Defined in: [aio-commerce-lib-admin-ui/source/order-view-buttons/presets.ts:66](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-admin-ui/source/order-view-buttons/presets.ts#L66)
+Defined in: [aio-commerce-lib-admin-ui/source/order-view-buttons/presets.ts:67](https://github.com/adobe/aio-commerce-sdk/blob/6e9704065e17b124069637c99898c47981974e20/packages/aio-commerce-lib-admin-ui/source/order-view-buttons/presets.ts#L67)
 
 Builds an HTTP 200 success response for an order view button handler.
 

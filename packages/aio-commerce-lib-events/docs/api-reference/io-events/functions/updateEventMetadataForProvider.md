@@ -22,7 +22,7 @@ function updateEventMetadataForProvider(
 ): Promise<IoEventMetadataHalModel>;
 ```
 
-Defined in: [io-events/api/event-metadata/endpoints.ts:142](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-events/source/io-events/api/event-metadata/endpoints.ts#L142)
+Defined in: [io-events/api/event-metadata/endpoints.ts:142](https://github.com/adobe/aio-commerce-sdk/blob/6e9704065e17b124069637c99898c47981974e20/packages/aio-commerce-lib-events/source/io-events/api/event-metadata/endpoints.ts#L142)
 
 Updates event metadata of a provider. This replaces the metadata: a `sampleEventTemplate`
 that is omitted clears the stored sample event.

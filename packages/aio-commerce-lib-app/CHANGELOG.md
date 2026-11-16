@@ -1,5 +1,39 @@
 # @adobe/aio-commerce-lib-app
 
+## 2.2.0
+
+### Minor Changes
+
+- [#776](https://github.com/adobe/aio-commerce-sdk/pull/776) [`32988bb`](https://github.com/adobe/aio-commerce-sdk/commit/32988bbda397d9a34f788aee721f4dca9abc362a) Thanks [@aminakhyat](https://github.com/aminakhyat)! - Add `adminUi.creditMemo.viewButtons` to the app config schema, with generated `view` and `workerProcess` operations and installation and upgrade support.
+
+- [#802](https://github.com/adobe/aio-commerce-sdk/pull/802) [`a03c546`](https://github.com/adobe/aio-commerce-sdk/commit/a03c546f8b6a54c8c1aa1352d89b6a0efef00d9e) Thanks [@aminakhyat](https://github.com/aminakhyat)! - Add `adminUi.rma.viewButtons` to the app config schema, with generated `view` and `workerProcess` operations and installation and upgrade support for return (RMA) view buttons.
+
+- [#746](https://github.com/adobe/aio-commerce-sdk/pull/746) [`ca065be`](https://github.com/adobe/aio-commerce-sdk/commit/ca065bec387cf90ce21309420851bef408ca194e) Thanks [@asalloum5](https://github.com/asalloum5)! - Add `adminUi.nativeUi.replacedPages` configuration to replace the native order creation form with an app page, including validation, web generation, and installation planning.
+
+- [#770](https://github.com/adobe/aio-commerce-sdk/pull/770) [`9b6e61c`](https://github.com/adobe/aio-commerce-sdk/commit/9b6e61ceed9c45ae415c37b401272f09d4c75759) Thanks [@obarcelonap](https://github.com/obarcelonap)! - Default new actions to Node.js 26 without changing existing runtimes.
+
+- [#770](https://github.com/adobe/aio-commerce-sdk/pull/770) [`9b6e61c`](https://github.com/adobe/aio-commerce-sdk/commit/9b6e61ceed9c45ae415c37b401272f09d4c75759) Thanks [@obarcelonap](https://github.com/obarcelonap)! - Add support for Node.js 26.
+
+- [#801](https://github.com/adobe/aio-commerce-sdk/pull/801) [`26287d7`](https://github.com/adobe/aio-commerce-sdk/commit/26287d7a0cc3dbd154e52acb94e2ad123c74ef4b) Thanks [@pablomoreno61](https://github.com/pablomoreno61)! - Allow `adminUi.nativeUi.replacedPages` to use the `return.create` target.
+
+- [#732](https://github.com/adobe/aio-commerce-sdk/pull/732) [`f124cf4`](https://github.com/adobe/aio-commerce-sdk/commit/f124cf49208d930ca0f151e948a7597317365697) Thanks [@asalloum5](https://github.com/asalloum5)! - Add invoice detail-page view and worker button configuration, validation, generated operations, and installation and upgrade support.
+
+### Patch Changes
+
+- [#806](https://github.com/adobe/aio-commerce-sdk/pull/806) [`18be2b5`](https://github.com/adobe/aio-commerce-sdk/commit/18be2b5b9f6af0b8c150e0a5c6747e66eafefd72) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Fix the uninstall of apps installed with lib-app before 1.8.0, including 1.0.x and 1.1.0, which 2.1.0 blocked because of a missing association record and an unreadable event provider link.
+
+- [#792](https://github.com/adobe/aio-commerce-sdk/pull/792) [`6dbdf71`](https://github.com/adobe/aio-commerce-sdk/commit/6dbdf711a6fdf6f38794dc74a0a9e16146c5d771) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Add an `x-ac-sdk-lib-versions` response header to every app-management endpoint response. It lists the lib-app version and the installed lib-config version it loads (not the app's version), for example `lib-app="2.2.0", lib-config="1.4.1"`.
+
+- [#803](https://github.com/adobe/aio-commerce-sdk/pull/803) [`e56dd61`](https://github.com/adobe/aio-commerce-sdk/commit/e56dd614586f4a335d0fbc373a5cd2e07fa3db48) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Fix `publishEvent` using a stale or missing provider after an app is uninstalled and reinstalled. The uninstall now removes the stored event data of a provider that was already deleted, and lists the removal in the plan. If it fails, the uninstall fails and can be retried. An install or upgrade that removes a duplicate provider no longer deletes the stored data of the provider it keeps.
+- Updated dependencies [[`32988bb`](https://github.com/adobe/aio-commerce-sdk/commit/32988bbda397d9a34f788aee721f4dca9abc362a), [`a03c546`](https://github.com/adobe/aio-commerce-sdk/commit/a03c546f8b6a54c8c1aa1352d89b6a0efef00d9e), [`f124cf4`](https://github.com/adobe/aio-commerce-sdk/commit/f124cf49208d930ca0f151e948a7597317365697), [`ca065be`](https://github.com/adobe/aio-commerce-sdk/commit/ca065bec387cf90ce21309420851bef408ca194e), [`9b6e61c`](https://github.com/adobe/aio-commerce-sdk/commit/9b6e61ceed9c45ae415c37b401272f09d4c75759), [`32988bb`](https://github.com/adobe/aio-commerce-sdk/commit/32988bbda397d9a34f788aee721f4dca9abc362a), [`a066916`](https://github.com/adobe/aio-commerce-sdk/commit/a066916918f9d3ff66affc7783c743c34a02f263), [`e56dd61`](https://github.com/adobe/aio-commerce-sdk/commit/e56dd614586f4a335d0fbc373a5cd2e07fa3db48), [`6dbdf71`](https://github.com/adobe/aio-commerce-sdk/commit/6dbdf711a6fdf6f38794dc74a0a9e16146c5d771)]:
+  - @adobe/aio-commerce-lib-admin-ui@1.3.0
+  - @adobe/aio-commerce-lib-api@1.5.0
+  - @adobe/aio-commerce-lib-auth@1.3.0
+  - @adobe/aio-commerce-lib-config@1.9.0
+  - @adobe/aio-commerce-lib-core@1.4.0
+  - @adobe/aio-commerce-lib-events@1.6.0
+  - @adobe/aio-commerce-lib-webhooks@1.3.0
+
 ## 2.1.0
 
 ### Minor Changes

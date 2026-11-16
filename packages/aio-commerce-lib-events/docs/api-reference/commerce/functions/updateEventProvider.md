@@ -19,7 +19,7 @@ function updateEventProvider(
 ): Promise<CommerceEventProvider>;
 ```
 
-Defined in: [commerce/api/event-providers/endpoints.ts:122](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-events/source/commerce/api/event-providers/endpoints.ts#L122)
+Defined in: [commerce/api/event-providers/endpoints.ts:122](https://github.com/adobe/aio-commerce-sdk/blob/6e9704065e17b124069637c99898c47981974e20/packages/aio-commerce-lib-events/source/commerce/api/event-providers/endpoints.ts#L122)
 
 Updates an event provider in the Commerce instance bound to the given [AdobeCommerceHttpClient](https://github.com/adobe/aio-commerce-sdk/blob/main/packages/aio-commerce-lib-api/docs/api-reference/classes/AdobeCommerceHttpClient.md).
 Omitted `label`, `description` and `workspace_configuration` keep their stored values.

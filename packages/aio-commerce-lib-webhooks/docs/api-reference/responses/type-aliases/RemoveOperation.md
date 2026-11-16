@@ -7,7 +7,7 @@ type RemoveOperation = {
 };
 ```
 
-Defined in: [responses/operations/types.ts:67](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-webhooks/source/responses/operations/types.ts#L67)
+Defined in: [responses/operations/types.ts:67](https://github.com/adobe/aio-commerce-sdk/blob/6e9704065e17b124069637c99898c47981974e20/packages/aio-commerce-lib-webhooks/source/responses/operations/types.ts#L67)
 
 Remove operation response
 Causes Commerce to remove a value or node in triggered event arguments by the provided path.
@@ -20,7 +20,7 @@ Causes Commerce to remove a value or node in triggered event arguments by the pr
 op: "remove";
 ```
 
-Defined in: [responses/operations/types.ts:68](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-webhooks/source/responses/operations/types.ts#L68)
+Defined in: [responses/operations/types.ts:68](https://github.com/adobe/aio-commerce-sdk/blob/6e9704065e17b124069637c99898c47981974e20/packages/aio-commerce-lib-webhooks/source/responses/operations/types.ts#L68)
 
 ---
 
@@ -30,6 +30,6 @@ Defined in: [responses/operations/types.ts:68](https://github.com/adobe/aio-comm
 path: string;
 ```
 
-Defined in: [responses/operations/types.ts:70](https://github.com/adobe/aio-commerce-sdk/blob/1aa18dfd977a20c07f169618df52fadc30b4839c/packages/aio-commerce-lib-webhooks/source/responses/operations/types.ts#L70)
+Defined in: [responses/operations/types.ts:70](https://github.com/adobe/aio-commerce-sdk/blob/6e9704065e17b124069637c99898c47981974e20/packages/aio-commerce-lib-webhooks/source/responses/operations/types.ts#L70)
 
 Specifies the path at which the value should be removed.

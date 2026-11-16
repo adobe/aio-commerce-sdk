@@ -23,9 +23,12 @@ import {
 } from "#test/fixtures/app-config-router";
 import {
   configWithCreditMemoViewButtons,
+  configWithCustomAttributeGridColumns,
+  configWithCustomAttributeGridColumnsMetadata,
   configWithDynamicListOptions,
   configWithFullAdminUiV2,
   configWithInvoiceViewButtons,
+  configWithRmaViewButtons,
   minimalValidConfig,
 } from "#test/fixtures/config";
 
@@ -36,6 +39,21 @@ describe("appConfigRuntimeAction", () => {
   });
 
   describe("GET /", () => {
+    test.each([
+      configWithCustomAttributeGridColumns,
+      configWithCustomAttributeGridColumnsMetadata,
+    ])(
+      "preserves custom-attribute columns and optional metadata in the app-config payload",
+      async (appConfig) => {
+        const handler = appConfigRuntimeAction({ appConfig });
+
+        expect(await handler(createRuntimeActionParams())).toMatchObject({
+          body: appConfig,
+          type: "success",
+        });
+      },
+    );
+
     test("returns the validated app config", async () => {
       const handler = appConfigRuntimeAction({
         appConfig: minimalValidConfig,
@@ -195,6 +213,7 @@ describe("appConfigRuntimeAction", () => {
     test.each([
       { appConfig: configWithInvoiceViewButtons, entity: "invoice" },
       { appConfig: configWithCreditMemoViewButtons, entity: "credit memo" },
+      { appConfig: configWithRmaViewButtons, entity: "return" },
     ])(
       "returns $entity view buttons including iframe title and worker settings",
       async ({ appConfig }) => {

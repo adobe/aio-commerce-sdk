@@ -113,6 +113,8 @@ The matching `useCreditMemoViewButtonContext` hook is available from
 [Admin UI usage guide](../aio-commerce-lib-admin-ui/docs/usage.md#credit-memo-view-button-wire-contract)
 for iframe (`view`) and runtime action (`worker`) examples.
 
+Return (RMA) view-button helpers are available from `@adobe/aio-commerce-sdk/admin-ui/rma-view-buttons`. The matching `useRmaViewButtonContext` hook is available from `@adobe/aio-commerce-sdk/admin-ui/web`. See the [Admin UI usage guide](../aio-commerce-lib-admin-ui/docs/usage.md#return-view-button-wire-contract) for iframe (`view`) and runtime action (`worker`) examples.
+
 ## Benefits
 
 - **Simplified dependency management**: Install one package instead of multiple individual libraries

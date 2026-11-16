@@ -118,6 +118,10 @@ export type EventingOperationValue =
       name: string;
       providerId?: string;
       changeMode?: "in-place" | "replace";
+    }
+  | {
+      resourceType: "storedEvents";
+      providerKey: string;
     };
 
 /**
