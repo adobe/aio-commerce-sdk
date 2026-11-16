@@ -205,12 +205,12 @@ describe("AdminUiSchema custom-attribute grid columns", () => {
     );
   });
 
-  test("rejects placing the section directly under adminUi", () => {
+  test("strips the unknown section directly under adminUi", () => {
     expect(
-      v.safeParse(AdminUiSchema, {
+      v.parse(AdminUiSchema, {
         customAttributeGridColumns: { columns },
-      }).success,
-    ).toBe(false);
+      }),
+    ).toEqual({});
   });
 
   test.each([
@@ -298,13 +298,30 @@ describe("AdminUiSchema custom-attribute grid columns", () => {
     "shipment",
     "newsletter",
     "rma",
-    "creditmemo",
-    "unknown",
-  ])("rejects custom-attribute columns on %s", (entity) => {
-    const result = v.safeParse(AdminUiSchema, {
-      [entity]: { customAttributeGridColumns: { columns } },
-    });
-    expect(result.success).toBe(false);
+  ])("strips unknown custom-attribute columns on %s", (entity) => {
+    expect(
+      v.parse(AdminUiSchema, {
+        [entity]: { customAttributeGridColumns: { columns } },
+      }),
+    ).toEqual({ [entity]: {} });
+  });
+
+  test.each(["creditmemo", "unknown"])("strips unknown entity %s", (entity) => {
+    expect(
+      v.parse(AdminUiSchema, {
+        [entity]: { customAttributeGridColumns: { columns } },
+      }),
+    ).toEqual({});
+  });
+
+  test("strips root-level custom-attribute columns without affecting Credit Memo", () => {
+    const { adminUi } = configWithCustomAttributeGridColumns;
+    expect(
+      v.parse(AdminUiSchema, {
+        ...adminUi,
+        customAttributeGridColumns: { columns },
+      }),
+    ).toEqual(adminUi);
   });
 
   test.each(["refund_reason", "Refund_Reason", "refund-reason"])(

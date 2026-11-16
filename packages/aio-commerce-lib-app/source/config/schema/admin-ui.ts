@@ -476,7 +476,11 @@ const AdminUiAclSchema = v.pipe(
 
 // ─── Top-level schema ─────────────────────────────────────────────────────────
 
-const AdminUiObjectSchema = v.object({
+/**
+ * Schema for Admin UI components, including Credit Memo custom-attribute columns.
+ * Custom-attribute columns and custom ACL resources require no backend-ui/2 workers or views.
+ */
+export const AdminUiSchema = v.object({
   acl: v.optional(AdminUiAclSchema),
   creditMemo: v.optional(AdminUiCreditMemoSchema),
   customer: v.optional(AdminUiGridAndMassActionEntitySchema),
@@ -489,27 +493,6 @@ const AdminUiObjectSchema = v.object({
   rma: v.optional(AdminUiRmaSchema),
   shipment: v.optional(AdminUiGridOnlyEntitySchema),
 });
-
-/**
- * Schema for Admin UI components, including Credit Memo custom-attribute columns.
- * Custom-attribute columns and custom ACL resources require no backend-ui/2 workers or views.
- */
-export const AdminUiSchema = v.pipe(
-  v.custom<v.InferInput<typeof AdminUiObjectSchema>>((input) => {
-    if (typeof input !== "object" || input === null) {
-      return true;
-    }
-    return Object.entries(input).every(
-      ([entity, config]) =>
-        entity !== "customAttributeGridColumns" &&
-        (entity === "creditMemo" ||
-          typeof config !== "object" ||
-          config === null ||
-          !("customAttributeGridColumns" in config)),
-    );
-  }, "customAttributeGridColumns is supported only under adminUi.creditMemo."),
-  AdminUiObjectSchema,
-);
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 

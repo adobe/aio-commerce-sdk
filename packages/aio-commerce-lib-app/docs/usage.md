@@ -681,6 +681,8 @@ adminUi: {
 
 Only `creditMemo` is supported. `columns` must be a nonempty array. Each column requires nonblank `id` and `label`, `align` (`left`, `center`, or `right`), and an `attribute_code` of 1–255 ASCII letters, digits, or underscores. The `id` identifies the UI column independently of its storage `attribute_code`. Column IDs must remain unique after Commerce sanitization, including across Runtime and custom-attribute columns for the same grid. `aclProtected` is an optional boolean.
 
+Declarations outside `adminUi.creditMemo`, including under misspelled entity names, are removed during validation as unknown fields.
+
 Omit `filter` for display-only text cells. A boolean filter accepts only `{ type: "boolean" }`, without `conditions`. A text filter requires a nonempty `conditions` array containing only `eq`, `neq`, or `contains`; their order is preserved. `null`, `type: "string"`, legacy `override`/`source` bindings, Runtime bindings, and host-owned identity or ACL fields are rejected.
 
 An app with only custom-attribute columns still registers its Admin UI configuration through `app-config` on `commerce/extensibility/1`. It does not need `commerce/backend-ui/2`, worker handlers, or a web frontend unless another component requires them. Column changes participate in installation and upgrade planning.

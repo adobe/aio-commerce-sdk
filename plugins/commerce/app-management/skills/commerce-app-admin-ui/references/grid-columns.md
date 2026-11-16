@@ -42,6 +42,8 @@ adminUi: {
 
 Use `adminUi.creditMemo.customAttributeGridColumns` when Commerce should read serialized attributes locally:
 
+Declarations outside `adminUi.creditMemo`, including under misspelled entity names, are removed during validation as unknown fields.
+
 ```ts
 creditMemo: {
   customAttributeGridColumns: {
