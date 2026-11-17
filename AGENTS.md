@@ -77,6 +77,7 @@ Each package has its own documentation under a `docs` folder (except for the met
 - Never edit the auto-generated API reference by hand — any changes will be wiped out on regeneration.
 - Never regenerate the API reference in PRs. It clutters the diff and complicates review; we regenerate it before publishing.
 - Never use emojis of any kind in public documentation.
+- Write each paragraph of `usage.md` and other Markdown docs on a single line. Don't hard-wrap prose at a fixed width.
 - When a change alters what a developer calls, configures or sees, update the README (if applicable), `usage.md` (along with any supporting docs when documentation is fragmented across files), and the API reference (updated indirectly via JSDoc). Internal changes that leave the public interface as it was need no documentation updates.
 - Document all public APIs with proper JSDoc. Use `@example` for non-obvious usage, and keep comments concise — don't restate what the types already convey.
 
