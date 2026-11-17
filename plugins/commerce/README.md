@@ -18,7 +18,7 @@ Skills are available through two channels with different stability guarantees:
 | **Latest** | This repo (`adobe/aio-commerce-sdk`)              | Experimental — may change at any time | Contributors, early adopters, unreleased features |
 | **Stable** | [`adobe/skills`](https://github.com/adobe/skills) | Production-ready, tested releases     | Everyone else                                     |
 
-For most developers, install from `adobe/skills`. The commands in each plugin's README target the stable channel. Installing a plugin (Claude Code, Tessl, Cursor) works only from `adobe/skills`; this repo holds the plugin source.
+For most developers, install from `adobe/skills`. The commands in each plugin's README target the stable channel. Installing a plugin (Claude Code, Tessl, Cursor) works only from `adobe/skills`; this repo holds the plugin source. To try unreleased skills from this repo, use `npx skills add adobe/aio-commerce-sdk` (add `#<branch>` to test a branch, `--list` to see what it finds).
 
 ## Contributing
 
