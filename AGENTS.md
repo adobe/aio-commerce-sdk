@@ -116,7 +116,7 @@ For source code comments, follow these rules:
 
 ### Agentic Tooling
 
-Agentic tooling lives under `plugins/`. Each subdirectory is a self-contained plugin with its own `.claude-plugin/plugin.json` manifest and installable content (skills, MCP configs, etc.).
+Agentic tooling lives under `plugins/`. Each subdirectory is a self-contained plugin with its own root `plugin.json` ([Agent Plugins](https://agent-plugins.org)) and installable content (skills, MCP configs, etc.). Client manifests are built from `plugin.json` in `adobe/skills`, not committed here.
 
 When making changes to the SDK that affect a plugin's domain (e.g. changes to config schemas, CLI flags, installation APIs), update the relevant plugin content in the same PR. Plugin content must stay in sync with the SDK it describes — stale plugin content is treated the same as stale documentation.
 

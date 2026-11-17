@@ -15,9 +15,12 @@ The changeset message is published verbatim as a `CHANGELOG.md` entry in `adobe/
 used internally for the promotion PR body — write it as permanent, end-user-facing release
 history from the first patch changeset onward.
 
-Do not manually bump versions in `.tessl-plugin/plugin.json` or `.claude-plugin/plugin.json`. The
-plugin `package.json` is the authoritative version source; release automation syncs that version
-into the plugin manifests.
+Do not manually bump the version in `plugin.json`. The plugin `package.json` is the authoritative
+version source; release automation syncs that version into `plugin.json`.
+
+Each plugin's root `plugin.json` is the only manifest committed here. `adobe/skills` builds the
+Claude Code, Tessl and Cursor manifests from it, so do not add `.claude-plugin/`, `.tessl-plugin/`
+or `.cursor-plugin/` folders.
 
 Plugin semver rules:
 
@@ -25,8 +28,8 @@ Plugin semver rules:
 - `minor` — new skills, new references or assets, or additive behavioral changes.
 - `major` — removed skills, renamed skills that break installs, or behavioral changes that break existing usage patterns.
 
-When adding a new skill to a plugin, also add its directory to `.tessl-plugin/plugin.json`'s
-`skills` array:
+When adding a new skill to a plugin, also add its directory to the `skills` array of the Tessl target
+in `plugin.json` (`extensions["io.github.ai-ecoverse.x927"].targets.tessl.skills`):
 
 ```json
 "skills": ["skills/commerce-app-<name>"]
@@ -44,7 +47,7 @@ Plugin `README.md` files are copied verbatim to `adobe/skills` and must be stabl
 
 Each `SKILL.md` must open with a YAML frontmatter block. Required fields:
 
-- `name` — kebab-case identifier; must match the skill's directory name as referenced in `.tessl-plugin/plugin.json`'s `skills` array
+- `name` — kebab-case identifier; must match the skill's directory name as referenced in the Tessl `skills` array of `plugin.json`
 - `description` — multi-line routing description (use `>` block scalar); written to tell the agent _when_ to invoke the skill, not to describe its contents
 - `license` — always `Apache-2.0`
 - `compatibility` — runtime and package requirements (use `>` block scalar)

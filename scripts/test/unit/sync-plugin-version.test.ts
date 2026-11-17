@@ -24,37 +24,27 @@ import syncPluginVersion from "#sync-plugin-version";
 type PluginManifest = { version: string; repository?: string };
 
 describe("sync-plugin-version.ts", () => {
-  test("syncs .tessl-plugin/plugin.json and .claude-plugin/plugin.json versions to package.json", async () => {
+  test("syncs plugin.json version to package.json", async () => {
     await withTempFiles(
       {
-        ".claude-plugin/plugin.json": JSON.stringify({
-          name: "commerce-app-management",
-          repository: "https://github.com/adobe/aio-commerce-sdk",
-          version: "1.1.0",
-        }),
-        ".tessl-plugin/plugin.json": JSON.stringify({
-          name: "adobe/commerce-app-management",
-          version: "1.1.0",
-        }),
         "package.json": JSON.stringify({
           name: "@adobe/aio-commerce-plugin-app-management",
           version: "1.2.0",
+        }),
+        "plugin.json": JSON.stringify({
+          name: "commerce-app-management",
+          repository: "https://github.com/adobe/aio-commerce-sdk",
+          version: "1.1.0",
         }),
       },
       async (tempDir) => {
         await withChdir(tempDir, async () => {
           await syncPluginVersion();
 
-          const [tesslPluginJson, pluginJson] = await Promise.all([
-            readJson<PluginManifest>(
-              join(tempDir, ".tessl-plugin/plugin.json"),
-            ),
-            readJson<PluginManifest>(
-              join(tempDir, ".claude-plugin/plugin.json"),
-            ),
-          ]);
+          const pluginJson = await readJson<PluginManifest>(
+            join(tempDir, "plugin.json"),
+          );
 
-          expect(tesslPluginJson.version).toBe("1.2.0");
           expect(pluginJson.version).toBe("1.2.0");
           expect(pluginJson.repository).toBe(
             "https://github.com/adobe/aio-commerce-sdk",
@@ -72,7 +62,7 @@ describe("sync-plugin-version.ts", () => {
     });
   });
 
-  test("skips manifests that don't exist", async () => {
+  test("skips plugins without a plugin.json", async () => {
     await withTempFiles(
       {
         "package.json": JSON.stringify({
