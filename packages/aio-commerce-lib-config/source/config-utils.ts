@@ -373,6 +373,16 @@ export function sanitizeRequestEntries(
     }));
 }
 
+/** Returns whether a configuration value is present for required-field validation. */
+export function hasRequiredValue(value: unknown): boolean {
+  return (
+    value !== null &&
+    value !== undefined &&
+    value !== "" &&
+    (!Array.isArray(value) || value.length > 0)
+  );
+}
+
 /**
  * Merge existing and requested entries, setting origin to the current scope for requested entries.
  * A `null` value in a requested entry removes that field from the persisted config,

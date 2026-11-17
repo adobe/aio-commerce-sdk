@@ -80,6 +80,7 @@ async function resolveDynamicListField(
     label: field.label,
     name: field.name,
     options,
+    requiredFor: field.requiredFor,
     selectionMode: field.selectionMode,
     type: "list",
   };

@@ -54,6 +54,8 @@ const {
   createCombinedStoreMock,
   createRootInstallationStepMock,
   getAssociationDataMock,
+  getMissingRequiredForMock,
+  initializeConfigMock,
   setAssociationDataMock,
 } = vi.hoisted(() => {
   const actionInvokeMock = vi.fn();
@@ -62,6 +64,8 @@ const {
     createCombinedStoreMock: vi.fn(),
     createRootInstallationStepMock: vi.fn(),
     getAssociationDataMock: vi.fn(),
+    getMissingRequiredForMock: vi.fn(),
+    initializeConfigMock: vi.fn(),
     invokeMock: actionInvokeMock,
     openwhiskMock: vi.fn(() => ({
       actions: {
@@ -71,6 +75,12 @@ const {
     setAssociationDataMock: vi.fn(),
   };
 });
+
+vi.mock("@adobe/aio-commerce-lib-config", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@adobe/aio-commerce-lib-config")>()),
+  getMissingRequiredFor: getMissingRequiredForMock,
+  initialize: initializeConfigMock,
+}));
 
 vi.mock("@aio-commerce-sdk/common-utils/storage", () => ({
   createCombinedStore: createCombinedStoreMock,
@@ -128,6 +138,7 @@ describe("installationRuntimeAction", () => {
     invokeMock.mockResolvedValue({ activationId: "activation-123" });
     setAssociationDataMock.mockReset();
     setAssociationDataMock.mockResolvedValue(undefined);
+    getMissingRequiredForMock.mockResolvedValue([]);
     getAssociationDataMock.mockResolvedValue({
       commerce: { baseUrl: "https://associated.example.com", env: "saas" },
     });
@@ -651,6 +662,66 @@ describe("installationRuntimeAction", () => {
     }
 
     describe("install branch", () => {
+      test("rejects a start with missing required global configuration without dispatching", async () => {
+        desiredInstallationStore = createMockInstallationStore();
+        desiredStateStore = createMockLifecycleStore<OrchestrationState>();
+        const action = installationRuntimeAction({
+          appConfig: {
+            ...configWithAutoUpgrade,
+            businessConfig: {
+              schema: [
+                {
+                  name: "secret",
+                  requiredFor: ["installation"],
+                  type: "password",
+                },
+              ],
+            },
+          },
+        });
+        const planId = await validateInstall(action);
+        getMissingRequiredForMock.mockResolvedValue(["secret"]);
+        const result = await startPlan(action, planId, requestBody);
+        expect(result).toMatchObject({
+          error: {
+            body: {
+              code: "missing-required-configuration",
+              fields: ["secret"],
+            },
+            statusCode: 409,
+          },
+          type: "error",
+        });
+        expect(getMissingRequiredForMock).toHaveBeenCalledWith("installation");
+        expect(invokeMock).not.toHaveBeenCalled();
+        expect(
+          (await desiredStateStore.get("current"))?.latestAttempt,
+        ).toBeFalsy();
+      });
+
+      test("ignores lifecycle requirements outside the associated environment", async () => {
+        desiredInstallationStore = createMockInstallationStore();
+        const action = installationRuntimeAction({
+          appConfig: {
+            ...configWithAutoUpgrade,
+            businessConfig: {
+              schema: [
+                {
+                  env: ["saas"],
+                  name: "secret",
+                  requiredFor: ["installation"],
+                  type: "password",
+                },
+              ],
+            },
+          },
+        });
+        const planId = await validateInstall(action);
+        const result = await startPlan(action, planId, requestBody);
+        expect(result).toMatchObject({ statusCode: 202, type: "success" });
+        expect(getMissingRequiredForMock).not.toHaveBeenCalled();
+      });
+
       test("dispatches to installation when no completed install exists", async () => {
         desiredInstallationStore = createMockInstallationStore();
         const action = installationRuntimeAction({
@@ -1090,6 +1161,40 @@ describe("installationRuntimeAction", () => {
     });
 
     describe("upgrade branch", () => {
+      test("rejects an upgrade when a required value is missing and succeeds after it is provided", async () => {
+        const action = installationRuntimeAction({
+          appConfig: {
+            ...configWithAutoUpgrade,
+            businessConfig: {
+              schema: [
+                { name: "region", requiredFor: ["upgrade"], type: "text" },
+              ],
+            },
+          },
+        });
+        const planned = await planRequest(action);
+        expect.assert(planned.type === "success");
+        const planId = (planned.body as { plan: { id: string } }).plan.id;
+        getMissingRequiredForMock
+          .mockResolvedValueOnce(["region"])
+          .mockResolvedValueOnce([]);
+        const rejected = await startPlan(action, planId);
+        expect(rejected).toMatchObject({
+          error: {
+            body: {
+              code: "missing-required-configuration",
+              fields: ["region"],
+            },
+            statusCode: 409,
+          },
+        });
+        expect(invokeMock).not.toHaveBeenCalled();
+        const accepted = await startPlan(action, planId);
+        expect(accepted).toMatchObject({ statusCode: 202, type: "success" });
+        expect(getMissingRequiredForMock).toHaveBeenCalledWith("upgrade");
+        expect(invokeMock).toHaveBeenCalledOnce();
+      });
+
       test("returns 409 when the app is not associated", async () => {
         getAssociationDataMock.mockResolvedValue(null);
         const action = installationRuntimeAction({
@@ -1861,6 +1966,25 @@ describe("installationRuntimeAction", () => {
 
         return { action, result };
       }
+
+      test("does not enforce install or upgrade requirements during uninstall", async () => {
+        useUninstallLeaf();
+        const { result } = await startUninstall({
+          ...configWithAutoUpgrade,
+          businessConfig: {
+            schema: [
+              {
+                default: "",
+                name: "secret",
+                requiredFor: ["installation", "upgrade"],
+                type: "password",
+              },
+            ],
+          },
+        });
+        expect(result).toMatchObject({ statusCode: 202, type: "success" });
+        expect(getMissingRequiredForMock).not.toHaveBeenCalled();
+      });
 
       /** The plan of the latest attempt. */
       async function getAttemptPlan() {

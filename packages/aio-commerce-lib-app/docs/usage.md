@@ -203,6 +203,7 @@ businessConfig: {
       type: 'text',
       label: 'API Key',
       description: 'Your API key for the service',
+      requiredFor: ['save', 'installation'],
     },
     {
       name: 'environment',
@@ -218,6 +219,10 @@ businessConfig: {
   ],
 }
 ```
+
+The optional `requiredFor` array applies to every field type. Include `"save"` to require an updated field's effective value to be non-empty before saving. Only fields present in the partial update are checked. A `null` update removes the override and is accepted only if a non-empty inherited value or default remains; `false` is a valid value. Invalid updates return HTTP 400 without saving any changes.
+
+Include `"installation"` and/or `"upgrade"` to require a non-empty effective global value before those operations start. Defaults count, and boolean `false` is valid; values saved only on other scopes do not satisfy the global requirement. Only fields applicable to the associated Commerce environment are checked. If values are missing, the start request returns HTTP 409 with code `missing-required-configuration` and a `fields` array; set the values and retry the pending plan. Planning and uninstall are unaffected.
 
 For detailed information about available field types and their usage, see the [`@adobe/aio-commerce-lib-config` documentation](../../aio-commerce-lib-config/docs/usage.md#field-types).
 
