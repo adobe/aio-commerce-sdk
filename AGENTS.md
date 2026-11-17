@@ -77,7 +77,7 @@ Each package has its own documentation under a `docs` folder (except for the met
 - Never edit the auto-generated API reference by hand — any changes will be wiped out on regeneration.
 - Never regenerate the API reference in PRs. It clutters the diff and complicates review; we regenerate it before publishing.
 - Never use emojis of any kind in public documentation.
-- Keep documentation in sync on every change: the README (if applicable), `usage.md` (along with any supporting docs when documentation is fragmented across files), and the API reference (updated indirectly via JSDoc).
+- When a change alters what a developer calls, configures or sees, update the README (if applicable), `usage.md` (along with any supporting docs when documentation is fragmented across files), and the API reference (updated indirectly via JSDoc). Internal changes that leave the public interface as it was need no documentation updates.
 - Document all public APIs with proper JSDoc. Use `@example` for non-obvious usage, and keep comments concise — don't restate what the types already convey.
 
 #### Comments
@@ -130,7 +130,8 @@ Each package that has deprecated symbols or planned breaking changes maintains a
 
 ### Changesets
 
-- Every code change that requires a release must include a changeset (test-only changes do not need one)
+- Every code change that requires a release must include a changeset (test-only changes do not need one). A fix to work that hasn't been released yet, or an internal change a developer can't observe, needs no changeset either
+- Keep one changeset per change. Its message lands in the CHANGELOG of every package it lists, so it must read true for each of them. When one change affects several packages in different ways, write a separate changeset for each package, or for each group of packages the same message describes
 - Create one with `pnpm changeset add --empty`, then edit the generated `.changeset/<name>.md` file
 - Changeset messages must be user-facing and concise — describe what the developer can now do or what changed for them, not what the implementation does internally; start with a capital letter and end with a period
 - Don't repeat the package's own name in its changeset message — it's redundant with the CHANGELOG file/header the message lands in (e.g. write "Release the first stable version." not "`@adobe/aio-commerce-lib-admin-ui` is now stable and released as 1.0.0."). Naming a _different_ package is fine when explaining why a dependent bumped (e.g. a meta-package changeset that references the library it re-exports)
