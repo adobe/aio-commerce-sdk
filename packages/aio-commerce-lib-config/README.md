@@ -14,8 +14,7 @@ pnpm add @adobe/aio-commerce-lib-config
 
 See the [Usage Guide](./docs/usage.md) for more information.
 
-Configuration changes also record a read-only audit of changed fields and supplied actor metadata,
-with sensitive values redacted. See [Business configuration audit](./docs/audit.md).
+Configuration changes also record a read-only audit of changed fields and supplied actor metadata, with sensitive values redacted. See [Business configuration audit](./docs/audit.md).
 
 ## Contributing
 
