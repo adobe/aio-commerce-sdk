@@ -24,8 +24,11 @@ const ValueSchema = v.optional(
   v.union([v.string(), v.boolean(), v.array(v.string())]),
 );
 const OriginSchema = v.strictObject({ code: v.string(), level: v.string() });
-const ChangeStateSchema = v.strictObject({
+/** Value and origin on one side of an audit change. */
+export const ChangeStateSchema = v.strictObject({
+  /** Scope where the value was set. */
   origin: OriginSchema,
+  /** Configuration value, with sensitive content redacted. */
   value: ValueSchema,
 });
 export const AuditEntrySchema = v.strictObject({

@@ -10,13 +10,11 @@
  * governing permissions and limitations under the License.
  */
 
-import type { ConfigValue } from "#modules/configuration/types";
+import type { InferOutput } from "valibot";
+import type { ChangeStateSchema } from "#utils/audit-storage";
 
 /** Value and origin on one side of an audit change. */
-type ConfigChangeState = {
-  value?: ConfigValue["value"];
-  origin: ConfigValue["origin"];
-};
+type ConfigChangeState = InferOutput<typeof ChangeStateSchema>;
 
 /** Application-supplied attribution, not an authenticated identity assertion. */
 export type AuditActor = {

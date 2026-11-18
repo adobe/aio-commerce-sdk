@@ -54,12 +54,12 @@ const AuditQuerySchema = v.pipe(
     startDate: v.optional(AuditDateSchema),
     userId: v.optional(v.string()),
   }),
-  v.check(
-    ({ startDate, endDate }) =>
-      (startDate ?? Number.NEGATIVE_INFINITY) <=
-      (endDate ?? Number.POSITIVE_INFINITY),
-    dateMessage,
-  ),
+  v.transform((query) => ({
+    ...query,
+    endDate: query.endDate ?? Number.POSITIVE_INFINITY,
+    startDate: query.startDate ?? Number.NEGATIVE_INFINITY,
+  })),
+  v.check(({ startDate, endDate }) => startDate <= endDate, dateMessage),
 );
 
 /** Prepares only changed fields and permitted actor metadata before live persistence. */
@@ -98,15 +98,13 @@ export async function queryAuditLog(
     AuditQuerySchema,
     request,
   );
-  const start = startDate ?? Number.NEGATIVE_INFINITY;
-  const end = endDate ?? Number.POSITIVE_INFINITY;
   const all = await listAuditEntries(namespace);
   const entries = all.filter(
     (entry) =>
       (scopeId === undefined || entry.scope.id === scopeId) &&
       (userId === undefined || entry.actor.userId === userId) &&
-      Date.parse(entry.timestamp) >= start &&
-      Date.parse(entry.timestamp) <= end,
+      Date.parse(entry.timestamp) >= startDate &&
+      Date.parse(entry.timestamp) <= endDate,
   );
   entries.sort(
     (a, b) =>

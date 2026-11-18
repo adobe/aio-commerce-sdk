@@ -10,9 +10,13 @@
  * governing permissions and limitations under the License.
  */
 
+import * as v from "valibot";
+
 import { ENCRYPTED_PREFIX } from "#utils/encryption";
 
 import type { ConfigDiff } from "./types";
+
+const EncryptedValueSchema = v.pipe(v.string(), v.startsWith(ENCRYPTED_PREFIX));
 
 /**
  * Redacted value indicator.
@@ -32,10 +36,8 @@ export function redactSensitiveDiffs(
 ): ConfigDiff[] {
   return diffs.map((diff) =>
     redactedFields.has(diff.name) ||
-    (typeof diff.old?.value === "string" &&
-      diff.old.value.startsWith(ENCRYPTED_PREFIX)) ||
-    (typeof diff.new?.value === "string" &&
-      diff.new.value.startsWith(ENCRYPTED_PREFIX))
+    v.is(EncryptedValueSchema, diff.old?.value) ||
+    v.is(EncryptedValueSchema, diff.new?.value)
       ? {
           ...diff,
           new: diff.new
