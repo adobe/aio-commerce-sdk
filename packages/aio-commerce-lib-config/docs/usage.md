@@ -9,12 +9,21 @@ The `@adobe/aio-commerce-lib-config` library provides:
 - **Inheritance Model**: Automatic configuration inheritance from parent scopes
 - **Schema Validation**: Validate configuration schemas with in-memory schema storage
 - **Persistent Storage**: Uses `@adobe/aio-lib-state` and `@adobe/aio-lib-files` for configuration data caching and storage
+- **Business Configuration Audit**: Read-only records of changed fields and supplied actor metadata, with sensitive values redacted
 
 ## Reference
 
 See the [API Reference](./api-reference/README.md) for a full list of classes, interfaces, and functions exported by the library.
 
 ## How to use
+
+### Business configuration audit
+
+`setConfiguration` records changed fields, their non-sensitive before/after values, and optional `metadata.actor` (`userId` and `source`). Use `getAuditLog(selector?, filters?)` to query by scope selector, actor, date, and pagination. Fields declared as `type: "password"` and unknown-schema values are redacted. Sensitivity is not inferred from field names.
+
+Audit queries are read-only and cannot restore historical settings. Live configuration and audit use separate writes; an audit failure can be reported after live values have changed.
+
+See [Business configuration audit](./audit.md) for attribution, redaction, and persistence limits.
 
 ### Setup
 

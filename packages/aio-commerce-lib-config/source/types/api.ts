@@ -10,6 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
+import type { AuditActor } from "#modules/audit/types";
 import type { ConfigValue, SetConfigValue } from "#modules/configuration/types";
 import type {
   BusinessConfigSchema,
@@ -60,6 +61,8 @@ export type GetConfigurationByKeyResponse = {
 export type SetConfigurationRequest = {
   /** Array of configuration name-value pairs to set. */
   config: SetConfigValue[];
+  /** Application-supplied actor metadata; not proof of the caller's identity. */
+  metadata?: { actor?: AuditActor };
 };
 
 /**
