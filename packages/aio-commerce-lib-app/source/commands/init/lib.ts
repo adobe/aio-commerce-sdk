@@ -23,12 +23,8 @@ import {
 } from "@aio-commerce-sdk/scripting-utils/project";
 import { consola } from "consola";
 
-import { ensureExtensionPointsOrder } from "#commands/common/extension-points";
 import {
-  BACKEND_UI_V2_EXTENSION_POINT_ID,
   COMMERCE_APP_CONFIG_FILE,
-  CONFIGURATION_EXTENSION_POINT_ID,
-  EXTENSIBILITY_EXTENSION_POINT_ID,
   PACKAGE_JSON_FILE,
 } from "#commands/constants";
 import { run as generateActions } from "#commands/generate/actions/main";
@@ -37,7 +33,6 @@ import { run as generateSchema } from "#commands/generate/schema/main";
 import { prettierFormat, runInstall } from "#commands/utils";
 import {
   getConfigDomains,
-  hasBackendUiV2Components,
   isTypeScriptConfig,
   parseCommerceAppConfig,
   readCommerceAppConfig,
@@ -46,8 +41,6 @@ import {
 } from "#config/index";
 
 import {
-  addExtensionPointToAppConfig,
-  addExtensionPointToInstallYaml,
   getDefaultCommerceAppConfig,
   initFlagsToScaffoldAppAnswers,
   promptForCommerceAppConfig,
@@ -227,44 +220,6 @@ export async function writePostinstallHook(
 }
 
 /**
- * Ensures app.config.yaml references the enabled domain extensions.
- * @param domains - Domains enabled in the app configuration.
- * @param config - The validated app configuration.
- * @param projectRoot - Resolved project root containing app.config.yaml.
- */
-export async function ensureAppConfig(
-  domains: Set<CommerceAppConfigDomain>,
-  config: CommerceAppConfigOutputModel,
-  projectRoot: string,
-) {
-  if (hasBackendUiV2Components(config)) {
-    await addExtensionPointToAppConfig(
-      BACKEND_UI_V2_EXTENSION_POINT_ID,
-      projectRoot,
-      " This extension is required for Admin UI. Do not remove.",
-    );
-  }
-
-  if (domains.has("businessConfig.schema")) {
-    await addExtensionPointToAppConfig(
-      CONFIGURATION_EXTENSION_POINT_ID,
-      projectRoot,
-      " This extension is required for business configuration. Do not remove.",
-    );
-  }
-
-  // This is always needed (to get the app config at least)
-  await addExtensionPointToAppConfig(
-    EXTENSIBILITY_EXTENSION_POINT_ID,
-    projectRoot,
-    " This extension is required for app management. Do not remove.",
-  );
-
-  // Entries that were already in the file keep their place unless we sort them.
-  await ensureExtensionPointsOrder(projectRoot);
-}
-
-/**
  * Install the domain-specific dependencies derived from the selected domains.
  * @param packageManager - The detected package manager
  * @param domains - Domains enabled in the commerce app config
@@ -312,39 +267,4 @@ export async function runGeneration(
       },
     );
   }
-}
-
-/**
- * Ensures install.yaml references the enabled domain extensions.
- * @param domains - Domains enabled in the app configuration.
- * @param config - The validated app configuration.
- * @param projectRoot - Resolved project root containing install.yaml.
- */
-export async function ensureInstallYaml(
-  domains: Set<CommerceAppConfigDomain>,
-  config: CommerceAppConfigOutputModel,
-  projectRoot: string,
-) {
-  if (domains.has("businessConfig.schema")) {
-    await addExtensionPointToInstallYaml(
-      CONFIGURATION_EXTENSION_POINT_ID,
-      projectRoot,
-      " This extension is required for business configuration. Do not remove.",
-    );
-  }
-
-  if (hasBackendUiV2Components(config)) {
-    await addExtensionPointToInstallYaml(
-      BACKEND_UI_V2_EXTENSION_POINT_ID,
-      projectRoot,
-      " This extension is required for Admin UI. Do not remove.",
-    );
-  }
-
-  // This is always needed (to get the app config at least)
-  await addExtensionPointToInstallYaml(
-    EXTENSIBILITY_EXTENSION_POINT_ID,
-    projectRoot,
-    " This extension is required for app management. Do not remove.",
-  );
 }

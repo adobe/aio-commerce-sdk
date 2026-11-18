@@ -11,18 +11,23 @@
  */
 
 import { existsSync, readFileSync } from "node:fs";
-import { mkdir, readFile, stat, writeFile } from "node:fs/promises";
+import { appendFile, mkdir, readFile, stat, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 
 import consola from "consola";
 import { afterEach, describe, expect, test, vi } from "vitest";
+import { parse } from "yaml";
 
 import {
   APP_CONFIG_FILE,
   BACKEND_UI_V2_EXTENSION_POINT_ID,
   CONFIGURATION_EXTENSION_POINT_ID,
   EXTENSIBILITY_EXTENSION_POINT_ID,
+  getExtensionPointFolderPath,
+  INSTALL_YAML_FILE,
 } from "#commands/constants";
+import { run as generateActions } from "#commands/generate/actions/main";
+import { run as generateSchema } from "#commands/generate/schema/main";
 import { exec, run } from "#commands/hooks/pre-app-build";
 import {
   getExtConfigPath,
@@ -71,6 +76,17 @@ vi.mock("@aio-commerce-sdk/scripting-utils/env", async (importOriginal) => ({
 
 const ORDER_REWRITTEN_RE =
   /were reordered \(commerce\/backend-ui\/2, commerce\/configuration\/1, commerce\/extensibility\/1\).*one-off/su;
+
+const ENTRIES_ADDED_RE =
+  /extension entries were added to (?<files>.+?)\. This build may not use them, so run the build again/su;
+
+const INSTALL_YAML_WITH_ALL_ENTRIES = `extensions:\n${ORDERED_EXTENSION_POINTS.map((id) => `  - extensionPointId: ${id}`).join("\n")}\n`;
+
+const KEPT_EXT_CONFIG_RE = /has changes that lib-app did not generate/u;
+
+const REMOVED_RE = /^Removed/u;
+
+const infoSpy = vi.spyOn(consola, "info").mockImplementation(() => undefined);
 
 const warnSpy = vi.spyOn(consola, "warn").mockImplementation(() => undefined);
 
@@ -386,7 +402,11 @@ describe("commands/hooks/pre-app-build", () => {
       );
 
       await withTempProject(
-        { ...makeProjectFiles(configWithAdminUiSingleGrid), ...wrongOrder },
+        {
+          ...makeProjectFiles(configWithAdminUiSingleGrid),
+          ...wrongOrder,
+          [INSTALL_YAML_FILE]: INSTALL_YAML_WITH_ALL_ENTRIES,
+        },
         async (tempDir) => {
           await expect(run("backend-ui/2", tempDir)).resolves.toBeUndefined();
 
@@ -407,7 +427,11 @@ describe("commands/hooks/pre-app-build", () => {
       );
 
       await withTempProject(
-        { ...makeProjectFiles(configWithAdminUiSingleGrid), ...wrongOrder },
+        {
+          ...makeProjectFiles(configWithAdminUiSingleGrid),
+          ...wrongOrder,
+          [INSTALL_YAML_FILE]: INSTALL_YAML_WITH_ALL_ENTRIES,
+        },
         async (tempDir) => {
           await run("backend-ui/2", tempDir);
           warnSpy.mockClear();
@@ -423,6 +447,7 @@ describe("commands/hooks/pre-app-build", () => {
         {
           ...makeProjectFiles(configWithAdminUiSingleGrid),
           ...makeAppConfigFile(ORDERED_EXTENSION_POINTS),
+          [INSTALL_YAML_FILE]: INSTALL_YAML_WITH_ALL_ENTRIES,
         },
         async (tempDir) => {
           const path = join(tempDir, APP_CONFIG_FILE);
@@ -431,6 +456,176 @@ describe("commands/hooks/pre-app-build", () => {
           await expect(run("backend-ui/2", tempDir)).resolves.toBeUndefined();
           expect((await stat(path)).mtimeMs).toBe(before.mtimeMs);
           expect(warnSpy).not.toHaveBeenCalled();
+        },
+      );
+    });
+
+    test("adds missing entries to app.config.yaml and install.yaml and warns once", async () => {
+      await withTempProject(
+        makeProjectFiles(minimalValidConfig),
+        async (tempDir) => {
+          await run("backend-ui/2", tempDir, tempDir);
+
+          const contents = await Promise.all(
+            [APP_CONFIG_FILE, INSTALL_YAML_FILE].map((file) =>
+              readFile(join(tempDir, file), "utf-8"),
+            ),
+          );
+
+          for (const content of contents) {
+            expect(content).toContain(EXTENSIBILITY_EXTENSION_POINT_ID);
+          }
+
+          expect(warnSpy).toHaveBeenCalledOnce();
+          expect(warnSpy.mock.calls[0]?.[0]).toMatch(ENTRIES_ADDED_RE);
+          expect(warnSpy.mock.calls[0]?.[0]).toContain(
+            `${APP_CONFIG_FILE} and ${INSTALL_YAML_FILE}`,
+          );
+        },
+      );
+    });
+
+    test("names only install.yaml when only it lacked entries", async () => {
+      await withTempProject(
+        {
+          ...makeProjectFiles(minimalValidConfig),
+          ...makeAppConfigFile([EXTENSIBILITY_EXTENSION_POINT_ID]),
+        },
+        async (tempDir) => {
+          await run("backend-ui/2", tempDir, tempDir);
+
+          expect(warnSpy).toHaveBeenCalledOnce();
+          expect(warnSpy.mock.calls[0]?.[0]).toMatch(ENTRIES_ADDED_RE);
+          expect(warnSpy.mock.calls[0]?.[0]).not.toContain(APP_CONFIG_FILE);
+        },
+      );
+    });
+
+    test("does not warn about entries when both files already have them", async () => {
+      await withTempProject(
+        {
+          ...makeProjectFiles(minimalValidConfig),
+          ...makeAppConfigFile([EXTENSIBILITY_EXTENSION_POINT_ID]),
+          [INSTALL_YAML_FILE]: `extensions:\n  - extensionPointId: ${EXTENSIBILITY_EXTENSION_POINT_ID}\n`,
+        },
+        async (tempDir) => {
+          await run("backend-ui/2", tempDir, tempDir);
+
+          expect(warnSpy).not.toHaveBeenCalledWith(
+            expect.stringMatching(ENTRIES_ADDED_RE),
+          );
+        },
+      );
+    });
+
+    describe("cleanup of a removed configuration/1", () => {
+      /** Generates artifacts for a businessConfig while the config on disk no longer has it. */
+      async function withRemovedBusinessConfig(
+        callback: (tempDir: string) => Promise<void>,
+      ) {
+        await withTempProject(
+          {
+            ...makeProjectFiles(minimalValidConfig),
+            ...makeTemplateFiles(),
+          },
+          async (tempDir) => {
+            await generateActions(configWithBusinessConfig, tempDir, tempDir);
+            await generateSchema(configWithBusinessConfig, tempDir);
+
+            warnSpy.mockClear();
+            await callback(tempDir);
+          },
+        );
+      }
+
+      function unrelatedWarnings() {
+        return warnSpy.mock.calls.filter(
+          ([message]) => !String(message).startsWith("Deprecated"),
+        );
+      }
+
+      async function listedExtensionPoints(tempDir: string) {
+        const [appConfig, installYaml] = await Promise.all([
+          readFile(join(tempDir, APP_CONFIG_FILE), "utf-8"),
+          readFile(join(tempDir, INSTALL_YAML_FILE), "utf-8"),
+        ]);
+
+        return {
+          appConfig: Object.keys(parse(appConfig).extensions),
+          install: parse(installYaml).extensions.map(
+            (entry: { extensionPointId: string }) => entry.extensionPointId,
+          ),
+        };
+      }
+
+      test("extensibility/1 deletes the removed artifacts and entries without logging", async () => {
+        await withRemovedBusinessConfig(async (tempDir) => {
+          await run("extensibility/1", tempDir, tempDir);
+
+          expect(
+            existsSync(
+              join(
+                tempDir,
+                getExtensionPointFolderPath(CONFIGURATION_EXTENSION_POINT_ID),
+              ),
+            ),
+          ).toBe(false);
+          expect(await listedExtensionPoints(tempDir)).toEqual({
+            appConfig: [EXTENSIBILITY_EXTENSION_POINT_ID],
+            install: [EXTENSIBILITY_EXTENSION_POINT_ID],
+          });
+          expect(unrelatedWarnings()).toHaveLength(0);
+          expect(infoSpy).not.toHaveBeenCalledWith(
+            expect.stringMatching(REMOVED_RE),
+          );
+        });
+      });
+
+      test("extensibility/1 keeps a modified ext.config.yaml and warns once", async () => {
+        await withRemovedBusinessConfig(async (tempDir) => {
+          const extConfigPath = join(
+            tempDir,
+            getExtConfigPath(CONFIGURATION_EXTENSION_POINT_ID),
+          );
+
+          await appendFile(extConfigPath, "\nmyCustomKey: true\n");
+          await run("extensibility/1", tempDir, tempDir);
+
+          expect(await readFile(extConfigPath, "utf-8")).toContain(
+            "myCustomKey",
+          );
+          expect((await listedExtensionPoints(tempDir)).appConfig).toContain(
+            CONFIGURATION_EXTENSION_POINT_ID,
+          );
+          expect(unrelatedWarnings()).toHaveLength(1);
+          expect(unrelatedWarnings()[0]?.[0]).toMatch(KEPT_EXT_CONFIG_RE);
+        });
+      });
+
+      test.each(["configuration/1", "backend-ui/2"] as const)(
+        "%s does not run the cleanup",
+        async (extension) => {
+          await withRemovedBusinessConfig(async (tempDir) => {
+            await run(extension, tempDir, tempDir);
+
+            expect(
+              existsSync(
+                join(
+                  tempDir,
+                  getExtConfigPath(CONFIGURATION_EXTENSION_POINT_ID),
+                ),
+              ),
+            ).toBe(true);
+            expect(await listedExtensionPoints(tempDir)).toEqual({
+              appConfig: [
+                CONFIGURATION_EXTENSION_POINT_ID,
+                EXTENSIBILITY_EXTENSION_POINT_ID,
+              ],
+              install: expect.arrayContaining([
+                CONFIGURATION_EXTENSION_POINT_ID,
+              ]),
+            });
+          });
         },
       );
     });
@@ -520,6 +715,7 @@ describe("commands/hooks/pre-app-build", () => {
           ...makeProjectFiles(configWithAdminUiSingleGrid),
           ...makeTemplateFiles(),
           ...makeAppConfigFile([...ORDERED_EXTENSION_POINTS].reverse()),
+          [INSTALL_YAML_FILE]: INSTALL_YAML_WITH_ALL_ENTRIES,
         },
         async () => {
           await exec();

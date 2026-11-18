@@ -40,7 +40,7 @@ Commands:
   
   generate <target>    Generate artifacts
     all                Generate app manifest and runtime actions
-    actions            Generate runtime actions only
+    actions            Generate runtime actions and update app.config.yaml and install.yaml
     manifest           Generate app manifest only
     schema             Generate configuration schema only
 

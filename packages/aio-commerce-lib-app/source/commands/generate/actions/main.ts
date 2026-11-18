@@ -25,13 +25,17 @@ import {
 } from "#commands/generate/web-src";
 import { loadAppManifest } from "#commands/utils";
 import {
+  getConfigDomains,
   hasBackendUiV2Components,
   hasBusinessConfigSchema,
 } from "#config/index";
 
+import { cleanupRemovedExtensions } from "./cleanup";
 import { getRuntimeActions } from "./config";
 import { TEMPLATES_DIR } from "./constants";
 import {
+  ensureAppConfig,
+  ensureInstallYaml,
   generateActionFiles,
   prepareRuntimeAppConfigModule,
   updateExtConfig,
@@ -40,7 +44,7 @@ import {
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 
 /**
- * Generates extension configs, runtime actions, and Admin UI web source for the configured domains.
+ * Generates extension configs, runtime actions, and Admin UI web source for the configured domains, then adds the extension entries to app.config.yaml and install.yaml and removes what was generated for extension points the config no longer needs.
  * @param appManifest - App configuration used to determine the generated content.
  * @param projectRoot - Resolved project root where files are generated.
  * @param templatesDir - Directory containing generation templates.
@@ -98,6 +102,11 @@ export async function run(
       );
     }
   }
+
+  const domains = getConfigDomains(appManifest);
+  await ensureAppConfig(domains, appManifest, projectRoot);
+  await ensureInstallYaml(domains, appManifest, projectRoot);
+  await cleanupRemovedExtensions(domains, appManifest, projectRoot);
 }
 
 /** Run the generate actions command */

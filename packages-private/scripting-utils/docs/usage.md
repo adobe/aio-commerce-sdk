@@ -141,6 +141,7 @@ import {
   getOrCreateSeq,
   getOrCreateMap,
   createOrUpdateExtConfig,
+  buildExtConfigDocument,
 } from "@aio-commerce-sdk/scripting-utils/yaml";
 
 // Read a YAML file into a Document
@@ -177,6 +178,9 @@ await createOrUpdateExtConfig("ext.config.yaml", {
     },
   },
 });
+
+// Build the same document without writing it (for example, to compare it with an existing file)
+const doc = await buildExtConfigDocument(config);
 ```
 
 ## Process Utilities
