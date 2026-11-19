@@ -25,14 +25,12 @@ const LEADING_UNDERSCORES = /^_+/u;
 /**
  * Converts a header name to a camelCase key aligned with `type-fest`'s `CamelCase` type.
  *
- * `camelcase` v9+ preserves leading underscores (e.g. `_foo_bar` → `_fooBar`), but
- * `type-fest`'s `CamelCase` — used by `HttpHeaderAccessorMap` — drops them
- * (e.g. `_foo_bar` → `fooBar`). Without stripping them first, runtime keys would diverge
- * from the inferred TypeScript type.
+ * Leading underscores are dropped (e.g. `_foo_bar` → `fooBar`), matching
+ * `HttpHeaderAccessorMap`, which sets `preserveLeadingUnderscores: false`.
  *
- * @remarks This function must be removed and replaced with a bare `camelcase(header)` call
- * once the two helpers agree on leading-underscore handling. That cleanup is a breaking
- * change and must land in a major release.
+ * @remarks Preserving leading underscores (a bare `camelcase(header)` call, which is the
+ * default for both `camelcase` v9+ and `type-fest` v6+) is a breaking change and must land
+ * in a major release, updating this function and `HttpHeaderAccessorMap` together.
  */
 function toHeaderCamelKey(header: string): string {
   return camelcase(header.replace(LEADING_UNDERSCORES, ""));
