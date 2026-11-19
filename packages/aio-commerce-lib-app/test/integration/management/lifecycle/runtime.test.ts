@@ -2698,4 +2698,34 @@ describe("lifecycle with concurrent root children", () => {
     expect(executed.status).toBe("succeeded");
     expect(maxInFlight).toBe(1);
   });
+
+  test("saves each succeeded branch together with its output", async () => {
+    const { attempt, stateStore } = createLifecycle("upgrade");
+    const { put } = stateStore;
+    const writes: OrchestrationState[] = [];
+    stateStore.put = async (key, value) => {
+      await delay(5);
+      writes.push(structuredClone(value));
+      await put(key, structuredClone(value));
+    };
+
+    const executed = await attempt("a1");
+    expect(executed.status).toBe("succeeded");
+
+    const progressWrites = writes.filter(
+      (state) => state.latestAttempt?.status === "in-progress",
+    );
+    expect(progressWrites.length).toBeGreaterThan(0);
+
+    for (const state of progressWrites) {
+      const attemptState = state.latestAttempt as LifecycleAttempt;
+      for (const child of attemptState.progress.children) {
+        if (child.status === "succeeded") {
+          expect(attemptState.data).toMatchObject({
+            root: { [child.name]: { name: child.name } },
+          });
+        }
+      }
+    }
+  });
 });

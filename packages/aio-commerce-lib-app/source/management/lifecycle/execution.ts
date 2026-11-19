@@ -199,10 +199,15 @@ function createProgressHooks(
   let queuedSaves: Promise<unknown> = Promise.resolve();
 
   // Saves are serialized so an older save can't overwrite newer progress from a parallel branch.
-  // Each one reads the live state when it runs, so don't snapshot it here.
+  // The state is copied when queued because parallel branches keep changing it before the save runs.
   const persistExecutionProgress = (progressState: WorkflowRunState) => {
+    const queued = {
+      ...progressState,
+      data: structuredClone(progressState.data),
+      step: structuredClone(progressState.step),
+    };
     const save = queuedSaves.then(() =>
-      persistProgress(stateStore, attempt.id, progressState),
+      persistProgress(stateStore, attempt.id, queued),
     );
 
     queuedSaves = save.catch(() => undefined);
