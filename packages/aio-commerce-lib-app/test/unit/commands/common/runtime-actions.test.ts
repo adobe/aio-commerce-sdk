@@ -164,7 +164,7 @@ describe("validateRuntimeActionReferences", () => {
     ).resolves.toBeUndefined();
   });
 
-  test("accepts eventing and webhook actions declared under application", async () => {
+  test("requires eventing and webhook actions to be declared in the extensibility extension", async () => {
     const appConfigYaml = [
       "application:",
       "  runtimeManifest:",
@@ -176,39 +176,45 @@ describe("validateRuntimeActionReferences", () => {
       "            web: 'yes'",
     ].join("\n");
 
-    await expect(
+    const display = await issuesOf(
       validate(configWithWebhooks, EXTENSIBILITY_EXTENSION_POINT_ID, {}, [], {
         "actions/hook.js": "",
         "app.config.yaml": appConfigYaml,
       }),
-    ).resolves.toBeUndefined();
+    );
+
+    expect(display).toContain(
+      'Runtime action "my-package/handle-webhook" is not declared under "runtimeManifest.packages" in src/commerce-extensibility-1/ext.config.yaml',
+    );
   });
 
-  test("resolves function paths relative to an included extension config", async () => {
-    const extConfigYaml = [
-      "runtimeManifest:",
-      "  packages:",
-      "    my-package:",
-      "      actions:",
-      "        handle-order:",
-      "          function: actions/order.js",
+  test("resolves function paths relative to an included runtime manifest", async () => {
+    const folder = getExtensionPointFolderPath(
+      EXTENSIBILITY_EXTENSION_POINT_ID,
+    );
+    const manifestYaml = [
+      "packages:",
+      "  my-package:",
+      "    actions:",
+      "      handle-order:",
+      "        function: actions/order.js",
     ].join("\n");
 
     await expect(
-      validate(
-        configWithCommerceEventing,
-        EXTENSIBILITY_EXTENSION_POINT_ID,
-        {},
-        [],
+      withTempFiles(
         {
-          "app.config.yaml": [
-            "extensions:",
-            "  other/1:",
-            "    $include: src/other/ext.config.yaml",
-          ].join("\n"),
-          "src/other/actions/order.js": "",
-          "src/other/ext.config.yaml": extConfigYaml,
+          [join(folder, "nested/manifest.yaml")]: manifestYaml,
+          [join(folder, "nested/actions/order.js")]: "",
         },
+        (tempDir) =>
+          validateRuntimeActionReferences(
+            configWithCommerceEventing,
+            EXTENSIBILITY_EXTENSION_POINT_ID,
+            {
+              runtimeManifest: { $include: "nested/manifest.yaml" },
+            } as unknown as ExtConfig,
+            tempDir,
+          ),
       ),
     ).resolves.toBeUndefined();
   });

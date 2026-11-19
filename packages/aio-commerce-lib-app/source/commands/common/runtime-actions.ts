@@ -17,10 +17,7 @@ import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
 import { readYamlFile } from "@aio-commerce-sdk/scripting-utils/yaml";
 import * as v from "valibot";
 
-import {
-  APP_CONFIG_FILE,
-  BACKEND_UI_V2_EXTENSION_POINT_ID,
-} from "#commands/constants";
+import { BACKEND_UI_V2_EXTENSION_POINT_ID } from "#commands/constants";
 import { getExtConfigPath } from "#commands/utils";
 import {
   ADMIN_UI_GRID_COLUMN_ENTITIES,
@@ -129,40 +126,9 @@ async function listRuntimeManifestActions(
 }
 
 /**
- * Lists every action the app deploys: those under `application` and every extension in
- * `app.config.yaml`, following `$include` directives.
- * @param projectRoot - Resolved project root containing `app.config.yaml`.
- */
-async function listAppConfigActions(projectRoot: string) {
-  const root = await resolveInclude(
-    { $include: APP_CONFIG_FILE },
-    join(projectRoot, APP_CONFIG_FILE),
-  );
-
-  const [application, extensions] = await Promise.all([
-    resolveInclude(root.node.application, root.file),
-    resolveInclude(root.node.extensions, root.file),
-  ]);
-
-  const extensionNodes = await Promise.all(
-    Object.values(extensions.node).map((node) =>
-      resolveInclude(node, extensions.file),
-    ),
-  );
-
-  const lists = await Promise.all(
-    [application, ...extensionNodes].map(({ node, file }) =>
-      listRuntimeManifestActions(node.runtimeManifest, file, projectRoot),
-    ),
-  );
-
-  return lists.flat();
-}
-
-/**
  * Schema for a single runtime action reference, checked against the declared actions.
  * @param declared - Actions the reference may resolve to.
- * @param location - Where those actions are declared, used in error messages.
+ * @param location - Project-relative path of the ext.config.yaml they are declared in, used in error messages.
  * @param requireWebAction - Whether the referenced action must be a web action.
  */
 function referenceSchema(
@@ -255,9 +221,8 @@ function extensibilityReferencesSchema(
 
 /**
  * Validates that every runtime action referenced by the config sections owned by an extension point
- * resolves to a declared action whose `function` exists on disk. `adminUi` actions must be declared in
- * the `commerce/backend-ui/2` extension config; `eventing` and `webhooks` actions may be declared under
- * `application` or any extension in `app.config.yaml`, and webhook actions must be web actions.
+ * is declared in that extension point's ext.config.yaml and that its `function` exists on disk.
+ * Webhook actions must also be web actions.
  * @param appConfig - The validated app configuration.
  * @param extensionPointId - The extension point whose references are validated.
  * @param extConfig - The extension point's parsed ext.config.yaml.
@@ -279,21 +244,14 @@ export async function validateRuntimeActionReferences(
     ),
   );
 
-  let schema: v.GenericSchema;
-  if (extensionPointId === BACKEND_UI_V2_EXTENSION_POINT_ID) {
-    schema = adminUiReferencesSchema(referenceSchema(declared, extConfigPath));
-  } else {
-    for (const [name, action] of await listAppConfigActions(projectRoot)) {
-      if (!declared.has(name)) {
-        declared.set(name, action);
-      }
-    }
-    const location = `${APP_CONFIG_FILE} or any of its extensions`;
-    schema = extensibilityReferencesSchema(
-      referenceSchema(declared, location),
-      referenceSchema(declared, location, true),
-    );
-  }
+  const ref = referenceSchema(declared, extConfigPath);
+  const schema =
+    extensionPointId === BACKEND_UI_V2_EXTENSION_POINT_ID
+      ? adminUiReferencesSchema(ref)
+      : extensibilityReferencesSchema(
+          ref,
+          referenceSchema(declared, extConfigPath, true),
+        );
 
   const result = v.safeParse(schema, appConfig);
   if (!result.success) {
