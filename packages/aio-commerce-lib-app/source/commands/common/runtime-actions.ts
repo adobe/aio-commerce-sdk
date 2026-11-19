@@ -11,14 +11,15 @@
  */
 
 import { existsSync } from "node:fs";
-import { join, resolve } from "node:path";
+import { dirname, join, relative, resolve } from "node:path";
 
 import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
+import { readYamlFile } from "@aio-commerce-sdk/scripting-utils/yaml";
 import * as v from "valibot";
 
 import {
+  APP_CONFIG_FILE,
   BACKEND_UI_V2_EXTENSION_POINT_ID,
-  getExtensionPointFolderPath,
 } from "#commands/constants";
 import { getExtConfigPath } from "#commands/utils";
 import {
@@ -40,48 +41,133 @@ type DeclaredAction = {
   function: string | undefined;
   functionExists: boolean;
   isWebAction: boolean;
+  source: string;
 };
 
 type DeclaredActions = Map<string, DeclaredAction>;
 
+type Node = Record<string, unknown>;
+
 /** Values of the `web` action property that expose the action over HTTP. */
 const WEB_ACTION_VALUES = new Set<unknown>([true, "yes", "raw"]);
 
-/**
- * Indexes the actions declared in an ext.config.yaml `runtimeManifest` by `<package>/<action>`.
- * @param extConfig - The parsed ext.config.yaml.
- * @param extConfigDir - Absolute directory of the ext.config.yaml, which `function` paths are relative to.
- */
-function getDeclaredActions(
-  extConfig: ExtConfig,
-  extConfigDir: string,
-): DeclaredActions {
-  const declared: DeclaredActions = new Map();
-  const packages = Object.entries(extConfig.runtimeManifest?.packages ?? {});
+function isNode(value: unknown): value is Node {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
 
-  for (const [packageName, { actions = {} }] of packages) {
-    for (const [actionName, action] of Object.entries(actions)) {
-      const fn = typeof action?.function === "string" ? action.function : "";
-      declared.set(`${packageName}/${actionName}`, {
-        function: fn || undefined,
-        functionExists: fn !== "" && existsSync(resolve(extConfigDir, fn)),
-        isWebAction: WEB_ACTION_VALUES.has(action?.web),
-      });
-    }
+/**
+ * Resolves a `$include` directive the way App Builder does, returning the merged node and the
+ * absolute path of the file it was read from.
+ * @param node - The node that may contain a `$include` directive.
+ * @param file - Absolute path of the file the node was read from.
+ */
+async function resolveInclude(
+  node: unknown,
+  file: string,
+): Promise<{ node: Node; file: string }> {
+  if (!(isNode(node) && typeof node.$include === "string")) {
+    return { file, node: isNode(node) ? node : {} };
   }
 
-  return declared;
+  const { $include, ...rest } = node;
+  const includedFile = resolve(dirname(file), $include);
+  const included = (await readYamlFile(includedFile)).toJS();
+
+  return resolveInclude(
+    { ...(isNode(included) ? included : {}), ...rest },
+    includedFile,
+  );
+}
+
+/**
+ * Lists the actions of a `runtimeManifest` as `<package>/<action>` entries.
+ * @param runtimeManifest - The `runtimeManifest` node, which may use `$include` at any level.
+ * @param file - Absolute path of the file the node was read from; `function` paths are relative to it.
+ * @param projectRoot - Resolved project root, used to report where each action is declared.
+ */
+async function listRuntimeManifestActions(
+  runtimeManifest: unknown,
+  file: string,
+  projectRoot: string,
+): Promise<[string, DeclaredAction][]> {
+  const manifest = await resolveInclude(runtimeManifest, file);
+  const packages = await resolveInclude(manifest.node.packages, manifest.file);
+
+  const perPackage = await Promise.all(
+    Object.entries(packages.node).map(async ([packageName, pkgNode]) => {
+      const pkg = await resolveInclude(pkgNode, packages.file);
+      const actions = await resolveInclude(pkg.node.actions, pkg.file);
+
+      return Promise.all(
+        Object.entries(actions.node).map(
+          async ([actionName, actionNode]): Promise<
+            [string, DeclaredAction]
+          > => {
+            const action = await resolveInclude(actionNode, actions.file);
+            const fn =
+              typeof action.node.function === "string"
+                ? action.node.function
+                : "";
+
+            return [
+              `${packageName}/${actionName}`,
+              {
+                function: fn || undefined,
+                functionExists:
+                  fn !== "" && existsSync(resolve(dirname(action.file), fn)),
+                isWebAction: WEB_ACTION_VALUES.has(action.node.web),
+                source: relative(projectRoot, action.file),
+              },
+            ];
+          },
+        ),
+      );
+    }),
+  );
+
+  return perPackage.flat();
+}
+
+/**
+ * Lists every action the app deploys: those under `application` and every extension in
+ * `app.config.yaml`, following `$include` directives.
+ * @param projectRoot - Resolved project root containing `app.config.yaml`.
+ */
+async function listAppConfigActions(projectRoot: string) {
+  const root = await resolveInclude(
+    { $include: APP_CONFIG_FILE },
+    join(projectRoot, APP_CONFIG_FILE),
+  );
+
+  const [application, extensions] = await Promise.all([
+    resolveInclude(root.node.application, root.file),
+    resolveInclude(root.node.extensions, root.file),
+  ]);
+
+  const extensionNodes = await Promise.all(
+    Object.values(extensions.node).map((node) =>
+      resolveInclude(node, extensions.file),
+    ),
+  );
+
+  const lists = await Promise.all(
+    [application, ...extensionNodes].map(({ node, file }) =>
+      listRuntimeManifestActions(node.runtimeManifest, file, projectRoot),
+    ),
+  );
+
+  return lists.flat();
 }
 
 /**
  * Schema for a single runtime action reference, checked against the declared actions.
- * @param declared - Actions declared in the scope's ext.config.yaml.
- * @param extConfigPath - Project-relative path of that ext.config.yaml, used in error messages.
+ * @param declared - Actions the reference may resolve to.
+ * @param location - Where those actions are declared, used in error messages.
  * @param requireWebAction - Whether the referenced action must be a web action.
  */
 function referenceSchema(
   declared: DeclaredActions,
-  extConfigPath: string,
+  location: string,
   requireWebAction = false,
 ) {
   return v.pipe(
@@ -89,21 +175,21 @@ function referenceSchema(
     v.check(
       (name) => declared.has(name),
       (issue) =>
-        `Runtime action "${issue.input}" is not declared under "runtimeManifest.packages" in ${extConfigPath}`,
+        `Runtime action "${issue.input}" is not declared under "runtimeManifest.packages" in ${location}`,
     ),
     v.check(
       (name) => declared.get(name)?.functionExists !== false,
       (issue) => {
-        const fn = declared.get(issue.input as string)?.function;
-        return fn
-          ? `Runtime action "${issue.input}" points to "${fn}" in ${extConfigPath}, which does not exist`
-          : `Runtime action "${issue.input}" has no "function" in ${extConfigPath}`;
+        const action = declared.get(issue.input as string);
+        return action?.function
+          ? `Runtime action "${issue.input}" points to "${action.function}" in ${action.source}, which does not exist`
+          : `Runtime action "${issue.input}" has no "function" in ${action?.source}`;
       },
     ),
     v.check(
       (name) => !requireWebAction || declared.get(name)?.isWebAction !== false,
       (issue) =>
-        `Runtime action "${issue.input}" must be a web action (set "web: yes" in ${extConfigPath})`,
+        `Runtime action "${issue.input}" must be a web action (set "web: yes" in ${declared.get(issue.input as string)?.source})`,
     ),
   );
 }
@@ -169,33 +255,45 @@ function extensibilityReferencesSchema(
 
 /**
  * Validates that every runtime action referenced by the config sections owned by an extension point
- * is declared in that extension point's ext.config.yaml and that its `function` exists on disk.
+ * resolves to a declared action whose `function` exists on disk. `adminUi` actions must be declared in
+ * the `commerce/backend-ui/2` extension config; `eventing` and `webhooks` actions may be declared under
+ * `application` or any extension in `app.config.yaml`, and webhook actions must be web actions.
  * @param appConfig - The validated app configuration.
  * @param extensionPointId - The extension point whose references are validated.
  * @param extConfig - The extension point's parsed ext.config.yaml.
  * @param projectRoot - Resolved project root containing the extension config.
  * @throws {CommerceSdkValidationError} If any reference does not resolve to a declared action.
  */
-export function validateRuntimeActionReferences(
+export async function validateRuntimeActionReferences(
   appConfig: CommerceAppConfigOutputModel,
   extensionPointId: RuntimeActionScope,
   extConfig: ExtConfig,
   projectRoot: string,
 ) {
   const extConfigPath = getExtConfigPath(extensionPointId);
-  const declared = getDeclaredActions(
-    extConfig,
-    join(projectRoot, getExtensionPointFolderPath(extensionPointId)),
+  const declared: DeclaredActions = new Map(
+    await listRuntimeManifestActions(
+      extConfig.runtimeManifest,
+      join(projectRoot, extConfigPath),
+      projectRoot,
+    ),
   );
 
-  const ref = referenceSchema(declared, extConfigPath);
-  const schema =
-    extensionPointId === BACKEND_UI_V2_EXTENSION_POINT_ID
-      ? adminUiReferencesSchema(ref)
-      : extensibilityReferencesSchema(
-          ref,
-          referenceSchema(declared, extConfigPath, true),
-        );
+  let schema: v.GenericSchema;
+  if (extensionPointId === BACKEND_UI_V2_EXTENSION_POINT_ID) {
+    schema = adminUiReferencesSchema(referenceSchema(declared, extConfigPath));
+  } else {
+    for (const [name, action] of await listAppConfigActions(projectRoot)) {
+      if (!declared.has(name)) {
+        declared.set(name, action);
+      }
+    }
+    const location = `${APP_CONFIG_FILE} or any of its extensions`;
+    schema = extensibilityReferencesSchema(
+      referenceSchema(declared, location),
+      referenceSchema(declared, location, true),
+    );
+  }
 
   const result = v.safeParse(schema, appConfig);
   if (!result.success) {

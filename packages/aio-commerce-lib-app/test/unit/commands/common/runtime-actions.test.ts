@@ -44,16 +44,23 @@ function extConfigWith(actions: Record<string, ActionDef>): ExtConfig {
   return { runtimeManifest: { packages } } as ExtConfig;
 }
 
-/** Runs the validator in a temp project where `files` exist under the extension point folder. */
+/**
+ * Runs the validator in a temp project where `files` exist under the extension point folder
+ * and `projectFiles` exist relative to the project root.
+ */
 function validate(
   config: CommerceAppConfigOutputModel,
   scope: RuntimeActionScope,
   actions: Record<string, ActionDef>,
   files: string[] = [],
+  projectFiles: Record<string, string> = {},
 ) {
   const folder = getExtensionPointFolderPath(scope);
   return withTempFiles(
-    Object.fromEntries(files.map((file) => [join(folder, file), ""])),
+    {
+      ...Object.fromEntries(files.map((file) => [join(folder, file), ""])),
+      ...projectFiles,
+    },
     (tempDir) =>
       validateRuntimeActionReferences(
         config,
@@ -155,5 +162,81 @@ describe("validateRuntimeActionReferences", () => {
         ["actions/order.js"],
       ),
     ).resolves.toBeUndefined();
+  });
+
+  test("accepts eventing and webhook actions declared under application", async () => {
+    const appConfigYaml = [
+      "application:",
+      "  runtimeManifest:",
+      "    packages:",
+      "      my-package:",
+      "        actions:",
+      "          handle-webhook:",
+      "            function: actions/hook.js",
+      "            web: 'yes'",
+    ].join("\n");
+
+    await expect(
+      validate(configWithWebhooks, EXTENSIBILITY_EXTENSION_POINT_ID, {}, [], {
+        "actions/hook.js": "",
+        "app.config.yaml": appConfigYaml,
+      }),
+    ).resolves.toBeUndefined();
+  });
+
+  test("resolves function paths relative to an included extension config", async () => {
+    const extConfigYaml = [
+      "runtimeManifest:",
+      "  packages:",
+      "    my-package:",
+      "      actions:",
+      "        handle-order:",
+      "          function: actions/order.js",
+    ].join("\n");
+
+    await expect(
+      validate(
+        configWithCommerceEventing,
+        EXTENSIBILITY_EXTENSION_POINT_ID,
+        {},
+        [],
+        {
+          "app.config.yaml": [
+            "extensions:",
+            "  other/1:",
+            "    $include: src/other/ext.config.yaml",
+          ].join("\n"),
+          "src/other/actions/order.js": "",
+          "src/other/ext.config.yaml": extConfigYaml,
+        },
+      ),
+    ).resolves.toBeUndefined();
+  });
+
+  test("requires adminUi actions to be declared in the backend-ui extension", async () => {
+    const appConfigYaml = [
+      "application:",
+      "  runtimeManifest:",
+      "    packages:",
+      "      customers:",
+      "        actions:",
+      "          export-customers:",
+      "            function: actions/export.js",
+    ].join("\n");
+
+    const display = await issuesOf(
+      validate(
+        configWithWorkerMassActions,
+        BACKEND_UI_V2_EXTENSION_POINT_ID,
+        {},
+        [],
+        {
+          "actions/export.js": "",
+          "app.config.yaml": appConfigYaml,
+        },
+      ),
+    );
+
+    expect(display).toContain("is not declared");
   });
 });

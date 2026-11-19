@@ -1379,6 +1379,21 @@ describe("validateConfigDomain", () => {
       expect(() => validateCommerceAppConfig(config)).toThrow();
     });
 
+    test("should accept a runtimeAction using OpenWhisk name characters", () => {
+      const config = {
+        ...createRuntimeWebhookConfig(),
+        webhooks: [
+          {
+            ...baseWebhookEntry,
+            runtimeAction: "my_package/handle.webhook",
+            webhook: baseWebhookDefinition,
+          },
+        ],
+      };
+
+      expect(() => validateCommerceAppConfig(config)).not.toThrow();
+    });
+
     test("should accept entry with url and no runtimeAction", () => {
       const config = {
         metadata: {

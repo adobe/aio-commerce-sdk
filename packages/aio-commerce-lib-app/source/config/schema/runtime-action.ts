@@ -13,7 +13,9 @@
 import { nonEmptyStringValueSchema } from "@aio-commerce-sdk/common-utils/valibot";
 import * as v from "valibot";
 
-const RUNTIME_ACTION_REFERENCE_REGEX = /^[a-zA-Z0-9-]+\/[a-zA-Z0-9-]+$/u;
+// Each segment follows OpenWhisk entity naming: word characters, spaces, `@`, `.` and `-`, no leading or trailing space.
+const RUNTIME_ACTION_REFERENCE_REGEX =
+  /^\w(?:[\w@ .-]*[\w@.-])?\/\w(?:[\w@ .-]*[\w@.-])?$/u;
 
 /**
  * Schema for a runtime action reference in the format `<package>/<action>`.

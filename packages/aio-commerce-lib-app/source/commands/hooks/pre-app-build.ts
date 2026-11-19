@@ -81,7 +81,7 @@ export async function run(
     );
     const extensibilityConfig = extensibilityExtConfig.toJS() as ExtConfig;
 
-    validateRuntimeActionReferences(
+    await validateRuntimeActionReferences(
       appManifest,
       EXTENSIBILITY_EXTENSION_POINT_ID,
       extensibilityConfig,
@@ -136,7 +136,7 @@ export async function run(
         projectRoot,
       );
 
-      validateRuntimeActionReferences(
+      await validateRuntimeActionReferences(
         appManifest,
         BACKEND_UI_V2_EXTENSION_POINT_ID,
         backendUiExtConfig.toJS() as ExtConfig,

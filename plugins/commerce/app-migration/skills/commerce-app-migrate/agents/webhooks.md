@@ -37,13 +37,6 @@ An action that passes all three tests is a Commerce webhook handler candidate. F
 to determine the webhook type (see detection rules below), then emit one entry
 in the `webhooks` array.
 
-**Declaration scope:** The `pre-app-build` hook fails the build unless every webhook
-`runtimeAction` is a web action (`web: yes`) declared under `runtimeManifest.packages` in
-`src/commerce-extensibility-1/ext.config.yaml` with an existing `function` file. If the
-handler is declared elsewhere (e.g. `application` in `app.config.yaml` or another
-extension's `ext.config.yaml`), move its package declaration there and rewrite each
-`function` path relative to `src/commerce-extensibility-1/`.
-
 Always set `webhook.webhook_type` to `"before"` or `"after"` and
 `webhook.method` to `"POST"`, `"PUT"`, `"DELETE"`, or `"GET"`. Never emit other
 values.

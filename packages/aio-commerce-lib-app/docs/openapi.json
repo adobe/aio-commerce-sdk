@@ -464,7 +464,7 @@
                                       "items": {
                                         "type": "string",
                                         "minLength": 1,
-                                        "pattern": "^[a-zA-Z0-9-]+\\/[a-zA-Z0-9-]+$"
+                                        "pattern": "^\\w(?:[\\w@ .-]*[\\w@.-])?\\/\\w(?:[\\w@ .-]*[\\w@.-])?$"
                                       }
                                     },
                                     "name": {
@@ -543,7 +543,7 @@
                                       "items": {
                                         "type": "string",
                                         "minLength": 1,
-                                        "pattern": "^[a-zA-Z0-9-]+\\/[a-zA-Z0-9-]+$"
+                                        "pattern": "^\\w(?:[\\w@ .-]*[\\w@.-])?\\/\\w(?:[\\w@ .-]*[\\w@.-])?$"
                                       }
                                     },
                                     "name": {
@@ -2749,7 +2749,7 @@
           "runtimeAction": {
             "type": "string",
             "minLength": 1,
-            "pattern": "^[a-zA-Z0-9-]+\\/[a-zA-Z0-9-]+$"
+            "pattern": "^\\w(?:[\\w@ .-]*[\\w@.-])?\\/\\w(?:[\\w@ .-]*[\\w@.-])?$"
           },
           "requireAdobeAuth": {
             "type": "boolean"
