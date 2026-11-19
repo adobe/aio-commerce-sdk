@@ -4,9 +4,8 @@
   // Exports that are only used inside their own file are not reported.
   "ignoreExportsUsedInFile": true,
 
-  // Hand-written type declarations next to the JS config files in configs/*,
-  // and build output, which Knip picks up from publishConfig.exports.
-  "ignore": ["**/*.d.ts", "**/dist/**"],
+  // Hand-written type declarations next to the JS config files in configs/*.
+  "ignore": ["**/*.d.ts"],
 
   "ignoreIssues": {
     // UpdateEventMetadataForProviderSchema is a deliberate alias of the create schema.
