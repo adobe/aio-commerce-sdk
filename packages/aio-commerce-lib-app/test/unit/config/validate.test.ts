@@ -1364,6 +1364,21 @@ describe("validateConfigDomain", () => {
       expect(() => validateCommerceAppConfig(config)).not.toThrow();
     });
 
+    test("should reject a runtimeAction not in the <package>/<action> format", () => {
+      const config = {
+        ...createRuntimeWebhookConfig(),
+        webhooks: [
+          {
+            ...baseWebhookEntry,
+            runtimeAction: "handle-webhook",
+            webhook: baseWebhookDefinition,
+          },
+        ],
+      };
+
+      expect(() => validateCommerceAppConfig(config)).toThrow();
+    });
+
     test("should accept entry with url and no runtimeAction", () => {
       const config = {
         metadata: {

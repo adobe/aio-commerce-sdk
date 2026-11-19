@@ -1,0 +1,159 @@
+/*
+ * Copyright 2026 Adobe. All rights reserved.
+ * This file is licensed to you under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License. You may obtain a copy
+ * of the License at http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under
+ * the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR REPRESENTATIONS
+ * OF ANY KIND, either express or implied. See the License for the specific language
+ * governing permissions and limitations under the License.
+ */
+
+import { join } from "node:path";
+
+import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
+import { withTempFiles } from "@aio-commerce-sdk/scripting-utils/filesystem";
+import { describe, expect, test } from "vitest";
+
+import { validateRuntimeActionReferences } from "#commands/common/runtime-actions";
+import {
+  BACKEND_UI_V2_EXTENSION_POINT_ID,
+  EXTENSIBILITY_EXTENSION_POINT_ID,
+  getExtensionPointFolderPath,
+} from "#commands/constants";
+import {
+  configWithCommerceEventing,
+  configWithWebhooks,
+  configWithWorkerMassActions,
+} from "#test/fixtures/config";
+
+import type { ExtConfig } from "@aio-commerce-sdk/scripting-utils/yaml";
+import type { RuntimeActionScope } from "#commands/common/runtime-actions";
+import type { CommerceAppConfigOutputModel } from "#config/schema/app";
+
+type ActionDef = { function?: string; web?: string };
+
+function extConfigWith(actions: Record<string, ActionDef>): ExtConfig {
+  const packages: Record<string, { actions: Record<string, ActionDef> }> = {};
+  for (const [reference, def] of Object.entries(actions)) {
+    const [packageName, actionName] = reference.split("/");
+    packages[packageName] ??= { actions: {} };
+    packages[packageName].actions[actionName] = def;
+  }
+  return { runtimeManifest: { packages } } as ExtConfig;
+}
+
+/** Runs the validator in a temp project where `files` exist under the extension point folder. */
+function validate(
+  config: CommerceAppConfigOutputModel,
+  scope: RuntimeActionScope,
+  actions: Record<string, ActionDef>,
+  files: string[] = [],
+) {
+  const folder = getExtensionPointFolderPath(scope);
+  return withTempFiles(
+    Object.fromEntries(files.map((file) => [join(folder, file), ""])),
+    (tempDir) =>
+      validateRuntimeActionReferences(
+        config,
+        scope,
+        extConfigWith(actions),
+        tempDir,
+      ),
+  );
+}
+
+async function issuesOf(promise: Promise<unknown>) {
+  const error = await promise.catch((e: unknown) => e);
+  expect(error).toBeInstanceOf(CommerceSdkValidationError);
+  return (error as CommerceSdkValidationError).display(false);
+}
+
+describe("validateRuntimeActionReferences", () => {
+  test("passes when every referenced action is declared with an existing function", async () => {
+    await expect(
+      validate(
+        configWithWorkerMassActions,
+        BACKEND_UI_V2_EXTENSION_POINT_ID,
+        { "customers/export-customers": { function: "actions/export.js" } },
+        ["actions/export.js"],
+      ),
+    ).resolves.toBeUndefined();
+  });
+
+  test("reports an undeclared adminUi action at its config path", async () => {
+    const display = await issuesOf(
+      validate(configWithWorkerMassActions, BACKEND_UI_V2_EXTENSION_POINT_ID, {
+        "customers/other": { function: "actions/other.js" },
+      }),
+    );
+
+    expect(display).toContain("adminUi.customer.massActions.0.runtimeAction");
+    expect(display).toContain(
+      'Runtime action "customers/export-customers" is not declared under "runtimeManifest.packages" in src/commerce-backend-ui-2/ext.config.yaml',
+    );
+  });
+
+  test("reports a declared action whose function does not exist", async () => {
+    const display = await issuesOf(
+      validate(configWithCommerceEventing, EXTENSIBILITY_EXTENSION_POINT_ID, {
+        "my-package/handle-order": { function: "actions/missing.js" },
+      }),
+    );
+
+    expect(display).toContain("eventing.commerce.0.events.0.runtimeActions.0");
+    expect(display).toContain('points to "actions/missing.js"');
+  });
+
+  test("reports a declared action without a function", async () => {
+    const display = await issuesOf(
+      validate(configWithCommerceEventing, EXTENSIBILITY_EXTENSION_POINT_ID, {
+        "my-package/handle-order": {},
+      }),
+    );
+
+    expect(display).toContain('has no "function"');
+  });
+
+  test("requires webhook actions to be web actions", async () => {
+    const display = await issuesOf(
+      validate(
+        configWithWebhooks,
+        EXTENSIBILITY_EXTENSION_POINT_ID,
+        { "my-package/handle-webhook": { function: "actions/hook.js" } },
+        ["actions/hook.js"],
+      ),
+    );
+
+    expect(display).toContain("webhooks.0.runtimeAction");
+    expect(display).toContain("must be a web action");
+  });
+
+  test("accepts webhook actions declared as web actions", async () => {
+    await expect(
+      validate(
+        configWithWebhooks,
+        EXTENSIBILITY_EXTENSION_POINT_ID,
+        {
+          "my-package/handle-webhook": {
+            function: "actions/hook.js",
+            web: "yes",
+          },
+        },
+        ["actions/hook.js"],
+      ),
+    ).resolves.toBeUndefined();
+  });
+
+  test("does not require event actions to be web actions", async () => {
+    await expect(
+      validate(
+        configWithCommerceEventing,
+        EXTENSIBILITY_EXTENSION_POINT_ID,
+        { "my-package/handle-order": { function: "actions/order.js" } },
+        ["actions/order.js"],
+      ),
+    ).resolves.toBeUndefined();
+  });
+});

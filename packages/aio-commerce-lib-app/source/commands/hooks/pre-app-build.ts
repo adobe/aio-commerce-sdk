@@ -22,6 +22,7 @@ import {
   EXTENSION_POINT_ORDER,
   ensureExtensionPointsOrder,
 } from "#commands/common/extension-points";
+import { validateRuntimeActionReferences } from "#commands/common/runtime-actions";
 import {
   APP_CONFIG_FILE,
   BACKEND_UI_V2_EXTENSION_POINT_ID,
@@ -78,13 +79,18 @@ export async function run(
       EXTENSIBILITY_EXTENSION_POINT_ID,
       projectRoot,
     );
+    const extensibilityConfig = extensibilityExtConfig.toJS() as ExtConfig;
+
+    validateRuntimeActionReferences(
+      appManifest,
+      EXTENSIBILITY_EXTENSION_POINT_ID,
+      extensibilityConfig,
+      projectRoot,
+    );
 
     await generateActionFiles(
       appManifest,
-      getRuntimeActions(
-        extensibilityExtConfig.toJS() as ExtConfig,
-        "app-management",
-      ),
+      getRuntimeActions(extensibilityConfig, "app-management"),
       EXTENSIBILITY_EXTENSION_POINT_ID,
       templatesDir,
       projectRoot,
@@ -125,6 +131,18 @@ export async function run(
 
   if (extension === "backend-ui/2") {
     if (hasBackendUiV2Components(appManifest)) {
+      const { doc: backendUiExtConfig } = await readExtConfig(
+        BACKEND_UI_V2_EXTENSION_POINT_ID,
+        projectRoot,
+      );
+
+      validateRuntimeActionReferences(
+        appManifest,
+        BACKEND_UI_V2_EXTENSION_POINT_ID,
+        backendUiExtConfig.toJS() as ExtConfig,
+        projectRoot,
+      );
+
       const extConfig = await updateExtConfig(
         appManifest,
         BACKEND_UI_V2_EXTENSION_POINT_ID,

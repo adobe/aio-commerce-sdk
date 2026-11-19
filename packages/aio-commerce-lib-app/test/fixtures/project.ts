@@ -24,6 +24,7 @@ import {
   getExtensionPointFolderPath,
   PACKAGE_NAME,
 } from "#commands/constants";
+import { collectUniqueRuntimeActions } from "#commands/generate/actions/config";
 import { runGeneration } from "#commands/init/lib";
 import {
   getActionPath,
@@ -111,28 +112,69 @@ export function envObject(env: Record<string, string>): string {
 /**
  * Creates an entry for an extension point ext.config.yaml with the given actions.
  * @param extensionPointId The extension point ID to create the config for.
- * @param actionNames The names of the actions to include in the config.
+ * @param actionNames The names of the SDK actions to include in the config.
+ * @param userActions `<package>/<action>` web actions to declare, each with an empty function file.
  */
 export function makeExtConfigFile(
   extensionPointId: string,
   actionNames: string[],
+  userActions: string[] = [],
 ) {
-  const extConfig = {
-    runtimeManifest: {
-      packages: {
-        [PACKAGE_NAME]: {
-          actions: Object.fromEntries(
-            actionNames.map((actionName) => [actionName, {}]),
-          ),
-        },
-      },
-    },
-  };
+  const folder = getExtensionPointFolderPath(extensionPointId);
+  const packages: Record<string, { actions: Record<string, object> }> = {};
+  const functionFiles: Record<string, string> = {};
+
+  if (actionNames.length > 0 || userActions.length === 0) {
+    packages[PACKAGE_NAME] = {
+      actions: Object.fromEntries(
+        actionNames.map((actionName) => [actionName, {}]),
+      ),
+    };
+  }
+
+  for (const reference of userActions) {
+    const [packageName, actionName] = reference.split("/");
+    const fn = `actions/${reference}.js`;
+
+    packages[packageName] ??= { actions: {} };
+    packages[packageName].actions[actionName] = { function: fn, web: "yes" };
+    functionFiles[join(folder, fn)] = "";
+  }
 
   return {
-    [join(getExtensionPointFolderPath(extensionPointId), "ext.config.yaml")]:
-      stringify(extConfig),
+    ...functionFiles,
+    [join(folder, "ext.config.yaml")]: stringify({
+      runtimeManifest: { packages },
+    }),
   };
+}
+
+/**
+ * Returns the runtime actions a config references from the sections owned by an extension point.
+ * @param config The app config.
+ * @param extensionPointId Either the extensibility or the backend UI v2 extension point ID.
+ */
+export function referencedRuntimeActions(
+  config: Partial<CommerceAppConfigOutputModel>,
+  extensionPointId: string,
+) {
+  if (extensionPointId === BACKEND_UI_V2_EXTENSION_POINT_ID) {
+    return collectUniqueRuntimeActions(config.adminUi);
+  }
+
+  const events = [
+    ...(config.eventing?.commerce ?? []),
+    ...(config.eventing?.external ?? []),
+  ].flatMap((source) => source.events);
+
+  return [
+    ...new Set([
+      ...events.flatMap((event) => event.runtimeActions),
+      ...(config.webhooks ?? []).flatMap((entry) =>
+        "runtimeAction" in entry ? [entry.runtimeAction] : [],
+      ),
+    ]),
+  ];
 }
 
 /** The extension points in the order app.config.yaml requires. */

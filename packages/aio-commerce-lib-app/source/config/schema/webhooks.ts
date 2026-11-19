@@ -19,6 +19,8 @@ import {
 } from "@aio-commerce-sdk/common-utils/valibot";
 import * as v from "valibot";
 
+import { runtimeActionReferenceSchema } from "./runtime-action";
+
 import type { AnyCommerceAppConfig, CommerceAppConfigOutputModel } from "./app";
 
 /** Schema for webhook field configuration (name and optional source). */
@@ -126,7 +128,7 @@ const WebhookEntryBaseSchema = v.object({
 const WebhookEntryWithRuntimeActionSchema = v.object({
   ...WebhookEntryBaseSchema.entries,
   requireAdobeAuth: v.optional(booleanValueSchema("requireAdobeAuth")),
-  runtimeAction: nonEmptyStringValueSchema("runtimeAction"),
+  runtimeAction: runtimeActionReferenceSchema("runtimeAction"),
   webhook: WebhookDefinitionBaseSchema,
 });
 
