@@ -12,7 +12,6 @@
 
 import { join } from "node:path";
 
-import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
 import { withTempFiles } from "@aio-commerce-sdk/scripting-utils/filesystem";
 import { describe, expect, test } from "vitest";
 
@@ -22,6 +21,7 @@ import {
   EXTENSIBILITY_EXTENSION_POINT_ID,
   getExtensionPointFolderPath,
 } from "#commands/constants";
+import { getExtConfigPath } from "#commands/utils";
 import {
   configWithCommerceEventing,
   configWithWebhooks,
@@ -29,8 +29,11 @@ import {
 } from "#test/fixtures/config";
 
 import type { ExtConfig } from "@aio-commerce-sdk/scripting-utils/yaml";
-import type { RuntimeActionScope } from "#commands/common/runtime-actions";
-import type { CommerceAppConfigOutputModel } from "#config/schema/app";
+import type { RuntimeActionSections } from "#commands/common/runtime-actions";
+
+type Scope =
+  | typeof BACKEND_UI_V2_EXTENSION_POINT_ID
+  | typeof EXTENSIBILITY_EXTENSION_POINT_ID;
 
 type ActionDef = { function?: string; web?: string };
 
@@ -49,8 +52,8 @@ function extConfigWith(actions: Record<string, ActionDef>): ExtConfig {
  * and `projectFiles` exist relative to the project root.
  */
 function validate(
-  config: CommerceAppConfigOutputModel,
-  scope: RuntimeActionScope,
+  sections: RuntimeActionSections,
+  scope: Scope,
   actions: Record<string, ActionDef>,
   files: string[] = [],
   projectFiles: Record<string, string> = {},
@@ -62,26 +65,25 @@ function validate(
       ...projectFiles,
     },
     (tempDir) =>
-      validateRuntimeActionReferences(
-        config,
-        scope,
-        extConfigWith(actions),
-        tempDir,
-      ),
+      validateRuntimeActionReferences(sections, {
+        config: extConfigWith(actions),
+        path: getExtConfigPath(scope),
+        projectRoot: tempDir,
+      }),
   );
 }
 
 async function issuesOf(promise: Promise<unknown>) {
   const error = await promise.catch((e: unknown) => e);
-  expect(error).toBeInstanceOf(CommerceSdkValidationError);
-  return (error as CommerceSdkValidationError).display(false);
+  expect(error).toBeInstanceOf(Error);
+  return (error as Error).message;
 }
 
 describe("validateRuntimeActionReferences", () => {
   test("passes when every referenced action is declared with an existing function", async () => {
     await expect(
       validate(
-        configWithWorkerMassActions,
+        { adminUi: configWithWorkerMassActions.adminUi },
         BACKEND_UI_V2_EXTENSION_POINT_ID,
         { "customers/export-customers": { function: "actions/export.js" } },
         ["actions/export.js"],
@@ -91,9 +93,13 @@ describe("validateRuntimeActionReferences", () => {
 
   test("reports an undeclared adminUi action at its config path", async () => {
     const display = await issuesOf(
-      validate(configWithWorkerMassActions, BACKEND_UI_V2_EXTENSION_POINT_ID, {
-        "customers/other": { function: "actions/other.js" },
-      }),
+      validate(
+        { adminUi: configWithWorkerMassActions.adminUi },
+        BACKEND_UI_V2_EXTENSION_POINT_ID,
+        {
+          "customers/other": { function: "actions/other.js" },
+        },
+      ),
     );
 
     expect(display).toContain("adminUi.customer.massActions.0.runtimeAction");
@@ -104,9 +110,13 @@ describe("validateRuntimeActionReferences", () => {
 
   test("reports a declared action whose function does not exist", async () => {
     const display = await issuesOf(
-      validate(configWithCommerceEventing, EXTENSIBILITY_EXTENSION_POINT_ID, {
-        "my-package/handle-order": { function: "actions/missing.js" },
-      }),
+      validate(
+        { eventing: configWithCommerceEventing.eventing },
+        EXTENSIBILITY_EXTENSION_POINT_ID,
+        {
+          "my-package/handle-order": { function: "actions/missing.js" },
+        },
+      ),
     );
 
     expect(display).toContain("eventing.commerce.0.events.0.runtimeActions.0");
@@ -115,9 +125,13 @@ describe("validateRuntimeActionReferences", () => {
 
   test("reports a declared action without a function", async () => {
     const display = await issuesOf(
-      validate(configWithCommerceEventing, EXTENSIBILITY_EXTENSION_POINT_ID, {
-        "my-package/handle-order": {},
-      }),
+      validate(
+        { eventing: configWithCommerceEventing.eventing },
+        EXTENSIBILITY_EXTENSION_POINT_ID,
+        {
+          "my-package/handle-order": {},
+        },
+      ),
     );
 
     expect(display).toContain('has no "function"');
@@ -126,7 +140,7 @@ describe("validateRuntimeActionReferences", () => {
   test("requires webhook actions to be web actions", async () => {
     const display = await issuesOf(
       validate(
-        configWithWebhooks,
+        { webhooks: configWithWebhooks.webhooks },
         EXTENSIBILITY_EXTENSION_POINT_ID,
         { "my-package/handle-webhook": { function: "actions/hook.js" } },
         ["actions/hook.js"],
@@ -140,7 +154,7 @@ describe("validateRuntimeActionReferences", () => {
   test("accepts webhook actions declared as web actions", async () => {
     await expect(
       validate(
-        configWithWebhooks,
+        { webhooks: configWithWebhooks.webhooks },
         EXTENSIBILITY_EXTENSION_POINT_ID,
         {
           "my-package/handle-webhook": {
@@ -156,7 +170,7 @@ describe("validateRuntimeActionReferences", () => {
   test("does not require event actions to be web actions", async () => {
     await expect(
       validate(
-        configWithCommerceEventing,
+        { eventing: configWithCommerceEventing.eventing },
         EXTENSIBILITY_EXTENSION_POINT_ID,
         { "my-package/handle-order": { function: "actions/order.js" } },
         ["actions/order.js"],
@@ -177,10 +191,16 @@ describe("validateRuntimeActionReferences", () => {
     ].join("\n");
 
     const display = await issuesOf(
-      validate(configWithWebhooks, EXTENSIBILITY_EXTENSION_POINT_ID, {}, [], {
-        "actions/hook.js": "",
-        "app.config.yaml": appConfigYaml,
-      }),
+      validate(
+        { webhooks: configWithWebhooks.webhooks },
+        EXTENSIBILITY_EXTENSION_POINT_ID,
+        {},
+        [],
+        {
+          "actions/hook.js": "",
+          "app.config.yaml": appConfigYaml,
+        },
+      ),
     );
 
     expect(display).toContain(
@@ -208,12 +228,14 @@ describe("validateRuntimeActionReferences", () => {
         },
         (tempDir) =>
           validateRuntimeActionReferences(
-            configWithCommerceEventing,
-            EXTENSIBILITY_EXTENSION_POINT_ID,
+            { eventing: configWithCommerceEventing.eventing },
             {
-              runtimeManifest: { $include: "nested/manifest.yaml" },
-            } as unknown as ExtConfig,
-            tempDir,
+              config: {
+                runtimeManifest: { $include: "nested/manifest.yaml" },
+              } as unknown as ExtConfig,
+              path: getExtConfigPath(EXTENSIBILITY_EXTENSION_POINT_ID),
+              projectRoot: tempDir,
+            },
           ),
       ),
     ).resolves.toBeUndefined();
@@ -232,7 +254,7 @@ describe("validateRuntimeActionReferences", () => {
 
     const display = await issuesOf(
       validate(
-        configWithWorkerMassActions,
+        { adminUi: configWithWorkerMassActions.adminUi },
         BACKEND_UI_V2_EXTENSION_POINT_ID,
         {},
         [],

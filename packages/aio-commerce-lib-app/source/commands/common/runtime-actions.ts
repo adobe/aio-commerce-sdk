@@ -13,26 +13,27 @@
 import { existsSync } from "node:fs";
 import { dirname, join, relative, resolve } from "node:path";
 
-import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
 import { readYamlFile } from "@aio-commerce-sdk/scripting-utils/yaml";
-import * as v from "valibot";
-
-import { BACKEND_UI_V2_EXTENSION_POINT_ID } from "#commands/constants";
-import { getExtConfigPath } from "#commands/utils";
-import {
-  ADMIN_UI_GRID_COLUMN_ENTITIES,
-  ADMIN_UI_MASS_ACTION_ENTITIES,
-  ADMIN_UI_VIEW_BUTTON_ENTITIES,
-} from "#config/schema/admin-ui";
 
 import type { ExtConfig } from "@aio-commerce-sdk/scripting-utils/yaml";
-import type { EXTENSIBILITY_EXTENSION_POINT_ID } from "#commands/constants";
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 
-/** Extension points whose `app.commerce.config` sections reference runtime actions. */
-export type RuntimeActionScope =
-  | typeof EXTENSIBILITY_EXTENSION_POINT_ID
-  | typeof BACKEND_UI_V2_EXTENSION_POINT_ID;
+/** Config sections that may reference runtime actions. */
+export type RuntimeActionSections = Partial<
+  Pick<CommerceAppConfigOutputModel, "adminUi" | "eventing" | "webhooks">
+>;
+
+/** The ext.config.yaml that runtime action references must resolve against. */
+export type ExtensionManifest = {
+  /** The parsed ext.config.yaml. */
+  config: ExtConfig;
+
+  /** Project-relative path of the ext.config.yaml. */
+  path: string;
+
+  /** Resolved project root. */
+  projectRoot: string;
+};
 
 type DeclaredAction = {
   function: string | undefined;
@@ -47,6 +48,9 @@ type Node = Record<string, unknown>;
 
 /** Values of the `web` action property that expose the action over HTTP. */
 const WEB_ACTION_VALUES = new Set<unknown>([true, "yes", "raw"]);
+
+/** Sections whose referenced actions must be web actions. */
+const WEB_ACTION_SECTIONS = new Set<string>(["webhooks"]);
 
 function isNode(value: unknown): value is Node {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -125,139 +129,113 @@ async function listRuntimeManifestActions(
   return perPackage.flat();
 }
 
+/** A `runtimeAction`/`runtimeActions` value found in the config, with its dotted config path. */
+type RuntimeActionReference = { name: string; path: string };
+
 /**
- * Schema for a single runtime action reference, checked against the declared actions.
- * @param declared - Actions the reference may resolve to.
- * @param location - Project-relative path of the ext.config.yaml they are declared in, used in error messages.
- * @param requireWebAction - Whether the referenced action must be a web action.
+ * Finds every `runtimeAction` and `runtimeActions` value nested in a config value.
+ * @param value - The config value to search.
+ * @param path - Dotted config path of `value`.
  */
-function referenceSchema(
-  declared: DeclaredActions,
-  location: string,
-  requireWebAction = false,
-) {
-  return v.pipe(
-    v.string(),
-    v.check(
-      (name) => declared.has(name),
-      (issue) =>
-        `Runtime action "${issue.input}" is not declared under "runtimeManifest.packages" in ${location}`,
-    ),
-    v.check(
-      (name) => declared.get(name)?.functionExists !== false,
-      (issue) => {
-        const action = declared.get(issue.input as string);
-        return action?.function
-          ? `Runtime action "${issue.input}" points to "${action.function}" in ${action.source}, which does not exist`
-          : `Runtime action "${issue.input}" has no "function" in ${action?.source}`;
-      },
-    ),
-    v.check(
-      (name) => !requireWebAction || declared.get(name)?.isWebAction !== false,
-      (issue) =>
-        `Runtime action "${issue.input}" must be a web action (set "web: yes" in ${declared.get(issue.input as string)?.source})`,
-    ),
-  );
+function* findReferences(
+  value: unknown,
+  path: string,
+): Generator<RuntimeActionReference> {
+  if (Array.isArray(value)) {
+    for (const [index, item] of value.entries()) {
+      yield* findReferences(item, `${path}.${index}`);
+    }
+
+    return;
+  }
+
+  if (!isNode(value)) {
+    return;
+  }
+
+  for (const [key, child] of Object.entries(value)) {
+    const childPath = `${path}.${key}`;
+
+    if (key === "runtimeAction" && typeof child === "string") {
+      yield { name: child, path: childPath };
+    } else if (key === "runtimeActions" && Array.isArray(child)) {
+      for (const [index, name] of child.entries()) {
+        if (typeof name === "string") {
+          yield { name, path: `${childPath}.${index}` };
+        }
+      }
+    } else {
+      yield* findReferences(child, childPath);
+    }
+  }
 }
 
 /**
- * Schema mirroring the `adminUi` fields that reference `workerProcess` runtime actions.
- * @param ref - Schema for a single runtime action reference.
+ * Returns why a reference does not resolve to a usable declared action, or `undefined` if it does.
+ * @param name - The referenced `<package>/<action>`.
+ * @param declared - Actions the reference may resolve to.
+ * @param location - Project-relative path of the ext.config.yaml they are declared in.
+ * @param requireWebAction - Whether the referenced action must be a web action.
  */
-function adminUiReferencesSchema(ref: v.GenericSchema<string>) {
-  const workerEntries = v.optional(
-    v.array(v.looseObject({ runtimeAction: v.optional(ref) })),
+function checkReference(
+  name: string,
+  declared: DeclaredActions,
+  location: string,
+  requireWebAction: boolean,
+) {
+  const action = declared.get(name);
+
+  if (!action) {
+    return `Runtime action "${name}" is not declared under "runtimeManifest.packages" in ${location}`;
+  }
+
+  if (!action.functionExists) {
+    return action.function
+      ? `Runtime action "${name}" points to "${action.function}" in ${action.source}, which does not exist`
+      : `Runtime action "${name}" has no "function" in ${action.source}`;
+  }
+
+  if (requireWebAction && !action.isWebAction) {
+    return `Runtime action "${name}" must be a web action (set "web: yes" in ${action.source})`;
+  }
+}
+
+/**
+ * Validates that every `runtimeAction`/`runtimeActions` value in the given config sections is
+ * declared in the given ext.config.yaml and that its `function` exists on disk. Webhook actions must
+ * also be web actions.
+ * @param sections - The config sections whose references are validated.
+ * @param manifest - The ext.config.yaml the references must resolve against.
+ * @throws {Error} If any reference does not resolve to a declared action.
+ */
+export async function validateRuntimeActionReferences(
+  sections: RuntimeActionSections,
+  manifest: ExtensionManifest,
+) {
+  const declared: DeclaredActions = new Map(
+    await listRuntimeManifestActions(
+      manifest.config.runtimeManifest,
+      join(manifest.projectRoot, manifest.path),
+      manifest.projectRoot,
+    ),
   );
 
-  const entities = new Set([
-    ...ADMIN_UI_GRID_COLUMN_ENTITIES,
-    ...ADMIN_UI_MASS_ACTION_ENTITIES,
-    ...ADMIN_UI_VIEW_BUTTON_ENTITIES,
-  ]);
+  const errors = Object.entries(sections).flatMap(([section, value]) =>
+    [...findReferences(value, section)].flatMap(({ name, path }) => {
+      const message = checkReference(
+        name,
+        declared,
+        manifest.path,
+        WEB_ACTION_SECTIONS.has(section),
+      );
 
-  const entitySchema = v.optional(
-    v.looseObject({
-      gridColumns: v.optional(v.looseObject({ runtimeAction: ref })),
-      massActions: workerEntries,
-      viewButtons: workerEntries,
+      return message ? [`${path}: ${message}`] : [];
     }),
   );
 
-  return v.looseObject({
-    adminUi: v.optional(
-      v.looseObject(
-        Object.fromEntries([...entities].map((key) => [key, entitySchema])),
-      ),
-    ),
-  });
-}
-
-/**
- * Schema mirroring the `eventing` and `webhooks` fields that reference runtime actions.
- * @param ref - Schema for a single runtime action reference.
- * @param webRef - Schema for a runtime action reference that must be a web action.
- */
-function extensibilityReferencesSchema(
-  ref: v.GenericSchema<string>,
-  webRef: v.GenericSchema<string>,
-) {
-  const eventSources = v.optional(
-    v.array(
-      v.looseObject({
-        events: v.array(v.looseObject({ runtimeActions: v.array(ref) })),
-      }),
-    ),
-  );
-
-  return v.looseObject({
-    eventing: v.optional(
-      v.looseObject({ commerce: eventSources, external: eventSources }),
-    ),
-    webhooks: v.optional(
-      v.array(v.looseObject({ runtimeAction: v.optional(webRef) })),
-    ),
-  });
-}
-
-/**
- * Validates that every runtime action referenced by the config sections owned by an extension point
- * is declared in that extension point's ext.config.yaml and that its `function` exists on disk.
- * Webhook actions must also be web actions.
- * @param appConfig - The validated app configuration.
- * @param extensionPointId - The extension point whose references are validated.
- * @param extConfig - The extension point's parsed ext.config.yaml.
- * @param projectRoot - Resolved project root containing the extension config.
- * @throws {CommerceSdkValidationError} If any reference does not resolve to a declared action.
- */
-export async function validateRuntimeActionReferences(
-  appConfig: CommerceAppConfigOutputModel,
-  extensionPointId: RuntimeActionScope,
-  extConfig: ExtConfig,
-  projectRoot: string,
-) {
-  const extConfigPath = getExtConfigPath(extensionPointId);
-  const declared: DeclaredActions = new Map(
-    await listRuntimeManifestActions(
-      extConfig.runtimeManifest,
-      join(projectRoot, extConfigPath),
-      projectRoot,
-    ),
-  );
-
-  const ref = referenceSchema(declared, extConfigPath);
-  const schema =
-    extensionPointId === BACKEND_UI_V2_EXTENSION_POINT_ID
-      ? adminUiReferencesSchema(ref)
-      : extensibilityReferencesSchema(
-          ref,
-          referenceSchema(declared, extConfigPath, true),
-        );
-
-  const result = v.safeParse(schema, appConfig);
-  if (!result.success) {
-    throw new CommerceSdkValidationError(
-      `Invalid runtime action references for ${extensionPointId}`,
-      { issues: result.issues },
+  if (errors.length > 0) {
+    throw new Error(
+      `Invalid runtime action references in ${manifest.path}:\n- ${errors.join("\n- ")}`,
     );
   }
 }

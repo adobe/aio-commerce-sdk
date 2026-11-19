@@ -43,7 +43,7 @@ import {
   generateWebSrc,
   prepareWebSourceImportAlias,
 } from "#commands/generate/web-src";
-import { loadAppManifest } from "#commands/utils";
+import { getExtConfigPath, loadAppManifest } from "#commands/utils";
 import { hasBackendUiV2Components } from "#config/index";
 
 import type { ExtConfig } from "@aio-commerce-sdk/scripting-utils/yaml/types";
@@ -82,10 +82,12 @@ export async function run(
     const extensibilityConfig = extensibilityExtConfig.toJS() as ExtConfig;
 
     await validateRuntimeActionReferences(
-      appManifest,
-      EXTENSIBILITY_EXTENSION_POINT_ID,
-      extensibilityConfig,
-      projectRoot,
+      { eventing: appManifest.eventing, webhooks: appManifest.webhooks },
+      {
+        config: extensibilityConfig,
+        path: getExtConfigPath(EXTENSIBILITY_EXTENSION_POINT_ID),
+        projectRoot,
+      },
     );
 
     await generateActionFiles(
@@ -137,10 +139,12 @@ export async function run(
       );
 
       await validateRuntimeActionReferences(
-        appManifest,
-        BACKEND_UI_V2_EXTENSION_POINT_ID,
-        backendUiExtConfig.toJS() as ExtConfig,
-        projectRoot,
+        { adminUi: appManifest.adminUi },
+        {
+          config: backendUiExtConfig.toJS() as ExtConfig,
+          path: getExtConfigPath(BACKEND_UI_V2_EXTENSION_POINT_ID),
+          projectRoot,
+        },
       );
 
       const extConfig = await updateExtConfig(
