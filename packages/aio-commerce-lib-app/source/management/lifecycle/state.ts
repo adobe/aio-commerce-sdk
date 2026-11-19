@@ -77,7 +77,7 @@ export type LifecycleRuntime = {
 
   /**
    * Paths of the data a new attempt takes from the latest attempt when it failed, instead of from
-   * the baseline.
+   * the baseline. The data of the steps that attempt completed is always taken.
    */
   failedAttemptDataPaths?: string[][];
 };

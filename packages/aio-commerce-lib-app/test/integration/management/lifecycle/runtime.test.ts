@@ -2644,6 +2644,7 @@ describe("lifecycle with concurrent root children", () => {
       applies,
       attempt,
       maxRunning: () => maxRunning,
+      snapshotStore: mock.snapshotStore,
       startedAfterOthers,
       stateStore: mock.stateStore,
     };
@@ -2697,6 +2698,32 @@ describe("lifecycle with concurrent root children", () => {
 
     expect(executed.status).toBe("succeeded");
     expect(maxInFlight).toBe(1);
+  });
+
+  test("keeps the output of the branches that succeeded before a retry", async () => {
+    const { attempt, snapshotStore, stateStore } = createLifecycle(
+      "upgrade",
+      "b",
+    );
+
+    expect((await attempt("a1")).status).toBe("failed");
+    expect((await attempt("a2")).status).toBe("succeeded");
+
+    const state = (await stateStore.get(
+      CURRENT_STATE_KEY,
+    )) as OrchestrationState;
+    const committed = await snapshotStore.get(
+      state.baselineSnapshotId as string,
+    );
+
+    expect(committed?.data).toMatchObject({
+      root: {
+        a: { name: "a" },
+        b: { name: "b" },
+        c: { name: "c" },
+        d: { name: "d" },
+      },
+    });
   });
 
   test("saves each succeeded branch together with its output", async () => {
