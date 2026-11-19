@@ -62,8 +62,9 @@ export async function findUp(
   const stopAt = options.stopAt || root;
 
   let currentDir = cwd;
+  let reachedTop = false;
 
-  for (;;) {
+  while (!reachedTop) {
     // Try to find any of the files in the current directory
     for (const fileName of names) {
       const filePath = join(currentDir, fileName);
@@ -76,12 +77,7 @@ export async function findUp(
       }
     }
 
-    // Stop if we've reached the stop directory or root
-    if (currentDir === stopAt || currentDir === root) {
-      return;
-    }
-
-    // Move up one directory
+    reachedTop = currentDir === stopAt || currentDir === root;
     currentDir = dirname(currentDir);
   }
 }
