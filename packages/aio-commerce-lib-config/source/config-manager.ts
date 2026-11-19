@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Adobe. All rights reserved.
+ * Copyright 2026 Adobe. All rights reserved.
  * This file is licensed to you under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License. You may obtain a copy
  * of the License at http://www.apache.org/licenses/LICENSE-2.0
@@ -497,7 +497,9 @@ export async function getConfigurationByKey(
  * @param request - Configuration set request containing the config values to set.
  * @param selector - Scope selector specifying how to identify the scope.
  * @param options - Optional library configuration options for cache timeout.
- * @returns Promise resolving to configuration response with updated scope and config values.
+ * @returns Updated scope and configuration values.
+ * @throws {Error} If audit preparation or persistence fails.
+ * A `CONFIGURATION_SAVED_WITHOUT_AUDIT` error means live values were already saved.
  *
  * @example
  * ```typescript
