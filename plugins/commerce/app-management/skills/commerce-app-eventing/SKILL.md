@@ -103,11 +103,11 @@ See [assets/eventing-config.ts](assets/eventing-config.ts) for the full referenc
 
 ## Creating the handler action
 
-For events that reference runtime actions via `runtimeActions`, create the action file under `src/commerce-extensibility-1/actions/` and register it in `src/commerce-extensibility-1/ext.config.yaml`. `aio app build` fails if a referenced action is not declared there or its `function` file does not exist.
+For events that reference runtime actions via `runtimeActions`, create a handler action under `src/commerce-extensibility-1/actions/`.
 
 ### Register the action
 
-Add a user-defined package to `src/commerce-extensibility-1/ext.config.yaml` alongside the existing `app-management` package. Use any name except `app-management` (reserved by the framework):
+Add a user-defined package to `src/commerce-extensibility-1/ext.config.yaml` alongside the existing `app-management` package. Use any name except `app-management` (reserved by the framework). `aio app build` fails if a referenced action is not declared here or its `function` file does not exist.
 
 ```yaml
 # src/commerce-extensibility-1/ext.config.yaml
