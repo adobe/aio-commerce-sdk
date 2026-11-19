@@ -28,8 +28,7 @@
   "sideEffects": false,
   "type": "module",
   "imports": {
-    "#*": "./source/*.ts",
-    "#test*": "./test/*.ts"
+    "#*": "./source/*.ts"
   },
   "exports": {
     ".": "./source/index.ts",
