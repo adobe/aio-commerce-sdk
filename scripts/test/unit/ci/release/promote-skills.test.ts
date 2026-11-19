@@ -218,18 +218,9 @@ describe("release/promote-skills.ts", () => {
   test("copies promotion artifacts and excludes package.json", async () => {
     await withTempFiles(
       {
+        "skills/plugins/commerce/app-management/.claude-plugin/plugin.json":
+          "{}",
         "skills/plugins/commerce/app-management/package.json": "{}",
-        "source/plugins/commerce/app-management/.claude-plugin/plugin.json":
-          JSON.stringify({
-            name: "commerce-app-management",
-            repository: "https://github.com/adobe/aio-commerce-sdk",
-            version: "1.0.0",
-          }),
-        "source/plugins/commerce/app-management/.tessl-plugin/plugin.json":
-          JSON.stringify({
-            name: "adobe/commerce-app-management",
-            version: "1.0.0",
-          }),
         "source/plugins/commerce/app-management/CHANGELOG.md": [
           "# @adobe/aio-commerce-plugin-app-management",
           "",
@@ -250,6 +241,11 @@ describe("release/promote-skills.ts", () => {
           name: "@adobe/aio-commerce-plugin-app-management",
           version: "1.0.0",
         }),
+        "source/plugins/commerce/app-management/plugin.json": JSON.stringify({
+          name: "commerce-app-management",
+          repository: "https://github.com/adobe/aio-commerce-sdk",
+          version: "0.9.0",
+        }),
         "source/plugins/commerce/app-management/README.md":
           "# App Management\n",
         "source/plugins/commerce/app-management/skills/commerce-app-init/SKILL.md":
@@ -267,10 +263,7 @@ describe("release/promote-skills.ts", () => {
 
         const targetRoot = join(skillsRoot, "plugins/commerce/app-management");
         const pluginJson = JSON.parse(
-          await readFile(
-            join(targetRoot, ".claude-plugin/plugin.json"),
-            "utf-8",
-          ),
+          await readFile(join(targetRoot, "plugin.json"), "utf-8"),
         );
 
         expect(promotions).toEqual([
@@ -282,6 +275,10 @@ describe("release/promote-skills.ts", () => {
           }),
         ]);
         expect(pluginJson.repository).toBe("https://github.com/adobe/skills");
+        expect(pluginJson.version).toBe("1.0.0");
+        await expect(
+          fileExists(join(targetRoot, ".claude-plugin/plugin.json")),
+        ).resolves.toBe(true);
         await expect(
           readFile(
             join(targetRoot, "skills/commerce-app-init/SKILL.md"),
@@ -306,17 +303,6 @@ describe("release/promote-skills.ts", () => {
   test("rejects plugin manifests that do not point to the SDK repository", async () => {
     await withTempFiles(
       {
-        "source/plugins/commerce/app-management/.claude-plugin/plugin.json":
-          JSON.stringify({
-            name: "commerce-app-management",
-            repository: "https://github.com/adobe/skills",
-            version: "1.0.0",
-          }),
-        "source/plugins/commerce/app-management/.tessl-plugin/plugin.json":
-          JSON.stringify({
-            name: "adobe/commerce-app-management",
-            version: "1.0.0",
-          }),
         "source/plugins/commerce/app-management/CHANGELOG.md": [
           "# @adobe/aio-commerce-plugin-app-management",
           "",
@@ -327,6 +313,11 @@ describe("release/promote-skills.ts", () => {
         ].join("\n"),
         "source/plugins/commerce/app-management/package.json": JSON.stringify({
           name: "@adobe/aio-commerce-plugin-app-management",
+          version: "1.0.0",
+        }),
+        "source/plugins/commerce/app-management/plugin.json": JSON.stringify({
+          name: "commerce-app-management",
+          repository: "https://github.com/adobe/skills",
           version: "1.0.0",
         }),
         "source/plugins/commerce/app-management/README.md":
@@ -349,17 +340,6 @@ describe("release/promote-skills.ts", () => {
   test("promotes changed plugins through the full git path", async () => {
     await withTempFiles(
       {
-        "source/plugins/commerce/app-management/.claude-plugin/plugin.json":
-          JSON.stringify({
-            name: "commerce-app-management",
-            repository: "https://github.com/adobe/aio-commerce-sdk",
-            version: "1.2.0",
-          }),
-        "source/plugins/commerce/app-management/.tessl-plugin/plugin.json":
-          JSON.stringify({
-            name: "adobe/commerce-app-management",
-            version: "1.2.0",
-          }),
         "source/plugins/commerce/app-management/CHANGELOG.md": [
           "# @adobe/aio-commerce-plugin-app-management",
           "",
@@ -370,6 +350,11 @@ describe("release/promote-skills.ts", () => {
         ].join("\n"),
         "source/plugins/commerce/app-management/package.json": JSON.stringify({
           name: "@adobe/aio-commerce-plugin-app-management",
+          version: "1.2.0",
+        }),
+        "source/plugins/commerce/app-management/plugin.json": JSON.stringify({
+          name: "commerce-app-management",
+          repository: "https://github.com/adobe/aio-commerce-sdk",
           version: "1.2.0",
         }),
         "source/plugins/commerce/app-management/README.md":
@@ -411,8 +396,7 @@ describe("release/promote-skills.ts", () => {
           .mockResolvedValueOnce({
             exitCode: 0,
             stderr: "",
-            stdout:
-              " M plugins/commerce/app-management/.tessl-plugin/plugin.json\n",
+            stdout: " M plugins/commerce/app-management/plugin.json\n",
           });
 
         await promoteSkills(
@@ -443,20 +427,14 @@ describe("release/promote-skills.ts", () => {
   test("is a no-op when adobe/skills already reflects the promoted content", async () => {
     await withTempFiles(
       {
-        "source/plugins/commerce/app-management/.claude-plugin/plugin.json":
-          JSON.stringify({
-            name: "commerce-app-management",
-            repository: "https://github.com/adobe/aio-commerce-sdk",
-            version: "1.2.0",
-          }),
-        "source/plugins/commerce/app-management/.tessl-plugin/plugin.json":
-          JSON.stringify({
-            name: "adobe/commerce-app-management",
-            version: "1.2.0",
-          }),
         "source/plugins/commerce/app-management/CHANGELOG.md": "",
         "source/plugins/commerce/app-management/package.json": JSON.stringify({
           name: "@adobe/aio-commerce-plugin-app-management",
+          version: "1.2.0",
+        }),
+        "source/plugins/commerce/app-management/plugin.json": JSON.stringify({
+          name: "commerce-app-management",
+          repository: "https://github.com/adobe/aio-commerce-sdk",
           version: "1.2.0",
         }),
         "source/plugins/commerce/app-management/README.md":

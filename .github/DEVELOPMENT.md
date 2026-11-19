@@ -490,7 +490,8 @@ workspace packages and are not published to npm. A changeset targeting a plugin 
 release intent for the stable skills channel. When the Release PR bumps a plugin version, the
 public release workflow opens or updates a promotion PR in
 [`adobe/skills`](https://github.com/adobe/skills) from the fixed branch
-`promote/adobe-aio-commerce-sdk`.
+`promote/adobe-aio-commerce-sdk`. The promotion carries each plugin's root `plugin.json`, with its
+version and repository set for `adobe/skills`, and leaves the manifests built there from it alone.
 
 Skill-only Release PRs are valid. They do not publish npm packages and do not send the package
 Slack notification, but they still run the `adobe/skills` promotion step and back-sync the
