@@ -86,6 +86,7 @@ vi.mock("#management/association/repository", () => ({
 }));
 
 vi.mock("#management/installation/root", () => ({
+  CONCURRENT_DEFAULT_CHILD_STEPS: [],
   createRootInstallationStep: createRootInstallationStepMock,
 }));
 

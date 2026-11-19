@@ -58,6 +58,12 @@ export type LifecycleBaselineProvider = {
 /** Dependencies shared by lifecycle orchestration operations. */
 export type LifecycleRuntime = {
   rootStep: BranchStep;
+
+  /**
+   * Names of the root step's children that run at the same time as their adjacent siblings also
+   * listed. Defaults to none, so every child runs in declared order.
+   */
+  concurrentRootChildren?: readonly string[];
   lifecycleContext: LifecycleContext;
   stateStore: LifecycleStore<OrchestrationState>;
   snapshotStore: LifecycleStore<AppStateSnapshot>;
@@ -145,11 +151,8 @@ export async function normalizeExpiredAttempt(
   const normalized = { ...state, latestAttempt: failed };
   await store.put(CURRENT_STATE_KEY, normalized);
 
-  const step = findInProgressStep(attempt.progress);
-  const since = step?.startedAt ? ` since ${step.startedAt}` : "";
-  const where = step
-    ? `while step ${step.path.join("/")} was in progress${since}`
-    : "before any step started";
+  const steps = findInProgressSteps(attempt.progress);
+  const where = describeInProgressSteps(steps);
 
   logger?.warn(
     `The ${attempt.operation} attempt ${attempt.id} expired at its execution deadline ${attempt.executionDeadline} ${where}.`,
@@ -158,20 +161,34 @@ export async function normalizeExpiredAttempt(
   return normalized;
 }
 
-/** The deepest step that is still in progress, or `null` when none is. */
-function findInProgressStep(step: StepStatus): StepStatus | null {
+/** Describes where an attempt was when it expired, from the steps then in progress. */
+function describeInProgressSteps(steps: StepStatus[]): string {
+  const [first] = steps;
+  if (!first) {
+    return "before any step started";
+  }
+
+  if (steps.length === 1) {
+    const since = first.startedAt ? ` since ${first.startedAt}` : "";
+    return `while step ${first.path.join("/")} was in progress${since}`;
+  }
+
+  const described = steps.map((step) => {
+    const since = step.startedAt ? ` (since ${step.startedAt})` : "";
+    return `${step.path.join("/")}${since}`;
+  });
+
+  return `while steps ${described.join(", ")} were in progress`;
+}
+
+/** The deepest steps still in progress, or none when the step is not in progress. */
+function findInProgressSteps(step: StepStatus): StepStatus[] {
   if (step.status !== "in-progress") {
-    return null;
+    return [];
   }
 
-  for (const child of step.children) {
-    const inProgress = findInProgressStep(child);
-    if (inProgress) {
-      return inProgress;
-    }
-  }
-
-  return step;
+  const inProgress = step.children.flatMap(findInProgressSteps);
+  return inProgress.length > 0 ? inProgress : [step];
 }
 
 /** Loads the current orchestration state or fails when it is uninitialized. */
