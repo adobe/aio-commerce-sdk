@@ -196,8 +196,23 @@ function createProgressHooks(
   attempt: LifecycleAttempt,
   logger: LifecycleContext["logger"],
 ): WorkflowHooks {
-  const persistExecutionProgress = (progressState: WorkflowRunState) =>
-    persistProgress(stateStore, attempt.id, progressState);
+  let queuedSaves: Promise<unknown> = Promise.resolve();
+
+  // Saves are serialized so an older save can't overwrite newer progress from a parallel branch.
+  // The state is copied when queued because parallel branches keep changing it before the save runs.
+  const persistExecutionProgress = (progressState: WorkflowRunState) => {
+    const queued = {
+      ...progressState,
+      data: structuredClone(progressState.data),
+      step: structuredClone(progressState.step),
+    };
+    const save = queuedSaves.then(() =>
+      persistProgress(stateStore, attempt.id, queued),
+    );
+
+    queuedSaves = save.catch(() => undefined);
+    return save;
+  };
 
   const prefix = `The ${attempt.operation} attempt ${attempt.id}`;
   return {
@@ -232,6 +247,7 @@ async function executePlan(
   const result = await executePlannedWorkflow({
     attemptId: attempt.id,
     baseline,
+    concurrentRootChildren: options.concurrentRootChildren,
     failureKey: "LIFECYCLE_APPLY_FAILED",
     hooks,
     initialState: toWorkflowState(attempt, attempt.plan.target?.config),

@@ -20,6 +20,16 @@ import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 import type { AnyStep, BranchStep } from "#management/common/workflow/index";
 import type { CustomInstallationStepIdentity } from "#management/domains/custom-installation/index";
 
+// Custom installation scripts may depend on what these steps create (e.g. the event provider).
+/**
+ * Names of the default child steps that run at the same time. The others run once these succeed.
+ */
+export const CONCURRENT_DEFAULT_CHILD_STEPS: readonly string[] = [
+  eventingStep.name,
+  webhooksStep.name,
+  adminUiStep.name,
+];
+
 /**
  * Creates the default child steps built-in in the library with dynamic children based on the
  * config. `executedCustomInstallationSteps` is the custom installation steps that ran, or `null`

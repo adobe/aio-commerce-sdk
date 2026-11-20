@@ -240,6 +240,44 @@ describe("normalizeExpiredAttempt", () => {
     );
   });
 
+  test("warns with every step that was in progress when concurrent steps expire", async () => {
+    const logger = createMockLogger();
+    const attempt = createMockLifecycleAttempt({
+      executionDeadline: PAST,
+      id: "attempt-expired",
+      progress: createMockStepStatus({
+        children: [
+          createMockStepStatus({
+            path: ["root", "eventing"],
+            startedAt: "1999-12-31T23:58:00.000Z",
+            status: "in-progress",
+          }),
+          createMockStepStatus({
+            path: ["root", "webhooks"],
+            startedAt: "1999-12-31T23:59:00.000Z",
+            status: "in-progress",
+          }),
+          createMockStepStatus({
+            path: ["root", "admin-ui"],
+            status: "succeeded",
+          }),
+        ],
+        status: "in-progress",
+      }),
+      status: "in-progress",
+    });
+
+    await normalizeExpiredAttempt(
+      createMockLifecycleStore<OrchestrationState>(),
+      createMockOrchestrationState({ latestAttempt: attempt }),
+      logger,
+    );
+
+    expect(logger.warn).toHaveBeenCalledWith(
+      `The upgrade attempt attempt-expired expired at its execution deadline ${PAST} while steps root/eventing (since 1999-12-31T23:58:00.000Z), root/webhooks (since 1999-12-31T23:59:00.000Z) were in progress.`,
+    );
+  });
+
   test("does not warn when the attempt has not expired", async () => {
     const logger = createMockLogger();
     await normalizeExpiredAttempt(

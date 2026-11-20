@@ -18,7 +18,10 @@ import { getAtPath } from "#management/common/workflow/utils";
 import { migrateLegacyInstallationState } from "#management/deprecated/migration";
 import { createInstallationStore } from "#management/deprecated/stores";
 import { readRunHistory } from "#management/domains/custom-installation/index";
-import { createRootInstallationStep } from "#management/installation/root";
+import {
+  CONCURRENT_DEFAULT_CHILD_STEPS,
+  createRootInstallationStep,
+} from "#management/installation/root";
 import { createLifecycleBaselineProvider } from "#management/lifecycle/baseline";
 import { CURRENT_STATE_KEY } from "#management/lifecycle/state";
 import {
@@ -284,6 +287,7 @@ export async function createLifecycleRuntime(
 
   return {
     ...persistence,
+    concurrentRootChildren: CONCURRENT_DEFAULT_CHILD_STEPS,
 
     // Custom installation steps have no live state to plan from, so only the failed attempt's
     // records show which of them ran.
