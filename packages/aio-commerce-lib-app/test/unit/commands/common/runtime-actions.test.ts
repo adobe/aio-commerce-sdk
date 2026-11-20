@@ -17,6 +17,7 @@ import { describe, expect, test } from "vitest";
 
 import { validateRuntimeActionReferences } from "#commands/common/runtime-actions";
 import {
+  APP_CONFIG_FILE,
   BACKEND_UI_V2_EXTENSION_POINT_ID,
   EXTENSIBILITY_EXTENSION_POINT_ID,
   getExtensionPointFolderPath,
@@ -47,6 +48,14 @@ function extConfigWith(actions: Record<string, ActionDef>): ExtConfig {
   return { runtimeManifest: { packages } } as ExtConfig;
 }
 
+function appConfigFor(scope: Scope) {
+  return [
+    "extensions:",
+    `  ${scope}:`,
+    `    $include: ${getExtConfigPath(scope)}`,
+  ].join("\n");
+}
+
 /**
  * Runs the validator in a temp project where `files` exist under the extension point folder
  * and `projectFiles` exist relative to the project root.
@@ -61,12 +70,14 @@ function validate(
   const folder = getExtensionPointFolderPath(scope);
   return withTempFiles(
     {
+      [APP_CONFIG_FILE]: appConfigFor(scope),
+      [getExtConfigPath(scope)]: JSON.stringify(extConfigWith(actions)),
       ...Object.fromEntries(files.map((file) => [join(folder, file), ""])),
       ...projectFiles,
     },
     (tempDir) =>
       validateRuntimeActionReferences(sections, {
-        config: extConfigWith(actions),
+        extensionPointId: scope,
         path: getExtConfigPath(scope),
         projectRoot: tempDir,
       }),
@@ -120,7 +131,9 @@ describe("validateRuntimeActionReferences", () => {
     );
 
     expect(display).toContain("eventing.commerce.0.events.0.runtimeActions.0");
-    expect(display).toContain('points to "actions/missing.js"');
+    expect(display).toContain(
+      'points to "src/commerce-extensibility-1/actions/missing.js"',
+    );
   });
 
   test("reports a declared action without a function", async () => {
@@ -198,7 +211,7 @@ describe("validateRuntimeActionReferences", () => {
         [],
         {
           "actions/hook.js": "",
-          "app.config.yaml": appConfigYaml,
+          "app.config.yaml": `${appConfigYaml}\n${appConfigFor(EXTENSIBILITY_EXTENSION_POINT_ID)}`,
         },
       ),
     );
@@ -223,6 +236,9 @@ describe("validateRuntimeActionReferences", () => {
     await expect(
       withTempFiles(
         {
+          [APP_CONFIG_FILE]: appConfigFor(EXTENSIBILITY_EXTENSION_POINT_ID),
+          [getExtConfigPath(EXTENSIBILITY_EXTENSION_POINT_ID)]:
+            "runtimeManifest:\n  $include: nested/manifest.yaml",
           [join(folder, "nested/manifest.yaml")]: manifestYaml,
           [join(folder, "nested/actions/order.js")]: "",
         },
@@ -230,9 +246,7 @@ describe("validateRuntimeActionReferences", () => {
           validateRuntimeActionReferences(
             { eventing: configWithCommerceEventing.eventing },
             {
-              config: {
-                runtimeManifest: { $include: "nested/manifest.yaml" },
-              } as unknown as ExtConfig,
+              extensionPointId: EXTENSIBILITY_EXTENSION_POINT_ID,
               path: getExtConfigPath(EXTENSIBILITY_EXTENSION_POINT_ID),
               projectRoot: tempDir,
             },
@@ -260,7 +274,7 @@ describe("validateRuntimeActionReferences", () => {
         [],
         {
           "actions/export.js": "",
-          "app.config.yaml": appConfigYaml,
+          "app.config.yaml": `${appConfigYaml}\n${appConfigFor(BACKEND_UI_V2_EXTENSION_POINT_ID)}`,
         },
       ),
     );

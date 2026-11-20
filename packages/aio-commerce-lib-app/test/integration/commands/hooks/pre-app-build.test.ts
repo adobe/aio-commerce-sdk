@@ -122,6 +122,12 @@ function makeProjectForAllExtensions() {
   };
 }
 
+/** ext.config.yaml files for the extension points that `app.config.yaml` includes besides backend-ui/2. */
+const OTHER_EXT_CONFIG_FILES = {
+  ...makeExtConfigFile(EXTENSIBILITY_EXTENSION_POINT_ID, []),
+  ...makeExtConfigFile(CONFIGURATION_EXTENSION_POINT_ID, []),
+};
+
 describe("commands/hooks/pre-app-build", () => {
   afterEach(() => {
     mockSpawnSync.mockClear();
@@ -414,6 +420,7 @@ describe("commands/hooks/pre-app-build", () => {
       await withTempProject(
         {
           ...makeBackendUiProjectFiles(configWithAdminUiSingleGrid),
+          ...OTHER_EXT_CONFIG_FILES,
           ...wrongOrder,
         },
         async (tempDir) => {
@@ -438,6 +445,7 @@ describe("commands/hooks/pre-app-build", () => {
       await withTempProject(
         {
           ...makeBackendUiProjectFiles(configWithAdminUiSingleGrid),
+          ...OTHER_EXT_CONFIG_FILES,
           ...wrongOrder,
         },
         async (tempDir) => {
@@ -454,6 +462,7 @@ describe("commands/hooks/pre-app-build", () => {
       await withTempProject(
         {
           ...makeBackendUiProjectFiles(configWithAdminUiSingleGrid),
+          ...OTHER_EXT_CONFIG_FILES,
           ...makeAppConfigFile(ORDERED_EXTENSION_POINTS),
         },
         async (tempDir) => {
@@ -551,6 +560,7 @@ describe("commands/hooks/pre-app-build", () => {
         {
           ...makeBackendUiProjectFiles(configWithAdminUiSingleGrid),
           ...makeTemplateFiles(),
+          ...OTHER_EXT_CONFIG_FILES,
           ...makeAppConfigFile([...ORDERED_EXTENSION_POINTS].reverse()),
         },
         async () => {

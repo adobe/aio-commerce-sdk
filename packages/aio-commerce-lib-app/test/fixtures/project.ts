@@ -16,6 +16,7 @@ import { inspect } from "node:util";
 import { withTempFiles } from "@aio-commerce-sdk/scripting-utils/filesystem";
 import { stringify } from "yaml";
 
+import { EXTENSION_POINT_ORDER } from "#commands/common/extension-points";
 import {
   APP_CONFIG_FILE,
   BACKEND_UI_V2_EXTENSION_POINT_ID,
@@ -227,6 +228,21 @@ export function generatedSchemaFile(tempDir: string) {
   return join(tempDir, getSchemaPath());
 }
 
+/** Adds an app.config.yaml including every ext.config.yaml in the files, unless one is already given. */
+function withDefaultAppConfig(files: Record<string, string>) {
+  if (APP_CONFIG_FILE in files) {
+    return files;
+  }
+
+  const extensionPointIds = EXTENSION_POINT_ORDER.filter(
+    (extensionPointId) => getExtConfigPath(extensionPointId) in files,
+  );
+
+  return extensionPointIds.length > 0
+    ? { ...files, ...makeAppConfigFile(extensionPointIds) }
+    : files;
+}
+
 /**
  * Scaffolds a temp project with the given files and runs the callback with
  * the tempDir as the current working directory.
@@ -235,7 +251,7 @@ export async function withTempProject(
   files: Record<string, string>,
   callback: (tempDir: string) => void | Promise<void>,
 ) {
-  await withTempFiles(files, async (tempDir) => {
+  await withTempFiles(withDefaultAppConfig(files), async (tempDir) => {
     // Point process.cwd() at the temp project instead of a real chdir: a real
     // chdir can strand the process on a deleted directory if a test is
     // interrupted mid-run, cascading ENOENT into unrelated tests.

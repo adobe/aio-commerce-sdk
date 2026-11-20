@@ -84,7 +84,7 @@ export async function run(
     await validateRuntimeActionReferences(
       { eventing: appManifest.eventing, webhooks: appManifest.webhooks },
       {
-        config: extensibilityConfig,
+        extensionPointId: EXTENSIBILITY_EXTENSION_POINT_ID,
         path: getExtConfigPath(EXTENSIBILITY_EXTENSION_POINT_ID),
         projectRoot,
       },
@@ -133,15 +133,10 @@ export async function run(
 
   if (extension === "backend-ui/2") {
     if (hasBackendUiV2Components(appManifest)) {
-      const { doc: backendUiExtConfig } = await readExtConfig(
-        BACKEND_UI_V2_EXTENSION_POINT_ID,
-        projectRoot,
-      );
-
       await validateRuntimeActionReferences(
         { adminUi: appManifest.adminUi },
         {
-          config: backendUiExtConfig.toJS() as ExtConfig,
+          extensionPointId: BACKEND_UI_V2_EXTENSION_POINT_ID,
           path: getExtConfigPath(BACKEND_UI_V2_EXTENSION_POINT_ID),
           projectRoot,
         },
