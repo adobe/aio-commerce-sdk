@@ -215,6 +215,18 @@
         "Suggests installing/using the commerce-app-migrate skill (e.g. npx skills add adobe/skills --skill commerce-app-migrate) to run the S1-to-S2 migration, offering to help",
         "Does not run the codemod, install packages, or rewrite Spectrum components itself unless the user explicitly asks it to proceed"
       ]
+    },
+    {
+      "id": 12,
+      "name": "newsletter-grid-column-with-unsupported-mass-action",
+      "prompt": "In my initialized Commerce app, add a 'Signup Source' column to the newsletter subscribers grid and an 'Export Selected Subscribers' bulk action.",
+      "expected_output": "Adds the Signup Source column under adminUi.newsletter.gridColumns with its runtime handler and manifest registration. Explains that the newsletter grid does not support mass actions and leaves the bulk export unimplemented.",
+      "files": [],
+      "assertions": [
+        "Adds the Signup Source column under adminUi.newsletter.gridColumns with a runtime action registered in the Admin UI extension manifest",
+        "Explains that the newsletter grid supports grid columns but not mass actions",
+        "Does not add adminUi.newsletter.massActions or scaffold or register a handler for the requested bulk export"
+      ]
     }
   ]
 }
