@@ -132,6 +132,13 @@ For each entity + provider direction, map to the action package consumer:
 **Placement:** Add `"runtimeActions": ["<package>/consumer"]` to **each individual event
 object** inside the `events` array. Do NOT add it to the provider object.
 
+**Declaration scope:** The `pre-app-build` hook fails the build unless every referenced
+action is declared under `runtimeManifest.packages` in
+`src/commerce-extensibility-1/ext.config.yaml` with an existing `function` file. If the
+consumer package is declared elsewhere (e.g. `application` in `app.config.yaml` or another
+extension's `ext.config.yaml`), move its package declaration there and rewrite each
+`function` path relative to `src/commerce-extensibility-1/`.
+
 **If the mapped package is not present in `actionPackages`** (e.g. `product-backoffice`
 appears in `starter-kit-registrations.json` but has no entry in `actionPackages`):
 

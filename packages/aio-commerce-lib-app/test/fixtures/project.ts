@@ -16,6 +16,7 @@ import { inspect } from "node:util";
 import { withTempFiles } from "@aio-commerce-sdk/scripting-utils/filesystem";
 import { stringify } from "yaml";
 
+import { EXTENSION_POINT_ORDER } from "#commands/common/extension-points";
 import {
   APP_CONFIG_FILE,
   BACKEND_UI_V2_EXTENSION_POINT_ID,
@@ -24,6 +25,7 @@ import {
   getExtensionPointFolderPath,
   PACKAGE_NAME,
 } from "#commands/constants";
+import { collectUniqueRuntimeActions } from "#commands/generate/actions/config";
 import { runGeneration } from "#commands/init/lib";
 import {
   getActionPath,
@@ -111,28 +113,69 @@ export function envObject(env: Record<string, string>): string {
 /**
  * Creates an entry for an extension point ext.config.yaml with the given actions.
  * @param extensionPointId The extension point ID to create the config for.
- * @param actionNames The names of the actions to include in the config.
+ * @param actionNames The names of the SDK actions to include in the config.
+ * @param userActions `<package>/<action>` web actions to declare, each with an empty function file.
  */
 export function makeExtConfigFile(
   extensionPointId: string,
   actionNames: string[],
+  userActions: string[] = [],
 ) {
-  const extConfig = {
-    runtimeManifest: {
-      packages: {
-        [PACKAGE_NAME]: {
-          actions: Object.fromEntries(
-            actionNames.map((actionName) => [actionName, {}]),
-          ),
-        },
-      },
-    },
-  };
+  const folder = getExtensionPointFolderPath(extensionPointId);
+  const packages: Record<string, { actions: Record<string, object> }> = {};
+  const functionFiles: Record<string, string> = {};
+
+  if (actionNames.length > 0 || userActions.length === 0) {
+    packages[PACKAGE_NAME] = {
+      actions: Object.fromEntries(
+        actionNames.map((actionName) => [actionName, {}]),
+      ),
+    };
+  }
+
+  for (const reference of userActions) {
+    const [packageName, actionName] = reference.split("/");
+    const fn = `actions/${reference}.js`;
+
+    packages[packageName] ??= { actions: {} };
+    packages[packageName].actions[actionName] = { function: fn, web: "yes" };
+    functionFiles[join(folder, fn)] = "";
+  }
 
   return {
-    [join(getExtensionPointFolderPath(extensionPointId), "ext.config.yaml")]:
-      stringify(extConfig),
+    ...functionFiles,
+    [join(folder, "ext.config.yaml")]: stringify({
+      runtimeManifest: { packages },
+    }),
   };
+}
+
+/**
+ * Returns the runtime actions a config references from the sections owned by an extension point.
+ * @param config The app config.
+ * @param extensionPointId Either the extensibility or the backend UI v2 extension point ID.
+ */
+export function referencedRuntimeActions(
+  config: Partial<CommerceAppConfigOutputModel>,
+  extensionPointId: string,
+) {
+  if (extensionPointId === BACKEND_UI_V2_EXTENSION_POINT_ID) {
+    return collectUniqueRuntimeActions(config.adminUi);
+  }
+
+  const events = [
+    ...(config.eventing?.commerce ?? []),
+    ...(config.eventing?.external ?? []),
+  ].flatMap((source) => source.events);
+
+  return [
+    ...new Set([
+      ...events.flatMap((event) => event.runtimeActions),
+      ...(config.webhooks ?? []).flatMap((entry) =>
+        "runtimeAction" in entry ? [entry.runtimeAction] : [],
+      ),
+    ]),
+  ];
 }
 
 /** The extension points in the order app.config.yaml requires. */
@@ -185,6 +228,21 @@ export function generatedSchemaFile(tempDir: string) {
   return join(tempDir, getSchemaPath());
 }
 
+/** Adds an app.config.yaml including every ext.config.yaml in the files, unless one is already given. */
+function withDefaultAppConfig(files: Record<string, string>) {
+  if (APP_CONFIG_FILE in files) {
+    return files;
+  }
+
+  const extensionPointIds = EXTENSION_POINT_ORDER.filter(
+    (extensionPointId) => getExtConfigPath(extensionPointId) in files,
+  );
+
+  return extensionPointIds.length > 0
+    ? { ...files, ...makeAppConfigFile(extensionPointIds) }
+    : files;
+}
+
 /**
  * Scaffolds a temp project with the given files and runs the callback with
  * the tempDir as the current working directory.
@@ -193,7 +251,7 @@ export async function withTempProject(
   files: Record<string, string>,
   callback: (tempDir: string) => void | Promise<void>,
 ) {
-  await withTempFiles(files, async (tempDir) => {
+  await withTempFiles(withDefaultAppConfig(files), async (tempDir) => {
     // Point process.cwd() at the temp project instead of a real chdir: a real
     // chdir can strand the process on a deleted directory if a test is
     // interrupted mid-run, cascading ENOENT into unrelated tests.
