@@ -10,6 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
+import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 import type {
   LifecycleOperation,
   LifecyclePlan,
@@ -66,6 +67,12 @@ export type PlanPreview = {
   /** The app version the plan ends at, or `null` when the app ends up with nothing installed. */
   targetVersion: string | null;
 
+  /**
+   * The `metadata.upgradeMode` of the target config for an upgrade, or `null` for any other
+   * operation.
+   */
+  upgradeMode: CommerceAppConfigOutputModel["metadata"]["upgradeMode"] | null;
+
   /** The domains with operations to run or config changes. A domain with neither is left out. */
   domains: PlanPreviewDomain[];
   issues: PlanPreviewIssue[];
@@ -107,5 +114,9 @@ export function toPlanPreview(plan: LifecyclePlan): PlanPreview {
     operation: plan.operation,
     sourceVersion: plan.source?.appVersion ?? null,
     targetVersion: plan.target?.appVersion ?? null,
+    upgradeMode:
+      plan.operation === "upgrade"
+        ? (plan.target?.config.metadata.upgradeMode ?? "manual")
+        : null,
   };
 }

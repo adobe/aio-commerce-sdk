@@ -45,7 +45,12 @@ type SkipCode =
   | "already-current"
   | "not-associated"
   | "not-installed"
+  | "in-progress"
+  | "upgrade-conflict"
   | "hook-disabled";
+
+/** The skip codes the service answers with when it refuses to plan the upgrade. */
+type RefusalCode = Exclude<SkipCode, "hook-disabled">;
 
 /** How the hook ended when it did not fail. */
 type HookResult =
@@ -53,22 +58,19 @@ type HookResult =
   | { kind: "planned"; plan: UpgradePlan }
   | { kind: "upgraded"; runId: string };
 
-const SKIP_MESSAGES: Record<string, string> = {
+const SKIP_MESSAGES: Record<RefusalCode, string> = {
   "already-current": "The app is already up to date.",
   "in-progress": "An upgrade is already in progress.",
   "not-associated":
     "The app is not associated with a Commerce instance. Nothing to upgrade.",
   "not-installed":
     "The app is not installed on the Commerce instance. Nothing to upgrade.",
+  "upgrade-conflict":
+    "Another upgrade of this app is in progress or an automatic upgrade is pending. Try again in a few minutes.",
 };
 
-function isSkipCode(code: unknown): code is SkipCode {
-  return (
-    code === "already-current" ||
-    code === "not-associated" ||
-    code === "not-installed" ||
-    code === "in-progress"
-  );
+function isSkipCode(code: unknown): code is RefusalCode {
+  return typeof code === "string" && Object.hasOwn(SKIP_MESSAGES, code);
 }
 
 /**
