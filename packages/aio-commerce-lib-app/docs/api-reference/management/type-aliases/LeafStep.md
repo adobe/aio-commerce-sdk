@@ -49,7 +49,7 @@ May optionally contribute the resource-reconciliation capability; `plan` and
 
 ```ts
 install: (config: TConfig, context: ExecutionContext<TStepCtx>) =>
-  TOutput | (Promise<TOutput>);
+  TOutput | Promise<TOutput>;
 ```
 
 The execution handler for the step.
