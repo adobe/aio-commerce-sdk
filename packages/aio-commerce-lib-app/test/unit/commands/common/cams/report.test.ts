@@ -104,6 +104,26 @@ describe("reportFailure", () => {
     expect(consola.debug).toHaveBeenCalledExactlyOnceWith(error);
   });
 
+  test.each([
+    ["project-access-denied", undefined, "I/O Management API"],
+    ["commerce-access-denied", "saas", "Cloud Service API"],
+    ["commerce-access-denied", "paas", "admin user in the instance, with"],
+    ["commerce-access-denied", undefined, "On SaaS"],
+  ])("adds a hint to a %s failure on %s", (code, commerceEnv, hint) => {
+    reportFailure(
+      new CamsClientError("Denied", {
+        code,
+        commerceEnv,
+        request: REQUEST,
+        status: 403,
+      }),
+    );
+
+    expect(consola.error).toHaveBeenCalledExactlyOnceWith(
+      expect.stringContaining(hint),
+    );
+  });
+
   test("prints only the message when the failure has no details", () => {
     reportFailure(new CamsClientError("Offline"));
 
