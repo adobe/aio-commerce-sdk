@@ -92,7 +92,8 @@ For each key in `envDistKeys` (deduplicated), skip it if:
 
 1. It is managed by App Management — it matches executor Category D Rules 1, 2, 3, 3a, 6 or 7
    (PaaS/OAuth1 credentials, IMS/SaaS credentials, Adobe I/O workspace credentials, Commerce
-   instance URL such as `COMMERCE_BASE_URL`, event configuration, webhook variables).
+   instance URL such as `COMMERCE_BASE_URL`, event configuration, webhook variables including
+   `COMMERCE_WEBHOOKS_PUBLIC_KEY`).
 2. It is platform or infrastructure configuration — `LOG_LEVEL`,
    `ENABLE_TELEMETRY`, `NEW_RELIC_LICENSE_KEY`, `ENABLE_EXTRA_LOGGING`, `ENCRYPTION_KEY`,
    `ENCRYPTION_IV`, `APPBUILDER_ENCRYPTION_KEY`, `AIO_COMMERCE_CONFIG_ENCRYPTION_KEY`.
