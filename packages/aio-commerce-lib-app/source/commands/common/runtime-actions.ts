@@ -19,7 +19,7 @@ import type { DeclaredRuntimeAction } from "@aio-commerce-sdk/scripting-utils/ai
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 
 /** Config sections that may reference runtime actions. */
-export type RuntimeActionSections = Partial<
+export type CommerceAppConfigReferencingRuntimeActions = Partial<
   Pick<CommerceAppConfigOutputModel, "adminUi" | "eventing" | "webhooks">
 >;
 
@@ -130,7 +130,7 @@ function checkReference(
  * @throws {Error} If any reference does not resolve to a declared action.
  */
 export async function validateRuntimeActionReferences(
-  sections: RuntimeActionSections,
+  sections: CommerceAppConfigReferencingRuntimeActions,
   manifest: ExtensionManifest,
 ) {
   const references = Object.entries(sections).flatMap(([section, value]) =>

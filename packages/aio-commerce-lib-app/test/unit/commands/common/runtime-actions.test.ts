@@ -30,7 +30,7 @@ import {
 } from "#test/fixtures/config";
 
 import type { ExtConfig } from "@aio-commerce-sdk/scripting-utils/yaml";
-import type { RuntimeActionSections } from "#commands/common/runtime-actions";
+import type { CommerceAppConfigReferencingRuntimeActions } from "#commands/common/runtime-actions";
 
 type Scope =
   | typeof BACKEND_UI_V2_EXTENSION_POINT_ID
@@ -61,7 +61,7 @@ function appConfigFor(scope: Scope) {
  * and `projectFiles` exist relative to the project root.
  */
 function validate(
-  sections: RuntimeActionSections,
+  sections: CommerceAppConfigReferencingRuntimeActions,
   scope: Scope,
   actions: Record<string, ActionDef>,
   files: string[] = [],
