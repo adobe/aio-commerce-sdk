@@ -300,6 +300,26 @@ describe("planUpgrade", () => {
     });
   });
 
+  test("tells the kind of Commerce instance a refused request was for", async () => {
+    apiServer.use(
+      http.post(UPGRADE_PREVIEW, () =>
+        HttpResponse.json(
+          { code: "commerce-access-denied", message: "Denied" },
+          { status: 403 },
+        ),
+      ),
+    );
+
+    const error = await failureOf(
+      createClient().planUpgrade({ extensionId: "ext-1" }),
+    );
+
+    expect(error).toMatchObject({
+      code: "commerce-access-denied",
+      commerceEnv: "paas",
+    });
+  });
+
   test.each([
     [
       "only the old reason field",
