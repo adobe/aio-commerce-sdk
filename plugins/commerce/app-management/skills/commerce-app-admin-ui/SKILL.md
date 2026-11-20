@@ -61,8 +61,7 @@ Native UI form replacements and the menu are always iframes.
 
 For each thing the user wants to add, gather:
 
-- **Which extension point** — grid columns, mass actions, order, invoice, credit memo, or return view buttons, menu, native UI form replacements, or custom ACL resources
-- **Which entity** — grid columns support `order`, `product`, `customer`, `invoice`, `creditMemo`, `shipment`, or `newsletter`; mass actions support only `order`, `product`, or `customer`; view buttons support `order`, `invoice`, `creditMemo`, and `rma`; native UI replacement targets are listed in [native-ui-replaced-pages](references/native-ui-replaced-pages.md); menu and custom ACL resources have no entity
+- **Which extension point and entity** — check the requested combination against the extension-point table above before writing config. For native UI replacements, check the supported targets in the linked reference. Explain any unsupported part of the request and configure only the supported parts.
 - **For mass actions and view buttons, the variant** — `worker` (runtime action) or `view` (iframe into `web-src`)
 - The fields for that extension point (column definitions, button labels, menu parent, etc.) — see the reference file in the table above for the full field set
 
@@ -351,7 +350,6 @@ A build failure with a validation error points directly to the offending `adminU
 ## Common Issues
 
 - **`view` vs `worker` mismatch**: each variant is a strict object — a `worker` entry requires `runtimeAction` (and rejects `path`/`sandboxPermissions`); a `view` entry requires `path` (and rejects `runtimeAction`/`timeout`). They are discriminated by `type`.
-- **Grid columns are worker-only**: there is no `view` grid column. `order`, `product`, `customer`, `invoice`, `creditMemo`, `shipment`, and `newsletter` support `gridColumns`; only `order`, `product`, and `customer` support `massActions`; `newsletter` supports `gridColumns` only; only `order`, `invoice`, `creditMemo`, and `rma` support `viewButtons` (`rma` supports `viewButtons` only).
 - **`runtimeAction` with no handler**: a worker entry whose `<package>/<action>` is not declared under `runtimeManifest` in `src/commerce-backend-ui-2/ext.config.yaml` leaves the generated `workerProcess` reference unresolved at deploy.
 - **Wrong action location**: handler sources and their `runtimeManifest` entry belong in the Admin UI extension folder `src/commerce-backend-ui-2/` — not `src/commerce-extensibility-1/` (where webhook and event handlers live). The `function` path is relative to `src/commerce-backend-ui-2/`.
 - **Grid row keys must match column ids**: keys in the `okGridResponse` rows must equal the `id`s in `gridColumns.columns`, or cells render empty (or fall back to the defaults bag).
