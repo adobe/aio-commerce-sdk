@@ -19,6 +19,8 @@ import {
 } from "@aio-commerce-sdk/common-utils/valibot";
 import * as v from "valibot";
 
+import { runtimeActionReferenceSchema } from "./runtime-action";
+
 import type { AnyCommerceAppConfig, CommerceAppConfigOutputModel } from "./app";
 
 const MAX_DESCRIPTION_LENGTH = 255;
@@ -179,13 +181,7 @@ const BaseEventSchema = v.object({
   ),
 
   runtimeActions: v.array(
-    v.pipe(
-      nonEmptyStringValueSchema("runtime action"),
-      v.regex(
-        /^[a-zA-Z0-9-]+\/[a-zA-Z0-9-]+$/u,
-        'Runtime action must be in the format "<package>/<action>" (e.g., "my-package/my-action")',
-      ),
-    ),
+    runtimeActionReferenceSchema("runtime action"),
     "Expected an array of runtime actions in the format <package>/<action>",
   ),
 });

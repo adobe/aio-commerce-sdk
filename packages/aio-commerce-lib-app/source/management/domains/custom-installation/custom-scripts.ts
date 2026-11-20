@@ -10,9 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
-import { parseOrThrow } from "@aio-commerce-sdk/common-utils/valibot";
 import * as camelcaseModule from "camelcase";
-import * as v from "valibot";
 
 import { hasCustomInstallationSteps } from "#config/schema/installation";
 import { defineLeafStep } from "#management/common/workflow/step";
@@ -21,10 +19,6 @@ import { createDeprecatedCustomScriptHandlers } from "#management/deprecated/dom
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 import type { CustomInstallationStep } from "#config/schema/installation";
 import type { AnyStep } from "#management/common/workflow/step";
-import type {
-  CustomInstallationStepDefinition,
-  CustomInstallationStepHandler,
-} from "#management/domains/custom-installation/define";
 
 type CamelcaseInterop = typeof camelcaseModule.default & {
   default?: typeof camelcaseModule.default;
@@ -33,117 +27,6 @@ type CamelcaseInterop = typeof camelcaseModule.default & {
 const camelcase =
   (camelcaseModule.default as CamelcaseInterop).default ??
   camelcaseModule.default;
-
-type WithDefault<T> = T | { default: T };
-type ScriptModule =
-  | CustomInstallationStepDefinition
-  | CustomInstallationStepHandler;
-
-const ScriptModuleSchema = v.union([
-  v.function(),
-  v.object({
-    install: v.function(),
-    uninstall: v.optional(v.function()),
-  }),
-]);
-
-/**
- * Validates that a loaded script export can be executed as a custom installation step.
- *
- * @param module - The loaded script export to validate.
- * @throws If the export is not a function or an object with an `install` function.
- */
-function assertScriptModule(module: unknown): asserts module is ScriptModule {
-  parseOrThrow(
-    ScriptModuleSchema,
-    module,
-    "Invalid script module format. Expected a function or an object with an `install` method.",
-  );
-}
-
-/**
- * Parses and validates a custom script module from the provided customScripts context.
- * It supports both direct function exports and default exports.
- *
- * @param customScripts - The customScripts context containing the loaded modules
- * @param script - The script path to resolve the module for
- * @returns The resolved script module, or `undefined` if the script is not present in the context.
- */
-export function getScriptModule(
-  customScripts: Record<string, unknown>,
-  script: string,
-): ScriptModule | undefined {
-  let scriptModule = customScripts[script] as WithDefault<unknown>;
-
-  if (!scriptModule) {
-    return;
-  }
-
-  if (typeof scriptModule === "object" && "default" in scriptModule) {
-    scriptModule = scriptModule.default;
-  }
-
-  assertScriptModule(scriptModule);
-  return scriptModule;
-}
-
-/**
- * Resolves the desired handler function from a custom script module. The module can either export
- * a single function (for install) or an object with install/uninstall methods.
- *
- * @param scriptModule - The loaded module
- * @param handler - The handler to resolve
- */
-
-// Overload for `install` (should always return something).
-export function resolveCustomScriptHandler(
-  scriptModule: ScriptModule,
-  handler: "install",
-): CustomInstallationStepHandler;
-
-// Overload for `uninstall` (may return null if uninstall is not defined).
-export function resolveCustomScriptHandler(
-  scriptModule: ScriptModule,
-  handler: "uninstall",
-): CustomInstallationStepHandler | null;
-
-export function resolveCustomScriptHandler(
-  scriptModule: ScriptModule,
-  handler: "install" | "uninstall",
-) {
-  // For export default / module.exports = defineCustomInstallationStep(() => {})
-  if (typeof scriptModule === "function") {
-    return handler === "install" ? scriptModule : null;
-  }
-
-  // For export default / module.exports = defineCustomInstallationStep({ install, uninstall })
-  if (handler in scriptModule && typeof scriptModule[handler] === "function") {
-    return scriptModule[handler];
-  }
-
-  return null;
-}
-
-/**
- * Resolves a script module from the customScripts context, throwing when it's absent.
- *
- * @param customScripts - The customScripts context containing the loaded modules.
- * @param script - The script path to resolve the module for.
- * @throws If the script is not present in the context.
- */
-export function getScriptModuleOrThrow(
-  customScripts: Record<string, unknown>,
-  script: string,
-): ScriptModule {
-  const scriptModule = getScriptModule(customScripts, script);
-  if (!scriptModule) {
-    throw new Error(
-      `Script ${script} not found in customScripts context. Make sure the script is defined in the configuration and the action was generated with custom scripts support.`,
-    );
-  }
-
-  return scriptModule;
-}
 
 /** The custom installation step the config declares with the given name, if any. */
 export function findDeclaredStep(

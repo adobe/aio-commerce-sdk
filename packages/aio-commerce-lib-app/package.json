@@ -31,8 +31,7 @@
     "#*": "./source/*.ts",
     "#openapi.json": "./docs/openapi.json",
     "#test/*": "./test/*.ts",
-    "#templates/admin-ui/*": "./source/commands/generate/actions/templates/admin-ui/*",
-    "#templates/*": "./source/commands/generate/actions/templates/*.template"
+    "#templates/admin-ui/*": "./source/commands/generate/actions/templates/admin-ui/*"
   },
   "exports": {
     ".": "./source/index.ts",
@@ -80,6 +79,7 @@
     "version": "pnpm exec tsx scripts/sync-openapi-version.ts && pnpm run format:openapi"
   },
   "dependencies": {
+    "@adobe/aio-cli-lib-app-config": "^4.2.0",
     "@adobe/aio-commerce-lib-admin-ui": "workspace:*",
     "@adobe/aio-commerce-lib-api": "workspace:*",
     "@adobe/aio-commerce-lib-auth": "workspace:*",

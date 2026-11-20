@@ -51,8 +51,11 @@ import {
   makeExtConfigFile,
   makeProjectFiles,
   ORDERED_EXTENSION_POINTS,
+  referencedRuntimeActions,
   withTempProject,
 } from "#test/fixtures/project";
+
+import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 
 const { mockSpawnSync } = vi.hoisted(() => ({
   mockSpawnSync: vi.fn((..._args: unknown[]) => ({ status: 0 })),
@@ -90,18 +93,40 @@ const configForAllExtensions = {
   ...configWithFullAdminUiV2,
 };
 
+/** Project files with a config and a backend-ui/2 ext.config.yaml declaring the actions it references. */
+function makeBackendUiProjectFiles(config: CommerceAppConfigOutputModel) {
+  return {
+    ...makeProjectFiles(config),
+    ...makeExtConfigFile(
+      BACKEND_UI_V2_EXTENSION_POINT_ID,
+      [],
+      referencedRuntimeActions(config, BACKEND_UI_V2_EXTENSION_POINT_ID),
+    ),
+  };
+}
+
 /** Project files with a config and the ext.config.yaml files that hooks read, for all extension points. */
 function makeProjectForAllExtensions() {
   return {
-    ...makeProjectFiles(configForAllExtensions),
+    ...makeBackendUiProjectFiles(configForAllExtensions),
     ...makeTemplateFiles(),
-    ...makeExtConfigFile(EXTENSIBILITY_EXTENSION_POINT_ID, [
-      "app-config",
-      "installation",
-    ]),
+    ...makeExtConfigFile(
+      EXTENSIBILITY_EXTENSION_POINT_ID,
+      ["app-config", "installation"],
+      referencedRuntimeActions(
+        configForAllExtensions,
+        EXTENSIBILITY_EXTENSION_POINT_ID,
+      ),
+    ),
     ...makeExtConfigFile(CONFIGURATION_EXTENSION_POINT_ID, ["config"]),
   };
 }
+
+/** ext.config.yaml files for the extension points that `app.config.yaml` includes besides backend-ui/2. */
+const OTHER_EXT_CONFIG_FILES = {
+  ...makeExtConfigFile(EXTENSIBILITY_EXTENSION_POINT_ID, []),
+  ...makeExtConfigFile(CONFIGURATION_EXTENSION_POINT_ID, []),
+};
 
 describe("commands/hooks/pre-app-build", () => {
   afterEach(() => {
@@ -116,7 +141,14 @@ describe("commands/hooks/pre-app-build", () => {
       const extensibilityProject = {
         ...makeProjectFiles(configWithCommerceEventing),
         ...makeTemplateFiles(),
-        ...makeExtConfigFile(EXTENSIBILITY_EXTENSION_POINT_ID, actions),
+        ...makeExtConfigFile(
+          EXTENSIBILITY_EXTENSION_POINT_ID,
+          actions,
+          referencedRuntimeActions(
+            configWithCommerceEventing,
+            EXTENSIBILITY_EXTENSION_POINT_ID,
+          ),
+        ),
       };
 
       await withTempProject(extensibilityProject, async (tempDir) => {
@@ -253,7 +285,7 @@ describe("commands/hooks/pre-app-build", () => {
 
     test("writes ext.config.yaml with workerProcess entries for backend-ui/2 when adminUi (grid columns) is configured", async () => {
       await withTempProject(
-        makeProjectFiles(configWithAdminUiSingleGrid),
+        makeBackendUiProjectFiles(configWithAdminUiSingleGrid),
         async (tempDir) => {
           await run("backend-ui/2", tempDir);
 
@@ -274,7 +306,7 @@ describe("commands/hooks/pre-app-build", () => {
     test("generates ext.config.yaml with workerProcess for backend-ui/2 when adminUi has worker mass actions", async () => {
       await withTempProject(
         {
-          ...makeProjectFiles(configWithFullAdminUiV2),
+          ...makeBackendUiProjectFiles(configWithFullAdminUiV2),
           ...makeTemplateFiles(),
         },
         async (tempDir) => {
@@ -332,7 +364,7 @@ describe("commands/hooks/pre-app-build", () => {
     test("does not scaffold web-src or write the #web/* alias for backend-ui/2 when adminUi has no view operation", async () => {
       await withTempProject(
         {
-          ...makeProjectFiles(configWithWorkerMassActions),
+          ...makeBackendUiProjectFiles(configWithWorkerMassActions),
           ...makeTemplateFiles(),
         },
         async (tempDir) => {
@@ -386,7 +418,11 @@ describe("commands/hooks/pre-app-build", () => {
       );
 
       await withTempProject(
-        { ...makeProjectFiles(configWithAdminUiSingleGrid), ...wrongOrder },
+        {
+          ...makeBackendUiProjectFiles(configWithAdminUiSingleGrid),
+          ...OTHER_EXT_CONFIG_FILES,
+          ...wrongOrder,
+        },
         async (tempDir) => {
           await expect(run("backend-ui/2", tempDir)).resolves.toBeUndefined();
 
@@ -407,7 +443,11 @@ describe("commands/hooks/pre-app-build", () => {
       );
 
       await withTempProject(
-        { ...makeProjectFiles(configWithAdminUiSingleGrid), ...wrongOrder },
+        {
+          ...makeBackendUiProjectFiles(configWithAdminUiSingleGrid),
+          ...OTHER_EXT_CONFIG_FILES,
+          ...wrongOrder,
+        },
         async (tempDir) => {
           await run("backend-ui/2", tempDir);
           warnSpy.mockClear();
@@ -421,7 +461,8 @@ describe("commands/hooks/pre-app-build", () => {
     test("does not write app.config.yaml when the order is right", async () => {
       await withTempProject(
         {
-          ...makeProjectFiles(configWithAdminUiSingleGrid),
+          ...makeBackendUiProjectFiles(configWithAdminUiSingleGrid),
+          ...OTHER_EXT_CONFIG_FILES,
           ...makeAppConfigFile(ORDERED_EXTENSION_POINTS),
         },
         async (tempDir) => {
@@ -502,7 +543,7 @@ describe("commands/hooks/pre-app-build", () => {
 
       await withTempProject(
         {
-          ...makeProjectFiles(configWithAdminUiSingleGrid),
+          ...makeBackendUiProjectFiles(configWithAdminUiSingleGrid),
           ...makeTemplateFiles(),
         },
         async () => {
@@ -517,8 +558,9 @@ describe("commands/hooks/pre-app-build", () => {
 
       await withTempProject(
         {
-          ...makeProjectFiles(configWithAdminUiSingleGrid),
+          ...makeBackendUiProjectFiles(configWithAdminUiSingleGrid),
           ...makeTemplateFiles(),
+          ...OTHER_EXT_CONFIG_FILES,
           ...makeAppConfigFile([...ORDERED_EXTENSION_POINTS].reverse()),
         },
         async () => {

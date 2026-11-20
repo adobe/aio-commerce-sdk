@@ -10,8 +10,8 @@
  * governing permissions and limitations under the License.
  */
 
-import { cp, mkdir, readFile, rm } from "node:fs/promises";
-import { basename, dirname, join } from "node:path";
+import { cp, mkdir, readdir, readFile, rm } from "node:fs/promises";
+import { dirname, join } from "node:path";
 
 import { readJson, replaceInJson, runGitHubScript } from "./utils.ts";
 
@@ -23,12 +23,13 @@ const TARGET_REPO = "skills";
 const TARGET_REPOSITORY_URL = `https://github.com/${TARGET_OWNER}/${TARGET_REPO}`;
 const PROMOTION_BRANCH = "promote/adobe-aio-commerce-sdk";
 const PROMOTED_REPOSITORY_FIELD = "https://github.com/adobe/aio-commerce-sdk";
-const PROMOTED_ENTRIES = [
-  ".tessl-plugin",
-  "README.md",
-  "skills",
+const PROMOTED_ENTRIES = ["plugin.json", "README.md", "skills", "CHANGELOG.md"];
+// Built in adobe/skills from plugin.json; the promotion must leave them alone.
+const GENERATED_ENTRIES = [
   ".claude-plugin",
-  "CHANGELOG.md",
+  ".tessl-plugin",
+  ".cursor-plugin",
+  ".mcp.json",
 ];
 
 type PluginPackageJson = {
@@ -36,9 +37,9 @@ type PluginPackageJson = {
   version: string;
 };
 
-type TesslPluginManifest = {
+type PluginManifest = {
   name: string;
-  version: string;
+  repository?: string;
 };
 
 type PluginPromotion = {
@@ -197,14 +198,12 @@ export async function preparePromotionArtifacts(
       const packageJson = await readJson<PluginPackageJson>(
         join(sourcePath, "package.json"),
       );
-      const tesslPluginJson = await readJson<TesslPluginManifest>(
-        join(sourcePath, ".tessl-plugin/plugin.json"),
+      const pluginJson = await readJson<PluginManifest>(
+        join(sourcePath, "plugin.json"),
       );
-      const displayName =
-        tesslPluginJson.name.split("/").at(-1) ?? basename(sourcePath);
+      const displayName = pluginJson.name;
 
-      await rm(targetPath, { force: true, recursive: true });
-      await mkdir(targetPath, { recursive: true });
+      await clearTarget(targetPath);
 
       await Promise.all(
         PROMOTED_ENTRIES.map((entry) =>
@@ -213,7 +212,7 @@ export async function preparePromotionArtifacts(
           }),
         ),
       );
-      await rewritePluginRepository(targetPath);
+      await preparePromotedManifest(targetPath, packageJson.version);
 
       return {
         changelogEntries: await readChangelogEntries(
@@ -285,9 +284,22 @@ async function readPreviousPackageJson(
   return JSON.parse(result.stdout) as PluginPackageJson;
 }
 
-async function rewritePluginRepository(targetPath: string) {
-  const pluginJsonPath = join(targetPath, ".claude-plugin/plugin.json");
-  const pluginJson = await readJson<Record<string, unknown>>(pluginJsonPath);
+async function clearTarget(targetPath: string) {
+  await mkdir(targetPath, { recursive: true });
+
+  const entries = await readdir(targetPath);
+  await Promise.all(
+    entries
+      .filter((entry) => !GENERATED_ENTRIES.includes(entry))
+      .map((entry) =>
+        rm(join(targetPath, entry), { force: true, recursive: true }),
+      ),
+  );
+}
+
+async function preparePromotedManifest(targetPath: string, version: string) {
+  const pluginJsonPath = join(targetPath, "plugin.json");
+  const pluginJson = await readJson<PluginManifest>(pluginJsonPath);
 
   if (pluginJson.repository !== PROMOTED_REPOSITORY_FIELD) {
     throw new Error(
@@ -295,7 +307,10 @@ async function rewritePluginRepository(targetPath: string) {
     );
   }
 
-  await replaceInJson(pluginJsonPath, { repository: TARGET_REPOSITORY_URL });
+  await replaceInJson(pluginJsonPath, {
+    repository: TARGET_REPOSITORY_URL,
+    version,
+  });
 }
 
 // @changesets/release-utils ships an equivalent getChangelogEntry, but it's

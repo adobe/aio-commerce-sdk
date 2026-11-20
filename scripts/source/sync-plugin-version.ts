@@ -19,25 +19,16 @@ import { readJson, replaceInJson } from "./ci/release/utils.ts";
 
 type PackageJson = { version: string };
 
-/** Syncs a Commerce plugin's .tessl-plugin/plugin.json and .claude-plugin/plugin.json versions to its package.json version. */
+/** Syncs a Commerce plugin's plugin.json version to its package.json version. */
 export default async function main() {
   const packageJsonPath = join(process.cwd(), "package.json");
-  if (!existsSync(packageJsonPath)) {
+  const pluginJsonPath = join(process.cwd(), "plugin.json");
+  if (!(existsSync(packageJsonPath) && existsSync(pluginJsonPath))) {
     return;
   }
 
   const packageJson = await readJson<PackageJson>(packageJsonPath);
-
-  const manifestPaths = [
-    join(process.cwd(), ".tessl-plugin/plugin.json"),
-    join(process.cwd(), ".claude-plugin/plugin.json"),
-  ].filter((manifestPath) => existsSync(manifestPath));
-
-  await Promise.all(
-    manifestPaths.map((manifestPath) =>
-      replaceInJson(manifestPath, { version: packageJson.version }),
-    ),
-  );
+  await replaceInJson(pluginJsonPath, { version: packageJson.version });
 }
 
 main().catch((error) => {
