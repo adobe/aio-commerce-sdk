@@ -34,7 +34,7 @@ Orchestrates the full migration workflow: project detection → domain analysis 
 **Documentation recommendations cover:**
 
 - README sections referencing obsolete onboarding scripts (`npm run onboard`, `aio commerce:event:subscribe`, Adobe I/O Console setup steps), manual credential configuration, or webhook registration steps that are now handled declaratively
-- `env.dist` entries for credentials and configuration now managed by the App Management platform: IMS/SaaS auth (`OAUTH_*`), PaaS OAuth1 (`COMMERCE_CONSUMER_*`, `COMMERCE_ACCESS_TOKEN*`), Adobe I/O workspace vars (`AIO_RUNTIME_NAMESPACE`, `AIO_RUNTIME_AUTH`, `IO_MANAGEMENT_API_KEY`, `IO_*`), and event config vars (`AIO_EVENTS_*`, `COMMERCE_ADOBE_IO_EVENTS_*`). `COMMERCE_WEBHOOKS_PUBLIC_KEY` stays while any webhook action verifies Commerce signatures, and is flagged only when every webhook uses `requireAdobeAuth: true` and the app supports Adobe Commerce as a Cloud Service only
+- `env.dist` entries for credentials and configuration now managed by the App Management platform: IMS/SaaS auth (`OAUTH_*`), PaaS OAuth1 (`COMMERCE_CONSUMER_*`, `COMMERCE_ACCESS_TOKEN*`), Adobe I/O workspace vars (`AIO_RUNTIME_NAMESPACE`, `AIO_RUNTIME_AUTH`, `IO_MANAGEMENT_API_KEY`, `IO_*`), and event config vars (`AIO_EVENTS_*`, `COMMERCE_ADOBE_IO_EVENTS_*`). `COMMERCE_WEBHOOKS_PUBLIC_KEY` stays while any webhook sets `requireAdobeAuth: false` and verifies Commerce signatures, and is flagged only when every webhook uses Adobe auth
 - Duplicate `env.dist` keys flagged explicitly (e.g. a key that appears twice in the file)
 - An annotated README removal guide (inline `<!-- ✂ REMOVE -->` comments) for projects with 5 or more flagged sections
 

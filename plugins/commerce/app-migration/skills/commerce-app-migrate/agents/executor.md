@@ -951,8 +951,8 @@ Keys matching any of: `AIO_EVENTS_PROVIDER_ID`, `AIO_EVENTS_REGISTRATION_ID`, `A
 Keys matching `*_WEBHOOKS_*`, except `COMMERCE_WEBHOOKS_PUBLIC_KEY`
 → reason: `"webhook registration is now declared in app.commerce.config.ts"`
 
-`COMMERCE_WEBHOOKS_PUBLIC_KEY` matches Rule 7 only when every entry in `webhooks` sets `requireAdobeAuth: true` AND the app supports Adobe Commerce as a Cloud Service only (`ProjectSnapshot.authMode` is `"saas"`, or every entry in `webhooks` sets `env: ["saas"]`). App Management does not provide this key, and PaaS instances still need signature verification (https://developer.adobe.com/commerce/extensibility/webhooks/signature-verification). Otherwise, do not flag it.
-→ reason: `"all webhooks use requireAdobeAuth: true on Adobe Commerce as a Cloud Service, so signature verification is not needed"`
+`COMMERCE_WEBHOOKS_PUBLIC_KEY` matches Rule 7 only when no entry in `webhooks` sets `requireAdobeAuth: false`. App Management requires IMS, so every webhook can authenticate with Adobe auth on any Commerce flavor, and the key and the signature check code are leftovers. A webhook with `requireAdobeAuth: false` still verifies Commerce signatures (https://developer.adobe.com/commerce/extensibility/webhooks/signature-verification), so keep the key in that case.
+→ reason: `"all webhooks use Adobe auth (requireAdobeAuth is not false), so the signature check and its public key are no longer needed"`
 
 **Runtime reference override (applies to Rules 1–3, 3a, 6, and 7):**
 After a key matches one of these rules, run:
@@ -1029,7 +1029,7 @@ Content describing registering webhooks via CLI or Admin UI.
 → reason: `"webhook registration is now handled declaratively in app.commerce.config.ts"`
 
 Content describing enabling webhook signatures in Commerce Admin or copying a public key into `COMMERCE_WEBHOOKS_PUBLIC_KEY` matches only when Rule 7 flags `COMMERCE_WEBHOOKS_PUBLIC_KEY`.
-→ reason: `"all webhooks use requireAdobeAuth: true on Adobe Commerce as a Cloud Service, so signature verification is not needed"`
+→ reason: `"all webhooks use Adobe auth (requireAdobeAuth is not false), so the signature check and its public key are no longer needed"`
 
 **Pattern 3 — Event subscription or workspace setup steps** (skip if `eventsDeclarative` is false):
 Content describing any of: `aio console org/project/workspace select`, `aio app use --merge`, setting up event providers or registrations in Adobe Developer Console, `npm run sync-oauth-credentials`.
