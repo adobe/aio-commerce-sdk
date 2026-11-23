@@ -2843,6 +2843,10 @@
             "type": "string",
             "format": "date-time"
           },
+          "error": {
+            "description": "The error of a step that failed itself. A step that failed only because a child did has none.",
+            "$ref": "#/components/schemas/WorkflowError"
+          },
           "children": {
             "type": "array",
             "items": {
@@ -2852,6 +2856,26 @@
         },
         "required": ["name", "id", "path", "meta", "status", "children"],
         "title": "StepStatus"
+      },
+      "WorkflowError": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "key": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "payload": {}
+        },
+        "required": ["path", "key"],
+        "title": "WorkflowError"
       },
       "StepValidationResult": {
         "type": "object",
@@ -3926,23 +3950,7 @@
             ]
           },
           "error": {
-            "type": "object",
-            "properties": {
-              "path": {
-                "type": "array",
-                "items": {
-                  "type": "string"
-                }
-              },
-              "key": {
-                "type": "string"
-              },
-              "message": {
-                "type": "string"
-              },
-              "payload": {}
-            },
-            "required": ["path", "key"]
+            "$ref": "#/components/schemas/WorkflowError"
           },
           "metadata": {
             "type": "object",
@@ -4207,23 +4215,7 @@
           },
           "error": {
             "description": "Present when the attempt failed.",
-            "type": "object",
-            "properties": {
-              "path": {
-                "type": "array",
-                "items": {
-                  "type": "string"
-                }
-              },
-              "key": {
-                "type": "string"
-              },
-              "message": {
-                "type": "string"
-              },
-              "payload": {}
-            },
-            "required": ["path", "key"]
+            "$ref": "#/components/schemas/WorkflowError"
           },
           "planDiff": {
             "description": "How the started plan differs from the reviewed one. Present when the attempt started from a reviewed plan.",

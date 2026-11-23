@@ -2554,9 +2554,12 @@ describe("lifecycle with concurrent root children", () => {
 
   /**
    * Creates a runtime whose root runs `a`, `b` and `c` at the same time and `d` after them. Each
-   * leaf plans an operation until it applies once, and `failing` fails its first apply.
+   * leaf plans an operation until it applies once, and each `failing` leaf fails its first apply.
    */
-  function createLifecycle(operation: LifecycleOperation, failing?: string) {
+  function createLifecycle(
+    operation: LifecycleOperation,
+    ...failing: string[]
+  ) {
     const live = new Set<string>();
     let running = 0;
     let maxRunning = 0;
@@ -2570,7 +2573,7 @@ describe("lifecycle with concurrent root children", () => {
         maxRunning = Math.max(maxRunning, running);
         try {
           await delay(10);
-          if (name === failing && !failed) {
+          if (failing.includes(name) && !failed) {
             failed = true;
             throw new Error(`${name} failed`);
           }
@@ -2698,6 +2701,31 @@ describe("lifecycle with concurrent root children", () => {
 
     expect(executed.status).toBe("succeeded");
     expect(maxInFlight).toBe(1);
+  });
+
+  test("keeps the error of each failed branch until a retry succeeds", async () => {
+    const { attempt } = createLifecycle("upgrade", "b", "c");
+
+    const failed = await attempt("a1");
+    expect(failed).toMatchObject({
+      failure: { message: "b failed" },
+      status: "failed",
+    });
+    expect(
+      failed.progress.children.map((child) => child.error?.message),
+    ).toEqual([undefined, "b failed", "c failed", undefined]);
+    expect(failed.progress.children[2].error).toEqual({
+      key: "STEP_EXECUTION_FAILED",
+      message: "c failed",
+      path: ["root", "c"],
+    });
+    expect(failed.progress.error).toBeUndefined();
+
+    const retried = await attempt("a2");
+    expect(retried.status).toBe("succeeded");
+    expect(retried.progress.children.filter((child) => child.error)).toEqual(
+      [],
+    );
   });
 
   test("keeps the output of the branches that succeeded before a retry", async () => {
