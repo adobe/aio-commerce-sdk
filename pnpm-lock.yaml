@@ -625,7 +625,7 @@ importers:
         version: link:../../scripts
       '@pnpm/lockfile.fs':
         specifier: ^1100.1.7
-        version: 1100.2.19(@pnpm/logger@1100.0.0)
+        version: 1100.2.20(@pnpm/logger@1100.0.0)
       '@react-spectrum/s2':
         specifier: catalog:react
         version: 1.8.2(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
@@ -2047,62 +2047,62 @@ packages:
     resolution: {integrity: sha512-Uijt2AYhsMtxnRlwxQwYgZ7TTZVgi0mfk0EKh83NoCEJjrwArJRLNBv/xP6e/5KuTEDSNr/vqqcPk0BgmBvTKw==}
     engines: {node: '>= 16.0.0', parcel: ^2.16.4}
 
-  '@pnpm/config.normalize-registries@1101.0.6':
-    resolution: {integrity: sha512-Pj9SXmNsUkS9ZlANiIEi/BxCpaqCB5sEd5W05SCLncBmc3kgWGKVrWHrzLxISgcgmcSAz7b3+XkOdm7DrPNB7w==}
+  '@pnpm/config.normalize-registries@1101.0.7':
+    resolution: {integrity: sha512-MlGcNF3ivZtK2VCAakaeTIRQt/JFFZPkDC4fyZSgMnJXvah01ZkDSRB3hQzlmD6WasYueMa8kQ6fgAL9gvwr9Q==}
     engines: {node: '>=22.13'}
 
-  '@pnpm/config.pick-registry-for-package@1101.0.6':
-    resolution: {integrity: sha512-wntdX2mqT0BSJNS/crPM5xrCfYpjcSrrE55dLwHKgW9zhL45uz22/1d4fd1+Mjt9/OBR3/ut+BF7KSJqTaoP1w==}
+  '@pnpm/config.pick-registry-for-package@1101.0.7':
+    resolution: {integrity: sha512-E3lN6obgfzwlfBy4IkfhV5/nrRU2McGfzxN/ZB2+0TJg4hBq3oSWRqF8uHb3qF9ulHRqZzyorU2DkRNkWCwfhg==}
     engines: {node: '>=22.13'}
 
   '@pnpm/constants@1102.0.1':
     resolution: {integrity: sha512-vLulGZ3iRt6kHcwbGYckrUF2Rd18nfGtpFjyRgbKmEyxLcZmFTBOWKFZSEyS3VVnxFEI7bTPNOGmRC0lD4U1qg==}
     engines: {node: '>=22.13'}
 
-  '@pnpm/crypto.hash@1100.0.9':
-    resolution: {integrity: sha512-KbIWS6Qc63eCl0lj/RSIiTGo8dy+0UYf/4dE0xSgTNgrLpszq0IalXtZvmnS2GQ0iWYRLaHu6Tj0Otc3lEhdww==}
+  '@pnpm/crypto.hash@1100.0.10':
+    resolution: {integrity: sha512-6c7Fa4DJF+Lydh1kfAYZnsqCztfBE8s2xNDw5HbdKl3yoTp5RBuFiXey5T3KXXBrhdASKKR3drZ+n+jz6mPhQQ==}
     engines: {node: '>=22.13'}
 
   '@pnpm/deps.graph-sequencer@1100.0.1':
     resolution: {integrity: sha512-pOr5+q1fLYKwFN3LAJuGZEnfXDcQ73zqgDHMtGy+K+uIoUqyY+6MeDCWFwfu+4EFuq76I5EPFofoNAI+Bmmq4A==}
     engines: {node: '>=22.13'}
 
-  '@pnpm/deps.path@1101.0.10':
-    resolution: {integrity: sha512-F+wo9AxgqvNOzbXz6ylr9gRLWen5KROtiDIPTcXFQRaGwnvtTuHoIZ+DW6RLPlPtO53uHXs6CuLEk7PYS24QAg==}
+  '@pnpm/deps.path@1101.0.11':
+    resolution: {integrity: sha512-oQXrqvX4OnCorQIZfKak+Zvf/OW63E1ciPwa/ZIzdVfgXfngz8s7PtKXp/pI/ubmMrVv1Vi1d6wTedzg4uEP0Q==}
     engines: {node: '>=22.13'}
 
-  '@pnpm/error@1100.2.2':
-    resolution: {integrity: sha512-OVUBUOtFou4xLyrnoETrplOX1FszsAVSfiq/H0DaN+g4nvqOlLPe12pLCoR2/P2Va9yEsInjgsXyrY29Ujgi7g==}
+  '@pnpm/error@1100.2.3':
+    resolution: {integrity: sha512-UNdOlAlv26PuLzlW6Dzr6MlcCzSLTAuAVSX1QlSNTlWaHdqQWm/iEpa5HuZXGZPxpfOGQajn7/GBuDDEhqCyGQ==}
     engines: {node: '>=22.13'}
 
-  '@pnpm/fetching.fetcher-base@1100.2.16':
-    resolution: {integrity: sha512-W8ivOAAUo+7LltWB7ySXdEAofHdYJigydmiFj9Y5iTuGK4/DCvrn3Mji7IV90OGBGj7xfnxWAnpdkGsMzupb4Q==}
+  '@pnpm/fetching.fetcher-base@1100.2.17':
+    resolution: {integrity: sha512-qhxlQvEdqDam3JqbOp6dAybup6LtG5ZKzN7uxeSZF3W26pOqHRfhC15rt87OMtfKNLGTmyUPOusB6aa6pIxTkQ==}
     engines: {node: '>=22.13'}
 
-  '@pnpm/fs.graceful-fs@1100.2.6':
-    resolution: {integrity: sha512-eD0IYNxyOXYXYvpM9vitelzNi0aiATx7k/3ps5vZGla/hc4l6LpQhPzUrYzXKpFA3HYujZmRhNVh2dpBhZSQ3g==}
+  '@pnpm/fs.graceful-fs@1100.2.7':
+    resolution: {integrity: sha512-M8PFIwKGpNT8sGvHZCJWAQs5ORL+ht1T4y3M16mym9i6A5wkptAZ7w53kfViHA17bgcpfhGY87U4jNGEadH0Iw==}
     engines: {node: '>=22.13'}
 
-  '@pnpm/hooks.types@1101.0.9':
-    resolution: {integrity: sha512-xxB/yOHovz08qcOaYPygqpfLk5FLSWU34ESRgizSgHMksVaRsXjuLnreYZS6X8VpRBpX5xc5LgrDrUGsldU7DQ==}
+  '@pnpm/hooks.types@1101.0.10':
+    resolution: {integrity: sha512-TXGUY/qBmGLjzPYSqX4lAN860Tw1m/F6RHSfEmD61ylZHSxRE/tIQBEx38weyoQP5UTVDuKt8dQ8AzdQCDlKXw==}
     engines: {node: '>=22.13'}
 
-  '@pnpm/lockfile.fs@1100.2.19':
-    resolution: {integrity: sha512-GFx+eMpci0sUHY1zJreimVuIcgqdWmx33iKwTqvx8HMTB+Y8txFw3nSzF3i6l8yYSkI1alplW41yz54bzTOxCQ==}
+  '@pnpm/lockfile.fs@1100.2.20':
+    resolution: {integrity: sha512-dZWv3V3Xlr/sQx9/R2V2bhRJ6O36wFlgtiKIiJipsx/Gn4Mq7/tg0P+E6OhPMpY+kLzTORKfgeLBXYsDFBDK0g==}
     engines: {node: '>=22.13'}
     peerDependencies:
       '@pnpm/logger': ^1100.0.0
 
-  '@pnpm/lockfile.merger@1100.0.30':
-    resolution: {integrity: sha512-f99JuIVKBuvG56riRuMhJbFKGdtIL1idRDidpec5ZnomDGbE4RxtjLW/gCiGM+pRlEs10lF+OkbhbggpwcrDHw==}
+  '@pnpm/lockfile.merger@1100.0.31':
+    resolution: {integrity: sha512-9vA7kwKmsf5EgxsMJ1F4AweglI+ef3gXWdOqm3RB3zcCyxJWdBOdg/fHAK92M/3qLDEd4IsEHWvWwb98UEb+Jw==}
     engines: {node: '>=22.13'}
 
-  '@pnpm/lockfile.types@1100.1.8':
-    resolution: {integrity: sha512-I/nYXdBuUTmyOTu2AU6Ea05fIC4B+M06Tfk4N1+X82CTb9PFl7Tap7kVNHWDYlKYCTRKlPWzwYou9EHxHkqIPg==}
+  '@pnpm/lockfile.types@1100.1.9':
+    resolution: {integrity: sha512-yGtSLGEDLHDZA7ayyNJpGZAaVLqhp43uQyLFMKZqom1Po+eDpI7/mqH0mRhMaV5VME8CYUpKNv5ErKMfXLx0RQ==}
     engines: {node: '>=22.13'}
 
-  '@pnpm/lockfile.utils@1102.1.12':
-    resolution: {integrity: sha512-Inb/qMeXTtfTTDGntNtuVqNmU1qeRQmLPMNJ/aWDAZhgOMe+uZUoN4HZv9b5b6qwUT3HFH4p8D0w/W+FU0052g==}
+  '@pnpm/lockfile.utils@1102.1.13':
+    resolution: {integrity: sha512-03TSknkpdZ4rTyqrXlS5xTOnaEuwdnjoMZ21w1NJdw75ylpcmRTdsuvoTMmtjnONfW1mZTiA84FSInc2NjFIQw==}
     engines: {node: '>=22.13'}
 
   '@pnpm/logger@1100.0.0':
@@ -2117,8 +2117,8 @@ packages:
     resolution: {integrity: sha512-PWQPOBohMGXR7QHvHe4PvxWZjtjHv2+RSW2vXIGRM0mMawdO3I4lt8YxDq7HOXeEkJilZQ7DUu2H8uwqEFfwGQ==}
     engines: {node: '>=22.13'}
 
-  '@pnpm/patching.config@1100.1.13':
-    resolution: {integrity: sha512-RTz/orA4euAgOd7nr3f9VvJacKJxrHi54+Fe0jEVXjHxTw3hNZVKra943VWc8O+98GV6lWLVCB2LuYaSfkNGGg==}
+  '@pnpm/patching.config@1100.1.14':
+    resolution: {integrity: sha512-kwfROsnHUFgX0/65Qalkj6sHM7KwvMTS4A4p2l93xPcqZ/OawH+b+TXYjXoR9PGm25O2sVxD/SX/PIjiqkPe7w==}
     engines: {node: '>=22.13'}
     peerDependencies:
       '@pnpm/logger': ^1100.0.0
@@ -2130,20 +2130,20 @@ packages:
   '@pnpm/ramda@0.28.1':
     resolution: {integrity: sha512-zcAG+lvU0fMziNeGXpPyCyCJYp5ZVrPElEE4t14jAmViaihohocZ+dDkcRIyAomox8pQsuZnv1EyHR+pOhmUWw==}
 
-  '@pnpm/resolving.resolver-base@1101.3.6':
-    resolution: {integrity: sha512-jmC+TEvm3nQntWhDvWiF5KoaL3H30qxt/1HRadFXrBcqFZdcoj5ezlRaeq39rO3IW2BKLWfrkz8QGG2XxhRGPA==}
+  '@pnpm/resolving.resolver-base@1101.3.7':
+    resolution: {integrity: sha512-82XSSInf6bXPao7MFXBygNu7RUaepg/Ow/Cax2bX5gV72B75mt5YB8q88GrpxwzCmBnyL6FItCiFo0hcf8O9wg==}
     engines: {node: '>=22.13'}
 
-  '@pnpm/resolving.tarball-url@1101.1.7':
-    resolution: {integrity: sha512-Sd8816TErP+Rp+dSQjBAeJ06/GTt8pUov4YRIgEFG55Ej3Z2R/SRY4XbMIaDGyZDb1DaIP5ss5ezNRlmyA1VqA==}
+  '@pnpm/resolving.tarball-url@1101.1.8':
+    resolution: {integrity: sha512-CQScD81D9dIMB0YnA2ZXQpsyNVIKBVkfO7Q0GUdOk2QlnxMiefkF83CHzTwv6pY7uJtyIbYRrEPET7btOlFcgg==}
     engines: {node: '>=22.13'}
 
   '@pnpm/store.cafs-types@1100.1.2':
     resolution: {integrity: sha512-oFKwyDw9SMnvn6XteQy2vEdCitqY9H0oCHXYZmpF/Ef0tLraHktoDm6MznArbHE67VgsdgQ8hoTVCUqCxDbFdw==}
     engines: {node: '>=22.13'}
 
-  '@pnpm/types@1102.1.4':
-    resolution: {integrity: sha512-rlfEl9WxglHp9P+0bEnm4T9hee77YP7rIUiVR8ziWR2k70km/+WsiYHjp3r49V549Z+mTQZHfWGGMjVuhKQWeQ==}
+  '@pnpm/types@1102.1.5':
+    resolution: {integrity: sha512-9F4Ql9DJ0Xpd+dgSdvC8g+3sDDpR4+zhUTW8vpAj7w1ppMguBm8XFB5OD5Ntb6a152N4/B1drP7h7awTJQkmrQ==}
     engines: {node: '>=22.13'}
 
   '@pnpm/util.lex-comparator@4.0.1':
@@ -2704,10 +2704,6 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@zkochan/js-yaml@0.0.11':
-    resolution: {integrity: sha512-SO+h5Jg079r2JvGle0jbdtk1EY7ppu6TGzmfWTp3Gy61IEb1OVKBocJ6ydTn4++nYFNfRKYenI2MniZQwsM9KQ==}
-    hasBin: true
-
   '@zkochan/rimraf@4.0.0':
     resolution: {integrity: sha512-0EdBn93hMsbx4svJsKQCch+sNMuXvzWbVYqTCGdctQmxtuYK57uCURZPNiNdwS2Y31d96DMWI3BpJ9DLN2Jxfw==}
     engines: {node: '>=22.13'}
@@ -2794,6 +2790,9 @@ packages:
 
   argparse@2.0.1:
     resolution: {integrity: sha512-8+9WqebbFzpX9OR+Wa6O29asIogeRMzcGtAINdpMHHyAg10f05aSFVBbcEqGf/PXw1EjAZ+q2/bEBg3DvurK3Q==}
+
+  argparse@3.0.4:
+    resolution: {integrity: sha512-fwWK3Zq22l4XJJjx5mcBHGikIk+hJqO+32dPm0Jur7+rtG5x1scOjSfdT9ZKeWHPpsya/l0HHK4tDImBkTrtvA==}
 
   aria-hidden@1.2.6:
     resolution: {integrity: sha512-ik3ZgC9dY/lYVVM++OISsaYDeg1tb0VtP5uL3ouh1koGOaUMDPpbFIei4JkFimWUFPn90sbMNMXQAIVOlnYKJA==}
@@ -3494,6 +3493,10 @@ packages:
 
   js-yaml@4.3.2:
     resolution: {integrity: sha512-SFNOvSJ+Dgf/9An904Yx+CgSlIPCkIpao4qo51lpee25TIRejdH3rhR4EZMGoNx3/TP3O+wzWuiTFl4sqbltzA==}
+    hasBin: true
+
+  js-yaml@5.5.0:
+    resolution: {integrity: sha512-paNr4LFIFPjeeSmwNYdrb8FafLLG/Cr2Af3GjbsHJ5CxIjH4r0c2emlmRdAtpPAieP1gRVzk6buBbVP5gBMGAg==}
     hasBin: true
 
   json-crawl@0.4.2:
@@ -5959,105 +5962,105 @@ snapshots:
 
   '@parcel/macros@2.16.4': {}
 
-  '@pnpm/config.normalize-registries@1101.0.6':
+  '@pnpm/config.normalize-registries@1101.0.7':
     dependencies:
       '@pnpm/constants': 1102.0.1
-      '@pnpm/types': 1102.1.4
+      '@pnpm/types': 1102.1.5
       normalize-registry-url: 2.0.1
       ramda: '@pnpm/ramda@0.28.1'
 
-  '@pnpm/config.pick-registry-for-package@1101.0.6':
+  '@pnpm/config.pick-registry-for-package@1101.0.7':
     dependencies:
-      '@pnpm/types': 1102.1.4
+      '@pnpm/types': 1102.1.5
 
   '@pnpm/constants@1102.0.1': {}
 
-  '@pnpm/crypto.hash@1100.0.9':
+  '@pnpm/crypto.hash@1100.0.10':
     dependencies:
-      '@pnpm/fs.graceful-fs': 1100.2.6
+      '@pnpm/fs.graceful-fs': 1100.2.7
       ssri: 13.0.1
 
   '@pnpm/deps.graph-sequencer@1100.0.1': {}
 
-  '@pnpm/deps.path@1101.0.10':
+  '@pnpm/deps.path@1101.0.11':
     dependencies:
-      '@pnpm/crypto.hash': 1100.0.9
-      '@pnpm/types': 1102.1.4
+      '@pnpm/crypto.hash': 1100.0.10
+      '@pnpm/types': 1102.1.5
       semver: 7.8.6
 
-  '@pnpm/error@1100.2.2':
+  '@pnpm/error@1100.2.3':
     dependencies:
       '@pnpm/constants': 1102.0.1
 
-  '@pnpm/fetching.fetcher-base@1100.2.16':
+  '@pnpm/fetching.fetcher-base@1100.2.17':
     dependencies:
-      '@pnpm/resolving.resolver-base': 1101.3.6
-      '@pnpm/types': 1102.1.4
+      '@pnpm/resolving.resolver-base': 1101.3.7
+      '@pnpm/types': 1102.1.5
       '@types/ssri': 7.1.5
 
-  '@pnpm/fs.graceful-fs@1100.2.6':
+  '@pnpm/fs.graceful-fs@1100.2.7':
     dependencies:
-      '@pnpm/error': 1100.2.2
+      '@pnpm/error': 1100.2.3
       graceful-fs: 4.2.12
 
-  '@pnpm/hooks.types@1101.0.9':
+  '@pnpm/hooks.types@1101.0.10':
     dependencies:
-      '@pnpm/fetching.fetcher-base': 1100.2.16
-      '@pnpm/lockfile.types': 1100.1.8
-      '@pnpm/resolving.resolver-base': 1101.3.6
+      '@pnpm/fetching.fetcher-base': 1100.2.17
+      '@pnpm/lockfile.types': 1100.1.9
+      '@pnpm/resolving.resolver-base': 1101.3.7
       '@pnpm/store.cafs-types': 1100.1.2
-      '@pnpm/types': 1102.1.4
+      '@pnpm/types': 1102.1.5
 
-  '@pnpm/lockfile.fs@1100.2.19(@pnpm/logger@1100.0.0)':
+  '@pnpm/lockfile.fs@1100.2.20(@pnpm/logger@1100.0.0)':
     dependencies:
       '@pnpm/constants': 1102.0.1
-      '@pnpm/deps.path': 1101.0.10
-      '@pnpm/error': 1100.2.2
-      '@pnpm/fs.graceful-fs': 1100.2.6
-      '@pnpm/lockfile.merger': 1100.0.30
-      '@pnpm/lockfile.types': 1100.1.8
-      '@pnpm/lockfile.utils': 1102.1.12
+      '@pnpm/deps.path': 1101.0.11
+      '@pnpm/error': 1100.2.3
+      '@pnpm/fs.graceful-fs': 1100.2.7
+      '@pnpm/lockfile.merger': 1100.0.31
+      '@pnpm/lockfile.types': 1100.1.9
+      '@pnpm/lockfile.utils': 1102.1.13
       '@pnpm/logger': 1100.0.0
       '@pnpm/network.git-utils': 1100.0.6
       '@pnpm/object.key-sorting': 1100.0.2
-      '@pnpm/patching.config': 1100.1.13(@pnpm/logger@1100.0.0)
+      '@pnpm/patching.config': 1100.1.14(@pnpm/logger@1100.0.0)
       '@pnpm/patching.types': 1100.0.1
-      '@pnpm/types': 1102.1.4
+      '@pnpm/types': 1102.1.5
       '@zkochan/rimraf': 4.0.0
       comver-to-semver: 2.0.0
-      js-yaml: '@zkochan/js-yaml@0.0.11'
+      js-yaml: 5.5.0
       ramda: '@pnpm/ramda@0.28.1'
       semver: 7.8.6
       signal-exit: 4.1.0
       strip-bom: 5.0.0
       write-file-atomic: 7.0.1
 
-  '@pnpm/lockfile.merger@1100.0.30':
+  '@pnpm/lockfile.merger@1100.0.31':
     dependencies:
-      '@pnpm/lockfile.types': 1100.1.8
-      '@pnpm/types': 1102.1.4
+      '@pnpm/lockfile.types': 1100.1.9
+      '@pnpm/types': 1102.1.5
       comver-to-semver: 2.0.0
       ramda: '@pnpm/ramda@0.28.1'
       semver: 7.8.6
 
-  '@pnpm/lockfile.types@1100.1.8':
+  '@pnpm/lockfile.types@1100.1.9':
     dependencies:
       '@pnpm/patching.types': 1100.0.1
-      '@pnpm/resolving.resolver-base': 1101.3.6
-      '@pnpm/types': 1102.1.4
+      '@pnpm/resolving.resolver-base': 1101.3.7
+      '@pnpm/types': 1102.1.5
 
-  '@pnpm/lockfile.utils@1102.1.12':
+  '@pnpm/lockfile.utils@1102.1.13':
     dependencies:
-      '@pnpm/config.normalize-registries': 1101.0.6
-      '@pnpm/config.pick-registry-for-package': 1101.0.6
+      '@pnpm/config.normalize-registries': 1101.0.7
+      '@pnpm/config.pick-registry-for-package': 1101.0.7
       '@pnpm/constants': 1102.0.1
-      '@pnpm/deps.path': 1101.0.10
-      '@pnpm/error': 1100.2.2
-      '@pnpm/hooks.types': 1101.0.9
-      '@pnpm/lockfile.types': 1100.1.8
-      '@pnpm/resolving.resolver-base': 1101.3.6
-      '@pnpm/resolving.tarball-url': 1101.1.7
-      '@pnpm/types': 1102.1.4
+      '@pnpm/deps.path': 1101.0.11
+      '@pnpm/error': 1100.2.3
+      '@pnpm/hooks.types': 1101.0.10
+      '@pnpm/lockfile.types': 1100.1.9
+      '@pnpm/resolving.resolver-base': 1101.3.7
+      '@pnpm/resolving.tarball-url': 1101.1.8
+      '@pnpm/types': 1102.1.5
       normalize-path: 3.0.0
       ramda: '@pnpm/ramda@0.28.1'
 
@@ -6075,10 +6078,10 @@ snapshots:
       '@pnpm/util.lex-comparator': 4.0.1
       sort-keys: 6.0.1
 
-  '@pnpm/patching.config@1100.1.13(@pnpm/logger@1100.0.0)':
+  '@pnpm/patching.config@1100.1.14(@pnpm/logger@1100.0.0)':
     dependencies:
-      '@pnpm/deps.path': 1101.0.10
-      '@pnpm/error': 1100.2.2
+      '@pnpm/deps.path': 1101.0.11
+      '@pnpm/error': 1100.2.3
       '@pnpm/logger': 1100.0.0
       '@pnpm/patching.types': 1100.0.1
       semver: 7.8.6
@@ -6087,18 +6090,18 @@ snapshots:
 
   '@pnpm/ramda@0.28.1': {}
 
-  '@pnpm/resolving.resolver-base@1101.3.6':
+  '@pnpm/resolving.resolver-base@1101.3.7':
     dependencies:
-      '@pnpm/types': 1102.1.4
+      '@pnpm/types': 1102.1.5
 
-  '@pnpm/resolving.tarball-url@1101.1.7':
+  '@pnpm/resolving.tarball-url@1101.1.8':
     dependencies:
-      '@pnpm/error': 1100.2.2
-      '@pnpm/types': 1102.1.4
+      '@pnpm/error': 1100.2.3
+      '@pnpm/types': 1102.1.5
 
   '@pnpm/store.cafs-types@1100.1.2': {}
 
-  '@pnpm/types@1102.1.4': {}
+  '@pnpm/types@1102.1.5': {}
 
   '@pnpm/util.lex-comparator@4.0.1': {}
 
@@ -6602,10 +6605,6 @@ snapshots:
   '@yuku-toolchain/win32-x64@0.28.1':
     optional: true
 
-  '@zkochan/js-yaml@0.0.11':
-    dependencies:
-      argparse: 2.0.1
-
   '@zkochan/rimraf@4.0.0': {}
 
   '@zkochan/which@2.0.3':
@@ -6672,6 +6671,8 @@ snapshots:
       sprintf-js: 1.0.3
 
   argparse@2.0.1: {}
+
+  argparse@3.0.4: {}
 
   aria-hidden@1.2.6:
     dependencies:
@@ -7317,6 +7318,10 @@ snapshots:
   js-yaml@4.3.2:
     dependencies:
       argparse: 2.0.1
+
+  js-yaml@5.5.0:
+    dependencies:
+      argparse: 3.0.4
 
   json-crawl@0.4.2: {}
 
