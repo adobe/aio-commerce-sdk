@@ -36,6 +36,7 @@
     "typecheck": "tsc --noEmit && echo '✅ No type errors found.'"
   },
   "dependencies": {
+    "@adobe/aio-cli-lib-app-config": "^4.2.0",
     "@adobe/aio-lib-core-config": "^5.0.1",
     "@adobe/aio-lib-ims": "catalog:",
     "@npmcli/package-json": "^8.0.0",

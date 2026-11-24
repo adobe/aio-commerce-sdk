@@ -22,6 +22,7 @@ import {
   EXTENSION_POINT_ORDER,
   ensureExtensionPointsOrder,
 } from "#commands/common/extension-points";
+import { validateRuntimeActionReferences } from "#commands/common/runtime-actions";
 import {
   APP_CONFIG_FILE,
   BACKEND_UI_V2_EXTENSION_POINT_ID,
@@ -42,7 +43,7 @@ import {
   generateWebSrc,
   prepareWebSourceImportAlias,
 } from "#commands/generate/web-src";
-import { loadAppManifest } from "#commands/utils";
+import { getExtConfigPath, loadAppManifest } from "#commands/utils";
 import { hasBackendUiV2Components } from "#config/index";
 
 import type { ExtConfig } from "@aio-commerce-sdk/scripting-utils/yaml/types";
@@ -78,13 +79,20 @@ export async function run(
       EXTENSIBILITY_EXTENSION_POINT_ID,
       projectRoot,
     );
+    const extensibilityConfig = extensibilityExtConfig.toJS() as ExtConfig;
+
+    await validateRuntimeActionReferences(
+      { eventing: appManifest.eventing, webhooks: appManifest.webhooks },
+      {
+        extensionPointId: EXTENSIBILITY_EXTENSION_POINT_ID,
+        path: getExtConfigPath(EXTENSIBILITY_EXTENSION_POINT_ID),
+        projectRoot,
+      },
+    );
 
     await generateActionFiles(
       appManifest,
-      getRuntimeActions(
-        extensibilityExtConfig.toJS() as ExtConfig,
-        "app-management",
-      ),
+      getRuntimeActions(extensibilityConfig, "app-management"),
       EXTENSIBILITY_EXTENSION_POINT_ID,
       templatesDir,
       projectRoot,
@@ -125,6 +133,15 @@ export async function run(
 
   if (extension === "backend-ui/2") {
     if (hasBackendUiV2Components(appManifest)) {
+      await validateRuntimeActionReferences(
+        { adminUi: appManifest.adminUi },
+        {
+          extensionPointId: BACKEND_UI_V2_EXTENSION_POINT_ID,
+          path: getExtConfigPath(BACKEND_UI_V2_EXTENSION_POINT_ID),
+          projectRoot,
+        },
+      );
+
       const extConfig = await updateExtConfig(
         appManifest,
         BACKEND_UI_V2_EXTENSION_POINT_ID,

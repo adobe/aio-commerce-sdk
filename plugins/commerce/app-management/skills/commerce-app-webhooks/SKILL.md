@@ -102,11 +102,11 @@ See [assets/webhooks-config.ts](assets/webhooks-config.ts) for the full annotate
 
 ## Creating the handler action
 
-For webhook entries that use `runtimeAction`, create the action file under `src/actions/` and register it in `app.config.yaml`.
+For webhook entries that use `runtimeAction`, create a handler action under `src/commerce-extensibility-1/actions/`.
 
 ### Register the action
 
-Add a user-defined package to `src/commerce-extensibility-1/ext.config.yaml` alongside the existing `app-management` package. Use any name except `app-management` (reserved by the framework):
+Add a user-defined package to `src/commerce-extensibility-1/ext.config.yaml` alongside the existing `app-management` package. Use any name except `app-management` (reserved by the framework). `aio app build` fails if a referenced action is not declared here or its `function` file does not exist. Webhook actions must be web actions (`web: "yes"`).
 
 ```yaml
 # src/commerce-extensibility-1/ext.config.yaml
