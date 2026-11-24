@@ -2545,7 +2545,7 @@ describe("lifecycle config changes", () => {
 });
 
 describe("lifecycle with concurrent root children", () => {
-  const CONCURRENT = ["a", "b", "c"];
+  const STAGES = [["a", "b", "c"], ["d"]];
 
   /** Resolves after the given delay, so other branches can make progress meanwhile. */
   function delay(ms: number) {
@@ -2612,7 +2612,7 @@ describe("lifecycle with concurrent root children", () => {
       baseline: operation === "install" ? null : createBaseline("1.0.0"),
       rootStep: createMockLifecycleRoot(leaves),
     });
-    const runtime = { ...mock.runtime, concurrentRootChildren: CONCURRENT };
+    const runtime = { ...mock.runtime, rootStages: STAGES };
 
     /** Plans, starts and executes one attempt. */
     async function attempt(activation: string) {

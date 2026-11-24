@@ -247,12 +247,12 @@ async function executePlan(
   const result = await executePlannedWorkflow({
     attemptId: attempt.id,
     baseline,
-    concurrentRootChildren: options.concurrentRootChildren,
     failureKey: "LIFECYCLE_APPLY_FAILED",
     hooks,
     initialState: toWorkflowState(attempt, attempt.plan.target?.config),
     lifecycleContext: options.lifecycleContext,
     plan: attempt.plan,
+    rootStages: options.rootStages,
     rootStep: options.rootStep,
   });
 

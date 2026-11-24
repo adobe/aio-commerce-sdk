@@ -28,7 +28,7 @@ import type { LeafStep } from "#management/common/workflow/step";
 
 type Apply = NonNullable<LeafStep["apply"]>;
 
-const CONCURRENT = ["a", "b", "c"];
+const STAGES = [["a", "b", "c"], ["d"]];
 
 /** Resolves after the given delay, so other branches can make progress meanwhile. */
 function delay(ms: number) {
@@ -36,12 +36,13 @@ function delay(ms: number) {
 }
 
 /**
- * Executes a plan with one operation for each root child `a`, `b`, `c` and `d`, where `a`, `b`
- * and `c` run concurrently and `d` after them.
+ * Executes a plan with one operation for each root child `a`, `b`, `c` and `d`, in the given
+ * stages. By default `a`, `b` and `c` run concurrently and `d` after them.
  */
 async function execute(
   applies: Partial<Record<string, Apply>>,
   hooks?: WorkflowHooks,
+  rootStages: string[][] = STAGES,
 ) {
   const names = ["a", "b", "c", "d"];
   const rootStep = createMockLifecycleRoot(
@@ -75,7 +76,6 @@ async function execute(
   const { state } = await executePlannedWorkflow({
     attemptId: "attempt-1",
     baseline: null,
-    concurrentRootChildren: CONCURRENT,
     hooks,
     initialState: createInitialPlanExecutionState({
       plan,
@@ -84,6 +84,7 @@ async function execute(
     }),
     lifecycleContext,
     plan,
+    rootStages,
     rootStep,
   });
 
@@ -146,6 +147,32 @@ describe("executePlannedWorkflow with concurrent root children", () => {
     });
     expect(state.data).toEqual({ root: { c: { name: "c" } } });
   });
+
+  test.each([
+    ["misses a child", [["a", "b", "c"]]],
+    [
+      "lists a child twice",
+      [
+        ["a", "b", "c"],
+        ["c", "d"],
+      ],
+    ],
+    ["changes the declared order", [["d"], ["a", "b", "c"]]],
+  ])(
+    "fails without applying anything when the stages %s",
+    async (_, stages) => {
+      const apply = vi.fn(async () => ({ snapshotData: null }));
+      const { state } = await execute(
+        { a: apply, b: apply, c: apply, d: apply },
+        undefined,
+        stages,
+      );
+
+      expect.assert(state.status === "failed");
+      expect(state.error.message).toContain("must list the children");
+      expect(apply).not.toHaveBeenCalled();
+    },
+  );
 
   test("fails a step whose start cannot be recorded, without applying it", async () => {
     const applyB = vi.fn(async () => ({ snapshotData: { name: "b" } }));

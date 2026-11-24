@@ -60,11 +60,16 @@ export type ExecutePlannedWorkflowOptions = {
   baseline: AppStateSnapshot | null;
 
   /**
-   * Names of the root step's children that run at the same time as their adjacent siblings also
-   * listed. Every other child runs alone, once the children declared before it succeed. Defaults
-   * to none, so every child runs in declared order.
+   * Names of the root step's children grouped into the stages they run in. The children of a
+   * stage run at the same time, and a stage starts once the previous one succeeds. Must list every
+   * root child exactly once, in declared order. Defaults to every child running in declared order.
+   *
+   * @example
+   * ```ts
+   * rootStages: [["eventing", "webhooks", "admin-ui"], ["customInstallationSteps"]]
+   * ```
    */
-  concurrentRootChildren?: readonly string[];
+  rootStages?: readonly (readonly string[])[];
 };
 
 /** Outcome of executing the `apply` methods selected by a persisted plan. */
@@ -83,7 +88,7 @@ type PlannedStepExecutionContext = {
   hooks?: WorkflowHooks;
   attemptId: string;
   plan: LifecyclePlan;
-  concurrentRootChildren: ReadonlySet<string>;
+  rootStages: readonly (readonly string[])[] | undefined;
 };
 
 /** What a step inherits from its ancestors. */
@@ -207,12 +212,12 @@ export async function executePlannedWorkflow(
   const context: PlannedStepExecutionContext = {
     attemptId,
     baseline: options.baseline,
-    concurrentRootChildren: new Set(options.concurrentRootChildren),
     config: plan.target?.config,
     data: initialState.data as Record<string, unknown> | null,
     hooks,
     id: initialState.id,
     plan,
+    rootStages: options.rootStages,
     rootStep: step,
     startedAt: initialState.startedAt,
   };
@@ -459,15 +464,12 @@ async function executePlannedChildren(
     };
   }
 
-  const concurrentChildren =
-    currentStep === context.rootStep
-      ? context.concurrentRootChildren
-      : new Set<string>();
+  const stages =
+    currentStep === context.rootStep && context.rootStages
+      ? groupIntoStages(step, currentStep.children, context.rootStages)
+      : currentStep.children.map((child) => [child]);
 
-  for (const stage of groupIntoStages(
-    currentStep.children,
-    concurrentChildren,
-  )) {
+  for (const stage of stages) {
     // biome-ignore lint/performance/noAwaitInLoops: each stage starts once the previous one succeeds
     const results = await Promise.allSettled(
       stage.map(async (childStatus) => {
@@ -514,29 +516,29 @@ async function executePlannedChildren(
 }
 
 /**
- * Splits children into the stages they run in, keeping their declared order. Adjacent concurrent
- * children share a stage, and every other child has one of its own.
+ * Splits the children to execute into the given stages, skipping the stages left with none.
+ * Throws when the stages don't list every child of the step exactly once, in declared order.
  */
 function groupIntoStages(
+  step: BranchStep,
   children: StepStatus[],
-  concurrentChildren: ReadonlySet<string>,
+  stageNames: readonly (readonly string[])[],
 ): StepStatus[][] {
-  const stages: StepStatus[][] = [];
+  const declared = step.children.map((child) => child.name);
+  const staged = stageNames.flat();
 
-  for (const child of children) {
-    const previous = stages.at(-1);
-    const joinsPrevious =
-      concurrentChildren.has(child.name) &&
-      previous?.every((sibling) => concurrentChildren.has(sibling.name));
-
-    if (previous && joinsPrevious) {
-      previous.push(child);
-    } else {
-      stages.push([child]);
-    }
+  if (
+    staged.length !== declared.length ||
+    staged.some((name, index) => name !== declared[index])
+  ) {
+    throw new Error(
+      `Stages [${staged.join(", ")}] must list the children of step "${step.name}" in declared order: [${declared.join(", ")}]`,
+    );
   }
 
-  return stages;
+  return stageNames
+    .map((names) => children.filter((child) => names.includes(child.name)))
+    .filter((stage) => stage.length > 0);
 }
 
 /** Returns the lifecycle context with a logger that prefixes every message with the branch name. */

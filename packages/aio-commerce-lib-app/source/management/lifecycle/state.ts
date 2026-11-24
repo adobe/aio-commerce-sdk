@@ -60,10 +60,10 @@ export type LifecycleRuntime = {
   rootStep: BranchStep;
 
   /**
-   * Names of the root step's children that run at the same time as their adjacent siblings also
-   * listed. Defaults to none, so every child runs in declared order.
+   * Names of the root step's children grouped into the stages they run in. Defaults to every
+   * child running in declared order.
    */
-  concurrentRootChildren?: readonly string[];
+  rootStages?: readonly (readonly string[])[];
   lifecycleContext: LifecycleContext;
   stateStore: LifecycleStore<OrchestrationState>;
   snapshotStore: LifecycleStore<AppStateSnapshot>;
