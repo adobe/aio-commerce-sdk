@@ -10,6 +10,8 @@
  * governing permissions and limitations under the License.
  */
 
+import { DEFAULT_UPGRADE_MODE } from "#config/schema/metadata";
+
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 import type {
   LifecycleOperation,
@@ -116,7 +118,7 @@ export function toPlanPreview(plan: LifecyclePlan): PlanPreview {
     targetVersion: plan.target?.appVersion ?? null,
     upgradeMode:
       plan.operation === "upgrade"
-        ? (plan.target?.config.metadata.upgradeMode ?? "manual")
+        ? (plan.target?.config.metadata.upgradeMode ?? DEFAULT_UPGRADE_MODE)
         : null,
   };
 }

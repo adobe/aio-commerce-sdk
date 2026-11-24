@@ -17,6 +17,7 @@ import {
   toAttemptStatus,
 } from "#actions/installation/lifecycle";
 import { toPlanPreview } from "#actions/installation/plan-preview";
+import { DEFAULT_UPGRADE_MODE } from "#config/schema/metadata";
 import {
   createMockLifecycleAttempt,
   createMockLifecyclePlan,
@@ -203,7 +204,7 @@ describe("toPlanPreview", () => {
     },
   );
 
-  test("defaults the upgrade mode to manual when the target config has none", () => {
+  test("defaults the upgrade mode when the target config has none", () => {
     const { target } = createPlan();
     const preview = toPlanPreview(
       createPlan({
@@ -217,7 +218,7 @@ describe("toPlanPreview", () => {
       }),
     );
 
-    expect(preview.upgradeMode).toBe("manual");
+    expect(preview.upgradeMode).toBe(DEFAULT_UPGRADE_MODE);
   });
 
   test.each(["install", "uninstall"] as const)(
