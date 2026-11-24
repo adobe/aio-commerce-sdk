@@ -6,6 +6,12 @@
     "ignoreUnknown": true
   },
 
+  "markdown": {
+    "formatter": {
+      "enabled": false
+    }
+  },
+
   "json": {
     "formatter": {
       "trailingCommas": "none"
