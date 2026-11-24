@@ -34,7 +34,9 @@ Ask the user what they want to intercept and how:
 
 - **What operation**: the `webhook_method` (the Commerce operation, e.g., `plugin.magento.catalog_product.save`) and `webhook_type` (`before` or `after`)
 - **How the handler is reached**: either a **runtime action** in this app (`runtimeAction: "<package>/<action>"`) or an **explicit external URL** (`webhook.url`) — these are mutually exclusive
-- **Category** (optional): `validation` (block if invalid), `append` (add data), or `modification` (alter data) — used for conflict detection
+- **Category**: `validation` (block if invalid), `append` (add data), or `modification` (alter data) — used for conflict detection
+- **Failure mode**: whether a failed or timed-out hook must block the shopper's or admin's action (`required: true`) or only log (`required: false`)
+- **Time budget**: the longest the shopper or admin can wait for this hook
 - **Batch and hook identifiers**: `batch_name` groups related hooks; `hook_name` uniquely identifies this hook within the batch
 
 ## Step 2 — Derive config values
@@ -53,7 +55,22 @@ Apply the following validation rules before writing. Surface any issues to the u
 | `webhook_type`             | Required; must be `before` or `after`                                                 |
 | `method`                   | Required; must be `POST`, `PUT`, `DELETE`, or `GET`                                   |
 | `timeout` / `soft_timeout` | Optional; positive integer (milliseconds)                                             |
+| `ttl`                      | Optional; positive integer (seconds)                                                  |
 | `priority` / `batch_order` | Optional; positive integer                                                            |
+
+### Webhook settings
+
+Set these on every entry. The defaults are rarely what the shopper-facing operation needs.
+
+- **`timeout` and `soft_timeout`**: `timeout` is a hard limit in milliseconds, and its default, 0, means no limit. A hung action then blocks the Commerce request until Runtime's own web action limit. Set `timeout` below the shopper-facing budget and below the action's time limit, and set `soft_timeout` lower so Commerce logs a notice before requests start failing. See [Create webhooks](https://developer.adobe.com/commerce/extensibility/webhooks/create-webhooks/).
+- **`required` and `fallback_error_message`**: `required` defaults to `true`. A required hook that answers non-2xx or hits `timeout` throws an exception and stops the action. An optional hook only logs. Decide per webhook: validation that must block (stock, fraud) stays `required: true` with a `fallback_error_message` the shopper can read, and enrichment that may be skipped sets `required: false`. See [Webhook responses](https://developer.adobe.com/commerce/extensibility/webhooks/responses/) and [Webhooks configuration reference](https://developer.adobe.com/commerce/extensibility/webhooks/xml-schema/).
+- **`requireAdobeAuth`**: for `runtimeAction` entries, a missing value means `true`. It must match `require-adobe-auth` on the runtime action in `ext.config.yaml`. Keep Adobe auth on unless the action verifies the Commerce signature itself. See [Webhooks installation](https://developer.adobe.com/commerce/extensibility/app-management/installation/webhooks/).
+- **`category`**: set `validation`, `append` or `modification` by what the hook does. Use `modification` when unsure between `append` and `modification`. A missing or wrong category doesn't block install, it only warns about conflicts with other apps. See [Webhooks installation](https://developer.adobe.com/commerce/extensibility/app-management/installation/webhooks/).
+
+Two more facts to apply when they fit:
+
+- `ttl` caches the response for requests with the same URL, body and headers. Use it for lookups whose answer doesn't change per request, such as shipping rates for the same cart, and not for validations that depend on live state.
+- Hooks in one batch run in parallel. A hook that needs another hook's result belongs in a later batch (`batch_order`). See [Create webhooks](https://developer.adobe.com/commerce/extensibility/webhooks/create-webhooks/).
 
 ## Step 3 — Update `app.commerce.config.ts`
 
@@ -67,14 +84,19 @@ webhooks: [
   {
     label: "Validate Product Save",
     description: "Validates product data before saving.",
-    category: "validation", // optional
+    category: "validation",
     runtimeAction: "my-package/validate-product", // <package>/<action>
+    requireAdobeAuth: true, // must match require-adobe-auth on the action
     webhook: {
       webhook_method: "plugin.magento.catalog_product.save",
       webhook_type: "before",
       batch_name: "my_app", // [a-zA-Z0-9_]+ only
       hook_name: "validate_product", // [a-zA-Z0-9_]+ only
       method: "POST",
+      timeout: 3000, // ms; default 0 means no limit
+      soft_timeout: 1500,
+      required: true,
+      fallback_error_message: "We couldn't validate this product. Try again.",
     },
   },
 ];
@@ -84,6 +106,7 @@ webhooks: [
   {
     label: "Fraud Check",
     description: "Calls external fraud service before order placement.",
+    category: "validation",
     webhook: {
       webhook_method: "plugin.magento.sales_order.place",
       webhook_type: "before",
@@ -91,6 +114,10 @@ webhooks: [
       hook_name: "fraud_check",
       method: "POST",
       url: "https://fraud.example.com/check", // inside webhook object, not top level
+      timeout: 5000,
+      soft_timeout: 2500,
+      required: true,
+      fallback_error_message: "We couldn't place your order. Try again later.",
     },
   },
 ];
@@ -198,12 +225,16 @@ A build failure with a validation error points directly to the offending config 
 - **`app-management` package name conflict**: The framework generates this package in `ext.config.yaml` on every build. Use any other name for your own actions.
 - **Function path is relative to `src/commerce-extensibility-1/`**: Do not use `src/...` or project-root-relative paths. `actions/validate-product/index.js` resolves correctly; `src/commerce-extensibility-1/actions/validate-product/index.js` does not.
 - **`defineConfig` not found**: Ensure `@adobe/aio-commerce-lib-app` is installed and `defineConfig` is imported from `@adobe/aio-commerce-lib-app/config`.
+- **Webhook call fails with an auth error, or the action runs unauthenticated**: `requireAdobeAuth` on the entry (missing means `true`) differs from `require-adobe-auth` on the runtime action. Make them match.
+- **Shopper action hangs**: the entry has no `timeout`, so Commerce waits until the action's own limit. Set `timeout` and `soft_timeout`.
 - **Webhook deployed but Commerce never calls it**: `init` wasn't re-run after adding the first install-requiring domain (Step 4) — no `installation` action, no install endpoint.
 
 ## Quality Bar
 
 - `aio app build` completes without errors
 - `installation` action present in `ext.config.yaml` when this webhook requires it
+- Every entry sets `timeout`, `soft_timeout`, `required` and `category`, and required entries set `fallback_error_message`
+- `requireAdobeAuth` matches `require-adobe-auth` on each runtime action
 
 ## Chaining
 
