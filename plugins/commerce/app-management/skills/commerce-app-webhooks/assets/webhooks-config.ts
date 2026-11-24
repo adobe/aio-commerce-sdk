@@ -10,10 +10,11 @@ export default defineConfig({
   webhooks: [
     // Entry type 1: handler is a runtime action in this app
     {
-      category: "validation", // optional: "validation" | "append" | "modification"
+      category: "validation", // "validation" | "append" | "modification"; use "modification" when unsure
       description: "Validates product data before saving.", // required, non-empty
       label: "Validate Product Save", // required, non-empty
       // env: ["paas"],                  // optional: scope to Commerce environments ("paas" | "saas"); omitted = all
+      requireAdobeAuth: true, // missing means true; must match require-adobe-auth on the runtime action
       runtimeAction: "my-package/validate-product", // <package>/<action>; mutually exclusive with webhook.url
       webhook: {
         batch_name: "my_app", // [a-zA-Z0-9_]+ only — no hyphens or dots
@@ -21,10 +22,13 @@ export default defineConfig({
         method: "POST", // "POST", "PUT", "DELETE", or "GET"
         webhook_method: "plugin.magento.catalog_product.save", // Commerce operation to intercept
         webhook_type: "before", // "before" or "after"
-        // timeout: 5000,                  // optional: max ms to wait (positive integer)
-        // soft_timeout: 3000,             // optional: soft limit before warning
-        // required: true,                 // optional: if true, Commerce aborts if hook fails
-        // priority: 100,                  // optional: execution order within batch
+        timeout: 3000, // hard limit in ms; default 0 means no limit. Keep below the shopper-facing budget
+        soft_timeout: 1500, // lower than timeout; Commerce logs a notice when exceeded
+        required: true, // default true: a failed or timed-out hook stops the operation. false only logs
+        fallback_error_message: "We couldn't validate this product. Try again.", // shown when a required hook fails
+        // ttl: 60,                        // optional: cache seconds for requests with the same URL, body and headers
+        // batch_order: 1,                 // optional: hooks in one batch run in parallel; order batches with this
+        // priority: 100,                  // optional: priority when merging hook results in the batch
         // fields: [{ name: "sku" }, { name: "price" }], // optional: restrict payload fields
         // rules: [{ field: "type_id", operator: "equal", value: "simple" }], // optional: conditional trigger
         // headers: [{ name: "X-Api-Key", value: "secret" }], // optional: custom headers
@@ -32,7 +36,7 @@ export default defineConfig({
     },
     // Entry type 2: handler is an external URL
     {
-      category: "append", // optional: "validation" | "append" | "modification"
+      category: "append", // "validation" | "append" | "modification"
       description: "Appends tax calculation from external service.", // required, non-empty
       label: "Append Tax Data", // required, non-empty
       webhook: {
@@ -42,6 +46,9 @@ export default defineConfig({
         url: "https://tax-service.example.com/webhook", // must be absolute URL; mutually exclusive with runtimeAction
         webhook_method: "plugin.magento.sales_order.place",
         webhook_type: "before",
+        timeout: 5000,
+        soft_timeout: 2500,
+        required: false, // enrichment: a failure only logs
       },
     },
   ],
