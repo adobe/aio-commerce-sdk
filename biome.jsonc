@@ -1,9 +1,15 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.6.6/schema.json",
+  "$schema": "https://biomejs.dev/schemas/2.6.8/schema.json",
   "extends": ["ultracite/biome/core"],
 
   "files": {
     "ignoreUnknown": true
+  },
+
+  "markdown": {
+    "formatter": {
+      "enabled": false
+    }
   },
 
   "json": {
@@ -35,6 +41,9 @@
       },
 
       "style": {
+        // Error modules intentionally group related error classes.
+        "noExcessiveClassesPerFile": "off",
+
         "useConsistentMemberAccessibility": {
           "level": "error",
           "options": {
@@ -59,6 +68,19 @@
       }
     }
   },
+
+  "overrides": [
+    {
+      "includes": ["**/*.{test,spec,test-d,spec-d}.{ts,tsx}"],
+      "linter": {
+        "rules": {
+          "suspicious": {
+            "noExplicitAny": "off"
+          }
+        }
+      }
+    }
+  ],
 
   "assist": {
     "enabled": true,

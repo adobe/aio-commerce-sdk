@@ -129,6 +129,9 @@ Generated Runtime actions always use `.js`.
 > [!NOTE]
 > Generated actions default to the `nodejs:26` runtime. To pin a different runtime, set the `runtime` field on the action in the generated `ext.config.yaml`. Codegen preserves a `runtime` you set there, so it survives regeneration. Generated app-management and business-configuration packages declare `LOG_LEVEL` at the package level; action-specific inputs remain on their actions.
 
+> [!IMPORTANT]
+> The `pre-app-build` hook checks that every runtime action your config references is declared under `runtimeManifest.packages` and that its `function` file exists. `adminUi` actions must be declared in `src/commerce-backend-ui-2/ext.config.yaml`. `eventing` and `webhooks` actions must be declared in `src/commerce-extensibility-1/ext.config.yaml`, and webhook actions must also be web actions (`web: yes`). The build fails with the offending config path for every reference that does not resolve.
+
 1. In your `app.config.yaml`, reference the generated extension configurations. If you have multiple extension points, add each as a new entry. Keep this order, with `commerce/extensibility/1` last, so that an upgrade works reliably:
 
 ```yaml
@@ -312,7 +315,7 @@ eventing: {
 - **destination**: Optional destination for the event. Must be a valid destination name.
 - **prioritary**: Optional boolean value to indicate if the event is prioritary.
 - **force**: Optional boolean value to indicate if the event should be forced.
-- **runtimeActions**: Array of runtime actions to invoke when the event is triggered, each in the format `<package>/<action>` (e.g., `["my-package/my-action"]`). Multiple actions can be specified to handle the same event.
+- **runtimeActions**: Array of runtime actions to invoke when the event is triggered, each in the format `<package>/<action>` (e.g., `["my-package/my-action"]`) and declared in `src/commerce-extensibility-1/ext.config.yaml`. Multiple actions can be specified to handle the same event.
 - **env**: Optional array of Commerce environments the event applies to. See [Environment Scoping (Events)](#environment-scoping-events).
 
 ##### External Events:
@@ -320,7 +323,7 @@ eventing: {
 - **name**: Word characters (letters, digits, underscore), hyphens, underscores, and dots (e.g., `external_event`, `webhook.received`, `my-event_123`)
 - **label**: Display name for the event (max 100 characters)
 - **description**: Description of the event (max 255 characters)
-- **runtimeActions**: Array of runtime actions to invoke when the event is triggered, each in the format `<package>/<action>` (e.g., `["my-package/my-action"]`). Multiple actions can be specified to handle the same event.
+- **runtimeActions**: Array of runtime actions to invoke when the event is triggered, each in the format `<package>/<action>` (e.g., `["my-package/my-action"]`) and declared in `src/commerce-extensibility-1/ext.config.yaml`. Multiple actions can be specified to handle the same event.
 - **env**: Optional array of Commerce environments the event applies to. See [Environment Scoping (Events)](#environment-scoping-events).
 
 ##### Provider Configuration:
@@ -405,7 +408,7 @@ Each webhook entry supports:
 - **label**: Display name for the webhook.
 - **description**: Description of what the webhook does.
 - **category**: Optional conflict-detection category. One of `"validation"`, `"append"`, `"modification"`.
-- **runtimeAction**: The runtime action that resolves the webhook URL, in the format `<package>/<action>`. The SDK derives the public action URL at install time and injects it into the webhook payload. **Mutually exclusive with `webhook.url`** — use one or the other, never both.
+- **runtimeAction**: The runtime action that resolves the webhook URL, in the format `<package>/<action>`. It must be a web action declared in `src/commerce-extensibility-1/ext.config.yaml`. The SDK derives the public action URL at install time and injects it into the webhook payload. **Mutually exclusive with `webhook.url`** — use one or the other, never both.
 - **requireAdobeAuth**: Optional boolean (runtime-action webhooks only). When not `false`, the webhook is registered with Adobe OAuth credentials.
 - **webhook**: The webhook payload sent to Commerce (`webhook_method`, `webhook_type`, `batch_name`, `hook_name`, `method`, and optional `url`, `fields`, `rules`, `headers`, `priority`, `required`, timeouts, and `ttl`). When `runtimeAction` is omitted, `webhook.url` is required and must be an explicit HTTPS URL pointing to your handler endpoint.
 - **env**: Optional array of Commerce environments the webhook applies to. See [Environment Scoping (Webhooks)](#environment-scoping-webhooks).
@@ -693,7 +696,7 @@ Commerce must have a compatible custom-attribute column provider installed. Filt
 
 Runtime-backed columns use `gridColumns`. Columns read directly from serialized Commerce custom attributes use [`customAttributeGridColumns`](#custom-attribute-grid-columns) instead; these do not need a Runtime action.
 
-The `workerProcess` entries are derived automatically from the `runtimeAction` values — you only need to provide the handler implementations.
+The `workerProcess` entries are derived automatically from the `runtimeAction` values — you only need to provide the handler implementations and declare them under `runtimeManifest` in `src/commerce-backend-ui-2/ext.config.yaml`.
 
 ```ts
 export default defineConfig({
@@ -1235,6 +1238,13 @@ An app installed with only business configuration never runs the install, so the
 #### The `post-app-deploy` Hook
 
 The generated `commerce/extensibility/1` extension wires a `post-app-deploy` hook automatically (alongside `pre-app-build`). After every `aio app deploy`, the hook plans an upgrade, so a redeploy of an installed app runs an upgrade check without any manual step. The hook never installs an app that is not installed yet. You must be logged in with `aio login`.
+
+In CI there is no `aio login`. Authenticate with the workspace's OAuth Server-to-Server credential instead. The service authorizes it like a user, so the credential needs:
+
+- The **I/O Management API** added to the workspace, so the service can read the project.
+- Access to the linked Commerce instance. On SaaS, add the **Adobe Commerce as a Cloud Service API** to the credential and assign it a profile for the instance. On PaaS, the credential's technical account email must exist as an admin user in the instance, as described in the [`aio-commerce-lib-api` usage guide](../../aio-commerce-lib-api/docs/usage.md).
+
+Without them the hook fails with `403 project-access-denied` or `403 commerce-access-denied`, and prints a hint for the missing access.
 
 - In `auto` mode the hook prints the plan, starts the upgrade, and shows its status until the upgrade finishes. It prints the run id when the upgrade starts.
 - In `manual` mode it reports that a plan was created but was not executed.

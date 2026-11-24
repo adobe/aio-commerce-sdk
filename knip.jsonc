@@ -4,9 +4,8 @@
   // Exports that are only used inside their own file are not reported.
   "ignoreExportsUsedInFile": true,
 
-  // Hand-written type declarations next to the JS config files in configs/*,
-  // and build output, which Knip picks up from publishConfig.exports.
-  "ignore": ["**/*.d.ts", "**/dist/**"],
+  // Hand-written type declarations next to the JS config files in configs/*.
+  "ignore": ["**/*.d.ts"],
 
   "ignoreIssues": {
     // UpdateEventMetadataForProviderSchema is a deliberate alias of the create schema.
@@ -30,8 +29,13 @@
       // never imported by this package.
       "ignore": ["source/commands/generate/actions/templates/**"],
 
-      // Only reached through vi.mock("@adobe/aio-lib-files") in the tests.
-      "ignoreDependencies": ["@adobe/aio-lib-files"]
+      // @adobe/aio-lib-files is only reached through vi.mock in the tests.
+      // @adobe/aio-cli-lib-app-config is imported by the bundled scripting-utils
+      // and stays external in the build, so consumers need it installed.
+      "ignoreDependencies": [
+        "@adobe/aio-lib-files",
+        "@adobe/aio-cli-lib-app-config"
+      ]
     },
 
     "plugins/commerce/app-management": {

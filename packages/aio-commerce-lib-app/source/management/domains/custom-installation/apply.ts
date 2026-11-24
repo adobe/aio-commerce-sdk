@@ -14,7 +14,7 @@ import {
   getScriptModule,
   getScriptModuleOrThrow,
   resolveCustomScriptHandler,
-} from "./custom-scripts";
+} from "./script-module";
 
 import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 import type {

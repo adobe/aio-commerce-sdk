@@ -38,6 +38,9 @@ type CamsClientErrorOptions = CommerceSdkErrorBaseOptions & {
 
   /** The request that CAMS answered with an error. */
   request?: CamsRequest;
+
+  /** The kind of Commerce instance the request was made for, when it names one. */
+  commerceEnv?: string;
 };
 
 /**
@@ -58,14 +61,25 @@ export class CamsClientError extends CommerceSdkErrorBase {
   /** The request that CAMS answered with an error, when CAMS answered. */
   public readonly request: CamsRequest | undefined;
 
+  /** The kind of Commerce instance the request was made for, when it names one. */
+  public readonly commerceEnv: string | undefined;
+
   public constructor(message: string, options: CamsClientErrorOptions = {}) {
-    const { retryable = false, status, code, request, ...rest } = options;
+    const {
+      retryable = false,
+      status,
+      code,
+      request,
+      commerceEnv,
+      ...rest
+    } = options;
     super(message, rest);
 
     this.retryable = retryable;
     this.status = status;
     this.code = code;
     this.request = request;
+    this.commerceEnv = commerceEnv;
   }
 }
 
@@ -125,6 +139,7 @@ export async function toCamsResponseError(error: HTTPError) {
   const options = {
     cause: error,
     code,
+    commerceEnv: error.request.headers.get("x-ac-env") ?? undefined,
     request: {
       method: error.request.method,
       path: new URL(error.request.url).pathname,

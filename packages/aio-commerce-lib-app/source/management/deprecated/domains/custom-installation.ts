@@ -14,7 +14,7 @@ import {
   getScriptModule,
   getScriptModuleOrThrow,
   resolveCustomScriptHandler,
-} from "#management/domains/custom-installation/custom-scripts";
+} from "#management/domains/custom-installation/script-module";
 
 import type {
   ConfigWithInstallationSteps,
