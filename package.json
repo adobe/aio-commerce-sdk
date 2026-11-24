@@ -61,11 +61,11 @@
     "typedoc": "^0.28.17",
     "typedoc-plugin-markdown": "^4.10.0",
     "typescript": "catalog:",
-    "ultracite": "8.2.1",
+    "ultracite": "8.3.1",
     "vitest": "^5.0.0",
     "vitest-browser-react": "^2.2.0"
   },
-  "packageManager": "pnpm@12.21.0",
+  "packageManager": "pnpm@12.22.0",
   "engines": {
     "node": "^22.11 || ^24 || ^26",
     "pnpm": ">=10"
