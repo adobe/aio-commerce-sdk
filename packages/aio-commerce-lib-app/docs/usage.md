@@ -1240,6 +1240,13 @@ An app installed with only business configuration never runs the install, so the
 
 The generated `commerce/extensibility/1` extension wires a `post-app-deploy` hook automatically (alongside `pre-app-build`). After every `aio app deploy`, the hook plans an upgrade, so a redeploy of an installed app runs an upgrade check without any manual step. The hook never installs an app that is not installed yet. You must be logged in with `aio login`.
 
+In CI there is no `aio login`. Authenticate with the workspace's OAuth Server-to-Server credential instead. The service authorizes it like a user, so the credential needs:
+
+- The **I/O Management API** added to the workspace, so the service can read the project.
+- Access to the linked Commerce instance. On SaaS, add the **Adobe Commerce as a Cloud Service API** to the credential and assign it a profile for the instance. On PaaS, the credential's technical account email must exist as an admin user in the instance, as described in the [`aio-commerce-lib-api` usage guide](../../aio-commerce-lib-api/docs/usage.md).
+
+Without them the hook fails with `403 project-access-denied` or `403 commerce-access-denied`, and prints a hint for the missing access.
+
 - In `auto` mode the hook prints the plan, starts the upgrade, and shows its status until the upgrade finishes. It prints the run id when the upgrade starts.
 - In `manual` mode it reports that a plan was created but was not executed.
 
