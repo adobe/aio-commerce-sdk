@@ -10,6 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
+import { PlannedStepError } from "./errors";
 import { callHook } from "./hooks";
 import { isBranchStep, isLeafStep } from "./step";
 import {
@@ -36,7 +37,6 @@ import type {
   StepStatus,
   SucceededWorkflowState,
   WorkflowData,
-  WorkflowError,
 } from "./types";
 
 /** Options for creating the initial execution state for a lifecycle plan. */
@@ -109,17 +109,6 @@ const LOGGER_METHODS = [
   "debug",
   "silly",
 ] as const;
-
-/** A failed step, with the error reported for it and for each of its ancestors. */
-class PlannedStepError extends Error {
-  public readonly workflowError: WorkflowError;
-
-  public constructor(workflowError: WorkflowError, cause: unknown) {
-    super(workflowError.message ?? workflowError.key, { cause });
-    this.name = "PlannedStepError";
-    this.workflowError = workflowError;
-  }
-}
 
 /**
  * Creates an initial execution state pruned to leaves with planned operations. A leaf with config
@@ -421,7 +410,9 @@ async function executePlannedStep(
     const failure =
       error instanceof PlannedStepError
         ? error
-        : new PlannedStepError(await createWorkflowError(error, path), error);
+        : new PlannedStepError(await createWorkflowError(error, path), {
+            cause: error,
+          });
 
     try {
       await callHook(
