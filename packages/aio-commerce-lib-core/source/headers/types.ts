@@ -42,5 +42,8 @@ export type HttpHeaderAccessorMap<
   T extends string[],
   O extends GetHeaderOptions | undefined = undefined,
 > = {
-  [K in T[number] as CamelCase<K>]: Exclude<GetHeaderReturn<O>, undefined>;
+  [K in T[number] as CamelCase<
+    K,
+    { preserveLeadingUnderscores: false }
+  >]: Exclude<GetHeaderReturn<O>, undefined>;
 };
