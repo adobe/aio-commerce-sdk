@@ -28,8 +28,6 @@ const SEMVER_REGEX = new RegExp(
   "u",
 );
 
-// "auto" is experimental and temporarily defaults to "manual" while automatic
-// upgrade execution is stabilizing; will be changed to "auto" once ready.
 /** The `metadata.upgradeMode` of an app config that does not set one. */
 export const DEFAULT_UPGRADE_MODE = "manual";
 
