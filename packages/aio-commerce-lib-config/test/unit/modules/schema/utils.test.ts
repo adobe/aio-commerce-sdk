@@ -14,6 +14,7 @@ import { describe, expect, test } from "vitest";
 
 import {
   hasDynamicSchema,
+  isNonEmptyConfigurationValue,
   resolveBusinessConfigSchema,
   validateBusinessConfigSchema,
 } from "#modules/schema/utils";
@@ -36,6 +37,21 @@ const mockParams: RuntimeActionParams = {
 const BOOM_FIELD_NAME_RE = /"boom"/u;
 
 describe("schema/utils", () => {
+  describe("isNonEmptyConfigurationValue", () => {
+    test("treats booleans and non-empty values as set", () => {
+      expect(isNonEmptyConfigurationValue(false)).toBe(true);
+      expect(isNonEmptyConfigurationValue("x")).toBe(true);
+      expect(isNonEmptyConfigurationValue(["x"])).toBe(true);
+    });
+
+    test("treats empty and missing values as not set", () => {
+      expect(isNonEmptyConfigurationValue("")).toBe(false);
+      expect(isNonEmptyConfigurationValue([])).toBe(false);
+      expect(isNonEmptyConfigurationValue(undefined)).toBe(false);
+      expect(isNonEmptyConfigurationValue(null)).toBe(false);
+    });
+  });
+
   describe("validateBusinessConfigSchema", () => {
     test("should not throw with valid schema", () => {
       expect(() => {
@@ -186,6 +202,20 @@ describe("schema/utils", () => {
   });
 
   describe("resolveBusinessConfigSchema", () => {
+    test("preserves requiredFor when resolving a dynamic list", async () => {
+      const schema: BusinessConfigSchema = [
+        {
+          name: "methods",
+          options: () => [{ label: "One", value: "one" }],
+          requiredFor: ["save", "installation"],
+          selectionMode: "multiple",
+          type: "dynamicList",
+        },
+      ];
+      const resolved = await resolveBusinessConfigSchema(schema, mockParams);
+      expect(resolved[0].requiredFor).toEqual(["save", "installation"]);
+    });
+
     const SINGLE_OPTION = [{ label: "A", value: "a" }];
     const pickFirstOption = (opts: BusinessConfigSchemaListOption[]) =>
       opts[0].value;

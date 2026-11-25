@@ -250,6 +250,38 @@ const schema = await getConfigSchema();
 console.log(schema); // Array of field definitions
 ```
 
+#### Required configuration values
+
+Use the optional `requiredFor` array to mark a field as required. Leave it out if the field is optional.
+
+```typescript
+const schema = [
+  { name: "apiKey", type: "password", requiredFor: ["save", "installation"] },
+  { name: "enabled", type: "boolean", requiredFor: ["save"], default: false },
+];
+```
+
+A required field must have a value. An empty string (`""`) or an empty list (`[]`) counts as no value. For boolean fields, both `true` and `false` count as values. The property works as a list accepting the following values:
+
+- `"save"`: the field cannot be saved without a value. This is checked only when the field is part of the update. Saving an empty value is rejected, even if a parent scope has a value. Passing `null` clears the value at that scope; this is allowed only if the field still gets a value from a parent scope or its default. If the check fails, `CommerceSdkValidationError` is thrown and nothing is saved.
+- `"installation"` / `"upgrade"`: used by App Management in `@adobe/aio-commerce-lib-app`. The app cannot be installed or upgraded until the field has a value in the **global** scope. The field's default counts. Values set only on other scopes do not count. This library does not run these checks by itself.
+
+To run these checks yourself, initialize the library with the schema filtered for the current environment. Then call `filterConfigurationFields` with a predicate. The predicate gets each field and its effective value, including inherited values and defaults; password values stay encrypted. Values are read from the global scope unless you pass a scope selector as the second argument. Use `isNonEmptyConfigurationValue` to tell whether a value is set.
+
+```typescript
+const missing = await filterConfigurationFields(
+  (field, value) =>
+    (field.requiredFor?.includes("installation") ?? false) &&
+    !isNonEmptyConfigurationValue(value),
+);
+
+// Same check against a website's effective values
+const missingForWebsite = await filterConfigurationFields(
+  (_field, value) => !isNonEmptyConfigurationValue(value),
+  byCodeAndLevel("base", "website"),
+);
+```
+
 ### Using Configuration in Runtime Actions
 
 This example demonstrates a typical use case: retrieving scope-specific configuration values within a runtime action. The action receives scope information (store code and level) from the incoming request parameters and uses it to fetch the appropriate configuration values. This pattern ensures that each request is processed with the correct settings for that particular scope.

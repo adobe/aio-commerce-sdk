@@ -10,6 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
+import { byCodeAndLevel } from "#config-utils";
 import {
   requireGlobalSchema,
   setGlobalSchema,
@@ -27,6 +28,7 @@ import {
   getConfiguration as getConfigModule,
   setConfiguration as setConfigModule,
 } from "./modules/configuration";
+import { filterConfigurationFields as filterConfigurationFieldsModule } from "./modules/configuration/filter-configuration-fields";
 import {
   getPersistedScopeTree,
   getScopeTree as getScopeTreeModule,
@@ -39,6 +41,8 @@ import type { RuntimeActionParams } from "@adobe/aio-commerce-lib-core/params";
 import type { SelectorBy } from "#config-utils";
 import type {
   BusinessConfigSchema,
+  BusinessConfigSchemaField,
+  BusinessConfigSchemaValue,
   ResolvedBusinessConfigSchema,
 } from "#modules/schema/types";
 import type { LibStateOptions } from "#utils/repository";
@@ -90,6 +94,60 @@ export type InitializeResult = {
   /** The concrete schema stored in global memory. */
   configSchema: ResolvedBusinessConfigSchema;
 };
+
+/**
+ * Returns the schema fields for which `predicate` holds. The predicate receives each field
+ * and its effective value in the selected scope, including inherited values and schema
+ * defaults. Password values are passed encrypted.
+ *
+ * @param predicate - Called with each field and its effective value.
+ * @param selector - Scope to read values from. Defaults to the global scope.
+ * @param options - Optional cache settings.
+ *
+ * @example
+ * ```typescript
+ * const withoutValue = await filterConfigurationFields(
+ *   (_field, value) => !isNonEmptyConfigurationValue(value),
+ * );
+ * const websiteWithoutValue = await filterConfigurationFields(
+ *   (_field, value) => !isNonEmptyConfigurationValue(value),
+ *   byCodeAndLevel("base", "website"),
+ * );
+ * ```
+ */
+export function filterConfigurationFields(
+  predicate: (
+    field: BusinessConfigSchemaField,
+    value: BusinessConfigSchemaValue | undefined,
+  ) => boolean,
+  selector: SelectorBy = byCodeAndLevel("global", "global"),
+  options?: OperationOptions,
+): Promise<BusinessConfigSchemaField[]> {
+  return filterConfigurationFieldsModule(
+    {
+      cacheTimeout: options?.cacheTimeout ?? DEFAULT_CACHE_TIMEOUT,
+      namespace: DEFAULT_NAMESPACE,
+    },
+    predicate,
+    selectorToScopeArgs(selector),
+  );
+}
+
+/** Converts a scope selector into the positional scope arguments used by the configuration modules. */
+function selectorToScopeArgs(selector: SelectorBy): unknown[] {
+  switch (selector.by._tag) {
+    case "scopeId":
+      return [selector.by.scopeId];
+    case "codeAndLevel":
+      return [selector.by.code, selector.by.level];
+    case "commerceScopeId":
+      return [selector.by.commerceScopeId, selector.by.level];
+    case "code":
+      return [selector.by.code];
+    default:
+      throw new Error("INVALID_ARGS: unknown scope selector");
+  }
+}
 
 function initializeStatic(configSchema: ResolvedBusinessConfigSchema) {
   setGlobalSchema(configSchema);
@@ -493,6 +551,8 @@ export async function getConfigurationByKey(
  * This function updates configuration values for a specific scope. The provided values
  * are merged with existing configuration, and the origin is set to the current scope.
  * Configuration values are inherited from parent scopes unless explicitly overridden.
+ * Updated fields marked with `requiredFor: ["save"]` must resolve to a non-empty value after the update.
+ * Unsetting such a field is allowed when an inherited value or default is present.
  *
  * @param request - Configuration set request containing the config values to set.
  * @param selector - Scope selector specifying how to identify the scope.

@@ -36,6 +36,7 @@ export {
 } from "./modules/configuration/system-config";
 export {
   hasDynamicSchema,
+  isNonEmptyConfigurationValue,
   RecordedSchemaBusinessConfig,
   resolveBusinessConfigSchema,
   SchemaBusinessConfig,

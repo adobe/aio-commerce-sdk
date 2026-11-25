@@ -521,7 +521,10 @@ async function mergeGlobalConfigIfNeeded(
  */
 function mergeCurrentConfigData(
   merged: Map<string, ConfigValue>,
-  configData: { scope: ScopeNode; config: ConfigValue[] },
+  configData: {
+    scope?: Pick<ScopeNode, "code" | "level">;
+    config: ConfigValueWithOptionalOrigin[];
+  },
   scopeCode: string,
   scopeLevel: string,
 ) {
@@ -530,11 +533,8 @@ function mergeCurrentConfigData(
       if (!merged.has(entry.name)) {
         merged.set(entry.name, {
           name: entry.name,
-          // biome-ignore lint/suspicious/noUnnecessaryConditions: configData comes from an external caller and may violate the declared type at runtime.
           origin: entry.origin || {
-            // biome-ignore lint/suspicious/noUnnecessaryConditions: configData comes from an external caller and may violate the declared type at runtime.
             code: configData.scope?.code || scopeCode,
-            // biome-ignore lint/suspicious/noUnnecessaryConditions: configData comes from an external caller and may violate the declared type at runtime.
             level: configData.scope?.level || scopeLevel,
           },
           value: entry.value,
@@ -565,12 +565,14 @@ function applySchemaDefaults(
 }
 
 /** Parameters for mergeWithSchemaDefaults function */
-type MergeWithSchemaDefaultsParams = {
+type MergeWithSchemaDefaultsParams<
+  T extends { scope: Pick<ScopeNode, "code" | "level">; config: ConfigValue[] },
+> = {
   loadScopeConfigFn: (
     code: string,
   ) => Promise<{ scope: ScopeNode; config: ConfigValue[] } | null>;
   getSchemaFn: () => Promise<ResolvedBusinessConfigSchema>;
-  configData: { scope: ScopeNode; config: ConfigValue[] };
+  configData: T;
   scopeCode: string;
   scopeLevel: string;
   scopePath: ScopeNode[];
@@ -588,14 +590,16 @@ type MergeWithSchemaDefaultsParams = {
  * @returns The merged config data. Returns null if the config data is not valid.
  * @throws An error if the config data is not valid.
  */
-export async function mergeWithSchemaDefaults({
+export async function mergeWithSchemaDefaults<
+  T extends { scope: Pick<ScopeNode, "code" | "level">; config: ConfigValue[] },
+>({
   loadScopeConfigFn,
   getSchemaFn,
   configData,
   scopeCode,
   scopeLevel,
   scopePath,
-}: MergeWithSchemaDefaultsParams) {
+}: MergeWithSchemaDefaultsParams<T>): Promise<T> {
   const schema = await getSchemaFn();
   const defaultMap = new Map<string, BusinessConfigSchemaValue>();
   for (const field of schema) {

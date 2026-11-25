@@ -34,6 +34,7 @@ For each setting the user wants to expose, gather:
 - **Type** — one of: `list`, `text`, `password`, `email`, `url`, `tel`, `boolean`
 - **Label** (optional) — human-readable label shown in Admin
 - **Description** (optional) — help text shown alongside the field in Admin
+- **Required for** (optional array of `"save"`, `"installation"`, and/or `"upgrade"`) — require a value when the field is saved, or a global value before install or upgrade starts
 - **Default value** (optional, type-dependent — see constraints in Step 2)
 - For `list` fields additionally: **`selectionMode`** (`"single"` or `"multiple"`) and **`options`** (each with a `label` and `value` string)
 
@@ -47,6 +48,7 @@ Apply the following per-type validation rules before writing. Surface any issues
 | `type` | Required; one of `list`, `text`, `password`, `email`, `url`, `tel`, `boolean` |
 | `label` | Optional string |
 | `description` | Optional string |
+| `requiredFor` | Optional array of `"save"`, `"installation"`, and/or `"upgrade"`; checks saved values or lifecycle prerequisites |
 | `list.selectionMode` | Required for list fields: `"single"` or `"multiple"` |
 | `list.options` | Required for list fields; each option needs both `label` and `value` strings |
 | `list/single` default | Required; must match one of the option `value` strings (non-empty) |
@@ -60,6 +62,11 @@ Apply the following per-type validation rules before writing. Surface any issues
 
 `businessConfig.schema` must contain at least one field — an empty array is rejected at build time.
 
+Omit `requiredFor` for optional fields. A required field must have a value: `""` and `[]` count as no value, while boolean `true` and `false` both count as values.
+
+- `"save"`: the field cannot be saved without a value. Only fields included in the update are checked. `null` clears the value at that scope and is allowed only if a parent scope or the default still provides a value.
+- `"installation"` / `"upgrade"`: install or upgrade cannot start until the field has a global value (the default counts; values on other scopes do not). If start returns `missing-required-configuration`, set the listed fields in global configuration and retry the pending plan.
+
 ## Step 3 — Update `app.commerce.config.ts`
 
 Add (or merge into) the top-level `businessConfig.schema` array, preserving all other domains. If the config already has a `businessConfig` key, append to `businessConfig.schema` rather than replacing it.
@@ -70,7 +77,7 @@ Minimal examples:
 businessConfig: {
   schema: [
     // Password (masked input — API keys, secrets)
-    { name: "api_key", type: "password", label: "API Key", default: "" },
+    { name: "api_key", type: "password", label: "API Key", default: "", requiredFor: ["save", "installation"] },
 
     // Single-select list
     {

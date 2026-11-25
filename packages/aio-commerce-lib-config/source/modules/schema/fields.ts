@@ -39,8 +39,9 @@ const DEFAULT_MULTIPLE_LIST_VALUE = [] as const;
 
 /**
  * Base schema for configuration field options with name, optional label,
- * optional description, and optional `env` to scope the field to specific
- * Commerce environments (when omitted, the field applies to all environments).
+ * optional description, optional `requiredFor` operations, and optional `env`
+ * to scope the field to specific Commerce environments (when omitted, the
+ * field applies to all environments).
  */
 const BaseOptionSchema = v.object({
   description: v.optional(
@@ -57,6 +58,9 @@ const BaseOptionSchema = v.object({
   name: v.pipe(
     v.string("Expected a string for the field name"),
     v.nonEmpty("The field name must not be empty"),
+  ),
+  requiredFor: v.optional(
+    v.array(v.picklist(["save", "installation", "upgrade"])),
   ),
 });
 
@@ -196,6 +200,22 @@ const BooleanSchema = v.object({
   ),
   type: v.literal("boolean", "Expected the type to be 'boolean'"),
 });
+
+/** Schema for the supported configuration value types. */
+export const ValueSchema = v.union([
+  TextSchema.entries.default.wrapped,
+  BooleanSchema.entries.default.wrapped,
+  v.array(TextSchema.entries.default.wrapped),
+]);
+
+/** Schema for a non-empty configuration value, including boolean false. */
+export const RequiredValueSchema = v.pipe(
+  ValueSchema,
+  v.check(
+    (value) => typeof value === "boolean" || value.length > 0,
+    "A configuration value is required",
+  ),
+);
 
 type OptionsFactory = (
   params: RuntimeActionParams,

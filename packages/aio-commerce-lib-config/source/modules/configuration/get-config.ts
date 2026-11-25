@@ -10,17 +10,10 @@
  * governing permissions and limitations under the License.
  */
 
-import {
-  deriveScopeFromArgs,
-  getSchemaDefaults,
-  mergeWithSchemaDefaults,
-} from "#config-utils";
-import { requireGlobalSchema } from "#modules/schema/config-schema-repository";
 import { getPasswordFields } from "#modules/schema/utils";
-import * as scopeTreeRepository from "#modules/scope-tree/scope-tree-repository";
 import { decrypt } from "#utils/encryption";
 
-import * as configRepository from "./configuration-repository";
+import { resolveEffectiveConfig } from "./resolve-effective-config";
 
 import type { GetConfigurationResponse } from "#types/index";
 import type { ConfigContext } from "./types";
@@ -37,45 +30,10 @@ export async function fetchRawConfiguration(
   configData: GetConfigurationResponse;
   passwordFields: Set<string>;
 }> {
-  const schema = requireGlobalSchema();
-  const scopeTree = await scopeTreeRepository.getPersistedScopeTree(
-    context.namespace,
-  );
-
-  const { scopeCode, scopeLevel, scopeId, scopePath } = deriveScopeFromArgs(
-    args,
-    scopeTree,
-  );
-
-  let configData = await configRepository.loadConfig(
-    scopeCode,
-    context.cacheTimeout,
-  );
-  if (!configData) {
-    const defaults = getSchemaDefaults(schema);
-    configData = {
-      config: defaults.config,
-      scope: { code: scopeCode, id: scopeId, level: scopeLevel },
-    };
-  } else if (!Array.isArray(configData.config)) {
-    configData.config = [];
-  }
-
-  try {
-    configData = await mergeWithSchemaDefaults({
-      configData,
-      getSchemaFn: async () => Promise.resolve(schema),
-
-      loadScopeConfigFn: (code: string) =>
-        configRepository.loadConfig(code, context.cacheTimeout),
-      scopeCode,
-      scopeLevel,
-      scopePath,
-    });
-  } catch {
-    // Continue with original configData if merging fails
-  }
-
+  // Reads have always returned the stored values when inherited scopes cannot be loaded.
+  const { configData, schema } = await resolveEffectiveConfig(context, args, {
+    ignoreMergeErrors: true,
+  });
   return { configData, passwordFields: getPasswordFields(schema) };
 }
 

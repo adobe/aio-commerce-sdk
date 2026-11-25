@@ -11,8 +11,13 @@
  */
 
 import { parseOrThrow } from "@aio-commerce-sdk/common-utils/valibot";
+import * as v from "valibot";
 
-import { ListSchema, SchemaBusinessConfigSchema } from "./fields";
+import {
+  ListSchema,
+  RequiredValueSchema,
+  SchemaBusinessConfigSchema,
+} from "./fields";
 
 import type { RuntimeActionParams } from "@adobe/aio-commerce-lib-core/params";
 import type {
@@ -50,6 +55,16 @@ export function getPasswordFields(schema: ResolvedBusinessConfigSchema) {
 }
 
 /**
+ * Whether a configuration value is non-empty. Empty strings, empty lists, `null`, and
+ * `undefined` are empty; booleans, including `false`, are not.
+ *
+ * @param value - The configuration value to check.
+ */
+export function isNonEmptyConfigurationValue(value: unknown): boolean {
+  return v.is(RequiredValueSchema, value);
+}
+
+/**
  * Whether a business configuration schema contains any `dynamicList` fields
  * that need runtime resolution before use.
  *
@@ -80,6 +95,7 @@ async function resolveDynamicListField(
     label: field.label,
     name: field.name,
     options,
+    requiredFor: field.requiredFor,
     selectionMode: field.selectionMode,
     type: "list",
   };

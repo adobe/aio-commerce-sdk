@@ -41,6 +41,7 @@ export type RecordedBusinessConfig = v.InferInput<
 
 export {
   hasDynamicSchema,
+  isNonEmptyConfigurationValue,
   resolveBusinessConfigSchema,
 } from "./utils";
 

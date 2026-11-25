@@ -210,6 +210,7 @@ businessConfig: {
       type: 'text',
       label: 'API Key',
       description: 'Your API key for the service',
+      requiredFor: ['save', 'installation'],
     },
     {
       name: 'environment',
@@ -225,6 +226,13 @@ businessConfig: {
   ],
 }
 ```
+
+Use the optional `requiredFor` array to mark a field as required. It works with every field type. Leave it out if the field is optional.
+
+A required field must have a value. An empty string (`""`) or an empty list (`[]`) counts as no value. For boolean fields, both `true` and `false` count as values. The property works as a list accepting the following values:
+
+- `"save"`: the field cannot be saved without a value. This is checked only when the field is part of the update. Sending `null` clears the value at that scope; this is allowed only if the field still gets a value from a parent scope or its default. If the check fails, the request returns HTTP 400 and nothing is saved.
+- `"installation"` / `"upgrade"`: the app cannot be installed or upgraded until the field has a value in the global scope. The field's default counts. Values set only on other scopes do not count. Only fields that apply to the connected Commerce environment are checked. If a value is missing, the start request returns HTTP 409 with code `missing-required-configuration` and a `fields` array listing the missing fields. Set those values and start the pending plan again. Planning and uninstall are not affected.
 
 For detailed information about available field types and their usage, see the [`@adobe/aio-commerce-lib-config` documentation](../../aio-commerce-lib-config/docs/usage.md#field-types).
 
