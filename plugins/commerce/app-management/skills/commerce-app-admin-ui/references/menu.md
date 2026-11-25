@@ -29,6 +29,7 @@ adminUi: {
 | `parentMenu` | Optional; one of the `COMMERCE_MENUS` constants |
 | `pageTitle` | Optional, non-empty |
 | `sandboxPermissions` | Optional; `allow-downloads` / `allow-modals` / `allow-popups` |
+| `allow` | Optional; `autoplay` / `microphone` |
 | `aclProtected` | Optional boolean; when `true`, Commerce generates a per-app ACL resource for the menu so admins can grant/deny menu access per role |
 
 ## Parent menu constants

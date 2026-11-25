@@ -56,6 +56,7 @@ adminUi: {
 | `timeout` | worker | Optional positive number (seconds) |
 | `path` | view | Required; route into `web-src` |
 | `sandboxPermissions` | view | Optional; `allow-downloads` / `allow-modals` / `allow-popups` |
+| `allow` | view | Optional; `autoplay` / `microphone` |
 
 ## Worker handler wire contract
 

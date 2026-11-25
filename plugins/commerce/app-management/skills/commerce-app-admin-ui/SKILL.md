@@ -72,6 +72,7 @@ These fields are shared across the extension points:
 | `confirm` | Optional `{ title?, message? }` — confirmation dialog before the action runs |
 | `notifications` | Optional `{ success?, error? }` — toast text Commerce shows on completion |
 | `sandboxPermissions` | Optional array (view/iframe entries); non-empty, no duplicates; each one of `allow-downloads`, `allow-modals`, `allow-popups` |
+| `allow` | Optional array (view/iframe entries) for the iframe `allow` attribute; non-empty, no duplicates; each one of `autoplay`, `microphone` |
 
 Minimal example covering each feature (use only the parts you need):
 
@@ -340,7 +341,7 @@ A build failure with a validation error points directly to the offending `adminU
 
 ## Common Issues
 
-- **`view` vs `worker` mismatch**: each variant is a strict object — a `worker` entry requires `runtimeAction` (and rejects `path`/`sandboxPermissions`); a `view` entry requires `path` (and rejects `runtimeAction`/`timeout`). They are discriminated by `type`.
+- **`view` vs `worker` mismatch**: each variant is a strict object — a `worker` entry requires `runtimeAction` (and rejects `path`/`sandboxPermissions`/`allow`); a `view` entry requires `path` (and rejects `runtimeAction`/`timeout`). They are discriminated by `type`.
 - **`runtimeAction` with no handler**: a worker entry whose `<package>/<action>` is not declared under `runtimeManifest` in `src/commerce-backend-ui-2/ext.config.yaml` leaves the generated `workerProcess` reference unresolved at deploy.
 - **Wrong action location**: handler sources and their `runtimeManifest` entry belong in the Admin UI extension folder `src/commerce-backend-ui-2/` — not `src/commerce-extensibility-1/` (where webhook and event handlers live). The `function` path is relative to `src/commerce-backend-ui-2/`.
 - **Grid row keys must match column ids**: keys in the `okGridResponse` rows must equal the `id`s in `gridColumns.columns`, or cells render empty (or fall back to the defaults bag).

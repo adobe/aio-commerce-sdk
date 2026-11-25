@@ -999,10 +999,11 @@ adminUi: {
 | `notifications`      |   x    |             |               |
 | `path`               |        |      x      |               |
 | `sandboxPermissions` |        |      x      |               |
+| `allow`              |        |      x      |               |
 | `runtimeAction`      |        |             |       x       |
 | `timeout`            |        |             |       x       |
 
-The `view` and `worker` variants are strict: `runtimeAction`/`timeout` on a `view` button and `path`/`sandboxPermissions` on a `worker` button are rejected at validation time.
+The `view` and `worker` variants are strict: `runtimeAction`/`timeout` on a `view` button and `path`/`sandboxPermissions`/`allow` on a `worker` button are rejected at validation time.
 
 ###### Field Reference:
 
@@ -1021,6 +1022,7 @@ Shared fields (both types):
 
 - **path**: Required — in-app iframe URL (e.g. `#/delete-order`)
 - **sandboxPermissions**: Optional — array of `"allow-downloads"`, `"allow-modals"`, `"allow-popups"`
+- **allow**: Optional — array of `"autoplay"`, `"microphone"`. Sets the iframe `allow` attribute so the page can autoplay media or use the microphone.
 
 `type: "worker"` specific:
 
@@ -1031,7 +1033,7 @@ For the handler wire contract (request/response shapes), see `@adobe/aio-commerc
 
 ##### Native UI Form Replacements
 
-`adminUi.nativeUi.replacedPages` replaces supported native Commerce Admin forms with pages from the app's `web-src`. Each replacement requires a supported `target`, an app route in `path`, and a `title`. `sandboxPermissions` is optional and uses the same values as other iframe-based extension points. The SDK enables the `view` operation and web source when at least one page replacement is configured.
+`adminUi.nativeUi.replacedPages` replaces supported native Commerce Admin forms with pages from the app's `web-src`. Each replacement requires a supported `target`, an app route in `path`, and a `title`. `sandboxPermissions` and `allow` are optional and use the same values as other iframe-based extension points. The SDK enables the `view` operation and web source when at least one page replacement is configured.
 
 ```ts
 adminUi: {
@@ -1056,7 +1058,7 @@ Add a matching route and page for each `path` in the generated web source, follo
 
 Mass actions are declared with an explicit `type` field that determines which variant applies:
 
-- `type: "view"` — renders an iframe at the given `path` (optional `sandboxPermissions` attribute).
+- `type: "view"` — renders an iframe at the given `path` (optional `sandboxPermissions` and `allow` attributes).
 - `type: "worker"` — invokes a runtime action specified by `runtimeAction` (optional `timeout`).
 
 The `id` field is authored as a bare name (e.g. `"export-orders"`). The SDK serves the bare `id` as-is in the `app-config` response; the Commerce backend extension handles prefixing and collision resolution when rendering the final Admin UI configuration.
@@ -1086,10 +1088,11 @@ operations:
 | `selectionLimit`     |   x    |             |               |
 | `path`               |        |      x      |               |
 | `sandboxPermissions` |        |      x      |               |
+| `allow`              |        |      x      |               |
 | `runtimeAction`      |        |             |       x       |
 | `timeout`            |        |             |       x       |
 
-The `view` and `worker` variants are strict: `path`/`sandboxPermissions` on a `worker` action and `runtimeAction`/`timeout` on a `view` action are rejected at validation time.
+The `view` and `worker` variants are strict: `path`/`sandboxPermissions`/`allow` on a `worker` action and `runtimeAction`/`timeout` on a `view` action are rejected at validation time.
 
 When a mass action of `type: "view"` is present, the SDK automatically adds a `view` operation pointing at `index.html` to `ext.config.yaml`.
 
@@ -1110,6 +1113,7 @@ Shared fields (both types):
 
 - **path**: Required — in-app iframe URL (e.g. `#/export-orders`)
 - **sandboxPermissions**: Optional — non-empty array of one or more of `"allow-downloads"`, `"allow-modals"`, `"allow-popups"`
+- **allow**: Optional — non-empty array of one or more of `"autoplay"`, `"microphone"`. Sets the iframe `allow` attribute.
 
 `type: "worker"` specific:
 
@@ -1157,6 +1161,7 @@ adminUi: {
   ```
 
 - **sandboxPermissions** (optional): array of iframe sandbox permissions; allowed values: `"allow-downloads"`, `"allow-modals"`, `"allow-popups"`
+- **allow** (optional): array of iframe `allow` permissions; allowed values: `"autoplay"`, `"microphone"`
 - **aclProtected** (optional): boolean — when `true`, Commerce auto-generates a per-app ACL resource id from `metadata.id` and registers it in the Adobe Commerce User Roles permission tree. Admins can then grant or deny access to the app's menu on a per-role basis; users without the resource see neither the menu item nor its content.
 
   The generated resource id follows the pattern `Magento_CommerceBackendUix::adminuisdk_app_<sanitized-id>`, where `<sanitized-id>` is `metadata.id` lowercased with non-alphanumeric characters replaced by `_`. Use `getAclResourceId` from `@adobe/aio-commerce-lib-admin-ui/api` to derive it programmatically, and `getAdminUiPermissionClient` to check access from your runtime actions. See the [`@adobe/aio-commerce-lib-admin-ui` Permission Client documentation](../../aio-commerce-lib-admin-ui/docs/usage.md#permission-client) for details.
