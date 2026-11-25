@@ -403,6 +403,7 @@ describe("post-app-deploy hook", () => {
       "not-associated",
       "not-installed",
       "in-progress",
+      "upgrade-conflict",
     ] as const)("skips when the plan is refused with %s", async (code) => {
       serveUpgrade();
       refusePlan(code);
@@ -430,6 +431,18 @@ describe("post-app-deploy hook", () => {
 
       await expect(runHook()).rejects.toThrow("The upgrade was not started");
       expect(spawnDetachedMock).not.toHaveBeenCalled();
+    });
+
+    test("prints the conflict message when the plan is refused with upgrade-conflict", async () => {
+      const calls = serveUpgrade();
+      refusePlan("upgrade-conflict");
+
+      await runHook();
+
+      expect(consola.info).toHaveBeenCalledWith(
+        "Another upgrade of this app is in progress or an automatic upgrade is pending. Try again in a few minutes.\n",
+      );
+      expect(calls.start).toBe(0);
     });
 
     test("fails on a service error while planning", async () => {

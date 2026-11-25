@@ -1282,8 +1282,10 @@ Some states are not actionable upgrades. The `post-app-deploy` hook treats them 
 - **`not-associated`**: the app is not associated with a Commerce instance.
 - **`not-installed`**: the app is associated but not installed.
 - **`already-current`**: the installed version already matches `metadata.version`.
+- **`in-progress`**: another lifecycle operation of the app is already running.
+- **`upgrade-conflict`**: another upgrade of the app is in progress, or an automatic upgrade planned a few minutes ago has not started yet. Try again in a few minutes.
 
-Any other planning failure, for example configuration issues that block the upgrade or another operation that is already running, surfaces as an error.
+Any other planning failure, for example configuration issues that block the upgrade, surfaces as an error.
 
 #### Troubleshooting a Lifecycle Operation
 
@@ -1294,7 +1296,7 @@ Add `operation=install`, `operation=upgrade` or `operation=uninstall` to read on
 Each attempt links to the rest of the trail:
 
 - `previousAttemptId` and `previousPlanId` name the attempt and the plan it replaced.
-- `plan` is the plan the attempt executes, in the same shape `POST /plan` returns for review: its versions, the operations to run per domain, the items each one changes, the `changes` per domain and the planning issues. Every domain has `changes`, empty when there are none. They list the items the target config adds, updates or removes compared with the installed config. They do not depend on the live state, so an item that is already live still appears. It is on every answer that carries an attempt, including the `attempt` of a `409` and of a failed run.
+- `plan` is the plan the attempt executes, in the same shape `POST /plan` returns for review: its versions, its `upgradeMode` (the `metadata.upgradeMode` of the target config for an upgrade, `null` otherwise), the operations to run per domain, the items each one changes, the `changes` per domain and the planning issues. Every domain has `changes`, empty when there are none. They list the items the target config adds, updates or removes compared with the installed config. They do not depend on the live state, so an item that is already live still appears. It is on every answer that carries an attempt, including the `attempt` of a `409` and of a failed run.
 - `plan.source.snapshotId` names the snapshot the attempt started from (for an app installed with only business configuration, the baseline the app writes when the upgrade starts), and `result.snapshotId` the one a successful attempt produced. Snapshots live in the app's file storage under `lifecycle-app-state-snapshot`, and each one records the `attemptId` that produced it.
 - `step` lists every step with its `status`, and `startedAt` and `completedAt` once it ran, so an expired attempt shows which step hung.
 - `activations.start` and `activations.execution` are the OpenWhisk activations that started and executed the attempt.

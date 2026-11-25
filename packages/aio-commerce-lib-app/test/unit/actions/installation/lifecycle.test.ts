@@ -17,13 +17,17 @@ import {
   toAttemptStatus,
 } from "#actions/installation/lifecycle";
 import { toPlanPreview } from "#actions/installation/plan-preview";
+import { DEFAULT_UPGRADE_MODE } from "#config/schema/metadata";
 import {
   createMockLifecycleAttempt,
   createMockLifecyclePlan,
 } from "#test/fixtures/lifecycle";
 
+import type { CommerceAppConfigOutputModel } from "#config/schema/app";
 import type { LifecyclePlan } from "#management/common/orchestration";
 import type { ItemRef } from "#management/common/workflow/resource";
+
+type AppMetadata = CommerceAppConfigOutputModel["metadata"];
 
 const SECRET = "super-secret-value";
 
@@ -65,6 +69,12 @@ function createPlan(overrides?: Partial<LifecyclePlan>) {
   });
 }
 
+/** Removes the upgrade mode from the metadata, as in configs stored by older versions. */
+function withoutUpgradeMode(metadata: AppMetadata) {
+  const { upgradeMode: _, ...rest } = metadata;
+  return rest as AppMetadata;
+}
+
 describe("toPlanPreview", () => {
   test("lists the versions, the domains with operations and the issues", () => {
     expect(toPlanPreview(createPlan())).toEqual({
@@ -102,6 +112,7 @@ describe("toPlanPreview", () => {
       operation: "upgrade",
       sourceVersion: "1.0.0",
       targetVersion: "2.0.0",
+      upgradeMode: "auto",
     });
   });
 
@@ -172,6 +183,50 @@ describe("toPlanPreview", () => {
     expect(preview.sourceVersion).toBeNull();
     expect(preview.targetVersion).toBeNull();
   });
+
+  test.each(["auto", "manual"] as const)(
+    "carries the %s upgrade mode of the target config of an upgrade",
+    (upgradeMode) => {
+      const { target } = createPlan();
+      const preview = toPlanPreview(
+        createPlan({
+          target: target && {
+            ...target,
+            config: {
+              ...target.config,
+              metadata: { ...target.config.metadata, upgradeMode },
+            },
+          },
+        }),
+      );
+
+      expect(preview.upgradeMode).toBe(upgradeMode);
+    },
+  );
+
+  test("defaults the upgrade mode when the target config has none", () => {
+    const { target } = createPlan();
+    const preview = toPlanPreview(
+      createPlan({
+        target: target && {
+          ...target,
+          config: {
+            ...target.config,
+            metadata: withoutUpgradeMode(target.config.metadata),
+          },
+        },
+      }),
+    );
+
+    expect(preview.upgradeMode).toBe(DEFAULT_UPGRADE_MODE);
+  });
+
+  test.each(["install", "uninstall"] as const)(
+    "has no upgrade mode for an %s",
+    (operation) => {
+      expect(toPlanPreview(createPlan({ operation })).upgradeMode).toBeNull();
+    },
+  );
 });
 
 describe("toAttemptStatus", () => {

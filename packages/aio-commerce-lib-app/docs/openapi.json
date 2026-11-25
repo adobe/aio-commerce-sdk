@@ -4342,6 +4342,18 @@
               }
             ]
           },
+          "upgradeMode": {
+            "description": "The `metadata.upgradeMode` of the target config for an upgrade, or `null` for any other operation.",
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": ["auto", "manual"]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "domains": {
             "description": "The domains with operations to run or config changes. A domain with neither is left out.",
             "type": "array",
@@ -4408,6 +4420,7 @@
           "operation",
           "sourceVersion",
           "targetVersion",
+          "upgradeMode",
           "domains",
           "issues"
         ]

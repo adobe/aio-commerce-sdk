@@ -28,6 +28,9 @@ const SEMVER_REGEX = new RegExp(
   "u",
 );
 
+/** The `metadata.upgradeMode` of an app config that does not set one. */
+export const DEFAULT_UPGRADE_MODE = "manual";
+
 function nonEmptyString(fieldName: string) {
   return v.pipe(
     v.string(`Expected a string for the ${fieldName}`),
@@ -59,9 +62,7 @@ export const MetadataSchema = v.object({
     ),
   ),
 
-  // "auto" is experimental and temporarily defaults to "manual" while automatic
-  // upgrade execution is stabilizing; will be changed to "auto" once ready.
-  upgradeMode: v.optional(v.picklist(["auto", "manual"]), "manual"),
+  upgradeMode: v.optional(v.picklist(["auto", "manual"]), DEFAULT_UPGRADE_MODE),
   version: v.pipe(
     nonEmptyString("version"),
     v.regex(
