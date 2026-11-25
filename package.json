@@ -15,7 +15,7 @@
     "docs": "turbo run docs",
     "format": "turbo run format",
     "format:check": "turbo run format:check",
-    "format:markdown": "turbo run format:markdown && prettier --no-error-on-unmatched-pattern --write 'specs/**/*.md'",
+    "format:markdown": "turbo run format:markdown && biome format --write --no-errors-on-unmatched --config-path=biome.markdown.jsonc .",
     "knip": "knip",
     "lint": "turbo run lint",
     "lint:fix": "turbo run lint:fix",
@@ -29,13 +29,10 @@
     "typecheck": "turbo typecheck"
   },
   "lint-staged": {
-    "*.{js,ts,cjs,mjs,d.cts,d.mts,jsx,tsx,json,jsonc}": [
+    "*.{js,ts,cjs,mjs,d.cts,d.mts,jsx,tsx,json,jsonc,md}": [
       "biome check --write --no-errors-on-unmatched --files-ignore-unknown=true"
     ],
-    "*.md": [
-      "prettier --no-error-on-unmatched-pattern --write '**/*.md' \"!**/{CODE_OF_CONDUCT.md,COPYRIGHT,LICENSE,SECURITY.md,CONTRIBUTING.md}\""
-    ],
-    "*": [
+    "!(*.{js,ts,cjs,mjs,d.cts,d.mts,jsx,tsx,json,jsonc,md})": [
       "biome check --no-errors-on-unmatched --files-ignore-unknown=true"
     ]
   },
@@ -53,7 +50,6 @@
     "knip": "^6.39.0",
     "lint-staged": "^17.0.0",
     "playwright": "1.65.1",
-    "prettier": "catalog:",
     "publint": "^0.3.18",
     "tsdown": "^0.23.0",
     "tsx": "^4.23.13",

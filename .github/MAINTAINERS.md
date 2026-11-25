@@ -1,23 +1,14 @@
 # Maintainers
 
-This document covers responsibilities and operations reserved for project maintainers — the
-actions that require elevated repository or GitHub Actions permissions, as opposed to the
-day-to-day contributor workflow covered in [DEVELOPMENT.md](./DEVELOPMENT.md). See
-[CONTRIBUTING.md](./CONTRIBUTING.md#from-contributor-to-committer) for how a contributor becomes
-a committer.
+This document covers responsibilities and operations reserved for project maintainers — the actions that require elevated repository or GitHub Actions permissions, as opposed to the day-to-day contributor workflow covered in [DEVELOPMENT.md](./DEVELOPMENT.md). See [CONTRIBUTING.md](./CONTRIBUTING.md#from-contributor-to-committer) for how a contributor becomes a committer.
 
 ## Release Process
 
-See [DEVELOPMENT.md](./DEVELOPMENT.md#release-process) for the full release process overview
-(semantic versioning, changesets workflow, branch channels, snapshot flow). The following steps
-require maintainer-level access to execute.
+See [DEVELOPMENT.md](./DEVELOPMENT.md#release-process) for the full release process overview (semantic versioning, changesets workflow, branch channels, snapshot flow). The following steps require maintainer-level access to execute.
 
 ### Requesting a PR snapshot
 
-Commenting `/snapshot` on an open PR publishes an `alpha` snapshot of that PR's changes to
-the public npm registry without affecting `main`. The workflow that handles this comment checks
-that the commenter has **admin** permission on the repository, so this is restricted to
-maintainers.
+Commenting `/snapshot` on an open PR publishes an `alpha` snapshot of that PR's changes to the public npm registry without affecting `main`. The workflow that handles this comment checks that the commenter has **admin** permission on the repository, so this is restricted to maintainers.
 
 ### Triggering a public release
 
@@ -51,11 +42,9 @@ If the deploy key ever needs to be rotated:
 3. Update the `DEPLOY_KEY` Actions secret with the new private key.
 4. Update the ruleset bypass actor with the new key ID via `gh api`.
 
-The Commerce plugin promotion step also requires an `ADOBE_SKILLS_TOKEN` Actions secret. Provision
-it as a fine-grained GitHub personal access token with the following settings:
+The Commerce plugin promotion step also requires an `ADOBE_SKILLS_TOKEN` Actions secret. Provision it as a fine-grained GitHub personal access token with the following settings:
 
 - **Resource owner:** `adobe`
 - **Repository access:** `adobe/skills` only
 - **Permissions:** Metadata (read), Contents (read/write), Pull requests (read/write)
-- **Expiration:** 366 days (the maximum); set a calendar reminder to regenerate it before it
-  expires, then update the `ADOBE_SKILLS_TOKEN` Actions secret with the new value.
+- **Expiration:** 366 days (the maximum); set a calendar reminder to regenerate it before it expires, then update the `ADOBE_SKILLS_TOKEN` Actions secret with the new value.

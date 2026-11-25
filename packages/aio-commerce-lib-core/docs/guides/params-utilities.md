@@ -112,6 +112,7 @@ The params utilities are designed to work seamlessly with Adobe I/O App Builder'
 ### The Problem
 
 > [!NOTE]
+>
 > This has been fixed in since v11 of the AIO CLI, but it's kept here for backwards compatibility.
 
 In App Builder, when you map action inputs to environment variables:

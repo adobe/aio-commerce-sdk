@@ -1,7 +1,6 @@
 # Order View Buttons (`commerce/backend-ui/2`)
 
-Adds a button to the order view (detail) page in Commerce Admin.
-Declared under `adminUi.order.viewButtons` (an array). Invoice buttons use [`adminUi.invoice.viewButtons`](invoice-view-buttons.md), credit memo buttons use [`adminUi.creditMemo.viewButtons`](credit-memo-view-buttons.md), and return buttons use [`adminUi.rma.viewButtons`](rma-view-buttons.md). Two variants, discriminated by `type`:
+Adds a button to the order view (detail) page in Commerce Admin. Declared under `adminUi.order.viewButtons` (an array). Invoice buttons use [`adminUi.invoice.viewButtons`](invoice-view-buttons.md), credit memo buttons use [`adminUi.creditMemo.viewButtons`](credit-memo-view-buttons.md), and return buttons use [`adminUi.rma.viewButtons`](rma-view-buttons.md). Two variants, discriminated by `type`:
 
 - **`worker`** — Commerce POSTs to a runtime action when the button is clicked (no UI).
 - **`view`** — Commerce opens an iframe into the app's `web-src` at `path`, with `orderId` as a query parameter.
@@ -42,21 +41,21 @@ adminUi: {
 
 ### Constraints
 
-| Field                | Applies to | Constraint                                                                                                                          |
-| -------------------- | ---------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| `type`               | both       | `"worker"` or `"view"` (strict object per variant)                                                                                  |
-| `id`                 | both       | Required, non-empty                                                                                                                 |
-| `label`              | both       | Required, non-empty                                                                                                                 |
-| `description`        | both       | Optional, non-empty                                                                                                                 |
-| `level`              | both       | Optional; one of `-1`, `0`, `1`                                                                                                     |
-| `sortOrder`          | both       | Optional positive number                                                                                                            |
-| `confirm`            | both       | Optional `{ title?, message? }`                                                                                                     |
-| `notifications`      | both       | Optional `{ success?, error? }`                                                                                                     |
-| `aclProtected`       | both       | Optional boolean; when `true`, Commerce generates a per-app nested ACL resource for the button so admins can grant/deny it per role |
-| `runtimeAction`      | worker     | Required; `<package>/<action>`                                                                                                      |
-| `timeout`            | worker     | Optional positive number (seconds)                                                                                                  |
-| `path`               | view       | Required; route into `web-src`                                                                                                      |
-| `sandboxPermissions` | view       | Optional; `allow-downloads` / `allow-modals` / `allow-popups`                                                                       |
+| Field | Applies to | Constraint |
+| --- | --- | --- |
+| `type` | both | `"worker"` or `"view"` (strict object per variant) |
+| `id` | both | Required, non-empty |
+| `label` | both | Required, non-empty |
+| `description` | both | Optional, non-empty |
+| `level` | both | Optional; one of `-1`, `0`, `1` |
+| `sortOrder` | both | Optional positive number |
+| `confirm` | both | Optional `{ title?, message? }` |
+| `notifications` | both | Optional `{ success?, error? }` |
+| `aclProtected` | both | Optional boolean; when `true`, Commerce generates a per-app nested ACL resource for the button so admins can grant/deny it per role |
+| `runtimeAction` | worker | Required; `<package>/<action>` |
+| `timeout` | worker | Optional positive number (seconds) |
+| `path` | view | Required; route into `web-src` |
+| `sandboxPermissions` | view | Optional; `allow-downloads` / `allow-modals` / `allow-popups` |
 
 ## Worker handler wire contract
 

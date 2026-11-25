@@ -17,8 +17,7 @@ The Executor is invoked with a `mode` parameter (default: `"normal"`).
 
 ### Normal mode
 
-All steps run in sequence. The assembled `app.commerce.config.ts` content is
-provided as a string and written to disk.
+All steps run in sequence. The assembled `app.commerce.config.ts` content is provided as a string and written to disk.
 
 ### doc-scan-only mode (`mode = "doc-scan-only"`)
 
@@ -29,16 +28,11 @@ Triggered when the orchestrating skill detects an already-migrated project.
 - **Skip:** Steps 4–7 (including Step 6a)
 - **Run:** Step 8 with a restricted output (documentation recommendations only)
 
-In doc-scan-only mode the `assembled config` parameter is `null`. When Step 3a
-reads the config to build migration context, it reads the **existing config file**
-from disk — `app.commerce.config.ts` if it exists, otherwise `app.commerce.config.js`
-(whichever caused `alreadyMigrated === true`) — using these string-presence checks:
+In doc-scan-only mode the `assembled config` parameter is `null`. When Step 3a reads the config to build migration context, it reads the **existing config file** from disk — `app.commerce.config.ts` if it exists, otherwise `app.commerce.config.js` (whichever caused `alreadyMigrated === true`) — using these string-presence checks:
 
 - `eventsDeclarative`: file content contains `"eventing:"`
 - `webhooksDeclarative`: file content contains `"webhooks:"`
-- `customInstallationSteps` script paths: scan the file for `script:` key patterns —
-  look for lines matching `script: "./`, `script: "/`, `script: './`, or `script: '/`
-  and extract the quoted string value as a script path. If none found, use `[]`
+- `customInstallationSteps` script paths: scan the file for `script:` key patterns — look for lines matching `script: "./`, `script: "/`, `script: './`, or `script: '/` and extract the quoted string value as a script path. If none found, use `[]`
 - `convertedYamlFiles`: `[]` (no YAML conversion happened in this mode)
 
 The Step 8 report header is also modified for doc-scan-only mode — see Step 8.
@@ -61,8 +55,7 @@ If the current branch is any other name, skip this step.
 
 ## Step 2: Write app.commerce.config.ts
 
-Write the received config content to `app.commerce.config.ts` at the project root.
-Prepend this copyright header before the config content:
+Write the received config content to `app.commerce.config.ts` at the project root. Prepend this copyright header before the config content:
 
     /*
      * Copyright 2026 Adobe. All rights reserved.
@@ -76,27 +69,20 @@ Prepend this copyright header before the config content:
      * governing permissions and limitations under the License.
      */
 
-**Strip internal metadata fields before writing:**
-Before writing the file, remove any internal-use-only properties that domain agents may have
-added to the configFragment (these are for Executor use only and must NOT appear in the output):
+**Strip internal metadata fields before writing:** Before writing the file, remove any internal-use-only properties that domain agents may have added to the configFragment (these are for Executor use only and must NOT appear in the output):
 
 - `"_source"` — marks auto-generated fields (e.g. `"_source": "aio-lib-files-path"`)
-- `"_directionWarning"` — carries warning text for non-standard event provider keys (rendered as
-  a `// ⚠` comment before the provider object, then removed from the written TypeScript)
+- `"_directionWarning"` — carries warning text for non-standard event provider keys (rendered as a `// ⚠` comment before the provider object, then removed from the written TypeScript)
 
-For `_directionWarning`: emit `// ⚠ <warning text>` as an inline TypeScript comment on the line
-immediately before the `provider: {` key, then omit the `_directionWarning` property from the output.
+For `_directionWarning`: emit `// ⚠ <warning text>` as an inline TypeScript comment on the line immediately before the `provider: {` key, then omit the `_directionWarning` property from the output.
 
 ---
 
 ## Step 3: Migrate custom installation scripts
 
-For each script path listed under `installation.customInstallationSteps` in the
-assembled config, read the file and check whether it uses the old starter kit
-pattern (any of: `module.exports`, `process.env`, `Core.Logger`, `async function main`).
+For each script path listed under `installation.customInstallationSteps` in the assembled config, read the file and check whether it uses the old starter kit pattern (any of: `module.exports`, `process.env`, `Core.Logger`, `async function main`).
 
-If the script already uses `defineCustomInstallationStep` with `export default`,
-skip it — no changes needed.
+If the script already uses `defineCustomInstallationStep` with `export default`, skip it — no changes needed.
 
 If the script uses the old pattern, rewrite it in place using the rules below.
 
@@ -104,11 +90,7 @@ If the script uses the old pattern, rewrite it in place using the rules below.
 
 **1. Replace the module system**
 
-Remove all top-level `require()` calls for packages that are replaced by the
-`defineCustomInstallationStep` context (`@adobe/aio-sdk` Core logger, dotenv,
-aio-lib-ims local context). Keep `require()` calls for project-local libs
-(e.g. `../lib/adobe-commerce`, `../lib/env`) by converting them to use
-`createRequire`.
+Remove all top-level `require()` calls for packages that are replaced by the `defineCustomInstallationStep` context (`@adobe/aio-sdk` Core logger, dotenv, aio-lib-ims local context). Keep `require()` calls for project-local libs (e.g. `../lib/adobe-commerce`, `../lib/env`) by converting them to use `createRequire`.
 
 Add these ESM imports at the very top of the file (after any copyright header):
 
@@ -127,8 +109,7 @@ Then convert surviving CJS requires to use this `require`:
 
 **2. Remove old-pattern logger declarations**
 
-Remove any top-level logger constructed from `Core.Logger(...)`. The logger is
-provided by the context parameter.
+Remove any top-level logger constructed from `Core.Logger(...)`. The logger is provided by the context parameter.
 
 **3. Wrap the main logic**
 
@@ -155,37 +136,25 @@ with:
 | `Core.Logger(...)` (inside body)      | `context.logger`                 |
 | `getAdobeCommerceClient(process.env)` | `getAdobeCommerceClient(params)` |
 
-If the body reads IMS credentials directly (any `OAUTH_*` or `AIO_COMMERCE_AUTH_IMS_*`
-key), resolve them with `resolveImsAuthParams(params)` from `@adobe/aio-commerce-lib-auth`
-instead. Runtime actions can receive the credentials through the
-`include-ims-credentials` annotation, without manually wiring individual params:
+If the body reads IMS credentials directly (any `OAUTH_*` or `AIO_COMMERCE_AUTH_IMS_*` key), resolve them with `resolveImsAuthParams(params)` from `@adobe/aio-commerce-lib-auth` instead. Runtime actions can receive the credentials through the `include-ims-credentials` annotation, without manually wiring individual params:
 
     import { resolveImsAuthParams } from "@adobe/aio-commerce-lib-auth";
 
     const imsAuthParams = resolveImsAuthParams(params);
 
-If the body reads the Commerce base URL directly (`COMMERCE_BASE_URL`, `AIO_COMMERCE_API_BASE_URL`),
-do not keep that read: App Management no longer injects it. Once the app is associated with a
-Commerce instance, the SDK stores the base URL and deployment type. Replace the direct client
-construction with:
+If the body reads the Commerce base URL directly (`COMMERCE_BASE_URL`, `AIO_COMMERCE_API_BASE_URL`), do not keep that read: App Management no longer injects it. Once the app is associated with a Commerce instance, the SDK stores the base URL and deployment type. Replace the direct client construction with:
 
     import { getCommerceClient } from "@adobe/aio-commerce-lib-app";
 
     const client = await getCommerceClient(resolveImsAuthParams(params));
 
-or, when only the URL is needed, `const { baseUrl, env } = await getCommerceInstance();`.
-Both throw `AssociationRecordNotFoundError` if the app is not associated.
+or, when only the URL is needed, `const { baseUrl, env } = await getCommerceInstance();`. Both throw `AssociationRecordNotFoundError` if the app is not associated.
 
-The starter kit's own `getAdobeCommerceClient(...)` helper (`lib/adobe-commerce`) is a project
-wrapper that reads the base URL from its input. Keep calling it as shown in the table, but
-record every helper file that reads `COMMERCE_BASE_URL` for the "Commerce base URL" section
-of Step 8 — do not rewrite the helper automatically.
+The starter kit's own `getAdobeCommerceClient(...)` helper (`lib/adobe-commerce`) is a project wrapper that reads the base URL from its input. Keep calling it as shown in the table, but record every helper file that reads `COMMERCE_BASE_URL` for the "Commerce base URL" section of Step 8 — do not rewrite the helper automatically.
 
 **5. Handle external data files (YAML, JSON, config)**
 
-Deployed App Builder actions are bundled by webpack. Only files that are statically
-`require()`d or `import`ed are included in the bundle — `fs.readFileSync` reads from
-the filesystem at runtime, which does not exist after deployment.
+Deployed App Builder actions are bundled by webpack. Only files that are statically `require()`d or `import`ed are included in the bundle — `fs.readFileSync` reads from the filesystem at runtime, which does not exist after deployment.
 
 If the script reads a data file via `fs.readFileSync` (e.g. a YAML or JSON config file):
 
@@ -193,30 +162,21 @@ If the script reads a data file via `fs.readFileSync` (e.g. a YAML or JSON confi
 
       const data = require("../path/to/file.json");
 
-- **YAML files**: create a sibling `.json` file with the same content, then require the
-  JSON file instead. Keep the original YAML for human readability and CLI use, but use
-  the JSON for the deployed script:
+- **YAML files**: create a sibling `.json` file with the same content, then require the JSON file instead. Keep the original YAML for human readability and CLI use, but use the JSON for the deployed script:
 
       // Create shipping-carriers.json alongside shipping-carriers.yaml
       // Then in the script:
       const { shipping_carriers } = require("../shipping-carriers.json");
 
-  The `require()` string must be a **static literal** (not a variable) so webpack can
-  analyse it at build time.
+  The `require()` string must be a **static literal** (not a variable) so webpack can analyse it at build time.
 
-  **Bookkeeping for Step 8:** Each time you create a `.json` sibling for a `.yaml`
-  file, record the original YAML path in an internal list called `convertedYamlFiles`.
-  For example, converting `shipping-carriers.yaml` → add `"shipping-carriers.yaml"` to
-  `convertedYamlFiles`. This list is used to populate the "Files that can be safely
-  removed" section of the summary.
+  **Bookkeeping for Step 8:** Each time you create a `.json` sibling for a `.yaml` file, record the original YAML path in an internal list called `convertedYamlFiles`. For example, converting `shipping-carriers.yaml` → add `"shipping-carriers.yaml"` to `convertedYamlFiles`. This list is used to populate the "Files that can be safely removed" section of the summary.
 
-- Remove `fs`, `path`, `fileURLToPath` imports if they were only used for file reading
-  and are no longer needed after this change.
+- Remove `fs`, `path`, `fileURLToPath` imports if they were only used for file reading and are no longer needed after this change.
 
 **6. Throw on failure, return on success**
 
-The old pattern often logs errors and continues. App Management installation steps
-must throw to fail visibly. Replace silent error logging with a throw:
+The old pattern often logs errors and continues. App Management installation steps must throw to fail visibly. Replace silent error logging with a throw:
 
     // Old
     console.error(`Failed: ${message}`);
@@ -230,8 +190,7 @@ Add a return value at the end:
 
 ### Examples: before and after
 
-The same transformation rules apply to all three checkout installation script types.
-Each type reads a YAML file and calls a specific Commerce API method.
+The same transformation rules apply to all three checkout installation script types. Each type reads a YAML file and calls a specific Commerce API method.
 
 ---
 
@@ -291,8 +250,7 @@ export default defineCustomInstallationStep(async (config, context) => {
 });
 ```
 
-YAML → JSON key mapping: `shipping_carriers` (top-level array key in `shipping-carriers.yaml`/`.json`).
-Item code path: `carrier.carrier.code`.
+YAML → JSON key mapping: `shipping_carriers` (top-level array key in `shipping-carriers.yaml`/`.json`). Item code path: `carrier.carrier.code`.
 
 ---
 
@@ -370,8 +328,7 @@ export default defineCustomInstallationStep(async (config, context) => {
 });
 ```
 
-YAML → JSON key mapping: `methods` (top-level array key in `payment-methods.yaml`/`.json`).
-Item code path: `paymentMethod.payment_method.code`.
+YAML → JSON key mapping: `methods` (top-level array key in `payment-methods.yaml`/`.json`). Item code path: `paymentMethod.payment_method.code`.
 
 ---
 
@@ -451,44 +408,30 @@ export default defineCustomInstallationStep(async (config, context) => {
 });
 ```
 
-YAML → JSON key mapping: `tax_integrations` (top-level array key in `tax-integrations.yaml`/`.json`).
-Item code path: `taxIntegration.tax_integration.code`.
-Private helpers (e.g. `formatErrorMessage`) are removed — errors now throw directly.
+YAML → JSON key mapping: `tax_integrations` (top-level array key in `tax-integrations.yaml`/`.json`). Item code path: `taxIntegration.tax_integration.code`. Private helpers (e.g. `formatErrorMessage`) are removed — errors now throw directly.
 
 ---
 
 ## Step 3a: Compute Documentation Recommendations
 
-**Run this step immediately after Step 3, before init.** Both Category C and
-Category D analyze static files that exist before any install command. Computing them
-now ensures the recommendations are always available in Step 8 regardless of whether
-Step 4 succeeds, times out, or is blocked.
+**Run this step immediately after Step 3, before init.** Both Category C and Category D analyze static files that exist before any install command. Computing them now ensures the recommendations are always available in Step 8 regardless of whether Step 4 succeeds, times out, or is blocked.
 
-In **doc-scan-only mode**, run this step using the modified inputs described in the
-"Operating Modes" section above. Skip Steps 1–3 entirely and begin here.
+In **doc-scan-only mode**, run this step using the modified inputs described in the "Operating Modes" section above. Skip Steps 1–3 entirely and begin here.
 
-Apply all computation rules defined below in Step 8 (Categories A, B, C, D). Those rules
-are written in Step 8 for readability but execute here, before npm install.
+Apply all computation rules defined below in Step 8 (Categories A, B, C, D). Those rules are written in Step 8 for readability but execute here, before npm install.
 
-- `convertedYamlFiles` for Category B is the list built during Step 3
-  (empty `[]` in doc-scan-only mode)
-- All other inputs are drawn from the assembled config and `ProjectSnapshot`
-  as described in Step 8
+- `convertedYamlFiles` for Category B is the list built during Step 3 (empty `[]` in doc-scan-only mode)
+- All other inputs are drawn from the assembled config and `ProjectSnapshot` as described in Step 8
 
 Store all results in memory, then:
 
-- **Normal mode:** also print the "Documentation recommendations" block **immediately now**,
-  before Steps 4–7 run. Use the same format as defined in Step 8's
-  "── Documentation recommendations" section. Prefix the block with:
+- **Normal mode:** also print the "Documentation recommendations" block **immediately now**, before Steps 4–7 run. Use the same format as defined in Step 8's "── Documentation recommendations" section. Prefix the block with:
 
       ── Documentation recommendations (computed before install) ────────
 
-  This ensures recommendations are visible if a later step (init, commit)
-  blocks, hangs, or fails. Step 8 includes the same block again — that is intentional.
+  This ensures recommendations are visible if a later step (init, commit) blocks, hangs, or fails. Step 8 includes the same block again — that is intentional.
 
-- **Doc-scan-only mode:** store results only. Do **not** print here. There are no risky
-  commands between Step 3a and Step 8, so printing twice would be pure noise. Print once
-  in Step 8's abbreviated report.
+- **Doc-scan-only mode:** store results only. Do **not** print here. There are no risky commands between Step 3a and Step 8, so printing twice would be pure noise. Print once in Step 8's abbreviated report.
 
 Proceed to Step 4 (or Step 8 in doc-scan-only mode) after storing.
 
@@ -500,15 +443,11 @@ Proceed to Step 4 (or Step 8 in doc-scan-only mode) after storing.
 
 ### Node version detection
 
-Before running init, detect the Node.js runtime version to use when scaffolding action
-handlers in Step 5. Apply in order — first match wins:
+Before running init, detect the Node.js runtime version to use when scaffolding action handlers in Step 5. Apply in order — first match wins:
 
-1. Scan all `ext.config.yaml` files in the project for a `runtime: nodejs:XX` declaration
-   in any action definition. Use the value found (e.g. `nodejs:24`).
-2. Read `.nvmrc` at the project root. Extract the major version number.
-   Format as `nodejs:<major>`.
-3. Read `package.json engines.node`. Extract the minimum major version from the semver range.
-   Format as `nodejs:<major>`.
+1. Scan all `ext.config.yaml` files in the project for a `runtime: nodejs:XX` declaration in any action definition. Use the value found (e.g. `nodejs:24`).
+2. Read `.nvmrc` at the project root. Extract the major version number. Format as `nodejs:<major>`.
+3. Read `package.json engines.node`. Extract the minimum major version from the semver range. Format as `nodejs:<major>`.
 4. Default: `nodejs:26`
 
 Store as `detectedNodeRuntime`. Used only in Step 5.
@@ -523,16 +462,11 @@ Before running init, check whether `.env` exists at the project root:
 - If `.env` does not exist but `env.dist` exists: copy it — `cp env.dist .env`.
 - If neither exists: create an empty `.env` file — `touch .env`.
 
-This is required because the init CLI unconditionally reads `.env` during
-the configuration-schema generation sub-step.
+This is required because the init CLI unconditionally reads `.env` during the configuration-schema generation sub-step.
 
 ### Pre-flight: record the original package.json description
 
-Read `package.json` and store its `description` value as `originalPackageDescription`
-(may be absent). `init` writes the config's `metadata.description` back into
-`package.json` — if that value was rewritten during config assembly to fit the
-255-char limit, the original description would be silently replaced. Step 6
-restores it.
+Read `package.json` and store its `description` value as `originalPackageDescription` (may be absent). `init` writes the config's `metadata.description` back into `package.json` — if that value was rewritten during config assembly to fit the 255-char limit, the original description would be silently replaced. Step 6 restores it.
 
 ### Run init
 
@@ -545,27 +479,18 @@ Run the appropriate command for the `packageManager` from `ProjectSnapshot`:
 | `yarn`         | `yarn dlx @adobe/aio-commerce-lib-app@latest init`  |
 | `bun`          | `bunx @adobe/aio-commerce-lib-app@latest init`      |
 
-The scoped package name (`@adobe/aio-commerce-lib-app`) is required: on a project
-where the package is not yet a local dependency, the unscoped bin name
-(`npx aio-commerce-lib-app init`) fails with
-`npm error could not determine executable to run`.
+The scoped package name (`@adobe/aio-commerce-lib-app`) is required: on a project where the package is not yet a local dependency, the unscoped bin name (`npx aio-commerce-lib-app init`) fails with `npm error could not determine executable to run`.
 
-The `init` command installs required dependencies and generates the full `src/` extension
-structure from `app.commerce.config.ts` in one step.
+The `init` command installs required dependencies and generates the full `src/` extension structure from `app.commerce.config.ts` in one step.
 
-It also wires the `post-app-deploy` hook, which plans an upgrade after every
-deployment of an installed app:
+It also wires the `post-app-deploy` hook, which plans an upgrade after every deployment of an installed app:
 
-- `metadata.upgradeMode: "auto"` starts the planned upgrade immediately and shows its
-  progress until it finishes. Check the run later with
-  `npx @adobe/aio-commerce-lib-app upgrade status`.
+- `metadata.upgradeMode: "auto"` starts the planned upgrade immediately and shows its progress until it finishes. Check the run later with `npx @adobe/aio-commerce-lib-app upgrade status`.
 - `metadata.upgradeMode: "manual"` leaves the plan pending without starting it.
 
-**If the init command is denied or blocked (permission error, sandbox rejection,
-or non-zero exit with no network output):**
+**If the init command is denied or blocked (permission error, sandbox rejection, or non-zero exit with no network output):**
 
-Do NOT retry. Record the failure and emit the following manual instruction in Step 8,
-substituting the command matching the project's package manager from the table above:
+Do NOT retry. Record the failure and emit the following manual instruction in Step 8, substituting the command matching the project's package manager from the table above:
 
     ✗ aio-commerce-lib-app init BLOCKED (Claude Code sandbox restriction)
 
@@ -578,8 +503,7 @@ Continue to Step 5 even if init failed.
 
 If the command exits with an error, inspect the output:
 
-1.  **"CLI was not built!"** — The installed package is missing its compiled `dist/`
-    directory (packaging defect). Record this specific error. In Step 8, emit:
+1.  **"CLI was not built!"** — The installed package is missing its compiled `dist/` directory (packaging defect). Record this specific error. In Step 8, emit:
 
         ✗ aio-commerce-lib-app init FAILED: CLI was not built! (dist/ missing from aio-commerce-lib-app)
 
@@ -591,20 +515,15 @@ If the command exits with an error, inspect the output:
                  npm install @adobe/aio-commerce-lib-app@<latest>
           3. Re-run: npx --yes @adobe/aio-commerce-lib-app@latest init
 
-2.  **Schema validation errors** — Record the error and report it in Step 8 so
-    the developer can fix the config and re-run init manually.
+2.  **Schema validation errors** — Record the error and report it in Step 8 so the developer can fix the config and re-run init manually.
 
-3.  **Any other error** — Record the failure message and skip Step 5.
-    Report the error in Step 8.
+3.  **Any other error** — Record the failure message and skip Step 5. Report the error in Step 8.
 
 After this command completes successfully, check which directories were created:
 
 - `src/commerce-extensibility-1/` — always expected
 - `src/commerce-configuration-1/` — present only if `businessConfig` was defined
-- `src/commerce-backend-ui-2/` — present only if `adminUi` was defined; when the
-  `adminUi` config has any `view` entry (view mass action, view button, or menu),
-  it also contains a generated `web-src/` frontend (mounted with `createExtensionApp`
-  from `@adobe/aio-commerce-lib-admin-ui/web`), plus additional dependencies installed (if not already present and compatible) needed by the frontend (`react`, `react-dom`, `@react-spectrum/s2`, and some `devDependencies` needed for proper TypeScript support/config).
+- `src/commerce-backend-ui-2/` — present only if `adminUi` was defined; when the `adminUi` config has any `view` entry (view mass action, view button, or menu), it also contains a generated `web-src/` frontend (mounted with `createExtensionApp` from `@adobe/aio-commerce-lib-admin-ui/web`), plus additional dependencies installed (if not already present and compatible) needed by the frontend (`react`, `react-dom`, `@react-spectrum/s2`, and some `devDependencies` needed for proper TypeScript support/config).
 
 Note which directories exist — you will need this in Steps 5 and 6.
 
@@ -612,15 +531,13 @@ Note which directories exist — you will need this in Steps 5 and 6.
 
 ## Step 5: Scaffold Admin UI SDK handlers
 
-Runs immediately after Step 4 init succeeds and `src/commerce-backend-ui-2/` exists.
-Skip this step entirely if the assembled config has no `adminUi` section.
+Runs immediately after Step 4 init succeeds and `src/commerce-backend-ui-2/` exists. Skip this step entirely if the assembled config has no `adminUi` section.
 
 Only **worker** entries require a handler — `view` entries (iframe) have no server-side handler.
 
 ### Grid columns
 
-For each entity (`order`, `product`, `customer`) where `adminUi.<entity>.gridColumns.runtimeAction`
-is set in the assembled config and is not `"<FILL_IN>"`:
+For each entity (`order`, `product`, `customer`) where `adminUi.<entity>.gridColumns.runtimeAction` is set in the assembled config and is not `"<FILL_IN>"`:
 
 1. Parse `<package>/<action>` from the value.
 2. Target path: `src/commerce-backend-ui-2/actions/<action>/index.js`
@@ -649,8 +566,7 @@ export async function main(params) {
 }
 ```
 
-5. Add the package definition to `src/commerce-backend-ui-2/ext.config.yaml` under
-   `runtimeManifest.packages` if the package is not already declared:
+5. Add the package definition to `src/commerce-backend-ui-2/ext.config.yaml` under `runtimeManifest.packages` if the package is not already declared:
 
 ```yaml
 <package>:
@@ -672,10 +588,8 @@ export async function main(params) {
 For each mass action in the assembled config where `type: "worker"`:
 
 1. Parse `<package>/<action>` from `runtimeAction` (skip if value is `"<FILL_IN>"`).
-2. Locate existing handler: search under `actions/`, `actions-src/`, `src/` for a file
-   whose path contains `<action>`.
-3. If found: rewrite to use lib utilities (preserve existing business logic; replace
-   request parsing and response construction with the builders below):
+2. Locate existing handler: search under `actions/`, `actions-src/`, `src/` for a file whose path contains `<action>`.
+3. If found: rewrite to use lib utilities (preserve existing business logic; replace request parsing and response construction with the builders below):
 
    ```javascript
    import { CommerceSdkValidationError } from "@adobe/aio-commerce-sdk/core/error";
@@ -701,8 +615,7 @@ For each mass action in the assembled config where `type: "worker"`:
    }
    ```
 
-4. If not found: scaffold a new handler at
-   `src/commerce-backend-ui-2/actions/<action>/index.js` using the same shape.
+4. If not found: scaffold a new handler at `src/commerce-backend-ui-2/actions/<action>/index.js` using the same shape.
 
 - `parseMassActionRequest(params)` → `{ requestId, gridType, selectedIds }` — validates incoming shape.
 - `okMassActionResponse(body?)` → HTTP 200.
@@ -740,8 +653,7 @@ export async function main(params) {
 }
 ```
 
-4. If not found: scaffold a new handler at
-   `src/commerce-backend-ui-2/actions/<action>/index.js` using the same shape.
+4. If not found: scaffold a new handler at `src/commerce-backend-ui-2/actions/<action>/index.js` using the same shape.
 
 - `parseOrderViewButtonRequest(params)` → `{ requestId, id, orderId }`.
 - `okOrderViewButtonResponse()` → success; empty `{}` body.
@@ -753,45 +665,23 @@ No copyright header on any scaffolded or rewritten file.
 
 ## Step 6: Post-init cleanup
 
-`init` (Step 4) adds the new `commerce/backend-ui/2` extension point but never
-removes the old Adobe Commerce Admin UI SDK (`commerce/backend-ui/1`) artifacts
-it replaces. Perform the cleanup init does not:
+`init` (Step 4) adds the new `commerce/backend-ui/2` extension point but never removes the old Adobe Commerce Admin UI SDK (`commerce/backend-ui/1`) artifacts it replaces. Perform the cleanup init does not:
 
-**1. Remove the old `commerce/backend-ui/1` extension point.**
-If `app.config.yaml` has a `commerce/backend-ui/1` entry under `extensions:`,
-remove it. `init` adds `commerce/backend-ui/2` alongside it but leaves the old
-entry in place, and keeping both is invalid.
+**1. Remove the old `commerce/backend-ui/1` extension point.** If `app.config.yaml` has a `commerce/backend-ui/1` entry under `extensions:`, remove it. `init` adds `commerce/backend-ui/2` alongside it but leaves the old entry in place, and keeping both is invalid.
 
-**2. Remove the old `pre-app-build` hook.**
-If `app.config.yaml` contains a `pre-app-build` hook that references
-`commerce-backend-ui-1` or its registration action path (e.g. a script under
-`src/commerce-backend-ui-1/`), remove that hook entry. That registration action
-is no longer generated by `commerce/backend-ui/2` and the hook will fail the build.
+**2. Remove the old `pre-app-build` hook.** If `app.config.yaml` contains a `pre-app-build` hook that references `commerce-backend-ui-1` or its registration action path (e.g. a script under `src/commerce-backend-ui-1/`), remove that hook entry. That registration action is no longer generated by `commerce/backend-ui/2` and the hook will fail the build.
 
-**3. Reconcile the install file extension.**
-`init` always writes `install.yaml`. If the project already had `install.yml`
-(`.yml` extension), `init` created a separate `install.yaml` — delete the stale
-`install.yml` (or merge its extra entries into `install.yaml` first) so only one
-install file remains.
+**3. Reconcile the install file extension.** `init` always writes `install.yaml`. If the project already had `install.yml` (`.yml` extension), `init` created a separate `install.yaml` — delete the stale `install.yml` (or merge its extra entries into `install.yaml` first) so only one install file remains.
 
-**4. Restore the original `package.json` description.**
-`init` writes the config's `metadata.description` back into `package.json`. If the
-config value was rewritten during assembly, this silently replaces the original.
-Compare `package.json`'s current `description` with the `originalPackageDescription`
-recorded in Step 4 — if they differ, restore `originalPackageDescription`. The
-rewritten value belongs only in `app.commerce.config.ts` (App Management's 255-char
-limit); the full description stays in `package.json`. Record whether a restore
-happened — it is reported in Step 8's "Modified" section.
+**4. Restore the original `package.json` description.** `init` writes the config's `metadata.description` back into `package.json`. If the config value was rewritten during assembly, this silently replaces the original. Compare `package.json`'s current `description` with the `originalPackageDescription` recorded in Step 4 — if they differ, restore `originalPackageDescription`. The rewritten value belongs only in `app.commerce.config.ts` (App Management's 255-char limit); the full description stays in `package.json`. Record whether a restore happened — it is reported in Step 8's "Modified" section.
 
-**Do not modify any other content in `app.config.yaml`, the install file, or
-`package.json`.**
+**Do not modify any other content in `app.config.yaml`, the install file, or `package.json`.**
 
 ---
 
 ## Step 6a: Migrate env vars to Business Configurations
 
-Skip this step if `envMigrations` is empty. The fields are already in `businessConfig.schema`
-of the config written in Step 2; this step updates the runtime code that read them as env vars.
+Skip this step if `envMigrations` is empty. The fields are already in `businessConfig.schema` of the config written in Step 2; this step updates the runtime code that read them as env vars.
 
 For every entry in `envMigrations`, in every file listed in its `reads`:
 
@@ -850,15 +740,11 @@ Also stage the install file (`init` writes `install.yaml`):
 
     git add install.yaml
 
-If `yarn.lock`, `pnpm-lock.yaml`, or `bun.lockb` was modified (based on `packageManager`
-from ProjectSnapshot), stage the appropriate lockfile instead of `package-lock.json`.
+If `yarn.lock`, `pnpm-lock.yaml`, or `bun.lockb` was modified (based on `packageManager` from ProjectSnapshot), stage the appropriate lockfile instead of `package-lock.json`.
 
-Note: if `package-lock.json` (or the relevant lockfile) does not exist or was not modified
-(e.g. install was blocked), skip staging it — `git add` of a non-existent file is harmless
-but emits a warning.
+Note: if `package-lock.json` (or the relevant lockfile) does not exist or was not modified (e.g. install was blocked), skip staging it — `git add` of a non-existent file is harmless but emits a warning.
 
-**In `--auto` mode:** run `git commit -m "feat: migrate to App Management"` immediately
-without prompting.
+**In `--auto` mode:** run `git commit -m "feat: migrate to App Management"` immediately without prompting.
 
 **In interactive mode:** do NOT commit automatically. Instead, print:
 
@@ -876,34 +762,22 @@ Then proceed to Step 8. Do not wait for the developer to commit before printing 
 
 ## Step 8: Print migration summary
 
-**Use the pre-computed results stored in Step 3a. The computation rules for
-Categories A–D are defined below — they run in Step 3a, not here.
-Step 8 only assembles and prints the report.**
+**Use the pre-computed results stored in Step 3a. The computation rules for Categories A–D are defined below — they run in Step 3a, not here. Step 8 only assembles and prints the report.**
 
 **Category A — Onboarding scripts not in `customInstallationSteps`:**
 
-Collect all paths from `ProjectSnapshot.onboardingScripts[].path`. Normalize every
-`installation.customInstallationSteps[].script` path from the assembled config by
-stripping a leading `./` (so `"./scripts/foo.js"` compares equal to `"scripts/foo.js"`).
+Collect all paths from `ProjectSnapshot.onboardingScripts[].path`. Normalize every `installation.customInstallationSteps[].script` path from the assembled config by stripping a leading `./` (so `"./scripts/foo.js"` compares equal to `"scripts/foo.js"`).
 
-For each onboarding script path NOT present in that normalized set, read the script
-file and assign a label using the first matching rule:
+For each onboarding script path NOT present in that normalized set, read the script file and assign a label using the first matching rule:
 
-1. File contains `replaceEnvVar`, `fs.writeFileSync` on a `.env` path,
-   `context.get(` from `@adobe/aio-lib-ims`, or `Core.Config.get("project.workspace` →
-   `"local developer utility — writes to .env or reads local IMS context; not needed in App Management"`
-2. Script `purpose` (from `ProjectSnapshot`) is `"event-subscription"` or `"event-provider"` →
-   `"superseded by declarative eventing in app.commerce.config.ts"`
-3. Script `purpose` is `"webhook"` →
-   `"superseded by declarative webhooks in app.commerce.config.ts"`
-4. Otherwise →
-   `"not included in customInstallationSteps; not needed in App Management deployment"`
+1. File contains `replaceEnvVar`, `fs.writeFileSync` on a `.env` path, `context.get(` from `@adobe/aio-lib-ims`, or `Core.Config.get("project.workspace` → `"local developer utility — writes to .env or reads local IMS context; not needed in App Management"`
+2. Script `purpose` (from `ProjectSnapshot`) is `"event-subscription"` or `"event-provider"` → `"superseded by declarative eventing in app.commerce.config.ts"`
+3. Script `purpose` is `"webhook"` → `"superseded by declarative webhooks in app.commerce.config.ts"`
+4. Otherwise → `"not included in customInstallationSteps; not needed in App Management deployment"`
 
 **Category B — Converted YAML files** (from the `convertedYamlFiles` list built in Step 3):
 
-For each entry, label it:
-`"replaced by <basename>.json for webpack bundling (original kept for reference)"`
-where `<basename>` is the filename without the `.yaml` extension.
+For each entry, label it: `"replaced by <basename>.json for webpack bundling (original kept for reference)"` where `<basename>` is the filename without the `.yaml` extension.
 
 If a path appears in both categories, list it once using the Category B label.
 
@@ -917,83 +791,47 @@ Skip this category entirely if `ProjectSnapshot.envDistKeys` is an empty array.
 
 For each key in `envDistKeys`, apply these rules in order — **first match wins**. Keys matching no rule are not included in Category D.
 
-**Rule 1 — PaaS/OAuth1 auth credentials:**
-Keys matching any of: `COMMERCE_CONSUMER_KEY`, `COMMERCE_CONSUMER_SECRET`, `COMMERCE_ACCESS_TOKEN`, `COMMERCE_ACCESS_TOKEN_SECRET`, or any key starting with `AIO_COMMERCE_AUTH_INTEGRATION_`
-→ reason: `"OAuth1/PaaS auth credential managed by App Management; may still be needed for local development"`
+**Rule 1 — PaaS/OAuth1 auth credentials:** Keys matching any of: `COMMERCE_CONSUMER_KEY`, `COMMERCE_CONSUMER_SECRET`, `COMMERCE_ACCESS_TOKEN`, `COMMERCE_ACCESS_TOKEN_SECRET`, or any key starting with `AIO_COMMERCE_AUTH_INTEGRATION_` → reason: `"OAuth1/PaaS auth credential managed by App Management; may still be needed for local development"`
 
-**Rule 2 — IMS/SaaS auth credentials:**
-Keys matching any of: `OAUTH_BASE_URL`, `OAUTH_CLIENT_ID`, `OAUTH_CLIENT_SECRETS`, `OAUTH_CLIENT_SECRET`, `OAUTH_TECHNICAL_ACCOUNT_ID`, `OAUTH_TECHNICAL_ACCOUNT_EMAIL`, `OAUTH_ORG_ID`, `OAUTH_IMS_ORG_ID`, `OAUTH_SCOPES`, `OAUTH_HOST`, or any key starting with `AIO_COMMERCE_AUTH_IMS_`
-→ reason: `"IMS/SaaS auth credential injected at runtime by the include-ims-credentials action annotation"`
+**Rule 2 — IMS/SaaS auth credentials:** Keys matching any of: `OAUTH_BASE_URL`, `OAUTH_CLIENT_ID`, `OAUTH_CLIENT_SECRETS`, `OAUTH_CLIENT_SECRET`, `OAUTH_TECHNICAL_ACCOUNT_ID`, `OAUTH_TECHNICAL_ACCOUNT_EMAIL`, `OAUTH_ORG_ID`, `OAUTH_IMS_ORG_ID`, `OAUTH_SCOPES`, `OAUTH_HOST`, or any key starting with `AIO_COMMERCE_AUTH_IMS_` → reason: `"IMS/SaaS auth credential injected at runtime by the include-ims-credentials action annotation"`
 
-**Rule 3 — Adobe I/O workspace credentials:**
-Keys matching any of: `IO_MANAGEMENT_BASE_URL`, `IO_CONSUMER_ID`, `IO_PROJECT_ID`, `IO_WORKSPACE_ID`, `IO_MANAGEMENT_API_KEY`, `AIO_RUNTIME_NAMESPACE`, `AIO_RUNTIME_AUTH`
-→ reason: `"Adobe I/O workspace credentials used by onboarding scripts; App Management handles workspace setup"`
+**Rule 3 — Adobe I/O workspace credentials:** Keys matching any of: `IO_MANAGEMENT_BASE_URL`, `IO_CONSUMER_ID`, `IO_PROJECT_ID`, `IO_WORKSPACE_ID`, `IO_MANAGEMENT_API_KEY`, `AIO_RUNTIME_NAMESPACE`, `AIO_RUNTIME_AUTH` → reason: `"Adobe I/O workspace credentials used by onboarding scripts; App Management handles workspace setup"`
 
-**Rule 3a — Commerce instance URL:**
-Keys matching any of: `COMMERCE_BASE_URL`, `AIO_COMMERCE_API_BASE_URL`
-→ reason: `"Commerce base URL is stored by App Management when the app is associated with a Commerce instance (see https://experienceleague.adobe.com/en/docs/commerce/app-management/manage-app/manage-app)"`
+**Rule 3a — Commerce instance URL:** Keys matching any of: `COMMERCE_BASE_URL`, `AIO_COMMERCE_API_BASE_URL` → reason: `"Commerce base URL is stored by App Management when the app is associated with a Commerce instance (see https://experienceleague.adobe.com/en/docs/commerce/app-management/manage-app/manage-app)"`
 
-**Rule 4 — Only referenced in removable scripts (Category A):**
-Read the content of each file in the Category A removable list. If the KEY string appears in any of those files AND does NOT appear in any file under `actions/`, `actions-src/`, `src/`, or `lib/` (search with grep across all four directories):
-→ reason: `"only referenced in <script-filename>, which is no longer needed after migration"`
+**Rule 4 — Only referenced in removable scripts (Category A):** Read the content of each file in the Category A removable list. If the KEY string appears in any of those files AND does NOT appear in any file under `actions/`, `actions-src/`, `src/`, or `lib/` (search with grep across all four directories): → reason: `"only referenced in <script-filename>, which is no longer needed after migration"`
 
-**Rule 5 — Only referenced in automated installation scripts:**
-Read the content of each script listed in `installation.customInstallationSteps` from the assembled config. If the KEY string appears in any of those files AND does NOT appear in any file under `actions/`, `actions-src/`, `src/`, or `lib/`:
-→ reason: `"only referenced in <script-filename> (customInstallationStep) — verify App Management injects this value before removing"`
+**Rule 5 — Only referenced in automated installation scripts:** Read the content of each script listed in `installation.customInstallationSteps` from the assembled config. If the KEY string appears in any of those files AND does NOT appear in any file under `actions/`, `actions-src/`, `src/`, or `lib/`: → reason: `"only referenced in <script-filename> (customInstallationStep) — verify App Management injects this value before removing"`
 
 Route Rule 5 findings to **Bucket B** (review manually), grouped by the customInstallationStep script path. Do NOT place them in Bucket C — these scripts are not removed; they run automatically during installation.
 
-**Rule 6 — Event configuration variables** (apply only if the assembled config has an `eventing` section):
-Keys matching any of: `AIO_EVENTS_PROVIDER_ID`, `AIO_EVENTS_REGISTRATION_ID`, `AIO_EVENTS_CONSUMER_ORG_ID`, `COMMERCE_ADOBE_IO_EVENTS_MERCHANT_ID`, `COMMERCE_ADOBE_IO_EVENTS_ENVIRONMENT_ID`, `EVENT_PREFIX`, `FEED_GENERATOR_PROVIDER_ID`, `COMMERCE_PROVIDER_ID`, or any key matching `REGISTRATION_ID_*`, `*_REGISTRATION_ID`, or `EVENT_PROVIDER_*`
-→ reason: `"event configuration is now declared in app.commerce.config.ts"`
+**Rule 6 — Event configuration variables** (apply only if the assembled config has an `eventing` section): Keys matching any of: `AIO_EVENTS_PROVIDER_ID`, `AIO_EVENTS_REGISTRATION_ID`, `AIO_EVENTS_CONSUMER_ORG_ID`, `COMMERCE_ADOBE_IO_EVENTS_MERCHANT_ID`, `COMMERCE_ADOBE_IO_EVENTS_ENVIRONMENT_ID`, `EVENT_PREFIX`, `FEED_GENERATOR_PROVIDER_ID`, `COMMERCE_PROVIDER_ID`, or any key matching `REGISTRATION_ID_*`, `*_REGISTRATION_ID`, or `EVENT_PROVIDER_*` → reason: `"event configuration is now declared in app.commerce.config.ts"`
 
-**Rule 7 — Webhook variables** (apply only if the assembled config has a top-level `webhooks` section):
-Keys matching `*_WEBHOOKS_*`, except `COMMERCE_WEBHOOKS_PUBLIC_KEY`
-→ reason: `"webhook registration is now declared in app.commerce.config.ts"`
+**Rule 7 — Webhook variables** (apply only if the assembled config has a top-level `webhooks` section): Keys matching `*_WEBHOOKS_*`, except `COMMERCE_WEBHOOKS_PUBLIC_KEY` → reason: `"webhook registration is now declared in app.commerce.config.ts"`
 
-`COMMERCE_WEBHOOKS_PUBLIC_KEY` matches Rule 7 only when no entry in `webhooks` sets `requireAdobeAuth: false`. App Management requires IMS, so every webhook can authenticate with Adobe auth on any Commerce flavor, and the key and the signature check code are leftovers. A webhook with `requireAdobeAuth: false` still verifies Commerce signatures (https://developer.adobe.com/commerce/extensibility/webhooks/signature-verification), so keep the key in that case.
-→ reason: `"all webhooks use Adobe auth (requireAdobeAuth is not false), so the signature check and its public key are no longer needed"`
+`COMMERCE_WEBHOOKS_PUBLIC_KEY` matches Rule 7 only when no entry in `webhooks` sets `requireAdobeAuth: false`. App Management requires IMS, so every webhook can authenticate with Adobe auth on any Commerce flavor, and the key and the signature check code are leftovers. A webhook with `requireAdobeAuth: false` still verifies Commerce signatures (https://developer.adobe.com/commerce/extensibility/webhooks/signature-verification), so keep the key in that case. → reason: `"all webhooks use Adobe auth (requireAdobeAuth is not false), so the signature check and its public key are no longer needed"`
 
-**Runtime reference override (applies to Rules 1–3, 3a, 6, and 7):**
-After a key matches one of these rules, run:
-`grep -rlF "<KEY>" actions/ actions-src/ src/ lib/ 2>/dev/null | head -1`
-If any matching file is found, downgrade the flag — replace the rule's default reason with:
-`"review manually: still referenced in <relative path> — ensure App Management injects this value before removing"`
-This check does not apply to Rule 4 or Rule 5 (which already check runtime references), or Rule 8.
+**Runtime reference override (applies to Rules 1–3, 3a, 6, and 7):** After a key matches one of these rules, run: `grep -rlF "<KEY>" actions/ actions-src/ src/ lib/ 2>/dev/null | head -1` If any matching file is found, downgrade the flag — replace the rule's default reason with: `"review manually: still referenced in <relative path> — ensure App Management injects this value before removing"` This check does not apply to Rule 4 or Rule 5 (which already check runtime references), or Rule 8.
 
-For Rule 3a keys, use this reason instead:
-`"review manually: still referenced in <relative path> — read the Commerce instance with getCommerceClient or getCommerceInstance from @adobe/aio-commerce-lib-app instead of this variable"`
+For Rule 3a keys, use this reason instead: `"review manually: still referenced in <relative path> — read the Commerce instance with getCommerceClient or getCommerceInstance from @adobe/aio-commerce-lib-app instead of this variable"`
 
-For Rule 2 keys, use this reason instead:
-`"review manually: still referenced in <relative path> — add include-ims-credentials: true to the action annotations and resolve credentials with resolveImsAuthParams(params) instead of wiring this input"`
+For Rule 2 keys, use this reason instead: `"review manually: still referenced in <relative path> — add include-ims-credentials: true to the action annotations and resolve credentials with resolveImsAuthParams(params) instead of wiring this input"`
 
 **grep flag note:** All grep commands in Rules 1–9 that search for a KEY string must use the `-F` (fixed-string) flag to prevent env var key names from being treated as regex patterns.
 
-**Rule 8 — Duplicate entries** (checked before Rules 1–7, independent of the allowlist):
-For each entry in `ProjectSnapshot.envDistDuplicates` (keys with count > 1):
-→ reason: `"appears <N> times in env.dist (duplicate entry — should appear only once)"`
+**Rule 8 — Duplicate entries** (checked before Rules 1–7, independent of the allowlist): For each entry in `ProjectSnapshot.envDistDuplicates` (keys with count > 1): → reason: `"appears <N> times in env.dist (duplicate entry — should appear only once)"`
 
 List these first in the Category D output, prefixed with `⚠ Duplicate entry:`. Then apply Rules 1–7 to the deduplicated key list (each key evaluated once).
 
-Rule 8 is **not subject to the "Never flag" allowlist** below — a duplicate `LOG_LEVEL` or
-`ENCRYPTION_KEY` entry is still a duplicate and should be flagged. The allowlist prevents
-flagging keys as _obsolete_; it does not prevent flagging them as _malformed_.
+Rule 8 is **not subject to the "Never flag" allowlist** below — a duplicate `LOG_LEVEL` or `ENCRYPTION_KEY` entry is still a duplicate and should be flagged. The allowlist prevents flagging keys as _obsolete_; it does not prevent flagging them as _malformed_.
 
-**Rule 9 — Unreferenced variables (catch-all):**
-Apply ONLY to keys that matched NONE of Rules 1–8 and are not in `envMigrations`.
-For each such key NOT in the "Never flag" list below:
-Run: `grep -rlF "<KEY>" actions/ actions-src/ src/ lib/ scripts/ app.config.yaml 2>/dev/null | head -1`
-If the grep returns NO match (zero files found), add the key to Category D with:
-→ reason: `"not referenced in any action file or configuration; likely unused — verify before removing"`
+**Rule 9 — Unreferenced variables (catch-all):** Apply ONLY to keys that matched NONE of Rules 1–8 and are not in `envMigrations`. For each such key NOT in the "Never flag" list below: Run: `grep -rlF "<KEY>" actions/ actions-src/ src/ lib/ scripts/ app.config.yaml 2>/dev/null | head -1` If the grep returns NO match (zero files found), add the key to Category D with: → reason: `"not referenced in any action file or configuration; likely unused — verify before removing"`
 
 Route Rule 9 findings to **Bucket D** in the output.
 
-Note: This rule fires last. A key already matched by Rules 1–8 is excluded from Rule 9 even
-if it also has no runtime references (Rules 1–8 provide the more specific, actionable reason).
+Note: This rule fires last. A key already matched by Rules 1–8 is excluded from Rule 9 even if it also has no runtime references (Rules 1–8 provide the more specific, actionable reason).
 
-**Never flag these keys as obsolete (Rules 1–9 only):**
-`LOG_LEVEL`, `ENABLE_TELEMETRY`, `NEW_RELIC_LICENSE_KEY`, `ENABLE_EXTRA_LOGGING`, `ENCRYPTION_KEY`, `ENCRYPTION_IV`, `APPBUILDER_ENCRYPTION_KEY`.
-Also never flag any key that is clearly a third-party service credential (Klaviyo, NetSuite, Salesforce, Adyen, OpenSearch, etc.) — recognisable by vendor-specific prefixes that do not match the patterns above.
+**Never flag these keys as obsolete (Rules 1–9 only):** `LOG_LEVEL`, `ENABLE_TELEMETRY`, `NEW_RELIC_LICENSE_KEY`, `ENABLE_EXTRA_LOGGING`, `ENCRYPTION_KEY`, `ENCRYPTION_IV`, `APPBUILDER_ENCRYPTION_KEY`. Also never flag any key that is clearly a third-party service credential (Klaviyo, NetSuite, Salesforce, Adyen, OpenSearch, etc.) — recognisable by vendor-specific prefixes that do not match the patterns above.
 
 ---
 
@@ -1014,8 +852,7 @@ Scan README.md for content matching these patterns. For each match, record:
 - `location`: the nearest markdown heading above the matched content, plus a short description (e.g. `"## Setup > step 3 (npm run onboard)"`)
 - `reason`: why it may be outdated
 
-**Pattern 1 — References to removable or automated scripts:**
-Match README text against two sets of identifiers:
+**Pattern 1 — References to removable or automated scripts:** Match README text against two sets of identifiers:
 
 1. **Direct path references** — any text that mentions a path in `removableScriptPaths` or `automatedScriptPaths`
 2. **npm script name references** — for each entry in `ProjectSnapshot.packageScripts`, if the command value contains a path from `removableScriptPaths` or `automatedScriptPaths`, add `npm run <name>` as an additional match pattern
@@ -1024,54 +861,38 @@ Example: if `packageScripts["onboard"] = "node scripts/onboarding/index.js"` and
 
 → reason: `"<script-name> is [no longer needed / now automated by App Management installation]"` (choose phrase based on whether the script is removable or automated)
 
-**Pattern 2 — Webhook manual setup steps** (skip if `webhooksDeclarative` is false):
-Content describing registering webhooks via CLI or Admin UI.
-→ reason: `"webhook registration is now handled declaratively in app.commerce.config.ts"`
+**Pattern 2 — Webhook manual setup steps** (skip if `webhooksDeclarative` is false): Content describing registering webhooks via CLI or Admin UI. → reason: `"webhook registration is now handled declaratively in app.commerce.config.ts"`
 
-Content describing enabling webhook signatures in Commerce Admin or copying a public key into `COMMERCE_WEBHOOKS_PUBLIC_KEY` matches only when Rule 7 flags `COMMERCE_WEBHOOKS_PUBLIC_KEY`.
-→ reason: `"all webhooks use Adobe auth (requireAdobeAuth is not false), so the signature check and its public key are no longer needed"`
+Content describing enabling webhook signatures in Commerce Admin or copying a public key into `COMMERCE_WEBHOOKS_PUBLIC_KEY` matches only when Rule 7 flags `COMMERCE_WEBHOOKS_PUBLIC_KEY`. → reason: `"all webhooks use Adobe auth (requireAdobeAuth is not false), so the signature check and its public key are no longer needed"`
 
-**Pattern 3 — Event subscription or workspace setup steps** (skip if `eventsDeclarative` is false):
-Content describing any of: `aio console org/project/workspace select`, `aio app use --merge`, setting up event providers or registrations in Adobe Developer Console, `npm run sync-oauth-credentials`.
-→ reason: `"event provider and subscription setup is now handled declaratively in app.commerce.config.ts"`
+**Pattern 3 — Event subscription or workspace setup steps** (skip if `eventsDeclarative` is false): Content describing any of: `aio console org/project/workspace select`, `aio app use --merge`, setting up event providers or registrations in Adobe Developer Console, `npm run sync-oauth-credentials`. → reason: `"event provider and subscription setup is now handled declaratively in app.commerce.config.ts"`
 
 **Pattern 4 — Documentation of redundant env vars:**
 
 Match sections that contain ANY of the following:
 
 1. **Exact key names:** Any variable name that appears in `redundantEnvKeys` is mentioned literally in the section text.
-2. **IMS/SaaS credential family terms** (apply when `redundantEnvKeys` contains any Rule 2 key):
-   Match sections containing any of: `IMS OAuth`, `Server-to-Server`, `OAuth Server-to-Server`, `OAuth Client ID`, `Adobe Developer Console`, `OAUTH_CLIENT_ID`, `IMS credentials`, `IMS authentication`, `Service Account credentials`.
-3. **PaaS/OAuth1 credential family terms** (apply when `redundantEnvKeys` contains any Rule 1 key):
-   Match sections containing any of: `OAuth 1.0a`, `Commerce OAuth`, `Consumer Key`, `COMMERCE_CONSUMER_KEY`, `Commerce integration`, `OAuth integration credentials`.
-4. **Workspace credential family terms** (apply when `redundantEnvKeys` contains any Rule 3 key):
-   Match sections containing any of: `App Builder workspace`, `aio console org select`, `workspace.json`, `IO_CONSUMER_ID`, `workspace credentials`.
+2. **IMS/SaaS credential family terms** (apply when `redundantEnvKeys` contains any Rule 2 key): Match sections containing any of: `IMS OAuth`, `Server-to-Server`, `OAuth Server-to-Server`, `OAuth Client ID`, `Adobe Developer Console`, `OAUTH_CLIENT_ID`, `IMS credentials`, `IMS authentication`, `Service Account credentials`.
+3. **PaaS/OAuth1 credential family terms** (apply when `redundantEnvKeys` contains any Rule 1 key): Match sections containing any of: `OAuth 1.0a`, `Commerce OAuth`, `Consumer Key`, `COMMERCE_CONSUMER_KEY`, `Commerce integration`, `OAuth integration credentials`.
+4. **Workspace credential family terms** (apply when `redundantEnvKeys` contains any Rule 3 key): Match sections containing any of: `App Builder workspace`, `aio console org select`, `workspace.json`, `IO_CONSUMER_ID`, `workspace credentials`.
 
 → reason: `"documents <key family or specific KEY> and related variables that may no longer be needed after migration"`
 
-**Pattern 5 — Environment setup boilerplate:**
-Content that describes copying the environment template: `cp env.dist .env`, `copy env.dist to .env`,
-or a numbered step saying "copy the environment template" or "configure environment variables from
-the template file".
-→ reason: `"environment setup instructions may need updating — many variables are now injected by App Management for deployed instances; local development setup may still be valid"`
+**Pattern 5 — Environment setup boilerplate:** Content that describes copying the environment template: `cp env.dist .env`, `copy env.dist to .env`, or a numbered step saying "copy the environment template" or "configure environment variables from the template file". → reason: `"environment setup instructions may need updating — many variables are now injected by App Management for deployed instances; local development setup may still be valid"`
 
 **Do not flag** content that is inside a fenced code block showing the new App Management approach, or inside a "Changelog", "Migration notes", or "What changed" section that already describes the migration.
 
 **Annotated README guide — applies when Category C findings ≥ 5:**
 
-After the standard location+reason list, append an annotated excerpt that shows each
-flagged section heading with an inline removal comment. For each flagged section:
+After the standard location+reason list, append an annotated excerpt that shows each flagged section heading with an inline removal comment. For each flagged section:
 
 1. Find the heading line in `README.md` that matches the flagged `location`
 2. Extract that heading line + up to 3 body lines immediately following it
 3. Prepend an inline comment based on which pattern matched:
-   - **Pattern 1 match** → `<!-- ✂ REMOVE: <reason> -->`
-     (the section is dedicated to a single removable/automated script and can be deleted)
-   - **Patterns 2–5 match** → `<!-- ✂ UPDATE: <reason> -->`
-     (the section may contain a mix of obsolete and still-valid content; review before removing)
+   - **Pattern 1 match** → `<!-- ✂ REMOVE: <reason> -->` (the section is dedicated to a single removable/automated script and can be deleted)
+   - **Patterns 2–5 match** → `<!-- ✂ UPDATE: <reason> -->` (the section may contain a mix of obsolete and still-valid content; review before removing)
 
-Assemble all flagged sections into a single fenced Markdown block and print it in the
-"Documentation recommendations" output under:
+Assemble all flagged sections into a single fenced Markdown block and print it in the "Documentation recommendations" output under:
 
     ── README.md — annotated removal guide ───────────────────────────
     Each flagged section is marked below. Sections not listed are unaffected.
@@ -1086,16 +907,13 @@ Assemble all flagged sections into a single fenced Markdown block and print it i
     <up to 3 body lines>
     ```
 
-Do **not** write a modified README file — this block is printed in the terminal only.
-The developer decides what to actually delete. Omit this block entirely when the count
-is fewer than 5.
+Do **not** write a modified README file — this block is printed in the terminal only. The developer decides what to actually delete. Omit this block entirely when the count is fewer than 5.
 
 ---
 
 Print the following report, filling in actual results. Use ✓ / ✗ for command outcomes.
 
-**In doc-scan-only mode**, replace the standard report with this abbreviated form —
-omit all sections except "Documentation recommendations":
+**In doc-scan-only mode**, replace the standard report with this abbreviated form — omit all sections except "Documentation recommendations":
 
     ╔══════════════════════════════════════════════════════════════════╗
     ║       App Management Migration — Documentation Scan              ║
@@ -1107,9 +925,7 @@ omit all sections except "Documentation recommendations":
     ── Documentation recommendations ─────────────────────────────────
     [Category C and D output — same format as below]
 
-Skip all other sections (Files written, Commands, Generated, Modified,
-Installation steps, Removable files, Schema cleanup, Commerce version
-constraints, Next steps) when in doc-scan-only mode.
+Skip all other sections (Files written, Commands, Generated, Modified, Installation steps, Removable files, Schema cleanup, Commerce version constraints, Next steps) when in doc-scan-only mode.
 
 ---
 
@@ -1413,8 +1229,7 @@ constraints, Next steps) when in doc-scan-only mode.
           provides the Commerce base URL to your actions. Guide: https://experienceleague.adobe.com/en/docs/commerce/app-management/manage-app/manage-app
        5. If metadata.upgradeMode is "manual", note that the generated upgrade plan was not executed
 
-If no customInstallationSteps were defined, omit the "Installation steps" section.
-If no scripts were migrated in Step 3, omit the migrated-scripts line from "Files written".
+If no customInstallationSteps were defined, omit the "Installation steps" section. If no scripts were migrated in Step 3, omit the migrated-scripts line from "Files written".
 
 **Removable files — edge cases:**
 

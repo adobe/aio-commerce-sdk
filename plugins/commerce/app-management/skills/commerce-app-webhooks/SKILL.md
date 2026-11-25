@@ -15,9 +15,7 @@ metadata:
 
 # Configure Commerce App Webhooks
 
-Adds or modifies webhook interceptors in an existing `app.commerce.config.ts`.
-Webhooks intercept Commerce operations — you can validate input, append data, or modify behavior before or after an operation executes.
-Other extensibility domains (events, business config) are added separately via their own skills.
+Adds or modifies webhook interceptors in an existing `app.commerce.config.ts`. Webhooks intercept Commerce operations — you can validate input, append data, or modify behavior before or after an operation executes. Other extensibility domains (events, business config) are added separately via their own skills.
 
 ## Prerequisites
 
@@ -43,20 +41,20 @@ Ask the user what they want to intercept and how:
 
 Apply the following validation rules before writing. Surface any issues to the user before proceeding.
 
-| Field                      | Constraint                                                                            |
-| -------------------------- | ------------------------------------------------------------------------------------- |
-| `batch_name`               | `[a-zA-Z0-9_]+` only — no hyphens, dots, or spaces                                    |
-| `hook_name`                | `[a-zA-Z0-9_]+` only — no hyphens, dots, or spaces                                    |
-| `category`                 | Optional; must be `validation`, `append`, or `modification`                           |
-| `runtimeAction`            | `<package>/<action>` format; mutually exclusive with `webhook.url`                    |
-| `webhook.url`              | Must be a valid absolute URL (`https://...`); mutually exclusive with `runtimeAction` |
-| `label`                    | Required, non-empty                                                                   |
-| `description`              | Required, non-empty                                                                   |
-| `webhook_type`             | Required; must be `before` or `after`                                                 |
-| `method`                   | Required; must be `POST`, `PUT`, `DELETE`, or `GET`                                   |
-| `timeout` / `soft_timeout` | Optional; positive integer (milliseconds)                                             |
-| `ttl`                      | Optional; positive integer (seconds)                                                  |
-| `priority` / `batch_order` | Optional; positive integer                                                            |
+| Field | Constraint |
+| --- | --- |
+| `batch_name` | `[a-zA-Z0-9_]+` only — no hyphens, dots, or spaces |
+| `hook_name` | `[a-zA-Z0-9_]+` only — no hyphens, dots, or spaces |
+| `category` | Optional; must be `validation`, `append`, or `modification` |
+| `runtimeAction` | `<package>/<action>` format; mutually exclusive with `webhook.url` |
+| `webhook.url` | Must be a valid absolute URL (`https://...`); mutually exclusive with `runtimeAction` |
+| `label` | Required, non-empty |
+| `description` | Required, non-empty |
+| `webhook_type` | Required; must be `before` or `after` |
+| `method` | Required; must be `POST`, `PUT`, `DELETE`, or `GET` |
+| `timeout` / `soft_timeout` | Optional; positive integer (milliseconds) |
+| `ttl` | Optional; positive integer (seconds) |
+| `priority` / `batch_order` | Optional; positive integer |
 
 ### Webhook settings
 
@@ -189,13 +187,13 @@ export async function main(params: Record<string, unknown>) {
 
 Operation types:
 
-| Response                        | Effect                                          |
-| ------------------------------- | ----------------------------------------------- |
-| `successOperation()`            | Allow — operation proceeds unchanged            |
-| `exceptionOperation(message)`   | Block — operation is rejected with this message |
-| `addOperation(path, value)`     | Append data at `path` in the result             |
-| `replaceOperation(path, value)` | Replace the value at `path` in the result       |
-| `removeOperation(path)`         | Remove the field at `path` from the result      |
+| Response | Effect |
+| --- | --- |
+| `successOperation()` | Allow — operation proceeds unchanged |
+| `exceptionOperation(message)` | Block — operation is rejected with this message |
+| `addOperation(path, value)` | Append data at `path` in the result |
+| `replaceOperation(path, value)` | Replace the value at `path` in the result |
+| `removeOperation(path)` | Remove the field at `path` from the result |
 
 ## Step 4 — Regenerate the `installation` action
 

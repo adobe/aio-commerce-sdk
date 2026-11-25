@@ -14,24 +14,17 @@ metadata:
 
 # Migrate to App Management
 
-Use this skill when the user wants to migrate an Adobe Commerce App Builder
-project from the Integration Starter Kit or Checkout Starter Kit to the new
-App Management approach using `@adobe/aio-commerce-lib-app`.
+Use this skill when the user wants to migrate an Adobe Commerce App Builder project from the Integration Starter Kit or Checkout Starter Kit to the new App Management approach using `@adobe/aio-commerce-lib-app`.
 
-This skill orchestrates the full migration: detection → domain analysis → Q&A →
-config assembly → execution. It leaves the project fully migrated and ready to deploy.
+This skill orchestrates the full migration: detection → domain analysis → Q&A → config assembly → execution. It leaves the project fully migrated and ready to deploy.
 
 ### Confirmation protocol
 
-At each step marked **[await]**: end your turn immediately, output nothing further,
-and wait for the developer's reply before proceeding.
+At each step marked **[await]**: end your turn immediately, output nothing further, and wait for the developer's reply before proceeding.
 
-**Autonomous mode:** If invoked with `--auto` or `--yes`, or the context indicates an
-automated pipeline (no interactive terminal), skip all **[await]** points and proceed
-directly to the next step.
+**Autonomous mode:** If invoked with `--auto` or `--yes`, or the context indicates an automated pipeline (no interactive terminal), skip all **[await]** points and proceed directly to the next step.
 
-**Doc-scan-only mode:** If invoked with `--doc-scan-only`, skip all migration steps after
-the Analyzer. After Step 1 completes (Analyzer returns a `ProjectSnapshot`):
+**Doc-scan-only mode:** If invoked with `--doc-scan-only`, skip all migration steps after the Analyzer. After Step 1 completes (Analyzer returns a `ProjectSnapshot`):
 
 - If `alreadyMigrated === false`, output:
 
@@ -42,22 +35,17 @@ the Analyzer. After Step 1 completes (Analyzer returns a `ProjectSnapshot`):
 
   Then stop.
 
-- If `alreadyMigrated === true`, apply any applicable Cross-cutting Warnings, then
-  dispatch the Executor in doc-scan-only mode. No files are modified.
-  Do not proceed to Steps 2–5.
+- If `alreadyMigrated === true`, apply any applicable Cross-cutting Warnings, then dispatch the Executor in doc-scan-only mode. No files are modified. Do not proceed to Steps 2–5.
 
 ---
 
 ## Preflight Check
 
-Before doing anything else, verify the current directory looks like an App Builder project.
-Check that ALL of these exist:
+Before doing anything else, verify the current directory looks like an App Builder project. Check that ALL of these exist:
 
 - `app.config.yaml`
 - `package.json`
-- At least one of: `actions/` directory OR `src/` directory OR `actions-src/` directory
-  (some projects compile TypeScript from `actions-src/` to `actions/`; `actions/` may be
-  gitignored and absent in a fresh checkout)
+- At least one of: `actions/` directory OR `src/` directory OR `actions-src/` directory (some projects compile TypeScript from `actions-src/` to `actions/`; `actions/` may be gitignored and absent in a fresh checkout)
 
 If none of those pass, stop immediately and output:
 
@@ -72,9 +60,7 @@ Do not proceed further if the preflight fails.
 
 ## Step 1: Run Analyzer Agent
 
-Dispatch the Analyzer agent (defined in `${CLAUDE_SKILL_DIR}/agents/analyzer.md`) using the Agent tool.
-The Analyzer reads the current directory and returns a `ProjectSnapshot` JSON object
-(schema defined in `${CLAUDE_SKILL_DIR}/shared/schema.md`).
+Dispatch the Analyzer agent (defined in `${CLAUDE_SKILL_DIR}/agents/analyzer.md`) using the Agent tool. The Analyzer reads the current directory and returns a `ProjectSnapshot` JSON object (schema defined in `${CLAUDE_SKILL_DIR}/shared/schema.md`).
 
 **Before printing the summary, check these early-exit conditions:**
 
@@ -89,22 +75,17 @@ The Analyzer reads the current directory and returns a `ProjectSnapshot` JSON ob
 
 Then apply any applicable Cross-cutting Warnings (see subsection below).
 
-Then dispatch the Executor agent (`${CLAUDE_SKILL_DIR}/agents/executor.md`) in
-**doc-scan-only mode** to produce documentation recommendations for the project:
+Then dispatch the Executor agent (`${CLAUDE_SKILL_DIR}/agents/executor.md`) in **doc-scan-only mode** to produce documentation recommendations for the project:
 
 - Pass `mode = "doc-scan-only"` to the Executor
 - Pass the `ProjectSnapshot` JSON from the Analyzer
 - Pass `assembled config = null` (no new config to write)
 
-The Executor will scan `README.md` and `env.dist` against the existing
-`app.commerce.config.ts` and print the "Documentation recommendations" report
-without modifying any files.
+The Executor will scan `README.md` and `env.dist` against the existing `app.commerce.config.ts` and print the "Documentation recommendations" report without modifying any files.
 
-**Do not proceed to Steps 2–5 (domain agents, Q&A, config assembly, full execution)
-unless the developer explicitly requests a specific section update.**
+**Do not proceed to Steps 2–5 (domain agents, Q&A, config assembly, full execution) unless the developer explicitly requests a specific section update.**
 
-After the Executor prints the documentation recommendations, **stop**. Do not continue to
-the "Detected project:" summary block or the migration confirmation prompt below.
+After the Executor prints the documentation recommendations, **stop**. Do not continue to the "Detected project:" summary block or the migration confirmation prompt below.
 
 After the Analyzer returns, print a human-readable summary:
 
@@ -137,14 +118,10 @@ Then ask:
 - If developer corrects `authMode`, update it
 - Re-print summary with corrections and ask again until confirmed
 
-**Handle unknown starterKitType:**
-If `starterKitType === "unknown"`, check `extensionPointsInUse`:
+**Handle unknown starterKitType:** If `starterKitType === "unknown"`, check `extensionPointsInUse`:
 
-- If `"commerce/backend-ui/1"` is present → this is an **Admin UI SDK v1 extension**. Proceed
-  with `starterKitType = "unknown"` — the admin-ui-sdk domain agent will migrate it to v2.
-  Print a note: "Detected Admin UI SDK v1 (commerce/backend-ui/1). Migrating to v2 (commerce/backend-ui/2)."
-- If all confidence values are `"none"` AND `extensionPointsInUse` is empty:
-  Output:
+- If `"commerce/backend-ui/1"` is present → this is an **Admin UI SDK v1 extension**. Proceed with `starterKitType = "unknown"` — the admin-ui-sdk domain agent will migrate it to v2. Print a note: "Detected Admin UI SDK v1 (commerce/backend-ui/1). Migrating to v2 (commerce/backend-ui/2)."
+- If all confidence values are `"none"` AND `extensionPointsInUse` is empty: Output:
 
       This project does not appear to be based on the Integration Starter Kit
       or Checkout Starter Kit. No event consumers, webhooks, or Admin UI SDK
@@ -169,8 +146,7 @@ If `starterKitType === "unknown"`, check `extensionPointsInUse`:
 
 ### Cross-cutting Warnings
 
-Apply these whenever the corresponding field is set in the ProjectSnapshot, regardless
-of migration state. Append each matching block to whatever output is currently being built.
+Apply these whenever the corresponding field is set in the ProjectSnapshot, regardless of migration state. Append each matching block to whatever output is currently being built.
 
 **If `openWhiskTriggers` is non-empty**, append:
 
@@ -178,37 +154,33 @@ of migration state. Append each matching block to whatever output is currently b
       <list each trigger description>
     These scheduled triggers have no direct equivalent in App Management.
 
-Read `${CLAUDE_SKILL_DIR}/shared/migration-warnings.md` (OpenWhisk Triggers section)
-and present the replacement options to the developer.
+Read `${CLAUDE_SKILL_DIR}/shared/migration-warnings.md` (OpenWhisk Triggers section) and present the replacement options to the developer.
 
 **If `hasApiGateway === true`**, append:
 
     ⚠ OpenWhisk API Gateway routes detected (apis: blocks in runtime manifest).
     These HTTP routes have no direct equivalent in App Management.
 
-Read `${CLAUDE_SKILL_DIR}/shared/migration-warnings.md` (API Gateway section)
-and present the migration options to the developer.
+Read `${CLAUDE_SKILL_DIR}/shared/migration-warnings.md` (API Gateway section) and present the migration options to the developer.
 
 **If `hasSequences === true`**, append:
 
     ⚠ OpenWhisk sequences detected.
     Action sequences have no equivalent in App Management.
 
-Read `${CLAUDE_SKILL_DIR}/shared/migration-warnings.md` (Sequences section)
-and present the refactoring guidance to the developer.
+Read `${CLAUDE_SKILL_DIR}/shared/migration-warnings.md` (Sequences section) and present the refactoring guidance to the developer.
 
 ---
 
 ## Step 2: Dispatch Domain Agents in Parallel
 
-For each domain where `confidence !== "none"`, dispatch the corresponding agent
-**at the same time** using the Agent tool (all in one parallel call):
+For each domain where `confidence !== "none"`, dispatch the corresponding agent **at the same time** using the Agent tool (all in one parallel call):
 
-| confidence field                                                     | Agent file                                      |
-| -------------------------------------------------------------------- | ----------------------------------------------- |
-| `confidence.events !== "none"`                                       | `${CLAUDE_SKILL_DIR}/agents/events.md`          |
-| `confidence.webhooks !== "none"`                                     | `${CLAUDE_SKILL_DIR}/agents/webhooks.md`        |
-| `confidence.adminUiSdk !== "none"`                                   | `${CLAUDE_SKILL_DIR}/agents/admin-ui-sdk.md`    |
+| confidence field | Agent file |
+| --- | --- |
+| `confidence.events !== "none"` | `${CLAUDE_SKILL_DIR}/agents/events.md` |
+| `confidence.webhooks !== "none"` | `${CLAUDE_SKILL_DIR}/agents/webhooks.md` |
+| `confidence.adminUiSdk !== "none"` | `${CLAUDE_SKILL_DIR}/agents/admin-ui-sdk.md` |
 | `confidence.businessConfig !== "none"` or `envDistKeys` is non-empty | `${CLAUDE_SKILL_DIR}/agents/business-config.md` |
 
 Each agent receives:
@@ -216,18 +188,13 @@ Each agent receives:
 - The `ProjectSnapshot` JSON
 - Instruction to read the relevant files in the current directory using their own Read tools
 
-Collect all returned `DomainResult` objects. Each has `domain`, `configFragment`,
-and `unresolvedQuestions` fields (schema in `${CLAUDE_SKILL_DIR}/shared/schema.md`).
-The business-config result may also carry `envMigrations`: environment variables still read
-by runtime actions that were added to `businessConfig.schema` as candidates (fields tagged
-`"_source": "env"`).
+Collect all returned `DomainResult` objects. Each has `domain`, `configFragment`, and `unresolvedQuestions` fields (schema in `${CLAUDE_SKILL_DIR}/shared/schema.md`). The business-config result may also carry `envMigrations`: environment variables still read by runtime actions that were added to `businessConfig.schema` as candidates (fields tagged `"_source": "env"`).
 
 ---
 
 ## Step 3: Grouped Q&A
 
-Collect all `unresolvedQuestions` from every `DomainResult`.
-If there are no unresolved questions across all domains, skip to Step 4.
+Collect all `unresolvedQuestions` from every `DomainResult`. If there are no unresolved questions across all domains, skip to Step 4.
 
 Present all questions in a single grouped session (format defined in `${CLAUDE_SKILL_DIR}/shared/questions.md`):
 
@@ -244,24 +211,17 @@ For each answer received:
 
 If the developer accepts a suggested value (presses Enter / says "yes"), use the `default`.
 
-**Special case — skip-by-default questions** (where `default` is `"no"`):
-These questions ask whether to include an optional section that was omitted from the
-`configFragment` because required data was missing (e.g. a provider direction with no
-deployed action package). Interpret the developer's reply as:
+**Special case — skip-by-default questions** (where `default` is `"no"`): These questions ask whether to include an optional section that was omitted from the `configFragment` because required data was missing (e.g. a provider direction with no deployed action package). Interpret the developer's reply as:
 
 - `"no"` (or pressing Enter) → leave the section out of the `configFragment`; do nothing
-- `"yes"` or any action string → add the section back; prompt for the runtime action name
-  if not already specified in the reply, then apply it to the `configFragment`
+- `"yes"` or any action string → add the section back; prompt for the runtime action name if not already specified in the reply, then apply it to the `configFragment`
 
-**Env var questions (`businessConfig.env.<KEY>.migrate`):**
-Group these under an "Environment variables" heading within the business-config domain. For each answer:
+**Env var questions (`businessConfig.env.<KEY>.migrate`):** Group these under an "Environment variables" heading within the business-config domain. For each answer:
 
 - `"yes"` (default) → keep the field in `businessConfig.schema`
-- `"no"` → remove the field tagged for that key from `businessConfig.schema` and drop its
-  `envMigrations` entry; the variable stays a manual environment variable
+- `"no"` → remove the field tagged for that key from `businessConfig.schema` and drop its `envMigrations` entry; the variable stays a manual environment variable
 
-If removal leaves `businessConfig.schema` empty, omit `businessConfig` from the config.
-The remaining `envMigrations` entries are the selected migrations passed to the Executor in Step 5.
+If removal leaves `businessConfig.schema` empty, omit `businessConfig` from the config. The remaining `envMigrations` entries are the selected migrations passed to the Executor in Step 5.
 
 **Autonomous mode — auto-accepted defaults summary:**
 
@@ -303,43 +263,13 @@ export default defineConfig({
 
 **Metadata derivation rules:**
 
-- `id`: Check `extension-manifest.json` first — if it has an `id` field and it is not
-  the same as the package name boilerplate, use it (apply same normalization: lowercase,
-  replace non-alphanumeric with `-`, trim, max 50 chars).
-  Otherwise take `name` from `package.json`. Strip npm scope (`@scope/`). Replace
-  any non-alphanumeric characters (except `-`) with `-`. Lowercase the entire string.
-  Trim leading/trailing dashes. Max 50 chars.
-  Known ISK boilerplate names to skip in favor of extension-manifest.json:
-  `commerce-integration-starter-kit`, `starter-kit`, `commerce-checkout-starter-kit`,
-  `aio-app-builder-template`.
-- `displayName`: Check `extension-manifest.json` first — if it has a `displayName` field,
-  use it (truncated to 50 chars). Otherwise title-case the `id` (replace `-` with spaces).
-  Max 50 chars.
+- `id`: Check `extension-manifest.json` first — if it has an `id` field and it is not the same as the package name boilerplate, use it (apply same normalization: lowercase, replace non-alphanumeric with `-`, trim, max 50 chars). Otherwise take `name` from `package.json`. Strip npm scope (`@scope/`). Replace any non-alphanumeric characters (except `-`) with `-`. Lowercase the entire string. Trim leading/trailing dashes. Max 50 chars. Known ISK boilerplate names to skip in favor of extension-manifest.json: `commerce-integration-starter-kit`, `starter-kit`, `commerce-checkout-starter-kit`, `aio-app-builder-template`.
+- `displayName`: Check `extension-manifest.json` first — if it has a `displayName` field, use it (truncated to 50 chars). Otherwise title-case the `id` (replace `-` with spaces). Max 50 chars.
 - `version`: Use `package.json` `version`. Default: `"1.0.0"`.
-- `upgradeMode`: Use `"manual"` (currently the default while upgrade execution
-  stabilizes) unless the developer explicitly asks for automatic execution. `"auto"` is
-  experimental: the generated post-deploy hook plans an upgrade, starts it and shows
-  its progress until it finishes. In `"manual"` mode, the hook leaves the plan pending
-  without starting execution.
-- `description`: Use `package.json` `description` if present.
-  If the description exceeds 255 characters, do NOT truncate it mid-sentence.
-  Instead, rewrite it: read the full description and compose a shorter one that
-  fits in 255 characters while preserving the essential meaning — what the app
-  does, which systems it connects, and its key capabilities. Prefer complete
-  sentences; drop secondary detail (deployment notes, exhaustive feature lists)
-  before core purpose. Never end with `"..."` — the rewritten description must
-  read as intentional, not cut off.
-  The rewritten value applies only to the config: the Executor records the original
-  `package.json` description before init and restores it afterwards (init writes the
-  config value back into `package.json`).
-  If absent or empty, check `extension-manifest.json` `description` field (apply the
-  same rewrite rule).
-  If neither has a description: `"Commerce App Builder application"`.
+- `upgradeMode`: Use `"manual"` (currently the default while upgrade execution stabilizes) unless the developer explicitly asks for automatic execution. `"auto"` is experimental: the generated post-deploy hook plans an upgrade, starts it and shows its progress until it finishes. In `"manual"` mode, the hook leaves the plan pending without starting execution.
+- `description`: Use `package.json` `description` if present. If the description exceeds 255 characters, do NOT truncate it mid-sentence. Instead, rewrite it: read the full description and compose a shorter one that fits in 255 characters while preserving the essential meaning — what the app does, which systems it connects, and its key capabilities. Prefer complete sentences; drop secondary detail (deployment notes, exhaustive feature lists) before core purpose. Never end with `"..."` — the rewritten description must read as intentional, not cut off. The rewritten value applies only to the config: the Executor records the original `package.json` description before init and restores it afterwards (init writes the config value back into `package.json`). If absent or empty, check `extension-manifest.json` `description` field (apply the same rewrite rule). If neither has a description: `"Commerce App Builder application"`.
 
-**productDependencies comment:**
-If `ProjectSnapshot.productDependencies` is non-null (has `minVersion` and/or `maxVersion`):
-Insert this comment block in the assembled TypeScript, immediately AFTER the copyright header
-and BEFORE the `import { defineConfig }` line:
+**productDependencies comment:** If `ProjectSnapshot.productDependencies` is non-null (has `minVersion` and/or `maxVersion`): Insert this comment block in the assembled TypeScript, immediately AFTER the copyright header and BEFORE the `import { defineConfig }` line:
 
 ```typescript
 // Product version constraints (no App Management equivalent — for reference only):
@@ -347,8 +277,7 @@ and BEFORE the `import { defineConfig }` line:
 // Contact Adobe Commerce Marketplace for guidance on version enforcement.
 ```
 
-Omit the `< <maxVersion>` part if `maxVersion` is null. Omit the `>= <minVersion>` part if
-`minVersion` is null. If both are null or `productDependencies` is null, omit the comment entirely.
+Omit the `< <maxVersion>` part if `maxVersion` is null. Omit the `>= <minVersion>` part if `minVersion` is null. If both are null or `productDependencies` is null, omit the comment entirely.
 
 Print the assembled TypeScript content to the terminal:
 
@@ -367,15 +296,11 @@ Print the assembled TypeScript content to the terminal:
 
 **[await]**
 
-**Handle rejection:**
-If the developer says no, ask: "Which section needs updating? (metadata / eventing /
-installation / adminUi / businessConfig)"
+**Handle rejection:** If the developer says no, ask: "Which section needs updating? (metadata / eventing / installation / adminUi / businessConfig)"
 
-Then ask the specific corrective question for that section, update the assembled
-config accordingly, re-print, and ask for confirmation again.
+Then ask the specific corrective question for that section, update the assembled config accordingly, re-print, and ask for confirmation again.
 
-Repeat until the developer confirms. Do NOT restart the entire flow — only
-re-enter the Q&A for the specific section being corrected.
+Repeat until the developer confirms. Do NOT restart the entire flow — only re-enter the Q&A for the specific section being corrected.
 
 ---
 
@@ -389,9 +314,7 @@ Dispatch the Executor agent (`${CLAUDE_SKILL_DIR}/agents/executor.md`) with:
 
 The Executor performs all file writes and CLI commands and prints the migration summary.
 
-If the Executor reports an error, relay the error message and the step that failed.
-Do not attempt to roll back changes — the git branch created by the Executor provides
-a rollback point (`git checkout main` to abandon the migration).
+If the Executor reports an error, relay the error message and the step that failed. Do not attempt to roll back changes — the git branch created by the Executor provides a rollback point (`git checkout main` to abandon the migration).
 
 ---
 

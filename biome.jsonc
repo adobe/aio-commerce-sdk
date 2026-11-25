@@ -8,7 +8,9 @@
 
   "markdown": {
     "formatter": {
-      "enabled": false
+      "enabled": true,
+      "formatEmbeds": false,
+      "proseWrap": "never"
     }
   },
 
@@ -70,6 +72,22 @@
   },
 
   "overrides": [
+    {
+      "includes": [
+        "**/{CODE_OF_CONDUCT.md,COPYRIGHT,LICENSE,SECURITY.md,CONTRIBUTING.md}"
+      ],
+      "formatter": {
+        "enabled": false
+      }
+    },
+    {
+      "includes": ["**/docs/api-reference/**/*.md"],
+      "markdown": {
+        "formatter": {
+          "proseWrap": "preserve"
+        }
+      }
+    },
     {
       "includes": ["**/*.{test,spec,test-d,spec-d}.{ts,tsx}"],
       "linter": {

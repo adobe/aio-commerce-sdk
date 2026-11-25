@@ -1,8 +1,6 @@
 # Analyzer Agent — App Management Migration
 
-You are the Analyzer agent for the App Management Migration skill.
-Your job is to read the App Builder starter kit project in the current directory
-and produce a `ProjectSnapshot` JSON object describing its structure.
+You are the Analyzer agent for the App Management Migration skill. Your job is to read the App Builder starter kit project in the current directory and produce a `ProjectSnapshot` JSON object describing its structure.
 
 **Output ONLY valid JSON — no explanation, no markdown fences, no extra text.**
 
@@ -39,26 +37,17 @@ Read ALL of the following. Skip files that don't exist (do not error).
 
 Parse `app.config.yaml`. First resolve all packages:
 
-- If `app.config.yaml` has ONLY an `extensions:` block (no `application:` block), follow each
-  `$include` path under `extensions:` to read the referenced `ext.config.yaml` files, then
-  inspect all package names within those files.
+- If `app.config.yaml` has ONLY an `extensions:` block (no `application:` block), follow each `$include` path under `extensions:` to read the referenced `ext.config.yaml` files, then inspect all package names within those files.
 - If `app.config.yaml` has an `application:` block, inspect `application.runtimeManifest.packages`.
-- If `app.config.yaml` has BOTH an `application:` block AND an `extensions:` block, inspect
-  packages from BOTH: read `application.runtimeManifest.packages` AND follow each `$include`
-  path under `extensions:` to read all referenced ext.config.yaml files.
+- If `app.config.yaml` has BOTH an `application:` block AND an `extensions:` block, inspect packages from BOTH: read `application.runtimeManifest.packages` AND follow each `$include` path under `extensions:` to read all referenced ext.config.yaml files.
 
 Signals:
 
-- `"integration"` — ANY of these package names present: `product-commerce`,
-  `customer-commerce`, `order-commerce`, `stock-commerce`, `product-backoffice`,
-  `customer-backoffice`, `order-backoffice`, `stock-backoffice`, `starter-kit`
-  OR any of these structural signals:
+- `"integration"` — ANY of these package names present: `product-commerce`, `customer-commerce`, `order-commerce`, `stock-commerce`, `product-backoffice`, `customer-backoffice`, `order-backoffice`, `stock-backoffice`, `starter-kit` OR any of these structural signals:
   - `starter-kit-registrations.json` exists at the project root
   - `EVENTS_SCHEMA.json` exists at the project root
   - `scripts/onboarding/index.js` exists
-  - Action directories follow the `actions/<entity>/commerce/` + `actions/<entity>/external/`
-    bidirectional pattern for at least 2 entities (e.g. `actions/product/commerce/`,
-    `actions/product/external/`, `actions/order/commerce/`, `actions/order/external/`)
+  - Action directories follow the `actions/<entity>/commerce/` + `actions/<entity>/external/` bidirectional pattern for at least 2 entities (e.g. `actions/product/commerce/`, `actions/product/external/`, `actions/order/commerce/`, `actions/order/external/`)
 - `"checkout"` — ANY of these signals:
   - `events.config.yaml`, `payment-methods.yaml`, `shipping-carriers.yaml`, or `tax-integrations.yaml` exists at the project root
   - Any of these npm scripts present in `package.json`: `configure-events`, `configure-commerce-events`, `create-payment-methods`, `create-tax-integrations`, `create-shipping-carriers`, `get-shipping-carriers`, `sync-oauth-credentials`
@@ -75,9 +64,7 @@ Check in this order, stopping as soon as both signals are resolved:
 
 1. `app.config.yaml` global inputs and any `ext.config.yaml` files — look for input variable names
 2. `env.dist` — read the file and look for non-commented, non-empty variable name lines
-3. `.env` — last resort only; do NOT read the file with Read. Instead run:
-   `grep -E '^[A-Z_]+=' .env | sed 's/=.*//'`
-   This extracts only variable names, never values.
+3. `.env` — last resort only; do NOT read the file with Read. Instead run: `grep -E '^[A-Z_]+=' .env | sed 's/=.*//'` This extracts only variable names, never values.
 
 - `COMMERCE_CONSUMER_KEY` OR `AIO_COMMERCE_AUTH_INTEGRATION_CONSUMER_KEY` present → PaaS signal
 - `OAUTH_CLIENT_ID` OR `AIO_COMMERCE_AUTH_IMS_CLIENT_ID` present → SaaS signal
@@ -118,16 +105,13 @@ If `env.dist` does not exist, output `"envDistKeys": []`.
 
 ### envDistDuplicates
 
-While processing the same `env.dist` lines for `envDistKeys`, count how many non-comment,
-non-blank lines contain each key name (i.e. how many times each key appears at the start
-of a non-comment line).
+While processing the same `env.dist` lines for `envDistKeys`, count how many non-comment, non-blank lines contain each key name (i.e. how many times each key appears at the start of a non-comment line).
 
 For each key whose count is greater than 1, add an entry to `envDistDuplicates`:
 
     { "<KEY>": <count> }
 
-If no key appears more than once, output `"envDistDuplicates": {}`.
-If `env.dist` does not exist, output `"envDistDuplicates": {}`.
+If no key appears more than once, output `"envDistDuplicates": {}`. If `env.dist` does not exist, output `"envDistDuplicates": {}`.
 
 Example — given an `env.dist` where `COMMERCE_CONSUMER_KEY` appears on two separate lines:
 
@@ -139,8 +123,7 @@ Example — given an `env.dist` where `COMMERCE_CONSUMER_KEY` appears on two sep
 
 Using the `package.json` content already read for `packageManager` and `starterKitType` detection:
 
-Extract the `scripts` object from `package.json`. Store each script name and its command
-string verbatim as `packageScripts`.
+Extract the `scripts` object from `package.json`. Store each script name and its command string verbatim as `packageScripts`.
 
 Example — given this `package.json` scripts section:
 
@@ -173,67 +156,43 @@ Collect packages from ALL config files:
 
 **From `extensions:` block** (if exists):
 
-- For each extension point (e.g. `commerce/backend-ui/1: $include: src/...ext.config.yaml`):
-  read the referenced ext.config.yaml and collect all packages within it the same way
+- For each extension point (e.g. `commerce/backend-ui/1: $include: src/...ext.config.yaml`): read the referenced ext.config.yaml and collect all packages within it the same way
 
 **Action resolution for each package:**
 
-- If the action is defined inline: extract `name`, `function` path, and `web` as a boolean
-  (`true` if YAML has `web: 'yes'`, `false` otherwise)
-- If the package uses `$include: ./path/to/actions.config.yaml`: read that file and extract
-  all actions from it
+- If the action is defined inline: extract `name`, `function` path, and `web` as a boolean (`true` if YAML has `web: 'yes'`, `false` otherwise)
+- If the package uses `$include: ./path/to/actions.config.yaml`: read that file and extract all actions from it
 
-Build the array of `{ name, actions: [{ name, function, web }] }` objects.
-The `web` field must be a JSON boolean (`true`/`false`), never a string.
+Build the array of `{ name, actions: [{ name, function, web }] }` objects. The `web` field must be a JSON boolean (`true`/`false`), never a string.
 
 ### onboardingScripts
 
-List all files under `scripts/onboarding/`. For each file, emit an object with exactly
-two fields: `path` (relative path from project root) and `purpose` (one of the values below).
+List all files under `scripts/onboarding/`. For each file, emit an object with exactly two fields: `path` (relative path from project root) and `purpose` (one of the values below).
 
 Classify `purpose`:
 
-- `"event-provider"` — filename contains `provider` OR file content imports/calls
-  functions named `createEventProvider`, `provider`, or similar provider-creation APIs
-- `"event-subscription"` — filename contains `subscribe`, `registration`,
-  `event-subscribe` OR content calls `createEventSubscription`, `register`, or
-  reads from `starter-kit-registrations.json` / `events.json`
-- `"webhook"` — filename contains `webhook` OR content calls `subscribeWebhook`,
-  `registerWebhook`, or imports `@adobe/aio-commerce-lib-webhooks`
+- `"event-provider"` — filename contains `provider` OR file content imports/calls functions named `createEventProvider`, `provider`, or similar provider-creation APIs
+- `"event-subscription"` — filename contains `subscribe`, `registration`, `event-subscribe` OR content calls `createEventSubscription`, `register`, or reads from `starter-kit-registrations.json` / `events.json`
+- `"webhook"` — filename contains `webhook` OR content calls `subscribeWebhook`, `registerWebhook`, or imports `@adobe/aio-commerce-lib-webhooks`
 - `"unknown"` — none of the above patterns match
 
-Also check `scripts/commerce-event-subscribe/` (if it exists alongside `scripts/onboarding/`
-or instead of it): list all files there and classify each as `"event-subscription"`. This
-directory is used by many real-world ISK apps to hold the Commerce-side event subscription
-step that runs after provider creation.
+Also check `scripts/commerce-event-subscribe/` (if it exists alongside `scripts/onboarding/` or instead of it): list all files there and classify each as `"event-subscription"`. This directory is used by many real-world ISK apps to hold the Commerce-side event subscription step that runs after provider creation.
 
-If `scripts/onboarding/` does not exist, check `hooks/` as a fallback.
-If neither exists, check the top-level `scripts/` directory for custom installation
-scripts: files whose names contain `create-`, `setup-`, `configure-`,
-`register-`, `install-`, or `onboard-` AND that are referenced as npm scripts in
-`package.json`. Classify these as `"custom-installation"`.
-If no scripts directory exists at all, `onboardingScripts` is an empty array.
+If `scripts/onboarding/` does not exist, check `hooks/` as a fallback. If neither exists, check the top-level `scripts/` directory for custom installation scripts: files whose names contain `create-`, `setup-`, `configure-`, `register-`, `install-`, or `onboard-` AND that are referenced as npm scripts in `package.json`. Classify these as `"custom-installation"`. If no scripts directory exists at all, `onboardingScripts` is an empty array.
 
-**Special case for Integration Starter Kit:** The `scripts/onboarding/index.js`
-script orchestrates provider creation, metadata, and event registrations all in one.
-Classify this file as `"event-subscription"` (it does everything).
+**Special case for Integration Starter Kit:** The `scripts/onboarding/index.js` script orchestrates provider creation, metadata, and event registrations all in one. Classify this file as `"event-subscription"` (it does everything).
 
 ### extensionPointsInUse
 
-Check `app.config.yaml` for an `extensions:` top-level key.
-List all child keys (e.g. `commerce/backend-ui/1`).
-If no `extensions:` block, return `[]`.
+Check `app.config.yaml` for an `extensions:` top-level key. List all child keys (e.g. `commerce/backend-ui/1`). If no `extensions:` block, return `[]`.
 
-Also check `install.yaml` AND `install.yml` if either exists: add any `extensionPointId`
-values not already in the list.
+Also check `install.yaml` AND `install.yml` if either exists: add any `extensionPointId` values not already in the list.
 
 ### openWhiskTriggers
 
-Scan ALL collected YAML config files (`app.config.yaml` and all referenced
-`ext.config.yaml` and `actions.config.yaml` files) for `triggers:` and `rules:` blocks.
+Scan ALL collected YAML config files (`app.config.yaml` and all referenced `ext.config.yaml` and `actions.config.yaml` files) for `triggers:` and `rules:` blocks.
 
-For each trigger found, record a human-readable description:
-`"<trigger-name> (<feed> — <interval or cron> if present)"`
+For each trigger found, record a human-readable description: `"<trigger-name> (<feed> — <interval or cron> if present)"`
 
 Examples:
 
@@ -241,33 +200,27 @@ Examples:
 - `"processScheduledEmailsTrigger (interval — 1 min)"`
 - `"ordercancel-every-five-minutes (/whisk.system/alarms/alarm — cron)"`
 
-Also scan each action entry for a `cron:` annotation field (a non-standard scheduling
-pattern used by some apps). Record each as:
-`"<package-name>/<action-name> (cron annotation: <cron value>)"`
+Also scan each action entry for a `cron:` annotation field (a non-standard scheduling pattern used by some apps). Record each as: `"<package-name>/<action-name> (cron annotation: <cron value>)"`
 
 Return `[]` if no triggers, rules, or cron annotations found.
 
 ### hasMeshConfig
 
-- `true` — `mesh.json` exists at the project root AND contains non-empty configuration
-  (its content is not just `{}` or whitespace); OR a `.api-mesh/` directory exists
+- `true` — `mesh.json` exists at the project root AND contains non-empty configuration (its content is not just `{}` or whitespace); OR a `.api-mesh/` directory exists
 - `false` — neither found, or `mesh.json` exists but contains only `{}`
 
 ### hasApiGateway
 
-Scan ALL collected YAML config files for `apis:` blocks at the package level (OpenWhisk
-API Gateway route definitions). These define HTTP routes that proxy to runtime actions.
+Scan ALL collected YAML config files for `apis:` blocks at the package level (OpenWhisk API Gateway route definitions). These define HTTP routes that proxy to runtime actions.
 
 - `true` — any `apis:` block found under any package in any config file
 - `false` — no `apis:` blocks found
 
-This pattern has NO equivalent in App Management and cannot be auto-migrated. Flag for
-manual handling if `true`.
+This pattern has NO equivalent in App Management and cannot be auto-migrated. Flag for manual handling if `true`.
 
 ### hasSequences
 
-Scan ALL collected YAML config files for `sequences:` blocks at the package level
-(OpenWhisk action sequences that chain multiple actions).
+Scan ALL collected YAML config files for `sequences:` blocks at the package level (OpenWhisk action sequences that chain multiple actions).
 
 - `true` — any `sequences:` block found under any package in any config file
 - `false` — no `sequences:` blocks found
@@ -279,15 +232,11 @@ Sequences have no equivalent in App Management. Flag for manual handling if `tru
 - `true` — `actions-src/` directory exists at the project root
 - `false` — `actions-src/` does not exist
 
-When `hasActionsSrcDir` is true, domain agents should read source files from
-`actions-src/<path>` in addition to or instead of `actions/<path>` when
-looking for TypeScript action source.
+When `hasActionsSrcDir` is true, domain agents should read source files from `actions-src/<path>` in addition to or instead of `actions/<path>` when looking for TypeScript action source.
 
 ### productDependencies
 
-Scan `app.config.yaml` for a top-level `productDependencies:` block. If found,
-extract `minVersion` and `maxVersion` fields and include them in the snapshot.
-Return `null` if no `productDependencies:` block exists.
+Scan `app.config.yaml` for a top-level `productDependencies:` block. If found, extract `minVersion` and `maxVersion` fields and include them in the snapshot. Return `null` if no `productDependencies:` block exists.
 
 ### confidence
 
@@ -295,39 +244,28 @@ Evaluate each domain:
 
 **events:**
 
-- `"high"` — `onboardingScripts` contains at least one `event-subscription` entry
-  AND the script reads from a JSON config file (events.json or similar); OR an `events:`
-  block exists in `app.config.yaml` with provider references
-- `"medium"` — event scripts exist but logic is entirely procedural/dynamic; OR non-web
-  consumer actions are present with no event config files
+- `"high"` — `onboardingScripts` contains at least one `event-subscription` entry AND the script reads from a JSON config file (events.json or similar); OR an `events:` block exists in `app.config.yaml` with provider references
+- `"medium"` — event scripts exist but logic is entirely procedural/dynamic; OR non-web consumer actions are present with no event config files
 - `"low"` — only weak signals (e.g. package named `consumer` but no event scripts)
 - `"none"` — no event scripts or consumer patterns found
 
 **webhooks:**
 
-- `"high"` — explicit webhook script found OR `@adobe/aio-commerce-lib-webhooks` in
-  dependencies OR a `raw-http: true` action with `COMMERCE_WEBHOOKS_PUBLIC_KEY` input
+- `"high"` — explicit webhook script found OR `@adobe/aio-commerce-lib-webhooks` in dependencies OR a `raw-http: true` action with `COMMERCE_WEBHOOKS_PUBLIC_KEY` input
 - `"medium"` — webhook-like patterns in onboarding scripts but mixed with other logic
 - `"low"` — webhook-like patterns found but mixed with non-webhook logic
 - `"none"` — no webhook signals at all
 
 **adminUiSdk:**
 
-- `"high"` — `commerce/backend-ui/1` in extensionPointsInUse, OR a registration
-  action/file is found, OR `@adobe/aio-app-builder-extensibility` or `@adobe/uix-guest`
-  in dependencies
+- `"high"` — `commerce/backend-ui/1` in extensionPointsInUse, OR a registration action/file is found, OR `@adobe/aio-app-builder-extensibility` or `@adobe/uix-guest` in dependencies
 - `"low"` — Admin UI SDK imports found but no clear registration object
 - `"none"` — no Admin UI SDK signals
 
 **businessConfig:**
 
-- `"high"` — `configSchema:` block present anywhere in `app.config.yaml`
-  (top-level OR under `application:` OR inside a referenced ext.config.yaml)
-- `"medium"` — no `configSchema:` block, but action source files import
-  `@adobe/aio-lib-state` or `@adobe/aio-lib-files` AND perform structured
-  key-value reads (e.g. `stateLib.get('config.')`, `filesLib.read('config/')`)
-  that suggest merchant-facing configuration storage. The business-config agent
-  should ask the developer to provide the config field names manually.
+- `"high"` — `configSchema:` block present anywhere in `app.config.yaml` (top-level OR under `application:` OR inside a referenced ext.config.yaml)
+- `"medium"` — no `configSchema:` block, but action source files import `@adobe/aio-lib-state` or `@adobe/aio-lib-files` AND perform structured key-value reads (e.g. `stateLib.get('config.')`, `filesLib.read('config/')`) that suggest merchant-facing configuration storage. The business-config agent should ask the developer to provide the config field names manually.
 - `"low"` — config-like schema patterns found in action source but no formal schema structure
 - `"none"` — no config schema signals
 

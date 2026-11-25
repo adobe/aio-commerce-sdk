@@ -303,6 +303,7 @@ The function performs several validations:
    ```
 
 3. **Whitespace is trimmed**
+
    ```typescript
    const auth = parseBearerToken("Bearer   token123   ");
    console.log(auth.token); // "token123"

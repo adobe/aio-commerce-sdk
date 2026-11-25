@@ -16,9 +16,7 @@ metadata:
 
 # Configure Commerce App Business Config
 
-Adds or modifies the `businessConfig.schema` array in an existing `app.commerce.config.ts`.
-Each entry in the schema defines one merchant-configurable setting that Commerce Admin will render as a UI field.
-Other extensibility domains (webhooks, events) are added separately via their own skills.
+Adds or modifies the `businessConfig.schema` array in an existing `app.commerce.config.ts`. Each entry in the schema defines one merchant-configurable setting that Commerce Admin will render as a UI field. Other extensibility domains (webhooks, events) are added separately via their own skills.
 
 ## Prerequisites
 
@@ -43,22 +41,22 @@ For each setting the user wants to expose, gather:
 
 Apply the following per-type validation rules before writing. Surface any issues to the user before proceeding.
 
-| Field                   | Constraint                                                                                      |
-| ----------------------- | ----------------------------------------------------------------------------------------------- |
-| `name`                  | Required, non-empty string                                                                      |
-| `type`                  | Required; one of `list`, `text`, `password`, `email`, `url`, `tel`, `boolean`                   |
-| `label`                 | Optional string                                                                                 |
-| `description`           | Optional string                                                                                 |
-| `list.selectionMode`    | Required for list fields: `"single"` or `"multiple"`                                            |
-| `list.options`          | Required for list fields; each option needs both `label` and `value` strings                    |
-| `list/single` default   | Required; must match one of the option `value` strings (non-empty)                              |
-| `list/multiple` default | Optional array of strings (defaults to `[]`); each element must match an option value           |
-| `text` default          | Optional string (defaults to `""`)                                                              |
-| `password` default      | Must be `""` — any non-empty default is rejected to prevent secrets in config                   |
-| `email` default         | Optional; `""` or a fully valid email address                                                   |
-| `url` default           | Optional; `""` or a fully valid absolute URL                                                    |
-| `tel` default           | Optional; `""` or matches `/^\+?[0-9\s\-()]+$/` (digits, spaces, hyphens, parens, optional `+`) |
-| `boolean` default       | Optional boolean (defaults to `false`)                                                          |
+| Field | Constraint |
+| --- | --- |
+| `name` | Required, non-empty string |
+| `type` | Required; one of `list`, `text`, `password`, `email`, `url`, `tel`, `boolean` |
+| `label` | Optional string |
+| `description` | Optional string |
+| `list.selectionMode` | Required for list fields: `"single"` or `"multiple"` |
+| `list.options` | Required for list fields; each option needs both `label` and `value` strings |
+| `list/single` default | Required; must match one of the option `value` strings (non-empty) |
+| `list/multiple` default | Optional array of strings (defaults to `[]`); each element must match an option value |
+| `text` default | Optional string (defaults to `""`) |
+| `password` default | Must be `""` — any non-empty default is rejected to prevent secrets in config |
+| `email` default | Optional; `""` or a fully valid email address |
+| `url` default | Optional; `""` or a fully valid absolute URL |
+| `tel` default | Optional; `""` or matches `/^\+?[0-9\s\-()]+$/` (digits, spaces, hyphens, parens, optional `+`) |
+| `boolean` default | Optional boolean (defaults to `false`) |
 
 `businessConfig.schema` must contain at least one field — an empty array is rejected at build time.
 
@@ -122,8 +120,7 @@ A build failure with a validation error points directly to the offending field.
 
 ## Reading config in runtime actions
 
-Use `@adobe/aio-commerce-lib-config` to read the values merchants set in Commerce Admin.
-The library must be initialized with the generated schema on every action invocation before any config call.
+Use `@adobe/aio-commerce-lib-config` to read the values merchants set in Commerce Admin. The library must be initialized with the generated schema on every action invocation before any config call.
 
 ### Basic pattern
 
@@ -165,12 +162,12 @@ export async function main(params) {
 
 ### Scope selectors
 
-| Selector                                  | When to use                                        |
-| ----------------------------------------- | -------------------------------------------------- |
-| `byCodeAndLevel("global", "global")`      | App-wide settings — applies to all stores          |
-| `byCodeAndLevel(storeCode, "store_view")` | Per store view (most specific)                     |
-| `byCode(storeCode)`                       | Resolves using the default level for the scope     |
-| `byScopeId(scopeId)`                      | When you have the scope's numeric ID from Commerce |
+| Selector | When to use |
+| --- | --- |
+| `byCodeAndLevel("global", "global")` | App-wide settings — applies to all stores |
+| `byCodeAndLevel(storeCode, "store_view")` | Per store view (most specific) |
+| `byCode(storeCode)` | Resolves using the default level for the scope |
+| `byScopeId(scopeId)` | When you have the scope's numeric ID from Commerce |
 
 Values inherit from parent scopes — a field not set on `store_view` falls back to `store`, `website`, then `global`.
 

@@ -327,6 +327,7 @@ await ioEventsClient.publishEvent({
 ### Custom API Clients
 
 > [!TIP]
+>
 > We recommend creating custom API clients with only the functions you need for better performance. This way your build tool will be able to tree-shake the unused functions and reduce the bundle size, leading to faster startup times, which is especially important for App Builder-based applications (lower cold start times).
 
 You can create custom API clients with only the functions you need:

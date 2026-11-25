@@ -16,8 +16,7 @@ metadata:
 
 # Configure Commerce App Eventing
 
-Adds or modifies event sources — Commerce-native events or external events — in an existing `app.commerce.config.ts`.
-Extensibility domains other than eventing (webhooks, business config) are added separately via their own skills.
+Adds or modifies event sources — Commerce-native events or external events — in an existing `app.commerce.config.ts`. Extensibility domains other than eventing (webhooks, business config) are added separately via their own skills.
 
 ## Prerequisites
 
@@ -64,19 +63,19 @@ For each event source, gather:
 
 Apply the following validation rules before writing the config. Surface any issues to the user before proceeding.
 
-| Field                | Constraint                                                                          |
-| -------------------- | ----------------------------------------------------------------------------------- |
-| Commerce event name  | Starts with `plugin.` or `observer.`; each segment matches `[a-z_]+`; max 180 chars |
-| External event name  | `[\w\-_.]+`; max 180 chars                                                          |
-| Provider label       | Max 100 chars                                                                       |
-| Provider description | Max 255 chars                                                                       |
-| Provider key         | Optional; alphanumeric + hyphens only; max 50 chars                                 |
-| Event label          | Max 100 chars                                                                       |
-| Event description    | Max 255 chars                                                                       |
-| Field name           | `[a-zA-Z0-9_\-.[\]]+` or `*`                                                        |
-| Rule operator        | `greaterThan`, `lessThan`, `equal`, `regex`, `in`, or `onChange`                    |
-| Runtime action       | `<package>/<action>` (e.g., `my-package/handle-order-placed`)                       |
-| Event env (optional) | Non-empty array of `"paas"` / `"saas"`; omitted = all environments                  |
+| Field | Constraint |
+| --- | --- |
+| Commerce event name | Starts with `plugin.` or `observer.`; each segment matches `[a-z_]+`; max 180 chars |
+| External event name | `[\w\-_.]+`; max 180 chars |
+| Provider label | Max 100 chars |
+| Provider description | Max 255 chars |
+| Provider key | Optional; alphanumeric + hyphens only; max 50 chars |
+| Event label | Max 100 chars |
+| Event description | Max 255 chars |
+| Field name | `[a-zA-Z0-9_\-.[\]]+` or `*` |
+| Rule operator | `greaterThan`, `lessThan`, `equal`, `regex`, `in`, or `onChange` |
+| Runtime action | `<package>/<action>` (e.g., `my-package/handle-order-placed`) |
+| Event env (optional) | Non-empty array of `"paas"` / `"saas"`; omitted = all environments |
 
 ## Step 3 — Update `app.commerce.config.ts`
 

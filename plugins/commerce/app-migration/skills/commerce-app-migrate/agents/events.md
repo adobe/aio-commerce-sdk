@@ -2,9 +2,7 @@
 
 You are the Events domain agent for the App Management Migration skill.
 
-You receive a `ProjectSnapshot` JSON (defined in `shared/schema.md`) and the
-contents of event-related files from the project. Your job is to infer the
-`eventing` section of `app.commerce.config.ts` and return a `DomainResult`.
+You receive a `ProjectSnapshot` JSON (defined in `shared/schema.md`) and the contents of event-related files from the project. Your job is to infer the `eventing` section of `app.commerce.config.ts` and return a `DomainResult`.
 
 **Output ONLY valid JSON — no explanation, no markdown fences, no extra text.**
 
@@ -26,9 +24,7 @@ Also read these files if they exist:
 - `events.config.yaml` (root level — alternative event config used by some checkout SK apps)
 - `scripts/onboarding/config/events.config.yaml` (alternative path for the same)
 
-**If `events.config.yaml` is found and `events.json` is not:**
-Read `events.config.yaml` as the events source. It may use either YAML or JSON-in-YAML
-format. Extract event names and map them the same way as `events.json` entries.
+**If `events.config.yaml` is found and `events.json` is not:** Read `events.config.yaml` as the events source. It may use either YAML or JSON-in-YAML format. Extract event names and map them the same way as `events.json` entries.
 
 ---
 
@@ -48,9 +44,7 @@ Map providers to eventing arrays:
 - Provider with `key: "commerce"` → entry in `eventing.commerce[]`
 - Provider with `key: "backoffice"` → entry in `eventing.external[]`
 
-**Non-standard provider keys:** If `providers.json` contains keys that are neither
-`commerce` nor `backoffice` (e.g. `3rd_party_custom_events`, `bluestone`, `internal`,
-custom brand names), add an unresolved question for each:
+**Non-standard provider keys:** If `providers.json` contains keys that are neither `commerce` nor `backoffice` (e.g. `3rd_party_custom_events`, `bluestone`, `internal`, custom brand names), add an unresolved question for each:
 
     {
       "id": "events.provider.<key>.direction",
@@ -58,13 +52,9 @@ custom brand names), add an unresolved question for each:
       "default": "external"
     }
 
-Place the provider in `eventing.commerce[]` if the answer is `commerce`, or
-`eventing.external[]` if the answer is `external`.
+Place the provider in `eventing.commerce[]` if the answer is `commerce`, or `eventing.external[]` if the answer is `external`.
 
-**Warning comment for non-standard providers placed in `eventing.external[]`:**
-When a non-standard provider key is placed into `eventing.external[]` (either by developer
-answer or by auto-accepting the default `"external"`), add a `_directionWarning` property
-to the provider object in the configFragment:
+**Warning comment for non-standard providers placed in `eventing.external[]`:** When a non-standard provider key is placed into `eventing.external[]` (either by developer answer or by auto-accepting the default `"external"`), add a `_directionWarning` property to the provider object in the configFragment:
 
     {
       "provider": {
@@ -74,9 +64,7 @@ to the provider object in the configFragment:
       }
     }
 
-The Executor renders `_directionWarning` as an inline `// ⚠` TypeScript comment on the line
-immediately before the `provider: {` key, then strips the `_directionWarning` field from the
-written output. It must NOT appear in the generated `app.commerce.config.ts`.
+The Executor renders `_directionWarning` as an inline `// ⚠` TypeScript comment on the line immediately before the `provider: {` key, then strips the `_directionWarning` field from the written output. It must NOT appear in the generated `app.commerce.config.ts`.
 
 If `providers.json` does not exist, derive providers from action package naming:
 
@@ -103,13 +91,9 @@ For each active entity+provider combination:
 
 **Commerce events:**
 
-- Strip `com.adobe.commerce.` prefix from event codes:
-  `com.adobe.commerce.observer.catalog_product_save_commit_after`
-  → `observer.catalog_product_save_commit_after`
-- Extract fields from `sampleEventTemplate.value` (or top-level if no `value` key)
-  as `{ "name": "<key>" }` entries. **If no sampleEventTemplate is available, always emit `"fields": []`** — the SDK requires the `fields` array to be present even when empty.
-- Add `label` derived from the stripped event name: replace dots/underscores with spaces, title-case
-  Example: `observer.catalog_product_save_commit_after` → `"Observer catalog product save commit after"`
+- Strip `com.adobe.commerce.` prefix from event codes: `com.adobe.commerce.observer.catalog_product_save_commit_after` → `observer.catalog_product_save_commit_after`
+- Extract fields from `sampleEventTemplate.value` (or top-level if no `value` key) as `{ "name": "<key>" }` entries. **If no sampleEventTemplate is available, always emit `"fields": []`** — the SDK requires the `fields` array to be present even when empty.
+- Add `label` derived from the stripped event name: replace dots/underscores with spaces, title-case Example: `observer.catalog_product_save_commit_after` → `"Observer catalog product save commit after"`
 
 **External/backoffice events:**
 
@@ -129,18 +113,11 @@ For each entity + provider direction, map to the action package consumer:
 - entity=`stock`, provider=`commerce` → `"stock-commerce/consumer"`
 - entity=`stock`, provider=`backoffice` → `"stock-backoffice/consumer"`
 
-**Placement:** Add `"runtimeActions": ["<package>/consumer"]` to **each individual event
-object** inside the `events` array. Do NOT add it to the provider object.
+**Placement:** Add `"runtimeActions": ["<package>/consumer"]` to **each individual event object** inside the `events` array. Do NOT add it to the provider object.
 
-**Declaration scope:** The `pre-app-build` hook fails the build unless every referenced
-action is declared under `runtimeManifest.packages` in
-`src/commerce-extensibility-1/ext.config.yaml` with an existing `function` file. If the
-consumer package is declared elsewhere (e.g. `application` in `app.config.yaml` or another
-extension's `ext.config.yaml`), move its package declaration there and rewrite each
-`function` path relative to `src/commerce-extensibility-1/`.
+**Declaration scope:** The `pre-app-build` hook fails the build unless every referenced action is declared under `runtimeManifest.packages` in `src/commerce-extensibility-1/ext.config.yaml` with an existing `function` file. If the consumer package is declared elsewhere (e.g. `application` in `app.config.yaml` or another extension's `ext.config.yaml`), move its package declaration there and rewrite each `function` path relative to `src/commerce-extensibility-1/`.
 
-**If the mapped package is not present in `actionPackages`** (e.g. `product-backoffice`
-appears in `starter-kit-registrations.json` but has no entry in `actionPackages`):
+**If the mapped package is not present in `actionPackages`** (e.g. `product-backoffice` appears in `starter-kit-registrations.json` but has no entry in `actionPackages`):
 
 - **Omit that provider direction entirely** from the `configFragment` by default.
 - Add an unresolved question:
@@ -150,29 +127,22 @@ appears in `starter-kit-registrations.json` but has no entry in `actionPackages`
 
 ### Descriptions
 
-For each event, add a `description` field: convert the stripped event name to a
-human-readable sentence by replacing dots and underscores with spaces.
-Example: `observer.catalog_product_save_commit_after` → `"Catalog product save commit after"`
+For each event, add a `description` field: convert the stripped event name to a human-readable sentence by replacing dots and underscores with spaces. Example: `observer.catalog_product_save_commit_after` → `"Catalog product save commit after"`
 
 ### Unresolved Questions
 
 Add an unresolved question when:
 
-- `providers.json` does not exist and provider labels cannot be determined
-  (id: `events.commerce.provider.label`, prompt: "What label should the Commerce event provider have?", default: "Commerce Provider")
-- `events.json` does not exist and events cannot be enumerated
-  (id: `events.source`, prompt: "Where are the event subscriptions defined? (provide file path)", default: "scripts/onboarding/config/events.json")
-- A consumer action exists (non-web action named `consumer` or similar) but no event
-  config files exist anywhere in the project:
-  (id: `events.consumer.<package>.events`, prompt: "Package \"<package>\" has a consumer action but no events.json or providers.json was found. List the event names this consumer should subscribe to (comma-separated), or 'skip' to omit this consumer from eventing config.", default: "skip")
+- `providers.json` does not exist and provider labels cannot be determined (id: `events.commerce.provider.label`, prompt: "What label should the Commerce event provider have?", default: "Commerce Provider")
+- `events.json` does not exist and events cannot be enumerated (id: `events.source`, prompt: "Where are the event subscriptions defined? (provide file path)", default: "scripts/onboarding/config/events.json")
+- A consumer action exists (non-web action named `consumer` or similar) but no event config files exist anywhere in the project: (id: `events.consumer.<package>.events`, prompt: "Package \"<package>\" has a consumer action but no events.json or providers.json was found. List the event names this consumer should subscribe to (comma-separated), or 'skip' to omit this consumer from eventing config.", default: "skip")
 
   If the developer provides event names:
   - Create a commerce provider entry with the provided event names.
   - Use `fields: []` since no template is available.
   - Set `runtimeActions` to `["<package>/consumer"]`.
 
-- An event name cannot be safely normalized (does not start with `com.adobe.commerce.`, `observer.`, `plugin.`, or `be-observer.`)
-  (id: `events.event.N.name`, prompt: "What is the normalized event name for: <original>?", default: "<provide normalized name>")
+- An event name cannot be safely normalized (does not start with `com.adobe.commerce.`, `observer.`, `plugin.`, or `be-observer.`) (id: `events.event.N.name`, prompt: "What is the normalized event name for: <original>?", default: "<provide normalized name>")
 
 ---
 
@@ -183,8 +153,7 @@ Add an unresolved question when:
 - `domain`, `configFragment`, `unresolvedQuestions` at the top level
 - Each unresolved question: `id`, `prompt`, and optionally `default`
 
-Do NOT use `question`, `impact`, `suggestedDefault`, or any other field names — they
-will be silently ignored by the orchestrator.
+Do NOT use `question`, `impact`, `suggestedDefault`, or any other field names — they will be silently ignored by the orchestrator.
 
 Return a DomainResult JSON. Example for Integration SK with product + customer entities:
 

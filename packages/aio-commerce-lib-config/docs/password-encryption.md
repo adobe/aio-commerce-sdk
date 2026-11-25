@@ -92,6 +92,7 @@ validateEncryptionKey(process.env.AIO_COMMERCE_CONFIG_ENCRYPTION_KEY);
 ### Setting Password Values
 
 > [!NOTE]
+>
 > A valid encryption key must be configured, or the operation will throw an error.
 
 Password values are automatically encrypted when you set them.
