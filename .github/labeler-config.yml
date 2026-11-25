@@ -35,7 +35,7 @@
 "pkg: aio-commerce-lib-webhooks":
   - changed-files:
       - any-glob-to-any-file: "packages/aio-commerce-lib-webhooks/**"
-      
+
 "private-pkg: scripting-utils":
   - changed-files:
       - any-glob-to-any-file: "packages-private/scripting-utils/**"

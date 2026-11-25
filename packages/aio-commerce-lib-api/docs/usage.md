@@ -69,6 +69,7 @@ const commerceClient = new AdobeCommerceHttpClient({
 **With IMS Auth:**
 
 > [!IMPORTANT]
+>
 > Using IMS authentication with PaaS requires a one-time manual setup in the Commerce Admin. The S2S token issued for your technical account is treated as a user token, so the technical account must exist as an admin user with the appropriate permissions.
 >
 > To set this up, follow the [Admin User Creation Guide](https://experienceleague.adobe.com/en/docs/commerce-admin/systems/user-accounts/permissions-users-all#create-a-user). In the Email field, enter the technical account email from the OAuth Server-to-Server credential in your Adobe Developer Console workspace (format: `<technical-account>@techacct.adobe.com`). It must match exactly. On the User Role tab, assign the **Integrations** role.
@@ -118,6 +119,7 @@ For App Builder runtime actions, you can use `resolveCommerceHttpClientParams` t
 **Example: SaaS with IMS Auth**
 
 > [!IMPORTANT]
+>
 > The `include-ims-credentials` annotation injects the workspace OAuth Server-to-Server credentials into the action at runtime. Manually wiring the `AIO_COMMERCE_AUTH_IMS_*` inputs is deprecated.
 
 ```diff
@@ -310,11 +312,11 @@ Empty groups are dropped, so a conditionally-built `filterGroups` cannot produce
 
 Three conditions Commerce will accept are deliberately excluded, because each one silently misbehaves over REST rather than returning an error:
 
-| Excluded   | Why                                                                                                                                                                                      | Use instead                     |
-| ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------- |
-| `moreq`    | Listed in Adobe's condition type table, but no Commerce condition map implements it. It falls through to `eq` and returns wrong rows.                                                    | `gteq`                          |
-| `fulltext` | An admin grid condition type. A REST request only reaches it via a fallback that rewrites it to `like` with the value wrapped in wildcards, despite the name implying relevance ranking. | `like` with explicit `%`        |
-| `ntoa`     | Matches `INET_NTOA(field)`, needing an IPv4 address stored as an integer. No core table does that, and on a varchar column such as `sales_order.remote_ip` it matches nothing at all.    | `like` or `eq` on the raw value |
+| Excluded | Why | Use instead |
+| --- | --- | --- |
+| `moreq` | Listed in Adobe's condition type table, but no Commerce condition map implements it. It falls through to `eq` and returns wrong rows. | `gteq` |
+| `fulltext` | An admin grid condition type. A REST request only reaches it via a fallback that rewrites it to `like` with the value wrapped in wildcards, despite the name implying relevance ranking. | `like` with explicit `%` |
+| `ntoa` | Matches `INET_NTOA(field)`, needing an IPv4 address stored as an integer. No core table does that, and on a varchar column such as `sales_order.remote_ip` it matches nothing at all. | `like` or `eq` on the raw value |
 
 A few behaviours worth knowing:
 
@@ -397,6 +399,7 @@ await commerceClient.get("products", { searchParams });
 ```
 
 > [!NOTE]
+>
 > Serialization is faithful to whatever you describe; it does not check that a field exists or that the endpoint you are calling supports search criteria. Invalid criteria surface as a Commerce `400`, which [`unwrapHttpError`](#unwrapping-http-errors) will make readable.
 
 ### Forwarding IMS Authentication
@@ -462,6 +465,7 @@ export const main = async function (params) {
 ```
 
 > [!NOTE]
+>
 > By default (`tryForwardAuthProvider: false`), the resolver uses `resolveAuthParams` which requires full IMS or Integration auth parameters. Set `tryForwardAuthProvider: true` explicitly when you want to forward pre-existing tokens.
 
 ### Custom Auth Providers

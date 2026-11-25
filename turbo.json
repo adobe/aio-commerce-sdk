@@ -11,9 +11,6 @@
     "format": {
       "dependsOn": ["assist:apply"]
     },
-    "format:markdown": {
-      "dependsOn": ["assist:apply"]
-    },
     "code:fix": {
       "dependsOn": ["transit"]
     },

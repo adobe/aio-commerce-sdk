@@ -1,6 +1,7 @@
 # Breaking Changes
 
 > [!IMPORTANT]
+>
 > All unreleased changes are planned for the next major release.
 
 ## [Unreleased]
@@ -19,11 +20,11 @@ The SDK uses [ky](https://github.com/sindresorhus/ky) as its HTTP client. ky v2 
 
 The `fetchOptions` parameter of the following endpoint functions accepts a `hooks` key:
 
-| Area                            | Functions                                                                                                                                                                                                                              |
-| ------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Commerce event providers        | `getAllEventProviders`, `getEventProviderById`, `createEventProvider`, `deleteEventProvider`                                                                                                                                           |
-| Commerce event subscriptions    | `getAllEventSubscriptions`, `createEventSubscription`, `deleteEventSubscription`                                                                                                                                                       |
-| Commerce eventing configuration | `updateEventingConfiguration`                                                                                                                                                                                                          |
-| IO Events event providers       | `getAllEventProviders`, `getEventProviderById`, `createEventProvider`, `deleteEventProvider`, `getAllCommerceEventProviders`, `getAll3rdPartyCustomEventProviders`, `createCommerceEventProvider`, `create3rdPartyCustomEventProvider` |
-| IO Events event registrations   | `getAllRegistrationsByConsumerOrg`, `getAllRegistrations`, `getRegistrationById`, `createRegistration`, `updateRegistration`, `deleteRegistration`                                                                                     |
-| IO Events event metadata        | `getAllEventMetadataForProvider`, `getEventMetadataForEventAndProvider`, `createEventMetadataForProvider`, `deleteEventMetadataForProvider`                                                                                            |
+| Area | Functions |
+| --- | --- |
+| Commerce event providers | `getAllEventProviders`, `getEventProviderById`, `createEventProvider`, `deleteEventProvider` |
+| Commerce event subscriptions | `getAllEventSubscriptions`, `createEventSubscription`, `deleteEventSubscription` |
+| Commerce eventing configuration | `updateEventingConfiguration` |
+| IO Events event providers | `getAllEventProviders`, `getEventProviderById`, `createEventProvider`, `deleteEventProvider`, `getAllCommerceEventProviders`, `getAll3rdPartyCustomEventProviders`, `createCommerceEventProvider`, `create3rdPartyCustomEventProvider` |
+| IO Events event registrations | `getAllRegistrationsByConsumerOrg`, `getAllRegistrations`, `getRegistrationById`, `createRegistration`, `updateRegistration`, `deleteRegistration` |
+| IO Events event metadata | `getAllEventMetadataForProvider`, `getEventMetadataForEventAndProvider`, `createEventMetadataForProvider`, `deleteEventMetadataForProvider` |

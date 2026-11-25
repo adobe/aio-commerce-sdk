@@ -276,16 +276,16 @@
 
   **For Adobe I/O Events**:
 
-  | Category                    | Operations                                                                                                                            |
-  | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-  | Event Providers             | `getAllEventProviders`, `getEventProviderById`, `createEventProvider`                                                                 |
+  | Category | Operations |
+  | --- | --- |
+  | Event Providers | `getAllEventProviders`, `getEventProviderById`, `createEventProvider` |
   | Event Providers (Shortcuts) | `getAllCommerceEventProviders`, `getAll3rdPartyCustomEventsProviders`, `createCommerceProvider`, `create3rdPartyCustomEventsProvider` |
-  | Event Metadata              | `getAllEventMetadataForProvider`, `getEventMetadataForEventAndProvider`, `createEventMetadataForProvider`                             |
+  | Event Metadata | `getAllEventMetadataForProvider`, `getEventMetadataForEventAndProvider`, `createEventMetadataForProvider` |
 
   **For Adobe Commerce**:
 
-  | Category               | Operations                                                            |
-  | ---------------------- | --------------------------------------------------------------------- |
-  | Event Providers        | `getAllEventProviders`, `getEventProviderById`, `createEventProvider` |
-  | Event Subscriptions    | `getAllEventSubscriptions`, `createEventSubscription`                 |
-  | Eventing Configuration | `updateEventingConfiguration`                                         |
+  | Category | Operations |
+  | --- | --- |
+  | Event Providers | `getAllEventProviders`, `getEventProviderById`, `createEventProvider` |
+  | Event Subscriptions | `getAllEventSubscriptions`, `createEventSubscription` |
+  | Eventing Configuration | `updateEventingConfiguration` |

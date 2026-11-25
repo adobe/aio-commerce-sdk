@@ -1,14 +1,12 @@
 # Data Schemas: Migration Agents
 
-This file defines the JSON data contracts exchanged between migration agents.
-All agents that produce or consume these types must conform to these schemas exactly.
+This file defines the JSON data contracts exchanged between migration agents. All agents that produce or consume these types must conform to these schemas exactly.
 
 ---
 
 ## Assembled Metadata
 
-The orchestrator always includes `upgradeMode` in the generated
-`app.commerce.config.ts` metadata:
+The orchestrator always includes `upgradeMode` in the generated `app.commerce.config.ts` metadata:
 
 ```typescript
 interface AssembledMetadata {
@@ -20,9 +18,7 @@ interface AssembledMetadata {
 }
 ```
 
-`"auto"` is the migration default: the generated post-deploy hook plans an
-upgrade and starts it immediately. Use `"manual"` only when the developer
-explicitly wants the plan left pending without starting it.
+`"auto"` is the migration default: the generated post-deploy hook plans an upgrade and starts it immediately. Use `"manual"` only when the developer explicitly wants the plan left pending without starting it.
 
 ---
 
@@ -202,8 +198,7 @@ interface ProjectSnapshot {
 
 ## DomainResult
 
-Produced by each **domain agent** (events, webhooks, admin-ui-sdk, business-config).
-Consumed by the **main orchestrator** to assemble the final `app.commerce.config.ts`.
+Produced by each **domain agent** (events, webhooks, admin-ui-sdk, business-config). Consumed by the **main orchestrator** to assemble the final `app.commerce.config.ts`.
 
 ```typescript
 interface DomainResult {

@@ -278,9 +278,6 @@ importers:
       playwright:
         specifier: 1.65.1
         version: 1.65.1
-      prettier:
-        specifier: 'catalog:'
-        version: 3.10.1
       publint:
         specifier: ^0.3.18
         version: 0.3.25

@@ -1,8 +1,6 @@
 # Grid Columns (`commerce/backend-ui/2`)
 
-Adds custom columns to the order, product, customer, invoice, credit memo, shipment, or newsletter grid in Commerce Admin.
-Runtime-backed `gridColumns` are **worker-only**: Commerce calls a runtime action to fetch visible row values.
-Credit Memo custom-attribute columns use the separate `customAttributeGridColumns` section described below.
+Adds custom columns to the order, product, customer, invoice, credit memo, shipment, or newsletter grid in Commerce Admin. Runtime-backed `gridColumns` are **worker-only**: Commerce calls a runtime action to fetch visible row values. Credit Memo custom-attribute columns use the separate `customAttributeGridColumns` section described below.
 
 ## Config (`app.commerce.config.ts`)
 
@@ -26,16 +24,16 @@ adminUi: {
 
 ### Constraints
 
-| Field                    | Constraint                                                                                                                          |
-| ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------- |
-| `label`                  | Required, non-empty                                                                                                                 |
-| `description`            | Required, non-empty                                                                                                                 |
-| `runtimeAction`          | Required; `<package>/<action>`; resolves to a worker action you declare                                                             |
-| `columns`                | Required array; at least one entry                                                                                                  |
-| `columns[].id`           | Required, non-empty; the key the handler returns for each row                                                                       |
-| `columns[].label`        | Required, non-empty; column header shown in Admin                                                                                   |
-| `columns[].type`         | Required; one of `boolean`, `date`, `datetime`, `float`, `integer`, `string`                                                        |
-| `columns[].align`        | Required; one of `left`, `center`, `right`                                                                                          |
+| Field | Constraint |
+| --- | --- |
+| `label` | Required, non-empty |
+| `description` | Required, non-empty |
+| `runtimeAction` | Required; `<package>/<action>`; resolves to a worker action you declare |
+| `columns` | Required array; at least one entry |
+| `columns[].id` | Required, non-empty; the key the handler returns for each row |
+| `columns[].label` | Required, non-empty; column header shown in Admin |
+| `columns[].type` | Required; one of `boolean`, `date`, `datetime`, `float`, `integer`, `string` |
+| `columns[].align` | Required; one of `left`, `center`, `right` |
 | `columns[].aclProtected` | Optional boolean; when `true`, Commerce generates a per-app nested ACL resource for the column so admins can grant/deny it per role |
 
 ## Custom-attribute columns (Credit Memo only)
@@ -63,24 +61,13 @@ creditMemo: {
 }
 ```
 
-The section requires only a nonempty `columns` array, without Runtime bindings.
-Optional, nonempty section `label` and `description` provide display text for App Management lifecycle summaries.
-Each column requires nonblank `id` and `label`, `align` (`left`, `center`, `right`), and `attribute_code`
-(1–255 ASCII letters, digits, or underscores). `aclProtected` is optional and boolean. IDs must be unique after
-Commerce sanitization, including across sibling `gridColumns` and `customAttributeGridColumns` declarations.
-Different column IDs may read the same attribute.
+The section requires only a nonempty `columns` array, without Runtime bindings. Optional, nonempty section `label` and `description` provide display text for App Management lifecycle summaries. Each column requires nonblank `id` and `label`, `align` (`left`, `center`, `right`), and `attribute_code` (1–255 ASCII letters, digits, or underscores). `aclProtected` is optional and boolean. IDs must be unique after Commerce sanitization, including across sibling `gridColumns` and `customAttributeGridColumns` declarations. Different column IDs may read the same attribute.
 
-Omit `filter` for display-only text. Boolean filtering uses `{ type: "boolean" }` without `conditions`.
-Text filtering requires `{ type: "text", conditions: [...] }` with at least one of `eq`, `neq`, or `contains`.
-Do not use column `type`, `override`, `source`, `attributeCode`, Runtime bindings, or host-owned ACL/identity fields.
+Omit `filter` for display-only text. Boolean filtering uses `{ type: "boolean" }` without `conditions`. Text filtering requires `{ type: "text", conditions: [...] }` with at least one of `eq`, `neq`, or `contains`. Do not use column `type`, `override`, `source`, `attributeCode`, Runtime bindings, or host-owned ACL/identity fields.
 
-Custom-attribute columns need a compatible provider installed in Commerce; filters additionally need Search
-support and its feature/index configuration. Commerce checks those prerequisites. Do not promise that declaring
-a filter enables its feature flag or prepares its index.
+Custom-attribute columns need a compatible provider installed in Commerce; filters additionally need Search support and its feature/index configuration. Commerce checks those prerequisites. Do not promise that declaring a filter enables its feature flag or prepares its index.
 
-These declarations are returned by `app-config` on `commerce/extensibility/1`, with no worker handler or web source.
-An app containing only these columns does not require `commerce/backend-ui/2`. It still participates in Admin UI
-registration and upgrade planning. The worker contract below applies only to Runtime-backed `gridColumns`.
+These declarations are returned by `app-config` on `commerce/extensibility/1`, with no worker handler or web source. An app containing only these columns does not require `commerce/backend-ui/2`. It still participates in Admin UI registration and upgrade planning. The worker contract below applies only to Runtime-backed `gridColumns`.
 
 ## Handler wire contract
 

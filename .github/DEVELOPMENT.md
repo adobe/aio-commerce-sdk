@@ -18,6 +18,7 @@ This project contains a collection of packages that together form the Adobe Comm
 In addition to these individual libraries, there's also the [`aio-commerce-sdk`](../packages/aio-commerce-sdk) package, which serves as a meta-package that re-exports selected libraries for convenience, similar to how the [`@adobe/aio-sdk`](https://github.com/adobe/aio-sdk) package works.
 
 > [!IMPORTANT]
+>
 > The SDK should focus on re-exporting the most commonly used libraries and those that work together in similar contexts, rather than re-exporting every available library.
 
 ### PNPM Monorepo
@@ -44,6 +45,7 @@ This project uses [Turborepo](https://turbo.build/repo/docs), a build system des
   - Scripts like `lint`, `format:check`, `test`, can all be run in parallel, because they don't depend on each other and don't produce any output that could be affected by the order in which they are run.
 
 > [!WARNING]
+>
 > The `turbo.json` file is the main configuration file for Turborepo. It defines the tasks that Turborepo will run, the dependencies between tasks, and the cache settings. The tasks there should be manipulated carefully, as they are used by the CI pipeline.
 
 For detailed information on using Turborepo in this project, refer to the [official documentation](https://turbo.build/repo/docs).
@@ -68,6 +70,7 @@ Don't worry if you're not familiar with the language, as the project provides a 
 This project uses ECMAScript Modules (ESM) exclusively. All source code must be written in ESM to ensure compatibility with modern JavaScript and Node.js.
 
 > [!NOTE]
+>
 > While we write all source code in ESM format, the build process generates bundles compatible with both ESM and CommonJS consumers. This dual compatibility is handled automatically by our build tool, TSDown. See [Configuring the build and exports](#configuring-the-build-and-exports) for more details.
 
 If you're unfamiliar with the difference between ESM and CommonJS, we recommend reading [this article](https://betterstack.com/community/guides/scaling-nodejs/commonjs-vs-esm/). In short, CommonJS (CJS, `require()`) is the legacy module system introduced in Node.js in 2009. It became the de facto standard for many years due to being the only module system supported in Node.js.
@@ -86,6 +89,7 @@ While Node.js still supports CommonJS and many libraries continue to use it, ECM
 Each package should provide its own documentation through both written guides (in Markdown) and inline code comments. We use JSDoc as our standard for documenting source code.
 
 > [!TIP]
+>
 > To maintain consistent documentation, you can draft your content and use AI to rewrite it in the style of existing packages, providing them as reference examples.
 
 When working with JSDoc in TypeScript, keep these guidelines in mind:
@@ -112,11 +116,13 @@ pnpm turbo gen create-package
 This will prompt you for package configuration details, such as whether to include tests or set it as private, before generating the new package in the `packages` directory.
 
 > [!TIP]
+>
 > The `create-package` generator will automatically setup the tooling configurations for the new package.
 
 ![create-package generator](./assets/turbo-create-package.png)
 
 > [!NOTE]
+>
 > The `create-package` generator will create the new package in the `packages` directory by default (or `packages/internal` if private). If you want it in another directory, feel free to move it after it's created. You may also want to remove files that you don't need. In any case, make sure of the following:
 >
 > - The `pnpm-workspace.yaml` file contains the directory where it has been moved (see [docs](https://pnpm.io/workspaces)).
@@ -127,6 +133,7 @@ This will prompt you for package configuration details, such as whether to inclu
 The generator will ask you if you want to make the package private. If you do, the `private` field in the `package.json` file will be set to `true`, and the name will be prefixed with `@aio-commerce-sdk/` to make it a scoped to the monorepo.
 
 > [!IMPORTANT]
+>
 > It is important to understand that private/internal packages are not published and must be referenced via the `@aio-commerce-sdk/` scope, while public packages will be published to the `npm` registry, and they are referenced via the `@adobe/` scope. Examples of private packages are:
 >
 > - [`@aio-commerce-sdk/config-typescript`](../configs/typescript)
@@ -157,6 +164,7 @@ If instead of using the workspace version of a package, you want to use a publis
 ```
 
 > [!IMPORTANT]
+>
 > When the package is published, the `workspace:*` syntax is automatically translated to the latest version of the package (the local one). Make sure you take this into account when using it as a dependency, as you might eventually include a breaking change that you didn't account for.
 
 The above example shows how to:
@@ -168,6 +176,7 @@ The above example shows how to:
 ### Code Style
 
 > [!TIP]
+>
 > The `create-package` generator will automatically setup a Biome configuration for your package.
 
 This project ensures a consistent code style by using [Biome](https://biomejs.dev/) for linting and formatting. Biome is a modern, fast, and configurable linter and formatter that replaces the usual combination of `eslint` and `prettier`. It works with JSON, JavaScript, and TypeScript ([among other languages](https://biomejs.dev/internals/language-support/)) out of the box, no plugins required.
@@ -178,6 +187,7 @@ To avoid unnecessary debates around code style (since everyone has their prefere
 - A `copilot-instructions.md` file in the `.github/` directory, to be used by GitHub Copilot.
 
 > [!IMPORTANT]
+>
 > Please, **refrain from modifying the root** configuration to adjust it to your liking, or to disable any rule that you don't like. Each package should use it's own configuration file that extends from the root one. Biome has a special `//` syntax to reference the root configuration file in monorepos, so you can do this very easily:
 >
 > ```json
@@ -190,14 +200,18 @@ To avoid unnecessary debates around code style (since everyone has their prefere
 
 #### Markdown Formatting
 
-At the time of writing, Biome doesn't fully support linting and formatting Markdown files. To workaround this, we've configured a `format:markdown` script in the root `package.json` file, that uses [Prettier](https://prettier.io/) to format them.
+Run `pnpm format` to format code and Markdown with Biome using the shared Ultracite preset. Use `pnpm format:check` to check formatting without changing files. Workspace scripts, editor formatting, staged-file checks, and post-TypeDoc formatting use the same settings; no Markdown-specific command or configuration is needed.
+
+Separate a GitHub alert marker such as `> [!TIP]` from its body with a quoted blank line (`>`), so formatting preserves the alert marker on its own line.
 
 > [!NOTE]
-> There's no configuration file for Prettier included in the project, as the opinionated defaults are good enough for Markdown.
+>
+> Authored prose stays on a single line per paragraph, while generated API references preserve their existing line wrapping. Fenced code examples are left unchanged, and contributor policy and legal documents are excluded from formatting. Prettier remains a runtime dependency of the app CLI for formatting generated Commerce app configuration files.
 
 #### Pre-commit hook
 
 > [!IMPORTANT]
+>
 > This hook **WILL MODIFY** your staged files to try and fix the code style issues. It will only apply safe fixes and non-destructive changes. If you have some files that can't be automatically fixed by the tool, the commit will fail and you'll need to fix the issues manually.
 
 To ensure a consistent code style, we've configured a `pre-commit` hook via [`husky`](https://typicode.github.io/husky/). It uses [`lint-staged`](https://github.com/okonet/lint-staged) to lint and format your staged files. This hook is automatically installed when you run `pnpm install` the first time, and doesn't require any manual or additional configuration.
@@ -205,6 +219,7 @@ To ensure a consistent code style, we've configured a `pre-commit` hook via [`hu
 ### Generating an API Reference from your code
 
 > [!TIP]
+>
 > The `create-package` generator will automatically setup TypeDoc for your package.
 
 We use [TypeDoc](https://typedoc.org/) with the [TypeDoc Markdown Plugin](https://typedoc-plugin-markdown.org/docs) for generating API reference documentation. These tools automatically generate comprehensive Markdown documentation from JSDoc annotations in your TypeScript source code, allowing you to maintain documentation alongside your code and ensuring it stays up to date.
@@ -252,8 +267,8 @@ JetBrains IDEs, such as [WebStorm](https://www.jetbrains.com/webstorm/) or [Inte
 
 Here are some guidelines to achieve a similar development experience:
 
-1. Install the [Biome](https://plugins.jetbrains.com/plugin/22761-biome), [Inspection Lens](https://plugins.jetbrains.com/plugin/19678-inspection-lens), and [Prettier](https://plugins.jetbrains.com/plugin/10456-prettier) plugins.
-   1. Configure Prettier to run exclusively on Markdown files and Biome on all other file types to prevent conflicts. Ensure the ESLint plugin is disabled or uninstalled, as it may interfere with Biome.
+1. Install the [Biome](https://plugins.jetbrains.com/plugin/22761-biome) and [Inspection Lens](https://plugins.jetbrains.com/plugin/19678-inspection-lens) plugins.
+   1. Configure Biome for supported code formats and Markdown. Disable Prettier and ESLint formatting to prevent conflicts.
 2. Set up automatic execution of the `assist:apply`, `format`, and `lint:fix` scripts on file save.
    1. Refer to the documentation on [File Watchers](https://www.jetbrains.com/help/idea/using-file-watchers.html) and [Actions on Save](https://www.jetbrains.com/help/idea/saving-and-reverting-changes.html#actions-on-save) for configuration details.
 3. Create [Run Configurations](https://www.jetbrains.com/help/idea/run-debug-configuration.html) according to your preferences.
@@ -263,6 +278,7 @@ Here are some guidelines to achieve a similar development experience:
 ## Testing
 
 > [!TIP]
+>
 > The `create-package` generator will automatically setup testing for your package if you select to include it.
 
 Testing is conducted on a per-package basis. While not all packages require tests (particularly those without source code), you should include them whenever applicable.
@@ -285,7 +301,6 @@ To configure the build, your package requires a `tsdown.config.ts` file in its r
 
 The default configuration should suffice for most use cases, requiring only that you specify the package entry points. To add additional entry points, simply include them in your `tsdown.config.ts` file. Refer to these packages for examples:
 
-<!-- prettier-ignore -->
 - [`@aio-commerce-sdk/config-tsdown`](../configs/tsdown/tsdown.config.base.ts): default configuration
 - [`@adobe/aio-commerce-lib-auth`](../packages/aio-commerce-lib-auth/tsdown.config.ts): single-entry public package example
 - [`@adobe/aio-commerce-sdk`](../packages/aio-commerce-sdk/tsdown.config.ts): multi-entry public package example
@@ -307,6 +322,7 @@ There are two different ways to configure the `exports` field in your `package.j
 - **Local `exports`**: Include the `exports` field directly in the `package.json` file. These exports should point to your source files directly. This way, when working locally you'll be able to use the latest version of the source code, without having to build it first.
 
 > [!IMPORTANT]
+>
 > If you don't make this distinction, you may find yourself with issues when trying to test your package locally. This will happen if you configure the `exports` field to point to your built artifact paths, and then use that package as a dependency in another package **without building it first**.
 
 See an example of this in the [`@adobe/aio-commerce-lib-auth`](../packages/aio-commerce-lib-auth/package.json) package.
@@ -406,6 +422,7 @@ We version packages using the `MAJOR.MINOR.PATCH` format:
 ### How Changesets Work
 
 > [!IMPORTANT]
+>
 > You don't need to manually handle versioning. If you run the below workflow correctly, Changesets will handle everything for you. Your only responsibility is to create changesets and commit them in your PRs.
 
 Here's a typical workflow when making changes:
@@ -427,6 +444,7 @@ This interactive command will:
      - You can later extend and edit that description in the generated changeset file (uses **Markdown**, which is difficult to write in the terminal).
 
 > [!IMPORTANT]
+>
 > Most of the time **you should create a different changeset per-package you want to bump**, and specify only the changes of that package. Otherwise, you'll end up with the same `CHANGELOG` message in multiple packages, explaining changes that are not related to the package you're bumping.
 >
 > Not all PRs may require a version bump (a changeset file), for example, you may only want to change an internal package or fix some typos. These kind of changes should not require a version bump. Stick to the [semantic versioning rules](#semantic-versioning).
@@ -437,6 +455,7 @@ After that, a new file is generated in the `.changeset` folder at the repository
    1. If you already created a Changeset file, you can just modify it and commit it again.
 
 > [!NOTE]
+>
 > A Changesets bot is configured to warn on PRs that modify packages but don't include a changeset file. If you know your PR doesn't require a version bump at all (e.g. internal changes), ignore the warning.
 
 #### Branch channels and releases
@@ -485,14 +504,6 @@ Once your feature PR is merged to `main`:
 
 #### Commerce plugins
 
-Commerce plugins under `plugins/commerce/*` use the same changeset flow, but they are private
-workspace packages and are not published to npm. A changeset targeting a plugin package is the
-release intent for the stable skills channel. When the Release PR bumps a plugin version, the
-public release workflow opens or updates a promotion PR in
-[`adobe/skills`](https://github.com/adobe/skills) from the fixed branch
-`promote/adobe-aio-commerce-sdk`. The promotion carries each plugin's root `plugin.json`, with its
-version and repository set for `adobe/skills`, and leaves the manifests built there from it alone.
+Commerce plugins under `plugins/commerce/*` use the same changeset flow, but they are private workspace packages and are not published to npm. A changeset targeting a plugin package is the release intent for the stable skills channel. When the Release PR bumps a plugin version, the public release workflow opens or updates a promotion PR in [`adobe/skills`](https://github.com/adobe/skills) from the fixed branch `promote/adobe-aio-commerce-sdk`. The promotion carries each plugin's root `plugin.json`, with its version and repository set for `adobe/skills`, and leaves the manifests built there from it alone.
 
-Skill-only Release PRs are valid. They do not publish npm packages and do not send the package
-Slack notification, but they still run the `adobe/skills` promotion step and back-sync the
-plugin version/changelog updates to `main`.
+Skill-only Release PRs are valid. They do not publish npm packages and do not send the package Slack notification, but they still run the `adobe/skills` promotion step and back-sync the plugin version/changelog updates to `main`.

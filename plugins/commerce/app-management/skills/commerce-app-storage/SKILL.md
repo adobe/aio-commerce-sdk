@@ -104,8 +104,7 @@ Add the action to a user-defined package in `src/commerce-extensibility-1/ext.co
 
 > **`include-ims-credentials: true` is required on every DB action.** Without it, `aio-lib-db` has no IMS token to authenticate with and the connection fails at runtime (and the app installation fails if the action runs during install). Do not omit this annotation.
 >
-> Do not manually wire OAuth Server-to-Server credentials with `AIO_COMMERCE_AUTH_IMS_*` inputs.
-> That legacy fallback is deprecated and planned for removal in a future major release.
+> Do not manually wire OAuth Server-to-Server credentials with `AIO_COMMERCE_AUTH_IMS_*` inputs. That legacy fallback is deprecated and planned for removal in a future major release.
 
 ```yaml
 # src/commerce-extensibility-1/ext.config.yaml
@@ -123,14 +122,14 @@ runtimeManifest:
             include-ims-credentials: true # REQUIRED for aio-lib-db auth
 ```
 
-| Field                     | Constraint                                                                        |
-| ------------------------- | --------------------------------------------------------------------------------- |
-| Package name              | Lowercase alphanumeric + hyphens; never `app-management` (reserved)               |
-| `function`                | Path relative to `src/commerce-extensibility-1/` — not `src/...` or root-relative |
-| `include-ims-credentials` | Must be `true` — without it `init()` has no IMS token and the connection fails    |
-| `web`                     | `"yes"` for HTTP-invokable web actions; `"no"` for event/webhook handlers         |
-| Collection name           | Non-empty string; created on first write if it doesn't exist                      |
-| Region                    | Must match the manifest `database.region` (`amer` \| `apac` \| `emea` \| `aus`)   |
+| Field | Constraint |
+| --- | --- |
+| Package name | Lowercase alphanumeric + hyphens; never `app-management` (reserved) |
+| `function` | Path relative to `src/commerce-extensibility-1/` — not `src/...` or root-relative |
+| `include-ims-credentials` | Must be `true` — without it `init()` has no IMS token and the connection fails |
+| `web` | `"yes"` for HTTP-invokable web actions; `"no"` for event/webhook handlers |
+| Collection name | Non-empty string; created on first write if it doesn't exist |
+| Region | Must match the manifest `database.region` (`amer` \| `apac` \| `emea` \| `aus`) |
 
 ## Step 5 — Implement the handler
 
@@ -281,11 +280,11 @@ installation: {
 },
 ```
 
-| Field         | Constraint                                                                                          |
-| ------------- | --------------------------------------------------------------------------------------------------- |
-| `script`      | Path relative to the project root; must be an ES module (`export default`) ending in `.js` or `.ts` |
-| `name`        | Non-empty string, ≤ 255 characters; **unique** across all installation steps                        |
-| `description` | Non-empty string, ≤ 255 characters                                                                  |
+| Field | Constraint |
+| --- | --- |
+| `script` | Path relative to the project root; must be an ES module (`export default`) ending in `.js` or `.ts` |
+| `name` | Non-empty string, ≤ 255 characters; **unique** across all installation steps |
+| `description` | Non-empty string, ≤ 255 characters |
 
 See [assets/setup-database.ts](assets/setup-database.ts) for the full annotated install/uninstall reference.
 

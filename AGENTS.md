@@ -47,7 +47,7 @@
 - Monorepo-local deps use `workspace:*`; third-party deps shared across multiple packages use `catalog:` (defined in `pnpm-workspace.yaml`)
 - Every public package must declare `"sideEffects"` in `package.json`: `false` if no side effects, or an array of files that do have side effects
 - `package.json` has two exports configs: `exports` (source paths, for local dev) and `publishConfig.exports` (dist paths, for consumers)
-- Format Markdown with `pnpm format:markdown` (Prettier)
+- Format code and Markdown with `pnpm format` (Biome)
 
 ## Workflow
 

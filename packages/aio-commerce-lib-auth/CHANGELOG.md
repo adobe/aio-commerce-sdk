@@ -166,8 +166,7 @@
 
   **Affected Versions**
 
-  @adobe/aio-commerce-lib-auth: All versions with ESM distribution
-  Occurs when using Node.js native ESM (projects with "type": "module" in package.json)
+  @adobe/aio-commerce-lib-auth: All versions with ESM distribution Occurs when using Node.js native ESM (projects with "type": "module" in package.json)
 
   **Root Cause**
 

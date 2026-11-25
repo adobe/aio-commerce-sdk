@@ -1,7 +1,6 @@
 # Admin Menu (`commerce/backend-ui/2`)
 
-Adds a single custom entry to the Commerce Admin menu. The entry opens an iframe into the app's web UI (`web-src`).
-Declared under `adminUi.menu` — a single object, **not an array**. There is no server handler.
+Adds a single custom entry to the Commerce Admin menu. The entry opens an iframe into the app's web UI (`web-src`). Declared under `adminUi.menu` — a single object, **not an array**. There is no server handler.
 
 ## Config (`app.commerce.config.ts`)
 
@@ -22,15 +21,15 @@ adminUi: {
 
 ### Constraints
 
-| Field                | Constraint                                                                                                                          |
-| -------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| `id`                 | Required; matches `^[A-Za-z0-9_/:]+$` — no hyphens or spaces                                                                        |
-| `label`              | Required, non-empty                                                                                                                 |
-| `description`        | Required, non-empty                                                                                                                 |
-| `parentMenu`         | Optional; one of the `COMMERCE_MENUS` constants                                                                                     |
-| `pageTitle`          | Optional, non-empty                                                                                                                 |
-| `sandboxPermissions` | Optional; `allow-downloads` / `allow-modals` / `allow-popups`                                                                       |
-| `aclProtected`       | Optional boolean; when `true`, Commerce generates a per-app ACL resource for the menu so admins can grant/deny menu access per role |
+| Field | Constraint |
+| --- | --- |
+| `id` | Required; matches `^[A-Za-z0-9_/:]+$` — no hyphens or spaces |
+| `label` | Required, non-empty |
+| `description` | Required, non-empty |
+| `parentMenu` | Optional; one of the `COMMERCE_MENUS` constants |
+| `pageTitle` | Optional, non-empty |
+| `sandboxPermissions` | Optional; `allow-downloads` / `allow-modals` / `allow-popups` |
+| `aclProtected` | Optional boolean; when `true`, Commerce generates a per-app ACL resource for the menu so admins can grant/deny menu access per role |
 
 ## Parent menu constants
 

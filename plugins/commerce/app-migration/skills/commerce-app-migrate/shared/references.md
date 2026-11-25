@@ -1,7 +1,6 @@
 # External Documentation References
 
-Use these links when the user needs context to answer a question or identify their
-project type. Surface them at decision points, not on every run.
+Use these links when the user needs context to answer a question or identify their project type. Surface them at decision points, not on every run.
 
 ## Integration Starter Kit (ISK)
 
@@ -11,11 +10,9 @@ Use when:
 
 - `starterKitType` is `"unknown"` and the user needs to identify their project
 - The user asks what ISK-style eventing or bidirectional sync looks like
-- Explaining why certain action package names (e.g. `product-commerce`, `order-backoffice`)
-  were detected
+- Explaining why certain action package names (e.g. `product-commerce`, `order-backoffice`) were detected
 
-Key concepts: event providers, event subscriptions, bidirectional sync actions,
-`starter-kit-registrations.json`, onboarding scripts.
+Key concepts: event providers, event subscriptions, bidirectional sync actions, `starter-kit-registrations.json`, onboarding scripts.
 
 ## Checkout Starter Kit (CSK)
 
@@ -27,8 +24,7 @@ Use when:
 - The user asks about webhook-based payment, shipping, or tax integrations
 - Explaining why `raw-http: true` actions or `COMMERCE_WEBHOOKS_PUBLIC_KEY` were detected
 
-Key concepts: out-of-process webhooks, payment methods, shipping carriers,
-tax integrations, `sync-oauth-credentials`.
+Key concepts: out-of-process webhooks, payment methods, shipping carriers, tax integrations, `sync-oauth-credentials`.
 
 ## App Management: associate and install an app
 
@@ -39,5 +35,4 @@ Use when:
 - Explaining that the Commerce base URL is provided by association, not by environment variables
 - Telling the developer how to associate, install, configure or upgrade the migrated app
 
-Key concepts: association (Project and Workspace), installation, configuration forms,
-scopes.
+Key concepts: association (Project and Workspace), installation, configuration forms, scopes.

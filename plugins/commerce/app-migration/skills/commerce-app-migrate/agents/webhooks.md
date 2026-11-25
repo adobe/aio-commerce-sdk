@@ -25,36 +25,23 @@ You will be given the `ProjectSnapshot` JSON. Use your Read tool to examine:
 
 ## Part 1: Detect webhook handler actions → `webhooks` array
 
-Scan all ext.config.yaml files in the project. For each action, check for these
-signals — the first two must be present, the third is treated as present when absent:
+Scan all ext.config.yaml files in the project. For each action, check for these signals — the first two must be present, the third is treated as present when absent:
 
 - `inputs` contains `COMMERCE_WEBHOOKS_PUBLIC_KEY`
 - `annotations` has `raw-http: true`
-- `annotations` has `require-adobe-auth: false` **OR** `require-adobe-auth` annotation
-  is entirely absent (which defaults to false in OpenWhisk)
+- `annotations` has `require-adobe-auth: false` **OR** `require-adobe-auth` annotation is entirely absent (which defaults to false in OpenWhisk)
 
-An action that passes all three tests is a Commerce webhook handler candidate. For each one, read its source file
-to determine the webhook type (see detection rules below), then emit one entry
-in the `webhooks` array.
+An action that passes all three tests is a Commerce webhook handler candidate. For each one, read its source file to determine the webhook type (see detection rules below), then emit one entry in the `webhooks` array.
 
-**Declaration scope:** The `pre-app-build` hook fails the build unless every webhook
-`runtimeAction` is a web action (`web: yes`) declared under `runtimeManifest.packages` in
-`src/commerce-extensibility-1/ext.config.yaml` with an existing `function` file. If the
-handler is declared elsewhere (e.g. `application` in `app.config.yaml` or another
-extension's `ext.config.yaml`), move its package declaration there and rewrite each
-`function` path relative to `src/commerce-extensibility-1/`.
+**Declaration scope:** The `pre-app-build` hook fails the build unless every webhook `runtimeAction` is a web action (`web: yes`) declared under `runtimeManifest.packages` in `src/commerce-extensibility-1/ext.config.yaml` with an existing `function` file. If the handler is declared elsewhere (e.g. `application` in `app.config.yaml` or another extension's `ext.config.yaml`), move its package declaration there and rewrite each `function` path relative to `src/commerce-extensibility-1/`.
 
-Always set `webhook.webhook_type` to `"before"` or `"after"` and
-`webhook.method` to `"POST"`, `"PUT"`, `"DELETE"`, or `"GET"`. Never emit other
-values.
+Always set `webhook.webhook_type` to `"before"` or `"after"` and `webhook.method` to `"POST"`, `"PUT"`, `"DELETE"`, or `"GET"`. Never emit other values.
 
 ### Webhook type detection
 
 **OOPE Shipping Carrier**
 
-Signals in the action source: processes a `rateRequest` payload (variable named
-`rateRequest`, accesses `.items`, `.dest_country_id`, etc.) and returns operations
-with `carrier_code`, `method`, `price`.
+Signals in the action source: processes a `rateRequest` payload (variable named `rateRequest`, accesses `.items`, `.dest_country_id`, etc.) and returns operations with `carrier_code`, `method`, `price`.
 
 Config to emit:
 
@@ -74,16 +61,12 @@ Config to emit:
       }
     }
 
-- `carrier_code`: read from `shipping-carriers.yaml` if present, otherwise derive from
-  the action name or the hardcoded carrier code in the source (e.g. `"ShipStation"` →
-  `"shipstation"`).
-- `package` and `action-name`: taken from the ext.config.yaml declaration (e.g. package
-  `shipstation`, action `shipstation-shipping` → `"shipstation/shipstation-shipping"`).
+- `carrier_code`: read from `shipping-carriers.yaml` if present, otherwise derive from the action name or the hardcoded carrier code in the source (e.g. `"ShipStation"` → `"shipstation"`).
+- `package` and `action-name`: taken from the ext.config.yaml declaration (e.g. package `shipstation`, action `shipstation-shipping` → `"shipstation/shipstation-shipping"`).
 
 **OOPE Payment Method**
 
-Signals in the action source: processes payment method data (variables like
-`paymentMethod`, `payment_code`, or returns payment method operations).
+Signals in the action source: processes payment method data (variables like `paymentMethod`, `payment_code`, or returns payment method operations).
 
 Config to emit:
 
@@ -105,9 +88,7 @@ Config to emit:
 
 **OOPE Tax Calculation**
 
-Signals in the action source: processes a tax calculation request (variable named
-`rateRequest`, accesses `.items`, `.oopQuote`, `.dest_country_id`, `.dest_region_id`, etc.)
-or exports a `calculateTax` function; and/or contains `plugin.magento.out_of_process_tax`.
+Signals in the action source: processes a tax calculation request (variable named `rateRequest`, accesses `.items`, `.oopQuote`, `.dest_country_id`, `.dest_region_id`, etc.) or exports a `calculateTax` function; and/or contains `plugin.magento.out_of_process_tax`.
 
 Config to emit:
 
@@ -131,8 +112,7 @@ Config to emit:
 
 **Unknown webhook type**
 
-If you cannot determine the webhook type from the action source, add an unresolved
-question instead of guessing:
+If you cannot determine the webhook type from the action source, add an unresolved question instead of guessing:
 
     {
       "id": "webhooks.handler.<action-name>.method",
@@ -143,18 +123,14 @@ question instead of guessing:
 
 ## Part 2: Map onboarding scripts → `customInstallationSteps`
 
-For each script in `onboardingScripts` where `purpose === "webhook"` OR
-`purpose === "custom-installation"`, read the script source and apply these rules.
+For each script in `onboardingScripts` where `purpose === "webhook"` OR `purpose === "custom-installation"`, read the script source and apply these rules.
 
 ### Exclude local-only developer utility scripts
 
-**Do NOT include a script** in `customInstallationSteps` if it shows clear signs
-of being a local developer workflow only — it will have no meaning in the App
-Management runtime:
+**Do NOT include a script** in `customInstallationSteps` if it shows clear signs of being a local developer workflow only — it will have no meaning in the App Management runtime:
 
 - Writes to `.env` files (calls `replaceEnvVar`, `fs.writeFileSync` on a `.env` path)
-- Reads from the local aio CLI IMS context (`context.get(credential)` from
-  `@adobe/aio-lib-ims`, `Core.Config.get("project.workspace...")`)
+- Reads from the local aio CLI IMS context (`context.get(credential)` from `@adobe/aio-lib-ims`, `Core.Config.get("project.workspace...")`)
 - Makes no Commerce API calls and uses no runtime env vars
 
 For each excluded script, add an unresolved question to inform the developer:
@@ -167,9 +143,7 @@ For each excluded script, add an unresolved question to inform the developer:
 
 ### Include scripts that perform runtime-meaningful work
 
-A script is eligible if it makes Commerce API calls using runtime credentials
-(for example through a Commerce client helper that reads its credentials from `process.env` or `params`) or performs any
-work that is meaningful when executed in the App Management installation runtime.
+A script is eligible if it makes Commerce API calls using runtime credentials (for example through a Commerce client helper that reads its credentials from `process.env` or `params`) or performs any work that is meaningful when executed in the App Management installation runtime.
 
 For each eligible script, create one `customInstallationStep` entry:
 
@@ -179,22 +153,19 @@ For each eligible script, create one `customInstallationStep` entry:
       "description": "<one-sentence description of what it does>"
     }
 
-**Name derivation:** Convert the filename (without extension) to title case,
-replacing hyphens/underscores with spaces.
+**Name derivation:** Convert the filename (without extension) to title case, replacing hyphens/underscores with spaces.
 
 **Description derivation:**
 
 - For `purpose === "webhook"`: `"Registers webhook subscriptions in Adobe Commerce"`
-- For `purpose === "custom-installation"`: use the first matching pattern below, or read
-  the script and derive a one-sentence description if none match:
+- For `purpose === "custom-installation"`: use the first matching pattern below, or read the script and derive a one-sentence description if none match:
   - Script calls `createOopeShippingCarrier` → `"Creates OOPE shipping carriers in Adobe Commerce using shipping-carriers.yaml"`
   - Script calls `createOopePaymentMethod` → `"Creates OOPE payment methods in Adobe Commerce using payment-methods.yaml"`
   - Script calls `createTaxIntegration` → `"Creates tax integrations in Adobe Commerce using tax-integrations.yaml"`
 
 ### Mixed-purpose scripts
 
-If a single script handles both webhook registration AND event subscription logic,
-add an unresolved question:
+If a single script handles both webhook registration AND event subscription logic, add an unresolved question:
 
     {
       "id": "webhooks.step.<index>.split",
@@ -206,8 +177,7 @@ add an unresolved question:
 
 ## Output
 
-`configFragment` may contain both `webhooks` and `installation` — include only
-the keys that have content.
+`configFragment` may contain both `webhooks` and `installation` — include only the keys that have content.
 
 Example output for an OOPE shipping carrier project with one eligible install script:
 

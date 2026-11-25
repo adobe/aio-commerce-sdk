@@ -69,6 +69,7 @@ npm install @adobe/aio-commerce-lib-app @adobe/aio-commerce-sdk
 ```
 
 > [!IMPORTANT]
+>
 > The generated runtime actions require `@adobe/aio-commerce-sdk` at runtime. Make sure it is installed before deploying your application.
 
 Add a `postinstall` hook to your `package.json` to ensure that everything keeps running as expected after each install.
@@ -117,6 +118,7 @@ Generated application code should import app metadata from `#app.commerce.config
 - `src/commerce-configuration-1/ext.config.yaml`: extension manifest with the `pre-app-build` hook
 
 > [!NOTE]
+>
 > Generated actions import app config through `#app.commerce.config`. When the business config schema contains `dynamicList` fields, no separate `configuration-schema.json` is generated. Generated actions resolve `dynamicList` fields on every request. Any external credentials a factory uses must be declared as `inputs` for each action that resolves the schema (in the corresponding `ext.config.yaml` of each action).
 
 Generated Runtime actions always use `.js`.
@@ -127,9 +129,11 @@ Generated Runtime actions always use `.js`.
 - `src/commerce-backend-ui-2/web-src/`: browser scaffold generated when iframe-based Admin UI features require a `view` operation. Existing `web-src/index.html` files are never overwritten. A separate required-file phase runs on every generation to ensure support files are present without replacing existing versions (e.g. a `.babelrc` file).
 
 > [!NOTE]
+>
 > Generated actions default to the `nodejs:26` runtime. To pin a different runtime, set the `runtime` field on the action in the generated `ext.config.yaml`. Codegen preserves a `runtime` you set there, so it survives regeneration. Generated app-management and business-configuration packages declare `LOG_LEVEL` at the package level; action-specific inputs remain on their actions.
 
 > [!IMPORTANT]
+>
 > The `pre-app-build` hook checks that every runtime action your config references is declared under `runtimeManifest.packages` and that its `function` file exists. `adminUi` actions must be declared in `src/commerce-backend-ui-2/ext.config.yaml`. `eventing` and `webhooks` actions must be declared in `src/commerce-extensibility-1/ext.config.yaml`, and webhook actions must also be web actions (`web: yes`). The build fails with the offending config path for every reference that does not resolve.
 
 1. In your `app.config.yaml`, reference the generated extension configurations. If you have multiple extension points, add each as a new entry. Keep this order, with `commerce/extensibility/1` last, so that an upgrade works reliably:
@@ -486,6 +490,7 @@ Both message fields are optional. You can provide one, both, or neither dependin
 The `installation.customInstallationSteps` field allows you to define custom scripts that run during the application installation process. These scripts are pre-loaded and executed in the order they are defined.
 
 > [!IMPORTANT]
+>
 > Two custom installation steps cannot have the same name. Step names must be unique.
 
 ```javascript
@@ -1168,11 +1173,7 @@ adminUi: {
 
 #### Custom ACL Resources
 
-Declare standalone permissions under `adminUi.acl` that are not tied to any Admin UI element. Commerce
-renders them in the Admin User Roles tree so a merchant can grant or deny them; your app checks them at
-runtime (see `getCustomAclResourceId` in `@adobe/aio-commerce-lib-admin-ui`) to gate its own logic.
-Resources are flat leaves or one-level groups. Each resource has an `id` (lowercase letters, digits,
-`_`; unique per level) and a `label` (3–50 characters — the text shown in the User Roles tree).
+Declare standalone permissions under `adminUi.acl` that are not tied to any Admin UI element. Commerce renders them in the Admin User Roles tree so a merchant can grant or deny them; your app checks them at runtime (see `getCustomAclResourceId` in `@adobe/aio-commerce-lib-admin-ui`) to gate its own logic. Resources are flat leaves or one-level groups. Each resource has an `id` (lowercase letters, digits, `_`; unique per level) and a `label` (3–50 characters — the text shown in the User Roles tree).
 
 ```ts
 adminUi: {
@@ -1223,6 +1224,7 @@ Installing, upgrading and uninstalling all plan the operation and validate the p
 An app installed with only business configuration never runs the install, so the SDK has no record of what it installed. When such an app adds a feature that needs installation (an event, a webhook, an admin UI or a custom installation step), the Commerce App Management Service sends `installedState: "business-config-only"` and `installedVersion` in the `POST /installation/plan` request. The SDK then plans an upgrade instead of an install. The plan's source version is `installedVersion`, and it compares the target config with the installed config minus the sections that need installation. Planning writes nothing. Starting the plan stores that config as the baseline snapshot, so the run is a normal upgrade and a failed run retries from it. The SDK ignores both fields when a baseline exists, and answers `409` with code `already-current` when `installedVersion` equals `metadata.version`.
 
 > [!IMPORTANT]
+>
 > `metadata.id` identifies the installed application and cannot change during an upgrade. The SDK refuses to plan an upgrade that changes it. To use a different ID, uninstall the existing app and install it again.
 
 #### Automatic vs. Manual Upgrades
@@ -1233,6 +1235,7 @@ An app installed with only business configuration never runs the install, so the
 - **`manual`** (default): the plan stays pending for review.
 
 > [!NOTE]
+>
 > `auto` is experimental and `upgradeMode` currently defaults to `manual` while automatic upgrade execution is stabilizing. This will change back to `auto` in a future release — if you want manual behavior permanently, set `upgradeMode: "manual"` explicitly now.
 
 #### The `post-app-deploy` Hook

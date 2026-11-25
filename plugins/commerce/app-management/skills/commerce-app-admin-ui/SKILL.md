@@ -24,9 +24,7 @@ metadata:
 
 # Configure Commerce App Admin UI
 
-Adds or modifies the `adminUi` block in an existing `app.commerce.config.ts`.
-The Admin UI extension point (`commerce/backend-ui/2`) lets a Commerce app extend the Commerce Admin with custom grid columns, mass actions, order, invoice, credit memo, and return view buttons, native UI form replacements, a menu entry, and custom ACL resources.
-Other extensibility domains (webhooks, events, business config) are added separately via their own skills.
+Adds or modifies the `adminUi` block in an existing `app.commerce.config.ts`. The Admin UI extension point (`commerce/backend-ui/2`) lets a Commerce app extend the Commerce Admin with custom grid columns, mass actions, order, invoice, credit memo, and return view buttons, native UI form replacements, a menu entry, and custom ACL resources. Other extensibility domains (webhooks, events, business config) are added separately via their own skills.
 
 ## Prerequisites
 
@@ -39,23 +37,20 @@ Other extensibility domains (webhooks, events, business config) are added separa
 
 ## Extension points at a glance
 
-| Extension point          | Entities                                                            | Variants      | Server handler | Reference                                                                            |
-| ------------------------ | ------------------------------------------------------------------- | ------------- | -------------- | ------------------------------------------------------------------------------------ |
-| Grid columns             | order, product, customer, invoice, creditMemo, shipment, newsletter | worker only   | yes            | [grid-columns](references/grid-columns.md)                                           |
-| Custom-attribute columns | creditMemo only                                                     | none          | no             | [grid-columns](references/grid-columns.md#custom-attribute-columns-credit-memo-only) |
-| Mass actions             | order, product, customer                                            | view / worker | worker only    | [mass-actions](references/mass-actions.md)                                           |
-| Order view buttons       | order only                                                          | view / worker | worker only    | [order-view-buttons](references/order-view-buttons.md)                               |
-| Invoice view buttons     | invoice only                                                        | view / worker | worker only    | [invoice-view-buttons](references/invoice-view-buttons.md)                           |
-| Credit memo view buttons | creditMemo only                                                     | view / worker | worker only    | [credit-memo-view-buttons](references/credit-memo-view-buttons.md)                   |
-| Return view buttons      | rma only                                                            | view / worker | worker only    | [rma-view-buttons](references/rma-view-buttons.md)                                   |
-| Native UI forms          | supported form targets (`adminUi.nativeUi.replacedPages`)           | view (iframe) | no             | [native-ui-replaced-pages](references/native-ui-replaced-pages.md)                   |
-| Menu                     | single entry (`adminUi.menu`)                                       | view (iframe) | no             | [menu](references/menu.md)                                                           |
-| Custom ACL               | list (`adminUi.acl`)                                                | none          | no             | [custom-acl](references/custom-acl.md)                                               |
+| Extension point | Entities | Variants | Server handler | Reference |
+| --- | --- | --- | --- | --- |
+| Grid columns | order, product, customer, invoice, creditMemo, shipment, newsletter | worker only | yes | [grid-columns](references/grid-columns.md) |
+| Custom-attribute columns | creditMemo only | none | no | [grid-columns](references/grid-columns.md#custom-attribute-columns-credit-memo-only) |
+| Mass actions | order, product, customer | view / worker | worker only | [mass-actions](references/mass-actions.md) |
+| Order view buttons | order only | view / worker | worker only | [order-view-buttons](references/order-view-buttons.md) |
+| Invoice view buttons | invoice only | view / worker | worker only | [invoice-view-buttons](references/invoice-view-buttons.md) |
+| Credit memo view buttons | creditMemo only | view / worker | worker only | [credit-memo-view-buttons](references/credit-memo-view-buttons.md) |
+| Return view buttons | rma only | view / worker | worker only | [rma-view-buttons](references/rma-view-buttons.md) |
+| Native UI forms | supported form targets (`adminUi.nativeUi.replacedPages`) | view (iframe) | no | [native-ui-replaced-pages](references/native-ui-replaced-pages.md) |
+| Menu | single entry (`adminUi.menu`) | view (iframe) | no | [menu](references/menu.md) |
+| Custom ACL | list (`adminUi.acl`) | none | no | [custom-acl](references/custom-acl.md) |
 
-`view` renders an iframe into the app's web UI (`web-src`) at the entry's `path`; `worker` invokes a runtime action server-side. Native UI form replacement pages also render in an iframe at their `path`.
-Custom ACL resources have no variant and no handler: they are standalone permissions Commerce renders in the User Roles tree, and the app checks them itself (see [custom-acl](references/custom-acl.md)).
-Runtime-backed grid columns are always worker; custom-attribute columns need no handler.
-Native UI form replacements and the menu are always iframes.
+`view` renders an iframe into the app's web UI (`web-src`) at the entry's `path`; `worker` invokes a runtime action server-side. Native UI form replacement pages also render in an iframe at their `path`. Custom ACL resources have no variant and no handler: they are standalone permissions Commerce renders in the User Roles tree, and the app checks them itself (see [custom-acl](references/custom-acl.md)). Runtime-backed grid columns are always worker; custom-attribute columns need no handler. Native UI form replacements and the menu are always iframes.
 
 ## Step 1 — Understand intent
 
@@ -71,11 +66,11 @@ Add (or merge into) the top-level `adminUi` block, preserving all other domains.
 
 These fields are shared across the extension points:
 
-| Field                | Constraint                                                                                                                    |
-| -------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| `runtimeAction`      | `<package>/<action>`; must resolve to a handler action you declare (Step 4)                                                   |
-| `confirm`            | Optional `{ title?, message? }` — confirmation dialog before the action runs                                                  |
-| `notifications`      | Optional `{ success?, error? }` — toast text Commerce shows on completion                                                     |
+| Field | Constraint |
+| --- | --- |
+| `runtimeAction` | `<package>/<action>`; must resolve to a handler action you declare (Step 4) |
+| `confirm` | Optional `{ title?, message? }` — confirmation dialog before the action runs |
+| `notifications` | Optional `{ success?, error? }` — toast text Commerce shows on completion |
 | `sandboxPermissions` | Optional array (view/iframe entries); non-empty, no duplicates; each one of `allow-downloads`, `allow-modals`, `allow-popups` |
 
 Minimal example covering each feature (use only the parts you need):
@@ -137,10 +132,7 @@ For the `view` variants (iframe) and the complete field set and constraints of e
 
 ## Step 3 — Register the extension point
 
-For an app declaring only `customAttributeGridColumns` and/or custom ACL resources, init uses the existing
-`commerce/extensibility/1` app-config flow. Do not add an empty `commerce/backend-ui/2` extension or worker handler.
-Custom-attribute columns are currently supported only under `adminUi.creditMemo`; see the grid-columns reference
-for their schema and required Commerce provider capabilities.
+For an app declaring only `customAttributeGridColumns` and/or custom ACL resources, init uses the existing `commerce/extensibility/1` app-config flow. Do not add an empty `commerce/backend-ui/2` extension or worker handler. Custom-attribute columns are currently supported only under `adminUi.creditMemo`; see the grid-columns reference for their schema and required Commerce provider capabilities.
 
 Run init so that `commerce/backend-ui/2` is added to `app.config.yaml` and `install.yaml`, and the `src/commerce-backend-ui-2/` extension folder is generated. This is idempotent — safe to run even if the extension is already registered.
 
@@ -188,8 +180,7 @@ runtimeManifest:
 
 The `<package>/<action>` in `runtimeAction` maps directly: `my-app/order-grid` → package `my-app`, action `order-grid`. Commerce invokes these worker actions with an Adobe IMS token, so they need `require-adobe-auth: true` (and `final: true` to lock the bound inputs).
 
-Implement the handler with the wire-contract builders from the `@adobe/aio-commerce-sdk/admin-ui/*` entrypoints.
-The builders differ per extension point — the reference file gives the exact request shape and response builders. Grid columns example:
+Implement the handler with the wire-contract builders from the `@adobe/aio-commerce-sdk/admin-ui/*` entrypoints. The builders differ per extension point — the reference file gives the exact request shape and response builders. Grid columns example:
 
 ```typescript
 // src/commerce-backend-ui-2/actions/order-grid/index.ts
@@ -247,15 +238,15 @@ For each `view`-type **mass action** and **order, invoice, credit memo, or retur
 
 Pre-wire the hook by view type — all from `@adobe/aio-commerce-lib-admin-ui/web`:
 
-| View entry              | Context hook                                                                    | Also                                                                | Reference                                                          |
-| ----------------------- | ------------------------------------------------------------------------------- | ------------------------------------------------------------------- | ------------------------------------------------------------------ |
-| Mass action (`view`)    | `useMassActionContext()` → `{ data, error }`; use `data.selectedIds`            | `useHostConnection()` → `{ actions, error }`; use `actions.close()` | [mass-actions](references/mass-actions.md)                         |
-| Order view button       | `useOrderViewButtonContext()` → `{ data, error }`; use `data.orderId`           | `useHostConnection()` → `{ actions, error }`; use `actions.close()` | [order-view-buttons](references/order-view-buttons.md)             |
-| Invoice view button     | `useInvoiceViewButtonContext()` → `{ data, error }`; use `data.invoiceId`       | `useHostConnection()` → `{ actions, error }`; use `actions.close()` | [invoice-view-buttons](references/invoice-view-buttons.md)         |
+| View entry | Context hook | Also | Reference |
+| --- | --- | --- | --- |
+| Mass action (`view`) | `useMassActionContext()` → `{ data, error }`; use `data.selectedIds` | `useHostConnection()` → `{ actions, error }`; use `actions.close()` | [mass-actions](references/mass-actions.md) |
+| Order view button | `useOrderViewButtonContext()` → `{ data, error }`; use `data.orderId` | `useHostConnection()` → `{ actions, error }`; use `actions.close()` | [order-view-buttons](references/order-view-buttons.md) |
+| Invoice view button | `useInvoiceViewButtonContext()` → `{ data, error }`; use `data.invoiceId` | `useHostConnection()` → `{ actions, error }`; use `actions.close()` | [invoice-view-buttons](references/invoice-view-buttons.md) |
 | Credit memo view button | `useCreditMemoViewButtonContext()` → `{ data, error }`; use `data.creditMemoId` | `useHostConnection()` → `{ actions, error }`; use `actions.close()` | [credit-memo-view-buttons](references/credit-memo-view-buttons.md) |
-| Return view button      | `useRmaViewButtonContext()` → `{ data, error }`; use `data.rmaId`               | `useHostConnection()` → `{ actions, error }`; use `actions.close()` | [rma-view-buttons](references/rma-view-buttons.md)                 |
-| Native UI form          | none                                                                            | none                                                                | [native-ui-replaced-pages](references/native-ui-replaced-pages.md) |
-| Menu                    | none (plain index page)                                                         | —                                                                   | [menu](references/menu.md)                                         |
+| Return view button | `useRmaViewButtonContext()` → `{ data, error }`; use `data.rmaId` | `useHostConnection()` → `{ actions, error }`; use `actions.close()` | [rma-view-buttons](references/rma-view-buttons.md) |
+| Native UI form | none | none | [native-ui-replaced-pages](references/native-ui-replaced-pages.md) |
+| Menu | none (plain index page) | — | [menu](references/menu.md) |
 
 These hooks return errors instead of throwing them. A route can throw a returned error during render to send it to the SDK's error boundary, which replaces the extension content with its fallback UI. If the route must stay mounted, handle the error locally by rendering a message, offering a retry, disabling the affected feature, or providing another degraded state. The placeholder examples below throw because they don't define custom recovery UI.
 

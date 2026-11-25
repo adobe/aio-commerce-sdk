@@ -4,8 +4,8 @@ Agent skills for migrating Adobe Commerce App Builder projects to the App Manage
 
 ## Available skills
 
-| Skill                                                  | Description                                                                               | Status    |
-| ------------------------------------------------------ | ----------------------------------------------------------------------------------------- | --------- |
+| Skill | Description | Status |
+| --- | --- | --- |
 | [commerce-app-migrate](./skills/commerce-app-migrate/) | Orchestrate the full migration from Integration or Checkout Starter Kit to App Management | Available |
 
 ### `commerce-app-migrate`

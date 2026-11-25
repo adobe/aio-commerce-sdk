@@ -59,6 +59,7 @@ import {
 ### Initialization
 
 > [!WARNING]
+>
 > You must initialize the library with your configuration schema before using any configuration functions. Calling configuration functions without initialization will throw an error.
 
 The schema is stored in memory only (not persisted) and must be provided on each application startup.
@@ -453,6 +454,7 @@ Multiple selection example:
 ```
 
 > [!NOTE]
+>
 > For `selectionMode: "multiple"`, the `default` value must be an array of strings, even if only one option is selected by default.
 
 ### Field Descriptions with Links
@@ -566,6 +568,7 @@ npx @adobe/aio-commerce-lib-config encryption validate
 Generates a new AES-256 encryption key and writes it to your `.env` file as `AIO_COMMERCE_CONFIG_ENCRYPTION_KEY`. If a key already exists, it will be overwritten.
 
 > [!TIP]
+>
 > Run this command once during initial setup if your configuration schema includes `password` fields. See the [Password Encryption](./password-encryption.md) documentation for full details.
 
 ### `encryption validate`
@@ -573,6 +576,7 @@ Generates a new AES-256 encryption key and writes it to your `.env` file as `AIO
 Validates that `AIO_COMMERCE_CONFIG_ENCRYPTION_KEY` is present in your environment and correctly formatted as a 64-character hex string.
 
 > [!TIP]
+>
 > This command is also available for manual verification or use in CI/CD pipelines where the encryption key must be confirmed before a build or deployment.
 
 ## Best Practices

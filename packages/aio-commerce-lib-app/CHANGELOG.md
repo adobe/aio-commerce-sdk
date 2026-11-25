@@ -71,7 +71,6 @@
 - [#717](https://github.com/adobe/aio-commerce-sdk/pull/717) [`fe9135b`](https://github.com/adobe/aio-commerce-sdk/commit/fe9135b4d1a88f65cee94fe03f8bbe167bb0e1bc) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Upgrades now fix webhooks that a failed upgrade or a manual edit left missing, different or no longer declared.
 
 - [#724](https://github.com/adobe/aio-commerce-sdk/pull/724) [`36cd90a`](https://github.com/adobe/aio-commerce-sdk/commit/36cd90acde5e8713a289ad2d9470525a708cdb8d) Thanks [@iivvaannxx](https://github.com/iivvaannxx)! - Several issues fixed:
-
   - An upgrade request that runs into another one in progress, or whose plan another request replaced, now gets a `409` with code `in-progress` or `stale-plan` instead of a `500`.
 
   - An upgrade that cannot start, for example because the app was deployed again after planning, is recorded as failed right away instead of blocking new upgrades until its deadline.

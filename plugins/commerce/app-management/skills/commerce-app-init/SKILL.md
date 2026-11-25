@@ -21,9 +21,7 @@ metadata:
 
 # Initialize a new Commerce App
 
-Scaffolds a bare Adobe Commerce app: creates `app.commerce.config.ts` with metadata,
-then runs `init` to install dependencies and generate all required project files.
-Extensibility domains (events, webhooks, business config) are added separately via domain skills.
+Scaffolds a bare Adobe Commerce app: creates `app.commerce.config.ts` with metadata, then runs `init` to install dependencies and generate all required project files. Extensibility domains (events, webhooks, business config) are added separately via domain skills.
 
 ## Step 1 — Create the config
 

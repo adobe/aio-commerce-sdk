@@ -22,15 +22,15 @@ A developer creating an app that needs events and webhooks would run `commerce-a
 
 ## Available skills
 
-| Skill                                                                  | Description                                | Status    |
-| ---------------------------------------------------------------------- | ------------------------------------------ | --------- |
-| [commerce-app-init](./skills/commerce-app-init/)                       | Scaffold a new Commerce app with metadata  | Available |
-| [commerce-app-eventing](./skills/commerce-app-eventing/)               | Manage Commerce and external event sources | Available |
-| [commerce-app-webhooks](./skills/commerce-app-webhooks/)               | Manage webhook interception                | Available |
-| [commerce-app-business-config](./skills/commerce-app-business-config/) | Manage custom business configuration       | Available |
-| [commerce-app-storage](./skills/commerce-app-storage/)                 | Integrate App Builder Database Storage     | Available |
-| [commerce-app-admin-ui](./skills/commerce-app-admin-ui/)               | Extend the Commerce Admin UI               | Available |
-| [commerce-app-api-mesh](./skills/commerce-app-api-mesh/)               | Wire API Mesh in front of a Commerce app   | Available |
+| Skill | Description | Status |
+| --- | --- | --- |
+| [commerce-app-init](./skills/commerce-app-init/) | Scaffold a new Commerce app with metadata | Available |
+| [commerce-app-eventing](./skills/commerce-app-eventing/) | Manage Commerce and external event sources | Available |
+| [commerce-app-webhooks](./skills/commerce-app-webhooks/) | Manage webhook interception | Available |
+| [commerce-app-business-config](./skills/commerce-app-business-config/) | Manage custom business configuration | Available |
+| [commerce-app-storage](./skills/commerce-app-storage/) | Integrate App Builder Database Storage | Available |
+| [commerce-app-admin-ui](./skills/commerce-app-admin-ui/) | Extend the Commerce Admin UI | Available |
+| [commerce-app-api-mesh](./skills/commerce-app-api-mesh/) | Wire API Mesh in front of a Commerce app | Available |
 
 ## Installation
 

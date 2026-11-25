@@ -14,7 +14,7 @@
     "editor.unicodeHighlight.invisibleCharacters": false,
     "diffEditor.ignoreTrimWhitespace": false,
     "editor.wordWrap": "on",
-    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.defaultFormatter": "biomejs.biome",
     "editor.formatOnSave": true
   },
 
