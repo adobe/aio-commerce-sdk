@@ -2,7 +2,7 @@ name: Publish Alpha
 
 on:
   issue_comment:
-    types: [created]
+    types: [ created ]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.issue.number }}
@@ -88,7 +88,7 @@ jobs:
 
   comment:
     name: Comment on PR
-    needs: [prepare, release]
+    needs: [ prepare, release ]
     if: needs.release.outputs.published == 'true'
     runs-on: ubuntu-latest
     permissions:

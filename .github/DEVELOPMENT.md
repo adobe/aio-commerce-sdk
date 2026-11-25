@@ -200,7 +200,7 @@ To avoid unnecessary debates around code style (since everyone has their prefere
 
 #### Markdown Formatting
 
-Run `pnpm format:markdown` to format Markdown with Biome using the shared Ultracite preset. Workspace scripts, editor formatting, staged-file checks, and post-TypeDoc formatting use the same settings.
+Run `pnpm format` to format code and Markdown with Biome using the shared Ultracite preset. Use `pnpm format:check` to check formatting without changing files. Workspace scripts, editor formatting, staged-file checks, and post-TypeDoc formatting use the same settings; no Markdown-specific command or configuration is needed.
 
 Separate a GitHub alert marker such as `> [!TIP]` from its body with a quoted blank line (`>`), so formatting preserves the alert marker on its own line.
 

@@ -36,7 +36,7 @@ specs/features/CEXT-6138-capability-discovery.md
 
 Use `specs/features/_template.md` as the starting point.
 
-Spec files are auto-formatted by Biome on every commit (via lint-staged) and by `pnpm format:markdown`. Focus on content — don't worry about line wrapping or whitespace.
+Spec files are auto-formatted by Biome on every commit (via lint-staged) and by `pnpm format`. Focus on content — don't worry about line wrapping or whitespace.
 
 ## Workflow
 
