@@ -58,6 +58,9 @@ export type StepStatus = {
   /** ISO timestamp when the step succeeded or failed. */
   completedAt?: string;
 
+  /** The error of a step that failed itself. A step that failed only because a child did has none. */
+  error?: WorkflowError;
+
   /** Child step statuses (empty for leaf steps). */
   children: StepStatus[];
 };

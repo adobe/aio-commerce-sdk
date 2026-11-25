@@ -414,6 +414,10 @@ async function executePlannedStep(
             cause: error,
           });
 
+    if (failure !== error) {
+      currentStep.error = failure.workflowError;
+    }
+
     try {
       await callHook(
         context.hooks,
