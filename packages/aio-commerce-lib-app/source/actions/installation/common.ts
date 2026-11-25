@@ -18,7 +18,10 @@ import { getAtPath } from "#management/common/workflow/utils";
 import { migrateLegacyInstallationState } from "#management/deprecated/migration";
 import { createInstallationStore } from "#management/deprecated/stores";
 import { readRunHistory } from "#management/domains/custom-installation/index";
-import { createRootInstallationStep } from "#management/installation/root";
+import {
+  createRootInstallationStep,
+  getDefaultStageNames,
+} from "#management/installation/root";
 import { createLifecycleBaselineProvider } from "#management/lifecycle/baseline";
 import { CURRENT_STATE_KEY } from "#management/lifecycle/state";
 import {
@@ -289,6 +292,7 @@ export async function createLifecycleRuntime(
     // records show which of them ran.
     failedAttemptDataPaths: [CUSTOM_INSTALLATION_STEPS_PATH],
     lifecycleContext: buildLifecycleContext(params, appConfig, logger),
+    rootStages: getDefaultStageNames(appConfig),
     rootStep: createRootInstallationStep(appConfig, {
       executedCustomInstallationSteps: getExecutedCustomInstallationSteps(
         state,

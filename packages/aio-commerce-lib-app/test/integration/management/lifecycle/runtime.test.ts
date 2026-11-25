@@ -2543,3 +2543,216 @@ describe("lifecycle config changes", () => {
     expect(live.apply).not.toHaveBeenCalled();
   });
 });
+
+describe("lifecycle with concurrent root children", () => {
+  const STAGES = [["a", "b", "c"], ["d"]];
+
+  /** Resolves after the given delay, so other branches can make progress meanwhile. */
+  function delay(ms: number) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  /**
+   * Creates a runtime whose root runs `a`, `b` and `c` at the same time and `d` after them. Each
+   * leaf plans an operation until it applies once, and `failing` fails its first apply.
+   */
+  function createLifecycle(operation: LifecycleOperation, failing?: string) {
+    const live = new Set<string>();
+    let running = 0;
+    let maxRunning = 0;
+    const startedAfterOthers: Record<string, number> = {};
+
+    const applies = ["a", "b", "c", "d"].map((name) => {
+      let failed = false;
+      return vi.fn(async () => {
+        startedAfterOthers[name] = live.size;
+        running += 1;
+        maxRunning = Math.max(maxRunning, running);
+        try {
+          await delay(10);
+          if (name === failing && !failed) {
+            failed = true;
+            throw new Error(`${name} failed`);
+          }
+          live.add(name);
+          return { snapshotData: { name } };
+        } finally {
+          running -= 1;
+        }
+      });
+    });
+
+    const leaves = ["a", "b", "c", "d"].map((name, index) =>
+      createMockLifecycleLeaf({
+        apply: applies[index],
+        name,
+        plan: async () => ({
+          kind: "planned",
+          plan: {
+            operations: live.has(name)
+              ? []
+              : [
+                  {
+                    after: { id: name },
+                    id: `add-${name}`,
+                    itemRefs: [],
+                    kind: "add",
+                    label: `Add ${name}`,
+                    reason: "change",
+                  },
+                ],
+            path: ["root", name],
+          },
+        }),
+      }),
+    );
+
+    const config = createConfig("2.0.0");
+    const mock = createMockLifecycleRuntime({
+      baseline: operation === "install" ? null : createBaseline("1.0.0"),
+      rootStep: createMockLifecycleRoot(leaves),
+    });
+    const runtime = { ...mock.runtime, rootStages: STAGES };
+
+    /** Plans, starts and executes one attempt. */
+    async function attempt(activation: string) {
+      const planning = await planLifecycle({
+        ...runtime,
+        ...getPlanInputs(operation, config),
+        actionVersion: "1.0.0",
+        operation,
+      });
+
+      const started = await startLifecycleAttempt({
+        ...runtime,
+        actionVersion: "1.0.0",
+        activationId: `${activation}-start`,
+        executionDeadline: EXECUTION_DEADLINE,
+        planId: planning.plan.id,
+      });
+
+      return await executeLifecycleAttempt({
+        ...runtime,
+        actionVersion: "1.0.0",
+        activationId: `${activation}-execute`,
+        attemptId: started.id,
+        executionDeadline: EXECUTION_DEADLINE,
+      });
+    }
+
+    return {
+      applies,
+      attempt,
+      maxRunning: () => maxRunning,
+      snapshotStore: mock.snapshotStore,
+      startedAfterOthers,
+      stateStore: mock.stateStore,
+    };
+  }
+
+  test.each<LifecycleOperation>(["install", "upgrade", "uninstall"])(
+    "%s runs the listed branches at the same time and retries only what did not succeed",
+    async (operation) => {
+      const { applies, attempt, maxRunning, startedAfterOthers } =
+        createLifecycle(operation, "b");
+
+      const failed = await attempt("a1");
+      expect(failed).toMatchObject({
+        failure: { message: "b failed" },
+        status: "failed",
+      });
+      expect(failed.progress.children).toMatchObject([
+        { name: "a", status: "succeeded" },
+        { name: "b", status: "failed" },
+        { name: "c", status: "succeeded" },
+        { name: "d", status: "pending" },
+      ]);
+      expect(maxRunning()).toBe(3);
+
+      const retried = await attempt("a2");
+      expect(retried.status).toBe("succeeded");
+      expect(applies.map((apply) => apply.mock.calls.length)).toEqual([
+        1, 2, 1, 1,
+      ]);
+      expect(startedAfterOthers.d).toBe(3);
+    },
+  );
+
+  test("saves progress one write at a time", async () => {
+    const { attempt, stateStore } = createLifecycle("upgrade");
+    const { put } = stateStore;
+    let inFlight = 0;
+    let maxInFlight = 0;
+    stateStore.put = async (key, value) => {
+      inFlight += 1;
+      maxInFlight = Math.max(maxInFlight, inFlight);
+      try {
+        await delay(1);
+        await put(key, value);
+      } finally {
+        inFlight -= 1;
+      }
+    };
+
+    const executed = await attempt("a1");
+
+    expect(executed.status).toBe("succeeded");
+    expect(maxInFlight).toBe(1);
+  });
+
+  test("keeps the output of the branches that succeeded before a retry", async () => {
+    const { attempt, snapshotStore, stateStore } = createLifecycle(
+      "upgrade",
+      "b",
+    );
+
+    expect((await attempt("a1")).status).toBe("failed");
+    expect((await attempt("a2")).status).toBe("succeeded");
+
+    const state = (await stateStore.get(
+      CURRENT_STATE_KEY,
+    )) as OrchestrationState;
+    const committed = await snapshotStore.get(
+      state.baselineSnapshotId as string,
+    );
+
+    expect(committed?.data).toMatchObject({
+      root: {
+        a: { name: "a" },
+        b: { name: "b" },
+        c: { name: "c" },
+        d: { name: "d" },
+      },
+    });
+  });
+
+  test("saves each succeeded branch together with its output", async () => {
+    const { attempt, stateStore } = createLifecycle("upgrade");
+    const { put } = stateStore;
+    const writes: OrchestrationState[] = [];
+    stateStore.put = async (key, value) => {
+      await delay(5);
+      writes.push(structuredClone(value));
+      await put(key, structuredClone(value));
+    };
+
+    const executed = await attempt("a1");
+    expect(executed.status).toBe("succeeded");
+
+    const progressWrites = writes.filter(
+      (state) => state.latestAttempt?.status === "in-progress",
+    );
+    expect(progressWrites.length).toBeGreaterThan(0);
+
+    for (const state of progressWrites) {
+      const attemptState = state.latestAttempt as LifecycleAttempt;
+      for (const child of attemptState.progress.children) {
+        if (child.status === "succeeded") {
+          expect(attemptState.data).toMatchObject({
+            root: { [child.name]: { name: child.name } },
+          });
+        }
+      }
+    }
+  });
+});

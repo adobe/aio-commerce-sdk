@@ -21,28 +21,50 @@ import type { AnyStep, BranchStep } from "#management/common/workflow/index";
 import type { CustomInstallationStepIdentity } from "#management/domains/custom-installation/index";
 
 /**
- * Creates the default child steps built-in in the library with dynamic children based on the
- * config. `executedCustomInstallationSteps` is the custom installation steps that ran, or `null`
- * when no run history is stored. `forLifecycle` builds the tree the lifecycle plans and applies
- * (see `createCustomInstallationStep`).
+ * Creates the default child steps built-in in the library, grouped into the stages they run in.
+ * The steps of a stage run at the same time, and a stage starts once the previous one succeeds.
+ * `executedCustomInstallationSteps` is the custom installation steps that ran, or `null` when no
+ * run history is stored. `forLifecycle` builds the tree the lifecycle plans and applies (see
+ * `createCustomInstallationStep`).
  */
-export function createDefaultChildSteps(
+function createDefaultStages(
   config: CommerceAppConfigOutputModel,
   executedCustomInstallationSteps:
     | readonly CustomInstallationStepIdentity[]
     | null = [],
   forLifecycle = false,
-): AnyStep[] {
+): AnyStep[][] {
   return [
-    eventingStep,
-    webhooksStep,
-    adminUiStep,
-    createCustomInstallationStep(
-      config,
-      executedCustomInstallationSteps,
-      forLifecycle,
-    ),
+    [eventingStep, webhooksStep, adminUiStep],
+
+    // Custom installation scripts may depend on what the other steps create (e.g. the event provider).
+    [
+      createCustomInstallationStep(
+        config,
+        executedCustomInstallationSteps,
+        forLifecycle,
+      ),
+    ],
   ];
+}
+
+/** Names of the default child steps, grouped into the stages they run in. */
+export function getDefaultStageNames(
+  config: CommerceAppConfigOutputModel,
+): string[][] {
+  return createDefaultStages(config).map((stage) =>
+    stage.map((step) => step.name),
+  );
+}
+
+/**
+ * Creates the default child steps built-in in the library with dynamic children based on the
+ * config, in the order of their stages (see `createDefaultStages`).
+ */
+export function createDefaultChildSteps(
+  ...args: Parameters<typeof createDefaultStages>
+): AnyStep[] {
+  return createDefaultStages(...args).flat();
 }
 
 /**

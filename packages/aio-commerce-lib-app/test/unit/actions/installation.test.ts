@@ -98,6 +98,7 @@ vi.mock("#management/association/repository", () => ({
 
 vi.mock("#management/installation/root", () => ({
   createRootInstallationStep: createRootInstallationStepMock,
+  getDefaultStageNames: vi.fn(),
 }));
 
 const { appData } = createMockInstallationContext();

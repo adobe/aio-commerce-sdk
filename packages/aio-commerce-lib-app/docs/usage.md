@@ -640,6 +640,7 @@ export default defineCustomInstallationStep(async (config, context) => {
 
 - Scripts **must** use `export default` to export the main function (named exports like `export { run }` are not supported)
 - Scripts are executed **sequentially** in the order defined in the configuration
+- Scripts run after eventing, webhooks and Admin UI are set up, so they can rely on them. The same applies to upgrades and uninstallations: each script's `uninstall` runs after the eventing, webhooks and Admin UI registrations are removed. If any of these steps fails, no script runs.
 - If any script throws an error, the entire installation fails and subsequent scripts are not executed
 - If you retry a failed installation, upgrade or uninstallation, the scripts that already succeeded don't run again. A script interrupted before it finished, for example by a timeout, runs again.
 - Scripts have access to the complete app configuration and can use it to make decisions

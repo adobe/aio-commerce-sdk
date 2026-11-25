@@ -10,6 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
+import { PlannedStepError } from "./errors";
 import { callHook } from "./hooks";
 import { isBranchStep, isLeafStep } from "./step";
 import {
@@ -36,7 +37,6 @@ import type {
   StepStatus,
   SucceededWorkflowState,
   WorkflowData,
-  WorkflowError,
 } from "./types";
 
 /** Options for creating the initial execution state for a lifecycle plan. */
@@ -58,6 +58,18 @@ export type ExecutePlannedWorkflowOptions = {
 
   /** The baseline snapshot the plan transitions from, or `null` when nothing is installed. */
   baseline: AppStateSnapshot | null;
+
+  /**
+   * Names of the root step's children grouped into the stages they run in. The children of a
+   * stage run at the same time, and a stage starts once the previous one succeeds. Must list every
+   * root child exactly once, in declared order. Defaults to every child running in declared order.
+   *
+   * @example
+   * ```ts
+   * rootStages: [["eventing", "webhooks", "admin-ui"], ["customInstallationSteps"]]
+   * ```
+   */
+  rootStages?: readonly (readonly string[])[];
 };
 
 /** Outcome of executing the `apply` methods selected by a persisted plan. */
@@ -67,18 +79,36 @@ export type PlannedWorkflowResult = {
 
 /** Mutable state shared while executing a persisted lifecycle plan. */
 type PlannedStepExecutionContext = {
-  lifecycleContext: LifecycleContext;
   config: CommerceAppConfigOutputModel | undefined;
   baseline: AppStateSnapshot | null;
   id: string;
   startedAt: string;
   rootStep: StepStatus;
   data: Record<string, unknown> | null;
-  error: WorkflowError | null;
   hooks?: WorkflowHooks;
   attemptId: string;
   plan: LifecyclePlan;
+  rootStages: readonly (readonly string[])[] | undefined;
 };
+
+/** What a step inherits from its ancestors. */
+type InheritedStepInputs = {
+  /** The values the ancestors' `context` factories returned. */
+  accumulatedContext: Record<string, unknown>;
+  configurationFlags: StepConfigurationFlags;
+  lifecycleContext: LifecycleContext;
+};
+
+/** The logger methods that write a message. */
+const LOGGER_METHODS = [
+  "error",
+  "warn",
+  "info",
+  "log",
+  "verbose",
+  "debug",
+  "silly",
+] as const;
 
 /**
  * Creates an initial execution state pruned to leaves with planned operations. A leaf with config
@@ -173,11 +203,10 @@ export async function executePlannedWorkflow(
     baseline: options.baseline,
     config: plan.target?.config,
     data: initialState.data as Record<string, unknown> | null,
-    error: null,
     hooks,
     id: initialState.id,
-    lifecycleContext,
     plan,
+    rootStages: options.rootStages,
     rootStep: step,
     startedAt: initialState.startedAt,
   };
@@ -191,9 +220,12 @@ export async function executePlannedWorkflow(
     await executePlannedStep(
       rootStep,
       context.rootStep,
-      {},
+      {
+        accumulatedContext: {},
+        configurationFlags: rootConfigurationFlags,
+        lifecycleContext,
+      },
       context,
-      rootConfigurationFlags,
     );
     const succeeded = createSucceededState({
       config: context.config,
@@ -207,7 +239,9 @@ export async function executePlannedWorkflow(
     return { state: succeeded };
   } catch (error) {
     const workflowError =
-      context.error ?? (await createWorkflowError(error, [], failureKey));
+      error instanceof PlannedStepError
+        ? error.workflowError
+        : await createWorkflowError(error, [], failureKey);
 
     const failed = createFailedState(
       {
@@ -305,61 +339,31 @@ function getLeafBaseline(
 async function executePlannedStep(
   step: AnyStep,
   currentStep: StepStatus,
-  accumulatedContext: Record<string, unknown>,
+  inherited: InheritedStepInputs,
   context: PlannedStepExecutionContext,
-  configurationFlags: StepConfigurationFlags,
 ): Promise<void> {
   if (currentStep.status === "succeeded") {
     return;
   }
 
   const { path } = currentStep;
+  const { accumulatedContext, configurationFlags, lifecycleContext } =
+    inherited;
+
   const isLeaf = isLeafStep(step);
   currentStep.status = "in-progress";
   currentStep.startedAt = nowIsoString();
 
-  await callHook(
-    context.hooks,
-    "onStepStart",
-    { isLeaf, path, stepName: step.name },
-    snapshot(context),
-  );
-
   try {
+    await callHook(
+      context.hooks,
+      "onStepStart",
+      { isLeaf, path, stepName: step.name },
+      snapshot(context),
+    );
+
     if (isBranchStep(step)) {
-      let childContext = accumulatedContext;
-
-      if (step.context && currentStep.children.length > 0) {
-        const stepContext = await step.context(context.lifecycleContext);
-        childContext = {
-          ...accumulatedContext,
-          ...stepContext,
-        };
-      }
-
-      for (const childStatus of currentStep.children) {
-        const child = step.children.find(
-          (candidate) => candidate.name === childStatus.name,
-        );
-
-        if (!child) {
-          throw new Error(`Step "${childStatus.name}" not found`);
-        }
-
-        // biome-ignore lint/performance/noAwaitInLoops: plan steps execute in declared order
-        await executePlannedStep(child, childStatus, childContext, context, {
-          configuredInBaseline: isConfiguredInBaseline(
-            child,
-            context,
-            configurationFlags.configuredInBaseline,
-          ),
-          configuredInTarget: isConfiguredInTarget(
-            child,
-            context,
-            configurationFlags.configuredInTarget,
-          ),
-        });
-      }
+      await executePlannedChildren(step, currentStep, inherited, context);
     } else if (isLeafStep(step)) {
       const domainPlan = context.plan.domains.find((candidate) =>
         pathsEqual(candidate.path, path),
@@ -370,7 +374,7 @@ async function executePlannedStep(
       }
 
       const result = await step.apply(domainPlan, {
-        ...context.lifecycleContext,
+        ...lifecycleContext,
         ...accumulatedContext,
         attemptId: context.attemptId,
         baseline: getLeafBaseline(context, path, configurationFlags),
@@ -402,15 +406,152 @@ async function executePlannedStep(
   } catch (error) {
     currentStep.status = "failed";
     currentStep.completedAt = nowIsoString();
-    context.error ??= await createWorkflowError(error, path);
 
-    await callHook(
-      context.hooks,
-      "onStepFailure",
-      { error: context.error, isLeaf, path, stepName: step.name },
-      snapshot(context),
+    const failure =
+      error instanceof PlannedStepError
+        ? error
+        : new PlannedStepError(await createWorkflowError(error, path), {
+            cause: error,
+          });
+
+    try {
+      await callHook(
+        context.hooks,
+        "onStepFailure",
+        { error: failure.workflowError, isLeaf, path, stepName: step.name },
+        snapshot(context),
+      );
+    } catch (hookError) {
+      // Keep the step's own error as the reason the attempt failed.
+      const reason =
+        hookError instanceof Error ? hookError.message : String(hookError);
+      lifecycleContext.logger.warn(
+        `Failed to record the failure of step ${path.join("/")}: ${reason}`,
+      );
+    }
+
+    throw failure;
+  }
+}
+
+/**
+ * Executes the children of a branch stage by stage. The children of a stage run at the same time
+ * and all finish before the stage fails, which it does with the error of its first failed child
+ * in declared order. A stage only starts once the previous one succeeds.
+ */
+async function executePlannedChildren(
+  step: BranchStep,
+  currentStep: StepStatus,
+  inherited: InheritedStepInputs,
+  context: PlannedStepExecutionContext,
+): Promise<void> {
+  let childContext = inherited.accumulatedContext;
+
+  if (step.context && currentStep.children.length > 0) {
+    const stepContext = await step.context(inherited.lifecycleContext);
+    childContext = {
+      ...childContext,
+      ...stepContext,
+    };
+  }
+
+  const stages =
+    currentStep === context.rootStep && context.rootStages
+      ? groupIntoStages(step, currentStep.children, context.rootStages)
+      : currentStep.children.map((child) => [child]);
+
+  for (const stage of stages) {
+    // biome-ignore lint/performance/noAwaitInLoops: each stage starts once the previous one succeeds
+    const results = await Promise.allSettled(
+      stage.map(async (childStatus) => {
+        const child = step.children.find(
+          (candidate) => candidate.name === childStatus.name,
+        );
+
+        if (!child) {
+          throw new Error(`Step "${childStatus.name}" not found`);
+        }
+
+        await executePlannedStep(
+          child,
+          childStatus,
+          {
+            accumulatedContext: childContext,
+            configurationFlags: {
+              configuredInBaseline: isConfiguredInBaseline(
+                child,
+                context,
+                inherited.configurationFlags.configuredInBaseline,
+              ),
+              configuredInTarget: isConfiguredInTarget(
+                child,
+                context,
+                inherited.configurationFlags.configuredInTarget,
+              ),
+            },
+            lifecycleContext:
+              stage.length > 1
+                ? withLabeledLogger(inherited.lifecycleContext, child.name)
+                : inherited.lifecycleContext,
+          },
+          context,
+        );
+      }),
     );
 
-    throw error;
+    const failed = results.find((result) => result.status === "rejected");
+    if (failed) {
+      throw failed.reason;
+    }
   }
+}
+
+/**
+ * Splits the children to execute into the given stages, skipping the stages left with none.
+ * Throws when the stages don't list every child of the step exactly once, in declared order.
+ */
+function groupIntoStages(
+  step: BranchStep,
+  children: StepStatus[],
+  stageNames: readonly (readonly string[])[],
+): StepStatus[][] {
+  const declared = step.children.map((child) => child.name);
+  const staged = stageNames.flat();
+
+  if (
+    staged.length !== declared.length ||
+    staged.some((name, index) => name !== declared[index])
+  ) {
+    throw new Error(
+      `Stages [${staged.join(", ")}] must list the children of step "${step.name}" in declared order: [${declared.join(", ")}]`,
+    );
+  }
+
+  return stageNames
+    .map((names) => children.filter((child) => names.includes(child.name)))
+    .filter((stage) => stage.length > 0);
+}
+
+/** Returns the lifecycle context with a logger that prefixes every message with the branch name. */
+function withLabeledLogger(
+  lifecycleContext: LifecycleContext,
+  branchName: string,
+): LifecycleContext {
+  const { logger } = lifecycleContext;
+  const label = `[${branchName}]`;
+  const labeled: LifecycleContext["logger"] = Object.create(logger);
+
+  for (const method of LOGGER_METHODS) {
+    labeled[method] = (...data: (object | string)[]) => {
+      const [message, ...rest] = data;
+      const args =
+        typeof message === "string"
+          ? [`${label} ${message}`, ...rest]
+          : [label, ...data];
+
+      logger[method](...args);
+    };
+  }
+
+  return { ...lifecycleContext, logger: labeled };
 }

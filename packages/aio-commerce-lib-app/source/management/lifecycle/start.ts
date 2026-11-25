@@ -31,7 +31,10 @@ import type {
   LifecycleAttempt,
   LifecyclePlanDiff,
 } from "#management/common/orchestration";
-import type { WorkflowData } from "#management/common/workflow/types";
+import type {
+  StepStatus,
+  WorkflowData,
+} from "#management/common/workflow/types";
 import type { LifecycleRuntime } from "./state";
 
 /** Inputs used to consume a reviewed plan and create an attempt. */
@@ -131,21 +134,23 @@ function assertFutureExecutionDeadline(executionDeadline: string): void {
 }
 
 /**
- * The data a new attempt starts with: the baseline's, with the data at `failedAttemptDataPaths`
- * taken from the latest attempt when it failed.
+ * The data a new attempt starts with: the baseline's, with the data of the steps the latest
+ * attempt completed and at `failedAttemptDataPaths` taken from it when it failed.
  */
 function getStartingData(
   baseline: AppStateSnapshot | null,
   latestAttempt: LifecycleAttempt | null,
   failedAttemptDataPaths: string[][] = [],
 ): WorkflowData | null {
-  const failedData =
-    latestAttempt?.status === "failed" ? latestAttempt.data : null;
+  const failedAttempt =
+    latestAttempt?.status === "failed" ? latestAttempt : null;
+  const failedData = failedAttempt?.data ?? null;
 
   const paths = failedData
-    ? failedAttemptDataPaths.filter(
-        (path) => getAtPath(failedData, path) !== undefined,
-      )
+    ? [
+        ...findSucceededLeafPaths(failedAttempt?.progress),
+        ...failedAttemptDataPaths,
+      ].filter((path) => getAtPath(failedData, path) !== undefined)
     : [];
 
   if (!failedData || paths.length === 0) {
@@ -159,4 +164,17 @@ function getStartingData(
   }
 
   return data;
+}
+
+/** The paths of the leaf steps that succeeded under the step. */
+function findSucceededLeafPaths(step: StepStatus | undefined): string[][] {
+  if (!step) {
+    return [];
+  }
+
+  if (step.children.length === 0) {
+    return step.status === "succeeded" ? [step.path] : [];
+  }
+
+  return step.children.flatMap(findSucceededLeafPaths);
 }

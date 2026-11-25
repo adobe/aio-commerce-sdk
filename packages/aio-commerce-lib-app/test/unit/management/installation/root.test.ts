@@ -17,7 +17,10 @@ import { isBranchStep, isLeafStep } from "#management/common/workflow/step";
 import { adminUiStep } from "#management/domains/admin-ui/branch";
 import { eventingStep } from "#management/domains/events/branch";
 import { webhooksStep } from "#management/domains/webhooks/branch";
-import { createRootInstallationStep } from "#management/installation/root";
+import {
+  createRootInstallationStep,
+  getDefaultStageNames,
+} from "#management/installation/root";
 import {
   configWithCustomInstallationSteps,
   configWithWebhooks,
@@ -39,6 +42,20 @@ describe("createRootInstallationStep", () => {
     expect(result.children[1]).toBe(webhooksStep);
     expect(result.children[2]).toBe(adminUiStep);
     expect(result.children[3].name).toBe("customInstallationSteps");
+  });
+
+  test("runs custom installation after eventing, webhooks and Admin UI, which run together", () => {
+    const stages = getDefaultStageNames(configWithCustomInstallationSteps);
+
+    expect(stages).toEqual([
+      [eventingStep.name, webhooksStep.name, adminUiStep.name],
+      ["customInstallationSteps"],
+    ]);
+    expect(stages.flat()).toEqual(
+      createRootInstallationStep(
+        configWithCustomInstallationSteps,
+      ).children.map((child) => child.name),
+    );
   });
 
   test("should create custom installation step with dynamic children when config has custom steps", () => {

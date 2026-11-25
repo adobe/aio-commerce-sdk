@@ -286,6 +286,7 @@ export async function executeLifecycle({
     attemptId,
     executionDeadline: getExecutionDeadline(),
     lifecycleContext: runtime.lifecycleContext,
+    rootStages: runtime.rootStages,
     rootStep: runtime.rootStep,
     snapshotStore: runtime.snapshotStore,
     stateStore: runtime.stateStore,
