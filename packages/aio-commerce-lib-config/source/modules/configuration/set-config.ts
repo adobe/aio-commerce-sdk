@@ -10,6 +10,9 @@
  * governing permissions and limitations under the License.
  */
 
+import { parseOrThrow } from "@aio-commerce-sdk/common-utils/valibot";
+import * as v from "valibot";
+
 import {
   deriveScopeFromArgs,
   mergeScopes,
@@ -18,17 +21,21 @@ import {
 import { prepareAuditEntry } from "#modules/audit/audit-logger";
 import { saveAuditEntry } from "#modules/audit/audit-repository";
 import { requireGlobalSchema } from "#modules/schema/config-schema-repository";
+import { RequiredValueSchema, ValueSchema } from "#modules/schema/fields";
 import { getPasswordFields } from "#modules/schema/utils";
 import * as scopeTreeRepository from "#modules/scope-tree/scope-tree-repository";
 import { encrypt } from "#utils/encryption";
 
 import * as configRepository from "./configuration-repository";
+import { resolveEffectiveConfig } from "./resolve-effective-config";
 
 import type {
   SetConfigurationRequest,
   SetConfigurationResponse,
 } from "#types/index";
-import type { ConfigContext, SetConfigValue } from "./types";
+import type { ConfigContext, ConfigValue, SetConfigValue } from "./types";
+
+const SaveValueSchema = v.nullable(ValueSchema);
 
 /**
  * Sets configuration values for a scope identified by code and level or id.
@@ -55,18 +62,16 @@ export async function setConfiguration(
     context.namespace,
   );
 
-  const { scopeCode, scopeLevel, scopeId } = deriveScopeFromArgs(
-    args,
-    scopeTree,
+  const scopeInfo = deriveScopeFromArgs(args, scopeTree);
+  const { scopeCode, scopeLevel, scopeId } = scopeInfo;
+  const requiredForSave = new Set(
+    schema
+      .filter((field) => field.requiredFor?.includes("save"))
+      .map((field) => field.name),
   );
-
+  validateRequiredSaveEntries(request.config, requiredForSave);
   const sanitizedEntries = sanitizeRequestEntries(request.config);
   const passwordFields = getPasswordFields(schema);
-  const encryptedEntries = encryptPasswordFields(
-    sanitizedEntries,
-    passwordFields,
-    context.encryptionKey,
-  );
 
   const existingPersisted = await configRepository.loadConfig(
     scopeCode,
@@ -76,6 +81,20 @@ export async function setConfiguration(
     ? (existingPersisted?.config ?? [])
     : [];
 
+  await validateRequiredSaveConfiguration({
+    context,
+    entries: sanitizedEntries,
+    existingEntries,
+    requiredForSave,
+    scopeArgs: args,
+    scopeInfo,
+  });
+
+  const encryptedEntries = encryptPasswordFields(
+    sanitizedEntries,
+    passwordFields,
+    context.encryptionKey,
+  );
   const mergedScopeConfig = mergeScopes(
     existingEntries,
     encryptedEntries,
@@ -126,6 +145,68 @@ export async function setConfiguration(
     scope: { code: scopeCode, id: String(scopeId), level: scopeLevel },
     timestamp: new Date().toISOString(),
   };
+}
+
+/** Validates the types of request values for fields required on save. */
+function validateRequiredSaveEntries(
+  entries: SetConfigValue[],
+  requiredForSave: Set<string>,
+) {
+  // Runs before sanitization, so malformed entries must be skipped here rather than crash.
+  for (const entry of Array.isArray(entries) ? entries : []) {
+    if (typeof entry?.name !== "string") {
+      continue;
+    }
+    const name = entry.name.trim();
+    if (requiredForSave.has(name)) {
+      parseOrThrow(
+        SaveValueSchema,
+        entry.value,
+        `Field "${name}" required for save must have a valid value`,
+      );
+    }
+  }
+}
+
+/** Validates effective values after applying a partial scope update. */
+async function validateRequiredSaveConfiguration({
+  context,
+  entries,
+  existingEntries,
+  requiredForSave,
+  scopeArgs,
+  scopeInfo,
+}: {
+  context: ConfigContext;
+  entries: SetConfigValue[];
+  existingEntries: ConfigValue[];
+  requiredForSave: Set<string>;
+  scopeArgs: unknown[];
+  scopeInfo: ReturnType<typeof deriveScopeFromArgs>;
+}) {
+  const touchedRequiredForSave = entries.filter((entry) =>
+    requiredForSave.has(entry.name),
+  );
+  if (touchedRequiredForSave.length === 0) {
+    return;
+  }
+
+  const { configData } = await resolveEffectiveConfig(context, scopeArgs, {
+    scopeConfig: mergeScopes(
+      existingEntries,
+      entries,
+      scopeInfo.scopeCode,
+      scopeInfo.scopeLevel,
+    ),
+  });
+
+  for (const { name } of touchedRequiredForSave) {
+    parseOrThrow(
+      RequiredValueSchema,
+      configData.config.find((entry) => entry.name === name)?.value,
+      `Field "${name}" required for save must have a value`,
+    );
+  }
 }
 
 /**

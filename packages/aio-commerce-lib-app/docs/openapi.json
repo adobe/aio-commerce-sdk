@@ -150,6 +150,9 @@
                                       "default": {
                                         "type": "string",
                                         "minLength": 1
+                                      },
+                                      "requiredFor": {
+                                        "$ref": "#/components/schemas/RequiredFor"
                                       }
                                     },
                                     "required": [
@@ -208,6 +211,9 @@
                                           "type": "string",
                                           "minLength": 1
                                         }
+                                      },
+                                      "requiredFor": {
+                                        "$ref": "#/components/schemas/RequiredFor"
                                       }
                                     },
                                     "required": [
@@ -246,6 +252,9 @@
                                   },
                                   "default": {
                                     "type": "string"
+                                  },
+                                  "requiredFor": {
+                                    "$ref": "#/components/schemas/RequiredFor"
                                   }
                                 },
                                 "required": ["name", "type", "default"]
@@ -276,6 +285,9 @@
                                   },
                                   "default": {
                                     "const": ""
+                                  },
+                                  "requiredFor": {
+                                    "$ref": "#/components/schemas/RequiredFor"
                                   }
                                 },
                                 "required": ["name", "type", "default"]
@@ -314,6 +326,9 @@
                                         "format": "email"
                                       }
                                     ]
+                                  },
+                                  "requiredFor": {
+                                    "$ref": "#/components/schemas/RequiredFor"
                                   }
                                 },
                                 "required": ["name", "type", "default"]
@@ -352,6 +367,9 @@
                                         "format": "uri"
                                       }
                                     ]
+                                  },
+                                  "requiredFor": {
+                                    "$ref": "#/components/schemas/RequiredFor"
                                   }
                                 },
                                 "required": ["name", "type", "default"]
@@ -390,6 +408,9 @@
                                         "pattern": "^\\+?[0-9\\s\\-()]+$"
                                       }
                                     ]
+                                  },
+                                  "requiredFor": {
+                                    "$ref": "#/components/schemas/RequiredFor"
                                   }
                                 },
                                 "required": ["name", "type", "default"]
@@ -420,6 +441,9 @@
                                   },
                                   "default": {
                                     "type": "boolean"
+                                  },
+                                  "requiredFor": {
+                                    "$ref": "#/components/schemas/RequiredFor"
                                   }
                                 },
                                 "required": ["name", "type", "default"]
@@ -781,6 +805,9 @@
                                   "default": {
                                     "type": "string",
                                     "minLength": 1
+                                  },
+                                  "requiredFor": {
+                                    "$ref": "#/components/schemas/RequiredFor"
                                   }
                                 },
                                 "required": [
@@ -839,6 +866,9 @@
                                       "type": "string",
                                       "minLength": 1
                                     }
+                                  },
+                                  "requiredFor": {
+                                    "$ref": "#/components/schemas/RequiredFor"
                                   }
                                 },
                                 "required": [
@@ -877,6 +907,9 @@
                               },
                               "default": {
                                 "type": "string"
+                              },
+                              "requiredFor": {
+                                "$ref": "#/components/schemas/RequiredFor"
                               }
                             },
                             "required": ["name", "type", "default"]
@@ -907,6 +940,9 @@
                               },
                               "default": {
                                 "const": ""
+                              },
+                              "requiredFor": {
+                                "$ref": "#/components/schemas/RequiredFor"
                               }
                             },
                             "required": ["name", "type", "default"]
@@ -945,6 +981,9 @@
                                     "format": "email"
                                   }
                                 ]
+                              },
+                              "requiredFor": {
+                                "$ref": "#/components/schemas/RequiredFor"
                               }
                             },
                             "required": ["name", "type", "default"]
@@ -983,6 +1022,9 @@
                                     "format": "uri"
                                   }
                                 ]
+                              },
+                              "requiredFor": {
+                                "$ref": "#/components/schemas/RequiredFor"
                               }
                             },
                             "required": ["name", "type", "default"]
@@ -1021,6 +1063,9 @@
                                     "pattern": "^\\+?[0-9\\s\\-()]+$"
                                   }
                                 ]
+                              },
+                              "requiredFor": {
+                                "$ref": "#/components/schemas/RequiredFor"
                               }
                             },
                             "required": ["name", "type", "default"]
@@ -1051,6 +1096,9 @@
                               },
                               "default": {
                                 "type": "boolean"
+                              },
+                              "requiredFor": {
+                                "$ref": "#/components/schemas/RequiredFor"
                               }
                             },
                             "required": ["name", "type", "default"]
@@ -1131,7 +1179,7 @@
       "patch": {
         "operationId": "patchConfiguration",
         "summary": "Patch Configuration Values",
-        "description": "Partially updates configuration values for a scope. Unsets those values that are sent with a null value.",
+        "description": "Partially updates configuration values for a scope. A null value unsets the scope override and restores inheritance. Updated fields marked with requiredFor: [save] must have a non-empty effective value after the update.",
         "parameters": [
           {
             "name": "x-gw-ims-org-id",
@@ -1239,7 +1287,7 @@
             }
           },
           "400": {
-            "description": "The request is invalid or could not be parsed.",
+            "description": "The request is invalid, could not be parsed, or updates a required field without a non-empty effective value.",
             "headers": {
               "x-ac-sdk-lib-versions": {
                 "$ref": "#/components/headers/SdkLibVersions"
@@ -1428,7 +1476,7 @@
       "post": {
         "operationId": "startLifecyclePlan",
         "summary": "Start a Planned Lifecycle Operation",
-        "description": "Starts the pending plan named by `planId`, whatever its operation (install, upgrade or uninstall). Get the plan from `POST /installation/plan`. The plan is made again from the current state before it starts, and the attempt records how it differs from the reviewed plan in `review`.",
+        "description": "Starts the pending plan named by `planId`, whatever its operation (install, upgrade or uninstall). Get the plan from `POST /installation/plan`. The plan is made again from the current state before it starts, and the attempt records how it differs from the reviewed plan in `review`. Install and upgrade starts require non-empty effective global values for fields marked for the corresponding operation.",
         "parameters": [
           {
             "name": "x-gw-ims-org-id",
@@ -1515,7 +1563,7 @@
             }
           },
           "409": {
-            "description": "The plan cannot start. `code` tells why: `in-progress` (another attempt is running; `attempt` carries its status), `stale-plan` (the `planId` is not the pending plan, or the installed state now calls for another operation; plan again), `not-associated`, `unreadable-state`, `baseline-missing` (the stored state names a baseline snapshot that no longer exists), `installed-without-config`, or `already-current`. Without a `code`, planning is blocked by the `issues`, or the application ID changed.",
+            "description": "The plan cannot start. `code` tells why: `in-progress` (another attempt is running; `attempt` carries its status), `stale-plan` (the `planId` is not the pending plan, or the installed state now calls for another operation; plan again), `not-associated`, `unreadable-state`, `baseline-missing` (the stored state names a baseline snapshot that no longer exists), `installed-without-config`, or `already-current`. Without a `code`, planning is blocked by the `issues`, or the application ID changed. `missing-required-configuration` lists missing global configuration field names in `fields`; provide those values and retry the start.",
             "headers": {
               "x-ac-sdk-lib-versions": {
                 "$ref": "#/components/headers/SdkLibVersions"
@@ -1539,6 +1587,13 @@
                       "type": "array",
                       "items": {
                         "$ref": "#/components/schemas/PlanningIssue"
+                      }
+                    },
+                    "fields": {
+                      "description": "Names of missing required global configuration fields.",
+                      "type": "array",
+                      "items": {
+                        "type": "string"
                       }
                     }
                   },
@@ -4424,6 +4479,14 @@
           "domains",
           "issues"
         ]
+      },
+      "RequiredFor": {
+        "description": "Operations that require a non-empty effective value when saving or starting.",
+        "type": "array",
+        "items": {
+          "type": "string",
+          "enum": ["save", "installation", "upgrade"]
+        }
       }
     },
     "headers": {
