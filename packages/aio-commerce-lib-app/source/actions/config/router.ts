@@ -14,6 +14,7 @@ import {
   byScopeId,
   getConfiguration,
   initialize,
+  isNonEmptyConfigurationValue,
   setConfiguration,
 } from "@adobe/aio-commerce-lib-config";
 import { CommerceSdkValidationError } from "@adobe/aio-commerce-lib-core/error";
@@ -56,7 +57,8 @@ interface ConfigActionContext extends BaseContext {
 const MASKED_PASSWORD_VALUE = "*****";
 
 /**
- * Filters password fields from the configuration values.
+ * Masks non-empty password values. Empty values are returned as-is so clients can tell
+ * whether a password is set.
  *
  * @param schema - The schema to use to filter the values.
  * @param values - The values to filter.
@@ -67,7 +69,10 @@ function filterPasswordFields<T extends Omit<ConfigValue, "origin">>(
 ) {
   return values.map((item) => {
     const schemaMatch = schema.find((field) => field.name === item.name);
-    if (schemaMatch?.type === "password") {
+    if (
+      schemaMatch?.type === "password" &&
+      isNonEmptyConfigurationValue(item.value)
+    ) {
       return { ...item, value: MASKED_PASSWORD_VALUE };
     }
 
