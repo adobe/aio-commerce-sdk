@@ -3048,6 +3048,9 @@
               "system"
             ]
           },
+          "allow": {
+            "$ref": "#/components/schemas/AdminUiAllowPermissions"
+          },
           "sandboxPermissions": {
             "$ref": "#/components/schemas/AdminUiSandboxPermissions"
           }
@@ -3091,6 +3094,9 @@
               "selectionLimit": {
                 "type": "number",
                 "minimum": 1
+              },
+              "allow": {
+                "$ref": "#/components/schemas/AdminUiAllowPermissions"
               },
               "sandboxPermissions": {
                 "$ref": "#/components/schemas/AdminUiSandboxPermissions"
@@ -3480,6 +3486,9 @@
           "confirm": {
             "$ref": "#/components/schemas/AdminUiConfirm"
           },
+          "allow": {
+            "$ref": "#/components/schemas/AdminUiAllowPermissions"
+          },
           "sandboxPermissions": {
             "$ref": "#/components/schemas/AdminUiSandboxPermissions"
           },
@@ -3595,6 +3604,9 @@
           },
           "confirm": {
             "$ref": "#/components/schemas/AdminUiConfirm"
+          },
+          "allow": {
+            "$ref": "#/components/schemas/AdminUiAllowPermissions"
           },
           "sandboxPermissions": {
             "$ref": "#/components/schemas/AdminUiSandboxPermissions"
@@ -3712,6 +3724,9 @@
           "confirm": {
             "$ref": "#/components/schemas/AdminUiConfirm"
           },
+          "allow": {
+            "$ref": "#/components/schemas/AdminUiAllowPermissions"
+          },
           "sandboxPermissions": {
             "$ref": "#/components/schemas/AdminUiSandboxPermissions"
           },
@@ -3795,6 +3810,15 @@
             "minLength": 1
           }
         }
+      },
+      "AdminUiAllowPermissions": {
+        "type": "array",
+        "items": {
+          "type": "string",
+          "enum": ["autoplay", "microphone"]
+        },
+        "minItems": 1,
+        "uniqueItems": true
       },
       "AdminUiSandboxPermissions": {
         "type": "array",
@@ -4058,6 +4082,9 @@
           },
           "confirm": {
             "$ref": "#/components/schemas/AdminUiConfirm"
+          },
+          "allow": {
+            "$ref": "#/components/schemas/AdminUiAllowPermissions"
           },
           "sandboxPermissions": {
             "$ref": "#/components/schemas/AdminUiSandboxPermissions"

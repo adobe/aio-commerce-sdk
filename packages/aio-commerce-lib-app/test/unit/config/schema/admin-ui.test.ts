@@ -830,6 +830,15 @@ describe("AdminUiSchema", () => {
         expect(result.success).toBe(false);
       });
 
+      test("type: worker with allow is rejected", () => {
+        const result = v.safeParse(AdminUiSchema, {
+          order: {
+            viewButtons: [{ ...viewButtonWorkerBase, allow: ["microphone"] }],
+          },
+        });
+        expect(result.success).toBe(false);
+      });
+
       test("type: worker missing runtimeAction is rejected", () => {
         const { runtimeAction: _, ...withoutAction } = viewButtonWorkerBase;
         const result = v.safeParse(AdminUiSchema, {
@@ -1057,6 +1066,16 @@ describe("AdminUiSchema", () => {
         menu: { ...configWithAdminUiMenu.adminUi.menu, sandboxPermissions: [] },
       });
       expect(result.success).toBe(false);
+    });
+
+    test("menu with allow permissions parses successfully", () => {
+      const result = v.safeParse(AdminUiSchema, {
+        menu: {
+          ...configWithAdminUiMenu.adminUi.menu,
+          allow: ["autoplay", "microphone"],
+        },
+      });
+      expect(result.success).toBe(true);
     });
 
     test("menu aclProtected: 'yes' (non-boolean string) is rejected", () => {
@@ -1556,6 +1575,61 @@ describe("AdminUiSchema — mass actions", () => {
               label: "Action",
               runtimeAction: "pkg/action",
               sandboxPermissions: ["allow-popups"],
+              type: "worker",
+            },
+          ],
+        },
+      });
+      expect(result.success).toBe(false);
+    });
+
+    test("view mass action with allow permissions parses successfully", () => {
+      const result = v.safeParse(AdminUiSchema, {
+        order: {
+          massActions: [
+            {
+              allow: ["microphone", "autoplay"],
+              id: "action",
+              label: "Action",
+              path: "#/action",
+              type: "view",
+            },
+          ],
+        },
+      });
+      expect(result.success).toBe(true);
+    });
+
+    test.each([
+      { label: "invalid permission value", value: ["camera"] },
+      { label: "duplicate permissions", value: ["autoplay", "autoplay"] },
+      { label: "empty permissions array", value: [] },
+    ])("view mass action allow rejected when $label", ({ value }) => {
+      const result = v.safeParse(AdminUiSchema, {
+        order: {
+          massActions: [
+            {
+              allow: value,
+              id: "action",
+              label: "Action",
+              path: "#/action",
+              type: "view",
+            },
+          ],
+        },
+      });
+      expect(result.success).toBe(false);
+    });
+
+    test("worker mass action with allow is rejected (strict)", () => {
+      const result = v.safeParse(AdminUiSchema, {
+        order: {
+          massActions: [
+            {
+              allow: ["microphone"],
+              id: "action",
+              label: "Action",
+              runtimeAction: "pkg/action",
               type: "worker",
             },
           ],

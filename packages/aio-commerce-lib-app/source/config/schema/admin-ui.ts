@@ -38,22 +38,57 @@ const SANDBOX_PERMISSION_VALUES = [
   "allow-popups",
 ] as const satisfies string[];
 
-const SandboxPermissionsSchema = v.pipe(
-  v.array(
-    v.picklist(
-      SANDBOX_PERMISSION_VALUES,
-      `Invalid sandbox permission. Accepted values are: ${SANDBOX_PERMISSION_VALUES.join(", ")}`,
+const ALLOW_PERMISSION_VALUES = [
+  "autoplay",
+  "microphone",
+] as const satisfies string[];
+
+/**
+ * Builds a schema for a non-empty, duplicate-free list of iframe permissions.
+ * @param field - The config field name, used in error messages.
+ * @param kind - The permission kind, used in error messages (e.g. `sandbox`).
+ * @param values - The accepted permission values.
+ */
+function permissionListSchema<const TValues extends readonly string[]>(
+  field: string,
+  kind: string,
+  values: TValues,
+) {
+  return v.pipe(
+    v.array(
+      v.picklist(
+        values,
+        `Invalid ${kind} permission. Accepted values are: ${values.join(", ")}`,
+      ),
     ),
-  ),
-  v.minLength(
-    1,
-    "sandboxPermissions must contain at least one permission when it's defined",
-  ),
-  v.check((permissions) => {
-    const uniquePermissions = new Set(permissions);
-    return uniquePermissions.size === permissions.length;
-  }, "Duplicate permissions are not allowed in sandboxPermissions"),
+    v.minLength(
+      1,
+      `${field} must contain at least one permission when it's defined`,
+    ),
+    v.check(
+      (permissions) => new Set(permissions).size === permissions.length,
+      `Duplicate permissions are not allowed in ${field}`,
+    ),
+  );
+}
+
+const SandboxPermissionsSchema = permissionListSchema(
+  "sandboxPermissions",
+  "sandbox",
+  SANDBOX_PERMISSION_VALUES,
 );
+
+const AllowPermissionsSchema = permissionListSchema(
+  "allow",
+  "iframe allow",
+  ALLOW_PERMISSION_VALUES,
+);
+
+/** Optional iframe permission fields shared by every iframe-based entry. */
+const iframePermissionEntries = {
+  allow: v.optional(AllowPermissionsSchema),
+  sandboxPermissions: v.optional(SandboxPermissionsSchema),
+};
 
 const NotificationsSchema = v.object({
   error: v.optional(nonEmptyStringValueSchema("error notification")),
@@ -174,8 +209,8 @@ const massActionCommonEntries = {
 /** `type: "view"` mass action — renders an iframe at `path`. */
 const ViewMassActionSchema = v.strictObject({
   ...massActionCommonEntries,
+  ...iframePermissionEntries,
   path: nonEmptyStringValueSchema("mass action path"),
-  sandboxPermissions: v.optional(SandboxPermissionsSchema),
   type: v.literal("view"),
 });
 
@@ -202,6 +237,7 @@ const MassActionSchema = v.variant(
 const ViewButtonLevelSchema = v.picklist([-1, 0, 1]);
 
 const ViewButtonViewSchema = v.strictObject({
+  ...iframePermissionEntries,
   aclProtected: v.optional(v.boolean()),
   confirm: v.optional(ConfirmSchema),
   description: v.optional(nonEmptyStringValueSchema("view button description")),
@@ -210,7 +246,6 @@ const ViewButtonViewSchema = v.strictObject({
   level: v.optional(ViewButtonLevelSchema),
   notifications: v.optional(NotificationsSchema),
   path: nonEmptyStringValueSchema("view button path"),
-  sandboxPermissions: v.optional(SandboxPermissionsSchema),
   sortOrder: v.optional(positiveNumberValueSchema("sortOrder")),
   type: v.literal("view"),
 });
@@ -343,6 +378,7 @@ const MenuIdSchema = v.pipe(
 );
 
 const MenuSchema = v.object({
+  ...iframePermissionEntries,
   /**
    * When `true`, Commerce auto-generates a per-app ACL resource id from `metadata.id`
    * and injects it into the Adobe Commerce User Roles permission tree, allowing role-based
@@ -359,7 +395,6 @@ const MenuSchema = v.object({
       "parentMenu must be a known Commerce Admin menu ID",
     ),
   ),
-  sandboxPermissions: v.optional(SandboxPermissionsSchema),
 });
 
 const NATIVE_UI_REPLACED_PAGE_TARGETS = [
@@ -368,8 +403,8 @@ const NATIVE_UI_REPLACED_PAGE_TARGETS = [
 ] as const satisfies readonly string[];
 
 const NativeUiReplacedPageSchema = v.strictObject({
+  ...iframePermissionEntries,
   path: nonEmptyStringValueSchema("replaced page path"),
-  sandboxPermissions: v.optional(SandboxPermissionsSchema),
   target: v.picklist(
     NATIVE_UI_REPLACED_PAGE_TARGETS,
     `Invalid native UI replaced page target. Accepted values are: ${NATIVE_UI_REPLACED_PAGE_TARGETS.join(", ")}`,
