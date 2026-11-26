@@ -742,7 +742,7 @@
         ],
         "responses": {
           "200": {
-            "description": "The configuration schema and the stored configuration values for the requested scope. Password fields are masked in the response.",
+            "description": "The configuration schema and the stored configuration values for the requested scope. Non-empty password values are masked in the response; empty password values are returned as empty strings.",
             "headers": {
               "x-ac-sdk-lib-versions": {
                 "$ref": "#/components/headers/SdkLibVersions"
@@ -1246,7 +1246,7 @@
         },
         "responses": {
           "200": {
-            "description": "The configuration values were successfully updated. Returns the updated configuration with password fields masked.",
+            "description": "The configuration values were successfully updated. Returns the updated configuration with non-empty password values masked.",
             "headers": {
               "Cache-Control": {
                 "description": "Prevents clients from caching configuration mutation responses.",

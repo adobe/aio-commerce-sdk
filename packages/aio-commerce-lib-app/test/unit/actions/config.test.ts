@@ -118,6 +118,30 @@ describe("configRuntimeAction", () => {
       });
     });
 
+    test("does not mask empty password values", async () => {
+      getConfigurationMock.mockResolvedValue({
+        config: [{ name: "apiKey", origin: "default", value: "" }],
+        scopeId: "store-1",
+      });
+
+      const handler = configRuntimeAction({ configSchema });
+
+      const result = await handler(
+        createRuntimeActionParams({
+          AIO_COMMERCE_CONFIG_ENCRYPTION_KEY: "encryption-key",
+          query: "scopeId=store-1",
+        }),
+      );
+
+      expect(result).toMatchObject({
+        body: {
+          values: {
+            config: [{ name: "apiKey", origin: "default", value: "" }],
+          },
+        },
+      });
+    });
+
     test("returns a 400 error when the scope id query parameter is missing", async () => {
       const handler = configRuntimeAction({ configSchema });
 
